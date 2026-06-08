@@ -1,10 +1,13 @@
+import { currentViemClient } from "@frak-labs/wallet-shared";
 import {
     type DefaultError,
     type UseMutationOptions,
     useMutation,
 } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 import { useConnection, useSendTransaction } from "wagmi";
+import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 
 type MutationParams = {
@@ -35,9 +38,18 @@ export function useSetupRecovery(
                 data: setupTxData,
             });
 
-            // Invalidate the recovery options for the given chain
+            // Wait for inclusion before invalidating, otherwise the on-chain
+            // recovery-option read-back refetches stale pre-setup state and the
+            // profile keeps showing "not configured" until a manual refresh.
+            await waitForTransactionReceipt(currentViemClient, {
+                hash: txHash,
+                confirmations: 8,
+            });
+
             await client.invalidateQueries({
-                queryKey: recoverySetupKey.status(address),
+                queryKey: recoveryKey.currentOption.full({
+                    walletAddress: address,
+                }),
             });
 
             return txHash;

@@ -25,6 +25,19 @@ export type IdentityWalletLookup = {
 };
 
 /**
+ * Availability of an email address relative to an optional caller group:
+ *  - `available`: free to use, or already the caller's own active address.
+ *  - `merge`: actively owned by another group → the client routes into the
+ *    login / merge flow using the surfaced wallet + credentials.
+ *  - `unavailable`: present but retired (unlinked) anywhere → globally
+ *    non-reusable for now (the unlinked row still holds the unique slot).
+ */
+export type EmailResolution =
+    | { status: "available" }
+    | { status: "merge"; wallet?: Address; authenticatorIds: string[] }
+    | { status: "unavailable" };
+
+/**
  * Cross-domain helper that resolves identity-graph nodes (postgres) to the
  * credential currently bound to the underlying wallet (postgres binding
  * table → libSQL credential row). Both reads are postgres-only now, but
@@ -38,19 +51,29 @@ export class AuthenticatorLookupOrchestrator {
     ) {}
 
     /**
-     * Look up the wallet + active-chain credential currently bound to the
-     * given email. Returns `null` when no identity group is attached to the
-     * email; returns a partial result when the group exists but the wallet
-     * or its current-chain binding is missing (callers should treat both
-     * fields as independently optional).
+     * Classify an email address for the auth + email-management flows: free,
+     * actively owned by another group (merge target), or retired and thus
+     * non-reusable. `currentGroupId` (when known) marks the caller's own
+     * active address as `available` rather than a self-conflict.
      */
-    async findByEmail(email: string): Promise<IdentityWalletLookup | null> {
-        const group = await this.identityRepository.findGroupByIdentity({
-            type: "email",
-            value: email,
-        });
-        if (!group) return null;
-        return this.fromGroupId(group.id);
+    async resolveEmail(
+        email: string,
+        currentGroupId?: string
+    ): Promise<EmailResolution> {
+        const node = await this.identityRepository.findEmailNode(email);
+        if (!node) {
+            return { status: "available" };
+        }
+        if (node.groupId === currentGroupId && !node.unlinkedAt) {
+            return { status: "available" };
+        }
+        if (!node.unlinkedAt) {
+            const { wallet, authenticatorIds } = await this.fromGroupId(
+                node.groupId
+            );
+            return { status: "merge", wallet, authenticatorIds };
+        }
+        return { status: "unavailable" };
     }
 
     private async fromGroupId(groupId: string): Promise<IdentityWalletLookup> {

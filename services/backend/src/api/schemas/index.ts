@@ -70,8 +70,6 @@ export {
     MergeWeightSchema,
 } from "../../orchestration/schemas/walletMergeSchemas";
 export {
-    type AssociateEmailResponse,
-    AssociateEmailResponseSchema,
     type EmailStatusResponse,
     EmailStatusResponseSchema,
     type MyEmailResponse,
@@ -101,6 +99,16 @@ export {
     MerchantIdParamSchema,
 } from "./commonApiSchemas";
 export {
+    type SendEmailVerificationBody,
+    SendEmailVerificationBodySchema,
+    type SendEmailVerificationResponse,
+    SendEmailVerificationResponseSchema,
+    type VerifyEmailBody,
+    VerifyEmailBodySchema,
+    type VerifyEmailResponse,
+    VerifyEmailResponseSchema,
+} from "./emailVerificationSchemas";
+export {
     type InteractionSubmission,
     InteractionSubmissionSchema,
     validateArrivalReferrer,
@@ -119,6 +127,22 @@ export {
     type RegisterTokenBody,
     RegisterTokenBodySchema,
 } from "./notificationTokenSchemas";
+export {
+    type DeleteRecoveryResponse,
+    DeleteRecoveryResponseSchema,
+    type RecoveryBlobResponse,
+    RecoveryBlobResponseSchema,
+    type RecoveryStatusResponse,
+    RecoveryStatusResponseSchema,
+    type RequestRecoveryEmailBody,
+    RequestRecoveryEmailBodySchema,
+    type RequestRecoveryEmailResponse,
+    RequestRecoveryEmailResponseSchema,
+    type SaveRecoveryBlobBody,
+    SaveRecoveryBlobBodySchema,
+    type SaveRecoveryResponse,
+    SaveRecoveryResponseSchema,
+} from "./recoverySchemas";
 export {
     type RewardHistoryResponse,
     RewardHistoryResponseSchema,

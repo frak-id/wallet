@@ -214,6 +214,11 @@ export class IdentityMergeService {
                 );
         }
 
+        // Moving nodes can leave the anchor with one linked email per merged
+        // group; collapse back to a single active email (verified, then most
+        // recent) so the single-active-email invariant holds post-merge.
+        await this.identityRepository.reconcileGroupEmails(anchorGroupId, trx);
+
         const migratedPurchasesResult = await trx
             .update(purchasesTable)
             .set({ identityGroupId: anchorGroupId, updatedAt: new Date() })

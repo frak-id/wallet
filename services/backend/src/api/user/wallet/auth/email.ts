@@ -1,13 +1,41 @@
 import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
-import { AuthContext } from "../../../../domain/auth";
+import { Elysia } from "elysia";
 import { IdentityContext } from "../../../../domain/identity/context";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import {
-    AssociateEmailResponseSchema,
     MyEmailResponseSchema,
+    SendEmailVerificationBodySchema,
+    SendEmailVerificationResponseSchema,
+    VerifyEmailBodySchema,
+    VerifyEmailResponseSchema,
 } from "../../../schemas";
+import { walletGroupContext } from "./walletGroupContext";
+
+/**
+ * Map an email-availability resolution to the response shape shared by the
+ * verification routes: a merge target becomes the `conflict` payload (wallet +
+ * credentials), a retired address becomes `unavailable`, and a free or
+ * own-group address yields `null` so the caller proceeds.
+ */
+async function checkEmailAvailability(email: string, walletGroupId: string) {
+    const resolution =
+        await OrchestrationContext.orchestrators.authenticatorLookup.resolveEmail(
+            email,
+            walletGroupId
+        );
+    if (resolution.status === "merge") {
+        return {
+            status: "conflict" as const,
+            authenticatorIds: resolution.authenticatorIds,
+            wallet: resolution.wallet,
+        };
+    }
+    if (resolution.status === "unavailable") {
+        return { status: "unavailable" as const };
+    }
+    return null;
+}
 
 /**
  * Post-auth email management for the *current* authenticator.
@@ -26,24 +54,30 @@ import {
  */
 export const emailRoutes = new Elysia({ prefix: "/email" })
     .use(sessionContext)
+    .use(walletGroupContext)
     .get(
         "/",
         async ({ walletSession }) => {
             if (walletSession.type === "ecdsa") {
-                return { email: null };
+                return { email: null, verified: false, verifiedAt: null };
             }
             const group =
                 await IdentityContext.repositories.identity.findGroupByIdentity(
                     { type: "wallet", value: walletSession.address }
                 );
             if (!group) {
-                return { email: null };
+                return { email: null, verified: false, verifiedAt: null };
             }
-            const email =
-                await IdentityContext.repositories.identity.findEmailForGroup(
+            const emailStatus =
+                await IdentityContext.services.emailVerification.getEmailStatus(
                     group.id
                 );
-            return { email };
+            return {
+                email: emailStatus.email,
+                verified: emailStatus.verifiedAt !== null,
+                verifiedAt: emailStatus.verifiedAt?.toISOString() ?? null,
+                pendingEmail: emailStatus.pendingEmail,
+            };
         },
         {
             withWalletAuthent: true,
@@ -54,88 +88,87 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
         }
     )
     .post(
-        "/",
-        async ({ walletSession, body: { email } }) => {
-            if (walletSession.type === "ecdsa") {
-                // No credential row to attach an email to. The UI shouldn't
-                // surface the flow for ECDSA sessions, but guard anyway.
-                return status(400, "Unsupported wallet type");
-            }
-
-            const credentialId = walletSession.authenticatorId;
+        "/verification",
+        async ({ walletGroup, body: { email } }) => {
             const identityRepo = IdentityContext.repositories.identity;
 
-            const walletGroup = await identityRepo.findGroupByIdentity({
-                type: "wallet",
-                value: walletSession.address,
-            });
-            if (!walletGroup) {
-                return status(404, "Wallet identity not found");
-            }
-
-            // Refuse silent overwrite: the post-auth UI only exposes this when
-            // no email is set, so reaching this with an existing email means
-            // either a race or a stale client. Surface it so we don't lose data.
-            const currentEmail = await identityRepo.findEmailForGroup(
-                walletGroup.id
-            );
-            if (currentEmail) {
-                return {
-                    status: "alreadyHasEmail" as const,
-                    email: currentEmail,
-                };
-            }
-
-            // Email already attached to a different identity group -> defer
-            // to the wallet-merge flow. Resolve the conflicting wallet + every
-            // credential currently bound to it on the active chain so the UI
-            // can pick one as the merge target / advertise the full list to a
-            // login ceremony.
-            const conflicting =
-                await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
-                    email
+            if (email) {
+                // Target must be free: another group owns it (-> merge
+                // conflict) or it was retired (-> unavailable).
+                const blocked = await checkEmailAvailability(
+                    email,
+                    walletGroup.id
                 );
-            if (conflicting && conflicting.groupId !== walletGroup.id) {
-                return {
-                    status: "conflict" as const,
-                    authenticatorIds: conflicting.authenticatorIds,
-                    wallet: conflicting.wallet,
-                };
-            }
+                if (blocked) {
+                    return blocked;
+                }
 
-            // Authenticated credential must still exist — otherwise the wallet
-            // session is dangling and `getByCredentialId` will return null. We
-            // keep the historical 404 to distinguish a missing credential
-            // from a successful update.
-            const credential =
-                await AuthContext.repositories.authenticator.getByCredentialId(
-                    credentialId
+                // First email for the group: materialise the unverified node
+                // now so the wallet immediately reflects "email on file" and a
+                // later resend can resolve the target. A rotation (the group
+                // already has a linked email) keeps the new address on the
+                // challenge row only, attached on verify.
+                const current = await identityRepo.findLinkedEmail(
+                    walletGroup.id
                 );
-            if (!credential) {
-                return status(404, "Authenticator not found");
+                if (!current) {
+                    await identityRepo.addNode({
+                        groupId: walletGroup.id,
+                        type: "email",
+                        value: email,
+                    });
+                }
             }
 
-            await identityRepo.addNode({
+            return IdentityContext.services.emailVerification.sendCode({
                 groupId: walletGroup.id,
-                type: "email",
-                value: email,
+                email,
             });
-
-            return {
-                status: "success" as const,
-                email: email.trim().toLowerCase(),
-            };
         },
         {
-            withWalletAuthent: true,
-            body: t.Object({
-                email: t.String({ format: "email", maxLength: 320 }),
-            }),
+            withWalletGroup: true,
+            body: SendEmailVerificationBodySchema,
             response: {
                 400: t.String(),
                 401: t.String(),
                 404: t.String(),
-                200: AssociateEmailResponseSchema,
+                200: SendEmailVerificationResponseSchema,
+            },
+        }
+    )
+    .post(
+        "/verify",
+        async ({ walletGroup, body: { code } }) => {
+            const result =
+                await IdentityContext.services.emailVerification.verifyCode({
+                    groupId: walletGroup.id,
+                    code,
+                });
+
+            // The address was claimed by another group between send and verify.
+            // Re-resolve into the merge-capable payload the client handles; if
+            // it is no longer an active foreign group (resolved free, or now
+            // retired), fall back to `invalid` so the client retries.
+            if (result.status === "conflict") {
+                const blocked = await checkEmailAvailability(
+                    result.email,
+                    walletGroup.id
+                );
+                return blocked?.status === "conflict"
+                    ? blocked
+                    : { status: "invalid" as const };
+            }
+
+            return result;
+        },
+        {
+            withWalletGroup: true,
+            body: VerifyEmailBodySchema,
+            response: {
+                400: t.String(),
+                401: t.String(),
+                404: t.String(),
+                200: VerifyEmailResponseSchema,
             },
         }
     );

@@ -7,9 +7,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address, Hex } from "viem";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import type { MigrateLoserAssetsMutation } from "../../strategy/types";
 import { FundsList } from "../FundsList";
@@ -133,20 +131,42 @@ export function AssetMigrationStep({
     const showHoldings = !!summary.data?.hasFunds;
 
     return (
-        <PageLayout
-            back={<Back onClick={onBack} disabled={migrate.isPending} />}
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={t(titleKey)}
+            description={t(descriptionKey)}
+            onBack={onBack}
+            backDisabled={migrate.isPending}
+            stepIndicator={stepIndicator}
             footer={renderFooter()}
         >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">{t(titleKey)}</Title>
-                    <Text variant="body" color="secondary">
-                        {t(descriptionKey)}
+            {summary.isLoading && (
+                <Card
+                    variant="muted"
+                    padding="default"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <Text variant="bodySmall" color="secondary">
+                        {t("wallet.merge.migrate.loading")}
                     </Text>
-                </Stack>
+                </Card>
+            )}
 
-                {summary.isLoading && (
+            {showHoldings && summary.data && (
+                <Card variant="elevated" padding="default">
+                    <Stack space="s">
+                        <Text variant="bodySmall" weight="semiBold">
+                            {t("wallet.merge.migrate.holdings.title")}
+                        </Text>
+                        <FundsList entries={summary.data.entries} />
+                    </Stack>
+                </Card>
+            )}
+
+            {migrate.isPending &&
+                (isPeerSigning ? (
+                    <RemotePeerWaitingCard />
+                ) : (
                     <Card
                         variant="muted"
                         padding="default"
@@ -154,65 +174,37 @@ export function AssetMigrationStep({
                         aria-live="polite"
                     >
                         <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.migrate.loading")}
+                            {t("wallet.merge.migrate.pending")}
                         </Text>
                     </Card>
-                )}
+                ))}
 
-                {showHoldings && summary.data && (
-                    <Card variant="elevated" padding="default">
-                        <Stack space="s">
-                            <Text variant="bodySmall" weight="semiBold">
-                                {t("wallet.merge.migrate.holdings.title")}
-                            </Text>
-                            <FundsList entries={summary.data.entries} />
-                        </Stack>
-                    </Card>
-                )}
+            {migrate.isError && (
+                <Card
+                    variant="muted"
+                    padding="default"
+                    role="alert"
+                    aria-live="assertive"
+                >
+                    <Text variant="bodySmall" color="error">
+                        {t("wallet.merge.migrate.error")}
+                    </Text>
+                </Card>
+            )}
 
-                {migrate.isPending &&
-                    (isPeerSigning ? (
-                        <RemotePeerWaitingCard />
-                    ) : (
-                        <Card
-                            variant="muted"
-                            padding="default"
-                            role="status"
-                            aria-live="polite"
-                        >
-                            <Text variant="bodySmall" color="secondary">
-                                {t("wallet.merge.migrate.pending")}
-                            </Text>
-                        </Card>
-                    ))}
-
-                {migrate.isError && (
-                    <Card
-                        variant="muted"
-                        padding="default"
-                        role="alert"
-                        aria-live="assertive"
-                    >
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.merge.migrate.error")}
-                        </Text>
-                    </Card>
-                )}
-
-                {summary.isError && (
-                    <Card
-                        variant="muted"
-                        padding="default"
-                        role="alert"
-                        aria-live="assertive"
-                    >
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.merge.migrate.summaryError")}
-                        </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+            {summary.isError && (
+                <Card
+                    variant="muted"
+                    padding="default"
+                    role="alert"
+                    aria-live="assertive"
+                >
+                    <Text variant="bodySmall" color="error">
+                        {t("wallet.merge.migrate.summaryError")}
+                    </Text>
+                </Card>
+            )}
+        </FlowStepScreen>
     );
 
     function renderFooter() {

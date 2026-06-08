@@ -6,9 +6,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { MergeError } from "../../errors";
 import { useMergeSettle } from "../../hook/useMergeSettle";
 import * as styles from "../stepLayout.css";
@@ -135,9 +133,23 @@ export function SettlingStep({
     const recovery = mapSettleError(error?.message);
 
     return (
-        <PageLayout
-            back={<Back onClick={onBack} disabled={isPending} />}
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={
+                isError
+                    ? t(
+                          recovery?.titleKey ??
+                              "wallet.merge.settling.errorTitle"
+                      )
+                    : t("wallet.merge.settling.title")
+            }
+            description={
+                isError
+                    ? t("wallet.merge.settling.errorDescription")
+                    : t("wallet.merge.settling.description")
+            }
+            onBack={onBack}
+            backDisabled={isPending}
+            stepIndicator={stepIndicator}
             footer={
                 isError ? (
                     <Box className={styles.footer}>
@@ -175,57 +187,36 @@ export function SettlingStep({
                 ) : undefined
             }
         >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">
-                        {isError
-                            ? t(
-                                  recovery?.titleKey ??
-                                      "wallet.merge.settling.errorTitle"
-                              )
-                            : t("wallet.merge.settling.title")}
-                    </Title>
-                    <Text variant="body" color="secondary">
-                        {isError
-                            ? t("wallet.merge.settling.errorDescription")
-                            : t("wallet.merge.settling.description")}
-                    </Text>
-                </Stack>
-
-                {isPending && (
-                    <Card
-                        variant="muted"
-                        padding="default"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        <Stack space="xs">
-                            <Text variant="bodySmall" weight="semiBold">
-                                {t("wallet.merge.settling.progress.title")}
-                            </Text>
-                            <Text variant="bodySmall" color="secondary">
-                                {t("wallet.merge.settling.progress.body")}
-                            </Text>
-                        </Stack>
-                    </Card>
-                )}
-
-                {isError && (
-                    <Card
-                        variant="muted"
-                        padding="default"
-                        role="alert"
-                        aria-live="assertive"
-                    >
-                        <Text variant="bodySmall" color="error">
-                            {t(
-                                recovery?.bodyKey ??
-                                    "wallet.merge.settling.error"
-                            )}
+            {isPending && (
+                <Card
+                    variant="muted"
+                    padding="default"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <Stack space="xs">
+                        <Text variant="bodySmall" weight="semiBold">
+                            {t("wallet.merge.settling.progress.title")}
                         </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+                        <Text variant="bodySmall" color="secondary">
+                            {t("wallet.merge.settling.progress.body")}
+                        </Text>
+                    </Stack>
+                </Card>
+            )}
+
+            {isError && (
+                <Card
+                    variant="muted"
+                    padding="default"
+                    role="alert"
+                    aria-live="assertive"
+                >
+                    <Text variant="bodySmall" color="error">
+                        {t(recovery?.bodyKey ?? "wallet.merge.settling.error")}
+                    </Text>
+                </Card>
+            )}
+        </FlowStepScreen>
     );
 }

@@ -38,6 +38,11 @@
       "types": "./src/constants/rewards.ts",
       "import": "./src/constants/rewards.ts",
       "default": "./src/constants/rewards.ts"
+    },
+    "./constants/emailVerification": {
+      "types": "./src/constants/emailVerification.ts",
+      "import": "./src/constants/emailVerification.ts",
+      "default": "./src/constants/emailVerification.ts"
     }
   }
 }

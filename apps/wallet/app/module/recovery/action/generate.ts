@@ -1,10 +1,12 @@
-import {
-    addresses,
-    isRunningInProd,
-    kernelAddresses,
-} from "@frak-labs/app-essentials";
+import { addresses, kernelAddresses } from "@frak-labs/app-essentials";
 import type { GeneratedRecoveryData } from "@frak-labs/wallet-shared";
-import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
+import {
+    type Address,
+    encodeFunctionData,
+    type Hex,
+    toFunctionSelector,
+    zeroAddress,
+} from "viem";
 import {
     doAddPassKeyFnAbi,
     setExecutionAbi,
@@ -15,39 +17,55 @@ import {
  */
 export async function generateRecoveryData({
     guardianAddress,
+    validAfter,
+    validUntil,
 }: {
     guardianAddress: Address;
+    validAfter: number;
+    validUntil: number;
 }): Promise<GeneratedRecoveryData> {
-    // Get the recovery selector
     const addPasskeySelector = toFunctionSelector(doAddPassKeyFnAbi);
 
-    // Crafter the valid after timestamp (one week from now)
-    const validAfter = isRunningInProd
-        ? Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7
-        : Math.floor(Date.now() / 1000);
-
-    // Generate the setup tx data
+    // setExecution args are (selector, executor, validator, validUntil, validAfter, enableData)
     const txData = encodeFunctionData({
         abi: [setExecutionAbi],
         functionName: "setExecution",
         args: [
-            // The passkey addition method
             addPasskeySelector,
-            // The webauthn recovery address
             addresses.webAuthNRecoveryAction,
-            // The address of the ecdsa validator
             kernelAddresses.ecdsaValidator,
-            // Valid until timestamps, in seconds
-            0,
-            // Valid after timestamp, in seconds
+            validUntil,
             validAfter,
-            // Data used to confirm the ecdsa validator
             guardianAddress,
         ],
     });
-    // Return all the stuff wanted
     return {
         guardianAddress,
         setupTxData: txData,
     };
+}
+
+/**
+ * Disable recovery on-chain: re-run `setExecution` for the same selector with a
+ * zero executor so `getCurrentRecoveryOption` reads back `null` and the burner
+ * key can no longer add a passkey.
+ */
+export async function generateDisableRecoveryData(): Promise<{
+    setupTxData: Hex;
+}> {
+    const addPasskeySelector = toFunctionSelector(doAddPassKeyFnAbi);
+
+    const txData = encodeFunctionData({
+        abi: [setExecutionAbi],
+        functionName: "setExecution",
+        args: [
+            addPasskeySelector,
+            zeroAddress,
+            kernelAddresses.ecdsaValidator,
+            0,
+            0,
+            zeroAddress,
+        ],
+    });
+    return { setupTxData: txData };
 }

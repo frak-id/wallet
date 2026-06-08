@@ -53,6 +53,8 @@ describe("useRecoverySetupStatus", () => {
                 "0x9876543210987654321098765432109876543210" as `0x${string}`,
             guardianAddress:
                 "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as `0x${string}`,
+            validAfter: 1000,
+            validUntil: 2000,
         };
 
         // Use mockWagmiHooks fixture - already configured with mockAddress

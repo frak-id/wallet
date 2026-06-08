@@ -1,19 +1,17 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { CodeInput, trackEvent } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { useResolveInstallCode } from "@/module/recovery-code/hook/useResolveInstallCode";
 import { modalStore } from "@/module/stores/modalStore";
-import * as styles from "./index.css";
 
 const CODE_LENGTH = 6;
 
 export function RecoveryCodePage() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [code, setCode] = useState("");
     const openModal = modalStore((s) => s.openModal);
 
@@ -56,9 +54,11 @@ export function RecoveryCodePage() {
     const errorMessage = error ? t("recoveryCode.error.invalid") : undefined;
 
     return (
-        <PageLayout
+        <FlowStepScreen
             fixedViewport
-            back={<Back href="/register" replace />}
+            title={t("recoveryCode.title")}
+            description={t("recoveryCode.description")}
+            onBack={() => navigate({ to: "/register", replace: true })}
             footer={
                 <Button
                     onClick={handleValidate}
@@ -69,22 +69,14 @@ export function RecoveryCodePage() {
                 </Button>
             }
         >
-            <div className={styles.wrapper}>
-                <Box display={"flex"} flexDirection={"column"} gap={"m"}>
-                    <Title size="page">{t("recoveryCode.title")}</Title>
-                    <p className={styles.description}>
-                        {t("recoveryCode.description")}
-                    </p>
-                </Box>
-                <CodeInput
-                    length={CODE_LENGTH}
-                    mode="alphanumeric"
-                    onChange={handleCodeChange}
-                    digitLabel={(i) => `${t("recoveryCode.digitLabel")} ${i}`}
-                    pasteLabel={t("recoveryCode.paste")}
-                    error={errorMessage}
-                />
-            </div>
-        </PageLayout>
+            <CodeInput
+                length={CODE_LENGTH}
+                mode="alphanumeric"
+                onChange={handleCodeChange}
+                digitLabel={(i) => `${t("recoveryCode.digitLabel")} ${i}`}
+                pasteLabel={t("recoveryCode.paste")}
+                error={errorMessage}
+            />
+        </FlowStepScreen>
     );
 }

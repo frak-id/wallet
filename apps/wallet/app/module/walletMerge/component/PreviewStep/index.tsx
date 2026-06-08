@@ -6,9 +6,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import { FundsList } from "../FundsList";
 import { WalletCard } from "../WalletCard";
@@ -64,9 +62,11 @@ export function PreviewStep({
     const fundsToMove = assetSummary?.hasFunds ? assetSummary.entries : null;
 
     return (
-        <PageLayout
-            back={<Back onClick={onCancel} />}
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={t("wallet.merge.preview.title")}
+            description={t("wallet.merge.preview.description", { email })}
+            onBack={onCancel}
+            stepIndicator={stepIndicator}
             footer={
                 <Box className={styles.footer}>
                     <Button
@@ -90,67 +90,56 @@ export function PreviewStep({
                 </Box>
             }
         >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">{t("wallet.merge.preview.title")}</Title>
-                    <Text variant="body" color="secondary">
-                        {t("wallet.merge.preview.description", { email })}
+            <Stack space="s">
+                <WalletCard
+                    address={preview.requesterWallet}
+                    label={t("wallet.merge.preview.labels.thisAccount")}
+                    stats={preview.requesterWeight}
+                    isWinner={requesterWins}
+                />
+                <Box className={styles.arrow} aria-hidden>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("wallet.merge.preview.combineArrow")}
+                    </Text>
+                </Box>
+                <WalletCard
+                    address={preview.targetWallet}
+                    label={t("wallet.merge.preview.labels.otherAccount")}
+                    stats={preview.targetWeight}
+                    isWinner={!requesterWins}
+                />
+            </Stack>
+
+            <Card variant="muted" padding="default">
+                <Stack space="xs">
+                    <Text variant="bodySmall" weight="semiBold">
+                        {t("wallet.merge.preview.gains.title")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("wallet.merge.preview.gains.description", {
+                            referrals: totals.referralsCount,
+                            interactions: totals.interactionsCount,
+                            assets: totals.assetsCount,
+                        })}
                     </Text>
                 </Stack>
+            </Card>
 
-                <Stack space="s">
-                    <WalletCard
-                        address={preview.requesterWallet}
-                        label={t("wallet.merge.preview.labels.thisAccount")}
-                        stats={preview.requesterWeight}
-                        isWinner={requesterWins}
-                    />
-                    <Box className={styles.arrow} aria-hidden>
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.preview.combineArrow")}
-                        </Text>
-                    </Box>
-                    <WalletCard
-                        address={preview.targetWallet}
-                        label={t("wallet.merge.preview.labels.otherAccount")}
-                        stats={preview.targetWeight}
-                        isWinner={!requesterWins}
-                    />
-                </Stack>
-
-                <Card variant="muted" padding="default">
-                    <Stack space="xs">
-                        <Text variant="bodySmall" weight="semiBold">
-                            {t("wallet.merge.preview.gains.title")}
-                        </Text>
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.preview.gains.description", {
-                                referrals: totals.referralsCount,
-                                interactions: totals.interactionsCount,
-                                assets: totals.assetsCount,
-                            })}
-                        </Text>
+            {fundsToMove && (
+                <Card variant="elevated" padding="default">
+                    <Stack space="s">
+                        <Stack space="xxs">
+                            <Text variant="bodySmall" weight="semiBold">
+                                {t("wallet.merge.preview.funds.title")}
+                            </Text>
+                            <Text variant="bodySmall" color="secondary">
+                                {t("wallet.merge.preview.funds.description")}
+                            </Text>
+                        </Stack>
+                        <FundsList entries={fundsToMove} />
                     </Stack>
                 </Card>
-
-                {fundsToMove && (
-                    <Card variant="elevated" padding="default">
-                        <Stack space="s">
-                            <Stack space="xxs">
-                                <Text variant="bodySmall" weight="semiBold">
-                                    {t("wallet.merge.preview.funds.title")}
-                                </Text>
-                                <Text variant="bodySmall" color="secondary">
-                                    {t(
-                                        "wallet.merge.preview.funds.description"
-                                    )}
-                                </Text>
-                            </Stack>
-                            <FundsList entries={fundsToMove} />
-                        </Stack>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+            )}
+        </FlowStepScreen>
     );
 }

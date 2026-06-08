@@ -93,14 +93,43 @@
             "enableNotifications": "Activer les notifications",
             "notificationDeniedHelp": "Notifications bloquées par le navigateur. Active-les depuis les paramètres du navigateur.",
             "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
-            "recoveryConfigured": "Configurée",
             "privacyPolicy": "Politique de confidentialité",
             "helpSupport": "Aide & support",
             "rateApp": "Noter l'application",
             "managePairings": "Gérer les appareils connectés",
             "lastConnection": "Dernière connexion",
             "currentDeviceConnected": "Connecté",
-            "addEmail": "Ajouter mon e-mail"
+            "recoveryOptions": "Options de récupération",
+            "security": {
+                "heading": "Renforce la sécurité de ton wallet",
+                "headingSecured": "Ton wallet est sécurisé",
+                "progressLabel": "Progression de la sécurité du wallet",
+                "steps": {
+                    "addEmail": {
+                        "title": "Ajoute un email",
+                        "description": "Protège ton wallet et récupère ton accès en cas de perte ou de changement d'appareil.",
+                        "cta": "Ajouter un email"
+                    },
+                    "verifyEmail": {
+                        "title": "Valide ton email",
+                        "description": "Confirme ton adresse email pour qu'elle puisse servir à récupérer ton wallet.",
+                        "cta": "Valider mon email"
+                    },
+                    "setupRecovery": {
+                        "title": "Configure la récupération",
+                        "description": "Ajoute une option de récupération pour toujours pouvoir restaurer l'accès à ton wallet.",
+                        "cta": "Configurer la récupération"
+                    },
+                    "updateRecovery": {
+                        "title": "Mets à jour la récupération",
+                        "description": "Ta récupération expire bientôt. Actualise-la pour garder ton wallet protégé.",
+                        "cta": "Mettre à jour la récupération"
+                    },
+                    "secured": {
+                        "description": "Ton email et ta récupération sont configurés. Ton wallet est entièrement protégé."
+                    }
+                }
+            }
         },
         "addEmail": {
             "title": "Ajoute ton e-mail",
@@ -110,6 +139,7 @@
             "continue": "Continuer",
             "clearAriaLabel": "Effacer l'adresse e-mail",
             "submitError": "Impossible d'enregistrer cet e-mail pour le moment. Réessaie.",
+            "alreadyUsed": "Cette adresse e-mail est déjà utilisée et ne peut pas être ajoutée. Essaie-en une autre.",
             "conflict": {
                 "title": "E-mail déjà utilisé",
                 "description": "Cet e-mail est déjà associé à un autre portefeuille. Utilise-en un autre, ou reviens plus tard.",
@@ -118,15 +148,48 @@
                 "useDifferent": "Utiliser un autre e-mail",
                 "back": "Retour au profil"
             },
-            "success": {
-                "title": "E-mail enregistré",
-                "description": "{{email}} est maintenant lié à ton portefeuille. Configure la récupération pour pouvoir le restaurer si tu perds l'accès.",
-                "setupRecovery": "Configurer la récupération",
-                "back": "Retour au profil"
-            },
             "card": {
                 "title": "Ajoute ton e-mail",
                 "description": "Ajoute ton e-mail pour pouvoir récupérer ton portefeuille plus tard."
+            }
+        },
+        "verifyEmail": {
+            "title": "Vérifie ton e-mail",
+            "description": "Saisis le code à 6 chiffres que nous t'envoyons par e-mail pour confirmer ton adresse. Tu peux le coller ou appuyer sur le bouton dans l'e-mail.",
+            "statusPending": "Pas encore vérifié",
+            "statusPendingNew": "Vérifie ta nouvelle adresse e-mail",
+            "sendCode": "Envoyer le code de vérification",
+            "resendIn": "Renvoyer dans {{seconds}}s",
+            "pasteCode": "Coller le code",
+            "pasteError": "Impossible de lire le presse-papiers. Colle ou saisis le code manuellement.",
+            "digitLabel": "Chiffre {{index}}",
+            "verify": "Vérifier",
+            "changeEmailLink": "Utiliser un autre e-mail",
+            "verifying": {
+                "title": "Vérification de ton e-mail…",
+                "description": "Patiente pendant que nous confirmons ton code."
+            },
+            "error": {
+                "invalid": "Code incorrect. Réessaie.",
+                "expired": "Ce code a expiré. Demandes-en un nouveau.",
+                "tooManyAttempts": "Trop de tentatives. Demande un nouveau code.",
+                "network": "Une erreur est survenue. Réessaie.",
+                "send": "Impossible d'envoyer le code. Réessaie."
+            },
+            "success": {
+                "title": "E-mail vérifié",
+                "description": "{{email}} est maintenant vérifié. Configure la récupération pour pouvoir restaurer ton compte si tu perds l'accès.",
+                "setupRecovery": "Configurer la récupération",
+                "back": "Retour au profil"
+            },
+            "changeEmail": {
+                "title": "Change ton e-mail",
+                "description": "Saisis une nouvelle adresse e-mail. Nous enverrons un code pour la vérifier ; ton e-mail actuel reste actif jusque-là.",
+                "label": "E-mail",
+                "placeholder": "ton.email@gmail.com",
+                "clearAriaLabel": "Effacer l'adresse e-mail",
+                "continue": "Envoyer le code",
+                "alreadyUsed": "Cette adresse e-mail est déjà utilisée. Essaie-en une autre."
             }
         },
         "merge": {
@@ -422,45 +485,200 @@
             "text": "Vous avez obtenu {{eurClaimable}} EUR en attente grâce à vos activités de parrainage !",
             "title": "Récompense de parrainage en attente"
         },
-        "recovery": {
-            "title": "Récupérer un porte-monnaie",
-            "step1": "Téléchargez votre fichier de récupération",
-            "step2": "Examiner les données de récupération",
-            "step3": "Décryptage avec mot de passe",
-            "step4": "Créer une nouvelle clé d'accès",
-            "step5": "Exécuter la récupération",
-            "step6": "Succès",
-            "uploadOrDrag": "Téléchargez ou faites glisser le fichier de récupération",
-            "invalidFile": "Fichier invalide",
-            "continue": "Poursuivre la récupération",
-            "invalidPassword": "Mot de passe invalide",
-            "errorLoading": "Erreur lors du chargement du compte de récupération",
-            "needCreatePasskey": "Vous devez créer une nouvelle clé d'accès sur votre appareil",
-            "createPasskey": "créer une clé d'accès",
-            "loadingRecovery": "Chargement de la récupération",
-            "pushPasskey": "Envoyer la nouvelle clé d'accès",
-            "status": {
-                "loading": "Chargement ...",
-                "walletAlready": "Porte-monnaie déjà récupéré",
-                "inProgress": "En cours",
-                "done": "Fait",
-                "error": "Erreur",
-                "pending": "En attente"
+        "recoveryUsage": {
+            "stepIndicator": "Étape {{current}}/{{total}}",
+            "title": "Récupérez votre porte-monnaie",
+            "description": "Saisissez votre e-mail et nous vous enverrons un lien de récupération, si votre porte-monnaie est configuré pour la récupération par e-mail.",
+            "email": {
+                "label": "Adresse e-mail",
+                "placeholder": "vous@exemple.com",
+                "action": "Envoyer le lien de récupération",
+                "sent": "Si cet e-mail est enregistré et vérifié, nous avons envoyé votre lien de récupération. Consultez votre boîte de réception.",
+                "error": "Une erreur s'est produite. Veuillez réessayer."
             },
-            "successful": "La récupération est réussie, vous pouvez maintenant vous <pLink>connecter</pLink>"
+            "blob": {
+                "toggle": "J'ai une sauvegarde de récupération",
+                "label": "Sauvegarde de récupération",
+                "placeholder": "Collez votre sauvegarde de récupération ici",
+                "paste": "Coller",
+                "continue": "Continuer",
+                "invalid": "Cela ne ressemble pas à une sauvegarde de récupération valide. Vérifiez que vous avez copié le code en entier."
+            },
+            "password": {
+                "title": "Déverrouillez votre sauvegarde",
+                "description": "Saisissez le mot de passe de récupération choisi lors de la configuration. Il ne quitte jamais cet appareil.",
+                "placeholder": "Saisissez votre mot de passe de récupération",
+                "invalid": "Ce mot de passe ne correspond pas à cette sauvegarde.",
+                "continue": "Continuer"
+            },
+            "validate": {
+                "loadingTitle": "Vérification de votre récupération",
+                "loadingDescription": "Lecture de la configuration de récupération de ce porte-monnaie sur la blockchain…",
+                "title": "Confirmer la récupération",
+                "description": "Confirmez pour ajouter une nouvelle clé d'accès à ce porte-monnaie. Il vous sera demandé de la créer sur cet appareil.",
+                "walletLabel": "Porte-monnaie",
+                "expiresLabel": "Utilisable jusqu'au",
+                "never": "Sans expiration",
+                "authorise": "Récupérer mon porte-monnaie",
+                "retry": "Réessayer",
+                "failed": "Échec de la récupération.",
+                "failedDescription": "Une erreur s'est produite lors de la récupération de votre porte-monnaie. Vous pouvez réessayer.",
+                "cancelled": "Récupération annulée.",
+                "cancelledDescription": "Vous avez annulé la demande. Vous pouvez réessayer quand vous le souhaitez.",
+                "tryAnother": "Utiliser une autre sauvegarde",
+                "notConfigured": {
+                    "title": "Pas de récupération sur ce porte-monnaie",
+                    "description": "Ce porte-monnaie n'a pas de récupération activée, il ne peut donc pas être récupéré avec une sauvegarde."
+                },
+                "guardianMismatch": {
+                    "title": "La sauvegarde ne correspond pas",
+                    "description": "Cette sauvegarde appartient à une autre configuration de récupération que celle définie sur ce porte-monnaie."
+                },
+                "tooEarly": {
+                    "title": "Pas encore disponible",
+                    "description": "Pour votre sécurité, ce porte-monnaie ne peut être récupéré qu'à partir du {{date}}. Merci de revenir à ce moment-là."
+                },
+                "expired": {
+                    "title": "Récupération expirée",
+                    "description": "Cette récupération a expiré le {{date}}. Reconfigurez la récupération depuis un appareil connecté pour obtenir une nouvelle sauvegarde."
+                }
+            },
+            "success": {
+                "title": "Bon retour",
+                "description": "Votre nouvelle clé d'accès a été ajoutée et votre porte-monnaie est récupéré. Vous êtes maintenant connecté.",
+                "done": "Aller à mon porte-monnaie"
+            }
         },
         "recoverySetup": {
-            "currentGuardian": "Gardien actuel :",
-            "disclaimer": "Avertissement<br /> - Nous ne stockons aucune information liée à la récupération de votre porte-monnaie.<br /> - Vous êtes seul responsable de la sécurité et de la confidentialité de votre fichier de récupération et de votre mot de passe.<br /> - Le fichier de récupération peut être généré maintenant, mais le processus de récupération réel ne sera disponible qu'une semaine après la création du fichier pour éviter toute utilisation malveillante.",
-            "download": "Télécharger mon fichier de récupération",
-            "generating": "Génération de données de récupération",
-            "setupNew": "Configurer une nouvelle récupération",
-            "setupOn": "Installer sur {{name}}",
-            "step1": "Mot de passe de cryptage",
-            "step2": "Générer les données de récupération",
-            "step3": "Télécharger le fichier de récupération",
-            "step4": "Activer la récupération",
-            "title": "Configuration de récupération"
+            "stepIndicator": "Étape {{current}}/{{total}}",
+            "password": {
+                "title": "Protégez votre récupération",
+                "description": "Choisissez un mot de passe pour chiffrer votre sauvegarde de récupération, et définissez éventuellement quand elle pourra être utilisée.",
+                "label": "Mot de passe",
+                "placeholder": "Saisissez un mot de passe robuste",
+                "hint": "Au moins {{min}} caractères.",
+                "toggle": "Afficher/masquer le mot de passe",
+                "startLabel": "Date de début (facultatif)",
+                "startHelp": "La récupération ne pourra être utilisée qu'après cette date. Par défaut, une semaine à partir de maintenant, par sécurité.",
+                "endLabel": "Date de fin (facultatif)",
+                "endHelp": "La récupération cesse de fonctionner après cette date. Par défaut et au maximum deux ans à partir de maintenant.",
+                "dateRangeError": "La date de début doit précéder la date de fin.",
+                "warning": "Choisissez un mot de passe robuste. Nous ne pouvons ni le réinitialiser ni le récupérer — si vous l'oubliez, votre sauvegarde devient définitivement inutilisable.",
+                "continue": "Continuer"
+            },
+            "sign": {
+                "title": "Autoriser la récupération",
+                "description": "Confirmez pour activer la récupération sur votre porte-monnaie. Cela crée votre clé de récupération et l'enregistre sur la blockchain.",
+                "authorise": "Autoriser la récupération",
+                "retry": "Réessayer",
+                "failedDescription": "Une erreur est survenue lors de l'activation de la récupération. Vous pouvez réessayer.",
+                "failed": "Échec de la configuration de récupération.",
+                "cancelledDescription": "Vous avez annulé l'autorisation. Vous pouvez réessayer quand vous le souhaitez.",
+                "cancelled": "L'autorisation a été annulée."
+            },
+            "backup": {
+                "title": "Sauvegardez votre récupération",
+                "description": "Voici votre sauvegarde de récupération chiffrée. Conservez votre propre copie en lieu sûr, par exemple dans un gestionnaire de mots de passe.",
+                "reveal": "Afficher",
+                "hide": "Masquer",
+                "copy": "Copier",
+                "copied": "Copié",
+                "warning": "Quiconque possède à la fois ce code de sauvegarde et votre mot de passe peut prendre le contrôle total de votre porte-monnaie. Conservez-les à des endroits séparés.",
+                "saveError": "Nous n'avons pas pu enregistrer votre sauvegarde sur nos serveurs. Veuillez réessayer avant de continuer.",
+                "retry": "Réenregistrer",
+                "continue": "Terminé"
+            },
+            "success": {
+                "title": "La récupération est configurée",
+                "description": "La récupération de votre porte-monnaie est désormais active et votre sauvegarde chiffrée est enregistrée.",
+                "done": "Retour à mon profil"
+            },
+            "config": {
+                "title": "Récupération",
+                "description": "La récupération vous permet de restaurer votre porte-monnaie si vous perdez l'accès à cet appareil.",
+                "activeTitle": "La récupération est active",
+                "statusLabel": "Statut",
+                "active": "Active",
+                "startLabel": "Utilisable à partir du",
+                "endLabel": "Expire le",
+                "never": "Jamais",
+                "refreshTitle": "Gérer la récupération",
+                "refreshDescription": "Conservez votre clé de récupération actuelle et déplacez sa période de validité, ou remplacez-la par une toute nouvelle.",
+                "updateDatesAction": "Modifier les dates de validité",
+                "replaceKeyAction": "Remplacer la clé de récupération",
+                "deleteTitle": "Supprimer la récupération",
+                "deleteDescription": "Désactivez complètement la récupération. Votre clé de récupération est désactivée sur la blockchain et votre sauvegarde chiffrée est supprimée.",
+                "deleteAction": "Désactiver la récupération",
+                "testTitle": "Vérifier votre mot de passe",
+                "testDescription": "Vérifiez que vous vous souvenez de votre mot de passe de récupération. Il ne quitte jamais cet appareil.",
+                "testPlaceholder": "Saisissez votre mot de passe",
+                "testButton": "Tester le mot de passe",
+                "testValid": "Le mot de passe est correct.",
+                "testInvalid": "Ce mot de passe ne correspond pas à votre sauvegarde."
+            },
+            "refresh": {
+                "replaceNote": "Ceci remplace votre clé de récupération et votre mot de passe actuels. Votre ancienne sauvegarde cesse de fonctionner dès que vous autorisez le changement.",
+                "signDescription": "Confirmez pour remplacer votre clé de récupération sur la blockchain. Votre clé précédente cesse immédiatement de fonctionner.",
+                "successTitle": "Clé de récupération remplacée",
+                "successDescription": "Votre nouvelle clé de récupération est active et votre sauvegarde précédente a été remplacée."
+            },
+            "dates": {
+                "password": {
+                    "title": "Confirmez votre mot de passe",
+                    "description": "Saisissez votre mot de passe de récupération pour conserver votre clé actuelle. Il ne quitte jamais cet appareil.",
+                    "placeholder": "Saisissez votre mot de passe",
+                    "continue": "Continuer",
+                    "invalid": "Ce mot de passe ne correspond pas à votre sauvegarde. Si vous l'avez perdu, créez plutôt une nouvelle clé de récupération.",
+                    "replaceAction": "Créer une nouvelle clé de récupération"
+                },
+                "dates": {
+                    "title": "Mettre à jour les dates de validité",
+                    "description": "Choisissez quand votre récupération peut être utilisée. Votre clé de récupération reste la même.",
+                    "continue": "Continuer"
+                },
+                "confirm": {
+                    "title": "Confirmez les nouvelles dates",
+                    "description": "Confirmez pour mettre à jour la validité de votre récupération sur la blockchain. Votre clé de récupération reste la même.",
+                    "keyLabel": "Clé de récupération",
+                    "keyUnchanged": "Inchangée",
+                    "authorise": "Mettre à jour les dates",
+                    "retry": "Réessayer",
+                    "failedDescription": "Une erreur est survenue lors de la mise à jour de votre récupération. Vous pouvez réessayer.",
+                    "failed": "Échec de la mise à jour de la récupération.",
+                    "cancelledDescription": "Vous avez annulé l'autorisation. Vous pouvez réessayer quand vous le souhaitez.",
+                    "cancelled": "L'autorisation a été annulée."
+                },
+                "success": {
+                    "title": "Validité mise à jour",
+                    "description": "Les dates de validité de votre récupération sont désormais mises à jour sur la blockchain.",
+                    "done": "Retour à mon profil"
+                }
+            },
+            "delete": {
+                "password": {
+                    "title": "Confirmez votre mot de passe",
+                    "description": "Saisissez votre mot de passe de récupération pour confirmer la suppression de la récupération. Il ne quitte jamais cet appareil.",
+                    "placeholder": "Saisissez votre mot de passe",
+                    "continue": "Continuer",
+                    "invalid": "Ce mot de passe ne correspond pas à votre sauvegarde. Saisissez le bon mot de passe pour supprimer la récupération."
+                },
+                "confirm": {
+                    "title": "Supprimer la récupération",
+                    "description": "Ceci désactive votre clé de récupération sur la blockchain et supprime votre sauvegarde chiffrée. Cette action est irréversible — vous devrez reconfigurer la récupération entièrement.",
+                    "warning": "Une fois supprimées, votre clé de récupération et votre sauvegarde actuelles cessent définitivement de fonctionner. Vous pouvez configurer une nouvelle récupération à tout moment.",
+                    "authorise": "Supprimer la récupération",
+                    "retry": "Réessayer",
+                    "failedDescription": "Une erreur est survenue lors de la suppression de votre récupération. Vous pouvez réessayer.",
+                    "failed": "Échec de la suppression de la récupération.",
+                    "cancelledDescription": "Vous avez annulé l'autorisation. Vous pouvez réessayer quand vous le souhaitez.",
+                    "cancelled": "L'autorisation a été annulée."
+                },
+                "success": {
+                    "title": "Récupération supprimée",
+                    "description": "Votre clé de récupération a été désactivée sur la blockchain et votre sauvegarde chiffrée a été supprimée.",
+                    "done": "Retour à mon profil"
+                }
+            }
         },
         "register": {
             "button": {

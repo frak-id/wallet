@@ -20,12 +20,22 @@ type CodeInputProps = {
     mode?: CodeInputMode;
     /** Pre-filled value — when set the inputs become read-only display boxes */
     value?: string;
+    /**
+     * Seeds the editable inputs with an initial code (e.g. a magic-link code)
+     * while keeping them editable. Ignored when `value` is set.
+     */
+    defaultValue?: string;
     /** Called whenever the code value changes */
     onChange?: (code: string) => void;
     /** Accessible label for each input cell (receives 1-based index) */
     digitLabel?: (index: number) => string;
     /** If provided, renders a clipboard paste button with this label */
     pasteLabel?: string;
+    /**
+     * Message shown when the clipboard read fails (denied / unavailable) —
+     * without it the paste button fails silently.
+     */
+    pasteErrorLabel?: string;
     /** Error message — renders red borders + message below inputs */
     error?: string;
     /** When true, cells flex-grow to fill the row width (instead of fixed 41px) */
@@ -42,9 +52,11 @@ export function CodeInput({
     length = 6,
     mode = "numeric",
     value,
+    defaultValue,
     onChange,
     digitLabel,
     pasteLabel,
+    pasteErrorLabel,
     error,
     fill,
 }: CodeInputProps) {
@@ -52,8 +64,9 @@ export function CodeInput({
     const [digits, setDigits] = useState<string[]>(() =>
         readOnly
             ? Array.from({ length }, (_, i) => value[i] ?? "")
-            : Array.from({ length }, () => "")
+            : Array.from({ length }, (_, i) => defaultValue?.[i] ?? "")
     );
+    const [clipboardFailed, setClipboardFailed] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
@@ -108,6 +121,7 @@ export function CodeInput({
         (index: number, e: ChangeEvent<HTMLInputElement>) => {
             const value = sanitize(e.target.value);
             if (!value) return;
+            setClipboardFailed(false);
 
             // Multi-character input (paste, autofill) → distribute across inputs
             if (value.length > 1) {
@@ -141,6 +155,7 @@ export function CodeInput({
     const handlePaste = useCallback(
         (e: ClipboardEvent<HTMLInputElement>) => {
             e.preventDefault();
+            setClipboardFailed(false);
             fillDigits(e.clipboardData.getData("text"));
         },
         [fillDigits]
@@ -157,9 +172,12 @@ export function CodeInput({
             } else {
                 text = await navigator.clipboard.readText();
             }
+            setClipboardFailed(false);
             fillDigits(text);
         } catch {
-            // Clipboard API unavailable or denied — focus first input for manual paste
+            // Clipboard API unavailable or denied — surface a hint and focus
+            // the first input so the user can paste/type manually.
+            setClipboardFailed(true);
             inputRefs.current[0]?.focus();
         }
     }, [fillDigits]);
@@ -223,6 +241,9 @@ export function CodeInput({
                 >
                     {pasteLabel}
                 </Button>
+            )}
+            {clipboardFailed && pasteErrorLabel && (
+                <p className={styles.errorMessage}>{pasteErrorLabel}</p>
             )}
         </>
     );

@@ -6,9 +6,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import type { LoserConsentMutation, MergeStrategy } from "../../strategy/types";
 import { RemotePairingPanel } from "../RemotePairingPanel";
 import * as styles from "../stepLayout.css";
@@ -104,9 +102,11 @@ export function ConsentStep({
     }
 
     return (
-        <PageLayout
-            back={<Back onClick={onBack} />}
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={t("wallet.merge.consent.title")}
+            description={t("wallet.merge.consent.description")}
+            onBack={onBack}
+            stepIndicator={stepIndicator}
             footer={
                 <Box className={styles.footer}>
                     <Button
@@ -125,34 +125,25 @@ export function ConsentStep({
                 </Box>
             }
         >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">{t("wallet.merge.consent.title")}</Title>
-                    <Text variant="body" color="secondary">
-                        {t("wallet.merge.consent.description")}
+            <Card variant="muted" padding="default">
+                <Stack space="xs">
+                    <Text variant="bodySmall" weight="semiBold">
+                        {t("wallet.merge.consent.help.title")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("wallet.merge.consent.help.description")}
                     </Text>
                 </Stack>
+            </Card>
 
+            {consent.isError && (
                 <Card variant="muted" padding="default">
-                    <Stack space="xs">
-                        <Text variant="bodySmall" weight="semiBold">
-                            {t("wallet.merge.consent.help.title")}
-                        </Text>
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.consent.help.description")}
-                        </Text>
-                    </Stack>
+                    <Text variant="bodySmall" color="error">
+                        {t("wallet.merge.consent.error")}
+                    </Text>
                 </Card>
-
-                {consent.isError && (
-                    <Card variant="muted" padding="default">
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.merge.consent.error")}
-                        </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+            )}
+        </FlowStepScreen>
     );
 }
 

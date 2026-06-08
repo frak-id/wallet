@@ -17,6 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { historyKey } from "@/module/history/queryKeys/history";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
+import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 import { MergeError } from "../errors";
 import { walletMergeKey } from "../queryKeys/walletMerge";
@@ -150,6 +151,7 @@ export function useMergeSettle() {
             client.removeQueries({ queryKey: rewardsKey.all });
             client.removeQueries({ queryKey: pairingKey.list.all });
             client.removeQueries({ queryKey: recoverySetupKey.all });
+            client.removeQueries({ queryKey: recoveryKey.all });
             client.removeQueries({ queryKey: historyKey.all });
         },
     });

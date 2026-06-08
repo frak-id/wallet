@@ -1,1178 +1,1407 @@
-interface Resources {
-    customized: {
-        sdk: {
-            modal: {
-                dismiss: {
-                    primaryAction: "Continue browsing";
-                    primaryAction_sharing: "Share without being paid";
-                };
-                final: {
-                    description: "You've successfully completed all the steps.";
-                    description_reward: "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!";
-                    description_sharing: "Your wallet has been created to receive your **{{productName}}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).";
-                    dismissed: {
-                        description: "All good";
-                        description_sharing: "Share this article.";
-                    };
-                    title: "Success";
-                    title_reward: "Gains";
-                    title_sharing: "Share";
-                };
-                login: {
-                    description: "Login to your Frak account to get the best experience on **{{productName}}**";
-                    description_reward: "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.";
-                    description_sharing: "{{productName}} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.";
-                    primaryAction: "I create my wallet under 30sec";
-                    secondaryAction: "Use a QR code to connect";
-                    success: "Connection successful";
-                    title: "Connection";
-                };
-                sendTransaction: {
-                    description: "To complete, authorize this transaction in your wallet. This ensures secure processing.";
-                    primaryAction_one: "Send transaction";
-                    primaryAction_other: "Send transactions";
-                    title: "Transaction";
-                };
-                siweAuthenticate: {
-                    description: "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.";
-                    primaryAction: "Authenticate";
-                    title: "Authentication";
-                };
-            };
-            sharingPage: {
-                card: {
-                    amount: "{{estimatedReward}}";
-                    label: "Credited to your account";
-                    tagline1: "Earn {{estimatedReward}},";
-                    tagline2: "on every purchase!";
-                };
-                confirmation: {
-                    benefits: {
-                        cashout: {
-                            description: "Transfer your earnings directly to your bank account in 3 clicks.";
-                            title: "Cash out whenever you want";
-                        };
-                        notify: {
-                            description: "Receive a notification when a purchase is made thanks to you.";
-                            title: "Get notified as soon as you earn";
-                        };
-                        wallet: {
-                            description: "No email, no password, no form. Simple, fast and secure.";
-                            title: "Your wallet secured in 10 seconds";
-                        };
-                    };
-                    cardPopupDescription: "A purchase was made through your link. {{estimatedReward}} has been transferred to your wallet.";
-                    cardPopupTitle: "You just won {{estimatedReward}}! 🎉";
-                    cta: "Collect my {{estimatedReward}}";
-                    shareAgain: "Share again";
-                    subtitle: "Install the Frak app, official partner of {{productName}}, and track your earnings in real time.";
-                    title: "Thank you for sharing!\nDon't miss out on your {{estimatedReward}}.";
-                };
-                dismiss: "Later";
-                faq: {
-                    a1: "Anyone can become an ambassador by sharing products through their unique link.";
-                    a2: "Your earnings depend on the brand's reward program and the number of purchases made through your link.";
-                    a3: "Your earnings are credited as soon as a purchase is confirmed through your sharing link.";
-                    a4: "Yes, everyone can create their own sharing link and become an ambassador too.";
-                    a5: "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.";
-                    q1: 'Who can become an "ambassador"?';
-                    q2: "How much can I earn?";
-                    q3: "When do I get paid?";
-                    q4: 'Can my friends also become "ambassadors"?';
-                    q5: "Why do brands use Frak?";
-                    title: "Frequently asked questions";
-                };
-                legal: {
-                    help: "Help";
-                    privacy: "Privacy notice";
-                    terms: "Terms & conditions";
-                };
-                reward: {
-                    tagline: "You earn a reward every time a friend makes a purchase through your link.";
-                    title: "Share with your friends";
-                };
-                steps: {
-                    "1": "Share in 1 click. A personal link is automatically generated with each share.";
-                    "2": "Earn on every purchase. Every order placed through your link earns you cash.";
-                    "3": "Collect your earnings in the app. Install FRAK to collect your earnings.";
-                    title: "";
-                };
-            };
-            wallet: {
-                loggedIn: {
-                    onboarding: {
-                        share: "🚀 Let's go! Share this product and receive your rewards directly.";
-                        share_referred: "🚀 Share your turn to win more!";
-                        welcome: "🥳 Congratulations! Your wallet is created.";
-                    };
-                };
-                login: {
-                    primaryAction: "I create my wallet";
-                    text: "Create your wallet and receive up to **{{estimatedReward}}** per referred friend";
-                    text_referred: "Welcome! Receive up to **{{estimatedReward}}** in case of purchase on the site.\n\nCreate your wallet in 1 click";
-                };
-            };
-        };
-    };
-    translation: {
-        authent: {
-            create: {
-                alreadyRegistered: "You already have a registered wallet. Click the login button below to log in.";
-                error: "Error during registration, please try again";
-                inProgress: "Wallet creation in progress";
-            };
-            sso: {
-                btn: {
-                    backToSession: "Back to my wallet";
-                    continue: "Continue with my wallet";
-                    existing: {
-                        create: "Create a new wallet";
-                        login: "Use biometrics";
-                    };
-                    "new": {
-                        create: "Use biometrics";
-                        login: "Already have an existing wallet?";
-                        phone: "Use a QR code to connect";
-                    };
-                    useAnother: "Use another account";
-                };
-                continueDescription: "You'll sign in to <strong>{{productName}}</strong> as <strong>{{address}}</strong>.";
-                description: "Frak does not store any personal or biometric data. By continuing you accept our <conditionsLink>terms</conditionsLink> and our <privacyLink>privacy policy</privacyLink>.";
-                header: {
-                    title: "Login with Frak Wallet";
-                };
-                pairing: {
-                    description: "Scan this QR code to sign in from your mobile.";
-                    title: "Sign in with my mobile";
-                };
-                previousWallet: "Your wallet: <strong>{{wallet}}</strong>";
-                recover: "Recover wallet from file";
-                redirect: "You will be redirected to {{productName}} in a few seconds.";
-                redirectNow: "Redirect now";
-                subTitle: "to immediately receive your winnings from <pLink>{{productName}}</pLink>.";
-                title: "Create your wallet";
-                title_existing: "Connect to your wallet";
-                title_new: "Create your wallet";
-            };
-        };
-        biometrics: {
-            confirmAction: "Confirm with {{type}}";
-            error: "Authentication failed. Please try again.";
-            locked: "Wallet Locked";
-            settings: {
-                description: "Require biometric authentication to access your wallet";
-                enable: "Enable biometric lock";
-                notAvailable: "Biometrics not available on this device";
-                timeout: "Lock after";
-                timeout15min: "15 minutes";
-                timeout1min: "1 minute";
-                timeout5min: "5 minutes";
-                timeoutImmediate: "Immediately";
-                title: "Biometric Lock";
-            };
-            unlock: "Unlock";
-            unlockReason: "Authenticate to access your wallet";
-            unlockWith: "Use {{type}} to unlock";
-        };
-        common: {
-            accountId: "Wallet";
-            added: "added";
-            amountRequired: "Amount is required";
-            at: "at";
-            authenticator: "Authenticator";
-            back: "Back";
-            "back-to-wallet": "Back to Wallet";
-            balance: "Balance";
-            claim: "Claim";
-            claimed: "claimed";
-            clear: "Clear";
-            close: "Close";
-            copied: "Copied!";
-            copyAddress: "Copy address";
-            enterAddress: "Enter address";
-            interactions: "Interactions";
-            logout: "Logout";
-            notifications: "Notifications";
-            or: "or";
-            pending: "pending";
-            refresh: "Refresh";
-            rewards: "Rewards";
-            send: "Send";
-            share: "Share";
-            submit: "Submit";
-            to: "To";
-            today: "Today";
-            transactionHash: "Transaction Hash:";
-            transactionLink: "Transaction Link";
-            transactionSuccess: "Transaction Success!";
-            wallet: "Wallet:";
-            walletAddress: "Wallet address:";
-            walletAddressRequired: "Wallet address is required";
-            walletInvalid: "Invalid wallet address";
-            yesterday: "Yesterday";
-        };
-        error: {
-            webauthn: {
-                alreadyRegistered: {
-                    message: "This device already has a passkey for your account. Try logging in instead.";
-                    title: "Already have a passkey";
-                };
-                dismiss: "Dismiss";
-                generic: {
-                    message: "An error occurred. Please try again.";
-                    title: "Something went wrong";
-                };
-                login: "Log in";
-                noCredential: {
-                    message: "No passkey was found on this device. Create one, or sign in on the device where you registered.";
-                    title: "No passkey found";
-                };
-                noScreenLock: {
-                    message: "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again.";
-                    title: "Screen lock required";
-                };
-                notAllowed: {
-                    message: "The passkey prompt was closed or timed out before the operation completed.";
-                    title: "Authentication cancelled";
-                };
-                retry: "Try again";
-                syncFailed: {
-                    message: "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.";
-                    step1: "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.";
-                    step2: "Update Google Play Services, then restart your phone and try again.";
-                    step3: "Still stuck? Sign in on another device, or recover your wallet from the settings.";
-                    title: "Passkey sync issue";
-                };
-                unsupported: {
-                    message: "Passkeys can't be used on this device right now. Make sure your passkey provider is set up, or try another device.";
-                    title: "Passkeys unavailable";
-                };
-                userOperationExecution: {
-                    message: "An error occurred while executing the transaction. Please try again.";
-                    title: "Transaction failed";
-                };
-            };
-        };
-        explorer: {
-            card: {
-                until: "Until {{date}}";
-            };
-            detail: {
-                close: "Close";
-                earningsAvailability: "Earnings availability";
-                endDateBadge: "Ends {{date}} ({{days}}d)";
-                endsIn: "Ends in {{count}} day";
-                endsIn_other: "Ends in {{count}} days";
-                immediate: "Immediate";
-                instructions: "Instructions";
-                legal: "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.";
-                pendingDays: "{{count}} day";
-                pendingDays_other: "{{count}} days";
-                readMore: "Read more";
-                refereeReward: "Reward as referee";
-                referrerReward: "Reward as referrer";
-                rewardPerReferral: "{{amount}} per referral";
-                share: "Share";
-                shareAndEarn: "Share and earn";
-                step1Description: "A personal link is automatically generated with each share.";
-                step1Title: "Share a product with your friends";
-                step2Description: "Every order made through your link on {{name}} earns you cash directly in your wallet.";
-                step2Title: "Earn {{amount}} for every purchase you help generate";
-                step3Description: "In one click, transfer your earnings to your bank account.";
-                step3Title: "Collect your earnings in your wallet";
-            };
-            empty: {
-                description: "New offers are coming soon. Check back later!";
-                title: "No offers available";
-            };
-            pageTitle: "Explorer";
-        };
-        installCode: {
-            codeCopied: "Code copied!";
-            copyCode: "Copy the code";
-            description: "Paste it when opening the app. It will let you claim your rewards once logged in.";
-            download: "Download the app";
-            error: "Failed to generate code. Please refresh.";
-            infoDescription: 'When opening the app, tap <1>"I have a recovery code"</1>.';
-            infoTitle: "Code valid for 3 days";
-            loading: "Generating your code...";
-            processing: "Setting up your wallet...";
-            title: "Don't lose your {{estimatedReward}}!\nCopy this code";
-        };
-        "mobile-sso": {
-            appNotFound: "Frak Wallet app not found";
-            connecting: "Connecting...";
-            continueInBrowser: "Continue in browser";
-            openWallet: "Open in Frak Wallet";
-            retry: "Connection timed out. Retry?";
-            waiting: "Waiting for wallet app...";
-        };
-        "mobile-tx": {
-            appNotFound: "Frak Wallet app not found";
-            appNotFoundHint: "Please reinstall the app or try again";
-            explanation: "Approve this transaction in your wallet app";
-            openWallet: "Open wallet to approve";
-            reopenWallet: "Re-open wallet";
-            retry: "Retry";
-            sendTransaction: "Send transaction";
-            timeout: "Approval timed out. Try again?";
-            waiting: "Waiting for approval...";
-        };
-        monerium: {
-            account: "Monerium Account";
-            badge: {
-                approved: "Bank connected:";
-                notLinked: "IBAN not linked to this wallet";
-                pending: "Bank verification in progress...";
-                rejected: "Verification failed";
-            };
-            bankFlow: {
-                info: {
-                    cta: "Accept and continue";
-                    description: "To transfer your earnings to your bank account, you need to complete your secure payment account setup.";
-                    feature1Description: "To secure your account and verify that you are the rightful owner of the earnings.";
-                    feature1Title: "Verify your identity";
-                    feature2Description: "To receive your earnings directly into your bank account.";
-                    feature2Title: "Add your IBAN";
-                    feature3Description: "Your transactions are protected and comply with current security standards.";
-                    feature3Title: "Secure your transfers";
-                    redirectNotice: "You will be redirected to our financial partner, Monerium, to:";
-                    title: "Complete your account to claim your earnings.";
-                };
-                kyc: {
-                    cta: "Verify my identity";
-                    description: "To transfer your earnings, you need to verify your identity.";
-                    featureDescription: "To secure your account and confirm that you are the rightful owner of the earnings, we use a financial partner, Monerium.";
-                    featureTitle: "Verify your identity";
-                    notice: "This step is quick and secure.";
-                    title: "Complete your identity verification";
-                };
-                link: {
-                    cta: "Link my account";
-                    description: "Your wallet is not yet connected to your Monerium account, connect it to transfer your earnings.";
-                    featureDescription: "To fully use your wallet, we need to link your account.";
-                    featureTitle: "Link your Monerium account to your wallet";
-                    title: "Link your wallet";
-                };
-                success: {
-                    cta: "Transfer my earnings";
-                    description: "Your account is ready. You can now transfer your earnings to your bank account with ease.";
-                    title: "You can now transfer your earnings 🎉";
-                };
-                transfer: {
-                    amount: {
-                        aboveMax: "Transfers of {{max}}€ or more require additional documentation.";
-                        continue: "Continue";
-                        ibanEmpty: "No IBAN saved";
-                        ibanLabel: "IBAN";
-                        insufficientBalance: "Insufficient balance";
-                        modify: "Edit";
-                        title: "Amount to transfer";
-                        totalBalance: "Total balance";
-                        walletLabel: "Frak Wallet";
-                    };
-                    ibanManager: {
-                        addNew: "Add an IBAN";
-                        empty: "No IBAN saved. Add one to get started.";
-                        firstNameLabel: "First name";
-                        firstNamePlaceholder: "e.g. John";
-                        ibanLabel: "IBAN";
-                        ibanPlaceholder: "FR76...";
-                        lastNameLabel: "Last name";
-                        lastNamePlaceholder: "e.g. Doe";
-                        pseudoLabel: "Pseudo / note";
-                        pseudoPlaceholder: "Defaults to first + last name";
-                        remove: "Remove";
-                        save: "Save";
-                        select: "Select";
-                        title: "Manage my IBANs";
-                    };
-                    recap: {
-                        addNote: "Add a note";
-                        amountLabel: "Amount";
-                        beneficiaryLabel: "Beneficiary";
-                        cancel: "Cancel";
-                        confirm: "Confirm transfer";
-                        title: "Summary";
-                        warning: "Once confirmed, this operation cannot be cancelled";
-                    };
-                    success: {
-                        description: "You will receive your payout within 10 seconds.";
-                        title: "Your transfer request of {{amount}} € has been received";
-                    };
-                };
-            };
-            callback: {
-                cancelledDescription: "You can reconnect to Monerium whenever you're ready.";
-                cancelledTitle: "Connection cancelled";
-                csrfDescription: "We couldn't verify the connection request. Please retry from the start.";
-                csrfTitle: "Security check failed";
-                errorDescription: "Something went wrong while connecting to Monerium. Please try again in a moment.";
-                errorTitle: "Connection failed";
-                tryAgain: "Try again";
-            };
-            completeSetup: "Complete setup";
-            connect: "Connect";
-            connecting: "Connecting...";
-            disconnect: "Disconnect";
-            linkWallet: "Link wallet";
-            offramp: {
-                amountInvalid: "Amount must be greater than 0";
-                amountLabel: "Amount (EURe)";
-                amountRequired: "Amount is required";
-                balance: "Balance:";
-                confirmBiometric: "Confirm with biometric...";
-                destinationIban: "Destination IBAN";
-                ibanWarning: "Warning: This IBAN is not linked to your current wallet address.";
-                max: "MAX";
-                noIban: "No IBAN linked. Please complete Monerium verification first.";
-                submit: "Withdraw to bank";
-                submitting: "Submitting order...";
-                success: "Order submitted! Funds will arrive in 1-2 business days.";
-                tryAgain: "Try again";
-            };
-            order: {
-                detail: {
-                    bank: "Bank";
-                    from: "From";
-                    noNote: "Sent with no note";
-                    to: "To";
-                    transaction: "Transaction";
-                    walletName: "Frak Labs";
-                };
-                kind: {
-                    issue: "IBAN **** -> Frak Labs";
-                    redeem: "Frak Labs -> IBAN ****";
-                };
-                state: {
-                    pending: "Processing";
-                    placed: "Order placed";
-                    processed: "Completed";
-                    rejected: "Rejected";
-                };
-            };
-            status: {
-                approved: "Verified ✓";
-                created: "Account created, complete verification on Monerium";
-                pending: "Verification in progress";
-                rejected: "Verification failed";
-                settingUp: "Setting up...";
-            };
-        };
-        onboarding: {
-            activateSecureSpace: "Activate my secure space";
-            alreadyHaveAccount: "Already have an account?";
-            continue: "Continue";
-            email: {
-                alreadyUsed: {
-                    description: "{{email}} is already linked to an account. Log in to continue with that wallet, or use a different email.";
-                    login: "Login";
-                    title: "Email already used";
-                    useDifferent: "Use a different email";
-                };
-                checkError: "Unable to verify this email right now. Please try again.";
-                clearAriaLabel: "Clear email address";
-                continue: "Continue";
-                description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
-                label: "Email";
-                placeholder: "your.email@gmail.com";
-                title: "Enter your email address";
-            };
-            keypass: {
-                description: "A secure key is saved in your password manager to quickly log in via biometrics.";
-                existingAccount: {
-                    button: "Log in";
-                    description: "You already have an account. Log in with your passkey to access your wallet.";
-                    title: "Welcome back!";
-                };
-                title: "Secure your account";
-                unsupported: {
-                    button: "Log in another way";
-                    description: "Your browser does not support biometric authentication. Log in another way to access your wallet.";
-                    title: "Browser not compatible";
-                };
-            };
-            notification: {
-                description: "Get notified as soon as money is credited to your wallet.";
-                descriptionHighlight: "Track your rewards in real time.";
-                enable: "Yes, notify me";
-                skip: "Later";
-                title: "Don't miss any reward!";
-            };
-            recoveryCode: "I have a recovery code";
-            referral: {
-                appliedToast: "Referral code applied";
-                description: "Got a creator code? Enter it here. Otherwise, you can skip this step.";
-                label: "Referral code";
-                placeholder: "Ex: LOLA10";
-                skip: "Skip";
-                submitCta: "Apply code";
-                title: "Add a referral code";
-            };
-            start: "Get started";
-            steps: {
-                one: {
-                    description: "Share your favorites and earn money for every purchase you help generate.";
-                    title: "Earn money by recommending";
-                };
-                three: {
-                    description: "No forms, no paperwork. Your wallet is ready to receive your earnings, instantly.";
-                    title: "Activate your secure space in 10 sec";
-                };
-                two: {
-                    description: "Track your earnings and transfer them to your bank account whenever you want.";
-                    title: "Your earnings in real time";
-                };
-            };
-            welcome: {
-                button: "Get started";
-                description: "Let's go! Explore our partner brands, recommend your favorites and turn your influence into earnings.";
-                descriptionHighlight: "Your earnings are secure and accessible at any time.";
-                legal: "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>";
-                title: "Welcome to your wallet";
-            };
-        };
-        recoveryCode: {
-            description: "Paste the code copied from wallet.frak.id to recover your earnings.";
-            digitLabel: "Character";
-            error: {
-                alreadyLinked: "This code has already been used.";
-                generic: "Something went wrong, please try again.";
-                invalid: "Incorrect or expired code, check the code copied from wallet.frak.id";
-            };
-            paste: "Paste the code";
-            success: {
-                description: "You'll receive a notification as soon as a friend purchases via your link.";
-                merchantInfo: "Connected to {{merchantName}}";
-                title: "Your referral link has been found!";
-            };
-            title: "Recover your code";
-            validate: "Validate the code";
-        };
-        reward: {
-            detail: {
-                creditedOn: "Credited on";
-                description: "Reward detail";
-                estimatedValidation: "Estimated validation";
-                generatedDate: "Purchase generated on";
-                generatedOn: "Generated on {{date}} · {{time}}";
-                pendingDisclaimer: "This reward will be available once the purchase is confirmed by the brand.";
-                pendingValidation: "Pending brand validation";
-                purchaseDate: "Purchase date";
-                purchaseMadeOn: "Purchase made on {{date}} at {{time}}";
-                rewardGenerated: "Reward generated";
-                title: "Reward detail";
-                toCollect: "To collect";
-                updatedAt: "Updated on {{date}} · {{time}}";
-            };
-            history: {
-                discover: "Discover offers";
-                emptyDescription: "Explore offers and recommend your favorite products to friends to earn money.";
-                emptyTitle: "Ready to earn money?";
-                seeAll: "See all";
-                stats: {
-                    totalEarnings: "Total earnings";
-                    totalPurchases: "Purchases generated";
-                    totalShares: "Total shares";
-                };
-                title: "Earnings history";
-                viewAll: "View all";
-            };
-            status: {
-                cancelled: "Cancelled";
-                consumed: "Consumed";
-                expired: "Expired";
-                pending: "Awaiting validation by the brand";
-                processing: "Processing";
-                settled: "To collect";
-            };
-            trigger: {
-                create_referral_link: "Shared Link";
-                custom: "Custom";
-                purchase: "Purchase";
-                referral: "Referral";
-                unknown: "Reward";
-            };
-        };
-        sharing: {
-            btn: {
-                copy: "Copy link";
-                copySuccess: "Link copied!";
-                share: "Share";
-                shareSuccess: "Link shared!";
-            };
-            text: "Discover this amazing product!";
-            title: "{{productName}} invite link";
-        };
-        version: {
-            hardUpdate: {
-                cta: "Update now";
-                description: "Your version ({{currentVersion}}) is no longer supported. Update to {{minVersion}} or higher to continue using Frak Wallet.";
-                fallback: "Couldn't open the store automatically. Please update Frak Wallet manually from your device's app store.";
-                retry: "Try again";
-                title: "Update required";
-            };
-            softUpdate: {
-                available: {
-                    cta: "Update";
-                    description: "Update Frak Wallet to get the latest features and improvements.";
-                    title: "A new version is available";
-                };
-                dismiss: "Later";
-                downloaded: {
-                    cta: "Restart now";
-                    title: "Update ready to install.";
-                };
-                inProgress: {
-                    title: "Downloading update…";
-                };
-            };
-        };
-        wallet: {
-            activateNotifications: "Turn on notifs to track your earnings in real time.";
-            addEmail: {
-                card: {
-                    description: "Add your email to be able to recover your wallet later.";
-                    title: "Add your email";
-                };
-                clearAriaLabel: "Clear email address";
-                conflict: {
-                    back: "Back to my profile";
-                    combine: "Combine my accounts";
-                    description: "This email is already linked to another wallet. Use a different email or come back later.";
-                    descriptionMergeable: "This email is already on another of your accounts. You can combine them into one — we'll guide you through, whether the other account is on this device or another one.";
-                    title: "Email already in use";
-                    useDifferent: "Use a different email";
-                };
-                continue: "Continue";
-                description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
-                label: "Email";
-                placeholder: "your.email@gmail.com";
-                submitError: "Unable to save this email right now. Please try again.";
-                success: {
-                    back: "Back to my profile";
-                    description: "{{email}} is now linked to your wallet. Set up recovery next so you can recover it if you ever lose access.";
-                    setupRecovery: "Set up recovery";
-                    title: "Email saved";
-                };
-                title: "Add your email";
-            };
-            inAppBrowser: {
-                clickToOpen: "Tap to open in your browser.";
-                clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
-                clipboardManualAlert: "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
-                cta: "Open browser";
-                description: "For a better experience, open this page in your default browser.";
-                dismiss: "Dismiss inapp browser warning";
-                title: "Open in your browser";
-                warning: "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.";
-            };
-            installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
-            invite: {
-                text: "Earn $5 for each friend you invite. T&C apply";
-                title: "Invite friends, earn $5";
-            };
-            login: {
-                accountCreation: "Account creation";
-                anotherAccount: "Connect another account";
-                button: "Use biometrics";
-                privy: "Connect via Privy";
-                recover: "Recover wallet from file";
-                title: "Log in to your wallet";
-                useMyAccount: "Continue with my account";
-                useQRCode: "Use QR code to connect";
-            };
-            manageNotifications: "<strong>Manage notifications</strong> <br /> Open settings to control your notifications";
-            merge: {
-                consent: {
-                    description: "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.";
-                    error: "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again.";
-                    help: {
-                        description: "Your device will ask you to confirm with face, fingerprint or PIN — same as when you log in. We never see your biometrics.";
-                        title: "What happens here";
-                    };
-                    remote: {
-                        description: "Scan this QR code with the device that holds your other passkey and approve the prompt there. We'll continue automatically.";
-                        error: "We couldn't reach your other device. Try again, or pick a different email.";
-                        preparing: "Preparing a secure connection…";
-                        title: "Confirm on your other device";
-                    };
-                    retry: "Try again";
-                    title: "Confirm with your other passkey";
-                    verify: "Confirm";
-                };
-                discovery: {
-                    description: "Pick how you want to confirm — on this device, or on the device that holds your other passkey.";
-                    localError: "We couldn't find the other passkey on this device. Try scanning the code with your other device instead.";
-                    localHint: {
-                        body: "Tap above to confirm with the passkey of your other account here. Works automatically if you use iCloud Keychain across your devices.";
-                        title: "Both passkeys on this device?";
-                    };
-                    preparing: "Preparing a secure connection…";
-                    scanHint: "Scan this code with the device that has your other account.";
-                    title: "Combine your accounts";
-                    useThisDevice: "Use this device";
-                };
-                migrate: {
-                    cancel: "Cancel";
-                    description: "Sending everything to your primary account before we finalise the combine. This takes a few seconds.";
-                    error: "The transfer didn't go through. Tap retry — we'll re-check your balances and try again.";
-                    errorDescription: "Something interrupted the transfer. Your accounts are safe — tap retry to try again with the latest balances.";
-                    errorTitle: "We couldn't move your funds";
-                    holdings: {
-                        title: "Funds to move";
-                    };
-                    loading: "Loading your balances — one second.";
-                    loadingDescription: "We need to know what's on your other account before we move it.";
-                    loadingTitle: "Checking your balances…";
-                    pending: "Sending the transfer on-chain — hang tight.";
-                    readyDescription: "Tap below to transfer everything from your other account to your primary account in one go.";
-                    readyTitle: "Move your funds";
-                    retry: "Retry";
-                    start: "Move my funds";
-                    summaryError: "Loading your balances failed. Tap retry to try again.";
-                    summaryErrorDescription: "Tap retry — we need this before we can move your funds.";
-                    summaryErrorTitle: "We couldn't load your balances";
-                    summaryRetry: "Retry";
-                    title: "Moving your funds…";
-                };
-                peerWaiting: {
-                    description: "We sent the request to your paired device — confirm it there and we'll continue automatically.";
-                    title: "Approve on your other device";
-                };
-                preview: {
-                    cancel: "Cancel";
-                    combineArrow: "↓ combine into ↓";
-                    continue: "Continue";
-                    description: "We found another account of yours using {{email}}. Here's what will move when you combine them — no changes happen until you confirm.";
-                    errorDescription: "Something went wrong while preparing the combine. Please try again.";
-                    errorRetry: "Try again";
-                    errorTitle: "We couldn't load your accounts";
-                    funds: {
-                        description: "We'll transfer these from your other account to your primary account before combining.";
-                        title: "Funds to move";
-                    };
-                    gains: {
-                        description: "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events — all on one account.";
-                        title: "What you'll get";
-                    };
-                    labels: {
-                        otherAccount: "Your other account";
-                        thisAccount: "This account";
-                    };
-                    loadingDescription: "We're double-checking both accounts before we show you what will move.";
-                    loadingTitle: "Getting things ready…";
-                    stats: {
-                        assets: "Rewards";
-                        interactions: "Interactions";
-                        referrals: "Referrals";
-                    };
-                    title: "Combine your accounts";
-                    winnerBadge: "Stays as primary";
-                };
-                settling: {
-                    cancel: "Cancel";
-                    description: "We're putting everything together. This usually takes a few seconds.";
-                    error: "The combine couldn't finish. Tap retry — we'll pick up where we left off.";
-                    errorDescription: "Something slipped on our side after you authorised. Tap retry — your accounts are safe.";
-                    errorTitle: "Almost there";
-                    progress: {
-                        body: "Linking your accounts, transferring referrals and rewards. Hang tight.";
-                        title: "Working on it…";
-                    };
-                    recover: {
-                        invalidConsent: {
-                            body: "Too much time passed since you confirmed with your other passkey. Reconfirm to continue — your accounts are safe.";
-                            cta: "Reconfirm";
-                            title: "Confirmation expired";
-                        };
-                        migrateReverted: {
-                            body: "The transfer didn't land on-chain. Run it again to finish — your accounts are safe.";
-                            cta: "Move funds again";
-                            title: "Funds didn't move";
-                        };
-                        onChainMismatch: {
-                            body: "Your accounts moved while we were combining them. Let's start over from the preview — nothing is lost.";
-                            cta: "Start over";
-                            title: "Something looks different";
-                        };
-                    };
-                    retry: "Retry";
-                    title: "Combining your accounts…";
-                };
-                sign: {
-                    authorise: "Authorise";
-                    cancel: "Cancel";
-                    description: "One last confirmation to bring your two accounts together.";
-                    error: "The combine couldn't be authorised. Tap try again — your accounts are safe.";
-                    errorDescription: "Something interrupted the combine. Your accounts are safe — try again to finish.";
-                    retry: "Try again";
-                    title: "Authorise the combine";
-                };
-                stepIndicator: "Step {{current}}/{{total}}";
-                success: {
-                    back: "Back to my profile";
-                    description: "{{email}} is linked to your wallet. Everything from your other account moved over — referrals, history, rewards.";
-                    title: "Your accounts are now one";
-                };
-            };
-            notifications: {
-                noNotifications: "No notifications";
-            };
-            offline: {
-                description: "Some features may be unavailable until your connection is restored.";
-                title: "You're offline";
-            };
-            openLogin: {
-                login: "Connect with biometrics";
-                webauthnNotSupported: "WebAuthn is not supported on this device";
-            };
-            pageTitle: "Wallet";
-            pairing: {
-                cancel: "Cancel";
-                code: "Check that the code is correct";
-                confirm: "Confirm the code";
-                error: {
-                    noCode: "No pairing code provided";
-                    notFound: "Pairing request not found or expired";
-                    title: "Invalid pairing request";
-                };
-                info: {
-                    device: "Device";
-                    status: "Status";
-                    title: "Pairing information";
-                };
-                launch: {
-                    error: {
-                        description: "Something interrupted the pairing. Please try again.";
-                        retry: "Try again";
-                        title: "Couldn’t connect";
-                    };
-                };
-                list: {
-                    createdAt: "Created at";
-                    delete: "Delete device";
-                    empty: "No connected devices";
-                    lastActive: "Last active";
-                    origin: "Origin";
-                    target: "Target";
-                    title: "Connected devices";
-                };
-                loading: {
-                    title: "Please wait";
-                };
-                noCodeNotice: "Confirm this pairing request to continue.";
-                origin: {
-                    state: {
-                        connecting: "Paired device not online";
-                        error: "Connection rejected by the server";
-                        idle: "Pairing logic initialisation";
-                        paired: "Connected with partner";
-                        requests: {
-                            connecting: "Open your paired device to proceed to the transaction";
-                            paired: "Wait for partner to process signature";
-                        };
-                        retryError: "Error when connecting to the paired device";
-                    };
-                };
-                pendingPairing: {
-                    description: "Please authenticate to continue.";
-                    dismissLabel: "Dismiss notification";
-                    title: "Pairing in progress";
-                };
-                reconnect: "Reconnect";
-                refresh: "Retry";
-                refreshCode: "Code:";
-                refreshReason: "Reason:";
-                signatureRequest: {
-                    banner: {
-                        cta: "Review";
-                        summary: "{{count}} pending request";
-                        summary_other: "{{count}} pending requests";
-                        title: "Another device is waiting for your signature";
-                    };
-                    buttons: {
-                        reject: "Reject";
-                        sign: "Sign";
-                    };
-                    description: "A device <strongFrom>{{from}}</strongFrom> is requesting your signature";
-                    modal: {
-                        counter: "{{current}} / {{total}}";
-                    };
-                    state: {
-                        declined: "Declined";
-                        error: "Error";
-                        idle: "Idle";
-                        pending: "Pending";
-                        success: "Success";
-                        unknown: "Unknown";
-                    };
-                    stateTitle: "Signing state";
-                    title: "Signature request";
-                };
-                status: {
-                    connecting: "Pairing in progress";
-                    error: "Connection lost";
-                    idle: "Idle";
-                    paired: "Paired";
-                    retryError: "Reconnecting…";
-                };
-                switchPasskey: {
-                    confirm: "Switch passkey";
-                    description: "This pairing was started with another passkey from your wallet. Switch to it on this device to continue.";
-                    title: "Different passkey required";
-                };
-                text: "You're about to connect a device to your account.";
-                title: "Confirm device pairing";
-            };
-            password: {
-                enter: "Enter password";
-                minimum: "Minimum password length is 5";
-                pleaseEnter: "Please enter a password";
-                required: "Password is required";
-            };
-            pendingEmpty: {
-                confirm: "Got it";
-                description: "As soon as a purchase is made through your sharing link, your earnings will appear here.";
-                title: "You don't have any earnings yet";
-            };
-            pendingGains: {
-                confirm: "Collect my earnings";
-                description: "A purchase through your link earned you rewards. Collect them now into your wallet.";
-                heading: "Great news!\nMoney is waiting for you.";
-                subtitle: "Pending earnings";
-                success: "Earnings collected!";
-            };
-            pendingReferral: {
-                success: "You have claimed your reward successfully!";
-                text: "You got {{eurClaimable}} EUR pending thanks to your referral activities!";
-                title: "Pending referral reward";
-            };
-            profile: {
-                addEmail: "Add my email";
-                biometricPrompt: "Require {{biometryLabel}} at every app launch";
-                currentDeviceConnected: "Connected";
-                enableNotifications: "Enable notifications";
-                helpSupport: "Help & support";
-                lastConnection: "Last connection";
-                manageNotifications: "Manage notifications";
-                managePairings: "Manage paired devices";
-                notificationDeniedHelp: "Notifications blocked by browser. Enable them in browser settings.";
-                notificationSettings: "Notifications";
-                pageTitle: "Profil";
-                privacyPolicy: "Privacy Policy";
-                rateApp: "Rate the app";
-                recoveryConfigured: "Configured";
-            };
-            recovery: {
-                continue: "Continue recovery";
-                createPasskey: "create passkey";
-                errorLoading: "Error loading recovery account";
-                invalidFile: "Invalid file";
-                invalidPassword: "Invalid password";
-                loadingRecovery: "Loading recovery";
-                needCreatePasskey: "You need to create a new passkey on your device";
-                pushPasskey: "Push new passkey";
-                status: {
-                    done: "Done";
-                    error: "Error";
-                    inProgress: "In progress";
-                    loading: "Loading ...";
-                    pending: "Pending";
-                    walletAlready: "Wallet already recovered";
-                };
-                step1: "Upload your recovery file";
-                step2: "Review recovery data";
-                step3: "Decryption with password";
-                step4: "Create new passkey";
-                step5: "Execute recovery";
-                step6: "Success";
-                successful: "Recovery is successful, you can now <pLink>login</pLink>";
-                title: "Recover a wallet";
-                uploadOrDrag: "Upload or drag recovery file";
-            };
-            recoverySetup: {
-                currentGuardian: "Current guardian:";
-                disclaimer: "Warning<br />- We do not store any information related to your wallet recovery.<br />- You are solely responsible for keeping your recovery file and password secure and private.\n                <br />- The recovery file can be generated now, but the actual recovery process will only be available one week after the file is created to prevent malicious usage.";
-                download: "Download my recovery file";
-                generating: "Generating recovery data";
-                setupNew: "Setup new recovery";
-                setupOn: "Setup recovery on {{name}}";
-                step1: "Encryption password";
-                step2: "Generate recovery data";
-                step3: "Download recovery file";
-                step4: "Enable recovery on-chain";
-                title: "Recovery setup";
-            };
-            referral: {
-                create: {
-                    autoConfirmLabel: "Generated for you";
-                    autoGenerate: "Generate automatically";
-                    description: "As soon as someone signs up with your code and places an order on one of our partner sites, you both earn money.";
-                    errorAlreadyActive: "You already have an active referral code.";
-                    errorCodeUnavailable: "This code is no longer available, please pick another one.";
-                    errorGeneric: "Something went wrong. Please try again.";
-                    hint: "Pick 4 letters to generate your code.";
-                    label: "Customize your code";
-                    personalizeCta: "Customize my code";
-                    placeholder: "e.g. LOLA10";
-                    searchingCode: "Searching for an available code";
-                    submitCta: "Validate my code";
-                    suggestionsLabel: "Choose your code";
-                    terms: "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>.";
-                    title: "My referral code";
-                };
-                edit: {
-                    attentionBody: "Changing your code revokes the previous one. Links you've already shared will stop working.";
-                    attentionTitle: "Heads up";
-                    cancel: "Cancel";
-                    cancelConfirm: {
-                        confirmCta: "Discard changes";
-                        continueCta: "Keep editing";
-                        description: "Your current code will be kept. Your changes won't be saved.";
-                        title: "Discard changes";
-                    };
-                    title: "Edit my code";
-                };
-                enterCode: {
-                    cta: "Enter a referral code";
-                    description: "Earn money on every purchase you make across all partner sites.";
-                    title: "Enter a referral code";
-                };
-                invite: {
-                    cta: "Generate my code";
-                    description: "Create your code and share it with your loved ones to earn even more money.";
-                    title: "Invite your friends to Frak";
-                };
-                menuLabel: "Referrals";
-                modify: "Modify";
-                redeem: {
-                    active: "Active";
-                    activeSince: "Activated on";
-                    confirmDelete: {
-                        cancelCta: "Cancel";
-                        confirmCta: "Delete the code";
-                        description: "You'll no longer benefit from this code on your future purchases. You can add a new one at any time.";
-                        title: "Delete this\nreferral code?";
-                    };
-                    deleteCta: "Delete active code";
-                    description: "Enter a friend's or creator's code and you'll both benefit.";
-                    errorAlreadyRedeemed: "You already have an active referral code.";
-                    errorCycle: "This code can't be used with your account.";
-                    errorGeneric: "Something went wrong. Please try again.";
-                    errorInvalid: "This code isn't valid.";
-                    errorNotFound: "This code does not exist. Make sure it's correct.";
-                    errorSelf: "You can't use your own code.";
-                    label: "Referral code";
-                    placeholder: "e.g. LOLA10";
-                    submitCta: "Apply the code";
-                    title: "Got a referral code?";
-                };
-                share: {
-                    activeSince: "Active since";
-                    copiedToast: "Referral code copied";
-                    copyCode: "Copy code";
-                    modifyCta: "Modify my code";
-                    savedToast: "New code saved";
-                    shareCta: "Share my code";
-                    shareText: "Use my referral code {{code}} to sign up on Frak.";
-                };
-                title: "Referrals";
-            };
-            register: {
-                button: {
-                    alreadyRegistered: "You already have a wallet on your device<br />Redirecting to the login page";
-                    create: "Create your <strong>wallet</strong> <sup>*</sup> in a second with biometry";
-                    error: "Error during registration, please try again";
-                    inProgress: "Wallet creation in progress<br />Waiting for your biometry validation";
-                };
-                notice: "<sup>*</sup>encrypted digital account where you can find all the content you own, your consumption data and the rewards you earn";
-                useExisting: "Use an existing wallet";
-                useQRCode: "Use QR code to connect";
-            };
-            registerDemo: {
-                button: {
-                    create: "Create your demo wallet";
-                    error: "Error during registration, please try again";
-                    inProgress: "Wallet creation in progress";
-                };
-                description: "Spin up a temporary wallet to explore Frak. No biometrics, no recovery, just a sandbox.";
-                title: "Try Frak in demo mode";
-            };
-            settings: {
-                biometryInfo: "Biometry informations";
-                deleteAccount: "Delete my account";
-                deletePrivateKey: "Delete private key";
-                ecdsaInfo: "Login informations";
-                ecdsaWallet: "Ecdsa wallet";
-                legal: "Legal";
-                privateKey: "Private key";
-                termsOfUse: "Terms and conditions";
-            };
-            "share-and-earn": "Share<br />& Earn";
-            stats: {
-                lifetime: "Lifetime";
-                pending: "Pending";
-            };
-            toastLoading: {
-                dismiss: "Dismiss inapp browser warning";
-                stuck: "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)";
-            };
-            tokens: {
-                amountLessThanBalance: "Amount must be less than balance";
-                amountPositive: "Amount must be positive";
-                amountToSend: "Amount to send";
-                sendTitle: "Transfer to a crypto wallet";
-            };
-            transferEmpty: {
-                description: "Share products with your friends to start earning money.";
-                discover: "Discover offers";
-                title: "You don't have any money to transfer yet";
-            };
-            transferModal: {
-                bankAccount: "Bank account";
-                bankAccountDescription: "Add an IBAN";
-                description: "Choose one of the following options to transfer your earnings.";
-                title: "Transfer";
-                wallet: "Wallet";
-                walletDescription: "Transfer to a crypto wallet";
-            };
-            transferToBank: "Transfer to my bank";
-            transferredEmpty: {
-                confirm: "Got it";
-                description: "The total of your earnings will appear here once you make a transfer to your bank account.";
-                title: "You haven't transferred any earnings yet";
-            };
-            welcome: {
-                check1: "Explore partner brands";
-                check2: "Recommend your favorite products";
-                check3: "Earn money with every referral";
-                detail: {
-                    discoverOffers: "Discover offers";
-                    howItWorks: "How does it work?";
-                    legal: "FRAK's <termsLink>terms and conditions</termsLink> apply.";
-                    step1Description: "Discover products to recommend to your friends and family.";
-                    step1Title: "Explore our partner brands";
-                    step2Description: "A personalized link is automatically generated every time you share. If they make a purchase through your link, you earn money.";
-                    step2Title: "Share an article with your friends";
-                    step3Description: "Transfer your earnings to your bank account with just one click.";
-                    step3Title: "Earn money";
-                };
-                invite: {
-                    check1: "Create your referral code.";
-                    check2: "Share it with your friends.";
-                    check3: "Earn money on every purchase made across all partner sites.";
-                    title: "Invite your friends to Frak";
-                };
-                notifications: {
-                    description: "Enable notifications to track your earnings in real time.";
-                    title: "Don't miss any earnings!";
-                };
-                text: "This wallet will enable you to collect all the rewards and much more.";
-                title: "Welcome in your wallet";
-            };
-        };
-    };
+export default interface Resources {
+  "customized": {
+    "sdk": {
+      "modal": {
+        "dismiss": {
+          "primaryAction": "Continue browsing",
+          "primaryAction_sharing": "Share without being paid"
+        },
+        "final": {
+          "description": "You've successfully completed all the steps.",
+          "description_reward": "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!",
+          "description_sharing": "Your wallet has been created to receive your **{{productName}}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).",
+          "dismissed": {
+            "description": "All good",
+            "description_sharing": "Share this article."
+          },
+          "title": "Success",
+          "title_reward": "Gains",
+          "title_sharing": "Share"
+        },
+        "login": {
+          "description": "Login to your Frak account to get the best experience on **{{productName}}**",
+          "description_reward": "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
+          "description_sharing": "{{productName}} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
+          "primaryAction": "I create my wallet under 30sec",
+          "secondaryAction": "Use a QR code to connect",
+          "success": "Connection successful",
+          "title": "Connection"
+        },
+        "sendTransaction": {
+          "description": "To complete, authorize this transaction in your wallet. This ensures secure processing.",
+          "primaryAction_one": "Send transaction",
+          "primaryAction_other": "Send transactions",
+          "title": "Transaction"
+        },
+        "siweAuthenticate": {
+          "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
+          "primaryAction": "Authenticate",
+          "title": "Authentication"
+        }
+      },
+      "sharingPage": {
+        "card": {
+          "amount": "{{estimatedReward}}",
+          "label": "Credited to your account",
+          "tagline1": "Earn {{estimatedReward}},",
+          "tagline2": "on every purchase!"
+        },
+        "confirmation": {
+          "benefits": {
+            "cashout": {
+              "description": "Transfer your earnings directly to your bank account in 3 clicks.",
+              "title": "Cash out whenever you want"
+            },
+            "notify": {
+              "description": "Receive a notification when a purchase is made thanks to you.",
+              "title": "Get notified as soon as you earn"
+            },
+            "wallet": {
+              "description": "No email, no password, no form. Simple, fast and secure.",
+              "title": "Your wallet secured in 10 seconds"
+            }
+          },
+          "cardPopupDescription": "A purchase was made through your link. {{estimatedReward}} has been transferred to your wallet.",
+          "cardPopupTitle": "You just won {{estimatedReward}}! 🎉",
+          "cta": "Collect my {{estimatedReward}}",
+          "shareAgain": "Share again",
+          "subtitle": "Install the Frak app, official partner of {{productName}}, and track your earnings in real time.",
+          "title": "Thank you for sharing!\nDon't miss out on your {{estimatedReward}}."
+        },
+        "dismiss": "Later",
+        "faq": {
+          "a1": "Anyone can become an ambassador by sharing products through their unique link.",
+          "a2": "Your earnings depend on the brand's reward program and the number of purchases made through your link.",
+          "a3": "Your earnings are credited as soon as a purchase is confirmed through your sharing link.",
+          "a4": "Yes, everyone can create their own sharing link and become an ambassador too.",
+          "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.",
+          "q1": "Who can become an \"ambassador\"?",
+          "q2": "How much can I earn?",
+          "q3": "When do I get paid?",
+          "q4": "Can my friends also become \"ambassadors\"?",
+          "q5": "Why do brands use Frak?",
+          "title": "Frequently asked questions"
+        },
+        "legal": {
+          "help": "Help",
+          "privacy": "Privacy notice",
+          "terms": "Terms & conditions"
+        },
+        "reward": {
+          "tagline": "You earn a reward every time a friend makes a purchase through your link.",
+          "title": "Share with your friends"
+        },
+        "steps": {
+          "1": "Share in 1 click. A personal link is automatically generated with each share.",
+          "2": "Earn on every purchase. Every order placed through your link earns you cash.",
+          "3": "Collect your earnings in the app. Install FRAK to collect your earnings.",
+          "title": ""
+        }
+      },
+      "wallet": {
+        "loggedIn": {
+          "onboarding": {
+            "share": "🚀 Let's go! Share this product and receive your rewards directly.",
+            "share_referred": "🚀 Share your turn to win more!",
+            "welcome": "🥳 Congratulations! Your wallet is created."
+          }
+        },
+        "login": {
+          "primaryAction": "I create my wallet",
+          "text": "Create your wallet and receive up to **{{estimatedReward}}** per referred friend",
+          "text_referred": "Welcome! Receive up to **{{estimatedReward}}** in case of purchase on the site.\n\nCreate your wallet in 1 click"
+        }
+      }
+    }
+  },
+  "translation": {
+    "authent": {
+      "create": {
+        "alreadyRegistered": "You already have a registered wallet. Click the login button below to log in.",
+        "error": "Error during registration, please try again",
+        "inProgress": "Wallet creation in progress"
+      },
+      "sso": {
+        "btn": {
+          "backToSession": "Back to my wallet",
+          "continue": "Continue with my wallet",
+          "existing": {
+            "create": "Create a new wallet",
+            "login": "Use biometrics"
+          },
+          "new": {
+            "create": "Use biometrics",
+            "login": "Already have an existing wallet?",
+            "phone": "Use a QR code to connect"
+          },
+          "useAnother": "Use another account"
+        },
+        "continueDescription": "You'll sign in to <strong>{{productName}}</strong> as <strong>{{address}}</strong>.",
+        "description": "Frak does not store any personal or biometric data. By continuing you accept our <conditionsLink>terms</conditionsLink> and our <privacyLink>privacy policy</privacyLink>.",
+        "header": {
+          "title": "Login with Frak Wallet"
+        },
+        "pairing": {
+          "description": "Scan this QR code to sign in from your mobile.",
+          "title": "Sign in with my mobile"
+        },
+        "previousWallet": "Your wallet: <strong>{{wallet}}</strong>",
+        "recover": "Recover wallet from file",
+        "redirect": "You will be redirected to {{productName}} in a few seconds.",
+        "redirectNow": "Redirect now",
+        "subTitle": "to immediately receive your winnings from <pLink>{{productName}}</pLink>.",
+        "title": "Create your wallet",
+        "title_existing": "Connect to your wallet",
+        "title_new": "Create your wallet"
+      }
+    },
+    "biometrics": {
+      "confirmAction": "Confirm with {{type}}",
+      "error": "Authentication failed. Please try again.",
+      "locked": "Wallet Locked",
+      "settings": {
+        "description": "Require biometric authentication to access your wallet",
+        "enable": "Enable biometric lock",
+        "notAvailable": "Biometrics not available on this device",
+        "timeout": "Lock after",
+        "timeout15min": "15 minutes",
+        "timeout1min": "1 minute",
+        "timeout5min": "5 minutes",
+        "timeoutImmediate": "Immediately",
+        "title": "Biometric Lock"
+      },
+      "unlock": "Unlock",
+      "unlockReason": "Authenticate to access your wallet",
+      "unlockWith": "Use {{type}} to unlock"
+    },
+    "common": {
+      "accountId": "Wallet",
+      "added": "added",
+      "amountRequired": "Amount is required",
+      "at": "at",
+      "authenticator": "Authenticator",
+      "back": "Back",
+      "back-to-wallet": "Back to Wallet",
+      "balance": "Balance",
+      "claim": "Claim",
+      "claimed": "claimed",
+      "clear": "Clear",
+      "close": "Close",
+      "copied": "Copied!",
+      "copyAddress": "Copy address",
+      "enterAddress": "Enter address",
+      "interactions": "Interactions",
+      "logout": "Logout",
+      "notifications": "Notifications",
+      "or": "or",
+      "pending": "pending",
+      "refresh": "Refresh",
+      "rewards": "Rewards",
+      "send": "Send",
+      "share": "Share",
+      "submit": "Submit",
+      "to": "To",
+      "today": "Today",
+      "transactionHash": "Transaction Hash:",
+      "transactionLink": "Transaction Link",
+      "transactionSuccess": "Transaction Success!",
+      "wallet": "Wallet:",
+      "walletAddress": "Wallet address:",
+      "walletAddressRequired": "Wallet address is required",
+      "walletInvalid": "Invalid wallet address",
+      "yesterday": "Yesterday"
+    },
+    "error": {
+      "webauthn": {
+        "alreadyRegistered": {
+          "message": "This device already has a passkey for your account. Try logging in instead.",
+          "title": "Already have a passkey"
+        },
+        "dismiss": "Dismiss",
+        "generic": {
+          "message": "An error occurred. Please try again.",
+          "title": "Something went wrong"
+        },
+        "login": "Log in",
+        "noCredential": {
+          "message": "No passkey was found on this device. Create one, or sign in on the device where you registered.",
+          "title": "No passkey found"
+        },
+        "noScreenLock": {
+          "message": "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again.",
+          "title": "Screen lock required"
+        },
+        "notAllowed": {
+          "message": "The passkey prompt was closed or timed out before the operation completed.",
+          "title": "Authentication cancelled"
+        },
+        "retry": "Try again",
+        "syncFailed": {
+          "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.",
+          "step1": "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.",
+          "step2": "Update Google Play Services, then restart your phone and try again.",
+          "step3": "Still stuck? Sign in on another device, or recover your wallet from the settings.",
+          "title": "Passkey sync issue"
+        },
+        "unsupported": {
+          "message": "Passkeys can't be used on this device right now. Make sure your passkey provider is set up, or try another device.",
+          "title": "Passkeys unavailable"
+        },
+        "userOperationExecution": {
+          "message": "An error occurred while executing the transaction. Please try again.",
+          "title": "Transaction failed"
+        }
+      }
+    },
+    "explorer": {
+      "card": {
+        "until": "Until {{date}}"
+      },
+      "detail": {
+        "close": "Close",
+        "earningsAvailability": "Earnings availability",
+        "endDateBadge": "Ends {{date}} ({{days}}d)",
+        "endsIn": "Ends in {{count}} day",
+        "endsIn_other": "Ends in {{count}} days",
+        "immediate": "Immediate",
+        "instructions": "Instructions",
+        "legal": "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.",
+        "pendingDays": "{{count}} day",
+        "pendingDays_other": "{{count}} days",
+        "readMore": "Read more",
+        "refereeReward": "Reward as referee",
+        "referrerReward": "Reward as referrer",
+        "rewardPerReferral": "{{amount}} per referral",
+        "share": "Share",
+        "shareAndEarn": "Share and earn",
+        "step1Description": "A personal link is automatically generated with each share.",
+        "step1Title": "Share a product with your friends",
+        "step2Description": "Every order made through your link on {{name}} earns you cash directly in your wallet.",
+        "step2Title": "Earn {{amount}} for every purchase you help generate",
+        "step3Description": "In one click, transfer your earnings to your bank account.",
+        "step3Title": "Collect your earnings in your wallet"
+      },
+      "empty": {
+        "description": "New offers are coming soon. Check back later!",
+        "title": "No offers available"
+      },
+      "pageTitle": "Explorer"
+    },
+    "installCode": {
+      "codeCopied": "Code copied!",
+      "copyCode": "Copy the code",
+      "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
+      "download": "Download the app",
+      "error": "Failed to generate code. Please refresh.",
+      "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
+      "infoTitle": "Code valid for 3 days",
+      "loading": "Generating your code...",
+      "processing": "Setting up your wallet...",
+      "title": "Don't lose your {{estimatedReward}}!\nCopy this code"
+    },
+    "mobile-sso": {
+      "appNotFound": "Frak Wallet app not found",
+      "connecting": "Connecting...",
+      "continueInBrowser": "Continue in browser",
+      "openWallet": "Open in Frak Wallet",
+      "retry": "Connection timed out. Retry?",
+      "waiting": "Waiting for wallet app..."
+    },
+    "mobile-tx": {
+      "appNotFound": "Frak Wallet app not found",
+      "appNotFoundHint": "Please reinstall the app or try again",
+      "explanation": "Approve this transaction in your wallet app",
+      "openWallet": "Open wallet to approve",
+      "reopenWallet": "Re-open wallet",
+      "retry": "Retry",
+      "sendTransaction": "Send transaction",
+      "timeout": "Approval timed out. Try again?",
+      "waiting": "Waiting for approval..."
+    },
+    "monerium": {
+      "account": "Monerium Account",
+      "badge": {
+        "approved": "Bank connected:",
+        "notLinked": "IBAN not linked to this wallet",
+        "pending": "Bank verification in progress...",
+        "rejected": "Verification failed"
+      },
+      "bankFlow": {
+        "info": {
+          "cta": "Accept and continue",
+          "description": "To transfer your earnings to your bank account, you need to complete your secure payment account setup.",
+          "feature1Description": "To secure your account and verify that you are the rightful owner of the earnings.",
+          "feature1Title": "Verify your identity",
+          "feature2Description": "To receive your earnings directly into your bank account.",
+          "feature2Title": "Add your IBAN",
+          "feature3Description": "Your transactions are protected and comply with current security standards.",
+          "feature3Title": "Secure your transfers",
+          "redirectNotice": "You will be redirected to our financial partner, Monerium, to:",
+          "title": "Complete your account to claim your earnings."
+        },
+        "kyc": {
+          "cta": "Verify my identity",
+          "description": "To transfer your earnings, you need to verify your identity.",
+          "featureDescription": "To secure your account and confirm that you are the rightful owner of the earnings, we use a financial partner, Monerium.",
+          "featureTitle": "Verify your identity",
+          "notice": "This step is quick and secure.",
+          "title": "Complete your identity verification"
+        },
+        "link": {
+          "cta": "Link my account",
+          "description": "Your wallet is not yet connected to your Monerium account, connect it to transfer your earnings.",
+          "featureDescription": "To fully use your wallet, we need to link your account.",
+          "featureTitle": "Link your Monerium account to your wallet",
+          "title": "Link your wallet"
+        },
+        "success": {
+          "cta": "Transfer my earnings",
+          "description": "Your account is ready. You can now transfer your earnings to your bank account with ease.",
+          "title": "You can now transfer your earnings 🎉"
+        },
+        "transfer": {
+          "amount": {
+            "aboveMax": "Transfers of {{max}}€ or more require additional documentation.",
+            "continue": "Continue",
+            "ibanEmpty": "No IBAN saved",
+            "ibanLabel": "IBAN",
+            "insufficientBalance": "Insufficient balance",
+            "modify": "Edit",
+            "title": "Amount to transfer",
+            "totalBalance": "Total balance",
+            "walletLabel": "Frak Wallet"
+          },
+          "ibanManager": {
+            "addNew": "Add an IBAN",
+            "empty": "No IBAN saved. Add one to get started.",
+            "firstNameLabel": "First name",
+            "firstNamePlaceholder": "e.g. John",
+            "ibanLabel": "IBAN",
+            "ibanPlaceholder": "FR76...",
+            "lastNameLabel": "Last name",
+            "lastNamePlaceholder": "e.g. Doe",
+            "pseudoLabel": "Pseudo / note",
+            "pseudoPlaceholder": "Defaults to first + last name",
+            "remove": "Remove",
+            "save": "Save",
+            "select": "Select",
+            "title": "Manage my IBANs"
+          },
+          "recap": {
+            "addNote": "Add a note",
+            "amountLabel": "Amount",
+            "beneficiaryLabel": "Beneficiary",
+            "cancel": "Cancel",
+            "confirm": "Confirm transfer",
+            "title": "Summary",
+            "warning": "Once confirmed, this operation cannot be cancelled"
+          },
+          "success": {
+            "description": "You will receive your payout within 10 seconds.",
+            "title": "Your transfer request of {{amount}} € has been received"
+          }
+        }
+      },
+      "callback": {
+        "cancelledDescription": "You can reconnect to Monerium whenever you're ready.",
+        "cancelledTitle": "Connection cancelled",
+        "csrfDescription": "We couldn't verify the connection request. Please retry from the start.",
+        "csrfTitle": "Security check failed",
+        "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
+        "errorTitle": "Connection failed",
+        "tryAgain": "Try again"
+      },
+      "completeSetup": "Complete setup",
+      "connect": "Connect",
+      "connecting": "Connecting...",
+      "disconnect": "Disconnect",
+      "linkWallet": "Link wallet",
+      "offramp": {
+        "amountInvalid": "Amount must be greater than 0",
+        "amountLabel": "Amount (EURe)",
+        "amountRequired": "Amount is required",
+        "balance": "Balance:",
+        "confirmBiometric": "Confirm with biometric...",
+        "destinationIban": "Destination IBAN",
+        "ibanWarning": "Warning: This IBAN is not linked to your current wallet address.",
+        "max": "MAX",
+        "noIban": "No IBAN linked. Please complete Monerium verification first.",
+        "submit": "Withdraw to bank",
+        "submitting": "Submitting order...",
+        "success": "Order submitted! Funds will arrive in 1-2 business days.",
+        "tryAgain": "Try again"
+      },
+      "order": {
+        "detail": {
+          "bank": "Bank",
+          "from": "From",
+          "noNote": "Sent with no note",
+          "to": "To",
+          "transaction": "Transaction",
+          "walletName": "Frak Labs"
+        },
+        "kind": {
+          "issue": "IBAN **** -> Frak Labs",
+          "redeem": "Frak Labs -> IBAN ****"
+        },
+        "state": {
+          "pending": "Processing",
+          "placed": "Order placed",
+          "processed": "Completed",
+          "rejected": "Rejected"
+        }
+      },
+      "status": {
+        "approved": "Verified ✓",
+        "created": "Account created, complete verification on Monerium",
+        "pending": "Verification in progress",
+        "rejected": "Verification failed",
+        "settingUp": "Setting up..."
+      }
+    },
+    "onboarding": {
+      "activateSecureSpace": "Activate my secure space",
+      "alreadyHaveAccount": "Already have an account?",
+      "continue": "Continue",
+      "email": {
+        "alreadyUsed": {
+          "description": "{{email}} is already linked to an account. Log in to continue with that wallet, or use a different email.",
+          "login": "Login",
+          "title": "Email already used",
+          "useDifferent": "Use a different email"
+        },
+        "checkError": "Unable to verify this email right now. Please try again.",
+        "clearAriaLabel": "Clear email address",
+        "continue": "Continue",
+        "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+        "label": "Email",
+        "placeholder": "your.email@gmail.com",
+        "title": "Enter your email address"
+      },
+      "keypass": {
+        "description": "A secure key is saved in your password manager to quickly log in via biometrics.",
+        "existingAccount": {
+          "button": "Log in",
+          "description": "You already have an account. Log in with your passkey to access your wallet.",
+          "title": "Welcome back!"
+        },
+        "title": "Secure your account",
+        "unsupported": {
+          "button": "Log in another way",
+          "description": "Your browser does not support biometric authentication. Log in another way to access your wallet.",
+          "title": "Browser not compatible"
+        }
+      },
+      "notification": {
+        "description": "Get notified as soon as money is credited to your wallet.",
+        "descriptionHighlight": "Track your rewards in real time.",
+        "enable": "Yes, notify me",
+        "skip": "Later",
+        "title": "Don't miss any reward!"
+      },
+      "recoveryCode": "I have a recovery code",
+      "referral": {
+        "appliedToast": "Referral code applied",
+        "description": "Got a creator code? Enter it here. Otherwise, you can skip this step.",
+        "label": "Referral code",
+        "placeholder": "Ex: LOLA10",
+        "skip": "Skip",
+        "submitCta": "Apply code",
+        "title": "Add a referral code"
+      },
+      "start": "Get started",
+      "steps": {
+        "one": {
+          "description": "Share your favorites and earn money for every purchase you help generate.",
+          "title": "Earn money by recommending"
+        },
+        "three": {
+          "description": "No forms, no paperwork. Your wallet is ready to receive your earnings, instantly.",
+          "title": "Activate your secure space in 10 sec"
+        },
+        "two": {
+          "description": "Track your earnings and transfer them to your bank account whenever you want.",
+          "title": "Your earnings in real time"
+        }
+      },
+      "welcome": {
+        "button": "Get started",
+        "description": "Let's go! Explore our partner brands, recommend your favorites and turn your influence into earnings.",
+        "descriptionHighlight": "Your earnings are secure and accessible at any time.",
+        "legal": "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>",
+        "title": "Welcome to your wallet"
+      }
+    },
+    "recoveryCode": {
+      "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
+      "digitLabel": "Character",
+      "error": {
+        "alreadyLinked": "This code has already been used.",
+        "generic": "Something went wrong, please try again.",
+        "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id"
+      },
+      "paste": "Paste the code",
+      "success": {
+        "description": "You'll receive a notification as soon as a friend purchases via your link.",
+        "merchantInfo": "Connected to {{merchantName}}",
+        "title": "Your referral link has been found!"
+      },
+      "title": "Recover your code",
+      "validate": "Validate the code"
+    },
+    "reward": {
+      "detail": {
+        "creditedOn": "Credited on",
+        "description": "Reward detail",
+        "estimatedValidation": "Estimated validation",
+        "generatedDate": "Purchase generated on",
+        "generatedOn": "Generated on {{date}} · {{time}}",
+        "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand.",
+        "pendingValidation": "Pending brand validation",
+        "purchaseDate": "Purchase date",
+        "purchaseMadeOn": "Purchase made on {{date}} at {{time}}",
+        "rewardGenerated": "Reward generated",
+        "title": "Reward detail",
+        "toCollect": "To collect",
+        "updatedAt": "Updated on {{date}} · {{time}}"
+      },
+      "history": {
+        "discover": "Discover offers",
+        "emptyDescription": "Explore offers and recommend your favorite products to friends to earn money.",
+        "emptyTitle": "Ready to earn money?",
+        "seeAll": "See all",
+        "stats": {
+          "totalEarnings": "Total earnings",
+          "totalPurchases": "Purchases generated",
+          "totalShares": "Total shares"
+        },
+        "title": "Earnings history",
+        "viewAll": "View all"
+      },
+      "status": {
+        "cancelled": "Cancelled",
+        "consumed": "Consumed",
+        "expired": "Expired",
+        "pending": "Awaiting validation by the brand",
+        "processing": "Processing",
+        "settled": "To collect"
+      },
+      "trigger": {
+        "create_referral_link": "Shared Link",
+        "custom": "Custom",
+        "purchase": "Purchase",
+        "referral": "Referral",
+        "unknown": "Reward"
+      }
+    },
+    "sharing": {
+      "btn": {
+        "copy": "Copy link",
+        "copySuccess": "Link copied!",
+        "share": "Share",
+        "shareSuccess": "Link shared!"
+      },
+      "text": "Discover this amazing product!",
+      "title": "{{productName}} invite link"
+    },
+    "version": {
+      "hardUpdate": {
+        "cta": "Update now",
+        "description": "Your version ({{currentVersion}}) is no longer supported. Update to {{minVersion}} or higher to continue using Frak Wallet.",
+        "fallback": "Couldn't open the store automatically. Please update Frak Wallet manually from your device's app store.",
+        "retry": "Try again",
+        "title": "Update required"
+      },
+      "softUpdate": {
+        "available": {
+          "cta": "Update",
+          "description": "Update Frak Wallet to get the latest features and improvements.",
+          "title": "A new version is available"
+        },
+        "dismiss": "Later",
+        "downloaded": {
+          "cta": "Restart now",
+          "title": "Update ready to install."
+        },
+        "inProgress": {
+          "title": "Downloading update…"
+        }
+      }
+    },
+    "wallet": {
+      "activateNotifications": "Turn on notifs to track your earnings in real time.",
+      "addEmail": {
+        "alreadyUsed": "This email address is already in use and can't be added. Try a different one.",
+        "card": {
+          "description": "Add your email to be able to recover your wallet later.",
+          "title": "Add your email"
+        },
+        "clearAriaLabel": "Clear email address",
+        "conflict": {
+          "back": "Back to my profile",
+          "combine": "Combine my accounts",
+          "description": "This email is already linked to another wallet. Use a different email or come back later.",
+          "descriptionMergeable": "This email is already on another of your accounts. You can combine them into one. We'll guide you through, whether the other account is on this device or another one.",
+          "title": "Email already in use",
+          "useDifferent": "Use a different email"
+        },
+        "continue": "Continue",
+        "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+        "label": "Email",
+        "placeholder": "your.email@gmail.com",
+        "submitError": "Unable to save this email right now. Please try again.",
+        "title": "Add your email"
+      },
+      "inAppBrowser": {
+        "clickToOpen": "Tap to open in your browser.",
+        "clipboardAlert": "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go",
+        "clipboardManualAlert": "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go",
+        "cta": "Open browser",
+        "description": "For a better experience, open this page in your default browser.",
+        "dismiss": "Dismiss inapp browser warning",
+        "title": "Open in your browser",
+        "warning": "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser."
+      },
+      "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
+      "invite": {
+        "text": "Earn $5 for each friend you invite. T&C apply",
+        "title": "Invite friends, earn $5"
+      },
+      "login": {
+        "accountCreation": "Account creation",
+        "anotherAccount": "Connect another account",
+        "button": "Use biometrics",
+        "email": {
+          "checkError": "Unable to verify this email right now. Please try again.",
+          "description": "Enter the email linked to your wallet. We'll surface every passkey attached to it so you can pick the right one.",
+          "notFound": {
+            "create": "Create an account",
+            "description": "We couldn't find a wallet linked to {{email}}. Want to create one with this email?",
+            "title": "No account found",
+            "useDifferent": "Use a different email"
+          },
+          "submit": "Continue",
+          "title": "Sign in with your email"
+        },
+        "privy": "Connect via Privy",
+        "recover": "Recover wallet from file",
+        "title": "Log in to your wallet",
+        "useEmail": "Sign in with email",
+        "useMyAccount": "Continue with my account",
+        "useQRCode": "Use QR code to connect"
+      },
+      "manageNotifications": "<strong>Manage notifications</strong> <br /> Open settings to control your notifications",
+      "merge": {
+        "consent": {
+          "description": "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.",
+          "error": "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again.",
+          "help": {
+            "description": "Your device will ask you to confirm with face, fingerprint or PIN, same as when you log in. We never see your biometrics.",
+            "title": "What happens here"
+          },
+          "remote": {
+            "description": "Scan this QR code with the device that holds your other passkey and approve the prompt there. We'll continue automatically.",
+            "error": "We couldn't reach your other device. Try again, or pick a different email.",
+            "preparing": "Preparing a secure connection…",
+            "title": "Confirm on your other device"
+          },
+          "retry": "Try again",
+          "title": "Confirm with your other passkey",
+          "verify": "Confirm"
+        },
+        "discovery": {
+          "description": "Pick how you want to confirm: on this device, or on the device that holds your other passkey.",
+          "localError": "We couldn't find the other passkey on this device. Try scanning the code with your other device instead.",
+          "localHint": {
+            "body": "Tap above to confirm with the passkey of your other account here. Works automatically if you use iCloud Keychain across your devices.",
+            "title": "Both passkeys on this device?"
+          },
+          "preparing": "Preparing a secure connection…",
+          "scanHint": "Scan this code with the device that has your other account.",
+          "title": "Combine your accounts",
+          "useThisDevice": "Use this device"
+        },
+        "migrate": {
+          "cancel": "Cancel",
+          "description": "Sending everything to your primary account before we finalise the combine. This takes a few seconds.",
+          "error": "The transfer didn't go through. Tap retry. We'll re-check your balances and try again.",
+          "errorDescription": "Something interrupted the transfer. Your accounts are safe. Tap retry to try again with the latest balances.",
+          "errorTitle": "We couldn't move your funds",
+          "holdings": {
+            "title": "Funds to move"
+          },
+          "loading": "Loading your balances, one second.",
+          "loadingDescription": "We need to know what's on your other account before we move it.",
+          "loadingTitle": "Checking your balances…",
+          "pending": "Sending the transfer on-chain. Hang tight.",
+          "readyDescription": "Tap below to transfer everything from your other account to your primary account in one go.",
+          "readyTitle": "Move your funds",
+          "retry": "Retry",
+          "start": "Move my funds",
+          "summaryError": "Loading your balances failed. Tap retry to try again.",
+          "summaryErrorDescription": "Tap retry. We need this before we can move your funds.",
+          "summaryErrorTitle": "We couldn't load your balances",
+          "summaryRetry": "Retry",
+          "title": "Moving your funds…"
+        },
+        "peerWaiting": {
+          "description": "We sent the request to your paired device. Confirm it there and we'll continue automatically.",
+          "title": "Approve on your other device"
+        },
+        "preview": {
+          "cancel": "Cancel",
+          "combineArrow": "↓ combine into ↓",
+          "continue": "Continue",
+          "description": "We found another account of yours using {{email}}. Here's what will move when you combine them. No changes happen until you confirm.",
+          "errorDescription": "Something went wrong while preparing the combine. Please try again.",
+          "errorRetry": "Try again",
+          "errorTitle": "We couldn't load your accounts",
+          "funds": {
+            "description": "We'll transfer these from your other account to your primary account before combining.",
+            "title": "Funds to move"
+          },
+          "gains": {
+            "description": "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events, all on one account.",
+            "title": "What you'll get"
+          },
+          "labels": {
+            "otherAccount": "Your other account",
+            "thisAccount": "This account"
+          },
+          "loadingDescription": "We're double-checking both accounts before we show you what will move.",
+          "loadingTitle": "Getting things ready…",
+          "stats": {
+            "assets": "Rewards",
+            "interactions": "Interactions",
+            "referrals": "Referrals"
+          },
+          "title": "Combine your accounts",
+          "winnerBadge": "Stays as primary"
+        },
+        "settling": {
+          "cancel": "Cancel",
+          "description": "We're putting everything together. This usually takes a few seconds.",
+          "error": "The combine couldn't finish. Tap retry. We'll pick up where we left off.",
+          "errorDescription": "Something slipped on our side after you authorised. Tap retry. Your accounts are safe.",
+          "errorTitle": "Almost there",
+          "progress": {
+            "body": "Linking your accounts, transferring referrals and rewards. Hang tight.",
+            "title": "Working on it…"
+          },
+          "recover": {
+            "invalidConsent": {
+              "body": "Too much time passed since you confirmed with your other passkey. Reconfirm to continue. Your accounts are safe.",
+              "cta": "Reconfirm",
+              "title": "Confirmation expired"
+            },
+            "migrateReverted": {
+              "body": "The transfer didn't land on-chain. Run it again to finish. Your accounts are safe.",
+              "cta": "Move funds again",
+              "title": "Funds didn't move"
+            },
+            "onChainMismatch": {
+              "body": "Your accounts moved while we were combining them. Let's start over from the preview. Nothing is lost.",
+              "cta": "Start over",
+              "title": "Something looks different"
+            }
+          },
+          "retry": "Retry",
+          "title": "Combining your accounts…"
+        },
+        "sign": {
+          "authorise": "Authorise",
+          "cancel": "Cancel",
+          "description": "One last confirmation to bring your two accounts together.",
+          "error": "The combine couldn't be authorised. Tap try again. Your accounts are safe.",
+          "errorDescription": "Something interrupted the combine. Your accounts are safe. Try again to finish.",
+          "retry": "Try again",
+          "title": "Authorise the combine"
+        },
+        "stepIndicator": "Step {{current}}/{{total}}",
+        "success": {
+          "back": "Back to my profile",
+          "description": "{{email}} is linked to your wallet. Everything from your other account moved over: referrals, history, rewards.",
+          "title": "Your accounts are now one"
+        }
+      },
+      "notifications": {
+        "noNotifications": "No notifications"
+      },
+      "offline": {
+        "description": "Some features may be unavailable until your connection is restored.",
+        "title": "You're offline"
+      },
+      "openLogin": {
+        "login": "Connect with biometrics",
+        "webauthnNotSupported": "WebAuthn is not supported on this device"
+      },
+      "pageTitle": "Wallet",
+      "pairing": {
+        "cancel": "Cancel",
+        "code": "Check that the code is correct",
+        "confirm": "Confirm the code",
+        "error": {
+          "noCode": "No pairing code provided",
+          "notFound": "Pairing request not found or expired",
+          "title": "Invalid pairing request"
+        },
+        "info": {
+          "device": "Device",
+          "status": "Status",
+          "title": "Pairing information"
+        },
+        "launch": {
+          "error": {
+            "description": "Something interrupted the pairing. Please try again.",
+            "retry": "Try again",
+            "title": "Couldn’t connect"
+          }
+        },
+        "list": {
+          "createdAt": "Created at",
+          "delete": "Delete device",
+          "empty": "No connected devices",
+          "lastActive": "Last active",
+          "origin": "Origin",
+          "target": "Target",
+          "title": "Connected devices"
+        },
+        "loading": {
+          "title": "Please wait"
+        },
+        "noCodeNotice": "Confirm this pairing request to continue.",
+        "origin": {
+          "state": {
+            "connecting": "Paired device not online",
+            "error": "Connection rejected by the server",
+            "idle": "Pairing logic initialisation",
+            "paired": "Connected with partner",
+            "requests": {
+              "connecting": "Open your paired device to proceed to the transaction",
+              "paired": "Wait for partner to process signature"
+            },
+            "retryError": "Error when connecting to the paired device"
+          }
+        },
+        "pendingPairing": {
+          "description": "Please authenticate to continue.",
+          "dismissLabel": "Dismiss notification",
+          "title": "Pairing in progress"
+        },
+        "reconnect": "Reconnect",
+        "refresh": "Retry",
+        "refreshCode": "Code:",
+        "refreshReason": "Reason:",
+        "signatureRequest": {
+          "banner": {
+            "cta": "Review",
+            "summary": "{{count}} pending request",
+            "summary_other": "{{count}} pending requests",
+            "title": "Another device is waiting for your signature"
+          },
+          "buttons": {
+            "reject": "Reject",
+            "sign": "Sign"
+          },
+          "description": "A device <strongFrom>{{from}}</strongFrom> is requesting your signature",
+          "modal": {
+            "counter": "{{current}} / {{total}}"
+          },
+          "state": {
+            "declined": "Declined",
+            "error": "Error",
+            "idle": "Idle",
+            "pending": "Pending",
+            "success": "Success",
+            "unknown": "Unknown"
+          },
+          "stateTitle": "Signing state",
+          "title": "Signature request"
+        },
+        "status": {
+          "connecting": "Pairing in progress",
+          "error": "Connection lost",
+          "idle": "Idle",
+          "paired": "Paired",
+          "retryError": "Reconnecting…"
+        },
+        "switchPasskey": {
+          "confirm": "Switch passkey",
+          "description": "This pairing was started with another passkey from your wallet. Switch to it on this device to continue.",
+          "title": "Different passkey required"
+        },
+        "text": "You're about to connect a device to your account.",
+        "title": "Confirm device pairing"
+      },
+      "password": {
+        "enter": "Enter password",
+        "minimum": "Minimum password length is 5",
+        "pleaseEnter": "Please enter a password",
+        "required": "Password is required"
+      },
+      "pendingEmpty": {
+        "confirm": "Got it",
+        "description": "As soon as a purchase is made through your sharing link, your earnings will appear here.",
+        "title": "You don't have any earnings yet"
+      },
+      "pendingGains": {
+        "confirm": "Collect my earnings",
+        "description": "A purchase through your link earned you rewards. Collect them now into your wallet.",
+        "heading": "Great news!\nMoney is waiting for you.",
+        "subtitle": "Pending earnings",
+        "success": "Earnings collected!"
+      },
+      "pendingReferral": {
+        "success": "You have claimed your reward successfully!",
+        "text": "You got {{eurClaimable}} EUR pending thanks to your referral activities!",
+        "title": "Pending referral reward"
+      },
+      "profile": {
+        "biometricPrompt": "Require {{biometryLabel}} at every app launch",
+        "currentDeviceConnected": "Connected",
+        "enableNotifications": "Enable notifications",
+        "helpSupport": "Help & support",
+        "lastConnection": "Last connection",
+        "manageNotifications": "Manage notifications",
+        "managePairings": "Manage paired devices",
+        "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
+        "notificationSettings": "Notifications",
+        "pageTitle": "Profil",
+        "privacyPolicy": "Privacy Policy",
+        "rateApp": "Rate the app",
+        "recoveryOptions": "Recovery options",
+        "security": {
+          "heading": "Secure your wallet",
+          "headingSecured": "Your wallet is secured",
+          "progressLabel": "Wallet security progress",
+          "steps": {
+            "addEmail": {
+              "cta": "Add an email",
+              "description": "Protect your wallet and recover your access if you lose or change device.",
+              "title": "Add an email"
+            },
+            "secured": {
+              "description": "Your email and recovery are all set. Your wallet is fully protected."
+            },
+            "setupRecovery": {
+              "cta": "Set up recovery",
+              "description": "Add a recovery option so you can always restore access to your wallet.",
+              "title": "Set up recovery"
+            },
+            "updateRecovery": {
+              "cta": "Update recovery options",
+              "description": "Your recovery expires soon. Refresh it to keep your wallet protected.",
+              "title": "Update recovery options"
+            },
+            "verifyEmail": {
+              "cta": "Validate my email",
+              "description": "Confirm your email address so it can be used to recover your wallet.",
+              "title": "Validate your email"
+            }
+          }
+        }
+      },
+      "recoverySetup": {
+        "backup": {
+          "continue": "Done",
+          "copied": "Copied",
+          "copy": "Copy",
+          "description": "This is your encrypted recovery backup. Keep your own copy somewhere safe, like a password manager.",
+          "hide": "Hide",
+          "retry": "Save again",
+          "reveal": "Reveal",
+          "saveError": "We couldn't save your backup to our servers. Please retry before continuing.",
+          "title": "Save your backup",
+          "warning": "Anyone who has both this backup code and your password can take full control of your wallet. Store them in separate places."
+        },
+        "config": {
+          "active": "Active",
+          "activeTitle": "Recovery is active",
+          "deleteAction": "Turn off recovery",
+          "deleteDescription": "Turn recovery off completely. Your recovery key is disabled on-chain and your encrypted backup is deleted.",
+          "deleteTitle": "Delete recovery",
+          "description": "Recovery lets you restore your wallet if you lose access to this device.",
+          "endLabel": "Expires",
+          "never": "Never",
+          "refreshDescription": "Keep your current recovery key and move its validity window, or replace it with a brand new one.",
+          "refreshTitle": "Manage recovery",
+          "replaceKeyAction": "Replace recovery key",
+          "startLabel": "Usable from",
+          "statusLabel": "Status",
+          "testButton": "Test password",
+          "testDescription": "Check that you still remember your recovery password. It never leaves this device.",
+          "testInvalid": "That password doesn't match your backup.",
+          "testPlaceholder": "Enter your password",
+          "testTitle": "Check your password",
+          "testValid": "Password is correct.",
+          "title": "Recovery",
+          "updateDatesAction": "Change validity dates"
+        },
+        "dates": {
+          "confirm": {
+            "authorise": "Update dates",
+            "cancelled": "Authorization was cancelled.",
+            "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+            "description": "Confirm to update your recovery validity on-chain. Your recovery key stays the same.",
+            "failed": "Recovery update failed.",
+            "failedDescription": "Something went wrong while updating your recovery. You can try again.",
+            "keyLabel": "Recovery key",
+            "keyUnchanged": "Unchanged",
+            "retry": "Try again",
+            "title": "Confirm the new dates"
+          },
+          "dates": {
+            "continue": "Continue",
+            "description": "Choose when your recovery can be used. Your recovery key stays the same.",
+            "title": "Update validity dates"
+          },
+          "password": {
+            "continue": "Continue",
+            "description": "Enter your recovery password to keep your current recovery key. It never leaves this device.",
+            "invalid": "That password doesn't match your backup. If you've lost it, create a new recovery key instead.",
+            "placeholder": "Enter your password",
+            "replaceAction": "Create a new recovery key",
+            "title": "Confirm your password"
+          },
+          "success": {
+            "description": "Your recovery validity dates are now updated on-chain.",
+            "done": "Back to my profile",
+            "title": "Validity updated"
+          }
+        },
+        "delete": {
+          "confirm": {
+            "authorise": "Delete recovery",
+            "cancelled": "Authorization was cancelled.",
+            "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+            "description": "This disables your recovery key on-chain and deletes your encrypted backup. This can't be undone — you'll have to set recovery up again from scratch.",
+            "failed": "Recovery deletion failed.",
+            "failedDescription": "Something went wrong while deleting your recovery. You can try again.",
+            "retry": "Try again",
+            "title": "Delete recovery",
+            "warning": "Once deleted, your current recovery key and backup stop working permanently. You can set up a new recovery anytime."
+          },
+          "password": {
+            "continue": "Continue",
+            "description": "Enter your recovery password to confirm you want to delete recovery. It never leaves this device.",
+            "invalid": "That password doesn't match your backup. Enter the correct password to delete recovery.",
+            "placeholder": "Enter your password",
+            "title": "Confirm your password"
+          },
+          "success": {
+            "description": "Your recovery key has been disabled on-chain and your encrypted backup has been deleted.",
+            "done": "Back to my profile",
+            "title": "Recovery deleted"
+          }
+        },
+        "password": {
+          "continue": "Continue",
+          "dateRangeError": "The start date must be before the end date.",
+          "description": "Choose a password to encrypt your recovery backup, and optionally control when it can be used.",
+          "endHelp": "Recovery stops working after this date. Defaults to and is capped at two years from now.",
+          "endLabel": "End date (optional)",
+          "hint": "At least {{min}} characters.",
+          "label": "Password",
+          "placeholder": "Enter a strong password",
+          "startHelp": "Recovery can only be used after this date. Defaults to one week from now as a safety delay.",
+          "startLabel": "Start date (optional)",
+          "title": "Protect your recovery",
+          "toggle": "Toggle password visibility",
+          "warning": "Choose a strong password. We can never reset or recover it — if you forget it, your backup is permanently useless."
+        },
+        "refresh": {
+          "replaceNote": "This replaces your current recovery key and password. Your old backup stops working once you authorize the change.",
+          "signDescription": "Confirm to replace your recovery key on-chain. Your previous key stops working immediately.",
+          "successDescription": "Your new recovery key is active and your previous backup has been replaced.",
+          "successTitle": "Recovery key replaced"
+        },
+        "sign": {
+          "authorise": "Authorize recovery",
+          "cancelled": "Authorization was cancelled.",
+          "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+          "description": "Confirm to enable recovery on your wallet. This creates your recovery key and registers it on-chain.",
+          "failed": "Recovery setup failed.",
+          "failedDescription": "Something went wrong while enabling recovery. You can try again.",
+          "retry": "Try again",
+          "title": "Authorize recovery"
+        },
+        "stepIndicator": "Step {{current}}/{{total}}",
+        "success": {
+          "description": "Your wallet recovery is now active and your encrypted backup is saved.",
+          "done": "Back to my profile",
+          "title": "Recovery is set up"
+        }
+      },
+      "recoveryUsage": {
+        "blob": {
+          "continue": "Continue",
+          "invalid": "This doesn't look like a valid recovery backup. Make sure you copied the whole code.",
+          "label": "Recovery backup",
+          "paste": "Paste",
+          "placeholder": "Paste your recovery backup here",
+          "toggle": "I have a recovery backup instead"
+        },
+        "description": "Enter your email and we'll send you a recovery link, if your wallet is set up for email recovery.",
+        "email": {
+          "action": "Send recovery link",
+          "error": "Something went wrong. Please try again.",
+          "label": "Email address",
+          "placeholder": "you@example.com",
+          "sent": "If that email is registered and verified, we've sent your recovery link. Check your inbox."
+        },
+        "password": {
+          "continue": "Continue",
+          "description": "Enter the recovery password you chose during setup. It never leaves this device.",
+          "invalid": "That password doesn't match this backup.",
+          "placeholder": "Enter your recovery password",
+          "title": "Unlock your backup"
+        },
+        "stepIndicator": "Step {{current}}/{{total}}",
+        "success": {
+          "description": "Your new passkey has been added and your wallet is recovered. You're now signed in.",
+          "done": "Go to my wallet",
+          "title": "Welcome back"
+        },
+        "title": "Recover your wallet",
+        "validate": {
+          "authorise": "Recover my wallet",
+          "cancelled": "Recovery was cancelled.",
+          "cancelledDescription": "You cancelled the prompt. You can try again whenever you're ready.",
+          "description": "Confirm to add a new passkey to this wallet. You'll be asked to create it on this device.",
+          "expired": {
+            "description": "This recovery expired on {{date}}. Set up recovery again from a logged-in device to get a fresh backup.",
+            "title": "Recovery expired"
+          },
+          "expiresLabel": "Usable until",
+          "failed": "Recovery failed.",
+          "failedDescription": "Something went wrong while recovering your wallet. You can try again.",
+          "guardianMismatch": {
+            "description": "This backup belongs to a different recovery setup than the one configured on this wallet.",
+            "title": "Backup doesn't match"
+          },
+          "loadingDescription": "Reading this wallet's recovery configuration on-chain…",
+          "loadingTitle": "Checking your recovery",
+          "never": "No expiry",
+          "notConfigured": {
+            "description": "This wallet doesn't have recovery enabled, so it can't be recovered with a backup.",
+            "title": "No recovery on this wallet"
+          },
+          "retry": "Try again",
+          "title": "Confirm recovery",
+          "tooEarly": {
+            "description": "For your security, this wallet can only be recovered from {{date}}. Please come back then.",
+            "title": "Not available yet"
+          },
+          "tryAnother": "Use a different backup",
+          "walletLabel": "Wallet"
+        }
+      },
+      "referral": {
+        "create": {
+          "autoConfirmLabel": "Generated for you",
+          "autoGenerate": "Generate automatically",
+          "description": "As soon as someone signs up with your code and places an order on one of our partner sites, you both earn money.",
+          "errorAlreadyActive": "You already have an active referral code.",
+          "errorCodeUnavailable": "This code is no longer available, please pick another one.",
+          "errorGeneric": "Something went wrong. Please try again.",
+          "hint": "Pick 4 letters to generate your code.",
+          "label": "Customize your code",
+          "personalizeCta": "Customize my code",
+          "placeholder": "e.g. LOLA10",
+          "searchingCode": "Searching for an available code",
+          "submitCta": "Validate my code",
+          "suggestionsLabel": "Choose your code",
+          "terms": "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>.",
+          "title": "My referral code"
+        },
+        "edit": {
+          "attentionBody": "Changing your code revokes the previous one. Links you've already shared will stop working.",
+          "attentionTitle": "Heads up",
+          "cancel": "Cancel",
+          "cancelConfirm": {
+            "confirmCta": "Discard changes",
+            "continueCta": "Keep editing",
+            "description": "Your current code will be kept. Your changes won't be saved.",
+            "title": "Discard changes"
+          },
+          "title": "Edit my code"
+        },
+        "enterCode": {
+          "cta": "Enter a referral code",
+          "description": "Earn money on every purchase you make across all partner sites.",
+          "title": "Enter a referral code"
+        },
+        "invite": {
+          "cta": "Generate my code",
+          "description": "Create your code and share it with your loved ones to earn even more money.",
+          "title": "Invite your friends to Frak"
+        },
+        "menuLabel": "Referrals",
+        "modify": "Modify",
+        "redeem": {
+          "active": "Active",
+          "activeSince": "Activated on",
+          "confirmDelete": {
+            "cancelCta": "Cancel",
+            "confirmCta": "Delete the code",
+            "description": "You'll no longer benefit from this code on your future purchases. You can add a new one at any time.",
+            "title": "Delete this\nreferral code?"
+          },
+          "deleteCta": "Delete active code",
+          "description": "Enter a friend's or creator's code and you'll both benefit.",
+          "errorAlreadyRedeemed": "You already have an active referral code.",
+          "errorCycle": "This code can't be used with your account.",
+          "errorGeneric": "Something went wrong. Please try again.",
+          "errorInvalid": "This code isn't valid.",
+          "errorNotFound": "This code does not exist. Make sure it's correct.",
+          "errorSelf": "You can't use your own code.",
+          "label": "Referral code",
+          "placeholder": "e.g. LOLA10",
+          "submitCta": "Apply the code",
+          "title": "Got a referral code?"
+        },
+        "share": {
+          "activeSince": "Active since",
+          "copiedToast": "Referral code copied",
+          "copyCode": "Copy code",
+          "modifyCta": "Modify my code",
+          "savedToast": "New code saved",
+          "shareCta": "Share my code",
+          "shareText": "Use my referral code {{code}} to sign up on Frak."
+        },
+        "title": "Referrals"
+      },
+      "register": {
+        "button": {
+          "alreadyRegistered": "You already have a wallet on your device<br />Redirecting to the login page",
+          "create": "Create your <strong>wallet</strong> <sup>*</sup> in a second with biometry",
+          "error": "Error during registration, please try again",
+          "inProgress": "Wallet creation in progress<br />Waiting for your biometry validation"
+        },
+        "notice": "<sup>*</sup>encrypted digital account where you can find all the content you own, your consumption data and the rewards you earn",
+        "useExisting": "Use an existing wallet",
+        "useQRCode": "Use QR code to connect"
+      },
+      "registerDemo": {
+        "button": {
+          "create": "Create your demo wallet",
+          "error": "Error during registration, please try again",
+          "inProgress": "Wallet creation in progress"
+        },
+        "description": "Spin up a temporary wallet to explore Frak. No biometrics, no recovery, just a sandbox.",
+        "title": "Try Frak in demo mode"
+      },
+      "settings": {
+        "biometryInfo": "Biometry informations",
+        "deleteAccount": "Delete my account",
+        "deletePrivateKey": "Delete private key",
+        "ecdsaInfo": "Login informations",
+        "ecdsaWallet": "Ecdsa wallet",
+        "legal": "Legal",
+        "privateKey": "Private key",
+        "termsOfUse": "Terms and conditions"
+      },
+      "share-and-earn": "Share<br />& Earn",
+      "stats": {
+        "lifetime": "Lifetime",
+        "pending": "Pending"
+      },
+      "toastLoading": {
+        "dismiss": "Dismiss inapp browser warning",
+        "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)"
+      },
+      "tokens": {
+        "amountLessThanBalance": "Amount must be less than balance",
+        "amountPositive": "Amount must be positive",
+        "amountToSend": "Amount to send",
+        "sendTitle": "Transfer to a crypto wallet"
+      },
+      "transferEmpty": {
+        "description": "Share products with your friends to start earning money.",
+        "discover": "Discover offers",
+        "title": "You don't have any money to transfer yet"
+      },
+      "transferModal": {
+        "bankAccount": "Bank account",
+        "bankAccountDescription": "Add an IBAN",
+        "description": "Choose one of the following options to transfer your earnings.",
+        "title": "Transfer",
+        "wallet": "Wallet",
+        "walletDescription": "Transfer to a crypto wallet"
+      },
+      "transferToBank": "Transfer to my bank",
+      "transferredEmpty": {
+        "confirm": "Got it",
+        "description": "The total of your earnings will appear here once you make a transfer to your bank account.",
+        "title": "You haven't transferred any earnings yet"
+      },
+      "verifyEmail": {
+        "changeEmail": {
+          "alreadyUsed": "This email address is already in use. Try a different one.",
+          "clearAriaLabel": "Clear email address",
+          "continue": "Send code",
+          "description": "Enter a new email address. We'll send a code to verify it; your current email stays active until then.",
+          "label": "Email",
+          "placeholder": "your.email@gmail.com",
+          "title": "Change your email"
+        },
+        "changeEmailLink": "Use a different email",
+        "description": "Enter the 6-digit code we email you to confirm your address. You can paste it or tap the button in the email.",
+        "digitLabel": "Digit {{index}}",
+        "error": {
+          "expired": "This code has expired. Send a new one.",
+          "invalid": "Incorrect code. Please try again.",
+          "network": "Something went wrong. Please try again.",
+          "send": "Couldn't send the code. Please try again.",
+          "tooManyAttempts": "Too many attempts. Send a new code."
+        },
+        "pasteCode": "Paste code",
+        "pasteError": "Couldn't read the clipboard. Paste or type the code manually.",
+        "resendIn": "Resend in {{seconds}}s",
+        "sendCode": "Send verification code",
+        "statusPending": "Not verified yet",
+        "statusPendingNew": "Verify your new email address",
+        "success": {
+          "back": "Back to my profile",
+          "description": "{{email}} is now verified. Set up recovery next so you can recover your account if you ever lose access.",
+          "setupRecovery": "Set up recovery",
+          "title": "Email verified"
+        },
+        "title": "Verify your email",
+        "verify": "Verify",
+        "verifying": {
+          "description": "Hang tight while we confirm your code.",
+          "title": "Verifying your email…"
+        }
+      },
+      "welcome": {
+        "check1": "Explore partner brands",
+        "check2": "Recommend your favorite products",
+        "check3": "Earn money with every referral",
+        "detail": {
+          "discoverOffers": "Discover offers",
+          "howItWorks": "How does it work?",
+          "legal": "FRAK's <termsLink>terms and conditions</termsLink> apply.",
+          "step1Description": "Discover products to recommend to your friends and family.",
+          "step1Title": "Explore our partner brands",
+          "step2Description": "A personalized link is automatically generated every time you share. If they make a purchase through your link, you earn money.",
+          "step2Title": "Share an article with your friends",
+          "step3Description": "Transfer your earnings to your bank account with just one click.",
+          "step3Title": "Earn money"
+        },
+        "invite": {
+          "check1": "Create your referral code.",
+          "check2": "Share it with your friends.",
+          "check3": "Earn money on every purchase made across all partner sites.",
+          "title": "Invite your friends to Frak"
+        },
+        "notifications": {
+          "description": "Enable notifications to track your earnings in real time.",
+          "title": "Don't miss any earnings!"
+        },
+        "text": "This wallet will enable you to collect all the rewards and much more.",
+        "title": "Welcome in your wallet"
+      }
+    }
+  }
 }
-
-export default Resources;

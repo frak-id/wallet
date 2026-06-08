@@ -1,1 +1,1 @@
-export { body, footer } from "../stepLayout.css";
+export { footer } from "../stepLayout.css";

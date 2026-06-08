@@ -23,7 +23,7 @@ import {
     aggregateFunnelSteps,
     buildFunnelSeries,
     type OpenPanelChartFilter,
-    type OpenPanelExportClient,
+    openPanelExportClient,
     serieCount,
     seriePreviousCount,
     seriePreviousSum,
@@ -128,10 +128,7 @@ type SeriesRow = {
  * which is why they share a class.
  */
 export class CampaignOverviewOrchestrator {
-    constructor(
-        private readonly pricingRepository: PricingRepository,
-        private readonly openPanel: OpenPanelExportClient
-    ) {}
+    constructor(private readonly pricingRepository: PricingRepository) {}
 
     // -------------------------------------------------------------------
     //  Public — summary (Postgres only)
@@ -490,7 +487,7 @@ export class CampaignOverviewOrchestrator {
         withPrevious: boolean
     ): Promise<OverviewFunnelStep[]> {
         const merchantFilter = this.merchantFilter(merchantId);
-        const response = await this.openPanel.getChart({
+        const response = await openPanelExportClient.getChart({
             series: buildFunnelSeries(definitions, [merchantFilter]),
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
@@ -514,7 +511,7 @@ export class CampaignOverviewOrchestrator {
         range: DateRange,
         withPrevious: boolean
     ): Promise<OverviewAccurateKpis> {
-        const response = await this.openPanel.getChart({
+        const response = await openPanelExportClient.getChart({
             series: [
                 {
                     name: "*",
@@ -603,7 +600,7 @@ export class CampaignOverviewOrchestrator {
         breakdown: string
     ): Promise<Map<string, number>> {
         const merchantFilter = this.merchantFilter(merchantId);
-        const response = await this.openPanel.getChart({
+        const response = await openPanelExportClient.getChart({
             series: [
                 { name: "sharing_link_shared", filters: [merchantFilter] },
                 { name: "sharing_link_copied", filters: [merchantFilter] },

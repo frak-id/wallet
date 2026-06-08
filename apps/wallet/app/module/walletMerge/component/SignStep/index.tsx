@@ -1,14 +1,11 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address, Hex } from "viem";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import type { SendAddPassKeyMutation } from "../../strategy/types";
 import { RemotePeerWaitingCard } from "../RemotePeerWaitingCard";
 import * as styles from "../stepLayout.css";
@@ -91,9 +88,16 @@ export function SignStep({
     ]);
 
     return (
-        <PageLayout
-            back={<Back onClick={onBack} disabled={sendAddPassKey.isPending} />}
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={t("wallet.merge.sign.title")}
+            description={
+                sendAddPassKey.isError
+                    ? t("wallet.merge.sign.errorDescription")
+                    : t("wallet.merge.sign.description")
+            }
+            onBack={onBack}
+            backDisabled={sendAddPassKey.isPending}
+            stepIndicator={stepIndicator}
             footer={
                 <Box className={styles.footer}>
                     <Button
@@ -123,28 +127,17 @@ export function SignStep({
                 </Box>
             }
         >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">{t("wallet.merge.sign.title")}</Title>
-                    <Text variant="body" color="secondary">
-                        {sendAddPassKey.isError
-                            ? t("wallet.merge.sign.errorDescription")
-                            : t("wallet.merge.sign.description")}
+            {isPeerSigning && sendAddPassKey.isPending && (
+                <RemotePeerWaitingCard />
+            )}
+
+            {sendAddPassKey.isError && (
+                <Card variant="muted" padding="default">
+                    <Text variant="bodySmall" color="error">
+                        {t("wallet.merge.sign.error")}
                     </Text>
-                </Stack>
-
-                {isPeerSigning && sendAddPassKey.isPending && (
-                    <RemotePeerWaitingCard />
-                )}
-
-                {sendAddPassKey.isError && (
-                    <Card variant="muted" padding="default">
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.merge.sign.error")}
-                        </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+                </Card>
+            )}
+        </FlowStepScreen>
     );
 }

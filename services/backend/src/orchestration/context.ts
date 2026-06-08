@@ -11,7 +11,6 @@ import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
-import { openPanelExportClient } from "../infrastructure/integrations/openpanel";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import {
@@ -25,6 +24,7 @@ import {
     IdentityMergeService,
     IdentityOrchestrator,
     IdentityWeightService,
+    RecoveryClaimOrchestrator,
     WalletMergeOrchestrator,
     WalletSessionOrchestrator,
 } from "./identity";
@@ -135,8 +135,7 @@ const campaignStatsOrchestrator = new CampaignStatsOrchestrator(
 );
 
 const campaignOverviewOrchestrator = new CampaignOverviewOrchestrator(
-    pricingRepository,
-    openPanelExportClient
+    pricingRepository
 );
 
 const explorerOrchestrator = new ExplorerOrchestrator();
@@ -163,6 +162,15 @@ const walletSessionOrchestrator = new WalletSessionOrchestrator(
     AuthContext.repositories.authenticator,
     AuthContext.services.webAuthN,
     AuthContext.services.walletJwt
+);
+
+const recoveryClaimOrchestrator = new RecoveryClaimOrchestrator(
+    AuthContext.repositories.authenticator,
+    IdentityContext.repositories.walletBinding,
+    AuthContext.services.webAuthN,
+    webAuthNValidatorReader,
+    identityOrchestrator,
+    walletSessionOrchestrator
 );
 
 const pairingRouterOrchestrator = new PairingRouterOrchestrator(
@@ -217,6 +225,7 @@ export namespace OrchestrationContext {
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
         walletMerge: walletMergeOrchestrator,
         walletSession: walletSessionOrchestrator,
+        recoveryClaim: recoveryClaimOrchestrator,
         authenticatorLookup: authenticatorLookupOrchestrator,
         pairing: pairingOrchestrator,
         pairingRouter: pairingRouterOrchestrator,

@@ -1,0 +1,367 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+// Same relative path the service imports (not the alias, which won't resolve here).
+import { resendClient } from "../../../infrastructure/integrations/email";
+import type { EmailVerificationRepository } from "../repositories/EmailVerificationRepository";
+import type { IdentityRepository } from "../repositories/IdentityRepository";
+import { EmailVerificationService } from "./EmailVerificationService";
+
+vi.mock("@backend-infrastructure", () => ({
+    log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+    // Transaction simply runs the callback with a throwaway handle — the repo
+    // methods are mocked and ignore the `tx` argument.
+    db: { transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb({})) },
+}));
+
+vi.mock("../../../infrastructure/integrations/email", () => ({
+    buildVerificationEmail: vi.fn(() => ({
+        subject: "Verify your email",
+        html: "<html></html>",
+    })),
+    resendClient: { send: vi.fn() },
+}));
+
+const GROUP_ID = "group-1";
+// Codes are now ambiguity-free uppercase alphanumeric (shared `generateCode`).
+const CODE_PATTERN = /^[A-Z0-9]{6}$/;
+
+const createEmailVerificationRepository = () =>
+    ({
+        findByGroup: vi.fn(),
+        upsert: vi.fn(),
+        incrementAttempts: vi.fn(),
+        consume: vi.fn(),
+        deleteExpired: vi.fn(),
+    }) as unknown as EmailVerificationRepository &
+        Record<string, ReturnType<typeof vi.fn>>;
+
+const createIdentityRepository = () =>
+    ({
+        findLinkedEmail: vi.fn(),
+        confirmEmail: vi.fn(async () => true),
+    }) as unknown as IdentityRepository &
+        Record<string, ReturnType<typeof vi.fn>>;
+
+describe("EmailVerificationService", () => {
+    let emailVerificationRepository: ReturnType<
+        typeof createEmailVerificationRepository
+    >;
+    let identityRepository: ReturnType<typeof createIdentityRepository>;
+    let service: EmailVerificationService;
+
+    beforeEach(() => {
+        vi.mocked(resendClient.send).mockReset().mockResolvedValue({
+            id: "msg-1",
+        });
+        process.env.FRAK_WALLET_URL = "https://wallet.test";
+        emailVerificationRepository = createEmailVerificationRepository();
+        identityRepository = createIdentityRepository();
+        service = new EmailVerificationService(
+            emailVerificationRepository as unknown as EmailVerificationRepository,
+            identityRepository as unknown as IdentityRepository
+        );
+    });
+
+    describe("getEmailStatus", () => {
+        it("surfaces an in-flight rotation target as the pending email", async () => {
+            identityRepository.findLinkedEmail.mockResolvedValue({
+                email: "old@test.com",
+                verifiedAt: new Date(),
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                email: "new@test.com",
+                consumedAt: null,
+                expiresAt: new Date(Date.now() + 60_000),
+            });
+
+            const status = await service.getEmailStatus(GROUP_ID);
+
+            expect(status).toEqual({
+                email: "old@test.com",
+                verifiedAt: expect.any(Date),
+                pendingEmail: "new@test.com",
+            });
+        });
+
+        it("returns no pending email when the challenge matches the current email", async () => {
+            identityRepository.findLinkedEmail.mockResolvedValue({
+                email: "user@test.com",
+                verifiedAt: null,
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                email: "user@test.com",
+                consumedAt: null,
+                expiresAt: new Date(Date.now() + 60_000),
+            });
+
+            const status = await service.getEmailStatus(GROUP_ID);
+
+            expect(status.pendingEmail).toBeNull();
+        });
+
+        it("ignores a consumed or expired challenge for pending", async () => {
+            identityRepository.findLinkedEmail.mockResolvedValue({
+                email: "old@test.com",
+                verifiedAt: new Date(),
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                email: "new@test.com",
+                consumedAt: new Date(),
+                expiresAt: new Date(Date.now() + 60_000),
+            });
+
+            const status = await service.getEmailStatus(GROUP_ID);
+
+            expect(status.pendingEmail).toBeNull();
+        });
+    });
+
+    describe("sendCode", () => {
+        it("sends a code to the group's current email", async () => {
+            identityRepository.findLinkedEmail.mockResolvedValue({
+                email: "user@test.com",
+                verifiedAt: null,
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(null);
+
+            const result = await service.sendCode({ groupId: GROUP_ID });
+
+            expect(result).toEqual({ status: "sent" });
+            expect(emailVerificationRepository.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    groupId: GROUP_ID,
+                    email: "user@test.com",
+                    code: expect.stringMatching(CODE_PATTERN),
+                })
+            );
+            expect(resendClient.send).toHaveBeenCalledWith(
+                expect.objectContaining({ to: "user@test.com" })
+            );
+        });
+
+        it("persists the challenge only after a successful send", async () => {
+            identityRepository.findLinkedEmail.mockResolvedValue({
+                email: "user@test.com",
+                verifiedAt: null,
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(null);
+            vi.mocked(resendClient.send).mockRejectedValue(
+                new Error("resend down")
+            );
+
+            await expect(
+                service.sendCode({ groupId: GROUP_ID })
+            ).rejects.toMatchObject({ code: "EMAIL_SEND_FAILED" });
+
+            // A failed send must not stamp the challenge / debounce window.
+            expect(emailVerificationRepository.upsert).not.toHaveBeenCalled();
+        });
+
+        it("throttles a resend inside the debounce window", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                lastSentAt: new Date(),
+            });
+
+            const result = await service.sendCode({ groupId: GROUP_ID });
+
+            expect(result.status).toBe("throttled");
+            if (result.status === "throttled") {
+                expect(result.retryAfterSec).toBeGreaterThan(0);
+                expect(result.retryAfterSec).toBeLessThanOrEqual(30);
+            }
+            expect(emailVerificationRepository.upsert).not.toHaveBeenCalled();
+            expect(resendClient.send).not.toHaveBeenCalled();
+        });
+
+        it("sends a code to a new address without attaching it (rotation)", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(null);
+
+            const result = await service.sendCode({
+                groupId: GROUP_ID,
+                email: "New@Test.com",
+            });
+
+            expect(result).toEqual({ status: "sent" });
+            expect(emailVerificationRepository.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    groupId: GROUP_ID,
+                    email: "new@test.com",
+                    code: expect.stringMatching(CODE_PATTERN),
+                })
+            );
+            expect(resendClient.send).toHaveBeenCalledWith(
+                expect.objectContaining({ to: "new@test.com" })
+            );
+            expect(identityRepository.confirmEmail).not.toHaveBeenCalled();
+            expect(identityRepository.findLinkedEmail).not.toHaveBeenCalled();
+        });
+
+        it("resends to the in-flight challenge target when no address is given", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                email: "rotating@test.com",
+                lastSentAt: new Date(Date.now() - 60_000),
+                consumedAt: null,
+                expiresAt: new Date(Date.now() + 60_000),
+            });
+
+            const result = await service.sendCode({ groupId: GROUP_ID });
+
+            expect(result).toEqual({ status: "sent" });
+            expect(resendClient.send).toHaveBeenCalledWith(
+                expect.objectContaining({ to: "rotating@test.com" })
+            );
+            expect(identityRepository.findLinkedEmail).not.toHaveBeenCalled();
+        });
+
+        it("throws when there is no email to verify", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(null);
+            identityRepository.findLinkedEmail.mockResolvedValue(null);
+
+            await expect(
+                service.sendCode({ groupId: GROUP_ID })
+            ).rejects.toMatchObject({ code: "NO_EMAIL" });
+        });
+    });
+
+    describe("verifyCode", () => {
+        const validRow = () => ({
+            email: "user@test.com",
+            code: "ABC234",
+            attempts: 0,
+            expiresAt: new Date(Date.now() + 60_000),
+            consumedAt: null,
+        });
+
+        it("returns expired when no challenge exists", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(null);
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "ABC234",
+            });
+
+            expect(result).toEqual({ status: "expired" });
+        });
+
+        it("returns expired for a past-expiry challenge", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                ...validRow(),
+                expiresAt: new Date(Date.now() - 1_000),
+            });
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "ABC234",
+            });
+
+            expect(result).toEqual({ status: "expired" });
+        });
+
+        it("returns alreadyVerified for a consumed challenge even past expiry", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                ...validRow(),
+                consumedAt: new Date(),
+                expiresAt: new Date(Date.now() - 1_000),
+            });
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "ABC234",
+            });
+
+            expect(result).toEqual({
+                status: "alreadyVerified",
+                email: "user@test.com",
+            });
+            expect(identityRepository.confirmEmail).not.toHaveBeenCalled();
+            expect(emailVerificationRepository.consume).not.toHaveBeenCalled();
+        });
+
+        it("returns tooManyAttempts past the cap", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                ...validRow(),
+                attempts: 5,
+            });
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "ABC234",
+            });
+
+            expect(result).toEqual({ status: "tooManyAttempts" });
+        });
+
+        it("increments attempts and returns invalid on mismatch", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                validRow()
+            );
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "ZZZ999",
+            });
+
+            expect(result).toEqual({ status: "invalid" });
+            expect(
+                emailVerificationRepository.incrementAttempts
+            ).toHaveBeenCalledWith(GROUP_ID);
+            expect(identityRepository.confirmEmail).not.toHaveBeenCalled();
+        });
+
+        it("matches the code case-insensitively", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                validRow()
+            );
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "abc234",
+            });
+
+            expect(result.status).toBe("verified");
+        });
+
+        it("attaches the email and consumes on a correct code", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                validRow()
+            );
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "ABC234",
+            });
+
+            expect(result.status).toBe("verified");
+            if (result.status === "verified") {
+                expect(result.email).toBe("user@test.com");
+                expect(typeof result.verifiedAt).toBe("string");
+            }
+            expect(identityRepository.confirmEmail).toHaveBeenCalledWith(
+                GROUP_ID,
+                "user@test.com",
+                expect.anything()
+            );
+            expect(emailVerificationRepository.consume).toHaveBeenCalledWith(
+                GROUP_ID,
+                expect.anything()
+            );
+        });
+
+        it("returns conflict and writes nothing when the address is owned by another group", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                validRow()
+            );
+            identityRepository.confirmEmail.mockResolvedValue(false);
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "ABC234",
+            });
+
+            expect(result).toEqual({
+                status: "conflict",
+                email: "user@test.com",
+            });
+            expect(emailVerificationRepository.consume).not.toHaveBeenCalled();
+        });
+    });
+});
