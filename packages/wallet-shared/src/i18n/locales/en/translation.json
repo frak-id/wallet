@@ -607,6 +607,9 @@
                 "refreshDescription": "Keep your current recovery key and move its validity window, or replace it with a brand new one.",
                 "updateDatesAction": "Update validity dates",
                 "replaceKeyAction": "Create a new recovery key",
+                "deleteTitle": "Delete recovery",
+                "deleteDescription": "Turn recovery off completely. Your recovery key is disabled on-chain and your encrypted backup is deleted.",
+                "deleteAction": "Delete recovery options",
                 "testTitle": "Test your password",
                 "testDescription": "Check that you still remember your recovery password. It never leaves this device.",
                 "testPlaceholder": "Enter your password",
@@ -649,6 +652,31 @@
                 "success": {
                     "title": "Validity updated",
                     "description": "Your recovery validity dates are now updated on-chain.",
+                    "done": "Back to my profile"
+                }
+            },
+            "delete": {
+                "password": {
+                    "title": "Confirm your password",
+                    "description": "Enter your recovery password to confirm you want to delete recovery. It never leaves this device.",
+                    "placeholder": "Enter your password",
+                    "continue": "Continue",
+                    "invalid": "That password doesn't match your backup. Enter the correct password to delete recovery."
+                },
+                "confirm": {
+                    "title": "Delete recovery",
+                    "description": "This disables your recovery key on-chain and deletes your encrypted backup. This can't be undone — you'll have to set recovery up again from scratch.",
+                    "warning": "Once deleted, your current recovery key and backup stop working permanently. You can set up a new recovery anytime.",
+                    "authorise": "Delete recovery",
+                    "retry": "Try again",
+                    "failedDescription": "Something went wrong while deleting your recovery. You can try again.",
+                    "failed": "Recovery deletion failed.",
+                    "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+                    "cancelled": "Authorization was cancelled."
+                },
+                "success": {
+                    "title": "Recovery deleted",
+                    "description": "Your recovery key has been disabled on-chain and your encrypted backup has been deleted.",
                     "done": "Back to my profile"
                 }
             }

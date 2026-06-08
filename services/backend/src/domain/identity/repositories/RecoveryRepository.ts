@@ -29,4 +29,10 @@ export class RecoveryRepository {
             .returning();
         return result;
     }
+
+    async deleteByGroup(groupId: string): Promise<void> {
+        await db
+            .delete(recoveryBlobsTable)
+            .where(eq(recoveryBlobsTable.groupId, groupId));
+    }
 }

@@ -21,6 +21,7 @@ export namespace recoverySetupKey {
      */
     export const generateOptions = [base, "generate-options"] as const;
     export const saveBlob = [base, "save-blob"] as const;
+    export const deleteBlob = [base, "delete-blob"] as const;
     export const testPassword = [base, "test-password"] as const;
     export const setup = (address?: Hex) =>
         [base, "setup", address ?? "no-address"] as const;

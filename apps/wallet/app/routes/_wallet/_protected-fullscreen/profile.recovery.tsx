@@ -3,6 +3,7 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { RecoveryConfiguration } from "@/module/recovery-setup/component/Configuration";
+import { DeleteRecoveryFlow } from "@/module/recovery-setup/component/DeleteRecoveryFlow";
 import { RefreshDatesFlow } from "@/module/recovery-setup/component/RefreshDatesFlow";
 import { RecoverySetupFlow } from "@/module/recovery-setup/component/SetupFlow";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
@@ -14,7 +15,7 @@ export const Route = createFileRoute(
     component: ProfileRecovery,
 });
 
-type ConfiguredView = "config" | "dates" | "replace";
+type ConfiguredView = "config" | "dates" | "replace" | "delete";
 
 function ProfileRecovery() {
     const navigate = useNavigate();
@@ -69,11 +70,21 @@ function ProfileRecovery() {
         );
     }
 
+    if (view === "delete") {
+        return (
+            <DeleteRecoveryFlow
+                onAbort={backToConfig}
+                onCompleted={goToProfile}
+            />
+        );
+    }
+
     return (
         <RecoveryConfiguration
             onBack={goToProfile}
             onUpdateDates={() => setView("dates")}
             onReplaceKey={() => setView("replace")}
+            onDelete={() => setView("delete")}
         />
     );
 }

@@ -605,6 +605,9 @@
                 "refreshDescription": "Conservez votre clé de récupération actuelle et déplacez sa période de validité, ou remplacez-la par une toute nouvelle.",
                 "updateDatesAction": "Mettre à jour les dates de validité",
                 "replaceKeyAction": "Créer une nouvelle clé de récupération",
+                "deleteTitle": "Supprimer la récupération",
+                "deleteDescription": "Désactivez complètement la récupération. Votre clé de récupération est désactivée sur la blockchain et votre sauvegarde chiffrée est supprimée.",
+                "deleteAction": "Supprimer les options de récupération",
                 "testTitle": "Testez votre mot de passe",
                 "testDescription": "Vérifiez que vous vous souvenez de votre mot de passe de récupération. Il ne quitte jamais cet appareil.",
                 "testPlaceholder": "Saisissez votre mot de passe",
@@ -647,6 +650,31 @@
                 "success": {
                     "title": "Validité mise à jour",
                     "description": "Les dates de validité de votre récupération sont désormais mises à jour sur la blockchain.",
+                    "done": "Retour à mon profil"
+                }
+            },
+            "delete": {
+                "password": {
+                    "title": "Confirmez votre mot de passe",
+                    "description": "Saisissez votre mot de passe de récupération pour confirmer la suppression de la récupération. Il ne quitte jamais cet appareil.",
+                    "placeholder": "Saisissez votre mot de passe",
+                    "continue": "Continuer",
+                    "invalid": "Ce mot de passe ne correspond pas à votre sauvegarde. Saisissez le bon mot de passe pour supprimer la récupération."
+                },
+                "confirm": {
+                    "title": "Supprimer la récupération",
+                    "description": "Ceci désactive votre clé de récupération sur la blockchain et supprime votre sauvegarde chiffrée. Cette action est irréversible — vous devrez reconfigurer la récupération entièrement.",
+                    "warning": "Une fois supprimées, votre clé de récupération et votre sauvegarde actuelles cessent définitivement de fonctionner. Vous pouvez configurer une nouvelle récupération à tout moment.",
+                    "authorise": "Supprimer la récupération",
+                    "retry": "Réessayer",
+                    "failedDescription": "Une erreur est survenue lors de la suppression de votre récupération. Vous pouvez réessayer.",
+                    "failed": "Échec de la suppression de la récupération.",
+                    "cancelledDescription": "Vous avez annulé l'autorisation. Vous pouvez réessayer quand vous le souhaitez.",
+                    "cancelled": "L'autorisation a été annulée."
+                },
+                "success": {
+                    "title": "Récupération supprimée",
+                    "description": "Votre clé de récupération a été désactivée sur la blockchain et votre sauvegarde chiffrée a été supprimée.",
                     "done": "Retour à mon profil"
                 }
             }

@@ -128,6 +128,8 @@ export {
     RegisterTokenBodySchema,
 } from "./notificationTokenSchemas";
 export {
+    type DeleteRecoveryResponse,
+    DeleteRecoveryResponseSchema,
     type RecoveryBlobResponse,
     RecoveryBlobResponseSchema,
     type RecoveryStatusResponse,

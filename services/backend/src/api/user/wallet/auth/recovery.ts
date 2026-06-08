@@ -3,6 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { IdentityContext } from "../../../../domain/identity/context";
 import {
+    DeleteRecoveryResponseSchema,
     RecoveryBlobResponseSchema,
     RecoveryStatusResponseSchema,
     RequestRecoveryEmailBodySchema,
@@ -108,6 +109,34 @@ export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
                 401: t.String(),
                 404: t.String(),
                 200: SaveRecoveryResponseSchema,
+            },
+        }
+    )
+    .delete(
+        "/",
+        async ({ walletSession }) => {
+            if (walletSession.type === "ecdsa") {
+                return status(400, "Unsupported wallet type");
+            }
+            const group =
+                await IdentityContext.repositories.identity.findGroupByIdentity(
+                    { type: "wallet", value: walletSession.address }
+                );
+            if (!group) {
+                return status(404, "Wallet identity not found");
+            }
+
+            await IdentityContext.repositories.recovery.deleteByGroup(group.id);
+
+            return { status: "deleted" as const };
+        },
+        {
+            withWalletAuthent: true,
+            response: {
+                400: t.String(),
+                401: t.String(),
+                404: t.String(),
+                200: DeleteRecoveryResponseSchema,
             },
         }
     )

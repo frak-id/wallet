@@ -33,6 +33,18 @@ export const SaveRecoveryResponseSchema = t.Object({
 });
 export type SaveRecoveryResponse = Static<typeof SaveRecoveryResponseSchema>;
 
+/**
+ * Acknowledgement for a recovery blob deletion. Idempotent: returns `deleted`
+ * whether or not a blob existed for the group (the client only deletes after a
+ * successful on-chain disable, so a missing blob is a no-op, not an error).
+ */
+export const DeleteRecoveryResponseSchema = t.Object({
+    status: t.Literal("deleted"),
+});
+export type DeleteRecoveryResponse = Static<
+    typeof DeleteRecoveryResponseSchema
+>;
+
 export const RequestRecoveryEmailBodySchema = t.Object({
     email: t.String({ format: "email", maxLength: 320 }),
 });

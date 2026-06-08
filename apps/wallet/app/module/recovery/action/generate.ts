@@ -1,6 +1,12 @@
 import { addresses, kernelAddresses } from "@frak-labs/app-essentials";
 import type { GeneratedRecoveryData } from "@frak-labs/wallet-shared";
-import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
+import {
+    type Address,
+    encodeFunctionData,
+    type Hex,
+    toFunctionSelector,
+    zeroAddress,
+} from "viem";
 import {
     doAddPassKeyFnAbi,
     setExecutionAbi,
@@ -37,4 +43,29 @@ export async function generateRecoveryData({
         guardianAddress,
         setupTxData: txData,
     };
+}
+
+/**
+ * Disable recovery on-chain: re-run `setExecution` for the same selector with a
+ * zero executor so `getCurrentRecoveryOption` reads back `null` and the burner
+ * key can no longer add a passkey.
+ */
+export async function generateDisableRecoveryData(): Promise<{
+    setupTxData: Hex;
+}> {
+    const addPasskeySelector = toFunctionSelector(doAddPassKeyFnAbi);
+
+    const txData = encodeFunctionData({
+        abi: [setExecutionAbi],
+        functionName: "setExecution",
+        args: [
+            addPasskeySelector,
+            zeroAddress,
+            kernelAddresses.ecdsaValidator,
+            0,
+            0,
+            zeroAddress,
+        ],
+    });
+    return { setupTxData: txData };
 }

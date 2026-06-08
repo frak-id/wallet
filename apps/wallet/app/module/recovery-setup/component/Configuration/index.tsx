@@ -19,12 +19,15 @@ type RecoveryConfigurationProps = {
     onUpdateDates: () => void;
     /** Mint a fresh burner and replace the stored backup. */
     onReplaceKey: () => void;
+    /** Disable recovery on-chain and delete the stored backup. */
+    onDelete: () => void;
 };
 
 export function RecoveryConfiguration({
     onBack,
     onUpdateDates,
     onReplaceKey,
+    onDelete,
 }: RecoveryConfigurationProps) {
     const { t } = useTranslation();
     const formId = useId();
@@ -112,6 +115,24 @@ export function RecoveryConfiguration({
                     onClick={onReplaceKey}
                 >
                     {t("wallet.recoverySetup.config.replaceKeyAction")}
+                </Button>
+            </Stack>
+
+            <Stack space="s">
+                <Text variant="bodySmall" weight="medium">
+                    {t("wallet.recoverySetup.config.deleteTitle")}
+                </Text>
+                <Text variant="caption" color="tertiary">
+                    {t("wallet.recoverySetup.config.deleteDescription")}
+                </Text>
+                <Button
+                    type="button"
+                    variant="destructive"
+                    size="large"
+                    width="full"
+                    onClick={onDelete}
+                >
+                    {t("wallet.recoverySetup.config.deleteAction")}
                 </Button>
             </Stack>
 
