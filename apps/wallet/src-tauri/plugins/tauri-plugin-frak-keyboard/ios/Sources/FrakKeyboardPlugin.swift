@@ -18,19 +18,25 @@ import WebKit
 ///     interceptable.
 ///
 /// So the fix is two-part:
-///   1. Resize the WKWebView frame to the visible area on `keyboardWillChangeFrame`
-///      so `window.innerHeight` matches `visualViewport.height`. This forces the
-///      reveal down the document-scroll path (and removes the visual-viewport
-///      shift / the gap).
+///   1. Snap the WKWebView frame to the visible area on `keyboardWillChangeFrame`
+///      (not animated) so `window.innerHeight` matches `visualViewport.height`. This
+///      forces the reveal down the document-scroll path (and removes the
+///      visual-viewport shift / the gap). The frame is intentionally NOT animated:
+///      WKWebView does not relayout `dvh` continuously through a frame animation, so
+///      the web would just snap to the end size.
 ///   2. Pin `scrollView.contentOffset` to zero via KVO while the keyboard is up,
 ///      so the reveal scroll is reset synchronously (before paint) and never
 ///      shows. The wallet document never scrolls at the page level — all real
 ///      scrolling is the inner `main` overflow container — so pinning the page
 ///      scroll view to zero is safe.
 ///
-/// `--viewport-height` is also written so the shell (`height: var(--viewport-height,
-/// 100dvh)`) shrinks deterministically. The JS hook in
-/// `apps/wallet/app/utils/keyboardInset.ts` early-returns on iOS.
+/// The visible keyboard animation lives on the web side: `--viewport-height` is set
+/// to the visible height and the shell transitions to it over `--kb-anim-dur` (the
+/// keyboard's real duration, also pushed here) — see appShell.css.ts. Frame and
+/// shell interpolate the same range over the same duration, so the footer rides the
+/// keyboard top. `--keyboard-open` (0/1) is also pushed (nav-bar inset / auth
+/// layout). The JS hook in `apps/wallet/app/utils/keyboardInset.ts` early-returns
+/// on iOS.
 class FrakKeyboardPlugin: Plugin {
     private weak var webview: WKWebView?
     private var pinScrollToZero = false
@@ -95,35 +101,48 @@ class FrakKeyboardPlugin: Plugin {
 
         let keyboardInView = webview.convert(endFrame, from: nil)
         let overlap = max(0, webview.bounds.maxY - keyboardInView.minY)
-        apply(overlap: overlap)
+        apply(overlap: overlap, info: info)
     }
 
     @objc private func keyboardWillHide(_ note: Notification) {
-        apply(overlap: 0)
+        apply(overlap: 0, info: note.userInfo)
     }
 
-    private func apply(overlap: CGFloat) {
+    private func apply(overlap: CGFloat, info: [AnyHashable: Any]?) {
         guard let webview = webview, let superview = webview.superview else { return }
         let bounds = superview.bounds
         let availableHeight = max(0, bounds.height - overlap)
 
         pinScrollToZero = overlap > 0
 
-        // Match the layout viewport to the visible area (see class doc).
+        // Snap the WKWebView frame to the visible area *immediately* (not animated).
+        // This makes `innerHeight` match the visible area before the focus reveal
+        // fires, routing the reveal to the pinnable document scroll (see class doc).
+        // The frame is NOT animated: WKWebView does not relayout `dvh` continuously
+        // through a frame animation — the web side would just snap to the end frame.
+        // The visible animation lives on the web instead (`--viewport-height` below).
         webview.frame = CGRect(
             x: bounds.minX, y: bounds.minY, width: bounds.width, height: availableHeight)
 
-        // Belt-and-suspenders: reset the page scroll now too (the reveal may have
-        // already fired before this notification).
         if pinScrollToZero, webview.scrollView.contentOffset != .zero {
             webview.scrollView.setContentOffset(.zero, animated: false)
         }
 
+        // Drive the shell height on the web side, transitioned over the keyboard's
+        // real duration (appShell.css.ts reads `--kb-anim-dur`). The keyboard frame
+        // and `--viewport-height` interpolate the same range over the same duration,
+        // so the footer rides the keyboard top — content below it is hidden behind
+        // the keyboard. `keyboardWillChangeFrame` posts just before the keyboard
+        // animates, so the transition starts ~in step with it.
+        let durationMs = Int(
+            ((info?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double) ?? 0.25) * 1000)
         let script =
             overlap > 0
-            ? "document.documentElement.style.setProperty('--viewport-height','\(Int(availableHeight))px');"
+            ? "document.documentElement.style.setProperty('--kb-anim-dur','\(durationMs)ms');"
+                + "document.documentElement.style.setProperty('--viewport-height','\(Int(availableHeight))px');"
                 + "document.documentElement.style.setProperty('--keyboard-open','1');"
-            : "document.documentElement.style.removeProperty('--viewport-height');"
+            : "document.documentElement.style.setProperty('--kb-anim-dur','\(durationMs)ms');"
+                + "document.documentElement.style.removeProperty('--viewport-height');"
                 + "document.documentElement.style.setProperty('--keyboard-open','0');"
         webview.evaluateJavaScript(script, completionHandler: nil)
     }
