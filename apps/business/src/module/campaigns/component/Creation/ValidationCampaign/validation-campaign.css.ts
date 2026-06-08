@@ -1,7 +1,22 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const validationCampaignMessage = style({
-    fontWeight: brand.typography.fontWeight.semiBold,
-    color: "#0ddb84", // TODO: token
+const rowBase = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: alias.spacing.m,
+    width: "100%",
+} as const;
+
+/** Single-line detail row: fixed 49px tall, content vertically centered. */
+export const row = style({
+    ...rowBase,
+    minHeight: "49px",
+});
+
+/** Stacked-value row (budget amount, rewards): grows with 16px top/bottom. */
+export const rowTall = style({
+    ...rowBase,
+    paddingBlock: alias.spacing.m,
 });

@@ -66,8 +66,6 @@ export const footer = style({
     alignItems: "center",
     gap: alias.spacing.s,
     padding: `${alias.spacing.l} ${alias.spacing.xxl}`,
-    borderTop: `1px solid ${vars.border.subtle}`,
-    // Slight upward fade so scrolling content dissolves under the bar.
     background: `linear-gradient(to top, ${vars.surface.background2} 60%, transparent)`,
     "@media": {
         "(max-width: 900px)": {

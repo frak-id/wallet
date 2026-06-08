@@ -58,6 +58,7 @@ export { LogoFrakBadge } from "./LogoFrakBadge";
 export { LogoFrakWithName } from "./LogoFrakWithName";
 export { MobileIcon } from "./MobileIcon";
 export { MoreVerticalIcon } from "./MoreVerticalIcon";
+export { NumberBadgeIcon } from "./NumberBadgeIcon";
 export { PauseIcon } from "./PauseIcon";
 export { PencilIcon } from "./PencilIcon";
 export { PeopleFilledIcon } from "./PeopleFilledIcon";

@@ -1,57 +1,56 @@
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-} from "@frak-labs/design-system/components/Card";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { BankIcon, CalendarIcon } from "@frak-labs/design-system/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { useMemo } from "react";
-import { useForm } from "react-hook-form";
-import { Actions } from "@/module/campaigns/component/Actions";
-import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
-import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
+import { useTranslation } from "react-i18next";
+import {
+    draftToRewardForm,
+    splitTargetCpa,
+} from "@/module/campaigns/component/Creation/RewardCampaign/utils";
+import { WizardStep } from "@/module/campaigns/component/Creation/WizardStep";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
+import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { Head } from "@/module/common/component/Head";
-import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import { Form, FormLayout } from "@/module/forms/Form";
-import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
+import { formatDate } from "@/module/common/utils/formatDate";
+import {
+    type CampaignDraft,
+    campaignStore,
+    getStartDate,
+} from "@/stores/campaignStore";
+import { CampaignLaunched } from "./CampaignLaunched";
 import * as styles from "./validation-campaign.css";
 
+const FORM_ID = "campaign-validation-form";
+const EMPTY = "—";
+
 export function ValidationCampaign() {
-    const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const isDemoMode = useIsDemoMode();
-    const merchantId = useActiveMerchantId();
+    const queryClient = useQueryClient();
 
     const draft = campaignStore((s) => s.draft);
     const isSuccess = campaignStore((s) => s.isSuccess);
     const setSuccess = campaignStore((s) => s.setSuccess);
-    const reset = campaignStore((s) => s.reset);
 
     const saveCampaign = useSaveCampaign();
     const { mutateAsync: publishCampaign } = useStatusTransition();
 
-    const form = useForm<CampaignDraft>({
-        values: useMemo(() => draft, [draft]),
-    });
-
-    const { mutate: saveAndPublish, isPending } = useMutation({
+    const { mutate: publish, isPending } = useMutation({
         mutationKey: ["campaign", "save-publish"],
-        mutationFn: async (values: CampaignDraft) => {
+        mutationFn: async () => {
             if (isDemoMode) {
                 await new Promise((r) => setTimeout(r, 1000));
                 return;
             }
-
-            const saved = await saveCampaign.mutateAsync(values);
-
+            const saved = await saveCampaign.mutateAsync(draft);
             if (!saved?.id) throw new Error("Failed to save campaign");
-
             await publishCampaign({
-                merchantId: values.merchantId,
+                merchantId: draft.merchantId,
                 campaignId: saved.id,
                 action: "publish",
             });
@@ -62,63 +61,258 @@ export function ValidationCampaign() {
         },
     });
 
-    function handleSubmit(values: CampaignDraft) {
-        if (isSuccess) {
-            reset();
-            navigate({
-                to: "/m/$merchantId/campaigns/list",
-                params: { merchantId },
-            });
-            return;
-        }
-
-        saveAndPublish(values);
+    if (isSuccess) {
+        return <CampaignLaunched />;
     }
-
-    const handleSaveDraft = form.handleSubmit(async (values: CampaignDraft) => {
-        await saveCampaign.mutateAsync(values);
-    });
 
     const isLoading = isPending || saveCampaign.isPending;
 
     return (
-        <FormLayout>
-            <Head
-                title={{ content: "Campaign Validation", size: "small" }}
-                rightSection={
-                    <ButtonCancel
-                        onClick={() => form.reset(draft)}
-                        disabled={isSuccess || isLoading}
-                    />
-                }
-            />
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)}>
-                    <Stack space="l">
-                        {!isSuccess && <FormCheck />}
-                        {isSuccess && <SuccessMessage />}
-                        <Actions
-                            isLoading={isLoading}
-                            onSaveDraft={handleSaveDraft}
-                            isSaving={saveCampaign.isPending}
-                            isSaved={saveCampaign.isSuccess}
-                        />
-                    </Stack>
-                </form>
-            </Form>
-        </FormLayout>
+        <WizardStep
+            stepKey="validation"
+            formId={FORM_ID}
+            isValid
+            isPending={isLoading}
+            onSaveDraft={() => saveCampaign.mutate(draft)}
+        >
+            <form
+                id={FORM_ID}
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    publish();
+                }}
+            >
+                <Card radius="m" variant="elevated" padding="none">
+                    <Box paddingX="m">
+                        <SummaryRows draft={draft} />
+                    </Box>
+                </Card>
+            </form>
+        </WizardStep>
     );
 }
 
-function SuccessMessage() {
+function SummaryRow({
+    label,
+    children,
+    tall,
+}: {
+    label: string;
+    children: ReactNode;
+    tall?: boolean;
+}) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Campaign published</CardTitle>
-            </CardHeader>
-            <p className={styles.validationCampaignMessage}>
-                Your campaign was successfully created and published!
-            </p>
-        </Card>
+        <div className={tall ? styles.rowTall : styles.row}>
+            <Text variant="bodySmall" weight="medium" color="secondary">
+                {label}
+            </Text>
+            {children}
+        </div>
     );
+}
+
+/** Single right-aligned value. `muted` renders the disabled "—" placeholder. */
+function Value({ children, muted }: { children: ReactNode; muted?: boolean }) {
+    return (
+        <Text
+            variant="bodySmall"
+            weight="medium"
+            color={muted ? "disabled" : undefined}
+            align="right"
+        >
+            {children}
+        </Text>
+    );
+}
+
+function SummaryRows({ draft }: { draft: CampaignDraft }) {
+    const { t } = useTranslation();
+    const reward = useMemo(() => draftToRewardForm(draft), [draft]);
+
+    const goal = draft.metadata.goal;
+    const territories = draft.metadata.territories ?? [];
+    const specialCategories = draft.metadata.specialCategories ?? [];
+    const startDate = formatIso(getStartDate(draft.rule));
+    const endDate = formatIso(draft.expiresAt);
+    const trigger = draft.rule.trigger;
+
+    const budget = draft.budgetConfig[0];
+    const amount = budget?.amount ?? 0;
+    const period = budgetPeriodKey(budget?.durationInSeconds);
+    const { rewardsPool, frakCommission } = splitTargetCpa(amount);
+
+    const scheduleText = `${
+        startDate ?? t("campaigns.create.validation.startImmediately")
+    } · ${endDate ?? t("campaigns.create.validation.noEndDate")}`;
+
+    return (
+        <>
+            <SummaryRow label={t("campaigns.create.validation.campaignTitle")}>
+                <Value>{draft.name}</Value>
+            </SummaryRow>
+
+            <SummaryRow label={t("campaigns.create.validation.goal")}>
+                {goal ? (
+                    <Value>
+                        {t(
+                            `campaigns.create.goals.options.${goal}.title` as "campaigns.create.goals.options.sales.title"
+                        )}
+                    </Value>
+                ) : (
+                    <Value muted>{EMPTY}</Value>
+                )}
+            </SummaryRow>
+
+            <SummaryRow label={t("campaigns.create.validation.territories")}>
+                {territories.length > 0 ? (
+                    <Value>{territories.join(", ")}</Value>
+                ) : (
+                    <Value muted>{EMPTY}</Value>
+                )}
+            </SummaryRow>
+
+            <SummaryRow
+                label={t("campaigns.create.validation.specialCategories")}
+            >
+                {specialCategories.length > 0 ? (
+                    <Value>{specialCategories.join(", ")}</Value>
+                ) : (
+                    <Value muted>{EMPTY}</Value>
+                )}
+            </SummaryRow>
+
+            <SummaryRow label={t("campaigns.create.validation.schedule")}>
+                <Inline space="xxs" alignY="center">
+                    <CalendarIcon width={16} height={16} />
+                    <Value>{scheduleText}</Value>
+                </Inline>
+            </SummaryRow>
+
+            <SummaryRow label={t("campaigns.create.validation.trigger")}>
+                {trigger ? (
+                    <Value>
+                        {t(`campaigns.create.reward.trigger.${trigger}`)}
+                    </Value>
+                ) : (
+                    <Value muted>{EMPTY}</Value>
+                )}
+            </SummaryRow>
+
+            <SummaryRow label={t("campaigns.create.validation.budgetPeriod")}>
+                <Value>{t(`campaigns.create.budget.period.${period}`)}</Value>
+            </SummaryRow>
+
+            <SummaryRow
+                label={t("campaigns.create.validation.budgetAmount")}
+                tall
+            >
+                <Stack space="xxs" align="right">
+                    <Inline space="xxs" alignY="center">
+                        <BankIcon width={16} height={16} />
+                        <Value>{`${amount} EUR`}</Value>
+                    </Inline>
+                    <Text variant="caption" weight="medium" color="tertiary">
+                        {t("campaigns.create.validation.budgetBreakdown", {
+                            distributed: rewardsPool,
+                            frak: frakCommission,
+                        })}
+                    </Text>
+                </Stack>
+            </SummaryRow>
+
+            <RewardRows reward={reward} />
+
+            <SummaryRow label={t("campaigns.create.validation.rewardLockup")}>
+                {reward.lockupDays ? (
+                    <Value>
+                        {t("campaigns.create.validation.lockupValue", {
+                            count: Number(reward.lockupDays),
+                        })}
+                    </Value>
+                ) : (
+                    <Value muted>{EMPTY}</Value>
+                )}
+            </SummaryRow>
+        </>
+    );
+}
+
+/** Target CPA + Rewards rows. Tiered is static (no persisted reward) → "—". */
+function RewardRows({
+    reward,
+}: {
+    reward: ReturnType<typeof draftToRewardForm>;
+}) {
+    const { t } = useTranslation();
+
+    if (reward.model === "fixed" || reward.model === "percentage") {
+        const isPercent = reward.model === "percentage";
+        const unit = isPercent ? "%" : "€";
+        const cpa = isPercent ? reward.targetCpaPercent : reward.targetCpa;
+        const ambassador = isPercent
+            ? reward.ambassadorPercent
+            : reward.ambassadorAmount;
+        const referee = isPercent
+            ? reward.refereePercent
+            : reward.refereeAmount;
+        const { frakCommission } = splitTargetCpa(cpa);
+
+        return (
+            <>
+                <SummaryRow label={t("campaigns.create.validation.targetCpa")}>
+                    <Value>{`${cpa}${unit}`}</Value>
+                </SummaryRow>
+                <SummaryRow
+                    label={t("campaigns.create.validation.rewards")}
+                    tall
+                >
+                    <Stack space="xxs" align="right">
+                        <Value>
+                            {t("campaigns.create.validation.ambassador", {
+                                value: `${ambassador}${unit}`,
+                            })}
+                        </Value>
+                        <Value>
+                            {t("campaigns.create.validation.referee", {
+                                value: `${referee}${unit}`,
+                            })}
+                        </Value>
+                        <Text
+                            variant="caption"
+                            weight="medium"
+                            color="tertiary"
+                        >
+                            {t("campaigns.create.validation.frak", {
+                                value: `${frakCommission}${unit}`,
+                            })}
+                        </Text>
+                    </Stack>
+                </SummaryRow>
+            </>
+        );
+    }
+
+    return (
+        <>
+            <SummaryRow label={t("campaigns.create.validation.targetCpa")}>
+                <Value muted>{EMPTY}</Value>
+            </SummaryRow>
+            <SummaryRow label={t("campaigns.create.validation.rewards")}>
+                <Value muted>{EMPTY}</Value>
+            </SummaryRow>
+        </>
+    );
+}
+
+/** Format an ISO date string for display, or `undefined` when unset. */
+function formatIso(iso?: string) {
+    return iso ? formatDate(new Date(iso)) : undefined;
+}
+
+/** Inverse of `getCapPeriod`: budget duration in seconds → period i18n key. */
+function budgetPeriodKey(duration: number | null | undefined) {
+    if (duration === getCapPeriod("daily")) return "daily";
+    if (duration === getCapPeriod("weekly")) return "weekly";
+    if (duration === getCapPeriod("monthly")) return "monthly";
+    return "global";
 }

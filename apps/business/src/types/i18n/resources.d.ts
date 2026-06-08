@@ -286,6 +286,23 @@ export default interface Resources {
                         subtitle: "Review all settings before publishing. All fields are read-only at this stage.";
                     };
                 };
+                success: {
+                    bestPractices: "View all the best practices";
+                    notifyBody: "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign — they can start sharing immediately.";
+                    notifyTitle: "Frak ambassadors will be notified";
+                    subtitle: "‘{{name}}’ is now live.";
+                    tip1Desc: "Add a sharing CTA right on the product page.";
+                    tip1Title: "Product Page";
+                    tip2Desc: "Add the sharing banner right after checkout.";
+                    tip2Title: "Order confirmation page";
+                    tip3Desc: "Announce the campaign to your existing customer base.";
+                    tip3Title: "Newsletter";
+                    tipsSubtitle: "The most effective campaigns use multiple touchpoints. Make sure you're activating all the levers:";
+                    tipsTitle: "Maximise your results";
+                    title: "Campaign launched!";
+                    viewAllCampaigns: "View all campaigns";
+                    viewPerformance: "View performance";
+                };
                 territory: {
                     card: {
                         description: "Choose one or several countries where your campaign will be displayed.";
@@ -317,6 +334,26 @@ export default interface Resources {
                             };
                         };
                     };
+                };
+                validation: {
+                    ambassador: "Ambassador: {{value}}";
+                    budgetAmount: "Budget amount";
+                    budgetBreakdown: "Distributed: {{distributed}}€ · Frak: {{frak}}€";
+                    budgetPeriod: "Budget period";
+                    campaignTitle: "Campaign title";
+                    frak: "Frak: {{value}}";
+                    goal: "Campaign goal";
+                    lockupValue: "{{count}} days";
+                    noEndDate: "No end date";
+                    referee: "Referee: {{value}}";
+                    rewardLockup: "Reward lockup";
+                    rewards: "Rewards";
+                    schedule: "Schedule";
+                    specialCategories: "Special categories";
+                    startImmediately: "Start immediately";
+                    targetCpa: "Target CPA";
+                    territories: "Territories";
+                    trigger: "Trigger";
                 };
             };
             details: {

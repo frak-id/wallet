@@ -1,6 +1,6 @@
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import type { StepperStep } from "@frak-labs/design-system/components/Stepper";
-import { ArrowLeftIcon } from "@frak-labs/design-system/icons";
+import { ArrowLeftIcon, CheckIcon } from "@frak-labs/design-system/icons";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,7 +18,7 @@ import {
 } from "../wizardSteps";
 
 type WizardStepProps = {
-    /** Which of the 7 steps this page represents. */
+    /** Which wizard step this page represents. */
     stepKey: WizardStepKey;
     /** id of the `<form>` the sticky Continue/Publish button submits. */
     formId: string;
@@ -105,6 +105,11 @@ export function WizardStep({
                     size="large"
                     loading={isPending}
                     disabled={!isValid || isPending}
+                    rightIcon={
+                        lastStep ? (
+                            <CheckIcon width={16} height={16} />
+                        ) : undefined
+                    }
                 >
                     {lastStep
                         ? t("campaigns.create.actions.publish")
