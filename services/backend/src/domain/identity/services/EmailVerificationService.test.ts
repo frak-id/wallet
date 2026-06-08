@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+// Same relative path the service imports (not the alias, which won't resolve here).
+import { resendClient } from "../../../infrastructure/integrations/email";
 import type { EmailVerificationRepository } from "../repositories/EmailVerificationRepository";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
-import type { EmailSender } from "./EmailSender";
 import { EmailVerificationService } from "./EmailVerificationService";
 
 vi.mock("@backend-infrastructure", () => ({
@@ -11,11 +12,12 @@ vi.mock("@backend-infrastructure", () => ({
     db: { transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb({})) },
 }));
 
-vi.mock("@backend-infrastructure/integrations/email", () => ({
+vi.mock("../../../infrastructure/integrations/email", () => ({
     buildVerificationEmail: vi.fn(() => ({
         subject: "Verify your email",
         html: "<html></html>",
     })),
+    resendClient: { send: vi.fn() },
 }));
 
 const GROUP_ID = "group-1";
@@ -39,27 +41,23 @@ const createIdentityRepository = () =>
     }) as unknown as IdentityRepository &
         Record<string, ReturnType<typeof vi.fn>>;
 
-const createEmailSender = () =>
-    ({ send: vi.fn(async () => ({ id: "msg-1" })) }) as unknown as EmailSender &
-        Record<string, ReturnType<typeof vi.fn>>;
-
 describe("EmailVerificationService", () => {
     let emailVerificationRepository: ReturnType<
         typeof createEmailVerificationRepository
     >;
     let identityRepository: ReturnType<typeof createIdentityRepository>;
-    let emailSender: ReturnType<typeof createEmailSender>;
     let service: EmailVerificationService;
 
     beforeEach(() => {
+        vi.mocked(resendClient.send).mockReset().mockResolvedValue({
+            id: "msg-1",
+        });
         process.env.FRAK_WALLET_URL = "https://wallet.test";
         emailVerificationRepository = createEmailVerificationRepository();
         identityRepository = createIdentityRepository();
-        emailSender = createEmailSender();
         service = new EmailVerificationService(
             emailVerificationRepository as unknown as EmailVerificationRepository,
-            identityRepository as unknown as IdentityRepository,
-            emailSender as unknown as EmailSender
+            identityRepository as unknown as IdentityRepository
         );
     });
 
@@ -135,7 +133,7 @@ describe("EmailVerificationService", () => {
                     code: expect.stringMatching(CODE_PATTERN),
                 })
             );
-            expect(emailSender.send).toHaveBeenCalledWith(
+            expect(resendClient.send).toHaveBeenCalledWith(
                 expect.objectContaining({ to: "user@test.com" })
             );
         });
@@ -146,7 +144,9 @@ describe("EmailVerificationService", () => {
                 verifiedAt: null,
             });
             emailVerificationRepository.findByGroup.mockResolvedValue(null);
-            emailSender.send.mockRejectedValue(new Error("resend down"));
+            vi.mocked(resendClient.send).mockRejectedValue(
+                new Error("resend down")
+            );
 
             await expect(
                 service.sendCode({ groupId: GROUP_ID })
@@ -169,7 +169,7 @@ describe("EmailVerificationService", () => {
                 expect(result.retryAfterSec).toBeLessThanOrEqual(30);
             }
             expect(emailVerificationRepository.upsert).not.toHaveBeenCalled();
-            expect(emailSender.send).not.toHaveBeenCalled();
+            expect(resendClient.send).not.toHaveBeenCalled();
         });
 
         it("sends a code to a new address without attaching it (rotation)", async () => {
@@ -188,7 +188,7 @@ describe("EmailVerificationService", () => {
                     code: expect.stringMatching(CODE_PATTERN),
                 })
             );
-            expect(emailSender.send).toHaveBeenCalledWith(
+            expect(resendClient.send).toHaveBeenCalledWith(
                 expect.objectContaining({ to: "new@test.com" })
             );
             expect(identityRepository.confirmEmail).not.toHaveBeenCalled();
@@ -206,7 +206,7 @@ describe("EmailVerificationService", () => {
             const result = await service.sendCode({ groupId: GROUP_ID });
 
             expect(result).toEqual({ status: "sent" });
-            expect(emailSender.send).toHaveBeenCalledWith(
+            expect(resendClient.send).toHaveBeenCalledWith(
                 expect.objectContaining({ to: "rotating@test.com" })
             );
             expect(identityRepository.findLinkedEmail).not.toHaveBeenCalled();

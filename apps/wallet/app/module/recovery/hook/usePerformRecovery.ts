@@ -1,4 +1,5 @@
 import {
+    currentViemClient,
     getPimlicoClient,
     getPimlicoTransport,
 } from "@frak-labs/wallet-shared";
@@ -14,6 +15,7 @@ import {
     toHex,
 } from "viem";
 import { createBundlerClient } from "viem/account-abstraction";
+import { waitForTransactionReceipt } from "viem/actions";
 import { useClient } from "wagmi";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
@@ -93,11 +95,22 @@ export function usePerformRecovery() {
                 ],
             });
 
-            // Then send the recovery transaction and return the tx hash
-            return await accountClient.sendTransaction({
+            // Send the recovery transaction. `sendTransaction` already waits
+            // for the userOp to be included, so the tx hash points at a mined tx.
+            const txHash = await accountClient.sendTransaction({
                 to: walletAddress,
                 data: fnData,
             });
+
+            // Wait for confirmations before returning so the backend claim
+            // (/auth/recover), which reads the passkey back from the on-chain
+            // validator, can't race ahead of inclusion.
+            await waitForTransactionReceipt(currentViemClient, {
+                hash: txHash,
+                confirmations: 8,
+            });
+
+            return txHash;
         },
     });
 

@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Same relative path the service imports (not the alias, which won't resolve here).
-import { buildRecoveryEmail } from "../../../infrastructure/integrations/email";
+import {
+    buildRecoveryEmail,
+    resendClient,
+} from "../../../infrastructure/integrations/email";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
 import type { RecoveryRepository } from "../repositories/RecoveryRepository";
-import type { EmailSender } from "./EmailSender";
 import { RecoveryEmailService } from "./RecoveryEmailService";
 
 vi.mock("@backend-infrastructure", () => ({
@@ -15,6 +17,7 @@ vi.mock("../../../infrastructure/integrations/email", () => ({
         subject: "Recover your wallet",
         html: "<html></html>",
     })),
+    resendClient: { send: vi.fn() },
 }));
 
 const GROUP_ID = "group-1";
@@ -28,10 +31,6 @@ const createRecoveryRepository = () =>
     ({ findByGroup: vi.fn() }) as unknown as RecoveryRepository &
         Record<string, ReturnType<typeof vi.fn>>;
 
-const createEmailSender = () =>
-    ({ send: vi.fn(async () => ({ id: "msg-1" })) }) as unknown as EmailSender &
-        Record<string, ReturnType<typeof vi.fn>>;
-
 const verifiedEmailNode = () => ({
     groupId: GROUP_ID,
     identityValue: EMAIL,
@@ -40,49 +39,43 @@ const verifiedEmailNode = () => ({
     verifiedAt: new Date(),
 });
 
-// The service awaits a fixed 500ms throttle before doing any work, so each call
-// is driven to completion by flushing fake timers + the microtasks behind them.
-const runRequest = async (service: RecoveryEmailService, email: string) => {
-    const promise = service.requestRecoveryEmail(email);
-    await vi.runAllTimersAsync();
-    await promise;
-};
-
 describe("RecoveryEmailService", () => {
     let identityRepository: ReturnType<typeof createIdentityRepository>;
     let recoveryRepository: ReturnType<typeof createRecoveryRepository>;
-    let emailSender: ReturnType<typeof createEmailSender>;
     let service: RecoveryEmailService;
 
     beforeEach(() => {
-        vi.useFakeTimers();
+        // `Bun.sleep` (the request throttle) is absent from the Node test
+        // runtime, so stub the global to a no-op resolved promise.
+        vi.stubGlobal("Bun", { sleep: vi.fn().mockResolvedValue(undefined) });
         vi.mocked(buildRecoveryEmail).mockClear();
+        vi.mocked(resendClient.send).mockReset().mockResolvedValue({
+            id: "msg-1",
+        });
         process.env.FRAK_WALLET_URL = "https://wallet.test";
         identityRepository = createIdentityRepository();
         recoveryRepository = createRecoveryRepository();
-        emailSender = createEmailSender();
         service = new RecoveryEmailService(
             identityRepository as unknown as IdentityRepository,
-            recoveryRepository as unknown as RecoveryRepository,
-            emailSender as unknown as EmailSender
+            recoveryRepository as unknown as RecoveryRepository
         );
     });
 
     afterEach(() => {
-        vi.useRealTimers();
+        vi.unstubAllGlobals();
     });
 
     it("mails the blob + deeplink when the email is verified and recoverable", async () => {
         identityRepository.findEmailNode.mockResolvedValue(verifiedEmailNode());
         recoveryRepository.findByGroup.mockResolvedValue({ blob: "blob-xyz" });
 
-        await runRequest(service, EMAIL);
+        await service.requestRecoveryEmail(EMAIL);
 
         expect(buildRecoveryEmail).toHaveBeenCalledWith({
             blob: "blob-xyz",
             link: "https://wallet.test/recovery#blob=blob-xyz",
         });
-        expect(emailSender.send).toHaveBeenCalledWith(
+        expect(resendClient.send).toHaveBeenCalledWith(
             expect.objectContaining({ to: EMAIL })
         );
     });
@@ -90,10 +83,10 @@ describe("RecoveryEmailService", () => {
     it("no-ops when the email has no identity node", async () => {
         identityRepository.findEmailNode.mockResolvedValue(null);
 
-        await runRequest(service, EMAIL);
+        await service.requestRecoveryEmail(EMAIL);
 
         expect(recoveryRepository.findByGroup).not.toHaveBeenCalled();
-        expect(emailSender.send).not.toHaveBeenCalled();
+        expect(resendClient.send).not.toHaveBeenCalled();
     });
 
     it("no-ops when the email node is unlinked (retired)", async () => {
@@ -102,10 +95,10 @@ describe("RecoveryEmailService", () => {
             unlinkedAt: new Date(),
         });
 
-        await runRequest(service, EMAIL);
+        await service.requestRecoveryEmail(EMAIL);
 
         expect(recoveryRepository.findByGroup).not.toHaveBeenCalled();
-        expect(emailSender.send).not.toHaveBeenCalled();
+        expect(resendClient.send).not.toHaveBeenCalled();
     });
 
     it("no-ops when the email node is not verified", async () => {
@@ -114,26 +107,30 @@ describe("RecoveryEmailService", () => {
             verifiedAt: null,
         });
 
-        await runRequest(service, EMAIL);
+        await service.requestRecoveryEmail(EMAIL);
 
         expect(recoveryRepository.findByGroup).not.toHaveBeenCalled();
-        expect(emailSender.send).not.toHaveBeenCalled();
+        expect(resendClient.send).not.toHaveBeenCalled();
     });
 
     it("no-ops when the group has no stored recovery blob", async () => {
         identityRepository.findEmailNode.mockResolvedValue(verifiedEmailNode());
         recoveryRepository.findByGroup.mockResolvedValue(null);
 
-        await runRequest(service, EMAIL);
+        await service.requestRecoveryEmail(EMAIL);
 
-        expect(emailSender.send).not.toHaveBeenCalled();
+        expect(resendClient.send).not.toHaveBeenCalled();
     });
 
     it("swallows send failures so existence is never leaked", async () => {
         identityRepository.findEmailNode.mockResolvedValue(verifiedEmailNode());
         recoveryRepository.findByGroup.mockResolvedValue({ blob: "blob-xyz" });
-        emailSender.send.mockRejectedValue(new Error("resend down"));
+        vi.mocked(resendClient.send).mockRejectedValue(
+            new Error("resend down")
+        );
 
-        await expect(runRequest(service, EMAIL)).resolves.toBeUndefined();
+        await expect(
+            service.requestRecoveryEmail(EMAIL)
+        ).resolves.toBeUndefined();
     });
 });

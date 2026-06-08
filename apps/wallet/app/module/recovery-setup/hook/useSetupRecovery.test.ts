@@ -16,6 +16,10 @@ vi.mock("wagmi", () => ({
     useSendTransaction: vi.fn(),
 }));
 
+vi.mock("viem/actions", () => ({
+    waitForTransactionReceipt: vi.fn().mockResolvedValue({}),
+}));
+
 describe("useSetupRecovery", () => {
     const mockAddress = "0x1234567890123456789012345678901234567890" as Hex;
     const mockTxHash =
@@ -137,6 +141,52 @@ describe("useSetupRecovery", () => {
         });
 
         expect(invalidateQueries).toHaveBeenCalled();
+    });
+
+    test("should wait for tx confirmations before invalidating", async ({
+        queryWrapper,
+    }) => {
+        const { useConnection, useSendTransaction } = await import("wagmi");
+        const { waitForTransactionReceipt } = await import("viem/actions");
+
+        const sendTransactionAsync = vi.fn().mockResolvedValue(mockTxHash);
+
+        vi.mocked(useConnection).mockReturnValue({
+            address: mockAddress,
+        } as any);
+        vi.mocked(useSendTransaction).mockReturnValue({
+            mutateAsync: sendTransactionAsync,
+        } as any);
+
+        const order: string[] = [];
+        vi.mocked(waitForTransactionReceipt).mockImplementation(async () => {
+            order.push("wait");
+            return {} as any;
+        });
+        const invalidateQueries = vi
+            .spyOn(queryWrapper.client, "invalidateQueries")
+            .mockImplementation(async () => {
+                order.push("invalidate");
+            });
+
+        const { result } = renderHook(() => useSetupRecovery(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.setupRecoveryAsync({
+            setupTxData: mockSetupTxData,
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(waitForTransactionReceipt).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ hash: mockTxHash, confirmations: 8 })
+        );
+        expect(invalidateQueries).toHaveBeenCalled();
+        expect(order).toEqual(["wait", "invalidate"]);
     });
 
     test("should handle transaction failure", async ({ queryWrapper }) => {
