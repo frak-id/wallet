@@ -14,11 +14,17 @@ export const shellContainer = style({
     position: "relative",
     display: "flex",
     flexDirection: "column",
-    // `--viewport-height` is mirrored from `window.visualViewport.height` by
-    // `initKeyboardInset` on Tauri so the shell shrinks when the soft keyboard
-    // opens (WKWebView and edge-to-edge Android WebView do not honor `dvh` or
-    // `adjustResize`). Falls back to `100dvh` everywhere else.
+    // Shrinks the shell when the soft keyboard opens (WKWebView and edge-to-edge
+    // Android WebView honor neither `dvh` nor `adjustResize`). Set by the native
+    // `frak-keyboard` plugin on iOS and by `initKeyboardInset` on Android; falls
+    // back to `100dvh` everywhere else.
     height: "var(--viewport-height, 100dvh)",
+    // iOS: WKWebView snaps `dvh` through a native frame animation, so the shell must
+    // animate the height itself. `--kb-anim-dur` is the keyboard's real duration
+    // pushed in by the plugin (0s otherwise → inert on web/Android); the bezier
+    // approximates iOS's private keyboard curve so the footer rides the keyboard top.
+    transition:
+        "height var(--kb-anim-dur, 0s) cubic-bezier(0.38, 0.7, 0.125, 1)",
     paddingTop: safeArea.top,
     overflow: "hidden",
     width: "100%",
