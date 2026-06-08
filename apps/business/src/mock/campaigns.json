@@ -13,14 +13,14 @@
                     "recipient": "referrer",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 5000000000000000000,
+                    "amount": 5,
                     "description": "5 FRK per purchase"
                 },
                 {
                     "recipient": "referee",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 2500000000000000000,
+                    "amount": 2.5,
                     "description": "2.5 FRK per purchase"
                 }
             ]
@@ -59,7 +59,7 @@
                     "recipient": "referrer",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 1000000000000000000,
+                    "amount": 1,
                     "description": "1 FRK for referral"
                 }
             ]
@@ -98,7 +98,7 @@
                     "recipient": "referrer",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 3000000000000000000,
+                    "amount": 3,
                     "description": "3 FRK for sharing referral link"
                 }
             ]
@@ -135,14 +135,14 @@
                     "recipient": "referrer",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 7500000000000000000,
+                    "amount": 7.5,
                     "description": "7.5 FRK per purchase"
                 },
                 {
                     "recipient": "referee",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 3750000000000000000,
+                    "amount": 3.75,
                     "description": "3.75 FRK per purchase"
                 }
             ]
@@ -181,7 +181,7 @@
                     "recipient": "user",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 10000000000000000000,
+                    "amount": 10,
                     "description": "10 FRK for repeat purchase"
                 }
             ]
@@ -220,7 +220,7 @@
                     "recipient": "referrer",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 5000000000000000000,
+                    "amount": 5,
                     "description": "5 FRK for custom event"
                 }
             ]
@@ -252,7 +252,7 @@
                     "recipient": "referrer",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 5000000000000000000,
+                    "amount": 5,
                     "description": "5 FRK per purchase"
                 }
             ]
@@ -291,7 +291,7 @@
                     "recipient": "referrer",
                     "type": "token",
                     "amountType": "fixed",
-                    "amount": 2000000000000000000,
+                    "amount": 2,
                     "description": "2 FRK for referral"
                 }
             ]

@@ -271,6 +271,99 @@
                     "datePlaceholder": "jj/mm/aaaa",
                     "openCalendar": "Ouvrir le calendrier"
                 }
+            },
+            "reward": {
+                "campaignType": {
+                    "label": "Type de campagne",
+                    "description": "Qui peut recevoir une récompense",
+                    "referral": {
+                        "title": "Campagne de parrainage",
+                        "description": "Ne récompenser que les utilisateurs parrainés par un autre utilisateur"
+                    }
+                },
+                "model": {
+                    "label": "Modèle de récompense",
+                    "description": "Comment les récompenses sont calculées pour chaque parrainage réussi",
+                    "fixed": {
+                        "title": "Montant fixe",
+                        "description": "Définir une récompense fixe [€] par conversion"
+                    },
+                    "percentage": {
+                        "title": "% du panier",
+                        "description": "La récompense évolue avec le montant de la commande"
+                    },
+                    "tiered": {
+                        "title": "Récompenses par paliers",
+                        "description": "Panier plus élevé = récompense plus élevée"
+                    }
+                },
+                "value": {
+                    "label": "Valeur de la récompense",
+                    "description": "Combien chaque personne reçoit par conversion"
+                },
+                "recipient": {
+                    "ambassadorReward": "Récompense ambassadeur",
+                    "refereeReward": "Récompense filleul",
+                    "ambassadorPlaceholder": "Ex. 6",
+                    "refereePlaceholder": "Ex. 2"
+                },
+                "cpa": {
+                    "hint": "Coût total que vous payez par conversion confirmée. Frak prend 20 % — le reste revient à vos utilisateurs.",
+                    "rewardsDistributed": "Récompenses distribuées",
+                    "frakCommission": "Commission Frak",
+                    "reco": "Frak recommande une répartition <highlight>80/20</highlight> en faveur de l’ambassadeur.",
+                    "applyReco": "Appliquer",
+                    "splitMismatch": "Ambassadeur + Filleul doivent totaliser {{amount}} (le pool de récompenses)."
+                },
+                "fixed": {
+                    "cpaLabel": "CPA cible",
+                    "cpaPlaceholder": "Ex. 10",
+                    "percentOfPool": "{{percent}} % du pool"
+                },
+                "percentage": {
+                    "cpaLabel": "CPA cible (% du panier du filleul)",
+                    "cpaPlaceholder": "Ex. 10",
+                    "recipientHint": "% de la valeur de la commande versé à cette personne."
+                },
+                "tiered": {
+                    "globalCpaTitle": "CPA cible",
+                    "ambassadorDescription": "Récompense pour la personne qui a partagé le lien",
+                    "refereeDescription": "Récompense de bienvenue pour le nouveau filleul",
+                    "basketRange": "Tranche de panier (€)",
+                    "cpaColumn": "CPA",
+                    "reward": "Récompense",
+                    "unit": "Unité",
+                    "commissionFootnote": "Frak prélève une commission de 20 % sur chaque récompense distribuée.",
+                    "fromPlaceholder": "Ex. 0",
+                    "toPlaceholder": "Ex. 50",
+                    "cpaPlaceholder": "Ex. 5",
+                    "rewardPlaceholder": "Ex. 5",
+                    "addTier": "Ajouter un palier",
+                    "removeTier": "Supprimer le palier"
+                },
+                "eligibility": {
+                    "label": "Éligibilité",
+                    "description": "Quels achats donnent droit à une récompense",
+                    "minPurchaseLabel": "Montant d’achat minimum",
+                    "minPurchasePlaceholder": "Ex. 5",
+                    "minPurchaseHint": "Mettre 0 pour accepter toute valeur de commande."
+                },
+                "lockup": {
+                    "label": "Blocage des récompenses",
+                    "description": "Protection contre les remboursements — délai avant le versement",
+                    "info": "Les récompenses sont retenues pendant une période de grâce après l’achat. Si la commande est remboursée durant cette période, aucune récompense n’est versée — ce qui protège le budget de votre campagne.",
+                    "durationLabel": "Durée de blocage (jours)",
+                    "durationPlaceholder": "Ex. 14",
+                    "durationHint": "Mettre 0 pour verser les récompenses immédiatement après l’achat.",
+                    "unit": "jours"
+                },
+                "triggeredOn": "Déclenché sur {{trigger}}",
+                "trigger": {
+                    "purchase": "Achat finalisé",
+                    "referral": "Parrainage",
+                    "create_referral_link": "Lien de parrainage créé",
+                    "custom": "Personnalisé"
+                }
             }
         },
         "tabs": {

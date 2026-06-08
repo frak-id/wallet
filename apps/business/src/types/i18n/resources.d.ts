@@ -161,6 +161,99 @@ export default interface Resources {
                     };
                     required: "Select a goal";
                 };
+                reward: {
+                    campaignType: {
+                        description: "Who qualifies for a reward";
+                        label: "Campaign type";
+                        referral: {
+                            description: "Only reward users who were referred by another user";
+                            title: "Referral campaign";
+                        };
+                    };
+                    cpa: {
+                        applyReco: "Apply reco";
+                        frakCommission: "Frak commission";
+                        hint: "Total cost you pay per confirmed conversion. Frak takes 20% — the rest goes to your users.";
+                        reco: "Frak recommends an <highlight>80/20 reward</highlight> split in favor of the Ambassador.";
+                        rewardsDistributed: "Rewards distributed";
+                        splitMismatch: "Ambassador + Referee must add up to {{amount}} (the rewards pool).";
+                    };
+                    eligibility: {
+                        description: "Which purchases qualify for a reward";
+                        label: "Eligibility";
+                        minPurchaseHint: "Set to 0 to accept any order value.";
+                        minPurchaseLabel: "Minimum purchase amount";
+                        minPurchasePlaceholder: "E.g. 5";
+                    };
+                    fixed: {
+                        cpaLabel: "Target CPA";
+                        cpaPlaceholder: "E.g. 10";
+                        percentOfPool: "{{percent}}% of pool";
+                    };
+                    lockup: {
+                        description: "Refund protection — delay before rewards are released";
+                        durationHint: "Set to 0 to release rewards immediately after purchase.";
+                        durationLabel: "Lockup duration (days)";
+                        durationPlaceholder: "E.g. 14";
+                        info: "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out — protecting your campaign budget.";
+                        label: "Reward lockup";
+                        unit: "days";
+                    };
+                    model: {
+                        description: "How rewards are calculated for each successful referral";
+                        fixed: {
+                            description: "Set a fixed [€] reward per conversion";
+                            title: "Fixed amount";
+                        };
+                        label: "Reward model";
+                        percentage: {
+                            description: "Reward scales with order value";
+                            title: "% of basket";
+                        };
+                        tiered: {
+                            description: "Higher basket = higher reward";
+                            title: "Tiered rewards";
+                        };
+                    };
+                    percentage: {
+                        cpaLabel: "Target CPA (% of referee's basket)";
+                        cpaPlaceholder: "E.g. 10";
+                        recipientHint: "% of the order value paid to this person.";
+                    };
+                    recipient: {
+                        ambassadorPlaceholder: "E.g. 6";
+                        ambassadorReward: "Ambassador reward";
+                        refereePlaceholder: "E.g. 2";
+                        refereeReward: "Referee reward";
+                    };
+                    tiered: {
+                        addTier: "Add a tier";
+                        ambassadorDescription: "Reward for the person who shared the link";
+                        basketRange: "Basket Range (€)";
+                        commissionFootnote: "Frak keeps a 20% commission on every reward distributed.";
+                        cpaColumn: "CPA";
+                        cpaPlaceholder: "E.g. 5";
+                        fromPlaceholder: "E.g. 0";
+                        globalCpaTitle: "Target CPA";
+                        refereeDescription: "Welcome reward for the new referee";
+                        removeTier: "Remove tier";
+                        reward: "Reward";
+                        rewardPlaceholder: "E.g. 5";
+                        toPlaceholder: "E.g. 50";
+                        unit: "Unit";
+                    };
+                    trigger: {
+                        create_referral_link: "Referral link created";
+                        custom: "Custom";
+                        purchase: "Purchase completed";
+                        referral: "Referral";
+                    };
+                    triggeredOn: "Triggered on {{trigger}}";
+                    value: {
+                        description: "How much each person receives per conversion";
+                        label: "Reward value";
+                    };
+                };
                 steps: {
                     basics: {
                         hint: "Name, merchant & currency";

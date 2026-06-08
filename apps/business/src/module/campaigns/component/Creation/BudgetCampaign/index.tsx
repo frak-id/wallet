@@ -23,6 +23,7 @@ import {
     getStartDate,
     setStartDate,
 } from "@/stores/campaignStore";
+import { DistributionBar } from "../DistributionBar";
 import { WizardFieldCard } from "../WizardFieldCard";
 import { WizardStep } from "../WizardStep";
 import * as styles from "./budget.css";
@@ -165,46 +166,17 @@ function BudgetPeriodField({
 
 function BudgetBreakdown({ amount }: { amount: number }) {
     const { t } = useTranslation();
-    const hasAmount = amount > 0;
     const rewards = Math.round(amount * (1 - FRAK_COMMISSION) * 100) / 100;
     const commission = Math.round(amount * FRAK_COMMISSION * 100) / 100;
 
     return (
         <div className={styles.breakdown}>
-            <div className={styles.bar}>
-                {hasAmount ? (
-                    <>
-                        <div className={styles.barRewards} />
-                        <div className={styles.barCommission} />
-                    </>
-                ) : (
-                    <div className={styles.barEmpty} />
-                )}
-            </div>
-            <div className={styles.legend}>
-                <span className={styles.legendItem}>
-                    <span
-                        className={`${styles.legendSquare} ${hasAmount ? styles.squareRewards : styles.squareEmpty}`}
-                    />
-                    <Text variant="caption" color="primary">
-                        {t("campaigns.create.budget.cap.rewards")} (
-                        {hasAmount ? 80 : 0}%) ·{" "}
-                        <span className={styles.amountRewards}>{rewards}€</span>
-                    </Text>
-                </span>
-                <span className={styles.legendItem}>
-                    <span
-                        className={`${styles.legendSquare} ${hasAmount ? styles.squareCommission : styles.squareEmpty}`}
-                    />
-                    <Text variant="caption" color="primary">
-                        {t("campaigns.create.budget.cap.commission")} (
-                        {hasAmount ? 20 : 0}%) ·{" "}
-                        <span className={styles.amountCommission}>
-                            {commission}€
-                        </span>
-                    </Text>
-                </span>
-            </div>
+            <DistributionBar
+                rewardsLabel={t("campaigns.create.budget.cap.rewards")}
+                commissionLabel={t("campaigns.create.budget.cap.commission")}
+                rewardsAmount={rewards}
+                commissionAmount={commission}
+            />
         </div>
     );
 }
@@ -444,7 +416,7 @@ export function BudgetCampaign() {
     async function onSubmit(values: BudgetFormValues) {
         const saved = await persist(values);
         navigate({
-            to: "/m/$merchantId/campaigns/draft/$campaignId/metrics",
+            to: "/m/$merchantId/campaigns/draft/$campaignId/reward",
             params: { merchantId, campaignId: saved.id },
         });
     }

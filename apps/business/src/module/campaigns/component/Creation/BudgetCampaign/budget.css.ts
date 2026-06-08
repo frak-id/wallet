@@ -95,68 +95,11 @@ export const capHint = style({
     paddingRight: alias.spacing.m,
 });
 
-/** Bar + legend: 8px under the hint + 16px inner padding, 16px bar/legend. */
+/** Wrapper around the shared DistributionBar: 8px under the hint, 16px padTop. */
 export const breakdown = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.m,
     marginTop: alias.spacing.xs,
     paddingTop: alias.spacing.m,
 });
-
-/** Two-segment proportion bar (rewards 80% / Frak 20%). */
-export const bar = style({
-    display: "flex",
-    width: "100%",
-    height: "4px",
-    borderRadius: "100px",
-    overflow: "hidden",
-});
-
-export const barRewards = style({
-    width: "80%",
-    backgroundColor: vars.text.success,
-});
-
-export const barCommission = style({
-    width: "20%",
-    backgroundColor: vars.surface.primary,
-});
-
-/** Greyed segments when no amount is set yet. */
-export const barEmpty = style({
-    width: "100%",
-    backgroundColor: vars.surface.disabled,
-});
-
-export const legend = style({
-    display: "flex",
-    gap: alias.spacing.xl,
-    alignItems: "center",
-});
-
-export const legendItem = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xxs,
-});
-
-export const legendSquare = style({
-    width: "8px",
-    height: "8px",
-    borderRadius: "2px",
-    flexShrink: 0,
-});
-
-export const squareRewards = style({ backgroundColor: vars.text.success });
-export const squareCommission = style({
-    backgroundColor: vars.surface.primary,
-});
-export const squareEmpty = style({ backgroundColor: vars.icon.disabled });
-
-/** Coloured amount inside each legend label. */
-export const amountRewards = style({ color: vars.text.success });
-export const amountCommission = style({ color: vars.text.action });
 
 /* ---- schedule ---- */
 
