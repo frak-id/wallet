@@ -8,25 +8,9 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
 import * as styles from "./campaignWizardLayout.css";
 
-/**
- * Fallback rail labels. The live wizard passes localised `steps` derived from
- * `wizardSteps.ts`; this English list is only used if `steps` is omitted.
- */
-export const CAMPAIGN_STEPS: StepperStep[] = [
-    { title: "Campaign basics", description: "Name, merchant & currency" },
-    { title: "Goals", description: "What action triggers rewards" },
-    {
-        title: "Territory & categories",
-        description: "Countries & Ad categories",
-    },
-    { title: "Budget & schedule", description: "Amount, period & dates" },
-    { title: "Reward setup", description: "Model, value & distribution" },
-    { title: "Campaign validation", description: "Review & publish" },
-];
-
 type CampaignWizardLayoutProps = {
-    /** Resolved stepper steps (title + description). Defaults to CAMPAIGN_STEPS. */
-    steps?: StepperStep[];
+    /** Resolved stepper steps (title + description), localised by the caller. */
+    steps: StepperStep[];
     /** Index of the active step (0-based). */
     activeStep: number;
     /** Optional handler to navigate between steps (clickable completed steps). */
@@ -45,7 +29,7 @@ type CampaignWizardLayoutProps = {
 };
 
 export function CampaignWizardLayout({
-    steps = CAMPAIGN_STEPS,
+    steps,
     activeStep,
     onStepClick,
     title,
