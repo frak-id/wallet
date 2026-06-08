@@ -22,6 +22,7 @@ import {
     bottomBar,
     mainContentNoNav,
     mainContentWithNav,
+    navBarScrim,
     shellContainer,
     shellContainerAuth,
 } from "./appShell.css";
@@ -118,6 +119,7 @@ export function AppShell({
                         />
                     </Box>
                 )}
+                <Box className={navBarScrim} aria-hidden="true" />
             </Box>
         </AppShellScrollContext.Provider>
     );

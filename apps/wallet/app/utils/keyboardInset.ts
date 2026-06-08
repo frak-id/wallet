@@ -1,4 +1,4 @@
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { IS_IOS, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 
 /**
  * Mirror `window.visualViewport.height` into a `--viewport-height` CSS
@@ -28,6 +28,14 @@ export function initKeyboardInset(): () => void {
     if (typeof window === "undefined") return () => {};
     if (!IS_TAURI) return () => {};
 
+    // iOS keyboard handling lives in `tauri-plugin-frak-keyboard`: it resizes the
+    // WKWebView frame so the layout viewport matches the visible area, which is
+    // what prevents WKWebView's caret-reveal (the `visualViewport.offsetTop`
+    // jump). Running this JS too would only set `--viewport-height` from
+    // `visualViewport` — redundant, and it cannot fix the layout-viewport
+    // mismatch. Android still uses the JS path.
+    if (IS_IOS) return () => {};
+
     const vv = window.visualViewport;
     if (!vv) return () => {};
 
@@ -37,6 +45,13 @@ export function initKeyboardInset(): () => void {
     // Smaller shrinkage is toolbar jitter, not the IME (keyboard ~250-350px).
     const KEYBOARD_THRESHOLD_PX = 120;
 
+    // iOS scrolls the document to reveal a focused input, dragging the shell up
+    // and leaving a gap below the footer. Snap it back to the top.
+    const pinScroll = () => {
+        if (window.scrollY !== 0 || window.scrollX !== 0)
+            window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    };
+
     const write = () => {
         rafId = null;
         baseline = Math.max(baseline, vv.height);
@@ -44,6 +59,7 @@ export function initKeyboardInset(): () => void {
         const root = document.documentElement.style;
         root.setProperty("--viewport-height", `${vv.height}px`);
         root.setProperty("--keyboard-open", keyboardOpen ? "1" : "0");
+        pinScroll();
     };
 
     const schedule = () => {
@@ -56,6 +72,7 @@ export function initKeyboardInset(): () => void {
 
     vv.addEventListener("resize", schedule);
     vv.addEventListener("scroll", schedule);
+    window.addEventListener("scroll", pinScroll, { passive: true });
 
     return () => {
         if (rafId !== null) {
@@ -64,6 +81,7 @@ export function initKeyboardInset(): () => void {
         }
         vv.removeEventListener("resize", schedule);
         vv.removeEventListener("scroll", schedule);
+        window.removeEventListener("scroll", pinScroll);
         document.documentElement.style.removeProperty("--viewport-height");
         document.documentElement.style.removeProperty("--keyboard-open");
     };

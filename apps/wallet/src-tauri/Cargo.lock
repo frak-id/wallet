@@ -77,7 +77,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "app"
-version = "1.0.67"
+version = "1.0.71"
 dependencies = [
  "log",
  "plist",
@@ -90,6 +90,7 @@ dependencies = [
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-deep-link",
  "tauri-plugin-frak-firebase",
+ "tauri-plugin-frak-keyboard",
  "tauri-plugin-frak-share",
  "tauri-plugin-frak-updater",
  "tauri-plugin-frak-webauthn",
@@ -4017,6 +4018,15 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
+ "tauri",
+ "tauri-plugin",
+]
+
+[[package]]
+name = "tauri-plugin-frak-keyboard"
+version = "0.1.0"
+dependencies = [
+ "serde",
  "tauri",
  "tauri-plugin",
 ]
