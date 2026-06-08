@@ -265,11 +265,6 @@ export default interface Resources {
                         label: "Budget & schedule";
                         subtitle: "Set your campaign budget and timeline. Frak takes a 20% commission on the total budget.";
                     };
-                    chain: {
-                        hint: "Multi-level ambassador";
-                        label: "Referral chain";
-                        subtitle: "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer.";
-                    };
                     goals: {
                         hint: "What action triggers rewards";
                         label: "Goals";

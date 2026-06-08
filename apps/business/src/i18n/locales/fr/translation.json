@@ -134,11 +134,6 @@
                     "hint": "Modèle, valeur & distribution",
                     "subtitle": "Choisissez comment les récompenses sont calculées et qui peut en bénéficier."
                 },
-                "chain": {
-                    "label": "Chaîne de parrainage",
-                    "hint": "Ambassadeur multi-niveaux",
-                    "subtitle": "Activez les récompenses en chaîne pour récompenser les ambassadeurs sur plusieurs niveaux de parrainage — pas seulement le parrain direct."
-                },
                 "validation": {
                     "label": "Validation de la campagne",
                     "hint": "Vérifier & publier",

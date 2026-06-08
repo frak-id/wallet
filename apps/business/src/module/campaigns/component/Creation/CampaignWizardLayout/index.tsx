@@ -9,9 +9,8 @@ import type { ReactNode } from "react";
 import * as styles from "./campaignWizardLayout.css";
 
 /**
- * The 7 campaign creation steps.
- * Only the first step ("Campaign basics") is wired today; the remaining
- * steps are shown for context and become navigable once their routes exist.
+ * Fallback rail labels. The live wizard passes localised `steps` derived from
+ * `wizardSteps.ts`; this English list is only used if `steps` is omitted.
  */
 export const CAMPAIGN_STEPS: StepperStep[] = [
     { title: "Campaign basics", description: "Name, merchant & currency" },
@@ -22,7 +21,6 @@ export const CAMPAIGN_STEPS: StepperStep[] = [
     },
     { title: "Budget & schedule", description: "Amount, period & dates" },
     { title: "Reward setup", description: "Model, value & distribution" },
-    { title: "Referral chain", description: "Multi-level ambassador" },
     { title: "Campaign validation", description: "Review & publish" },
 ];
 

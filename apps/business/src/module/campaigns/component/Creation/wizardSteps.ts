@@ -1,7 +1,7 @@
 /**
- * Single source of truth for the 7-step campaign creation wizard: ordered step
- * keys, their routes, and i18n key builders. Navigation helpers derive
- * previous/next from a step's index so the wizard chrome stays declarative.
+ * Single source of truth for the campaign creation wizard: ordered step keys,
+ * their routes, and i18n key builders. Navigation helpers derive previous/next
+ * from a step's index so the wizard chrome stays declarative.
  */
 
 export type WizardStepKey =
@@ -10,7 +10,6 @@ export type WizardStepKey =
     | "territory"
     | "budget"
     | "reward"
-    | "chain"
     | "validation";
 
 export type WizardStepDef = {
@@ -31,7 +30,6 @@ export const WIZARD_STEPS: WizardStepDef[] = [
     },
     { key: "budget", to: "/m/$merchantId/campaigns/draft/$campaignId/budget" },
     { key: "reward", to: "/m/$merchantId/campaigns/draft/$campaignId/reward" },
-    { key: "chain", to: "/m/$merchantId/campaigns/draft/$campaignId/chain" },
     {
         key: "validation",
         to: "/m/$merchantId/campaigns/draft/$campaignId/validation",
@@ -86,11 +84,6 @@ const STEP_I18N = {
         label: "campaigns.create.steps.reward.label",
         hint: "campaigns.create.steps.reward.hint",
         subtitle: "campaigns.create.steps.reward.subtitle",
-    },
-    chain: {
-        label: "campaigns.create.steps.chain.label",
-        hint: "campaigns.create.steps.chain.hint",
-        subtitle: "campaigns.create.steps.chain.subtitle",
     },
     validation: {
         label: "campaigns.create.steps.validation.label",

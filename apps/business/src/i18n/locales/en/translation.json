@@ -134,11 +134,6 @@
                     "hint": "Model, value & distribution",
                     "subtitle": "Choose how rewards are calculated and who qualifies."
                 },
-                "chain": {
-                    "label": "Referral chain",
-                    "hint": "Multi-level ambassador",
-                    "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
-                },
                 "validation": {
                     "label": "Campaign validation",
                     "hint": "Review & publish",
