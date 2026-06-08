@@ -347,6 +347,9 @@ function RecipientBox({
  * an 80/20 distribution bar, a gated reco bar, and the Ambassador/Referee
  * split inputs. The unit (€ vs %) and field names are passed per model.
  */
+// Cleared inputs become "" (not 0); coerce so the empty checks hold.
+const num = (v: number | string | undefined) => (typeof v === "number" ? v : 0);
+
 function CpaReveal({
     control,
     setValue,
@@ -374,9 +377,6 @@ function CpaReveal({
     recipientHint: (poolPercent: number) => string;
 }) {
     const { t } = useTranslation();
-    // Cleared inputs become "" (not 0); coerce so the empty checks below hold.
-    const num = (v: number | string | undefined) =>
-        typeof v === "number" ? v : 0;
     const cpa = num(useWatch({ control, name: cpaName }));
     const ambassador = num(useWatch({ control, name: ambName }));
     const referee = num(useWatch({ control, name: refName }));

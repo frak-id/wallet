@@ -202,11 +202,3 @@ export const countryLabel = style({
         },
     },
 });
-
-export const empty = style({
-    display: "flex",
-    alignItems: "center",
-    height: "48px",
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});

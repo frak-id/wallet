@@ -203,6 +203,7 @@ export function CountrySelect({ value, onChange }: CountrySelectProps) {
                 <div className={styles.searchRow}>
                     <input
                         className={styles.searchInput}
+                        aria-label={t("campaigns.create.territory.card.search")}
                         placeholder={t(
                             "campaigns.create.territory.card.search"
                         )}

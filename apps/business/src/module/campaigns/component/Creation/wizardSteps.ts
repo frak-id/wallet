@@ -36,7 +36,7 @@ export const WIZARD_STEPS: WizardStepDef[] = [
     },
 ];
 
-export const WIZARD_STEP_COUNT = WIZARD_STEPS.length;
+const WIZARD_STEP_COUNT = WIZARD_STEPS.length;
 
 export function stepIndexOf(key: WizardStepKey): number {
     return WIZARD_STEPS.findIndex((s) => s.key === key);
@@ -44,10 +44,6 @@ export function stepIndexOf(key: WizardStepKey): number {
 
 export function previousStep(index: number): WizardStepDef | undefined {
     return index > 0 ? WIZARD_STEPS[index - 1] : undefined;
-}
-
-export function nextStep(index: number): WizardStepDef | undefined {
-    return index < WIZARD_STEP_COUNT - 1 ? WIZARD_STEPS[index + 1] : undefined;
 }
 
 export function isLastStep(index: number): boolean {
