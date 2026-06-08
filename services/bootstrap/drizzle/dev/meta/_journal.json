@@ -232,6 +232,13 @@
             "when": 1779781969418,
             "tag": "0032_faulty_the_twelve",
             "breakpoints": true
+        },
+        {
+            "idx": 33,
+            "version": "7",
+            "when": 1780912141604,
+            "tag": "0033_spotty_network",
+            "breakpoints": true
         }
     ]
 }
