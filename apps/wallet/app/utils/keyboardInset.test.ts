@@ -15,6 +15,9 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_TAURI() {
         return isTauriMock();
     },
+    // These tests exercise the JS (non-iOS) path; on iOS `initKeyboardInset`
+    // early-returns because the native plugin owns keyboard handling.
+    IS_IOS: false,
 }));
 
 import { initKeyboardInset } from "./keyboardInset";
