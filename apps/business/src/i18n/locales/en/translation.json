@@ -246,7 +246,12 @@
                     "description": "Choose one or several countries where your campaign will be displayed.",
                     "placeholder": "Select country",
                     "search": "Search",
-                    "required": "Select a country"
+                    "required": "Select a country",
+                    "noResults": {
+                        "title": "No result found",
+                        "description": "No results found for “{{query}}”",
+                        "clear": "Clear search"
+                    }
                 },
                 "special": {
                     "label": "Special advertising categories",

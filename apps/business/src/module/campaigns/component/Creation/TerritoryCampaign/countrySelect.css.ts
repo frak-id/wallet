@@ -214,3 +214,32 @@ export const countryLabel = style({
         },
     },
 });
+
+/* ---- empty state (search matched no country) ---- */
+
+/** Empty-state block shown when a search matches no country. */
+export const empty = style({
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: alias.spacing.l,
+    paddingTop: alias.spacing.m,
+    paddingBottom: alias.spacing.l,
+    paddingLeft: alias.spacing.m,
+    paddingRight: alias.spacing.m,
+    width: "100%",
+});
+
+/** Circular accent badge wrapping the search icon. */
+export const emptyBadge = style({
+    boxSizing: "border-box",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: alias.size.xl,
+    height: alias.size.xl,
+    padding: "10px",
+    backgroundColor: vars.surface.secondary,
+    borderRadius: alias.cornerRadius.full,
+    color: vars.icon.action,
+});

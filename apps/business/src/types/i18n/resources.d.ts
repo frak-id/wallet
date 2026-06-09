@@ -314,6 +314,11 @@ export default interface Resources {
           "card": {
             "description": "Choose one or several countries where your campaign will be displayed.",
             "label": "Territory",
+            "noResults": {
+              "clear": "Clear search",
+              "description": "No results found for “{{query}}”",
+              "title": "No result found"
+            },
             "placeholder": "Select country",
             "required": "Select a country",
             "search": "Search"

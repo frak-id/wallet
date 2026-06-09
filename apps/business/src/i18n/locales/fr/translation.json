@@ -246,7 +246,12 @@
                     "description": "Choisissez un ou plusieurs pays où votre campagne sera diffusée.",
                     "placeholder": "Sélectionner un pays",
                     "search": "Rechercher",
-                    "required": "Sélectionnez un pays"
+                    "required": "Sélectionnez un pays",
+                    "noResults": {
+                        "title": "Aucun résultat",
+                        "description": "Aucun résultat pour « {{query}} »",
+                        "clear": "Effacer la recherche"
+                    }
                 },
                 "special": {
                     "label": "Catégories publicitaires spéciales",

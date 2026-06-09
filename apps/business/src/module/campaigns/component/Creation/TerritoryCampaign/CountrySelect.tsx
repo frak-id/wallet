@@ -1,9 +1,11 @@
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@frak-labs/design-system/components/Popover";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     ChevronDownIcon,
@@ -228,79 +230,112 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
                     />
                 </div>
                 <div className={styles.list}>
-                    {filtered
-                        ? filtered.map((c) => (
-                              <label
-                                  key={c.code}
-                                  htmlFor={`country-${c.code}`}
-                                  className={styles.countryLabel}
-                              >
-                                  <Checkbox
-                                      id={`country-${c.code}`}
-                                      checked={selected.has(c.code)}
-                                      onCheckedChange={() =>
-                                          toggleCountry(c.code)
-                                      }
-                                  />
-                                  <Text variant="body">{c.name}</Text>
-                              </label>
-                          ))
-                        : CONTINENT_GROUPS.map((group) => (
-                              <div key={group.code}>
-                                  <div className={styles.row}>
-                                      <Checkbox
-                                          checked={
-                                              continentStates.get(group.code) ??
-                                              false
-                                          }
-                                          onCheckedChange={() =>
-                                              toggleContinent(group.code)
-                                          }
-                                      />
-                                      <button
-                                          type="button"
-                                          className={styles.expandButton}
-                                          onClick={() =>
-                                              toggleExpand(group.code)
-                                          }
-                                      >
-                                          {expanded.has(group.code) ? (
-                                              <ChevronUpIcon
-                                                  width={16}
-                                                  height={16}
-                                              />
-                                          ) : (
-                                              <ChevronDownIcon
-                                                  width={16}
-                                                  height={16}
-                                              />
-                                          )}
-                                          <Text variant="body">
-                                              {group.name}
-                                          </Text>
-                                      </button>
-                                  </div>
-                                  {expanded.has(group.code) &&
-                                      group.countries.map((c) => (
-                                          <label
-                                              key={c.code}
-                                              htmlFor={`country-${c.code}`}
-                                              className={`${styles.row} ${styles.rowCountry}`}
-                                          >
-                                              <Checkbox
-                                                  id={`country-${c.code}`}
-                                                  checked={selected.has(c.code)}
-                                                  onCheckedChange={() =>
-                                                      toggleCountry(c.code)
-                                                  }
-                                              />
-                                              <Text variant="body">
-                                                  {c.name}
-                                              </Text>
-                                          </label>
-                                      ))}
-                              </div>
-                          ))}
+                    {filtered ? (
+                        filtered.length > 0 ? (
+                            filtered.map((c) => (
+                                <label
+                                    key={c.code}
+                                    htmlFor={`country-${c.code}`}
+                                    className={styles.countryLabel}
+                                >
+                                    <Checkbox
+                                        id={`country-${c.code}`}
+                                        checked={selected.has(c.code)}
+                                        onCheckedChange={() =>
+                                            toggleCountry(c.code)
+                                        }
+                                    />
+                                    <Text variant="body">{c.name}</Text>
+                                </label>
+                            ))
+                        ) : (
+                            <div className={styles.empty}>
+                                <Stack space="m" align="center">
+                                    <div className={styles.emptyBadge}>
+                                        <SearchIcon width={24} height={24} />
+                                    </div>
+                                    <Stack space="xs" align="center">
+                                        <Text variant="heading2" align="center">
+                                            {t(
+                                                "campaigns.create.territory.card.noResults.title"
+                                            )}
+                                        </Text>
+                                        <Text
+                                            variant="body"
+                                            color="secondary"
+                                            align="center"
+                                        >
+                                            {t(
+                                                "campaigns.create.territory.card.noResults.description",
+                                                { query: search.trim() }
+                                            )}
+                                        </Text>
+                                    </Stack>
+                                </Stack>
+                                <Button
+                                    variant="primary"
+                                    size="large"
+                                    width="auto"
+                                    onClick={() => setSearch("")}
+                                >
+                                    {t(
+                                        "campaigns.create.territory.card.noResults.clear"
+                                    )}
+                                </Button>
+                            </div>
+                        )
+                    ) : (
+                        CONTINENT_GROUPS.map((group) => (
+                            <div key={group.code}>
+                                <div className={styles.row}>
+                                    <Checkbox
+                                        checked={
+                                            continentStates.get(group.code) ??
+                                            false
+                                        }
+                                        onCheckedChange={() =>
+                                            toggleContinent(group.code)
+                                        }
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.expandButton}
+                                        onClick={() => toggleExpand(group.code)}
+                                    >
+                                        {expanded.has(group.code) ? (
+                                            <ChevronUpIcon
+                                                width={16}
+                                                height={16}
+                                            />
+                                        ) : (
+                                            <ChevronDownIcon
+                                                width={16}
+                                                height={16}
+                                            />
+                                        )}
+                                        <Text variant="body">{group.name}</Text>
+                                    </button>
+                                </div>
+                                {expanded.has(group.code) &&
+                                    group.countries.map((c) => (
+                                        <label
+                                            key={c.code}
+                                            htmlFor={`country-${c.code}`}
+                                            className={`${styles.row} ${styles.rowCountry}`}
+                                        >
+                                            <Checkbox
+                                                id={`country-${c.code}`}
+                                                checked={selected.has(c.code)}
+                                                onCheckedChange={() =>
+                                                    toggleCountry(c.code)
+                                                }
+                                            />
+                                            <Text variant="body">{c.name}</Text>
+                                        </label>
+                                    ))}
+                            </div>
+                        ))
+                    )}
                 </div>
             </PopoverContent>
         </Popover>
