@@ -67,7 +67,7 @@ async function main() {
 
     // Safety net: covers runtime paths that change the language WITHOUT
     // pre-loading the EN bundle first (e.g. `?lng=en` deep links). The
-    // LanguageSelector itself preloads before calling `changeLanguage`, so
+    // LanguageCard itself preloads before calling `changeLanguage`, so
     // no flash for that path.
     i18next.on("languageChanged", (lng) => {
         if (lng === "en") void loadEnglishBundle();

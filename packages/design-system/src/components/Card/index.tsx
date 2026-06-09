@@ -1,8 +1,10 @@
 import type { RecipeVariants } from "@vanilla-extract/recipes";
-import type { HTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 import { Box } from "../Box";
 import { Text } from "../Text";
 import { card, cardHeader } from "./card.css";
+
+type TextProps = ComponentProps<typeof Text>;
 
 type CardProps = HTMLAttributes<HTMLDivElement> &
     RecipeVariants<typeof card> & {
@@ -50,18 +52,31 @@ export function CardHeader({ children, className, ...rest }: CardHeaderProps) {
 type CardTitleProps = {
     children?: ReactNode;
     className?: string;
+    as?: TextProps["as"];
+    variant?: TextProps["variant"];
+    weight?: TextProps["weight"];
+    color?: TextProps["color"];
 };
 
 /**
- * Heading inside `CardHeader`. Renders an `<h3>` with the design-system
- * `heading4` Text variant (16px, semiBold, text.primary).
+ * Heading inside `CardHeader`. Defaults to an `<h3>` with the design-system
+ * `heading4` Text variant (16px, semiBold). Pass `as`/`variant`/`weight`/
+ * `color` to render a quieter group label (e.g. settings sections).
  */
-export function CardTitle({ children, className }: CardTitleProps) {
+export function CardTitle({
+    children,
+    className,
+    as = "h3",
+    variant = "heading4",
+    weight = "semiBold",
+    color,
+}: CardTitleProps) {
     return (
         <Text
-            as="h3"
-            variant="heading4"
-            weight="semiBold"
+            as={as}
+            variant={variant}
+            weight={weight}
+            color={color}
             className={className}
         >
             {children}
@@ -72,15 +87,22 @@ export function CardTitle({ children, className }: CardTitleProps) {
 type CardDescriptionProps = {
     children?: ReactNode;
     className?: string;
+    variant?: TextProps["variant"];
+    color?: TextProps["color"];
 };
 
 /**
- * Optional secondary line under `CardTitle`. Uses `bodySmall` + secondary
- * text color.
+ * Optional secondary line under `CardTitle`. Defaults to `bodySmall` +
+ * secondary; override `variant`/`color` for quieter group descriptions.
  */
-export function CardDescription({ children, className }: CardDescriptionProps) {
+export function CardDescription({
+    children,
+    className,
+    variant = "bodySmall",
+    color = "secondary",
+}: CardDescriptionProps) {
     return (
-        <Text variant="bodySmall" color="secondary" className={className}>
+        <Text variant={variant} color={color} className={className}>
             {children}
         </Text>
     );

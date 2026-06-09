@@ -1,9 +1,10 @@
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const walletAddress = style({
-    marginBottom: "20px",
+export const content = style({
+    maxWidth: "688px",
 });
 
-export const logoutButton = style({
-    marginTop: "20px",
+export const tabContent = style({
+    marginTop: alias.spacing.l,
 });
