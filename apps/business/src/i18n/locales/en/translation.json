@@ -5,11 +5,10 @@
             "heroTitleLine1": "Access and discover",
             "heroTitleLine2": "Frak Ad Manager",
             "heroSubtitle": "Register in a second. No email, no password.",
-            "heroImageAlt": "Login",
-            "disclaimer": "Before connecting, please ensure that you are using a device that belongs to you.",
-            "connect": "Connect",
-            "footerCopyright": "© 2026 Frak Labs Copyright and rights reserved",
-            "footerTerms": "Terms and Conditions",
+            "connect": "Connect to Frak Ad Manager",
+            "dashboardImageAlt": "Frak Ad Manager dashboard preview",
+            "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",
+            "footerTerms": "Terms & Conditions",
             "footerPrivacy": "Privacy Policy"
         },
         "embedded": {

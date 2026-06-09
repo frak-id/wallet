@@ -1,21 +1,30 @@
-import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { tablet } from "@frak-labs/design-system/breakpoints";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useNavigate } from "@tanstack/react-router";
-import clsx from "clsx";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { useAuthStore } from "@/stores/authStore";
+// Imported last so the component-scoped styles win over DS variant styles.
 import * as styles from "./login.css";
 import logo from "./logo-frak.svg";
+
+// SIWE session lifetime: 1 week.
+const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7;
+// Evaluated once per page load — keeps the footer year current without reading
+// the clock during React render.
+const currentYear = new Date().getFullYear();
 
 export function Login() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [, startTransition] = useTransition();
-    const isMobile = useMediaQuery("(max-width : 768px)");
+    const isMobile = useMediaQuery(`(max-width: ${tablet - 1}px)`);
 
     const { mutate: authenticate, isPending } = useSiweAuthenticate({
         mutations: {
@@ -46,76 +55,94 @@ export function Login() {
         },
     });
 
-    const logoFrakLabs = (
-        <ClientOnly>
-            <a href="https://frak.id" target="_blank" rel="noreferrer">
-                <img
-                    src={logo}
-                    alt={t("auth.login.frakLabsLogoAlt")}
-                    width={111}
-                    height={42}
-                    className={styles.image}
-                />
-            </a>
-        </ClientOnly>
-    );
+    const handleConnect = () =>
+        authenticate({
+            siwe: {
+                expirationTimeTimestamp: Date.now() + SESSION_DURATION_MS,
+            },
+        });
 
     return (
         <div className={styles.login}>
-            <div>
-                {isMobile && logoFrakLabs}
-                <h1 className={styles.title}>
+            <Stack as="section" space="l" align="left" className={styles.hero}>
+                <a href="https://frak.id" target="_blank" rel="noreferrer">
+                    <img
+                        src={logo}
+                        alt={t("auth.login.frakLabsLogoAlt")}
+                        width={105}
+                        height={40}
+                        className={styles.logo}
+                    />
+                </a>
+                <Text
+                    as="h1"
+                    variant="display1"
+                    color="primary"
+                    className={styles.title}
+                >
                     {t("auth.login.heroTitleLine1")}
                     <br />
-                    {t("auth.login.heroTitleLine2")}
-                </h1>
-                <p className={styles.subTitle}>
+                    <Text as="span" variant="display1" color="action">
+                        {t("auth.login.heroTitleLine2")}
+                    </Text>
+                </Text>
+                <Text as="p" className={styles.subtitle}>
                     {t("auth.login.heroSubtitle")}
-                </p>
-                {!isMobile && (
-                    <ClientOnly>
-                        <img
-                            src="/assets/login-phone.webp"
-                            alt={t("auth.login.heroImageAlt")}
-                            width={430}
-                            height={449}
-                            className={clsx(styles.phone, styles.image)}
-                        />
-                    </ClientOnly>
-                )}
-            </div>
-            <div>
-                <div className={styles.panel}>
-                    {logoFrakLabs}
-                    <p className={styles.text}>{t("auth.login.disclaimer")}</p>
-                    <button
-                        className={styles.button}
-                        type="button"
-                        disabled={isPending}
-                        onClick={() =>
-                            authenticate({
-                                siwe: {
-                                    // Expire the session after 1 week
-                                    expirationTimeTimestamp:
-                                        Date.now() + 1000 * 60 * 60 * 24 * 7,
-                                },
-                            })
-                        }
-                    >
-                        {isPending && <Spinner />} {t("auth.login.connect")}
-                    </button>
+                </Text>
+                <Button
+                    variant="primary"
+                    size="large"
+                    width={isMobile ? "full" : "auto"}
+                    loading={isPending}
+                    onClick={handleConnect}
+                >
+                    {t("auth.login.connect")}
+                </Button>
+            </Stack>
+
+            <aside className={styles.rightPanel}>
+                <div className={styles.screenshotCard}>
+                    <img
+                        src="/assets/login-dashboard.webp"
+                        alt={t("auth.login.dashboardImageAlt")}
+                        className={styles.screenshot}
+                        decoding="async"
+                    />
                 </div>
-            </div>
+            </aside>
+
             <footer className={styles.footer}>
-                <p>{t("auth.login.footerCopyright")}</p>
-                <ul className={styles.list}>
-                    <li className={styles.listItem}>
-                        <a href="/">{t("auth.login.footerTerms")}</a>
-                    </li>
-                    <li className={styles.listItem}>
-                        <a href="/">{t("auth.login.footerPrivacy")}</a>
-                    </li>
-                </ul>
+                <Text variant="caption" color="secondary">
+                    {t("auth.login.footerCopyright", { year: currentYear })}
+                </Text>
+                <Inline space="m" alignY="center">
+                    <a
+                        href="https://frak.id/terms"
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.footerLink}
+                    >
+                        <Text
+                            variant="caption"
+                            className={styles.footerLinkText}
+                        >
+                            {t("auth.login.footerTerms")}
+                        </Text>
+                    </a>
+                    <a
+                        href="https://frak.id/privacy"
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.footerLink}
+                    >
+                        <Text
+                            variant="caption"
+                            className={styles.footerLinkText}
+                        >
+                            {t("auth.login.footerPrivacy")}
+                        </Text>
+                    </a>
+                </Inline>
             </footer>
         </div>
     );

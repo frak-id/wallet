@@ -5,10 +5,9 @@
             "heroTitleLine1": "Accédez et découvrez",
             "heroTitleLine2": "Frak Ad Manager",
             "heroSubtitle": "Inscrivez-vous en une seconde. Sans email, sans mot de passe.",
-            "heroImageAlt": "Connexion",
-            "disclaimer": "Avant de vous connecter, assurez-vous d'utiliser un appareil qui vous appartient.",
-            "connect": "Se connecter",
-            "footerCopyright": "© 2026 Frak Labs Copyright et tous droits réservés",
+            "connect": "Se connecter à Frak Ad Manager",
+            "dashboardImageAlt": "Aperçu du tableau de bord Frak Ad Manager",
+            "footerCopyright": "© {{year}} FrakLabs. Tous droits réservés.",
             "footerTerms": "Conditions générales",
             "footerPrivacy": "Politique de confidentialité"
         },
