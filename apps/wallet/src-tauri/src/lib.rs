@@ -39,14 +39,6 @@ pub fn run() {
             .plugin(tauri_plugin_fs::init());
     }
 
-    // iOS-only: native keyboard avoidance. Its `load(webview:)` hook resizes the
-    // WKWebView on the keyboard curve so `100dvh` / `visualViewport` react
-    // natively, replacing the JS `keyboardInset` workaround.
-    #[cfg(target_os = "ios")]
-    {
-        builder = builder.plugin(tauri_plugin_frak_keyboard::init());
-    }
-
     builder
         .setup(|app| {
             if cfg!(debug_assertions) {
