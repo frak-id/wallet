@@ -16,6 +16,7 @@ import {
 } from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
+import { ChartEmptyState } from "./ChartEmptyState";
 
 type Variant = "website" | "wallet";
 
@@ -66,20 +67,30 @@ export function FunnelCard({ funnels }: { funnels: OverviewFunnels }) {
                             {labels.wallet}
                         </TabsTrigger>
                     </TabsList>
-                    {(Object.keys(labels) as Variant[]).map((variant) => (
-                        <TabsContent key={variant} value={variant}>
-                            <Stack space="m">
-                                <Text variant="bodySmall" color="secondary">
-                                    {t("campaigns.overview.funnel.global", {
-                                        variant: labels[variant],
-                                    })}
-                                </Text>
-                                <FunnelChart
-                                    steps={toChartSteps(funnels[variant])}
-                                />
-                            </Stack>
-                        </TabsContent>
-                    ))}
+                    {(Object.keys(labels) as Variant[]).map((variant) => {
+                        const steps = funnels[variant];
+                        const isEmpty =
+                            steps.length === 0 ||
+                            steps.every((step) => step.value === 0);
+                        return (
+                            <TabsContent key={variant} value={variant}>
+                                <Stack space="m">
+                                    <Text variant="bodySmall" color="secondary">
+                                        {t("campaigns.overview.funnel.global", {
+                                            variant: labels[variant],
+                                        })}
+                                    </Text>
+                                    {isEmpty ? (
+                                        <ChartEmptyState />
+                                    ) : (
+                                        <FunnelChart
+                                            steps={toChartSteps(steps)}
+                                        />
+                                    )}
+                                </Stack>
+                            </TabsContent>
+                        );
+                    })}
                 </Stack>
             </Tabs>
         </Card>

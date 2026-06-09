@@ -22,6 +22,7 @@ import { vars } from "@frak-labs/design-system/theme";
 import clsx from "clsx";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ChartEmptyState } from "./ChartEmptyState";
 import * as local from "./sharingBySource.css";
 
 type Mode = "platform" | "device";
@@ -101,6 +102,16 @@ export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
                     </Text>
                     {(["platform", "device"] as Mode[]).map((mode) => {
                         const segments = toLabeledSegments(mode);
+                        const isEmpty =
+                            segments.length === 0 ||
+                            segments.every((s) => s.value === 0);
+                        if (isEmpty) {
+                            return (
+                                <TabsContent key={mode} value={mode}>
+                                    <ChartEmptyState />
+                                </TabsContent>
+                            );
+                        }
                         return (
                             <TabsContent key={mode} value={mode}>
                                 <Stack space="m">

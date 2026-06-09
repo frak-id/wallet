@@ -15,6 +15,8 @@ export const amount = style({
     fontVariantNumeric: "tabular-nums",
 });
 
+export const amountEmpty = style([amount, { color: vars.text.disabled }]);
+
 export const hint = style({
     color: vars.text.disabled,
     fontStyle: "italic",

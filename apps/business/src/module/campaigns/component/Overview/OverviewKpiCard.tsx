@@ -3,6 +3,8 @@ import { DeltaIndicator } from "@frak-labs/design-system/components/DeltaIndicat
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { useTranslation } from "react-i18next";
+import { EMPTY_AMOUNT } from "./constants";
 import * as styles from "./kpiCard.css";
 
 type Props = {
@@ -11,6 +13,9 @@ type Props = {
     amount: string;
     delta?: number;
     hint?: string;
+    // No data for this metric yet: show a muted `·` placeholder, drop the delta
+    // chip, and surface a "No data yet" line instead of any approximate hint.
+    empty?: boolean;
 };
 
 export function OverviewKpiCard({
@@ -19,7 +24,9 @@ export function OverviewKpiCard({
     amount,
     delta,
     hint,
+    empty,
 }: Props) {
+    const { t } = useTranslation();
     return (
         <Card className={styles.cell} radius="m">
             <Stack space="xxs">
@@ -37,13 +44,31 @@ export function OverviewKpiCard({
                     </Text>
                 </Inline>
                 <Stack space="none">
-                    <span className={styles.amount}>{amount}</span>
-                    {delta !== undefined && <DeltaIndicator delta={delta} />}
+                    {empty ? (
+                        <span className={styles.amountEmpty}>
+                            {EMPTY_AMOUNT}
+                        </span>
+                    ) : (
+                        <span className={styles.amount}>{amount}</span>
+                    )}
+                    {!empty && delta !== undefined && (
+                        <DeltaIndicator delta={delta} />
+                    )}
                 </Stack>
-                {hint && (
-                    <Text as="span" variant="caption" className={styles.hint}>
-                        {hint}
+                {empty ? (
+                    <Text as="span" variant="caption" color="tertiary">
+                        {t("campaigns.overview.kpi.noData")}
                     </Text>
+                ) : (
+                    hint && (
+                        <Text
+                            as="span"
+                            variant="caption"
+                            className={styles.hint}
+                        >
+                            {hint}
+                        </Text>
+                    )
                 )}
             </Stack>
         </Card>

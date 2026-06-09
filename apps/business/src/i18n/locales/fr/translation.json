@@ -654,7 +654,11 @@
                 "sharingRate": "Taux de partage",
                 "avgCpa": "CPA moyen",
                 "descriptorTotal": "total",
-                "descriptorAllCampaigns": "Toutes les campagnes"
+                "descriptorAllCampaigns": "Toutes les campagnes",
+                "noData": "Pas encore de données"
+            },
+            "empty": {
+                "noData": "Aucune donnée à afficher pour le moment."
             },
             "funnel": {
                 "website": "Site web",

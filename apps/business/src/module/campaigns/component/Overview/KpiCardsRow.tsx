@@ -103,6 +103,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 amount={formatters.integer.format(ambassadors.current)}
                 delta={percentDelta(ambassadors.current, ambassadors.previous)}
                 hint={ambassadorsAccurate ? undefined : APPROXIMATE_HINT}
+                empty={ambassadors.current === 0}
             />
             <OverviewKpiCard
                 label={t("campaigns.overview.kpi.shares")}
@@ -110,6 +111,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 amount={formatters.integer.format(shares.current)}
                 delta={percentDelta(shares.current, shares.previous)}
                 hint={sharesAccurate ? undefined : APPROXIMATE_HINT}
+                empty={shares.current === 0}
             />
             <OverviewKpiCard
                 label={t("campaigns.overview.kpi.revenue")}
@@ -119,6 +121,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                     kpis.revenue.current,
                     kpis.revenue.previous
                 )}
+                empty={kpis.revenue.current === 0}
             />
             <OverviewKpiCard
                 label={t("campaigns.overview.kpi.sharingRate")}
@@ -130,11 +133,13 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                         ? undefined
                         : APPROXIMATE_HINT
                 }
+                empty={sharingRate.current === 0}
             />
             <OverviewKpiCard
                 label={t("campaigns.overview.kpi.avgCpa")}
                 descriptor={t("campaigns.overview.kpi.descriptorAllCampaigns")}
                 amount={formatters.cpa.format(avgCpa)}
+                empty={avgCpa === 0}
             />
         </div>
     );

@@ -19,6 +19,8 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { ChartEmptyState } from "./ChartEmptyState";
+import { EMPTY_AMOUNT } from "./constants";
 import * as styles from "./overview.css";
 
 const FORECAST_BUCKETS = 2;
@@ -58,12 +60,22 @@ export function ProjectedRevenueCard({
         return { data, total, currencyFormatter };
     }, [series, locale, currency]);
 
+    const isEmpty = total === 0;
+
     return (
         <Card radius="m">
             <Stack space="m">
                 <Stack space="xxs">
-                    <span className={styles.chartAmount}>
-                        {currencyFormatter.format(total)}
+                    <span
+                        className={
+                            isEmpty
+                                ? styles.chartAmountEmpty
+                                : styles.chartAmount
+                        }
+                    >
+                        {isEmpty
+                            ? EMPTY_AMOUNT
+                            : currencyFormatter.format(total)}
                     </span>
                     <Text as="h2" variant="bodySmall" color="secondary">
                         {t("campaigns.overview.projected.title")}
@@ -72,74 +84,80 @@ export function ProjectedRevenueCard({
                         {t("campaigns.overview.projected.subtitle")}
                     </Text>
                 </Stack>
-                <AreaChart
-                    className={styles.chartBox}
-                    data={data}
-                    locale={i18n.language}
-                    margin={chartMargin}
-                    xDataKey="date"
-                >
-                    <Grid vertical={false} />
-                    <Area
-                        dataKey="actual"
-                        fill={vars.icon.success}
-                        stroke={vars.icon.success}
-                    />
-                    <Area
-                        dataKey="forecast"
-                        fill={vars.icon.tertiary}
-                        stroke={vars.icon.tertiary}
-                    />
-                    <XAxis tickMode="data" />
-                    <NumericYAxis
-                        formatter={(v) => `${v / 1000}k€`}
-                        ticks={[0, 5000, 10000, 15000]}
-                    />
-                    <ChartTooltip
-                        rows={(point) =>
-                            [
-                                point.actual != null
-                                    ? {
-                                          color: vars.icon.success,
-                                          label: t(
-                                              "campaigns.overview.projected.actual"
-                                          ),
-                                          value: point.actual as number,
-                                      }
-                                    : null,
-                                point.forecast != null
-                                    ? {
-                                          color: vars.icon.tertiary,
-                                          label: t(
-                                              "campaigns.overview.projected.forecast"
-                                          ),
-                                          value: point.forecast as number,
-                                      }
-                                    : null,
-                            ].filter((row) => row !== null)
-                        }
-                    />
-                </AreaChart>
-                <Inline space="l">
-                    <Stack space="xxs">
-                        <span
-                            className={styles.legendDotSuccess}
-                            aria-hidden="true"
-                        />
-                        <Text as="span" variant="caption">
-                            {t("campaigns.overview.projected.actual")}
-                        </Text>
-                    </Stack>
-                    <Stack space="xxs">
-                        <span
-                            className={styles.legendDotForecast}
-                            aria-hidden="true"
-                        />
-                        <Text as="span" variant="caption">
-                            {t("campaigns.overview.projected.forecast")}
-                        </Text>
-                    </Stack>
-                </Inline>
+                {isEmpty ? (
+                    <ChartEmptyState />
+                ) : (
+                    <>
+                        <AreaChart
+                            className={styles.chartBox}
+                            data={data}
+                            locale={i18n.language}
+                            margin={chartMargin}
+                            xDataKey="date"
+                        >
+                            <Grid vertical={false} />
+                            <Area
+                                dataKey="actual"
+                                fill={vars.icon.success}
+                                stroke={vars.icon.success}
+                            />
+                            <Area
+                                dataKey="forecast"
+                                fill={vars.icon.tertiary}
+                                stroke={vars.icon.tertiary}
+                            />
+                            <XAxis tickMode="data" />
+                            <NumericYAxis
+                                formatter={(v) => `${v / 1000}k€`}
+                                ticks={[0, 5000, 10000, 15000]}
+                            />
+                            <ChartTooltip
+                                rows={(point) =>
+                                    [
+                                        point.actual != null
+                                            ? {
+                                                  color: vars.icon.success,
+                                                  label: t(
+                                                      "campaigns.overview.projected.actual"
+                                                  ),
+                                                  value: point.actual as number,
+                                              }
+                                            : null,
+                                        point.forecast != null
+                                            ? {
+                                                  color: vars.icon.tertiary,
+                                                  label: t(
+                                                      "campaigns.overview.projected.forecast"
+                                                  ),
+                                                  value: point.forecast as number,
+                                              }
+                                            : null,
+                                    ].filter((row) => row !== null)
+                                }
+                            />
+                        </AreaChart>
+                        <Inline space="l">
+                            <Stack space="xxs">
+                                <span
+                                    className={styles.legendDotSuccess}
+                                    aria-hidden="true"
+                                />
+                                <Text as="span" variant="caption">
+                                    {t("campaigns.overview.projected.actual")}
+                                </Text>
+                            </Stack>
+                            <Stack space="xxs">
+                                <span
+                                    className={styles.legendDotForecast}
+                                    aria-hidden="true"
+                                />
+                                <Text as="span" variant="caption">
+                                    {t("campaigns.overview.projected.forecast")}
+                                </Text>
+                            </Stack>
+                        </Inline>
+                    </>
+                )}
             </Stack>
         </Card>
     );

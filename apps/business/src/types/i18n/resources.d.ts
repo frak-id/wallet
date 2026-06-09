@@ -532,6 +532,9 @@ export default interface Resources {
         "tabsLabel": "Filter campaigns by status"
       },
       "overview": {
+        "empty": {
+          "noData": "No data to display yet."
+        },
         "footer": {
           "viewAll": "View all campaigns"
         },
@@ -554,6 +557,7 @@ export default interface Resources {
           "avgCpa": "Avg. CPA",
           "descriptorAllCampaigns": "All campaigns",
           "descriptorTotal": "total",
+          "noData": "No data yet",
           "revenue": "Generated Revenue",
           "shares": "Shares",
           "sharingRate": "Sharing rate"

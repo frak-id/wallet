@@ -64,6 +64,27 @@ export const chartAmount = style({
     fontVariantNumeric: "tabular-nums",
 });
 
+export const chartAmountEmpty = style([
+    chartAmount,
+    { color: vars.text.disabled },
+]);
+
+// No-data placeholder that stands in for a chart's graphic. Mirrors `chartBox`'s
+// height so swapping chart ↔ empty state doesn't change the card's footprint,
+// and stretches to fill cards that lay their charts out with `flex: 1`.
+export const chartEmpty = style({
+    minHeight: "180px",
+    flex: 1,
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+});
+
+export const chartEmptyIcon = style({
+    color: vars.icon.disabled,
+});
+
 export const legendDot = style({
     width: "8px",
     height: "8px",
