@@ -714,6 +714,9 @@ export default interface Resources {
         },
         "myAccount": "My account"
       },
+      "nav": {
+        "noMerchantHint": "Add a merchant first"
+      },
       "pages": {
         "campaigns": {
           "nav": "Campaigns"

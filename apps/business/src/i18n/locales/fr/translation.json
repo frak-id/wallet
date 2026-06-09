@@ -44,6 +44,9 @@
         }
     },
     "shell": {
+        "nav": {
+            "noMerchantHint": "Ajoutez d’abord un marchand"
+        },
         "sections": {
             "acquisition": "Acquisition",
             "preview": "Aperçu"

@@ -13,7 +13,13 @@ import { pageNav } from "@/module/common/i18n/pageLabel";
 import { NavigationItem, SubNavigationItem } from "./index";
 import { collapsibleContent } from "./navigation.css";
 
-export function NavigationCampaignsSwitcher() {
+export function NavigationCampaignsSwitcher({
+    disabled,
+    tooltip,
+}: {
+    disabled?: boolean;
+    tooltip?: string;
+}) {
     const { t } = useTranslation();
     const isMobile = useMediaQuery("(max-width : 768px)");
     const merchantId = useOptionalActiveMerchantId();
@@ -26,6 +32,20 @@ export function NavigationCampaignsSwitcher() {
     const overviewUrl = merchantId
         ? `/m/${merchantId}/campaigns`
         : "/campaigns";
+
+    // No merchant ⇒ every campaigns route bounces to /dashboard; show a single
+    // disabled entry (no expandable sub-items) with the reason.
+    if (disabled) {
+        return (
+            <NavigationItem
+                disabled
+                tooltip={tooltip}
+                icon={<ChecklistIcon width={20} height={20} />}
+            >
+                {pageNav(t, "campaigns")}
+            </NavigationItem>
+        );
+    }
 
     return isMobile ? (
         <NavigationItem

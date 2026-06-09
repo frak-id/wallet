@@ -131,7 +131,14 @@ const itemBase = style({
     color: vars.text.secondary,
     transition: "background 0.15s ease, color 0.15s ease",
     selectors: {
+        // `aria-disabled` mirrors `:disabled` — used when the item still needs
+        // hover/focus events (e.g. to show a tooltip), which a native disabled
+        // button would swallow.
         "&:disabled": {
+            cursor: "not-allowed",
+            color: vars.text.disabled,
+        },
+        '&[aria-disabled="true"]': {
             cursor: "not-allowed",
             color: vars.text.disabled,
         },
@@ -148,7 +155,7 @@ export const item = style([
         "@media": {
             "(hover: hover)": {
                 selectors: {
-                    "&:hover": {
+                    "&:not(:disabled):not([aria-disabled='true']):hover": {
                         background: vars.surface.muted,
                         color: vars.text.action,
                     },
@@ -173,7 +180,7 @@ export const subItem = style([
         "@media": {
             "(hover: hover)": {
                 selectors: {
-                    "&:hover": {
+                    "&:not(:disabled):not([aria-disabled='true']):hover": {
                         background: brand.colors.neutral.grey200,
                         color: vars.text.action,
                     },

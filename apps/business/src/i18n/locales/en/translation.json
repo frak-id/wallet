@@ -44,6 +44,9 @@
         }
     },
     "shell": {
+        "nav": {
+            "noMerchantHint": "Add a merchant first"
+        },
         "sections": {
             "acquisition": "Acquisition",
             "preview": "Preview"

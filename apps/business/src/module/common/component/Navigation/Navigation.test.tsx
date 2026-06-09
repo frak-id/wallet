@@ -26,10 +26,21 @@ vi.mock("./NavigationCampaignsSwitcher", () => ({
     ),
 }));
 
+const mockUseMyMerchants = vi.fn();
+vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
+    useMyMerchants: () => mockUseMyMerchants(),
+}));
+
 describe("Navigation", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockMatchRoute.mockReturnValue(false);
+        mockUseMyMerchants.mockReturnValue({
+            isEmpty: false,
+            merchants: [{ id: "m1" }],
+            owned: [{ id: "m1" }],
+            adminOf: [],
+        });
     });
 
     afterEach(() => {
@@ -73,6 +84,21 @@ describe("Navigation", () => {
         expect(
             container.querySelector('[data-testid="campaigns-switcher"]')
         ).toBeInTheDocument();
+    });
+
+    it("disables merchant-scoped items when there are no merchants", () => {
+        mockUseMyMerchants.mockReturnValue({
+            isEmpty: true,
+            merchants: [],
+            owned: [],
+            adminOf: [],
+        });
+        render(<Navigation />);
+
+        const members = screen.getByRole("button", {
+            name: "shell.pages.members.nav",
+        });
+        expect(members).toHaveAttribute("aria-disabled", "true");
     });
 });
 

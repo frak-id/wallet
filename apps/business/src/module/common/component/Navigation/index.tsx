@@ -10,8 +10,10 @@ import {
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { pageNav, sectionLabel } from "@/module/common/i18n/pageLabel";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 import {
     divider,
@@ -34,6 +36,11 @@ import {
 export function Navigation() {
     const { t } = useTranslation();
     const merchantId = useOptionalActiveMerchantId();
+    // Merchant-scoped sections (campaigns, members) bounce back to /dashboard
+    // until a merchant exists — disable them and explain why instead of letting
+    // the click silently no-op.
+    const { isEmpty } = useMyMerchants();
+    const noMerchantHint = isEmpty ? t("shell.nav.noMerchantHint") : undefined;
     const dashboardUrl = merchantId
         ? `/m/${merchantId}/dashboard`
         : "/dashboard";
@@ -67,10 +74,15 @@ export function Navigation() {
                             {sectionLabel(t, "acquisition")}
                         </Text>
                     </li>
-                    <NavigationCampaignsSwitcher />
+                    <NavigationCampaignsSwitcher
+                        disabled={isEmpty}
+                        tooltip={noMerchantHint}
+                    />
                     <NavigationItem
                         url={membersUrl}
                         icon={<PeopleFilledIcon width={20} height={20} />}
+                        disabled={isEmpty}
+                        tooltip={noMerchantHint}
                     >
                         {pageNav(t, "members")}
                     </NavigationItem>
@@ -102,6 +114,8 @@ type NavigationItemProps = HTMLAttributes<HTMLElement> & {
     rightSection?: ReactNode;
     isActive?: boolean;
     disabled?: boolean;
+    /** When disabled, an explanation shown on hover/focus. */
+    tooltip?: string;
     isSub?: boolean;
     fuzzy?: boolean;
 };
@@ -113,6 +127,7 @@ export function NavigationItem({
     rightSection,
     isActive,
     disabled,
+    tooltip,
     isSub = false,
     fuzzy = true,
     ...rest
@@ -141,6 +156,25 @@ export function NavigationItem({
     );
 
     if (disabled) {
+        // With a tooltip, use `aria-disabled` (not native `disabled`) so the
+        // button still receives the hover/focus that opens the tooltip.
+        if (tooltip) {
+            return (
+                <li className={itemListEntry}>
+                    <Tooltip content={tooltip} side="right">
+                        <button
+                            type="button"
+                            className={className}
+                            {...rest}
+                            aria-disabled="true"
+                            onClick={(e) => e.preventDefault()}
+                        >
+                            {content}
+                        </button>
+                    </Tooltip>
+                </li>
+            );
+        }
         return (
             <li className={itemListEntry}>
                 <button type="button" className={className} disabled {...rest}>
