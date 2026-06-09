@@ -12,27 +12,20 @@ import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import { CssEditor } from "./CssEditor";
 import * as styles from "./customize.css";
 import { BannerFields } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
 import { PostPurchaseFields } from "./fields/PostPurchaseFields";
-import { SharingPagePreview } from "./ModalPreview";
 import { ComponentPreview } from "./PlacementCustomization";
-import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import { COMPONENT_LABELS } from "./translations";
 import type {
     ComponentSettingsFormValues,
     ComponentType,
     CssFormValues,
-    TranslationFormValues,
-    TranslationLang,
 } from "./types";
 import { COMPONENT_TYPES } from "./types";
-import {
-    buildTranslationsPayload,
-    getTranslationsFormValues,
-    valueOrNull,
-} from "./utils";
+import { valueOrNull } from "./utils";
 
 export function DefaultCustomization({
     merchantId,
@@ -46,11 +39,6 @@ export function DefaultCustomization({
     return (
         <>
             <GlobalComponentsPanel
-                merchantId={merchantId}
-                sdkConfig={sdkConfig}
-                onDirtyChange={onDirtyChange}
-            />
-            <GlobalTranslationsPanel
                 merchantId={merchantId}
                 sdkConfig={sdkConfig}
                 onDirtyChange={onDirtyChange}
@@ -148,89 +136,9 @@ function GlobalCssPanel({
     );
 }
 
-function GlobalTranslationsPanel({
-    merchantId,
-    sdkConfig,
-    onDirtyChange,
-}: {
-    merchantId: string;
-    sdkConfig: SdkConfig;
-    onDirtyChange: (key: string, isDirty: boolean) => void;
-}) {
-    const {
-        mutate: editSdkConfig,
-        isPending,
-        isSuccess,
-    } = useMerchantUpdate({ merchantId, target: "sdk-config" });
-    const [lang, setLang] = useState<TranslationLang>("default");
-
-    const values = useMemo<TranslationFormValues>(
-        () => getTranslationsFormValues(sdkConfig.translations),
-        [sdkConfig.translations]
-    );
-
-    const form = useForm<TranslationFormValues>({
-        values,
-        defaultValues: {
-            translationsDefault: {},
-            translationsEn: {},
-            translationsFr: {},
-        },
-    });
-
-    useEffect(() => {
-        onDirtyChange("default-translations", form.formState.isDirty);
-        return () => onDirtyChange("default-translations", false);
-    }, [form.formState.isDirty, onDirtyChange]);
-
-    useEffect(() => {
-        if (!isSuccess) return;
-        form.reset(form.getValues());
-    }, [isSuccess, form.reset, form.getValues, form]);
-
-    return (
-        <Form {...form}>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Global translations</CardTitle>
-                </CardHeader>
-                <p className={styles.customizeFieldDescription}>
-                    Translations applied to all SDK components across every
-                    placement.
-                </p>
-                <SharingPagePreview
-                    form={form}
-                    logoUrl={sdkConfig.logoUrl ?? undefined}
-                    currency={sdkConfig.currency ?? undefined}
-                    lang={lang}
-                />
-                <TranslationEditor
-                    form={form}
-                    fieldPrefix={"translations"}
-                    lang={lang}
-                    onLangChange={setLang}
-                />
-                <FormActions
-                    isSuccess={isSuccess}
-                    isPending={isPending}
-                    isDirty={form.formState.isDirty}
-                    onDiscard={() => form.reset(values)}
-                    onSubmit={() => {
-                        const payload = buildTranslationsPayload(
-                            form.getValues()
-                        );
-                        editSdkConfig({
-                            translations: payload.hasAnyValues
-                                ? payload.translations
-                                : null,
-                        });
-                    }}
-                />
-            </Card>
-        </Form>
-    );
-}
-
+// Text fields (text, noRewardText, banner/postPurchase copy) have no UI — wording
+// is Frak-managed. They are still read and re-submitted on save so existing values
+// round-trip unchanged. Do not drop them: that would wipe merchant wording on next save.
 const getGlobalComponentsValues = ({
     components: c,
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Just fallback values
@@ -300,6 +208,8 @@ function GlobalComponentsPanel({
     }, [isSuccess, form.reset, form.getValues, form]);
 
     const onSubmit = useCallback(
+        // Text fields are not editable here (Frak-managed wording) but are still
+        // written so saved CSS/clickAction changes preserve existing wording.
         (v: ComponentSettingsFormValues) => {
             const val = (s: string) => s.trim() || undefined;
             editSdkConfig({
@@ -345,8 +255,8 @@ function GlobalComponentsPanel({
                     <CardTitle>Global component defaults</CardTitle>
                 </CardHeader>
                 <p className={styles.customizeFieldDescription}>
-                    Default text and styles for SDK components. Placement-level
-                    settings override these values.
+                    Default styles and behavior for SDK components.
+                    Placement-level settings override these values.
                 </p>
 
                 <div className={styles.customizeComponentSelector}>

@@ -7,7 +7,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import { Input } from "@/module/forms/Input";
 import * as styles from "../customize.css";
 import type { ComponentSettingsFormValues } from "../types";
 
@@ -18,69 +17,6 @@ export function ButtonShareFields({
 }) {
     return (
         <div className={styles.customizeSettingsGrid}>
-            <FormField
-                control={form.control}
-                name="buttonShare.text"
-                rules={{
-                    maxLength: {
-                        value: 500,
-                        message: "Maximum length is 500 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Button text</FormLabel>
-                        <FormDescription>
-                            Label displayed on the share button. Embed{" "}
-                            <code>{"{REWARD}"}</code> to display the estimated
-                            reward amount inline (e.g.{" "}
-                            <em>Share and earn up to {"{REWARD}"}!</em>).
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={500}
-                                placeholder={"Share and earn!"}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <FormField
-                control={form.control}
-                name="buttonShare.noRewardText"
-                rules={{
-                    maxLength: {
-                        value: 500,
-                        message: "Maximum length is 500 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>
-                            No-reward fallback text
-                        </FormLabel>
-                        <FormDescription>
-                            Shown instead when the button text contains{" "}
-                            <code>{"{REWARD}"}</code> but no reward is available
-                            for this campaign
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={500}
-                                placeholder={"Share even without rewards"}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
             <FormField
                 control={form.control}
                 name="buttonShare.clickAction"

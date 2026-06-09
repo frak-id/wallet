@@ -33,11 +33,7 @@ import {
     getPostPurchaseDefaults,
     PostPurchaseFields,
 } from "./fields/PostPurchaseFields";
-import {
-    DeletePlacementPanel,
-    PlacementCssPanel,
-    PlacementTranslationsPanel,
-} from "./PlacementPanels";
+import { DeletePlacementPanel, PlacementCssPanel } from "./PlacementPanels";
 import { COMPONENT_LABELS } from "./translations";
 import type { ComponentSettingsFormValues, ComponentType } from "./types";
 import { COMPONENT_TYPES } from "./types";
@@ -69,12 +65,6 @@ export function PlacementCustomization({
                 onDirtyChange={onDirtyChange}
             />
             <PlacementCssPanel
-                merchantId={merchantId}
-                placementId={placementId}
-                sdkConfig={sdkConfig}
-                onDirtyChange={onDirtyChange}
-            />
-            <PlacementTranslationsPanel
                 merchantId={merchantId}
                 placementId={placementId}
                 sdkConfig={sdkConfig}

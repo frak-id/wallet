@@ -1,13 +1,5 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 
-export type TranslationLang = "default" | "en" | "fr";
-
-export type TranslationFormValues = {
-    translationsDefault: Record<string, string>;
-    translationsEn: Record<string, string>;
-    translationsFr: Record<string, string>;
-};
-
 export type SdkIdentityFormValues = {
     name: string;
     logoUrl: string;

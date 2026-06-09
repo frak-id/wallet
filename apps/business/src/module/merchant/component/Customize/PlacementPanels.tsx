@@ -5,28 +5,15 @@ import {
     CardTitle,
 } from "@frak-labs/design-system/components/Card";
 import { Trash2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
-import { Form } from "@/module/forms/Form";
-import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import { CssEditor } from "./CssEditor";
 import * as styles from "./customize.css";
-import { SharingPagePreview } from "./ModalPreview";
-import { CssEditor, TranslationEditor } from "./TranslationEditor";
-import type {
-    CssFormValues,
-    TranslationFormValues,
-    TranslationLang,
-} from "./types";
-import {
-    buildTranslationsPayload,
-    getPlacementTranslationsFormValues,
-    getTranslationsFormValues,
-    updatePlacement,
-    valueOrUndefined,
-} from "./utils";
+import type { CssFormValues } from "./types";
+import { updatePlacement, valueOrUndefined } from "./utils";
 
 export function PlacementCssPanel({
     merchantId,
@@ -102,106 +89,6 @@ export function PlacementCssPanel({
                 }
             />
         </Card>
-    );
-}
-
-export function PlacementTranslationsPanel({
-    merchantId,
-    placementId,
-    sdkConfig,
-    onDirtyChange,
-}: {
-    merchantId: string;
-    placementId: string;
-    sdkConfig: SdkConfig;
-    onDirtyChange: (key: string, isDirty: boolean) => void;
-}) {
-    const {
-        mutate: editSdkConfig,
-        isPending,
-        isSuccess,
-    } = useMerchantUpdate({ merchantId, target: "sdk-config" });
-    const [lang, setLang] = useState<TranslationLang>("default");
-
-    const values = useMemo<TranslationFormValues>(
-        () => getPlacementTranslationsFormValues(sdkConfig, placementId),
-        [sdkConfig, placementId]
-    );
-
-    const inheritedValues = useMemo(
-        () => getTranslationsFormValues(sdkConfig.translations),
-        [sdkConfig.translations]
-    );
-
-    const form = useForm<TranslationFormValues>({
-        values,
-        defaultValues: {
-            translationsDefault: {},
-            translationsEn: {},
-            translationsFr: {},
-        },
-    });
-
-    useEffect(() => {
-        onDirtyChange(
-            `placement-${placementId}-translations`,
-            form.formState.isDirty
-        );
-        return () =>
-            onDirtyChange(`placement-${placementId}-translations`, false);
-    }, [form.formState.isDirty, onDirtyChange, placementId]);
-
-    useEffect(() => {
-        if (!isSuccess) return;
-        form.reset(form.getValues());
-    }, [isSuccess, form.reset, form.getValues, form]);
-
-    const handleSubmit = useCallback(() => {
-        const payload = buildTranslationsPayload(form.getValues());
-        editSdkConfig({
-            placements: updatePlacement(
-                sdkConfig,
-                placementId,
-                (placement) => ({
-                    ...placement,
-                    translations: payload.hasAnyValues
-                        ? payload.translations
-                        : undefined,
-                })
-            ),
-        });
-    }, [editSdkConfig, form, sdkConfig, placementId]);
-
-    return (
-        <Form {...form}>
-            <Card>
-                <CardHeader>
-                    <CardTitle>{`Placement translations · ${placementId}`}</CardTitle>
-                </CardHeader>
-                <SharingPagePreview
-                    form={form}
-                    logoUrl={sdkConfig.logoUrl ?? undefined}
-                    currency={sdkConfig.currency ?? undefined}
-                    lang={lang}
-                    defaultValues={inheritedValues}
-                />
-                <TranslationEditor
-                    form={form}
-                    fieldPrefix={`placements.${placementId}.translations`}
-                    defaultValues={inheritedValues}
-                    lang={lang}
-                    onLangChange={setLang}
-                />
-
-                <FormActions
-                    isSuccess={isSuccess}
-                    isPending={isPending}
-                    isDirty={form.formState.isDirty}
-                    onDiscard={() => form.reset(values)}
-                    onSubmit={handleSubmit}
-                />
-            </Card>
-        </Form>
     );
 }
 
