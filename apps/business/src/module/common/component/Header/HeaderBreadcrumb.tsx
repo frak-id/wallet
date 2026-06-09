@@ -10,7 +10,6 @@ import {
     breadcrumbLink,
     breadcrumbSeparator,
 } from "./header.css";
-import { MerchantSwitcher } from "./MerchantSwitcher";
 
 /**
  * Maps a route segment to its translated label. Falls back to a
@@ -50,7 +49,7 @@ export function HeaderBreadcrumb() {
 
     const rawSegments = pathname.split("/").filter(Boolean);
 
-    // Strip the `/m/$merchantId` prefix — the switcher renders in its place.
+    // Strip the `/m/$merchantId` prefix — it isn't a navigable crumb.
     const segments = (() => {
         if (params.merchantId && rawSegments[0] === "m") {
             return rawSegments.slice(2);
@@ -58,16 +57,13 @@ export function HeaderBreadcrumb() {
         return rawSegments;
     })();
 
-    const hasSwitcher = Boolean(params.merchantId);
-
-    if (segments.length === 0 && !hasSwitcher) return null;
+    if (segments.length === 0) return null;
 
     return (
         <nav
             aria-label={t("shell.header.breadcrumbLabel")}
             className={breadcrumb}
         >
-            {hasSwitcher && <MerchantSwitcher />}
             {segments.map((segment, index) => {
                 const isLast = index === segments.length - 1;
                 const tail = segments.slice(0, index + 1).join("/");
@@ -76,7 +72,7 @@ export function HeaderBreadcrumb() {
                     : `/${tail}`;
                 return (
                     <Fragment key={href}>
-                        {(hasSwitcher || index > 0) && (
+                        {index > 0 && (
                             <span
                                 aria-hidden="true"
                                 className={breadcrumbSeparator}

@@ -14,10 +14,12 @@ vi.mock("@tanstack/react-router", () => ({
     ),
     useLocation: () => ({ pathname: "/m/merchant-1/campaigns/list" }),
     useParams: () => ({ merchantId: "merchant-1" }),
+    useNavigate: () => vi.fn(),
 }));
 
 vi.mock("@/module/common/atoms/demoMode", () => ({
     useIsDemoMode: () => false,
+    useDemoMode: () => ({ isDemoMode: false, setDemoMode: vi.fn() }),
 }));
 
 vi.mock("@/module/campaigns/component/ButtonNewCampaign", () => ({
@@ -72,10 +74,12 @@ describe("Header", () => {
         expect(screen.getByTestId("new-campaign-btn")).toBeInTheDocument();
     });
 
-    it("should render My account profile link", () => {
+    it("should render the My account menu trigger", () => {
         render(<Header />);
-        const profileLink = screen.getByTestId("link-settings");
-        expect(profileLink).toBeInTheDocument();
-        expect(profileLink).toHaveTextContent("shell.header.myAccount");
+        const trigger = screen.getByRole("button", {
+            name: "shell.header.myAccount",
+        });
+        expect(trigger).toBeInTheDocument();
+        expect(trigger).toHaveTextContent("shell.header.myAccount");
     });
 });

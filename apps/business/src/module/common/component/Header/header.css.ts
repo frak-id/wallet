@@ -1,6 +1,6 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
-import { globalStyle, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 
 export const header = style({
     position: "fixed",
@@ -90,69 +90,6 @@ export const actionGroup = style({
     "@media": {
         "screen and (max-width: 768px)": {
             gap: alias.spacing.xs,
-        },
-    },
-});
-
-export const profileLink = style({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: alias.spacing.m,
-    height: "40px",
-    borderRadius: alias.cornerRadius.full,
-    color: vars.text.primary,
-    textDecoration: "none",
-    transition: "background 0.15s ease",
-    "@media": {
-        "(hover: hover)": {
-            selectors: {
-                "&:hover": {
-                    background: vars.surface.muted,
-                },
-            },
-        },
-    },
-});
-
-export const profileContent = style({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-});
-
-export const profileAvatar = style({
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "40px",
-    height: "40px",
-    borderRadius: alias.cornerRadius.full,
-    backgroundColor: vars.surface.secondary,
-    color: vars.icon.action,
-    flexShrink: 0,
-});
-
-globalStyle(`${profileAvatar} > svg`, {
-    width: "24px",
-    height: "24px",
-});
-
-export const profileLabel = style({
-    "@media": {
-        "screen and (max-width: 768px)": {
-            display: "none",
-        },
-    },
-});
-
-export const profileChevron = style({
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: vars.icon.tertiary,
-    "@media": {
-        "screen and (max-width: 768px)": {
-            display: "none",
         },
     },
 });

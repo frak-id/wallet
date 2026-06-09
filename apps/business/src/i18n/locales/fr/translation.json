@@ -94,11 +94,9 @@
             "myAccount": "Mon compte",
             "demoBadge": "démo",
             "demoBadgeTitle": "Le mode démo est actif. Cliquez pour gérer les paramètres.",
-            "merchantSwitcher": {
-                "label": "Changer de marchand",
-                "owned": "Mes marchands",
-                "adminOf": "Marchands administrés",
-                "empty": "Aucun marchand disponible"
+            "account": {
+                "settings": "Paramètres",
+                "logout": "Se déconnecter"
             }
         }
     },

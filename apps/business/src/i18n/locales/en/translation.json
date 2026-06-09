@@ -94,11 +94,9 @@
             "myAccount": "My account",
             "demoBadge": "demo",
             "demoBadgeTitle": "Demo mode is active. Click to manage settings.",
-            "merchantSwitcher": {
-                "label": "Switch merchant",
-                "owned": "Owned",
-                "adminOf": "Admin of",
-                "empty": "No merchant available"
+            "account": {
+                "settings": "Settings",
+                "logout": "Log out"
             }
         }
     },

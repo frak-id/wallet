@@ -6,6 +6,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
 import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
+import { AccountMenu } from "./AccountMenu";
 import { DateRangeChip } from "./DateRangeChip";
 import { HeaderBreadcrumb } from "./HeaderBreadcrumb";
 import {
@@ -17,7 +18,6 @@ import {
     headerRight,
     hideOnMobile,
 } from "./header.css";
-import { ProfileLink } from "./ProfileLink";
 
 const CAMPAIGNS_PATH = /^\/m\/[^/]+\/campaigns(\/|$)/;
 const CAMPAIGNS_OVERVIEW_PATH = /^\/m\/[^/]+\/campaigns$/;
@@ -84,7 +84,7 @@ export function Header() {
                             />
                         )}
                     </div>
-                    <ProfileLink />
+                    <AccountMenu />
                 </div>
             </div>
         </header>

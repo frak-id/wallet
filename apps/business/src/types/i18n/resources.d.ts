@@ -715,17 +715,15 @@ export default interface Resources {
     },
     "shell": {
       "header": {
+        "account": {
+          "logout": "Log out",
+          "settings": "Settings"
+        },
         "addMerchant": "Add merchant",
         "breadcrumbLabel": "Breadcrumb",
         "demoBadge": "demo",
         "demoBadgeTitle": "Demo mode is active. Click to manage settings.",
         "export": "Export",
-        "merchantSwitcher": {
-          "adminOf": "Admin of",
-          "empty": "No merchant available",
-          "label": "Switch merchant",
-          "owned": "Owned"
-        },
         "myAccount": "My account"
       },
       "nav": {

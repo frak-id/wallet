@@ -57,6 +57,7 @@ export { LockIcon } from "./LockIcon";
 export { LogoFrak } from "./LogoFrak";
 export { LogoFrakBadge } from "./LogoFrakBadge";
 export { LogoFrakWithName } from "./LogoFrakWithName";
+export { LogoutIcon } from "./LogoutIcon";
 export { MobileIcon } from "./MobileIcon";
 export { MoreVerticalIcon } from "./MoreVerticalIcon";
 export { NumberBadgeIcon } from "./NumberBadgeIcon";
