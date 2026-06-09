@@ -1,3 +1,4 @@
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import {
     RadioGroup,
@@ -34,6 +35,7 @@ import {
     type UseFormSetValue,
     useFieldArray,
     useForm,
+    useFormState,
     useWatch,
 } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
@@ -48,6 +50,7 @@ import { WizardFieldCard } from "../WizardFieldCard";
 import { WizardStep } from "../WizardStep";
 import * as styles from "./reward.css";
 import {
+    type CpaTierRow,
     DEFAULT_REWARD_FORM,
     draftToRewardForm,
     isRewardFormValid,
@@ -58,6 +61,7 @@ import {
     splitTargetCpa,
     type TierRow,
     type TierUnit,
+    tieredTiersValid,
 } from "./utils";
 
 const FORM_ID = "campaign-reward-form";
@@ -154,6 +158,8 @@ type StepperFieldProps = {
     tone?: "muted" | "elevated";
     /** Keep a literal `0` visible (e.g. min-purchase/lockup, where 0 is valid). */
     allowZero?: boolean;
+    /** Fill the field with the error surface when invalid. */
+    error?: boolean;
 };
 
 /** A numeric field with a double-chevron stepper and a trailing unit. */
@@ -165,11 +171,13 @@ function StepperField({
     ariaLabel,
     tone = "muted",
     allowZero = false,
+    error,
 }: StepperFieldProps) {
     return (
         <InputNumber
             variant="bare"
             tone={tone}
+            error={error}
             aria-label={ariaLabel}
             classNameWrapper={styles.inputWrapper}
             placeholder={placeholder}
@@ -302,6 +310,7 @@ function RecipientBox({
     unit,
     placeholder,
     hint,
+    error,
 }: {
     control: Control<RewardFormValues>;
     name:
@@ -314,6 +323,8 @@ function RecipientBox({
     placeholder: string;
     /** Omitted (e.g. while the input is empty) ⇒ no hint line is rendered. */
     hint?: string;
+    /** Tint the input red when the split is invalid. */
+    error?: boolean;
 }) {
     return (
         <div className={styles.recipientBox}>
@@ -328,6 +339,7 @@ function RecipientBox({
                         field={field}
                         unit={unit}
                         tone="elevated"
+                        error={error}
                         placeholder={placeholder}
                         ariaLabel={label}
                     />
@@ -419,7 +431,21 @@ function CpaReveal({
                     name={cpaName}
                     render={({ field }) => (
                         <StepperField
-                            field={field}
+                            field={{
+                                ...field,
+                                // Changing the Target CPA changes the pool, so
+                                // the previous split no longer adds up — clear
+                                // it (this also re-surfaces the reco bar).
+                                onChange: (next) => {
+                                    field.onChange(next);
+                                    setValue(ambName, 0, {
+                                        shouldValidate: true,
+                                    });
+                                    setValue(refName, 0, {
+                                        shouldValidate: true,
+                                    });
+                                },
+                            }}
                             unit={unit}
                             placeholder={cpaPlaceholder}
                             ariaLabel={cpaLabel}
@@ -461,6 +487,7 @@ function CpaReveal({
                         )}
                         unit={unit}
                         placeholder={ambPlaceholder}
+                        error={splitMismatch}
                         hint={
                             ambassador > 0
                                 ? recipientHint(poolPercent(ambassador))
@@ -475,6 +502,7 @@ function CpaReveal({
                         )}
                         unit={unit}
                         placeholder={refPlaceholder}
+                        error={splitMismatch}
                         hint={
                             referee > 0
                                 ? recipientHint(poolPercent(referee))
@@ -485,11 +513,11 @@ function CpaReveal({
             )}
 
             {splitMismatch && (
-                <Text variant="caption" className={styles.splitError}>
+                <FieldError>
                     {t("campaigns.create.reward.cpa.splitMismatch", {
                         amount: `${rewardsPool}${suffix}`,
                     })}
-                </Text>
+                </FieldError>
             )}
 
             <TriggeredRow />
@@ -609,6 +637,7 @@ function TierCell({
     unit,
     onEdit,
     tone = "muted",
+    error,
 }: {
     control: Control<RewardFormValues>;
     name: string;
@@ -616,6 +645,7 @@ function TierCell({
     unit: UnitGlyph;
     onEdit?: () => void;
     tone?: "muted" | "elevated";
+    error?: boolean;
 }) {
     return (
         <Controller
@@ -626,6 +656,7 @@ function TierCell({
                 <InputNumber
                     variant="bare"
                     tone={tone}
+                    error={error}
                     classNameWrapper={styles.inputWrapper}
                     placeholder={placeholder}
                     rightSection={<UnitIcon unit={unit} />}
@@ -648,12 +679,14 @@ function ValueCell({
     unitName,
     placeholder,
     tone = "muted",
+    error,
 }: {
     control: Control<RewardFormValues>;
     valueName: string;
     unitName: string;
     placeholder: string;
     tone?: "muted" | "elevated";
+    error?: boolean;
 }) {
     const unit =
         // biome-ignore lint/suspicious/noExplicitAny: dynamic field-array path
@@ -665,6 +698,7 @@ function ValueCell({
             placeholder={placeholder}
             unit={unit}
             tone={tone}
+            error={error}
         />
     );
 }
@@ -677,6 +711,8 @@ function RangeCell({
     lastTier,
     onEdit,
     tone = "muted",
+    fromError,
+    toError,
 }: {
     control: Control<RewardFormValues>;
     fromName: string;
@@ -684,6 +720,8 @@ function RangeCell({
     lastTier: boolean;
     onEdit?: () => void;
     tone?: "muted" | "elevated";
+    fromError?: boolean;
+    toError?: boolean;
 }) {
     const { t } = useTranslation();
     return (
@@ -695,6 +733,7 @@ function RangeCell({
                     unit="eur"
                     onEdit={onEdit}
                     tone={tone}
+                    error={fromError}
                     placeholder={t(
                         "campaigns.create.reward.tiered.fromPlaceholder"
                     )}
@@ -710,6 +749,7 @@ function RangeCell({
                     unit="eur"
                     onEdit={onEdit}
                     tone={tone}
+                    error={toError}
                     placeholder={
                         lastTier
                             ? "∞"
@@ -790,6 +830,13 @@ function GlobalCpaTable({ control }: { control: Control<RewardFormValues> }) {
         control,
         name: "globalCpaTiers",
     });
+    // Live tier values + a dirty gate, so errors only surface once the user has
+    // started filling the table (not on a pristine, just-selected tiered model).
+    const tiers = (useWatch({ control, name: "globalCpaTiers" }) ??
+        []) as CpaTierRow[];
+    const { dirtyFields } = useFormState({ control });
+    const showErrors = Boolean(dirtyFields.globalCpaTiers);
+    const tiersInvalid = !tieredTiersValid(tiers);
 
     return (
         <Stack space="xs">
@@ -805,39 +852,52 @@ function GlobalCpaTable({ control }: { control: Control<RewardFormValues> }) {
                 valueLabel={t("campaigns.create.reward.tiered.cpaColumn")}
             />
 
-            {fields.map((row, index) => (
-                <div className={styles.tierRow} key={row.id}>
-                    <RangeCell
-                        control={control}
-                        fromName={`globalCpaTiers.${index}.from`}
-                        toName={`globalCpaTiers.${index}.to`}
-                        lastTier={index === fields.length - 1}
-                    />
-                    <div className={styles.tierValueUnit}>
-                        <div className={styles.tierValue}>
-                            <ValueCell
-                                control={control}
-                                valueName={`globalCpaTiers.${index}.cpa`}
-                                unitName={`globalCpaTiers.${index}.unit`}
-                                placeholder={t(
-                                    "campaigns.create.reward.tiered.cpaPlaceholder"
-                                )}
-                            />
+            {fields.map((row, index) => {
+                const tier = tiers[index];
+                const isLast = index === fields.length - 1;
+                const fromError = showErrors && (!tier || tier.from === "");
+                const toError =
+                    showErrors && !isLast && (!tier || tier.to === "");
+                const cpaError = showErrors && !(Number(tier?.cpa) > 0);
+                return (
+                    <div className={styles.tierRow} key={row.id}>
+                        <RangeCell
+                            control={control}
+                            fromName={`globalCpaTiers.${index}.from`}
+                            toName={`globalCpaTiers.${index}.to`}
+                            lastTier={isLast}
+                            fromError={fromError}
+                            toError={toError}
+                        />
+                        <div className={styles.tierValueUnit}>
+                            <div className={styles.tierValue}>
+                                <ValueCell
+                                    control={control}
+                                    valueName={`globalCpaTiers.${index}.cpa`}
+                                    unitName={`globalCpaTiers.${index}.unit`}
+                                    error={cpaError}
+                                    placeholder={t(
+                                        "campaigns.create.reward.tiered.cpaPlaceholder"
+                                    )}
+                                />
+                            </div>
+                            <div className={styles.tierUnit}>
+                                <UnitSelectField
+                                    control={control}
+                                    name={`globalCpaTiers.${index}.unit`}
+                                />
+                            </div>
                         </div>
-                        <div className={styles.tierUnit}>
-                            <UnitSelectField
-                                control={control}
-                                name={`globalCpaTiers.${index}.unit`}
-                            />
-                        </div>
+                        <TierDelete
+                            index={index}
+                            onRemove={() => remove(index)}
+                            label={t(
+                                "campaigns.create.reward.tiered.removeTier"
+                            )}
+                        />
                     </div>
-                    <TierDelete
-                        index={index}
-                        onRemove={() => remove(index)}
-                        label={t("campaigns.create.reward.tiered.removeTier")}
-                    />
-                </div>
-            ))}
+                );
+            })}
 
             <div className={styles.tierAddButton}>
                 <Button
@@ -859,6 +919,11 @@ function GlobalCpaTable({ control }: { control: Control<RewardFormValues> }) {
             >
                 {t("campaigns.create.reward.tiered.commissionFootnote")}
             </Text>
+            {showErrors && tiersInvalid ? (
+                <FieldError>
+                    {t("campaigns.create.reward.tiered.incomplete")}
+                </FieldError>
+            ) : null}
         </Stack>
     );
 }

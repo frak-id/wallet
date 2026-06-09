@@ -154,13 +154,6 @@ export const recipientBox = style({
     borderRadius: alias.cornerRadius.m,
 });
 
-/** Validation message when Ambassador + Referee don't sum to the pool. */
-export const splitError = style({
-    color: vars.text.error,
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
 /* ---- "triggered on …" footer ---- */
 
 export const triggeredIcon = style({

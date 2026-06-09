@@ -1,3 +1,4 @@
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import {
     RadioGroup,
     RadioGroupItem,
@@ -24,6 +25,7 @@ import {
     setStartDate,
 } from "@/stores/campaignStore";
 import { DistributionBar } from "../DistributionBar";
+import { shouldShowError } from "../fieldError";
 import { WizardFieldCard } from "../WizardFieldCard";
 import { WizardStep } from "../WizardStep";
 import * as styles from "./budget.css";
@@ -229,32 +231,46 @@ function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
             <Controller
                 control={control}
                 name="amount"
-                rules={{ validate: (v) => (v ?? 0) > 0 }}
-                render={({ field }) => (
-                    <InputNumber
-                        variant="bare"
-                        tone="muted"
-                        classNameWrapper={styles.capInputWrapper}
-                        rightSection={
-                            <span className={styles.capRight}>
-                                <NumberStepper
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                />
-                                <EurCodeIcon
-                                    width={24}
-                                    height={24}
-                                    className={styles.eurIcon}
-                                />
-                            </span>
-                        }
-                        placeholder={t(
-                            "campaigns.create.budget.cap.placeholder"
-                        )}
-                        {...field}
-                        value={field.value || ""}
-                    />
-                )}
+                rules={{
+                    validate: (v) =>
+                        (v ?? 0) > 0
+                            ? true
+                            : t("campaigns.create.budget.cap.required"),
+                }}
+                render={({ field, fieldState }) => {
+                    const showError = shouldShowError(fieldState);
+                    return (
+                        <>
+                            <InputNumber
+                                variant="bare"
+                                tone="muted"
+                                error={showError}
+                                classNameWrapper={styles.capInputWrapper}
+                                rightSection={
+                                    <span className={styles.capRight}>
+                                        <NumberStepper
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                        />
+                                        <EurCodeIcon
+                                            width={24}
+                                            height={24}
+                                            className={styles.eurIcon}
+                                        />
+                                    </span>
+                                }
+                                placeholder={t(
+                                    "campaigns.create.budget.cap.placeholder"
+                                )}
+                                {...field}
+                                value={field.value || ""}
+                            />
+                            <FieldError>
+                                {showError ? fieldState.error?.message : null}
+                            </FieldError>
+                        </>
+                    );
+                }}
             />
             <Text variant="caption" color="tertiary" className={styles.capHint}>
                 {t("campaigns.create.budget.cap.hint")}
@@ -278,35 +294,51 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
             <Controller
                 control={control}
                 name="scheduleMode"
-                rules={{ required: true }}
-                render={({ field }) => (
-                    <RadioGroup
-                        className={styles.scheduleRow}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                    >
-                        {SCHEDULE_OPTIONS.map((option) => (
-                            <label
-                                key={option.value}
-                                htmlFor={`schedule-${option.value}`}
-                                className={styles.scheduleOption}
+                rules={{
+                    required: t("campaigns.create.budget.schedule.required"),
+                }}
+                render={({ field, fieldState }) => {
+                    const showError = shouldShowError(fieldState);
+                    return (
+                        <>
+                            <RadioGroup
+                                className={styles.scheduleRow}
+                                value={field.value}
+                                onValueChange={field.onChange}
                             >
-                                <RadioGroupItem
-                                    id={`schedule-${option.value}`}
-                                    value={option.value}
-                                />
-                                <span className={styles.scheduleMain}>
-                                    <Text variant="body" weight="medium">
-                                        {t(option.titleKey)}
-                                    </Text>
-                                    <Text variant="bodySmall" color="secondary">
-                                        {t(option.descKey)}
-                                    </Text>
-                                </span>
-                            </label>
-                        ))}
-                    </RadioGroup>
-                )}
+                                {SCHEDULE_OPTIONS.map((option) => (
+                                    <label
+                                        key={option.value}
+                                        htmlFor={`schedule-${option.value}`}
+                                        className={styles.scheduleOption}
+                                    >
+                                        <RadioGroupItem
+                                            id={`schedule-${option.value}`}
+                                            value={option.value}
+                                        />
+                                        <span className={styles.scheduleMain}>
+                                            <Text
+                                                variant="body"
+                                                weight="medium"
+                                            >
+                                                {t(option.titleKey)}
+                                            </Text>
+                                            <Text
+                                                variant="bodySmall"
+                                                color="secondary"
+                                            >
+                                                {t(option.descKey)}
+                                            </Text>
+                                        </span>
+                                    </label>
+                                ))}
+                            </RadioGroup>
+                            <FieldError>
+                                {showError ? fieldState.error?.message : null}
+                            </FieldError>
+                        </>
+                    );
+                }}
             />
 
             {showDates && <div className={styles.divider} />}
@@ -315,17 +347,31 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
                 <Controller
                     control={control}
                     name="startDate"
-                    rules={{ validate: (v) => Boolean(v) }}
-                    render={({ field }) => (
-                        <DateField
-                            value={field.value}
-                            onChange={field.onChange}
-                            minDate={today}
-                            ariaLabel={t(
-                                "campaigns.create.budget.schedule.startDate"
-                            )}
-                        />
-                    )}
+                    rules={{
+                        validate: (v) =>
+                            Boolean(v) ||
+                            t(
+                                "campaigns.create.budget.schedule.startDateRequired"
+                            ),
+                    }}
+                    render={({ field, fieldState }) => {
+                        const showError = shouldShowError(fieldState);
+                        return (
+                            <DateField
+                                value={field.value}
+                                onChange={field.onChange}
+                                minDate={today}
+                                error={showError}
+                                errorMessage={fieldState.error?.message}
+                                invalidMessage={t(
+                                    "campaigns.create.budget.schedule.invalidDate"
+                                )}
+                                ariaLabel={t(
+                                    "campaigns.create.budget.schedule.startDate"
+                                )}
+                            />
+                        );
+                    }}
                 />
             )}
 
@@ -339,22 +385,36 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
                             control={control}
                             name="startDate"
                             rules={{
-                                validate: (v) => Boolean(v),
+                                validate: (v) =>
+                                    Boolean(v) ||
+                                    t(
+                                        "campaigns.create.budget.schedule.startDateRequired"
+                                    ),
                                 deps: ["endDate"],
                             }}
-                            render={({ field }) => (
-                                <DateField
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    minDate={today}
-                                    maxDate={
-                                        endDate ? new Date(endDate) : undefined
-                                    }
-                                    ariaLabel={t(
-                                        "campaigns.create.budget.schedule.startDate"
-                                    )}
-                                />
-                            )}
+                            render={({ field, fieldState }) => {
+                                const showError = shouldShowError(fieldState);
+                                return (
+                                    <DateField
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        minDate={today}
+                                        error={showError}
+                                        errorMessage={fieldState.error?.message}
+                                        invalidMessage={t(
+                                            "campaigns.create.budget.schedule.invalidDate"
+                                        )}
+                                        maxDate={
+                                            endDate
+                                                ? new Date(endDate)
+                                                : undefined
+                                        }
+                                        ariaLabel={t(
+                                            "campaigns.create.budget.schedule.startDate"
+                                        )}
+                                    />
+                                );
+                            }}
                         />
                     </div>
                     <div className={styles.dateColumn}>
@@ -365,25 +425,44 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
                             control={control}
                             name="endDate"
                             rules={{
-                                validate: (v) =>
-                                    v
-                                        ? !startDate ||
-                                          new Date(v).getTime() >=
-                                              new Date(startDate).getTime()
-                                        : false,
+                                validate: (v) => {
+                                    if (!v)
+                                        return t(
+                                            "campaigns.create.budget.schedule.endDateRequired"
+                                        );
+                                    if (
+                                        startDate &&
+                                        new Date(v).getTime() <
+                                            new Date(startDate).getTime()
+                                    )
+                                        return t(
+                                            "campaigns.create.budget.schedule.endDateInvalid"
+                                        );
+                                    return true;
+                                },
                             }}
-                            render={({ field }) => (
-                                <DateField
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    minDate={
-                                        startDate ? new Date(startDate) : today
-                                    }
-                                    ariaLabel={t(
-                                        "campaigns.create.budget.schedule.endDate"
-                                    )}
-                                />
-                            )}
+                            render={({ field, fieldState }) => {
+                                const showError = shouldShowError(fieldState);
+                                return (
+                                    <DateField
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        minDate={
+                                            startDate
+                                                ? new Date(startDate)
+                                                : today
+                                        }
+                                        error={showError}
+                                        errorMessage={fieldState.error?.message}
+                                        invalidMessage={t(
+                                            "campaigns.create.budget.schedule.invalidDate"
+                                        )}
+                                        ariaLabel={t(
+                                            "campaigns.create.budget.schedule.endDate"
+                                        )}
+                                    />
+                                );
+                            }}
                         />
                     </div>
                 </div>

@@ -166,7 +166,8 @@
                 "referee": "Filleul : {{value}}",
                 "frak": "Frak : {{value}}",
                 "rewardLockup": "Blocage des récompenses",
-                "lockupValue": "{{count}} jours"
+                "lockupValue": "{{count}} jours",
+                "publishError": "Impossible de publier la campagne. Veuillez réessayer."
             },
             "success": {
                 "title": "Campagne lancée !",
@@ -216,7 +217,8 @@
                 "title": {
                     "label": "Titre de la campagne",
                     "placeholder": "Ex. Soldes d’été 2026",
-                    "hint": "Visible uniquement par vous."
+                    "hint": "Visible uniquement par vous.",
+                    "required": "Saisissez un titre de campagne"
                 },
                 "merchant": {
                     "label": "Marchand",
@@ -283,7 +285,8 @@
                     "placeholder": "Ex. 1000",
                     "hint": "Budget total pour toute la campagne. S’arrête une fois épuisé.",
                     "rewards": "Récompenses distribuées",
-                    "commission": "Commission Frak"
+                    "commission": "Commission Frak",
+                    "required": "Définissez un budget supérieur à 0"
                 },
                 "schedule": {
                     "label": "Calendrier",
@@ -303,7 +306,12 @@
                     "startDate": "Date de début",
                     "endDate": "Date de fin",
                     "datePlaceholder": "jj/mm/aaaa",
-                    "openCalendar": "Ouvrir le calendrier"
+                    "openCalendar": "Ouvrir le calendrier",
+                    "required": "Choisissez quand la campagne s’exécute",
+                    "startDateRequired": "Sélectionnez une date de début",
+                    "endDateRequired": "Sélectionnez une date de fin",
+                    "endDateInvalid": "La date de fin doit être égale ou postérieure à la date de début",
+                    "invalidDate": "Saisissez une date valide"
                 }
             },
             "reward": {
@@ -373,7 +381,8 @@
                     "cpaPlaceholder": "Ex. 5",
                     "rewardPlaceholder": "Ex. 5",
                     "addTier": "Ajouter un palier",
-                    "removeTier": "Supprimer le palier"
+                    "removeTier": "Supprimer le palier",
+                    "incomplete": "Chaque palier doit avoir une tranche de panier et un CPA supérieur à 0"
                 },
                 "eligibility": {
                     "label": "Éligibilité",

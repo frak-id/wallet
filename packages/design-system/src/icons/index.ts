@@ -34,6 +34,7 @@ export { EarningsIcon } from "./EarningsIcon";
 export { ErrorFilledIcon } from "./ErrorFilledIcon";
 export { EurCodeIcon } from "./EurCodeIcon";
 export { EurIcon } from "./EurIcon";
+export { ExclamationCircleIcon } from "./ExclamationCircleIcon";
 export { ExclamationFilledIcon } from "./ExclamationFilledIcon";
 export { ExclamationIcon } from "./ExclamationIcon";
 export { ExclamationTriangleIcon } from "./ExclamationTriangleIcon";

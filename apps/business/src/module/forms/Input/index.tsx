@@ -5,6 +5,7 @@ export type InputProps = ComponentPropsWithRef<"input"> & {
     variant?: "default" | "bare" | "soft";
     length?: "small" | "medium" | "big";
     tone?: "elevated" | "muted";
+    error?: boolean;
     classNameWrapper?: string;
     leftSection?: ReactNode;
     rightSection?: ReactNode;
@@ -16,6 +17,7 @@ export const Input = ({
     variant,
     length,
     tone,
+    error,
     className,
     classNameWrapper,
     leftSection,
@@ -28,6 +30,7 @@ export const Input = ({
         variant={variant}
         length={length}
         tone={tone}
+        error={error}
         leftSection={leftSection}
         rightSection={rightSection}
         className={classNameWrapper ?? className}

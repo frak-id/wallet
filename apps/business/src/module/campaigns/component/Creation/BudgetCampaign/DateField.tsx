@@ -1,8 +1,10 @@
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@frak-labs/design-system/components/Popover";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { CalendarIcon } from "@frak-labs/design-system/icons";
 import {
     format,
@@ -26,6 +28,16 @@ type DateFieldProps = {
     maxDate?: Date;
     /** Accessible name for the input (the field has no visible <label>). */
     ariaLabel?: string;
+    /** Fill the field with the error surface (form-level error, e.g. required). */
+    error?: boolean;
+    /** Message shown when `error` is set (e.g. "Select a start date"). */
+    errorMessage?: string;
+    /**
+     * Message shown when a complete date is typed but rejected (impossible
+     * date or outside the [minDate, maxDate] window) — the emitted value is
+     * `undefined`, which alone wouldn't flag the field, so we detect it here.
+     */
+    invalidMessage?: string;
 };
 
 const DISPLAY_FORMAT = "dd/MM/yyyy";
@@ -62,6 +74,9 @@ export function DateField({
     minDate,
     maxDate,
     ariaLabel,
+    error,
+    errorMessage,
+    invalidMessage,
 }: DateFieldProps) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
@@ -104,36 +119,48 @@ export function DateField({
         setOpen(false);
     }
 
+    // A complete date that produced no value was typed but rejected (impossible
+    // or out of range). The form value is `undefined` either way, so the field
+    // wouldn't otherwise flag it — surface it here.
+    const invalidText = text.length === DISPLAY_FORMAT.length && !value;
+    const showError = Boolean(error) || invalidText;
+    const message = invalidText ? invalidMessage : error ? errorMessage : null;
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
-            <div className={styles.dateField}>
-                <input
-                    type="text"
-                    inputMode="numeric"
-                    aria-label={ariaLabel}
-                    className={styles.dateInput}
-                    placeholder={t(
-                        "campaigns.create.budget.schedule.datePlaceholder"
-                    )}
-                    value={text}
-                    onChange={handleInput}
-                />
-                <PopoverTrigger asChild>
-                    <button
-                        type="button"
-                        aria-label={t(
-                            "campaigns.create.budget.schedule.openCalendar"
+            <Stack space="xxs">
+                <div
+                    className={`${styles.dateField}${showError ? ` ${styles.dateFieldError}` : ""}`}
+                >
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        aria-label={ariaLabel}
+                        className={styles.dateInput}
+                        placeholder={t(
+                            "campaigns.create.budget.schedule.datePlaceholder"
                         )}
-                        className={styles.dateIconButton}
-                    >
-                        <CalendarIcon
-                            width={20}
-                            height={20}
-                            className={styles.dateIcon}
-                        />
-                    </button>
-                </PopoverTrigger>
-            </div>
+                        value={text}
+                        onChange={handleInput}
+                    />
+                    <PopoverTrigger asChild>
+                        <button
+                            type="button"
+                            aria-label={t(
+                                "campaigns.create.budget.schedule.openCalendar"
+                            )}
+                            className={styles.dateIconButton}
+                        >
+                            <CalendarIcon
+                                width={20}
+                                height={20}
+                                className={styles.dateIcon}
+                            />
+                        </button>
+                    </PopoverTrigger>
+                </div>
+                <FieldError>{message}</FieldError>
+            </Stack>
             <PopoverContent align="end">
                 <Calendar
                     mode="single"

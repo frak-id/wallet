@@ -10,6 +10,7 @@ import {
     ChevronUpIcon,
     CloseCircleIcon,
     CloseIcon,
+    ErrorFilledIcon,
     SearchIcon,
 } from "@frak-labs/design-system/icons";
 import { continents, getCountryDataList } from "countries-list";
@@ -77,9 +78,10 @@ function computeContinentStates(
 type CountrySelectProps = {
     value: string[];
     onChange: (value: string[]) => void;
+    error?: boolean;
 };
 
-export function CountrySelect({ value, onChange }: CountrySelectProps) {
+export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
@@ -130,7 +132,9 @@ export function CountrySelect({ value, onChange }: CountrySelectProps) {
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <div className={styles.trigger}>
+                <div
+                    className={`${styles.trigger}${error ? ` ${styles.triggerError}` : ""}`}
+                >
                     <div
                         className={`${styles.triggerContent}${value.length > 0 ? ` ${styles.triggerContentFilled}` : ""}`}
                     >
@@ -174,6 +178,13 @@ export function CountrySelect({ value, onChange }: CountrySelectProps) {
                         )}
                     </div>
                     <span className={styles.right}>
+                        {error && (
+                            <ErrorFilledIcon
+                                width={24}
+                                height={24}
+                                className={styles.errorIcon}
+                            />
+                        )}
                         {value.length > 0 && (
                             <button
                                 type="button"

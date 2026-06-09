@@ -1,4 +1,5 @@
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useNavigate } from "@tanstack/react-router";
@@ -9,6 +10,7 @@ import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 import type { SpecialCategory } from "@/types/Campaign";
+import { shouldShowError } from "../fieldError";
 import { WizardFieldCard } from "../WizardFieldCard";
 import { WizardStep } from "../WizardStep";
 import { CountrySelect } from "./CountrySelect";
@@ -93,12 +95,21 @@ function TerritoryField({ control }: { control: Control<CampaignDraft> }) {
                         ? true
                         : t("campaigns.create.territory.card.required"),
             }}
-            render={({ field }) => (
-                <CountrySelect
-                    value={field.value ?? []}
-                    onChange={field.onChange}
-                />
-            )}
+            render={({ field, fieldState }) => {
+                const showError = shouldShowError(fieldState);
+                return (
+                    <Stack space="xxs">
+                        <CountrySelect
+                            value={field.value ?? []}
+                            onChange={field.onChange}
+                            error={showError}
+                        />
+                        <FieldError>
+                            {showError ? fieldState.error?.message : null}
+                        </FieldError>
+                    </Stack>
+                );
+            }}
         />
     );
 }
@@ -120,7 +131,7 @@ function SpecialCategoriesField({
                         ? true
                         : t("campaigns.create.territory.special.notSupported"),
             }}
-            render={({ field }) => {
+            render={({ field, fieldState }) => {
                 const value = (field.value ?? []) as SpecialCategory[];
                 const toggle = (id: SpecialCategory) =>
                     field.onChange(
@@ -128,17 +139,23 @@ function SpecialCategoriesField({
                             ? value.filter((v) => v !== id)
                             : [...value, id]
                     );
+                const showError = shouldShowError(fieldState);
                 return (
-                    <div className={styles.cells}>
-                        {CATEGORIES.map((cat) => (
-                            <CategoryRow
-                                key={cat.id}
-                                category={cat}
-                                checked={value.includes(cat.id)}
-                                onToggle={() => toggle(cat.id)}
-                            />
-                        ))}
-                    </div>
+                    <Stack space="xs">
+                        <div className={styles.cells}>
+                            {CATEGORIES.map((cat) => (
+                                <CategoryRow
+                                    key={cat.id}
+                                    category={cat}
+                                    checked={value.includes(cat.id)}
+                                    onToggle={() => toggle(cat.id)}
+                                />
+                            ))}
+                        </div>
+                        <FieldError>
+                            {showError ? fieldState.error?.message : null}
+                        </FieldError>
+                    </Stack>
                 );
             }}
         />

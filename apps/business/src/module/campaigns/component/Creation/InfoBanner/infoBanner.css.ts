@@ -15,7 +15,20 @@ export const banner = style({
     borderRadius: alias.cornerRadius.m,
 });
 
+/** Error tone: same bar on the error surface with a red feedback icon. */
+export const bannerError = style([
+    banner,
+    {
+        backgroundColor: vars.surface.error,
+    },
+]);
+
 export const icon = style({
     color: vars.text.action,
+    flexShrink: 0,
+});
+
+export const iconError = style({
+    color: vars.icon.error,
     flexShrink: 0,
 });

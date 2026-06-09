@@ -23,6 +23,7 @@ import {
     campaignStore,
     getStartDate,
 } from "@/stores/campaignStore";
+import { InfoBanner } from "../InfoBanner";
 import { CampaignLaunched } from "./CampaignLaunched";
 import * as styles from "./validation-campaign.css";
 
@@ -30,6 +31,7 @@ const FORM_ID = "campaign-validation-form";
 const EMPTY = "—";
 
 export function ValidationCampaign() {
+    const { t } = useTranslation();
     const isDemoMode = useIsDemoMode();
     const queryClient = useQueryClient();
 
@@ -40,7 +42,11 @@ export function ValidationCampaign() {
     const saveCampaign = useSaveCampaign();
     const { mutateAsync: publishCampaign } = useStatusTransition();
 
-    const { mutate: publish, isPending } = useMutation({
+    const {
+        mutate: publish,
+        isPending,
+        isError,
+    } = useMutation({
         mutationKey: ["campaign", "save-publish"],
         mutationFn: async () => {
             if (isDemoMode) {
@@ -82,11 +88,18 @@ export function ValidationCampaign() {
                     publish();
                 }}
             >
-                <Card radius="m" variant="elevated" padding="none">
-                    <Box paddingX="m">
-                        <SummaryRows draft={draft} />
-                    </Box>
-                </Card>
+                <Stack space="m">
+                    {isError && (
+                        <InfoBanner tone="error">
+                            {t("campaigns.create.validation.publishError")}
+                        </InfoBanner>
+                    )}
+                    <Card radius="m" variant="elevated" padding="none">
+                        <Box paddingX="m">
+                            <SummaryRows draft={draft} />
+                        </Box>
+                    </Card>
+                </Stack>
             </form>
         </WizardStep>
     );

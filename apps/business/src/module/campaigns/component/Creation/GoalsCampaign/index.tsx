@@ -1,4 +1,5 @@
 import { Card } from "@frak-labs/design-system/components/Card";
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import {
     RadioGroup,
     RadioGroupItem,
@@ -17,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
+import { shouldShowError } from "../fieldError";
 import { InfoBanner } from "../InfoBanner";
 import { WizardStep } from "../WizardStep";
 import * as styles from "./goalsCampaign.css";
@@ -93,55 +95,79 @@ export function GoalsCampaign() {
                             rules={{
                                 required: t("campaigns.create.goals.required"),
                             }}
-                            render={({ field }) => (
-                                <RadioGroup
-                                    className={styles.list}
-                                    value={field.value}
-                                    onValueChange={field.onChange}
-                                >
-                                    {GOALS.map((goal) => (
-                                        <label
-                                            key={goal.id}
-                                            htmlFor={`goal-${goal.id}`}
-                                            className={styles.row}
+                            render={({ field, fieldState }) => {
+                                const showError = shouldShowError(fieldState);
+                                return (
+                                    <>
+                                        <RadioGroup
+                                            className={styles.list}
+                                            value={field.value}
+                                            onValueChange={field.onChange}
                                         >
-                                            <span className={styles.left}>
-                                                <RadioGroupItem
-                                                    id={`goal-${goal.id}`}
-                                                    value={goal.id}
-                                                />
-                                                <span className={styles.badge}>
-                                                    {goal.icon}
-                                                </span>
-                                            </span>
-                                            <span className={styles.main}>
-                                                <Text
-                                                    variant="body"
-                                                    weight="medium"
+                                            {GOALS.map((goal) => (
+                                                <label
+                                                    key={goal.id}
+                                                    htmlFor={`goal-${goal.id}`}
+                                                    className={styles.row}
                                                 >
-                                                    {t(goal.titleKey)}
-                                                </Text>
-                                                <span
-                                                    className={styles.textGroup}
-                                                >
-                                                    <Text
-                                                        variant="bodySmall"
-                                                        color="secondary"
+                                                    <span
+                                                        className={styles.left}
                                                     >
-                                                        {t(goal.descKey)}
-                                                    </Text>
-                                                    <Text
-                                                        variant="bodySmall"
-                                                        color="tertiary"
+                                                        <RadioGroupItem
+                                                            id={`goal-${goal.id}`}
+                                                            value={goal.id}
+                                                        />
+                                                        <span
+                                                            className={
+                                                                styles.badge
+                                                            }
+                                                        >
+                                                            {goal.icon}
+                                                        </span>
+                                                    </span>
+                                                    <span
+                                                        className={styles.main}
                                                     >
-                                                        {t(goal.tagsKey)}
-                                                    </Text>
-                                                </span>
-                                            </span>
-                                        </label>
-                                    ))}
-                                </RadioGroup>
-                            )}
+                                                        <Text
+                                                            variant="body"
+                                                            weight="medium"
+                                                        >
+                                                            {t(goal.titleKey)}
+                                                        </Text>
+                                                        <span
+                                                            className={
+                                                                styles.textGroup
+                                                            }
+                                                        >
+                                                            <Text
+                                                                variant="bodySmall"
+                                                                color="secondary"
+                                                            >
+                                                                {t(
+                                                                    goal.descKey
+                                                                )}
+                                                            </Text>
+                                                            <Text
+                                                                variant="bodySmall"
+                                                                color="tertiary"
+                                                            >
+                                                                {t(
+                                                                    goal.tagsKey
+                                                                )}
+                                                            </Text>
+                                                        </span>
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </RadioGroup>
+                                        <FieldError>
+                                            {showError
+                                                ? fieldState.error?.message
+                                                : null}
+                                        </FieldError>
+                                    </>
+                                );
+                            }}
                         />
                     </Stack>
                 </Card>

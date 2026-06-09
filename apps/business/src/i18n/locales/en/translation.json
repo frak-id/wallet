@@ -166,7 +166,8 @@
                 "referee": "Referee: {{value}}",
                 "frak": "Frak: {{value}}",
                 "rewardLockup": "Reward lockup",
-                "lockupValue": "{{count}} days"
+                "lockupValue": "{{count}} days",
+                "publishError": "Couldn’t publish the campaign. Please try again."
             },
             "success": {
                 "title": "Campaign launched!",
@@ -216,7 +217,8 @@
                 "title": {
                     "label": "Campaign title",
                     "placeholder": "E.g. Summer sales 2026",
-                    "hint": "Only visible by you."
+                    "hint": "Only visible by you.",
+                    "required": "Enter a campaign title"
                 },
                 "merchant": {
                     "label": "Merchant",
@@ -283,7 +285,8 @@
                     "placeholder": "E.g. 1000",
                     "hint": "Total budget for the entire campaign. Stops when exhausted.",
                     "rewards": "Rewards distributed",
-                    "commission": "Frak commission"
+                    "commission": "Frak commission",
+                    "required": "Set a budget above 0"
                 },
                 "schedule": {
                     "label": "Schedule",
@@ -303,7 +306,12 @@
                     "startDate": "Start date",
                     "endDate": "End date",
                     "datePlaceholder": "dd/mm/yyyy",
-                    "openCalendar": "Open calendar"
+                    "openCalendar": "Open calendar",
+                    "required": "Choose when the campaign runs",
+                    "startDateRequired": "Select a start date",
+                    "endDateRequired": "Select an end date",
+                    "endDateInvalid": "End date must be on or after the start date",
+                    "invalidDate": "Enter a valid date"
                 }
             },
             "reward": {
@@ -373,7 +381,8 @@
                     "cpaPlaceholder": "E.g. 5",
                     "rewardPlaceholder": "E.g. 5",
                     "addTier": "Add a tier",
-                    "removeTier": "Remove tier"
+                    "removeTier": "Remove tier",
+                    "incomplete": "Each tier needs a basket range and a CPA above 0"
                 },
                 "eligibility": {
                     "label": "Eligibility",

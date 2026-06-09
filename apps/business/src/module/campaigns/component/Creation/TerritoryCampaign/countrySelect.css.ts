@@ -21,6 +21,18 @@ export const trigger = style({
     textAlign: "left",
 });
 
+/** Invalid state — fills the field with the error surface (declared after
+ * `trigger` so its background wins over the default tone). */
+export const triggerError = style({
+    backgroundColor: vars.surface.error,
+});
+
+/** The filled error icon shown inside the field, left of the chevron. */
+export const errorIcon = style({
+    color: vars.icon.error,
+    flexShrink: 0,
+});
+
 /**
  * Left column. Empty → placeholder centered. Filled → label pinned to the
  * top with chips below, so the label doesn't drift up as more chips wrap.

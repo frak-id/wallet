@@ -97,6 +97,21 @@ export const inputWrapper = recipe({
                 backgroundColor: vars.surface.disabled,
             },
         },
+        // Error tone for the borderless variants — Figma fills the field with
+        // the error surface (the `default` variant only recolours its border).
+        // Declared after the `tone` compounds so the error bg wins.
+        {
+            variants: { variant: "bare", error: true },
+            style: {
+                backgroundColor: vars.surface.error,
+            },
+        },
+        {
+            variants: { variant: "soft", error: true },
+            style: {
+                backgroundColor: vars.surface.error,
+            },
+        },
     ],
     defaultVariants: {
         variant: "default",

@@ -94,7 +94,8 @@ export default interface Resources {
           "title": {
             "hint": "Only visible by you.",
             "label": "Campaign title",
-            "placeholder": "E.g. Summer sales 2026"
+            "placeholder": "E.g. Summer sales 2026",
+            "required": "Enter a campaign title"
           }
         },
         "budget": {
@@ -103,6 +104,7 @@ export default interface Resources {
             "hint": "Total budget for the entire campaign. Stops when exhausted.",
             "label": "Budget cap",
             "placeholder": "E.g. 1000",
+            "required": "Set a budget above 0",
             "rewards": "Rewards distributed"
           },
           "period": {
@@ -116,17 +118,22 @@ export default interface Resources {
             "datePlaceholder": "dd/mm/yyyy",
             "description": "If you don’t set an end date, the campaign stops when the budget is exhausted.",
             "endDate": "End date",
+            "endDateInvalid": "End date must be on or after the start date",
+            "endDateRequired": "Select an end date",
             "immediate": {
               "description": "Goes live immediately on publish",
               "title": "Start immediately"
             },
+            "invalidDate": "Enter a valid date",
             "label": "Schedule",
             "openCalendar": "Open calendar",
             "range": {
               "description": "Set a fixed campaign window",
               "title": "Start + End date"
             },
+            "required": "Choose when the campaign runs",
             "startDate": "Start date",
+            "startDateRequired": "Select a start date",
             "startOnly": {
               "description": "Schedule a starting date",
               "title": "Start date only"
@@ -234,6 +241,7 @@ export default interface Resources {
             "cpaPlaceholder": "E.g. 5",
             "fromPlaceholder": "E.g. 0",
             "globalCpaTitle": "Target CPA",
+            "incomplete": "Each tier needs a basket range and a CPA above 0",
             "refereeDescription": "Welcome reward for the new referee",
             "removeTier": "Remove tier",
             "reward": "Reward",
@@ -344,6 +352,7 @@ export default interface Resources {
           "goal": "Campaign goal",
           "lockupValue": "{{count}} days",
           "noEndDate": "No end date",
+          "publishError": "Couldn’t publish the campaign. Please try again.",
           "referee": "Referee: {{value}}",
           "rewardLockup": "Reward lockup",
           "rewards": "Rewards",

@@ -101,10 +101,15 @@ export function splitTargetCpa(targetCpa: number) {
 /** Frak's recommended Ambassador/Referee values for a Target CPA (80/20 of pool). */
 export function recommendedSplit(targetCpa: number) {
     const { rewardsPool } = splitTargetCpa(targetCpa);
-    // Round the Ambassador share to a whole number and give the Referee the
-    // remainder, so the two still sum exactly to the pool with no stray
-    // decimals when the pool is whole (e.g. pool 8 → 6 / 2, not 6.4 / 1.6).
-    const ambassador = Math.round(rewardsPool * AMBASSADOR_RECO_SHARE);
+    // Prefer a whole-number Ambassador share with the Referee taking the
+    // remainder, so typical pools land on clean integers (pool 8 → 6 / 2). But
+    // for small pools the rounded share can overshoot (pool 0.8 → 1), pushing
+    // the Referee negative — there, fall back to a to-the-cent split.
+    const whole = Math.round(rewardsPool * AMBASSADOR_RECO_SHARE);
+    const ambassador =
+        whole > 0 && whole < rewardsPool
+            ? whole
+            : round2(rewardsPool * AMBASSADOR_RECO_SHARE);
     const referee = round2(rewardsPool - ambassador);
     return { ambassador, referee };
 }
@@ -230,6 +235,27 @@ export function rewardFormToDraft(
     return { ...draft, rule };
 }
 
+/**
+ * A Global-CPA tier is complete when it has a basket range and a positive CPA.
+ * The last tier's upper bound may be left empty (it reads as ∞).
+ */
+function isCpaTierComplete(tier: CpaTierRow, isLast: boolean): boolean {
+    const fromOk = tier.from !== "";
+    const toOk = isLast || tier.to !== "";
+    const cpaOk = Number(tier.cpa) > 0;
+    return fromOk && toOk && cpaOk;
+}
+
+/** Whether every Global-CPA tier is complete (at least one tier required). */
+export function tieredTiersValid(tiers: CpaTierRow[]): boolean {
+    return (
+        tiers.length > 0 &&
+        tiers.every((tier, i) =>
+            isCpaTierComplete(tier, i === tiers.length - 1)
+        )
+    );
+}
+
 /** Whether Ambassador + Referee sum to the rewards pool (Frak's 20% aside). */
 function splitMatchesPool(
     targetCpa: number,
@@ -266,6 +292,9 @@ export function isRewardFormValid(values: RewardFormValues): boolean {
             )
         );
     }
-    // Tiered is static (never blocks); no model selected ⇒ not valid yet.
-    return values.model === "tiered";
+    if (values.model === "tiered") {
+        return tieredTiersValid(values.globalCpaTiers);
+    }
+    // No model selected ⇒ not valid yet.
+    return false;
 }

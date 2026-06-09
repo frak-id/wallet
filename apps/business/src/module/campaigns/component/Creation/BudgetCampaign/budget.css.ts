@@ -173,6 +173,11 @@ export const dateField = style({
     borderRadius: alias.cornerRadius.m,
 });
 
+/** Invalid state — fills the field with the error surface. */
+export const dateFieldError = style({
+    backgroundColor: vars.surface.error,
+});
+
 /** The dd/mm/yyyy text input filling the field. */
 export const dateInput = style({
     all: "unset",
