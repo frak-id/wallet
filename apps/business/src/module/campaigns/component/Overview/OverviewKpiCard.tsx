@@ -43,18 +43,14 @@ export function OverviewKpiCard({
                         {descriptor}
                     </Text>
                 </Inline>
-                <Stack space="none">
-                    {empty ? (
-                        <span className={styles.amountEmpty}>
-                            {EMPTY_AMOUNT}
-                        </span>
-                    ) : (
-                        <span className={styles.amount}>{amount}</span>
-                    )}
-                    {!empty && delta !== undefined && (
-                        <DeltaIndicator delta={delta} />
-                    )}
-                </Stack>
+                {empty ? (
+                    <span className={styles.amountEmpty}>{EMPTY_AMOUNT}</span>
+                ) : (
+                    <span className={styles.amount}>{amount}</span>
+                )}
+                {!empty && delta !== undefined && (
+                    <DeltaIndicator delta={delta} />
+                )}
                 {empty ? (
                     <Text as="span" variant="caption" color="tertiary">
                         {t("campaigns.overview.kpi.noData")}

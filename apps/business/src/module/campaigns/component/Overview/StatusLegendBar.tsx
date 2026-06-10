@@ -1,5 +1,6 @@
 import type { OverviewStatusBreakdown } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
@@ -29,7 +30,7 @@ export function StatusLegendBar({
     const total = statusOrder.reduce((acc, k) => acc + breakdown[k], 0) || 1;
 
     return (
-        <Stack space="s">
+        <Stack space="m">
             <Text as="span" variant="bodySmall" color="secondary">
                 {t("campaigns.overview.statusLegend.title")}
             </Text>
@@ -49,16 +50,9 @@ export function StatusLegendBar({
             </div>
             <Inline space="xl" wrap>
                 {statusOrder.map((key) => (
-                    <Inline key={key} space="xxs" alignY="center">
-                        <span
-                            className={styles.dot}
-                            style={{ backgroundColor: statusColor[key] }}
-                            aria-hidden="true"
-                        />
-                        <Text as="span" variant="caption">
-                            {breakdown[key]} {t(`campaigns.status.${key}`)}
-                        </Text>
-                    </Inline>
+                    <LegendItem key={key} swatchColor={statusColor[key]}>
+                        {breakdown[key]} {t(`campaigns.status.${key}`)}
+                    </LegendItem>
                 ))}
             </Inline>
         </Stack>

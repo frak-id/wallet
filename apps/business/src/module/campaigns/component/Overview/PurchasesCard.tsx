@@ -11,6 +11,7 @@ import {
     NumericYAxis,
     ReferenceLine,
 } from "@frak-labs/design-system/components/charts";
+import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
@@ -114,15 +115,12 @@ export function PurchasesCard({ series }: { series: OverviewSeries }) {
                                 showDatePill={false}
                             />
                         </BarChart>
-                        <Stack space="xxs">
-                            <span
-                                className={styles.legendDotPrimary}
-                                aria-hidden="true"
-                            />
-                            <Text as="span" variant="caption">
-                                {t("campaigns.overview.purchases.title")}
-                            </Text>
-                        </Stack>
+                        <LegendItem
+                            layout="stacked"
+                            swatchColor={vars.icon.action}
+                        >
+                            {t("campaigns.overview.purchases.title")}
+                        </LegendItem>
                     </>
                 )}
             </Stack>

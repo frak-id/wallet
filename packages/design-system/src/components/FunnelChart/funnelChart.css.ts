@@ -1,6 +1,6 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import { alias } from "../../tokens.css";
+import { alias, brand } from "../../tokens.css";
 
 export const funnelChartStyles = {
     container: style({
@@ -62,5 +62,6 @@ export const funnelChartStyles = {
     }),
     valueSuccess: style({
         color: vars.text.success,
+        fontWeight: brand.typography.fontWeight.medium,
     }),
 };

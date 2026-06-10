@@ -1,4 +1,5 @@
-import { Text } from "@frak-labs/design-system/components/Text";
+import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
+import { vars } from "@frak-labs/design-system/theme";
 import * as styles from "./distribution.css";
 
 type DistributionBarProps = {
@@ -34,38 +35,34 @@ export function DistributionBar({
                 ) : null}
             </div>
             <div className={styles.legend}>
-                <span className={styles.legendItem}>
+                <LegendItem
+                    swatchColor={
+                        hasData ? vars.text.success : vars.icon.disabled
+                    }
+                >
+                    {rewardsLabel} ({hasData ? 80 : 0}%) ·{" "}
                     <span
-                        className={`${styles.square} ${hasData ? styles.squareRewards : styles.squareEmpty}`}
-                    />
-                    <Text variant="caption" color="primary">
-                        {rewardsLabel} ({hasData ? 80 : 0}%) ·{" "}
-                        <span
-                            className={
-                                hasData ? styles.amountRewards : undefined
-                            }
-                        >
-                            {rewardsAmount}
-                            {suffix}
-                        </span>
-                    </Text>
-                </span>
-                <span className={styles.legendItem}>
+                        className={hasData ? styles.amountRewards : undefined}
+                    >
+                        {rewardsAmount}
+                        {suffix}
+                    </span>
+                </LegendItem>
+                <LegendItem
+                    swatchColor={
+                        hasData ? vars.surface.primary : vars.icon.disabled
+                    }
+                >
+                    {commissionLabel} ({hasData ? 20 : 0}%) ·{" "}
                     <span
-                        className={`${styles.square} ${hasData ? styles.squareCommission : styles.squareEmpty}`}
-                    />
-                    <Text variant="caption" color="primary">
-                        {commissionLabel} ({hasData ? 20 : 0}%) ·{" "}
-                        <span
-                            className={
-                                hasData ? styles.amountCommission : undefined
-                            }
-                        >
-                            {commissionAmount}
-                            {suffix}
-                        </span>
-                    </Text>
-                </span>
+                        className={
+                            hasData ? styles.amountCommission : undefined
+                        }
+                    >
+                        {commissionAmount}
+                        {suffix}
+                    </span>
+                </LegendItem>
             </div>
         </div>
     );

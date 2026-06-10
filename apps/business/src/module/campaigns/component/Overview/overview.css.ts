@@ -85,28 +85,6 @@ export const chartEmptyIcon = style({
     color: vars.icon.disabled,
 });
 
-export const legendDot = style({
-    width: "8px",
-    height: "8px",
-    borderRadius: "2px",
-    flexShrink: 0,
-});
-
-export const legendDotPrimary = style([
-    legendDot,
-    { backgroundColor: vars.icon.action },
-]);
-
-export const legendDotSuccess = style([
-    legendDot,
-    { backgroundColor: vars.icon.success },
-]);
-
-export const legendDotForecast = style([
-    legendDot,
-    { backgroundColor: vars.icon.tertiary },
-]);
-
 export const floatingFooter = style({
     position: "fixed",
     bottom: 0,

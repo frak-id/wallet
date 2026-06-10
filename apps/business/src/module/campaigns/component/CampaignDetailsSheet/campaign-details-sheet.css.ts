@@ -63,13 +63,6 @@ export const cpaSegment = style({
     height: "100%",
 });
 
-export const legendSquare = style({
-    width: "8px",
-    height: "8px",
-    borderRadius: "2px",
-    flexShrink: 0,
-});
-
 export const subtitleDot = style({ color: vars.text.tertiary });
 
 // --- Configuration tab ---------------------------------------------------

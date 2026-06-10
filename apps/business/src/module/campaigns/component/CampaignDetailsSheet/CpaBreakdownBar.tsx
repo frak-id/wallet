@@ -1,5 +1,6 @@
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
@@ -67,22 +68,16 @@ export function CpaBreakdownBar({
 
                 <Inline space="xl" wrap>
                     {cpaBreakdown.segments.map((segment) => (
-                        <Inline key={segment.key} space="xxs" alignY="center">
-                            <span
-                                className={styles.legendSquare}
-                                style={{
-                                    backgroundColor: segmentColor[segment.key],
-                                }}
-                                aria-hidden="true"
-                            />
-                            <Text as="span" variant="caption">
-                                {t("campaigns.details.cpa.legendItem", {
-                                    label: t(segmentLabelKey[segment.key]),
-                                    percent: fmt.percent0.format(segment.pct),
-                                    amount: fmt.currency.format(segment.amount),
-                                })}
-                            </Text>
-                        </Inline>
+                        <LegendItem
+                            key={segment.key}
+                            swatchColor={segmentColor[segment.key]}
+                        >
+                            {t("campaigns.details.cpa.legendItem", {
+                                label: t(segmentLabelKey[segment.key]),
+                                percent: fmt.percent0.format(segment.pct),
+                                amount: fmt.currency.format(segment.amount),
+                            })}
+                        </LegendItem>
                     ))}
                 </Inline>
             </Stack>

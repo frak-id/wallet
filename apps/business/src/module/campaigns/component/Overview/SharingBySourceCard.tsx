@@ -10,6 +10,7 @@ import {
     PieSliceLabels,
 } from "@frak-labs/design-system/components/charts";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
     Tabs,
@@ -121,10 +122,10 @@ export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
                                             data={segments}
                                             hoverOffset={8}
                                             hoveredIndex={hoveredIndex}
-                                            innerRadius={52}
+                                            innerRadius={59}
                                             onHoverChange={setHoveredIndex}
                                             padAngle={0.02}
-                                            size={180}
+                                            size={186}
                                         >
                                             {segments.map((s, i) => (
                                                 <PieSlice
@@ -135,11 +136,12 @@ export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
                                             <PieSliceLabels />
                                         </PieChart>
                                     </Inline>
-                                    <Inline space="l" align="center" wrap>
+                                    <Inline space="xl" wrap>
                                         {segments.map((s, i) => (
-                                            <div
+                                            <LegendItem
+                                                layout="stacked"
+                                                swatchColor={s.color}
                                                 className={clsx(
-                                                    local.legendItem,
                                                     hoveredIndex === i &&
                                                         local.legendItemActive,
                                                     hoveredIndex !== null &&
@@ -154,21 +156,8 @@ export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
                                                     setHoveredIndex(null)
                                                 }
                                             >
-                                                <span
-                                                    className={local.dot}
-                                                    style={{
-                                                        backgroundColor:
-                                                            s.color,
-                                                    }}
-                                                    aria-hidden="true"
-                                                />
-                                                <Text
-                                                    as="span"
-                                                    variant="caption"
-                                                >
-                                                    {s.label}
-                                                </Text>
-                                            </div>
+                                                {s.label}
+                                            </LegendItem>
                                         ))}
                                     </Inline>
                                 </Stack>

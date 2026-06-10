@@ -14,6 +14,7 @@ import {
     XAxis,
 } from "@frak-labs/design-system/components/charts";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
@@ -101,10 +102,11 @@ export function ProjectedRevenueCard({
                                 fill={vars.icon.success}
                                 stroke={vars.icon.success}
                             />
+                            {/* Forecast draws lighter than its legend dot. */}
                             <Area
                                 dataKey="forecast"
-                                fill={vars.icon.tertiary}
-                                stroke={vars.icon.tertiary}
+                                fill={vars.border.default}
+                                stroke={vars.border.default}
                             />
                             <XAxis tickMode="data" />
                             <NumericYAxis
@@ -136,25 +138,19 @@ export function ProjectedRevenueCard({
                                 }
                             />
                         </AreaChart>
-                        <Inline space="l">
-                            <Stack space="xxs">
-                                <span
-                                    className={styles.legendDotSuccess}
-                                    aria-hidden="true"
-                                />
-                                <Text as="span" variant="caption">
-                                    {t("campaigns.overview.projected.actual")}
-                                </Text>
-                            </Stack>
-                            <Stack space="xxs">
-                                <span
-                                    className={styles.legendDotForecast}
-                                    aria-hidden="true"
-                                />
-                                <Text as="span" variant="caption">
-                                    {t("campaigns.overview.projected.forecast")}
-                                </Text>
-                            </Stack>
+                        <Inline space="xl">
+                            <LegendItem
+                                layout="stacked"
+                                swatchColor={vars.icon.success}
+                            >
+                                {t("campaigns.overview.projected.actual")}
+                            </LegendItem>
+                            <LegendItem
+                                layout="stacked"
+                                swatchColor={vars.icon.tertiary}
+                            >
+                                {t("campaigns.overview.projected.forecast")}
+                            </LegendItem>
                         </Inline>
                     </>
                 )}
