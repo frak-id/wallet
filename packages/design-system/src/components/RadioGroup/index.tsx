@@ -4,7 +4,6 @@ import type { ComponentPropsWithRef } from "react";
 import {
     radioGroup,
     radioGroupIndicator,
-    radioGroupIndicatorLarge,
     radioGroupItem,
     radioGroupItemLarge,
 } from "./radioGroup.css";
@@ -20,7 +19,7 @@ export function RadioGroup({
 }
 
 export type RadioGroupItemProps = ComponentPropsWithRef<typeof Item> & {
-    /** Radio diameter: `m` = 20px (default), `l` = 24px. */
+    /** Layout box: `m` = 20px (default), `l` = 24px (20px ring + 2px halo). */
     size?: "m" | "l";
 };
 
@@ -40,12 +39,7 @@ export function RadioGroupItem({
             )}
             {...props}
         >
-            <Indicator
-                className={clsx(
-                    radioGroupIndicator,
-                    size === "l" && radioGroupIndicatorLarge
-                )}
-            />
+            <Indicator className={radioGroupIndicator} />
         </Item>
     );
 }

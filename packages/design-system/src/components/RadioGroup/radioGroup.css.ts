@@ -56,14 +56,10 @@ export const radioGroupIndicator = style({
     backgroundColor: vars.surface.primary,
 });
 
-/** 24px variant — used by the campaign wizard. */
+/**
+ * 24px variant — used by the campaign wizard. The ring stays 20px; a 2px
+ * halo brings the layout box to 24×24 (the design component's geometry).
+ */
 export const radioGroupItemLarge = style({
-    width: "24px",
-    height: "24px",
-});
-
-/** 12px dot: even size, integer-centered in the 20px content box. */
-export const radioGroupIndicatorLarge = style({
-    width: "12px",
-    height: "12px",
+    margin: "2px",
 });
