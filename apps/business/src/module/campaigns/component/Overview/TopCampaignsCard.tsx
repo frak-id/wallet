@@ -10,6 +10,7 @@ import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Table } from "@/module/common/component/Table";
+import { EMPTY_AMOUNT } from "./constants";
 import { StatusLegendBar } from "./StatusLegendBar";
 
 const columnHelper = createColumnHelper<OverviewTopCampaign>();
@@ -81,16 +82,30 @@ export function TopCampaignsCard({
                 columnHelper.accessor("rewardsCount", {
                     header: () => t("campaigns.table.rewards"),
                     size: 140,
-                    cell: ({ getValue }) => (
-                        <Text
-                            as="span"
-                            variant="bodySmall"
-                            weight="medium"
-                            color="success"
-                        >
-                            {numberFormatter.format(getValue())}
-                        </Text>
-                    ),
+                    cell: ({ getValue }) => {
+                        const count = getValue();
+                        if (count === 0) {
+                            return (
+                                <Text
+                                    as="span"
+                                    variant="bodySmall"
+                                    color="disabled"
+                                >
+                                    {EMPTY_AMOUNT}
+                                </Text>
+                            );
+                        }
+                        return (
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                weight="medium"
+                                color="success"
+                            >
+                                {numberFormatter.format(count)}
+                            </Text>
+                        );
+                    },
                     meta: { align: "right" },
                 }),
             ] as ColumnDef<OverviewTopCampaign>[],
