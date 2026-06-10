@@ -156,8 +156,10 @@ export const searchIcon = style({
     flexShrink: 0,
 });
 
+/** Tall enough for the 7 collapsed continent rows (7 × 48px) — the default
+ * view scrolls only once a continent is expanded. */
 export const list = style({
-    maxHeight: "320px",
+    maxHeight: "336px",
     overflowY: "auto",
     width: "100%",
 });
