@@ -101,10 +101,11 @@ export const button = recipe({
         },
         size: {
             small: {
+                // 36px tall: 2×8 padding + 20px line.
                 paddingBlock: alias.spacing.xs,
                 paddingInline: alias.spacing.m,
                 fontSize: fontSize.s,
-                lineHeight: "21px",
+                lineHeight: "20px",
                 fontWeight: 600,
             },
             medium: {
@@ -113,7 +114,9 @@ export const button = recipe({
                 fontWeight: 600,
             },
             large: {
-                padding: alias.spacing.m,
+                // 48px tall: 2×16 padding + 16px line, 24px sides.
+                paddingBlock: alias.spacing.m,
+                paddingInline: alias.spacing.l,
                 fontSize: fontSize.m,
                 fontWeight: 600,
             },

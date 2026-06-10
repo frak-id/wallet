@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RadioGroup, RadioGroupItem } from "./index";
+import { radioGroupItem, radioGroupItemLarge } from "./radioGroup.css";
 
 describe("RadioGroup", () => {
     it("should render its items", () => {
@@ -70,6 +71,19 @@ describe("RadioGroup", () => {
         );
         expect(container.querySelector(".custom-group")).toBeInTheDocument();
         expect(screen.getByRole("radio")).toHaveClass("custom-item");
+    });
+
+    it("should only add the large size class when size is l", () => {
+        render(
+            <RadioGroup>
+                <RadioGroupItem value="a" />
+                <RadioGroupItem value="b" size="l" />
+            </RadioGroup>
+        );
+        const [medium, large] = screen.getAllByRole("radio");
+        expect(medium).toHaveClass(radioGroupItem);
+        expect(medium).not.toHaveClass(radioGroupItemLarge);
+        expect(large).toHaveClass(radioGroupItem, radioGroupItemLarge);
     });
 
     it("should reflect data-state on the checked item", () => {

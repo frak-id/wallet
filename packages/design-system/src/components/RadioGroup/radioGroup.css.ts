@@ -55,3 +55,15 @@ export const radioGroupIndicator = style({
     borderRadius: alias.cornerRadius.full,
     backgroundColor: vars.surface.primary,
 });
+
+/** 24px variant — used by the campaign wizard. */
+export const radioGroupItemLarge = style({
+    width: "24px",
+    height: "24px",
+});
+
+/** 12px dot: even size, integer-centered in the 20px content box. */
+export const radioGroupIndicatorLarge = style({
+    width: "12px",
+    height: "12px",
+});
