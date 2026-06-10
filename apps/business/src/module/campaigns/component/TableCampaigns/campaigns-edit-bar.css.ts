@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const bar = style({
@@ -15,7 +15,7 @@ export const bar = style({
 export const count = style({
     fontSize: "16px",
     lineHeight: "26px",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     color: vars.text.action,
     whiteSpace: "nowrap",
 });

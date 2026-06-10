@@ -1,6 +1,6 @@
 import { keyframes, style, styleVariants } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import { alias } from "../../tokens.css";
+import { alias, brand } from "../../tokens.css";
 
 /* ----- keyframes ----- */
 
@@ -74,7 +74,7 @@ const indicatorBase = {
     flexShrink: 0,
     fontSize: "14px",
     lineHeight: 1,
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     fontVariantNumeric: "tabular-nums",
     borderWidth: 1,
     borderStyle: "solid",
