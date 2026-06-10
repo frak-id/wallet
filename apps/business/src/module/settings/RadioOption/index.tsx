@@ -18,7 +18,7 @@ export function RadioOption({ value, label, icon, fill }: RadioOptionProps) {
             htmlFor={id}
             className={clsx(styles.option, fill && styles.optionFill)}
         >
-            <RadioGroupItem id={id} value={value} />
+            <RadioGroupItem id={id} value={value} size="l" />
             <span className={styles.content}>
                 {icon && <span className={styles.icon}>{icon}</span>}
                 <Text as="span" variant="body" weight="medium">
