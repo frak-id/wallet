@@ -43,7 +43,7 @@ export function TableCampaignFilters({
     // Extract current values from columnFilters
     const currentTitle = useMemo(
         () =>
-            (columnFilters.find((filter) => filter.id === "title")
+            (columnFilters.find((filter) => filter.id === "name")
                 ?.value as string) || "",
         [columnFilters]
     );
@@ -63,12 +63,12 @@ export function TableCampaignFilters({
         [columnFilters]
     );
 
-    // Helper to update title filter
+    // Helper to update the campaign-name filter
     const setTitleFilter = (value: string) => {
         setColumnFilters((prev) => {
-            const filtered = prev.filter((f) => f.id !== "title");
+            const filtered = prev.filter((f) => f.id !== "name");
             if (!value) return filtered;
-            return [...filtered, { id: "title", value }];
+            return [...filtered, { id: "name", value }];
         });
     };
 
