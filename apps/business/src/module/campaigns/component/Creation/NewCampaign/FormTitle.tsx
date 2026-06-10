@@ -17,6 +17,7 @@ export function FormTitle() {
     return (
         <WizardFieldCard
             insetLabel
+            space="xs"
             label={t("campaigns.create.basics.title.label")}
         >
             <FormField

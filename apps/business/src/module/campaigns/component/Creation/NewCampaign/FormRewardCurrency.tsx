@@ -92,6 +92,7 @@ export function FormRewardCurrency() {
                                 <RadioGroupItem
                                     id="currency-other"
                                     value="other"
+                                    size="l"
                                 />
                             </span>
                             <span className={styles.cellMain}>
@@ -129,6 +130,7 @@ export function FormRewardCurrency() {
                                     <RadioGroupItem
                                         id="currency-default"
                                         value="default"
+                                        size="l"
                                     />
                                 </span>
                                 <span className={styles.cellMain}>
@@ -179,6 +181,7 @@ export function FormRewardCurrency() {
                                                 <RadioGroupItem
                                                     id={`token-${token.stablecoin}`}
                                                     value={token.stablecoin}
+                                                    size="l"
                                                 />
                                                 <span
                                                     className={

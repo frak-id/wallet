@@ -29,11 +29,13 @@ export const rail = style({
     backgroundColor: vars.surface.background,
     borderRight: `1px solid ${vars.border.subtle}`,
     padding: alias.spacing.l,
+    paddingTop: alias.spacing.xxl,
     "@media": {
         "(max-width: 900px)": {
             width: "100%",
             borderRight: "none",
             borderBottom: `1px solid ${vars.border.subtle}`,
+            paddingTop: alias.spacing.l,
         },
     },
 });
@@ -56,6 +58,8 @@ export const header = style({
 export const content = style({
     flex: 1,
     padding: alias.spacing.l,
+    // The form column is capped at 704px (680px cards + the 24px left inset).
+    maxWidth: 728,
 });
 
 export const footer = style({

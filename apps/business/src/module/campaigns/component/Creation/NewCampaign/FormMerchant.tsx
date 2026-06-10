@@ -22,6 +22,7 @@ export function FormMerchant({ merchantId }: { merchantId: string }) {
     const navigate = useNavigate();
     const { merchants } = useMyMerchants();
     const resetDraft = campaignStore((s) => s.reset);
+    const selectedMerchant = merchants.find((m) => m.id === merchantId);
 
     function handleChange(nextMerchantId: string) {
         if (nextMerchantId === merchantId) return;
@@ -35,6 +36,7 @@ export function FormMerchant({ merchantId }: { merchantId: string }) {
     return (
         <WizardFieldCard
             insetLabel
+            space="xs"
             label={t("campaigns.create.basics.merchant.label")}
         >
             <Select
@@ -42,11 +44,14 @@ export function FormMerchant({ merchantId }: { merchantId: string }) {
                 onValueChange={handleChange}
             >
                 <SelectTrigger className={styles.selectTrigger}>
+                    {/* Closed trigger shows the domain only; items keep "name — domain". */}
                     <SelectValue
                         placeholder={t(
                             "campaigns.create.basics.merchant.placeholder"
                         )}
-                    />
+                    >
+                        {selectedMerchant?.domain}
+                    </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                     {merchants.map((merchant) => (

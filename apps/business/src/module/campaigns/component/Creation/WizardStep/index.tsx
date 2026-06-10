@@ -88,6 +88,7 @@ export function WizardStep({
                     <Button
                         type="button"
                         variant="secondary"
+                        size="small"
                         onClick={onSaveDraft}
                         disabled={isPending}
                         loading={isPending}
