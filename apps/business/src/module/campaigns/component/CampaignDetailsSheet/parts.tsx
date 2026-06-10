@@ -172,12 +172,15 @@ export function MetricCard({
                         </Text>
                     )}
                 </Inline>
-                {children}
-                {sub && (
-                    <Text as="span" variant="bodySmall" color="tertiary">
-                        {sub}
-                    </Text>
-                )}
+                {/* The sub-line sits flush under the big value. */}
+                <Stack space="none">
+                    {children}
+                    {sub && (
+                        <Text as="span" variant="bodySmall" color="tertiary">
+                            {sub}
+                        </Text>
+                    )}
+                </Stack>
                 {footer}
             </Stack>
         </Card>

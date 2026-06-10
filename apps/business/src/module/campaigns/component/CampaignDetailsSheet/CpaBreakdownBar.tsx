@@ -65,7 +65,7 @@ export function CpaBreakdownBar({
                     ))}
                 </div>
 
-                <Inline space="l" wrap>
+                <Inline space="xl" wrap>
                     {cpaBreakdown.segments.map((segment) => (
                         <Inline key={segment.key} space="xxs" alignY="center">
                             <span

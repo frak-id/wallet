@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import { ExportIcon } from "./ExportIcon";
 
 /**
- * Export affordance from the Figma redesign. Visual-only for now — a CSV/export
- * endpoint does not exist yet, so the click is a no-op placeholder.
+ * Export affordance. Visual-only for now — a CSV/export endpoint does not
+ * exist yet, so the click is a no-op placeholder.
  */
 export function ExportButton() {
     const { t } = useTranslation();
