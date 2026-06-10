@@ -240,6 +240,7 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
                                 >
                                     <Checkbox
                                         id={`country-${c.code}`}
+                                        size="l"
                                         checked={selected.has(c.code)}
                                         onCheckedChange={() =>
                                             toggleCountry(c.code)
@@ -289,6 +290,7 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
                             <div key={group.code}>
                                 <div className={styles.row}>
                                     <Checkbox
+                                        size="l"
                                         checked={
                                             continentStates.get(group.code) ??
                                             false
@@ -325,6 +327,7 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
                                         >
                                             <Checkbox
                                                 id={`country-${c.code}`}
+                                                size="l"
                                                 checked={selected.has(c.code)}
                                                 onCheckedChange={() =>
                                                     toggleCountry(c.code)

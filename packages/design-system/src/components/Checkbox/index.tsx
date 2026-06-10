@@ -1,6 +1,14 @@
 import { Indicator, Root } from "@radix-ui/react-checkbox";
+import clsx from "clsx";
 import type { ComponentPropsWithRef } from "react";
-import { box, glyph, indicator, root, squareFill } from "./checkbox.css";
+import {
+    box,
+    glyph,
+    indicator,
+    root,
+    rootLarge,
+    squareFill,
+} from "./checkbox.css";
 
 /* Squircle + check / minus glyphs taken verbatim from the DS checkbox design. */
 
@@ -19,10 +27,17 @@ const MINUS_PATH =
 
 type CheckboxProps = ComponentPropsWithRef<typeof Root> & {
     className?: string;
+    /** Layout box: `m` = 20px (default), `l` = 24px (20px glyph + 2px halo). */
+    size?: "m" | "l";
 };
 
-export function Checkbox({ ref, className, ...props }: CheckboxProps) {
-    const combinedClassName = [root, className].filter(Boolean).join(" ");
+export function Checkbox({
+    ref,
+    className,
+    size = "m",
+    ...props
+}: CheckboxProps) {
+    const combinedClassName = clsx(root, size === "l" && rootLarge, className);
 
     return (
         <Root className={combinedClassName} ref={ref} {...props}>

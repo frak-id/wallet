@@ -66,6 +66,7 @@ function CategoryRow({
             <span className={styles.categorySelector}>
                 <Checkbox
                     id={id}
+                    size="l"
                     checked={checked}
                     onCheckedChange={onToggle}
                 />
@@ -198,6 +199,7 @@ export function TerritoryCampaign() {
             <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                 <Stack space="l">
                     <WizardFieldCard
+                        space="xs"
                         label={t("campaigns.create.territory.card.label")}
                         description={t(
                             "campaigns.create.territory.card.description"

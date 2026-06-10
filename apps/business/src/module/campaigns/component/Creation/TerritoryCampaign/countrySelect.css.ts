@@ -61,7 +61,7 @@ export const fieldLabel = style({
 export const chips = style({
     display: "flex",
     flexWrap: "wrap",
-    gap: alias.spacing.xs,
+    gap: alias.spacing.xxs,
     alignItems: "center",
 });
 

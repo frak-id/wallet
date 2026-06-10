@@ -1,6 +1,7 @@
 /// <reference types="@testing-library/jest-dom" />
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { root, rootLarge } from "./checkbox.css";
 import { Checkbox } from "./index";
 
 describe("Checkbox", () => {
@@ -63,6 +64,16 @@ describe("Checkbox", () => {
         const { container } = render(<Checkbox className="custom-check" />);
         const checkbox = container.querySelector("button");
         expect(checkbox).toHaveClass("custom-check");
+    });
+
+    it("should only add the large size class when size is l", () => {
+        const { rerender } = render(<Checkbox />);
+        const checkbox = screen.getByRole("checkbox");
+        expect(checkbox).toHaveClass(root);
+        expect(checkbox).not.toHaveClass(rootLarge);
+
+        rerender(<Checkbox size="l" />);
+        expect(checkbox).toHaveClass(root, rootLarge);
     });
 
     it("should have data-state attribute reflecting checked state", () => {

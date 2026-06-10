@@ -29,6 +29,14 @@ export const root = style({
     },
 });
 
+/**
+ * 24px variant — used by the campaign wizard. The glyph stays 20px; a 2px
+ * halo brings the layout box to 24×24 (the design component's geometry).
+ */
+export const rootLarge = style({
+    margin: "2px",
+});
+
 /** Off state: the 2px grey squircle ring (always rendered, behind the fill). */
 export const box = style({
     position: "absolute",
