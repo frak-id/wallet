@@ -9,7 +9,7 @@ import {
     expect,
     test,
 } from "@/tests/vitest-fixtures";
-import { useSetupRecovery } from "./useSetupRecovery";
+import { useSendRecoveryTx } from "./useSendRecoveryTx";
 
 vi.mock("wagmi", () => ({
     useConnection: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock("viem/actions", () => ({
     waitForTransactionReceipt: vi.fn().mockResolvedValue({}),
 }));
 
-describe("useSetupRecovery", () => {
+describe("useSendRecoveryTx", () => {
     const mockAddress = "0x1234567890123456789012345678901234567890" as Hex;
     const mockTxHash =
         "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890" as Hex;
@@ -46,15 +46,15 @@ describe("useSetupRecovery", () => {
             mutateAsync: vi.fn(),
         } as any);
 
-        const { result } = renderHook(() => useSetupRecovery(), {
+        const { result } = renderHook(() => useSendRecoveryTx(), {
             wrapper: queryWrapper.wrapper,
         });
 
         expect(result.current.isPending).toBe(false);
         expect(result.current.isSuccess).toBe(false);
         expect(result.current.isError).toBe(false);
-        expect(result.current.setupRecovery).toBeDefined();
-        expect(result.current.setupRecoveryAsync).toBeDefined();
+        expect(result.current.sendRecoveryTx).toBeDefined();
+        expect(result.current.sendRecoveryTxAsync).toBeDefined();
     });
 
     test("should setup recovery successfully", async ({ queryWrapper }) => {
@@ -69,11 +69,11 @@ describe("useSetupRecovery", () => {
             mutateAsync: sendTransactionAsync,
         } as any);
 
-        const { result } = renderHook(() => useSetupRecovery(), {
+        const { result } = renderHook(() => useSendRecoveryTx(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await result.current.setupRecoveryAsync({
+        await result.current.sendRecoveryTxAsync({
             setupTxData: mockSetupTxData,
         });
 
@@ -98,11 +98,11 @@ describe("useSetupRecovery", () => {
             mutateAsync: vi.fn(),
         } as any);
 
-        const { result } = renderHook(() => useSetupRecovery(), {
+        const { result } = renderHook(() => useSendRecoveryTx(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        const txHash = await result.current.setupRecoveryAsync({
+        const txHash = await result.current.sendRecoveryTxAsync({
             setupTxData: mockSetupTxData,
         });
 
@@ -128,11 +128,11 @@ describe("useSetupRecovery", () => {
             "invalidateQueries"
         );
 
-        const { result } = renderHook(() => useSetupRecovery(), {
+        const { result } = renderHook(() => useSendRecoveryTx(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await result.current.setupRecoveryAsync({
+        await result.current.sendRecoveryTxAsync({
             setupTxData: mockSetupTxData,
         });
 
@@ -169,11 +169,11 @@ describe("useSetupRecovery", () => {
                 order.push("invalidate");
             });
 
-        const { result } = renderHook(() => useSetupRecovery(), {
+        const { result } = renderHook(() => useSendRecoveryTx(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await result.current.setupRecoveryAsync({
+        await result.current.sendRecoveryTxAsync({
             setupTxData: mockSetupTxData,
         });
 
@@ -203,12 +203,12 @@ describe("useSetupRecovery", () => {
             mutateAsync: sendTransactionAsync,
         } as any);
 
-        const { result } = renderHook(() => useSetupRecovery(), {
+        const { result } = renderHook(() => useSendRecoveryTx(), {
             wrapper: queryWrapper.wrapper,
         });
 
         await expect(
-            result.current.setupRecoveryAsync({ setupTxData: mockSetupTxData })
+            result.current.sendRecoveryTxAsync({ setupTxData: mockSetupTxData })
         ).rejects.toThrow("Transaction failed");
 
         await waitFor(() => {
@@ -230,11 +230,11 @@ describe("useSetupRecovery", () => {
 
         const onSuccess = vi.fn();
 
-        const { result } = renderHook(() => useSetupRecovery({ onSuccess }), {
+        const { result } = renderHook(() => useSendRecoveryTx({ onSuccess }), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await result.current.setupRecoveryAsync({
+        await result.current.sendRecoveryTxAsync({
             setupTxData: mockSetupTxData,
         });
 

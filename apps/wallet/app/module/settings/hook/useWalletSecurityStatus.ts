@@ -1,6 +1,6 @@
 import { useCurrentEmail } from "@/module/authentication/hook/useCurrentEmail";
-import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
-import { useRecoveryStatus } from "@/module/recovery-setup/hook/useRecoveryStatus";
+import { useBackendRecoveryStatus } from "@/module/recovery-setup/hook/useBackendRecoveryStatus";
+import { useConnectedWalletRecovery } from "@/module/recovery-setup/hook/useConnectedWalletRecovery";
 import { isExpiringSoon } from "@/module/recovery-setup/utils/recoveryDates";
 import {
     resolveSecurityStep,
@@ -26,8 +26,8 @@ export type WalletSecurityStatus = {
  */
 export function useWalletSecurityStatus(): WalletSecurityStatus {
     const { data: emailStatus } = useCurrentEmail();
-    const { recoverySetupStatus } = useRecoverySetupStatus();
-    const { data: backendRecoveryStatus } = useRecoveryStatus();
+    const { onChainRecovery } = useConnectedWalletRecovery();
+    const { data: backendRecoveryStatus } = useBackendRecoveryStatus();
 
     const email = emailStatus?.email ?? null;
     const hasEmail = email != null;
@@ -35,9 +35,9 @@ export function useWalletSecurityStatus(): WalletSecurityStatus {
     // Configured = enabled on-chain AND blob synced on the backend; on-chain
     // only falls back to setup so the user can finish storing the blob.
     const hasRecovery =
-        !!recoverySetupStatus && !!backendRecoveryStatus?.configured;
-    const recoveryExpiringSoon = recoverySetupStatus
-        ? isExpiringSoon(recoverySetupStatus.validUntil)
+        !!onChainRecovery && !!backendRecoveryStatus?.configured;
+    const recoveryExpiringSoon = onChainRecovery
+        ? isExpiringSoon(onChainRecovery.validUntil)
         : false;
 
     const step = resolveSecurityStep({

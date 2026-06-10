@@ -3,10 +3,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 import { StepIndicator } from "@/module/common/component/StepIndicator";
-import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
+import { RecoveryPasswordGate } from "@/module/recovery-setup/component/RecoveryPasswordGate";
+import { useConnectedWalletRecovery } from "@/module/recovery-setup/hook/useConnectedWalletRecovery";
 import { ConfirmStep } from "./ConfirmStep";
 import { DatesStep } from "./DatesStep";
-import { PasswordCheckStep } from "./PasswordCheckStep";
 
 type Step =
     | { kind: "password" }
@@ -42,12 +42,12 @@ export function RefreshDatesFlow({
     onReplaceKey,
 }: RefreshDatesFlowProps) {
     const { t } = useTranslation();
-    const { recoverySetupStatus } = useRecoverySetupStatus();
+    const { onChainRecovery } = useConnectedWalletRecovery();
     const [step, setStep] = useState<Step>({ kind: "password" });
 
     // Only reachable when recovery is configured on-chain, so the guardian is
     // present; guard defensively in case the status query is still settling.
-    const guardianAddress = recoverySetupStatus?.guardianAddress;
+    const guardianAddress = onChainRecovery?.guardianAddress;
 
     const stepIndicator =
         step.kind === "success" ? null : (
@@ -60,11 +60,34 @@ export function RefreshDatesFlow({
 
     if (step.kind === "password") {
         return (
-            <PasswordCheckStep
+            <RecoveryPasswordGate
+                title={t("wallet.recoverySetup.dates.password.title")}
+                description={t(
+                    "wallet.recoverySetup.dates.password.description"
+                )}
+                placeholder={t(
+                    "wallet.recoverySetup.dates.password.placeholder"
+                )}
+                continueLabel={t(
+                    "wallet.recoverySetup.dates.password.continue"
+                )}
+                invalidMessage={t(
+                    "wallet.recoverySetup.dates.password.invalid"
+                )}
                 onVerified={() => setStep({ kind: "dates" })}
-                onReplaceKey={onReplaceKey}
                 onBack={onAbort}
                 stepIndicator={stepIndicator}
+                failureExtra={
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="large"
+                        width="full"
+                        onClick={onReplaceKey}
+                    >
+                        {t("wallet.recoverySetup.dates.password.replaceAction")}
+                    </Button>
+                }
             />
         );
     }

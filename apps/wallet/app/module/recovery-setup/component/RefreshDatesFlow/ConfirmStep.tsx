@@ -11,7 +11,7 @@ import { useDateFormatter } from "@/module/common/hook/useDateFormatter";
 import { generateRecoveryData } from "@/module/recovery/action/generate";
 import { SummaryRow } from "@/module/recovery-setup/component/SummaryRow";
 import { useRecoveryAuthorization } from "@/module/recovery-setup/hook/useRecoveryAuthorization";
-import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
+import { useSendRecoveryTx } from "@/module/recovery-setup/hook/useSendRecoveryTx";
 
 type ConfirmStepProps = {
     /** The existing on-chain guardian — reused unchanged, only the dates move. */
@@ -32,7 +32,7 @@ export function ConfirmStep({
     stepIndicator,
 }: ConfirmStepProps) {
     const { t } = useTranslation();
-    const { setupRecoveryAsync, isPending } = useSetupRecovery();
+    const { sendRecoveryTxAsync, isPending } = useSendRecoveryTx();
     const { error, authorize } = useRecoveryAuthorization();
     const formatter = useDateFormatter();
 
@@ -43,7 +43,7 @@ export function ConfirmStep({
                 validAfter,
                 validUntil,
             });
-            await setupRecoveryAsync({ setupTxData });
+            await sendRecoveryTxAsync({ setupTxData });
         });
         if (result.ok) onConfirmed();
     }, [
@@ -51,7 +51,7 @@ export function ConfirmStep({
         guardianAddress,
         validAfter,
         validUntil,
-        setupRecoveryAsync,
+        sendRecoveryTxAsync,
         onConfirmed,
     ]);
 

@@ -9,7 +9,7 @@ import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
  * wallet) and the restore flow's readiness check (a wallet being recovered) so
  * both hit a single cache entry per address instead of two parallel reads.
  */
-export function useCurrentRecoveryOption(walletAddress?: Address) {
+export function useOnChainRecovery(walletAddress?: Address) {
     return useQuery({
         queryKey: recoveryKey.currentOption.full({ walletAddress }),
         gcTime: 0,

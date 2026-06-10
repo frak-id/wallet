@@ -10,10 +10,10 @@ import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-set
 
 /**
  * Whether the backend holds a stored recovery blob for the current wallet's
- * identity group. Distinct from `useRecoverySetupStatus`, which reads the
+ * identity group. Distinct from `useConnectedWalletRecovery`, which reads the
  * on-chain recovery module.
  */
-export function useRecoveryStatus() {
+export function useBackendRecoveryStatus() {
     const session = useStore(sessionStore, selectSession);
 
     return useQuery<RecoveryStatusResponse>({

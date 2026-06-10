@@ -2,14 +2,19 @@ import {
     addresses,
     getExecutionAbi,
     kernelAddresses,
+    multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
 import type { CurrentRecovery } from "@frak-labs/wallet-shared";
 import { currentViemClient } from "@frak-labs/wallet-shared";
 import { tryit } from "radash";
 import {
     type Address,
+    type Hex,
+    hexToBigInt,
     isAddressEqual,
+    keccak256,
     toFunctionSelector,
+    toHex,
     zeroAddress,
 } from "viem";
 import { readContract } from "viem/actions";
@@ -79,4 +84,28 @@ export async function getCurrentRecoveryOption({
         validAfter: recoveryOption.validAfter,
         validUntil: recoveryOption.validUntil,
     };
+}
+
+/**
+ * Whether `passkey` is already registered on `wallet` in the on-chain WebAuthn
+ * validator. Lets recovery retries resume from chain state instead of local
+ * progress flags (the validator stores `keccak256(authenticatorId)` as key).
+ */
+export async function isPasskeyRegisteredOnWallet({
+    wallet,
+    passkey,
+}: {
+    wallet: Address;
+    passkey: { authenticatorId: string; publicKey: { x: Hex; y: Hex } };
+}): Promise<boolean> {
+    const [, pubKey] = await readContract(currentViemClient, {
+        address: addresses.webAuthNValidator,
+        abi: multiWebAuthNValidatorV2Abi,
+        functionName: "getPasskey",
+        args: [wallet, keccak256(toHex(passkey.authenticatorId))],
+    });
+    return (
+        pubKey.x === hexToBigInt(passkey.publicKey.x) &&
+        pubKey.y === hexToBigInt(passkey.publicKey.y)
+    );
 }

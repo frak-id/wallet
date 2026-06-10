@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 import { StepIndicator } from "@/module/common/component/StepIndicator";
+import { RecoveryPasswordGate } from "@/module/recovery-setup/component/RecoveryPasswordGate";
 import { ConfirmStep } from "./ConfirmStep";
-import { PasswordStep } from "./PasswordStep";
 
 type Step = { kind: "password" } | { kind: "confirm" } | { kind: "success" };
 
@@ -44,7 +44,20 @@ export function DeleteRecoveryFlow({
 
     if (step.kind === "password") {
         return (
-            <PasswordStep
+            <RecoveryPasswordGate
+                title={t("wallet.recoverySetup.delete.password.title")}
+                description={t(
+                    "wallet.recoverySetup.delete.password.description"
+                )}
+                placeholder={t(
+                    "wallet.recoverySetup.delete.password.placeholder"
+                )}
+                continueLabel={t(
+                    "wallet.recoverySetup.delete.password.continue"
+                )}
+                invalidMessage={t(
+                    "wallet.recoverySetup.delete.password.invalid"
+                )}
                 onVerified={() => setStep({ kind: "confirm" })}
                 onBack={onAbort}
                 stepIndicator={stepIndicator}

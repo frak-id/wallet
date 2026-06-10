@@ -7,13 +7,6 @@ import type { IdentityRepository } from "../repositories/IdentityRepository";
 import type { RecoveryRepository } from "../repositories/RecoveryRepository";
 
 /**
- * Constant upfront delay applied to every recovery-email request. It throttles
- * rapid retries and flattens the response time so a caller can't infer from
- * timing whether the address exists, is verified, or has a stored backup.
- */
-const REQUEST_DELAY_MS = 500;
-
-/**
  * Unauthenticated "email me my recovery backup" flow.
  *
  * A user who can't log in enters their email; if it maps to a verified email
@@ -23,7 +16,9 @@ const REQUEST_DELAY_MS = 500;
  *
  * Every "not eligible" path is a silent no-op: the route always returns the
  * same generic acknowledgement, so the endpoint never discloses whether an
- * address is registered, verified, or recoverable (anti-enumeration).
+ * address is registered, verified, or recoverable (anti-enumeration). The
+ * route fires this without awaiting it, so the response time carries no
+ * eligibility signal either.
  */
 export class RecoveryEmailService {
     constructor(
@@ -32,8 +27,6 @@ export class RecoveryEmailService {
     ) {}
 
     async requestRecoveryEmail(email: string): Promise<void> {
-        await Bun.sleep(REQUEST_DELAY_MS);
-
         // Must be a currently-linked, verified email node. An unlinked (retired)
         // or never-verified address is not a valid recovery target.
         const node = await this.identityRepository.findEmailNode(email);

@@ -1,12 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
-import { useRef } from "react";
 import type { Address, LocalAccount } from "viem";
-import {
-    type RecoveryCredential,
-    useCreateRecoveryPasskey,
-} from "@/module/recovery/hook/useCreateRecoveryPasskey";
-import { usePerformRecovery } from "@/module/recovery/hook/usePerformRecovery";
-import { useRecoveryClaim } from "@/module/recovery/hook/useRecoveryClaim";
+import { isPasskeyRegisteredOnWallet } from "@/module/recovery/action/get";
+import { useClaimRecoveredWallet } from "@/module/recovery/hook/useClaimRecoveredWallet";
+import { useCreateRecoveryPasskey } from "@/module/recovery/hook/useCreateRecoveryPasskey";
+import { usePushRecoveryPasskey } from "@/module/recovery/hook/usePushRecoveryPasskey";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 
 /**
@@ -15,19 +12,17 @@ import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
  * it on the backend (which binds it to the wallet and opens a session).
  *
  * The order matters — the backend claim only authorizes once the passkey is
- * visible on-chain, so the on-chain push must complete first. Each phase is
- * remembered across retries: a failed claim resumes at the claim alone, never
- * re-minting a passkey or re-pushing on-chain (which would orphan the first).
+ * visible on-chain, so the on-chain push must complete first. Retries resume
+ * from observed state instead of local progress flags: the passkey is reused
+ * from the create mutation's cached result, and the on-chain push is skipped
+ * when the validator already reports the passkey on the wallet. This never
+ * re-mints a passkey or re-pushes on-chain (which would orphan the first).
  */
 export function useRunRecovery() {
-    const { createRecoveryPasskeyAsync } = useCreateRecoveryPasskey();
-    const { performRecoveryAsync } = usePerformRecovery();
-    const { claimRecoveryAsync } = useRecoveryClaim();
-
-    // Per-attempt progress so a retry after a failed claim skips the steps that
-    // already succeeded (passkey creation + on-chain push).
-    const credentialRef = useRef<RecoveryCredential | null>(null);
-    const onChainDoneRef = useRef(false);
+    const { data: createdCredential, createRecoveryPasskeyAsync } =
+        useCreateRecoveryPasskey();
+    const { pushRecoveryPasskeyAsync } = usePushRecoveryPasskey();
+    const { claimRecoveredWalletAsync } = useClaimRecoveredWallet();
 
     const { mutateAsync, mutate, ...mutationStuff } = useMutation({
         mutationKey: recoveryKey.runRecovery,
@@ -39,24 +34,29 @@ export function useRunRecovery() {
             walletAddress: Address;
             guardianAccount: LocalAccount<string>;
         }) => {
-            if (!credentialRef.current) {
-                credentialRef.current = await createRecoveryPasskeyAsync();
-            }
-            const credential = credentialRef.current;
+            const credential =
+                createdCredential ?? (await createRecoveryPasskeyAsync());
 
-            if (!onChainDoneRef.current) {
-                await performRecoveryAsync({
+            const newPasskey = {
+                authenticatorId: credential.id,
+                publicKey: credential.publicKey,
+            };
+            const alreadyOnChain = await isPasskeyRegisteredOnWallet({
+                wallet: walletAddress,
+                passkey: newPasskey,
+            });
+            if (!alreadyOnChain) {
+                await pushRecoveryPasskeyAsync({
                     walletAddress,
                     recoveryAccount: guardianAccount,
-                    newPasskey: {
-                        authenticatorId: credential.id,
-                        publicKey: credential.publicKey,
-                    },
+                    newPasskey,
                 });
-                onChainDoneRef.current = true;
             }
 
-            return claimRecoveryAsync({ wallet: walletAddress, credential });
+            return claimRecoveredWalletAsync({
+                wallet: walletAddress,
+                credential,
+            });
         },
     });
 

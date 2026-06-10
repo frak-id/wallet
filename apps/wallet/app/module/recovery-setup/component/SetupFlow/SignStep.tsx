@@ -7,7 +7,7 @@ import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { WarningCard } from "@/module/common/component/WarningCard";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
 import { useRecoveryAuthorization } from "@/module/recovery-setup/hook/useRecoveryAuthorization";
-import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
+import { useSendRecoveryTx } from "@/module/recovery-setup/hook/useSendRecoveryTx";
 import type { RecoveryFlowMode } from "./index";
 
 type SignStepProps = {
@@ -34,7 +34,7 @@ export function SignStep({
     const session = useStore(sessionStore, selectWebauthnSession);
     const { generateRecoveryOptionsAsync, isPending: isGenerating } =
         useGenerateRecoveryOptions();
-    const { setupRecoveryAsync, isPending: isSettingUp } = useSetupRecovery();
+    const { sendRecoveryTxAsync, isPending: isSettingUp } = useSendRecoveryTx();
     const { error, authorize } = useRecoveryAuthorization();
 
     const isPending = isGenerating || isSettingUp;
@@ -49,7 +49,7 @@ export function SignStep({
                 validAfter,
                 validUntil,
             });
-            await setupRecoveryAsync({ setupTxData });
+            await sendRecoveryTxAsync({ setupTxData });
             return blob;
         });
 
@@ -61,7 +61,7 @@ export function SignStep({
         validUntil,
         authorize,
         generateRecoveryOptionsAsync,
-        setupRecoveryAsync,
+        sendRecoveryTxAsync,
         onSigned,
     ]);
 

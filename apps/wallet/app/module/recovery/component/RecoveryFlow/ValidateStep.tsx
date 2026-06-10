@@ -7,7 +7,7 @@ import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResult
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { WarningCard } from "@/module/common/component/WarningCard";
 import { useDateFormatter } from "@/module/common/hook/useDateFormatter";
-import { useCurrentRecoveryOption } from "@/module/recovery/hook/useCurrentRecoveryOption";
+import { useOnChainRecovery } from "@/module/recovery/hook/useOnChainRecovery";
 import { useRunRecovery } from "@/module/recovery/hook/useRunRecovery";
 import {
     evaluateRecoveryReadiness,
@@ -32,8 +32,7 @@ export function ValidateStep({
     stepIndicator,
 }: ValidateStepProps) {
     const { t } = useTranslation();
-    const { data: recovery, isLoading } =
-        useCurrentRecoveryOption(walletAddress);
+    const { data: recovery, isLoading } = useOnChainRecovery(walletAddress);
 
     if (isLoading || recovery === undefined) {
         return (

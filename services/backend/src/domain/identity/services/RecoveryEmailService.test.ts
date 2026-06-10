@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 // Same relative path the service imports (not the alias, which won't resolve here).
 import {
     buildRecoveryEmail,
@@ -45,9 +45,6 @@ describe("RecoveryEmailService", () => {
     let service: RecoveryEmailService;
 
     beforeEach(() => {
-        // `Bun.sleep` (the request throttle) is absent from the Node test
-        // runtime, so stub the global to a no-op resolved promise.
-        vi.stubGlobal("Bun", { sleep: vi.fn().mockResolvedValue(undefined) });
         vi.mocked(buildRecoveryEmail).mockClear();
         vi.mocked(resendClient.send).mockReset().mockResolvedValue({
             id: "msg-1",
@@ -59,10 +56,6 @@ describe("RecoveryEmailService", () => {
             identityRepository as unknown as IdentityRepository,
             recoveryRepository as unknown as RecoveryRepository
         );
-    });
-
-    afterEach(() => {
-        vi.unstubAllGlobals();
     });
 
     it("mails the blob + deeplink when the email is verified and recoverable", async () => {

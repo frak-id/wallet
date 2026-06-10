@@ -39,7 +39,7 @@ export const recoverRoutes = new Elysia()
 
             if (result.status === "notAuthorized") {
                 return status(
-                    400,
+                    403,
                     "Passkey is not registered on this wallet on-chain"
                 );
             }
@@ -63,7 +63,7 @@ export const recoverRoutes = new Elysia()
                 wallet: t.Address(),
             }),
             response: {
-                400: t.String(),
+                403: t.String(),
                 409: t.String(),
                 200: WalletAuthResponseDto,
             },

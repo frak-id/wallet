@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { type ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
@@ -7,17 +8,34 @@ import { WarningCard } from "@/module/common/component/WarningCard";
 import { useTestRecoveryPassword } from "@/module/recovery-setup/hook/useTestRecoveryPassword";
 import * as styles from "../SetupFlow/styles.css";
 
-type PasswordStepProps = {
+type RecoveryPasswordGateProps = {
+    title: string;
+    description: string;
+    placeholder: string;
+    continueLabel: string;
+    invalidMessage: string;
     onVerified: () => void;
     onBack: () => void;
     stepIndicator?: ReactNode;
+    /** Extra content shown under the invalid warning (e.g. a replace-key CTA). */
+    failureExtra?: ReactNode;
 };
 
-export function PasswordStep({
+/**
+ * Password confirmation gate shared by the delete and date-refresh flows:
+ * fetch the stored blob and verify the password by decrypting it on-device.
+ */
+export function RecoveryPasswordGate({
+    title,
+    description,
+    placeholder,
+    continueLabel,
+    invalidMessage,
     onVerified,
     onBack,
     stepIndicator,
-}: PasswordStepProps) {
+    failureExtra,
+}: RecoveryPasswordGateProps) {
     const { t } = useTranslation();
     const formId = useId();
     const { testPasswordAsync, isPending } = useTestRecoveryPassword();
@@ -35,8 +53,8 @@ export function PasswordStep({
 
     return (
         <FlowStepScreen
-            title={t("wallet.recoverySetup.delete.password.title")}
-            description={t("wallet.recoverySetup.delete.password.description")}
+            title={title}
+            description={description}
             onBack={onBack}
             backDisabled={isPending}
             stepIndicator={stepIndicator}
@@ -50,7 +68,7 @@ export function PasswordStep({
                     loading={isPending}
                     disabled={isPending || password.length === 0}
                 >
-                    {t("wallet.recoverySetup.delete.password.continue")}
+                    {continueLabel}
                 </Button>
             }
         >
@@ -64,9 +82,7 @@ export function PasswordStep({
             >
                 <PasswordInput
                     toggleLabel={t("wallet.recoverySetup.password.toggle")}
-                    placeholder={t(
-                        "wallet.recoverySetup.delete.password.placeholder"
-                    )}
+                    placeholder={placeholder}
                     autoComplete="off"
                     value={password}
                     error={failed}
@@ -78,9 +94,10 @@ export function PasswordStep({
             </form>
 
             {failed ? (
-                <WarningCard>
-                    {t("wallet.recoverySetup.delete.password.invalid")}
-                </WarningCard>
+                <Stack space="s">
+                    <WarningCard>{invalidMessage}</WarningCard>
+                    {failureExtra}
+                </Stack>
             ) : null}
         </FlowStepScreen>
     );

@@ -2,7 +2,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import * as recoveryActions from "@/module/recovery/action/get";
-import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
+import { useConnectedWalletRecovery } from "@/module/recovery-setup/hook/useConnectedWalletRecovery";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 // Mock wagmi
@@ -13,7 +13,7 @@ vi.mock("wagmi", () => ({
 // Mock recovery actions
 vi.mock("@/module/recovery/action/get");
 
-describe("useRecoverySetupStatus", () => {
+describe("useConnectedWalletRecovery", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -34,13 +34,13 @@ describe("useRecoverySetupStatus", () => {
             mockWagmiHooks.useConnection as any
         );
 
-        const { result } = renderHook(() => useRecoverySetupStatus(), {
+        const { result } = renderHook(() => useConnectedWalletRecovery(), {
             wrapper: queryWrapper.wrapper,
         });
 
         // Should not be loading since query is disabled
         expect(result.current.isPending).toBe(true);
-        expect(result.current.recoverySetupStatus).toBeUndefined();
+        expect(result.current.onChainRecovery).toBeUndefined();
     });
 
     test("should fetch recovery status when address is available", async ({
@@ -67,7 +67,7 @@ describe("useRecoverySetupStatus", () => {
             mockRecoveryOptions
         );
 
-        const { result } = renderHook(() => useRecoverySetupStatus(), {
+        const { result } = renderHook(() => useConnectedWalletRecovery(), {
             wrapper: queryWrapper.wrapper,
         });
 
@@ -75,7 +75,7 @@ describe("useRecoverySetupStatus", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(result.current.recoverySetupStatus).toEqual(mockRecoveryOptions);
+        expect(result.current.onChainRecovery).toEqual(mockRecoveryOptions);
         expect(recoveryActions.getCurrentRecoveryOption).toHaveBeenCalledWith({
             wallet: mockAddress,
         });
@@ -95,7 +95,7 @@ describe("useRecoverySetupStatus", () => {
             null
         );
 
-        const { result } = renderHook(() => useRecoverySetupStatus(), {
+        const { result } = renderHook(() => useConnectedWalletRecovery(), {
             wrapper: queryWrapper.wrapper,
         });
 
@@ -103,7 +103,7 @@ describe("useRecoverySetupStatus", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(result.current.recoverySetupStatus).toBeNull();
+        expect(result.current.onChainRecovery).toBeNull();
     });
 
     test("should handle errors gracefully", async ({
@@ -122,7 +122,7 @@ describe("useRecoverySetupStatus", () => {
             mockError
         );
 
-        const { result } = renderHook(() => useRecoverySetupStatus(), {
+        const { result } = renderHook(() => useConnectedWalletRecovery(), {
             wrapper: queryWrapper.wrapper,
         });
 
@@ -147,7 +147,7 @@ describe("useRecoverySetupStatus", () => {
             null
         );
 
-        const { result } = renderHook(() => useRecoverySetupStatus(), {
+        const { result } = renderHook(() => useConnectedWalletRecovery(), {
             wrapper: queryWrapper.wrapper,
         });
 

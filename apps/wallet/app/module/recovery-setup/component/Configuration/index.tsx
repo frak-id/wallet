@@ -24,7 +24,7 @@ import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { PasswordInput } from "@/module/common/component/PasswordInput";
 import { useDateFormatter } from "@/module/common/hook/useDateFormatter";
 import { SummaryRow } from "@/module/recovery-setup/component/SummaryRow";
-import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
+import { useConnectedWalletRecovery } from "@/module/recovery-setup/hook/useConnectedWalletRecovery";
 import { useTestRecoveryPassword } from "@/module/recovery-setup/hook/useTestRecoveryPassword";
 import * as formStyles from "../SetupFlow/styles.css";
 import * as styles from "./styles.css";
@@ -47,7 +47,7 @@ export function RecoveryConfiguration({
 }: RecoveryConfigurationProps) {
     const { t } = useTranslation();
     const formId = useId();
-    const { recoverySetupStatus } = useRecoverySetupStatus();
+    const { onChainRecovery } = useConnectedWalletRecovery();
     const { testPasswordAsync, isPending } = useTestRecoveryPassword();
     const [password, setPassword] = useState("");
     const [result, setResult] = useState<"valid" | "invalid" | null>(null);
@@ -84,16 +84,14 @@ export function RecoveryConfiguration({
                             {t("wallet.recoverySetup.config.active")}
                         </Badge>
                     </Box>
-                    {recoverySetupStatus && (
+                    {onChainRecovery && (
                         <Stack space="s">
                             <SummaryRow
                                 label={t(
                                     "wallet.recoverySetup.config.startLabel"
                                 )}
                                 value={formatter.format(
-                                    new Date(
-                                        recoverySetupStatus.validAfter * 1000
-                                    )
+                                    new Date(onChainRecovery.validAfter * 1000)
                                 )}
                             />
                             <SummaryRow
@@ -101,10 +99,10 @@ export function RecoveryConfiguration({
                                     "wallet.recoverySetup.config.endLabel"
                                 )}
                                 value={
-                                    recoverySetupStatus.validUntil
+                                    onChainRecovery.validUntil
                                         ? formatter.format(
                                               new Date(
-                                                  recoverySetupStatus.validUntil *
+                                                  onChainRecovery.validUntil *
                                                       1000
                                               )
                                           )

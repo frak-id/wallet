@@ -1,6 +1,7 @@
-import { sessionContext } from "@backend-infrastructure";
+import { log, sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
+import type { StaticWalletTokenDto } from "../../../../domain/auth";
 import { IdentityContext } from "../../../../domain/identity/context";
 import {
     DeleteRecoveryResponseSchema,
@@ -11,6 +12,27 @@ import {
     SaveRecoveryBlobBodySchema,
     SaveRecoveryResponseSchema,
 } from "../../../schemas";
+import { walletGroupContext } from "./walletGroupContext";
+
+/**
+ * Resolve the stored recovery blob row for a session, degrading to `null` for
+ * ECDSA sessions and wallets without an identity group (the read routes answer
+ * "not configured" rather than erroring, mirroring `GET /email`).
+ */
+async function findRecoveryForSession(walletSession: StaticWalletTokenDto) {
+    if (walletSession.type === "ecdsa") {
+        return null;
+    }
+    const group =
+        await IdentityContext.repositories.identity.findGroupByIdentity({
+            type: "wallet",
+            value: walletSession.address,
+        });
+    if (!group) {
+        return null;
+    }
+    return IdentityContext.repositories.recovery.findByGroup(group.id);
+}
 
 /**
  * Encrypted recovery backup for the *current* wallet.
@@ -26,25 +48,12 @@ import {
  */
 export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
     .use(sessionContext)
+    .use(walletGroupContext)
     .get(
         "/",
-        async ({ walletSession }) => {
-            if (walletSession.type === "ecdsa") {
-                return { configured: false };
-            }
-            const group =
-                await IdentityContext.repositories.identity.findGroupByIdentity(
-                    { type: "wallet", value: walletSession.address }
-                );
-            if (!group) {
-                return { configured: false };
-            }
-            const recovery =
-                await IdentityContext.repositories.recovery.findByGroup(
-                    group.id
-                );
-            return { configured: !!recovery };
-        },
+        async ({ walletSession }) => ({
+            configured: !!(await findRecoveryForSession(walletSession)),
+        }),
         {
             withWalletAuthent: true,
             response: {
@@ -55,23 +64,9 @@ export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
     )
     .get(
         "/blob",
-        async ({ walletSession }) => {
-            if (walletSession.type === "ecdsa") {
-                return { blob: null };
-            }
-            const group =
-                await IdentityContext.repositories.identity.findGroupByIdentity(
-                    { type: "wallet", value: walletSession.address }
-                );
-            if (!group) {
-                return { blob: null };
-            }
-            const recovery =
-                await IdentityContext.repositories.recovery.findByGroup(
-                    group.id
-                );
-            return { blob: recovery?.blob ?? null };
-        },
+        async ({ walletSession }) => ({
+            blob: (await findRecoveryForSession(walletSession))?.blob ?? null,
+        }),
         {
             withWalletAuthent: true,
             response: {
@@ -82,27 +77,16 @@ export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
     )
     .post(
         "/",
-        async ({ walletSession, body: { blob } }) => {
-            if (walletSession.type === "ecdsa") {
-                return status(400, "Unsupported wallet type");
-            }
-            const group =
-                await IdentityContext.repositories.identity.findGroupByIdentity(
-                    { type: "wallet", value: walletSession.address }
-                );
-            if (!group) {
-                return status(404, "Wallet identity not found");
-            }
-
+        async ({ walletGroup, body: { blob } }) => {
             await IdentityContext.repositories.recovery.save({
-                groupId: group.id,
+                groupId: walletGroup.id,
                 blob,
             });
 
             return { status: "success" as const };
         },
         {
-            withWalletAuthent: true,
+            withWalletGroup: true,
             body: SaveRecoveryBlobBodySchema,
             response: {
                 400: t.String(),
@@ -114,24 +98,15 @@ export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
     )
     .delete(
         "/",
-        async ({ walletSession }) => {
-            if (walletSession.type === "ecdsa") {
-                return status(400, "Unsupported wallet type");
-            }
-            const group =
-                await IdentityContext.repositories.identity.findGroupByIdentity(
-                    { type: "wallet", value: walletSession.address }
-                );
-            if (!group) {
-                return status(404, "Wallet identity not found");
-            }
-
-            await IdentityContext.repositories.recovery.deleteByGroup(group.id);
+        async ({ walletGroup }) => {
+            await IdentityContext.repositories.recovery.deleteByGroup(
+                walletGroup.id
+            );
 
             return { status: "deleted" as const };
         },
         {
-            withWalletAuthent: true,
+            withWalletGroup: true,
             response: {
                 400: t.String(),
                 401: t.String(),
@@ -142,13 +117,17 @@ export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
     )
     // Intentionally public (no `withWalletAuthent`): a logged-out user requests
     // their backup by email. The ack is identical whether or not the address is
-    // recoverable, so this never reveals account existence.
+    // recoverable, so this never reveals account existence. Fire-and-forget:
+    // responding before the lookup + send keeps the response time flat, so an
+    // attacker can't infer eligibility from latency either.
     .post(
         "/request",
-        async ({ body: { email } }) => {
-            await IdentityContext.services.recoveryEmail.requestRecoveryEmail(
-                email
-            );
+        ({ body: { email } }) => {
+            IdentityContext.services.recoveryEmail
+                .requestRecoveryEmail(email)
+                .catch((err) =>
+                    log.error({ err }, "Recovery email request failed")
+                );
             return { status: "requested" as const };
         },
         {

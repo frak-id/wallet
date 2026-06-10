@@ -4,10 +4,11 @@ import {
     type Session,
     sessionStore,
 } from "@frak-labs/wallet-shared";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Address } from "viem";
 import type { RecoveryCredential } from "@/module/recovery/hook/useCreateRecoveryPasskey";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
+import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 
 /**
  * Register the new passkey against the recovered wallet on the backend and
@@ -18,7 +19,9 @@ import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
  * run AFTER `doAddPasskey` has landed. On success the minted session is the
  * recovered wallet's, and we persist it so the user is logged straight in.
  */
-export function useRecoveryClaim() {
+export function useClaimRecoveredWallet() {
+    const queryClient = useQueryClient();
+
     const { mutateAsync, mutate, ...mutationStuff } = useMutation({
         mutationKey: recoveryKey.claimRecovery,
         gcTime: 0,
@@ -51,11 +54,22 @@ export function useRecoveryClaim() {
 
             return session;
         },
+        onSuccess: async () => {
+            // The active identity just changed wallets — every cached recovery
+            // read (backend blob status, on-chain option) belongs to the
+            // previous session and must be refetched.
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: recoveryKey.all }),
+                queryClient.invalidateQueries({
+                    queryKey: recoverySetupKey.all,
+                }),
+            ]);
+        },
     });
 
     return {
         ...mutationStuff,
-        claimRecoveryAsync: mutateAsync,
-        claimRecovery: mutate,
+        claimRecoveredWalletAsync: mutateAsync,
+        claimRecoveredWallet: mutate,
     };
 }

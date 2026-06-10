@@ -41,7 +41,7 @@ type MutationParams = {
  * recovery guardian. Resolves once the user operation is included, so the
  * passkey is guaranteed registered on-chain when this returns.
  */
-export function usePerformRecovery() {
+export function usePushRecoveryPasskey() {
     // Get the viem client for the given chain
     const client = useClient();
 
@@ -116,7 +116,7 @@ export function usePerformRecovery() {
 
     return {
         ...mutationStuff,
-        performRecoveryAsync: mutateAsync,
-        performRecovery: mutate,
+        pushRecoveryPasskeyAsync: mutateAsync,
+        pushRecoveryPasskey: mutate,
     };
 }

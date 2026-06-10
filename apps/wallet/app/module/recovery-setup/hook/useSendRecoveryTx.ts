@@ -14,9 +14,11 @@ type MutationParams = {
     setupTxData: Hex;
 };
 /**
- * Setup the recovery
+ * Send a recovery `setExecution` transaction from the connected wallet and
+ * wait for inclusion. Shared by setup, date-refresh, and disable (each caller
+ * supplies its own pre-encoded `setupTxData`).
  */
-export function useSetupRecovery(
+export function useSendRecoveryTx(
     options?: UseMutationOptions<Hex | null, DefaultError, MutationParams>
 ) {
     const { address } = useConnection();
@@ -58,7 +60,7 @@ export function useSetupRecovery(
 
     return {
         ...mutationStuff,
-        setupRecoveryAsync: mutateAsync,
-        setupRecovery: mutate,
+        sendRecoveryTxAsync: mutateAsync,
+        sendRecoveryTx: mutate,
     };
 }
