@@ -23,12 +23,15 @@ export const bannerError = style([
     },
 ]);
 
+/** 20px glyph centered in a 24px slot. */
 export const icon = style({
     color: vars.text.action,
     flexShrink: 0,
+    marginInline: 2,
 });
 
 export const iconError = style({
     color: vars.icon.error,
     flexShrink: 0,
+    marginInline: 2,
 });

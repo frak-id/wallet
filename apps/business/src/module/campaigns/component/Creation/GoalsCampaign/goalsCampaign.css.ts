@@ -34,7 +34,8 @@ export const left = style({
     paddingBottom: 2,
 });
 
-/** 40px light-blue circle holding the (blue) goal icon. */
+/** 40px light-blue circle holding the (blue) goal icon, in a 44px-wide slot
+ * (the extra 4px pushes the text block right of the avatar). */
 export const badge = style({
     display: "flex",
     alignItems: "center",
@@ -42,6 +43,7 @@ export const badge = style({
     flexShrink: 0,
     width: 40,
     height: 40,
+    marginRight: alias.spacing.xxs,
     borderRadius: alias.cornerRadius.full,
     backgroundColor: vars.surface.secondary,
     color: vars.text.action,

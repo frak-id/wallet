@@ -84,7 +84,7 @@ export function GoalsCampaign() {
             onClose={() => form.reset(draft)}
         >
             <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
-                <Card>
+                <Card radius="m">
                     <Stack space="m">
                         <InfoBanner>
                             {t("campaigns.create.goals.info")}
@@ -116,6 +116,7 @@ export function GoalsCampaign() {
                                                         <RadioGroupItem
                                                             id={`goal-${goal.id}`}
                                                             value={goal.id}
+                                                            size="l"
                                                         />
                                                         <span
                                                             className={
