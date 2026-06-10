@@ -465,10 +465,10 @@ export default interface Resources {
       "continue": "Continue",
       "email": {
         "alreadyUsed": {
-          "description": "{{email}} is already linked to an account. Log in to continue with that wallet, or use a different email.",
-          "login": "Login",
-          "title": "Email already used",
-          "useDifferent": "Use a different email"
+          "description": "{{email}} is already linked to a wallet. Log in with biometrics to access it, or recover your wallet if you can no longer log in.",
+          "login": "Log in with biometrics",
+          "recover": "Recover my wallet",
+          "title": "You already have a wallet"
         },
         "checkError": "Unable to verify this email right now. Please try again.",
         "clearAriaLabel": "Clear email address",

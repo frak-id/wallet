@@ -21,6 +21,7 @@ import { isRecoveryBlobEnvelope } from "@/module/recovery-setup/utils/recoveryBl
 import * as styles from "./styles.css";
 
 type BlobStepProps = {
+    initialEmail?: string;
     onSubmit: (blob: string) => void;
     onBack: () => void;
     stepIndicator?: ReactNode;
@@ -32,11 +33,16 @@ type BlobStepProps = {
  * fallback lets users who still hold their backup paste it and jump straight to
  * the password step.
  */
-export function BlobStep({ onSubmit, onBack, stepIndicator }: BlobStepProps) {
+export function BlobStep({
+    initialEmail,
+    onSubmit,
+    onBack,
+    stepIndicator,
+}: BlobStepProps) {
     const { t } = useTranslation();
     const emailFormId = useId();
     const blobFormId = useId();
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(initialEmail ?? "");
     const [blob, setBlob] = useState("");
     const [invalid, setInvalid] = useState(false);
     const { requestRecoveryEmail, isRequesting, isSent, error } =

@@ -1,5 +1,6 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { useWebauthnErrorToast } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 
@@ -20,6 +21,7 @@ export function EmailAlreadyUsedStep({
     loginError,
 }: EmailAlreadyUsedStepProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     useWebauthnErrorToast(loginError, {
         operation: "login",
@@ -48,9 +50,9 @@ export function EmailAlreadyUsedStep({
                 variant="secondary"
                 size="large"
                 width="full"
-                onClick={onBack}
+                onClick={() => navigate({ to: "/recovery", search: { email } })}
             >
-                {t("onboarding.email.alreadyUsed.useDifferent")}
+                {t("onboarding.email.alreadyUsed.recover")}
             </Button>
         </EmailFlowResultScreen>
     );

@@ -977,10 +977,10 @@
             "continue": "Continuer",
             "clearAriaLabel": "Effacer l'adresse e-mail",
             "alreadyUsed": {
-                "title": "E-mail déjà utilisé",
-                "description": "{{email}} est déjà lié à un compte. Connecte-toi pour continuer avec ce portefeuille, ou utilise un autre e-mail.",
-                "login": "Se connecter",
-                "useDifferent": "Utiliser un autre e-mail"
+                "title": "Tu as déjà un portefeuille",
+                "description": "{{email}} est déjà lié à un portefeuille. Connecte-toi avec la biométrie pour y accéder, ou récupère ton portefeuille si tu n'arrives plus à te connecter.",
+                "login": "Me connecter avec la biométrie",
+                "recover": "Récupérer mon portefeuille"
             },
             "checkError": "Impossible de vérifier cet e-mail pour le moment. Réessaie."
         },

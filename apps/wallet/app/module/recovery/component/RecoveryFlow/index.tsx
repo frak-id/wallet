@@ -29,6 +29,8 @@ const RECOVERY_STEP_NUMBER: Record<Exclude<Step["kind"], "success">, number> = {
 type RecoveryUsageFlowProps = {
     /** Blob pulled from the URL hash, when the user opened a recovery link. */
     initialBlob?: string;
+    /** Email prefilled from a `?email=` search param (e.g. from onboarding). */
+    initialEmail?: string;
 };
 
 /**
@@ -36,7 +38,10 @@ type RecoveryUsageFlowProps = {
  * self-contained screen and state is local. The guardian account derived from
  * the backup is carried forward only as far as the on-chain push that uses it.
  */
-export function RecoveryUsageFlow({ initialBlob }: RecoveryUsageFlowProps) {
+export function RecoveryUsageFlow({
+    initialBlob,
+    initialEmail,
+}: RecoveryUsageFlowProps) {
     const navigate = useNavigate();
     // A malformed `#blob=` link otherwise lands straight on the password step
     // and fails to decode; only skip ahead when it's actually a recovery envelope.
@@ -64,6 +69,7 @@ export function RecoveryUsageFlow({ initialBlob }: RecoveryUsageFlowProps) {
     if (step.kind === "blob") {
         return (
             <BlobStep
+                initialEmail={initialEmail}
                 onSubmit={(blob) => setStep({ kind: "password", blob })}
                 onBack={leaveToLogin}
                 stepIndicator={stepIndicator}

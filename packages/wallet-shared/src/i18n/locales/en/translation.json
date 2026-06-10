@@ -979,10 +979,10 @@
             "continue": "Continue",
             "clearAriaLabel": "Clear email address",
             "alreadyUsed": {
-                "title": "Email already used",
-                "description": "{{email}} is already linked to an account. Log in to continue with that wallet, or use a different email.",
-                "login": "Login",
-                "useDifferent": "Use a different email"
+                "title": "You already have a wallet",
+                "description": "{{email}} is already linked to a wallet. Log in with biometrics to access it, or recover your wallet if you can no longer log in.",
+                "login": "Log in with biometrics",
+                "recover": "Recover my wallet"
             },
             "checkError": "Unable to verify this email right now. Please try again."
         },
