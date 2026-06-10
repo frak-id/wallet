@@ -37,6 +37,11 @@ const COUNTRIES: Country[] = getCountryDataList()
 
 const NAME_BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c.name]));
 
+/** Display name for an ISO-3166 alpha-2 code (falls back to the code). */
+export function getCountryName(code: string): string {
+    return NAME_BY_CODE.get(code) ?? code;
+}
+
 /** Countries grouped by continent — one pass, O(1) lookup by code. */
 const COUNTRIES_BY_CONTINENT = (() => {
     const map = new Map<ContinentCode, Country[]>(

@@ -24,6 +24,7 @@ import {
     getStartDate,
 } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
+import { getCountryName } from "../TerritoryCampaign/CountrySelect";
 import { CampaignLaunched } from "./CampaignLaunched";
 import * as styles from "./validation-campaign.css";
 
@@ -178,7 +179,7 @@ function SummaryRows({ draft }: { draft: CampaignDraft }) {
 
             <SummaryRow label={t("campaigns.create.validation.territories")}>
                 {territories.length > 0 ? (
-                    <Value>{territories.join(", ")}</Value>
+                    <Value>{territories.map(getCountryName).join(", ")}</Value>
                 ) : (
                     <Value muted>{EMPTY}</Value>
                 )}
@@ -188,7 +189,15 @@ function SummaryRows({ draft }: { draft: CampaignDraft }) {
                 label={t("campaigns.create.validation.specialCategories")}
             >
                 {specialCategories.length > 0 ? (
-                    <Value>{specialCategories.join(", ")}</Value>
+                    <Value>
+                        {specialCategories
+                            .map((category) =>
+                                t(
+                                    `campaigns.create.territory.special.options.${category}.title` as "campaigns.create.territory.special.options.credit.title"
+                                )
+                            )
+                            .join(", ")}
+                    </Value>
                 ) : (
                     <Value muted>{EMPTY}</Value>
                 )}
