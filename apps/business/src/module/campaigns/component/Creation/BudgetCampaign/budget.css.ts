@@ -154,9 +154,15 @@ export const dateFields = style({
 export const dateColumn = style({
     display: "flex",
     flexDirection: "column",
-    gap: alias.spacing.xxs,
+    gap: alias.spacing.xs,
     flex: 1,
     minWidth: 0,
+});
+
+/** Date label, inset 16px to line up with the field text. */
+export const dateLabel = style({
+    paddingLeft: alias.spacing.m,
+    paddingRight: alias.spacing.m,
 });
 
 /** Muted field shell: typeable date input + calendar-popover trigger. */

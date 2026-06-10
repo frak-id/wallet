@@ -40,7 +40,11 @@ export function DistributionBar({
                     />
                     <Text variant="caption" color="primary">
                         {rewardsLabel} ({hasData ? 80 : 0}%) ·{" "}
-                        <span className={styles.amountRewards}>
+                        <span
+                            className={
+                                hasData ? styles.amountRewards : undefined
+                            }
+                        >
                             {rewardsAmount}
                             {suffix}
                         </span>
@@ -52,7 +56,11 @@ export function DistributionBar({
                     />
                     <Text variant="caption" color="primary">
                         {commissionLabel} ({hasData ? 20 : 0}%) ·{" "}
-                        <span className={styles.amountCommission}>
+                        <span
+                            className={
+                                hasData ? styles.amountCommission : undefined
+                            }
+                        >
                             {commissionAmount}
                             {suffix}
                         </span>

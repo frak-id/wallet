@@ -156,8 +156,11 @@ function BudgetPeriodField({
                             <RadioGroupItem
                                 id={`period-${period.value}`}
                                 value={period.value}
+                                size="l"
                             />
-                            <Text variant="body">{t(period.labelKey)}</Text>
+                            <Text variant="body" weight="medium">
+                                {t(period.labelKey)}
+                            </Text>
                         </label>
                     ))}
                 </RadioGroup>
@@ -315,6 +318,7 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
                                         <RadioGroupItem
                                             id={`schedule-${option.value}`}
                                             value={option.value}
+                                            size="l"
                                         />
                                         <span className={styles.scheduleMain}>
                                             <Text
@@ -378,7 +382,12 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
             {mode === "range" && (
                 <div className={styles.dateFields}>
                     <div className={styles.dateColumn}>
-                        <Text variant="bodySmall" color="secondary">
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                            className={styles.dateLabel}
+                        >
                             {t("campaigns.create.budget.schedule.startDate")}
                         </Text>
                         <Controller
@@ -418,7 +427,12 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
                         />
                     </div>
                     <div className={styles.dateColumn}>
-                        <Text variant="bodySmall" color="secondary">
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                            className={styles.dateLabel}
+                        >
                             {t("campaigns.create.budget.schedule.endDate")}
                         </Text>
                         <Controller
