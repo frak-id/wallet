@@ -107,8 +107,8 @@ export const floatingFooterEdge = style({
     position: "absolute",
     inset: 0,
     backgroundImage: `linear-gradient(to top, ${vars.surface.background2} 30%, rgba(249, 250, 251, 0))`,
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
+    backdropFilter: "blur(30px)",
+    WebkitBackdropFilter: "blur(30px)",
     maskImage: "linear-gradient(to top, black 30%, transparent)",
     WebkitMaskImage: "linear-gradient(to top, black 30%, transparent)",
 });
