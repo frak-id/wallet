@@ -110,7 +110,7 @@ export const distributionGap = style({
 
 /**
  * 1px rule between the radios and the reveal section. The 4px margin adds to
- * the parent Stack's 16px gap for Figma's 20px of breathing room around the line.
+ * the parent Stack's 16px gap for 20px of breathing room around the line.
  */
 export const divider = style({
     width: "100%",
@@ -259,10 +259,10 @@ export const tierLabelSpacer = style({ width: "24px", flexShrink: 0 });
 /** "Frak keeps a 20% commission…" footnote, dimmed to 70%. */
 export const tierFootnote = style({ opacity: 0.7 });
 
-/** Table title clears the header row by 16px (8px gap + 8px margin), per Figma. */
+/** Table title clears the header row by 16px (8px gap + 8px margin). */
 export const tierTitle = style({ marginBottom: alias.spacing.xs });
 
-/** "Add a tier" sits 16px below the last row (8px gap + 8px margin), per Figma. */
+/** "Add a tier" sits 16px below the last row (8px gap + 8px margin). */
 export const tierAddButton = style({ marginTop: alias.spacing.xs });
 
 /**

@@ -328,7 +328,12 @@ function RecipientBox({
 }) {
     return (
         <div className={styles.recipientBox}>
-            <Text variant="bodySmall" weight="medium" color="secondary">
+            <Text
+                variant="bodySmall"
+                weight="medium"
+                color="secondary"
+                className={styles.insetX}
+            >
                 {label}
             </Text>
             <Controller
@@ -346,7 +351,11 @@ function RecipientBox({
                 )}
             />
             {hint ? (
-                <Text variant="caption" color="tertiary">
+                <Text
+                    variant="caption"
+                    color="tertiary"
+                    className={styles.insetX}
+                >
                     {hint}
                 </Text>
             ) : null}
@@ -374,6 +383,7 @@ function CpaReveal({
     ambPlaceholder,
     refPlaceholder,
     recipientHint,
+    hintWhenEmpty = false,
 }: {
     control: Control<RewardFormValues>;
     setValue: UseFormSetValue<RewardFormValues>;
@@ -387,6 +397,8 @@ function CpaReveal({
     refPlaceholder: string;
     /** Hint under each recipient input, given its share of the pool. */
     recipientHint: (poolPercent: number) => string;
+    /** Show the hint even while the input is empty (the % model's static hint). */
+    hintWhenEmpty?: boolean;
 }) {
     const { t } = useTranslation();
     const cpa = num(useWatch({ control, name: cpaName }));
@@ -489,7 +501,7 @@ function CpaReveal({
                         placeholder={ambPlaceholder}
                         error={splitMismatch}
                         hint={
-                            ambassador > 0
+                            hintWhenEmpty || ambassador > 0
                                 ? recipientHint(poolPercent(ambassador))
                                 : undefined
                         }
@@ -504,7 +516,7 @@ function CpaReveal({
                         placeholder={refPlaceholder}
                         error={splitMismatch}
                         hint={
-                            referee > 0
+                            hintWhenEmpty || referee > 0
                                 ? recipientHint(poolPercent(referee))
                                 : undefined
                         }
@@ -585,6 +597,7 @@ function PercentageReveal({
             recipientHint={() =>
                 t("campaigns.create.reward.percentage.recipientHint")
             }
+            hintWhenEmpty
         />
     );
 }
@@ -1353,6 +1366,7 @@ export function RewardCampaign() {
                                                 <RadioGroupItem
                                                     id={`model-${m.value}`}
                                                     value={m.value}
+                                                    size="l"
                                                 />
                                                 <span
                                                     className={styles.modelMain}
