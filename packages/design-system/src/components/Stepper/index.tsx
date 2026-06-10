@@ -64,6 +64,7 @@ export function Stepper({
                     <>
                         <span className={styles.indicatorColumn}>
                             <span className={styles.indicator[status]}>
+                                {status === "active" && <ActiveRing />}
                                 {status === "completed" ? (
                                     <CheckIcon
                                         className={clsx(
@@ -132,6 +133,26 @@ export function Stepper({
                 );
             })}
         </ol>
+    );
+}
+
+/** Dashed ring around the active indicator (2-2 round-capped dashes). */
+function ActiveRing() {
+    return (
+        <svg
+            className={styles.activeRing}
+            viewBox="0 0 33 33"
+            fill="none"
+            aria-hidden="true"
+        >
+            <circle
+                cx="16.5"
+                cy="16.5"
+                r="16"
+                strokeLinecap="round"
+                strokeDasharray="2 2"
+            />
+        </svg>
     );
 }
 

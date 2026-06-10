@@ -76,7 +76,7 @@ const indicatorBase = {
     lineHeight: 1,
     fontWeight: 500,
     fontVariantNumeric: "tabular-nums",
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderStyle: "solid",
     transition:
         "color 200ms ease, border-color 200ms ease, background-color 200ms ease",
@@ -91,8 +91,8 @@ export const indicator = styleVariants({
     },
     active: {
         ...indicatorBase,
-        borderStyle: "dashed",
-        borderColor: vars.text.action,
+        position: "relative",
+        borderColor: "transparent",
         color: vars.text.action,
         backgroundColor: "transparent",
     },
@@ -102,6 +102,20 @@ export const indicator = styleVariants({
         color: vars.text.onAction,
         backgroundColor: vars.text.action,
     },
+});
+
+/**
+ * The active ring, drawn as a real SVG: CSS `border-style: dashed` can't
+ * reproduce the 2-2 round-capped dash pattern. The source glyph is a 33×33
+ * box whose r=16 circle overflows the 32px indicator by 0.5px per side.
+ */
+export const activeRing = style({
+    position: "absolute",
+    inset: "-0.5px",
+    width: "calc(100% + 1px)",
+    height: "calc(100% + 1px)",
+    pointerEvents: "none",
+    stroke: vars.text.action,
 });
 
 export const checkIcon = style({
@@ -163,8 +177,9 @@ export const cellText = style({
     transition: "color 200ms ease",
 });
 
+/** 2px-on / 2px-off dashes; CSS `dashed` renders a different rhythm. */
 export const connectorDashed = style({
     position: "absolute",
     inset: 0,
-    borderLeft: `1px dashed ${vars.text.action}`,
+    backgroundImage: `repeating-linear-gradient(to bottom, ${vars.text.action} 0 2px, transparent 2px 4px)`,
 });
