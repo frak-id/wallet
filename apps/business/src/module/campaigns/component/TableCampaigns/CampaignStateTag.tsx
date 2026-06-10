@@ -2,6 +2,7 @@ import { Badge } from "@frak-labs/design-system/components/Badge";
 import { useTranslation } from "react-i18next";
 import { isEnded } from "@/module/campaigns/component/TableCampaigns/isEnded";
 import type { CampaignStatus } from "@/types/Campaign";
+import * as styles from "./campaign-state-tag.css";
 
 export function CampaignStateTag({
     status,
@@ -23,7 +24,11 @@ export function CampaignStateTag({
     switch (status) {
         case "draft":
             return (
-                <Badge variant="neutral" size="small">
+                <Badge
+                    variant="neutral"
+                    size="small"
+                    className={styles.draftTag}
+                >
                     {t("campaigns.status.draft")}
                 </Badge>
             );

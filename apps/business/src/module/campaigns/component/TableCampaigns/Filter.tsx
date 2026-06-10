@@ -99,62 +99,71 @@ export function TableCampaignFilters({
 
     return (
         <div className={styles.filters}>
-            <Inline space="xs" alignY="center">
+            <Inline space="l" alignY="center">
                 <InputSearch
                     className={styles.filtersSearch}
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}
                 />
-                <DateRangePopover
-                    value={currentDate}
-                    onChange={setDateFilter}
-                    trigger={
-                        <Button variant="filter" size="filter">
-                            <CalendarIcon width={16} height={16} />
-                            <span>
-                                {currentDate?.from ? (
-                                    currentDate.to ? (
-                                        <>
-                                            {format(
+                <Inline space="m" alignY="center">
+                    <DateRangePopover
+                        value={currentDate}
+                        onChange={setDateFilter}
+                        trigger={
+                            <Button variant="filter" size="filter">
+                                <CalendarIcon width={16} height={16} />
+                                <span>
+                                    {currentDate?.from ? (
+                                        currentDate.to ? (
+                                            <>
+                                                {format(
+                                                    currentDate.from,
+                                                    "LLL dd, y",
+                                                    { locale }
+                                                )}{" "}
+                                                -{" "}
+                                                {format(
+                                                    currentDate.to,
+                                                    "LLL dd, y",
+                                                    { locale }
+                                                )}
+                                            </>
+                                        ) : (
+                                            format(
                                                 currentDate.from,
                                                 "LLL dd, y",
-                                                { locale }
-                                            )}{" "}
-                                            -{" "}
-                                            {format(
-                                                currentDate.to,
-                                                "LLL dd, y",
-                                                { locale }
-                                            )}
-                                        </>
+                                                {
+                                                    locale,
+                                                }
+                                            )
+                                        )
                                     ) : (
-                                        format(currentDate.from, "LLL dd, y", {
-                                            locale,
-                                        })
-                                    )
-                                ) : (
-                                    t("campaigns.filter.dateRange")
-                                )}
-                            </span>
-                        </Button>
-                    }
-                />
-                <Button
-                    variant="filter"
-                    size="filter"
-                    icon={<RefreshIcon width={16} height={16} />}
-                    onClick={resetFilters}
-                >
-                    {t("campaigns.filter.reset")}
-                </Button>
+                                        t("campaigns.filter.dateRange")
+                                    )}
+                                </span>
+                            </Button>
+                        }
+                    />
+                    <Button
+                        variant="filter"
+                        size="filter"
+                        icon={<RefreshIcon width={16} height={16} />}
+                        onClick={resetFilters}
+                    >
+                        {t("campaigns.filter.reset")}
+                    </Button>
+                </Inline>
             </Inline>
             <Tabs
                 value={currentStatus}
                 onValueChange={(value) => setStatusFilter(value as CampaignTab)}
             >
-                <TabsList aria-label={t("campaigns.filter.tabsLabel")}>
+                <TabsList
+                    variant="navigation"
+                    aria-label={t("campaigns.filter.tabsLabel")}
+                >
                     {tabValues.map((tab) => (
-                        <TabsTrigger key={tab} value={tab}>
+                        <TabsTrigger key={tab} value={tab} variant="navigation">
                             {t(`campaigns.tabs.${tab}`)}
                         </TabsTrigger>
                     ))}

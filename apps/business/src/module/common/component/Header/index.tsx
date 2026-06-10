@@ -66,12 +66,15 @@ export function Header() {
                         {showExport && (
                             <Button
                                 variant="secondary"
+                                size="small"
                                 rightIcon={<Download size={16} />}
                             >
                                 {t("shell.header.export")}
                             </Button>
                         )}
-                        {showCreateCampaign && <ButtonNewCampaign />}
+                        {showCreateCampaign && (
+                            <ButtonNewCampaign size="small" />
+                        )}
                         {showSendPush && <ButtonSendPush />}
                         {showAddMerchant && (
                             <AddMerchantSheet

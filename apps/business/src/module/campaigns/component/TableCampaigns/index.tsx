@@ -95,6 +95,7 @@ export function TableCampaigns() {
                             >
                                 <Checkbox
                                     id="campaign-select-all"
+                                    size="l"
                                     checked={checked}
                                     disabled={visibleIds.length === 0}
                                     onCheckedChange={() => {
@@ -115,6 +116,7 @@ export function TableCampaigns() {
                         >
                             <Checkbox
                                 id={`campaign-select-${row.original.id}`}
+                                size="l"
                                 checked={selectedIds.has(row.original.id)}
                                 onCheckedChange={() =>
                                     toggleSelection(row.original.id)

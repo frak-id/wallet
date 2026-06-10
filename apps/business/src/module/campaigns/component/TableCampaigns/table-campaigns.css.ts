@@ -11,7 +11,6 @@ export const budgetRow = style({
 
 export const budgetBarTrack = style({
     height: alias.size.xs,
-    marginTop: alias.spacing.xxs,
     backgroundColor: vars.surface.disabled,
     borderRadius: alias.cornerRadius.full,
     overflow: "hidden",

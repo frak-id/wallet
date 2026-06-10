@@ -11,5 +11,5 @@ export const filters = style({
 });
 
 export const filtersSearch = style({
-    width: "300px",
+    width: "343px",
 });

@@ -14,6 +14,7 @@ export const bar = style({
 
 export const count = style({
     fontSize: "16px",
+    lineHeight: "26px",
     fontWeight: 500,
     color: vars.text.action,
     whiteSpace: "nowrap",
