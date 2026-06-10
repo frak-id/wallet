@@ -3,6 +3,7 @@ import {
     createCampaign,
     updateCampaign,
 } from "@/module/campaigns/api/campaignApi";
+import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import {
     buildApiPayload,
@@ -72,11 +73,19 @@ export function useSaveCampaign() {
             campaignStore.getState().setDraft({ ...draft, id: created.id });
             return created;
         },
-        onSuccess: async (campaign) => {
+        onSuccess: async (campaign, draft) => {
+            // Seed the detail query so the next step's useSuspenseQuery finds
+            // the campaign in cache and doesn't suspend (the step 1 → 2
+            // transition otherwise swaps the whole page for a fallback).
+            queryClient.setQueryData(
+                campaignQueryOptions({
+                    merchantId: draft.merchantId,
+                    campaignId: campaign.id,
+                    isDemoMode,
+                }).queryKey,
+                campaign
+            );
             await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-            await queryClient.invalidateQueries({
-                queryKey: ["campaign", campaign.id],
-            });
         },
     });
 }
