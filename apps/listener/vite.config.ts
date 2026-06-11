@@ -162,8 +162,12 @@ function stripOrphanCrossChunkImports() {
  * RPC boot path — no UI shown — the eager link is pure waste blocking first paint.
  */
 function stripEagerLazyCss() {
+    // Key on the href chunk-name alone, not rel="stylesheet" before href: a Vite
+    // upgrade that reorders <link> attributes would otherwise silently no-op this
+    // stripper. assertEagerBundleBudget fails the build if a lazy CSS link slips
+    // through, so any future break is loud rather than silent.
     const lazyCssLinkRe = new RegExp(
-        `\\s*<link\\b[^>]*rel="stylesheet"[^>]*href="[^"]*(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.css"[^>]*>`,
+        `\\s*<link\\b[^>]*\\bhref="[^"]*(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.css"[^>]*>`,
         "g"
     );
     return {
@@ -176,6 +180,23 @@ function stripEagerLazyCss() {
             },
         },
     };
+}
+
+/**
+ * Fail loudly if {@link stripEagerLazyCss} no-op'd (e.g. a Vite upgrade changed
+ * the `<link>` attribute order/format): a surviving lazy-chunk CSS link would
+ * ship a render-blocking stylesheet on every iframe boot. Keyed on the href
+ * chunk-name so it is attribute-order independent, mirroring the stripper.
+ */
+function assertNoLazyCssLeak(htmlSource: string) {
+    const leakedLazyCssRe = new RegExp(
+        `<link\\b[^>]*\\bhref="[^"]*(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.css"`
+    );
+    if (leakedLazyCssRe.test(htmlSource)) {
+        throw new Error(
+            "Lazy-chunk CSS leaked into boot index.html — stripEagerLazyCss matched nothing (did Vite change <link> output?)."
+        );
+    }
 }
 
 /**
@@ -217,6 +238,8 @@ function assertEagerBundleBudget() {
             } catch {
                 return;
             }
+
+            assertNoLazyCssLeak(htmlSource);
 
             const eager = new Set<string>();
             for (const re of [scriptRe, preloadRe]) {
@@ -357,7 +380,7 @@ export default defineConfig(async () => {
             vanillaExtractPlugin(),
             // Inline Sora @font-face. No `preload` on purpose: the iframe
             // boots with no UI, so the woff2 must load lazily with Ring 1.
-            inlineFontFaces({ cssFiles: ["public/fonts/sora.css"] }),
+            inlineFontFaces({ cssFiles: ["app/fonts/sora.css"] }),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
             stripOrphanCrossChunkImports(),
