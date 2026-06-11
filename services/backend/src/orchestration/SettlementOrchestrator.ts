@@ -20,6 +20,7 @@ const defaultSettlementResult: SettlementResult = {
     txHashes: [],
     errors: [],
     banks: new Set(),
+    settledAssetLogIds: [],
 };
 
 export class SettlementOrchestrator {
@@ -137,9 +138,13 @@ export class SettlementOrchestrator {
             merchantBanks
         );
 
-        if (results.settledCount > 0) {
+        const settledIds = new Set(results.settledAssetLogIds);
+        const settledRewards = distributableRewards.filter((reward) =>
+            settledIds.has(reward.id)
+        );
+        if (settledRewards.length > 0) {
             try {
-                this.sendRewardSettledNotifications(distributableRewards);
+                this.sendRewardSettledNotifications(settledRewards);
             } catch (error) {
                 log.warn(
                     { error },

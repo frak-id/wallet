@@ -42,6 +42,7 @@ export class SettlementService {
             txHashes: [],
             errors: [],
             banks: new Set(),
+            settledAssetLogIds: [],
         };
 
         if (rewards.length === 0) {
@@ -90,6 +91,7 @@ export class SettlementService {
                 result.txHashes.push(txResult.txHash);
                 result.banks.add(bank);
                 result.settledCount += bankBatch.rewards.length;
+                result.settledAssetLogIds.push(...bankBatch.assetLogIds);
 
                 await this.assetLogRepository.updateStatusBatch(
                     bankBatch.assetLogIds,

@@ -87,12 +87,17 @@ export class AssetLogRepository {
     }
 
     /**
-     * Atomically claim pending rewards for settlement: lock eligible rows with
+     * Atomically claim rewards for settlement: lock eligible rows with
      * `FOR UPDATE SKIP LOCKED` and flip them to `processing` in the SAME
      * transaction. The lock must live inside a transaction — a bare autocommit
      * `SELECT ... FOR UPDATE SKIP LOCKED` releases it before the on-chain push,
      * letting two replicas claim and double-pay the same rows. Once committed
-     * the rows are no longer `pending`, so a concurrent run cannot re-pick them.
+     * the rows are no longer claimable, so a concurrent run cannot re-pick them.
+     *
+     * `bank_depleted` rows are claimed alongside `pending` ones: that status is
+     * a soft retry marker, not a terminal state, so a later run re-checks them
+     * against current bank balances and settles them once the merchant refills
+     * (otherwise they would be stranded forever once a bank ran dry).
      *
      * `settlementAttempts` is intentionally not bumped here; only an actual
      * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
@@ -107,7 +112,10 @@ export class AssetLogRepository {
                 .from(assetLogsTable)
                 .where(
                     and(
-                        eq(assetLogsTable.status, "pending"),
+                        inArray(assetLogsTable.status, [
+                            "pending",
+                            "bank_depleted",
+                        ]),
                         eq(assetLogsTable.assetType, "token"),
                         lt(
                             assetLogsTable.settlementAttempts,
@@ -282,14 +290,16 @@ export class AssetLogRepository {
     }
 
     /**
-     * Atomically expire every `pending` reward whose `expires_at` deadline
-     * has passed. Rewards whose campaign was deleted (`campaign_rule_id` is
-     * NULL) are included too — otherwise they would linger `pending` forever,
-     * never settling (past deadline) nor reaching a terminal state. Returns
-     * the affected rows so the caller can restore the corresponding campaign
-     * budgets; rows with a NULL `campaignRuleId` carry no budget to restore
-     * and are ignored by `restoreBudgetsBatch`. Single SQL round-trip; no
-     * find-then-update race.
+     * Atomically expire every still-owed reward whose `expires_at` deadline
+     * has passed. Both `pending` and `bank_depleted` rows qualify: a reward
+     * stuck `bank_depleted` because the merchant never refilled the bank must
+     * still reach a terminal state at its deadline instead of being re-checked
+     * forever. Rewards whose campaign was deleted (`campaign_rule_id` is NULL)
+     * are included too — otherwise they would linger forever, never settling
+     * (past deadline) nor reaching a terminal state. Returns the affected rows
+     * so the caller can restore the corresponding campaign budgets; rows with a
+     * NULL `campaignRuleId` carry no budget to restore and are ignored by
+     * `restoreBudgetsBatch`. Single SQL round-trip; no find-then-update race.
      */
     async expirePendingPastDeadline(): Promise<
         { id: string; campaignRuleId: string | null; amount: string }[]
@@ -305,7 +315,10 @@ export class AssetLogRepository {
             })
             .where(
                 and(
-                    eq(assetLogsTable.status, "pending"),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                    ]),
                     isNotNull(assetLogsTable.expiresAt),
                     lt(assetLogsTable.expiresAt, now)
                 )

@@ -22,6 +22,13 @@ type PushRewardParams = {
     attestation: Hex;
 };
 
+/**
+ * Upper bound on the confirmation wait. viem already defaults to 180s, but we
+ * pin it explicitly so a stalled RPC can't keep a settlement run parked for
+ * the full default; on timeout viem throws and the batch reverts to `pending`.
+ */
+const RECEIPT_TIMEOUT_MS = 120_000;
+
 function sortOpsByBankAndToken(ops: RewardOp[]): RewardOp[] {
     return [...ops].sort((a, b) => {
         const bankCompare = a.bank
@@ -62,7 +69,12 @@ export class RewardsHubRepository {
             key: "rewarder",
         });
 
-        return mutex.runExclusive(async () => {
+        // The mutex exists only to serialize nonce allocation on the shared
+        // rewarder EOA, so it must wrap the broadcast and nothing more. Holding
+        // it across `waitForTransactionReceipt` would block every other
+        // settlement push for the entire confirmation window (or a stalled-RPC
+        // timeout), which is exactly the head-of-line stall we are avoiding.
+        const txHash = await mutex.runExclusive(async () => {
             const account = await adminWalletsRepository.getKeySpecificAccount({
                 key: "rewarder",
             });
@@ -89,38 +101,39 @@ export class RewardsHubRepository {
                     functionName: "batch",
                     contractAddress: addresses.rewarderHub,
                     account: account.address,
-                    opsCount: Array.isArray(args[0]) ? args[0].length : 1,
+                    opsCount: args.length,
                 },
                 "Executing RewardsHub transaction"
             );
 
-            const txHash = await sendTransaction(viemClient, {
+            return sendTransaction(viemClient, {
                 account,
                 to: addresses.rewarderHub,
                 data,
                 chain: viemClient.chain,
             });
+        });
 
-            const receipt = await waitForTransactionReceipt(viemClient, {
-                hash: txHash,
-                confirmations: 4,
-            });
+        const receipt = await waitForTransactionReceipt(viemClient, {
+            hash: txHash,
+            confirmations: 4,
+            timeout: RECEIPT_TIMEOUT_MS,
+        });
 
-            log.info(
-                {
-                    functionName: "batch",
-                    txHash,
-                    blockNumber: receipt.blockNumber,
-                    gasUsed: receipt.gasUsed,
-                },
-                "RewardsHub transaction confirmed"
-            );
-
-            return {
+        log.info(
+            {
+                functionName: "batch",
                 txHash,
                 blockNumber: receipt.blockNumber,
-            };
-        });
+                gasUsed: receipt.gasUsed,
+            },
+            "RewardsHub transaction confirmed"
+        );
+
+        return {
+            txHash,
+            blockNumber: receipt.blockNumber,
+        };
     }
 }
 
