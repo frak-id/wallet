@@ -10,6 +10,7 @@ import removeConsole from "vite-plugin-remove-console";
 import {
     getSandboxEnv,
     getSstResource,
+    inlineFontFaces,
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
@@ -230,6 +231,9 @@ export default defineConfig(async () => {
         plugins: [
             preact({ reactAliasesEnabled: false }),
             vanillaExtractPlugin(),
+            // Inline Sora @font-face. No `preload` on purpose: the iframe
+            // boots with no UI, so the woff2 must load lazily with Ring 1.
+            inlineFontFaces({ cssFiles: ["public/fonts/sora.css"] }),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
             stripOrphanCrossChunkImports(),
