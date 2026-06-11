@@ -1,10 +1,6 @@
-import {
-    createFileRoute,
-    Outlet,
-    redirect,
-    useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
+import { useIsBareShell } from "@/module/common/hook/useIsBareShell";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { BankStatusBanner } from "@/module/merchant/component/BankStatusBanner";
 import { myMerchantsQueryOptions } from "@/module/merchant/queries/queryOptions";
@@ -51,15 +47,13 @@ export const Route = createFileRoute("/_restricted/m/$merchantId")({
 
 function MerchantLayout() {
     const { merchantId } = Route.useParams();
-    // The campaign creation wizard is a full-bleed, immersive layout (it
-    // cancels the shell padding and fills the viewport), so the global bank
-    // banner would collide with its header. Hide it there.
-    const isCampaignWizard = useRouterState({
-        select: (s) => s.location.pathname.includes("/campaigns/draft/"),
-    });
+    // Bare-shell pages (campaign wizard, merchant edit) are immersive
+    // full-viewport layouts — the global bank banner would collide with
+    // their own toolbars. Hide it there.
+    const isBareShell = useIsBareShell();
     return (
         <>
-            {!isCampaignWizard && <BankStatusBanner merchantId={merchantId} />}
+            {!isBareShell && <BankStatusBanner merchantId={merchantId} />}
             <Outlet />
         </>
     );

@@ -5,6 +5,7 @@ import { RouteError } from "@/module/common/component/RouteError";
 export const Route = createFileRoute(
     "/_restricted/m/$merchantId/campaigns/draft/new"
 )({
+    staticData: { shell: "bare" },
     component: CampaignsDraftNewPage,
     errorComponent: (props) => (
         <RouteError

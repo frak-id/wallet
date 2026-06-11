@@ -6,6 +6,7 @@ import { MerchantDetails } from "@/module/merchant/component/MerchantDetails";
 import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";
 
 export const Route = createFileRoute("/_restricted/m/$merchantId/merchant/")({
+    staticData: { shell: "bare" },
     loader: ({ params }) => {
         const demoMode = isDemoMode();
         queryClient.prefetchQuery(

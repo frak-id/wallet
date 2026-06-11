@@ -6,19 +6,11 @@ export const root = style({
     display: "flex",
     alignItems: "stretch",
     width: "100%",
-    // Fill the viewport below the fixed 70px header so the rail spans full height.
-    minHeight: "calc(100dvh - 70px)",
+    minHeight: "100dvh",
     backgroundColor: vars.surface.background2,
-    // Cancel the shell's breathing padding (`<main>` = offset + 24px on every
-    // side) so the wizard renders flush against the nav + header. Subtracting the
-    // breathing value leaves exactly the fixed nav/header offsets intact.
-    margin: `calc(-1 * ${alias.spacing.l})`,
     "@media": {
         "(max-width: 900px)": {
             flexDirection: "column",
-        },
-        "(max-width: 768px)": {
-            margin: `calc(-1 * ${alias.spacing.s})`,
         },
     },
 });
@@ -47,12 +39,17 @@ export const main = style({
     minWidth: 0,
 });
 
-/** Header padding: top 24, sides 24, no bottom (content's 24 top spaces the first card). */
+/** Header padding: top 24, sides 24, small bottom (content's 24 top spaces the first card). */
 export const header = style({
+    position: "sticky",
+    top: 0,
+    zIndex: 10,
     paddingTop: alias.spacing.l,
     paddingRight: alias.spacing.l,
-    paddingBottom: 0,
+    paddingBottom: alias.spacing.xs,
     paddingLeft: alias.spacing.l,
+    backdropFilter: "blur(5px)",
+    WebkitBackdropFilter: "blur(5px)",
 });
 
 export const content = style({

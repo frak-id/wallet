@@ -9,6 +9,7 @@ import { CampaignError } from "@/module/common/component/RouteError";
 export const Route = createFileRoute(
     "/_restricted/m/$merchantId/campaigns/draft/$campaignId/goals"
 )({
+    staticData: { shell: "bare" },
     loader: draftCampaignLoader,
     component: CampaignsDraftGoalsPage,
     errorComponent: CampaignError,

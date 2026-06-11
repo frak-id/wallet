@@ -8,6 +8,7 @@ import {
 export const Route = createFileRoute(
     "/_restricted/m/$merchantId/campaigns/draft/$campaignId/validation"
 )({
+    staticData: { shell: "bare" },
     loader: draftCampaignLoader,
     component: CampaignsDraftValidationPage,
 });
