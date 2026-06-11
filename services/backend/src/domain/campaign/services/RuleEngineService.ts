@@ -104,6 +104,16 @@ export class RuleEngineService {
             }
 
             allRewards.push(...result.rewards);
+
+            // Keep the merchant-wide per-user counter live across campaigns in
+            // this same evaluation. Several campaigns for one merchant can match
+            // a single interaction; each must see the referee rewards granted by
+            // earlier ones, or the cap is overshot by (matching campaigns − 1).
+            if (merchantRewardCount !== undefined) {
+                merchantRewardCount += result.rewards.filter(
+                    (reward) => reward.recipient === "referee"
+                ).length;
+            }
         }
 
         return {

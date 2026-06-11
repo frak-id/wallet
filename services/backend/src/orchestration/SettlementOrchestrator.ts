@@ -41,18 +41,18 @@ export class SettlementOrchestrator {
             log.info({ resetCount }, "Reset stuck settlement processing items");
         }
 
-        const pendingAssetLogs =
-            await this.assetLogRepository.findPendingForSettlement(
+        const claimedAssetLogs =
+            await this.assetLogRepository.claimPendingForSettlement(
                 RewardConfig.settlement.batchSize
             );
 
-        if (pendingAssetLogs.length === 0) {
+        if (claimedAssetLogs.length === 0) {
             log.debug("No pending rewards to settle");
             return defaultSettlementResult;
         }
 
         const pendingRewards =
-            await this.enrichWithWalletAndInteraction(pendingAssetLogs);
+            await this.enrichWithWalletAndInteraction(claimedAssetLogs);
 
         if (pendingRewards.length === 0) {
             log.warn(

@@ -79,7 +79,8 @@ const batchRewardOrchestrator = new BatchRewardOrchestrator(
     AttributionContext.services.referral,
     identityOrchestrator,
     interactionContextBuilder,
-    MerchantContext.repositories.merchant
+    MerchantContext.repositories.merchant,
+    CampaignContext.repositories.campaignRule
 );
 
 const purchaseInteractionCreator = new PurchaseInteractionCreator(

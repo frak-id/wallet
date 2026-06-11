@@ -3,6 +3,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
 import { buildTimeContext, type CalculatedReward } from "../domain/campaign";
+import type { CampaignRuleRepository } from "../domain/campaign/repositories/CampaignRuleRepository";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
 import {
@@ -46,7 +47,8 @@ export class BatchRewardOrchestrator {
         private readonly referralService: ReferralService,
         private readonly identityOrchestrator: IdentityOrchestrator,
         private readonly contextBuilder: InteractionContextBuilder,
-        private readonly merchantRepository: MerchantRepository
+        private readonly merchantRepository: MerchantRepository,
+        private readonly campaignRuleRepository: CampaignRuleRepository
     ) {}
 
     async processPendingInteractions(options: {
@@ -128,6 +130,11 @@ export class BatchRewardOrchestrator {
         interaction: InteractionLogSelect,
         merchantId: string
     ): Promise<ProcessSingleResult> {
+        // Budget consumed during rule evaluation must be released on any path
+        // that does not persist the matching rewards; declared out here so the
+        // catch can compensate too. Success and catch paths are mutually
+        // exclusive, so the budget is never restored twice.
+        let consumedByCampaign = new Map<string, number>();
         try {
             if (!interaction.identityGroupId) {
                 return {
@@ -160,6 +167,10 @@ export class BatchRewardOrchestrator {
                     time,
                 },
                 (args) => this.referralService.getReferralChain(args)
+            );
+
+            consumedByCampaign = this.sumRewardAmountsByCampaign(
+                evaluationResult.rewards
             );
 
             const assetParams =
@@ -236,6 +247,11 @@ export class BatchRewardOrchestrator {
                 return { cancelled: false, createdAssets };
             });
 
+            await this.restoreUnpersistedBudget(
+                consumedByCampaign,
+                txOutcome.createdAssets
+            );
+
             if (txOutcome.createdAssets.length > 0) {
                 try {
                     await this.sendRewardPendingNotifications(
@@ -271,6 +287,11 @@ export class BatchRewardOrchestrator {
                 cancelled: txOutcome.cancelled,
             };
         } catch (error) {
+            // We consumed budget before failing (buildAssetLogParams or the
+            // insert tx threw, and the interaction stays unprocessed for retry).
+            // Release all of it so the retry can consume cleanly.
+            await this.restoreUnpersistedBudget(consumedByCampaign, []);
+
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
 
@@ -288,6 +309,60 @@ export class BatchRewardOrchestrator {
                 rewardsCreated: 0,
                 error: errorMessage,
             };
+        }
+    }
+
+    private sumRewardAmountsByCampaign(
+        rewards: CalculatedReward[]
+    ): Map<string, number> {
+        const byCampaign = new Map<string, number>();
+        for (const reward of rewards) {
+            byCampaign.set(
+                reward.campaignRuleId,
+                (byCampaign.get(reward.campaignRuleId) ?? 0) + reward.amount
+            );
+        }
+        return byCampaign;
+    }
+
+    /**
+     * Release the slice of campaign budget consumed during rule evaluation but
+     * not persisted as a pending reward. `created` are the rows actually
+     * inserted; anything consumed beyond them per campaign is restored. Runs on
+     * exactly one of the success/catch paths, so it never double-restores; a
+     * failed restore is logged, never thrown, so it cannot mask the outcome.
+     */
+    private async restoreUnpersistedBudget(
+        consumedByCampaign: Map<string, number>,
+        created: AssetLogSelect[]
+    ): Promise<void> {
+        if (consumedByCampaign.size === 0) return;
+
+        const insertedByCampaign = new Map<string, number>();
+        for (const asset of created) {
+            if (!asset.campaignRuleId) continue;
+            insertedByCampaign.set(
+                asset.campaignRuleId,
+                (insertedByCampaign.get(asset.campaignRuleId) ?? 0) +
+                    Number.parseFloat(asset.amount)
+            );
+        }
+
+        for (const [campaignRuleId, consumed] of consumedByCampaign) {
+            const toRestore =
+                consumed - (insertedByCampaign.get(campaignRuleId) ?? 0);
+            if (toRestore <= 0) continue;
+            try {
+                await this.campaignRuleRepository.restoreBudget(
+                    campaignRuleId,
+                    toRestore
+                );
+            } catch (error) {
+                log.warn(
+                    { error, campaignRuleId, amount: toRestore },
+                    "Failed to restore unspent campaign budget"
+                );
+            }
         }
     }
 

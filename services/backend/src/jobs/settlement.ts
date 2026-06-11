@@ -1,7 +1,16 @@
 import { RewardConfig } from "../domain/rewards/config";
+import { tryWithAdvisoryLock } from "../infrastructure/persistence/postgres";
 import { OrchestrationContext } from "../orchestration";
 import { MutexCron } from "../utils/mutexCron";
 import { CronRegistry } from "./registry";
+
+/**
+ * Advisory-lock key serializing the settlement job across replicas. With the
+ * atomic row claim in `AssetLogRepository.claimPendingForSettlement`, this
+ * keeps a single process pushing rewards on-chain at a time — preventing
+ * double-pays and rewarder-EOA nonce collisions under multi-replica deploys.
+ */
+const SETTLEMENT_ADVISORY_LOCK_KEY = 0x5e771e;
 
 CronRegistry.register(
     new MutexCron({
@@ -12,9 +21,20 @@ CronRegistry.register(
         run: async ({ context: { logger } }) => {
             logger.debug("Starting reward settlement batch");
 
-            const result =
-                await OrchestrationContext.orchestrators.settlement.runSettlement();
+            const outcome = await tryWithAdvisoryLock(
+                SETTLEMENT_ADVISORY_LOCK_KEY,
+                () =>
+                    OrchestrationContext.orchestrators.settlement.runSettlement()
+            );
 
+            if (!outcome.ran) {
+                logger.info(
+                    "Settlement skipped — another replica holds the settlement lock"
+                );
+                return;
+            }
+
+            const { result } = outcome;
             logger.info(
                 {
                     settled: result.settledCount,

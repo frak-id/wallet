@@ -95,7 +95,7 @@ export class RewardLifecycleOrchestrator {
 
     /** Restore campaign budgets and emit a structured log. */
     private async finalize(
-        terminated: { campaignRuleId: string; amount: string }[],
+        terminated: { campaignRuleId: string | null; amount: string }[],
         reason: CancellationReason,
         logCtx: Record<string, unknown>
     ): Promise<LifecycleResult> {

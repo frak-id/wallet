@@ -81,3 +81,36 @@ export const db = drizzle({
         assetLogsTable,
     },
 });
+
+/**
+ * Run `task` while holding a Postgres session-level advisory lock identified by
+ * `key`, so it runs on a single process at a time across replicas. Returns
+ * `{ ran: false }` immediately — without running `task` — when another holder
+ * already owns the lock.
+ *
+ * Lock and unlock must happen on the SAME physical connection (advisory locks
+ * are session-scoped), so a connection is reserved out of the pool for the
+ * whole task; using the shared `db` would take the lock on one pooled
+ * connection and lose it on the next statement.
+ */
+export async function tryWithAdvisoryLock<T>(
+    key: number,
+    task: () => Promise<T>
+): Promise<{ ran: true; result: T } | { ran: false }> {
+    const connection = await postgresDb.reserve();
+    try {
+        const [row] = await connection<{ locked: boolean }[]>`
+            SELECT pg_try_advisory_lock(${key}) AS locked
+        `;
+        if (!row?.locked) {
+            return { ran: false };
+        }
+        try {
+            return { ran: true, result: await task() };
+        } finally {
+            await connection`SELECT pg_advisory_unlock(${key})`;
+        }
+    } finally {
+        connection.release();
+    }
+}

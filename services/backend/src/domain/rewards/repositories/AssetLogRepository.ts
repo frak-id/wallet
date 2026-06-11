@@ -86,38 +86,62 @@ export class AssetLogRepository {
         }));
     }
 
-    async findPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
+    /**
+     * Atomically claim pending rewards for settlement: lock eligible rows with
+     * `FOR UPDATE SKIP LOCKED` and flip them to `processing` in the SAME
+     * transaction. The lock must live inside a transaction — a bare autocommit
+     * `SELECT ... FOR UPDATE SKIP LOCKED` releases it before the on-chain push,
+     * letting two replicas claim and double-pay the same rows. Once committed
+     * the rows are no longer `pending`, so a concurrent run cannot re-pick them.
+     *
+     * `settlementAttempts` is intentionally not bumped here; only an actual
+     * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
+     * skipped before the push are retried via `resetStuckSettlementProcessing`.
+     */
+    async claimPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
         const now = new Date();
-        const query = db
-            .select()
-            .from(assetLogsTable)
-            .where(
-                and(
-                    eq(assetLogsTable.status, "pending"),
-                    eq(assetLogsTable.assetType, "token"),
-                    lt(
-                        assetLogsTable.settlementAttempts,
-                        RewardConfig.settlement.maxAttempts
-                    ),
-                    or(
-                        isNull(assetLogsTable.expiresAt),
-                        gt(assetLogsTable.expiresAt, now)
-                    ),
-                    // Exclude rewards still inside their lockup window.
-                    or(
-                        isNull(assetLogsTable.availableAt),
-                        lte(assetLogsTable.availableAt, now)
+
+        return db.transaction(async (tx) => {
+            const lockable = tx
+                .select({ id: assetLogsTable.id })
+                .from(assetLogsTable)
+                .where(
+                    and(
+                        eq(assetLogsTable.status, "pending"),
+                        eq(assetLogsTable.assetType, "token"),
+                        lt(
+                            assetLogsTable.settlementAttempts,
+                            RewardConfig.settlement.maxAttempts
+                        ),
+                        or(
+                            isNull(assetLogsTable.expiresAt),
+                            gt(assetLogsTable.expiresAt, now)
+                        ),
+                        // Exclude rewards still inside their lockup window.
+                        or(
+                            isNull(assetLogsTable.availableAt),
+                            lte(assetLogsTable.availableAt, now)
+                        )
                     )
                 )
-            )
-            .orderBy(assetLogsTable.createdAt)
-            .for("update", { skipLocked: true });
+                .orderBy(assetLogsTable.createdAt)
+                .for("update", { skipLocked: true });
 
-        if (limit) {
-            return query.limit(limit);
-        }
+            const locked = limit ? await lockable.limit(limit) : await lockable;
 
-        return query;
+            if (locked.length === 0) return [];
+
+            return tx
+                .update(assetLogsTable)
+                .set({ status: "processing", statusChangedAt: now })
+                .where(
+                    inArray(
+                        assetLogsTable.id,
+                        locked.map((row) => row.id)
+                    )
+                )
+                .returning();
+        });
     }
 
     /**
@@ -259,15 +283,19 @@ export class AssetLogRepository {
 
     /**
      * Atomically expire every `pending` reward whose `expires_at` deadline
-     * has passed and that still has a campaign attached. Returns the
-     * affected rows so the caller can restore the corresponding campaign
-     * budgets. Single SQL round-trip; no find-then-update race.
+     * has passed. Rewards whose campaign was deleted (`campaign_rule_id` is
+     * NULL) are included too — otherwise they would linger `pending` forever,
+     * never settling (past deadline) nor reaching a terminal state. Returns
+     * the affected rows so the caller can restore the corresponding campaign
+     * budgets; rows with a NULL `campaignRuleId` carry no budget to restore
+     * and are ignored by `restoreBudgetsBatch`. Single SQL round-trip; no
+     * find-then-update race.
      */
     async expirePendingPastDeadline(): Promise<
-        { id: string; campaignRuleId: string; amount: string }[]
+        { id: string; campaignRuleId: string | null; amount: string }[]
     > {
         const now = new Date();
-        const rows = await db
+        return db
             .update(assetLogsTable)
             .set({
                 status: "expired",
@@ -279,7 +307,6 @@ export class AssetLogRepository {
                 and(
                     eq(assetLogsTable.status, "pending"),
                     isNotNull(assetLogsTable.expiresAt),
-                    isNotNull(assetLogsTable.campaignRuleId),
                     lt(assetLogsTable.expiresAt, now)
                 )
             )
@@ -288,9 +315,6 @@ export class AssetLogRepository {
                 campaignRuleId: assetLogsTable.campaignRuleId,
                 amount: assetLogsTable.amount,
             });
-
-        // `campaignRuleId` is non-null thanks to the WHERE clause.
-        return rows as { id: string; campaignRuleId: string; amount: string }[];
     }
 
     async findByIdentityGroups(

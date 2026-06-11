@@ -539,6 +539,71 @@ describe("RuleEngineService", () => {
                 mockAssetLogRepository.countByMerchantAndUserAsReferee
             ).not.toHaveBeenCalled();
         });
+
+        it("keeps the merchant-wide cap live across campaigns in one evaluation", async () => {
+            const mockRepository = createMockRepository();
+            const mockConditionEvaluator = createMockConditionEvaluator();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const sharedRule = {
+                trigger: "purchase" as const,
+                conditions: [],
+                rewards: [
+                    {
+                        recipient: "referee" as const,
+                        type: "token" as const,
+                        amountType: "fixed" as const,
+                        amount: 100,
+                    },
+                ],
+                merchantMaxRewardsPerUser: 1,
+            };
+            const campaignA = createMockCampaign({
+                id: "campaign-a",
+                rule: sharedRule,
+            });
+            const campaignB = createMockCampaign({
+                id: "campaign-b",
+                rule: sharedRule,
+            });
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaignA,
+                campaignB,
+            ]);
+            vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
+            vi.mocked(
+                mockAssetLogRepository.countByMerchantAndUserAsReferee
+            ).mockResolvedValue(0);
+            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+                calculated: [
+                    createMockCalculatedReward({ recipient: "referee" }),
+                ],
+                errors: [],
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                mockConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: createMockContext(),
+            });
+
+            // A fills the cap of 1, so B is skipped; a stale count grants both.
+            expect(result.rewards).toHaveLength(1);
+            expect(mockRewardCalculator.calculateAll).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe("buildTimeContext", () => {
