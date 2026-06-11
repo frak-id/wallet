@@ -18,7 +18,7 @@
     "./sprinkles": "./src/sprinkles.css.ts",
     "./utils": "./src/reset.css.ts",
     "./styles/inAppBanner": "./src/styles/inAppBanner.css.ts",
-    "./assets/iphone.png": "./src/assets/iphone.png"
+    "./assets/iphone.webp": "./src/assets/iphone.webp"
   },
   "dependencies": {
     "@number-flow/react": "^0.6.0",
