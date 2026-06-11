@@ -53,7 +53,8 @@
         },
         "pages": {
             "dashboard": {
-                "nav": "Dashboard"
+                "nav": "My merchants",
+                "title": "My Merchants"
             },
             "campaigns": {
                 "nav": "Campaigns"
@@ -90,7 +91,7 @@
         "header": {
             "breadcrumbLabel": "Breadcrumb",
             "export": "Export",
-            "addMerchant": "Add merchant",
+            "addMerchant": "Add a new merchant",
             "myAccount": "My account",
             "demoBadge": "demo",
             "demoBadgeTitle": "Demo mode is active. Click to manage settings.",
@@ -104,6 +105,10 @@
         "empty": {
             "title": "Welcome to Frak",
             "description": "You don't have any merchant yet. Add one to start running campaigns."
+        },
+        "actions": {
+            "manageBudget": "Manage budget",
+            "edit": "Edit"
         }
     },
     "campaigns": {
@@ -738,6 +743,63 @@
             "ctaAddFunds": "Add funds",
             "ctaManageBank": "Manage bank",
             "ctaSetup": "Set up"
+        }
+    },
+    "funding": {
+        "header": {
+            "budgetTitle": "Manage Budget",
+            "addFundsTitle": "Add funds",
+            "addFundsDescription": "Top up your reward budget. Stripe handles the amount and payment method.",
+            "close": "Close",
+            "back": "Back"
+        },
+        "budget": {
+            "sectionLabel": "Reward Budget",
+            "distributing": "Distributing Rewards",
+            "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
+            "available": "available",
+            "noFundsCaption": "No funds — add funds to start distributing rewards.",
+            "addFunds": "Add funds",
+            "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
+            "allowanceTooltip": "Up to {{amount}} authorized for distribution",
+            "limitTooLow": "Distribution limit too low",
+            "status": {
+                "active": "Active",
+                "actionNeeded": "Action needed",
+                "paused": "Paused"
+            },
+            "actions": {
+                "increaseLimit": "Increase limit",
+                "withdraw": "Withdraw",
+                "confirm": "Confirm",
+                "cancel": "Cancel",
+                "amountPlaceholder": "Amount"
+            }
+        },
+        "setup": {
+            "description": "Set up your reward budget to start distributing rewards to your users.",
+            "cta": "Set Up Budget"
+        },
+        "error": "Failed to load reward budget data.",
+        "addFunds": {
+            "balanceLabel": "Current balance",
+            "stripe": "Add funds via Stripe",
+            "testTokens": "Fund with Test Tokens"
+        },
+        "pause": {
+            "title": "Pause rewards",
+            "description": "Active campaigns will stop distributing rewards for this currency until you re-enable the allowance.",
+            "currency": "Currency",
+            "cancel": "Cancel",
+            "confirm": "Pause rewards"
+        },
+        "legacy": {
+            "title": "Legacy Bank Migration",
+            "description": "Your old campaign bank still holds funds. Migrate them to your new bank to continue distributing rewards.",
+            "totalBalance": "Total balance",
+            "pending": "Pending rewards (locked)",
+            "withdrawable": "Available to migrate",
+            "migrate": "Migrate funds to new bank"
         }
     },
     "settings": {

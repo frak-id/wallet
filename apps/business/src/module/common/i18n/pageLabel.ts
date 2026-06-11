@@ -17,9 +17,12 @@ export type SectionKey = "acquisition" | "preview";
 
 // Pages that ship a dedicated standalone title (h1) different from their
 // sidebar/header nav label. Anything not in this set falls back to `nav`.
-type PageWithTitle = "members";
+type PageWithTitle = "dashboard" | "members";
 
-const PAGES_WITH_TITLE: ReadonlySet<PageKey> = new Set<PageKey>(["members"]);
+const PAGES_WITH_TITLE: ReadonlySet<PageKey> = new Set<PageKey>([
+    "dashboard",
+    "members",
+]);
 
 export function pageNav(t: TFunction, key: PageKey): string {
     return t(`shell.pages.${key}.nav`);

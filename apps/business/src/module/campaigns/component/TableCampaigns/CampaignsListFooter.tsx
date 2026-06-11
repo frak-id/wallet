@@ -1,5 +1,5 @@
 import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
-import * as styles from "./campaigns-list-footer.css";
+import { FloatingFooter } from "@/module/common/component/FloatingFooter";
 
 /**
  * Floating bottom bar with the "Create new campaign" CTA. Pinned to the
@@ -7,11 +7,8 @@ import * as styles from "./campaigns-list-footer.css";
  */
 export function CampaignsListFooter() {
     return (
-        <div className={styles.footer}>
-            <div className={styles.scrollEdge} />
-            <div className={styles.buttonWrapper}>
-                <ButtonNewCampaign size="large" />
-            </div>
-        </div>
+        <FloatingFooter>
+            <ButtonNewCampaign size="large" />
+        </FloatingFooter>
     );
 }

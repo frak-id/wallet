@@ -653,6 +653,10 @@ export default interface Resources {
       }
     },
     "dashboard": {
+      "actions": {
+        "edit": "Edit",
+        "manageBudget": "Manage budget"
+      },
       "empty": {
         "description": "You don't have any merchant yet. Add one to start running campaigns.",
         "title": "Welcome to Frak"
@@ -682,6 +686,63 @@ export default interface Resources {
         "search": "Search...",
         "selectedCount_one": "{{count}} selected",
         "selectedCount_other": "{{count}} selected"
+      }
+    },
+    "funding": {
+      "addFunds": {
+        "balanceLabel": "Current balance",
+        "stripe": "Add funds via Stripe",
+        "testTokens": "Fund with Test Tokens"
+      },
+      "budget": {
+        "actions": {
+          "amountPlaceholder": "Amount",
+          "cancel": "Cancel",
+          "confirm": "Confirm",
+          "increaseLimit": "Increase limit",
+          "withdraw": "Withdraw"
+        },
+        "addFunds": "Add funds",
+        "allowanceTooltip": "Up to {{amount}} authorized for distribution",
+        "available": "available",
+        "distributing": "Distributing Rewards",
+        "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
+        "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
+        "limitTooLow": "Distribution limit too low",
+        "noFundsCaption": "No funds — add funds to start distributing rewards.",
+        "sectionLabel": "Reward Budget",
+        "status": {
+          "actionNeeded": "Action needed",
+          "active": "Active",
+          "paused": "Paused"
+        }
+      },
+      "error": "Failed to load reward budget data.",
+      "header": {
+        "addFundsDescription": "Top up your reward budget. Stripe handles the amount and payment method.",
+        "addFundsTitle": "Add funds",
+        "back": "Back",
+        "budgetTitle": "Manage Budget",
+        "close": "Close"
+      },
+      "legacy": {
+        "description": "Your old campaign bank still holds funds. Migrate them to your new bank to continue distributing rewards.",
+        "migrate": "Migrate funds to new bank",
+        "pending": "Pending rewards (locked)",
+        "title": "Legacy Bank Migration",
+        "totalBalance": "Total balance",
+        "withdrawable": "Available to migrate"
+      },
+      "pause": {
+        "cancel": "Cancel",
+        "confirm": "Pause rewards",
+        "currency": "Currency",
+        "description": "Active campaigns will stop distributing rewards for this currency until you re-enable the allowance.",
+        "title": "Pause rewards"
+      },
+      "setup": {
+        "cta": "Set Up Budget",
+        "description": "Set up your reward budget to start distributing rewards to your users."
       }
     },
     "settings": {
@@ -716,7 +777,7 @@ export default interface Resources {
           "logout": "Log out",
           "settings": "Settings"
         },
-        "addMerchant": "Add merchant",
+        "addMerchant": "Add a new merchant",
         "breadcrumbLabel": "Breadcrumb",
         "demoBadge": "demo",
         "demoBadgeTitle": "Demo mode is active. Click to manage settings.",
@@ -737,7 +798,8 @@ export default interface Resources {
           "nav": "Data overview"
         },
         "dashboard": {
-          "nav": "Dashboard"
+          "nav": "My merchants",
+          "title": "My Merchants"
         },
         "members": {
           "nav": "Members",

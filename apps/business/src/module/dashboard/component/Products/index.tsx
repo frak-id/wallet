@@ -1,39 +1,34 @@
-import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Title } from "@/module/common/component/Title";
+import { useState } from "react";
 import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
+import { ManageBudgetSheet } from "@/module/merchant/component/ManageBudgetSheet";
 import * as styles from "./products.css";
 
 export function MyMerchants() {
     const { merchants } = useMyMerchants();
+    const [budgetMerchantId, setBudgetMerchantId] = useState<string | null>(
+        null
+    );
 
     return (
-        <Stack as="section" space="m">
-            <Title size="small">My Merchants</Title>
-            <MerchantListSection merchants={merchants} />
-        </Stack>
+        <>
+            <section className={styles.merchantGrid}>
+                {merchants.map((merchant) => (
+                    <MerchantItem
+                        key={merchant.id}
+                        merchantId={merchant.id}
+                        name={merchant.name}
+                        domain={merchant.domain}
+                        onManageBudget={() => setBudgetMerchantId(merchant.id)}
+                    />
+                ))}
+            </section>
+            {budgetMerchantId && (
+                <ManageBudgetSheet
+                    merchantId={budgetMerchantId}
+                    onClose={() => setBudgetMerchantId(null)}
+                />
+            )}
+        </>
     );
-}
-
-function MerchantListSection({
-    merchants,
-}: {
-    merchants: { id: string; name: string; domain: string }[];
-}) {
-    return (
-        <div className={styles.contentListSection}>
-            {merchants.map((merchant) => (
-                <MerchantListItem key={merchant.id} merchant={merchant} />
-            ))}
-        </div>
-    );
-}
-
-function MerchantListItem({
-    merchant,
-}: {
-    merchant: { id: string; name: string; domain: string };
-}) {
-    const { id, name, domain } = merchant;
-    return <MerchantItem merchantId={id} name={name} domain={domain} />;
 }

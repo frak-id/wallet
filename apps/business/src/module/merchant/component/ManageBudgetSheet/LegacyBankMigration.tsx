@@ -1,10 +1,11 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import clsx from "clsx";
 import { ArrowRightLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { formatUnits } from "viem";
-import { Button } from "@/module/common/component/Button";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import { useGetLegacyBankStatus } from "@/module/merchant/hook/useGetLegacyBankStatus";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
@@ -43,6 +44,7 @@ function LegacyBankMigrationContent({
     oldBankAddress: Address;
     newBankAddress: Address;
 }) {
+    const { t } = useTranslation();
     const { data: status, isLoading } = useGetLegacyBankStatus({
         oldBankAddress,
     });
@@ -74,18 +76,17 @@ function LegacyBankMigrationContent({
         <div className={styles.legacyPanel}>
             <div className={styles.legacyPanelHeader}>
                 <ArrowRightLeft width={16} height={16} />
-                <span>Legacy Bank Migration</span>
+                <span>{t("funding.legacy.title")}</span>
             </div>
 
             <p className={styles.legacyPanelDescription}>
-                Your old campaign bank still holds funds. Migrate them to your
-                new bank to continue distributing rewards.
+                {t("funding.legacy.description")}
             </p>
 
             <div className={styles.legacyPanelStats}>
                 <div className={styles.legacyPanelStatRow}>
                     <span className={styles.legacyPanelStatLabel}>
-                        Total balance
+                        {t("funding.legacy.totalBalance")}
                     </span>
                     <span className={styles.legacyPanelStatValue}>
                         {formattedBalance} {symbol}
@@ -94,7 +95,7 @@ function LegacyBankMigrationContent({
                 {status.totalPending > 0n && (
                     <div className={styles.legacyPanelStatRow}>
                         <span className={styles.legacyPanelStatLabel}>
-                            Pending rewards (locked)
+                            {t("funding.legacy.pending")}
                         </span>
                         <span
                             className={clsx(
@@ -108,7 +109,7 @@ function LegacyBankMigrationContent({
                 )}
                 <div className={styles.legacyPanelStatRow}>
                     <span className={styles.legacyPanelStatLabel}>
-                        Available to migrate
+                        {t("funding.legacy.withdrawable")}
                     </span>
                     <span
                         className={clsx(
@@ -128,9 +129,9 @@ function LegacyBankMigrationContent({
                     onClick={handleMigrate}
                     loading={isPending}
                     disabled={isPending}
+                    icon={<ArrowRightLeft width={14} height={14} />}
                 >
-                    <ArrowRightLeft width={14} height={14} />
-                    Migrate funds to new bank
+                    {t("funding.legacy.migrate")}
                 </Button>
             </Box>
         </div>

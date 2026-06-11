@@ -1,101 +1,68 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MerchantItem } from "./index";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, to, params, ...props }: any) => (
-        <a href={`${to}/${params?.id}`} {...props}>
+        <a href={to.replace("$merchantId", params?.merchantId)} {...props}>
             {children}
         </a>
     ),
 }));
 
-describe("MerchantItem", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
 
+describe("MerchantItem", () => {
     afterEach(() => {
         cleanup();
     });
 
-    it("should render with name", () => {
-        render(<MerchantItem name="Test Product" />);
+    const props = {
+        merchantId: "merchant-123",
+        name: "Acme Store",
+        domain: "acme.example.com",
+        onManageBudget: vi.fn(),
+    };
 
-        expect(screen.getByText("Test Product")).toBeInTheDocument();
+    it("should render name and domain", () => {
+        render(<MerchantItem {...props} />);
+
+        expect(screen.getByText("Acme Store")).toBeInTheDocument();
+        expect(screen.getByText("acme.example.com")).toBeInTheDocument();
     });
 
-    it("should render with domain as link when isLink is true", () => {
-        render(<MerchantItem name="Product" domain="example.com" />);
+    it("should render the domain as plain text", () => {
+        render(<MerchantItem {...props} />);
 
-        const domainLink = screen.getByText("example.com");
-        expect(domainLink).toBeInTheDocument();
-        expect(domainLink.tagName).toBe("A");
-        expect(domainLink).toHaveAttribute("href", "//example.com");
-        expect(domainLink).toHaveAttribute("target", "_blank");
+        expect(screen.getByText("acme.example.com").tagName).not.toBe("A");
     });
 
-    it("should render with domain as span when isLink is false", () => {
-        const { container } = render(
-            <MerchantItem
-                name="Product"
-                domain="example.com"
-                isLink={false}
-                showActions={false}
-            />
+    it("should open the budget sheet from the manage budget button", () => {
+        const onManageBudget = vi.fn();
+        render(<MerchantItem {...props} onManageBudget={onManageBudget} />);
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: "dashboard.actions.manageBudget",
+            })
         );
 
-        // Should have a span element with the domain text
-        const spans = Array.from(container.querySelectorAll("span")).filter(
-            (el) => el.textContent === "example.com"
-        );
-        expect(spans.length).toBeGreaterThan(0);
-        expect(spans[0]?.tagName).toBe("SPAN");
+        expect(onManageBudget).toHaveBeenCalledTimes(1);
     });
 
-    it("should render actions when showActions is true", () => {
-        render(
-            <MerchantItem
-                name="Product"
-                merchantId="merchant-123"
-                showActions
-            />
-        );
+    it("should link to the merchant page", () => {
+        render(<MerchantItem {...props} />);
 
         const links = screen.getAllByRole("link");
-        expect(links.length).toBeGreaterThan(0);
+        expect(links).toHaveLength(1);
+        expect(links[0]).toHaveAttribute("href", "/m/merchant-123/merchant");
     });
 
-    it("should not render actions when showActions is false", () => {
-        const { container } = render(
-            <MerchantItem
-                name="Product"
-                merchantId="merchant-123"
-                showActions={false}
-            />
-        );
+    it("should render avatar initials", () => {
+        render(<MerchantItem {...props} />);
 
-        // Debug: check what's in the DOM
-        const allLinks = container.querySelectorAll("a");
-        // Component with showActions=false should not render action links
-        // There should be no links at all since no domain is provided
-        expect(allLinks).toHaveLength(0);
-    });
-
-    it("should not render actions when merchantId is not provided", () => {
-        render(<MerchantItem name="Product" showActions />);
-
-        const links = screen.queryAllByRole("link");
-        expect(links).toHaveLength(0);
-    });
-
-    it("should render with ReactElement name", () => {
-        render(
-            <MerchantItem
-                name={<span data-testid="custom-name">Custom</span>}
-            />
-        );
-
-        expect(screen.getByTestId("custom-name")).toBeInTheDocument();
+        expect(screen.getByText("AS")).toBeInTheDocument();
     });
 });

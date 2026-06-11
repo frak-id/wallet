@@ -114,8 +114,9 @@ export const button = recipe({
                 fontWeight: 600,
             },
             large: {
-                // 48px tall: 2×16 padding + 16px line, 24px sides.
-                paddingBlock: alias.spacing.m,
+                // Fixed height so a 24px icon doesn't inflate the button.
+                height: "48px",
+                paddingBlock: 0,
                 paddingInline: alias.spacing.l,
                 fontSize: fontSize.m,
                 fontWeight: 600,

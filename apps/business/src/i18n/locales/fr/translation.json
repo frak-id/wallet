@@ -53,7 +53,8 @@
         },
         "pages": {
             "dashboard": {
-                "nav": "Tableau de bord"
+                "nav": "Mes marchands",
+                "title": "Mes marchands"
             },
             "campaigns": {
                 "nav": "Campagnes"
@@ -90,7 +91,7 @@
         "header": {
             "breadcrumbLabel": "Fil d'Ariane",
             "export": "Exporter",
-            "addMerchant": "Ajouter un marchand",
+            "addMerchant": "Ajouter un nouveau marchand",
             "myAccount": "Mon compte",
             "demoBadge": "démo",
             "demoBadgeTitle": "Le mode démo est actif. Cliquez pour gérer les paramètres.",
@@ -104,6 +105,10 @@
         "empty": {
             "title": "Bienvenue sur Frak",
             "description": "Vous n'avez encore aucun marchand. Ajoutez-en un pour lancer vos campagnes."
+        },
+        "actions": {
+            "manageBudget": "Gérer le budget",
+            "edit": "Modifier"
         }
     },
     "campaigns": {
@@ -738,6 +743,63 @@
             "ctaAddFunds": "Ajouter des fonds",
             "ctaManageBank": "Gérer la banque",
             "ctaSetup": "Configurer"
+        }
+    },
+    "funding": {
+        "header": {
+            "budgetTitle": "Gérer le budget",
+            "addFundsTitle": "Ajouter des fonds",
+            "addFundsDescription": "Rechargez votre budget de récompenses. Stripe gère le montant et le moyen de paiement.",
+            "close": "Fermer",
+            "back": "Retour"
+        },
+        "budget": {
+            "sectionLabel": "Budget de récompenses",
+            "distributing": "Distribution des récompenses",
+            "distributingTooltip": "Lorsque cette option est activée, les récompenses sont automatiquement distribuées à vos utilisateurs via les campagnes actives. La désactiver stoppe toute nouvelle distribution.",
+            "available": "disponible",
+            "noFundsCaption": "Aucun fonds — ajoutez des fonds pour commencer à distribuer des récompenses.",
+            "addFunds": "Ajouter des fonds",
+            "emptyWarning": "Votre banque n'a aucun fonds. Les campagnes actives ne peuvent pas distribuer de récompenses tant que vous n'ajoutez pas de fonds.",
+            "allowanceTooltip": "Jusqu'à {{amount}} autorisé pour la distribution",
+            "limitTooLow": "Limite de distribution trop basse",
+            "status": {
+                "active": "Actif",
+                "actionNeeded": "Action requise",
+                "paused": "En pause"
+            },
+            "actions": {
+                "increaseLimit": "Augmenter la limite",
+                "withdraw": "Retirer",
+                "confirm": "Confirmer",
+                "cancel": "Annuler",
+                "amountPlaceholder": "Montant"
+            }
+        },
+        "setup": {
+            "description": "Configurez votre budget de récompenses pour commencer à distribuer des récompenses à vos utilisateurs.",
+            "cta": "Configurer le budget"
+        },
+        "error": "Échec du chargement des données du budget de récompenses.",
+        "addFunds": {
+            "balanceLabel": "Solde actuel",
+            "stripe": "Ajouter via Stripe",
+            "testTokens": "Ajouter des jetons"
+        },
+        "pause": {
+            "title": "Mettre en pause les récompenses",
+            "description": "Les campagnes actives cesseront de distribuer des récompenses pour cette devise jusqu'à ce que vous réactiviez l'autorisation.",
+            "currency": "Devise",
+            "cancel": "Annuler",
+            "confirm": "Mettre en pause les récompenses"
+        },
+        "legacy": {
+            "title": "Migration de l'ancienne banque",
+            "description": "Votre ancienne banque de campagne détient encore des fonds. Migrez-les vers votre nouvelle banque pour continuer à distribuer des récompenses.",
+            "totalBalance": "Solde total",
+            "pending": "Récompenses en attente (bloquées)",
+            "withdrawable": "Disponible pour la migration",
+            "migrate": "Migrer les fonds vers la nouvelle banque"
         }
     },
     "settings": {

@@ -4,8 +4,8 @@ import { style } from "@vanilla-extract/css";
 const SIDEBAR_WIDTH_DESKTOP = "240px";
 const SIDEBAR_WIDTH_MOBILE = "64px";
 
-// Reserves room under the table so the last row isn't hidden behind the
-// fixed footer. Pair with <CampaignsListFooter /> on the same page.
+// Reserves room under the page content so the last row isn't hidden behind
+// the fixed footer. Pair with <FloatingFooter /> on the same page.
 export const pageBottomSpacer = style({
     paddingBottom: "96px",
 });
@@ -28,7 +28,7 @@ export const footer = style({
     },
 });
 
-// Scroll edge effect — fades the table content out behind the button so
+// Scroll edge effect — fades the page content out behind the button so
 // rows scrolling under the bar don't read as cut off.
 export const scrollEdge = style({
     position: "absolute",

@@ -10,8 +10,9 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
-import { PauseCircle } from "lucide-react";
+import { PauseIcon } from "@frak-labs/design-system/icons";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Button } from "@/module/common/component/Button";
@@ -37,6 +38,7 @@ export function PauseRewardsConfirmSheet({
     bankAddress,
     disabled,
 }: Props) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const { mutate: revokeAllowance, isPending } = useBankAllowanceMutation({
         bankAddress,
@@ -50,23 +52,28 @@ export function PauseRewardsConfirmSheet({
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button size="small" variant="ghost" disabled={disabled}>
-                    <PauseCircle width={14} height={14} />
-                    Pause rewards
+                <Button
+                    size="small"
+                    variant="secondary"
+                    disabled={disabled}
+                    icon={<PauseIcon width={16} height={16} />}
+                >
+                    {t("funding.pause.title")}
                 </Button>
             </SheetTrigger>
             <SheetContent side="right">
                 <SheetHeader>
-                    <SheetTitle>Pause rewards</SheetTitle>
+                    <SheetTitle>{t("funding.pause.title")}</SheetTitle>
                     <SheetDescription>
-                        Active campaigns will stop distributing rewards for this
-                        currency until you re-enable the allowance.
+                        {t("funding.pause.description")}
                     </SheetDescription>
                 </SheetHeader>
 
                 <div className={styles.body}>
                     <div>
-                        <h3 className={styles.sectionTitle}>Currency</h3>
+                        <h3 className={styles.sectionTitle}>
+                            {t("funding.pause.currency")}
+                        </h3>
                         <div className={styles.sectionBody}>
                             <Inline space="m" alignY="center">
                                 <span className={styles.currencyValue}>
@@ -83,7 +90,7 @@ export function PauseRewardsConfirmSheet({
                 <SheetFooter>
                     <SheetClose asChild>
                         <Button variant="secondary" disabled={isPending}>
-                            Cancel
+                            {t("funding.pause.cancel")}
                         </Button>
                     </SheetClose>
                     <Button
@@ -99,7 +106,7 @@ export function PauseRewardsConfirmSheet({
                             )
                         }
                     >
-                        Pause rewards
+                        {t("funding.pause.confirm")}
                     </Button>
                 </SheetFooter>
             </SheetContent>

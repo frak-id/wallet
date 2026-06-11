@@ -2,9 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-const SIDEBAR_WIDTH_DESKTOP = "240px";
-const SIDEBAR_WIDTH_MOBILE = "64px";
-
 export const page = style({
     paddingBottom: "112px",
 });
@@ -83,37 +80,4 @@ export const chartEmpty = style({
 
 export const chartEmptyIcon = style({
     color: vars.icon.disabled,
-});
-
-export const floatingFooter = style({
-    position: "fixed",
-    bottom: 0,
-    left: SIDEBAR_WIDTH_DESKTOP,
-    right: 0,
-    height: "96px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    pointerEvents: "none",
-    zIndex: 10,
-    "@media": {
-        "screen and (max-width: 768px)": {
-            left: SIDEBAR_WIDTH_MOBILE,
-        },
-    },
-});
-
-export const floatingFooterEdge = style({
-    position: "absolute",
-    inset: 0,
-    backgroundImage: `linear-gradient(to top, ${vars.surface.background2} 30%, rgba(249, 250, 251, 0))`,
-    backdropFilter: "blur(30px)",
-    WebkitBackdropFilter: "blur(30px)",
-    maskImage: "linear-gradient(to top, black 30%, transparent)",
-    WebkitMaskImage: "linear-gradient(to top, black 30%, transparent)",
-});
-
-export const floatingFooterButtonWrap = style({
-    position: "relative",
-    pointerEvents: "auto",
 });

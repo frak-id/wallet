@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, brand } from "@frak-labs/design-system/tokens";
+import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const legacyPanel = style({
@@ -7,42 +7,42 @@ export const legacyPanel = style({
     flexDirection: "column",
     gap: alias.spacing.s,
     padding: alias.spacing.m,
-    backgroundColor: "rgba(255, 165, 0, 0.1)",
-    border: `1px solid ${vars.text.warning}`,
-    borderRadius: alias.cornerRadius.s,
+    backgroundColor: vars.surface.warning,
+    border: `1px solid ${vars.border.warning}`,
+    borderRadius: alias.cornerRadius.m,
 });
 
 export const legacyPanelHeader = style({
     display: "flex",
     alignItems: "center",
     gap: alias.spacing.xs,
-    fontSize: "0.9375rem",
+    fontSize: fontSize.s,
     fontWeight: brand.typography.fontWeight.semiBold,
     color: vars.text.warning,
 });
 
 export const legacyPanelDescription = style({
-    fontSize: "0.875rem",
+    margin: 0,
+    fontSize: fontSize.xs,
     color: vars.text.secondary,
     lineHeight: 1.4,
-    margin: 0,
 });
 
 export const legacyPanelStats = style({
     display: "flex",
     flexDirection: "column",
-    gap: "6px",
+    gap: alias.spacing.xxs,
     padding: alias.spacing.s,
-    backgroundColor: vars.surface.background2,
-    borderRadius: "6px",
-    border: `1px solid ${vars.border.default}`,
+    backgroundColor: vars.surface.background,
+    borderRadius: alias.cornerRadius.s,
+    border: `1px solid ${vars.border.subtle}`,
 });
 
 export const legacyPanelStatRow = style({
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    fontSize: "0.8125rem",
+    fontSize: fontSize.xs,
 });
 
 export const legacyPanelStatLabel = style({
@@ -51,7 +51,6 @@ export const legacyPanelStatLabel = style({
 
 export const legacyPanelStatValue = style({
     fontWeight: brand.typography.fontWeight.semiBold,
-    fontFamily: '"Monaco", "Menlo", "Ubuntu Mono", monospace',
     color: vars.text.primary,
 });
 

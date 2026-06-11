@@ -6,6 +6,10 @@ vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
     useMyMerchants: vi.fn(),
 }));
 
+vi.mock("@/module/merchant/component/ManageBudgetSheet", () => ({
+    ManageBudgetSheet: () => null,
+}));
+
 vi.mock("@/module/dashboard/component/MerchantItem", () => ({
     MerchantItem: ({
         name,
@@ -31,7 +35,7 @@ describe("MyMerchants", () => {
         vi.clearAllMocks();
     });
 
-    it("should render merchants panel when data is available", async () => {
+    it("should render an empty grid when there is no merchant", async () => {
         vi.mocked(useMyMerchants).mockReturnValue({
             merchants: [],
             owned: [],
@@ -41,7 +45,7 @@ describe("MyMerchants", () => {
 
         render(<MyMerchants />);
 
-        expect(screen.getByText("My Merchants")).toBeInTheDocument();
+        expect(screen.queryAllByTestId("merchant-item")).toHaveLength(0);
     });
 
     it("should render merchants list when loaded", async () => {

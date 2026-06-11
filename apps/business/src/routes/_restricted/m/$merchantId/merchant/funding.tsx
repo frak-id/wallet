@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { MerchantFunding } from "@/module/merchant/component/Funding";
+import { MerchantsPage } from "@/module/dashboard/component/MerchantsPage";
+import { ManageBudgetSheet } from "@/module/merchant/component/ManageBudgetSheet";
 import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";
 
 export const Route = createFileRoute(
@@ -16,7 +17,22 @@ export const Route = createFileRoute(
     component: MerchantFundingPage,
 });
 
+// Deep-link entry (bank status banner, merchant switcher): the merchant
+// list renders as backdrop so the sheet matches its in-page trigger.
 function MerchantFundingPage() {
     const { merchantId } = Route.useParams();
-    return <MerchantFunding merchantId={merchantId} />;
+    const navigate = Route.useNavigate();
+    const close = () =>
+        navigate({
+            to: "/m/$merchantId/dashboard",
+            params: { merchantId },
+            replace: true,
+        });
+
+    return (
+        <>
+            <MerchantsPage />
+            <ManageBudgetSheet merchantId={merchantId} onClose={close} />
+        </>
+    );
 }
