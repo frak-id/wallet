@@ -46,6 +46,23 @@ const preactJsxRuntime = path.resolve(
 
 const DEBUG = JSON.stringify(false);
 
+// Single source of truth for the lazy (Ring 1/2) chunk name roots, consumed by
+// the modulePreload filter, the orphan-import stripper and the eager-CSS
+// stripper. Add a new lazy chunk group here, not in each regex.
+const LAZY_CHUNK_NAMES = [
+    "blockchain-vendor",
+    "BaseProvider",
+    "Modal",
+    "Wallet",
+    "SharingPage",
+    "ccip",
+    "secp256k1",
+    "lazy-shared",
+    "ui-vendor",
+    "ui-runtime",
+] as const;
+const LAZY_CHUNK_ALTERNATION = LAZY_CHUNK_NAMES.join("|");
+
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 
@@ -80,8 +97,10 @@ const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
  * are preserved because they don't use the top-level `import "...";` form.
  */
 function stripOrphanCrossChunkImports() {
-    const LAZY_ORPHAN_RE =
-        /import\s*"\.\/(?:blockchain-vendor|BaseProvider|ui-vendor|ui-runtime|lazy-shared|Modal|Wallet|SharingPage)-[A-Za-z0-9_-]+\.js";/g;
+    const LAZY_ORPHAN_RE = new RegExp(
+        `import\\s*"\\./(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.js";`,
+        "g"
+    );
     return {
         name: "strip-orphan-cross-chunk-imports",
         apply: "build" as const,
@@ -124,6 +143,30 @@ function stripOrphanCrossChunkImports() {
                     }
                 }
             }
+        },
+    };
+}
+
+/**
+ * Drop render-blocking `<link rel="stylesheet">` tags for lazy chunks (e.g.
+ * `ui-runtime.css`) from `index.html`. Vite emits them even though the chunk's
+ * JS is dynamic-imported and the CSS is already in the chunk's `__vitePreload`
+ * dep map (so the dynamic import re-injects it on Ring 1 mount). On the bare
+ * RPC boot path — no UI shown — the eager link is pure waste blocking first paint.
+ */
+function stripEagerLazyCss() {
+    const lazyCssLinkRe = new RegExp(
+        `\\s*<link\\b[^>]*rel="stylesheet"[^>]*href="[^"]*(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.css"[^>]*>`,
+        "g"
+    );
+    return {
+        name: "strip-eager-lazy-css",
+        apply: "build" as const,
+        transformIndexHtml: {
+            order: "post" as const,
+            handler(html: string) {
+                return html.replace(lazyCssLinkRe, "");
+            },
         },
     };
 }
@@ -237,6 +280,7 @@ export default defineConfig(async () => {
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
             stripOrphanCrossChunkImports(),
+            stripEagerLazyCss(),
         ],
         server: {
             port: 3002,
@@ -266,12 +310,10 @@ export default defineConfig(async () => {
             modulePreload: {
                 resolveDependencies: (_filename, deps, { hostType }) => {
                     if (hostType !== "html") return deps;
-                    return deps.filter(
-                        (d) =>
-                            !/(?:blockchain-vendor|BaseProvider|Modal|Wallet|SharingPage|ccip|secp256k1|lazy-shared|ui-vendor|ui-runtime)-/.test(
-                                d
-                            )
+                    const lazyDepRe = new RegExp(
+                        `(?:${LAZY_CHUNK_ALTERNATION})-`
                     );
+                    return deps.filter((d) => !lazyDepRe.test(d));
                 },
             },
             target: "baseline-widely-available",
