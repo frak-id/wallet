@@ -53,8 +53,15 @@ export class SettlementOrchestrator {
             return defaultSettlementResult;
         }
 
-        const pendingRewards =
+        const { enriched: pendingRewards, skippedIds } =
             await this.enrichWithWalletAndInteraction(claimedAssetLogs);
+
+        if (skippedIds.length > 0) {
+            await this.assetLogRepository.bumpAttemptAndRevert(
+                skippedIds,
+                "No wallet for identity group"
+            );
+        }
 
         if (pendingRewards.length === 0) {
             log.warn(
@@ -253,7 +260,7 @@ export class SettlementOrchestrator {
 
     private async enrichWithWalletAndInteraction(
         assetLogs: AssetLogSelect[]
-    ): Promise<AssetLogWithWallet[]> {
+    ): Promise<{ enriched: AssetLogWithWallet[]; skippedIds: string[] }> {
         const uniqueGroupIds = [
             ...new Set(assetLogs.map((r) => r.identityGroupId)),
         ];
@@ -274,7 +281,8 @@ export class SettlementOrchestrator {
                 ...new Set(interactionLogIds),
             ]);
 
-        const results: AssetLogWithWallet[] = [];
+        const enriched: AssetLogWithWallet[] = [];
+        const skippedIds: string[] = [];
         for (const assetLog of assetLogs) {
             const walletAddress = walletMap.get(assetLog.identityGroupId);
             if (!walletAddress) {
@@ -285,10 +293,11 @@ export class SettlementOrchestrator {
                     },
                     "Skipping reward: no wallet found for identity group"
                 );
+                skippedIds.push(assetLog.id);
                 continue;
             }
 
-            results.push({
+            enriched.push({
                 ...assetLog,
                 walletAddress,
                 interactionType: assetLog.interactionLogId
@@ -298,7 +307,7 @@ export class SettlementOrchestrator {
             });
         }
 
-        return results;
+        return { enriched, skippedIds };
     }
 
     private async getMerchantBanks(

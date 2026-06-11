@@ -57,6 +57,16 @@ export class SettlementService {
         result.failedCount = prepared.errors.length;
         result.errors = prepared.errors;
 
+        // Rows dropped in preparation never reach a push, so they must be
+        // explicitly returned to `pending` (with an attempt spent) — otherwise
+        // they linger `claimed`/`processing` and are re-picked every run.
+        if (prepared.errors.length > 0) {
+            await this.assetLogRepository.bumpAttemptAndRevert(
+                prepared.errors.map((e) => e.assetLogId),
+                "Settlement preparation failed"
+            );
+        }
+
         if (prepared.rewards.length === 0) {
             return result;
         }

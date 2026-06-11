@@ -200,3 +200,55 @@ describe("SettlementOrchestrator.requeueDepletedRewards", () => {
         expect(emitMock).not.toHaveBeenCalled();
     });
 });
+
+describe("SettlementOrchestrator.runSettlement", () => {
+    it("re-pends claimed rows with no wallet and never settles them", async () => {
+        const reconcileStuckSettlements = vi
+            .fn()
+            .mockResolvedValue({ settled: 0, reverted: 0, pending: 0 });
+        const settleRewards = vi.fn();
+        const settlementService = {
+            reconcileStuckSettlements,
+            settleRewards,
+        } as unknown as SettlementService;
+
+        const bumpAttemptAndRevert = vi.fn().mockResolvedValue(1);
+        const assetLog = {
+            claimPendingForSettlement: vi.fn().mockResolvedValue([
+                {
+                    id: "a1",
+                    identityGroupId: "g1",
+                    interactionLogId: null,
+                    merchantId: "m1",
+                },
+            ]),
+            bumpAttemptAndRevert,
+        } as unknown as AssetLogRepository;
+
+        const identity = {
+            getWalletForGroup: vi.fn().mockResolvedValue(null),
+        } as unknown as IdentityRepository;
+
+        const interaction = {
+            getTypesByIds: vi.fn().mockResolvedValue(new Map()),
+        } as unknown as InteractionLogRepository;
+
+        const orchestrator = new SettlementOrchestrator(
+            settlementService,
+            assetLog,
+            {} as unknown as MerchantRepository,
+            identity,
+            interaction,
+            {} as unknown as CampaignBankRepository,
+            {} as unknown as TokenMetadataRepository
+        );
+
+        await orchestrator.runSettlement();
+
+        expect(bumpAttemptAndRevert).toHaveBeenCalledWith(
+            ["a1"],
+            "No wallet for identity group"
+        );
+        expect(settleRewards).not.toHaveBeenCalled();
+    });
+});

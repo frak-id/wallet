@@ -359,6 +359,31 @@ export class AssetLogRepository {
         return results.length;
     }
 
+    /**
+     * Revert claimed rows that were dropped before any on-chain push (no wallet,
+     * missing bank/token/decimals) back to `pending`, AND spend an attempt.
+     * Unlike `revertSettlementToPending` (used after a push, which already
+     * counted its attempt via `markSettlementProcessing`), these rows never
+     * reached the push, so without this bump they would be re-claimed every run
+     * forever; the increment lets `maxAttempts` eventually retire them.
+     */
+    async bumpAttemptAndRevert(ids: string[], error: string): Promise<number> {
+        if (ids.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({
+                status: "pending",
+                statusChangedAt: new Date(),
+                settlementAttempts: sql`${assetLogsTable.settlementAttempts} + 1`,
+                lastSettlementError: error,
+            })
+            .where(inArray(assetLogsTable.id, ids))
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
     async findStuckProcessing(
         olderThanMinutes: number
     ): Promise<{ id: string; onchainTxHash: Hex | null }[]> {

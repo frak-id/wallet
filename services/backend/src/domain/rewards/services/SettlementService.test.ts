@@ -33,12 +33,14 @@ const buildService = () => {
     const markSettlementProcessing = vi.fn().mockResolvedValue(1);
     const updateStatusBatch = vi.fn().mockResolvedValue(1);
     const revertSettlementToPending = vi.fn().mockResolvedValue(1);
+    const bumpAttemptAndRevert = vi.fn().mockResolvedValue(1);
     const recordSettlementBroadcast = vi.fn().mockResolvedValue(1);
     const findStuckProcessing = vi.fn().mockResolvedValue([]);
     const assetLogRepository = {
         markSettlementProcessing,
         updateStatusBatch,
         revertSettlementToPending,
+        bumpAttemptAndRevert,
         recordSettlementBroadcast,
         findStuckProcessing,
     } as unknown as AssetLogRepository;
@@ -66,6 +68,7 @@ const buildService = () => {
         service,
         updateStatusBatch,
         revertSettlementToPending,
+        bumpAttemptAndRevert,
         findStuckProcessing,
         pushRewards,
         getReceipt,
@@ -181,6 +184,23 @@ describe("SettlementService.settleRewards", () => {
         expect(result.txHashes).toEqual(["0xpending"]);
         expect(updateStatusBatch).not.toHaveBeenCalled();
         expect(revertSettlementToPending).not.toHaveBeenCalled();
+    });
+
+    it("re-pends preparation drops with an attempt spent and never pushes", async () => {
+        const { service, bumpAttemptAndRevert, pushRewards } = buildService();
+
+        const result = await service.settleRewards(
+            [reward({ id: "a1", merchantId: "m-a" })],
+            new Map<string, Address>()
+        );
+
+        expect(result.failedCount).toBe(1);
+        expect(result.settledCount).toBe(0);
+        expect(bumpAttemptAndRevert).toHaveBeenCalledWith(
+            ["a1"],
+            "Settlement preparation failed"
+        );
+        expect(pushRewards).not.toHaveBeenCalled();
     });
 });
 
