@@ -835,6 +835,23 @@
             "identity": "Personnaliser l'identité SDK",
             "explorer": "Réglages de l'app Explorer",
             "team": "Gérer votre équipe"
+        },
+        "team": {
+            "headers": {
+                "wallet": "Portefeuille",
+                "role": "Rôle",
+                "action": "Action"
+            },
+            "roles": {
+                "owner": "Propriétaire",
+                "admin": "Admin"
+            },
+            "me": "Moi :",
+            "addMember": "Ajouter un membre",
+            "saveAll": "Enregistrer les modifications",
+            "removeMember": "Retirer le membre",
+            "undoRemove": "Annuler le retrait",
+            "saveError": "Certaines modifications n'ont pas pu être enregistrées. Réessayez."
         }
     },
     "customize": {

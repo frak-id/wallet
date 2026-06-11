@@ -870,6 +870,23 @@ export default interface Resources {
         "identity": "Customize SDK Identity",
         "team": "Manage your team"
       },
+      "team": {
+        "addMember": "Add Team Member",
+        "headers": {
+          "action": "Action",
+          "role": "Role",
+          "wallet": "Wallet"
+        },
+        "me": "Me:",
+        "removeMember": "Remove member",
+        "roles": {
+          "admin": "Admin",
+          "owner": "Owner"
+        },
+        "saveAll": "Save all changes",
+        "saveError": "Some changes could not be saved. Try again.",
+        "undoRemove": "Undo remove"
+      },
       "title": "Edit"
     },
     "settings": {

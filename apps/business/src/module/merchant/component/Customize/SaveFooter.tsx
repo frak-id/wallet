@@ -8,10 +8,12 @@ export function SaveFooter({
     disabled,
     isSaving,
     onSave,
+    label,
 }: {
     disabled: boolean;
     isSaving: boolean;
     onSave: () => void;
+    label?: string;
 }) {
     const { t } = useTranslation();
     return (
@@ -26,7 +28,7 @@ export function SaveFooter({
                         disabled={disabled || isSaving}
                         loading={isSaving}
                     >
-                        {t("customize.save")}
+                        {label ?? t("customize.save")}
                     </Button>
                 </div>
             </div>

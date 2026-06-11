@@ -835,6 +835,23 @@
             "identity": "Customize SDK Identity",
             "explorer": "Explorer App settings",
             "team": "Manage your team"
+        },
+        "team": {
+            "headers": {
+                "wallet": "Wallet",
+                "role": "Role",
+                "action": "Action"
+            },
+            "roles": {
+                "owner": "Owner",
+                "admin": "Admin"
+            },
+            "me": "Me:",
+            "addMember": "Add Team Member",
+            "saveAll": "Save all changes",
+            "removeMember": "Remove member",
+            "undoRemove": "Undo remove",
+            "saveError": "Some changes could not be saved. Try again."
         }
     },
     "customize": {
