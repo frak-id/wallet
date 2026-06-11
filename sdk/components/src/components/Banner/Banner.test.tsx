@@ -282,6 +282,54 @@ describe.sequential("Banner", () => {
         });
     });
 
+    it("should interpolate {REWARD} in configured referral text", async () => {
+        vi.mocked(useRewardHook.useReward).mockReturnValue({
+            reward: "10 €",
+        });
+        vi.mocked(usePlacementHook.usePlacement).mockReturnValue({
+            components: {
+                banner: {
+                    referralTitle: "Earn {REWARD} on purchases",
+                    referralDescription: "Claim your {REWARD} with Frak.",
+                },
+            },
+        } as any);
+
+        const { container } = render(<Banner />);
+
+        window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
+
+        await waitFor(() => {
+            expect(
+                container.querySelector(".frak-banner__title")?.textContent
+            ).toBe("Earn 10 € on purchases");
+            expect(
+                container.querySelector(".frak-banner__description")
+                    ?.textContent
+            ).toBe("Claim your 10 € with Frak.");
+        });
+    });
+
+    it("should strip {REWARD} from configured text when no reward", async () => {
+        vi.mocked(usePlacementHook.usePlacement).mockReturnValue({
+            components: {
+                banner: {
+                    referralTitle: "Earn {REWARD} on purchases",
+                },
+            },
+        } as any);
+
+        const { container } = render(<Banner />);
+
+        window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
+
+        await waitFor(() => {
+            expect(
+                container.querySelector(".frak-banner__title")?.textContent
+            ).toBe("Earn  on purchases");
+        });
+    });
+
     // ─── Mode priority ───
 
     it("should prioritize in-app mode over referral event", async () => {

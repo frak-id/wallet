@@ -22,6 +22,7 @@ import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
+import { applyRewardPlaceholder } from "@/utils/format/formatReward";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     cssSource,
@@ -211,7 +212,9 @@ export function Banner({
     const bannerConfig =
         placement?.components?.banner ?? globalComponents?.banner;
 
-    // Resolve texts from placement config with hardcoded defaults
+    // Resolve texts from placement config with hardcoded defaults.
+    // Configured wording may carry the `{REWARD}` token — interpolate it the
+    // same way ButtonShare and PostPurchase do.
     const texts = useMemo(() => {
         if (mode === "referral") {
             const defaultTitle = reward
@@ -219,27 +222,35 @@ export function Banner({
                 : "You've been referred!";
 
             return {
-                title:
+                title: applyRewardPlaceholder(
                     propReferralTitle ??
-                    bannerConfig?.referralTitle ??
-                    defaultTitle,
-                description:
+                        bannerConfig?.referralTitle ??
+                        defaultTitle,
+                    reward
+                ),
+                description: applyRewardPlaceholder(
                     propReferralDescription ??
-                    bannerConfig?.referralDescription ??
-                    "Earn rewards after your purchase via the Frak partner app.",
+                        bannerConfig?.referralDescription ??
+                        "Earn rewards after your purchase via the Frak partner app.",
+                    reward
+                ),
                 cta: propReferralCta ?? bannerConfig?.referralCta ?? "Got it",
             };
         }
 
         return {
-            title:
+            title: applyRewardPlaceholder(
                 propInappTitle ??
-                bannerConfig?.inappTitle ??
-                "Open in your browser",
-            description:
+                    bannerConfig?.inappTitle ??
+                    "Open in your browser",
+                reward
+            ),
+            description: applyRewardPlaceholder(
                 propInappDescription ??
-                bannerConfig?.inappDescription ??
-                "For a better experience and to earn your rewards, open this page in your default browser.",
+                    bannerConfig?.inappDescription ??
+                    "For a better experience and to earn your rewards, open this page in your default browser.",
+                reward
+            ),
             cta: propInappCta ?? bannerConfig?.inappCta ?? "Open browser",
         };
     }, [
