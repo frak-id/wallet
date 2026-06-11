@@ -25,6 +25,8 @@ import type { InteractionContextBuilder } from "./reward";
 type BatchProcessResult = {
     processedCount: number;
     rewardsCreated: number;
+    /** Interactions left unprocessed because a percentage reward couldn't be priced. */
+    deferredCount: number;
     errors: {
         interactionLogId: string;
         error: string;
@@ -36,6 +38,8 @@ type ProcessSingleResult = {
     rewardsCreated: number;
     /** True when the interaction was already cancelled by a concurrent refund. */
     cancelled?: boolean;
+    /** True when left unprocessed for a later retry (unpriceable percentage reward). */
+    deferred?: boolean;
     error?: string;
 };
 
@@ -60,7 +64,12 @@ export class BatchRewardOrchestrator {
             });
 
         if (interactions.length === 0) {
-            return { processedCount: 0, rewardsCreated: 0, errors: [] };
+            return {
+                processedCount: 0,
+                rewardsCreated: 0,
+                deferredCount: 0,
+                errors: [],
+            };
         }
 
         log.debug(
@@ -71,6 +80,7 @@ export class BatchRewardOrchestrator {
         const result: BatchProcessResult = {
             processedCount: 0,
             rewardsCreated: 0,
+            deferredCount: 0,
             errors: [],
         };
 
@@ -86,7 +96,9 @@ export class BatchRewardOrchestrator {
                     merchantId
                 );
 
-                if (processResult.success) {
+                if (processResult.deferred) {
+                    result.deferredCount++;
+                } else if (processResult.success) {
                     result.processedCount++;
                     result.rewardsCreated += processResult.rewardsCreated;
                 } else if (processResult.error) {
@@ -102,6 +114,7 @@ export class BatchRewardOrchestrator {
             {
                 processedCount: result.processedCount,
                 rewardsCreated: result.rewardsCreated,
+                deferredCount: result.deferredCount,
                 errorCount: result.errors.length,
             },
             "Batch reward processing completed"
@@ -159,12 +172,20 @@ export class BatchRewardOrchestrator {
                     walletAddress
                 );
 
+            // Resolved once and shared between rule evaluation (to price
+            // percentage rewards) and asset-log creation (token fallback).
+            const merchantDefaultToken =
+                (await this.merchantRepository.getDefaultRewardToken(
+                    merchantId
+                )) ?? undefined;
+
             const evaluationResult = await this.ruleEngineService.evaluateRules(
                 {
                     merchantId,
                     trigger,
                     context,
                     time,
+                    merchantDefaultToken,
                 },
                 (args) => this.referralService.getReferralChain(args)
             );
@@ -173,12 +194,22 @@ export class BatchRewardOrchestrator {
                 evaluationResult.rewards
             );
 
+            if (evaluationResult.deferForUnpriceableReward) {
+                return await this.deferInteraction(
+                    interaction,
+                    merchantId,
+                    evaluationResult.deferReason ?? "pricing_unavailable",
+                    consumedByCampaign
+                );
+            }
+
             const assetParams =
                 evaluationResult.rewards.length > 0
-                    ? await this.buildAssetLogParams(
+                    ? this.buildAssetLogParams(
                           evaluationResult.rewards,
                           merchantId,
                           interaction.id,
+                          merchantDefaultToken,
                           referralLinkId ?? undefined
                       )
                     : [];
@@ -366,23 +397,39 @@ export class BatchRewardOrchestrator {
         }
     }
 
-    private async buildAssetLogParams(
+    /**
+     * Leave the interaction unprocessed (processed_at stays NULL) so the next
+     * cron run re-evaluates it — pricing failures are transient (FX/token rate
+     * providers down) and rare, so the cron cadence is the retry policy, same
+     * as the generic error path. Budget consumed by sibling campaigns is
+     * released so the retry is clean.
+     */
+    private async deferInteraction(
+        interaction: InteractionLogSelect,
+        merchantId: string,
+        reason: string,
+        consumedByCampaign: Map<string, number>
+    ): Promise<ProcessSingleResult> {
+        await this.restoreUnpersistedBudget(consumedByCampaign, []);
+        log.info(
+            { interactionLogId: interaction.id, merchantId, reason },
+            "Deferred interaction: percentage reward not priceable, will retry next run"
+        );
+        return { success: true, rewardsCreated: 0, deferred: true };
+    }
+
+    private buildAssetLogParams(
         rewards: CalculatedReward[],
         merchantId: string,
         interactionLogId: string,
+        merchantDefaultToken: Address | undefined,
         referralLinkId: string | undefined
-    ): Promise<CreateAssetLogParams[]> {
-        const hasTokenTypeWithoutToken = rewards.some(
-            (r) => r.type === "token" && !r.token
-        );
-        const fallbackToken = hasTokenTypeWithoutToken
-            ? await this.merchantRepository.getDefaultRewardToken(merchantId)
-            : null;
-
+    ): CreateAssetLogParams[] {
         const params: CreateAssetLogParams[] = [];
 
         for (const reward of rewards) {
-            const resolvedToken = reward.token ?? fallbackToken ?? undefined;
+            const resolvedToken =
+                reward.token ?? merchantDefaultToken ?? undefined;
 
             if (reward.type === "token" && !resolvedToken) {
                 log.warn(

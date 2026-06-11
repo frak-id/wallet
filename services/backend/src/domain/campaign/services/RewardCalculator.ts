@@ -1,3 +1,4 @@
+import type { PricingRepository } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { RecipientType } from "../../rewards/schemas";
 import type {
@@ -16,7 +17,12 @@ export type { ReferralChainMember };
 
 type RewardCalculationResult =
     | { success: true; amount: number; token: Address | null }
-    | { success: false; error: string };
+    | { success: false; error: string }
+    | {
+          success: false;
+          defer: true;
+          reason: "fx_rate_unavailable" | "token_price_unavailable";
+      };
 
 function calculateFixedReward(
     reward: FixedRewardDefinition
@@ -31,14 +37,24 @@ function calculateFixedReward(
     };
 }
 
-function calculatePercentageReward(
+async function calculatePercentageReward(
     reward: PercentageRewardDefinition,
-    context: RuleContext
-): RewardCalculationResult {
+    context: RuleContext,
+    merchantDefaultToken: Address | undefined,
+    pricingRepository: PricingRepository
+): Promise<RewardCalculationResult> {
     if (!context.purchase) {
         return {
             success: false,
             error: "Purchase context required for percentage reward",
+        };
+    }
+
+    const token = reward.token ?? merchantDefaultToken;
+    if (!token) {
+        return {
+            success: false,
+            error: "No token to price percentage reward against",
         };
     }
 
@@ -47,8 +63,21 @@ function calculatePercentageReward(
             ? (context.purchase.subtotal ?? context.purchase.amount)
             : context.purchase.amount;
 
-    let amount = (baseAmount * reward.percent) / 100;
+    // Order total is in fiat; convert to token units or a JPY/SEK order pays ~150x.
+    const fiatAmount = (baseAmount * reward.percent) / 100;
+    const conversion = await pricingRepository.convertFiatToTokenAmount({
+        token,
+        fiatAmount,
+        currency: context.purchase.currency,
+    });
 
+    if (!conversion.converted) {
+        return { success: false, defer: true, reason: conversion.reason };
+    }
+
+    // min/max cap the token payout (same unit as a fixed reward), so they are
+    // applied after the fiat->token conversion.
+    let amount = conversion.tokenAmount;
     if (reward.maxAmount !== undefined && amount > reward.maxAmount) {
         amount = reward.maxAmount;
     }
@@ -66,7 +95,7 @@ function calculatePercentageReward(
     return {
         success: true,
         amount: Math.round(amount * 1_000_000) / 1_000_000,
-        token: reward.token ?? null,
+        token,
     };
 }
 
@@ -162,17 +191,26 @@ function distributeChainedRewards(params: {
 }
 
 export class RewardCalculator {
-    constructor(private readonly conditionEvaluator: RuleConditionEvaluator) {}
+    constructor(
+        private readonly conditionEvaluator: RuleConditionEvaluator,
+        private readonly pricingRepository: PricingRepository
+    ) {}
 
-    calculate(
+    async calculate(
         reward: RewardDefinition,
-        context: RuleContext
-    ): RewardCalculationResult {
+        context: RuleContext,
+        merchantDefaultToken?: Address
+    ): Promise<RewardCalculationResult> {
         switch (reward.amountType) {
             case "fixed":
                 return calculateFixedReward(reward);
             case "percentage":
-                return calculatePercentageReward(reward, context);
+                return calculatePercentageReward(
+                    reward,
+                    context,
+                    merchantDefaultToken,
+                    this.pricingRepository
+                );
             case "tiered":
                 return calculateTieredReward(
                     reward,
@@ -184,24 +222,38 @@ export class RewardCalculator {
         }
     }
 
-    calculateAll(
+    async calculateAll(
         rewards: RewardDefinition[],
         context: RuleContext,
         campaignRuleId: string,
         referralChain?: ReferralChainMember[],
         expirationDays?: number,
-        defaultLockupSeconds?: number
-    ): {
+        defaultLockupSeconds?: number,
+        merchantDefaultToken?: Address
+    ): Promise<{
         calculated: CalculatedReward[];
         errors: string[];
-    } {
+        deferForUnpriceableReward: boolean;
+        deferReason?: string;
+    }> {
         const calculated: CalculatedReward[] = [];
         const errors: string[] = [];
+        let deferForUnpriceableReward = false;
+        let deferReason: string | undefined;
 
         for (const reward of rewards) {
-            const result = this.calculate(reward, context);
+            const result = await this.calculate(
+                reward,
+                context,
+                merchantDefaultToken
+            );
 
             if (!result.success) {
+                if ("defer" in result) {
+                    deferForUnpriceableReward = true;
+                    deferReason ??= `${result.reason} (${reward.recipient} percentage reward, currency=${context.purchase?.currency})`;
+                    continue;
+                }
                 errors.push(`${reward.recipient}: ${result.error}`);
                 continue;
             }
@@ -252,7 +304,7 @@ export class RewardCalculator {
             });
         }
 
-        return { calculated, errors };
+        return { calculated, errors, deferForUnpriceableReward, deferReason };
     }
 
     private resolveRecipient(

@@ -1,4 +1,5 @@
 import { log } from "@backend-infrastructure";
+import type { Address } from "viem";
 import type { AssetLogRepository } from "../../rewards/repositories/AssetLogRepository";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
@@ -19,6 +20,8 @@ type EvaluateRulesParams = {
     trigger: CampaignTrigger;
     context: Omit<RuleContext, "time">;
     time?: TimeContext;
+    /** Fallback token for pricing percentage rewards that don't pin their own. */
+    merchantDefaultToken?: Address;
 };
 
 export function buildTimeContext(date?: Date): TimeContext {
@@ -59,6 +62,7 @@ export class RuleEngineService {
                 budgetExceeded: false,
                 skippedCampaigns: [],
                 errors: [],
+                deferForUnpriceableReward: false,
             };
         }
 
@@ -79,6 +83,8 @@ export class RuleEngineService {
         const skippedCampaigns: string[] = [];
         const errors: { campaignRuleId: string; error: string }[] = [];
         let budgetExceeded = false;
+        let deferForUnpriceableReward = false;
+        let deferReason: string | undefined;
 
         for (const campaign of activeCampaigns) {
             const result = await this.evaluateSingleCampaign(
@@ -86,10 +92,14 @@ export class RuleEngineService {
                 fullContext,
                 params.merchantId,
                 merchantRewardCount,
-                fetchReferralChain
+                fetchReferralChain,
+                params.merchantDefaultToken
             );
 
             if (!result.matched) continue;
+
+            deferForUnpriceableReward ||= result.deferForUnpriceableReward;
+            deferReason ??= result.deferReason;
 
             if (result.errors.length > 0) {
                 for (const error of result.errors) {
@@ -121,6 +131,8 @@ export class RuleEngineService {
             budgetExceeded,
             skippedCampaigns,
             errors,
+            deferForUnpriceableReward,
+            deferReason,
         };
     }
 
@@ -129,12 +141,15 @@ export class RuleEngineService {
         context: RuleContext,
         merchantId: string,
         merchantRewardCount: number | undefined,
-        fetchReferralChain?: ReferralChainFetcher
+        fetchReferralChain?: ReferralChainFetcher,
+        merchantDefaultToken?: Address
     ): Promise<{
         matched: boolean;
         rewards: CalculatedReward[];
         budgetExceeded: boolean;
         errors: string[];
+        deferForUnpriceableReward: boolean;
+        deferReason?: string;
     }> {
         const conditionsMatch = this.conditionEvaluator.evaluate(
             campaign.rule.conditions,
@@ -147,6 +162,7 @@ export class RuleEngineService {
                 rewards: [],
                 budgetExceeded: false,
                 errors: [],
+                deferForUnpriceableReward: false,
             };
         }
 
@@ -171,6 +187,7 @@ export class RuleEngineService {
                 rewards: [],
                 budgetExceeded: false,
                 errors: [],
+                deferForUnpriceableReward: false,
             };
         }
 
@@ -197,6 +214,7 @@ export class RuleEngineService {
                     rewards: [],
                     budgetExceeded: false,
                     errors: [],
+                    deferForUnpriceableReward: false,
                 };
             }
         }
@@ -219,14 +237,29 @@ export class RuleEngineService {
             });
         }
 
-        const { calculated, errors } = this.rewardCalculator.calculateAll(
-            campaign.rule.rewards,
-            context,
-            campaign.id,
-            referralChain,
-            campaign.rule.pendingRewardExpirationDays,
-            campaign.rule.defaultLockupSeconds
-        );
+        const { calculated, errors, deferForUnpriceableReward, deferReason } =
+            await this.rewardCalculator.calculateAll(
+                campaign.rule.rewards,
+                context,
+                campaign.id,
+                referralChain,
+                campaign.rule.pendingRewardExpirationDays,
+                campaign.rule.defaultLockupSeconds,
+                merchantDefaultToken
+            );
+
+        // Unpriceable percentage reward: bail before consuming budget so the
+        // orchestrator can leave the interaction unprocessed for a later retry.
+        if (deferForUnpriceableReward) {
+            return {
+                matched: true,
+                rewards: [],
+                budgetExceeded: false,
+                errors,
+                deferForUnpriceableReward: true,
+                deferReason,
+            };
+        }
 
         if (calculated.length === 0) {
             return {
@@ -234,6 +267,7 @@ export class RuleEngineService {
                 rewards: [],
                 budgetExceeded: false,
                 errors,
+                deferForUnpriceableReward: false,
             };
         }
 
@@ -253,7 +287,13 @@ export class RuleEngineService {
                 },
                 "Budget exceeded for campaign"
             );
-            return { matched: true, rewards: [], budgetExceeded: true, errors };
+            return {
+                matched: true,
+                rewards: [],
+                budgetExceeded: true,
+                errors,
+                deferForUnpriceableReward: false,
+            };
         }
 
         log.debug(
@@ -271,6 +311,7 @@ export class RuleEngineService {
             rewards: calculated,
             budgetExceeded: false,
             errors,
+            deferForUnpriceableReward: false,
         };
     }
 }

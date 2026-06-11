@@ -108,6 +108,15 @@ export type EvaluationResult = {
         campaignRuleId: string;
         error: string;
     }[];
+    /**
+     * True when a matched percentage reward could not be converted into its
+     * token amount (no FX rate for the purchase currency or token price
+     * unavailable). The orchestrator records the failure on the interaction
+     * (attempt counter + backoff) and leaves it unprocessed for retry.
+     */
+    deferForUnpriceableReward: boolean;
+    /** Why pricing failed, persisted as `interaction_logs.last_pricing_error`. */
+    deferReason?: string;
 };
 
 export type BudgetConsumptionResult = {

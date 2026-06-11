@@ -183,9 +183,10 @@ describe("RuleEngineService", () => {
             vi.mocked(
                 mockAssetLogRepository.countByCampaignAndUserAsReferee
             ).mockResolvedValue(2);
-            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [calculatedReward],
                 errors: [],
+                deferForUnpriceableReward: false,
             });
             vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
                 success: true,
@@ -208,6 +209,56 @@ describe("RuleEngineService", () => {
             expect(result.rewards).toEqual([calculatedReward]);
             expect(result.budgetExceeded).toBe(false);
             expect(mockRewardCalculator.calculateAll).toHaveBeenCalled();
+        });
+
+        it("propagates the defer flag and skips budget when a percentage reward is unpriceable", async () => {
+            const mockRepository = createMockRepository();
+            const mockConditionEvaluator = createMockConditionEvaluator();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = createMockCampaign({
+                rule: {
+                    trigger: "purchase",
+                    conditions: [],
+                    rewards: [
+                        {
+                            recipient: "referee",
+                            type: "token",
+                            amountType: "percentage",
+                            percent: 5,
+                            percentOf: "purchase_amount",
+                        },
+                    ],
+                },
+            });
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+            vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
+                calculated: [],
+                errors: [],
+                deferForUnpriceableReward: true,
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                mockConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: createMockContext(),
+            });
+
+            expect(result.deferForUnpriceableReward).toBe(true);
+            expect(result.rewards).toEqual([]);
+            expect(mockRepository.consumeBudget).not.toHaveBeenCalled();
         });
 
         it("should have no cap when maxRewardsPerUser is not set", async () => {
@@ -238,9 +289,10 @@ describe("RuleEngineService", () => {
                 campaign,
             ]);
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
-            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [calculatedReward],
                 errors: [],
+                deferForUnpriceableReward: false,
             });
             vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
                 success: true,
@@ -299,9 +351,10 @@ describe("RuleEngineService", () => {
             vi.mocked(
                 mockAssetLogRepository.countByCampaignAndUserAsReferee
             ).mockResolvedValue(4);
-            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [calculatedReward],
                 errors: [],
+                deferForUnpriceableReward: false,
             });
             vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
                 success: true,
@@ -454,9 +507,10 @@ describe("RuleEngineService", () => {
             vi.mocked(
                 mockAssetLogRepository.countByMerchantAndUserAsReferee
             ).mockResolvedValue(1);
-            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [calculatedReward],
                 errors: [],
+                deferForUnpriceableReward: false,
             });
             vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
                 success: true,
@@ -512,9 +566,10 @@ describe("RuleEngineService", () => {
             vi.mocked(
                 mockAssetLogRepository.countByCampaignAndUserAsReferee
             ).mockResolvedValue(0);
-            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [calculatedReward],
                 errors: [],
+                deferForUnpriceableReward: false,
             });
             vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
                 success: true,
@@ -576,11 +631,12 @@ describe("RuleEngineService", () => {
             vi.mocked(
                 mockAssetLogRepository.countByMerchantAndUserAsReferee
             ).mockResolvedValue(0);
-            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+            vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [
                     createMockCalculatedReward({ recipient: "referee" }),
                 ],
                 errors: [],
+                deferForUnpriceableReward: false,
             });
             vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
                 success: true,

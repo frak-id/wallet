@@ -25,6 +25,11 @@ export { eventEmitter } from "./messaging/events";
 export { getLibsqlClient, getLibsqlDb } from "./persistence/libsql";
 export { db } from "./persistence/postgres";
 export {
+    FxRateRepository,
+    fxRateRepository,
+} from "./pricing/FxRateRepository";
+export {
+    type FiatToTokenConversion,
     PricingRepository,
     pricingRepository,
     type TokenPrice,
