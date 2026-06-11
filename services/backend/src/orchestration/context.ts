@@ -10,6 +10,7 @@ import { PurchasesContext } from "../domain/purchases/context";
 import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
+import { tokenMetadataRepository } from "../infrastructure/blockchain/TokenMetadataRepository";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
@@ -114,7 +115,8 @@ const settlementOrchestrator = new SettlementOrchestrator(
     MerchantContext.repositories.merchant,
     IdentityContext.repositories.identity,
     RewardsContext.repositories.interactionLog,
-    CampaignBankContext.repositories.campaignBank
+    CampaignBankContext.repositories.campaignBank,
+    tokenMetadataRepository
 );
 const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
     RewardsContext.repositories.assetLog,

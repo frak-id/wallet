@@ -92,12 +92,11 @@ export class AssetLogRepository {
      * transaction. The lock must live inside a transaction — a bare autocommit
      * `SELECT ... FOR UPDATE SKIP LOCKED` releases it before the on-chain push,
      * letting two replicas claim and double-pay the same rows. Once committed
-     * the rows are no longer claimable, so a concurrent run cannot re-pick them.
+     * the rows are no longer `pending`, so a concurrent run cannot re-pick them.
      *
-     * `bank_depleted` rows are claimed alongside `pending` ones: that status is
-     * a soft retry marker, not a terminal state, so a later run re-checks them
-     * against current bank balances and settles them once the merchant refills
-     * (otherwise they would be stranded forever once a bank ran dry).
+     * Only `pending` rows are claimed. `bank_depleted` rewards are requeued to
+     * `pending` out-of-band by the requeue-depleted cron once their bank can
+     * pay again, keeping this hot path from re-checking dead banks every run.
      *
      * `settlementAttempts` is intentionally not bumped here; only an actual
      * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
@@ -112,10 +111,7 @@ export class AssetLogRepository {
                 .from(assetLogsTable)
                 .where(
                     and(
-                        inArray(assetLogsTable.status, [
-                            "pending",
-                            "bank_depleted",
-                        ]),
+                        eq(assetLogsTable.status, "pending"),
                         eq(assetLogsTable.assetType, "token"),
                         lt(
                             assetLogsTable.settlementAttempts,
@@ -153,14 +149,87 @@ export class AssetLogRepository {
     }
 
     /**
-     * Atomically move every still-`pending` reward tied to the given
-     * interaction logs to a terminal non-settled state and record the reason.
-     * Used by the refund flow to cancel rewards triggered by a now-refunded
-     * purchase.
+     * Smallest still-owed amount per (merchant, token) across all
+     * `bank_depleted` rewards. Drives the requeue cron: comparing a bank's
+     * live balance against this minimum tells whether *any* depleted reward
+     * for that token could settle, so a requeue is never pure churn. `amount`
+     * is human units (numeric); the caller converts to wei via the token's
+     * decimals.
+     */
+    async findDepletedAmountsByMerchantAndToken(): Promise<
+        { merchantId: string; tokenAddress: Address; minAmount: string }[]
+    > {
+        const rows = await db
+            .select({
+                merchantId: assetLogsTable.merchantId,
+                tokenAddress: assetLogsTable.tokenAddress,
+                minAmount: sql<string>`min(${assetLogsTable.amount})`,
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.status, "bank_depleted"),
+                    eq(assetLogsTable.assetType, "token"),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            )
+            .groupBy(assetLogsTable.merchantId, assetLogsTable.tokenAddress);
+
+        return rows as {
+            merchantId: string;
+            tokenAddress: Address;
+            minAmount: string;
+        }[];
+    }
+
+    /**
+     * Flip `bank_depleted` rewards back to `pending` for the given
+     * (merchant, token) pairs once their bank can pay again. Idempotent across
+     * replicas: the `status = 'bank_depleted'` guard means a row already
+     * requeued by a concurrent run is simply not matched again.
+     */
+    async requeueDepletedToPending(
+        groups: { merchantId: string; tokenAddress: Address }[]
+    ): Promise<number> {
+        if (groups.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({ status: "pending", statusChangedAt: new Date() })
+            .where(
+                and(
+                    eq(assetLogsTable.status, "bank_depleted"),
+                    or(
+                        ...groups.map((group) =>
+                            and(
+                                eq(assetLogsTable.merchantId, group.merchantId),
+                                eq(
+                                    assetLogsTable.tokenAddress,
+                                    group.tokenAddress
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    /**
+     * Atomically move every still-owed reward tied to the given interaction
+     * logs to a terminal non-settled state and record the reason. Used by the
+     * refund flow to cancel rewards triggered by a now-refunded purchase.
+     *
+     * Both `pending` and `bank_depleted` rows are voided: neither has paid out
+     * on-chain, and `bank_depleted` is only a soft retry marker (a later run
+     * can still settle it once the bank refills), so skipping it would let a
+     * refunded purchase pay out after a refill.
      *
      * Skipped rows:
-     *  - rewards already in `processing`/`settled` (lockup window has passed
-     *    — must not be flipped from underneath the on-chain transaction);
+     *  - rewards in `processing`/`settled` (already pushed on-chain — must not
+     *    be flipped from underneath the transaction);
      *  - rewards without a `campaignRuleId` (campaign was deleted — nothing
      *    to restore, ignore gracefully).
      *
@@ -187,7 +256,10 @@ export class AssetLogRepository {
             .where(
                 and(
                     inArray(assetLogsTable.interactionLogId, interactionLogIds),
-                    eq(assetLogsTable.status, "pending"),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                    ]),
                     isNotNull(assetLogsTable.campaignRuleId)
                 )
             )

@@ -1,6 +1,10 @@
-import { eventEmitter, log } from "@backend-infrastructure";
+import {
+    eventEmitter,
+    log,
+    type TokenMetadataRepository,
+} from "@backend-infrastructure";
 import { currentStablecoinsList } from "@frak-labs/app-essentials";
-import { type Address, getAddress } from "viem";
+import { type Address, getAddress, parseUnits } from "viem";
 import type { CampaignBankRepository } from "../domain/campaign-bank/repositories/CampaignBankRepository";
 import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
@@ -30,7 +34,8 @@ export class SettlementOrchestrator {
         private readonly merchantRepository: MerchantRepository,
         private readonly identityRepository: IdentityRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
-        private readonly campaignBankRepository: CampaignBankRepository
+        private readonly campaignBankRepository: CampaignBankRepository,
+        private readonly tokenMetadata: TokenMetadataRepository
     ) {}
 
     async runSettlement(): Promise<SettlementResult> {
@@ -159,6 +164,95 @@ export class SettlementOrchestrator {
         }
 
         return results;
+    }
+
+    /**
+     * Requeue `bank_depleted` rewards whose bank can pay again. Runs on its own
+     * slow cron, off the settlement hot path, so a dead bank's backlog never
+     * churns through settlement batches. Per (merchant, token) group it
+     * re-reads live bank state (cache forced fresh — the LRU would otherwise
+     * feed stale zeros) and requeues only when the bank is open and holds
+     * balance AND allowance >= the smallest depleted reward, i.e. at least one
+     * reward can actually settle. Emits `newPendingRewards` so the settlement
+     * cron drains them immediately instead of waiting for its next tick.
+     */
+    async requeueDepletedRewards(): Promise<{ requeuedCount: number }> {
+        const groups =
+            await this.assetLogRepository.findDepletedAmountsByMerchantAndToken();
+        if (groups.length === 0) {
+            return { requeuedCount: 0 };
+        }
+
+        const merchantIds = [
+            ...new Set(groups.map((group) => group.merchantId)),
+        ];
+        const merchantBanks =
+            await this.merchantRepository.getBankAddresses(merchantIds);
+
+        const bankStates = new Map<
+            Address,
+            Awaited<ReturnType<CampaignBankRepository["getBankOnChainState"]>>
+        >();
+        await Promise.all(
+            [...new Set(merchantBanks.values())].map(async (bank) => {
+                this.campaignBankRepository.clearOnChainCache(bank);
+                bankStates.set(
+                    bank,
+                    await this.campaignBankRepository.getBankOnChainState(
+                        bank,
+                        currentStablecoinsList
+                    )
+                );
+            })
+        );
+
+        const decimalsByToken = new Map<Address, number>();
+        await Promise.all(
+            [...new Set(groups.map((group) => group.tokenAddress))].map(
+                async (token) => {
+                    decimalsByToken.set(
+                        token,
+                        await this.tokenMetadata.getDecimals({ token })
+                    );
+                }
+            )
+        );
+
+        const requeueable = groups.filter((group) => {
+            const bank = merchantBanks.get(group.merchantId);
+            if (!bank) return false;
+
+            const state = bankStates.get(bank);
+            if (!state?.isOpen) return false;
+
+            const decimals = decimalsByToken.get(group.tokenAddress);
+            if (decimals === undefined) return false;
+
+            const token = getAddress(group.tokenAddress);
+            const minWei = parseUnits(group.minAmount, decimals);
+            return (
+                (state.balances.get(token) ?? 0n) >= minWei &&
+                (state.allowances.get(token) ?? 0n) >= minWei
+            );
+        });
+
+        if (requeueable.length === 0) {
+            return { requeuedCount: 0 };
+        }
+
+        const requeuedCount =
+            await this.assetLogRepository.requeueDepletedToPending(
+                requeueable.map((group) => ({
+                    merchantId: group.merchantId,
+                    tokenAddress: group.tokenAddress,
+                }))
+            );
+
+        if (requeuedCount > 0) {
+            eventEmitter.emit("newPendingRewards", { count: requeuedCount });
+        }
+
+        return { requeuedCount };
     }
 
     private async enrichWithWalletAndInteraction(
