@@ -31,16 +31,33 @@ export type SelectTriggerProps = ComponentPropsWithRef<
 > & {
     /** Preset width: `medium` (320 px) or `big` (100 %). */
     length?: SelectTriggerLength;
+    /**
+     * `"bare"` — borderless 56px flat card (pairs with `Input variant="bare"`;
+     * `length` is ignored). Use `tone` to pick the surface.
+     */
+    variant?: "default" | "bare";
+    /** Surface tone for `variant="bare"`: `elevated` (white) or `muted`. */
+    tone?: "elevated" | "muted";
 };
 
 export function SelectTrigger({
     ref,
     length,
+    variant = "default",
+    tone,
     className,
     children,
     ...props
 }: SelectTriggerProps) {
-    const base = length ? triggerLength[length] : selectStyles.trigger;
+    const base =
+        variant === "bare"
+            ? clsx(
+                  selectStyles.triggerBare,
+                  tone === "muted" && selectStyles.triggerBareMuted
+              )
+            : length
+              ? triggerLength[length]
+              : selectStyles.trigger;
     const combined = clsx(base, className);
 
     return (

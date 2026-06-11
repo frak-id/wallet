@@ -13,6 +13,8 @@ type ValidStackElement =
     | "article"
     | "aside"
     | "main"
+    | "header"
+    | "footer"
     | "details";
 type StackAlign = "left" | "center" | "right";
 type StackJustify = "start" | "center" | "end" | "space-between";

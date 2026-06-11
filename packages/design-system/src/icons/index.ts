@@ -83,6 +83,7 @@ export { SparklesIcon } from "./SparklesIcon";
 export { StarIcon } from "./StarIcon";
 export { TabGridIcon } from "./TabGridIcon";
 export { TransferIcon } from "./TransferIcon";
+export { UploadIcon } from "./UploadIcon";
 export { UsdcIcon } from "./UsdcIcon";
 export { UsdIcon } from "./UsdIcon";
 export { WalletIcon } from "./WalletIcon";

@@ -38,8 +38,30 @@ export const triggerLength = styleVariants({
     big: [triggerBase, { width: "100%" }],
 });
 
+/** Borderless 56px flat-card trigger — pairs with `Input variant="bare"`. */
+const triggerBare = style([
+    triggerBase,
+    {
+        width: "100%",
+        height: "56px",
+        padding: `0 ${alias.spacing.m}`,
+        gap: alias.spacing.m,
+        borderRadius: alias.cornerRadius.m,
+        border: "none",
+        backgroundColor: vars.surface.elevated,
+        fontSize: fontSize.m,
+        lineHeight: "26px",
+    },
+]);
+
+const triggerBareMuted = style({
+    backgroundColor: vars.surface.muted,
+});
+
 export const selectStyles = {
     trigger: triggerBase,
+    triggerBare,
+    triggerBareMuted,
 
     icon: style({
         color: vars.icon.secondary,
