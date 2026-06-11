@@ -56,8 +56,14 @@ export class SettlementOrchestrator {
         const { enriched: pendingRewards, skippedIds } =
             await this.enrichWithWalletAndInteraction(claimedAssetLogs);
 
+        // `claimPendingForSettlement` already gates on an active wallet node,
+        // so a skipped row here means the wallet was unlinked between claim and
+        // enrichment (a rare concurrent merge/unlink). No wallet is a transient
+        // "not yet" state, never a permanent invalid, so revert WITHOUT spending
+        // an attempt — `bumpAttemptAndRevert` would burn `maxAttempts` and
+        // forfeit owed rewards at expiry even after the wallet reappears.
         if (skippedIds.length > 0) {
-            await this.assetLogRepository.bumpAttemptAndRevert(
+            await this.assetLogRepository.revertSettlementToPending(
                 skippedIds,
                 "No wallet for identity group"
             );

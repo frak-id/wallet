@@ -202,7 +202,7 @@ describe("SettlementOrchestrator.requeueDepletedRewards", () => {
 });
 
 describe("SettlementOrchestrator.runSettlement", () => {
-    it("re-pends claimed rows with no wallet and never settles them", async () => {
+    it("re-pends a wallet-less claimed row without spending an attempt and never settles it", async () => {
         const reconcileStuckSettlements = vi
             .fn()
             .mockResolvedValue({ settled: 0, reverted: 0, pending: 0 });
@@ -212,6 +212,7 @@ describe("SettlementOrchestrator.runSettlement", () => {
             settleRewards,
         } as unknown as SettlementService;
 
+        const revertSettlementToPending = vi.fn().mockResolvedValue(1);
         const bumpAttemptAndRevert = vi.fn().mockResolvedValue(1);
         const assetLog = {
             claimPendingForSettlement: vi.fn().mockResolvedValue([
@@ -222,6 +223,7 @@ describe("SettlementOrchestrator.runSettlement", () => {
                     merchantId: "m1",
                 },
             ]),
+            revertSettlementToPending,
             bumpAttemptAndRevert,
         } as unknown as AssetLogRepository;
 
@@ -245,10 +247,14 @@ describe("SettlementOrchestrator.runSettlement", () => {
 
         await orchestrator.runSettlement();
 
-        expect(bumpAttemptAndRevert).toHaveBeenCalledWith(
+        // No-wallet is transient (fingerprint referrers link a wallet later),
+        // so the row reverts to `pending` with no attempt spent — burning
+        // `maxAttempts` would forfeit owed rewards at expiry.
+        expect(revertSettlementToPending).toHaveBeenCalledWith(
             ["a1"],
             "No wallet for identity group"
         );
+        expect(bumpAttemptAndRevert).not.toHaveBeenCalled();
         expect(settleRewards).not.toHaveBeenCalled();
     });
 });

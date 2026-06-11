@@ -2,6 +2,7 @@ import {
     and,
     desc,
     eq,
+    exists,
     gt,
     inArray,
     isNotNull,
@@ -14,6 +15,7 @@ import {
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 
+import { identityNodesTable } from "../../identity/db/schema";
 import { merchantsTable } from "../../merchant/db/schema";
 import { RewardConfig } from "../config";
 import {
@@ -98,6 +100,16 @@ export class AssetLogRepository {
      * `pending` out-of-band by the requeue-depleted cron once their bank can
      * pay again, keeping this hot path from re-checking dead banks every run.
      *
+     * Rows whose identity group has no active wallet node yet are NOT claimed
+     * (the `exists` gate below): fingerprint-only referrers earn rewards before
+     * ever linking a wallet (a designed flow — see `ArrivalHandler`), and there
+     * is nothing to settle until that wallet exists. Gating here — rather than
+     * claiming then reverting — keeps such rows `pending` without churning or
+     * spending an attempt, so they settle the moment the wallet appears instead
+     * of burning `maxAttempts` and forfeiting owed rewards at expiry. The
+     * predicate mirrors `IdentityRepository.getWalletForGroup` (a `wallet` node
+     * that is not soft-unlinked).
+     *
      * `settlementAttempts` is intentionally not bumped here; only an actual
      * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
      * skipped before the push are recovered by `reconcileStuckSettlements`.
@@ -125,6 +137,25 @@ export class AssetLogRepository {
                         or(
                             isNull(assetLogsTable.availableAt),
                             lte(assetLogsTable.availableAt, now)
+                        ),
+                        // Gate on an active wallet node (see method doc).
+                        exists(
+                            tx
+                                .select({ one: sql`1` })
+                                .from(identityNodesTable)
+                                .where(
+                                    and(
+                                        eq(
+                                            identityNodesTable.groupId,
+                                            assetLogsTable.identityGroupId
+                                        ),
+                                        eq(
+                                            identityNodesTable.identityType,
+                                            "wallet"
+                                        ),
+                                        isNull(identityNodesTable.unlinkedAt)
+                                    )
+                                )
                         )
                     )
                 )
