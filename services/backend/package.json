@@ -55,6 +55,7 @@
     "@frak-labs/test-foundation": "workspace:*",
     "@swc/core": "^1.15.24",
     "@types/web-push": "^3.6.4",
+    "@vitest/ui": "^4.1.4",
     "bun-types": "latest",
     "dependency-cruiser": "^17.4.2",
     "pino-pretty": "^13.1.3",
