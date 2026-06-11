@@ -183,6 +183,13 @@
             "when": 1780676177520,
             "tag": "0025_large_starjammers",
             "breakpoints": true
+        },
+        {
+            "idx": 26,
+            "version": "7",
+            "when": 1781195356489,
+            "tag": "0026_natural_silhouette",
+            "breakpoints": true
         }
     ]
 }
