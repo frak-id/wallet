@@ -20,7 +20,7 @@ type EvaluateRulesParams = {
     trigger: CampaignTrigger;
     context: Omit<RuleContext, "time">;
     time?: TimeContext;
-    /** Fallback token for pricing percentage rewards that don't pin their own. */
+    /** Fallback token for pricing percentage/tiered rewards that don't pin their own. */
     merchantDefaultToken?: Address;
 };
 
@@ -248,7 +248,7 @@ export class RuleEngineService {
                 merchantDefaultToken
             );
 
-        // Unpriceable percentage reward: bail before consuming budget so the
+        // Unpriceable reward: bail before consuming budget so the
         // orchestrator can leave the interaction unprocessed for a later retry.
         if (deferForUnpriceableReward) {
             return {

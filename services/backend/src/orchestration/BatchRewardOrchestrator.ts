@@ -25,7 +25,7 @@ import type { InteractionContextBuilder } from "./reward";
 type BatchProcessResult = {
     processedCount: number;
     rewardsCreated: number;
-    /** Interactions left unprocessed because a percentage reward couldn't be priced. */
+    /** Interactions left unprocessed because a reward couldn't be priced. */
     deferredCount: number;
     errors: {
         interactionLogId: string;
@@ -38,7 +38,7 @@ type ProcessSingleResult = {
     rewardsCreated: number;
     /** True when the interaction was already cancelled by a concurrent refund. */
     cancelled?: boolean;
-    /** True when left unprocessed for a later retry (unpriceable percentage reward). */
+    /** True when left unprocessed for a later retry (unpriceable reward). */
     deferred?: boolean;
     error?: string;
 };
@@ -173,7 +173,7 @@ export class BatchRewardOrchestrator {
                 );
 
             // Resolved once and shared between rule evaluation (to price
-            // percentage rewards) and asset-log creation (token fallback).
+            // percentage/tiered rewards) and asset-log creation (token fallback).
             const merchantDefaultToken =
                 (await this.merchantRepository.getDefaultRewardToken(
                     merchantId
@@ -413,7 +413,7 @@ export class BatchRewardOrchestrator {
         await this.restoreUnpersistedBudget(consumedByCampaign, []);
         log.info(
             { interactionLogId: interaction.id, merchantId, reason },
-            "Deferred interaction: percentage reward not priceable, will retry next run"
+            "Deferred interaction: reward not priceable, will retry next run"
         );
         return { success: true, rewardsCreated: 0, deferred: true };
     }

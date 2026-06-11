@@ -7,14 +7,12 @@ import type {
     ReferralChainMember,
     RewardDefinition,
     RuleContext,
+    TieredRewardDefinition,
 } from "../types";
 import { RewardCalculator } from "./RewardCalculator";
-import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
+import { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
-const conditionEvaluator = {
-    evaluate: vi.fn(),
-    getFieldValue: vi.fn(),
-} as unknown as RuleConditionEvaluator;
+const conditionEvaluator = new RuleConditionEvaluator();
 
 const pricingRepository = {
     convertFiatToTokenAmount: vi.fn(),
@@ -285,5 +283,139 @@ describe("RewardCalculator.calculateAll — percentage FX normalisation", () => 
         expect(
             pricingRepository.convertFiatToTokenAmount
         ).not.toHaveBeenCalled();
+    });
+});
+
+describe("RewardCalculator.calculateAll — tiered purchase.amount normalisation", () => {
+    const TOKEN = "0x0000000000000000000000000000000000000abc" as Address;
+
+    const purchase = (currency: string, amount: number): PurchaseContext => ({
+        orderId: "order-1",
+        amount,
+        currency,
+        items: [],
+    });
+
+    const tieredReward = (
+        overrides: Partial<TieredRewardDefinition> = {}
+    ): RewardDefinition => ({
+        recipient: "referee",
+        type: "token",
+        amountType: "tiered",
+        tierField: "purchase.amount",
+        tiers: [
+            { minValue: 0, maxValue: 99, amount: 1 },
+            { minValue: 100, maxValue: 499, amount: 5 },
+            { minValue: 500, amount: 20 },
+        ],
+        token: TOKEN,
+        ...overrides,
+    });
+
+    beforeEach(() => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockReset();
+    });
+
+    it("matches tiers against the token-converted amount, not raw fiat", async () => {
+        // ¥50,000 is only ~310 token units: mid tier, not the top one
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 310 }
+        );
+
+        const { calculated } = await calculator.calculateAll(
+            [tieredReward()],
+            { ...baseContext, purchase: purchase("jpy", 50_000) },
+            "campaign-1"
+        );
+
+        expect(pricingRepository.convertFiatToTokenAmount).toHaveBeenCalledWith(
+            {
+                token: TOKEN,
+                fiatAmount: 50_000,
+                currency: "jpy",
+            }
+        );
+        expect(calculated).toHaveLength(1);
+        expect(calculated[0].amount).toBe(5);
+    });
+
+    it("defers when the tier amount cannot be converted", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: false, reason: "fx_rate_unavailable" }
+        );
+
+        const { calculated, deferForUnpriceableReward, deferReason } =
+            await calculator.calculateAll(
+                [tieredReward()],
+                { ...baseContext, purchase: purchase("jpy", 50_000) },
+                "campaign-1"
+            );
+
+        expect(deferForUnpriceableReward).toBe(true);
+        expect(deferReason).toContain("tiered reward");
+        expect(calculated).toHaveLength(0);
+    });
+
+    it("falls back to the merchant default token for conversion", async () => {
+        const MERCHANT_DEFAULT =
+            "0x0000000000000000000000000000000000000def" as Address;
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 600 }
+        );
+
+        const { calculated } = await calculator.calculateAll(
+            [tieredReward({ token: undefined })],
+            { ...baseContext, purchase: purchase("eur", 600) },
+            "campaign-1",
+            undefined,
+            undefined,
+            undefined,
+            MERCHANT_DEFAULT
+        );
+
+        expect(pricingRepository.convertFiatToTokenAmount).toHaveBeenCalledWith(
+            expect.objectContaining({ token: MERCHANT_DEFAULT })
+        );
+        expect(calculated[0].amount).toBe(20);
+    });
+
+    it("errors without deferring when no token can be resolved", async () => {
+        const { errors, deferForUnpriceableReward } =
+            await calculator.calculateAll(
+                [tieredReward({ token: undefined })],
+                { ...baseContext, purchase: purchase("eur", 100) },
+                "campaign-1"
+            );
+
+        expect(deferForUnpriceableReward).toBe(false);
+        expect(errors[0]).toContain("No token");
+        expect(
+            pricingRepository.convertFiatToTokenAmount
+        ).not.toHaveBeenCalled();
+    });
+
+    it("leaves non-purchase tier fields untouched", async () => {
+        const { calculated } = await calculator.calculateAll(
+            [
+                tieredReward({
+                    tierField: "user.totalPurchases",
+                    tiers: [
+                        { minValue: 0, maxValue: 4, amount: 1 },
+                        { minValue: 5, amount: 10 },
+                    ],
+                }),
+            ],
+            {
+                ...baseContext,
+                user: { ...baseContext.user, totalPurchases: 7 },
+                purchase: purchase("jpy", 50_000),
+            },
+            "campaign-1"
+        );
+
+        expect(
+            pricingRepository.convertFiatToTokenAmount
+        ).not.toHaveBeenCalled();
+        expect(calculated[0].amount).toBe(10);
     });
 });

@@ -36,12 +36,10 @@ type PurchaseItem = {
 export type PurchaseContext = {
     orderId: string;
     /**
-     * Order total in `currency` units — raw fiat, never FX-normalized. Rule
-     * conditions and tier thresholds compare it as-is, so they are
-     * order-currency-relative: "min 500" means 500 JPY on a JPY order, not
-     * 500 EUR. Only percentage reward amounts go through FX conversion.
-     * TODO(follow-up): normalize once when building the context, or scope
-     * thresholds per currency.
+     * Order total in `currency` units — raw fiat, never FX-normalized.
+     * Percentage and tiered (`tierField: purchase.amount`) rewards convert
+     * it into reward-token units at evaluation time; plain rule conditions
+     * compare it as-is and are therefore order-currency-relative.
      */
     amount: number;
     currency: string;
@@ -116,13 +114,13 @@ export type EvaluationResult = {
         error: string;
     }[];
     /**
-     * True when a matched percentage reward could not be converted into its
-     * token amount (no FX rate for the purchase currency or token price
-     * unavailable). The orchestrator leaves the interaction unprocessed so
-     * the next cron run retries it — failure is logged only, nothing is
-     * persisted. TODO: if production logs ever show a row stuck on this path
-     * (starving the batch), add an attempt counter + backoff on
-     * interaction_logs.
+     * True when a matched percentage or tiered reward could not convert the
+     * purchase amount into token units (no FX rate for the purchase currency
+     * or token price unavailable). The orchestrator leaves the interaction
+     * unprocessed so the next cron run retries it — failure is logged only,
+     * nothing is persisted. TODO: if production logs ever show a row stuck
+     * on this path (starving the batch), add an attempt counter + backoff
+     * on interaction_logs.
      */
     deferForUnpriceableReward: boolean;
     /** Why pricing failed — logged by the orchestrator, not persisted. */

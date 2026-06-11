@@ -94,21 +94,46 @@ async function calculatePercentageReward(
     };
 }
 
-function calculateTieredReward(
+async function calculateTieredReward(
     reward: TieredRewardDefinition,
     context: RuleContext,
-    conditionEvaluator: RuleConditionEvaluator
-): RewardCalculationResult {
-    const tierValue = conditionEvaluator.getFieldValue(
+    conditionEvaluator: RuleConditionEvaluator,
+    merchantDefaultToken: Address | undefined,
+    pricingRepository: PricingRepository
+): Promise<RewardCalculationResult> {
+    const rawValue = conditionEvaluator.getFieldValue(
         context,
         reward.tierField
     );
 
-    if (typeof tierValue !== "number") {
+    if (typeof rawValue !== "number") {
         return {
             success: false,
             error: `Tier field ${reward.tierField} is not a number`,
         };
+    }
+
+    let tierValue = rawValue;
+    // Tier definitions (minValue/maxValue/amount) are all denominated in the
+    // reward token, while purchase.amount is fiat in the order's currency —
+    // convert it on site or thresholds compare apples to yen.
+    if (reward.tierField === "purchase.amount" && context.purchase) {
+        const token = reward.token ?? merchantDefaultToken;
+        if (!token) {
+            return {
+                success: false,
+                error: "No token to price tier thresholds against",
+            };
+        }
+        const conversion = await pricingRepository.convertFiatToTokenAmount({
+            token,
+            fiatAmount: rawValue,
+            currency: context.purchase.currency,
+        });
+        if (!conversion.converted) {
+            return { success: false, defer: true, reason: conversion.reason };
+        }
+        tierValue = conversion.tokenAmount;
     }
 
     const sortedTiers = [...reward.tiers].sort(
@@ -210,7 +235,9 @@ export class RewardCalculator {
                 return calculateTieredReward(
                     reward,
                     context,
-                    this.conditionEvaluator
+                    this.conditionEvaluator,
+                    merchantDefaultToken,
+                    this.pricingRepository
                 );
             default:
                 return { success: false, error: "Unknown reward amount type" };
@@ -246,7 +273,7 @@ export class RewardCalculator {
             if (!result.success) {
                 if ("defer" in result) {
                     deferForUnpriceableReward = true;
-                    deferReason ??= `${result.reason} (${reward.recipient} percentage reward, currency=${context.purchase?.currency})`;
+                    deferReason ??= `${result.reason} (${reward.recipient} ${reward.amountType} reward, currency=${context.purchase?.currency})`;
                     continue;
                 }
                 errors.push(`${reward.recipient}: ${result.error}`);
