@@ -1,6 +1,8 @@
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import * as process from "node:process";
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
 import preact from "@preact/preset-vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import type { UserConfig } from "vite";
@@ -62,6 +64,11 @@ const LAZY_CHUNK_NAMES = [
     "ui-runtime",
 ] as const;
 const LAZY_CHUNK_ALTERNATION = LAZY_CHUNK_NAMES.join("|");
+
+// Hard ceiling on gzipped JS the iframe fetches synchronously on boot (eager
+// static-import closure from the entry). Audit measured ~9.4 KB; 15 KB leaves
+// headroom while failing the build if a lazy chunk leaks into the eager path.
+const EAGER_JS_BUDGET_GZIP = 15 * 1024;
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
@@ -167,6 +174,80 @@ function stripEagerLazyCss() {
             handler(html: string) {
                 return html.replace(lazyCssLinkRe, "");
             },
+        },
+    };
+}
+
+/**
+ * Fail the build if the eager boot JS exceeds {@link EAGER_JS_BUDGET_GZIP}.
+ *
+ * "Eager" = the JS the booted `index.html` pulls synchronously: the entry
+ * `<script type=module>` plus every `<link rel=modulepreload>`. That list is
+ * Vite's own curated boot set — the `modulePreload` filter has already dropped
+ * the lazy Ring 1/2 chunks — so the gate measures exactly what ships on boot,
+ * with no fragile re-derivation of the module graph.
+ *
+ * Mechanical KPI gate: if a renamed/new lazy chunk slips past the modulePreload
+ * filter it lands in the preload list and is counted here, failing the build
+ * instead of silently shipping on every iframe boot.
+ */
+function assertEagerBundleBudget() {
+    // Capture the bundle-key path (assets/<name>.js) regardless of the `/listener`
+    // base prefix, from the entry <script src> and each modulepreload <link href>.
+    const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
+    const preloadRe =
+        /<link\b[^>]*\brel="modulepreload"[^>]*\bhref="[^"]*?(assets\/[^"]+\.js)"/g;
+
+    return {
+        name: "assert-eager-bundle-budget",
+        apply: "build" as const,
+        // writeBundle (post-write) so the final, fully-transformed index.html and
+        // every chunk are on disk — avoids in-memory bundle timing/encoding edge
+        // cases where the emitted HTML asset isn't yet a string in generateBundle.
+        writeBundle(options: { dir?: string }) {
+            const dir = options.dir;
+            if (!dir) return;
+
+            let htmlSource: string;
+            try {
+                htmlSource = readFileSync(
+                    path.join(dir, "index.html"),
+                    "utf-8"
+                );
+            } catch {
+                return;
+            }
+
+            const eager = new Set<string>();
+            for (const re of [scriptRe, preloadRe]) {
+                for (const m of htmlSource.matchAll(re)) eager.add(m[1]);
+            }
+
+            let totalGzip = 0;
+            const breakdown: string[] = [];
+            for (const key of eager) {
+                let code: Buffer;
+                try {
+                    code = readFileSync(path.join(dir, key));
+                } catch {
+                    continue;
+                }
+                const gz = gzipSync(code).length;
+                totalGzip += gz;
+                breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
+            }
+
+            const totalKb = (totalGzip / 1024).toFixed(2);
+            console.log(
+                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${EAGER_JS_BUDGET_GZIP / 1024} KB)`
+            );
+            if (totalGzip > EAGER_JS_BUDGET_GZIP) {
+                throw new Error(
+                    `Eager boot JS budget exceeded: ${totalKb} KB gz > ${EAGER_JS_BUDGET_GZIP / 1024} KB.\n${breakdown
+                        .sort()
+                        .join("\n")}`
+                );
+            }
         },
     };
 }
@@ -281,6 +362,7 @@ export default defineConfig(async () => {
             ...(isProd ? [removeConsole()] : []),
             stripOrphanCrossChunkImports(),
             stripEagerLazyCss(),
+            assertEagerBundleBudget(),
         ],
         server: {
             port: 3002,
@@ -317,6 +399,11 @@ export default defineConfig(async () => {
                 },
             },
             target: "baseline-widely-available",
+            // Coarse per-chunk warning only: kept just above the largest legit
+            // lazy chunk (blockchain-vendor ~285 KB) to avoid routine noise on
+            // intentionally heavy lazy chunks. The KPI that matters — the eager
+            // boot path — is enforced as a hard build failure by
+            // `assertEagerBundleBudget`, not by this number.
             chunkSizeWarningLimit: 300,
             rolldownOptions: {
                 // Skip emitting facade chunks for dynamic-import entry points.
