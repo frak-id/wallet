@@ -1,7 +1,14 @@
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@frak-labs/design-system/components/Select";
 import type { UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import {
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -9,63 +16,73 @@ import {
 } from "@/module/forms/Form";
 import * as styles from "../customize.css";
 import type { ComponentSettingsFormValues } from "../types";
+import { ComponentCssField, WordingTextField } from "./shared";
 
 export function ButtonShareFields({
     form,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
+    const { t } = useTranslation();
     return (
-        <div className={styles.customizeSettingsGrid}>
+        <div className={styles.settingsGrid}>
+            <WordingTextField
+                form={form}
+                name="buttonShare.text"
+                label={t("customize.components.fields.text")}
+            />
+            <WordingTextField
+                form={form}
+                name="buttonShare.noRewardText"
+                label={t("customize.components.fields.noRewardText")}
+            />
             <FormField
                 control={form.control}
                 name="buttonShare.clickAction"
                 render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Click action</FormLabel>
-                        <FormDescription>
-                            What happens when a visitor clicks the share button
-                        </FormDescription>
-                        <FormControl>
-                            <select
-                                className={styles.customizeSelect}
-                                value={field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                            >
-                                <option value="embedded-wallet">
-                                    Embedded wallet
-                                </option>
-                                <option value="share-modal">Share modal</option>
-                                <option value="sharing-page">
-                                    Sharing page
-                                </option>
-                            </select>
-                        </FormControl>
+                    <FormItem className={styles.fieldItem}>
+                        <FormLabel className={styles.fieldLabel}>
+                            {t("customize.components.clickAction.label")}
+                        </FormLabel>
+                        <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                        >
+                            <FormControl>
+                                <SelectTrigger variant="bare" tone="muted">
+                                    <SelectValue />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="embedded-wallet">
+                                    {t(
+                                        "customize.components.clickAction.embeddedWallet"
+                                    )}
+                                </SelectItem>
+                                <SelectItem value="share-modal">
+                                    {t(
+                                        "customize.components.clickAction.shareModal"
+                                    )}
+                                </SelectItem>
+                                <SelectItem value="sharing-page">
+                                    {t(
+                                        "customize.components.clickAction.sharingPage"
+                                    )}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className={styles.fieldHint}>
+                            {t("customize.components.clickAction.hint")}
+                        </p>
                         <FormMessage />
                     </FormItem>
                 )}
             />
-
-            <FormField
-                control={form.control}
+            <ComponentCssField
+                form={form}
                 name="buttonShare.css"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
-                        <FormDescription>
-                            Custom styles applied to the share button
-                        </FormDescription>
-                        <FormControl>
-                            <textarea
-                                className={styles.customizeTextarea}
-                                placeholder={".frak-button-share { ... }"}
-                                rows={4}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.css")}
+                placeholder={".frak-button-share { ... }"}
             />
         </div>
     );

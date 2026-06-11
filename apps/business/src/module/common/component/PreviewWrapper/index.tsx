@@ -11,7 +11,7 @@ export function PreviewWrapper({
 }) {
     return (
         <div className={previewWrapper}>
-            <Text variant="overline" color="tertiary">
+            <Text variant="body" weight="medium" align="center">
                 {label}
             </Text>
             {children}

@@ -1,17 +1,17 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-} from "@frak-labs/design-system/components/Card";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { CssEditor } from "./CssEditor";
 import * as styles from "./customize.css";
+import { useCustomizeSection } from "./saveRegistry";
 import type { CssFormValues } from "./types";
 import { updatePlacement, valueOrUndefined } from "./utils";
 
@@ -19,18 +19,16 @@ export function PlacementCssPanel({
     merchantId,
     placementId,
     sdkConfig,
-    onDirtyChange,
 }: {
     merchantId: string;
     placementId: string;
     sdkConfig: SdkConfig;
-    onDirtyChange: (key: string, isDirty: boolean) => void;
 }) {
-    const {
-        mutate: editSdkConfig,
-        isPending,
-        isSuccess,
-    } = useMerchantUpdate({ merchantId, target: "sdk-config" });
+    const { t } = useTranslation();
+    const { mutateAsync: editSdkConfig, isSuccess } = useMerchantUpdate({
+        merchantId,
+        target: "sdk-config",
+    });
 
     const values = useMemo<CssFormValues>(() => {
         const placement = sdkConfig.placements?.[placementId];
@@ -47,47 +45,46 @@ export function PlacementCssPanel({
     });
 
     useEffect(() => {
-        onDirtyChange(`placement-${placementId}-css`, form.formState.isDirty);
-        return () => onDirtyChange(`placement-${placementId}-css`, false);
-    }, [form.formState.isDirty, onDirtyChange, placementId]);
-
-    useEffect(() => {
         if (!isSuccess) return;
         form.reset(form.getValues());
     }, [isSuccess, form.reset, form.getValues, form]);
 
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{`Placement CSS · ${placementId}`}</CardTitle>
-            </CardHeader>
-            <p className={styles.customizeFieldDescription}>
-                Global CSS overrides for this placement. Styles defined here
-                apply to all SDK components within this placement.
-            </p>
-            <CssEditor
-                value={form.watch("css")}
-                onChange={(value) => {
-                    form.setValue("css", value, { shouldDirty: true });
-                }}
-                placeholder={sdkConfig.rawCss ?? ".frak-modal { ... }"}
-                isPending={isPending}
-                isSuccess={isSuccess}
-                isDirty={form.formState.isDirty}
-                onDiscard={() => form.reset(values)}
-                onSave={() =>
-                    editSdkConfig({
-                        placements: updatePlacement(
-                            sdkConfig,
-                            placementId,
-                            (placement) => ({
-                                ...placement,
-                                rawCss: valueOrUndefined(form.getValues("css")),
-                            })
-                        ),
+    const onSubmit = useCallback(
+        (v: CssFormValues) =>
+            editSdkConfig({
+                placements: updatePlacement(
+                    sdkConfig,
+                    placementId,
+                    (placement) => ({
+                        ...placement,
+                        rawCss: valueOrUndefined(v.css),
                     })
-                }
-            />
+                ),
+            }),
+        [editSdkConfig, sdkConfig, placementId]
+    );
+
+    useCustomizeSection(`placement-${placementId}-css`, form, onSubmit);
+
+    return (
+        <Card radius="m">
+            <Stack space="m">
+                <Stack space="xxs">
+                    <Text variant="bodySmall" weight="medium" color="secondary">
+                        {t("customize.placements.css.title", { placementId })}
+                    </Text>
+                    <Text variant="caption" color="tertiary">
+                        {t("customize.placements.css.description")}
+                    </Text>
+                </Stack>
+                <CssEditor
+                    value={form.watch("css")}
+                    onChange={(value) => {
+                        form.setValue("css", value, { shouldDirty: true });
+                    }}
+                    placeholder={sdkConfig.rawCss ?? ".frak-modal { ... }"}
+                />
+            </Stack>
         </Card>
     );
 }
@@ -103,6 +100,7 @@ export function DeletePlacementPanel({
     sdkConfig: SdkConfig;
     onDelete: () => void;
 }) {
+    const { t } = useTranslation();
     const { mutateAsync: editSdkConfig, isPending } = useMerchantUpdate({
         merchantId,
         target: "sdk-config",
@@ -110,49 +108,60 @@ export function DeletePlacementPanel({
     const [open, setOpen] = useState(false);
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{`Delete placement · ${placementId}`}</CardTitle>
-            </CardHeader>
-            <p className={styles.customizeHint}>
-                This removes all overrides for this placement.
-            </p>
-            <AlertDialog
-                open={open}
-                onOpenChange={setOpen}
-                title={"Delete placement"}
-                buttonElement={
-                    <button
-                        type="button"
-                        className={styles.customizeDeleteButton}
-                    >
-                        <Trash2 size={16} />
-                        Delete {placementId}
-                    </button>
-                }
-                description={`This will remove all overrides for placement ${placementId}.`}
-                cancel={<Button variant={"secondary"}>Cancel</Button>}
-                action={
-                    <Button
-                        variant={"destructive"}
-                        loading={isPending}
-                        disabled={isPending}
-                        onClick={async () => {
-                            const currentPlacements = {
-                                ...(sdkConfig.placements ?? {}),
-                            };
-                            delete currentPlacements[placementId];
-                            await editSdkConfig({
-                                placements: currentPlacements,
-                            });
-                            onDelete();
-                            setOpen(false);
-                        }}
-                    >
-                        Delete placement
-                    </Button>
-                }
-            />
+        <Card radius="m">
+            <Stack space="m">
+                <Stack space="xxs">
+                    <Text variant="bodySmall" weight="medium" color="secondary">
+                        {t("customize.placements.delete.title", {
+                            placementId,
+                        })}
+                    </Text>
+                    <Text variant="caption" color="tertiary">
+                        {t("customize.placements.delete.hint")}
+                    </Text>
+                </Stack>
+                <AlertDialog
+                    open={open}
+                    onOpenChange={setOpen}
+                    title={t("customize.placements.delete.dialogTitle")}
+                    buttonElement={
+                        <button type="button" className={styles.deleteButton}>
+                            <Trash2 size={16} />
+                            {t("customize.placements.delete.action", {
+                                placementId,
+                            })}
+                        </button>
+                    }
+                    description={t("customize.placements.delete.description", {
+                        placementId,
+                    })}
+                    cancel={
+                        <Button variant={"secondary"}>
+                            {t("customize.placements.delete.cancel")}
+                        </Button>
+                    }
+                    action={
+                        <Button
+                            variant={"destructive"}
+                            loading={isPending}
+                            disabled={isPending}
+                            onClick={async () => {
+                                const currentPlacements = {
+                                    ...(sdkConfig.placements ?? {}),
+                                };
+                                delete currentPlacements[placementId];
+                                await editSdkConfig({
+                                    placements: currentPlacements,
+                                });
+                                onDelete();
+                                setOpen(false);
+                            }}
+                        >
+                            {t("customize.placements.delete.confirm")}
+                        </Button>
+                    }
+                />
+            </Stack>
         </Card>
     );
 }

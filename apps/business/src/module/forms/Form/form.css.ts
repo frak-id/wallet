@@ -4,9 +4,7 @@ import { globalStyle, style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 
 export const formItem = recipe({
-    base: {
-        marginBottom: "10px",
-    },
+    base: {},
     variants: {
         variant: {
             radio: {

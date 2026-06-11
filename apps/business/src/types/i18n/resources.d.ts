@@ -652,6 +652,124 @@ export default interface Resources {
         "empty": "No results"
       }
     },
+    "customize": {
+      "components": {
+        "advanced": "Advanced settings",
+        "banner": "Banner",
+        "buttonShare": "Share button",
+        "clickAction": {
+          "embeddedWallet": "Embedded wallet",
+          "hint": "What happens when a visitor clicks the share button",
+          "label": "Click action",
+          "shareModal": "Share modal",
+          "sharingPage": "Sharing page"
+        },
+        "description": "Choose the wording that best matches your brand for each component.",
+        "fields": {
+          "css": "Component CSS",
+          "ctaNoRewardText": "CTA text (no reward)",
+          "ctaText": "CTA text",
+          "inappCta": "In-app CTA",
+          "inappDescription": "In-app description",
+          "inappTitle": "In-app title",
+          "noRewardText": "Button text (no reward)",
+          "refereeNoRewardText": "Referee message (no reward)",
+          "refereeText": "Referee message",
+          "referralCta": "Referral CTA",
+          "referralDescription": "Referral description",
+          "referralTitle": "Referral title",
+          "referrerNoRewardText": "Referrer message (no reward)",
+          "referrerText": "Referrer message",
+          "text": "Button text"
+        },
+        "postPurchase": "Post Purchase",
+        "preview": "Preview",
+        "targetInteraction": {
+          "error": "Maximum length is 200 characters",
+          "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
+          "label": "Target interaction"
+        },
+        "title": "Global component defaults"
+      },
+      "globalCss": {
+        "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
+        "title": "Global CSS",
+        "toggle": "Custom CSS"
+      },
+      "identity": {
+        "currency": {
+          "auto": "Auto",
+          "hint": "Currency used to display reward amounts",
+          "label": "Currency"
+        },
+        "displayed": {
+          "description": "When off, the SDK is completely hidden from visitors",
+          "title": "Frak SDK displayed"
+        },
+        "homepage": {
+          "hint": "Your website URL, used when visitors click your brand name",
+          "label": "Homepage Link"
+        },
+        "lang": {
+          "auto": "Auto (Browser detection)",
+          "en": "English",
+          "fr": "French",
+          "hint": "Language for SDK text. Auto detects from the visitor's browser.",
+          "label": "Language"
+        },
+        "logo": {
+          "browse": "Browse files",
+          "dropActive": "Drop image here",
+          "dropTitle": "Drag and drop files here",
+          "existing": "Use an existing image:",
+          "hint": "Your logo image, displayed alongside your name in SDK components",
+          "label": "Logo",
+          "or": "or",
+          "remove": "Remove image",
+          "restrictions": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)",
+          "uploading": "Uploading…"
+        },
+        "name": {
+          "hint": "Your brand name as shown to visitors in the SDK components",
+          "label": "Name",
+          "placeholder": "Merchant Name"
+        }
+      },
+      "placements": {
+        "add": "Add another placement",
+        "css": {
+          "description": "Global CSS overrides for this placement. Styles defined here apply to all SDK components within this placement.",
+          "title": "Placement CSS · {{placementId}}"
+        },
+        "delete": {
+          "action": "Delete {{placementId}}",
+          "cancel": "Cancel",
+          "confirm": "Delete placement",
+          "description": "This will remove all overrides for placement {{placementId}}.",
+          "dialogTitle": "Delete placement",
+          "hint": "This removes all overrides for this placement.",
+          "title": "Delete placement · {{placementId}}"
+        },
+        "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways — each with its own text, styles, and behavior.",
+        "dialog": {
+          "cancel": "Cancel",
+          "create": "Create placement",
+          "errorExists": "This placement already exists.",
+          "errorFormat": "Use 3-16 chars (letters, numbers, _ or -).",
+          "errorMax": "Maximum 10 placements allowed.",
+          "hint": "Placement id must be unique and use 3 to 16 characters.",
+          "title": "Create placement"
+        },
+        "globalDefault": "Global default",
+        "settings": {
+          "description": "Text, styles and behavior overrides for this placement.",
+          "title": "Placement settings · {{placementId}}"
+        },
+        "title": "SDK Customization"
+      },
+      "save": "Save",
+      "unsavedChanges": "You have unsaved changes. Discard them?"
+    },
     "dashboard": {
       "actions": {
         "edit": "Edit",
@@ -744,6 +862,15 @@ export default interface Resources {
         "cta": "Set Up Budget",
         "description": "Set up your reward budget to start distributing rewards to your users."
       }
+    },
+    "merchantEdit": {
+      "close": "Close",
+      "tabs": {
+        "explorer": "Explorer App settings",
+        "identity": "Customize SDK Identity",
+        "team": "Manage your team"
+      },
+      "title": "Edit"
     },
     "settings": {
       "currency": {

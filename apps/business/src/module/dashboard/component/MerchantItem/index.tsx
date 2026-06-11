@@ -52,7 +52,7 @@ export function MerchantItem({
                         {t("dashboard.actions.manageBudget")}
                     </Button>
                     <LinkButton
-                        to="/m/$merchantId/merchant"
+                        to="/m/$merchantId/merchant/customize"
                         params={{ merchantId }}
                         variant="secondary"
                         size="small"

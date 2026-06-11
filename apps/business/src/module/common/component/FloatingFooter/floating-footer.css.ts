@@ -40,6 +40,15 @@ export const scrollEdge = style({
     WebkitMaskImage: "linear-gradient(to top, black 30%, transparent)",
 });
 
+export const footerBare = style({
+    left: 0,
+    "@media": {
+        "screen and (max-width: 768px)": {
+            left: 0,
+        },
+    },
+});
+
 export const buttonWrapper = style({
     position: "relative",
     pointerEvents: "auto",

@@ -1,18 +1,10 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { UseFormReturn } from "react-hook-form";
-import {
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/module/forms/Form";
+import { useTranslation } from "react-i18next";
 import * as styles from "../customize.css";
 import type { BannerFormValues, ComponentSettingsFormValues } from "../types";
+import { ComponentCssField, WordingTextField } from "./shared";
 
-// Text fields have no UI (Frak-managed wording) but are still loaded into the form
-// so they round-trip unchanged on save. Keep them — dropping wipes merchant wording.
 export function getBannerDefaults(
     components: NonNullable<
         NonNullable<SdkConfig["placements"]>[string]
@@ -35,28 +27,44 @@ export function BannerFields({
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
+    const { t } = useTranslation();
     return (
-        <div className={styles.customizeSettingsGrid}>
-            <FormField
-                control={form.control}
+        <div className={styles.settingsGrid}>
+            <WordingTextField
+                form={form}
+                name="banner.referralTitle"
+                label={t("customize.components.fields.referralTitle")}
+            />
+            <WordingTextField
+                form={form}
+                name="banner.referralDescription"
+                label={t("customize.components.fields.referralDescription")}
+            />
+            <WordingTextField
+                form={form}
+                name="banner.referralCta"
+                label={t("customize.components.fields.referralCta")}
+            />
+            <WordingTextField
+                form={form}
+                name="banner.inappTitle"
+                label={t("customize.components.fields.inappTitle")}
+            />
+            <WordingTextField
+                form={form}
+                name="banner.inappDescription"
+                label={t("customize.components.fields.inappDescription")}
+            />
+            <WordingTextField
+                form={form}
+                name="banner.inappCta"
+                label={t("customize.components.fields.inappCta")}
+            />
+            <ComponentCssField
+                form={form}
                 name="banner.css"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
-                        <FormDescription>
-                            Custom styles applied to the banner component
-                        </FormDescription>
-                        <FormControl>
-                            <textarea
-                                className={styles.customizeTextarea}
-                                placeholder={".frak-banner { ... }"}
-                                rows={4}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.css")}
+                placeholder={".frak-banner { ... }"}
             />
         </div>
     );

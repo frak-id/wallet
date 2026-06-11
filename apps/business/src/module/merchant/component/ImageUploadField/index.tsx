@@ -8,6 +8,7 @@ import {
     useMediaList,
     useMediaUpload,
 } from "@/module/merchant/hook/useMediaUpload";
+import { getUploadErrorMessage } from "@/module/merchant/utils/uploadError";
 import * as styles from "./image-upload-field.css";
 
 type ImageUploadFieldProps = {
@@ -131,22 +132,6 @@ export function ImageUploadField({
             </Stack>
         </Inline>
     );
-}
-
-function getUploadErrorMessage(error: unknown): string | null {
-    if (!error) return null;
-    if (
-        typeof error === "object" &&
-        error !== null &&
-        "value" in error &&
-        typeof (error as { value: unknown }).value === "object" &&
-        (error as { value: null | object }).value !== null &&
-        "error" in (error as { value: { error: unknown } }).value
-    ) {
-        return String((error as { value: { error: string } }).value.error);
-    }
-    if (error instanceof Error) return error.message;
-    return "Upload failed";
 }
 
 function ExistingFilePicker({

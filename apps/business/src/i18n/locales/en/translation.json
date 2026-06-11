@@ -827,5 +827,132 @@
             "label": "Enable Demo Mode",
             "description": "When enabled, all data will be replaced with mock data for demonstration purposes. This is useful for presentations and testing without affecting real data."
         }
+    },
+    "merchantEdit": {
+        "title": "Edit",
+        "close": "Close",
+        "tabs": {
+            "identity": "Customize SDK Identity",
+            "explorer": "Explorer App settings",
+            "team": "Manage your team"
+        }
+    },
+    "customize": {
+        "save": "Save",
+        "unsavedChanges": "You have unsaved changes. Discard them?",
+        "identity": {
+            "name": {
+                "label": "Name",
+                "placeholder": "Merchant Name",
+                "hint": "Your brand name as shown to visitors in the SDK components"
+            },
+            "logo": {
+                "label": "Logo",
+                "hint": "Your logo image, displayed alongside your name in SDK components",
+                "dropTitle": "Drag and drop files here",
+                "dropActive": "Drop image here",
+                "uploading": "Uploading…",
+                "or": "or",
+                "browse": "Browse files",
+                "restrictions": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)",
+                "existing": "Use an existing image:",
+                "remove": "Remove image"
+            },
+            "homepage": {
+                "label": "Homepage Link",
+                "hint": "Your website URL, used when visitors click your brand name"
+            },
+            "currency": {
+                "label": "Currency",
+                "hint": "Currency used to display reward amounts",
+                "auto": "Auto"
+            },
+            "lang": {
+                "label": "Language",
+                "hint": "Language for SDK text. Auto detects from the visitor's browser.",
+                "auto": "Auto (Browser detection)",
+                "en": "English",
+                "fr": "French"
+            },
+            "displayed": {
+                "title": "Frak SDK displayed",
+                "description": "When off, the SDK is completely hidden from visitors"
+            }
+        },
+        "placements": {
+            "title": "SDK Customization",
+            "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways — each with its own text, styles, and behavior.",
+            "globalDefault": "Global default",
+            "add": "Add another placement",
+            "dialog": {
+                "title": "Create placement",
+                "hint": "Placement id must be unique and use 3 to 16 characters.",
+                "cancel": "Cancel",
+                "create": "Create placement",
+                "errorMax": "Maximum 10 placements allowed.",
+                "errorFormat": "Use 3-16 chars (letters, numbers, _ or -).",
+                "errorExists": "This placement already exists."
+            },
+            "settings": {
+                "title": "Placement settings · {{placementId}}",
+                "description": "Text, styles and behavior overrides for this placement."
+            },
+            "css": {
+                "title": "Placement CSS · {{placementId}}",
+                "description": "Global CSS overrides for this placement. Styles defined here apply to all SDK components within this placement."
+            },
+            "delete": {
+                "title": "Delete placement · {{placementId}}",
+                "hint": "This removes all overrides for this placement.",
+                "dialogTitle": "Delete placement",
+                "description": "This will remove all overrides for placement {{placementId}}.",
+                "action": "Delete {{placementId}}",
+                "cancel": "Cancel",
+                "confirm": "Delete placement"
+            }
+        },
+        "components": {
+            "title": "Global component defaults",
+            "description": "Choose the wording that best matches your brand for each component.",
+            "buttonShare": "Share button",
+            "postPurchase": "Post Purchase",
+            "banner": "Banner",
+            "preview": "Preview",
+            "advanced": "Advanced settings",
+            "clickAction": {
+                "label": "Click action",
+                "hint": "What happens when a visitor clicks the share button",
+                "embeddedWallet": "Embedded wallet",
+                "shareModal": "Share modal",
+                "sharingPage": "Sharing page"
+            },
+            "targetInteraction": {
+                "label": "Target interaction",
+                "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
+                "error": "Maximum length is 200 characters"
+            },
+            "fields": {
+                "text": "Button text",
+                "noRewardText": "Button text (no reward)",
+                "refereeText": "Referee message",
+                "refereeNoRewardText": "Referee message (no reward)",
+                "referrerText": "Referrer message",
+                "referrerNoRewardText": "Referrer message (no reward)",
+                "ctaText": "CTA text",
+                "ctaNoRewardText": "CTA text (no reward)",
+                "referralTitle": "Referral title",
+                "referralDescription": "Referral description",
+                "referralCta": "Referral CTA",
+                "inappTitle": "In-app title",
+                "inappDescription": "In-app description",
+                "inappCta": "In-app CTA",
+                "css": "Component CSS"
+            }
+        },
+        "globalCss": {
+            "title": "Global CSS",
+            "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
+            "toggle": "Custom CSS"
+        }
     }
 }

@@ -52,12 +52,15 @@ describe("MerchantItem", () => {
         expect(onManageBudget).toHaveBeenCalledTimes(1);
     });
 
-    it("should link to the merchant page", () => {
+    it("should link to the merchant edit page", () => {
         render(<MerchantItem {...props} />);
 
         const links = screen.getAllByRole("link");
         expect(links).toHaveLength(1);
-        expect(links[0]).toHaveAttribute("href", "/m/merchant-123/merchant");
+        expect(links[0]).toHaveAttribute(
+            "href",
+            "/m/merchant-123/merchant/customize"
+        );
     });
 
     it("should render avatar initials", () => {

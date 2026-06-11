@@ -9,8 +9,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import type { Address } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
-import { FormLayout } from "@/module/forms/Form";
-import { MerchantHead } from "@/module/merchant/component/MerchantHead";
+import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
 import { AllowedDomainsSheet } from "../AllowedDomainsSheet";
@@ -40,8 +39,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
     const currency = stablecoin ? currencyMetadata[stablecoin] : undefined;
 
     return (
-        <FormLayout>
-            <MerchantHead />
+        <EditPageLayout merchantId={merchantId} page="details">
             {merchant && (
                 <Card>
                     <CardHeader>
@@ -123,7 +121,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
             <NewsletterShareLink merchantId={merchantId} />
             <ExplorerSettings merchantId={merchantId} />
             <PurchaseTrackerSummary merchantId={merchantId} />
-        </FormLayout>
+        </EditPageLayout>
     );
 }
 

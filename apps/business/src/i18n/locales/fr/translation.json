@@ -827,5 +827,132 @@
             "label": "Activer le mode démo",
             "description": "Une fois activé, toutes les données sont remplacées par des données fictives à des fins de démonstration. Utile pour des présentations ou des tests sans toucher aux données réelles."
         }
+    },
+    "merchantEdit": {
+        "title": "Modifier",
+        "close": "Fermer",
+        "tabs": {
+            "identity": "Personnaliser l'identité SDK",
+            "explorer": "Réglages de l'app Explorer",
+            "team": "Gérer votre équipe"
+        }
+    },
+    "customize": {
+        "save": "Enregistrer",
+        "unsavedChanges": "Des modifications ne sont pas enregistrées. Les abandonner ?",
+        "identity": {
+            "name": {
+                "label": "Nom",
+                "placeholder": "Nom du marchand",
+                "hint": "Le nom de votre marque affiché aux visiteurs dans les composants SDK"
+            },
+            "logo": {
+                "label": "Logo",
+                "hint": "Votre logo, affiché à côté de votre nom dans les composants SDK",
+                "dropTitle": "Glissez-déposez vos fichiers ici",
+                "dropActive": "Déposez l'image ici",
+                "uploading": "Envoi en cours…",
+                "or": "ou",
+                "browse": "Parcourir",
+                "restrictions": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 à 2:1 (Max 10 Mo)",
+                "existing": "Utiliser une image existante :",
+                "remove": "Supprimer l'image"
+            },
+            "homepage": {
+                "label": "Lien du site",
+                "hint": "L'URL de votre site, utilisée quand un visiteur clique sur votre marque"
+            },
+            "currency": {
+                "label": "Devise",
+                "hint": "Devise utilisée pour afficher les montants de récompense",
+                "auto": "Auto"
+            },
+            "lang": {
+                "label": "Langue",
+                "hint": "Langue des textes du SDK. Auto détecte celle du navigateur du visiteur.",
+                "auto": "Auto (détection navigateur)",
+                "en": "Anglais",
+                "fr": "Français"
+            },
+            "displayed": {
+                "title": "SDK Frak affiché",
+                "description": "Désactivé, le SDK est entièrement masqué pour les visiteurs"
+            }
+        },
+        "placements": {
+            "title": "Personnalisation du SDK",
+            "description": "Les réglages globaux s'appliquent à tous les composants SDK. Les emplacements sont des variantes utilisables sur un même site pour présenter vos produits différemment — chacune avec ses textes, styles et comportements.",
+            "globalDefault": "Réglages globaux",
+            "add": "Ajouter un emplacement",
+            "dialog": {
+                "title": "Créer un emplacement",
+                "hint": "L'identifiant doit être unique et contenir 3 à 16 caractères.",
+                "cancel": "Annuler",
+                "create": "Créer l'emplacement",
+                "errorMax": "Maximum 10 emplacements.",
+                "errorFormat": "3 à 16 caractères (lettres, chiffres, _ ou -).",
+                "errorExists": "Cet emplacement existe déjà."
+            },
+            "settings": {
+                "title": "Réglages de l'emplacement · {{placementId}}",
+                "description": "Textes, styles et comportements propres à cet emplacement."
+            },
+            "css": {
+                "title": "CSS de l'emplacement · {{placementId}}",
+                "description": "CSS appliqué à tous les composants SDK de cet emplacement."
+            },
+            "delete": {
+                "title": "Supprimer l'emplacement · {{placementId}}",
+                "hint": "Supprime tous les réglages propres à cet emplacement.",
+                "dialogTitle": "Supprimer l'emplacement",
+                "description": "Tous les réglages de l'emplacement {{placementId}} seront supprimés.",
+                "action": "Supprimer {{placementId}}",
+                "cancel": "Annuler",
+                "confirm": "Supprimer l'emplacement"
+            }
+        },
+        "components": {
+            "title": "Réglages par défaut des composants",
+            "description": "Choisissez la formulation qui correspond le mieux à votre marque pour chaque composant.",
+            "buttonShare": "Bouton de partage",
+            "postPurchase": "Post-achat",
+            "banner": "Bannière",
+            "preview": "Aperçu",
+            "advanced": "Réglages avancés",
+            "clickAction": {
+                "label": "Action au clic",
+                "hint": "Ce qui se passe quand un visiteur clique sur le bouton de partage",
+                "embeddedWallet": "Wallet intégré",
+                "shareModal": "Fenêtre de partage",
+                "sharingPage": "Page de partage"
+            },
+            "targetInteraction": {
+                "label": "Interaction cible",
+                "hint": "Nom de l'événement qui déclenche le calcul de la récompense pour cet emplacement (ex. purchase_completed, signup)",
+                "error": "Maximum 200 caractères"
+            },
+            "fields": {
+                "text": "Texte du bouton",
+                "noRewardText": "Texte du bouton (sans récompense)",
+                "refereeText": "Message du filleul",
+                "refereeNoRewardText": "Message du filleul (sans récompense)",
+                "referrerText": "Message du parrain",
+                "referrerNoRewardText": "Message du parrain (sans récompense)",
+                "ctaText": "Texte du CTA",
+                "ctaNoRewardText": "Texte du CTA (sans récompense)",
+                "referralTitle": "Titre parrainage",
+                "referralDescription": "Description parrainage",
+                "referralCta": "CTA parrainage",
+                "inappTitle": "Titre in-app",
+                "inappDescription": "Description in-app",
+                "inappCta": "CTA in-app",
+                "css": "CSS du composant"
+            }
+        },
+        "globalCss": {
+            "title": "CSS global",
+            "description": "Styles CSS appliqués à tous les composants SDK, tous emplacements confondus. Le CSS par emplacement peut les surcharger.",
+            "toggle": "CSS personnalisé"
+        }
     }
 }
