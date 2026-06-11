@@ -5,29 +5,13 @@ import {
     isFrakDeepLink,
     triggerDeepLinkWithFallback,
 } from "../../utils/browser/deepLinkWithFallback";
+import { isInAppBrowser, isIOS } from "../../utils/browser/inAppBrowser";
 import { changeIframeVisibility } from "../../utils/iframe/iframeHelper";
 
-/**
- * Detect iOS in-app browsers (Instagram, Facebook) where server-side
- * 302 redirects to custom URL schemes (x-safari-https://) are silently
- * swallowed by WKWebView. Direct window.location.href assignment works.
- */
-const isIOSInAppBrowser = (() => {
-    if (typeof navigator === "undefined") return false;
-    const ua = navigator.userAgent;
-    // Standard iOS or iPadOS 13+ (reports as Macintosh with touch)
-    const isIOS =
-        /iPhone|iPad|iPod/i.test(ua) ||
-        (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
-    if (!isIOS) return false;
-    const lower = ua.toLowerCase();
-    return (
-        lower.includes("instagram") ||
-        lower.includes("fban") ||
-        lower.includes("fbav") ||
-        lower.includes("facebook")
-    );
-})();
+// iOS in-app browsers (Instagram, Facebook) silently swallow server-side 302
+// redirects to custom URL schemes (x-safari-https://) in WKWebView; direct
+// window.location.href assignment works.
+const isIOSInAppBrowser = isIOS && isInAppBrowser;
 
 /** @ignore */
 export type IframeLifecycleManager = {
