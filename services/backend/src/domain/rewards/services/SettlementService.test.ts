@@ -69,6 +69,7 @@ const buildService = () => {
         updateStatusBatch,
         revertSettlementToPending,
         bumpAttemptAndRevert,
+        recordSettlementBroadcast,
         findStuckProcessing,
         pushRewards,
         getReceipt,
@@ -166,6 +167,7 @@ describe("SettlementService.settleRewards", () => {
             service,
             updateStatusBatch,
             revertSettlementToPending,
+            recordSettlementBroadcast,
             pushRewards,
         } = buildService();
         pushRewards.mockResolvedValue({
@@ -184,6 +186,10 @@ describe("SettlementService.settleRewards", () => {
         expect(result.txHashes).toEqual(["0xpending"]);
         expect(updateStatusBatch).not.toHaveBeenCalled();
         expect(revertSettlementToPending).not.toHaveBeenCalled();
+        expect(recordSettlementBroadcast).toHaveBeenCalledWith(
+            ["a1"],
+            "0xpending"
+        );
     });
 
     it("re-pends preparation drops with an attempt spent and never pushes", async () => {
@@ -291,6 +297,48 @@ describe("SettlementService.reconcileStuckSettlements", () => {
             "Settlement tx dropped from mempool"
         );
         expect(result).toEqual({ settled: 0, reverted: 1, pending: 0 });
+    });
+
+    it("defers rows when the receipt lookup itself fails (RPC down)", async () => {
+        const {
+            service,
+            findStuckProcessing,
+            revertSettlementToPending,
+            updateStatusBatch,
+            getReceipt,
+            isTransactionKnown,
+        } = buildService();
+        findStuckProcessing.mockResolvedValue([
+            { id: "a1", onchainTxHash: "0xaaa" },
+        ]);
+        getReceipt.mockRejectedValue(new Error("RPC unreachable"));
+
+        const result = await service.reconcileStuckSettlements(30);
+
+        expect(revertSettlementToPending).not.toHaveBeenCalled();
+        expect(updateStatusBatch).not.toHaveBeenCalled();
+        expect(isTransactionKnown).not.toHaveBeenCalled();
+        expect(result).toEqual({ settled: 0, reverted: 0, pending: 1 });
+    });
+
+    it("defers rows when the mempool lookup fails instead of treating them as dropped", async () => {
+        const {
+            service,
+            findStuckProcessing,
+            revertSettlementToPending,
+            getReceipt,
+            isTransactionKnown,
+        } = buildService();
+        findStuckProcessing.mockResolvedValue([
+            { id: "a1", onchainTxHash: "0xaaa" },
+        ]);
+        getReceipt.mockResolvedValue(null);
+        isTransactionKnown.mockRejectedValue(new Error("RPC unreachable"));
+
+        const result = await service.reconcileStuckSettlements(30);
+
+        expect(revertSettlementToPending).not.toHaveBeenCalled();
+        expect(result).toEqual({ settled: 0, reverted: 0, pending: 1 });
     });
 
     it("reverts rows that never broadcast without touching the chain", async () => {
