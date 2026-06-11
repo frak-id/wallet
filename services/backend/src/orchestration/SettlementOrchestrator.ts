@@ -81,8 +81,13 @@ export class SettlementOrchestrator {
             }
         >();
 
+        // Force a fresh read: the 10-min LRU could otherwise report a bank
+        // drained by an earlier run (or another replica) as still funded,
+        // passing pre-flight only for the on-chain push to fail and burn an
+        // attempt. Dedupe so banks shared across merchants are read once.
         await Promise.all(
-            [...merchantBanks.entries()].map(async ([, bankAddress]) => {
+            [...new Set(merchantBanks.values())].map(async (bankAddress) => {
+                this.campaignBankRepository.clearOnChainCache(bankAddress);
                 const state =
                     await this.campaignBankRepository.getBankOnChainState(
                         bankAddress,

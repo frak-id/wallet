@@ -36,7 +36,6 @@ type PurchaseItem = {
 export type PurchaseContext = {
     orderId: string;
     amount: number;
-    subtotal?: number;
     currency: string;
     items: PurchaseItem[];
     isFirstPurchase?: boolean;

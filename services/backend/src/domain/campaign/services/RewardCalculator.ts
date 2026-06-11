@@ -58,13 +58,8 @@ async function calculatePercentageReward(
         };
     }
 
-    const baseAmount =
-        reward.percentOf === "purchase_subtotal"
-            ? (context.purchase.subtotal ?? context.purchase.amount)
-            : context.purchase.amount;
-
     // Order total is in fiat; convert to token units or a JPY/SEK order pays ~150x.
-    const fiatAmount = (baseAmount * reward.percent) / 100;
+    const fiatAmount = (context.purchase.amount * reward.percent) / 100;
     const conversion = await pricingRepository.convertFiatToTokenAmount({
         token,
         fiatAmount,

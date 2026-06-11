@@ -118,7 +118,11 @@ export class CampaignRuleRepository {
         CampaignRuleSelect[]
     >({
         max: 256,
-        ttl: 5 * 60 * 1000,
+        // invalidateMerchantCache only evicts the local instance, so a pause or
+        // archive on another replica stays unseen for up to one TTL — i.e. the
+        // campaign keeps paying. 30s caps that cross-replica staleness window
+        // until a shared invalidation bus replaces this stopgap.
+        ttl: 30 * 1000,
     });
 
     async findById(id: string): Promise<CampaignRuleSelect | null> {

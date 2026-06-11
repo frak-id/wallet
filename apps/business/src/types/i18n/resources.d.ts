@@ -405,8 +405,7 @@ export default interface Resources {
           },
           "rewards": {
             "base": {
-              "purchase_amount": "the order total",
-              "purchase_subtotal": "the order subtotal"
+              "purchase_amount": "the order total"
             },
             "bounds": "Between {{min}} and {{max}} {{currency}}",
             "boundsMax": "Up to {{max}} {{currency}}",

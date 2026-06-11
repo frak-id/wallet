@@ -106,10 +106,7 @@ const PercentageRewardDefinitionSchema = t.Object({
     type: AssetTypeSchema,
     amountType: t.Literal("percentage"),
     percent: t.Number(),
-    percentOf: t.Union([
-        t.Literal("purchase_amount"),
-        t.Literal("purchase_subtotal"),
-    ]),
+    percentOf: t.Literal("purchase_amount"),
     maxAmount: t.Optional(t.Number()),
     minAmount: t.Optional(t.Number()),
     token: t.Optional(t.Hex()),
