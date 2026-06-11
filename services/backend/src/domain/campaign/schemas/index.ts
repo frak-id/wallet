@@ -223,11 +223,9 @@ const EstimatedRewardTierSchema = t.Union([
         maxValue: t.Optional(t.Number()),
         amount: t.TokenAmount,
     }),
-    t.Object({
-        minValue: t.Number(),
-        maxValue: t.Optional(t.Number()),
-        percent: t.Number(),
-    }),
+    // .anyOf[1] is RewardTierSchema's percent branch, byte-identical here —
+    // reuse it so the two can't drift (only the amount branch differs).
+    RewardTierSchema.anyOf[1],
 ]);
 
 const FixedEstimatedRewardSchema = t.Object({

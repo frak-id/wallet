@@ -114,7 +114,7 @@ export class AssetLogRepository {
      * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
      * skipped before the push are recovered by `reconcileStuckSettlements`.
      */
-    async claimPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
+    async claimPendingForSettlement(limit: number): Promise<AssetLogSelect[]> {
         const now = new Date();
 
         return db.transaction(async (tx) => {
@@ -162,7 +162,7 @@ export class AssetLogRepository {
                 .orderBy(assetLogsTable.createdAt)
                 .for("update", { skipLocked: true });
 
-            const locked = limit ? await lockable.limit(limit) : await lockable;
+            const locked = await lockable.limit(limit);
 
             if (locked.length === 0) return [];
 

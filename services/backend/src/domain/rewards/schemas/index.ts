@@ -36,13 +36,8 @@ export type AssetStatus = Static<typeof AssetStatusSchema>;
  * transition, so `consumed` is never persisted to `asset_logs.status`).
  */
 export const RewardDisplayStatusSchema = t.Union([
-    t.Literal("pending"),
-    t.Literal("processing"),
-    t.Literal("settled"),
+    ...AssetStatusSchema.anyOf,
     t.Literal("consumed"),
-    t.Literal("cancelled"),
-    t.Literal("expired"),
-    t.Literal("bank_depleted"),
 ]);
 export type RewardDisplayStatus = Static<typeof RewardDisplayStatusSchema>;
 
