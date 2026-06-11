@@ -56,6 +56,9 @@ export default defineConfig([
         clean: true,
         minify: true,
         dts: true,
+        // Ship sourcemaps with the published NPM build so integrators can debug
+        // into the minified dist. The CDN IIFE intentionally stays mapless.
+        sourcemap: true,
         outDir: "./dist",
         treeshake: {
             moduleSideEffects: false,
