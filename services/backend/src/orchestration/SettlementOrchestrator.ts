@@ -39,13 +39,9 @@ export class SettlementOrchestrator {
     ) {}
 
     async runSettlement(): Promise<SettlementResult> {
-        const resetCount =
-            await this.assetLogRepository.resetStuckSettlementProcessing(
-                RewardConfig.settlement.stuckThresholdMinutes
-            );
-        if (resetCount > 0) {
-            log.info({ resetCount }, "Reset stuck settlement processing items");
-        }
+        await this.settlementService.reconcileStuckSettlements(
+            RewardConfig.settlement.stuckThresholdMinutes
+        );
 
         const claimedAssetLogs =
             await this.assetLogRepository.claimPendingForSettlement(

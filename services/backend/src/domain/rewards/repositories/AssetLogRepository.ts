@@ -100,7 +100,7 @@ export class AssetLogRepository {
      *
      * `settlementAttempts` is intentionally not bumped here; only an actual
      * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
-     * skipped before the push are retried via `resetStuckSettlementProcessing`.
+     * skipped before the push are recovered by `reconcileStuckSettlements`.
      */
     async claimPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
         const now = new Date();
@@ -320,6 +320,26 @@ export class AssetLogRepository {
         return results.length;
     }
 
+    /**
+     * Stamp the broadcast tx hash on rows still `processing`, so a crash before
+     * the settled-status write leaves enough state to reconcile against the
+     * chain instead of re-sending.
+     */
+    async recordSettlementBroadcast(
+        ids: string[],
+        txHash: Hex
+    ): Promise<number> {
+        if (ids.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({ onchainTxHash: txHash })
+            .where(inArray(assetLogsTable.id, ids))
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
     async revertSettlementToPending(
         ids: string[],
         error: string
@@ -339,26 +359,23 @@ export class AssetLogRepository {
         return results.length;
     }
 
-    async resetStuckSettlementProcessing(
+    async findStuckProcessing(
         olderThanMinutes: number
-    ): Promise<number> {
+    ): Promise<{ id: string; onchainTxHash: Hex | null }[]> {
         const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
 
-        const results = await db
-            .update(assetLogsTable)
-            .set({
-                status: "pending",
-                statusChangedAt: new Date(),
+        return db
+            .select({
+                id: assetLogsTable.id,
+                onchainTxHash: assetLogsTable.onchainTxHash,
             })
+            .from(assetLogsTable)
             .where(
                 and(
                     eq(assetLogsTable.status, "processing"),
                     lt(assetLogsTable.statusChangedAt, cutoff)
                 )
-            )
-            .returning({ id: assetLogsTable.id });
-
-        return results.length;
+            );
     }
 
     /**
