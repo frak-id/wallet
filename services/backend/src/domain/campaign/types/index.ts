@@ -35,6 +35,14 @@ type PurchaseItem = {
 
 export type PurchaseContext = {
     orderId: string;
+    /**
+     * Order total in `currency` units — raw fiat, never FX-normalized. Rule
+     * conditions and tier thresholds compare it as-is, so they are
+     * order-currency-relative: "min 500" means 500 JPY on a JPY order, not
+     * 500 EUR. Only percentage reward amounts go through FX conversion.
+     * TODO(follow-up): normalize once when building the context, or scope
+     * thresholds per currency.
+     */
     amount: number;
     currency: string;
     items: PurchaseItem[];
@@ -110,11 +118,14 @@ export type EvaluationResult = {
     /**
      * True when a matched percentage reward could not be converted into its
      * token amount (no FX rate for the purchase currency or token price
-     * unavailable). The orchestrator records the failure on the interaction
-     * (attempt counter + backoff) and leaves it unprocessed for retry.
+     * unavailable). The orchestrator leaves the interaction unprocessed so
+     * the next cron run retries it — failure is logged only, nothing is
+     * persisted. TODO: if production logs ever show a row stuck on this path
+     * (starving the batch), add an attempt counter + backoff on
+     * interaction_logs.
      */
     deferForUnpriceableReward: boolean;
-    /** Why pricing failed, persisted as `interaction_logs.last_pricing_error`. */
+    /** Why pricing failed — logged by the orchestrator, not persisted. */
     deferReason?: string;
 };
 

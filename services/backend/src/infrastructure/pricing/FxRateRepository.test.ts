@@ -19,7 +19,9 @@ describe("FxRateRepository", () => {
     let repository: FxRateRepository;
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        // resetAllMocks (not clear): drops unconsumed mockResolvedValueOnce
+        // queues so they cannot leak into the next test
+        vi.resetAllMocks();
         repository = new FxRateRepository();
     });
 
@@ -126,6 +128,47 @@ describe("FxRateRepository", () => {
         );
         expect(frankfurterGet).not.toHaveBeenCalled();
         expect(erApiGet).not.toHaveBeenCalled();
+    });
+
+    // Simulates the 6h table-cache expiry (baselines live 24h, so they survive)
+    const expireRateTable = (repo: FxRateRepository) => {
+        (repo as unknown as { cache: { clear: () => void } }).cache.clear();
+    };
+
+    it("rejects a rate that jumps more than 20% vs the last accepted value", async () => {
+        frankfurterGet.mockResolvedValueOnce({
+            json: async () => ({ rates: { USD: 1.08 } }),
+        });
+        expect(await repository.getRate({ from: "EUR", to: "USD" })).toBe(1.08);
+
+        expireRateTable(repository);
+        frankfurterGet.mockResolvedValueOnce({
+            json: async () => ({ rates: { USD: 108 } }),
+        });
+
+        expect(
+            await repository.getRate({ from: "EUR", to: "USD" })
+        ).toBeUndefined();
+    });
+
+    it("accepts a rate drifting within the 20% band and moves the baseline", async () => {
+        frankfurterGet.mockResolvedValueOnce({
+            json: async () => ({ rates: { USD: 1.0 } }),
+        });
+        expect(await repository.getRate({ from: "EUR", to: "USD" })).toBe(1.0);
+
+        expireRateTable(repository);
+        frankfurterGet.mockResolvedValueOnce({
+            json: async () => ({ rates: { USD: 1.15 } }),
+        });
+        expect(await repository.getRate({ from: "EUR", to: "USD" })).toBe(1.15);
+
+        // 1.15 -> 1.3 is within 20% of the moved baseline, but 30% from 1.0
+        expireRateTable(repository);
+        frankfurterGet.mockResolvedValueOnce({
+            json: async () => ({ rates: { USD: 1.3 } }),
+        });
+        expect(await repository.getRate({ from: "EUR", to: "USD" })).toBe(1.3);
     });
 
     it("does not poison the cache with failures forever", async () => {

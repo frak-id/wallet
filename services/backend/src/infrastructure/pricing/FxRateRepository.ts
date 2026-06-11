@@ -10,6 +10,20 @@ type RateTable = Record<string, number>;
 const RATE_TTL_MS = 6 * 60 * 60 * 1000;
 /** Retry unknown/unreachable bases quickly: failures are often transient. */
 const FAILURE_TTL_MS = 5 * 60 * 1000;
+/**
+ * Providers are free, keyless, no-SLA services feeding a money path: a
+ * poisoned response would mint wrong reward amounts. Real FX pairs never
+ * move >20% between fetches, so reject such jumps vs the last accepted
+ * value — the pair becomes unavailable and rewards defer instead.
+ */
+const SANITY_BAND = 0.2;
+/**
+ * Baselines refresh on every accepted rate, so this TTL only matters for a
+ * rejected pair: after 24h without acceptance the baseline ages out and the
+ * new market level is taken at face value (self-recovery from a genuine
+ * structural move, e.g. a currency collapse).
+ */
+const BASELINE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const ISO_4217 = /^[A-Za-z]{3}$/;
 
@@ -22,6 +36,12 @@ export class FxRateRepository {
     private readonly cache = new LRUCache<string, RateTable | "unknown">({
         max: 64,
         ttl: RATE_TTL_MS,
+    });
+
+    /** Last accepted rate per "BASE/QUOTE" pair, for the sanity band. */
+    private readonly baselines = new LRUCache<string, number>({
+        max: 256,
+        ttl: BASELINE_TTL_MS,
     });
 
     private readonly apiMutex = new Mutex();
@@ -60,7 +80,27 @@ export class FxRateRepository {
 
         const table = await this.getRateTable(base);
         const rate = table?.[quote];
-        return rate !== undefined && rate > 0 ? rate : undefined;
+        if (rate === undefined || rate <= 0) return undefined;
+        return this.checkAgainstBaseline(`${base}/${quote}`, rate);
+    }
+
+    private checkAgainstBaseline(
+        pair: string,
+        rate: number
+    ): number | undefined {
+        const baseline = this.baselines.get(pair);
+        if (baseline !== undefined) {
+            const drift = Math.abs(rate - baseline) / baseline;
+            if (drift > SANITY_BAND) {
+                log.error(
+                    { pair, rate, baseline, drift },
+                    "[FxRateRepository] Rate outside sanity band, rejecting"
+                );
+                return undefined;
+            }
+        }
+        this.baselines.set(pair, rate);
+        return rate;
     }
 
     private async getRateTable(base: string): Promise<RateTable | undefined> {
