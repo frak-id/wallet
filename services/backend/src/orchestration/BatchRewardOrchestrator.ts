@@ -3,6 +3,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
 import { buildTimeContext, type CalculatedReward } from "../domain/campaign";
+import type { CampaignRuleRepository } from "../domain/campaign/repositories/CampaignRuleRepository";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
 import {
@@ -24,6 +25,8 @@ import type { InteractionContextBuilder } from "./reward";
 type BatchProcessResult = {
     processedCount: number;
     rewardsCreated: number;
+    /** Interactions left unprocessed because a reward couldn't be priced. */
+    deferredCount: number;
     errors: {
         interactionLogId: string;
         error: string;
@@ -35,6 +38,8 @@ type ProcessSingleResult = {
     rewardsCreated: number;
     /** True when the interaction was already cancelled by a concurrent refund. */
     cancelled?: boolean;
+    /** True when left unprocessed for a later retry (unpriceable reward). */
+    deferred?: boolean;
     error?: string;
 };
 
@@ -46,7 +51,8 @@ export class BatchRewardOrchestrator {
         private readonly referralService: ReferralService,
         private readonly identityOrchestrator: IdentityOrchestrator,
         private readonly contextBuilder: InteractionContextBuilder,
-        private readonly merchantRepository: MerchantRepository
+        private readonly merchantRepository: MerchantRepository,
+        private readonly campaignRuleRepository: CampaignRuleRepository
     ) {}
 
     async processPendingInteractions(options: {
@@ -58,7 +64,12 @@ export class BatchRewardOrchestrator {
             });
 
         if (interactions.length === 0) {
-            return { processedCount: 0, rewardsCreated: 0, errors: [] };
+            return {
+                processedCount: 0,
+                rewardsCreated: 0,
+                deferredCount: 0,
+                errors: [],
+            };
         }
 
         log.debug(
@@ -69,6 +80,7 @@ export class BatchRewardOrchestrator {
         const result: BatchProcessResult = {
             processedCount: 0,
             rewardsCreated: 0,
+            deferredCount: 0,
             errors: [],
         };
 
@@ -84,7 +96,9 @@ export class BatchRewardOrchestrator {
                     merchantId
                 );
 
-                if (processResult.success) {
+                if (processResult.deferred) {
+                    result.deferredCount++;
+                } else if (processResult.success) {
                     result.processedCount++;
                     result.rewardsCreated += processResult.rewardsCreated;
                 } else if (processResult.error) {
@@ -100,6 +114,7 @@ export class BatchRewardOrchestrator {
             {
                 processedCount: result.processedCount,
                 rewardsCreated: result.rewardsCreated,
+                deferredCount: result.deferredCount,
                 errorCount: result.errors.length,
             },
             "Batch reward processing completed"
@@ -128,6 +143,11 @@ export class BatchRewardOrchestrator {
         interaction: InteractionLogSelect,
         merchantId: string
     ): Promise<ProcessSingleResult> {
+        // Budget consumed during rule evaluation must be released on any path
+        // that does not persist the matching rewards; declared out here so the
+        // catch can compensate too. Success and catch paths are mutually
+        // exclusive, so the budget is never restored twice.
+        let consumedByCampaign = new Map<string, number>();
         try {
             if (!interaction.identityGroupId) {
                 return {
@@ -152,22 +172,44 @@ export class BatchRewardOrchestrator {
                     walletAddress
                 );
 
+            // Resolved once and shared between rule evaluation (to price
+            // percentage/tiered rewards) and asset-log creation (token fallback).
+            const merchantDefaultToken =
+                (await this.merchantRepository.getDefaultRewardToken(
+                    merchantId
+                )) ?? undefined;
+
             const evaluationResult = await this.ruleEngineService.evaluateRules(
                 {
                     merchantId,
                     trigger,
                     context,
                     time,
+                    merchantDefaultToken,
                 },
                 (args) => this.referralService.getReferralChain(args)
             );
 
+            consumedByCampaign = this.sumRewardAmountsByCampaign(
+                evaluationResult.rewards
+            );
+
+            if (evaluationResult.deferForUnpriceableReward) {
+                return await this.deferInteraction(
+                    interaction,
+                    merchantId,
+                    evaluationResult.deferReason ?? "pricing_unavailable",
+                    consumedByCampaign
+                );
+            }
+
             const assetParams =
                 evaluationResult.rewards.length > 0
-                    ? await this.buildAssetLogParams(
+                    ? this.buildAssetLogParams(
                           evaluationResult.rewards,
                           merchantId,
                           interaction.id,
+                          merchantDefaultToken,
                           referralLinkId ?? undefined
                       )
                     : [];
@@ -236,6 +278,11 @@ export class BatchRewardOrchestrator {
                 return { cancelled: false, createdAssets };
             });
 
+            await this.restoreUnpersistedBudget(
+                consumedByCampaign,
+                txOutcome.createdAssets
+            );
+
             if (txOutcome.createdAssets.length > 0) {
                 try {
                     await this.sendRewardPendingNotifications(
@@ -271,6 +318,11 @@ export class BatchRewardOrchestrator {
                 cancelled: txOutcome.cancelled,
             };
         } catch (error) {
+            // We consumed budget before failing (buildAssetLogParams or the
+            // insert tx threw, and the interaction stays unprocessed for retry).
+            // Release all of it so the retry can consume cleanly.
+            await this.restoreUnpersistedBudget(consumedByCampaign, []);
+
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
 
@@ -291,23 +343,93 @@ export class BatchRewardOrchestrator {
         }
     }
 
-    private async buildAssetLogParams(
+    private sumRewardAmountsByCampaign(
+        rewards: CalculatedReward[]
+    ): Map<string, number> {
+        const byCampaign = new Map<string, number>();
+        for (const reward of rewards) {
+            byCampaign.set(
+                reward.campaignRuleId,
+                (byCampaign.get(reward.campaignRuleId) ?? 0) + reward.amount
+            );
+        }
+        return byCampaign;
+    }
+
+    /**
+     * Release the slice of campaign budget consumed during rule evaluation but
+     * not persisted as a pending reward. `created` are the rows actually
+     * inserted; anything consumed beyond them per campaign is restored. Runs on
+     * exactly one of the success/catch paths, so it never double-restores; a
+     * failed restore is logged, never thrown, so it cannot mask the outcome.
+     */
+    private async restoreUnpersistedBudget(
+        consumedByCampaign: Map<string, number>,
+        created: AssetLogSelect[]
+    ): Promise<void> {
+        if (consumedByCampaign.size === 0) return;
+
+        const insertedByCampaign = new Map<string, number>();
+        for (const asset of created) {
+            if (!asset.campaignRuleId) continue;
+            insertedByCampaign.set(
+                asset.campaignRuleId,
+                (insertedByCampaign.get(asset.campaignRuleId) ?? 0) +
+                    Number.parseFloat(asset.amount)
+            );
+        }
+
+        for (const [campaignRuleId, consumed] of consumedByCampaign) {
+            const toRestore =
+                consumed - (insertedByCampaign.get(campaignRuleId) ?? 0);
+            if (toRestore <= 0) continue;
+            try {
+                await this.campaignRuleRepository.restoreBudget(
+                    campaignRuleId,
+                    toRestore
+                );
+            } catch (error) {
+                log.warn(
+                    { error, campaignRuleId, amount: toRestore },
+                    "Failed to restore unspent campaign budget"
+                );
+            }
+        }
+    }
+
+    /**
+     * Leave the interaction unprocessed (processed_at stays NULL) so the next
+     * cron run re-evaluates it — pricing failures are transient (FX/token rate
+     * providers down) and rare, so the cron cadence is the retry policy, same
+     * as the generic error path. Budget consumed by sibling campaigns is
+     * released so the retry is clean.
+     */
+    private async deferInteraction(
+        interaction: InteractionLogSelect,
+        merchantId: string,
+        reason: string,
+        consumedByCampaign: Map<string, number>
+    ): Promise<ProcessSingleResult> {
+        await this.restoreUnpersistedBudget(consumedByCampaign, []);
+        log.info(
+            { interactionLogId: interaction.id, merchantId, reason },
+            "Deferred interaction: reward not priceable, will retry next run"
+        );
+        return { success: true, rewardsCreated: 0, deferred: true };
+    }
+
+    private buildAssetLogParams(
         rewards: CalculatedReward[],
         merchantId: string,
         interactionLogId: string,
+        merchantDefaultToken: Address | undefined,
         referralLinkId: string | undefined
-    ): Promise<CreateAssetLogParams[]> {
-        const hasTokenTypeWithoutToken = rewards.some(
-            (r) => r.type === "token" && !r.token
-        );
-        const fallbackToken = hasTokenTypeWithoutToken
-            ? await this.merchantRepository.getDefaultRewardToken(merchantId)
-            : null;
-
+    ): CreateAssetLogParams[] {
         const params: CreateAssetLogParams[] = [];
 
         for (const reward of rewards) {
-            const resolvedToken = reward.token ?? fallbackToken ?? undefined;
+            const resolvedToken =
+                reward.token ?? merchantDefaultToken ?? undefined;
 
             if (reward.type === "token" && !resolvedToken) {
                 log.warn(

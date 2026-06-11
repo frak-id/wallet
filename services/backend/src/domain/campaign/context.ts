@@ -1,3 +1,4 @@
+import { pricingRepository } from "@backend-infrastructure";
 import { RewardsContext } from "../rewards/context";
 import { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
 import { CampaignManagementService } from "./services/CampaignManagementService";
@@ -8,7 +9,10 @@ import { RuleEngineService } from "./services/RuleEngineService";
 
 const campaignRuleRepository = new CampaignRuleRepository();
 const ruleConditionEvaluator = new RuleConditionEvaluator();
-const rewardCalculator = new RewardCalculator(ruleConditionEvaluator);
+const rewardCalculator = new RewardCalculator(
+    ruleConditionEvaluator,
+    pricingRepository
+);
 const ruleEngineService = new RuleEngineService(
     campaignRuleRepository,
     ruleConditionEvaluator,

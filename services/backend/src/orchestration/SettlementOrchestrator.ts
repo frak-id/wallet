@@ -1,6 +1,10 @@
-import { eventEmitter, log } from "@backend-infrastructure";
+import {
+    eventEmitter,
+    log,
+    type TokenMetadataRepository,
+} from "@backend-infrastructure";
 import { currentStablecoinsList } from "@frak-labs/app-essentials";
-import { type Address, getAddress } from "viem";
+import { type Address, getAddress, parseUnits } from "viem";
 import type { CampaignBankRepository } from "../domain/campaign-bank/repositories/CampaignBankRepository";
 import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
@@ -20,6 +24,7 @@ const defaultSettlementResult: SettlementResult = {
     txHashes: [],
     errors: [],
     banks: new Set(),
+    settledAssetLogIds: [],
 };
 
 export class SettlementOrchestrator {
@@ -29,30 +34,40 @@ export class SettlementOrchestrator {
         private readonly merchantRepository: MerchantRepository,
         private readonly identityRepository: IdentityRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
-        private readonly campaignBankRepository: CampaignBankRepository
+        private readonly campaignBankRepository: CampaignBankRepository,
+        private readonly tokenMetadata: TokenMetadataRepository
     ) {}
 
     async runSettlement(): Promise<SettlementResult> {
-        const resetCount =
-            await this.assetLogRepository.resetStuckSettlementProcessing(
-                RewardConfig.settlement.stuckThresholdMinutes
-            );
-        if (resetCount > 0) {
-            log.info({ resetCount }, "Reset stuck settlement processing items");
-        }
+        await this.settlementService.reconcileStuckSettlements(
+            RewardConfig.settlement.stuckThresholdMinutes
+        );
 
-        const pendingAssetLogs =
-            await this.assetLogRepository.findPendingForSettlement(
+        const claimedAssetLogs =
+            await this.assetLogRepository.claimPendingForSettlement(
                 RewardConfig.settlement.batchSize
             );
 
-        if (pendingAssetLogs.length === 0) {
+        if (claimedAssetLogs.length === 0) {
             log.debug("No pending rewards to settle");
             return defaultSettlementResult;
         }
 
-        const pendingRewards =
-            await this.enrichWithWalletAndInteraction(pendingAssetLogs);
+        const { enriched: pendingRewards, skippedIds } =
+            await this.enrichWithWalletAndInteraction(claimedAssetLogs);
+
+        // `claimPendingForSettlement` already gates on an active wallet node,
+        // so a skipped row here means the wallet was unlinked between claim and
+        // enrichment (a rare concurrent merge/unlink). No wallet is a transient
+        // "not yet" state, never a permanent invalid, so revert WITHOUT spending
+        // an attempt — `bumpAttemptAndRevert` would burn `maxAttempts` and
+        // forfeit owed rewards at expiry even after the wallet reappears.
+        if (skippedIds.length > 0) {
+            await this.assetLogRepository.revertSettlementToPending(
+                skippedIds,
+                "No wallet for identity group"
+            );
+        }
 
         if (pendingRewards.length === 0) {
             log.warn(
@@ -72,8 +87,13 @@ export class SettlementOrchestrator {
             }
         >();
 
+        // Force a fresh read: the 10-min LRU could otherwise report a bank
+        // drained by an earlier run (or another replica) as still funded,
+        // passing pre-flight only for the on-chain push to fail and burn an
+        // attempt. Dedupe so banks shared across merchants are read once.
         await Promise.all(
-            [...merchantBanks.entries()].map(async ([, bankAddress]) => {
+            [...new Set(merchantBanks.values())].map(async (bankAddress) => {
+                this.campaignBankRepository.clearOnChainCache(bankAddress);
                 const state =
                     await this.campaignBankRepository.getBankOnChainState(
                         bankAddress,
@@ -137,9 +157,13 @@ export class SettlementOrchestrator {
             merchantBanks
         );
 
-        if (results.settledCount > 0) {
+        const settledIds = new Set(results.settledAssetLogIds);
+        const settledRewards = distributableRewards.filter((reward) =>
+            settledIds.has(reward.id)
+        );
+        if (settledRewards.length > 0) {
             try {
-                this.sendRewardSettledNotifications(distributableRewards);
+                this.sendRewardSettledNotifications(settledRewards);
             } catch (error) {
                 log.warn(
                     { error },
@@ -156,9 +180,98 @@ export class SettlementOrchestrator {
         return results;
     }
 
+    /**
+     * Requeue `bank_depleted` rewards whose bank can pay again. Runs on its own
+     * slow cron, off the settlement hot path, so a dead bank's backlog never
+     * churns through settlement batches. Per (merchant, token) group it
+     * re-reads live bank state (cache forced fresh — the LRU would otherwise
+     * feed stale zeros) and requeues only when the bank is open and holds
+     * balance AND allowance >= the smallest depleted reward, i.e. at least one
+     * reward can actually settle. Emits `newPendingRewards` so the settlement
+     * cron drains them immediately instead of waiting for its next tick.
+     */
+    async requeueDepletedRewards(): Promise<{ requeuedCount: number }> {
+        const groups =
+            await this.assetLogRepository.findDepletedAmountsByMerchantAndToken();
+        if (groups.length === 0) {
+            return { requeuedCount: 0 };
+        }
+
+        const merchantIds = [
+            ...new Set(groups.map((group) => group.merchantId)),
+        ];
+        const merchantBanks =
+            await this.merchantRepository.getBankAddresses(merchantIds);
+
+        const bankStates = new Map<
+            Address,
+            Awaited<ReturnType<CampaignBankRepository["getBankOnChainState"]>>
+        >();
+        await Promise.all(
+            [...new Set(merchantBanks.values())].map(async (bank) => {
+                this.campaignBankRepository.clearOnChainCache(bank);
+                bankStates.set(
+                    bank,
+                    await this.campaignBankRepository.getBankOnChainState(
+                        bank,
+                        currentStablecoinsList
+                    )
+                );
+            })
+        );
+
+        const decimalsByToken = new Map<Address, number>();
+        await Promise.all(
+            [...new Set(groups.map((group) => group.tokenAddress))].map(
+                async (token) => {
+                    decimalsByToken.set(
+                        token,
+                        await this.tokenMetadata.getDecimals({ token })
+                    );
+                }
+            )
+        );
+
+        const requeueable = groups.filter((group) => {
+            const bank = merchantBanks.get(group.merchantId);
+            if (!bank) return false;
+
+            const state = bankStates.get(bank);
+            if (!state?.isOpen) return false;
+
+            const decimals = decimalsByToken.get(group.tokenAddress);
+            if (decimals === undefined) return false;
+
+            const token = getAddress(group.tokenAddress);
+            const minWei = parseUnits(group.minAmount, decimals);
+            return (
+                (state.balances.get(token) ?? 0n) >= minWei &&
+                (state.allowances.get(token) ?? 0n) >= minWei
+            );
+        });
+
+        if (requeueable.length === 0) {
+            return { requeuedCount: 0 };
+        }
+
+        const requeuedCount =
+            await this.assetLogRepository.requeueDepletedToPending(
+                requeueable.map((group) => ({
+                    merchantId: group.merchantId,
+                    tokenAddress: group.tokenAddress,
+                }))
+            );
+
+        if (requeuedCount > 0) {
+            eventEmitter.emit("newPendingRewards", { count: requeuedCount });
+        }
+
+        return { requeuedCount };
+    }
+
     private async enrichWithWalletAndInteraction(
         assetLogs: AssetLogSelect[]
-    ): Promise<AssetLogWithWallet[]> {
+    ): Promise<{ enriched: AssetLogWithWallet[]; skippedIds: string[] }> {
         const uniqueGroupIds = [
             ...new Set(assetLogs.map((r) => r.identityGroupId)),
         ];
@@ -179,7 +292,8 @@ export class SettlementOrchestrator {
                 ...new Set(interactionLogIds),
             ]);
 
-        const results: AssetLogWithWallet[] = [];
+        const enriched: AssetLogWithWallet[] = [];
+        const skippedIds: string[] = [];
         for (const assetLog of assetLogs) {
             const walletAddress = walletMap.get(assetLog.identityGroupId);
             if (!walletAddress) {
@@ -190,10 +304,11 @@ export class SettlementOrchestrator {
                     },
                     "Skipping reward: no wallet found for identity group"
                 );
+                skippedIds.push(assetLog.id);
                 continue;
             }
 
-            results.push({
+            enriched.push({
                 ...assetLog,
                 walletAddress,
                 interactionType: assetLog.interactionLogId
@@ -203,7 +318,7 @@ export class SettlementOrchestrator {
             });
         }
 
-        return results;
+        return { enriched, skippedIds };
     }
 
     private async getMerchantBanks(

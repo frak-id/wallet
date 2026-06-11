@@ -131,7 +131,7 @@ export const assetLogsTable = pgTable(
         index("asset_logs_pending_expirable_idx")
             .on(table.expiresAt)
             .where(
-                sql`"status" = 'pending' AND "expires_at" IS NOT NULL AND "campaign_rule_id" IS NOT NULL`
+                sql`"status" IN ('pending', 'bank_depleted') AND "expires_at" IS NOT NULL`
             ),
         index("asset_logs_processing_status_changed_idx")
             .on(table.statusChangedAt)

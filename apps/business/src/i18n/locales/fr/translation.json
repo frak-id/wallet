@@ -579,8 +579,7 @@
                     "fixed": "{{amount}} {{currency}}",
                     "percentage": "{{percent}} % de {{base}}",
                     "base": {
-                        "purchase_amount": "le montant total de la commande",
-                        "purchase_subtotal": "le sous-total de la commande"
+                        "purchase_amount": "le montant total de la commande"
                     },
                     "bounds": "Entre {{min}} et {{max}} {{currency}}",
                     "boundsMin": "Au moins {{min}} {{currency}}",

@@ -64,6 +64,7 @@ function toRewardSummary(reward: RewardDefinition): CampaignListReward {
             return {
                 recipient: reward.recipient,
                 amountType: "tiered",
+                tiers: reward.tiers,
             };
     }
 }

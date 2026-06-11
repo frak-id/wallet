@@ -2,6 +2,7 @@ import {
     and,
     desc,
     eq,
+    exists,
     gt,
     inArray,
     isNotNull,
@@ -14,6 +15,7 @@ import {
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 
+import { identityNodesTable } from "../../identity/db/schema";
 import { merchantsTable } from "../../merchant/db/schema";
 import { RewardConfig } from "../config";
 import {
@@ -86,49 +88,179 @@ export class AssetLogRepository {
         }));
     }
 
-    async findPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
+    /**
+     * Atomically claim rewards for settlement: lock eligible rows with
+     * `FOR UPDATE SKIP LOCKED` and flip them to `processing` in the SAME
+     * transaction. The lock must live inside a transaction — a bare autocommit
+     * `SELECT ... FOR UPDATE SKIP LOCKED` releases it before the on-chain push,
+     * letting two replicas claim and double-pay the same rows. Once committed
+     * the rows are no longer `pending`, so a concurrent run cannot re-pick them.
+     *
+     * Only `pending` rows are claimed. `bank_depleted` rewards are requeued to
+     * `pending` out-of-band by the requeue-depleted cron once their bank can
+     * pay again, keeping this hot path from re-checking dead banks every run.
+     *
+     * Rows whose identity group has no active wallet node yet are NOT claimed
+     * (the `exists` gate below): fingerprint-only referrers earn rewards before
+     * ever linking a wallet (a designed flow — see `ArrivalHandler`), and there
+     * is nothing to settle until that wallet exists. Gating here — rather than
+     * claiming then reverting — keeps such rows `pending` without churning or
+     * spending an attempt, so they settle the moment the wallet appears instead
+     * of burning `maxAttempts` and forfeiting owed rewards at expiry. The
+     * predicate mirrors `IdentityRepository.getWalletForGroup` (a `wallet` node
+     * that is not soft-unlinked).
+     *
+     * `settlementAttempts` is intentionally not bumped here; only an actual
+     * on-chain push (`markSettlementProcessing`) spends an attempt, so rows
+     * skipped before the push are recovered by `reconcileStuckSettlements`.
+     */
+    async claimPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
         const now = new Date();
-        const query = db
-            .select()
-            .from(assetLogsTable)
-            .where(
-                and(
-                    eq(assetLogsTable.status, "pending"),
-                    eq(assetLogsTable.assetType, "token"),
-                    lt(
-                        assetLogsTable.settlementAttempts,
-                        RewardConfig.settlement.maxAttempts
-                    ),
-                    or(
-                        isNull(assetLogsTable.expiresAt),
-                        gt(assetLogsTable.expiresAt, now)
-                    ),
-                    // Exclude rewards still inside their lockup window.
-                    or(
-                        isNull(assetLogsTable.availableAt),
-                        lte(assetLogsTable.availableAt, now)
+
+        return db.transaction(async (tx) => {
+            const lockable = tx
+                .select({ id: assetLogsTable.id })
+                .from(assetLogsTable)
+                .where(
+                    and(
+                        eq(assetLogsTable.status, "pending"),
+                        eq(assetLogsTable.assetType, "token"),
+                        lt(
+                            assetLogsTable.settlementAttempts,
+                            RewardConfig.settlement.maxAttempts
+                        ),
+                        or(
+                            isNull(assetLogsTable.expiresAt),
+                            gt(assetLogsTable.expiresAt, now)
+                        ),
+                        // Exclude rewards still inside their lockup window.
+                        or(
+                            isNull(assetLogsTable.availableAt),
+                            lte(assetLogsTable.availableAt, now)
+                        ),
+                        // Gate on an active wallet node (see method doc).
+                        exists(
+                            tx
+                                .select({ one: sql`1` })
+                                .from(identityNodesTable)
+                                .where(
+                                    and(
+                                        eq(
+                                            identityNodesTable.groupId,
+                                            assetLogsTable.identityGroupId
+                                        ),
+                                        eq(
+                                            identityNodesTable.identityType,
+                                            "wallet"
+                                        ),
+                                        isNull(identityNodesTable.unlinkedAt)
+                                    )
+                                )
+                        )
                     )
                 )
-            )
-            .orderBy(assetLogsTable.createdAt)
-            .for("update", { skipLocked: true });
+                .orderBy(assetLogsTable.createdAt)
+                .for("update", { skipLocked: true });
 
-        if (limit) {
-            return query.limit(limit);
-        }
+            const locked = limit ? await lockable.limit(limit) : await lockable;
 
-        return query;
+            if (locked.length === 0) return [];
+
+            return tx
+                .update(assetLogsTable)
+                .set({ status: "processing", statusChangedAt: now })
+                .where(
+                    inArray(
+                        assetLogsTable.id,
+                        locked.map((row) => row.id)
+                    )
+                )
+                .returning();
+        });
     }
 
     /**
-     * Atomically move every still-`pending` reward tied to the given
-     * interaction logs to a terminal non-settled state and record the reason.
-     * Used by the refund flow to cancel rewards triggered by a now-refunded
-     * purchase.
+     * Smallest still-owed amount per (merchant, token) across all
+     * `bank_depleted` rewards. Drives the requeue cron: comparing a bank's
+     * live balance against this minimum tells whether *any* depleted reward
+     * for that token could settle, so a requeue is never pure churn. `amount`
+     * is human units (numeric); the caller converts to wei via the token's
+     * decimals.
+     */
+    async findDepletedAmountsByMerchantAndToken(): Promise<
+        { merchantId: string; tokenAddress: Address; minAmount: string }[]
+    > {
+        const rows = await db
+            .select({
+                merchantId: assetLogsTable.merchantId,
+                tokenAddress: assetLogsTable.tokenAddress,
+                minAmount: sql<string>`min(${assetLogsTable.amount})`,
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.status, "bank_depleted"),
+                    eq(assetLogsTable.assetType, "token"),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            )
+            .groupBy(assetLogsTable.merchantId, assetLogsTable.tokenAddress);
+
+        return rows as {
+            merchantId: string;
+            tokenAddress: Address;
+            minAmount: string;
+        }[];
+    }
+
+    /**
+     * Flip `bank_depleted` rewards back to `pending` for the given
+     * (merchant, token) pairs once their bank can pay again. Idempotent across
+     * replicas: the `status = 'bank_depleted'` guard means a row already
+     * requeued by a concurrent run is simply not matched again.
+     */
+    async requeueDepletedToPending(
+        groups: { merchantId: string; tokenAddress: Address }[]
+    ): Promise<number> {
+        if (groups.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({ status: "pending", statusChangedAt: new Date() })
+            .where(
+                and(
+                    eq(assetLogsTable.status, "bank_depleted"),
+                    or(
+                        ...groups.map((group) =>
+                            and(
+                                eq(assetLogsTable.merchantId, group.merchantId),
+                                eq(
+                                    assetLogsTable.tokenAddress,
+                                    group.tokenAddress
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    /**
+     * Atomically move every still-owed reward tied to the given interaction
+     * logs to a terminal non-settled state and record the reason. Used by the
+     * refund flow to cancel rewards triggered by a now-refunded purchase.
+     *
+     * Both `pending` and `bank_depleted` rows are voided: neither has paid out
+     * on-chain, and `bank_depleted` is only a soft retry marker (a later run
+     * can still settle it once the bank refills), so skipping it would let a
+     * refunded purchase pay out after a refill.
      *
      * Skipped rows:
-     *  - rewards already in `processing`/`settled` (lockup window has passed
-     *    — must not be flipped from underneath the on-chain transaction);
+     *  - rewards in `processing`/`settled` (already pushed on-chain — must not
+     *    be flipped from underneath the transaction);
      *  - rewards without a `campaignRuleId` (campaign was deleted — nothing
      *    to restore, ignore gracefully).
      *
@@ -155,7 +287,10 @@ export class AssetLogRepository {
             .where(
                 and(
                     inArray(assetLogsTable.interactionLogId, interactionLogIds),
-                    eq(assetLogsTable.status, "pending"),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                    ]),
                     isNotNull(assetLogsTable.campaignRuleId)
                 )
             )
@@ -216,6 +351,26 @@ export class AssetLogRepository {
         return results.length;
     }
 
+    /**
+     * Stamp the broadcast tx hash on rows still `processing`, so a crash before
+     * the settled-status write leaves enough state to reconcile against the
+     * chain instead of re-sending.
+     */
+    async recordSettlementBroadcast(
+        ids: string[],
+        txHash: Hex
+    ): Promise<number> {
+        if (ids.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({ onchainTxHash: txHash })
+            .where(inArray(assetLogsTable.id, ids))
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
     async revertSettlementToPending(
         ids: string[],
         error: string
@@ -235,39 +390,67 @@ export class AssetLogRepository {
         return results.length;
     }
 
-    async resetStuckSettlementProcessing(
-        olderThanMinutes: number
-    ): Promise<number> {
-        const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+    /**
+     * Revert claimed rows that were dropped before any on-chain push (no wallet,
+     * missing bank/token/decimals) back to `pending`, AND spend an attempt.
+     * Unlike `revertSettlementToPending` (used after a push, which already
+     * counted its attempt via `markSettlementProcessing`), these rows never
+     * reached the push, so without this bump they would be re-claimed every run
+     * forever; the increment lets `maxAttempts` eventually retire them.
+     */
+    async bumpAttemptAndRevert(ids: string[], error: string): Promise<number> {
+        if (ids.length === 0) return 0;
 
         const results = await db
             .update(assetLogsTable)
             .set({
                 status: "pending",
                 statusChangedAt: new Date(),
+                settlementAttempts: sql`${assetLogsTable.settlementAttempts} + 1`,
+                lastSettlementError: error,
             })
-            .where(
-                and(
-                    eq(assetLogsTable.status, "processing"),
-                    lt(assetLogsTable.statusChangedAt, cutoff)
-                )
-            )
+            .where(inArray(assetLogsTable.id, ids))
             .returning({ id: assetLogsTable.id });
 
         return results.length;
     }
 
+    async findStuckProcessing(
+        olderThanMinutes: number
+    ): Promise<{ id: string; onchainTxHash: Hex | null }[]> {
+        const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+
+        return db
+            .select({
+                id: assetLogsTable.id,
+                onchainTxHash: assetLogsTable.onchainTxHash,
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.status, "processing"),
+                    lt(assetLogsTable.statusChangedAt, cutoff)
+                )
+            );
+    }
+
     /**
-     * Atomically expire every `pending` reward whose `expires_at` deadline
-     * has passed and that still has a campaign attached. Returns the
-     * affected rows so the caller can restore the corresponding campaign
-     * budgets. Single SQL round-trip; no find-then-update race.
+     * Atomically expire every still-owed reward whose `expires_at` deadline
+     * has passed. Both `pending` and `bank_depleted` rows qualify: a reward
+     * stuck `bank_depleted` because the merchant never refilled the bank must
+     * still reach a terminal state at its deadline instead of being re-checked
+     * forever. Rewards whose campaign was deleted (`campaign_rule_id` is NULL)
+     * are included too — otherwise they would linger forever, never settling
+     * (past deadline) nor reaching a terminal state. Returns the affected rows
+     * so the caller can restore the corresponding campaign budgets; rows with a
+     * NULL `campaignRuleId` carry no budget to restore and are ignored by
+     * `restoreBudgetsBatch`. Single SQL round-trip; no find-then-update race.
      */
     async expirePendingPastDeadline(): Promise<
-        { id: string; campaignRuleId: string; amount: string }[]
+        { id: string; campaignRuleId: string | null; amount: string }[]
     > {
         const now = new Date();
-        const rows = await db
+        return db
             .update(assetLogsTable)
             .set({
                 status: "expired",
@@ -277,9 +460,11 @@ export class AssetLogRepository {
             })
             .where(
                 and(
-                    eq(assetLogsTable.status, "pending"),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "bank_depleted",
+                    ]),
                     isNotNull(assetLogsTable.expiresAt),
-                    isNotNull(assetLogsTable.campaignRuleId),
                     lt(assetLogsTable.expiresAt, now)
                 )
             )
@@ -288,9 +473,6 @@ export class AssetLogRepository {
                 campaignRuleId: assetLogsTable.campaignRuleId,
                 amount: assetLogsTable.amount,
             });
-
-        // `campaignRuleId` is non-null thanks to the WHERE clause.
-        return rows as { id: string; campaignRuleId: string; amount: string }[];
     }
 
     async findByIdentityGroups(

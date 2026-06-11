@@ -35,6 +35,8 @@ export const RewardConfig = {
         rewardCalculation: "0 */5 * * * *",
         /** Settlement job pattern (every hour) */
         settlement: "0 * * * *",
+        /** Bank-depleted requeue check pattern (every 3 hours) */
+        requeueDepleted: "0 */3 * * *",
         /** Expiration job pattern (daily at 3am UTC) */
         expiration: "0 3 * * *",
     },

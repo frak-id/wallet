@@ -84,11 +84,22 @@ export const RewardChainingSchema = t.Object({
 });
 export type RewardChaining = Static<typeof RewardChainingSchema>;
 
-const RewardTierSchema = t.Object({
-    minValue: t.Number(),
-    maxValue: t.Optional(t.Number()),
-    amount: t.Number(),
-});
+// Each tier pays either a flat token `amount` or a `percent` of the matched
+// tierField value (exactly one of the two; enforced at publish time since
+// union validation alone won't reject a tier carrying both).
+export const RewardTierSchema = t.Union([
+    t.Object({
+        minValue: t.Number(),
+        maxValue: t.Optional(t.Number()),
+        amount: t.Number(),
+    }),
+    t.Object({
+        minValue: t.Number(),
+        maxValue: t.Optional(t.Number()),
+        percent: t.Number(),
+    }),
+]);
+export type RewardTier = Static<typeof RewardTierSchema>;
 
 const FixedRewardDefinitionSchema = t.Object({
     recipient: RecipientTypeSchema,
@@ -106,10 +117,7 @@ const PercentageRewardDefinitionSchema = t.Object({
     type: AssetTypeSchema,
     amountType: t.Literal("percentage"),
     percent: t.Number(),
-    percentOf: t.Union([
-        t.Literal("purchase_amount"),
-        t.Literal("purchase_subtotal"),
-    ]),
+    percentOf: t.Literal("purchase_amount"),
     maxAmount: t.Optional(t.Number()),
     minAmount: t.Optional(t.Number()),
     token: t.Optional(t.Hex()),
@@ -209,11 +217,18 @@ export const CampaignMetadataSchema = t.Object({
 });
 export type CampaignMetadata = Static<typeof CampaignMetadataSchema>;
 
-const EstimatedRewardTierSchema = t.Object({
-    minValue: t.Number(),
-    maxValue: t.Optional(t.Number()),
-    amount: t.TokenAmount,
-});
+const EstimatedRewardTierSchema = t.Union([
+    t.Object({
+        minValue: t.Number(),
+        maxValue: t.Optional(t.Number()),
+        amount: t.TokenAmount,
+    }),
+    t.Object({
+        minValue: t.Number(),
+        maxValue: t.Optional(t.Number()),
+        percent: t.Number(),
+    }),
+]);
 
 const FixedEstimatedRewardSchema = t.Object({
     payoutType: t.Literal("fixed"),
