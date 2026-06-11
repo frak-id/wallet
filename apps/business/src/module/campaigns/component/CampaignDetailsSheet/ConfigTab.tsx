@@ -290,7 +290,9 @@ function RewardValue({
                             {formatTierRange(tier)}
                         </Text>
                         <Text as="span" variant="bodySmall" weight="medium">
-                            {tier.amount} {currency}
+                            {"percent" in tier
+                                ? `${tier.percent}%`
+                                : `${tier.amount} ${currency}`}
                         </Text>
                     </div>
                 ))}

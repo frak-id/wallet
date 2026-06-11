@@ -39,10 +39,28 @@ export function formatEstimatedReward(
         }
         case "tiered": {
             const max = reward.tiers.reduce(
-                (acc, tier) => Math.max(acc, tier.amount[key]),
+                (acc, tier) =>
+                    "amount" in tier ? Math.max(acc, tier.amount[key]) : acc,
                 0
             );
-            return formatAmount(Math.round(max), supportedCurrency);
+            if (max > 0) {
+                return formatAmount(Math.round(max), supportedCurrency);
+            }
+            const maxPercent = reward.tiers.reduce(
+                (acc, tier) =>
+                    "percent" in tier ? Math.max(acc, tier.percent) : acc,
+                0
+            );
+            if (maxPercent > 0) {
+                if (basketAmount !== undefined) {
+                    return formatAmount(
+                        Math.round((maxPercent * basketAmount) / 100),
+                        supportedCurrency
+                    );
+                }
+                return `${maxPercent} %`;
+            }
+            return formatAmount(0, supportedCurrency);
         }
     }
 }

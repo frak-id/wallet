@@ -94,6 +94,38 @@ async function calculatePercentageReward(
     };
 }
 
+// Tier definitions (minValue/maxValue/amount) are all denominated in the
+// reward token, while purchase.amount is fiat in the order's currency —
+// convert it on site or thresholds compare apples to yen.
+async function resolveTierValue(
+    reward: TieredRewardDefinition,
+    context: RuleContext,
+    rawValue: number,
+    merchantDefaultToken: Address | undefined,
+    pricingRepository: PricingRepository
+): Promise<{ value: number } | RewardCalculationResult> {
+    if (reward.tierField !== "purchase.amount" || !context.purchase) {
+        return { value: rawValue };
+    }
+
+    const token = reward.token ?? merchantDefaultToken;
+    if (!token) {
+        return {
+            success: false,
+            error: "No token to price tier thresholds against",
+        };
+    }
+    const conversion = await pricingRepository.convertFiatToTokenAmount({
+        token,
+        fiatAmount: rawValue,
+        currency: context.purchase.currency,
+    });
+    if (!conversion.converted) {
+        return { success: false, defer: true, reason: conversion.reason };
+    }
+    return { value: conversion.tokenAmount };
+}
+
 async function calculateTieredReward(
     reward: TieredRewardDefinition,
     context: RuleContext,
@@ -113,28 +145,17 @@ async function calculateTieredReward(
         };
     }
 
-    let tierValue = rawValue;
-    // Tier definitions (minValue/maxValue/amount) are all denominated in the
-    // reward token, while purchase.amount is fiat in the order's currency —
-    // convert it on site or thresholds compare apples to yen.
-    if (reward.tierField === "purchase.amount" && context.purchase) {
-        const token = reward.token ?? merchantDefaultToken;
-        if (!token) {
-            return {
-                success: false,
-                error: "No token to price tier thresholds against",
-            };
-        }
-        const conversion = await pricingRepository.convertFiatToTokenAmount({
-            token,
-            fiatAmount: rawValue,
-            currency: context.purchase.currency,
-        });
-        if (!conversion.converted) {
-            return { success: false, defer: true, reason: conversion.reason };
-        }
-        tierValue = conversion.tokenAmount;
+    const resolved = await resolveTierValue(
+        reward,
+        context,
+        rawValue,
+        merchantDefaultToken,
+        pricingRepository
+    );
+    if (!("value" in resolved)) {
+        return resolved;
     }
+    const tierValue = resolved.value;
 
     const sortedTiers = [...reward.tiers].sort(
         (a, b) => b.minValue - a.minValue
@@ -145,13 +166,28 @@ async function calculateTieredReward(
         const meetsMax =
             tier.maxValue === undefined || tierValue <= tier.maxValue;
 
-        if (meetsMin && meetsMax) {
+        if (!meetsMin || !meetsMax) continue;
+
+        // Percent tiers pay a share of the matched value; tierValue is already
+        // token-denominated here (converted above), and conversion is linear,
+        // so percent-of-converted == converted-percent-of-fiat.
+        const amount =
+            "percent" in tier
+                ? roundAmount((tierValue * tier.percent) / PERCENT_BASE)
+                : tier.amount;
+
+        if (amount <= 0) {
             return {
-                success: true,
-                amount: tier.amount,
-                token: reward.token ?? null,
+                success: false,
+                error: "Calculated amount is zero or negative",
             };
         }
+
+        return {
+            success: true,
+            amount,
+            token: reward.token ?? null,
+        };
     }
 
     return { success: false, error: "No matching tier found" };

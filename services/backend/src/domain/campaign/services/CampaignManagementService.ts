@@ -2,7 +2,11 @@ import { HttpError } from "@backend-utils";
 import type { CampaignRuleInsert, CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type { CampaignStatus } from "../schemas";
-import type { BudgetConfig, CampaignRuleDefinition } from "../types";
+import type {
+    BudgetConfig,
+    CampaignRuleDefinition,
+    TieredRewardDefinition,
+} from "../types";
 
 type CampaignCreateInput = {
     merchantId: string;
@@ -297,7 +301,57 @@ export class CampaignManagementService {
                 if (!reward.tiers || reward.tiers.length === 0) {
                     return "Tiered reward must have at least one tier";
                 }
-                break;
+                return this.validateTiers(reward);
+        }
+        return null;
+    }
+
+    private validateTiers(reward: TieredRewardDefinition): string | null {
+        for (const tier of reward.tiers) {
+            const error = this.validateSingleTier(tier, reward.tierField);
+            if (error) return error;
+        }
+        return this.validateTierRanges(reward.tiers);
+    }
+
+    private validateSingleTier(
+        tier: TieredRewardDefinition["tiers"][0],
+        tierField: string
+    ): string | null {
+        const hasAmount = "amount" in tier;
+        const hasPercent = "percent" in tier;
+        if (hasAmount === hasPercent) {
+            return "Each tier must have exactly one of amount or percent";
+        }
+        if (hasAmount && tier.amount <= 0) {
+            return "Tier amount must be positive";
+        }
+        if (hasPercent && (tier.percent <= 0 || tier.percent > 100)) {
+            return "Tier percent must be between 0 and 100";
+        }
+        if (hasPercent && tierField !== "purchase.amount") {
+            return "Percent tiers require tierField purchase.amount";
+        }
+        if (tier.maxValue !== undefined && tier.minValue >= tier.maxValue) {
+            return "Tier minValue must be lower than maxValue";
+        }
+        return null;
+    }
+
+    // Touching boundaries ({0-100}, {100-∞}) are fine — runtime matching
+    // sorts by minValue desc, so the upper tier deterministically wins.
+    private validateTierRanges(
+        tiers: TieredRewardDefinition["tiers"]
+    ): string | null {
+        const sorted = [...tiers].sort((a, b) => a.minValue - b.minValue);
+        for (let i = 1; i < sorted.length; i++) {
+            const prev = sorted[i - 1];
+            if (
+                prev.maxValue === undefined ||
+                prev.maxValue > sorted[i].minValue
+            ) {
+                return "Tier ranges must not overlap";
+            }
         }
         return null;
     }

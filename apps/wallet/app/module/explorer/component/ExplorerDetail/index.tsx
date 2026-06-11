@@ -430,7 +430,10 @@ function getRewardEurValue(reward: EstimatedReward): number {
             return reward.maxAmount?.eurAmount ?? 0;
         case "tiered":
             return reward.tiers.reduce(
-                (max, tier) => Math.max(max, tier.amount.eurAmount),
+                (max, tier) =>
+                    "amount" in tier
+                        ? Math.max(max, tier.amount.eurAmount)
+                        : max,
                 0
             );
     }

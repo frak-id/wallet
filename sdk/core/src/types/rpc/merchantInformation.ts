@@ -12,13 +12,20 @@ export type TokenAmountType = {
 };
 
 /**
- * A tier definition for tiered rewards
+ * A tier definition for tiered rewards — pays either a flat token amount
+ * or a percent of the tier field value
  */
-export type RewardTier = {
-    minValue: number;
-    maxValue?: number;
-    amount: TokenAmountType;
-};
+export type RewardTier =
+    | {
+          minValue: number;
+          maxValue?: number;
+          amount: TokenAmountType;
+      }
+    | {
+          minValue: number;
+          maxValue?: number;
+          percent: number;
+      };
 
 /**
  * Estimated reward amount — discriminated union by payout type

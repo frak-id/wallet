@@ -90,7 +90,10 @@ function RewardAmount({
                         {tier.maxValue !== undefined
                             ? `–${tier.maxValue}`
                             : "+"}
-                        : {tier.amount} {currency}
+                        :{" "}
+                        {"percent" in tier
+                            ? `${tier.percent}%`
+                            : `${tier.amount} ${currency}`}
                     </span>
                 ))}
             </span>

@@ -6,6 +6,7 @@ import {
     CampaignMetadataSchema,
     CampaignRuleDefinitionSchema,
     CampaignStatusSchema,
+    RewardTierSchema,
 } from "../../domain/campaign/schemas";
 import { DistributionStatusSchema } from "../../domain/campaign-bank/schemas";
 import { RecipientTypeSchema } from "../../domain/rewards/schemas";
@@ -47,6 +48,7 @@ const CampaignListRewardSchema = t.Union([
     t.Object({
         recipient: RecipientTypeSchema,
         amountType: t.Literal("tiered"),
+        tiers: t.Array(RewardTierSchema),
     }),
 ]);
 export type CampaignListReward = Static<typeof CampaignListRewardSchema>;

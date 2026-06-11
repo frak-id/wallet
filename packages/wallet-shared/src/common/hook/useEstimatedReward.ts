@@ -61,10 +61,27 @@ export function formatEstimatedReward(
 
         case "tiered": {
             const maxTierAmount = reward.tiers.reduce(
-                (max, tier) => Math.max(max, tier.amount[currencyAmountKey]),
+                (max, tier) =>
+                    "amount" in tier
+                        ? Math.max(max, tier.amount[currencyAmountKey])
+                        : max,
                 0
             );
-            return formatAmount(Math.round(maxTierAmount), supportedCurrency);
+            if (maxTierAmount > 0) {
+                return formatAmount(
+                    Math.round(maxTierAmount),
+                    supportedCurrency
+                );
+            }
+            const maxTierPercent = reward.tiers.reduce(
+                (max, tier) =>
+                    "percent" in tier ? Math.max(max, tier.percent) : max,
+                0
+            );
+            if (maxTierPercent > 0) {
+                return `${maxTierPercent} %`;
+            }
+            return formatAmount(0, supportedCurrency);
         }
     }
 }
@@ -80,7 +97,8 @@ function getRewardSortValue(
             return reward.maxAmount?.[key] ?? 0;
         case "tiered":
             return reward.tiers.reduce(
-                (max, tier) => Math.max(max, tier.amount[key]),
+                (max, tier) =>
+                    "amount" in tier ? Math.max(max, tier.amount[key]) : max,
                 0
             );
     }

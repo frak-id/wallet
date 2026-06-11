@@ -394,6 +394,68 @@ describe("RewardCalculator.calculateAll — tiered purchase.amount normalisation
         ).not.toHaveBeenCalled();
     });
 
+    it("pays a percent of the token-converted value for percent tiers", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 310 }
+        );
+
+        const { calculated } = await calculator.calculateAll(
+            [
+                tieredReward({
+                    tiers: [
+                        { minValue: 0, maxValue: 99, amount: 1 },
+                        { minValue: 100, percent: 5 },
+                    ],
+                }),
+            ],
+            { ...baseContext, purchase: purchase("jpy", 50_000) },
+            "campaign-1"
+        );
+
+        expect(calculated).toHaveLength(1);
+        expect(calculated[0].amount).toBe(15.5);
+    });
+
+    it("pays a percent of the raw value for non-purchase tier fields", async () => {
+        const { calculated } = await calculator.calculateAll(
+            [
+                tieredReward({
+                    tierField: "user.totalPurchases",
+                    tiers: [{ minValue: 0, percent: 10 }],
+                }),
+            ],
+            {
+                ...baseContext,
+                user: { ...baseContext.user, totalPurchases: 50 },
+            },
+            "campaign-1"
+        );
+
+        expect(
+            pricingRepository.convertFiatToTokenAmount
+        ).not.toHaveBeenCalled();
+        expect(calculated[0].amount).toBe(5);
+    });
+
+    it("rejects a matched tier resolving to zero", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 0 }
+        );
+
+        const { calculated, errors } = await calculator.calculateAll(
+            [
+                tieredReward({
+                    tiers: [{ minValue: 0, percent: 5 }],
+                }),
+            ],
+            { ...baseContext, purchase: purchase("eur", 0) },
+            "campaign-1"
+        );
+
+        expect(calculated).toHaveLength(0);
+        expect(errors[0]).toContain("zero or negative");
+    });
+
     it("leaves non-purchase tier fields untouched", async () => {
         const { calculated } = await calculator.calculateAll(
             [
