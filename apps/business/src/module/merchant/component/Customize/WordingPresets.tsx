@@ -21,6 +21,12 @@ import {
 import type { ComponentSettingsFormValues, ComponentType } from "./types";
 
 /**
+ * Presets write fixed English texts into the merchant component config;
+ * keep them hidden until the SDK supports localized wording.
+ */
+const WORDING_PRESETS_ENABLED = false;
+
+/**
  * 2×2 grid of curated wording choices for the selected component. The radio
  * reflects the current stored text (none selected for custom wording) and
  * picking one writes the preset into the form, updating the live preview.
@@ -36,6 +42,7 @@ export function WordingPresets({
     currency: Currency;
     shopName: string;
 }) {
+    if (!WORDING_PRESETS_ENABLED) return null;
     if (componentType === "banner") {
         return (
             <BannerPresets

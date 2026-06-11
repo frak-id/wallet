@@ -89,7 +89,6 @@ function GlobalComponentsPanel({
 
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
-    const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
     const values = useMemo(
         () => getGlobalComponentsValues(sdkConfig),
@@ -184,16 +183,10 @@ function GlobalComponentsPanel({
                         shopName={sdkConfig.name ?? "My Store"}
                     />
 
-                    <AdvancedDisclosure
-                        label={t("customize.components.advanced")}
-                        isOpen={isAdvancedOpen}
-                        onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
-                    >
-                        <ComponentFields
-                            selectedComponent={selectedComponent}
-                            form={form}
-                        />
-                    </AdvancedDisclosure>
+                    <ComponentFields
+                        selectedComponent={selectedComponent}
+                        form={form}
+                    />
                 </Stack>
             </Card>
         </Form>

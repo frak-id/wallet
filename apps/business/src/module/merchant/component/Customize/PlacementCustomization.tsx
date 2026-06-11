@@ -18,7 +18,6 @@ import {
 } from "@/module/forms/Form";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import {
-    AdvancedDisclosure,
     ComponentFields,
     ComponentPreview,
     ComponentTypeTabs,
@@ -106,7 +105,6 @@ function PlacementSettingsPanel({
 
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
-    const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
     const values = useMemo(
         () => getPlacementFormValues(sdkConfig, placementId),
@@ -295,16 +293,10 @@ function PlacementSettingsPanel({
                         shopName={sdkConfig.name ?? "My Store"}
                     />
 
-                    <AdvancedDisclosure
-                        label={t("customize.components.advanced")}
-                        isOpen={isAdvancedOpen}
-                        onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
-                    >
-                        <ComponentFields
-                            selectedComponent={selectedComponent}
-                            form={form}
-                        />
-                    </AdvancedDisclosure>
+                    <ComponentFields
+                        selectedComponent={selectedComponent}
+                        form={form}
+                    />
                 </Stack>
             </Card>
         </Form>
