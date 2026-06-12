@@ -1,33 +1,47 @@
-import { brand } from "@frak-labs/design-system/tokens";
-import { globalStyle, style } from "@vanilla-extract/css";
+import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
+import { style } from "@vanilla-extract/css";
 
-export const textarea = style({
-    all: "unset",
-    boxSizing: "border-box",
-    padding: "9px 12px",
-    width: "320px",
-    minHeight: "100px",
-    lineHeight: "20px",
-    fontSize: "16px",
-    color: "#333843",
-    fontWeight: brand.typography.fontWeight.regular,
-    border: "1px solid #e0e2e7",
-    borderRadius: "8px",
-    backgroundColor: "#f9f9fc",
-    transition: "border-color 0.2s",
-    resize: "vertical",
+export const textareaMuted = style({
+    backgroundColor: vars.surface.muted,
+    borderRadius: alias.cornerRadius.m,
+    width: "100%",
+    paddingBlock: alias.spacing.xs,
     selectors: {
-        "&:focus": {
-            boxShadow: "0 0 0 1px #5c59e8",
+        "&&": {
+            border: "none",
+            boxShadow: "none",
         },
-        "&:disabled": {
-            cursor: "not-allowed",
-            opacity: 0.6,
+        // No focus ring, matching the DS `bare` inputs around it.
+        "&&:focus-within": {
+            boxShadow: "none",
+            outline: "none",
         },
     },
 });
 
-globalStyle(`${textarea}::placeholder`, {
-    color: "#858d9d",
-    opacity: 1,
+export const switchRow = style({
+    borderRadius: alias.cornerRadius.l,
+    backgroundColor: vars.surface.elevated,
+});
+
+/**
+ * The form column ends at 846px (126px gutter + 720px max-width); the phone
+ * needs 353px + 40px right offset + 24px gap → fits from 1264px up. The
+ * height guard keeps the 735px-tall phone from overlapping the sticky
+ * toolbar and the floating save bar on short windows.
+ */
+export const phonePreviewFixed = style({
+    "@media": {
+        "(min-width: 1264px) and (min-height: 820px)": {
+            position: "fixed",
+            right: "40px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 11,
+        },
+        "(max-width: 1263px), (max-height: 819px)": {
+            display: "none",
+        },
+    },
 });

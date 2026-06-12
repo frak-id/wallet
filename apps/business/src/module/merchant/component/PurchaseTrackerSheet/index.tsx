@@ -1,53 +1,67 @@
+import { Button } from "@frak-labs/design-system/components/Button";
+import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Input } from "@frak-labs/design-system/components/Input";
 import {
     Sheet,
-    SheetClose,
     SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
+    SheetToolbar,
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { useMemo, useState } from "react";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { CheckCircleFilledIcon } from "@frak-labs/design-system/icons";
+import { type ReactNode, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Trans, useTranslation } from "react-i18next";
 import { generatePrivateKey } from "viem/accounts";
 import { Badge } from "@/module/common/component/Badge";
-import { Button } from "@/module/common/component/Button";
+import { Button as BusinessButton } from "@/module/common/component/Button";
+import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
-import { Form, FormLabel } from "@/module/forms/Form";
-import { Input } from "@/module/forms/Input";
+import { EditField } from "@/module/forms/EditField";
+import { Form, FormControl, FormField } from "@/module/forms/Form";
 import {
     usePurchaseWebhookStatus,
     type WebhookPlatform,
     type WebhookStatus,
 } from "@/module/merchant/hook/usePurchaseWebhookStatus";
 import { useWebhookSetup } from "@/module/merchant/hook/useWebhookSetup";
+import * as cells from "../detail-cells.css";
+import { EditCard } from "../EditCard";
 import * as styles from "./purchase-tracker-sheet.css";
 
 export function PurchaseTrackerSheet({ merchantId }: { merchantId: string }) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant="secondary">Update webhook</Button>
+                <BusinessButton variant="secondary" size="small">
+                    {t("merchantEdit.purchaseTracker.update")}
+                </BusinessButton>
             </SheetTrigger>
-            <SheetContent side="right">
-                <SheetHeader>
-                    <SheetTitle>Purchase tracker</SheetTitle>
-                    <SheetDescription>
-                        Configure how Frak receives purchase events from your
-                        store.
-                    </SheetDescription>
-                </SheetHeader>
+            <SheetContent
+                side="right"
+                size="wide"
+                padded={false}
+                hideCloseButton
+            >
+                <SheetToolbar
+                    size="large"
+                    leading={
+                        <GlassCloseButton
+                            onClick={() => setOpen(false)}
+                            aria-label={t("merchantEdit.close")}
+                        />
+                    }
+                    title={t("merchantEdit.purchaseTracker.title")}
+                    subtitle={t(
+                        "merchantEdit.purchaseTracker.sheet.description"
+                    )}
+                />
                 <PurchaseTrackerSheetBody merchantId={merchantId} />
-                <SheetFooter>
-                    <SheetClose asChild>
-                        <Button variant="ghost">Close</Button>
-                    </SheetClose>
-                </SheetFooter>
             </SheetContent>
         </Sheet>
     );
@@ -59,79 +73,131 @@ function PurchaseTrackerSheetBody({ merchantId }: { merchantId: string }) {
     });
 
     if (isLoading || !webhookStatus) {
-        return <Spinner />;
+        return (
+            <Stack space="l" padding="l">
+                <Spinner />
+            </Stack>
+        );
     }
 
     return (
-        <div className={styles.body}>
-            <StatusSection status={webhookStatus} />
-            <PlatformSection
+        <Stack space="l" padding="l">
+            <StatusCard status={webhookStatus} />
+            <PlatformCard
                 merchantId={merchantId}
                 webhookStatus={webhookStatus}
             />
             {webhookStatus.setup && webhookStatus.stats && (
-                <StatsSection stats={webhookStatus.stats} />
+                <StatsCard stats={webhookStatus.stats} />
             )}
-        </div>
+        </Stack>
     );
 }
 
-function Section({
-    title,
-    children,
-}: {
-    title: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div>
-            <h3 className={styles.sectionTitle}>{title}</h3>
-            <div className={styles.sectionBody}>{children}</div>
-        </div>
-    );
-}
+function StatusCard({ status }: { status: WebhookStatus }) {
+    const { t } = useTranslation();
 
-function StatusSection({ status }: { status: WebhookStatus }) {
     return (
-        <Section title="Status">
-            <Inline space="m" alignY="bottom">
-                <Badge variant={status.setup ? "success" : "warning"}>
-                    {status.setup
-                        ? "Webhook registered"
-                        : "Webhook not registered"}
-                </Badge>
+        <EditCard title={t("merchantEdit.purchaseTracker.status")}>
+            <div className={cells.detailCells}>
+                <div className={cells.detailCell}>
+                    <span className={cells.cellLabel}>
+                        {t("merchantEdit.purchaseTracker.status")}
+                    </span>
+                    <span className={cells.cellValue}>
+                        {status.setup ? (
+                            <Inline
+                                as="span"
+                                space="xxs"
+                                alignY="center"
+                                className={cells.statusSuccess}
+                            >
+                                {t("merchantEdit.purchaseTracker.registered")}
+                                <CheckCircleFilledIcon width={16} height={16} />
+                            </Inline>
+                        ) : (
+                            t("merchantEdit.purchaseTracker.notRegistered")
+                        )}
+                    </span>
+                </div>
                 {status.setup && status.platform && (
-                    <Badge variant={"secondary"}>{status.platform}</Badge>
+                    <div className={cells.detailCell}>
+                        <span className={cells.cellLabel}>
+                            {t("merchantEdit.purchaseTracker.platform")}
+                        </span>
+                        <span className={cells.cellValue}>
+                            {status.platform}
+                        </span>
+                    </div>
                 )}
-            </Inline>
-        </Section>
+            </div>
+        </EditCard>
     );
 }
 
-function PlatformSection({
+const SELECTABLE_PLATFORMS: WebhookPlatform[] = [
+    "shopify",
+    "woocommerce",
+    "magento",
+    "custom",
+];
+
+function PlatformCard({
     merchantId,
     webhookStatus,
 }: {
     merchantId: string;
     webhookStatus: WebhookStatus;
 }) {
+    const { t } = useTranslation();
     const initialState: WebhookPlatform = webhookStatus.setup
         ? webhookStatus.platform
         : "shopify";
     const [currentPlatform, setCurrentPlatform] =
         useState<WebhookPlatform>(initialState);
+    const [pendingPlatform, setPendingPlatform] =
+        useState<WebhookPlatform | null>(null);
 
     const webhookUrl = useMemo(() => {
         return `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/purchases/${currentPlatform}`;
     }, [merchantId, currentPlatform]);
 
+    const handlePlatformChange = (platform: WebhookPlatform) => {
+        if (platform === currentPlatform) return;
+        if (!webhookStatus.setup) {
+            setCurrentPlatform(platform);
+            return;
+        }
+        setPendingPlatform(platform);
+    };
+
     return (
-        <Section title="Purchase platform">
-            <PlatformSelector
-                currentPlatform={currentPlatform}
-                setPlatform={setCurrentPlatform}
-                isSetup={webhookStatus.setup}
-            />
+        <EditCard title={t("merchantEdit.purchaseTracker.sheet.platformTitle")}>
+            <Inline space="xs">
+                {SELECTABLE_PLATFORMS.map((platform) => (
+                    <Badge
+                        key={platform}
+                        onClick={() => handlePlatformChange(platform)}
+                        variant={
+                            currentPlatform === platform
+                                ? "success"
+                                : "secondary"
+                        }
+                    >
+                        {t(
+                            `merchantEdit.purchaseTracker.sheet.platforms.${platform}`
+                        )}
+                    </Badge>
+                ))}
+                <Badge
+                    variant={
+                        currentPlatform === "internal" ? "success" : "secondary"
+                    }
+                    disabled
+                >
+                    {t("merchantEdit.purchaseTracker.sheet.platforms.internal")}
+                </Badge>
+            </Inline>
             <PlatformRegistration
                 platform={currentPlatform}
                 webhookUrl={webhookUrl}
@@ -142,79 +208,111 @@ function PlatformSection({
                         : undefined
                 }
             />
-        </Section>
+            <ConfirmDialog
+                open={pendingPlatform !== null}
+                onOpenChange={(o) => !o && setPendingPlatform(null)}
+                title={t("merchantEdit.purchaseTracker.sheet.change.title")}
+                description={
+                    currentPlatform === "internal"
+                        ? `${t("merchantEdit.purchaseTracker.sheet.change.description")} ${t("merchantEdit.purchaseTracker.sheet.change.internalWarning")}`
+                        : t(
+                              "merchantEdit.purchaseTracker.sheet.change.description"
+                          )
+                }
+                cancelLabel={t("merchantEdit.editMerchant.cancel")}
+                confirmLabel={t(
+                    "merchantEdit.purchaseTracker.sheet.change.confirm"
+                )}
+                confirmTone="destructive"
+                onConfirm={() => {
+                    if (pendingPlatform) setCurrentPlatform(pendingPlatform);
+                    setPendingPlatform(null);
+                }}
+            />
+        </EditCard>
     );
 }
 
-function PlatformSelector({
-    currentPlatform,
-    setPlatform,
-    isSetup,
-}: {
-    currentPlatform: WebhookPlatform;
-    setPlatform: (platform: WebhookPlatform) => void;
-    isSetup: boolean;
-}) {
-    const handlePlatformChange = (platform: WebhookPlatform) => {
-        if (platform === currentPlatform) return;
-        if (!isSetup) {
-            setPlatform(platform);
-            return;
-        }
+function CopyCell({ label, value }: { label: string; value: string }) {
+    return (
+        <Inline
+            space="m"
+            alignY="center"
+            wrap={false}
+            paddingX="m"
+            paddingY="xs"
+            className={styles.copyCell}
+        >
+            <TextWithCopy text={value}>
+                <span className={styles.copyCellLabel}>{label}</span>
+                <span className={styles.copyCellValue}>{value}</span>
+            </TextWithCopy>
+        </Inline>
+    );
+}
 
-        const confirmSuffix =
-            currentPlatform === "internal"
-                ? "\n\nYou won't be able to revert back using this dashboard. You would need to go to the platform-specific application (like the Shopify Frak app) and set up the webhook again from there."
-                : "";
-        const hasConfirmed = window.confirm(
-            `Warning\n\nAre you sure you want to change the platform?\nThis could potentially break your purchase tracking.${confirmSuffix}`
-        );
-        if (hasConfirmed) {
-            setPlatform(platform);
-        }
-    };
+function RegistrationLayout({
+    intro,
+    webhookUrl,
+    signinKey,
+    children,
+}: {
+    intro: ReactNode;
+    webhookUrl?: string;
+    signinKey?: string;
+    children: ReactNode;
+}) {
+    const { t } = useTranslation();
 
     return (
-        <Inline space="m" alignY="center">
-            <Badge
-                onClick={() => handlePlatformChange("shopify")}
-                variant={
-                    currentPlatform === "shopify" ? "success" : "secondary"
-                }
+        <Stack space="m">
+            <p className={styles.instructions}>{intro}</p>
+            {webhookUrl && (
+                <CopyCell
+                    label={t("merchantEdit.purchaseTracker.sheet.urlLabel")}
+                    value={webhookUrl}
+                />
+            )}
+            {signinKey && (
+                <CopyCell
+                    label={t("merchantEdit.purchaseTracker.sheet.secretLabel")}
+                    value={signinKey}
+                />
+            )}
+            {children}
+        </Stack>
+    );
+}
+
+function RegisterButton({
+    isPending,
+    isUpdate,
+    onClick,
+    type = "button",
+}: {
+    isPending: boolean;
+    isUpdate: boolean;
+    onClick?: () => void;
+    type?: "button" | "submit";
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <div>
+            <Button
+                type={type}
+                variant="primary"
+                size="small"
+                width="auto"
+                disabled={isPending}
+                loading={isPending}
+                onClick={onClick}
             >
-                Shopify
-            </Badge>
-            <Badge
-                onClick={() => handlePlatformChange("woocommerce")}
-                variant={
-                    currentPlatform === "woocommerce" ? "success" : "secondary"
-                }
-            >
-                WooCommerce
-            </Badge>
-            <Badge
-                onClick={() => handlePlatformChange("magento")}
-                variant={
-                    currentPlatform === "magento" ? "success" : "secondary"
-                }
-            >
-                Magento
-            </Badge>
-            <Badge
-                onClick={() => handlePlatformChange("custom")}
-                variant={currentPlatform === "custom" ? "success" : "secondary"}
-            >
-                Custom
-            </Badge>
-            <Badge
-                variant={
-                    currentPlatform === "internal" ? "success" : "secondary"
-                }
-                disabled
-            >
-                Internal
-            </Badge>
-        </Inline>
+                {isUpdate
+                    ? t("merchantEdit.purchaseTracker.update")
+                    : t("merchantEdit.purchaseTracker.sheet.register")}
+            </Button>
+        </div>
     );
 }
 
@@ -229,42 +327,23 @@ function PlatformRegistration({
     merchantId: string;
     currentSigninKey?: string;
 }) {
-    if (platform === "woocommerce") {
-        return (
-            <WooCommerceRegistrationForm
-                merchantId={merchantId}
-                webhookUrl={webhookUrl}
-                currentSigninKey={currentSigninKey}
-            />
-        );
-    }
-
-    if (platform === "magento") {
-        return (
-            <MagentoRegistrationForm
-                merchantId={merchantId}
-                webhookUrl={webhookUrl}
-                currentSigninKey={currentSigninKey}
-            />
-        );
-    }
-
-    if (platform === "custom") {
-        return (
-            <CustomRegistrationForm
-                merchantId={merchantId}
-                webhookUrl={webhookUrl}
-                currentSigninKey={currentSigninKey}
-            />
-        );
-    }
-
     if (platform === "internal") {
-        return <InternalRegistrationForm />;
+        return <InternalRegistration />;
+    }
+
+    if (platform === "shopify") {
+        return (
+            <ShopifyRegistrationForm
+                merchantId={merchantId}
+                webhookUrl={webhookUrl}
+                currentSigninKey={currentSigninKey}
+            />
+        );
     }
 
     return (
-        <ShopifyRegistrationForm
+        <KeyedRegistration
+            platform={platform}
             merchantId={merchantId}
             webhookUrl={webhookUrl}
             currentSigninKey={currentSigninKey}
@@ -272,15 +351,19 @@ function PlatformRegistration({
     );
 }
 
-function CustomRegistrationForm({
+/** WooCommerce / Magento / Custom: generated secret + register button. */
+function KeyedRegistration({
+    platform,
     merchantId,
     webhookUrl,
     currentSigninKey,
 }: {
+    platform: Exclude<WebhookPlatform, "shopify" | "internal">;
     merchantId: string;
     webhookUrl: string;
     currentSigninKey?: string;
 }) {
+    const { t } = useTranslation();
     const { mutate: setupWebhook, isPending } = useWebhookSetup({ merchantId });
 
     const signinKey = useMemo(
@@ -288,156 +371,63 @@ function CustomRegistrationForm({
         [currentSigninKey]
     );
 
-    return (
-        <>
-            <p>
-                To use this webhook on your website, please refer to the{" "}
-                <a
-                    href={
-                        "https://docs.frak.id/wallet-sdk/api/endpoints/webhook#custom-webhook"
-                    }
-                    target={"_blank"}
-                    rel="noopener noreferrer"
-                >
-                    Documentation
-                </a>
-            </p>
-            <TextWithCopy text={webhookUrl}>
-                URL: <pre>{webhookUrl}</pre>
-            </TextWithCopy>
-            <TextWithCopy text={signinKey}>
-                Secret: <pre>{signinKey}</pre>
-            </TextWithCopy>
-            <p>And finally Register it on Frak via this button</p>
-            <Button
-                type="button"
-                variant="secondary"
-                disabled={isPending}
-                onClick={() => {
-                    setupWebhook({
-                        webhookKey: signinKey,
-                        platform: "custom",
-                    });
+    const intro = {
+        woocommerce: (
+            <Trans
+                i18nKey="merchantEdit.purchaseTracker.sheet.instructions.woocommerce"
+                components={{ italic: <i /> }}
+            />
+        ),
+        magento: (
+            <Trans
+                i18nKey="merchantEdit.purchaseTracker.sheet.instructions.magento"
+                components={{
+                    italic: <i />,
+                    doc: (
+                        // biome-ignore lint/a11y/useAnchorContent: content injected by Trans
+                        <a
+                            href="https://packagist.org/packages/frak-labs/magento2-module"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        />
+                    ),
                 }}
-            >
-                {currentSigninKey ? "Update Webhook" : "Register webhook"}
-            </Button>
-        </>
-    );
-}
-
-function WooCommerceRegistrationForm({
-    merchantId,
-    webhookUrl,
-    currentSigninKey,
-}: {
-    merchantId: string;
-    webhookUrl: string;
-    currentSigninKey?: string;
-}) {
-    const { mutate: setupWebhook, isPending } = useWebhookSetup({ merchantId });
-
-    const signinKey = useMemo(
-        () => currentSigninKey ?? generatePrivateKey(),
-        [currentSigninKey]
-    );
+            />
+        ),
+        custom: (
+            <Trans
+                i18nKey="merchantEdit.purchaseTracker.sheet.instructions.custom"
+                components={{
+                    doc: (
+                        // biome-ignore lint/a11y/useAnchorContent: content injected by Trans
+                        <a
+                            href="https://docs.frak.id/wallet-sdk/references-api/webhook#custom-webhook"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        />
+                    ),
+                }}
+            />
+        ),
+    }[platform];
 
     return (
-        <>
-            <p>
-                To register the webhook on WooCommerce, go to your WordPress
-                admin console, and then in
-                <br />
-                <i>
-                    WooCommerce {">"} Settings {">"} Advanced {">"} Webhooks
-                </i>
-                <br />
-                Create a new WebHook with the topic <i>Order Updated</i> with
-                the following URL and Secret:
+        <RegistrationLayout
+            intro={intro}
+            webhookUrl={webhookUrl}
+            signinKey={signinKey}
+        >
+            <p className={styles.instructions}>
+                {t("merchantEdit.purchaseTracker.sheet.registerHint")}
             </p>
-            <TextWithCopy text={webhookUrl}>
-                URL: <pre>{webhookUrl}</pre>
-            </TextWithCopy>
-            <TextWithCopy text={signinKey}>
-                Secret: <pre>{signinKey}</pre>
-            </TextWithCopy>
-            <p>And finally Register it on Frak via this button</p>
-            <Button
-                type="button"
-                variant="secondary"
-                disabled={isPending}
-                onClick={() => {
-                    setupWebhook({
-                        webhookKey: signinKey,
-                        platform: "woocommerce",
-                    });
-                }}
-            >
-                {currentSigninKey ? "Update Webhook" : "Register webhook"}
-            </Button>
-        </>
-    );
-}
-
-function MagentoRegistrationForm({
-    merchantId,
-    webhookUrl,
-    currentSigninKey,
-}: {
-    merchantId: string;
-    webhookUrl: string;
-    currentSigninKey?: string;
-}) {
-    const { mutate: setupWebhook, isPending } = useWebhookSetup({ merchantId });
-
-    const signinKey = useMemo(
-        () => currentSigninKey ?? generatePrivateKey(),
-        [currentSigninKey]
-    );
-
-    return (
-        <>
-            <p>
-                To register the webhook on Adobe Commerce (Magento 2), install
-                the{" "}
-                <a
-                    href={
-                        "https://packagist.org/packages/frak-labs/magento2-module"
-                    }
-                    target={"_blank"}
-                    rel="noopener noreferrer"
-                >
-                    frak-labs/magento2-module
-                </a>{" "}
-                Composer package, then go to your Magento admin console:
-                <br />
-                <i>
-                    Stores {">"} Configuration {">"} Frak {">"} Webhook Secret
-                </i>
-                <br />
-                Paste the secret below into the Webhook Secret field.
-            </p>
-            <TextWithCopy text={webhookUrl}>
-                URL: <pre>{webhookUrl}</pre>
-            </TextWithCopy>
-            <TextWithCopy text={signinKey}>
-                Secret: <pre>{signinKey}</pre>
-            </TextWithCopy>
-            <p>And finally Register it on Frak via this button</p>
-            <Button
-                type="button"
-                variant="secondary"
-                disabled={isPending}
-                onClick={() => {
-                    setupWebhook({
-                        webhookKey: signinKey,
-                        platform: "magento",
-                    });
-                }}
-            >
-                {currentSigninKey ? "Update Webhook" : "Register webhook"}
-            </Button>
-        </>
+            <RegisterButton
+                isPending={isPending}
+                isUpdate={!!currentSigninKey}
+                onClick={() =>
+                    setupWebhook({ webhookKey: signinKey, platform })
+                }
+            />
+        </RegistrationLayout>
     );
 }
 
@@ -450,88 +440,92 @@ function ShopifyRegistrationForm({
     currentSigninKey?: string;
     webhookUrl?: string;
 }) {
+    const { t } = useTranslation();
     const { mutate: setupWebhook, isPending } = useWebhookSetup({ merchantId });
-    const [error, setError] = useState<string | undefined>();
 
     const form = useForm({
-        values: useMemo(() => ({ key: currentSigninKey }), [currentSigninKey]),
-        defaultValues: {
-            key: currentSigninKey,
-        },
+        values: useMemo(
+            () => ({ key: currentSigninKey ?? "" }),
+            [currentSigninKey]
+        ),
+        defaultValues: { key: currentSigninKey ?? "" },
     });
 
+    const submit = form.handleSubmit(({ key }) =>
+        setupWebhook({ webhookKey: key, platform: "shopify" })
+    );
+
     return (
-        <>
-            <p>
-                To register the webhook on Shopify, go to your Shopify admin
-                console, and then in <br />
-                <i>
-                    Settings {">"} Notifications {">"} WebHook
-                </i>
-                <br />
-                Create a new WebHook with the event <i>Order Updated</i> with
-                the following URL:
-            </p>
-            <TextWithCopy text={webhookUrl}>
-                URL: <pre>{webhookUrl}</pre>
-            </TextWithCopy>
+        <RegistrationLayout
+            intro={
+                <Trans
+                    i18nKey="merchantEdit.purchaseTracker.sheet.instructions.shopify"
+                    components={{ italic: <i /> }}
+                />
+            }
+            webhookUrl={webhookUrl}
+        >
             <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit((values) => {
-                        const { key } = values;
-                        setError(undefined);
-                        if (!key || key === "") {
-                            setError("Missing signin key");
-                            return;
-                        }
-                        setupWebhook({ webhookKey: key, platform: "shopify" });
-                    })}
-                >
-                    <FormLabel weight={"medium"} htmlFor={"webhook-signin-key"}>
-                        Copy the signature in the bottom of the webhooks list
-                        from your shopify panel
-                    </FormLabel>
-                    <Input
-                        id={"webhook-signin-key"}
-                        length={"medium"}
-                        disabled={isPending}
-                        placeholder="Webhook signin key"
-                        {...form.register("key")}
+                <form onSubmit={submit}>
+                    <FormField
+                        control={form.control}
+                        name="key"
+                        rules={{
+                            required: t(
+                                "merchantEdit.purchaseTracker.sheet.shopify.missingKey"
+                            ),
+                        }}
+                        render={({ field }) => (
+                            <EditField
+                                label={t(
+                                    "merchantEdit.purchaseTracker.sheet.shopify.keyLabel"
+                                )}
+                            >
+                                <FormControl>
+                                    <Input
+                                        variant="bare"
+                                        tone="muted"
+                                        disabled={isPending}
+                                        placeholder={t(
+                                            "merchantEdit.purchaseTracker.sheet.shopify.keyPlaceholder"
+                                        )}
+                                        {...field}
+                                    />
+                                </FormControl>
+                            </EditField>
+                        )}
                     />
-                    {error && <p className={"error"}>{error}</p>}
-                    <Button
-                        type="submit"
-                        variant="secondary"
-                        disabled={isPending}
-                    >
-                        {currentSigninKey
-                            ? "Update webhook"
-                            : "Register webhook"}
-                    </Button>
                 </form>
             </Form>
-        </>
+            <RegisterButton
+                isPending={isPending}
+                isUpdate={!!currentSigninKey}
+                type="button"
+                onClick={() => submit()}
+            />
+        </RegistrationLayout>
     );
 }
 
-function InternalRegistrationForm() {
+function InternalRegistration() {
+    const { t } = useTranslation();
+
     return (
-        <>
-            <p>
-                Your merchant is already registered on Frak using an internal
-                webhook. <br />
-                This could be because you are using one of our third parties
-                application like the Shopify app, or the WordPress plugin.
+        <Stack space="m">
+            <p className={styles.instructions}>
+                {t("merchantEdit.purchaseTracker.sheet.instructions.internal1")}
             </p>
-            <p>
-                If you think that's a mistake, you can switch to a manual setup
-                using the selector on top.
+            <p className={styles.instructions}>
+                {t("merchantEdit.purchaseTracker.sheet.instructions.internal2")}
             </p>
-        </>
+        </Stack>
     );
 }
 
-function StatsSection({
+const formatDate = (date?: Date) =>
+    date ? new Date(date).toLocaleString() : "N/A";
+
+function StatsCard({
     stats,
 }: {
     stats: {
@@ -541,33 +535,41 @@ function StatsSection({
         totalPurchaseHandled?: number;
     };
 }) {
-    return (
-        <Section title="Stats">
-            <Row
-                label="First purchase"
-                value={stats.firstPurchase?.toString() ?? "N/A"}
-            />
-            <Row
-                label="Last purchase"
-                value={stats.lastPurchase?.toString() ?? "N/A"}
-            />
-            <Row
-                label="Last update"
-                value={stats.lastUpdate?.toString() ?? "N/A"}
-            />
-            <Row
-                label="Total purchases handled"
-                value={String(stats.totalPurchaseHandled ?? 0)}
-            />
-        </Section>
-    );
-}
+    const { t } = useTranslation();
 
-function Row({ label, value }: { label: string; value: string }) {
+    const rows = [
+        {
+            key: "firstPurchase",
+            label: t("merchantEdit.purchaseTracker.sheet.stats.firstPurchase"),
+            value: formatDate(stats.firstPurchase),
+        },
+        {
+            key: "lastPurchase",
+            label: t("merchantEdit.purchaseTracker.sheet.stats.lastPurchase"),
+            value: formatDate(stats.lastPurchase),
+        },
+        {
+            key: "lastUpdate",
+            label: t("merchantEdit.purchaseTracker.sheet.stats.lastUpdate"),
+            value: formatDate(stats.lastUpdate),
+        },
+        {
+            key: "total",
+            label: t("merchantEdit.purchaseTracker.tracked"),
+            value: String(stats.totalPurchaseHandled ?? 0),
+        },
+    ];
+
     return (
-        <div className={styles.labelRow}>
-            <span className={styles.labelText}>{label}</span>
-            <span className={styles.valueText}>{value}</span>
-        </div>
+        <EditCard title={t("merchantEdit.purchaseTracker.sheet.stats.title")}>
+            <div className={cells.detailCells}>
+                {rows.map((row) => (
+                    <div key={row.key} className={cells.detailCell}>
+                        <span className={cells.cellLabel}>{row.label}</span>
+                        <span className={cells.cellValue}>{row.value}</span>
+                    </div>
+                ))}
+            </div>
+        </EditCard>
     );
 }

@@ -1,53 +1,41 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
-export const body = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.l,
+/** Muted copy cell: label + truncated value + copy trigger. */
+export const copyCell = style({
+    minHeight: "49px",
+    backgroundColor: vars.surface.muted,
+    borderRadius: alias.cornerRadius.m,
 });
 
-export const sectionTitle = style({
-    margin: 0,
-    fontSize: "13px",
-    fontWeight: 600,
-    color: vars.text.secondary,
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-});
-
-export const sectionBody = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xs,
-    marginTop: alias.spacing.xs,
-});
-
-export const labelRow = style({
-    display: "flex",
-    justifyContent: "space-between",
-    gap: alias.spacing.m,
-    fontSize: "14px",
-});
-
-export const labelText = style({
+export const copyCellLabel = style({
+    flexShrink: 0,
+    fontSize: fontSize.s,
+    lineHeight: "22px",
+    fontWeight: brand.typography.fontWeight.medium,
     color: vars.text.secondary,
 });
 
-export const valueText = style({
+export const copyCellValue = style({
+    flex: 1,
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    fontSize: fontSize.xs,
     color: vars.text.primary,
-    fontWeight: 500,
+    fontFamily: '"SF Mono", Menlo, Consolas, monospace',
 });
 
-/**
- * Preserves the legacy spacing inside the registration sub-forms, which rely
- * on top-margin on every paragraph/form/button so the documentation steps
- * stay visually separated.
- */
-globalStyle(
-    `${sectionBody} > p, ${sectionBody} > form, ${sectionBody} > button`,
-    {
-        marginTop: alias.spacing.xs,
-    }
-);
+export const instructions = style({
+    margin: 0,
+    fontSize: fontSize.s,
+    lineHeight: "22px",
+    color: vars.text.secondary,
+});
+
+globalStyle(`${instructions} a`, {
+    color: vars.text.action,
+    fontWeight: brand.typography.fontWeight.medium,
+});

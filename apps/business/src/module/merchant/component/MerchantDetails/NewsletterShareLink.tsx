@@ -1,19 +1,15 @@
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-} from "@frak-labs/design-system/components/Card";
-import { Stack } from "@frak-labs/design-system/components/Stack";
+import { useTranslation } from "react-i18next";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
-import { summaryDescription } from "./merchant-summary.css";
-import * as styles from "./newsletter-share-link.css";
+import { EditCard } from "../EditCard";
+import * as styles from "./merchant-summary.css";
 
 function buildShareUrl(domain: string): string {
     return `https://${domain}/?frakAction=share`;
 }
 
 export function NewsletterShareLink({ merchantId }: { merchantId: string }) {
+    const { t } = useTranslation();
     const { data: merchant } = useMerchant({ merchantId });
 
     if (!merchant?.domain) return null;
@@ -21,21 +17,17 @@ export function NewsletterShareLink({ merchantId }: { merchantId: string }) {
     const shareUrl = buildShareUrl(merchant.domain);
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Newsletter sharing link</CardTitle>
-            </CardHeader>
-            <Stack space="m">
-                <p className={summaryDescription}>
-                    Paste this link into your newsletter or any marketing email.
-                    When a customer clicks it, your storefront opens with the
-                    Frak sharing modal, pre-filled with your current campaign
-                    rewards, so they can share and earn in one tap.
-                </p>
-                <TextWithCopy text={shareUrl}>
-                    <pre className={styles.shareUrl}>{shareUrl}</pre>
-                </TextWithCopy>
-            </Stack>
-        </Card>
+        <EditCard
+            title={t("merchantEdit.newsletter.title")}
+            description={t("merchantEdit.newsletter.description")}
+        >
+            <div className={styles.detailCells}>
+                <div className={styles.detailCell}>
+                    <TextWithCopy text={shareUrl}>
+                        <span className={styles.cellLabel}>{shareUrl}</span>
+                    </TextWithCopy>
+                </div>
+            </div>
+        </EditCard>
     );
 }

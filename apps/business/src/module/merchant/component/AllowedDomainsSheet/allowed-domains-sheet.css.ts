@@ -1,36 +1,33 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+
+export const domainCard = style({
+    backgroundColor: vars.surface.background,
+    borderRadius: alias.cornerRadius.m,
+});
 
 export const domainList = style({
     listStyle: "none",
-    padding: 0,
     margin: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xs,
+    padding: 0,
 });
 
 export const domainItem = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: alias.spacing.s,
-    padding: `${alias.spacing.xs} ${alias.spacing.s}`,
-    border: `1px solid ${vars.border.default}`,
-    borderRadius: alias.cornerRadius.s,
-    fontSize: "14px",
-    color: vars.text.primary,
+    minHeight: "49px",
 });
 
-export const error = style({
-    margin: `${alias.spacing.xxs} 0 0`,
-    fontSize: "12px",
-    color: vars.text.error,
+export const inputLabel = style({
+    paddingInline: alias.spacing.m,
 });
 
-export const emptyState = style({
-    color: vars.text.tertiary,
-    fontSize: "14px",
-    fontStyle: "italic",
+export const domainText = style({
+    flex: 1,
+    minWidth: 0,
+    fontSize: fontSize.s,
+    fontWeight: brand.typography.fontWeight.medium,
+    color: vars.text.secondary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
 });

@@ -15,6 +15,7 @@ type EditExplorerInput = {
     config?: {
         heroImageUrl?: string;
         heroImageUrls?: string[];
+        logoUrl?: string;
         description?: string;
     };
 };
