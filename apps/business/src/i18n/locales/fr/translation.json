@@ -164,6 +164,7 @@
                 "budgetAmount": "Montant du budget",
                 "budgetBreakdown": "Distribué : {{distributed}}€ · Frak : {{frak}}€",
                 "targetCpa": "CPA cible",
+                "tieredTiers": "{{count}} paliers",
                 "rewards": "Récompenses",
                 "ambassador": "Ambassadeur : {{value}}",
                 "referee": "Filleul : {{value}}",

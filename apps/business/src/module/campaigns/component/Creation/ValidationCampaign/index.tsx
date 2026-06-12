@@ -259,13 +259,70 @@ function SummaryRows({ draft }: { draft: CampaignDraft }) {
     );
 }
 
-/** Target CPA + Rewards rows. Tiered is static (no persisted reward) → "—". */
+/** Target CPA + Rewards rows. Tiered lists each basket tier and its split. */
 function RewardRows({
     reward,
 }: {
     reward: ReturnType<typeof draftToRewardForm>;
 }) {
     const { t } = useTranslation();
+
+    if (reward.model === "tiered") {
+        const tiers = reward.globalCpaTiers;
+        return (
+            <>
+                <SummaryRow label={t("campaigns.create.validation.targetCpa")}>
+                    <Value>
+                        {t("campaigns.create.validation.tieredTiers", {
+                            count: tiers.length,
+                        })}
+                    </Value>
+                </SummaryRow>
+                <SummaryRow
+                    label={t("campaigns.create.validation.rewards")}
+                    tall
+                >
+                    <Stack space="xs" align="right">
+                        {tiers.map((tier, i) => {
+                            const isLast = i === tiers.length - 1;
+                            const unit = tier.unit === "percent" ? "%" : "€";
+                            const upper =
+                                tier.to === "" ? (isLast ? "∞" : "") : tier.to;
+                            const from = tier.from === "" ? 0 : tier.from;
+                            return (
+                                <Stack
+                                    key={`${tier.from}-${tier.to}`}
+                                    space="xxs"
+                                    align="right"
+                                >
+                                    <Value>{`${from} → ${upper} · ${tier.cpa}${unit}`}</Value>
+                                    <Text
+                                        variant="caption"
+                                        weight="medium"
+                                        color="tertiary"
+                                    >
+                                        {t(
+                                            "campaigns.create.validation.ambassador",
+                                            {
+                                                value: `${reward.ambassadorTiers[i]?.reward ?? 0}${unit}`,
+                                            }
+                                        )}
+                                        {" · "}
+                                        {t(
+                                            "campaigns.create.validation.referee",
+                                            {
+                                                value: `${reward.refereeTiers[i]?.reward ?? 0}${unit}`,
+                                            }
+                                        )}
+                                    </Text>
+                                </Stack>
+                            );
+                        })}
+                    </Stack>
+                </SummaryRow>
+            </>
+        );
+    }
 
     if (reward.model === "fixed" || reward.model === "percentage") {
         const isPercent = reward.model === "percentage";

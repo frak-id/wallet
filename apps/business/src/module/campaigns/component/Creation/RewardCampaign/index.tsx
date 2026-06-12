@@ -25,7 +25,7 @@ import {
     PlusIcon,
 } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import {
     type Control,
     Controller,
@@ -60,7 +60,6 @@ import {
     rewardFormToDraft,
     splitTargetCpa,
     type TierRow,
-    type TierUnit,
     tieredTiersValid,
 } from "./utils";
 
@@ -611,10 +610,12 @@ function UnitSelectField({
     control,
     name,
     tone = "muted",
+    disabled,
 }: {
     control: Control<RewardFormValues>;
     name: string;
     tone?: "muted" | "elevated";
+    disabled?: boolean;
 }) {
     return (
         <Controller
@@ -622,7 +623,11 @@ function UnitSelectField({
             // biome-ignore lint/suspicious/noExplicitAny: dynamic field-array path
             name={name as any}
             render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={disabled}
+                >
                     <SelectTrigger
                         className={
                             tone === "elevated"
@@ -648,17 +653,17 @@ function TierCell({
     name,
     placeholder,
     unit,
-    onEdit,
     tone = "muted",
     error,
+    disabled,
 }: {
     control: Control<RewardFormValues>;
     name: string;
     placeholder: string;
     unit: UnitGlyph;
-    onEdit?: () => void;
     tone?: "muted" | "elevated";
     error?: boolean;
+    disabled?: boolean;
 }) {
     return (
         <Controller
@@ -670,15 +675,12 @@ function TierCell({
                     variant="bare"
                     tone={tone}
                     error={error}
+                    disabled={disabled}
                     classNameWrapper={styles.inputWrapper}
                     placeholder={placeholder}
                     rightSection={<UnitIcon unit={unit} />}
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(event) => {
-                        onEdit?.();
-                        field.onChange(event);
-                    }}
                 />
             )}
         />
@@ -722,19 +724,19 @@ function RangeCell({
     fromName,
     toName,
     lastTier,
-    onEdit,
     tone = "muted",
     fromError,
     toError,
+    disabled,
 }: {
     control: Control<RewardFormValues>;
     fromName: string;
     toName: string;
     lastTier: boolean;
-    onEdit?: () => void;
     tone?: "muted" | "elevated";
     fromError?: boolean;
     toError?: boolean;
+    disabled?: boolean;
 }) {
     const { t } = useTranslation();
     return (
@@ -744,9 +746,9 @@ function RangeCell({
                     control={control}
                     name={fromName}
                     unit="eur"
-                    onEdit={onEdit}
                     tone={tone}
                     error={fromError}
+                    disabled={disabled}
                     placeholder={t(
                         "campaigns.create.reward.tiered.fromPlaceholder"
                     )}
@@ -760,9 +762,9 @@ function RangeCell({
                     control={control}
                     name={toName}
                     unit="eur"
-                    onEdit={onEdit}
                     tone={tone}
                     error={toError}
+                    disabled={disabled}
                     placeholder={
                         lastTier
                             ? "∞"
@@ -941,30 +943,26 @@ function GlobalCpaTable({ control }: { control: Control<RewardFormValues> }) {
     );
 }
 
-/** Ambassador/Referee reward tier table: basket range · reward · unit. */
+/**
+ * Ambassador/Referee reward tier table. A read-only mirror of the Global CPA
+ * table: basket range and unit follow Global (so the split can't diverge);
+ * only the reward amount per tier is editable.
+ */
 function RewardTierTable({
     control,
     name,
     fields,
-    append,
-    remove,
     title,
     description,
-    onRangeEdit,
 }: {
     control: Control<RewardFormValues>;
     name: "ambassadorTiers" | "refereeTiers";
     /** Lifted to the parent so the prefill sync and rendering share one array. */
     fields: { id: string }[];
-    append: (value: TierRow) => void;
-    remove: (index: number) => void;
     title: string;
     description: string;
-    onRangeEdit: () => void;
 }) {
     const { t } = useTranslation();
-    const defaultUnit: TierUnit =
-        name === "ambassadorTiers" ? "percent" : "eur";
 
     return (
         <div className={styles.tierCard}>
@@ -984,13 +982,15 @@ function RewardTierTable({
 
                 {fields.map((row, index) => (
                     <div className={styles.tierRow} key={row.id}>
+                        {/* Range + unit mirror the Global CPA table — disabled
+                            so the split can't diverge; only the reward edits. */}
                         <RangeCell
                             control={control}
                             fromName={`${name}.${index}.from`}
                             toName={`${name}.${index}.to`}
                             lastTier={index === fields.length - 1}
-                            onEdit={onRangeEdit}
                             tone="elevated"
+                            disabled
                         />
                         <div className={styles.tierValueUnit}>
                             <div className={styles.tierValue}>
@@ -1009,39 +1009,14 @@ function RewardTierTable({
                                     control={control}
                                     name={`${name}.${index}.unit`}
                                     tone="elevated"
+                                    disabled
                                 />
                             </div>
                         </div>
-                        <TierDelete
-                            index={index}
-                            onRemove={() => remove(index)}
-                            label={t(
-                                "campaigns.create.reward.tiered.removeTier"
-                            )}
-                        />
+                        <span className={styles.tierLabelSpacer} />
                     </div>
                 ))}
             </Stack>
-
-            <div>
-                <Button
-                    type="button"
-                    variant="primary"
-                    size="small"
-                    rightIcon={<PlusIcon width={16} height={16} />}
-                    onClick={() => {
-                        onRangeEdit();
-                        append({
-                            from: "",
-                            to: "",
-                            reward: "",
-                            unit: defaultUnit,
-                        });
-                    }}
-                >
-                    {t("campaigns.create.reward.tiered.addTier")}
-                </Button>
-            </div>
         </div>
     );
 }
@@ -1052,16 +1027,12 @@ function TieredReveal({
     getValues,
     ambassadorArray,
     refereeArray,
-    ambassadorRef,
-    refereeRef,
 }: {
     control: Control<RewardFormValues>;
     setValue: UseFormSetValue<RewardFormValues>;
     getValues: UseFormGetValues<RewardFormValues>;
     ambassadorArray: UseFieldArrayReturn<RewardFormValues, "ambassadorTiers">;
     refereeArray: UseFieldArrayReturn<RewardFormValues, "refereeTiers">;
-    ambassadorRef: React.RefObject<boolean>;
-    refereeRef: React.RefObject<boolean>;
 }) {
     const { t } = useTranslation();
     // Destructure the stable `replace` methods; depending on the whole array
@@ -1070,39 +1041,21 @@ function TieredReveal({
     const { replace: replaceReferee } = refereeArray;
     const globalTiers = useWatch({ control, name: "globalCpaTiers" }) ?? [];
 
-    // Auto-prefill Ambassador/Referee basket ranges from the Global CPA tiers,
-    // syncing on every Global change until the user edits that table's ranges.
+    // The split tables are a read-only mirror of the Global CPA table: their
+    // basket ranges and unit always follow Global, so the overlap stays
+    // computable. Only each tier's reward amount is the user's — preserved
+    // here by index across Global edits.
     useEffect(() => {
-        if (!ambassadorRef.current) {
-            const existing = getValues("ambassadorTiers");
-            replaceAmbassador(
-                globalTiers.map((g, i) => ({
-                    from: g.from,
-                    to: g.to,
-                    reward: existing[i]?.reward ?? "",
-                    unit: existing[i]?.unit ?? "percent",
-                }))
-            );
-        }
-        if (!refereeRef.current) {
-            const existing = getValues("refereeTiers");
-            replaceReferee(
-                globalTiers.map((g, i) => ({
-                    from: g.from,
-                    to: g.to,
-                    reward: existing[i]?.reward ?? "",
-                    unit: existing[i]?.unit ?? "eur",
-                }))
-            );
-        }
-    }, [
-        globalTiers,
-        getValues,
-        replaceAmbassador,
-        replaceReferee,
-        ambassadorRef,
-        refereeRef,
-    ]);
+        const mirror = (existing: TierRow[]): TierRow[] =>
+            globalTiers.map((g, i) => ({
+                from: g.from,
+                to: g.to,
+                reward: existing[i]?.reward ?? "",
+                unit: g.unit,
+            }));
+        replaceAmbassador(mirror(getValues("ambassadorTiers")));
+        replaceReferee(mirror(getValues("refereeTiers")));
+    }, [globalTiers, getValues, replaceAmbassador, replaceReferee]);
 
     const hasCpa = globalTiers.some((tier) => Number(tier.cpa) > 0);
 
@@ -1145,33 +1098,23 @@ function TieredReveal({
                         control={control}
                         name="ambassadorTiers"
                         fields={ambassadorArray.fields}
-                        append={ambassadorArray.append}
-                        remove={ambassadorArray.remove}
                         title={t(
                             "campaigns.create.reward.recipient.ambassadorReward"
                         )}
                         description={t(
                             "campaigns.create.reward.tiered.ambassadorDescription"
                         )}
-                        onRangeEdit={() => {
-                            ambassadorRef.current = true;
-                        }}
                     />
                     <RewardTierTable
                         control={control}
                         name="refereeTiers"
                         fields={refereeArray.fields}
-                        append={refereeArray.append}
-                        remove={refereeArray.remove}
                         title={t(
                             "campaigns.create.reward.recipient.refereeReward"
                         )}
                         description={t(
                             "campaigns.create.reward.tiered.refereeDescription"
                         )}
-                        onRangeEdit={() => {
-                            refereeRef.current = true;
-                        }}
                     />
                 </>
             )}
@@ -1291,9 +1234,6 @@ export function RewardCampaign() {
         control: form.control,
         name: "refereeTiers",
     });
-    // Once the user edits a table's ranges, stop mirroring the Global ranges.
-    const ambassadorRangesDirty = useRef(false);
-    const refereeRangesDirty = useRef(false);
 
     const model = useWatch({ control: form.control, name: "model" });
 
@@ -1410,8 +1350,6 @@ export function RewardCampaign() {
                                     getValues={form.getValues}
                                     ambassadorArray={ambassadorArray}
                                     refereeArray={refereeArray}
-                                    ambassadorRef={ambassadorRangesDirty}
-                                    refereeRef={refereeRangesDirty}
                                 />
                             )}
                         </Stack>

@@ -221,6 +221,11 @@ export const unitTrigger = style({
             fontSize: "16px",
             color: vars.text.primary,
         },
+        // Disabled (split tables): match the bare input's faded look.
+        "&&:disabled": {
+            opacity: 0.6,
+            cursor: "not-allowed",
+        },
     },
 });
 

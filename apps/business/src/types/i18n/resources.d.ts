@@ -366,6 +366,7 @@ export default interface Resources {
           "startImmediately": "Start immediately",
           "targetCpa": "Target CPA",
           "territories": "Territories",
+          "tieredTiers": "{{count}} tiers",
           "trigger": "Trigger"
         }
       },

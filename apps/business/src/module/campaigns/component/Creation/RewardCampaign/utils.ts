@@ -43,7 +43,10 @@ export type RewardFormValues = {
     targetCpaPercent: number;
     ambassadorPercent: number;
     refereePercent: number;
-    /** Tiered model — static for now: held locally, not yet persisted. */
+    /**
+     * Tiered model. `globalCpaTiers` is a UI aid (re-derived on load); the
+     * per-recipient tiers are what persist. Split ranges/unit mirror Global.
+     */
     globalCpaTiers: CpaTierRow[];
     ambassadorTiers: TierRow[];
     refereeTiers: TierRow[];
@@ -114,7 +117,19 @@ export function recommendedSplit(targetCpa: number) {
     return { ambassador, referee };
 }
 
-/** Build the backend reward list from the form. Tiered is static — emits none. */
+/** A form tier → backend tier: € rows carry `amount`, % rows carry `percent`. */
+function tierRowToBackend(row: TierRow) {
+    const range = {
+        minValue: Number(row.from) || 0,
+        // Empty upper bound = ∞ — omit `maxValue` rather than send a 0 cap.
+        ...(row.to === "" ? {} : { maxValue: Number(row.to) }),
+    };
+    return row.unit === "percent"
+        ? { ...range, percent: Number(row.reward) || 0 }
+        : { ...range, amount: Number(row.reward) || 0 };
+}
+
+/** Build the backend reward list from the form. */
 function rewardsFromForm(
     values: RewardFormValues,
     rewardToken?: Hex
@@ -164,10 +179,101 @@ function rewardsFromForm(
                 ...token,
             });
         }
+    } else if (values.model === "tiered") {
+        // The Global CPA table is a UI aid (re-derived on load); only the
+        // per-recipient tiers persist, keyed on the basket amount.
+        if (values.ambassadorTiers.length > 0) {
+            rewards.push({
+                recipient: "referrer",
+                type: "token",
+                amountType: "tiered",
+                tierField: "purchase.amount",
+                tiers: values.ambassadorTiers.map(tierRowToBackend),
+                ...token,
+            });
+        }
+        if (values.refereeTiers.length > 0) {
+            rewards.push({
+                recipient: "referee",
+                type: "token",
+                amountType: "tiered",
+                tierField: "purchase.amount",
+                tiers: values.refereeTiers.map(tierRowToBackend),
+                ...token,
+            });
+        }
     }
-    // Tiered: static for now — the table is held in form state only, not yet
-    // mapped to the backend (its tiers lack a unit field server-side).
     return rewards;
+}
+
+/** A persisted backend tier → form row (% rows carry `percent`, € rows `amount`). */
+function tierToFormRow(tier: {
+    minValue: number;
+    maxValue?: number;
+    amount?: number;
+    percent?: number;
+}): TierRow {
+    const isPercent = tier.percent !== undefined;
+    return {
+        from: tier.minValue,
+        to: tier.maxValue ?? "",
+        reward: isPercent ? (tier.percent ?? 0) : (tier.amount ?? 0),
+        unit: isPercent ? "percent" : "eur",
+    };
+}
+
+/**
+ * Rebuild the tiered form from its two persisted reward definitions. The
+ * Global CPA table isn't stored, so it's re-derived per range from the
+ * Ambassador/Referee split (CPA = pool / 80%), mirroring `targetCpa`.
+ */
+function tieredDraftToForm(
+    rule: CampaignRuleDefinition,
+    referrer?: RewardDefinition,
+    referee?: RewardDefinition
+): RewardFormValues {
+    const ambassadorTiers =
+        referrer?.amountType === "tiered"
+            ? referrer.tiers.map(tierToFormRow)
+            : [];
+    const refereeTiers =
+        referee?.amountType === "tiered"
+            ? referee.tiers.map(tierToFormRow)
+            : [];
+    const globalCpaTiers: CpaTierRow[] = ambassadorTiers.map((a, i) => {
+        const sum =
+            (Number(a.reward) || 0) + (Number(refereeTiers[i]?.reward) || 0);
+        return {
+            from: a.from,
+            to: a.to,
+            cpa: sum > 0 ? round2(sum / REWARDS_SHARE) : "",
+            // Global unit follows the ambassador tier; the form's mirror keeps
+            // the ambassador/referee units in lock-step with it.
+            unit: a.unit,
+        };
+    });
+
+    return {
+        ...DEFAULT_REWARD_FORM,
+        referralOnly: getReferralOnly(rule),
+        model: "tiered",
+        globalCpaTiers: globalCpaTiers.length
+            ? globalCpaTiers
+            : DEFAULT_REWARD_FORM.globalCpaTiers,
+        ambassadorTiers: ambassadorTiers.length
+            ? ambassadorTiers
+            : DEFAULT_REWARD_FORM.ambassadorTiers,
+        refereeTiers: refereeTiers.length
+            ? refereeTiers
+            : DEFAULT_REWARD_FORM.refereeTiers,
+        // Tiered eligibility comes from the ranges; the standalone min is unused.
+        minPurchaseAmount: "",
+        lockupDays: rule.defaultLockupSeconds
+            ? Math.round(
+                  rule.defaultLockupSeconds / REWARD_LOCKUP.SECONDS_PER_DAY
+              )
+            : "",
+    };
 }
 
 export function draftToRewardForm(draft: CampaignDraft): RewardFormValues {
@@ -184,6 +290,10 @@ export function draftToRewardForm(draft: CampaignDraft): RewardFormValues {
           : sample.amountType === "tiered"
             ? "tiered"
             : "fixed";
+
+    if (model === "tiered") {
+        return tieredDraftToForm(rule, referrer, referee);
+    }
 
     const ambassadorAmount =
         referrer?.amountType === "fixed" ? referrer.amount : 0;
@@ -267,9 +377,30 @@ function splitMatchesPool(
 }
 
 /**
+ * Whether every tier's split is allocated like the fixed/% pool: both
+ * recipients get a positive reward and Ambassador + Referee = 80% of that
+ * tier's CPA. Each reward must be > 0 — the backend rejects a zero/negative
+ * tier amount at publish, and a tiered definition can't skip a basket range.
+ */
+function tieredSplitValid(values: RewardFormValues): boolean {
+    const {
+        globalCpaTiers: cpa,
+        ambassadorTiers: amb,
+        refereeTiers: ref,
+    } = values;
+    if (amb.length !== cpa.length || ref.length !== cpa.length) return false;
+    return cpa.every((tier, i) => {
+        const ambReward = Number(amb[i].reward);
+        const refReward = Number(ref[i].reward);
+        if (!(ambReward > 0) || !(refReward > 0)) return false;
+        return splitMatchesPool(Number(tier.cpa) || 0, ambReward, refReward);
+    });
+}
+
+/**
  * Continue gating. Fixed/% require a positive Target CPA whose pool is fully
- * allocated (Ambassador + Referee + Frak commission = Target CPA). Tiered is
- * static for now and never blocks Continue.
+ * allocated (Ambassador + Referee + Frak commission = Target CPA). Tiered
+ * applies the same rule to every tier (complete range, CPA > 0, split = 80%).
  */
 export function isRewardFormValid(values: RewardFormValues): boolean {
     if (values.model === "fixed") {
@@ -293,7 +424,9 @@ export function isRewardFormValid(values: RewardFormValues): boolean {
         );
     }
     if (values.model === "tiered") {
-        return tieredTiersValid(values.globalCpaTiers);
+        return (
+            tieredTiersValid(values.globalCpaTiers) && tieredSplitValid(values)
+        );
     }
     // No model selected ⇒ not valid yet.
     return false;
