@@ -57,7 +57,15 @@ const fieldBase = style({
         "&:disabled": {
             cursor: "not-allowed",
         },
+        // Focus is indicated by the wrapper border (:focus-within).
+        "&:focus": {
+            outline: "none",
+        },
     },
+});
+
+const fieldNoResize = style({
+    resize: "none",
 });
 
 export const textareaStyles = {
@@ -65,4 +73,5 @@ export const textareaStyles = {
     wrapperError,
     wrapperDisabled,
     field: fieldBase,
+    fieldNoResize,
 };

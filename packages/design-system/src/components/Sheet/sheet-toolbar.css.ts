@@ -24,3 +24,17 @@ export const title = style({
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
 });
+
+export const titleLarge = style({
+    margin: 0,
+    fontSize: fontSize["3xl"],
+    fontWeight: brand.typography.fontWeight.bold,
+    lineHeight: "38px",
+    color: vars.text.primary,
+});
+
+export const subtitleLarge = style({
+    fontSize: fontSize.m,
+    lineHeight: "26px",
+    color: vars.text.secondary,
+});

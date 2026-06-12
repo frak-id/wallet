@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { TextareaHTMLAttributes } from "react";
 import { Box } from "../Box";
 import { lengthVariants, textareaStyles } from "./textarea.css";
@@ -10,6 +11,8 @@ type TextAreaProps = Omit<
 > & {
     length?: TextAreaLength;
     error?: boolean;
+    /** Resize behavior of the inner textarea (defaults to vertical). */
+    resize?: "vertical" | "none";
     className?: string;
 };
 
@@ -17,24 +20,28 @@ export function TextArea({
     length,
     error,
     disabled,
+    resize = "vertical",
     className,
     ...rest
 }: TextAreaProps) {
-    const wrapperClassName = [
+    const wrapperClassName = clsx(
         textareaStyles.wrapper,
-        length ? lengthVariants[length] : undefined,
-        error ? textareaStyles.wrapperError : undefined,
-        disabled ? textareaStyles.wrapperDisabled : undefined,
-        className,
-    ]
-        .filter(Boolean)
-        .join(" ");
+        length && lengthVariants[length],
+        error && textareaStyles.wrapperError,
+        disabled && textareaStyles.wrapperDisabled,
+        className
+    );
+
+    const fieldClassName = clsx(
+        textareaStyles.field,
+        resize === "none" && textareaStyles.fieldNoResize
+    );
 
     return (
         <Box as="span" className={wrapperClassName}>
             <Box
                 as="textarea"
-                className={textareaStyles.field}
+                className={fieldClassName}
                 disabled={disabled}
                 {...rest}
             />

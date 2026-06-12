@@ -3,7 +3,13 @@ import type { ReactNode } from "react";
 import { Box } from "../Box";
 import { Inline } from "../Inline";
 import { Stack } from "../Stack";
-import { titleBlock, title as titleStyle, toolbar } from "./sheet-toolbar.css";
+import {
+    subtitleLarge,
+    titleBlock,
+    titleLarge,
+    title as titleStyle,
+    toolbar,
+} from "./sheet-toolbar.css";
 
 type SheetToolbarProps = {
     /** Slot for the close (or back) affordance, shown on the left. */
@@ -14,6 +20,11 @@ type SheetToolbarProps = {
     subtitle?: ReactNode;
     /** Trailing action slot — typically a small pill button. */
     action?: ReactNode;
+    /**
+     * `default` is the compact inline bar; `large` stacks a bold headline
+     * (and subtitle) under the controls row.
+     */
+    size?: "default" | "large";
 };
 
 /**
@@ -26,7 +37,39 @@ export function SheetToolbar({
     title,
     subtitle,
     action,
+    size = "default",
 }: SheetToolbarProps) {
+    if (size === "large") {
+        return (
+            <Box
+                className={toolbar}
+                position="sticky"
+                paddingX="l"
+                paddingTop="l"
+                paddingBottom="xs"
+            >
+                <Inline space="m" align="space-between" alignY="center">
+                    {leading && (
+                        <Box display="flex" alignItems="center" flexShrink={0}>
+                            {leading}
+                        </Box>
+                    )}
+                    {action && <Box flexShrink={0}>{action}</Box>}
+                </Inline>
+                <Box paddingTop="m">
+                    <RadixDialog.Title className={titleLarge}>
+                        {title}
+                    </RadixDialog.Title>
+                </Box>
+                {subtitle && (
+                    <Box paddingTop="xs" className={subtitleLarge}>
+                        {subtitle}
+                    </Box>
+                )}
+            </Box>
+        );
+    }
+
     return (
         <Box
             className={toolbar}

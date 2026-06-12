@@ -7,6 +7,19 @@ const fadeScaleIn = keyframes({
     to: { opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
 });
 
+/**
+ * Alert dialogs interrupt whatever is open (sheets, dialogs at
+ * `modal`/`modal + 1`), so their overlay and content sit two levels higher.
+ */
+export const alertDialogOverlayStyle = style({
+    selectors: {
+        // Outranks the base Overlay class regardless of stylesheet order.
+        "&&": {
+            zIndex: zIndex.modal + 2,
+        },
+    },
+});
+
 export const alertDialogContentStyle = style({
     position: "fixed",
     top: "50%",
@@ -20,7 +33,7 @@ export const alertDialogContentStyle = style({
     maxWidth: "480px",
     maxHeight: "85vh",
     overflowY: "auto",
-    zIndex: zIndex.modal + 1,
+    zIndex: zIndex.modal + 3,
     animationName: fadeScaleIn,
     animationDuration: transition.base,
     animationTimingFunction: easing.smooth,
