@@ -1,6 +1,8 @@
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import * as process from "node:process";
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
 import preact from "@preact/preset-vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import type { UserConfig } from "vite";
@@ -10,6 +12,7 @@ import removeConsole from "vite-plugin-remove-console";
 import {
     getSandboxEnv,
     getSstResource,
+    inlineFontFaces,
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
@@ -45,6 +48,28 @@ const preactJsxRuntime = path.resolve(
 
 const DEBUG = JSON.stringify(false);
 
+// Single source of truth for the lazy (Ring 1/2) chunk name roots, consumed by
+// the modulePreload filter, the orphan-import stripper and the eager-CSS
+// stripper. Add a new lazy chunk group here, not in each regex.
+const LAZY_CHUNK_NAMES = [
+    "blockchain-vendor",
+    "BaseProvider",
+    "Modal",
+    "Wallet",
+    "SharingPage",
+    "ccip",
+    "secp256k1",
+    "lazy-shared",
+    "ui-vendor",
+    "ui-runtime",
+] as const;
+const LAZY_CHUNK_ALTERNATION = LAZY_CHUNK_NAMES.join("|");
+
+// Hard ceiling on gzipped JS the iframe fetches synchronously on boot (eager
+// static-import closure from the entry). Audit measured ~9.4 KB; 15 KB leaves
+// headroom while failing the build if a lazy chunk leaks into the eager path.
+const EAGER_JS_BUDGET_GZIP = 15 * 1024;
+
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 
@@ -79,8 +104,10 @@ const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
  * are preserved because they don't use the top-level `import "...";` form.
  */
 function stripOrphanCrossChunkImports() {
-    const LAZY_ORPHAN_RE =
-        /import\s*"\.\/(?:blockchain-vendor|BaseProvider|ui-vendor|ui-runtime|lazy-shared|Modal|Wallet|SharingPage)-[A-Za-z0-9_-]+\.js";/g;
+    const LAZY_ORPHAN_RE = new RegExp(
+        `import\\s*"\\./(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.js";`,
+        "g"
+    );
     return {
         name: "strip-orphan-cross-chunk-imports",
         apply: "build" as const,
@@ -122,6 +149,127 @@ function stripOrphanCrossChunkImports() {
                         f.code = f.code.replace(re, "");
                     }
                 }
+            }
+        },
+    };
+}
+
+/**
+ * Drop render-blocking `<link rel="stylesheet">` tags for lazy chunks (e.g.
+ * `ui-runtime.css`) from `index.html`. Vite emits them even though the chunk's
+ * JS is dynamic-imported and the CSS is already in the chunk's `__vitePreload`
+ * dep map (so the dynamic import re-injects it on Ring 1 mount). On the bare
+ * RPC boot path — no UI shown — the eager link is pure waste blocking first paint.
+ */
+function stripEagerLazyCss() {
+    // Key on the href chunk-name alone, not rel="stylesheet" before href: a Vite
+    // upgrade that reorders <link> attributes would otherwise silently no-op this
+    // stripper. assertEagerBundleBudget fails the build if a lazy CSS link slips
+    // through, so any future break is loud rather than silent.
+    const lazyCssLinkRe = new RegExp(
+        `\\s*<link\\b[^>]*\\bhref="[^"]*(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.css"[^>]*>`,
+        "g"
+    );
+    return {
+        name: "strip-eager-lazy-css",
+        apply: "build" as const,
+        transformIndexHtml: {
+            order: "post" as const,
+            handler(html: string) {
+                return html.replace(lazyCssLinkRe, "");
+            },
+        },
+    };
+}
+
+/**
+ * Fail loudly if {@link stripEagerLazyCss} no-op'd (e.g. a Vite upgrade changed
+ * the `<link>` attribute order/format): a surviving lazy-chunk CSS link would
+ * ship a render-blocking stylesheet on every iframe boot. Keyed on the href
+ * chunk-name so it is attribute-order independent, mirroring the stripper.
+ */
+function assertNoLazyCssLeak(htmlSource: string) {
+    const leakedLazyCssRe = new RegExp(
+        `<link\\b[^>]*\\bhref="[^"]*(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.css"`
+    );
+    if (leakedLazyCssRe.test(htmlSource)) {
+        throw new Error(
+            "Lazy-chunk CSS leaked into boot index.html — stripEagerLazyCss matched nothing (did Vite change <link> output?)."
+        );
+    }
+}
+
+/**
+ * Fail the build if the eager boot JS exceeds {@link EAGER_JS_BUDGET_GZIP}.
+ *
+ * "Eager" = the JS the booted `index.html` pulls synchronously: the entry
+ * `<script type=module>` plus every `<link rel=modulepreload>`. That list is
+ * Vite's own curated boot set — the `modulePreload` filter has already dropped
+ * the lazy Ring 1/2 chunks — so the gate measures exactly what ships on boot,
+ * with no fragile re-derivation of the module graph.
+ *
+ * Mechanical KPI gate: if a renamed/new lazy chunk slips past the modulePreload
+ * filter it lands in the preload list and is counted here, failing the build
+ * instead of silently shipping on every iframe boot.
+ */
+function assertEagerBundleBudget() {
+    // Capture the bundle-key path (assets/<name>.js) regardless of the `/listener`
+    // base prefix, from the entry <script src> and each modulepreload <link href>.
+    const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
+    const preloadRe =
+        /<link\b[^>]*\brel="modulepreload"[^>]*\bhref="[^"]*?(assets\/[^"]+\.js)"/g;
+
+    return {
+        name: "assert-eager-bundle-budget",
+        apply: "build" as const,
+        // writeBundle (post-write) so the final, fully-transformed index.html and
+        // every chunk are on disk — avoids in-memory bundle timing/encoding edge
+        // cases where the emitted HTML asset isn't yet a string in generateBundle.
+        writeBundle(options: { dir?: string }) {
+            const dir = options.dir;
+            if (!dir) return;
+
+            let htmlSource: string;
+            try {
+                htmlSource = readFileSync(
+                    path.join(dir, "index.html"),
+                    "utf-8"
+                );
+            } catch {
+                return;
+            }
+
+            assertNoLazyCssLeak(htmlSource);
+
+            const eager = new Set<string>();
+            for (const re of [scriptRe, preloadRe]) {
+                for (const m of htmlSource.matchAll(re)) eager.add(m[1]);
+            }
+
+            let totalGzip = 0;
+            const breakdown: string[] = [];
+            for (const key of eager) {
+                let code: Buffer;
+                try {
+                    code = readFileSync(path.join(dir, key));
+                } catch {
+                    continue;
+                }
+                const gz = gzipSync(code).length;
+                totalGzip += gz;
+                breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
+            }
+
+            const totalKb = (totalGzip / 1024).toFixed(2);
+            console.log(
+                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${EAGER_JS_BUDGET_GZIP / 1024} KB)`
+            );
+            if (totalGzip > EAGER_JS_BUDGET_GZIP) {
+                throw new Error(
+                    `Eager boot JS budget exceeded: ${totalKb} KB gz > ${EAGER_JS_BUDGET_GZIP / 1024} KB.\n${breakdown
+                        .sort()
+                        .join("\n")}`
+                );
             }
         },
     };
@@ -230,9 +378,14 @@ export default defineConfig(async () => {
         plugins: [
             preact({ reactAliasesEnabled: false }),
             vanillaExtractPlugin(),
+            // Inline Sora @font-face. No `preload` on purpose: the iframe
+            // boots with no UI, so the woff2 must load lazily with Ring 1.
+            inlineFontFaces({ cssFiles: ["app/fonts/sora.css"] }),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
             stripOrphanCrossChunkImports(),
+            stripEagerLazyCss(),
+            assertEagerBundleBudget(),
         ],
         server: {
             port: 3002,
@@ -262,15 +415,18 @@ export default defineConfig(async () => {
             modulePreload: {
                 resolveDependencies: (_filename, deps, { hostType }) => {
                     if (hostType !== "html") return deps;
-                    return deps.filter(
-                        (d) =>
-                            !/(?:blockchain-vendor|BaseProvider|Modal|Wallet|SharingPage|ccip|secp256k1|lazy-shared|ui-vendor|ui-runtime)-/.test(
-                                d
-                            )
+                    const lazyDepRe = new RegExp(
+                        `(?:${LAZY_CHUNK_ALTERNATION})-`
                     );
+                    return deps.filter((d) => !lazyDepRe.test(d));
                 },
             },
             target: "baseline-widely-available",
+            // Coarse per-chunk warning only: kept just above the largest legit
+            // lazy chunk (blockchain-vendor ~285 KB) to avoid routine noise on
+            // intentionally heavy lazy chunks. The KPI that matters — the eager
+            // boot path — is enforced as a hard build failure by
+            // `assertEagerBundleBudget`, not by this number.
             chunkSizeWarningLimit: 300,
             rolldownOptions: {
                 // Skip emitting facade chunks for dynamic-import entry points.

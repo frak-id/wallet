@@ -89,16 +89,18 @@ function removeCache(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Initialise window-backed config (once per bundle boundary)
+// Initialise window-backed config (lazily, on first access)
 // ---------------------------------------------------------------------------
 
+// Seed `window.__frakSdkConfig` from the localStorage cache. Do NOT call this at
+// module top-level: that side effect contradicts `sideEffects: false` (a bundler
+// may legally drop it) and forces a localStorage read on every consumer at import.
+// It is invoked lazily from `getConfig` instead.
 function initConfig(): void {
     if (!isBrowser) return;
     if (window[GLOBAL_KEY]) return;
     window[GLOBAL_KEY] = readCache() ?? freshEmptyConfig();
 }
-
-initConfig();
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -106,6 +108,7 @@ initConfig();
 
 function getConfig(): SdkResolvedConfig {
     if (!isBrowser) return freshEmptyConfig();
+    initConfig();
     return window[GLOBAL_KEY] ?? freshEmptyConfig();
 }
 

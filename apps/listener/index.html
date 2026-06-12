@@ -11,13 +11,10 @@
             content="Frak Listener - iframe component for wallet interactions"
         >
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link
-            href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap"
-            rel="stylesheet"
-        >
+        <!-- Warm DNS only (not preconnect) for the idle boot ping in bootstrap.ts -->
+        <link rel="dns-prefetch" href="https://metrics.frak.id">
+
+        <!-- Sora @font-face is inlined by the inlineFontFaces Vite plugin (vite.config.ts) -->
     </head>
     <body>
         <div id="root"></div>

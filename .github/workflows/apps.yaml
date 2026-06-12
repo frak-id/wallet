@@ -1,0 +1,39 @@
+name: "✅ CI: Apps"
+
+on:
+  push:
+    branches: [main, dev]
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'bun.lock']
+  pull_request:
+    paths: ['apps/**', 'packages/**', 'sdk/**', 'bun.lock']
+
+# Newer pushes to the same ref cancel in-flight runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Listener ────────────────────────────────────────────
+  listener-eager-budget:
+    name: "📏 Listener · Eager bundle budget"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+      # The listener imports `@frak-labs/core-sdk` / `@frak-labs/frame-connector`
+      # from their built `dist/`, so the SDK must be built before the app build
+      # can resolve them (mirrors the deploy workflow).
+      - name: "🔨 Build the SDK"
+        run: bun run build:sdk
+      # The `assert-eager-bundle-budget` writeBundle plugin (apps/listener/
+      # vite.config.ts) fails the build when the eager boot JS — the entry
+      # <script> plus its <link rel=modulepreload> set — exceeds 15 KB gz, so a
+      # lazy chunk leaking into the eager path trips the budget here instead of
+      # shipping on every iframe boot.
+      - name: "📏 Build listener & assert eager budget"
+        run: bun run --cwd apps/listener build

@@ -46,15 +46,36 @@ import type {
 import { ensureHydrated } from "@/queryClient";
 
 /**
+ * Run a callback during browser idle time, falling back to a macrotask where
+ * requestIdleCallback is unavailable (Safari < 17). Keeps fire-and-forget work
+ * off the iframe boot critical path.
+ */
+function runWhenIdle(callback: () => void): void {
+    if (typeof window === "undefined") return;
+    if ("requestIdleCallback" in window) {
+        (
+            window as Window & {
+                requestIdleCallback: (cb: () => void) => number;
+            }
+        ).requestIdleCallback(callback);
+        return;
+    }
+    setTimeout(callback, 0);
+}
+
+/**
  * Send a one-shot ping to the metrics server so we can count iframe loads.
  * Fire-and-forget — failures are silently dropped, the metrics endpoint
- * is best-effort.
+ * is best-effort. Deferred to idle so it never competes with the SDK's first
+ * RPC + Ring 1 chunk fetches that fire right after `emitConnected()`.
  */
 function sendBootPing(): void {
-    void fetch("https://metrics.frak.id/ping", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ua: navigator.userAgent }),
+    runWhenIdle(() => {
+        void fetch("https://metrics.frak.id/ping", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ua: navigator.userAgent }),
+        });
     });
 }
 
@@ -108,17 +129,8 @@ function setupPreloadHints(): void {
         await Promise.all(promises);
     };
 
-    if ("requestIdleCallback" in window) {
-        const id = (
-            window as Window & {
-                requestIdleCallback: (cb: () => void) => number;
-            }
-        ).requestIdleCallback(handler);
-        // No teardown — bootstrap runs once per iframe lifetime.
-        void id;
-        return;
-    }
-    setTimeout(handler, 0);
+    // No teardown — bootstrap runs once per iframe lifetime.
+    runWhenIdle(handler);
 }
 
 /**

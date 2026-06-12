@@ -11,7 +11,7 @@ Framework-agnostic core SDK (111 public exports). Dual build: NPM (`dist/`, ESM+
 - `src/utils/` — compression (`compressJsonToB64`), base64url, URL builders, `sdkConfigStore`, `FrakContextManager`
 
 ## Subpath Exports
-`.`, `./actions`, `./bundle`. Browser field → `./cdn/bundle.js`. `development` condition → `./src/index.ts` (monorepo dev).
+`.`, `./actions`, `./bundle`. `development` condition → `./src/index.ts` (monorepo dev). No `browser` field on purpose — it pointed bundlers (`mainFields: ["browser"]`) at the non-tree-shakeable 39.5 KB IIFE and defeated `sideEffects: false`. CDN consumers fetch `cdn/bundle.js` by URL, not via package resolution.
 
 ## Defined Variables (tsdown)
 `OPEN_PANEL_API_URL`, `SDK_VERSION` — injected at build time; not read from runtime env.
