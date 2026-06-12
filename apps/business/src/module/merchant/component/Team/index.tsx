@@ -5,7 +5,9 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { isAddressEqual } from "viem";
+import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { pageBottomSpacer } from "@/module/common/component/FloatingFooter/floating-footer.css";
+import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
 import { ButtonAddTeam } from "@/module/merchant/component/ButtonAddTeam";
 import { SaveFooter } from "@/module/merchant/component/Customize/SaveFooter";
@@ -53,12 +55,11 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
         }
     }, [staged, merchantId, removeAdmin]);
 
-    const confirmDiscard = useCallback(
-        () =>
-            staged.length === 0 ||
-            window.confirm(t("customize.unsavedChanges")),
-        [staged, t]
-    );
+    const { guard: guardNavigate, dialogProps: discardDialogProps } =
+        useDiscardGuard({
+            isDirty: staged.length > 0,
+            onDiscard: () => setStaged([]),
+        });
 
     if (isLoading || !merchant) {
         return (
@@ -74,7 +75,7 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
                 <EditPageLayout
                     merchantId={merchantId}
                     page="team"
-                    onBeforeNavigate={confirmDiscard}
+                    guardNavigate={guardNavigate}
                 >
                     <TableTeam
                         merchantId={merchantId}
@@ -102,6 +103,7 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
                 onSave={saveAll}
                 label={t("merchantEdit.team.saveAll")}
             />
+            <DiscardChangesDialog {...discardDialogProps} />
         </>
     );
 }

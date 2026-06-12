@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import { Form } from "@/module/forms/Form";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import { useCustomizeSection } from "../saveRegistry";
 import {
     AdvancedDisclosure,
     ComponentFields,
@@ -16,7 +17,6 @@ import {
     ComponentTypeTabs,
 } from "./ComponentEditor";
 import { CssEditor } from "./CssEditor";
-import { useCustomizeSection } from "./saveRegistry";
 import type {
     ComponentSettingsFormValues,
     ComponentType,

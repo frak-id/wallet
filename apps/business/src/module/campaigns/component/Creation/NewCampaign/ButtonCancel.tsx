@@ -1,15 +1,10 @@
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
-import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
-import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
-import { CloseIcon, ExclamationIcon } from "@frak-labs/design-system/icons";
+import { CloseIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { Button } from "@/module/common/component/Button";
+import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { campaignStore } from "@/stores/campaignStore";
-import * as styles from "./buttonCancel.css";
 
 /**
  * Round glass "X" in the wizard header. Opens a "Close draft without saving it?"
@@ -28,11 +23,8 @@ export function ButtonCancel({
     const merchantId = useActiveMerchantId();
 
     return (
-        <AlertDialog
-            showCloseButton={false}
-            classNameContent={styles.content}
-            classNameTitle={styles.title}
-            buttonElement={
+        <ConfirmDialog
+            trigger={
                 <GlassButton
                     as="button"
                     disabled={disabled}
@@ -40,51 +32,19 @@ export function ButtonCancel({
                     icon={<CloseIcon width={22} height={22} />}
                 />
             }
-            title={
-                <Stack space="m" align="center">
-                    <IconCircle size="md">
-                        <ExclamationIcon className={styles.badgeIcon} />
-                    </IconCircle>
-                    <Text as="span" variant="heading2">
-                        {t("campaigns.create.cancel.title")}
-                    </Text>
-                </Stack>
-            }
-            description={
-                <Text variant="body" color="secondary" align="center">
-                    {t("campaigns.create.cancel.description")}
-                </Text>
-            }
-            footer={{ className: styles.footer }}
-            cancel={
-                <Button
-                    variant="secondary"
-                    size="large"
-                    width="full"
-                    className={styles.footerButton}
-                >
-                    {t("campaigns.create.cancel.dismiss")}
-                </Button>
-            }
-            actionClose
-            action={
-                <Button
-                    variant="primary"
-                    size="large"
-                    width="full"
-                    className={styles.footerButton}
-                    onClick={() => {
-                        reset();
-                        onClick();
-                        navigate({
-                            to: "/m/$merchantId/campaigns/list",
-                            params: { merchantId },
-                        });
-                    }}
-                >
-                    {t("campaigns.create.cancel.confirm")}
-                </Button>
-            }
+            title={t("campaigns.create.cancel.title")}
+            description={t("campaigns.create.cancel.description")}
+            cancelLabel={t("campaigns.create.cancel.dismiss")}
+            confirmLabel={t("campaigns.create.cancel.confirm")}
+            confirmTone="primary"
+            onConfirm={() => {
+                reset();
+                onClick();
+                navigate({
+                    to: "/m/$merchantId/campaigns/list",
+                    params: { merchantId },
+                });
+            }}
         />
     );
 }

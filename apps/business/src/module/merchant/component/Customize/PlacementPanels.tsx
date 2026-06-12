@@ -9,9 +9,9 @@ import { useTranslation } from "react-i18next";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import { useCustomizeSection } from "../saveRegistry";
 import { CssEditor } from "./CssEditor";
 import * as styles from "./customize.css";
-import { useCustomizeSection } from "./saveRegistry";
 import type { CssFormValues } from "./types";
 import { updatePlacement, valueOrUndefined } from "./utils";
 

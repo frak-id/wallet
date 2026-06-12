@@ -40,9 +40,16 @@ export function useCustomizeSection<T extends FieldValues>(
     useEffect(
         () =>
             registerSection(key, async () => {
-                await form.handleSubmit(async (values) => {
-                    await onValid(values);
-                })();
+                await form.handleSubmit(
+                    async (values) => {
+                        await onValid(values);
+                    },
+                    // Reject so the page-level save surfaces the failure
+                    // instead of silently skipping an invalid section.
+                    () => {
+                        throw new Error(`Section "${key}" is invalid`);
+                    }
+                )();
             }),
         [registerSection, key, form, onValid]
     );

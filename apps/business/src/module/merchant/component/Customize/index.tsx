@@ -1,16 +1,19 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { pageBottomSpacer } from "@/module/common/component/FloatingFooter/floating-footer.css";
+import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useSdkConfig } from "@/module/merchant/hook/useSdkConfig";
+import { CustomizeSaveProvider } from "../saveRegistry";
 import { DefaultCustomization } from "./DefaultCustomization";
 import { PlacementCustomization } from "./PlacementCustomization";
 import { PlacementSelector } from "./PlacementSelector";
 import { SaveFooter } from "./SaveFooter";
 import { SdkIdentityPanel } from "./SdkIdentityPanel";
-import { CustomizeSaveProvider } from "./saveRegistry";
 import { getSdkConfig } from "./utils";
 
 export function CustomizePage({ merchantId }: { merchantId: string }) {
@@ -29,6 +32,7 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
         {}
     );
     const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState(false);
     const submitHandlers = useRef(new Map<string, () => Promise<void>>());
 
     const {
@@ -85,39 +89,34 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
     // The backend merges each update over a fresh read of the stored config,
     // so concurrent saves would drop fields — submit sections one by one.
     const saveAll = useCallback(async () => {
-        const dirtyKeys = Object.entries(dirtySections)
-            .filter(([, isDirty]) => isDirty)
-            .map(([key]) => key);
-
         setIsSaving(true);
+        setSaveError(false);
         try {
-            for (const key of dirtyKeys) {
-                await submitHandlers.current.get(key)?.();
+            for (const [key, isDirty] of Object.entries(dirtySections)) {
+                if (!isDirty) continue;
+                try {
+                    await submitHandlers.current.get(key)?.();
+                } catch {
+                    // Failed/invalid section stays dirty; keep saving the rest.
+                    setSaveError(true);
+                }
             }
         } finally {
             setIsSaving(false);
         }
     }, [dirtySections]);
 
-    const confirmDiscard = useCallback(
-        () =>
-            !hasUnsavedChanges || window.confirm(t("customize.unsavedChanges")),
-        [hasUnsavedChanges, t]
-    );
+    const { guard: guardNavigate, dialogProps: navDialogProps } =
+        useDiscardGuard({ isDirty: hasUnsavedChanges });
+    const { guard: guardTabChange, dialogProps: tabDialogProps } =
+        useDiscardGuard({ isDirty: hasUnsavedSectionChanges });
 
     const handleTabChange = useCallback(
         (nextTab: "default" | string) => {
             if (nextTab === activeTab) return;
-            if (
-                hasUnsavedSectionChanges &&
-                !window.confirm(t("customize.unsavedChanges"))
-            ) {
-                return;
-            }
-
-            setActiveTab(nextTab);
+            guardTabChange(() => setActiveTab(nextTab));
         },
-        [activeTab, hasUnsavedSectionChanges, t]
+        [activeTab, guardTabChange]
     );
 
     const handleCreatePlacement = useCallback(
@@ -148,7 +147,7 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                 <EditPageLayout
                     merchantId={merchantId}
                     page="customize"
-                    onBeforeNavigate={confirmDiscard}
+                    guardNavigate={guardNavigate}
                 >
                     <SdkIdentityPanel
                         merchantId={merchantId}
@@ -179,6 +178,11 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                             }
                         />
                     )}
+                    {saveError && (
+                        <Text variant="caption" color="error">
+                            {t("merchantEdit.saveError")}
+                        </Text>
+                    )}
                 </EditPageLayout>
             </div>
             <SaveFooter
@@ -186,6 +190,8 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
                 isSaving={isSaving}
                 onSave={saveAll}
             />
+            <DiscardChangesDialog {...navDialogProps} />
+            <DiscardChangesDialog {...tabDialogProps} />
         </CustomizeSaveProvider>
     );
 }

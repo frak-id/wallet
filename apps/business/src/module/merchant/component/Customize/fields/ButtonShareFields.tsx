@@ -7,13 +7,8 @@ import {
 } from "@frak-labs/design-system/components/Select";
 import type { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import {
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/module/forms/Form";
+import { EditField } from "@/module/forms/EditField";
+import { FormControl, FormField } from "@/module/forms/Form";
 import * as styles from "../customize.css";
 import type { ComponentSettingsFormValues } from "../types";
 import { ComponentCssField, WordingTextField } from "./shared";
@@ -40,10 +35,10 @@ export function ButtonShareFields({
                 control={form.control}
                 name="buttonShare.clickAction"
                 render={({ field }) => (
-                    <FormItem className={styles.fieldItem}>
-                        <FormLabel className={styles.fieldLabel}>
-                            {t("customize.components.clickAction.label")}
-                        </FormLabel>
+                    <EditField
+                        label={t("customize.components.clickAction.label")}
+                        hint={t("customize.components.clickAction.hint")}
+                    >
                         <Select
                             value={field.value}
                             onValueChange={field.onChange}
@@ -71,11 +66,7 @@ export function ButtonShareFields({
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                        <p className={styles.fieldHint}>
-                            {t("customize.components.clickAction.hint")}
-                        </p>
-                        <FormMessage />
-                    </FormItem>
+                    </EditField>
                 )}
             />
             <ComponentCssField

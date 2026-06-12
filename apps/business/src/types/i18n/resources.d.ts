@@ -720,16 +720,8 @@ export default interface Resources {
           "label": "Language"
         },
         "logo": {
-          "browse": "Browse files",
-          "dropActive": "Drop image here",
-          "dropTitle": "Drag and drop files here",
-          "existing": "Use an existing image:",
           "hint": "Your logo image, displayed alongside your name in SDK components",
-          "label": "Logo",
-          "or": "or",
-          "remove": "Remove image",
-          "restrictions": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)",
-          "uploading": "Uploading…"
+          "label": "Logo"
         },
         "name": {
           "hint": "Your brand name as shown to visitors in the SDK components",
@@ -769,8 +761,7 @@ export default interface Resources {
         },
         "title": "SDK Customization"
       },
-      "save": "Save",
-      "unsavedChanges": "You have unsaved changes. Discard them?"
+      "save": "Save"
     },
     "dashboard": {
       "actions": {
@@ -867,6 +858,124 @@ export default interface Resources {
     },
     "merchantEdit": {
       "close": "Close",
+      "details": {
+        "currency": "Default reward currency",
+        "domain": "Domain",
+        "edit": "Edit",
+        "name": "Name",
+        "title": "Details of the merchant"
+      },
+      "discard": {
+        "confirm": "Discard changes",
+        "description": "You have unsaved changes. Are you sure you want to discard them?",
+        "keepEditing": "Keep editing",
+        "title": "Discard changes?"
+      },
+      "domains": {
+        "add": "Add domain",
+        "additionalLabel": "Additional domain",
+        "description": "Additional domains authorized to access this merchant (e.g. Shopify myshopify.com domains).",
+        "empty": "No additional domains yet.",
+        "invalid": "Invalid domain format",
+        "manage": "Manage domains",
+        "more": "+{{count}} more",
+        "placeholder": "e.g. mystore.myshopify.com",
+        "remove": "Remove",
+        "title": "Allowed domains"
+      },
+      "editMerchant": {
+        "cancel": "Cancel",
+        "currency": "Default reward currency",
+        "description": "Update your merchant name and default reward currency.",
+        "domain": "Domain name",
+        "infoCircle": "Circle (USDC):",
+        "infoMonerium": "Monerium:",
+        "name": "Merchant name",
+        "namePlaceholder": "Merchant name...",
+        "nameRequired": "Merchant name is required",
+        "save": "Save changes",
+        "title": "Edit merchant"
+      },
+      "explorer": {
+        "additionalHero": "Additional hero images",
+        "additionalHeroHint": "Up to 4 extra images shown as a slider after the main one.",
+        "browseFiles": "Browse files",
+        "description": "Description",
+        "descriptionPlaceholder": "Merchant description...",
+        "dragAndDrop": "Drag and drop files here",
+        "dropHere": "Drop image here",
+        "heroHint": "The main image shown at the top of your Explorer page.",
+        "heroImage": "Hero image",
+        "invalidUrl": "Enter a valid image URL (https://…)",
+        "listed": "Listed in Explorer",
+        "logo": "Logo",
+        "or": "or",
+        "removeImage": "Remove image",
+        "restrictions": {
+          "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
+          "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)"
+        },
+        "title": "Explorer",
+        "uploaded": "Image uploaded",
+        "uploading": "Uploading...",
+        "useExisting": "Use an existing image:"
+      },
+      "newsletter": {
+        "description": "Paste this link into your newsletter or any marketing email. When a customer clicks it, your storefront opens with the Frak sharing modal, pre-filled with your current campaign rewards, so they can share and earn in one tap.",
+        "title": "Newsletter sharing link"
+      },
+      "purchaseTracker": {
+        "description": "Track purchases from your store to power campaigns and distribute rewards.",
+        "notRegistered": "Not registered",
+        "platform": "Platform",
+        "registered": "Webhook registered",
+        "sheet": {
+          "change": {
+            "confirm": "Change platform",
+            "description": "This could break your purchase tracking. Are you sure you want to change the platform?",
+            "internalWarning": "You won't be able to revert back from this dashboard — you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
+            "title": "Change platform?"
+          },
+          "description": "Configure how Frak receives purchase events from your store.",
+          "instructions": {
+            "custom": "To use this webhook on your website, please refer to the <doc>documentation</doc>.",
+            "internal1": "Your merchant is already registered on Frak using an internal webhook. This usually means you are using one of our third-party applications, like the Shopify app or the WordPress plugin.",
+            "internal2": "If you think that's a mistake, you can switch to a manual setup using the selector above.",
+            "magento": "To register the webhook on Adobe Commerce (Magento 2), install the <doc>frak-labs/magento2-module</doc> Composer package, then in your Magento admin console open <italic>Stores > Configuration > Frak > Webhook Secret</italic> and paste the secret below:",
+            "shopify": "To register the webhook on Shopify, go to your Shopify admin console, then <italic>Settings > Notifications > Webhook</italic>. Create a new webhook with the <italic>Order Updated</italic> event using the URL below:",
+            "woocommerce": "To register the webhook on WooCommerce, go to your WordPress admin console, then <italic>WooCommerce > Settings > Advanced > Webhooks</italic>. Create a new webhook with the <italic>Order Updated</italic> topic using the URL and secret below:"
+          },
+          "platformTitle": "Purchase platform",
+          "platforms": {
+            "custom": "Custom",
+            "internal": "Internal",
+            "magento": "Magento",
+            "shopify": "Shopify",
+            "woocommerce": "WooCommerce"
+          },
+          "register": "Register webhook",
+          "registerHint": "Then register it on Frak with this button.",
+          "secretLabel": "Secret",
+          "shopify": {
+            "keyLabel": "Webhook signature",
+            "keyPlaceholder": "Copy the signature shown at the bottom of the webhooks list in your Shopify panel",
+            "missingKey": "Missing signin key"
+          },
+          "stats": {
+            "firstPurchase": "First purchase",
+            "lastPurchase": "Last purchase",
+            "lastUpdate": "Last update",
+            "title": "Stats"
+          },
+          "urlLabel": "URL"
+        },
+        "status": "Status",
+        "title": "Purchase tracker",
+        "tracked": "Purchases tracked",
+        "update": "Update webhook"
+      },
+      "saveAll": "Save all changes",
+      "saveError": "Some changes could not be saved. Check the fields and try again.",
       "tabs": {
         "explorer": "Explorer App settings",
         "identity": "Customize SDK Identity",

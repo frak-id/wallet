@@ -1,12 +1,7 @@
 import { Input } from "@frak-labs/design-system/components/Input";
 import type { FieldPath, UseFormReturn } from "react-hook-form";
-import {
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/module/forms/Form";
+import { EditField } from "@/module/forms/EditField";
+import { FormControl, FormField } from "@/module/forms/Form";
 import * as styles from "../customize.css";
 import type { ComponentSettingsFormValues } from "../types";
 
@@ -44,13 +39,11 @@ export function WordingTextField({
             control={form.control}
             name={name}
             render={({ field }) => (
-                <FormItem className={styles.fieldItem}>
-                    <FormLabel className={styles.fieldLabel}>{label}</FormLabel>
+                <EditField label={label}>
                     <FormControl>
                         <Input variant="bare" tone="muted" {...field} />
                     </FormControl>
-                    <FormMessage />
-                </FormItem>
+                </EditField>
             )}
         />
     );
@@ -72,8 +65,7 @@ export function ComponentCssField({
             control={form.control}
             name={name}
             render={({ field }) => (
-                <FormItem className={styles.fieldItem}>
-                    <FormLabel className={styles.fieldLabel}>{label}</FormLabel>
+                <EditField label={label}>
                     <FormControl>
                         <textarea
                             className={styles.cssTextarea}
@@ -82,8 +74,7 @@ export function ComponentCssField({
                             {...field}
                         />
                     </FormControl>
-                    <FormMessage />
-                </FormItem>
+                </EditField>
             )}
         />
     );

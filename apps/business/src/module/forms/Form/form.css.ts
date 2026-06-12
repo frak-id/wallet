@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, brand } from "@frak-labs/design-system/tokens";
+import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 
@@ -54,6 +54,15 @@ export const formLabel = recipe({
             light: {
                 fontWeight: brand.typography.fontWeight.medium,
                 color: vars.text.tertiary,
+            },
+            /** Quiet field label matching the design-system Input label. */
+            field: {
+                paddingBottom: 0,
+                fontSize: fontSize.s,
+                lineHeight: "22px",
+                fontWeight: brand.typography.fontWeight.medium,
+                color: vars.text.secondary,
+                whiteSpace: "normal",
             },
             dark: {},
         },

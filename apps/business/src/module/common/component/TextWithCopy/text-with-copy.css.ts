@@ -18,11 +18,11 @@ export const trigger = style({
     border: "none",
     cursor: "pointer",
     padding: "4px",
-    color: vars.icon.action,
+    color: vars.icon.secondary,
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     ":hover": {
-        color: vars.icon.actionHover,
+        color: vars.icon.primary,
     },
 });

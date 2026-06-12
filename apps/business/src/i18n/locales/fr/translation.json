@@ -838,6 +838,124 @@
             "explorer": "Réglages de l'app Explorer",
             "team": "Gérer votre équipe"
         },
+        "saveAll": "Sauvegarder les modifications",
+        "saveError": "Certaines modifications n'ont pas pu être enregistrées. Vérifiez les champs et réessayez.",
+        "discard": {
+            "title": "Abandonner les modifications ?",
+            "description": "Vous avez des modifications non sauvegardées. Voulez-vous vraiment les abandonner ?",
+            "keepEditing": "Continuer l'édition",
+            "confirm": "Abandonner"
+        },
+        "details": {
+            "title": "Détails du marchand",
+            "name": "Nom",
+            "domain": "Domaine",
+            "currency": "Devise de récompense par défaut",
+            "edit": "Modifier"
+        },
+        "domains": {
+            "title": "Domaines autorisés",
+            "description": "Domaines supplémentaires autorisés à accéder à ce marchand (ex. domaines Shopify myshopify.com).",
+            "empty": "Aucun domaine supplémentaire pour l'instant.",
+            "manage": "Gérer les domaines",
+            "additionalLabel": "Domaine supplémentaire",
+            "placeholder": "ex. mastore.myshopify.com",
+            "add": "Ajouter le domaine",
+            "invalid": "Format de domaine invalide",
+            "remove": "Supprimer",
+            "more": "+{{count}} autres"
+        },
+        "newsletter": {
+            "title": "Lien de partage newsletter",
+            "description": "Collez ce lien dans votre newsletter ou tout e-mail marketing. Lorsqu'un client clique dessus, votre boutique s'ouvre avec la modal de partage Frak, pré-remplie avec vos récompenses de campagne actuelles, pour partager et gagner en un clic."
+        },
+        "explorer": {
+            "title": "Explorer",
+            "listed": "Listé dans l'Explorer",
+            "heroImage": "Image hero",
+            "heroHint": "L'image principale affichée en haut de votre page Explorer.",
+            "additionalHero": "Images hero supplémentaires",
+            "additionalHeroHint": "Jusqu'à 4 images supplémentaires affichées en carrousel après l'image principale.",
+            "logo": "Logo",
+            "description": "Description",
+            "dragAndDrop": "Glissez-déposez vos fichiers ici",
+            "dropHere": "Déposez l'image ici",
+            "uploading": "Téléversement...",
+            "uploaded": "Image téléversée",
+            "or": "ou",
+            "browseFiles": "Parcourir les fichiers",
+            "removeImage": "Supprimer l'image",
+            "useExisting": "Utiliser une image existante :",
+            "invalidUrl": "Saisissez une URL d'image valide (https://…)",
+            "restrictions": {
+                "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 à 2:1 (Max 10 Mo)",
+                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)"
+            },
+            "descriptionPlaceholder": "Description du marchand..."
+        },
+        "purchaseTracker": {
+            "title": "Suivi des achats",
+            "description": "Suivez les achats de votre boutique pour alimenter les campagnes et distribuer des récompenses.",
+            "status": "Statut",
+            "registered": "Webhook enregistré",
+            "notRegistered": "Non enregistré",
+            "platform": "Plateforme",
+            "tracked": "Achats suivis",
+            "update": "Mettre à jour le webhook",
+            "sheet": {
+                "description": "Configurez comment Frak reçoit les événements d'achat de votre boutique.",
+                "platformTitle": "Plateforme d'achat",
+                "platforms": {
+                    "shopify": "Shopify",
+                    "woocommerce": "WooCommerce",
+                    "magento": "Magento",
+                    "custom": "Personnalisé",
+                    "internal": "Interne"
+                },
+                "urlLabel": "URL",
+                "secretLabel": "Secret",
+                "registerHint": "Puis enregistrez-le sur Frak avec ce bouton.",
+                "register": "Enregistrer le webhook",
+                "change": {
+                    "title": "Changer de plateforme ?",
+                    "description": "Cela pourrait casser le suivi de vos achats. Voulez-vous vraiment changer de plateforme ?",
+                    "internalWarning": "Vous ne pourrez pas revenir en arrière depuis ce tableau de bord — il faudra reconfigurer le webhook depuis l'application de la plateforme (comme l'app Shopify Frak).",
+                    "confirm": "Changer de plateforme"
+                },
+                "instructions": {
+                    "shopify": "Pour enregistrer le webhook sur Shopify, ouvrez votre console d'administration Shopify, puis <italic>Settings > Notifications > Webhook</italic>. Créez un nouveau webhook avec l'événement <italic>Order Updated</italic> en utilisant l'URL ci-dessous :",
+                    "woocommerce": "Pour enregistrer le webhook sur WooCommerce, ouvrez votre console d'administration WordPress, puis <italic>WooCommerce > Settings > Advanced > Webhooks</italic>. Créez un nouveau webhook avec le sujet <italic>Order Updated</italic> en utilisant l'URL et le secret ci-dessous :",
+                    "magento": "Pour enregistrer le webhook sur Adobe Commerce (Magento 2), installez le paquet Composer <doc>frak-labs/magento2-module</doc>, puis dans votre console d'administration Magento ouvrez <italic>Stores > Configuration > Frak > Webhook Secret</italic> et collez le secret ci-dessous :",
+                    "custom": "Pour utiliser ce webhook sur votre site, référez-vous à la <doc>documentation</doc>.",
+                    "internal1": "Votre marchand est déjà enregistré sur Frak via un webhook interne. Cela signifie généralement que vous utilisez l'une de nos applications tierces, comme l'app Shopify ou le plugin WordPress.",
+                    "internal2": "Si vous pensez qu'il s'agit d'une erreur, vous pouvez passer à une configuration manuelle via le sélecteur ci-dessus."
+                },
+                "shopify": {
+                    "keyLabel": "Signature du webhook",
+                    "keyPlaceholder": "Copiez la signature affichée en bas de la liste des webhooks dans votre panneau Shopify",
+                    "missingKey": "Signature manquante"
+                },
+                "stats": {
+                    "title": "Statistiques",
+                    "firstPurchase": "Premier achat",
+                    "lastPurchase": "Dernier achat",
+                    "lastUpdate": "Dernière mise à jour"
+                }
+            }
+        },
+        "editMerchant": {
+            "title": "Modifier le marchand",
+            "description": "Mettez à jour le nom de votre marchand et la devise de récompense par défaut.",
+            "name": "Nom du marchand",
+            "nameRequired": "Le nom du marchand est requis",
+            "namePlaceholder": "Nom du marchand...",
+            "domain": "Nom de domaine",
+            "currency": "Devise de récompense par défaut",
+            "infoMonerium": "Monerium :",
+            "infoCircle": "Circle (USDC) :",
+            "cancel": "Annuler",
+            "save": "Sauvegarder les modifications"
+        },
         "team": {
             "headers": {
                 "wallet": "Portefeuille",
@@ -858,7 +976,6 @@
     },
     "customize": {
         "save": "Enregistrer",
-        "unsavedChanges": "Des modifications ne sont pas enregistrées. Les abandonner ?",
         "identity": {
             "name": {
                 "label": "Nom",
@@ -867,15 +984,7 @@
             },
             "logo": {
                 "label": "Logo",
-                "hint": "Votre logo, affiché à côté de votre nom dans les composants SDK",
-                "dropTitle": "Glissez-déposez vos fichiers ici",
-                "dropActive": "Déposez l'image ici",
-                "uploading": "Envoi en cours…",
-                "or": "ou",
-                "browse": "Parcourir",
-                "restrictions": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 à 2:1 (Max 10 Mo)",
-                "existing": "Utiliser une image existante :",
-                "remove": "Supprimer l'image"
+                "hint": "Votre logo, affiché à côté de votre nom dans les composants SDK"
             },
             "homepage": {
                 "label": "Lien du site",

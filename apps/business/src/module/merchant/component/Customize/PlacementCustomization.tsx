@@ -8,25 +8,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/module/forms/Form";
+import { EditField } from "@/module/forms/EditField";
+import { Form, FormControl, FormField } from "@/module/forms/Form";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import { useCustomizeSection } from "../saveRegistry";
 import {
     ComponentFields,
     ComponentPreview,
     ComponentTypeTabs,
 } from "./ComponentEditor";
-import * as styles from "./customize.css";
 import { getBannerDefaults } from "./fields/BannerFields";
 import { getPostPurchaseDefaults } from "./fields/PostPurchaseFields";
 import { DeletePlacementPanel, PlacementCssPanel } from "./PlacementPanels";
-import { useCustomizeSection } from "./saveRegistry";
 import type { ComponentSettingsFormValues, ComponentType } from "./types";
 import { updatePlacement, valueOrUndefined } from "./utils";
 import { WordingPresets } from "./WordingPresets";
@@ -247,12 +240,14 @@ function PlacementSettingsPanel({
                             },
                         }}
                         render={({ field }) => (
-                            <FormItem className={styles.fieldItem}>
-                                <FormLabel className={styles.fieldLabel}>
-                                    {t(
-                                        "customize.components.targetInteraction.label"
-                                    )}
-                                </FormLabel>
+                            <EditField
+                                label={t(
+                                    "customize.components.targetInteraction.label"
+                                )}
+                                hint={t(
+                                    "customize.components.targetInteraction.hint"
+                                )}
+                            >
                                 <FormControl>
                                     <Input
                                         variant="bare"
@@ -262,13 +257,7 @@ function PlacementSettingsPanel({
                                         {...field}
                                     />
                                 </FormControl>
-                                <p className={styles.fieldHint}>
-                                    {t(
-                                        "customize.components.targetInteraction.hint"
-                                    )}
-                                </p>
-                                <FormMessage />
-                            </FormItem>
+                            </EditField>
                         )}
                     />
 

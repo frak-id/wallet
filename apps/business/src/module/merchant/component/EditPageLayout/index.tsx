@@ -28,20 +28,23 @@ const PAGE_ROUTES = {
 export function EditPageLayout({
     merchantId,
     page,
-    onBeforeNavigate,
+    guardNavigate,
     children,
 }: {
     merchantId: string;
     page: EditPage;
-    /** Return false to block navigation (e.g. unsaved changes). */
-    onBeforeNavigate?: () => boolean;
+    /** Guard navigation through the discard modal (receives the deferred action). */
+    guardNavigate?: (action: () => void) => void;
     children: ReactNode;
 }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
     const guarded = (action: () => void) => {
-        if (onBeforeNavigate && !onBeforeNavigate()) return;
+        if (guardNavigate) {
+            guardNavigate(action);
+            return;
+        }
         action();
     };
 

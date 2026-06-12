@@ -12,93 +12,12 @@ export const saveFooterColumn = style({
     justifyContent: "center",
 });
 
-export const fieldItem = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xxs,
-});
-
-/** Label/hint inset aligns with the input text (16px padding). */
-export const fieldLabel = style({
-    paddingInline: alias.spacing.m,
-    marginBottom: alias.spacing.xxs,
-    fontSize: fontSize.s,
-    lineHeight: "22px",
-    fontWeight: brand.typography.fontWeight.medium,
-    color: vars.text.secondary,
-});
-
-export const fieldHint = style({
-    paddingInline: alias.spacing.m,
-    margin: 0,
-    fontSize: fontSize.xs,
-    lineHeight: "20px",
-    color: vars.text.tertiary,
-});
-
 export const switchRow = style({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: alias.spacing.m,
     paddingBlock: alias.spacing.m,
-});
-
-export const dropzone = style({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: alias.spacing.m,
-    padding: alias.spacing.m,
-    borderRadius: alias.cornerRadius.m,
-    border: `1px dashed ${vars.border.default}`,
-    backgroundColor: vars.surface.muted,
-});
-
-export const dropzoneActive = style({
-    borderColor: vars.border.focus,
-    backgroundColor: vars.surface.secondary,
-});
-
-export const dropzoneIcon = style({
-    color: vars.icon.action,
-});
-
-export const clearButton = style({
-    all: "unset",
-    boxSizing: "border-box",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    width: "24px",
-    height: "24px",
-    borderRadius: alias.cornerRadius.full,
-    color: vars.text.secondary,
-    selectors: {
-        "&:hover": {
-            color: vars.text.primary,
-        },
-    },
-});
-
-export const thumbnailButton = style({
-    all: "unset",
-    boxSizing: "border-box",
-    cursor: "pointer",
-    width: "48px",
-    height: "48px",
-    borderRadius: alias.cornerRadius.m,
-    border: `1px solid ${vars.border.default}`,
-    overflow: "hidden",
-    flexShrink: 0,
-});
-
-export const thumbnailImage = style({
-    display: "block",
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
 });
 
 export const radioRow = style({

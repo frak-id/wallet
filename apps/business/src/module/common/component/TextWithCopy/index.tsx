@@ -1,4 +1,4 @@
-import { Check, Clipboard } from "lucide-react";
+import { CheckIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import type { PropsWithChildren } from "react";
 import { useCopyToClipboardWithState } from "@/module/common/hook/useCopyToClipboardWithState";
 import { container, trigger } from "./text-with-copy.css";
@@ -20,7 +20,11 @@ export function TextWithCopy({
                 onClick={() => copy(text)}
                 aria-label="Copy to clipboard"
             >
-                {copied ? <Check size={16} /> : <Clipboard size={16} />}
+                {copied ? (
+                    <CheckIcon width={16} height={16} />
+                ) : (
+                    <CopyIcon width={16} height={16} />
+                )}
             </button>
         </div>
     );

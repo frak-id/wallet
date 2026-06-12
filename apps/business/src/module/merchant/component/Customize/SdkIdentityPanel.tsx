@@ -14,18 +14,12 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/module/forms/Form";
+import { EditField } from "@/module/forms/EditField";
+import { Form, FormControl, FormField, FormItem } from "@/module/forms/Form";
+import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import { useCustomizeSection } from "../saveRegistry";
 import * as styles from "./customize.css";
-import { LogoUploadField } from "./LogoUploadField";
-import { useCustomizeSection } from "./saveRegistry";
 import type { SdkIdentityFormValues } from "./types";
 import { valueOrNull } from "./utils";
 
@@ -70,7 +64,7 @@ export function SdkIdentityPanel({
     useEffect(() => {
         if (!isSuccessUpdate) return;
         form.reset(form.getValues());
-    }, [isSuccessUpdate, form.reset, form.getValues, form]);
+    }, [isSuccessUpdate, form]);
 
     const onSubmit = useCallback(
         (currentValues: SdkIdentityFormValues) =>
@@ -103,10 +97,10 @@ export function SdkIdentityPanel({
                         control={form.control}
                         name="name"
                         render={({ field }) => (
-                            <FormItem className={styles.fieldItem}>
-                                <FormLabel className={styles.fieldLabel}>
-                                    {t("customize.identity.name.label")}
-                                </FormLabel>
+                            <EditField
+                                label={t("customize.identity.name.label")}
+                                hint={t("customize.identity.name.hint")}
+                            >
                                 <FormControl>
                                     <Input
                                         variant="bare"
@@ -117,43 +111,39 @@ export function SdkIdentityPanel({
                                         {...field}
                                     />
                                 </FormControl>
-                                <p className={styles.fieldHint}>
-                                    {t("customize.identity.name.hint")}
-                                </p>
-                                <FormMessage />
-                            </FormItem>
+                            </EditField>
                         )}
                     />
                     <FormField
                         control={form.control}
                         name="logoUrl"
                         render={({ field }) => (
-                            <FormItem className={styles.fieldItem}>
-                                <FormLabel className={styles.fieldLabel}>
-                                    {t("customize.identity.logo.label")}
-                                </FormLabel>
+                            <EditField
+                                label={t("customize.identity.logo.label")}
+                            >
                                 <FormControl>
-                                    <LogoUploadField
+                                    <ImageUploadField
                                         merchantId={merchantId}
+                                        type="logo"
                                         value={field.value}
                                         onChange={field.onChange}
                                         onUploadSuccess={
                                             handleLogoUploadSuccess
                                         }
+                                        hint={t("customize.identity.logo.hint")}
                                     />
                                 </FormControl>
-                                <FormMessage />
-                            </FormItem>
+                            </EditField>
                         )}
                     />
                     <FormField
                         control={form.control}
                         name="homepageLink"
                         render={({ field }) => (
-                            <FormItem className={styles.fieldItem}>
-                                <FormLabel className={styles.fieldLabel}>
-                                    {t("customize.identity.homepage.label")}
-                                </FormLabel>
+                            <EditField
+                                label={t("customize.identity.homepage.label")}
+                                hint={t("customize.identity.homepage.hint")}
+                            >
                                 <FormControl>
                                     <Input
                                         variant="bare"
@@ -162,21 +152,17 @@ export function SdkIdentityPanel({
                                         {...field}
                                     />
                                 </FormControl>
-                                <p className={styles.fieldHint}>
-                                    {t("customize.identity.homepage.hint")}
-                                </p>
-                                <FormMessage />
-                            </FormItem>
+                            </EditField>
                         )}
                     />
                     <FormField
                         control={form.control}
                         name="currency"
                         render={({ field }) => (
-                            <FormItem className={styles.fieldItem}>
-                                <FormLabel className={styles.fieldLabel}>
-                                    {t("customize.identity.currency.label")}
-                                </FormLabel>
+                            <EditField
+                                label={t("customize.identity.currency.label")}
+                                hint={t("customize.identity.currency.hint")}
+                            >
                                 <Select
                                     value={field.value || AUTO}
                                     onValueChange={(value) =>
@@ -204,21 +190,17 @@ export function SdkIdentityPanel({
                                         <SelectItem value="gbp">GBP</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <p className={styles.fieldHint}>
-                                    {t("customize.identity.currency.hint")}
-                                </p>
-                                <FormMessage />
-                            </FormItem>
+                            </EditField>
                         )}
                     />
                     <FormField
                         control={form.control}
                         name="lang"
                         render={({ field }) => (
-                            <FormItem className={styles.fieldItem}>
-                                <FormLabel className={styles.fieldLabel}>
-                                    {t("customize.identity.lang.label")}
-                                </FormLabel>
+                            <EditField
+                                label={t("customize.identity.lang.label")}
+                                hint={t("customize.identity.lang.hint")}
+                            >
                                 <Select
                                     value={field.value || AUTO}
                                     onValueChange={(value) =>
@@ -247,11 +229,7 @@ export function SdkIdentityPanel({
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <p className={styles.fieldHint}>
-                                    {t("customize.identity.lang.hint")}
-                                </p>
-                                <FormMessage />
-                            </FormItem>
+                            </EditField>
                         )}
                     />
                     <FormField
