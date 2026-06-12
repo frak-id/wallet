@@ -1,5 +1,12 @@
 import { addresses, rewarderHubAbi } from "@frak-labs/app-essentials";
-import { type Address, encodeFunctionData, getAddress, type Hex } from "viem";
+import {
+    type Address,
+    encodeFunctionData,
+    getAddress,
+    type Hex,
+    TransactionNotFoundError,
+    TransactionReceiptNotFoundError,
+} from "viem";
 import {
     getTransaction,
     getTransactionReceipt,
@@ -91,6 +98,11 @@ export class RewardsHubRepository {
         return this.executeTransaction(sortedOps, options);
     }
 
+    /**
+     * `null` strictly means "the chain has no receipt for this hash". Any
+     * other failure (RPC down, timeout) is rethrown — reconciliation must
+     * not mistake an unreachable RPC for a dropped tx and re-send.
+     */
     async getReceipt(txHash: Hex): Promise<SettlementReceipt | null> {
         try {
             const receipt = await getTransactionReceipt(viemClient, {
@@ -100,17 +112,20 @@ export class RewardsHubRepository {
                 status: receipt.status,
                 blockNumber: receipt.blockNumber,
             };
-        } catch {
-            return null;
+        } catch (error) {
+            if (error instanceof TransactionReceiptNotFoundError) return null;
+            throw error;
         }
     }
 
+    /** `false` strictly means "no node knows this tx"; RPC failures rethrow. */
     async isTransactionKnown(txHash: Hex): Promise<boolean> {
         try {
             await getTransaction(viemClient, { hash: txHash });
             return true;
-        } catch {
-            return false;
+        } catch (error) {
+            if (error instanceof TransactionNotFoundError) return false;
+            throw error;
         }
     }
 

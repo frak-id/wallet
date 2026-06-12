@@ -170,12 +170,16 @@ export class PricingRepository {
         peg: PegCurrency
     ): Promise<TokenPrice | undefined> {
         const price: TokenPrice = { eur: 1, usd: 1, gbp: 1 };
-        for (const currency of TOKEN_PRICE_CURRENCIES) {
-            if (currency === peg) continue;
-            const rate = await this.fxRates.getRate({
-                from: peg,
-                to: currency,
-            });
+        const targets = TOKEN_PRICE_CURRENCIES.filter(
+            (currency) => currency !== peg
+        );
+        const rates = await Promise.all(
+            targets.map((currency) =>
+                this.fxRates.getRate({ from: peg, to: currency })
+            )
+        );
+        for (const [index, currency] of targets.entries()) {
+            const rate = rates[index];
             if (rate === undefined) return undefined;
             price[currency] = rate;
         }

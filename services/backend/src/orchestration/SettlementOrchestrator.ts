@@ -18,6 +18,41 @@ import type {
 } from "../domain/rewards/services/SettlementService";
 import type { SettlementResult } from "../domain/rewards/types";
 
+type BankOnChainState = Awaited<
+    ReturnType<CampaignBankRepository["getBankOnChainState"]>
+>;
+
+type RewardCapacityGroup = {
+    capacity: bigint;
+    rewards: { reward: AssetLogWithWallet; amountWei: bigint }[];
+};
+
+// Greedy smallest-first fill of one (bank, token) group under its capacity —
+// see selectDistributableRewards for why the batch must stay within capacity.
+function capRewardsToCapacity(
+    group: RewardCapacityGroup,
+    distributableRewards: AssetLogWithWallet[],
+    depletedRewards: AssetLogWithWallet[]
+): void {
+    group.rewards.sort((a, b) => compareBigInt(a.amountWei, b.amountWei));
+
+    let runningTotal = 0n;
+    for (const { reward, amountWei } of group.rewards) {
+        if (runningTotal + amountWei <= group.capacity) {
+            runningTotal += amountWei;
+            distributableRewards.push(reward);
+        } else {
+            depletedRewards.push(reward);
+        }
+    }
+}
+
+function compareBigInt(a: bigint, b: bigint): number {
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
+}
+
 const defaultSettlementResult: SettlementResult = {
     settledCount: 0,
     failedCount: 0,
@@ -78,47 +113,16 @@ export class SettlementOrchestrator {
 
         const merchantBanks = await this.getMerchantBanks(pendingRewards);
 
-        const bankStates = new Map<
-            Address,
-            {
-                isOpen: boolean;
-                balances: Map<Address, bigint>;
-                allowances: Map<Address, bigint>;
-            }
-        >();
-
-        // Force a fresh read: the 10-min LRU could otherwise report a bank
-        // drained by an earlier run (or another replica) as still funded,
-        // passing pre-flight only for the on-chain push to fail and burn an
-        // attempt. Dedupe so banks shared across merchants are read once.
-        await Promise.all(
-            [...new Set(merchantBanks.values())].map(async (bankAddress) => {
-                this.campaignBankRepository.clearOnChainCache(bankAddress);
-                const state =
-                    await this.campaignBankRepository.getBankOnChainState(
-                        bankAddress,
-                        currentStablecoinsList
-                    );
-                bankStates.set(bankAddress, state);
-            })
+        const bankStates = await this.readFreshBankStates(
+            merchantBanks.values()
         );
 
-        const distributableRewards: AssetLogWithWallet[] = [];
-        const depletedRewards: AssetLogWithWallet[] = [];
-
-        for (const reward of pendingRewards) {
-            const isBankCapable = this.isBankCapableForReward(
-                reward,
+        const { distributableRewards, depletedRewards } =
+            await this.selectDistributableRewards(
+                pendingRewards,
                 merchantBanks,
                 bankStates
             );
-
-            if (isBankCapable) {
-                distributableRewards.push(reward);
-            } else {
-                depletedRewards.push(reward);
-            }
-        }
 
         if (depletedRewards.length > 0) {
             const depletedIds = depletedRewards.map((reward) => reward.id);
@@ -203,21 +207,8 @@ export class SettlementOrchestrator {
         const merchantBanks =
             await this.merchantRepository.getBankAddresses(merchantIds);
 
-        const bankStates = new Map<
-            Address,
-            Awaited<ReturnType<CampaignBankRepository["getBankOnChainState"]>>
-        >();
-        await Promise.all(
-            [...new Set(merchantBanks.values())].map(async (bank) => {
-                this.campaignBankRepository.clearOnChainCache(bank);
-                bankStates.set(
-                    bank,
-                    await this.campaignBankRepository.getBankOnChainState(
-                        bank,
-                        currentStablecoinsList
-                    )
-                );
-            })
+        const bankStates = await this.readFreshBankStates(
+            merchantBanks.values()
         );
 
         const decimalsByToken = new Map<Address, number>();
@@ -328,36 +319,155 @@ export class SettlementOrchestrator {
         return this.merchantRepository.getBankAddresses(merchantIds);
     }
 
-    private isBankCapableForReward(
+    /**
+     * Read live bank state with the 10-min LRU forced fresh: it could
+     * otherwise report a bank drained by an earlier run (or another replica)
+     * as still funded, passing pre-flight only for the on-chain push to fail
+     * and burn an attempt. Banks shared across merchants are deduped so each
+     * is read once.
+     */
+    private async readFreshBankStates(
+        bankAddresses: Iterable<Address>
+    ): Promise<Map<Address, BankOnChainState>> {
+        const bankStates = new Map<Address, BankOnChainState>();
+        await Promise.all(
+            [...new Set(bankAddresses)].map(async (bank) => {
+                this.campaignBankRepository.clearOnChainCache(bank);
+                bankStates.set(
+                    bank,
+                    await this.campaignBankRepository.getBankOnChainState(
+                        bank,
+                        currentStablecoinsList
+                    )
+                );
+            })
+        );
+        return bankStates;
+    }
+
+    /**
+     * Split rewards into what the bank can actually pay this run vs. what to
+     * defer as `bank_depleted`. The on-chain push is ONE atomic batch tx per
+     * bank, so a batch whose total exceeds the bank's live balance/allowance
+     * reverts wholesale and burns an attempt on every row. Grouped per
+     * (bank, token) — each token draws on its own balance/allowance — rewards
+     * are admitted smallest-first while the running total stays within
+     * min(balance, allowance), maximising how many settle; the rest defer for
+     * the requeue cron once the bank refills.
+     */
+    private async selectDistributableRewards(
+        rewards: AssetLogWithWallet[],
+        merchantBanks: Map<string, Address>,
+        bankStates: Map<Address, BankOnChainState>
+    ): Promise<{
+        distributableRewards: AssetLogWithWallet[];
+        depletedRewards: AssetLogWithWallet[];
+    }> {
+        const decimalsByToken = await this.resolveTokenDecimals(
+            rewards
+                .map((reward) => reward.tokenAddress)
+                .filter((token): token is Address => token !== null)
+        );
+
+        const { groups, depletedRewards } = this.groupRewardsByBankToken(
+            rewards,
+            merchantBanks,
+            bankStates,
+            decimalsByToken
+        );
+
+        const distributableRewards: AssetLogWithWallet[] = [];
+        for (const group of groups.values()) {
+            capRewardsToCapacity(group, distributableRewards, depletedRewards);
+        }
+
+        return { distributableRewards, depletedRewards };
+    }
+
+    private groupRewardsByBankToken(
+        rewards: AssetLogWithWallet[],
+        merchantBanks: Map<string, Address>,
+        bankStates: Map<Address, BankOnChainState>,
+        decimalsByToken: Map<Address, number>
+    ): {
+        groups: Map<string, RewardCapacityGroup>;
+        depletedRewards: AssetLogWithWallet[];
+    } {
+        const groups = new Map<string, RewardCapacityGroup>();
+        const depletedRewards: AssetLogWithWallet[] = [];
+
+        for (const reward of rewards) {
+            const context = this.resolveRewardBankContext(
+                reward,
+                merchantBanks,
+                bankStates,
+                decimalsByToken
+            );
+            // No context = missing/closed bank or unresolved token/decimals:
+            // can never settle this run, so defer rather than sink the batch.
+            if (!context) {
+                depletedRewards.push(reward);
+                continue;
+            }
+
+            const entry = { reward, amountWei: context.amountWei };
+            const group = groups.get(context.key);
+            if (group) {
+                group.rewards.push(entry);
+            } else {
+                groups.set(context.key, {
+                    capacity: context.capacity,
+                    rewards: [entry],
+                });
+            }
+        }
+
+        return { groups, depletedRewards };
+    }
+
+    private resolveRewardBankContext(
         reward: AssetLogWithWallet,
         merchantBanks: Map<string, Address>,
-        bankStates: Map<
-            Address,
-            {
-                isOpen: boolean;
-                balances: Map<Address, bigint>;
-                allowances: Map<Address, bigint>;
-            }
-        >
-    ) {
-        const bankAddress = merchantBanks.get(reward.merchantId);
-        if (!bankAddress) {
-            return false;
+        bankStates: Map<Address, BankOnChainState>,
+        decimalsByToken: Map<Address, number>
+    ): { key: string; capacity: bigint; amountWei: bigint } | null {
+        const bank = merchantBanks.get(reward.merchantId);
+        const state = bank ? bankStates.get(bank) : undefined;
+        const token =
+            reward.tokenAddress !== null
+                ? getAddress(reward.tokenAddress)
+                : undefined;
+        const decimals =
+            token !== undefined ? decimalsByToken.get(token) : undefined;
+
+        if (!bank || !state?.isOpen || !token || decimals === undefined) {
+            return null;
         }
 
-        const bankState = bankStates.get(bankAddress);
-        if (!bankState?.isOpen) {
-            return false;
-        }
+        const balance = state.balances.get(token) ?? 0n;
+        const allowance = state.allowances.get(token) ?? 0n;
+        return {
+            key: `${bank}:${token}`,
+            capacity: balance < allowance ? balance : allowance,
+            amountWei: parseUnits(reward.amount, decimals),
+        };
+    }
 
-        const rewardToken = getAddress(reward.tokenAddress as Address);
-        const tokenBalance = bankState.balances.get(rewardToken) ?? 0n;
-        const tokenAllowance = bankState.allowances.get(rewardToken) ?? 0n;
-        if (tokenBalance === 0n || tokenAllowance === 0n) {
-            return false;
-        }
-
-        return true;
+    private async resolveTokenDecimals(
+        tokens: Address[]
+    ): Promise<Map<Address, number>> {
+        const decimalsByToken = new Map<Address, number>();
+        await Promise.all(
+            [...new Set(tokens.map((token) => getAddress(token)))].map(
+                async (token) => {
+                    decimalsByToken.set(
+                        token,
+                        await this.tokenMetadata.getDecimals({ token })
+                    );
+                }
+            )
+        );
+        return decimalsByToken;
     }
 
     private sendRewardSettledNotifications(rewards: AssetLogWithWallet[]) {

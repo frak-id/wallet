@@ -37,6 +37,15 @@ const fundedState = (amount: bigint) =>
         allowances: new Map([[TOKEN, amount]]),
     });
 
+const row = (id: string, amount: string) => ({
+    id,
+    identityGroupId: "g1",
+    interactionLogId: null,
+    merchantId: "m1",
+    tokenAddress: TOKEN,
+    amount,
+});
+
 type DepletedGroup = {
     merchantId: string;
     tokenAddress: Address;
@@ -256,5 +265,84 @@ describe("SettlementOrchestrator.runSettlement", () => {
         );
         expect(bumpAttemptAndRevert).not.toHaveBeenCalled();
         expect(settleRewards).not.toHaveBeenCalled();
+    });
+
+    it("caps an over-budget batch to the bank balance, settling smallest-first", async () => {
+        const settleRewards = vi.fn().mockResolvedValue({
+            settledCount: 0,
+            failedCount: 0,
+            txHashes: [],
+            errors: [],
+            banks: new Set(),
+            settledAssetLogIds: [],
+        });
+        const settlementService = {
+            reconcileStuckSettlements: vi
+                .fn()
+                .mockResolvedValue({ settled: 0, reverted: 0, pending: 0 }),
+            settleRewards,
+        } as unknown as SettlementService;
+
+        // Three same-token rewards (40, 10, 30) against a bank holding 50: the
+        // batch is one atomic tx, so only what fits may be pushed. Smallest
+        // first clears 10 + 30 = 40 (≤ 50); the 40 must defer as bank_depleted.
+        const updateStatusBatch = vi.fn().mockResolvedValue(1);
+        const assetLog = {
+            claimPendingForSettlement: vi
+                .fn()
+                .mockResolvedValue([
+                    row("r-40", "40"),
+                    row("r-10", "10"),
+                    row("r-30", "30"),
+                ]),
+            updateStatusBatch,
+        } as unknown as AssetLogRepository;
+
+        const identity = {
+            getWalletForGroup: vi
+                .fn()
+                .mockResolvedValue(
+                    "0x00000000000000000000000000000000000000aa" as Address
+                ),
+        } as unknown as IdentityRepository;
+        const interaction = {
+            getTypesByIds: vi.fn().mockResolvedValue(new Map()),
+        } as unknown as InteractionLogRepository;
+        const merchant = {
+            getBankAddresses: vi
+                .fn()
+                .mockResolvedValue(new Map([["m1", BANK_LIVE]])),
+        } as unknown as MerchantRepository;
+        const campaignBank = {
+            clearOnChainCache: vi.fn(),
+            getBankOnChainState: vi
+                .fn()
+                .mockResolvedValue(fundedState(parseUnits("50", 6))),
+        } as unknown as CampaignBankRepository;
+        const tokenMetadata = {
+            getDecimals: vi.fn().mockResolvedValue(6),
+        } as unknown as TokenMetadataRepository;
+
+        const orchestrator = new SettlementOrchestrator(
+            settlementService,
+            assetLog,
+            merchant,
+            identity,
+            interaction,
+            campaignBank,
+            tokenMetadata
+        );
+
+        await orchestrator.runSettlement();
+
+        expect(settleRewards).toHaveBeenCalledTimes(1);
+        const distributed = (settleRewards.mock.calls[0][0] as { id: string }[])
+            .map((reward) => reward.id)
+            .sort();
+        expect(distributed).toEqual(["r-10", "r-30"]);
+        expect(updateStatusBatch).toHaveBeenCalledWith(
+            ["r-40"],
+            "bank_depleted"
+        );
     });
 });

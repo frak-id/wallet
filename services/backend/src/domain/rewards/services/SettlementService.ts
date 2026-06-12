@@ -179,6 +179,20 @@ export class SettlementService {
         // status === "timeout": the tx was broadcast but its receipt is unknown.
         // Leave the rows `processing` with their persisted hash for
         // reconcileStuckSettlements — reverting risks re-sending a live tx.
+        // Re-stamp the hash (idempotent): if the onBroadcast write failed,
+        // reconciliation would otherwise see hashless rows, classify them
+        // "never broadcast" and re-send a possibly-live tx.
+        try {
+            await this.assetLogRepository.recordSettlementBroadcast(
+                bankBatch.assetLogIds,
+                txResult.txHash
+            );
+        } catch (error) {
+            log.error(
+                { error, txHash: txResult.txHash },
+                "Failed to re-persist settlement tx hash after timeout"
+            );
+        }
         result.txHashes.push(txResult.txHash);
         result.banks.add(bank);
         log.warn(
@@ -242,42 +256,10 @@ export class SettlementService {
         let pending = 0;
 
         for (const [txHash, ids] of idsByHash) {
-            const receipt = await this.rewardsHub.getReceipt(txHash);
-
-            if (receipt?.status === "success") {
-                await this.assetLogRepository.updateStatusBatch(
-                    ids,
-                    "settled",
-                    {
-                        txHash,
-                        blockNumber: receipt.blockNumber,
-                    }
-                );
-                settled += ids.length;
-                continue;
-            }
-
-            if (receipt?.status === "reverted") {
-                await this.assetLogRepository.revertSettlementToPending(
-                    ids,
-                    "Settlement tx reverted on-chain"
-                );
-                reverted += ids.length;
-                continue;
-            }
-
-            // No receipt: a tx still known to a node may yet mine, so wait;
-            // only a fully-dropped tx is safe to re-send.
-            if (await this.rewardsHub.isTransactionKnown(txHash)) {
-                pending += ids.length;
-                continue;
-            }
-
-            await this.assetLogRepository.revertSettlementToPending(
-                ids,
-                "Settlement tx dropped from mempool"
-            );
-            reverted += ids.length;
+            const outcome = await this.reconcileTxBatch(txHash, ids);
+            if (outcome === "settled") settled += ids.length;
+            if (outcome === "reverted") reverted += ids.length;
+            if (outcome === "pending") pending += ids.length;
         }
 
         log.info(
@@ -286,6 +268,64 @@ export class SettlementService {
         );
 
         return { settled, reverted, pending };
+    }
+
+    /**
+     * Decide the fate of one broadcast tx and its rows. Every RPC failure maps
+     * to `pending` (rows stay `processing`, retried next run): re-pending on an
+     * unverified "no receipt"/"not in mempool" would re-send a possibly-live tx
+     * and double-pay.
+     */
+    private async reconcileTxBatch(
+        txHash: Hex,
+        ids: string[]
+    ): Promise<"settled" | "reverted" | "pending"> {
+        let receipt: Awaited<ReturnType<RewardsHubRepository["getReceipt"]>>;
+        try {
+            receipt = await this.rewardsHub.getReceipt(txHash);
+        } catch (error) {
+            log.warn(
+                { error, txHash, count: ids.length },
+                "Receipt lookup failed during reconciliation; deferring"
+            );
+            return "pending";
+        }
+
+        if (receipt?.status === "success") {
+            await this.assetLogRepository.updateStatusBatch(ids, "settled", {
+                txHash,
+                blockNumber: receipt.blockNumber,
+            });
+            return "settled";
+        }
+
+        if (receipt?.status === "reverted") {
+            await this.assetLogRepository.revertSettlementToPending(
+                ids,
+                "Settlement tx reverted on-chain"
+            );
+            return "reverted";
+        }
+
+        let known: boolean;
+        try {
+            known = await this.rewardsHub.isTransactionKnown(txHash);
+        } catch (error) {
+            log.warn(
+                { error, txHash, count: ids.length },
+                "Mempool lookup failed during reconciliation; deferring"
+            );
+            return "pending";
+        }
+        if (known) {
+            return "pending";
+        }
+
+        await this.assetLogRepository.revertSettlementToPending(
+            ids,
+            "Settlement tx dropped from mempool"
+        );
+        return "reverted";
     }
 
     private async prepareRewards(
