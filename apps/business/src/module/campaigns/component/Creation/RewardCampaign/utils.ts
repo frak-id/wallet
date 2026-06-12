@@ -366,6 +366,24 @@ export function tieredTiersValid(tiers: CpaTierRow[]): boolean {
     );
 }
 
+/**
+ * Whether any two basket ranges overlap. Touching boundaries are allowed
+ * (the backend resolves them by highest `minValue`); only a genuine overlap
+ * is flagged. Empty upper bound reads as ∞. The backend rejects overlaps at
+ * publish, so this gates Continue too.
+ */
+export function tieredRangesOverlap(tiers: CpaTierRow[]): boolean {
+    const ranges = tiers
+        .filter((t) => t.from !== "")
+        .map((t) => ({
+            from: Number(t.from),
+            to: t.to === "" ? Number.POSITIVE_INFINITY : Number(t.to),
+        }));
+    return ranges.some((a, i) =>
+        ranges.some((b, j) => j > i && a.from < b.to && b.from < a.to)
+    );
+}
+
 /** Whether Ambassador + Referee sum to the rewards pool (Frak's 20% aside). */
 function splitMatchesPool(
     targetCpa: number,
@@ -425,7 +443,9 @@ export function isRewardFormValid(values: RewardFormValues): boolean {
     }
     if (values.model === "tiered") {
         return (
-            tieredTiersValid(values.globalCpaTiers) && tieredSplitValid(values)
+            tieredTiersValid(values.globalCpaTiers) &&
+            !tieredRangesOverlap(values.globalCpaTiers) &&
+            tieredSplitValid(values)
         );
     }
     // No model selected ⇒ not valid yet.

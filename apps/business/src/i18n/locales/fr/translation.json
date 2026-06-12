@@ -391,7 +391,9 @@
                     "rewardPlaceholder": "Ex. 5",
                     "addTier": "Ajouter un palier",
                     "removeTier": "Supprimer le palier",
-                    "incomplete": "Chaque palier doit avoir une tranche de panier et un CPA supérieur à 0"
+                    "incomplete": "Chaque palier doit avoir une tranche de panier et un CPA supérieur à 0",
+                    "overlap": "Les paliers ne peuvent pas se chevaucher — chaque tranche de panier doit commencer là où la précédente se termine.",
+                    "splitMismatch": "Ambassadeur + Filleul doivent totaliser 80 % du CPA de chaque palier (le pool de récompenses)."
                 },
                 "eligibility": {
                     "label": "Éligibilité",

@@ -391,7 +391,9 @@
                     "rewardPlaceholder": "E.g. 5",
                     "addTier": "Add a tier",
                     "removeTier": "Remove tier",
-                    "incomplete": "Each tier needs a basket range and a CPA above 0"
+                    "incomplete": "Each tier needs a basket range and a CPA above 0",
+                    "overlap": "Tiers can't overlap — each basket range must start where the previous one ends.",
+                    "splitMismatch": "Ambassador + Referee must add up to 80% of each tier's CPA (the rewards pool)."
                 },
                 "eligibility": {
                     "label": "Eligibility",

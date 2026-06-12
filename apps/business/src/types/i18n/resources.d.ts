@@ -242,10 +242,12 @@ export default interface Resources {
             "fromPlaceholder": "E.g. 0",
             "globalCpaTitle": "Target CPA",
             "incomplete": "Each tier needs a basket range and a CPA above 0",
+            "overlap": "Tiers can't overlap — each basket range must start where the previous one ends.",
             "refereeDescription": "Welcome reward for the new referee",
             "removeTier": "Remove tier",
             "reward": "Reward",
             "rewardPlaceholder": "E.g. 5",
+            "splitMismatch": "Ambassador + Referee must add up to 80% of each tier's CPA (the rewards pool).",
             "toPlaceholder": "E.g. 50",
             "unit": "Unit"
           },

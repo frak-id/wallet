@@ -60,6 +60,7 @@ import {
     rewardFormToDraft,
     splitTargetCpa,
     type TierRow,
+    tieredRangesOverlap,
     tieredTiersValid,
 } from "./utils";
 
@@ -852,6 +853,7 @@ function GlobalCpaTable({ control }: { control: Control<RewardFormValues> }) {
     const { dirtyFields } = useFormState({ control });
     const showErrors = Boolean(dirtyFields.globalCpaTiers);
     const tiersInvalid = !tieredTiersValid(tiers);
+    const tiersOverlap = tieredRangesOverlap(tiers);
 
     return (
         <Stack space="xs">
@@ -937,6 +939,10 @@ function GlobalCpaTable({ control }: { control: Control<RewardFormValues> }) {
             {showErrors && tiersInvalid ? (
                 <FieldError>
                     {t("campaigns.create.reward.tiered.incomplete")}
+                </FieldError>
+            ) : showErrors && tiersOverlap ? (
+                <FieldError>
+                    {t("campaigns.create.reward.tiered.overlap")}
                 </FieldError>
             ) : null}
         </Stack>
@@ -1040,6 +1046,10 @@ function TieredReveal({
     const { replace: replaceAmbassador } = ambassadorArray;
     const { replace: replaceReferee } = refereeArray;
     const globalTiers = useWatch({ control, name: "globalCpaTiers" }) ?? [];
+    const ambTiers = (useWatch({ control, name: "ambassadorTiers" }) ??
+        []) as TierRow[];
+    const refTiers = (useWatch({ control, name: "refereeTiers" }) ??
+        []) as TierRow[];
 
     // The split tables are a read-only mirror of the Global CPA table: their
     // basket ranges and unit always follow Global, so the overlap stays
@@ -1058,6 +1068,16 @@ function TieredReveal({
     }, [globalTiers, getValues, replaceAmbassador, replaceReferee]);
 
     const hasCpa = globalTiers.some((tier) => Number(tier.cpa) > 0);
+
+    // Surface an over/under-allocation once both recipients are filled for a
+    // tier: the split must equal that tier's rewards pool (80% of its CPA).
+    const splitMismatch = globalTiers.some((g, i) => {
+        const a = Number(ambTiers[i]?.reward);
+        const r = Number(refTiers[i]?.reward);
+        if (!(a > 0) || !(r > 0)) return false;
+        const { rewardsPool } = splitTargetCpa(Number(g.cpa) || 0);
+        return Math.abs(a + r - rewardsPool) >= 0.01;
+    });
 
     function applyReco() {
         const current = getValues();
@@ -1116,6 +1136,11 @@ function TieredReveal({
                             "campaigns.create.reward.tiered.refereeDescription"
                         )}
                     />
+                    {splitMismatch && (
+                        <FieldError>
+                            {t("campaigns.create.reward.tiered.splitMismatch")}
+                        </FieldError>
+                    )}
                 </>
             )}
 

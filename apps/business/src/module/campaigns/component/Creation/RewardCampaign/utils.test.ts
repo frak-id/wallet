@@ -6,6 +6,7 @@ import {
     isRewardFormValid,
     type RewardFormValues,
     rewardFormToDraft,
+    tieredRangesOverlap,
 } from "./utils";
 
 const baseDraft: CampaignDraft = {
@@ -116,5 +117,45 @@ describe("isRewardFormValid (tiered)", () => {
             ],
         };
         expect(isRewardFormValid(zeroReferee)).toBe(false);
+    });
+
+    it("fails when basket ranges overlap", () => {
+        const overlapping: RewardFormValues = {
+            ...tieredValues,
+            globalCpaTiers: [
+                { from: 0, to: 100, cpa: 10, unit: "eur" },
+                { from: 50, to: "", cpa: 10, unit: "percent" },
+            ],
+        };
+        expect(isRewardFormValid(overlapping)).toBe(false);
+    });
+});
+
+describe("tieredRangesOverlap", () => {
+    it("allows touching boundaries (0–100, 100–∞)", () => {
+        expect(
+            tieredRangesOverlap([
+                { from: 0, to: 100, cpa: 10, unit: "eur" },
+                { from: 100, to: "", cpa: 10, unit: "eur" },
+            ])
+        ).toBe(false);
+    });
+
+    it("flags a genuine overlap (0–100, 50–∞)", () => {
+        expect(
+            tieredRangesOverlap([
+                { from: 0, to: 100, cpa: 10, unit: "eur" },
+                { from: 50, to: "", cpa: 10, unit: "eur" },
+            ])
+        ).toBe(true);
+    });
+
+    it("ignores tiers without a lower bound", () => {
+        expect(
+            tieredRangesOverlap([
+                { from: "", to: "", cpa: "", unit: "eur" },
+                { from: 0, to: 100, cpa: 10, unit: "eur" },
+            ])
+        ).toBe(false);
     });
 });
