@@ -16,6 +16,7 @@ import { SoftUpdatePrompt } from "./SoftUpdatePrompt";
 export function VersionGate() {
     const state = useVersionGate();
     const [dismissedFor, setDismissedFor] = useState<string | null>(null);
+    const [progressDismissed, setProgressDismissed] = useState(false);
 
     // Reset dismissal whenever the store advertises a newer release than
     // the one the user previously dismissed — staying silent across
@@ -31,6 +32,15 @@ export function VersionGate() {
         }
     }, [state, dismissedFor]);
 
+    // A PENDING download can wedge for hours (Play waiting on Wi-Fi); let the
+    // user hide the progress banner, then re-arm it once we leave that state so
+    // the downloaded "Restart now" prompt still surfaces.
+    useEffect(() => {
+        if (state.kind !== "soft_update_in_progress" && progressDismissed) {
+            setProgressDismissed(false);
+        }
+    }, [state, progressDismissed]);
+
     if (state.kind === "hard_update") {
         return (
             <HardUpdateGate
@@ -41,7 +51,13 @@ export function VersionGate() {
     }
 
     if (state.kind === "soft_update_in_progress") {
-        return <SoftUpdatePrompt mode="in_progress" />;
+        if (progressDismissed) return null;
+        return (
+            <SoftUpdatePrompt
+                mode="in_progress"
+                onDismiss={() => setProgressDismissed(true)}
+            />
+        );
     }
 
     if (state.kind === "soft_update_downloaded") {

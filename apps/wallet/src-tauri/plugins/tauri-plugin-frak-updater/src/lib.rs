@@ -1,8 +1,12 @@
 use serde::{Deserialize, Serialize};
 use tauri::{
     plugin::{Builder, TauriPlugin},
-    AppHandle, Manager, Runtime,
+    AppHandle, Runtime,
 };
+// `Manager` only powers `.manage()` / `.state()`, both of which live behind
+// `#[cfg(mobile)]`; importing it unconditionally warns as unused on desktop.
+#[cfg(mobile)]
+use tauri::Manager;
 
 #[cfg(mobile)]
 mod mobile;
@@ -35,8 +39,17 @@ pub use mobile::FrakUpdater;
 /// `unsupported`        — Native check failed (e.g. desktop, no Play Services).
 ///                        Frontend should fall back to the backend hard-update
 ///                        gate only.
+// `rename_all` only renames the *variants* (UpToDate -> up_to_date); the
+// struct-variant *fields* are renamed separately. The native plugins (Kotlin /
+// Swift) and the JS layer both speak camelCase, so without `rename_all_fields`
+// the bridge would expect `store_version` / `bytes_downloaded` and fail to
+// deserialize `storeVersion` / `bytesDownloaded` from the native side.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "snake_case", tag = "status")]
+#[serde(
+    rename_all = "snake_case",
+    rename_all_fields = "camelCase",
+    tag = "status"
+)]
 pub enum UpdateStatus {
     UpToDate,
     Available,
@@ -67,10 +80,16 @@ pub struct CheckUpdateResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct StartSoftUpdateResponse {
-    /// `true`  — Android FLEXIBLE flow successfully launched (the user saw a
-    ///           consent dialog and accepted; download is now running in the
-    ///           background and the frontend should listen for progress).
-    /// `false` — User dismissed the consent dialog or the flow was cancelled.
+    /// `true`  — the native flow was *launched* (Android: a fresh FLEXIBLE
+    ///           update or a resume of an in-progress one; iOS: App Store URL
+    ///           opened). Resolves as soon as the flow starts — it does NOT
+    ///           mean the user consented; the dialog outcome arrives later via
+    ///           the install-state listener / `check_update` polls, so the
+    ///           frontend shows progress optimistically and lets the poll
+    ///           reconcile a decline.
+    /// `false` — the flow could not be launched (nothing available or in
+    ///           progress, FLEXIBLE not allowed, or the launch threw); the
+    ///           frontend reconciles its cache and may fall back to the store.
     pub started: bool,
 }
 
@@ -190,4 +209,51 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             Ok(())
         })
         .build()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Regression lock for the `rename_all_fields = "camelCase"` bridge contract.
+
+    #[test]
+    fn in_progress_deserializes_camel_case_and_reserializes_camel_case() {
+        let native = r#"{"currentVersion":"1.2.3","status":"in_progress","bytesDownloaded":5,"totalBytes":10}"#;
+        let parsed: CheckUpdateResponse = serde_json::from_str(native).unwrap();
+        assert_eq!(parsed.current_version, "1.2.3");
+        assert!(matches!(
+            parsed.update,
+            UpdateStatus::InProgress {
+                bytes_downloaded: 5,
+                total_bytes: 10
+            }
+        ));
+
+        let json = serde_json::to_value(&parsed).unwrap();
+        assert_eq!(json["status"], "in_progress");
+        assert_eq!(json["bytesDownloaded"], 5);
+        assert_eq!(json["totalBytes"], 10);
+    }
+
+    #[test]
+    fn candidate_deserializes_camel_case_store_version() {
+        let native = r#"{"currentVersion":"1.2.3","status":"candidate","storeVersion":"1.2.4"}"#;
+        let parsed: CheckUpdateResponse = serde_json::from_str(native).unwrap();
+        assert!(matches!(
+            parsed.update,
+            UpdateStatus::Candidate { ref store_version } if store_version == "1.2.4"
+        ));
+
+        let json = serde_json::to_value(&parsed).unwrap();
+        assert_eq!(json["status"], "candidate");
+        assert_eq!(json["storeVersion"], "1.2.4");
+    }
+
+    #[test]
+    fn unit_variants_carry_only_the_status_tag() {
+        let native = r#"{"currentVersion":"1.2.3","status":"available"}"#;
+        let parsed: CheckUpdateResponse = serde_json::from_str(native).unwrap();
+        assert!(matches!(parsed.update, UpdateStatus::Available));
+    }
 }

@@ -5,18 +5,24 @@ import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckIcon } from "@frak-labs/design-system/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { versionKey } from "../../queryKeys/version";
 import {
     completeNativeSoftUpdate,
     type NativeUpdateStatus,
+    openNativeStore,
     startNativeSoftUpdate,
 } from "../../utils/nativeUpdater";
 import * as styles from "./index.css";
 
+// Play can wedge in a state where it keeps refusing to (re)launch the flow;
+// after this many dead-end taps we bail out to the store listing.
+const MAX_SOFT_UPDATE_ATTEMPTS = 2;
+
 type SoftUpdatePromptProps =
     | { mode: "available"; storeVersion?: string; onDismiss: () => void }
-    | { mode: "in_progress" }
+    | { mode: "in_progress"; onDismiss: () => void }
     | { mode: "downloaded" };
 
 /**
@@ -55,6 +61,11 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
                     <div className={styles.progressTrack}>
                         <div className={styles.progressBar} />
                     </div>
+                    <Box className={styles.actions}>
+                        <Button variant="secondary" onClick={props.onDismiss}>
+                            {t("version.softUpdate.dismiss")}
+                        </Button>
+                    </Box>
                 </Box>
             </Card>
         );
@@ -78,6 +89,24 @@ function AvailableBanner({
     t: Translate;
 }) {
     const queryClient = useQueryClient();
+    // Consecutive launch failures, so we can escalate to the store listing
+    // instead of leaving the user tapping a dead "Update" button.
+    const failedStarts = useRef(0);
+
+    // The native flow refused to start/resume (Play already flipped the update
+    // out of UPDATE_AVAILABLE, the consent dialog was dismissed, or the bridge
+    // threw). Reconcile against Play's real state so the banner stops lying,
+    // and after repeated dead-ends fall back to the store.
+    const onStartFailed = () => {
+        failedStarts.current += 1;
+        if (failedStarts.current >= MAX_SOFT_UPDATE_ATTEMPTS) {
+            failedStarts.current = 0;
+            void openNativeStore();
+            return;
+        }
+        queryClient.invalidateQueries({ queryKey: versionKey.nativeStatus });
+    };
+
     const start = useMutation({
         mutationKey: versionKey.startSoftUpdate,
         mutationFn: startNativeSoftUpdate,
@@ -90,7 +119,11 @@ function AvailableBanner({
         // and the `refetchInterval` safety net in `useVersionGate` recovers
         // the cache if neither channel reports back.
         onSuccess: (started) => {
-            if (!started) return;
+            if (!started) {
+                onStartFailed();
+                return;
+            }
+            failedStarts.current = 0;
             queryClient.setQueryData<NativeUpdateStatus>(
                 versionKey.nativeStatus,
                 (previous) => ({
@@ -104,6 +137,9 @@ function AvailableBanner({
                 })
             );
         },
+        // A thrown invoke error is at least as bad as `started: false` —
+        // recover the same way so the optimistic state can't get stuck.
+        onError: onStartFailed,
     });
 
     return (
@@ -138,9 +174,24 @@ function AvailableBanner({
 }
 
 function DownloadedBanner({ t }: { t: Translate }) {
+    const queryClient = useQueryClient();
     const complete = useMutation({
         mutationKey: versionKey.completeSoftUpdate,
         mutationFn: completeNativeSoftUpdate,
+        // `completed: false`/error means the install didn't take; reconcile
+        // against Play so the user isn't stranded on a dead "Restart now".
+        onSuccess: (completed) => {
+            if (!completed) {
+                queryClient.invalidateQueries({
+                    queryKey: versionKey.nativeStatus,
+                });
+            }
+        },
+        onError: () => {
+            queryClient.invalidateQueries({
+                queryKey: versionKey.nativeStatus,
+            });
+        },
     });
 
     return (

@@ -6,16 +6,20 @@ import { SoftUpdatePrompt } from "@/module/version/component/SoftUpdatePrompt";
 import type { NativeUpdateStatus } from "@/module/version/utils/nativeUpdater";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
-const { startNativeSoftUpdateMock, completeNativeSoftUpdateMock } = vi.hoisted(
-    () => ({
-        startNativeSoftUpdateMock: vi.fn(),
-        completeNativeSoftUpdateMock: vi.fn(),
-    })
-);
+const {
+    startNativeSoftUpdateMock,
+    completeNativeSoftUpdateMock,
+    openNativeStoreMock,
+} = vi.hoisted(() => ({
+    startNativeSoftUpdateMock: vi.fn(),
+    completeNativeSoftUpdateMock: vi.fn(),
+    openNativeStoreMock: vi.fn(),
+}));
 
 vi.mock("@/module/version/utils/nativeUpdater", () => ({
     startNativeSoftUpdate: startNativeSoftUpdateMock,
     completeNativeSoftUpdate: completeNativeSoftUpdateMock,
+    openNativeStore: openNativeStoreMock,
 }));
 
 vi.mock("react-i18next", () => ({
@@ -53,6 +57,7 @@ describe.sequential("SoftUpdatePrompt — AvailableBanner", () => {
     beforeEach(() => {
         startNativeSoftUpdateMock.mockReset();
         completeNativeSoftUpdateMock.mockReset();
+        openNativeStoreMock.mockReset().mockResolvedValue(true);
     });
 
     test("flips the native-status cache to in_progress, preserving currentVersion", async () => {
@@ -86,9 +91,10 @@ describe.sequential("SoftUpdatePrompt — AvailableBanner", () => {
         expect(startNativeSoftUpdateMock).toHaveBeenCalledTimes(1);
     });
 
-    test("leaves the cache untouched when the native start call reports `started: false`", async () => {
+    test("invalidates the native-status query (but keeps the data) on a single `started: false`", async () => {
         startNativeSoftUpdateMock.mockResolvedValue(false);
         const { client, wrapper } = createTestClient();
+        const invalidateSpy = vi.spyOn(client, "invalidateQueries");
         const seeded: NativeUpdateStatus = {
             status: "available",
             currentVersion: "1.2.3",
@@ -106,14 +112,43 @@ describe.sequential("SoftUpdatePrompt — AvailableBanner", () => {
         );
 
         await waitFor(() => {
-            expect(startNativeSoftUpdateMock).toHaveBeenCalledTimes(1);
+            expect(invalidateSpy).toHaveBeenCalledWith({
+                queryKey: ["version", "native-status"],
+            });
         });
-        // Flush pending microtasks so the mutation's onSuccess has had its
-        // turn before we assert the cache is still the seeded value.
-        await new Promise((resolve) => setTimeout(resolve, 0));
         expect(client.getQueryData(["version", "native-status"])).toEqual(
             seeded
         );
+        expect(openNativeStoreMock).not.toHaveBeenCalled();
+    });
+
+    test("falls back to the store after repeated `started: false`", async () => {
+        startNativeSoftUpdateMock.mockResolvedValue(false);
+        const { wrapper } = createTestClient();
+
+        render(<SoftUpdatePrompt mode="available" onDismiss={vi.fn()} />, {
+            wrapper,
+        });
+
+        const button = await screen.findByRole("button", {
+            name: "version.softUpdate.available.cta",
+        });
+
+        fireEvent.click(button);
+        await waitFor(() =>
+            expect(startNativeSoftUpdateMock).toHaveBeenCalledTimes(1)
+        );
+        // The mutation re-enables the button once it settles; wait for that
+        // before the second tap so both attempts actually register.
+        await waitFor(() =>
+            expect((button as HTMLButtonElement).disabled).toBe(false)
+        );
+
+        fireEvent.click(button);
+        await waitFor(() =>
+            expect(openNativeStoreMock).toHaveBeenCalledTimes(1)
+        );
+        expect(startNativeSoftUpdateMock).toHaveBeenCalledTimes(2);
     });
 
     test("falls back to an empty currentVersion when no prior cache entry exists", async () => {
@@ -147,6 +182,74 @@ describe.sequential("SoftUpdatePrompt — AvailableBanner", () => {
         const onDismiss = vi.fn();
 
         render(<SoftUpdatePrompt mode="available" onDismiss={onDismiss} />, {
+            wrapper,
+        });
+
+        fireEvent.click(
+            await screen.findByRole("button", {
+                name: "version.softUpdate.dismiss",
+            })
+        );
+
+        expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe.sequential("SoftUpdatePrompt — DownloadedBanner", () => {
+    beforeEach(() => {
+        startNativeSoftUpdateMock.mockReset();
+        completeNativeSoftUpdateMock.mockReset();
+        openNativeStoreMock.mockReset().mockResolvedValue(true);
+    });
+
+    test("invalidates the native-status query when complete reports `completed: false`", async () => {
+        completeNativeSoftUpdateMock.mockResolvedValue(false);
+        const { client, wrapper } = createTestClient();
+        const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+
+        render(<SoftUpdatePrompt mode="downloaded" />, { wrapper });
+
+        fireEvent.click(
+            await screen.findByRole("button", {
+                name: "version.softUpdate.downloaded.cta",
+            })
+        );
+
+        await waitFor(() => {
+            expect(invalidateSpy).toHaveBeenCalledWith({
+                queryKey: ["version", "native-status"],
+            });
+        });
+    });
+
+    test("does not invalidate when complete reports `completed: true`", async () => {
+        completeNativeSoftUpdateMock.mockResolvedValue(true);
+        const { client, wrapper } = createTestClient();
+        const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+
+        render(<SoftUpdatePrompt mode="downloaded" />, { wrapper });
+
+        fireEvent.click(
+            await screen.findByRole("button", {
+                name: "version.softUpdate.downloaded.cta",
+            })
+        );
+
+        await waitFor(() =>
+            expect(completeNativeSoftUpdateMock).toHaveBeenCalledTimes(1)
+        );
+        // Flush microtasks so onSuccess runs before asserting it stayed quiet.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(invalidateSpy).not.toHaveBeenCalled();
+    });
+});
+
+describe.sequential("SoftUpdatePrompt — in_progress", () => {
+    test("invokes onDismiss so a wedged progress banner can be hidden", async () => {
+        const { wrapper } = createTestClient();
+        const onDismiss = vi.fn();
+
+        render(<SoftUpdatePrompt mode="in_progress" onDismiss={onDismiss} />, {
             wrapper,
         });
 

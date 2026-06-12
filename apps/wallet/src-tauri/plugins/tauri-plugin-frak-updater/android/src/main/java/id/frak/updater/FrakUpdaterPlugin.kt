@@ -45,36 +45,28 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
     private val updateManager: AppUpdateManager =
         AppUpdateManagerFactory.create(activity.applicationContext)
 
-    /**
-     * Tracks bytes downloaded for the in-progress flexible update so
-     * subsequent `checkUpdate` calls (e.g. on focus) can resolve with
-     * progress without re-querying Play.
-     */
-    @Volatile
-    private var lastDownloadProgress: DownloadProgress? = null
-
     private val installListener = InstallStateUpdatedListener { state ->
         when (state.installStatus()) {
-            InstallStatus.DOWNLOADING -> {
-                val bytesDownloaded = state.bytesDownloaded()
-                val totalBytes = state.totalBytesToDownload()
-                lastDownloadProgress = DownloadProgress(
-                    bytesDownloaded = bytesDownloaded,
-                    totalBytes = totalBytes
-                )
+            InstallStatus.PENDING -> {
+                // PENDING (accepted but not yet downloading) can persist for
+                // minutes on slow/metered connections; surface it as
+                // `in_progress` so a focus refetch can't revert the banner.
                 triggerStatusEvent(JSObject().apply {
                     put("currentVersion", currentVersionName())
                     put("status", "in_progress")
-                    put("bytesDownloaded", bytesDownloaded)
-                    put("totalBytes", totalBytes)
+                    put("bytesDownloaded", 0L)
+                    put("totalBytes", 0L)
+                })
+            }
+            InstallStatus.DOWNLOADING -> {
+                triggerStatusEvent(JSObject().apply {
+                    put("currentVersion", currentVersionName())
+                    put("status", "in_progress")
+                    put("bytesDownloaded", state.bytesDownloaded())
+                    put("totalBytes", state.totalBytesToDownload())
                 })
             }
             InstallStatus.DOWNLOADED -> {
-                val totalBytes = state.totalBytesToDownload()
-                lastDownloadProgress = DownloadProgress(
-                    bytesDownloaded = totalBytes,
-                    totalBytes = totalBytes
-                )
                 triggerStatusEvent(JSObject().apply {
                     put("currentVersion", currentVersionName())
                     put("status", "downloaded")
@@ -87,17 +79,16 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
                 // a CANCELED event when the user dismisses the FLEXIBLE consent
                 // dialog itself — only for a started-then-aborted download — so
                 // the JS layer also polls via `refetchInterval` as a safety net.
-                lastDownloadProgress = null
                 triggerStatusEvent(JSObject().apply {
                     put("currentVersion", currentVersionName())
                     put("status", "available")
                 })
             }
             else -> {
-                // INSTALLED (app is restarting via completeUpdate), PENDING,
+                // INSTALLED (app is restarting via completeUpdate),
                 // REQUIRES_UI_INTENT, UNKNOWN — leave the JS cache alone; the
                 // next checkUpdate() / focus refetch will reconcile if needed.
-                lastDownloadProgress = null
+                Unit
             }
         }
     }
@@ -134,9 +125,19 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
     fun startSoftUpdate(invoke: Invoke) {
         updateManager.appUpdateInfo
             .addOnSuccessListener { info ->
-                if (info.updateAvailability() != UpdateAvailability.UPDATE_AVAILABLE ||
-                    !info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
-                ) {
+                val availability = info.updateAvailability()
+                val canStart =
+                    availability == UpdateAvailability.UPDATE_AVAILABLE &&
+                        info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
+                // Once the user accepts the consent dialog Play flips
+                // availability to DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS;
+                // re-launching the flow then is Google's documented "resume"
+                // path that recovers a stalled download instead of dead-ending
+                // a re-tap with started: false.
+                val canResume =
+                    availability == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
+
+                if (!canStart && !canResume) {
                     invoke.resolve(JSObject().apply { put("started", false) })
                     return@addOnSuccessListener
                 }
@@ -173,8 +174,18 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
                     invoke.resolve(JSObject().apply { put("completed", false) })
                     return@addOnSuccessListener
                 }
+                // completeUpdate() returns a Task that only settles once Play
+                // accepts the install+restart. Resolving before it settles
+                // would report completed: true even on a failed install,
+                // stranding the user on the "Restart now" banner.
                 updateManager.completeUpdate()
-                invoke.resolve(JSObject().apply { put("completed", true) })
+                    .addOnSuccessListener {
+                        invoke.resolve(JSObject().apply { put("completed", true) })
+                    }
+                    .addOnFailureListener { error ->
+                        Log.w(TAG, "Failed to complete flexible update", error)
+                        invoke.resolve(JSObject().apply { put("completed", false) })
+                    }
             }
             .addOnFailureListener { error ->
                 Log.w(TAG, "Failed to fetch update info before completing", error)
@@ -216,29 +227,40 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
 
     private fun resolveCheck(invoke: Invoke, info: AppUpdateInfo) {
         val current = currentVersionName()
+        val installStatus = info.installStatus()
 
-        // If a flexible download is already running or finished, surface
-        // that state so the frontend doesn't restart the flow on the next
-        // focus check.
-        when (info.installStatus()) {
-            InstallStatus.DOWNLOADING -> {
-                val progress = lastDownloadProgress ?: DownloadProgress(0, 0)
-                invoke.resolve(JSObject().apply {
-                    put("currentVersion", current)
-                    put("status", "in_progress")
-                    put("bytesDownloaded", progress.bytesDownloaded)
-                    put("totalBytes", progress.totalBytes)
-                })
-                return
-            }
-            InstallStatus.DOWNLOADED -> {
+        // An already-running FLEXIBLE update must win over the availability
+        // check, else a focus refetch reverts the banner to "Update". Play
+        // signals it as DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS (after consent)
+        // and/or installStatus PENDING/DOWNLOADING/DOWNLOADED — PENDING can
+        // linger for minutes, which is when the old code mis-reported it.
+        // A FAILED/CANCELED install is excluded so a transient in-progress
+        // availability can't make this poll fight the listener's `available`.
+        val installAborted =
+            installStatus == InstallStatus.FAILED || installStatus == InstallStatus.CANCELED
+        val updateInProgress = !installAborted &&
+            (info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS ||
+                installStatus == InstallStatus.PENDING ||
+                installStatus == InstallStatus.DOWNLOADING ||
+                installStatus == InstallStatus.DOWNLOADED)
+
+        if (updateInProgress) {
+            if (installStatus == InstallStatus.DOWNLOADED) {
                 invoke.resolve(JSObject().apply {
                     put("currentVersion", current)
                     put("status", "downloaded")
                 })
                 return
             }
-            else -> Unit
+            // Bytes come straight from AppUpdateInfo so the value is correct
+            // even after process death (a cached counter would read 0/0).
+            invoke.resolve(JSObject().apply {
+                put("currentVersion", current)
+                put("status", "in_progress")
+                put("bytesDownloaded", info.bytesDownloaded())
+                put("totalBytes", info.totalBytesToDownload())
+            })
+            return
         }
 
         if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
@@ -275,8 +297,6 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
         put("currentVersion", currentVersionName())
         put("status", "unsupported")
     }
-
-    private data class DownloadProgress(val bytesDownloaded: Long, val totalBytes: Long)
 
     companion object {
         private const val TAG = "FrakUpdaterPlugin"
