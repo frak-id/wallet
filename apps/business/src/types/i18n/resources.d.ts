@@ -855,6 +855,48 @@ export default interface Resources {
         "description": "Set up your reward budget to start distributing rewards to your users."
       }
     },
+    "members": {
+      "audience": {
+        "minMember": "You need at least 1 member to continue",
+        "reach": "You will reach {{count}} members",
+        "required": "Push audience is required",
+        "title": "Audience"
+      },
+      "columns": {
+        "interactions": "Interactions",
+        "memberFrom": "Member from",
+        "merchants": "Merchants",
+        "rewards": "Rewards ({{currency}})",
+        "wallet": "Wallet"
+      },
+      "details": {
+        "activity": "Activity",
+        "close": "Close",
+        "interactions": "Interactions",
+        "memberSince": "Member since {{date}}",
+        "merchants": "Merchants",
+        "rewardsEarned": "Rewards earned",
+        "wallet": "Wallet"
+      },
+      "filters": {
+        "button": "Filters",
+        "from": "From",
+        "interactions": "Interactions",
+        "max": "Max",
+        "maxGreaterThanMinError": "Max interactions should be greater than minimum",
+        "maxInteractions": "Max interactions",
+        "maxInteractionsError": "Maximum interactions can't be negative",
+        "membershipDate": "Membership Date",
+        "min": "Min",
+        "minInteractions": "Min interactions",
+        "minInteractionsError": "Minimum interactions can't be negative",
+        "pickDate": "Pick a date",
+        "reset": "Reset filter",
+        "segment": "Segment",
+        "to": "To"
+      },
+      "sendPushNotification": "Send Push Notification"
+    },
     "merchantEdit": {
       "close": "Close",
       "details": {

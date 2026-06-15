@@ -43,6 +43,7 @@ export { ExternalLinkIcon } from "./ExternalLinkIcon";
 export { EyeIcon } from "./EyeIcon";
 export { EyeOffIcon } from "./EyeOffIcon";
 export { FaceIdIcon } from "./FaceIdIcon";
+export { FiltersIcon } from "./FiltersIcon";
 export { GbpIcon } from "./GbpIcon";
 export { GiftIcon } from "./GiftIcon";
 export { HeartIcon } from "./HeartIcon";

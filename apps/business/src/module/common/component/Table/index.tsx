@@ -1,3 +1,4 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import { ArrowUpIcon } from "@frak-labs/design-system/icons";
 import type { SortingState, TableOptions } from "@tanstack/react-table";
 import {
@@ -38,6 +39,13 @@ export type ReactTableProps<TData> = {
     className?: string;
     preTable?: ReactNode;
     postTable?: ReactNode;
+    /**
+     * When set, the empty state renders as a full data row: the empty message
+     * in the first column and this placeholder (e.g. `"–"`) in every other,
+     * matching designs that keep the column grid visible. When omitted, the
+     * message spans all columns in a single cell.
+     */
+    emptyPlaceholder?: ReactNode;
     // Some custom configs
     enableFiltering?: boolean;
     onRowClick?: (row: Row<TData>) => void;
@@ -72,6 +80,7 @@ export function Table<TData extends object>({
     className = "",
     preTable,
     postTable,
+    emptyPlaceholder,
     sorting,
     enableFiltering = false,
     onRowClick,
@@ -168,11 +177,19 @@ export function Table<TData extends object>({
 
                 <tbody>
                     {rowModel.rows.length === 0 ? (
-                        <tr>
-                            <td colSpan={table.options.columns.length}>
-                                {t("common.table.empty")}
-                            </td>
-                        </tr>
+                        emptyPlaceholder !== undefined ? (
+                            <EmptyRow
+                                columns={table.getVisibleLeafColumns()}
+                                message={t("common.table.empty")}
+                                placeholder={emptyPlaceholder}
+                            />
+                        ) : (
+                            <tr>
+                                <td colSpan={table.options.columns.length}>
+                                    {t("common.table.empty")}
+                                </td>
+                            </tr>
+                        )
                     ) : (
                         rowModel.rows.map((row) => {
                             const extraAttrs = rowDataAttributes
@@ -249,6 +266,55 @@ export function Table<TData extends object>({
 
             {postTable}
         </div>
+    );
+}
+
+/**
+ * Empty state rendered as a full data row so the column grid stays visible.
+ * The message lands in the first data (accessor) column; other data columns
+ * show the placeholder; display columns (checkbox, actions) stay blank.
+ */
+function EmptyRow<TData>({
+    columns,
+    message,
+    placeholder,
+}: {
+    columns: Column<TData, unknown>[];
+    message: ReactNode;
+    placeholder: ReactNode;
+}) {
+    const firstDataIndex = columns.findIndex(
+        (column) => typeof column.accessorFn === "function"
+    );
+    return (
+        <tr>
+            {columns.map((column, index) => {
+                const size = column.columnDef.size;
+                const align = column.columnDef.meta?.align;
+                const isData = typeof column.accessorFn === "function";
+                return (
+                    <td
+                        key={column.id}
+                        style={{
+                            ...(size !== undefined && { width: size }),
+                            ...(align === "right" && { textAlign: "right" }),
+                        }}
+                    >
+                        {isData ? (
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                color="tertiary"
+                            >
+                                {index === firstDataIndex
+                                    ? message
+                                    : placeholder}
+                            </Text>
+                        ) : null}
+                    </td>
+                );
+            })}
+        </tr>
     );
 }
 

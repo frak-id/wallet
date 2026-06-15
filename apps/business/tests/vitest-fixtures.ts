@@ -197,14 +197,12 @@ export const test = baseTest.extend<DashboardTestFixtures>({
         const { membersStore } = await import("@/stores/membersStore");
 
         // Reset before use
-        membersStore.getState().clearSelection();
         membersStore.getState().setTableFilters({ limit: 10, offset: 0 });
         membersStore.getState().setTableFiltersCount(0);
 
         await use(membersStore);
 
         // Reset after use
-        membersStore.getState().clearSelection();
         membersStore.getState().setTableFilters({ limit: 10, offset: 0 });
         membersStore.getState().setTableFiltersCount(0);
     },

@@ -69,7 +69,15 @@ export function formatRangeLabel(
     t: TFunction,
     locale?: Locale
 ): string {
-    if (!from || !to) return t("common.dateRange.label");
+    if (!from && !to) return t("common.dateRange.label");
+
+    // One-ended range (e.g. a single calendar click sets `from` only): an
+    // active filter, so show the chosen date rather than the empty label.
+    if (!from || !to) {
+        return format(parseISO((from ?? to) as string), "MMM d, yyyy", {
+            locale,
+        });
+    }
 
     const presetKey = matchPreset(from, to);
     if (presetKey) {

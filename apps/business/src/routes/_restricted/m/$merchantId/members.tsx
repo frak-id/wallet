@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import * as footerStyles from "@/module/common/component/FloatingFooter/floating-footer.css";
 import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { TableMembers } from "@/module/members/component/TableMembers";
+import { MembersListFooter } from "@/module/members/component/TableMembers/MembersListFooter";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
 import { useAuthStore } from "@/stores/authStore";
 import { currencyStore } from "@/stores/currencyStore";
@@ -41,8 +43,11 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/members")({
 
 function MembersListPage() {
     return (
-        <PageShell page="members">
-            <TableMembers />
-        </PageShell>
+        <div className={footerStyles.pageBottomSpacer}>
+            <PageShell page="members">
+                <TableMembers />
+            </PageShell>
+            <MembersListFooter />
+        </div>
     );
 }

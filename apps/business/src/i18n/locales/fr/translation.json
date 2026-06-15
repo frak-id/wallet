@@ -111,6 +111,48 @@
             "edit": "Modifier"
         }
     },
+    "members": {
+        "columns": {
+            "wallet": "Wallet",
+            "merchants": "Marchands",
+            "memberFrom": "Membre depuis",
+            "interactions": "Interactions",
+            "rewards": "Récompenses ({{currency}})"
+        },
+        "filters": {
+            "button": "Filtres",
+            "reset": "Réinitialiser le filtre",
+            "segment": "Segment",
+            "membershipDate": "Date d'adhésion",
+            "interactions": "Interactions",
+            "min": "Min",
+            "max": "Max",
+            "from": "De",
+            "to": "À",
+            "pickDate": "Choisir une date",
+            "minInteractions": "Min interactions",
+            "maxInteractions": "Max interactions",
+            "minInteractionsError": "Le minimum d'interactions ne peut pas être négatif",
+            "maxInteractionsError": "Le maximum d'interactions ne peut pas être négatif",
+            "maxGreaterThanMinError": "Le maximum doit être supérieur au minimum"
+        },
+        "sendPushNotification": "Envoyer une notification push",
+        "details": {
+            "memberSince": "Membre depuis le {{date}}",
+            "wallet": "Wallet",
+            "activity": "Activité",
+            "interactions": "Interactions",
+            "rewardsEarned": "Récompenses gagnées",
+            "merchants": "Marchands",
+            "close": "Fermer"
+        },
+        "audience": {
+            "title": "Audience",
+            "required": "L'audience du push est requise",
+            "reach": "Vous toucherez {{count}} membres",
+            "minMember": "Il faut au moins 1 membre pour continuer"
+        }
+    },
     "campaigns": {
         "create": {
             "steps": {

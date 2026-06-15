@@ -1,4 +1,5 @@
 import { formatAmount } from "@frak-labs/core-sdk";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import {
     Sheet,
     SheetClose,
@@ -9,6 +10,8 @@ import {
     SheetTitle,
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import {
     formatHash,
@@ -34,6 +37,7 @@ export function MemberDetailsSheet({ member, onOpenChange }: Props) {
 }
 
 function MemberDetailsContent({ member }: { member: GetMembersPageItem }) {
+    const { t } = useTranslation();
     const currency = currencyStore((state) => state.preferredCurrency);
     const memberSince = new Date(
         Number.parseInt(member.firstInteractionTimestamp, 10) * 1000
@@ -43,43 +47,54 @@ function MemberDetailsContent({ member }: { member: GetMembersPageItem }) {
         <>
             <SheetHeader>
                 <SheetTitle>{formatHash({ hash: member.user })}</SheetTitle>
-                <SheetDescription>Member since {memberSince}</SheetDescription>
+                <SheetDescription>
+                    {t("members.details.memberSince", { date: memberSince })}
+                </SheetDescription>
             </SheetHeader>
 
             <Stack space="l">
-                <Section title="Wallet">
+                <Section title={t("members.details.wallet")}>
                     <WalletAddress wallet={member.user} />
                 </Section>
 
-                <Section title="Activity">
+                <Section title={t("members.details.activity")}>
                     <Row
-                        label="Interactions"
+                        label={t("members.details.interactions")}
                         value={member.totalInteractions}
                     />
                     <Row
-                        label="Rewards earned"
+                        label={t("members.details.rewardsEarned")}
                         value={formatAmount(member.totalRewardsFiat, currency)}
                     />
                 </Section>
 
-                <Section title="Merchants">
+                <Section title={t("members.details.merchants")}>
                     {member.merchantNames.length > 0 ? (
-                        <div className={styles.merchantList}>
+                        <Inline space="xs">
                             {member.merchantNames.map((name) => (
-                                <span key={name} className={styles.merchantTag}>
+                                <Text
+                                    as="span"
+                                    variant="caption"
+                                    key={name}
+                                    className={styles.merchantTag}
+                                >
                                     {name}
-                                </span>
+                                </Text>
                             ))}
-                        </div>
+                        </Inline>
                     ) : (
-                        <span className={styles.emptyState}>—</span>
+                        <Text variant="bodySmall" color="tertiary">
+                            —
+                        </Text>
                     )}
                 </Section>
             </Stack>
 
             <SheetFooter>
                 <SheetClose asChild>
-                    <Button variant="ghost">Close</Button>
+                    <Button variant="ghost">
+                        {t("members.details.close")}
+                    </Button>
                 </SheetClose>
             </SheetFooter>
         </>
@@ -94,18 +109,24 @@ function Section({
     children: React.ReactNode;
 }) {
     return (
-        <div>
-            <h3 className={styles.sectionTitle}>{title}</h3>
-            <div className={styles.sectionBody}>{children}</div>
-        </div>
+        <Stack space="xs">
+            <Text as="h3" variant="overline" color="secondary">
+                {title}
+            </Text>
+            <Stack space="xs">{children}</Stack>
+        </Stack>
     );
 }
 
 function Row({ label, value }: { label: string; value: string | number }) {
     return (
-        <div className={styles.labelRow}>
-            <span className={styles.labelText}>{label}</span>
-            <span className={styles.valueText}>{value}</span>
-        </div>
+        <Inline space="m" align="space-between">
+            <Text variant="bodySmall" color="secondary">
+                {label}
+            </Text>
+            <Text variant="bodySmall" weight="medium">
+                {value}
+            </Text>
+        </Inline>
     );
 }

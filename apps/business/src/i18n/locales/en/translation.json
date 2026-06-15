@@ -111,6 +111,48 @@
             "edit": "Edit"
         }
     },
+    "members": {
+        "columns": {
+            "wallet": "Wallet",
+            "merchants": "Merchants",
+            "memberFrom": "Member from",
+            "interactions": "Interactions",
+            "rewards": "Rewards ({{currency}})"
+        },
+        "filters": {
+            "button": "Filters",
+            "reset": "Reset filter",
+            "segment": "Segment",
+            "membershipDate": "Membership Date",
+            "interactions": "Interactions",
+            "min": "Min",
+            "max": "Max",
+            "from": "From",
+            "to": "To",
+            "pickDate": "Pick a date",
+            "minInteractions": "Min interactions",
+            "maxInteractions": "Max interactions",
+            "minInteractionsError": "Minimum interactions can't be negative",
+            "maxInteractionsError": "Maximum interactions can't be negative",
+            "maxGreaterThanMinError": "Max interactions should be greater than minimum"
+        },
+        "sendPushNotification": "Send Push Notification",
+        "details": {
+            "memberSince": "Member since {{date}}",
+            "wallet": "Wallet",
+            "activity": "Activity",
+            "interactions": "Interactions",
+            "rewardsEarned": "Rewards earned",
+            "merchants": "Merchants",
+            "close": "Close"
+        },
+        "audience": {
+            "title": "Audience",
+            "required": "Push audience is required",
+            "reach": "You will reach {{count}} members",
+            "minMember": "You need at least 1 member to continue"
+        }
+    },
     "campaigns": {
         "create": {
             "steps": {

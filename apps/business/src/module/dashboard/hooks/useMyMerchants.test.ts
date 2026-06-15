@@ -77,8 +77,10 @@ describe("useMyMerchants", () => {
             expect(result.current.isEmpty).toBe(false);
             expect(result.current.owned).toHaveLength(1);
             expect(result.current.adminOf).toHaveLength(1);
-            expect(result.current.merchants[0].name).toBe("Owned Merchant");
-            expect(result.current.merchants[1].name).toBe("Admin Merchant");
+            // Combined list is sorted alphabetically by name, not grouped
+            // by owned/admin: "Admin Merchant" < "Owned Merchant".
+            expect(result.current.merchants[0].name).toBe("Admin Merchant");
+            expect(result.current.merchants[1].name).toBe("Owned Merchant");
         });
 
         test("should return isEmpty true when no merchants exist", async ({

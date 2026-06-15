@@ -1,7 +1,4 @@
 import { formatAmount } from "@frak-labs/core-sdk";
-import { Box } from "@frak-labs/design-system/components/Box";
-import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
-import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -11,9 +8,8 @@ import {
     type SortingState,
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
-import { isAddressEqual } from "viem";
+import { useTranslation } from "react-i18next";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { Button } from "@/module/common/component/Button";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Table } from "@/module/common/component/Table";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
@@ -27,7 +23,6 @@ import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
 import { currencyStore } from "@/stores/currencyStore";
 import { membersStore } from "@/stores/membersStore";
-import * as styles from "./table-members.css";
 
 const columnHelper = createColumnHelper<GetMembersPageItem>();
 
@@ -37,12 +32,9 @@ const columnHelper = createColumnHelper<GetMembersPageItem>();
  *  - filter on top
  */
 export function TableMembers() {
+    const { t } = useTranslation();
     const filters = membersStore((state) => state.tableFilters);
     const setFilters = membersStore((state) => state.setTableFilters);
-    const selectedMembers = membersStore((state) => state.selectedMembers);
-    const addSelectedMember = membersStore((state) => state.addMember);
-    const removeSelectedMember = membersStore((state) => state.removeMember);
-    const clearSelection = membersStore((state) => state.clearSelection);
     const isDemoMode = useIsDemoMode();
     const merchantId = useActiveMerchantId();
     const currency = currencyStore((state) => state.preferredCurrency);
@@ -126,41 +118,9 @@ export function TableMembers() {
     const columns = useMemo(
         () =>
             [
-                columnHelper.display({
-                    id: "select",
-                    cell: ({ row }) => {
-                        return (
-                            <div
-                                onClick={(e) => e.stopPropagation()}
-                                onKeyDown={(e) => e.stopPropagation()}
-                            >
-                                <Checkbox
-                                    id={`select-${row.id}`}
-                                    checked={
-                                        !!selectedMembers?.find((a) =>
-                                            isAddressEqual(a, row.original.user)
-                                        )
-                                    }
-                                    onCheckedChange={(checked) => {
-                                        if (checked) {
-                                            addSelectedMember(
-                                                row.original.user
-                                            );
-                                        } else {
-                                            removeSelectedMember(
-                                                row.original.user
-                                            );
-                                        }
-                                    }}
-                                    disabled={false}
-                                />
-                            </div>
-                        );
-                    },
-                }),
                 columnHelper.accessor("user", {
                     enableSorting: true,
-                    header: () => "Wallet",
+                    header: () => t("members.columns.wallet"),
                     cell: ({ getValue }) => (
                         <span
                             onClick={(e) => e.stopPropagation()}
@@ -172,12 +132,12 @@ export function TableMembers() {
                 }),
                 columnHelper.accessor("merchantNames", {
                     enableSorting: false,
-                    header: () => "Merchants",
+                    header: () => t("members.columns.merchants"),
                     cell: ({ getValue }) => getValue().join(", "),
                 }),
                 columnHelper.accessor("firstInteractionTimestamp", {
                     enableSorting: true,
-                    header: () => "Member from",
+                    header: () => t("members.columns.memberFrom"),
                     cell: ({ getValue }) =>
                         new Date(
                             Number.parseInt(getValue(), 10) * 1000
@@ -185,22 +145,19 @@ export function TableMembers() {
                 }),
                 columnHelper.accessor("totalInteractions", {
                     enableSorting: true,
-                    header: () => "Interactions",
+                    header: () => t("members.columns.interactions"),
                     cell: ({ getValue }) => getValue(),
                 }),
                 columnHelper.accessor("totalRewardsFiat", {
                     enableSorting: true,
-                    header: () => "Rewards",
+                    header: () =>
+                        t("members.columns.rewards", {
+                            currency: currency.toUpperCase(),
+                        }),
                     cell: ({ getValue }) => formatAmount(getValue(), currency),
                 }),
             ] as ColumnDef<GetMembersPageItem>[],
-        [
-            selectedMembers,
-            addSelectedMember,
-            removeSelectedMember,
-            isDemoMode,
-            currency,
-        ]
+        [currency, t]
     );
 
     if (!page || isPending) {
@@ -215,6 +172,7 @@ export function TableMembers() {
                     <Table
                         data={page.members}
                         columns={columns}
+                        emptyPlaceholder="–"
                         manualPagination={true}
                         manualSorting={true}
                         rowCount={page.totalResult}
@@ -223,34 +181,9 @@ export function TableMembers() {
                         onSortingChange={setSorting}
                         onRowClick={(row) => setSelectedMember(row.original)}
                         postTable={
-                            <>
-                                {(selectedMembers?.length ?? 0) > 0 && (
-                                    <Box className={styles.selectedMembersRow}>
-                                        <Inline space="m" alignY="center">
-                                            <p>
-                                                You have selected{" "}
-                                                <strong>
-                                                    {selectedMembers?.length}
-                                                </strong>{" "}
-                                                Members
-                                            </p>
-                                            <Button
-                                                type={"button"}
-                                                onClick={() => clearSelection()}
-                                                variant={"secondary"}
-                                            >
-                                                Clear selection
-                                            </Button>
-                                        </Inline>
-                                    </Box>
-                                )}
-
-                                {page.totalResult > (filters.limit ?? 10) && (
-                                    <Pagination
-                                        totalResult={page.totalResult}
-                                    />
-                                )}
-                            </>
+                            page.totalResult > (filters.limit ?? 10) && (
+                                <Pagination totalResult={page.totalResult} />
+                            )
                         }
                     />
                 )}

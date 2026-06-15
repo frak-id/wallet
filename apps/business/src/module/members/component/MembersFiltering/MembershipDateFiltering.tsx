@@ -9,6 +9,7 @@ import {
 import { format, startOfDay } from "date-fns";
 import { memo, useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
@@ -29,6 +30,7 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
     disabled?: boolean;
     onSubmit: (data: FormMembersFiltering) => void;
 }) {
+    const { t } = useTranslation();
     const { control, handleSubmit, setValue } =
         useFormContext<FormMembersFiltering>();
     const currentFirstInteractionTimestamp = useWatch({
@@ -54,7 +56,7 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
 
     return (
         <>
-            <FormDescription label={"Segment"} />
+            <FormDescription label={t("members.filters.segment")} />
             <FormItem variant={"checkbox"}>
                 <Checkbox
                     checked={checked === true}
@@ -80,7 +82,7 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                     selected={checked === true}
                     htmlFor={"date-filters"}
                 >
-                    Membership Date
+                    {t("members.filters.membershipDate")}
                 </FormLabel>
             </FormItem>
             <Box className={styles.formFromToRow}>
@@ -96,7 +98,7 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                                         variant={"light"}
                                         weight={"medium"}
                                     >
-                                        From
+                                        {t("members.filters.from")}
                                     </FormLabel>
                                     <Popover>
                                         <PopoverTrigger {...rest} asChild>
@@ -113,7 +115,11 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                                                             "PPP"
                                                         )
                                                     ) : (
-                                                        <span>Pick a date</span>
+                                                        <span>
+                                                            {t(
+                                                                "members.filters.pickDate"
+                                                            )}
+                                                        </span>
                                                     )}
                                                 </ButtonCalendar>
                                             </FormControl>
@@ -158,7 +164,7 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                                         variant={"light"}
                                         weight={"medium"}
                                     >
-                                        To
+                                        {t("members.filters.to")}
                                     </FormLabel>
                                     <Popover>
                                         <PopoverTrigger {...rest} asChild>
@@ -175,7 +181,11 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                                                             "PPP"
                                                         )
                                                     ) : (
-                                                        <span>Pick a date</span>
+                                                        <span>
+                                                            {t(
+                                                                "members.filters.pickDate"
+                                                            )}
+                                                        </span>
                                                     )}
                                                 </ButtonCalendar>
                                             </FormControl>

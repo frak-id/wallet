@@ -354,6 +354,7 @@ export function TableCampaigns() {
                         className={styles.campaignsTable}
                         data={data}
                         columns={columns}
+                        emptyPlaceholder="–"
                         enableSorting={true}
                         enableFiltering={true}
                         columnFilters={columnFilters}

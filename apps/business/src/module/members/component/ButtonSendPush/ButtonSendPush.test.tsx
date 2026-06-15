@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ButtonSendPush } from "./index";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 const mockNavigate = vi.fn();
 const mockSetForm = vi.fn();
 
@@ -48,10 +52,12 @@ vi.mock("lucide-react", () => ({
 }));
 
 describe("ButtonSendPush", () => {
-    it("should render button with 'Send Push' text", () => {
+    it("should render button with the default send-push label", () => {
         render(<ButtonSendPush />);
 
-        expect(screen.getByText("Send Push")).toBeInTheDocument();
+        expect(
+            screen.getByText("members.sendPushNotification")
+        ).toBeInTheDocument();
     });
 
     it("should render with Plus icon (size 20) on left", () => {
@@ -65,7 +71,7 @@ describe("ButtonSendPush", () => {
     it("should call setForm(undefined) and navigate to the merchant-scoped push route when clicked", () => {
         render(<ButtonSendPush />);
 
-        const button = screen.getByText("Send Push");
+        const button = screen.getByText("members.sendPushNotification");
         fireEvent.click(button);
 
         expect(mockSetForm).toHaveBeenCalledWith(undefined);
