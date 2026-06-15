@@ -789,11 +789,7 @@
             "testTokens": "Fund with Test Tokens"
         },
         "pause": {
-            "title": "Pause rewards",
-            "description": "Active campaigns will stop distributing rewards for this currency until you re-enable the allowance.",
-            "currency": "Currency",
-            "cancel": "Cancel",
-            "confirm": "Pause rewards"
+            "title": "Pause rewards"
         },
         "legacy": {
             "title": "Legacy Bank Migration",

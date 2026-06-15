@@ -5,6 +5,7 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { PauseIcon } from "@frak-labs/design-system/icons";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { AlertTriangle, ArrowUpCircle, Download } from "lucide-react";
 import { useState } from "react";
@@ -17,7 +18,6 @@ import {
     formatTokenBalance,
 } from "@/module/common/utils/currencyOptions";
 import { Input } from "@/module/forms/Input";
-import { PauseRewardsConfirmSheet } from "@/module/merchant/component/PauseRewardsConfirmSheet";
 import { useBankAllowanceMutation } from "@/module/merchant/hook/useBankAllowanceMutation";
 import { useWithdrawFromBank } from "@/module/merchant/hook/useWithdrawFromBank";
 import {
@@ -243,7 +243,7 @@ function TokenActions({
                 </Button>
             )}
             {token.allowance > 0n && (
-                <PauseRewardsConfirmSheet
+                <PauseRewardsButton
                     token={token}
                     merchantId={merchantId}
                     bankAddress={bankAddress}
@@ -260,6 +260,37 @@ function TokenActions({
                 </Button>
             )}
         </div>
+    );
+}
+
+function PauseRewardsButton({
+    token,
+    merchantId,
+    bankAddress,
+}: {
+    token: BudgetToken;
+    merchantId: string;
+    bankAddress: Address;
+}) {
+    const { t } = useTranslation();
+    const { mutate: revokeAllowance, isPending } = useBankAllowanceMutation({
+        bankAddress,
+        merchantId,
+        action: "revoke",
+    });
+
+    return (
+        <Button
+            size="small"
+            variant="secondary"
+            width="auto"
+            loading={isPending}
+            disabled={isPending}
+            icon={<PauseIcon width={16} height={16} />}
+            onClick={() => revokeAllowance({ token: token.address })}
+        >
+            {t("funding.pause.title")}
+        </Button>
     );
 }
 

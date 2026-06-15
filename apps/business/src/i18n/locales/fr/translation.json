@@ -789,11 +789,7 @@
             "testTokens": "Ajouter des jetons"
         },
         "pause": {
-            "title": "Mettre en pause les récompenses",
-            "description": "Les campagnes actives cesseront de distribuer des récompenses pour cette devise jusqu'à ce que vous réactiviez l'autorisation.",
-            "currency": "Devise",
-            "cancel": "Annuler",
-            "confirm": "Mettre en pause les récompenses"
+            "title": "Mettre en pause les récompenses"
         },
         "legacy": {
             "title": "Migration de l'ancienne banque",
