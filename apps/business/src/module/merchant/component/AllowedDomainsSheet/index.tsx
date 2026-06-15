@@ -113,8 +113,12 @@ export function AllowedDomainsSheet({
                 />
 
                 <Stack space="l" padding="l">
-                    <Stack space="m" padding="m" className={styles.domainCard}>
-                        {allowedDomains.length > 0 ? (
+                    {allowedDomains.length > 0 && (
+                        <Stack
+                            space="m"
+                            padding="m"
+                            className={styles.domainCard}
+                        >
                             <Stack
                                 as="ul"
                                 space="none"
@@ -135,6 +139,7 @@ export function AllowedDomainsSheet({
                                         <Button
                                             variant="destructive"
                                             size="small"
+                                            width="auto"
                                             onClick={() => removeDomain(domain)}
                                             disabled={isRemoving}
                                         >
@@ -143,12 +148,10 @@ export function AllowedDomainsSheet({
                                     </Inline>
                                 ))}
                             </Stack>
-                        ) : (
-                            <Text variant="caption" color="tertiary">
-                                {t("merchantEdit.domains.empty")}
-                            </Text>
-                        )}
+                        </Stack>
+                    )}
 
+                    <Stack space="m" padding="m" className={styles.domainCard}>
                         <Stack space="xs">
                             <Text
                                 variant="bodySmall"
@@ -177,20 +180,20 @@ export function AllowedDomainsSheet({
                                 </Text>
                             )}
                         </Stack>
-                    </Stack>
 
-                    <Inline space="m" align="center">
-                        <Button
-                            variant="primary"
-                            size="large"
-                            width="auto"
-                            onClick={handleAdd}
-                            disabled={!isValid || isAdding}
-                            loading={isAdding}
-                        >
-                            {t("merchantEdit.domains.add")}
-                        </Button>
-                    </Inline>
+                        <Inline space="m" align="center">
+                            <Button
+                                variant="primary"
+                                size="large"
+                                width="auto"
+                                onClick={handleAdd}
+                                disabled={!isValid || isAdding}
+                                loading={isAdding}
+                            >
+                                {t("merchantEdit.domains.add")}
+                            </Button>
+                        </Inline>
+                    </Stack>
                 </Stack>
             </SheetContent>
             <DiscardChangesDialog {...dialogProps} />
