@@ -1,6 +1,7 @@
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { getRouteApi } from "@tanstack/react-router";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import {
     type ColumnFiltersState,
@@ -32,6 +33,8 @@ import * as styles from "./table-campaigns.css";
 
 const columnHelper = createColumnHelper<CampaignWithStats>();
 
+const routeApi = getRouteApi("/_restricted/m/$merchantId/campaigns/list");
+
 function MutedText({ children }: { children: React.ReactNode }) {
     return (
         <Text variant="bodySmall" as="span" color="tertiary">
@@ -48,10 +51,13 @@ export function TableCampaigns() {
     const { t } = useTranslation();
     const { data } = useCampaignsWithStats();
     const merchantId = useActiveMerchantId();
+    const navigate = routeApi.useNavigate();
+    const { campaign: selectedId, tab } = routeApi.useSearch();
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-    const [selectedCampaign, setSelectedCampaign] = useState<
-        CampaignWithStats | undefined
-    >();
+    const selectedCampaign = useMemo(
+        () => data.find((c) => c.id === selectedId),
+        [data, selectedId]
+    );
     const selectedIds = campaignSelectionStore((state) => state.selectedIds);
     const toggleSelection = campaignSelectionStore((state) => state.toggle);
     const setManySelection = campaignSelectionStore((state) => state.setMany);
@@ -351,7 +357,15 @@ export function TableCampaigns() {
                         enableSorting={true}
                         enableFiltering={true}
                         columnFilters={columnFilters}
-                        onRowClick={(row) => setSelectedCampaign(row.original)}
+                        onRowClick={(row) =>
+                            navigate({
+                                search: (prev) => ({
+                                    ...prev,
+                                    campaign: row.original.id,
+                                    tab: undefined,
+                                }),
+                            })
+                        }
                         rowDataAttributes={rowDataAttributes}
                         anySelected={selectedCampaigns.length > 0}
                     />
@@ -359,8 +373,21 @@ export function TableCampaigns() {
             </Stack>
             <CampaignDetailsSheet
                 campaign={selectedCampaign}
+                tab={tab}
+                onTabChange={(nextTab) =>
+                    navigate({
+                        search: (prev) => ({ ...prev, tab: nextTab }),
+                    })
+                }
                 onOpenChange={(open) => {
-                    if (!open) setSelectedCampaign(undefined);
+                    if (!open)
+                        navigate({
+                            search: (prev) => ({
+                                ...prev,
+                                campaign: undefined,
+                                tab: undefined,
+                            }),
+                        });
                 }}
             />
         </>

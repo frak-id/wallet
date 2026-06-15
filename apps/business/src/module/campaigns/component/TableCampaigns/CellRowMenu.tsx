@@ -15,7 +15,7 @@ import {
 } from "@frak-labs/design-system/icons";
 import { Link } from "@tanstack/react-router";
 import type { Row } from "@tanstack/react-table";
-import { Fragment, Suspense, useState } from "react";
+import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ModalArchive,
@@ -23,7 +23,6 @@ import {
     ModalPause,
     ModalResume,
 } from "@/module/campaigns/component/CampaignActionModals";
-import { CampaignPerformanceSheet } from "@/module/campaigns/component/CampaignPerformanceSheet";
 import { campaignStore } from "@/stores/campaignStore";
 import type { CampaignListItemWithActions } from "@/types/Campaign";
 import * as styles from "./table-campaigns.css";
@@ -38,7 +37,6 @@ type SectionId = "nav" | "lifecycle" | "destructive";
 export function CellRowMenu({ row, merchantId }: Props) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
-    const [performanceOpen, setPerformanceOpen] = useState(false);
     const reset = campaignStore((state) => state.reset);
     const { actions, status, id, name } = row.original;
     const isDraft = status === "draft";
@@ -57,8 +55,9 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 </Link>
             ) : (
                 <Link
-                    to="/m/$merchantId/campaigns/$campaignId"
-                    params={{ merchantId, campaignId: id }}
+                    to="/m/$merchantId/campaigns/list"
+                    params={{ merchantId }}
+                    search={{ campaign: id, tab: "config" }}
                     className={styles.rowMenuItem}
                 >
                     <EyeIcon width={16} height={16} />
@@ -66,17 +65,15 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 </Link>
             )}
             {!isDraft && (
-                <button
-                    type="button"
+                <Link
+                    to="/m/$merchantId/campaigns/list"
+                    params={{ merchantId }}
+                    search={{ campaign: id, tab: "funnel" }}
                     className={styles.rowMenuItem}
-                    onClick={() => {
-                        setOpen(false);
-                        setPerformanceOpen(true);
-                    }}
                 >
                     <BarChartIcon width={16} height={16} />
                     <span>{t("campaigns.rowMenu.openPerformance")}</span>
-                </button>
+                </Link>
             )}
             {actions.canEdit &&
                 (isDraft ? (
@@ -193,46 +190,32 @@ export function CellRowMenu({ row, merchantId }: Props) {
     }
 
     return (
-        <>
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <button
-                        type="button"
-                        className={styles.rowMenuButton}
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label={t("campaigns.rowMenu.ariaActions", {
-                            name,
-                        })}
-                    >
-                        <MoreVerticalIcon width={20} height={20} />
-                    </button>
-                </PopoverTrigger>
-                <PopoverContent
-                    align="end"
-                    sideOffset={6}
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <button
+                    type="button"
+                    className={styles.rowMenuButton}
                     onClick={(e) => e.stopPropagation()}
-                    className={styles.rowMenuList}
+                    aria-label={t("campaigns.rowMenu.ariaActions", {
+                        name,
+                    })}
                 >
-                    {sections.map((section, idx) => (
-                        <Fragment key={section.id}>
-                            {idx > 0 && (
-                                <div className={styles.rowMenuDivider} />
-                            )}
-                            {section.node}
-                        </Fragment>
-                    ))}
-                </PopoverContent>
-            </Popover>
-            {performanceOpen && (
-                <Suspense fallback={null}>
-                    <CampaignPerformanceSheet
-                        campaignId={id}
-                        campaign={row.original}
-                        open={performanceOpen}
-                        onOpenChange={setPerformanceOpen}
-                    />
-                </Suspense>
-            )}
-        </>
+                    <MoreVerticalIcon width={20} height={20} />
+                </button>
+            </PopoverTrigger>
+            <PopoverContent
+                align="end"
+                sideOffset={6}
+                onClick={(e) => e.stopPropagation()}
+                className={styles.rowMenuList}
+            >
+                {sections.map((section, idx) => (
+                    <Fragment key={section.id}>
+                        {idx > 0 && <div className={styles.rowMenuDivider} />}
+                        {section.node}
+                    </Fragment>
+                ))}
+            </PopoverContent>
+        </Popover>
     );
 }

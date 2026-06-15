@@ -44,7 +44,6 @@ import { Route as RestrictedMMerchantIdMerchantSetupStatusRouteImport } from './
 import { Route as RestrictedMMerchantIdMerchantFundingRouteImport } from './routes/_restricted/m/$merchantId/merchant/funding'
 import { Route as RestrictedMMerchantIdMerchantCustomizeRouteImport } from './routes/_restricted/m/$merchantId/merchant/customize'
 import { Route as RestrictedMMerchantIdCampaignsListRouteImport } from './routes/_restricted/m/$merchantId/campaigns/list'
-import { Route as RestrictedMMerchantIdCampaignsCampaignIdRouteImport } from './routes/_restricted/m/$merchantId/campaigns/$campaignId'
 import { Route as RestrictedCampaignsDraftCampaignIdValidationRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/validation'
 import { Route as RestrictedMMerchantIdCampaignsEditCampaignIdRouteImport } from './routes/_restricted/m/$merchantId/campaigns/edit/$campaignId'
 import { Route as RestrictedMMerchantIdCampaignsDraftNewRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/new'
@@ -250,12 +249,6 @@ const RestrictedMMerchantIdCampaignsListRoute =
     path: '/campaigns/list',
     getParentRoute: () => RestrictedMMerchantIdRoute,
   } as any)
-const RestrictedMMerchantIdCampaignsCampaignIdRoute =
-  RestrictedMMerchantIdCampaignsCampaignIdRouteImport.update({
-    id: '/campaigns/$campaignId',
-    path: '/campaigns/$campaignId',
-    getParentRoute: () => RestrictedMMerchantIdRoute,
-  } as any)
 const RestrictedCampaignsDraftCampaignIdValidationRoute =
   RestrictedCampaignsDraftCampaignIdValidationRouteImport.update({
     id: '/campaigns/draft/$campaignId/validation',
@@ -337,7 +330,6 @@ export interface FileRoutesByFullPath {
   '/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
   '/merchant/$id/': typeof RestrictedMerchantIdIndexRoute
   '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
-  '/m/$merchantId/campaigns/$campaignId': typeof RestrictedMMerchantIdCampaignsCampaignIdRoute
   '/m/$merchantId/campaigns/list': typeof RestrictedMMerchantIdCampaignsListRoute
   '/m/$merchantId/merchant/customize': typeof RestrictedMMerchantIdMerchantCustomizeRoute
   '/m/$merchantId/merchant/funding': typeof RestrictedMMerchantIdMerchantFundingRoute
@@ -383,7 +375,6 @@ export interface FileRoutesByTo {
   '/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
   '/merchant/$id': typeof RestrictedMerchantIdIndexRoute
   '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
-  '/m/$merchantId/campaigns/$campaignId': typeof RestrictedMMerchantIdCampaignsCampaignIdRoute
   '/m/$merchantId/campaigns/list': typeof RestrictedMMerchantIdCampaignsListRoute
   '/m/$merchantId/merchant/customize': typeof RestrictedMMerchantIdMerchantCustomizeRoute
   '/m/$merchantId/merchant/funding': typeof RestrictedMMerchantIdMerchantFundingRoute
@@ -431,7 +422,6 @@ export interface FileRoutesById {
   '/_restricted/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
   '/_restricted/merchant/$id/': typeof RestrictedMerchantIdIndexRoute
   '/_restricted/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
-  '/_restricted/m/$merchantId/campaigns/$campaignId': typeof RestrictedMMerchantIdCampaignsCampaignIdRoute
   '/_restricted/m/$merchantId/campaigns/list': typeof RestrictedMMerchantIdCampaignsListRoute
   '/_restricted/m/$merchantId/merchant/customize': typeof RestrictedMMerchantIdMerchantCustomizeRoute
   '/_restricted/m/$merchantId/merchant/funding': typeof RestrictedMMerchantIdMerchantFundingRoute
@@ -479,7 +469,6 @@ export interface FileRouteTypes {
     | '/merchant/$id/team'
     | '/merchant/$id/'
     | '/campaigns/draft/$campaignId/validation'
-    | '/m/$merchantId/campaigns/$campaignId'
     | '/m/$merchantId/campaigns/list'
     | '/m/$merchantId/merchant/customize'
     | '/m/$merchantId/merchant/funding'
@@ -525,7 +514,6 @@ export interface FileRouteTypes {
     | '/merchant/$id/team'
     | '/merchant/$id'
     | '/campaigns/draft/$campaignId/validation'
-    | '/m/$merchantId/campaigns/$campaignId'
     | '/m/$merchantId/campaigns/list'
     | '/m/$merchantId/merchant/customize'
     | '/m/$merchantId/merchant/funding'
@@ -572,7 +560,6 @@ export interface FileRouteTypes {
     | '/_restricted/merchant/$id/team'
     | '/_restricted/merchant/$id/'
     | '/_restricted/campaigns/draft/$campaignId/validation'
-    | '/_restricted/m/$merchantId/campaigns/$campaignId'
     | '/_restricted/m/$merchantId/campaigns/list'
     | '/_restricted/m/$merchantId/merchant/customize'
     | '/_restricted/m/$merchantId/merchant/funding'
@@ -849,13 +836,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestrictedMMerchantIdCampaignsListRouteImport
       parentRoute: typeof RestrictedMMerchantIdRoute
     }
-    '/_restricted/m/$merchantId/campaigns/$campaignId': {
-      id: '/_restricted/m/$merchantId/campaigns/$campaignId'
-      path: '/campaigns/$campaignId'
-      fullPath: '/m/$merchantId/campaigns/$campaignId'
-      preLoaderRoute: typeof RestrictedMMerchantIdCampaignsCampaignIdRouteImport
-      parentRoute: typeof RestrictedMMerchantIdRoute
-    }
     '/_restricted/campaigns/draft/$campaignId/validation': {
       id: '/_restricted/campaigns/draft/$campaignId/validation'
       path: '/campaigns/draft/$campaignId/validation'
@@ -925,7 +905,6 @@ declare module '@tanstack/react-router' {
 interface RestrictedMMerchantIdRouteChildren {
   RestrictedMMerchantIdDashboardRoute: typeof RestrictedMMerchantIdDashboardRoute
   RestrictedMMerchantIdMembersRoute: typeof RestrictedMMerchantIdMembersRoute
-  RestrictedMMerchantIdCampaignsCampaignIdRoute: typeof RestrictedMMerchantIdCampaignsCampaignIdRoute
   RestrictedMMerchantIdCampaignsListRoute: typeof RestrictedMMerchantIdCampaignsListRoute
   RestrictedMMerchantIdMerchantCustomizeRoute: typeof RestrictedMMerchantIdMerchantCustomizeRoute
   RestrictedMMerchantIdMerchantFundingRoute: typeof RestrictedMMerchantIdMerchantFundingRoute
@@ -948,8 +927,6 @@ interface RestrictedMMerchantIdRouteChildren {
 const RestrictedMMerchantIdRouteChildren: RestrictedMMerchantIdRouteChildren = {
   RestrictedMMerchantIdDashboardRoute: RestrictedMMerchantIdDashboardRoute,
   RestrictedMMerchantIdMembersRoute: RestrictedMMerchantIdMembersRoute,
-  RestrictedMMerchantIdCampaignsCampaignIdRoute:
-    RestrictedMMerchantIdCampaignsCampaignIdRoute,
   RestrictedMMerchantIdCampaignsListRoute:
     RestrictedMMerchantIdCampaignsListRoute,
   RestrictedMMerchantIdMerchantCustomizeRoute:

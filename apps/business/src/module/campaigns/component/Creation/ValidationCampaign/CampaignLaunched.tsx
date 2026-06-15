@@ -59,8 +59,9 @@ export function CampaignLaunched() {
             return;
         }
         navigate({
-            to: "/m/$merchantId/campaigns/$campaignId",
-            params: { merchantId, campaignId },
+            to: "/m/$merchantId/campaigns/list",
+            params: { merchantId },
+            search: { campaign: campaignId },
         });
     }
 
