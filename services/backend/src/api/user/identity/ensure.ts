@@ -26,12 +26,15 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .post(
         "",
-        async ({ headers, body, walletSession }) => {
+        async ({ headers, body, walletSession, request }) => {
             const { merchantId, anonymousId: bodyAnonymousId } = body;
 
             // Determine the anonymousId: body (wallet app) or header (SDK)
-            const anonymousId = bodyAnonymousId || headers["x-frak-client-id"];
-
+            const anonymousId =
+                bodyAnonymousId ??
+                headers["x-frak-client-id"] ??
+                request.headers.get("x-frak-client-id");
+                
             if (!anonymousId) {
                 throw HttpError.badRequest(
                     "MISSING_ANONYMOUS_ID",
