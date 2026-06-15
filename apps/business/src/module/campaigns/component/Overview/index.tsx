@@ -8,6 +8,7 @@ import {
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { currencyStore } from "@/stores/currencyStore";
+import { DateRangeChip } from "./DateRangeChip";
 import { FunnelCard } from "./FunnelCard";
 import { FunnelCardSkeleton } from "./FunnelCardSkeleton";
 import { KpiCardsRow } from "./KpiCardsRow";
@@ -38,6 +39,7 @@ export function CampaignsOverview({ from, to }: WindowProps) {
     return (
         <div className={styles.page}>
             <Stack space="l">
+                <DateRangeChip />
                 <KpiCardsRow kpis={summary.kpis} from={from} to={to} />
                 <div className={styles.twoColumns}>
                     <Suspense fallback={<FunnelCardSkeleton />}>
