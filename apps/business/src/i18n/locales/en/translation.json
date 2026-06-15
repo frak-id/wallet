@@ -969,7 +969,16 @@
             "saveAll": "Save all changes",
             "removeMember": "Remove member",
             "undoRemove": "Undo remove",
-            "saveError": "Some changes could not be saved. Try again."
+            "saveError": "Some changes could not be saved. Try again.",
+            "add": {
+                "title": "Add a member",
+                "description": "Invite an admin to your team by wallet address.",
+                "label": "Member wallet",
+                "placeholder": "0x…",
+                "submit": "Add member",
+                "invalid": "Invalid wallet address",
+                "error": "Could not add the admin. Try again."
+            }
         }
     },
     "customize": {

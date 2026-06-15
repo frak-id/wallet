@@ -1,162 +1,152 @@
+import { Button } from "@frak-labs/design-system/components/Button";
+import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Input } from "@frak-labs/design-system/components/Input";
 import {
     Sheet,
-    SheetClose,
     SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
+    SheetToolbar,
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
-import { BadgeCheck } from "lucide-react";
-import {
-    type PropsWithChildren,
-    useCallback,
-    useEffect,
-    useState,
-} from "react";
-import { useForm, useFormContext } from "react-hook-form";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { type PropsWithChildren, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type Address, isAddress } from "viem";
-import { Button } from "@/module/common/component/Button";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-    FormValidMessage,
-} from "@/module/forms/Form";
-import { Input } from "@/module/forms/Input";
+import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
+import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { useAdminMutation } from "@/module/merchant/hook/useAdminMutation";
-
-type FormAddTeamMembers = {
-    wallet?: Address;
-};
+import * as styles from "./add-team-sheet.css";
 
 export function ButtonAddTeam({
     merchantId,
     children,
 }: PropsWithChildren<{ merchantId: string }>) {
-    const [isOpen, setIsOpen] = useState(false);
+    const { t } = useTranslation();
+    const [open, setOpen] = useState(false);
+    const [wallet, setWallet] = useState("");
+
     const {
-        mutateAsync: addAdmin,
-        isPending: isAddingMember,
-        error,
+        mutate: addAdmin,
+        isPending,
+        isError,
     } = useAdminMutation({ action: "add" });
 
-    const form = useForm<FormAddTeamMembers>();
+    const trimmed = wallet.trim();
+    const isValid = useMemo(() => isAddress(trimmed), [trimmed]);
 
-    useEffect(() => {
-        if (isOpen) return;
-        form.reset();
-    }, [isOpen, form.reset, form]);
+    const { guard, dialogProps } = useDiscardGuard({
+        isDirty: trimmed.length > 0,
+        onDiscard: () => setWallet(""),
+    });
 
-    const onSubmit = useCallback(
-        async (data: FormAddTeamMembers) => {
-            if (!data.wallet) return;
-            await addAdmin({
-                merchantId,
-                wallet: data.wallet,
-            });
-            setIsOpen(false);
-        },
-        [addAdmin, merchantId]
-    );
-
-    return (
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>{children}</SheetTrigger>
-            <SheetContent side="right">
-                <SheetHeader>
-                    <SheetTitle>
-                        <BadgeCheck color={"#0DDB84"} /> Add a new member
-                    </SheetTitle>
-                    <SheetDescription>
-                        Invite an admin to your merchant team by wallet address.
-                    </SheetDescription>
-                </SheetHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
-                        {isAddingMember && (
-                            <p>
-                                Adding the new admin
-                                <span className={"dotsLoading"}>...</span>
-                            </p>
-                        )}
-                        <FormWallet disabled={isAddingMember} />
-                        {error && (
-                            <p>Error when adding the admin: {error.message}</p>
-                        )}
-                    </form>
-                </Form>
-                <SheetFooter>
-                    <SheetClose asChild>
-                        <Button variant={"secondary"} disabled={isAddingMember}>
-                            Cancel
-                        </Button>
-                    </SheetClose>
-                    <Button
-                        variant={"primary"}
-                        disabled={!form.formState.isValid || isAddingMember}
-                        onClick={form.handleSubmit(onSubmit)}
-                    >
-                        Add Member
-                    </Button>
-                </SheetFooter>
-            </SheetContent>
-        </Sheet>
-    );
-}
-
-function FormWallet({ disabled }: { disabled: boolean }) {
-    const { trigger, control } = useFormContext<FormAddTeamMembers>();
-    useEffect(() => {
-        trigger("wallet");
-    }, [trigger]);
-
-    return (
-        <FormField
-            control={control}
-            name="wallet"
-            rules={{
-                required: "Wallet address required",
-                validate: {
-                    required: (value) =>
-                        (value && isAddress(value)) || "Invalid wallet address",
+    function handleAdd() {
+        if (!isValid) return;
+        addAdmin(
+            { merchantId, wallet: trimmed as Address },
+            {
+                onSuccess: () => {
+                    setWallet("");
+                    setOpen(false);
                 },
+            }
+        );
+    }
+
+    function requestClose() {
+        guard(() => setOpen(false));
+    }
+
+    return (
+        <Sheet
+            open={open}
+            onOpenChange={(next) => {
+                if (next) {
+                    setOpen(true);
+                    return;
+                }
+                requestClose();
             }}
-            render={({ field }) => (
-                <FormItem>
-                    <FormLabel weight={"medium"}>
-                        Enter your Member Wallet
-                    </FormLabel>
-                    <FormControl>
-                        <Inline space="m" alignY="bottom">
-                            <Input
-                                length={"medium"}
-                                placeholder={"Wallet Address...."}
-                                {...field}
-                                value={field.value ?? ""}
-                            />
-                            <Button
-                                variant={"primary"}
-                                disabled={disabled}
-                                onClick={() => {
-                                    trigger("wallet");
-                                }}
+        >
+            <SheetTrigger asChild>{children}</SheetTrigger>
+            <SheetContent
+                side="right"
+                size="wide"
+                padded={false}
+                hideCloseButton
+                onEscapeKeyDown={(e) => {
+                    e.preventDefault();
+                    requestClose();
+                }}
+                onInteractOutside={(e) => {
+                    e.preventDefault();
+                    requestClose();
+                }}
+            >
+                <SheetToolbar
+                    size="large"
+                    leading={
+                        <GlassCloseButton
+                            onClick={requestClose}
+                            aria-label={t("merchantEdit.close")}
+                        />
+                    }
+                    title={t("merchantEdit.team.add.title")}
+                    subtitle={t("merchantEdit.team.add.description")}
+                />
+
+                <Stack space="l" padding="l">
+                    <Stack space="m" padding="m" className={styles.fieldCard}>
+                        <Stack space="xs">
+                            <Text
+                                variant="bodySmall"
+                                weight="medium"
+                                color="secondary"
+                                className={styles.inputLabel}
                             >
-                                Verify
+                                {t("merchantEdit.team.add.label")}
+                            </Text>
+                            <Input
+                                variant="bare"
+                                tone="muted"
+                                length="big"
+                                value={wallet}
+                                onChange={(e) => setWallet(e.target.value)}
+                                placeholder={t(
+                                    "merchantEdit.team.add.placeholder"
+                                )}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleAdd();
+                                }}
+                            />
+                            {trimmed && !isValid && (
+                                <Text variant="caption" color="error">
+                                    {t("merchantEdit.team.add.invalid")}
+                                </Text>
+                            )}
+                            {isError && (
+                                <Text variant="caption" color="error">
+                                    {t("merchantEdit.team.add.error")}
+                                </Text>
+                            )}
+                        </Stack>
+
+                        <Inline space="m" align="center">
+                            <Button
+                                variant="primary"
+                                size="large"
+                                width="auto"
+                                onClick={handleAdd}
+                                disabled={!isValid || isPending}
+                                loading={isPending}
+                            >
+                                {t("merchantEdit.team.add.submit")}
                             </Button>
                         </Inline>
-                    </FormControl>
-                    <FormMessage />
-                    <FormValidMessage>
-                        The new member is ready to be added
-                    </FormValidMessage>
-                </FormItem>
-            )}
-        />
+                    </Stack>
+                </Stack>
+            </SheetContent>
+            <DiscardChangesDialog {...dialogProps} />
+        </Sheet>
     );
 }

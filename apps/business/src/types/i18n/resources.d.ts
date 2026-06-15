@@ -981,6 +981,15 @@ export default interface Resources {
         "team": "Manage your team"
       },
       "team": {
+        "add": {
+          "description": "Invite an admin to your team by wallet address.",
+          "error": "Could not add the admin. Try again.",
+          "invalid": "Invalid wallet address",
+          "label": "Member wallet",
+          "placeholder": "0x…",
+          "submit": "Add member",
+          "title": "Add a member"
+        },
         "addMember": "Add Team Member",
         "headers": {
           "action": "Action",

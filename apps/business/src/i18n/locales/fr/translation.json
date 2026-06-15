@@ -969,7 +969,16 @@
             "saveAll": "Enregistrer les modifications",
             "removeMember": "Retirer le membre",
             "undoRemove": "Annuler le retrait",
-            "saveError": "Certaines modifications n'ont pas pu être enregistrées. Réessayez."
+            "saveError": "Certaines modifications n'ont pas pu être enregistrées. Réessayez.",
+            "add": {
+                "title": "Ajouter un membre",
+                "description": "Invitez un administrateur à votre équipe via son adresse de portefeuille.",
+                "label": "Portefeuille du membre",
+                "placeholder": "0x…",
+                "submit": "Ajouter le membre",
+                "invalid": "Adresse de portefeuille invalide",
+                "error": "Impossible d'ajouter l'administrateur. Réessayez."
+            }
         }
     },
     "customize": {
