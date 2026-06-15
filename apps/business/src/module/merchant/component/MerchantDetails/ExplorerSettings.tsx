@@ -5,6 +5,7 @@ import { ExplorerPhonePreview } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { isValidUrl } from "@/module/common/utils/validateUrl";
 import { EditField } from "@/module/forms/EditField";
 import {
     Form,
@@ -29,15 +30,6 @@ type ExplorerFormValues = {
     logoUrl?: string;
     description?: string;
 };
-
-function isValidImageUrl(value: string): boolean {
-    try {
-        const url = new URL(value);
-        return url.protocol === "https:" || url.protocol === "http:";
-    } catch {
-        return false;
-    }
-}
 
 export function ExplorerSettings({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
@@ -111,9 +103,9 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
     // Feed the preview only with parseable URLs so partial input doesn't
     // replace the mockup imagery mid-typing.
     const previewHero =
-        watchedHero && isValidImageUrl(watchedHero) ? watchedHero : undefined;
+        watchedHero && isValidUrl(watchedHero) ? watchedHero : undefined;
     const previewLogo =
-        watchedLogo && isValidImageUrl(watchedLogo) ? watchedLogo : undefined;
+        watchedLogo && isValidUrl(watchedLogo) ? watchedLogo : undefined;
 
     return (
         <>
@@ -152,7 +144,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                         rules={{
                             validate: (value) =>
                                 !value ||
-                                isValidImageUrl(value) ||
+                                isValidUrl(value) ||
                                 t("merchantEdit.explorer.invalidUrl"),
                         }}
                         render={({ field }) => (
@@ -208,7 +200,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                         rules={{
                             validate: (value) =>
                                 !value ||
-                                isValidImageUrl(value) ||
+                                isValidUrl(value) ||
                                 t("merchantEdit.explorer.invalidUrl"),
                         }}
                         render={({ field }) => (

@@ -710,6 +710,7 @@ export default interface Resources {
         },
         "homepage": {
           "hint": "Your website URL, used when visitors click your brand name",
+          "invalid": "Enter a valid URL (https://…)",
           "label": "Homepage Link"
         },
         "lang": {

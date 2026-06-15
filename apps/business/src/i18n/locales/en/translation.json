@@ -986,7 +986,8 @@
             },
             "homepage": {
                 "label": "Homepage Link",
-                "hint": "Your website URL, used when visitors click your brand name"
+                "hint": "Your website URL, used when visitors click your brand name",
+                "invalid": "Enter a valid URL (https://…)"
             },
             "currency": {
                 "label": "Currency",

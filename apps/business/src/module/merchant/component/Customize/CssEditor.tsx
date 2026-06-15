@@ -15,6 +15,7 @@ export function CssEditor({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder={placeholder}
+            maxLength={50000}
         />
     );
 }

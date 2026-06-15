@@ -986,7 +986,8 @@
             },
             "homepage": {
                 "label": "Lien du site",
-                "hint": "L'URL de votre site, utilisée quand un visiteur clique sur votre marque"
+                "hint": "L'URL de votre site, utilisée quand un visiteur clique sur votre marque",
+                "invalid": "Entrez une URL valide (https://…)"
             },
             "currency": {
                 "label": "Devise",

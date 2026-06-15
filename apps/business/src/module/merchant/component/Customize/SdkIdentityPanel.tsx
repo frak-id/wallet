@@ -14,6 +14,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { isValidUrl, normalizeUrl } from "@/module/common/utils/validateUrl";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField, FormItem } from "@/module/forms/Form";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
@@ -67,16 +68,19 @@ export function SdkIdentityPanel({
     }, [isSuccessUpdate, form]);
 
     const onSubmit = useCallback(
-        (currentValues: SdkIdentityFormValues) =>
-            editSdkConfig({
+        (currentValues: SdkIdentityFormValues) => {
+            const homepageLink = normalizeUrl(currentValues.homepageLink);
+            form.setValue("homepageLink", homepageLink);
+            return editSdkConfig({
                 name: valueOrNull(currentValues.name),
                 logoUrl: valueOrNull(currentValues.logoUrl),
-                homepageLink: valueOrNull(currentValues.homepageLink),
+                homepageLink: valueOrNull(homepageLink),
                 currency: currentValues.currency || null,
                 lang: currentValues.lang || null,
                 hidden: currentValues.hidden,
-            }),
-        [editSdkConfig]
+            });
+        },
+        [editSdkConfig, form]
     );
 
     useCustomizeSection("identity", form, onSubmit);
@@ -105,6 +109,7 @@ export function SdkIdentityPanel({
                                     <Input
                                         variant="bare"
                                         tone="muted"
+                                        maxLength={200}
                                         placeholder={t(
                                             "customize.identity.name.placeholder"
                                         )}
@@ -139,6 +144,11 @@ export function SdkIdentityPanel({
                     <FormField
                         control={form.control}
                         name="homepageLink"
+                        rules={{
+                            validate: (value) =>
+                                isValidUrl(value) ||
+                                t("customize.identity.homepage.invalid"),
+                        }}
                         render={({ field }) => (
                             <EditField
                                 label={t("customize.identity.homepage.label")}
