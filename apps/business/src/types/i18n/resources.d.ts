@@ -811,7 +811,9 @@ export default interface Resources {
           "cancel": "Cancel",
           "confirm": "Confirm",
           "increaseLimit": "Increase limit",
-          "withdraw": "Withdraw"
+          "withdraw": "Withdraw",
+          "withdrawCta": "Withdraw funds",
+          "withdrawTooltip": "Sends your bank's available funds back to your wallet. Available because reward distribution is off."
         },
         "addFunds": "Add funds",
         "allowanceTooltip": "Up to {{amount}} authorized for distribution",
@@ -845,10 +847,6 @@ export default interface Resources {
         "withdrawable": "Available to migrate"
       },
       "pause": {
-        "cancel": "Cancel",
-        "confirm": "Pause rewards",
-        "currency": "Currency",
-        "description": "Active campaigns will stop distributing rewards for this currency until you re-enable the allowance.",
         "title": "Pause rewards"
       },
       "setup": {

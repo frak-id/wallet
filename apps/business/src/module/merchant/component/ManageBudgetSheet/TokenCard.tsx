@@ -66,7 +66,9 @@ export function FundedTokenCard({
     const stablecoin = token.symbol as Stablecoin;
     const { data: tokenMeta } = useTokenMetadata(token.address);
     const decimals = tokenMeta?.decimals ?? 18;
-    const status = getTokenStatus(token.balance, token.allowance);
+    const status = isBankOpen
+        ? getTokenStatus(token.balance, token.allowance)
+        : "paused";
     const needsAllowanceIncrease =
         token.allowance < token.balance && isBankOpen;
 
@@ -85,6 +87,7 @@ export function FundedTokenCard({
                             token={token}
                             status={status}
                             decimals={decimals}
+                            isBankOpen={isBankOpen}
                         />
                     </Inline>
 
@@ -144,17 +147,19 @@ function TokenStatusBadge({
     token,
     status,
     decimals,
+    isBankOpen,
 }: {
     token: BudgetToken;
     status: TokenStatus;
     decimals: number;
+    isBankOpen: boolean;
 }) {
     const { t } = useTranslation();
     if (status === "empty") return null;
 
     const stablecoin = token.symbol as Stablecoin;
     const allowanceLabel =
-        token.allowance > 0n
+        isBankOpen && token.allowance > 0n
             ? t("funding.budget.allowanceTooltip", {
                   amount: formatTokenBalance(
                       token.allowance,
@@ -236,13 +241,14 @@ function TokenActions({
                 <Button
                     size="small"
                     variant="secondary"
+                    width="auto"
                     icon={<ArrowUpCircle size={16} />}
                     onClick={() => setAction("allowance")}
                 >
                     {t("funding.budget.actions.increaseLimit")}
                 </Button>
             )}
-            {token.allowance > 0n && (
+            {isBankOpen && token.allowance > 0n && (
                 <PauseRewardsButton
                     token={token}
                     merchantId={merchantId}
@@ -250,14 +256,17 @@ function TokenActions({
                 />
             )}
             {!isBankOpen && token.balance > 0n && (
-                <Button
-                    size="small"
-                    variant="secondary"
-                    icon={<Download size={16} />}
-                    onClick={() => setAction("withdraw")}
-                >
-                    {t("funding.budget.actions.withdraw")}
-                </Button>
+                <Tooltip content={t("funding.budget.actions.withdrawTooltip")}>
+                    <Button
+                        size="small"
+                        variant="secondary"
+                        width="auto"
+                        icon={<Download size={16} />}
+                        onClick={() => setAction("withdraw")}
+                    >
+                        {t("funding.budget.actions.withdrawCta")}
+                    </Button>
+                </Tooltip>
             )}
         </div>
     );
@@ -329,6 +338,7 @@ function AllowanceEditor({
             <Button
                 size="small"
                 variant="primary"
+                width="auto"
                 disabled={!value || isPending}
                 loading={isPending}
                 onClick={() =>
@@ -347,6 +357,7 @@ function AllowanceEditor({
             <Button
                 size="small"
                 variant="ghost"
+                width="auto"
                 disabled={isPending}
                 onClick={onDone}
             >
@@ -391,6 +402,7 @@ function WithdrawEditor({
             <Button
                 size="small"
                 variant="primary"
+                width="auto"
                 disabled={!value || isPending}
                 loading={isPending}
                 onClick={() =>
@@ -411,6 +423,7 @@ function WithdrawEditor({
             <Button
                 size="small"
                 variant="ghost"
+                width="auto"
                 disabled={isPending}
                 onClick={onDone}
             >

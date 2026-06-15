@@ -773,6 +773,8 @@
             "actions": {
                 "increaseLimit": "Augmenter la limite",
                 "withdraw": "Retirer",
+                "withdrawCta": "Retirer les fonds",
+                "withdrawTooltip": "Renvoie les fonds disponibles de votre banque vers votre portefeuille. Disponible car la distribution est désactivée.",
                 "confirm": "Confirmer",
                 "cancel": "Annuler",
                 "amountPlaceholder": "Montant"

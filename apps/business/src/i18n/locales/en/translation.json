@@ -773,6 +773,8 @@
             "actions": {
                 "increaseLimit": "Increase limit",
                 "withdraw": "Withdraw",
+                "withdrawCta": "Withdraw funds",
+                "withdrawTooltip": "Sends your bank's available funds back to your wallet. Available because reward distribution is off.",
                 "confirm": "Confirm",
                 "cancel": "Cancel",
                 "amountPlaceholder": "Amount"
