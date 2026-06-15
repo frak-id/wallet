@@ -99,6 +99,17 @@ targets:
         # Generate dSYMs for both debug and release so Crashlytics can
         # symbolicate native frames consistently across configurations.
         DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+        # REQUIRED for Firebase Crashlytics fatal-crash capture on iOS.
+        # Firebase is linked as a STATIC lib (swift-rs -> libapp.a), which
+        # bypasses BOTH CocoaPods (auto-adds -ObjC) and Xcode-native SPM. With
+        # no -ObjC, the linker dead-strips Crashlytics' Obj-C +load/category
+        # code that installs the NSException + Mach/signal handlers, so
+        # FirebaseApp.configure() + crashlytics.log() link & run fine but NO
+        # crash is ever captured/uploaded (even a forced fatalError). Android
+        # is unaffected (separate Gradle/AGP path). -lc++ is required next to
+        # -ObjC because Crashlytics' modulemap declares `link "c++"`
+        # (firebase-ios-sdk#12451). Ref: https://firebase.google.com/docs/crashlytics/ios/get-started
+        OTHER_LDFLAGS: "$(inherited) -ObjC -lc++"
         EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
       groups: [app]
     dependencies:
