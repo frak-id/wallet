@@ -5,7 +5,7 @@ import { ExplorerPhonePreview } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { isValidUrl } from "@/module/common/utils/validateUrl";
+import { isValidUrl, normalizeUrl } from "@/module/common/utils/validateUrl";
 import { EditField } from "@/module/forms/EditField";
 import {
     Form,
@@ -71,19 +71,21 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
 
     const onValid = useCallback(
         async (values: ExplorerFormValues) => {
-            const hasHeroExtras =
-                values.heroImageUrls && values.heroImageUrls.length > 0;
+            // Prepend https:// to scheme-less URLs so they satisfy the
+            // backend's `format: "uri"` validation.
+            const heroImageUrl = normalizeUrl(values.heroImageUrl ?? "");
+            const logoUrl = normalizeUrl(values.logoUrl ?? "");
+            const heroImageUrls = values.heroImageUrls?.map(normalizeUrl);
+            const hasHeroExtras = heroImageUrls && heroImageUrls.length > 0;
             // Empty fields are omitted: the backend validates each value as a
             // URI and replaces the stored config wholesale — always send the
             // object so clearing the last field persists too.
             await editExplorerAsync({
                 enabled: values.enabled,
                 config: {
-                    heroImageUrl: values.heroImageUrl || undefined,
-                    heroImageUrls: hasHeroExtras
-                        ? values.heroImageUrls
-                        : undefined,
-                    logoUrl: values.logoUrl || undefined,
+                    heroImageUrl: heroImageUrl || undefined,
+                    heroImageUrls: hasHeroExtras ? heroImageUrls : undefined,
+                    logoUrl: logoUrl || undefined,
                     description: values.description || undefined,
                 },
             });
@@ -233,6 +235,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                                     <TextArea
                                         length="big"
                                         resize="none"
+                                        maxLength={1000}
                                         className={styles.textareaMuted}
                                         placeholder={t(
                                             "merchantEdit.explorer.descriptionPlaceholder"
