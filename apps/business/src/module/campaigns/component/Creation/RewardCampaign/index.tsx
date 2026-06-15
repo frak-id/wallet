@@ -19,13 +19,12 @@ import {
     CheckFilledIcon,
     DeleteIcon,
     DoubleChevronIcon,
-    EurCodeIcon,
     LightbulbIcon,
     PercentIcon,
     PlusIcon,
 } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import {
     type Control,
     Controller,
@@ -39,6 +38,7 @@ import {
     useWatch,
 } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
+import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Button } from "@/module/common/component/Button";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
@@ -66,7 +66,11 @@ import {
 
 const FORM_ID = "campaign-reward-form";
 
-type UnitGlyph = "eur" | "percent";
+type UnitKind = "amount" | "percent";
+
+/** Reward-currency glyph (€/£/$) for `"amount"` units, shared across the step. */
+const CurrencyGlyphContext = createContext<string>("€");
+const useCurrencyGlyph = () => useContext(CurrencyGlyphContext);
 
 const MODELS = [
     {
@@ -94,9 +98,14 @@ const MODELS = [
 /*  Shared field bits                                                  */
 /* ------------------------------------------------------------------ */
 
-function UnitIcon({ unit }: { unit: UnitGlyph }) {
-    const Icon = unit === "eur" ? EurCodeIcon : PercentIcon;
-    return <Icon width={24} height={24} className={styles.unitIcon} />;
+function UnitIcon({ unit }: { unit: UnitKind }) {
+    const glyph = useCurrencyGlyph();
+    if (unit === "percent") {
+        return (
+            <PercentIcon width={24} height={24} className={styles.unitIcon} />
+        );
+    }
+    return <span className={styles.unitGlyph}>{glyph}</span>;
 }
 
 /** Double-chevron stepper: one glyph with two transparent hit zones. */
@@ -149,7 +158,7 @@ type NumericFieldName =
 type StepperFieldProps = {
     field: ControllerRenderProps<RewardFormValues, NumericFieldName>;
     /** A glyph unit (€ / %). Use `unitLabel` instead for word units. */
-    unit?: UnitGlyph;
+    unit?: UnitKind;
     /** A localised text unit (e.g. "DAYS"/"JOURS"); a word can't be a glyph. */
     unitLabel?: string;
     placeholder: string;
@@ -319,7 +328,7 @@ function RecipientBox({
         | "ambassadorPercent"
         | "refereePercent";
     label: string;
-    unit: UnitGlyph;
+    unit: UnitKind;
     placeholder: string;
     /** Omitted (e.g. while the input is empty) ⇒ no hint line is rendered. */
     hint?: string;
@@ -387,7 +396,7 @@ function CpaReveal({
 }: {
     control: Control<RewardFormValues>;
     setValue: UseFormSetValue<RewardFormValues>;
-    unit: "eur" | "percent";
+    unit: "amount" | "percent";
     cpaName: "targetCpa" | "targetCpaPercent";
     ambName: "ambassadorAmount" | "ambassadorPercent";
     refName: "refereeAmount" | "refereePercent";
@@ -406,7 +415,8 @@ function CpaReveal({
     const referee = num(useWatch({ control, name: refName }));
     const { rewardsPool, frakCommission } = splitTargetCpa(cpa);
     const hasPool = rewardsPool > 0;
-    const suffix = unit === "eur" ? "€" : "%";
+    const glyph = useCurrencyGlyph();
+    const suffix = unit === "amount" ? glyph : "%";
 
     // Reco shows only while no split has been configured yet.
     const showReco = hasPool && ambassador === 0 && referee === 0;
@@ -549,7 +559,7 @@ function FixedReveal({
         <CpaReveal
             control={control}
             setValue={setValue}
-            unit="eur"
+            unit="amount"
             cpaName="targetCpa"
             ambName="ambassadorAmount"
             refName="refereeAmount"
@@ -618,6 +628,7 @@ function UnitSelectField({
     tone?: "muted" | "elevated";
     disabled?: boolean;
 }) {
+    const glyph = useCurrencyGlyph();
     return (
         <Controller
             control={control}
@@ -640,7 +651,7 @@ function UnitSelectField({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="percent">%</SelectItem>
-                        <SelectItem value="eur">€</SelectItem>
+                        <SelectItem value="amount">{glyph}</SelectItem>
                     </SelectContent>
                 </Select>
             )}
@@ -661,7 +672,7 @@ function TierCell({
     control: Control<RewardFormValues>;
     name: string;
     placeholder: string;
-    unit: UnitGlyph;
+    unit: UnitKind;
     tone?: "muted" | "elevated";
     error?: boolean;
     disabled?: boolean;
@@ -706,7 +717,7 @@ function ValueCell({
 }) {
     const unit =
         // biome-ignore lint/suspicious/noExplicitAny: dynamic field-array path
-        (useWatch({ control, name: unitName as any }) as UnitGlyph) ?? "eur";
+        (useWatch({ control, name: unitName as any }) as UnitKind) ?? "amount";
     return (
         <TierCell
             control={control}
@@ -746,7 +757,7 @@ function RangeCell({
                 <TierCell
                     control={control}
                     name={fromName}
-                    unit="eur"
+                    unit="amount"
                     tone={tone}
                     error={fromError}
                     disabled={disabled}
@@ -762,7 +773,7 @@ function RangeCell({
                 <TierCell
                     control={control}
                     name={toName}
-                    unit="eur"
+                    unit="amount"
                     tone={tone}
                     error={toError}
                     disabled={disabled}
@@ -923,7 +934,7 @@ function GlobalCpaTable({ control }: { control: Control<RewardFormValues> }) {
                     size="small"
                     rightIcon={<PlusIcon width={16} height={16} />}
                     onClick={() =>
-                        append({ from: "", to: "", cpa: "", unit: "eur" })
+                        append({ from: "", to: "", cpa: "", unit: "amount" })
                     }
                 >
                     {t("campaigns.create.reward.tiered.addTier")}
@@ -1171,7 +1182,7 @@ function EligibilityField({ control }: { control: Control<RewardFormValues> }) {
                 render={({ field }) => (
                     <StepperField
                         field={field}
-                        unit="eur"
+                        unit="amount"
                         allowZero
                         placeholder={t(
                             "campaigns.create.reward.eligibility.minPurchasePlaceholder"
@@ -1241,6 +1252,7 @@ export function RewardCampaign() {
     const draft = campaignStore((s) => s.draft);
     const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
+    const currencyGlyph = useCampaignCurrencyGlyph();
 
     const defaultValues = useMemo(() => draftToRewardForm(draft), [draft]);
 
@@ -1285,126 +1297,134 @@ export function RewardCampaign() {
     const handleSaveDraft = form.handleSubmit(persist);
 
     return (
-        <WizardStep
-            stepKey="reward"
-            formId={FORM_ID}
-            isValid={isValid}
-            isPending={saveCampaign.isPending}
-            onSaveDraft={handleSaveDraft}
-            onClose={() => form.reset(defaultValues)}
-        >
-            <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
-                <Stack space="l">
-                    <WizardFieldCard
-                        space="xs"
-                        label={t("campaigns.create.reward.campaignType.label")}
-                        description={t(
-                            "campaigns.create.reward.campaignType.description"
-                        )}
-                    >
-                        <CampaignTypeField control={form.control} />
-                    </WizardFieldCard>
-
-                    <WizardFieldCard
-                        space="xs"
-                        label={t("campaigns.create.reward.model.label")}
-                        description={t(
-                            "campaigns.create.reward.model.description"
-                        )}
-                    >
-                        <Stack space="m">
-                            <Controller
-                                control={form.control}
-                                name="model"
-                                render={({ field }) => (
-                                    <RadioGroup
-                                        className={styles.modelRow}
-                                        value={field.value}
-                                        onValueChange={field.onChange}
-                                    >
-                                        {MODELS.map((m) => (
-                                            <label
-                                                key={m.value}
-                                                htmlFor={`model-${m.value}`}
-                                                className={styles.modelOption}
-                                            >
-                                                <RadioGroupItem
-                                                    id={`model-${m.value}`}
-                                                    value={m.value}
-                                                    size="l"
-                                                />
-                                                <span
-                                                    className={styles.modelMain}
-                                                >
-                                                    <Text
-                                                        variant="body"
-                                                        weight="medium"
-                                                    >
-                                                        {t(m.titleKey)}
-                                                    </Text>
-                                                    <Text
-                                                        variant="bodySmall"
-                                                        color="secondary"
-                                                    >
-                                                        {t(m.descKey)}
-                                                    </Text>
-                                                </span>
-                                            </label>
-                                        ))}
-                                    </RadioGroup>
-                                )}
-                            />
-
-                            {model && <div className={styles.divider} />}
-                            {model === "fixed" && (
-                                <FixedReveal
-                                    control={form.control}
-                                    setValue={form.setValue}
-                                />
-                            )}
-                            {model === "percentage" && (
-                                <PercentageReveal
-                                    control={form.control}
-                                    setValue={form.setValue}
-                                />
-                            )}
-                            {model === "tiered" && (
-                                <TieredReveal
-                                    control={form.control}
-                                    setValue={form.setValue}
-                                    getValues={form.getValues}
-                                    ambassadorArray={ambassadorArray}
-                                    refereeArray={refereeArray}
-                                />
-                            )}
-                        </Stack>
-                    </WizardFieldCard>
-
-                    {model !== "tiered" && (
+        <CurrencyGlyphContext.Provider value={currencyGlyph}>
+            <WizardStep
+                stepKey="reward"
+                formId={FORM_ID}
+                isValid={isValid}
+                isPending={saveCampaign.isPending}
+                onSaveDraft={handleSaveDraft}
+                onClose={() => form.reset(defaultValues)}
+            >
+                <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
+                    <Stack space="l">
                         <WizardFieldCard
                             space="xs"
                             label={t(
-                                "campaigns.create.reward.eligibility.label"
+                                "campaigns.create.reward.campaignType.label"
                             )}
                             description={t(
-                                "campaigns.create.reward.eligibility.description"
+                                "campaigns.create.reward.campaignType.description"
                             )}
                         >
-                            <EligibilityField control={form.control} />
+                            <CampaignTypeField control={form.control} />
                         </WizardFieldCard>
-                    )}
 
-                    <WizardFieldCard
-                        space="xs"
-                        label={t("campaigns.create.reward.lockup.label")}
-                        description={t(
-                            "campaigns.create.reward.lockup.description"
+                        <WizardFieldCard
+                            space="xs"
+                            label={t("campaigns.create.reward.model.label")}
+                            description={t(
+                                "campaigns.create.reward.model.description"
+                            )}
+                        >
+                            <Stack space="m">
+                                <Controller
+                                    control={form.control}
+                                    name="model"
+                                    render={({ field }) => (
+                                        <RadioGroup
+                                            className={styles.modelRow}
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                        >
+                                            {MODELS.map((m) => (
+                                                <label
+                                                    key={m.value}
+                                                    htmlFor={`model-${m.value}`}
+                                                    className={
+                                                        styles.modelOption
+                                                    }
+                                                >
+                                                    <RadioGroupItem
+                                                        id={`model-${m.value}`}
+                                                        value={m.value}
+                                                        size="l"
+                                                    />
+                                                    <span
+                                                        className={
+                                                            styles.modelMain
+                                                        }
+                                                    >
+                                                        <Text
+                                                            variant="body"
+                                                            weight="medium"
+                                                        >
+                                                            {t(m.titleKey)}
+                                                        </Text>
+                                                        <Text
+                                                            variant="bodySmall"
+                                                            color="secondary"
+                                                        >
+                                                            {t(m.descKey)}
+                                                        </Text>
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </RadioGroup>
+                                    )}
+                                />
+
+                                {model && <div className={styles.divider} />}
+                                {model === "fixed" && (
+                                    <FixedReveal
+                                        control={form.control}
+                                        setValue={form.setValue}
+                                    />
+                                )}
+                                {model === "percentage" && (
+                                    <PercentageReveal
+                                        control={form.control}
+                                        setValue={form.setValue}
+                                    />
+                                )}
+                                {model === "tiered" && (
+                                    <TieredReveal
+                                        control={form.control}
+                                        setValue={form.setValue}
+                                        getValues={form.getValues}
+                                        ambassadorArray={ambassadorArray}
+                                        refereeArray={refereeArray}
+                                    />
+                                )}
+                            </Stack>
+                        </WizardFieldCard>
+
+                        {model !== "tiered" && (
+                            <WizardFieldCard
+                                space="xs"
+                                label={t(
+                                    "campaigns.create.reward.eligibility.label"
+                                )}
+                                description={t(
+                                    "campaigns.create.reward.eligibility.description"
+                                )}
+                            >
+                                <EligibilityField control={form.control} />
+                            </WizardFieldCard>
                         )}
-                    >
-                        <LockupField control={form.control} />
-                    </WizardFieldCard>
-                </Stack>
-            </form>
-        </WizardStep>
+
+                        <WizardFieldCard
+                            space="xs"
+                            label={t("campaigns.create.reward.lockup.label")}
+                            description={t(
+                                "campaigns.create.reward.lockup.description"
+                            )}
+                        >
+                            <LockupField control={form.control} />
+                        </WizardFieldCard>
+                    </Stack>
+                </form>
+            </WizardStep>
+        </CurrencyGlyphContext.Provider>
     );
 }

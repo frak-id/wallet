@@ -13,6 +13,7 @@ import {
     splitTargetCpa,
 } from "@/module/campaigns/component/Creation/RewardCampaign/utils";
 import { WizardStep } from "@/module/campaigns/component/Creation/WizardStep";
+import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
 import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
@@ -141,6 +142,7 @@ function Value({ children, muted }: { children: ReactNode; muted?: boolean }) {
 
 function SummaryRows({ draft }: { draft: CampaignDraft }) {
     const { t } = useTranslation();
+    const currencyGlyph = useCampaignCurrencyGlyph();
     const reward = useMemo(() => draftToRewardForm(draft), [draft]);
 
     const goal = draft.metadata.goal;
@@ -231,18 +233,19 @@ function SummaryRows({ draft }: { draft: CampaignDraft }) {
                 <Stack space="xxs" align="right">
                     <Inline space="xxs" alignY="center">
                         <BankIcon width={16} height={16} />
-                        <Value>{`${amount} EUR`}</Value>
+                        <Value>{`${amount} ${currencyGlyph}`}</Value>
                     </Inline>
                     <Text variant="caption" weight="medium" color="tertiary">
                         {t("campaigns.create.validation.budgetBreakdown", {
                             distributed: rewardsPool,
                             frak: frakCommission,
+                            currency: currencyGlyph,
                         })}
                     </Text>
                 </Stack>
             </SummaryRow>
 
-            <RewardRows reward={reward} />
+            <RewardRows reward={reward} currencyGlyph={currencyGlyph} />
 
             <SummaryRow label={t("campaigns.create.validation.rewardLockup")}>
                 {reward.lockupDays ? (
@@ -262,8 +265,10 @@ function SummaryRows({ draft }: { draft: CampaignDraft }) {
 /** Target CPA + Rewards rows. Tiered lists each basket tier and its split. */
 function RewardRows({
     reward,
+    currencyGlyph,
 }: {
     reward: ReturnType<typeof draftToRewardForm>;
+    currencyGlyph: string;
 }) {
     const { t } = useTranslation();
 
@@ -285,7 +290,8 @@ function RewardRows({
                     <Stack space="xs" align="right">
                         {tiers.map((tier, i) => {
                             const isLast = i === tiers.length - 1;
-                            const unit = tier.unit === "percent" ? "%" : "€";
+                            const unit =
+                                tier.unit === "percent" ? "%" : currencyGlyph;
                             const upper =
                                 tier.to === "" ? (isLast ? "∞" : "") : tier.to;
                             const from = tier.from === "" ? 0 : tier.from;
@@ -326,7 +332,7 @@ function RewardRows({
 
     if (reward.model === "fixed" || reward.model === "percentage") {
         const isPercent = reward.model === "percentage";
-        const unit = isPercent ? "%" : "€";
+        const unit = isPercent ? "%" : currencyGlyph;
         const cpa = isPercent ? reward.targetCpaPercent : reward.targetCpa;
         const ambassador = isPercent
             ? reward.ambassadorPercent

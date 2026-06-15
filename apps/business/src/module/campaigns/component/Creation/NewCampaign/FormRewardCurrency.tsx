@@ -78,10 +78,21 @@ export function FormRewardCurrency() {
                 control={control}
                 name="rewardToken"
                 render={({ field }) => {
-                    const mode = field.value ? "other" : "default";
-                    const selected = field.value
-                        ? detectStablecoin(field.value)
-                        : undefined;
+                    // The backend resolves the merchant default onto every
+                    // reward, so a campaign saved with "use default" reads back
+                    // with that explicit token — show it as "use default", not
+                    // "Choose another", when it matches the merchant default.
+                    const isMerchantDefault =
+                        !!field.value &&
+                        !!merchant?.defaultRewardToken &&
+                        field.value.toLowerCase() ===
+                            merchant.defaultRewardToken.toLowerCase();
+                    const usesCustomToken = !!field.value && !isMerchantDefault;
+                    const mode = usesCustomToken ? "other" : "default";
+                    const selected =
+                        usesCustomToken && field.value
+                            ? detectStablecoin(field.value)
+                            : undefined;
 
                     const chooseAnotherRow = (
                         <label

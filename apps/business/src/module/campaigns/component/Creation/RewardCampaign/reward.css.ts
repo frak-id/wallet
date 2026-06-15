@@ -68,6 +68,18 @@ export const unitText = style({
     whiteSpace: "nowrap",
 });
 
+/** Trailing currency glyph (€/£/$), sized to align with the 24px unit icons. */
+export const unitGlyph = style({
+    flexShrink: 0,
+    minWidth: "24px",
+    color: vars.icon.tertiary,
+    fontSize: "16px",
+    fontWeight: 500,
+    lineHeight: "24px",
+    textAlign: "center",
+    whiteSpace: "nowrap",
+});
+
 /** 16px horizontal inset to line a label/hint up with the field text. */
 export const insetX = style({
     paddingLeft: alias.spacing.m,

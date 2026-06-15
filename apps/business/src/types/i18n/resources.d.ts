@@ -208,7 +208,7 @@ export default interface Resources {
           "model": {
             "description": "How rewards are calculated for each successful referral",
             "fixed": {
-              "description": "Set a fixed [€] reward per conversion",
+              "description": "Set a fixed reward per conversion",
               "title": "Fixed amount"
             },
             "label": "Reward model",
@@ -235,7 +235,7 @@ export default interface Resources {
           "tiered": {
             "addTier": "Add a tier",
             "ambassadorDescription": "Reward for the person who shared the link",
-            "basketRange": "Basket Range (€)",
+            "basketRange": "Basket Range",
             "commissionFootnote": "Frak keeps a 20% commission on every reward distributed.",
             "cpaColumn": "CPA",
             "cpaPlaceholder": "E.g. 5",
@@ -352,7 +352,7 @@ export default interface Resources {
         "validation": {
           "ambassador": "Ambassador: {{value}}",
           "budgetAmount": "Budget amount",
-          "budgetBreakdown": "Distributed: {{distributed}}€ · Frak: {{frak}}€",
+          "budgetBreakdown": "Distributed: {{distributed}}{{currency}} · Frak: {{frak}}{{currency}}",
           "budgetPeriod": "Budget period",
           "campaignTitle": "Campaign title",
           "frak": "Frak: {{value}}",

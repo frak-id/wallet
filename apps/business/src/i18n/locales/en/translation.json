@@ -162,7 +162,7 @@
                 "trigger": "Trigger",
                 "budgetPeriod": "Budget period",
                 "budgetAmount": "Budget amount",
-                "budgetBreakdown": "Distributed: {{distributed}}€ · Frak: {{frak}}€",
+                "budgetBreakdown": "Distributed: {{distributed}}{{currency}} · Frak: {{frak}}{{currency}}",
                 "targetCpa": "Target CPA",
                 "tieredTiers": "{{count}} tiers",
                 "rewards": "Rewards",
@@ -337,7 +337,7 @@
                     "description": "How rewards are calculated for each successful referral",
                     "fixed": {
                         "title": "Fixed amount",
-                        "description": "Set a fixed [€] reward per conversion"
+                        "description": "Set a fixed reward per conversion"
                     },
                     "percentage": {
                         "title": "% of basket",
@@ -380,7 +380,7 @@
                     "globalCpaTitle": "Target CPA",
                     "ambassadorDescription": "Reward for the person who shared the link",
                     "refereeDescription": "Welcome reward for the new referee",
-                    "basketRange": "Basket Range (€)",
+                    "basketRange": "Basket Range",
                     "cpaColumn": "CPA",
                     "reward": "Reward",
                     "unit": "Unit",

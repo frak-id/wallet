@@ -119,3 +119,22 @@ export function tokenAddressToCurrency(
     }
     return undefined;
 }
+
+/** Monetary glyph per ISO currency code (USDC shares the USD "$" glyph). */
+const CURRENCY_GLYPHS: Record<string, string> = {
+    eur: "€",
+    gbp: "£",
+    usd: "$",
+};
+
+/**
+ * Resolve a reward-token address to its display glyph (€ / £ / $). Falls back
+ * to € for an unknown/undefined token (e.g. a merchant default from another
+ * environment), matching the historical hardcoded default.
+ */
+export function tokenAddressToCurrencyGlyph(
+    tokenAddress: string | undefined
+): string {
+    const currency = tokenAddressToCurrency(tokenAddress);
+    return (currency && CURRENCY_GLYPHS[currency]) || "€";
+}

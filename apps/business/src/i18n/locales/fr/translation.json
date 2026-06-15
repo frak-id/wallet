@@ -162,7 +162,7 @@
                 "trigger": "Déclencheur",
                 "budgetPeriod": "Période de budget",
                 "budgetAmount": "Montant du budget",
-                "budgetBreakdown": "Distribué : {{distributed}}€ · Frak : {{frak}}€",
+                "budgetBreakdown": "Distribué : {{distributed}}{{currency}} · Frak : {{frak}}{{currency}}",
                 "targetCpa": "CPA cible",
                 "tieredTiers": "{{count}} paliers",
                 "rewards": "Récompenses",
@@ -337,7 +337,7 @@
                     "description": "Comment les récompenses sont calculées pour chaque parrainage réussi",
                     "fixed": {
                         "title": "Montant fixe",
-                        "description": "Définir une récompense fixe [€] par conversion"
+                        "description": "Définir une récompense fixe par conversion"
                     },
                     "percentage": {
                         "title": "% du panier",
@@ -380,7 +380,7 @@
                     "globalCpaTitle": "CPA cible",
                     "ambassadorDescription": "Récompense pour la personne qui a partagé le lien",
                     "refereeDescription": "Récompense de bienvenue pour le nouveau filleul",
-                    "basketRange": "Tranche de panier (€)",
+                    "basketRange": "Tranche de panier",
                     "cpaColumn": "CPA",
                     "reward": "Récompense",
                     "unit": "Unité",

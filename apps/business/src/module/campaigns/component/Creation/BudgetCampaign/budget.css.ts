@@ -82,10 +82,16 @@ const stepperZone = style({
 export const stepperUp = style([stepperZone, { top: 0 }]);
 export const stepperDown = style([stepperZone, { bottom: 0 }]);
 
-/** EUR code glyph, tertiary colour, after the stepper. */
-export const eurIcon = style({
+/** Trailing currency glyph (€/£/$), tertiary colour, after the stepper. */
+export const capGlyph = style({
     flexShrink: 0,
+    minWidth: "24px",
     color: vars.icon.tertiary,
+    fontSize: "16px",
+    fontWeight: 500,
+    lineHeight: "24px",
+    textAlign: "center",
+    whiteSpace: "nowrap",
 });
 
 /** Cap hint, 4px under the field, inset 16px to line up with the field text. */

@@ -23,21 +23,21 @@ const tieredValues: RewardFormValues = {
     ...DEFAULT_REWARD_FORM,
     model: "tiered",
     globalCpaTiers: [
-        { from: 0, to: 100, cpa: 10, unit: "eur" },
+        { from: 0, to: 100, cpa: 10, unit: "amount" },
         { from: 100, to: "", cpa: 10, unit: "percent" },
     ],
     ambassadorTiers: [
-        { from: 0, to: 100, reward: 6, unit: "eur" },
+        { from: 0, to: 100, reward: 6, unit: "amount" },
         { from: 100, to: "", reward: 4, unit: "percent" },
     ],
     refereeTiers: [
-        { from: 0, to: 100, reward: 2, unit: "eur" },
+        { from: 0, to: 100, reward: 2, unit: "amount" },
         { from: 100, to: "", reward: 4, unit: "percent" },
     ],
 };
 
 describe("tiered rewards persistence", () => {
-    it("emits one tiered reward per recipient, € as amount and % as percent", () => {
+    it("emits one tiered reward per recipient, currency as amount and % as percent", () => {
         const draft = rewardFormToDraft(tieredValues, baseDraft);
         const referrer = draft.rule.rewards.find(
             (r) => r.recipient === "referrer"
@@ -70,7 +70,7 @@ describe("tiered rewards persistence", () => {
         expect(restored.refereeTiers).toEqual(tieredValues.refereeTiers);
         // CPA isn't stored — re-derived as (ambassador + referee) / 80%.
         expect(restored.globalCpaTiers).toEqual([
-            { from: 0, to: 100, cpa: 10, unit: "eur" },
+            { from: 0, to: 100, cpa: 10, unit: "amount" },
             { from: 100, to: "", cpa: 10, unit: "percent" },
         ]);
     });
@@ -85,7 +85,7 @@ describe("isRewardFormValid (tiered)", () => {
         const bad: RewardFormValues = {
             ...tieredValues,
             ambassadorTiers: [
-                { from: 0, to: 100, reward: 5, unit: "eur" },
+                { from: 0, to: 100, reward: 5, unit: "amount" },
                 { from: 100, to: "", reward: 4, unit: "percent" },
             ],
         };
@@ -96,7 +96,7 @@ describe("isRewardFormValid (tiered)", () => {
         const incomplete: RewardFormValues = {
             ...tieredValues,
             refereeTiers: [
-                { from: 0, to: 100, reward: "", unit: "eur" },
+                { from: 0, to: 100, reward: "", unit: "amount" },
                 { from: 100, to: "", reward: 4, unit: "percent" },
             ],
         };
@@ -108,11 +108,11 @@ describe("isRewardFormValid (tiered)", () => {
         const zeroReferee: RewardFormValues = {
             ...tieredValues,
             ambassadorTiers: [
-                { from: 0, to: 100, reward: 8, unit: "eur" },
+                { from: 0, to: 100, reward: 8, unit: "amount" },
                 { from: 100, to: "", reward: 8, unit: "percent" },
             ],
             refereeTiers: [
-                { from: 0, to: 100, reward: 0, unit: "eur" },
+                { from: 0, to: 100, reward: 0, unit: "amount" },
                 { from: 100, to: "", reward: 0, unit: "percent" },
             ],
         };
@@ -123,7 +123,7 @@ describe("isRewardFormValid (tiered)", () => {
         const overlapping: RewardFormValues = {
             ...tieredValues,
             globalCpaTiers: [
-                { from: 0, to: 100, cpa: 10, unit: "eur" },
+                { from: 0, to: 100, cpa: 10, unit: "amount" },
                 { from: 50, to: "", cpa: 10, unit: "percent" },
             ],
         };
@@ -135,8 +135,8 @@ describe("tieredRangesOverlap", () => {
     it("allows touching boundaries (0–100, 100–∞)", () => {
         expect(
             tieredRangesOverlap([
-                { from: 0, to: 100, cpa: 10, unit: "eur" },
-                { from: 100, to: "", cpa: 10, unit: "eur" },
+                { from: 0, to: 100, cpa: 10, unit: "amount" },
+                { from: 100, to: "", cpa: 10, unit: "amount" },
             ])
         ).toBe(false);
     });
@@ -144,8 +144,8 @@ describe("tieredRangesOverlap", () => {
     it("flags a genuine overlap (0–100, 50–∞)", () => {
         expect(
             tieredRangesOverlap([
-                { from: 0, to: 100, cpa: 10, unit: "eur" },
-                { from: 50, to: "", cpa: 10, unit: "eur" },
+                { from: 0, to: 100, cpa: 10, unit: "amount" },
+                { from: 50, to: "", cpa: 10, unit: "amount" },
             ])
         ).toBe(true);
     });
@@ -153,8 +153,8 @@ describe("tieredRangesOverlap", () => {
     it("ignores tiers without a lower bound", () => {
         expect(
             tieredRangesOverlap([
-                { from: "", to: "", cpa: "", unit: "eur" },
-                { from: 0, to: 100, cpa: 10, unit: "eur" },
+                { from: "", to: "", cpa: "", unit: "amount" },
+                { from: 0, to: 100, cpa: 10, unit: "amount" },
             ])
         ).toBe(false);
     });

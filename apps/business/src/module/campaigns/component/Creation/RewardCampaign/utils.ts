@@ -13,7 +13,7 @@ import type {
 } from "@/types/Campaign";
 
 export type RewardModel = "fixed" | "percentage" | "tiered";
-export type TierUnit = "percent" | "eur";
+export type TierUnit = "percent" | "amount";
 
 /** A reward tier (Ambassador/Referee table). `""` cells show their placeholder. */
 export type TierRow = {
@@ -88,9 +88,9 @@ export const DEFAULT_REWARD_FORM: RewardFormValues = {
     targetCpaPercent: 0,
     ambassadorPercent: 0,
     refereePercent: 0,
-    globalCpaTiers: [emptyCpaTier("eur"), emptyCpaTier("eur")],
+    globalCpaTiers: [emptyCpaTier("amount"), emptyCpaTier("amount")],
     ambassadorTiers: [emptyTier("percent"), emptyTier("percent")],
-    refereeTiers: [emptyTier("eur"), emptyTier("eur")],
+    refereeTiers: [emptyTier("amount"), emptyTier("amount")],
     minPurchaseAmount: "",
     lockupDays: "",
 };
@@ -218,7 +218,7 @@ function tierToFormRow(tier: {
         from: tier.minValue,
         to: tier.maxValue ?? "",
         reward: isPercent ? (tier.percent ?? 0) : (tier.amount ?? 0),
-        unit: isPercent ? "percent" : "eur",
+        unit: isPercent ? "percent" : "amount",
     };
 }
 
@@ -302,14 +302,14 @@ export function draftToRewardForm(draft: CampaignDraft): RewardFormValues {
         referrer?.amountType === "percentage" ? referrer.percent : 0;
     const refereePercent =
         referee?.amountType === "percentage" ? referee.percent : 0;
-    const eurPool = ambassadorAmount + refereeAmount;
+    const amountPool = ambassadorAmount + refereeAmount;
     const percentPool = ambassadorPercent + refereePercent;
 
     return {
         ...DEFAULT_REWARD_FORM,
         referralOnly: getReferralOnly(rule),
         model,
-        targetCpa: eurPool > 0 ? round2(eurPool / REWARDS_SHARE) : 0,
+        targetCpa: amountPool > 0 ? round2(amountPool / REWARDS_SHARE) : 0,
         ambassadorAmount,
         refereeAmount,
         targetCpaPercent:

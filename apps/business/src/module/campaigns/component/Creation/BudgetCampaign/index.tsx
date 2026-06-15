@@ -5,12 +5,13 @@ import {
 } from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { DoubleChevronIcon, EurCodeIcon } from "@frak-labs/design-system/icons";
+import { DoubleChevronIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { startOfDay } from "date-fns";
 import { useMemo } from "react";
 import { type Control, Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import {
     type BudgetType,
@@ -169,7 +170,13 @@ function BudgetPeriodField({
     );
 }
 
-function BudgetBreakdown({ amount }: { amount: number }) {
+function BudgetBreakdown({
+    amount,
+    currencyGlyph,
+}: {
+    amount: number;
+    currencyGlyph: string;
+}) {
     const { t } = useTranslation();
     const rewards = Math.round(amount * (1 - FRAK_COMMISSION) * 100) / 100;
     const commission = Math.round(amount * FRAK_COMMISSION * 100) / 100;
@@ -181,6 +188,7 @@ function BudgetBreakdown({ amount }: { amount: number }) {
                 commissionLabel={t("campaigns.create.budget.cap.commission")}
                 rewardsAmount={rewards}
                 commissionAmount={commission}
+                suffix={currencyGlyph}
             />
         </div>
     );
@@ -228,6 +236,7 @@ function NumberStepper({
 function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
     const { t } = useTranslation();
     const amount = useWatch({ control, name: "amount" });
+    const currencyGlyph = useCampaignCurrencyGlyph();
 
     return (
         <div className={styles.capContent}>
@@ -255,11 +264,9 @@ function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
                                             value={field.value}
                                             onChange={field.onChange}
                                         />
-                                        <EurCodeIcon
-                                            width={24}
-                                            height={24}
-                                            className={styles.eurIcon}
-                                        />
+                                        <span className={styles.capGlyph}>
+                                            {currencyGlyph}
+                                        </span>
                                     </span>
                                 }
                                 placeholder={t(
@@ -278,7 +285,10 @@ function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
             <Text variant="caption" color="tertiary" className={styles.capHint}>
                 {t("campaigns.create.budget.cap.hint")}
             </Text>
-            <BudgetBreakdown amount={amount ?? 0} />
+            <BudgetBreakdown
+                amount={amount ?? 0}
+                currencyGlyph={currencyGlyph}
+            />
         </div>
     );
 }
