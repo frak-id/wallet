@@ -1,4 +1,4 @@
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -86,9 +86,10 @@ export const campaignStore = create<CampaignState>()(
             reset: () => set({ draft: initialDraft, isSuccess: false }),
         }),
         {
-            // v5: draft shape tightened to match the backend (scheduled /
-            // referralOnly / minPurchaseAmount folded into rule.conditions).
-            name: "campaign-draft-v5",
+            // v6: rewardToken now means "explicit non-default currency" — a
+            // token equal to the merchant default is dropped on hydration.
+            // Bump invalidates pre-fix drafts that baked the default in.
+            name: "campaign-draft-v6",
             partialize: (s) => ({ draft: s.draft }),
         }
     )
@@ -222,20 +223,34 @@ export function buildApiPayload(draft: CampaignDraft) {
     };
 }
 
-/** Backend campaign → draft. Reward token is derived from the rewards. */
-export function campaignToDraft(campaign: {
-    id: string;
-    merchantId: string;
-    name: string;
-    rule: CampaignRuleDefinition;
-    metadata?: CampaignMetadata | null;
-    budgetConfig?: BudgetConfigItem[] | null;
-    expiresAt?: string | null;
-    priority: number;
-}): CampaignDraft {
-    const rewardToken = campaign.rule.rewards.find((r) => r.token)?.token as
+/**
+ * Backend campaign → draft. Reward token is derived from the rewards. The
+ * backend bakes the merchant default onto every reward at write time, so a
+ * stored token equal to `defaultRewardToken` means the campaign uses the
+ * default — drop it back to undefined to round-trip the "use default" choice.
+ */
+export function campaignToDraft(
+    campaign: {
+        id: string;
+        merchantId: string;
+        name: string;
+        rule: CampaignRuleDefinition;
+        metadata?: CampaignMetadata | null;
+        budgetConfig?: BudgetConfigItem[] | null;
+        expiresAt?: string | null;
+        priority: number;
+    },
+    defaultRewardToken?: Address
+): CampaignDraft {
+    const storedToken = campaign.rule.rewards.find((r) => r.token)?.token as
         | Hex
         | undefined;
+    const rewardToken =
+        storedToken &&
+        defaultRewardToken &&
+        storedToken.toLowerCase() === defaultRewardToken.toLowerCase()
+            ? undefined
+            : storedToken;
 
     return {
         id: campaign.id,

@@ -85,7 +85,7 @@ describe("campaignStore", () => {
         }: TestContext) => {
             freshCampaignStore.getState().setDraft(mockCampaignDraft);
 
-            const stored = localStorage.getItem("campaign-draft-v5");
+            const stored = localStorage.getItem("campaign-draft-v6");
             expect(stored).toBeTruthy();
         });
     });
@@ -149,7 +149,7 @@ describe("campaignStore", () => {
         test("should persist draft", ({ freshCampaignStore }: TestContext) => {
             freshCampaignStore.getState().setDraft(mockCampaignDraft);
 
-            const stored = localStorage.getItem("campaign-draft-v5");
+            const stored = localStorage.getItem("campaign-draft-v6");
             expect(stored).toBeTruthy();
 
             const parsed = JSON.parse(stored || "{}");
@@ -161,7 +161,7 @@ describe("campaignStore", () => {
         }: TestContext) => {
             freshCampaignStore.getState().setSuccess(true);
 
-            const stored = localStorage.getItem("campaign-draft-v5");
+            const stored = localStorage.getItem("campaign-draft-v6");
             if (stored) {
                 const parsed = JSON.parse(stored);
                 expect(parsed.state.isSuccess).toBeUndefined();
@@ -318,5 +318,51 @@ describe("campaignToDraft", () => {
         expect(result.budgetConfig).toEqual([]);
         expect(result.expiresAt).toBeUndefined();
         expect(result.rewardToken).toBeUndefined();
+    });
+
+    const withRewardToken = (token: string) => ({
+        id: "campaign-123",
+        merchantId: "merchant-456",
+        name: "Test Campaign",
+        rule: {
+            trigger: "purchase" as const,
+            conditions: [REFERRAL_CONDITION],
+            rewards: [
+                {
+                    recipient: "referrer" as const,
+                    type: "token" as const,
+                    amountType: "fixed" as const,
+                    amount: 10,
+                    token: token as `0x${string}`,
+                },
+            ],
+        },
+        priority: 0,
+    });
+
+    test("drops rewardToken when it equals the merchant default", () => {
+        const token = "0xabcabcabcabcabcabcabcabcabcabcabcabcabca";
+        const result = campaignToDraft(withRewardToken(token), token);
+
+        expect(result.rewardToken).toBeUndefined();
+    });
+
+    test("matches the merchant default case-insensitively", () => {
+        const result = campaignToDraft(
+            withRewardToken("0xABCABCABCABCABCABCABCABCABCABCABCABCABCA"),
+            "0xabcabcabcabcabcabcabcabcabcabcabcabcabca"
+        );
+
+        expect(result.rewardToken).toBeUndefined();
+    });
+
+    test("keeps rewardToken when it differs from the merchant default", () => {
+        const token = "0xabcabcabcabcabcabcabcabcabcabcabcabcabca";
+        const result = campaignToDraft(
+            withRewardToken(token),
+            "0x1111111111111111111111111111111111111111"
+        );
+
+        expect(result.rewardToken).toBe(token);
     });
 });

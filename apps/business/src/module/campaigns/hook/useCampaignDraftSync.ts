@@ -8,6 +8,7 @@ import {
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { queryClient } from "@/module/common/provider/RootProvider";
+import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 
 export function draftCampaignLoader({
@@ -40,12 +41,17 @@ export function useCampaignDraftSync(campaignId: string) {
         })
     );
 
+    const { data: merchant } = useMerchant({ merchantId });
+    const defaultRewardToken = merchant?.defaultRewardToken;
     const setDraft = campaignStore((state) => state.setDraft);
     const draftId = campaignStore((state) => state.draft.id);
 
     useEffect(() => {
+        // Wait for the merchant default so a stored token equal to it can be
+        // recognised as "use default" rather than an explicit currency.
+        if (!defaultRewardToken) return;
         if (draftId !== campaignId) {
-            setDraft(campaignToDraft(campaign));
+            setDraft(campaignToDraft(campaign, defaultRewardToken));
         }
-    }, [campaign, campaignId, draftId, setDraft]);
+    }, [campaign, campaignId, draftId, setDraft, defaultRewardToken]);
 }
