@@ -15,12 +15,15 @@ import {
     ComponentFields,
     ComponentPreview,
     ComponentTypeTabs,
+    WordingLangTabs,
 } from "./ComponentEditor";
 import { CssEditor } from "./CssEditor";
+import { fromLocalizedText, toLocalizedText } from "./localizable";
 import type {
     ComponentSettingsFormValues,
     ComponentType,
     CssFormValues,
+    WordingLang,
 } from "./types";
 import { valueOrNull } from "./utils";
 import { WordingPresets } from "./WordingPresets";
@@ -45,31 +48,34 @@ export function DefaultCustomization({
 
 const getGlobalComponentsValues = ({
     components: c,
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Just fallback values
 }: SdkConfig): ComponentSettingsFormValues => ({
     targetInteraction: "",
     buttonShare: {
-        text: c?.buttonShare?.text ?? "",
-        noRewardText: c?.buttonShare?.noRewardText ?? "",
+        text: toLocalizedText(c?.buttonShare?.text),
+        noRewardText: toLocalizedText(c?.buttonShare?.noRewardText),
         clickAction: c?.buttonShare?.clickAction ?? "sharing-page",
         css: c?.buttonShare?.rawCss ?? "",
     },
     postPurchase: {
-        refereeText: c?.postPurchase?.refereeText ?? "",
-        refereeNoRewardText: c?.postPurchase?.refereeNoRewardText ?? "",
-        referrerText: c?.postPurchase?.referrerText ?? "",
-        referrerNoRewardText: c?.postPurchase?.referrerNoRewardText ?? "",
-        ctaText: c?.postPurchase?.ctaText ?? "",
-        ctaNoRewardText: c?.postPurchase?.ctaNoRewardText ?? "",
+        refereeText: toLocalizedText(c?.postPurchase?.refereeText),
+        refereeNoRewardText: toLocalizedText(
+            c?.postPurchase?.refereeNoRewardText
+        ),
+        referrerText: toLocalizedText(c?.postPurchase?.referrerText),
+        referrerNoRewardText: toLocalizedText(
+            c?.postPurchase?.referrerNoRewardText
+        ),
+        ctaText: toLocalizedText(c?.postPurchase?.ctaText),
+        ctaNoRewardText: toLocalizedText(c?.postPurchase?.ctaNoRewardText),
         css: c?.postPurchase?.rawCss ?? "",
     },
     banner: {
-        referralTitle: c?.banner?.referralTitle ?? "",
-        referralDescription: c?.banner?.referralDescription ?? "",
-        referralCta: c?.banner?.referralCta ?? "",
-        inappTitle: c?.banner?.inappTitle ?? "",
-        inappDescription: c?.banner?.inappDescription ?? "",
-        inappCta: c?.banner?.inappCta ?? "",
+        referralTitle: toLocalizedText(c?.banner?.referralTitle),
+        referralDescription: toLocalizedText(c?.banner?.referralDescription),
+        referralCta: toLocalizedText(c?.banner?.referralCta),
+        inappTitle: toLocalizedText(c?.banner?.inappTitle),
+        inappDescription: toLocalizedText(c?.banner?.inappDescription),
+        inappCta: toLocalizedText(c?.banner?.inappCta),
         css: c?.banner?.rawCss ?? "",
     },
 });
@@ -89,6 +95,7 @@ function GlobalComponentsPanel({
 
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
+    const [activeLang, setActiveLang] = useState<WordingLang>("en");
 
     const values = useMemo(
         () => getGlobalComponentsValues(sdkConfig),
@@ -110,31 +117,45 @@ function GlobalComponentsPanel({
             return editSdkConfig({
                 components: {
                     buttonShare: {
-                        text: val(v.buttonShare.text),
-                        noRewardText: val(v.buttonShare.noRewardText),
+                        text: fromLocalizedText(v.buttonShare.text),
+                        noRewardText: fromLocalizedText(
+                            v.buttonShare.noRewardText
+                        ),
                         clickAction: v.buttonShare.clickAction,
                         rawCss: val(v.buttonShare.css),
                     },
                     postPurchase: {
-                        refereeText: val(v.postPurchase.refereeText),
-                        refereeNoRewardText: val(
+                        refereeText: fromLocalizedText(
+                            v.postPurchase.refereeText
+                        ),
+                        refereeNoRewardText: fromLocalizedText(
                             v.postPurchase.refereeNoRewardText
                         ),
-                        referrerText: val(v.postPurchase.referrerText),
-                        referrerNoRewardText: val(
+                        referrerText: fromLocalizedText(
+                            v.postPurchase.referrerText
+                        ),
+                        referrerNoRewardText: fromLocalizedText(
                             v.postPurchase.referrerNoRewardText
                         ),
-                        ctaText: val(v.postPurchase.ctaText),
-                        ctaNoRewardText: val(v.postPurchase.ctaNoRewardText),
+                        ctaText: fromLocalizedText(v.postPurchase.ctaText),
+                        ctaNoRewardText: fromLocalizedText(
+                            v.postPurchase.ctaNoRewardText
+                        ),
                         rawCss: val(v.postPurchase.css),
                     },
                     banner: {
-                        referralTitle: val(v.banner.referralTitle),
-                        referralDescription: val(v.banner.referralDescription),
-                        referralCta: val(v.banner.referralCta),
-                        inappTitle: val(v.banner.inappTitle),
-                        inappDescription: val(v.banner.inappDescription),
-                        inappCta: val(v.banner.inappCta),
+                        referralTitle: fromLocalizedText(
+                            v.banner.referralTitle
+                        ),
+                        referralDescription: fromLocalizedText(
+                            v.banner.referralDescription
+                        ),
+                        referralCta: fromLocalizedText(v.banner.referralCta),
+                        inappTitle: fromLocalizedText(v.banner.inappTitle),
+                        inappDescription: fromLocalizedText(
+                            v.banner.inappDescription
+                        ),
+                        inappCta: fromLocalizedText(v.banner.inappCta),
                         rawCss: val(v.banner.css),
                     },
                 },
@@ -167,12 +188,18 @@ function GlobalComponentsPanel({
                         onSelect={setSelectedComponent}
                     />
 
+                    <WordingLangTabs
+                        selected={activeLang}
+                        onSelect={setActiveLang}
+                    />
+
                     <PreviewWrapper label={t("customize.components.preview")}>
                         <ComponentPreview
                             selectedComponent={selectedComponent}
                             form={form}
                             currency={(sdkConfig.currency ?? "eur") as Currency}
                             shopName={sdkConfig.name ?? "My Store"}
+                            lang={activeLang}
                         />
                     </PreviewWrapper>
 
@@ -181,11 +208,13 @@ function GlobalComponentsPanel({
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
                         shopName={sdkConfig.name ?? "My Store"}
+                        lang={activeLang}
                     />
 
                     <ComponentFields
                         selectedComponent={selectedComponent}
                         form={form}
+                        lang={activeLang}
                     />
                 </Stack>
             </Card>

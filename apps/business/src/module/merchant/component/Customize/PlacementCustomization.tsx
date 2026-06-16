@@ -16,13 +16,19 @@ import {
     ComponentFields,
     ComponentPreview,
     ComponentTypeTabs,
+    WordingLangTabs,
 } from "./ComponentEditor";
 import {
     getBannerDefaults,
     getPostPurchaseDefaults,
 } from "./fields/fieldDefaults";
+import { fromLocalizedText, toLocalizedText } from "./localizable";
 import { DeletePlacementPanel, PlacementCssPanel } from "./PlacementPanels";
-import type { ComponentSettingsFormValues, ComponentType } from "./types";
+import type {
+    ComponentSettingsFormValues,
+    ComponentType,
+    WordingLang,
+} from "./types";
 import { updatePlacement, valueOrUndefined } from "./utils";
 import { WordingPresets } from "./WordingPresets";
 
@@ -73,8 +79,8 @@ function getPlacementFormValues(
     return {
         targetInteraction: placement?.targetInteraction ?? "",
         buttonShare: {
-            text: bs?.text ?? "",
-            noRewardText: bs?.noRewardText ?? "",
+            text: toLocalizedText(bs?.text),
+            noRewardText: toLocalizedText(bs?.noRewardText),
             clickAction: bs?.clickAction ?? "sharing-page",
             css: bs?.rawCss ?? "",
         },
@@ -100,6 +106,7 @@ function PlacementSettingsPanel({
 
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
+    const [activeLang, setActiveLang] = useState<WordingLang>("en");
 
     const values = useMemo(
         () => getPlacementFormValues(sdkConfig, placementId),
@@ -111,27 +118,27 @@ function PlacementSettingsPanel({
         defaultValues: {
             targetInteraction: "",
             buttonShare: {
-                text: "",
-                noRewardText: "",
+                text: toLocalizedText(undefined),
+                noRewardText: toLocalizedText(undefined),
                 clickAction: "sharing-page",
                 css: "",
             },
             postPurchase: {
-                refereeText: "",
-                refereeNoRewardText: "",
-                referrerText: "",
-                referrerNoRewardText: "",
-                ctaText: "",
-                ctaNoRewardText: "",
+                refereeText: toLocalizedText(undefined),
+                refereeNoRewardText: toLocalizedText(undefined),
+                referrerText: toLocalizedText(undefined),
+                referrerNoRewardText: toLocalizedText(undefined),
+                ctaText: toLocalizedText(undefined),
+                ctaNoRewardText: toLocalizedText(undefined),
                 css: "",
             },
             banner: {
-                referralTitle: "",
-                referralDescription: "",
-                referralCta: "",
-                inappTitle: "",
-                inappDescription: "",
-                inappCta: "",
+                referralTitle: toLocalizedText(undefined),
+                referralDescription: toLocalizedText(undefined),
+                referralCta: toLocalizedText(undefined),
+                inappTitle: toLocalizedText(undefined),
+                inappDescription: toLocalizedText(undefined),
+                inappCta: toLocalizedText(undefined),
                 css: "",
             },
         },
@@ -145,45 +152,47 @@ function PlacementSettingsPanel({
     const onSubmit = useCallback(
         (currentValues: ComponentSettingsFormValues) => {
             const buttonShare = {
-                text: valueOrUndefined(currentValues.buttonShare.text),
-                noRewardText: valueOrUndefined(
+                text: fromLocalizedText(currentValues.buttonShare.text),
+                noRewardText: fromLocalizedText(
                     currentValues.buttonShare.noRewardText
                 ),
                 clickAction: currentValues.buttonShare.clickAction,
                 rawCss: valueOrUndefined(currentValues.buttonShare.css),
             };
             const postPurchase = {
-                refereeText: valueOrUndefined(
+                refereeText: fromLocalizedText(
                     currentValues.postPurchase.refereeText
                 ),
-                refereeNoRewardText: valueOrUndefined(
+                refereeNoRewardText: fromLocalizedText(
                     currentValues.postPurchase.refereeNoRewardText
                 ),
-                referrerText: valueOrUndefined(
+                referrerText: fromLocalizedText(
                     currentValues.postPurchase.referrerText
                 ),
-                referrerNoRewardText: valueOrUndefined(
+                referrerNoRewardText: fromLocalizedText(
                     currentValues.postPurchase.referrerNoRewardText
                 ),
-                ctaText: valueOrUndefined(currentValues.postPurchase.ctaText),
-                ctaNoRewardText: valueOrUndefined(
+                ctaText: fromLocalizedText(currentValues.postPurchase.ctaText),
+                ctaNoRewardText: fromLocalizedText(
                     currentValues.postPurchase.ctaNoRewardText
                 ),
                 rawCss: valueOrUndefined(currentValues.postPurchase.css),
             };
             const banner = {
-                referralTitle: valueOrUndefined(
+                referralTitle: fromLocalizedText(
                     currentValues.banner.referralTitle
                 ),
-                referralDescription: valueOrUndefined(
+                referralDescription: fromLocalizedText(
                     currentValues.banner.referralDescription
                 ),
-                referralCta: valueOrUndefined(currentValues.banner.referralCta),
-                inappTitle: valueOrUndefined(currentValues.banner.inappTitle),
-                inappDescription: valueOrUndefined(
+                referralCta: fromLocalizedText(
+                    currentValues.banner.referralCta
+                ),
+                inappTitle: fromLocalizedText(currentValues.banner.inappTitle),
+                inappDescription: fromLocalizedText(
                     currentValues.banner.inappDescription
                 ),
-                inappCta: valueOrUndefined(currentValues.banner.inappCta),
+                inappCta: fromLocalizedText(currentValues.banner.inappCta),
                 rawCss: valueOrUndefined(currentValues.banner.css),
             };
 
@@ -268,12 +277,18 @@ function PlacementSettingsPanel({
                         onSelect={setSelectedComponent}
                     />
 
+                    <WordingLangTabs
+                        selected={activeLang}
+                        onSelect={setActiveLang}
+                    />
+
                     <PreviewWrapper label={t("customize.components.preview")}>
                         <ComponentPreview
                             selectedComponent={selectedComponent}
                             form={form}
                             currency={(sdkConfig.currency ?? "eur") as Currency}
                             shopName={sdkConfig.name ?? "My Store"}
+                            lang={activeLang}
                         />
                     </PreviewWrapper>
 
@@ -282,11 +297,13 @@ function PlacementSettingsPanel({
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
                         shopName={sdkConfig.name ?? "My Store"}
+                        lang={activeLang}
                     />
 
                     <ComponentFields
                         selectedComponent={selectedComponent}
                         form={form}
+                        lang={activeLang}
                     />
                 </Stack>
             </Card>

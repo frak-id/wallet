@@ -6,7 +6,7 @@ import {
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useId } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import type { FieldPath, UseFormReturn } from "react-hook-form";
 import * as styles from "./customize.css";
 import {
     applyBrand,
@@ -18,7 +18,11 @@ import {
     matchPostPurchasePreset,
     POST_PURCHASE_PRESETS,
 } from "./presets";
-import type { ComponentSettingsFormValues, ComponentType } from "./types";
+import type {
+    ComponentSettingsFormValues,
+    ComponentType,
+    WordingLang,
+} from "./types";
 
 /**
  * Presets write fixed English texts into the merchant component config;
@@ -36,11 +40,13 @@ export function WordingPresets({
     form,
     currency,
     shopName,
+    lang,
 }: {
     componentType: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
     shopName: string;
+    lang: WordingLang;
 }) {
     if (!WORDING_PRESETS_ENABLED) return null;
     if (componentType === "banner") {
@@ -49,6 +55,7 @@ export function WordingPresets({
                 form={form}
                 currency={currency}
                 shopName={shopName}
+                lang={lang}
             />
         );
     }
@@ -57,6 +64,7 @@ export function WordingPresets({
             componentType={componentType}
             form={form}
             currency={currency}
+            lang={lang}
         />
     );
 }
@@ -65,20 +73,24 @@ function TextPresets({
     componentType,
     form,
     currency,
+    lang,
 }: {
     componentType: "buttonShare" | "postPurchase";
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
+    lang: WordingLang;
 }) {
     const isButtonShare = componentType === "buttonShare";
     const presets = isButtonShare
         ? BUTTON_SHARE_PRESETS
         : POST_PURCHASE_PRESETS;
-    const fieldName = isButtonShare
-        ? ("buttonShare.text" as const)
-        : ("postPurchase.refereeText" as const);
+    const fieldName = (
+        isButtonShare
+            ? `buttonShare.text.${lang}`
+            : `postPurchase.refereeText.${lang}`
+    ) as FieldPath<ComponentSettingsFormValues>;
 
-    const current = form.watch(fieldName);
+    const current = String(form.watch(fieldName) ?? "");
     const selected = isButtonShare
         ? matchButtonSharePreset(current)
         : matchPostPurchasePreset(current);
@@ -108,13 +120,19 @@ function BannerPresets({
     form,
     currency,
     shopName,
+    lang,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
     shopName: string;
+    lang: WordingLang;
 }) {
-    const title = form.watch("banner.referralTitle");
-    const description = form.watch("banner.referralDescription");
+    const titleField =
+        `banner.referralTitle.${lang}` as FieldPath<ComponentSettingsFormValues>;
+    const descriptionField =
+        `banner.referralDescription.${lang}` as FieldPath<ComponentSettingsFormValues>;
+    const title = String(form.watch(titleField) ?? "");
+    const description = String(form.watch(descriptionField) ?? "");
     const selected = matchBannerPreset(title, description, shopName);
 
     return (
@@ -123,13 +141,11 @@ function BannerPresets({
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
                 const preset = BANNER_PRESETS[Number(value)];
+                form.setValue(titleField, applyBrand(preset.title, shopName), {
+                    shouldDirty: true,
+                });
                 form.setValue(
-                    "banner.referralTitle",
-                    applyBrand(preset.title, shopName),
-                    { shouldDirty: true }
-                );
-                form.setValue(
-                    "banner.referralDescription",
+                    descriptionField,
                     applyBrand(preset.description, shopName),
                     { shouldDirty: true }
                 );

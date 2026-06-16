@@ -18,8 +18,49 @@ import { BannerFields } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
 import { PostPurchaseFields } from "./fields/PostPurchaseFields";
 import { COMPONENT_LABEL_KEYS } from "./translations";
-import type { ComponentSettingsFormValues, ComponentType } from "./types";
-import { COMPONENT_TYPES } from "./types";
+import type {
+    ComponentSettingsFormValues,
+    ComponentType,
+    WordingLang,
+} from "./types";
+import { COMPONENT_TYPES, SUPPORTED_WORDING_LANGS } from "./types";
+
+const WORDING_LANG_LABELS: Record<WordingLang, string> = {
+    en: "English",
+    fr: "Français",
+};
+
+export function WordingLangTabs({
+    selected,
+    onSelect,
+}: {
+    selected: WordingLang;
+    onSelect: (lang: WordingLang) => void;
+}) {
+    return (
+        <Tabs
+            value={selected}
+            onValueChange={(value) => onSelect(value as WordingLang)}
+        >
+            <TabsList
+                variant="segmented"
+                fullWidth
+                className={styles.segmentedTrack}
+            >
+                {SUPPORTED_WORDING_LANGS.map((lang) => (
+                    <TabsTrigger
+                        key={lang}
+                        value={lang}
+                        variant="segmented"
+                        fullWidth
+                    >
+                        {WORDING_LANG_LABELS[lang]}
+                    </TabsTrigger>
+                ))}
+            </TabsList>
+        </Tabs>
+    );
+}
 
 export function ComponentTypeTabs({
     selected,
@@ -88,17 +129,19 @@ export function AdvancedDisclosure({
 export function ComponentFields({
     selectedComponent,
     form,
+    lang,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
+    lang: WordingLang;
 }) {
     switch (selectedComponent) {
         case "buttonShare":
-            return <ButtonShareFields form={form} />;
+            return <ButtonShareFields form={form} lang={lang} />;
         case "postPurchase":
-            return <PostPurchaseFields form={form} />;
+            return <PostPurchaseFields form={form} lang={lang} />;
         case "banner":
-            return <BannerFields form={form} />;
+            return <BannerFields form={form} lang={lang} />;
     }
 }
 
@@ -107,11 +150,13 @@ export function ComponentPreview({
     form,
     currency,
     shopName,
+    lang,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
     shopName: string;
+    lang: WordingLang;
 }) {
     const values = form.watch();
 
@@ -119,7 +164,7 @@ export function ComponentPreview({
         case "buttonShare":
             return (
                 <ShareButtonPreview
-                    text={values.buttonShare.text || "Share and earn!"}
+                    text={values.buttonShare.text[lang] || "Share and earn!"}
                     currency={currency}
                     shopName={shopName}
                 />
@@ -128,11 +173,12 @@ export function ComponentPreview({
             return (
                 <PostPurchasePreview
                     messageText={
-                        values.postPurchase.refereeText ||
+                        values.postPurchase.refereeText[lang] ||
                         "You just earned {REWARD}! Share with friends to earn even more."
                     }
                     ctaText={
-                        values.postPurchase.ctaText || "Share & earn {REWARD}"
+                        values.postPurchase.ctaText[lang] ||
+                        "Share & earn {REWARD}"
                     }
                     currency={currency}
                     shopName={shopName}
@@ -142,14 +188,14 @@ export function ComponentPreview({
             return (
                 <BannerPreview
                     title={
-                        values.banner.referralTitle ||
+                        values.banner.referralTitle[lang] ||
                         "Earn {REWARD} on purchases"
                     }
                     description={
-                        values.banner.referralDescription ||
+                        values.banner.referralDescription[lang] ||
                         "Earn rewards after your purchase via the Frak partner app."
                     }
-                    ctaText={values.banner.referralCta || "Got it"}
+                    ctaText={values.banner.referralCta[lang] || "Got it"}
                     currency={currency}
                     shopName={shopName}
                 />

@@ -10,13 +10,15 @@ import { useTranslation } from "react-i18next";
 import { EditField } from "@/module/forms/EditField";
 import { FormControl, FormField } from "@/module/forms/Form";
 import * as styles from "../customize.css";
-import type { ComponentSettingsFormValues } from "../types";
+import type { ComponentSettingsFormValues, WordingLang } from "../types";
 import { ComponentCssField, WordingTextField } from "./shared";
 
 export function ButtonShareFields({
     form,
+    lang,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
+    lang: WordingLang;
 }) {
     const { t } = useTranslation();
     return (
@@ -25,11 +27,13 @@ export function ButtonShareFields({
                 form={form}
                 name="buttonShare.text"
                 label={t("customize.components.fields.text")}
+                lang={lang}
             />
             <WordingTextField
                 form={form}
                 name="buttonShare.noRewardText"
                 label={t("customize.components.fields.noRewardText")}
+                lang={lang}
             />
             <FormField
                 control={form.control}

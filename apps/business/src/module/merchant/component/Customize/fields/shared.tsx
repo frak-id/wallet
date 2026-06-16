@@ -3,9 +3,9 @@ import type { FieldPath, UseFormReturn } from "react-hook-form";
 import { EditField } from "@/module/forms/EditField";
 import { FormControl, FormField } from "@/module/forms/Form";
 import * as styles from "../customize.css";
-import type { ComponentSettingsFormValues } from "../types";
+import type { ComponentSettingsFormValues, WordingLang } from "../types";
 
-/** String-valued form paths editable as plain text. */
+/** Localizable form paths (each resolves to a `LocalizedText`). */
 export type WordingFieldName = Extract<
     FieldPath<ComponentSettingsFormValues>,
     | `buttonShare.${"text" | "noRewardText"}`
@@ -25,19 +25,28 @@ export type WordingFieldName = Extract<
           | "inappCta"}`
 >;
 
+/** Per-language leaf path, e.g. `banner.referralCta.fr` — resolves to a string. */
+type WordingLeafName = Extract<
+    FieldPath<ComponentSettingsFormValues>,
+    `${WordingFieldName}.${WordingLang}`
+>;
+
 export function WordingTextField({
     form,
     name,
     label,
+    lang,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
     name: WordingFieldName;
     label: string;
+    lang: WordingLang;
 }) {
+    const fieldName: WordingLeafName = `${name}.${lang}`;
     return (
         <FormField
             control={form.control}
-            name={name}
+            name={fieldName}
             render={({ field }) => (
                 <EditField label={label}>
                     <FormControl>

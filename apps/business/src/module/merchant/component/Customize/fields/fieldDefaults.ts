@@ -1,4 +1,5 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
+import { toLocalizedText } from "../localizable";
 import type { BannerFormValues, PostPurchaseFormValues } from "../types";
 
 type PlacementComponents = NonNullable<
@@ -10,12 +11,12 @@ export function getBannerDefaults(
 ): BannerFormValues {
     const b = components?.banner;
     return {
-        referralTitle: b?.referralTitle ?? "",
-        referralDescription: b?.referralDescription ?? "",
-        referralCta: b?.referralCta ?? "",
-        inappTitle: b?.inappTitle ?? "",
-        inappDescription: b?.inappDescription ?? "",
-        inappCta: b?.inappCta ?? "",
+        referralTitle: toLocalizedText(b?.referralTitle),
+        referralDescription: toLocalizedText(b?.referralDescription),
+        referralCta: toLocalizedText(b?.referralCta),
+        inappTitle: toLocalizedText(b?.inappTitle),
+        inappDescription: toLocalizedText(b?.inappDescription),
+        inappCta: toLocalizedText(b?.inappCta),
         css: b?.rawCss ?? "",
     };
 }
@@ -25,12 +26,12 @@ export function getPostPurchaseDefaults(
 ): PostPurchaseFormValues {
     const pp = components?.postPurchase;
     return {
-        refereeText: pp?.refereeText ?? "",
-        refereeNoRewardText: pp?.refereeNoRewardText ?? "",
-        referrerText: pp?.referrerText ?? "",
-        referrerNoRewardText: pp?.referrerNoRewardText ?? "",
-        ctaText: pp?.ctaText ?? "",
-        ctaNoRewardText: pp?.ctaNoRewardText ?? "",
+        refereeText: toLocalizedText(pp?.refereeText),
+        refereeNoRewardText: toLocalizedText(pp?.refereeNoRewardText),
+        referrerText: toLocalizedText(pp?.referrerText),
+        referrerNoRewardText: toLocalizedText(pp?.referrerNoRewardText),
+        ctaText: toLocalizedText(pp?.ctaText),
+        ctaNoRewardText: toLocalizedText(pp?.ctaNoRewardText),
         css: pp?.rawCss ?? "",
     };
 }
