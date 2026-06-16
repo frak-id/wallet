@@ -4,9 +4,11 @@ import { openEmbeddedWallet } from "@/actions/embeddedWallet";
 import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
+import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
+import { componentDefaults } from "@/i18n/defaults";
 import { applyRewardPlaceholder } from "@/utils/format/formatReward";
 import type { ButtonShareProps } from "./types";
 
@@ -56,7 +58,7 @@ import type { ButtonShareProps } from "./types";
  */
 export function ButtonShare({
     placement: placementId,
-    text = "Share and earn!",
+    text,
     classname = "",
     noRewardText,
     targetInteraction,
@@ -64,6 +66,7 @@ export function ButtonShare({
     preview,
 }: ButtonShareProps) {
     const isPreview = !!preview;
+    const lang = useLang();
     const placement = usePlacement(placementId);
     const globalComponents = useGlobalComponents();
     const componentConfig =
@@ -79,7 +82,10 @@ export function ButtonShare({
         [placement?.targetInteraction, targetInteraction]
     );
 
-    const resolvedText = componentConfig?.text ?? text;
+    const resolvedText =
+        componentConfig?.text ??
+        text ??
+        componentDefaults[lang].buttonShare.text;
     const resolvedNoRewardText = componentConfig?.noRewardText ?? noRewardText;
 
     const wantsReward = useMemo(

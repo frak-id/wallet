@@ -18,9 +18,11 @@ import {
 } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
+import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
+import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import { applyRewardPlaceholder } from "@/utils/format/formatReward";
 import { GiftIcon } from "../icons/GiftIcon";
@@ -86,6 +88,7 @@ export function Banner({
     allowInappRedirect,
 }: BannerProps) {
     const isPreview = !!preview;
+    const lang = useLang();
     const resolvedPreviewMode: BannerMode =
         previewMode === "inapp" ? "inapp" : "referral";
     // HTML attribute consumers (Shopify Liquid, WordPress PHP) pass
@@ -219,10 +222,11 @@ export function Banner({
     // Configured wording may carry the `{REWARD}` token — interpolate it the
     // same way ButtonShare and PostPurchase do.
     const texts = useMemo(() => {
+        const defaults = componentDefaults[lang].banner;
         if (mode === "referral") {
             const defaultTitle = reward
-                ? `Earn ${reward} on purchases on this site`
-                : "You've been referred!";
+                ? defaults.referralTitleReward
+                : defaults.referralTitle;
 
             return {
                 title: applyRewardPlaceholder(
@@ -234,10 +238,13 @@ export function Banner({
                 description: applyRewardPlaceholder(
                     propReferralDescription ??
                         bannerConfig?.referralDescription ??
-                        "Earn rewards after your purchase via the Frak partner app.",
+                        defaults.referralDescription,
                     reward
                 ),
-                cta: propReferralCta ?? bannerConfig?.referralCta ?? "Got it",
+                cta:
+                    propReferralCta ??
+                    bannerConfig?.referralCta ??
+                    defaults.referralCta,
             };
         }
 
@@ -245,18 +252,19 @@ export function Banner({
             title: applyRewardPlaceholder(
                 propInappTitle ??
                     bannerConfig?.inappTitle ??
-                    "Open in your browser",
+                    defaults.inappTitle,
                 reward
             ),
             description: applyRewardPlaceholder(
                 propInappDescription ??
                     bannerConfig?.inappDescription ??
-                    "For a better experience and to earn your rewards, open this page in your default browser.",
+                    defaults.inappDescription,
                 reward
             ),
-            cta: propInappCta ?? bannerConfig?.inappCta ?? "Open browser",
+            cta: propInappCta ?? bannerConfig?.inappCta ?? defaults.inappCta,
         };
     }, [
+        lang,
         mode,
         reward,
         bannerConfig,
@@ -290,7 +298,7 @@ export function Banner({
                 title={texts.title}
                 description={texts.description}
                 cta={texts.cta}
-                dismissLabel="Dismiss"
+                dismissLabel={componentDefaults[lang].banner.dismissLabel}
                 onAction={handleAction}
                 onDismiss={handleDismiss}
                 className={["frak-banner", "frak-banner--inapp", classname]

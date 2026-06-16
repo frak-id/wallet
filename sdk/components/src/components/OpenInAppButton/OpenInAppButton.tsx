@@ -1,8 +1,10 @@
 import { openFrakWalletApp } from "@/actions/openInApp";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { componentDefaults } from "@/i18n/defaults";
 import type { OpenInAppButtonProps } from "./types";
 
 /**
@@ -33,9 +35,10 @@ import type { OpenInAppButtonProps } from "./types";
  */
 export function OpenInAppButton({
     placement: placementId,
-    text = "Open in App",
+    text,
     classname = "",
 }: OpenInAppButtonProps) {
+    const lang = useLang();
     const placement = usePlacement(placementId);
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { isMobile } = useIsMobile();
@@ -46,7 +49,10 @@ export function OpenInAppButton({
         placement?.components?.openInApp?.css
     );
 
-    const resolvedText = placement?.components?.openInApp?.text ?? text;
+    const resolvedText =
+        placement?.components?.openInApp?.text ??
+        text ??
+        componentDefaults[lang].openInApp.text;
 
     if (!isMobile || !shouldRender || isHidden) {
         return null;
@@ -63,7 +69,7 @@ export function OpenInAppButton({
     return (
         <button
             type="button"
-            aria-label="Open in Frak Wallet app"
+            aria-label={componentDefaults[lang].openInApp.ariaLabel}
             disabled={!isClientReady}
             class={buttonClass}
             onClick={handleClick}
