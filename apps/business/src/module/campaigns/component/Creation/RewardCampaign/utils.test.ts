@@ -18,7 +18,8 @@ const baseDraft: CampaignDraft = {
     priority: 0,
 };
 
-// A mixed €/% tiered config whose splits are exactly 80% of each tier's CPA.
+// A mixed €/% tiered config. The recipient tiers hold only the reward amount;
+// the basket range and unit come from the matching Global CPA tier by index.
 const tieredValues: RewardFormValues = {
     ...DEFAULT_REWARD_FORM,
     model: "tiered",
@@ -26,14 +27,8 @@ const tieredValues: RewardFormValues = {
         { from: 0, to: 100, cpa: 10, unit: "amount" },
         { from: 100, to: "", cpa: 10, unit: "percent" },
     ],
-    ambassadorTiers: [
-        { from: 0, to: 100, reward: 6, unit: "amount" },
-        { from: 100, to: "", reward: 4, unit: "percent" },
-    ],
-    refereeTiers: [
-        { from: 0, to: 100, reward: 2, unit: "amount" },
-        { from: 100, to: "", reward: 4, unit: "percent" },
-    ],
+    ambassadorTiers: [{ reward: 6 }, { reward: 4 }],
+    refereeTiers: [{ reward: 2 }, { reward: 4 }],
 };
 
 describe("tiered rewards persistence", () => {
@@ -66,9 +61,13 @@ describe("tiered rewards persistence", () => {
         const restored = draftToRewardForm(draft);
 
         expect(restored.model).toBe("tiered");
-        expect(restored.ambassadorTiers).toEqual(tieredValues.ambassadorTiers);
-        expect(restored.refereeTiers).toEqual(tieredValues.refereeTiers);
-        // CPA isn't stored — re-derived as (ambassador + referee) / 80%.
+        expect(restored.ambassadorTiers).toEqual([
+            { reward: 6 },
+            { reward: 4 },
+        ]);
+        expect(restored.refereeTiers).toEqual([{ reward: 2 }, { reward: 4 }]);
+        // CPA isn't stored — re-derived as (ambassador + referee) / 80%; the
+        // range and unit come back from the persisted tiers.
         expect(restored.globalCpaTiers).toEqual([
             { from: 0, to: 100, cpa: 10, unit: "amount" },
             { from: 100, to: "", cpa: 10, unit: "percent" },
@@ -77,44 +76,33 @@ describe("tiered rewards persistence", () => {
 });
 
 describe("isRewardFormValid (tiered)", () => {
-    it("passes when every tier's split equals 80% of its CPA", () => {
+    it("passes when every tier has both rewards filled in", () => {
         expect(isRewardFormValid(tieredValues)).toBe(true);
     });
 
-    it("fails when a tier's split doesn't match its CPA", () => {
-        const bad: RewardFormValues = {
+    // The split is no longer forced to equal 80% of the CPA — the distribution
+    // bar shows the recommendation, but any positive amounts are accepted.
+    it("passes when a tier's split doesn't match its CPA", () => {
+        const offReco: RewardFormValues = {
             ...tieredValues,
-            ambassadorTiers: [
-                { from: 0, to: 100, reward: 5, unit: "amount" },
-                { from: 100, to: "", reward: 4, unit: "percent" },
-            ],
+            ambassadorTiers: [{ reward: 5 }, { reward: 4 }],
         };
-        expect(isRewardFormValid(bad)).toBe(false);
+        expect(isRewardFormValid(offReco)).toBe(true);
     });
 
     it("fails when a split reward is left empty", () => {
         const incomplete: RewardFormValues = {
             ...tieredValues,
-            refereeTiers: [
-                { from: 0, to: 100, reward: "", unit: "amount" },
-                { from: 100, to: "", reward: 4, unit: "percent" },
-            ],
+            refereeTiers: [{ reward: "" }, { reward: 4 }],
         };
         expect(isRewardFormValid(incomplete)).toBe(false);
     });
 
-    // A zero reward sums to 80% of CPA but the backend rejects a 0 tier amount.
-    it("fails when a tier reward is 0 even if the split still hits 80%", () => {
+    // The backend rejects a 0 tier amount; a tiered definition can't skip a range.
+    it("fails when a tier reward is 0", () => {
         const zeroReferee: RewardFormValues = {
             ...tieredValues,
-            ambassadorTiers: [
-                { from: 0, to: 100, reward: 8, unit: "amount" },
-                { from: 100, to: "", reward: 8, unit: "percent" },
-            ],
-            refereeTiers: [
-                { from: 0, to: 100, reward: 0, unit: "amount" },
-                { from: 100, to: "", reward: 0, unit: "percent" },
-            ],
+            refereeTiers: [{ reward: 0 }, { reward: 0 }],
         };
         expect(isRewardFormValid(zeroReferee)).toBe(false);
     });

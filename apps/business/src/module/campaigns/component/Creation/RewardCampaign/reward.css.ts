@@ -173,33 +173,19 @@ export const triggeredIcon = style({
     flexShrink: 0,
 });
 
-/* ---- tiered table (static) ---- */
+/* ---- tiered cards ---- */
+/* Layout (flex/gap/direction/padding) lives on DS <Stack>/<Inline>; these
+   styles carry only sizing + visuals. */
 
-/** Column-header row (labels), shown once; mirrors `tierRow` widths. */
-export const tierHeader = style({
-    display: "flex",
-    gap: alias.spacing.m,
-    alignItems: "flex-end",
+/** Tier card surface — layout via `<Stack space="m" padding="m">`. */
+export const tierCard = style({
     width: "100%",
+    backgroundColor: vars.surface.tertiary,
+    borderRadius: alias.cornerRadius.m,
 });
 
-/** A tier row: basket (flex 1) · value+unit group · delete. */
-export const tierRow = style({
-    display: "flex",
-    gap: alias.spacing.m,
-    alignItems: "flex-end",
-    width: "100%",
-});
-
-/** Basket range group: from → to. */
-export const tierBasket = style({
-    display: "flex",
-    flex: 1,
-    minWidth: 0,
-    gap: alias.spacing.xxs,
-    alignItems: "flex-end",
-});
-export const tierBasketInput = style({ flex: 1, minWidth: 0 });
+/** A labelled field column's sizing — layout via `<Stack space="xs">`. */
+export const tierField = style({ flex: 1, minWidth: 0 });
 
 /** Right-arrow between from/to, centred against the 56px input. */
 export const tierArrow = style({
@@ -210,16 +196,31 @@ export const tierArrow = style({
     color: vars.icon.tertiary,
 });
 
-/** Value (CPA/reward) + Unit columns, 8px apart. */
-export const tierValueUnit = style({
+/** Target CPA (flex) + Unit (fixed) row — 10px gap isn't a spacing token. */
+export const tierCpaRow = style({
     display: "flex",
-    gap: alias.spacing.xs,
+    gap: "10px",
     alignItems: "flex-end",
+    width: "100%",
 });
-export const tierValue = style({ width: "153px", flexShrink: 0 });
-export const tierUnit = style({ width: "88px", flexShrink: 0 });
 
-/** Unit Select restyled as a grey 56px filled field (`&&` beats the DS base). */
+/** Unit field: a fixed 88px column. */
+export const tierUnitField = style({ width: "88px", flexShrink: 0 });
+
+/** Recipient reward box surface — layout via `<Stack space="xs" padding="m">`. */
+export const tierRecipientCard = style({
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: vars.surface.elevated,
+    borderRadius: alias.cornerRadius.m,
+});
+
+/** The per-tier distribution bar, sitting 8px below its card. */
+export const tierDistribution = style({
+    paddingTop: alias.spacing.xs,
+});
+
+/** Unit Select restyled as a 56px filled field (`&&` beats the DS base). */
 export const unitTrigger = style({
     selectors: {
         "&&": {
@@ -233,65 +234,22 @@ export const unitTrigger = style({
             fontSize: "16px",
             color: vars.text.primary,
         },
-        // Disabled (split tables): match the bare input's faded look.
-        "&&:disabled": {
-            opacity: 0.6,
-            cursor: "not-allowed",
-        },
     },
 });
 
-/** White unit Select for the grey recipient cards, where grey would vanish. */
+/** White unit Select for the grey tier card, where grey would vanish. */
 export const unitTriggerElevated = style([
     unitTrigger,
     { selectors: { "&&": { backgroundColor: vars.surface.elevated } } },
 ]);
 
-/** Delete (trash) cell, centred against the 56px input. */
+/** Trash button on a tier's title row. */
 export const tierDelete = style({
     all: "unset",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    height: "56px",
-    width: "24px",
     flexShrink: 0,
     cursor: "pointer",
     color: vars.icon.secondary,
-});
-/** First tier can't be removed: keep the column width, hide the button. */
-export const tierDeleteHidden = style({
-    opacity: 0,
-    pointerEvents: "none",
-});
-
-/** Header label, inset 16px to line up with the field text. */
-export const tierLabel = style({
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-export const tierLabelBasket = style({ flex: 1, minWidth: 0 });
-export const tierLabelSpacer = style({ width: "24px", flexShrink: 0 });
-
-/** "Frak keeps a 20% commission…" footnote, dimmed to 70%. */
-export const tierFootnote = style({ opacity: 0.7 });
-
-/** Table title clears the header row by 16px (8px gap + 8px margin). */
-export const tierTitle = style({ marginBottom: alias.spacing.xs });
-
-/** "Add a tier" sits 16px below the last row (8px gap + 8px margin). */
-export const tierAddButton = style({ marginTop: alias.spacing.xs });
-
-/**
- * Ambassador/Referee tables live in a grey card with white inputs — the inverse
- * of the Global-CPA table (grey inputs sitting directly on the white card).
- */
-export const tierCard = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.m,
-    width: "100%",
-    padding: alias.spacing.m,
-    backgroundColor: vars.surface.tertiary,
-    borderRadius: alias.cornerRadius.m,
 });

@@ -419,14 +419,10 @@
                     "recipientHint": "% of the order value paid to this person."
                 },
                 "tiered": {
+                    "tierLabel": "Tier {{n}}",
                     "globalCpaTitle": "Target CPA",
-                    "ambassadorDescription": "Reward for the person who shared the link",
-                    "refereeDescription": "Welcome reward for the new referee",
-                    "basketRange": "Basket Range",
-                    "cpaColumn": "CPA",
-                    "reward": "Reward",
+                    "basketRange": "Basket Range ({{glyph}})",
                     "unit": "Unit",
-                    "commissionFootnote": "Frak keeps a 20% commission on every reward distributed.",
                     "fromPlaceholder": "E.g. 0",
                     "toPlaceholder": "E.g. 50",
                     "cpaPlaceholder": "E.g. 5",
@@ -434,8 +430,7 @@
                     "addTier": "Add a tier",
                     "removeTier": "Remove tier",
                     "incomplete": "Each tier needs a basket range and a CPA above 0",
-                    "overlap": "Tiers can't overlap — each basket range must start where the previous one ends.",
-                    "splitMismatch": "Ambassador + Referee must add up to 80% of each tier's CPA (the rewards pool)."
+                    "overlap": "Tiers can't overlap — each basket range must start where the previous one ends."
                 },
                 "eligibility": {
                     "label": "Eligibility",

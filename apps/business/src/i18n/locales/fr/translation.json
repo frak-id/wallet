@@ -419,14 +419,10 @@
                     "recipientHint": "% de la valeur de la commande versé à cette personne."
                 },
                 "tiered": {
+                    "tierLabel": "Palier {{n}}",
                     "globalCpaTitle": "CPA cible",
-                    "ambassadorDescription": "Récompense pour la personne qui a partagé le lien",
-                    "refereeDescription": "Récompense de bienvenue pour le nouveau filleul",
-                    "basketRange": "Tranche de panier",
-                    "cpaColumn": "CPA",
-                    "reward": "Récompense",
+                    "basketRange": "Tranche de panier ({{glyph}})",
                     "unit": "Unité",
-                    "commissionFootnote": "Frak prélève une commission de 20 % sur chaque récompense distribuée.",
                     "fromPlaceholder": "Ex. 0",
                     "toPlaceholder": "Ex. 50",
                     "cpaPlaceholder": "Ex. 5",
@@ -434,8 +430,7 @@
                     "addTier": "Ajouter un palier",
                     "removeTier": "Supprimer le palier",
                     "incomplete": "Chaque palier doit avoir une tranche de panier et un CPA supérieur à 0",
-                    "overlap": "Les paliers ne peuvent pas se chevaucher — chaque tranche de panier doit commencer là où la précédente se termine.",
-                    "splitMismatch": "Ambassadeur + Filleul doivent totaliser 80 % du CPA de chaque palier (le pool de récompenses)."
+                    "overlap": "Les paliers ne peuvent pas se chevaucher — chaque tranche de panier doit commencer là où la précédente se termine."
                 },
                 "eligibility": {
                     "label": "Éligibilité",

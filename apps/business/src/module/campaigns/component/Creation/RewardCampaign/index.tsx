@@ -24,13 +24,17 @@ import {
     PlusIcon,
 } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { createContext, useContext, useEffect, useMemo } from "react";
+import {
+    createContext,
+    Fragment,
+    type ReactNode,
+    useContext,
+    useMemo,
+} from "react";
 import {
     type Control,
     Controller,
     type ControllerRenderProps,
-    type UseFieldArrayReturn,
-    type UseFormGetValues,
     type UseFormSetValue,
     useFieldArray,
     useForm,
@@ -59,9 +63,7 @@ import {
     recommendedSplit,
     rewardFormToDraft,
     splitTargetCpa,
-    type TierRow,
     tieredRangesOverlap,
-    tieredTiersValid,
 } from "./utils";
 
 const FORM_ID = "campaign-reward-form";
@@ -659,7 +661,11 @@ function UnitSelectField({
     );
 }
 
-/** A grey filled tier input with a trailing unit glyph (no stepper). */
+/**
+ * A filled tier input with a trailing unit glyph. With `stepper`, a
+ * double-chevron stepper precedes the glyph (Target CPA / reward fields); the
+ * basket-range fields omit it.
+ */
 function TierCell({
     control,
     name,
@@ -667,7 +673,7 @@ function TierCell({
     unit,
     tone = "muted",
     error,
-    disabled,
+    stepper = false,
 }: {
     control: Control<RewardFormValues>;
     name: string;
@@ -675,7 +681,7 @@ function TierCell({
     unit: UnitKind;
     tone?: "muted" | "elevated";
     error?: boolean;
-    disabled?: boolean;
+    stepper?: boolean;
 }) {
     return (
         <Controller
@@ -687,10 +693,21 @@ function TierCell({
                     variant="bare"
                     tone={tone}
                     error={error}
-                    disabled={disabled}
                     classNameWrapper={styles.inputWrapper}
                     placeholder={placeholder}
-                    rightSection={<UnitIcon unit={unit} />}
+                    rightSection={
+                        stepper ? (
+                            <Inline as="span" space="m" alignY="center">
+                                <NumberStepper
+                                    value={field.value ?? 0}
+                                    onChange={field.onChange}
+                                />
+                                <UnitIcon unit={unit} />
+                            </Inline>
+                        ) : (
+                            <UnitIcon unit={unit} />
+                        )
+                    }
                     {...field}
                     value={field.value ?? ""}
                 />
@@ -699,150 +716,19 @@ function TierCell({
     );
 }
 
-/** A value cell (CPA/reward) whose trailing glyph follows the row's unit. */
-function ValueCell({
-    control,
-    valueName,
-    unitName,
-    placeholder,
-    tone = "muted",
-    error,
-}: {
-    control: Control<RewardFormValues>;
-    valueName: string;
-    unitName: string;
-    placeholder: string;
-    tone?: "muted" | "elevated";
-    error?: boolean;
-}) {
-    const unit =
-        // biome-ignore lint/suspicious/noExplicitAny: dynamic field-array path
-        (useWatch({ control, name: unitName as any }) as UnitKind) ?? "amount";
-    return (
-        <TierCell
-            control={control}
-            name={valueName}
-            placeholder={placeholder}
-            unit={unit}
-            tone={tone}
-            error={error}
-        />
-    );
-}
-
-/** Basket-range cell: `from → to` (both EUR). `lastTier` shows ∞ as the cap. */
-function RangeCell({
-    control,
-    fromName,
-    toName,
-    lastTier,
-    tone = "muted",
-    fromError,
-    toError,
-    disabled,
-}: {
-    control: Control<RewardFormValues>;
-    fromName: string;
-    toName: string;
-    lastTier: boolean;
-    tone?: "muted" | "elevated";
-    fromError?: boolean;
-    toError?: boolean;
-    disabled?: boolean;
-}) {
-    const { t } = useTranslation();
-    return (
-        <div className={styles.tierBasket}>
-            <div className={styles.tierBasketInput}>
-                <TierCell
-                    control={control}
-                    name={fromName}
-                    unit="amount"
-                    tone={tone}
-                    error={fromError}
-                    disabled={disabled}
-                    placeholder={t(
-                        "campaigns.create.reward.tiered.fromPlaceholder"
-                    )}
-                />
-            </div>
-            <span className={styles.tierArrow}>
-                <ArrowRightIcon width={24} height={24} />
-            </span>
-            <div className={styles.tierBasketInput}>
-                <TierCell
-                    control={control}
-                    name={toName}
-                    unit="amount"
-                    tone={tone}
-                    error={toError}
-                    disabled={disabled}
-                    placeholder={
-                        lastTier
-                            ? "∞"
-                            : t("campaigns.create.reward.tiered.toPlaceholder")
-                    }
-                />
-            </div>
-        </div>
-    );
-}
-
-/** Column-header row (labels) shown once above the tiers. */
-function TierHeader({ valueLabel }: { valueLabel: string }) {
-    const { t } = useTranslation();
-    return (
-        <div className={styles.tierHeader}>
-            <div className={styles.tierLabelBasket}>
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={styles.tierLabel}
-                >
-                    {t("campaigns.create.reward.tiered.basketRange")}
-                </Text>
-            </div>
-            <div className={styles.tierValueUnit}>
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={`${styles.tierValue} ${styles.tierLabel}`}
-                >
-                    {valueLabel}
-                </Text>
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={`${styles.tierUnit} ${styles.tierLabel}`}
-                >
-                    {t("campaigns.create.reward.tiered.unit")}
-                </Text>
-            </div>
-            <span className={styles.tierLabelSpacer} />
-        </div>
-    );
-}
-
-/** A delete (trash) button; hidden but space-reserved on the first tier. */
+/** A delete (trash) button on a tier's title row (rendered for tier 2+). */
 function TierDelete({
-    index,
     onRemove,
     label,
 }: {
-    index: number;
     onRemove: () => void;
     label: string;
 }) {
-    const hidden = index === 0;
     return (
         <button
             type="button"
-            className={`${styles.tierDelete} ${hidden ? styles.tierDeleteHidden : ""}`}
+            className={styles.tierDelete}
             aria-label={label}
-            disabled={hidden}
             onClick={onRemove}
         >
             <DeleteIcon width={24} height={24} />
@@ -850,310 +736,325 @@ function TierDelete({
     );
 }
 
-/** Global CPA tier table: basket range · CPA · unit. Defines the tiers. */
-function GlobalCpaTable({ control }: { control: Control<RewardFormValues> }) {
-    const { t } = useTranslation();
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "globalCpaTiers",
-    });
-    // Live tier values + a dirty gate, so errors only surface once the user has
-    // started filling the table (not on a pristine, just-selected tiered model).
-    const tiers = (useWatch({ control, name: "globalCpaTiers" }) ??
-        []) as CpaTierRow[];
-    const { dirtyFields } = useFormState({ control });
-    const showErrors = Boolean(dirtyFields.globalCpaTiers);
-    const tiersInvalid = !tieredTiersValid(tiers);
-    const tiersOverlap = tieredRangesOverlap(tiers);
-
+/** A labelled field column (label above the input). */
+function TierField({
+    label,
+    className,
+    padding,
+    children,
+}: {
+    label?: string;
+    className?: string;
+    /** Pads the column into a card (the recipient reward boxes). */
+    padding?: "m";
+    children: ReactNode;
+}) {
     return (
-        <Stack space="xs">
-            <Text
-                variant="bodySmall"
-                weight="medium"
-                color="secondary"
-                className={styles.tierTitle}
-            >
-                {t("campaigns.create.reward.tiered.globalCpaTitle")}
-            </Text>
-            <TierHeader
-                valueLabel={t("campaigns.create.reward.tiered.cpaColumn")}
-            />
-
-            {fields.map((row, index) => {
-                const tier = tiers[index];
-                const isLast = index === fields.length - 1;
-                const fromError = showErrors && (!tier || tier.from === "");
-                const toError =
-                    showErrors && !isLast && (!tier || tier.to === "");
-                const cpaError = showErrors && !(Number(tier?.cpa) > 0);
-                return (
-                    <div className={styles.tierRow} key={row.id}>
-                        <RangeCell
-                            control={control}
-                            fromName={`globalCpaTiers.${index}.from`}
-                            toName={`globalCpaTiers.${index}.to`}
-                            lastTier={isLast}
-                            fromError={fromError}
-                            toError={toError}
-                        />
-                        <div className={styles.tierValueUnit}>
-                            <div className={styles.tierValue}>
-                                <ValueCell
-                                    control={control}
-                                    valueName={`globalCpaTiers.${index}.cpa`}
-                                    unitName={`globalCpaTiers.${index}.unit`}
-                                    error={cpaError}
-                                    placeholder={t(
-                                        "campaigns.create.reward.tiered.cpaPlaceholder"
-                                    )}
-                                />
-                            </div>
-                            <div className={styles.tierUnit}>
-                                <UnitSelectField
-                                    control={control}
-                                    name={`globalCpaTiers.${index}.unit`}
-                                />
-                            </div>
-                        </div>
-                        <TierDelete
-                            index={index}
-                            onRemove={() => remove(index)}
-                            label={t(
-                                "campaigns.create.reward.tiered.removeTier"
-                            )}
-                        />
-                    </div>
-                );
-            })}
-
-            <div className={styles.tierAddButton}>
-                <Button
-                    type="button"
-                    variant="primary"
-                    size="small"
-                    rightIcon={<PlusIcon width={16} height={16} />}
-                    onClick={() =>
-                        append({ from: "", to: "", cpa: "", unit: "amount" })
-                    }
+        <Stack
+            space="xs"
+            padding={padding}
+            className={className ?? styles.tierField}
+        >
+            {label ? (
+                <Text
+                    variant="bodySmall"
+                    weight="medium"
+                    color="secondary"
+                    className={styles.insetX}
                 >
-                    {t("campaigns.create.reward.tiered.addTier")}
-                </Button>
-            </div>
-            <Text
-                variant="caption"
-                color="secondary"
-                className={styles.tierFootnote}
-            >
-                {t("campaigns.create.reward.tiered.commissionFootnote")}
-            </Text>
-            {showErrors && tiersInvalid ? (
-                <FieldError>
-                    {t("campaigns.create.reward.tiered.incomplete")}
-                </FieldError>
-            ) : showErrors && tiersOverlap ? (
-                <FieldError>
-                    {t("campaigns.create.reward.tiered.overlap")}
-                </FieldError>
+                    {label}
+                </Text>
             ) : null}
+            {children}
         </Stack>
     );
 }
 
 /**
- * Ambassador/Referee reward tier table. A read-only mirror of the Global CPA
- * table: basket range and unit follow Global (so the split can't diverge);
- * only the reward amount per tier is editable.
+ * One tier as a self-contained card: title (+ trash on tier 2+), basket range,
+ * Target CPA + unit, and the Ambassador/Referee reward boxes. The range, CPA
+ * and unit live on `globalCpaTiers[index]`; the rewards on the recipient arrays
+ * at the same index. The parent renders a distribution bar below each card.
  */
-function RewardTierTable({
+function TierCard({
     control,
-    name,
-    fields,
-    title,
-    description,
+    index,
+    isLast,
+    unit,
+    fromError,
+    toError,
+    cpaError,
+    onRemove,
 }: {
     control: Control<RewardFormValues>;
-    name: "ambassadorTiers" | "refereeTiers";
-    /** Lifted to the parent so the prefill sync and rendering share one array. */
-    fields: { id: string }[];
-    title: string;
-    description: string;
+    index: number;
+    isLast: boolean;
+    unit: UnitKind;
+    fromError?: boolean;
+    toError?: boolean;
+    cpaError?: boolean;
+    onRemove: () => void;
 }) {
     const { t } = useTranslation();
-
+    const glyph = useCurrencyGlyph();
     return (
-        <div className={styles.tierCard}>
-            <Stack space="xxs">
-                <Text variant="bodySmall" weight="medium" color="secondary">
-                    {title}
+        <Stack space="m" padding="m" className={styles.tierCard}>
+            <Inline space="none" align="space-between" alignY="center">
+                <Text variant="body">
+                    {t("campaigns.create.reward.tiered.tierLabel", {
+                        n: index + 1,
+                    })}
                 </Text>
-                <Text variant="caption" color="tertiary">
-                    {description}
-                </Text>
-            </Stack>
+                {index > 0 && (
+                    <TierDelete
+                        onRemove={onRemove}
+                        label={t("campaigns.create.reward.tiered.removeTier")}
+                    />
+                )}
+            </Inline>
 
-            <Stack space="xs">
-                <TierHeader
-                    valueLabel={t("campaigns.create.reward.tiered.reward")}
-                />
+            <Inline space="xxs" alignY="bottom" wrap={false}>
+                <TierField
+                    label={t("campaigns.create.reward.tiered.basketRange", {
+                        glyph,
+                    })}
+                >
+                    <TierCell
+                        control={control}
+                        name={`globalCpaTiers.${index}.from`}
+                        unit="amount"
+                        tone="elevated"
+                        error={fromError}
+                        placeholder={t(
+                            "campaigns.create.reward.tiered.fromPlaceholder"
+                        )}
+                    />
+                </TierField>
+                <span className={styles.tierArrow}>
+                    <ArrowRightIcon width={24} height={24} />
+                </span>
+                <TierField>
+                    <TierCell
+                        control={control}
+                        name={`globalCpaTiers.${index}.to`}
+                        unit="amount"
+                        tone="elevated"
+                        error={toError}
+                        placeholder={
+                            isLast
+                                ? "∞"
+                                : t(
+                                      "campaigns.create.reward.tiered.toPlaceholder"
+                                  )
+                        }
+                    />
+                </TierField>
+            </Inline>
 
-                {fields.map((row, index) => (
-                    <div className={styles.tierRow} key={row.id}>
-                        {/* Range + unit mirror the Global CPA table — disabled
-                            so the split can't diverge; only the reward edits. */}
-                        <RangeCell
-                            control={control}
-                            fromName={`${name}.${index}.from`}
-                            toName={`${name}.${index}.to`}
-                            lastTier={index === fields.length - 1}
-                            tone="elevated"
-                            disabled
-                        />
-                        <div className={styles.tierValueUnit}>
-                            <div className={styles.tierValue}>
-                                <ValueCell
-                                    control={control}
-                                    valueName={`${name}.${index}.reward`}
-                                    unitName={`${name}.${index}.unit`}
-                                    tone="elevated"
-                                    placeholder={t(
-                                        "campaigns.create.reward.tiered.rewardPlaceholder"
-                                    )}
-                                />
-                            </div>
-                            <div className={styles.tierUnit}>
-                                <UnitSelectField
-                                    control={control}
-                                    name={`${name}.${index}.unit`}
-                                    tone="elevated"
-                                    disabled
-                                />
-                            </div>
-                        </div>
-                        <span className={styles.tierLabelSpacer} />
-                    </div>
-                ))}
-            </Stack>
-        </div>
+            <div className={styles.tierCpaRow}>
+                <TierField
+                    label={t("campaigns.create.reward.tiered.globalCpaTitle")}
+                >
+                    <TierCell
+                        control={control}
+                        name={`globalCpaTiers.${index}.cpa`}
+                        unit={unit}
+                        tone="elevated"
+                        stepper
+                        error={cpaError}
+                        placeholder={t(
+                            "campaigns.create.reward.tiered.cpaPlaceholder"
+                        )}
+                    />
+                </TierField>
+                <TierField
+                    label={t("campaigns.create.reward.tiered.unit")}
+                    className={styles.tierUnitField}
+                >
+                    <UnitSelectField
+                        control={control}
+                        name={`globalCpaTiers.${index}.unit`}
+                        tone="elevated"
+                    />
+                </TierField>
+            </div>
+
+            <Inline space="xs" alignY="top" wrap={false}>
+                <TierField
+                    label={t(
+                        "campaigns.create.reward.recipient.ambassadorReward"
+                    )}
+                    className={styles.tierRecipientCard}
+                    padding="m"
+                >
+                    <TierCell
+                        control={control}
+                        name={`ambassadorTiers.${index}.reward`}
+                        unit={unit}
+                        stepper
+                        placeholder={t(
+                            "campaigns.create.reward.tiered.rewardPlaceholder"
+                        )}
+                    />
+                </TierField>
+                <TierField
+                    label={t("campaigns.create.reward.recipient.refereeReward")}
+                    className={styles.tierRecipientCard}
+                    padding="m"
+                >
+                    <TierCell
+                        control={control}
+                        name={`refereeTiers.${index}.reward`}
+                        unit={unit}
+                        stepper
+                        placeholder={t(
+                            "campaigns.create.reward.tiered.rewardPlaceholder"
+                        )}
+                    />
+                </TierField>
+            </Inline>
+        </Stack>
     );
 }
 
 function TieredReveal({
     control,
     setValue,
-    getValues,
-    ambassadorArray,
-    refereeArray,
 }: {
     control: Control<RewardFormValues>;
     setValue: UseFormSetValue<RewardFormValues>;
-    getValues: UseFormGetValues<RewardFormValues>;
-    ambassadorArray: UseFieldArrayReturn<RewardFormValues, "ambassadorTiers">;
-    refereeArray: UseFieldArrayReturn<RewardFormValues, "refereeTiers">;
 }) {
     const { t } = useTranslation();
-    // Destructure the stable `replace` methods; depending on the whole array
-    // object (recreated each render) would loop the prefill effect.
-    const { replace: replaceAmbassador } = ambassadorArray;
-    const { replace: replaceReferee } = refereeArray;
-    const globalTiers = useWatch({ control, name: "globalCpaTiers" }) ?? [];
-    const ambTiers = (useWatch({ control, name: "ambassadorTiers" }) ??
-        []) as TierRow[];
-    const refTiers = (useWatch({ control, name: "refereeTiers" }) ??
-        []) as TierRow[];
+    const glyph = useCurrencyGlyph();
+    // One field array per tiered column; appended/removed together so they stay
+    // index-aligned (Global CPA holds the range/unit, recipients hold rewards).
+    const globalArray = useFieldArray({ control, name: "globalCpaTiers" });
+    const ambassadorArray = useFieldArray({ control, name: "ambassadorTiers" });
+    const refereeArray = useFieldArray({ control, name: "refereeTiers" });
 
-    // The split tables are a read-only mirror of the Global CPA table: their
-    // basket ranges and unit always follow Global, so the overlap stays
-    // computable. Only each tier's reward amount is the user's — preserved
-    // here by index across Global edits.
-    useEffect(() => {
-        const mirror = (existing: TierRow[]): TierRow[] =>
-            globalTiers.map((g, i) => ({
-                from: g.from,
-                to: g.to,
-                reward: existing[i]?.reward ?? "",
-                unit: g.unit,
-            }));
-        replaceAmbassador(mirror(getValues("ambassadorTiers")));
-        replaceReferee(mirror(getValues("refereeTiers")));
-    }, [globalTiers, getValues, replaceAmbassador, replaceReferee]);
-
-    const hasCpa = globalTiers.some((tier) => Number(tier.cpa) > 0);
-
-    // Surface an over/under-allocation once both recipients are filled for a
-    // tier: the split must equal that tier's rewards pool (80% of its CPA).
-    const splitMismatch = globalTiers.some((g, i) => {
-        const a = Number(ambTiers[i]?.reward);
-        const r = Number(refTiers[i]?.reward);
-        if (!(a > 0) || !(r > 0)) return false;
-        const { rewardsPool } = splitTargetCpa(Number(g.cpa) || 0);
-        return Math.abs(a + r - rewardsPool) >= 0.01;
+    const tiers = (useWatch({ control, name: "globalCpaTiers" }) ??
+        []) as CpaTierRow[];
+    // Errors are gated per-field on touch (blur): a field reds only once the user
+    // has left it empty, so filling one input never reds its still-pristine
+    // neighbours (and a just-added tier stays clean).
+    const { touchedFields } = useFormState({ control });
+    const touched = touchedFields.globalCpaTiers;
+    const fieldErrors = (
+        i: number,
+        tier: CpaTierRow | undefined,
+        isLast: boolean
+    ) => {
+        const tf = touched?.[i];
+        return {
+            from: Boolean(tf?.from) && (!tier || tier.from === ""),
+            to: Boolean(tf?.to) && !isLast && (!tier || tier.to === ""),
+            cpa: Boolean(tf?.cpa) && !(Number(tier?.cpa) > 0),
+        };
+    };
+    const lastIndex = tiers.length - 1;
+    // The summary surfaces only alongside an actually-red field, never alone.
+    const incomplete = tiers.some((tier, i) => {
+        const e = fieldErrors(i, tier, i === lastIndex);
+        return e.from || e.to || e.cpa;
     });
+    const tiersOverlap = tieredRangesOverlap(tiers);
+    const hasCpa = tiers.some((tier) => Number(tier.cpa) > 0);
 
+    function addTier() {
+        globalArray.append({ from: "", to: "", cpa: "", unit: "percent" });
+        ambassadorArray.append({ reward: "" });
+        refereeArray.append({ reward: "" });
+    }
+    function removeTier(index: number) {
+        globalArray.remove(index);
+        ambassadorArray.remove(index);
+        refereeArray.remove(index);
+    }
+    // Fill the recommended 80/20 split per tier; the distribution bar always
+    // shows that ratio, but the amounts stay the user's to override. Written via
+    // `setValue` (not the field array's `replace`) so it reaches the recipient
+    // inputs, which are registered by name rather than mapped from `fields`.
     function applyReco() {
-        const current = getValues();
-        const split = (cpa: number | "", share: 0.8 | 0.2) =>
-            recommendedSplit(Number(cpa) || 0)[
-                share === 0.8 ? "ambassador" : "referee"
-            ];
-        replaceAmbassador(
-            current.globalCpaTiers.map((g) => ({
-                from: g.from,
-                to: g.to,
-                reward: split(g.cpa, 0.8),
-                unit: g.unit,
-            }))
-        );
-        replaceReferee(
-            current.globalCpaTiers.map((g) => ({
-                from: g.from,
-                to: g.to,
-                reward: split(g.cpa, 0.2),
-                unit: g.unit,
-            }))
-        );
-        setValue("globalCpaTiers", current.globalCpaTiers);
+        tiers.forEach((g, i) => {
+            const { ambassador, referee } = recommendedSplit(
+                Number(g.cpa) || 0
+            );
+            setValue(`ambassadorTiers.${i}.reward`, ambassador, {
+                shouldValidate: true,
+                shouldDirty: true,
+            });
+            setValue(`refereeTiers.${i}.reward`, referee, {
+                shouldValidate: true,
+                shouldDirty: true,
+            });
+        });
     }
 
     return (
         <Stack space="m">
             <RevealHeader />
 
-            <GlobalCpaTable control={control} />
+            {/* The reco surfaces only once a Target CPA exists. */}
+            {hasCpa && <RecoBar onApply={applyReco} />}
 
-            {/* Reco + recipient tables surface only once a Target CPA exists. */}
-            {hasCpa && (
-                <>
-                    <RecoBar onApply={applyReco} />
-                    <RewardTierTable
-                        control={control}
-                        name="ambassadorTiers"
-                        fields={ambassadorArray.fields}
-                        title={t(
-                            "campaigns.create.reward.recipient.ambassadorReward"
-                        )}
-                        description={t(
-                            "campaigns.create.reward.tiered.ambassadorDescription"
-                        )}
-                    />
-                    <RewardTierTable
-                        control={control}
-                        name="refereeTiers"
-                        fields={refereeArray.fields}
-                        title={t(
-                            "campaigns.create.reward.recipient.refereeReward"
-                        )}
-                        description={t(
-                            "campaigns.create.reward.tiered.refereeDescription"
-                        )}
-                    />
-                    {splitMismatch && (
-                        <FieldError>
-                            {t("campaigns.create.reward.tiered.splitMismatch")}
-                        </FieldError>
-                    )}
-                </>
-            )}
+            {globalArray.fields.map((row, index) => {
+                const tier = tiers[index];
+                const isLast = index === globalArray.fields.length - 1;
+                const unit = (tier?.unit ?? "amount") as UnitKind;
+                const errors = fieldErrors(index, tier, isLast);
+                const { rewardsPool, frakCommission } = splitTargetCpa(
+                    Number(tier?.cpa) || 0
+                );
+                return (
+                    <Fragment key={row.id}>
+                        <TierCard
+                            control={control}
+                            index={index}
+                            isLast={isLast}
+                            unit={unit}
+                            fromError={errors.from}
+                            toError={errors.to}
+                            cpaError={errors.cpa}
+                            onRemove={() => removeTier(index)}
+                        />
+                        <div className={styles.tierDistribution}>
+                            <DistributionBar
+                                rewardsLabel={t(
+                                    "campaigns.create.reward.cpa.rewardsDistributed"
+                                )}
+                                commissionLabel={t(
+                                    "campaigns.create.reward.cpa.frakCommission"
+                                )}
+                                rewardsAmount={rewardsPool}
+                                commissionAmount={frakCommission}
+                                suffix={unit === "amount" ? glyph : "%"}
+                            />
+                        </div>
+                    </Fragment>
+                );
+            })}
+
+            <Inline space="none">
+                <Button
+                    type="button"
+                    variant="primary"
+                    size="small"
+                    rightIcon={<PlusIcon width={16} height={16} />}
+                    onClick={addTier}
+                >
+                    {t("campaigns.create.reward.tiered.addTier")}
+                </Button>
+            </Inline>
+
+            {incomplete ? (
+                <FieldError>
+                    {t("campaigns.create.reward.tiered.incomplete")}
+                </FieldError>
+            ) : tiersOverlap ? (
+                <FieldError>
+                    {t("campaigns.create.reward.tiered.overlap")}
+                </FieldError>
+            ) : null}
 
             <TriggeredRow />
         </Stack>
@@ -1259,17 +1160,6 @@ export function RewardCampaign() {
     const form = useForm<RewardFormValues>({
         values: defaultValues,
         mode: "onChange",
-    });
-
-    // Field arrays for the tiered tables live here so the Global CPA table can
-    // drive the Ambassador/Referee ranges (range-prefill sync).
-    const ambassadorArray = useFieldArray({
-        control: form.control,
-        name: "ambassadorTiers",
-    });
-    const refereeArray = useFieldArray({
-        control: form.control,
-        name: "refereeTiers",
     });
 
     const model = useWatch({ control: form.control, name: "model" });
@@ -1391,9 +1281,6 @@ export function RewardCampaign() {
                                     <TieredReveal
                                         control={form.control}
                                         setValue={form.setValue}
-                                        getValues={form.getValues}
-                                        ambassadorArray={ambassadorArray}
-                                        refereeArray={refereeArray}
                                     />
                                 )}
                             </Stack>
