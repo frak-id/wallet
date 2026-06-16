@@ -23,9 +23,21 @@ const TranslationTieredSchema = t.Object({
     fr: t.Optional(TranslationOverridesSchema),
 });
 
+// Either a single string (all languages) or a per-language map. Resolve
+// flattens it to one string per request; a bare string keeps old configs valid.
+const LocalizableStringSchema = t.Union([
+    t.String({ maxLength: 500 }),
+    t.Object({
+        default: t.Optional(t.String({ maxLength: 500 })),
+        en: t.Optional(t.String({ maxLength: 500 })),
+        fr: t.Optional(t.String({ maxLength: 500 })),
+    }),
+]);
+export type LocalizableString = Static<typeof LocalizableStringSchema>;
+
 const ButtonShareComponentSchema = t.Object({
-    text: t.Optional(t.String({ maxLength: 500 })),
-    noRewardText: t.Optional(t.String({ maxLength: 500 })),
+    text: t.Optional(LocalizableStringSchema),
+    noRewardText: t.Optional(LocalizableStringSchema),
     clickAction: t.Optional(
         t.Union([
             t.Literal("embedded-wallet"),
@@ -44,29 +56,29 @@ const ButtonWalletComponentSchema = t.Object({
 });
 
 const OpenInAppComponentSchema = t.Object({
-    text: t.Optional(t.String({ maxLength: 500 })),
+    text: t.Optional(LocalizableStringSchema),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
 const PostPurchaseComponentSchema = t.Object({
-    refereeText: t.Optional(t.String({ maxLength: 500 })),
-    refereeNoRewardText: t.Optional(t.String({ maxLength: 500 })),
-    referrerText: t.Optional(t.String({ maxLength: 500 })),
-    referrerNoRewardText: t.Optional(t.String({ maxLength: 500 })),
-    ctaText: t.Optional(t.String({ maxLength: 500 })),
-    ctaNoRewardText: t.Optional(t.String({ maxLength: 500 })),
+    refereeText: t.Optional(LocalizableStringSchema),
+    refereeNoRewardText: t.Optional(LocalizableStringSchema),
+    referrerText: t.Optional(LocalizableStringSchema),
+    referrerNoRewardText: t.Optional(LocalizableStringSchema),
+    ctaText: t.Optional(LocalizableStringSchema),
+    ctaNoRewardText: t.Optional(LocalizableStringSchema),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
 const BannerComponentSchema = t.Object({
-    referralTitle: t.Optional(t.String({ maxLength: 500 })),
-    referralDescription: t.Optional(t.String({ maxLength: 500 })),
-    referralCta: t.Optional(t.String({ maxLength: 500 })),
-    inappTitle: t.Optional(t.String({ maxLength: 500 })),
-    inappDescription: t.Optional(t.String({ maxLength: 500 })),
-    inappCta: t.Optional(t.String({ maxLength: 500 })),
+    referralTitle: t.Optional(LocalizableStringSchema),
+    referralDescription: t.Optional(LocalizableStringSchema),
+    referralCta: t.Optional(LocalizableStringSchema),
+    inappTitle: t.Optional(LocalizableStringSchema),
+    inappDescription: t.Optional(LocalizableStringSchema),
+    inappCta: t.Optional(LocalizableStringSchema),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });

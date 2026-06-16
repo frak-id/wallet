@@ -4,6 +4,7 @@ import { LRUCache } from "lru-cache";
 import { keccak256, toHex } from "viem";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 import type {
+    LocalizableString,
     MerchantResolveResponse,
     Placement,
     ResolvedPlacement,
@@ -14,6 +15,17 @@ import type {
 function processRawCss(rawCss: string | null | undefined): string | undefined {
     if (rawCss) return processCss(rawCss);
     return rawCss ?? undefined;
+}
+
+function resolveLocalizable(
+    value: LocalizableString | undefined,
+    lang: Language
+): string | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value === "string") return value;
+    // Fall through lang -> default -> other langs so a partially-translated
+    // field never renders blank.
+    return value[lang] ?? value.default ?? value.en ?? value.fr;
 }
 
 function processRawScopedCss(
@@ -240,31 +252,10 @@ export class MerchantResolveService {
 
             resolvedPlacements[id] = {
                 ...(placement.components && {
-                    components: {
-                        ...(placement.components.buttonShare && {
-                            buttonShare: stripRawCss(
-                                placement.components.buttonShare
-                            ),
-                        }),
-                        ...(placement.components.buttonWallet && {
-                            buttonWallet: stripRawCss(
-                                placement.components.buttonWallet
-                            ),
-                        }),
-                        ...(placement.components.openInApp && {
-                            openInApp: stripRawCss(
-                                placement.components.openInApp
-                            ),
-                        }),
-                        ...(placement.components.postPurchase && {
-                            postPurchase: stripRawCss(
-                                placement.components.postPurchase
-                            ),
-                        }),
-                        ...(placement.components.banner && {
-                            banner: stripRawCss(placement.components.banner),
-                        }),
-                    },
+                    components: this.buildResolvedComponents(
+                        placement.components,
+                        lang
+                    ),
                 }),
                 ...(placement.targetInteraction && {
                     targetInteraction: placement.targetInteraction,
@@ -305,7 +296,10 @@ export class MerchantResolveService {
             ...(mergedTranslations && { translations: mergedTranslations }),
             ...(resolvedPlacements && { placements: resolvedPlacements }),
             ...(sdkConfig.components && {
-                components: this.buildResolvedComponents(sdkConfig.components),
+                components: this.buildResolvedComponents(
+                    sdkConfig.components,
+                    lang
+                ),
             }),
             ...(sdkConfig.attribution && {
                 attribution: sdkConfig.attribution,
@@ -350,24 +344,107 @@ export class MerchantResolveService {
     }
 
     private buildResolvedComponents(
-        components: NonNullable<SdkConfig["components"]>
+        components: NonNullable<SdkConfig["components"]>,
+        lang: Language
     ): ResolvedPlacement["components"] {
         return {
             ...(components.buttonShare && {
-                buttonShare: stripRawCss(components.buttonShare),
+                buttonShare: this.resolveButtonShare(
+                    components.buttonShare,
+                    lang
+                ),
             }),
             ...(components.buttonWallet && {
                 buttonWallet: stripRawCss(components.buttonWallet),
             }),
             ...(components.openInApp && {
-                openInApp: stripRawCss(components.openInApp),
+                openInApp: this.resolveOpenInApp(components.openInApp, lang),
             }),
             ...(components.postPurchase && {
-                postPurchase: stripRawCss(components.postPurchase),
+                postPurchase: this.resolvePostPurchase(
+                    components.postPurchase,
+                    lang
+                ),
             }),
             ...(components.banner && {
-                banner: stripRawCss(components.banner),
+                banner: this.resolveBanner(components.banner, lang),
             }),
+        };
+    }
+
+    private resolveButtonShare(
+        c: NonNullable<NonNullable<SdkConfig["components"]>["buttonShare"]>,
+        lang: Language
+    ) {
+        const text = resolveLocalizable(c.text, lang);
+        const noRewardText = resolveLocalizable(c.noRewardText, lang);
+        return {
+            ...(text !== undefined && { text }),
+            ...(noRewardText !== undefined && { noRewardText }),
+            ...(c.clickAction && { clickAction: c.clickAction }),
+            ...(c.css && { css: c.css }),
+        };
+    }
+
+    private resolveOpenInApp(
+        c: NonNullable<NonNullable<SdkConfig["components"]>["openInApp"]>,
+        lang: Language
+    ) {
+        const text = resolveLocalizable(c.text, lang);
+        return {
+            ...(text !== undefined && { text }),
+            ...(c.css && { css: c.css }),
+        };
+    }
+
+    private resolvePostPurchase(
+        c: NonNullable<NonNullable<SdkConfig["components"]>["postPurchase"]>,
+        lang: Language
+    ) {
+        const refereeText = resolveLocalizable(c.refereeText, lang);
+        const refereeNoRewardText = resolveLocalizable(
+            c.refereeNoRewardText,
+            lang
+        );
+        const referrerText = resolveLocalizable(c.referrerText, lang);
+        const referrerNoRewardText = resolveLocalizable(
+            c.referrerNoRewardText,
+            lang
+        );
+        const ctaText = resolveLocalizable(c.ctaText, lang);
+        const ctaNoRewardText = resolveLocalizable(c.ctaNoRewardText, lang);
+        return {
+            ...(refereeText !== undefined && { refereeText }),
+            ...(refereeNoRewardText !== undefined && { refereeNoRewardText }),
+            ...(referrerText !== undefined && { referrerText }),
+            ...(referrerNoRewardText !== undefined && { referrerNoRewardText }),
+            ...(ctaText !== undefined && { ctaText }),
+            ...(ctaNoRewardText !== undefined && { ctaNoRewardText }),
+            ...(c.css && { css: c.css }),
+        };
+    }
+
+    private resolveBanner(
+        c: NonNullable<NonNullable<SdkConfig["components"]>["banner"]>,
+        lang: Language
+    ) {
+        const referralTitle = resolveLocalizable(c.referralTitle, lang);
+        const referralDescription = resolveLocalizable(
+            c.referralDescription,
+            lang
+        );
+        const referralCta = resolveLocalizable(c.referralCta, lang);
+        const inappTitle = resolveLocalizable(c.inappTitle, lang);
+        const inappDescription = resolveLocalizable(c.inappDescription, lang);
+        const inappCta = resolveLocalizable(c.inappCta, lang);
+        return {
+            ...(referralTitle !== undefined && { referralTitle }),
+            ...(referralDescription !== undefined && { referralDescription }),
+            ...(referralCta !== undefined && { referralCta }),
+            ...(inappTitle !== undefined && { inappTitle }),
+            ...(inappDescription !== undefined && { inappDescription }),
+            ...(inappCta !== undefined && { inappCta }),
+            ...(c.css && { css: c.css }),
         };
     }
 }
