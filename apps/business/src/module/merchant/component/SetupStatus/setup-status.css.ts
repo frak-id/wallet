@@ -1,6 +1,5 @@
 import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { brandColors } from "@/styles/brand";
 
 export const stepItem = style({
     padding: alias.spacing.m,
@@ -55,7 +54,7 @@ export const iconWarning = style({
 
 export const description = style({
     margin: `${alias.spacing.xs} 0 ${alias.spacing.xs} ${brand.scale[900]}`,
-    color: brandColors.blueFrak,
+    color: brand.colors.neutral.grey700,
     fontSize: fontSize.s,
     lineHeight: 1.5,
 });

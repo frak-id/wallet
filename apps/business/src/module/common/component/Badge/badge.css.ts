@@ -1,7 +1,6 @@
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
-import { brandColors } from "@/styles/brand";
 
 export const badgeClickable = style({
     cursor: "pointer",
@@ -23,8 +22,8 @@ export const badgeVariants = recipe({
     variants: {
         variant: {
             primary: {
-                backgroundColor: brandColors.ceruleanBackground,
-                color: brandColors.cerulean,
+                backgroundColor: brand.colors.primary[100],
+                color: brand.colors.primary[500],
             },
             secondary: {
                 backgroundColor: brand.colors.neutral.grey200,

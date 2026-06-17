@@ -1,7 +1,6 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { brand } from "@frak-labs/design-system/tokens";
 import { globalStyle } from "@vanilla-extract/css";
-import { brandColors } from "./brand";
 
 globalStyle("*, *::after, *::before", {
     margin: 0,
@@ -59,7 +58,7 @@ globalStyle(".error", {
 });
 
 globalStyle(".success", {
-    color: brandColors.neonGreen,
+    color: brand.colors.success[600],
 });
 
 globalStyle(".link", {
