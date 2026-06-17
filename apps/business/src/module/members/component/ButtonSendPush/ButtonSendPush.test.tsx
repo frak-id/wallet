@@ -60,12 +60,12 @@ describe("ButtonSendPush", () => {
         ).toBeInTheDocument();
     });
 
-    it("should render with Plus icon (size 20) on left", () => {
+    it("should render with Plus icon (size 16) on left", () => {
         render(<ButtonSendPush />);
 
         const icon = screen.getByTestId("plus-icon");
         expect(icon).toBeInTheDocument();
-        expect(icon).toHaveAttribute("data-size", "20");
+        expect(icon).toHaveAttribute("data-size", "16");
     });
 
     it("should call setForm(undefined) and navigate to the merchant-scoped push route when clicked", () => {
