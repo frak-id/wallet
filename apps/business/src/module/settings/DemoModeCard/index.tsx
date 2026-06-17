@@ -1,11 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
+import { useLogout } from "@/module/common/hook/useLogout";
 import { Switch } from "@/module/forms/Switch";
 import { SettingsCard } from "../SettingsCard";
 
 export function DemoModeCard() {
     const { t } = useTranslation();
     const { isDemoMode, setDemoMode } = useDemoMode();
+    const logout = useLogout();
 
     return (
         <SettingsCard
@@ -16,7 +18,9 @@ export function DemoModeCard() {
                 <Switch
                     id="demo-mode-switch"
                     checked={isDemoMode}
-                    onCheckedChange={setDemoMode}
+                    onCheckedChange={(checked) =>
+                        checked ? setDemoMode(true) : logout()
+                    }
                 />
             }
         />
