@@ -244,10 +244,12 @@
 			outputPaths = (
 				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
 				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libfirebase_objc.a",
+				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libfirebase_objc.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "bun tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+			shellScript = "set -e\nbun tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}\nbash \"${SRCROOT}/firebase-forceload.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -289,7 +291,8 @@
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				OTHER_LDFLAGS = "$(inherited) -ObjC -lc++";
+				"OTHER_LDFLAGS[arch=arm64]" = "$(inherited) -lc++ -force_load $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION)/libfirebase_objc.a";
+				"OTHER_LDFLAGS[arch=x86_64]" = "$(inherited) -lc++ -force_load $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION)/libfirebase_objc.a";
 				PRODUCT_BUNDLE_IDENTIFIER = id.frak.wallet.dev;
 				PRODUCT_NAME = "Frak Wallet Dev";
 				SDKROOT = iphoneos;
@@ -380,7 +383,8 @@
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				OTHER_LDFLAGS = "$(inherited) -ObjC -lc++";
+				"OTHER_LDFLAGS[arch=arm64]" = "$(inherited) -lc++ -force_load $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION)/libfirebase_objc.a";
+				"OTHER_LDFLAGS[arch=x86_64]" = "$(inherited) -lc++ -force_load $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION)/libfirebase_objc.a";
 				PRODUCT_BUNDLE_IDENTIFIER = id.frak.wallet.dev;
 				PRODUCT_NAME = "Frak Wallet Dev";
 				SDKROOT = iphoneos;
