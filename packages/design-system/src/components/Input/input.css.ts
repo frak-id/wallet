@@ -9,6 +9,14 @@ export const inputWrapper = recipe({
         width: "100%",
         color: vars.text.primary,
         overflow: "hidden",
+        selectors: {
+            // Fill with the error surface whenever the field is invalid —
+            // FormControl sets aria-invalid, so this works without an
+            // explicit `error` prop. Outranks the variant/tone backgrounds.
+            '&:has([aria-invalid="true"])': {
+                backgroundColor: vars.surface.error,
+            },
+        },
     },
     variants: {
         variant: {
@@ -97,8 +105,8 @@ export const inputWrapper = recipe({
                 backgroundColor: vars.surface.disabled,
             },
         },
-        // Error tone for the borderless variants — Figma fills the field with
-        // the error surface (the `default` variant only recolours its border).
+        // Error tone for the borderless variants — fill the field with the
+        // error surface (the `default` variant only recolours its border).
         // Declared after the `tone` compounds so the error bg wins.
         {
             variants: { variant: "bare", error: true },

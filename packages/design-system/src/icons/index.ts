@@ -77,6 +77,7 @@ export { ReferralIcon } from "./ReferralIcon";
 export { RefreshIcon } from "./RefreshIcon";
 export { SafetyIcon } from "./SafetyIcon";
 export { SearchIcon } from "./SearchIcon";
+export { SendIcon } from "./SendIcon";
 export { SettingsIcon } from "./SettingsIcon";
 export { ShareIcon } from "./ShareIcon";
 export { ShieldIcon } from "./ShieldIcon";
