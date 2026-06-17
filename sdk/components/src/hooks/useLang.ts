@@ -1,9 +1,6 @@
-import {
-    type Language,
-    type SdkResolvedConfig,
-    sdkConfigStore,
-} from "@frak-labs/core-sdk";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { type Language, sdkConfigStore } from "@frak-labs/core-sdk";
+import { useSyncExternalStore } from "preact/compat";
+import { subscribeSdkConfig } from "./sdkConfigSubscription";
 
 /**
  * Detect a supported language from the browser, defaulting to English.
@@ -17,27 +14,15 @@ function detectBrowserLang(): Language {
 /**
  * Resolve the active display language for the Web Components.
  *
- * Precedence: resolved SDK/backend config `lang` (driven by
- * `metadata.lang` or the backend `/resolve` response) → browser language →
- * `en`. Re-renders on the `frak:config` event so a late, backend-driven
- * language switch updates the built-in default copy (see
- * `@/i18n/defaults`).
+ * Precedence: resolved SDK/backend config `lang` (driven by `metadata.lang`
+ * or the backend `/resolve` response) → browser language → `en`. Backed by
+ * `useSyncExternalStore` with a bare-string snapshot, so a `frak:config`
+ * dispatch only re-renders the component when the resolved language actually
+ * changes (see `@/i18n/defaults`).
  */
 export function useLang(): Language {
-    const [configVersion, setConfigVersion] = useState(0);
-
-    useEffect(() => {
-        const onConfig = (_e: CustomEvent<SdkResolvedConfig>) => {
-            setConfigVersion((v) => v + 1);
-        };
-        window.addEventListener("frak:config", onConfig);
-        // Re-check in case the event fired between render and effect mount
-        setConfigVersion((v) => v + 1);
-        return () => window.removeEventListener("frak:config", onConfig);
-    }, []);
-
-    return useMemo(
-        () => sdkConfigStore.getConfig().lang ?? detectBrowserLang(),
-        [configVersion]
+    return useSyncExternalStore(
+        subscribeSdkConfig,
+        () => sdkConfigStore.getConfig().lang ?? detectBrowserLang()
     );
 }

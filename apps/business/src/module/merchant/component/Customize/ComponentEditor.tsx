@@ -26,6 +26,7 @@ import type {
 import { COMPONENT_TYPES, SUPPORTED_WORDING_LANGS } from "./types";
 
 const WORDING_LANG_LABELS: Record<WordingLang, string> = {
+    default: "Default",
     en: "English",
     fr: "Français",
 };

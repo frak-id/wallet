@@ -95,7 +95,7 @@ function GlobalComponentsPanel({
 
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
-    const [activeLang, setActiveLang] = useState<WordingLang>("en");
+    const [activeLang, setActiveLang] = useState<WordingLang>("default");
 
     const values = useMemo(
         () => getGlobalComponentsValues(sdkConfig),
@@ -208,7 +208,6 @@ function GlobalComponentsPanel({
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
                         shopName={sdkConfig.name ?? "My Store"}
-                        lang={activeLang}
                     />
 
                     <ComponentFields

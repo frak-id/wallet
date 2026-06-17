@@ -22,15 +22,33 @@ describe("applyBrand", () => {
     });
 });
 
+describe("preset catalogue", () => {
+    it("ships non-empty en + fr copy for every preset", () => {
+        for (const preset of [
+            ...BUTTON_SHARE_PRESETS,
+            ...POST_PURCHASE_PRESETS,
+        ]) {
+            expect(preset.en.trim().length).toBeGreaterThan(0);
+            expect(preset.fr.trim().length).toBeGreaterThan(0);
+        }
+        for (const preset of BANNER_PRESETS) {
+            expect(preset.en.title.trim().length).toBeGreaterThan(0);
+            expect(preset.en.description.trim().length).toBeGreaterThan(0);
+            expect(preset.fr.title.trim().length).toBeGreaterThan(0);
+            expect(preset.fr.description.trim().length).toBeGreaterThan(0);
+        }
+    });
+});
+
 describe("matchButtonSharePreset", () => {
-    it("matches each preset exactly", () => {
+    it("matches each preset on its en copy", () => {
         for (const [index, preset] of BUTTON_SHARE_PRESETS.entries()) {
-            expect(matchButtonSharePreset(preset)).toBe(index);
+            expect(matchButtonSharePreset(preset.en)).toBe(index);
         }
     });
 
     it("matches with surrounding whitespace", () => {
-        expect(matchButtonSharePreset(`  ${BUTTON_SHARE_PRESETS[1]}  `)).toBe(
+        expect(matchButtonSharePreset(`  ${BUTTON_SHARE_PRESETS[1].en}  `)).toBe(
             1
         );
     });
@@ -43,9 +61,9 @@ describe("matchButtonSharePreset", () => {
 });
 
 describe("matchPostPurchasePreset", () => {
-    it("matches each preset exactly", () => {
+    it("matches each preset on its en copy", () => {
         for (const [index, preset] of POST_PURCHASE_PRESETS.entries()) {
-            expect(matchPostPurchasePreset(preset)).toBe(index);
+            expect(matchPostPurchasePreset(preset.en)).toBe(index);
         }
     });
 
@@ -58,8 +76,8 @@ describe("matchBannerPreset", () => {
     it("matches title + description pairs", () => {
         expect(
             matchBannerPreset(
-                BANNER_PRESETS[0].title,
-                BANNER_PRESETS[0].description,
+                BANNER_PRESETS[0].en.title,
+                BANNER_PRESETS[0].en.description,
                 "Nowa"
             )
         ).toBe(0);
@@ -78,8 +96,8 @@ describe("matchBannerPreset", () => {
     it("requires both fields to match the same preset", () => {
         expect(
             matchBannerPreset(
-                BANNER_PRESETS[0].title,
-                BANNER_PRESETS[1].description,
+                BANNER_PRESETS[0].en.title,
+                BANNER_PRESETS[1].en.description,
                 "Nowa"
             )
         ).toBeNull();
@@ -88,7 +106,7 @@ describe("matchBannerPreset", () => {
     it("returns null when either field is empty", () => {
         expect(matchBannerPreset("", "desc", "Nowa")).toBeNull();
         expect(
-            matchBannerPreset(BANNER_PRESETS[0].title, "", "Nowa")
+            matchBannerPreset(BANNER_PRESETS[0].en.title, "", "Nowa")
         ).toBeNull();
     });
 });

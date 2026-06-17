@@ -21,10 +21,16 @@ export const COMPONENT_TYPES: ComponentType[] = [
     "banner",
 ];
 
-export const SUPPORTED_WORDING_LANGS = ["en", "fr"] as const;
+// Editable tabs, mirroring the backend `LocalizableString` ({ default, en, fr }).
+// `default` is the language-agnostic fallback (a bare string); `en`/`fr` override it.
+export const SUPPORTED_WORDING_LANGS = ["default", "en", "fr"] as const;
 export type WordingLang = (typeof SUPPORTED_WORDING_LANGS)[number];
 
-// Empty string means "not set" for that language; empties are dropped at save.
+// Languages a preset ships copy for (the `default` tier is never preset-authored).
+export const PRESET_LANGS = ["en", "fr"] as const;
+export type PresetLang = (typeof PRESET_LANGS)[number];
+
+// Empty string means "not set" for that tier; empties are dropped at save.
 export type LocalizedText = Record<WordingLang, string>;
 
 type Components = NonNullable<SdkConfig["components"]>;

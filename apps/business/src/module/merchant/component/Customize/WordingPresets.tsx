@@ -18,35 +18,31 @@ import {
     matchPostPurchasePreset,
     POST_PURCHASE_PRESETS,
 } from "./presets";
-import type {
-    ComponentSettingsFormValues,
-    ComponentType,
-    WordingLang,
-} from "./types";
+import type { ComponentSettingsFormValues, ComponentType } from "./types";
 
 /**
- * Presets write fixed English texts into the merchant component config;
- * keep them hidden until the SDK supports localized wording.
+ * Presets are bilingual and language-independent in the UI: one picker (not
+ * tied to the active language tab) writes both `en` + `fr` at once. Kept hidden
+ * behind this flag until the feature is wired up end to end.
  */
 const WORDING_PRESETS_ENABLED = false;
 
 /**
  * 2×2 grid of curated wording choices for the selected component. The radio
  * reflects the current stored text (none selected for custom wording) and
- * picking one writes the preset into the form, updating the live preview.
+ * picking one writes the preset's en + fr copy into the form, updating the
+ * live preview.
  */
 export function WordingPresets({
     componentType,
     form,
     currency,
     shopName,
-    lang,
 }: {
     componentType: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
     shopName: string;
-    lang: WordingLang;
 }) {
     if (!WORDING_PRESETS_ENABLED) return null;
     if (componentType === "banner") {
@@ -55,7 +51,6 @@ export function WordingPresets({
                 form={form}
                 currency={currency}
                 shopName={shopName}
-                lang={lang}
             />
         );
     }
@@ -64,7 +59,6 @@ export function WordingPresets({
             componentType={componentType}
             form={form}
             currency={currency}
-            lang={lang}
         />
     );
 }
@@ -73,42 +67,41 @@ function TextPresets({
     componentType,
     form,
     currency,
-    lang,
 }: {
     componentType: "buttonShare" | "postPurchase";
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
-    lang: WordingLang;
 }) {
     const isButtonShare = componentType === "buttonShare";
     const presets = isButtonShare
         ? BUTTON_SHARE_PRESETS
         : POST_PURCHASE_PRESETS;
-    const fieldName = (
-        isButtonShare
-            ? `buttonShare.text.${lang}`
-            : `postPurchase.refereeText.${lang}`
+    const enField = (
+        isButtonShare ? "buttonShare.text.en" : "postPurchase.refereeText.en"
+    ) as FieldPath<ComponentSettingsFormValues>;
+    const frField = (
+        isButtonShare ? "buttonShare.text.fr" : "postPurchase.refereeText.fr"
     ) as FieldPath<ComponentSettingsFormValues>;
 
-    const current = String(form.watch(fieldName) ?? "");
+    const currentEn = String(form.watch(enField) ?? "");
     const selected = isButtonShare
-        ? matchButtonSharePreset(current)
-        : matchPostPurchasePreset(current);
+        ? matchButtonSharePreset(currentEn)
+        : matchPostPurchasePreset(currentEn);
 
     return (
         <RadioGroup
             className={styles.presetGrid}
             value={selected !== null ? String(selected) : ""}
-            onValueChange={(value) =>
-                form.setValue(fieldName, presets[Number(value)], {
-                    shouldDirty: true,
-                })
-            }
+            onValueChange={(value) => {
+                const preset = presets[Number(value)];
+                form.setValue(enField, preset.en, { shouldDirty: true });
+                form.setValue(frField, preset.fr, { shouldDirty: true });
+            }}
         >
             {presets.map((preset, index) => (
-                <PresetRow key={preset} value={String(index)}>
+                <PresetRow key={preset.en} value={String(index)}>
                     <Text variant="body" weight="medium" as="span">
-                        {formatPresetLabel(preset, currency)}
+                        {formatPresetLabel(preset.en, currency)}
                     </Text>
                 </PresetRow>
             ))}
@@ -120,20 +113,23 @@ function BannerPresets({
     form,
     currency,
     shopName,
-    lang,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
     shopName: string;
-    lang: WordingLang;
 }) {
-    const titleField =
-        `banner.referralTitle.${lang}` as FieldPath<ComponentSettingsFormValues>;
-    const descriptionField =
-        `banner.referralDescription.${lang}` as FieldPath<ComponentSettingsFormValues>;
-    const title = String(form.watch(titleField) ?? "");
-    const description = String(form.watch(descriptionField) ?? "");
-    const selected = matchBannerPreset(title, description, shopName);
+    const titleEnField =
+        "banner.referralTitle.en" as FieldPath<ComponentSettingsFormValues>;
+    const titleFrField =
+        "banner.referralTitle.fr" as FieldPath<ComponentSettingsFormValues>;
+    const descEnField =
+        "banner.referralDescription.en" as FieldPath<ComponentSettingsFormValues>;
+    const descFrField =
+        "banner.referralDescription.fr" as FieldPath<ComponentSettingsFormValues>;
+
+    const titleEn = String(form.watch(titleEnField) ?? "");
+    const descEn = String(form.watch(descEnField) ?? "");
+    const selected = matchBannerPreset(titleEn, descEn, shopName);
 
     return (
         <RadioGroup
@@ -141,25 +137,37 @@ function BannerPresets({
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
                 const preset = BANNER_PRESETS[Number(value)];
-                form.setValue(titleField, applyBrand(preset.title, shopName), {
-                    shouldDirty: true,
-                });
                 form.setValue(
-                    descriptionField,
-                    applyBrand(preset.description, shopName),
+                    titleEnField,
+                    applyBrand(preset.en.title, shopName),
+                    { shouldDirty: true }
+                );
+                form.setValue(
+                    titleFrField,
+                    applyBrand(preset.fr.title, shopName),
+                    { shouldDirty: true }
+                );
+                form.setValue(
+                    descEnField,
+                    applyBrand(preset.en.description, shopName),
+                    { shouldDirty: true }
+                );
+                form.setValue(
+                    descFrField,
+                    applyBrand(preset.fr.description, shopName),
                     { shouldDirty: true }
                 );
             }}
         >
             {BANNER_PRESETS.map((preset, index) => (
-                <PresetRow key={preset.title} value={String(index)}>
+                <PresetRow key={preset.en.title} value={String(index)}>
                     <Stack space="none" as="span">
                         <Text variant="body" weight="medium" as="span">
-                            {formatPresetLabel(preset.title, currency)}
+                            {formatPresetLabel(preset.en.title, currency)}
                         </Text>
                         <Text variant="bodySmall" color="tertiary" as="span">
                             {formatPresetLabel(
-                                applyBrand(preset.description, shopName),
+                                applyBrand(preset.en.description, shopName),
                                 currency
                             )}
                         </Text>

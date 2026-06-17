@@ -1,51 +1,42 @@
 import type { LocalizableString } from "@frak-labs/backend-elysia/domain/merchant";
-import { type LocalizedText, SUPPORTED_WORDING_LANGS } from "./types";
-
-function blankLocalizedText(): LocalizedText {
-    return Object.fromEntries(
-        SUPPORTED_WORDING_LANGS.map((lang) => [lang, ""])
-    ) as LocalizedText;
-}
+import type { LocalizedText } from "./types";
 
 /**
- * Stored config value -> per-language form inputs. A bare string is mirrored
- * into every language input (legacy single-language configs stay editable);
- * a tiered map fills each language and falls back to `default` when missing.
+ * Stored config value -> editable tier inputs. A bare string loads into the
+ * `default` tier (a bare `LocalizableString` is language-agnostic); a tiered
+ * map loads each tier as-is. Kept in sync with {@link fromLocalizedText}.
  */
 export function toLocalizedText(
     value: LocalizableString | undefined
 ): LocalizedText {
-    if (value === undefined) return blankLocalizedText();
-    if (typeof value === "string") {
-        return Object.fromEntries(
-            SUPPORTED_WORDING_LANGS.map((lang) => [lang, value])
-        ) as LocalizedText;
-    }
-    const result = blankLocalizedText();
-    for (const lang of SUPPORTED_WORDING_LANGS) {
-        result[lang] = value[lang] ?? value.default ?? "";
-    }
-    return result;
+    if (value === undefined) return { default: "", en: "", fr: "" };
+    if (typeof value === "string") return { default: value, en: "", fr: "" };
+    return {
+        default: value.default ?? "",
+        en: value.en ?? "",
+        fr: value.fr ?? "",
+    };
 }
 
 /**
- * Per-language form inputs -> stored config value. Returns `undefined` when
- * nothing is set (clears the field), a single bare string when every language
- * is identical (compact, language-agnostic), otherwise a tiered map of the
- * non-empty languages.
+ * Editable tier inputs -> stored config value. Returns `undefined` when nothing
+ * is set (clears the field), a bare string when only the `default` tier is set
+ * (compact, language-agnostic, backward compatible), otherwise a tiered map of
+ * the non-empty tiers. Kept in sync with {@link toLocalizedText}.
  */
 export function fromLocalizedText(
     text: LocalizedText
 ): LocalizableString | undefined {
-    const entries = SUPPORTED_WORDING_LANGS.map(
-        (lang) => [lang, text[lang].trim()] as const
-    ).filter(([, value]) => value.length > 0);
+    const defaultValue = text.default.trim();
+    const en = text.en.trim();
+    const fr = text.fr.trim();
 
-    if (entries.length === 0) return undefined;
+    if (!defaultValue && !en && !fr) return undefined;
+    if (defaultValue && !en && !fr) return defaultValue;
 
-    const allLanguagesSet = entries.length === SUPPORTED_WORDING_LANGS.length;
-    const allIdentical = entries.every(([, value]) => value === entries[0][1]);
-    if (allLanguagesSet && allIdentical) return entries[0][1];
-
-    return Object.fromEntries(entries) as LocalizableString;
+    return {
+        ...(defaultValue && { default: defaultValue }),
+        ...(en && { en }),
+        ...(fr && { fr }),
+    };
 }
