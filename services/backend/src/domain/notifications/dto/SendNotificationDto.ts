@@ -15,12 +15,6 @@ export const SendNotificationTargetsDto = t.Union([
                         max: t.Number(),
                     })
                 ),
-                rewards: t.Partial(
-                    t.Object({
-                        min: t.Hex(),
-                        max: t.Hex(),
-                    })
-                ),
                 firstInteractionTimestamp: t.Partial(
                     t.Object({
                         min: t.Number(),

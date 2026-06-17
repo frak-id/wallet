@@ -46,7 +46,8 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
 
             const wallets =
                 await OrchestrationContext.orchestrators.notification.resolveWalletsFromTargets(
-                    targets
+                    targets,
+                    merchantId
                 );
 
             const broadcast =

@@ -12,6 +12,7 @@ import type {
 } from "../domain/notifications/events";
 import type { NotificationBroadcastRepository } from "../domain/notifications/repositories/NotificationBroadcastRepository";
 import type { NotificationsService } from "../domain/notifications/services/NotificationsService";
+import type { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
 
 // Stage-scoped wallet URL: prod backend points users at wallet.frak.id,
 // dev backend points users at wallet-dev.frak.id (matches the dev app variant).
@@ -58,7 +59,8 @@ export class NotificationOrchestrator {
     constructor(
         private readonly notificationsService: NotificationsService,
         private readonly merchantRepository: MerchantRepository,
-        private readonly notificationBroadcastRepository: NotificationBroadcastRepository
+        private readonly notificationBroadcastRepository: NotificationBroadcastRepository,
+        private readonly memberQueryOrchestrator: MemberQueryOrchestrator
     ) {}
 
     registerListeners() {
@@ -68,16 +70,20 @@ export class NotificationOrchestrator {
     }
 
     async resolveWalletsFromTargets(
-        targets: SendNotificationTargets
+        targets: SendNotificationTargets,
+        merchantId: string
     ): Promise<Address[]> {
         if ("wallets" in targets) {
             return targets.wallets;
         }
 
-        log.warn(
-            "[NotificationOrchestrator] Filter-based notification targeting not yet migrated to DB. Returning empty list."
+        // Scope filter-based resolution to the broadcasting merchant: a broadcast
+        // maps to a single merchant and the cron has no session to widen that, so
+        // a merchant can only ever reach its own members.
+        return this.memberQueryOrchestrator.resolveWallets(
+            [merchantId],
+            targets.filter
         );
-        return [];
     }
 
     async processDueScheduledNotifications() {
@@ -88,7 +94,10 @@ export class NotificationOrchestrator {
 
         for (const broadcast of due) {
             const wallets = broadcast.targets
-                ? await this.resolveWalletsFromTargets(broadcast.targets)
+                ? await this.resolveWalletsFromTargets(
+                      broadcast.targets,
+                      broadcast.merchantId
+                  )
                 : [];
             await this.sendPromotionalNotification({
                 wallets,

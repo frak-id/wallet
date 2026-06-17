@@ -600,12 +600,6 @@ const SendNotificationTargetsDto = t.Union([
                         max: t.Number(),
                     })
                 ),
-                rewards: t.Partial(
-                    t.Object({
-                        min: t.String(),
-                        max: t.String(),
-                    })
-                ),
                 firstInteractionTimestamp: t.Partial(
                     t.Object({
                         min: t.Number(),
@@ -711,8 +705,9 @@ vi.mock("../../src/domain/business/context", () => ({
 export const notificationOrchestratorMocks = {
     sendNotifications: vi.fn(() => Promise.resolve()),
     sendPromotionalNotification: vi.fn(() => Promise.resolve()),
-    resolveWalletsFromTargets: vi.fn((targets: { wallets?: `0x${string}`[] }) =>
-        Promise.resolve("wallets" in targets ? (targets.wallets ?? []) : [])
+    resolveWalletsFromTargets: vi.fn(
+        (targets: { wallets?: `0x${string}`[] }, _merchantId: string) =>
+            Promise.resolve("wallets" in targets ? (targets.wallets ?? []) : [])
     ),
     processDueScheduledNotifications: vi.fn(() => Promise.resolve()),
 };
