@@ -10,7 +10,7 @@ type WizardFieldCardProps = {
     /** Optional hint under the label (Footnote, tertiary colour). */
     description?: string;
     /** Gap between the header and the content. */
-    space?: "m" | "xs";
+    space?: "m" | "xs" | "none";
     /** Inset the header 16px to align with an input field's text. */
     insetLabel?: boolean;
     children: ReactNode;

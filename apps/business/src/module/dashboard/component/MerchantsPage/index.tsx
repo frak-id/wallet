@@ -1,6 +1,6 @@
 import * as footerStyles from "@/module/common/component/FloatingFooter/floating-footer.css";
 import { PageShell } from "@/module/common/component/PageShell";
-import { AddMerchantFooter } from "@/module/dashboard/component/AddMerchantSheet/AddMerchantFooter";
+import { AddMerchantFooter } from "@/module/dashboard/component/AddMerchantFooter";
 import { MyMerchants } from "@/module/dashboard/component/Products";
 
 export function MerchantsPage() {

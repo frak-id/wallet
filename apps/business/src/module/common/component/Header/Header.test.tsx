@@ -30,12 +30,6 @@ vi.mock("@/module/campaigns/component/ButtonNewCampaign", () => ({
     ),
 }));
 
-vi.mock("@/module/dashboard/component/AddMerchantSheet", () => ({
-    AddMerchantSheet: ({ trigger }: { trigger: React.ReactNode }) => (
-        <>{trigger}</>
-    ),
-}));
-
 vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
     useMyMerchants: () => ({
         merchants: [{ id: "merchant-1", name: "Acme", domain: "acme.example" }],

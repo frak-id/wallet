@@ -953,6 +953,86 @@
             "description": "When enabled, all data will be replaced with mock data for demonstration purposes. This is useful for presentations and testing without affecting real data."
         }
     },
+    "merchant": {
+        "create": {
+            "steps": {
+                "details": {
+                    "label": "Add merchant details",
+                    "hint": "Set up your merchant information",
+                    "title": "Add merchant details",
+                    "subtitle": "Configure your merchant details."
+                },
+                "registration": {
+                    "label": "Merchant registration",
+                    "hint": "Register your merchant on-chain",
+                    "title": "Merchant registration",
+                    "subtitle": "Register your merchant on the blockchain"
+                }
+            },
+            "actions": {
+                "close": "Close",
+                "back": "Back",
+                "continue": "Continue",
+                "completeRegistration": "Complete Registration"
+            },
+            "fields": {
+                "name": {
+                    "label": "Enter a Merchant Name",
+                    "placeholder": "Merchant name",
+                    "required": "Merchant name is required",
+                    "minLength": "Merchant name must be at least 2 characters"
+                },
+                "currency": {
+                    "label": "Currency",
+                    "description": "The default currency for your campaigns"
+                },
+                "domain": {
+                    "label": "Domain Configuration",
+                    "nameLabel": "Domain Name",
+                    "required": "Domain name is required",
+                    "invalid": "Please enter a valid domain (e.g., example.com)",
+                    "alreadyRegistered": "A merchant already exists for the domain {{domain}}",
+                    "dnsNotSet": "The DNS TXT record is not set, or the setup code is invalid",
+                    "verifyFailed": "Failed to verify domain"
+                },
+                "setupCode": {
+                    "label": "Setup Code (optional)",
+                    "placeholder": "Setup code..."
+                }
+            },
+            "currencyInfo": {
+                "moneriumName": "Monerium:",
+                "moneriumDescription": "Best for easy IBAN transfers. Your users can fund their wallets directly via bank transfer, making it simple for non-crypto users.",
+                "circleName": "Circle (USDC):",
+                "circleDescription": "Best for blockchain-native users. Widely used across DeFi platforms and exchanges."
+            },
+            "dns": {
+                "title": "DNS TXT Record Required",
+                "helper": "Add this TXT record to your domain's DNS settings:",
+                "copy": "Copy",
+                "helpQuestion": "How to add a DNS TXT record in my DNS settings?",
+                "helpBody": "Adding a DNS TXT record verifies that you own this domain. The process varies depending on your DNS provider (e.g., Cloudflare, GoDaddy, Namecheap). For detailed step-by-step instructions, please visit our documentation:",
+                "helpCta": "View DNS Setup Guide"
+            },
+            "summary": {
+                "label": "Summary",
+                "description": "Review the information that will be registered on-chain.",
+                "name": "Merchant Name",
+                "domain": "Domain",
+                "currency": "Currency",
+                "provider": "Provider"
+            },
+            "registration": {
+                "label": "Complete registration",
+                "description": "To complete registration:"
+            },
+            "instructions": {
+                "onChain": "Your merchant will be registered on-chain.",
+                "approve": "You'll be asked to approve the transaction using your wallet.",
+                "duration": "Registration usually takes less than a minute"
+            }
+        }
+    },
     "merchantEdit": {
         "title": "Edit",
         "close": "Close",

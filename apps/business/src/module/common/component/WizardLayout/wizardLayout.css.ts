@@ -41,15 +41,10 @@ export const main = style({
 
 /** Header padding: top 24, sides 24, small bottom (content's 24 top spaces the first card). */
 export const header = style({
-    position: "sticky",
-    top: 0,
-    zIndex: 10,
     paddingTop: alias.spacing.l,
     paddingRight: alias.spacing.l,
     paddingBottom: alias.spacing.xs,
     paddingLeft: alias.spacing.l,
-    backdropFilter: "blur(5px)",
-    WebkitBackdropFilter: "blur(5px)",
 });
 
 export const content = style({
@@ -63,14 +58,17 @@ export const footer = style({
     position: "sticky",
     bottom: 0,
     display: "flex",
+    justifyContent: "flex-start",
+    background: `linear-gradient(to top, ${vars.surface.background2} 60%, transparent)`,
+});
+
+/** Caps the button row to the content column so it centres over the cards. */
+export const footerInner = style({
+    width: "100%",
+    maxWidth: 728,
+    display: "flex",
     justifyContent: "center",
     alignItems: "center",
     gap: alias.spacing.s,
-    padding: `${alias.spacing.l} ${alias.spacing.xxl}`,
-    background: `linear-gradient(to top, ${vars.surface.background2} 60%, transparent)`,
-    "@media": {
-        "(max-width: 900px)": {
-            padding: alias.spacing.l,
-        },
-    },
+    padding: alias.spacing.l,
 });

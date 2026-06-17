@@ -1,11 +1,10 @@
-import { Button } from "@frak-labs/design-system/components/Button";
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LinkButton } from "@/module/common/component/LinkButton";
 import { PageShell } from "@/module/common/component/PageShell";
 import { resolveActiveMerchant } from "@/module/common/utils/resolveActiveMerchant";
-import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
 
 /**
  * Dual-purpose `/dashboard` route:
@@ -40,14 +39,13 @@ function OnboardingDashboard() {
                 title={t("dashboard.empty.title")}
                 description={t("dashboard.empty.description")}
             />
-            <AddMerchantSheet
-                trigger={
-                    <Button variant="primary">
-                        <Plus size={16} />
-                        {t("shell.header.addMerchant")}
-                    </Button>
-                }
-            />
+            <LinkButton
+                to="/merchant/new"
+                variant="primary"
+                icon={<Plus size={16} />}
+            >
+                {t("shell.header.addMerchant")}
+            </LinkButton>
         </PageShell>
     );
 }

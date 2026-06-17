@@ -5,8 +5,8 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
+import { WizardLayout } from "@/module/common/component/WizardLayout";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import { CampaignWizardLayout } from "../CampaignWizardLayout";
 import { ButtonCancel } from "../NewCampaign/ButtonCancel";
 import {
     isLastStep,
@@ -62,7 +62,7 @@ export function WizardStep({
     const current = stepI18n(stepKey);
 
     return (
-        <CampaignWizardLayout
+        <WizardLayout
             steps={steps}
             activeStep={activeStep}
             title={t(current.label)}
@@ -119,6 +119,6 @@ export function WizardStep({
             }
         >
             {children}
-        </CampaignWizardLayout>
+        </WizardLayout>
     );
 }

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
-import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
+import { LinkButton } from "@/module/common/component/LinkButton";
 import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
 import { AccountMenu } from "./AccountMenu";
 import { HeaderBreadcrumb } from "./HeaderBreadcrumb";
@@ -72,14 +72,13 @@ export function Header() {
                         )}
                         {showSendPush && <ButtonSendPush />}
                         {showAddMerchant && (
-                            <AddMerchantSheet
-                                trigger={
-                                    <Button variant="primary">
-                                        <Plus size={16} />
-                                        {t("shell.header.addMerchant")}
-                                    </Button>
-                                }
-                            />
+                            <LinkButton
+                                to="/merchant/new"
+                                variant="primary"
+                                icon={<Plus size={16} />}
+                            >
+                                {t("shell.header.addMerchant")}
+                            </LinkButton>
                         )}
                     </div>
                     <AccountMenu />

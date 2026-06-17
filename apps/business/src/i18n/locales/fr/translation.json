@@ -953,6 +953,86 @@
             "description": "Une fois activé, toutes les données sont remplacées par des données fictives à des fins de démonstration. Utile pour des présentations ou des tests sans toucher aux données réelles."
         }
     },
+    "merchant": {
+        "create": {
+            "steps": {
+                "details": {
+                    "label": "Détails du marchand",
+                    "hint": "Configurez les informations de votre marchand",
+                    "title": "Détails du marchand",
+                    "subtitle": "Configurez les détails de votre marchand."
+                },
+                "registration": {
+                    "label": "Enregistrement du marchand",
+                    "hint": "Enregistrez votre marchand on-chain",
+                    "title": "Enregistrement du marchand",
+                    "subtitle": "Enregistrez votre marchand sur la blockchain"
+                }
+            },
+            "actions": {
+                "close": "Fermer",
+                "back": "Retour",
+                "continue": "Continuer",
+                "completeRegistration": "Finaliser l'enregistrement"
+            },
+            "fields": {
+                "name": {
+                    "label": "Saisissez un nom de marchand",
+                    "placeholder": "Nom du marchand",
+                    "required": "Le nom du marchand est requis",
+                    "minLength": "Le nom du marchand doit comporter au moins 2 caractères"
+                },
+                "currency": {
+                    "label": "Devise",
+                    "description": "La devise par défaut de vos campagnes"
+                },
+                "domain": {
+                    "label": "Configuration du domaine",
+                    "nameLabel": "Nom de domaine",
+                    "required": "Le nom de domaine est requis",
+                    "invalid": "Veuillez saisir un domaine valide (par ex. example.com)",
+                    "alreadyRegistered": "Un marchand existe déjà pour le domaine {{domain}}",
+                    "dnsNotSet": "L'enregistrement DNS TXT n'est pas défini, ou le code de configuration est invalide",
+                    "verifyFailed": "Échec de la vérification du domaine"
+                },
+                "setupCode": {
+                    "label": "Code de configuration (optionnel)",
+                    "placeholder": "Code de configuration..."
+                }
+            },
+            "currencyInfo": {
+                "moneriumName": "Monerium :",
+                "moneriumDescription": "Idéal pour les virements IBAN faciles. Vos utilisateurs peuvent alimenter leur portefeuille directement par virement bancaire, ce qui le rend simple pour les utilisateurs non-crypto.",
+                "circleName": "Circle (USDC) :",
+                "circleDescription": "Idéal pour les utilisateurs natifs de la blockchain. Largement utilisé sur les plateformes DeFi et les exchanges."
+            },
+            "dns": {
+                "title": "Enregistrement DNS TXT requis",
+                "helper": "Ajoutez cet enregistrement TXT aux paramètres DNS de votre domaine :",
+                "copy": "Copier",
+                "helpQuestion": "Comment ajouter un enregistrement DNS TXT dans mes paramètres DNS ?",
+                "helpBody": "Ajouter un enregistrement DNS TXT confirme que vous êtes propriétaire de ce domaine. La procédure varie selon votre fournisseur DNS (par ex. Cloudflare, GoDaddy, Namecheap). Pour des instructions détaillées étape par étape, consultez notre documentation :",
+                "helpCta": "Voir le guide de configuration DNS"
+            },
+            "summary": {
+                "label": "Récapitulatif",
+                "description": "Vérifiez les informations qui seront enregistrées on-chain.",
+                "name": "Nom du marchand",
+                "domain": "Domaine",
+                "currency": "Devise",
+                "provider": "Fournisseur"
+            },
+            "registration": {
+                "label": "Finaliser l'enregistrement",
+                "description": "Pour finaliser l'enregistrement :"
+            },
+            "instructions": {
+                "onChain": "Votre marchand sera enregistré on-chain.",
+                "approve": "Il vous sera demandé d'approuver la transaction avec votre portefeuille.",
+                "duration": "L'enregistrement prend généralement moins d'une minute"
+            }
+        }
+    },
     "merchantEdit": {
         "title": "Modifier",
         "close": "Fermer",

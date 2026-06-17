@@ -896,6 +896,86 @@ export default interface Resources {
       },
       "sendPushNotification": "Send Push Notification"
     },
+    "merchant": {
+      "create": {
+        "actions": {
+          "back": "Back",
+          "close": "Close",
+          "completeRegistration": "Complete Registration",
+          "continue": "Continue"
+        },
+        "currencyInfo": {
+          "circleDescription": "Best for blockchain-native users. Widely used across DeFi platforms and exchanges.",
+          "circleName": "Circle (USDC):",
+          "moneriumDescription": "Best for easy IBAN transfers. Your users can fund their wallets directly via bank transfer, making it simple for non-crypto users.",
+          "moneriumName": "Monerium:"
+        },
+        "dns": {
+          "copy": "Copy",
+          "helpBody": "Adding a DNS TXT record verifies that you own this domain. The process varies depending on your DNS provider (e.g., Cloudflare, GoDaddy, Namecheap). For detailed step-by-step instructions, please visit our documentation:",
+          "helpCta": "View DNS Setup Guide",
+          "helpQuestion": "How to add a DNS TXT record in my DNS settings?",
+          "helper": "Add this TXT record to your domain's DNS settings:",
+          "title": "DNS TXT Record Required"
+        },
+        "fields": {
+          "currency": {
+            "description": "The default currency for your campaigns",
+            "label": "Currency"
+          },
+          "domain": {
+            "alreadyRegistered": "A merchant already exists for the domain {{domain}}",
+            "dnsNotSet": "The DNS TXT record is not set, or the setup code is invalid",
+            "invalid": "Please enter a valid domain (e.g., example.com)",
+            "label": "Domain Configuration",
+            "nameLabel": "Domain Name",
+            "required": "Domain name is required",
+            "verifyFailed": "Failed to verify domain"
+          },
+          "name": {
+            "label": "Enter a Merchant Name",
+            "minLength": "Merchant name must be at least 2 characters",
+            "placeholder": "Merchant name",
+            "required": "Merchant name is required"
+          },
+          "setupCode": {
+            "label": "Setup Code (optional)",
+            "placeholder": "Setup code..."
+          }
+        },
+        "instructions": {
+          "approve": "You'll be asked to approve the transaction using your wallet.",
+          "duration": "Registration usually takes less than a minute",
+          "onChain": "Your merchant will be registered on-chain."
+        },
+        "registration": {
+          "description": "To complete registration:",
+          "label": "Complete registration"
+        },
+        "steps": {
+          "details": {
+            "hint": "Set up your merchant information",
+            "label": "Add merchant details",
+            "subtitle": "Configure your merchant details.",
+            "title": "Add merchant details"
+          },
+          "registration": {
+            "hint": "Register your merchant on-chain",
+            "label": "Merchant registration",
+            "subtitle": "Register your merchant on the blockchain",
+            "title": "Merchant registration"
+          }
+        },
+        "summary": {
+          "currency": "Currency",
+          "description": "Review the information that will be registered on-chain.",
+          "domain": "Domain",
+          "label": "Summary",
+          "name": "Merchant Name",
+          "provider": "Provider"
+        }
+      }
+    },
     "merchantEdit": {
       "close": "Close",
       "details": {

@@ -6,9 +6,9 @@ import {
 } from "@frak-labs/design-system/components/Stepper";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
-import * as styles from "./campaignWizardLayout.css";
+import * as styles from "./wizardLayout.css";
 
-type CampaignWizardLayoutProps = {
+type WizardLayoutProps = {
     /** Resolved stepper steps (title + description), localised by the caller. */
     steps: StepperStep[];
     /** Index of the active step (0-based). */
@@ -28,7 +28,12 @@ type CampaignWizardLayoutProps = {
     children: ReactNode;
 };
 
-export function CampaignWizardLayout({
+/**
+ * Full-screen wizard chrome shared by the campaign and merchant creation flows:
+ * a left stepper rail, a header (title + leading/actions), the scrollable
+ * content column, and a sticky footer bar centred over the content.
+ */
+export function WizardLayout({
     steps,
     activeStep,
     onStepClick,
@@ -38,7 +43,7 @@ export function CampaignWizardLayout({
     headerActions,
     footer,
     children,
-}: CampaignWizardLayoutProps) {
+}: WizardLayoutProps) {
     return (
         <div className={styles.root}>
             <aside className={styles.rail}>
@@ -50,7 +55,6 @@ export function CampaignWizardLayout({
             </aside>
             <div className={styles.main}>
                 <Stack space="m" className={styles.header}>
-                    {/* Controls row: Back (left) + Save/Close (right). */}
                     <Inline
                         space="m"
                         align="space-between"
@@ -64,7 +68,6 @@ export function CampaignWizardLayout({
                             </Inline>
                         )}
                     </Inline>
-                    {/* Title block. */}
                     <Stack space="xs">
                         <Text as="h1" variant="heading1">
                             {title}
@@ -77,7 +80,11 @@ export function CampaignWizardLayout({
                     </Stack>
                 </Stack>
                 <div className={styles.content}>{children}</div>
-                {footer && <div className={styles.footer}>{footer}</div>}
+                {footer && (
+                    <div className={styles.footer}>
+                        <div className={styles.footerInner}>{footer}</div>
+                    </div>
+                )}
             </div>
         </div>
     );
