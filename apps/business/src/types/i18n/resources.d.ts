@@ -1200,6 +1200,7 @@ export default interface Resources {
           },
           "description": "Choose when this notification should be sent.",
           "later": {
+            "comingSoon": "Coming soon",
             "description": "Choose a date and time for delivery.",
             "label": "Schedule for later"
           },

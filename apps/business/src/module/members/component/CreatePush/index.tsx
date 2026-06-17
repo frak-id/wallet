@@ -25,7 +25,7 @@ const DEFAULT_VALUES: FormCreatePushNotification = {
     pushCampaignTitle: "",
     payload: { title: "", body: "", icon: "", data: { url: "" } },
     targetCount: 0,
-    schedule: { type: "", date: "", time: "" },
+    schedule: { type: "now", date: "", time: "" },
 };
 
 /**
@@ -43,9 +43,20 @@ export function CreatePushNotification() {
     // reactively would fight react-hook-form's own state on every keystroke.
     const [initialDraft] = useState(() => {
         const state = pushCreationStore.getState();
-        return state.draftMerchantId === merchantId
-            ? state.currentPushCreationForm
-            : undefined;
+        const draft =
+            state.draftMerchantId === merchantId
+                ? state.currentPushCreationForm
+                : undefined;
+        if (!draft) return undefined;
+        // Scheduling is greyed out for now — coerce any "later" draft back to
+        // immediate so it can't resurrect a misleading "Schedule" confirmation.
+        if (draft.schedule?.type !== "now") {
+            return {
+                ...draft,
+                schedule: { type: "now" as const, date: "", time: "" },
+            };
+        }
+        return draft;
     });
 
     const form = useForm<FormCreatePushNotification>({

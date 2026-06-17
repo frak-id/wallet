@@ -204,7 +204,8 @@
                 },
                 "later": {
                     "label": "Schedule for later",
-                    "description": "Choose a date and time for delivery."
+                    "description": "Choose a date and time for delivery.",
+                    "comingSoon": "Coming soon"
                 },
                 "date": {
                     "label": "Select date"

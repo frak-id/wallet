@@ -39,6 +39,11 @@ export const scheduleCell = style({
     cursor: "pointer",
 });
 
+/** Matches the greyed-out radio: whole cell reads as unavailable on hover. */
+export const scheduleCellDisabled = style({
+    cursor: "not-allowed",
+});
+
 export const dateRow = style({
     display: "flex",
     alignItems: "flex-start",
