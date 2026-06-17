@@ -89,6 +89,10 @@ export function ExplorerPhonePreview({
                 src={phoneFrameUrl}
                 srcSet={`${phoneFrameUrl} 1x, ${phoneFrame2xUrl} 2x`}
                 alt=""
+                width={353}
+                height={735}
+                decoding="async"
+                fetchPriority="low"
                 className={styles.frameImage}
             />
 
