@@ -868,15 +868,6 @@ export default interface Resources {
         "rewards": "Rewards ({{currency}})",
         "wallet": "Wallet"
       },
-      "details": {
-        "activity": "Activity",
-        "close": "Close",
-        "interactions": "Interactions",
-        "memberSince": "Member since {{date}}",
-        "merchants": "Merchants",
-        "rewardsEarned": "Rewards earned",
-        "wallet": "Wallet"
-      },
       "filters": {
         "button": "Filters",
         "from": "From",

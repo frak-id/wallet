@@ -134,15 +134,6 @@
             "maxGreaterThanMinError": "Max interactions should be greater than minimum"
         },
         "sendPushNotification": "Send Push Notification",
-        "details": {
-            "memberSince": "Member since {{date}}",
-            "wallet": "Wallet",
-            "activity": "Activity",
-            "interactions": "Interactions",
-            "rewardsEarned": "Rewards earned",
-            "merchants": "Merchants",
-            "close": "Close"
-        },
         "audience": {
             "title": "Audience",
             "required": "Push audience is required",

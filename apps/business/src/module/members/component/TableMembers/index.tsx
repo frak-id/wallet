@@ -17,7 +17,6 @@ import type {
     GetMembersPageItem,
     GetMembersParam,
 } from "@/module/members/api/getMerchantMembers";
-import { MemberDetailsSheet } from "@/module/members/component/MemberDetailsSheet";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
@@ -74,13 +73,6 @@ export function TableMembers() {
     const [sortingState, setSorting] = useState<SortingState>([]);
 
     /**
-     * Member currently displayed in the right-side details sheet.
-     */
-    const [selectedMember, setSelectedMember] = useState<
-        GetMembersPageItem | undefined
-    >();
-
-    /**
      * Every time sorting state changes, update the filters
      */
     useEffect(() => {
@@ -122,12 +114,7 @@ export function TableMembers() {
                     enableSorting: true,
                     header: () => t("members.columns.wallet"),
                     cell: ({ getValue }) => (
-                        <span
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                        >
-                            <WalletAddress wallet={getValue()} />
-                        </span>
+                        <WalletAddress wallet={getValue()} />
                     ),
                 }),
                 columnHelper.accessor("merchantNames", {
@@ -165,35 +152,26 @@ export function TableMembers() {
     }
 
     return (
-        <>
-            <Stack space="l">
-                <TableMembersFilters />
-                {page && (
-                    <Table
-                        data={page.members}
-                        columns={columns}
-                        emptyPlaceholder="–"
-                        manualPagination={true}
-                        manualSorting={true}
-                        rowCount={page.totalResult}
-                        pagination={paginationState}
-                        sorting={sortingState}
-                        onSortingChange={setSorting}
-                        onRowClick={(row) => setSelectedMember(row.original)}
-                        postTable={
-                            page.totalResult > (filters.limit ?? 10) && (
-                                <Pagination totalResult={page.totalResult} />
-                            )
-                        }
-                    />
-                )}
-            </Stack>
-            <MemberDetailsSheet
-                member={selectedMember}
-                onOpenChange={(open) =>
-                    setSelectedMember(open ? selectedMember : undefined)
-                }
-            />
-        </>
+        <Stack space="l">
+            <TableMembersFilters />
+            {page && (
+                <Table
+                    data={page.members}
+                    columns={columns}
+                    emptyPlaceholder="–"
+                    manualPagination={true}
+                    manualSorting={true}
+                    rowCount={page.totalResult}
+                    pagination={paginationState}
+                    sorting={sortingState}
+                    onSortingChange={setSorting}
+                    postTable={
+                        page.totalResult > (filters.limit ?? 10) && (
+                            <Pagination totalResult={page.totalResult} />
+                        )
+                    }
+                />
+            )}
+        </Stack>
     );
 }

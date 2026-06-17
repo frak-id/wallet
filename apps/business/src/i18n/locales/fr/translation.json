@@ -134,15 +134,6 @@
             "maxGreaterThanMinError": "Le maximum doit être supérieur au minimum"
         },
         "sendPushNotification": "Envoyer une notification push",
-        "details": {
-            "memberSince": "Membre depuis le {{date}}",
-            "wallet": "Wallet",
-            "activity": "Activité",
-            "interactions": "Interactions",
-            "rewardsEarned": "Récompenses gagnées",
-            "merchants": "Marchands",
-            "close": "Fermer"
-        },
         "audience": {
             "title": "Audience",
             "required": "L'audience du push est requise",
