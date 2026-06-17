@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 // Lift above a fixed header (z-index 1) when needed; the popover portals to
@@ -32,7 +32,7 @@ export const presetButton = style({
     color: vars.text.primary,
     cursor: "pointer",
     fontSize: "13px",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     whiteSpace: "nowrap",
     ":hover": {
         backgroundColor: vars.surface.muted,
@@ -41,7 +41,7 @@ export const presetButton = style({
 
 export const presetButtonActive = style({
     backgroundColor: vars.surface.muted,
-    fontWeight: 600,
+    fontWeight: brand.typography.fontWeight.semiBold,
 });
 
 export const clearButton = style({
@@ -54,7 +54,7 @@ export const clearButton = style({
     color: vars.text.tertiary,
     cursor: "pointer",
     fontSize: "13px",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     ":hover": {
         color: vars.text.primary,
         backgroundColor: vars.surface.muted,

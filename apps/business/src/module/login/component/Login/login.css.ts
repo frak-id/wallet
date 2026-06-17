@@ -71,7 +71,7 @@ export const subtitle = style({
     margin: 0,
     fontSize: "18px",
     lineHeight: "28px",
-    fontWeight: 400,
+    fontWeight: brand.typography.fontWeight.regular,
     color: vars.text.primary,
     "@media": {
         [mobile]: {

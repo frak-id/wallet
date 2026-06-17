@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const body = style({
@@ -26,7 +26,7 @@ export const threeCol = style({
 export const amount = style({
     fontSize: "32px",
     lineHeight: "40px",
-    fontWeight: 600,
+    fontWeight: brand.typography.fontWeight.semiBold,
     color: vars.text.primary,
     fontVariantNumeric: "tabular-nums",
     letterSpacing: "-0.01em",
@@ -35,7 +35,7 @@ export const amount = style({
 // Decimal/fraction part rendered smaller, baseline-aligned (Figma "Decimals").
 export const amountFraction = style({
     fontSize: "20px",
-    fontWeight: 600,
+    fontWeight: brand.typography.fontWeight.semiBold,
 });
 
 // Layout only — font/line-height/weight come from <Text variant="bodySmall">,

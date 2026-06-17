@@ -1,4 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
+import { brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 // Lets the KPI Card shrink inside the `repeat(N, minmax(0,1fr))` grid; the DS
@@ -10,7 +11,7 @@ export const cell = style({
 export const amount = style({
     fontSize: "32px",
     lineHeight: "40px",
-    fontWeight: 600,
+    fontWeight: brand.typography.fontWeight.semiBold,
     color: vars.text.primary,
     fontVariantNumeric: "tabular-nums",
 });

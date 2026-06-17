@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const page = style({
@@ -56,7 +56,7 @@ export const chartBox = style({
 export const chartAmount = style({
     fontSize: "32px",
     lineHeight: "36px",
-    fontWeight: 600,
+    fontWeight: brand.typography.fontWeight.semiBold,
     color: vars.text.primary,
     fontVariantNumeric: "tabular-nums",
 });

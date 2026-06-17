@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 /* ---- budget period ---- */
@@ -88,7 +88,7 @@ export const capGlyph = style({
     minWidth: "24px",
     color: vars.icon.tertiary,
     fontSize: "16px",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     lineHeight: "24px",
     textAlign: "center",
     whiteSpace: "nowrap",

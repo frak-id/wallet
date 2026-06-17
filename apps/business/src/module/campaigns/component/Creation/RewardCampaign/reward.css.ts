@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 /* ---- campaign type ---- */
@@ -63,7 +63,7 @@ export const unitText = style({
     flexShrink: 0,
     color: vars.icon.tertiary,
     fontSize: "14px",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     textTransform: "uppercase",
     whiteSpace: "nowrap",
 });
@@ -74,7 +74,7 @@ export const unitGlyph = style({
     minWidth: "24px",
     color: vars.icon.tertiary,
     fontSize: "16px",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     lineHeight: "24px",
     textAlign: "center",
     whiteSpace: "nowrap",
