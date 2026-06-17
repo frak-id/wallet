@@ -24,7 +24,7 @@ export function ButtonSendPush({
             to="/m/$merchantId/push/create"
             params={{ merchantId }}
             onClick={() => setForm(undefined)}
-            icon={<Plus size={20} />}
+            icon={<Plus size={16} />}
             size={size}
         >
             {children ?? t("members.sendPushNotification")}

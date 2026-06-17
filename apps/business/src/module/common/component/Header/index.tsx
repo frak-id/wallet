@@ -70,11 +70,12 @@ export function Header() {
                         {showCreateCampaign && (
                             <ButtonNewCampaign size="small" />
                         )}
-                        {showSendPush && <ButtonSendPush />}
+                        {showSendPush && <ButtonSendPush size="small" />}
                         {showAddMerchant && (
                             <LinkButton
                                 to="/merchant/new"
                                 variant="primary"
+                                size="small"
                                 icon={<Plus size={16} />}
                             >
                                 {t("shell.header.addMerchant")}
