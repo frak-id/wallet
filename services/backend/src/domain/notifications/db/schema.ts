@@ -12,7 +12,10 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
-import type { SendNotificationPayload } from "../dto/SendNotificationDto";
+import type {
+    SendNotificationPayload,
+    SendNotificationTargets,
+} from "../dto/SendNotificationDto";
 import type { NotificationStatus, NotificationType } from "../schemas";
 
 export type PushTokenType = "web-push" | "fcm";
@@ -54,8 +57,12 @@ export const pushTokensTable = pgTable(
 );
 
 /**
- * Groups individual notification_sent rows for a single merchant broadcast.
- * Each time a merchant clicks "Send" in the dashboard, one row is created here.
+ * One row per merchant broadcast; groups the related notification_sent rows.
+ * Also acts as the scheduled-notification queue. State is derived from two nullable
+ * timestamps:
+ *  - scheduledAt null             → immediate broadcast (legacy /send, untouched)
+ *  - scheduledAt set, sentAt null → pending scheduled (listable / removable)
+ *  - sentAt set                   → claimed by the cron (idempotency guard)
  */
 export const notificationBroadcastsTable = pgTable(
     "notification_broadcasts",
@@ -63,11 +70,16 @@ export const notificationBroadcastsTable = pgTable(
         id: uuid("id").primaryKey().defaultRandom(),
         merchantId: uuid("merchant_id").notNull(),
         payload: jsonb("payload").$type<SendNotificationPayload>().notNull(),
+        /** Audience resolved at send time — null for immediate broadcasts. */
+        targets: jsonb("targets").$type<SendNotificationTargets>(),
+        scheduledAt: timestamp("scheduled_at"),
+        sentAt: timestamp("sent_at"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [
         index("notification_broadcasts_merchant_idx").on(table.merchantId),
         index("notification_broadcasts_created_at_idx").on(table.createdAt),
+        index("notification_broadcasts_scheduled_at_idx").on(table.scheduledAt),
     ]
 );
 

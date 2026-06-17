@@ -14,6 +14,7 @@ export {
     type LocalisedNotificationPayload,
     type SendNotificationPayload,
     SendNotificationPayloadDto,
+    type SendNotificationTargets,
     SendNotificationTargetsDto,
 } from "./dto/SendNotificationDto";
 export { notificationMacro } from "./macro";

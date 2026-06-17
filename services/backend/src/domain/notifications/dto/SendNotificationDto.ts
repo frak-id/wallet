@@ -32,6 +32,8 @@ export const SendNotificationTargetsDto = t.Union([
     }),
 ]);
 
+export type SendNotificationTargets = typeof SendNotificationTargetsDto.static;
+
 export const SendNotificationPayloadDto = t.Object({
     title: t.String(),
     body: t.String(),

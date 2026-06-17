@@ -70,7 +70,8 @@ const interactionContextBuilder = new InteractionContextBuilder(
 
 const notificationOrchestrator = new NotificationOrchestrator(
     NotificationContext.services.notifications,
-    MerchantContext.repositories.merchant
+    MerchantContext.repositories.merchant,
+    NotificationContext.repositories.notificationBroadcast
 );
 
 const batchRewardOrchestrator = new BatchRewardOrchestrator(

@@ -715,6 +715,10 @@ vi.mock("../../src/domain/business/context", () => ({
 export const notificationOrchestratorMocks = {
     sendNotifications: vi.fn(() => Promise.resolve()),
     sendPromotionalNotification: vi.fn(() => Promise.resolve()),
+    resolveWalletsFromTargets: vi.fn((targets: { wallets?: `0x${string}`[] }) =>
+        Promise.resolve("wallets" in targets ? (targets.wallets ?? []) : [])
+    ),
+    processDueScheduledNotifications: vi.fn(() => Promise.resolve()),
 };
 
 export const rewardHistoryOrchestratorMocks = {
