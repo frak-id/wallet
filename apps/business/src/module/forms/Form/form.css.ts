@@ -84,10 +84,6 @@ export const formTitle = style({
     fontSize: "16px",
 });
 
-export const formError = style({
-    color: `${brand.colors.error[600]} !important`,
-});
-
 // Radio checked highlight
 globalStyle(
     `${formItem.classNames.variants.variant.radio}:has(button[data-state="checked"])`,

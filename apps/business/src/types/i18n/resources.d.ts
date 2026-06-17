@@ -632,6 +632,10 @@ export default interface Resources {
       }
     },
     "common": {
+      "dateField": {
+        "openCalendar": "Open calendar",
+        "placeholder": "dd/mm/yyyy"
+      },
       "dateRange": {
         "clear": "Clear",
         "label": "Date range",
@@ -1045,6 +1049,93 @@ export default interface Resources {
       },
       "title": "Edit"
     },
+    "push": {
+      "create": {
+        "audience": {
+          "description": "Choose which members should receive this notification.",
+          "matched": "Audience matched: <0>{{total}}</0> members",
+          "title": "Audience"
+        },
+        "campaign": {
+          "hint": "Internal name used to identify this notification campaign. Members will not see it.",
+          "label": "Campaign name",
+          "maxLength": "The campaign name can't exceed 100 characters",
+          "minLength": "The campaign name requires at least 5 characters",
+          "placeholder": "E.g. Summer reactivation campaign",
+          "required": "Campaign name is required"
+        },
+        "charCount": "{{current}} / {{max}} characters",
+        "close": "Close",
+        "content": {
+          "description": "Create the push notification your members will receive.",
+          "image": {
+            "hint": "Optional. Display an image in the notification when supported by the device.",
+            "label": "Image URL",
+            "placeholder": "https://..."
+          },
+          "launchUrl": {
+            "label": "Launch URL",
+            "placeholder": "https://..."
+          },
+          "message": {
+            "label": "Notification message",
+            "max": "The message can't exceed 500 characters",
+            "min": "The message requires at least 10 characters",
+            "placeholder": "Enter notification message",
+            "required": "Notification message is required"
+          },
+          "notificationTitle": {
+            "label": "Notification title",
+            "max": "The notification title can't exceed 40 characters",
+            "min": "The notification title requires at least 8 characters",
+            "placeholder": "Enter notification title",
+            "required": "Notification title is required"
+          },
+          "title": "Notification content"
+        },
+        "leave": {
+          "confirm": "Yes, leave",
+          "continueEditing": "Continue editing",
+          "description": "You've started creating a push notification. If you leave, any information you've entered will be lost.",
+          "title": "Leave notification setup?"
+        },
+        "preview": {
+          "message": "Your notification message will appear here.",
+          "title": "Your notification title"
+        },
+        "publish": "Publish notification",
+        "review": {
+          "audience": "Audience",
+          "audienceValue": "{{total}} members",
+          "continueEditing": "Continue editing",
+          "delivery": "Delivery",
+          "immediately": "Immediately",
+          "schedule": "Schedule notification",
+          "send": "Send notification",
+          "title": "Review notification"
+        },
+        "schedule": {
+          "date": {
+            "label": "Select date"
+          },
+          "description": "Choose when this notification should be sent.",
+          "later": {
+            "description": "Choose a date and time for delivery.",
+            "label": "Schedule for later"
+          },
+          "now": {
+            "description": "Send as soon as it's published.",
+            "label": "Send immediately"
+          },
+          "required": "Pick a date and time for delivery",
+          "time": {
+            "label": "Select time"
+          },
+          "title": "Schedule"
+        },
+        "title": "Send Push Notification"
+      }
+    },
     "settings": {
       "currency": {
         "label": "Choose your preferred currency",
@@ -1110,9 +1201,6 @@ export default interface Resources {
         },
         "push": {
           "nav": "Push"
-        },
-        "pushConfirm": {
-          "nav": "Confirm"
         },
         "pushCreate": {
           "nav": "Create"

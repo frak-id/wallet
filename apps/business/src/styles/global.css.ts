@@ -24,7 +24,9 @@ globalStyle("body", {
     fontSize: "14px",
     lineHeight: 1.5,
     WebkitFontSmoothing: "antialiased",
-    overflowX: "hidden",
+    // No `overflow-x` here: <html> already clips horizontal scroll and is the
+    // scroll container. Setting it on <body> too makes <body> its own
+    // non-scrolling scroll-box, which breaks `position: sticky` descendants.
     margin: 0,
     padding: 0,
 });

@@ -21,13 +21,8 @@ export const page = style({
 });
 
 export const toolbar = style({
-    position: "sticky",
-    top: 0,
-    zIndex: 10,
     paddingTop: alias.spacing.l,
     paddingBottom: alias.spacing.xs,
-    backdropFilter: "blur(5px)",
-    WebkitBackdropFilter: "blur(5px)",
 });
 
 export const content = style({

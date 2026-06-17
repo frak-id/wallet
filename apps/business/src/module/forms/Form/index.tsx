@@ -1,3 +1,4 @@
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import type { RecipeVariants } from "@vanilla-extract/recipes";
@@ -9,7 +10,6 @@ import { Controller, FormProvider, useFormContext } from "react-hook-form";
 import { Label } from "@/module/forms/Label";
 import {
     formDescription,
-    formError,
     formItem,
     formLabel,
     formLayout,
@@ -115,14 +115,13 @@ const FormLabel = ({
     className,
     ...props
 }: FormLabelProps) => {
-    const { error, formItemId } = useFormField();
+    const { formItemId } = useFormField();
     return (
         <Label
             ref={ref}
             className={clsx(
                 formLabel({ variant, selected, weight }),
-                className,
-                error && formError
+                className
             )}
             htmlFor={formItemId}
             {...props}
@@ -185,11 +184,12 @@ const FormDescription = ({
 FormDescription.displayName = "FormDescription";
 
 const FormMessage = ({
-    ref,
-    className = "",
+    className,
     children,
-    ...props
-}: ComponentPropsWithRef<"p">) => {
+}: {
+    className?: string;
+    children?: ReactNode;
+}) => {
     const { error, formMessageId } = useFormField();
     const body = error ? String(error?.message) : children;
 
@@ -198,14 +198,9 @@ const FormMessage = ({
     }
 
     return (
-        <p
-            ref={ref}
-            id={formMessageId}
-            className={clsx("error", className)}
-            {...props}
-        >
+        <FieldError id={formMessageId} className={className}>
             {body}
-        </p>
+        </FieldError>
     );
 };
 FormMessage.displayName = "FormMessage";

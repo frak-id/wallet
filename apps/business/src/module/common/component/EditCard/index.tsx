@@ -4,8 +4,9 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
 
 /**
- * Card shell shared by the merchant Edit pages: quiet group title,
- * optional description, then the body blocks (cells, fields, actions).
+ * Card shell shared by the immersive Edit pages (merchant edit, push
+ * creation): quiet group title, optional description, then the body blocks
+ * (cells, fields, actions).
  */
 export function EditCard({
     title,

@@ -5,6 +5,8 @@ import { ExplorerPhonePreview } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { EditCard } from "@/module/common/component/EditCard";
+import { FloatingPhonePreview } from "@/module/common/component/FloatingPhonePreview";
 import { isValidUrl, normalizeUrl } from "@/module/common/utils/validateUrl";
 import { EditField } from "@/module/forms/EditField";
 import {
@@ -20,7 +22,6 @@ import { MultiHeroImagesField } from "@/module/merchant/component/MultiHeroImage
 import { useCustomizeSection } from "@/module/merchant/component/saveRegistry";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import { EditCard } from "../EditCard";
 import * as styles from "./merchant-details.css";
 
 type ExplorerFormValues = {
@@ -248,7 +249,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                     />
                 </EditCard>
             </Form>
-            <div className={styles.phonePreviewFixed}>
+            <FloatingPhonePreview>
                 <ExplorerPhonePreview
                     name={merchant.name}
                     heroImageUrl={previewHero}
@@ -256,7 +257,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                     logoUrl={previewLogo}
                     description={watchedDescription || undefined}
                 />
-            </div>
+            </FloatingPhonePreview>
         </>
     );
 }

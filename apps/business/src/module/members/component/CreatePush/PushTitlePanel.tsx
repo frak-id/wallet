@@ -1,56 +1,50 @@
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-} from "@frak-labs/design-system/components/Card";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { useFormContext } from "react-hook-form";
-import {
-    FormControl,
-    FormField,
-    FormItem,
-    FormMessage,
-} from "@/module/forms/Form";
+import { useTranslation } from "react-i18next";
+import { EditField } from "@/module/forms/EditField";
+import { FormControl, FormField } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
 
 /**
- * Audience panel
- * @constructor
+ * Campaign name — single inset field (the label aligns with the input text).
  */
 export function PushTitlePanel() {
-    const form = useFormContext<FormCreatePushNotification>();
+    const { t } = useTranslation();
+    const { control } = useFormContext<FormCreatePushNotification>();
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Push Notification Title</CardTitle>
-            </CardHeader>
+        <Card radius={"m"}>
             <FormField
-                control={form.control}
+                control={control}
                 name={"pushCampaignTitle"}
                 rules={{
-                    required: "Push campaign title is required",
+                    required: t("push.create.campaign.required"),
                     minLength: {
                         value: 5,
-                        message:
-                            "The push campaign title require at least 5 characters",
+                        message: t("push.create.campaign.minLength"),
                     },
                     maxLength: {
                         value: 100,
-                        message:
-                            "The push campaign title can't exceed 40 characters",
+                        message: t("push.create.campaign.maxLength"),
                     },
                 }}
                 render={({ field }) => (
-                    <FormItem>
+                    <EditField
+                        label={t("push.create.campaign.label")}
+                        hint={t("push.create.campaign.hint")}
+                    >
                         <FormControl>
                             <Input
-                                length={"medium"}
-                                placeholder={"My New Push Campaign"}
+                                variant={"bare"}
+                                tone={"muted"}
+                                placeholder={t(
+                                    "push.create.campaign.placeholder"
+                                )}
                                 {...field}
                             />
                         </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                    </EditField>
                 )}
             />
         </Card>

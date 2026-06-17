@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
+import { EditCard } from "@/module/common/component/EditCard";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
-import { EditCard } from "../EditCard";
 import * as styles from "./merchant-summary.css";
 
 function buildShareUrl(domain: string): string {

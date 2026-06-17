@@ -10,8 +10,7 @@ export type PageKey =
     | "settings"
     | "merchant"
     | "push"
-    | "pushCreate"
-    | "pushConfirm";
+    | "pushCreate";
 
 export type SectionKey = "acquisition" | "preview";
 

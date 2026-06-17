@@ -17,6 +17,7 @@ import {
     type BudgetType,
     getCapPeriod,
 } from "@/module/campaigns/utils/capPeriods";
+import { DateField } from "@/module/common/component/DateField";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { InputNumber } from "@/module/forms/InputNumber";
 import {
@@ -30,7 +31,6 @@ import { shouldShowError } from "../fieldError";
 import { WizardFieldCard } from "../WizardFieldCard";
 import { WizardStep } from "../WizardStep";
 import * as styles from "./budget.css";
-import { DateField } from "./DateField";
 
 const FORM_ID = "campaign-budget-form";
 const FRAK_COMMISSION = 0.2;

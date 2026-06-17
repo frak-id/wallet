@@ -29,8 +29,6 @@ function labelFor(segment: string, t: TFunction): string {
             return pageNav(t, "push");
         case "create":
             return pageNav(t, "pushCreate");
-        case "confirm":
-            return pageNav(t, "pushConfirm");
         case "settings":
             return pageNav(t, "settings");
         case "merchant":

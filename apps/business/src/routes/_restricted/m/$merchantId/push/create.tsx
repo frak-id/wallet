@@ -4,6 +4,7 @@ import { RouteError } from "@/module/common/component/RouteError";
 import { CreatePushNotification } from "@/module/members/component/CreatePush";
 
 export const Route = createFileRoute("/_restricted/m/$merchantId/push/create")({
+    staticData: { shell: "bare" },
     component: SendPushNotificationPage,
     errorComponent: CreatePushNotificationError,
 });

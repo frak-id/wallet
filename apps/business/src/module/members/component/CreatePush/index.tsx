@@ -1,135 +1,144 @@
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
-import { Button } from "@/module/common/component/Button";
-import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
-import { Head } from "@/module/common/component/Head";
+import { useTranslation } from "react-i18next";
+import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
+import { FloatingFooter } from "@/module/common/component/FloatingFooter";
+import { pageBottomSpacer } from "@/module/common/component/FloatingFooter/floating-footer.css";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import { Form, FormLayout } from "@/module/forms/Form";
+import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
+import { Form } from "@/module/forms/Form";
 import { AudiencePanel } from "@/module/members/component/CreatePush/AudiencePanel";
+import { PushCreateLayout } from "@/module/members/component/CreatePush/PushCreateLayout";
 import { PushPayloadPanel } from "@/module/members/component/CreatePush/PushPayloadPanel";
+import { PushPreview } from "@/module/members/component/CreatePush/PushPreview";
 import { PushTitlePanel } from "@/module/members/component/CreatePush/PushTitlePanel";
+import { ReviewDialog } from "@/module/members/component/CreatePush/ReviewDialog";
+import { SchedulePanel } from "@/module/members/component/CreatePush/SchedulePanel";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
+import { useSendPushNotification } from "@/module/members/component/CreatePush/useSendPushNotification";
 import { pushCreationStore } from "@/stores/pushCreationStore";
 
+const DEFAULT_VALUES: FormCreatePushNotification = {
+    pushCampaignTitle: "",
+    payload: { title: "", body: "", icon: "", data: { url: "" } },
+    targetCount: 0,
+    schedule: { type: "", date: "", time: "" },
+};
+
 /**
- * Create a push notification
- * @constructor
+ * Compose and send a push notification — single immersive page with an
+ * in-page review modal.
  */
 export function CreatePushNotification() {
-    const previousPushCreationForm = pushCreationStore(
-        (state) => state.currentPushCreationForm
-    );
-    const draftMerchantId = pushCreationStore((state) => state.draftMerchantId);
-    const setForm = pushCreationStore((state) => state.setForm);
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const merchantId = useActiveMerchantId();
 
-    // Only resume the persisted draft when it belongs to the merchant in
-    // the URL. A draft from another merchant would otherwise leak its
-    // targeting + payload data into this composer.
-    const resumableDraft =
-        draftMerchantId === merchantId ? previousPushCreationForm : undefined;
-
-    const form = useForm<FormCreatePushNotification>({
-        values: resumableDraft,
-        defaultValues: {
-            pushCampaignTitle: "",
-            payload: {
-                title: "",
-                body: "",
-                icon: "",
-                data: {
-                    url: "",
-                },
-            },
-        },
+    const setForm = pushCreationStore((state) => state.setForm);
+    const clearForm = pushCreationStore((state) => state.clearForm);
+    // Read the persisted draft once (scoped to this merchant) — reading it
+    // reactively would fight react-hook-form's own state on every keystroke.
+    const [initialDraft] = useState(() => {
+        const state = pushCreationStore.getState();
+        return state.draftMerchantId === merchantId
+            ? state.currentPushCreationForm
+            : undefined;
     });
 
-    const onSubmit = useCallback(
-        async (data: FormCreatePushNotification) => {
-            console.log("Submitting push data", { data });
+    const form = useForm<FormCreatePushNotification>({
+        mode: "onChange",
+        defaultValues: initialDraft ?? DEFAULT_VALUES,
+    });
 
-            // If no target is selected, we can't go to the next step
-            if (data.targetCount === 0) return;
+    const values = form.watch();
+    const hasContent = Boolean(
+        values.pushCampaignTitle ||
+            values.payload?.title ||
+            values.payload?.body ||
+            values.target
+    );
+    const canPublish = form.formState.isValid && (values.targetCount ?? 0) > 0;
 
-            // Save the form in the push creation form, scoped to the
-            // active merchant so the confirm route can reject drafts
-            // that don't belong to the current URL.
-            setForm(data, merchantId);
-            // And go to the confirmation page
-            navigate({
-                to: "/m/$merchantId/push/confirm",
-                params: { merchantId },
-            });
-        },
-        [setForm, navigate, merchantId]
+    const sendMutation = useSendPushNotification(merchantId);
+    const [reviewOpen, setReviewOpen] = useState(false);
+
+    const onValid = (data: FormCreatePushNotification) => {
+        if (data.targetCount === 0) return;
+        // Persist the draft so an accidental refresh resumes it.
+        setForm(data, merchantId);
+        setReviewOpen(true);
+    };
+
+    const { guard, dialogProps } = useDiscardGuard({
+        isDirty: hasContent,
+        onDiscard: clearForm,
+    });
+    const handleClose = () =>
+        guard(() =>
+            navigate({ to: "/m/$merchantId/members", params: { merchantId } })
+        );
+
+    const preview = (
+        <PushPreview
+            title={values.payload?.title || t("push.create.preview.title")}
+            message={values.payload?.body || t("push.create.preview.message")}
+            icon={values.payload?.icon}
+        />
     );
 
     return (
-        <FormLayout>
-            <Head
-                title={{
-                    content: "Send new push notifications",
-                    size: "small",
-                }}
-                rightSection={
-                    <ButtonWithConfirmationAlert
-                        description={
-                            "Are you sure you want to discard everything related to your new push notification?"
-                        }
-                        onClick={() => {
-                            form.reset();
-                            setForm(undefined);
-                            // And go to the previous page
-                            window.history.back();
-                        }}
-                    />
-                }
-            />
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <Stack space="l">
+        <Form {...form}>
+            <div className={pageBottomSpacer}>
+                <PushCreateLayout
+                    title={t("push.create.title")}
+                    onClose={handleClose}
+                    preview={preview}
+                >
+                    <Stack space={"l"}>
                         <PushTitlePanel />
                         <PushPayloadPanel />
                         <AudiencePanel />
-                        <ActionsWrapper
-                            left={
-                                <ButtonWithConfirmationAlert
-                                    description={
-                                        <>
-                                            <p>
-                                                Do you want to stop this push
-                                                notification campaign creation?
-                                            </p>
-                                            <p>
-                                                You will be able to continue
-                                                it's creation later
-                                            </p>
-                                        </>
-                                    }
-                                    title={"Close"}
-                                    buttonText={"Close"}
-                                    onClick={() => {
-                                        // Save the current form state
-                                        // (scoped to the active merchant)
-                                        setForm(form.getValues(), merchantId);
-                                        // And go back
-                                        window.history.back();
-                                    }}
-                                />
-                            }
-                            right={
-                                <Button type={"submit"} variant={"secondary"}>
-                                    Next
-                                </Button>
-                            }
-                        />
+                        <SchedulePanel />
                     </Stack>
-                </form>
-            </Form>
-        </FormLayout>
+                </PushCreateLayout>
+            </div>
+            <FloatingFooter bare align={"content"}>
+                <Button
+                    variant={"primary"}
+                    size={"large"}
+                    width={"auto"}
+                    disabled={!canPublish}
+                    onClick={form.handleSubmit(onValid)}
+                >
+                    {t("push.create.publish")}
+                </Button>
+            </FloatingFooter>
+            <ReviewDialog
+                open={reviewOpen}
+                onOpenChange={(open) => {
+                    setReviewOpen(open);
+                    // Drop a stale failure so reopening starts clean.
+                    if (!open) sendMutation.reset();
+                }}
+                schedule={values.schedule}
+                targetCount={values.targetCount ?? 0}
+                isPending={sendMutation.isPending}
+                error={sendMutation.error?.message}
+                onConfirm={() => sendMutation.mutate(form.getValues())}
+            />
+            <ConfirmDialog
+                open={dialogProps.open}
+                onOpenChange={(open) => !open && dialogProps.onKeepEditing()}
+                title={t("push.create.leave.title")}
+                description={t("push.create.leave.description")}
+                cancelLabel={t("push.create.leave.continueEditing")}
+                confirmLabel={t("push.create.leave.confirm")}
+                confirmTone={"primary"}
+                onConfirm={dialogProps.onDiscard}
+            />
+        </Form>
     );
 }

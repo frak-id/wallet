@@ -18,6 +18,7 @@ import { generatePrivateKey } from "viem/accounts";
 import { Badge } from "@/module/common/component/Badge";
 import { Button as BusinessButton } from "@/module/common/component/Button";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
+import { EditCard } from "@/module/common/component/EditCard";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField } from "@/module/forms/Form";
@@ -28,7 +29,6 @@ import {
 } from "@/module/merchant/hook/usePurchaseWebhookStatus";
 import { useWebhookSetup } from "@/module/merchant/hook/useWebhookSetup";
 import * as cells from "../detail-cells.css";
-import { EditCard } from "../EditCard";
 import * as styles from "./purchase-tracker-sheet.css";
 
 export function PurchaseTrackerSheet({ merchantId }: { merchantId: string }) {

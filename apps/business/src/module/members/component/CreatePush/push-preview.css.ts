@@ -1,59 +1,98 @@
-import { brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const pushPreview = style({
+// Raw px/rgba on purpose — this replicates an iOS lock-screen notification
+// (white glass over a photo), not our themed surfaces.
+
+export const phone = style({
     position: "relative",
-    display: "inline-block",
+    width: "353px",
+    maxWidth: "100%",
 });
 
-export const pushPreviewNotificationWrapper = style({
-    position: "absolute",
-    top: "200px",
-    left: 0,
+export const phoneImage = style({
+    display: "block",
     width: "100%",
+    height: "auto",
 });
 
-export const pushPreviewNotification = style({
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    margin: "0 23px",
-    background: "#f5f5f54d",
-    color: brand.colors.neutral.white,
-    padding: "10px",
-    borderRadius: "18px",
-    fontSize: "11px",
-    letterSpacing: "-0.20000000298023224px",
-});
-
-export const pushPreviewTitle = style({
-    fontSize: "13px",
-    fontWeight: brand.typography.fontWeight.semiBold,
-    letterSpacing: "-0.02em",
-});
-
-export const pushPreviewText = style({
-    fontFamily: "inherit",
-    whiteSpace: "pre-wrap",
-});
-
-export const pushPreviewDate = style({
+/** Glass notification, centered horizontally and ~34% down the wallpaper. */
+export const notification = style({
     position: "absolute",
-    top: "12px",
-    right: "12px",
-    fontSize: "9px",
-    letterSpacing: "-0.20000000298023224px",
-    textAlign: "right",
-    color: "#d7d7d7",
+    top: "34%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "85.9%",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "9.83px",
+    padding: "9.83px",
+    borderRadius: "16.39px",
+    // The frosted glass (blur + tint + border) is baked into the exported
+    // image — set via inline `backgroundImage` in the component.
+    backgroundSize: "100% 100%",
+    backgroundRepeat: "no-repeat",
+    color: "#ffffff",
+    fontFamily:
+        '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif',
 });
 
-export const pushPreviewIcon = style({
-    width: "29px",
-    height: "29px",
-    borderRadius: "10px",
-    background: brand.colors.neutral.white,
+export const icon = style({
+    flexShrink: 0,
+    width: "31px",
+    height: "31px",
+    borderRadius: "6.33px",
+    overflow: "hidden",
+});
+
+export const iconImage = style({
+    display: "block",
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+});
+
+export const body = style({
+    flex: 1,
+    minWidth: 0,
     display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    alignItems: "flex-start",
+    gap: "13.11px",
+});
+
+export const text = style({
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.82px",
+});
+
+export const title = style({
+    margin: 0,
+    fontSize: "12.29px",
+    lineHeight: "15px",
+    fontWeight: 590,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+});
+
+export const message = style({
+    margin: 0,
+    fontSize: "11.47px",
+    lineHeight: "14px",
+    fontWeight: 400,
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+});
+
+export const time = style({
+    flexShrink: 0,
+    fontSize: "9.83px",
+    lineHeight: "11px",
+    letterSpacing: "-0.02em",
+    opacity: 0.5,
+    whiteSpace: "nowrap",
 });

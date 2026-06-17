@@ -83,9 +83,6 @@
             },
             "pushCreate": {
                 "nav": "Créer"
-            },
-            "pushConfirm": {
-                "nav": "Confirmer"
             }
         },
         "header": {
@@ -151,6 +148,93 @@
             "required": "L'audience du push est requise",
             "reach": "Vous toucherez {{count}} membres",
             "minMember": "Il faut au moins 1 membre pour continuer"
+        }
+    },
+    "push": {
+        "create": {
+            "title": "Envoyer une notification push",
+            "close": "Fermer",
+            "campaign": {
+                "label": "Nom de la campagne",
+                "placeholder": "Ex. Campagne de réactivation estivale",
+                "hint": "Nom interne utilisé pour identifier cette campagne de notification. Les membres ne le verront pas.",
+                "required": "Le nom de la campagne est requis",
+                "minLength": "Le nom de la campagne doit comporter au moins 5 caractères",
+                "maxLength": "Le nom de la campagne ne peut pas dépasser 100 caractères"
+            },
+            "content": {
+                "title": "Contenu de la notification",
+                "description": "Créez la notification push que vos membres recevront.",
+                "notificationTitle": {
+                    "label": "Titre de la notification",
+                    "placeholder": "Saisissez le titre de la notification",
+                    "required": "Le titre de la notification est requis",
+                    "min": "Le titre de la notification doit comporter au moins 8 caractères",
+                    "max": "Le titre de la notification ne peut pas dépasser 40 caractères"
+                },
+                "message": {
+                    "label": "Message de la notification",
+                    "placeholder": "Saisissez le message de la notification",
+                    "required": "Le message de la notification est requis",
+                    "min": "Le message doit comporter au moins 10 caractères",
+                    "max": "Le message ne peut pas dépasser 500 caractères"
+                },
+                "image": {
+                    "label": "URL de l'image",
+                    "placeholder": "https://...",
+                    "hint": "Facultatif. Affiche une image dans la notification lorsque l'appareil le permet."
+                },
+                "launchUrl": {
+                    "label": "URL de destination",
+                    "placeholder": "https://..."
+                }
+            },
+            "charCount": "{{current}} / {{max}} caractères",
+            "audience": {
+                "title": "Audience",
+                "description": "Choisissez quels membres recevront cette notification.",
+                "matched": "Audience ciblée : <0>{{total}}</0> membres"
+            },
+            "schedule": {
+                "title": "Planification",
+                "description": "Choisissez quand cette notification doit être envoyée.",
+                "now": {
+                    "label": "Envoyer immédiatement",
+                    "description": "Envoyée dès sa publication."
+                },
+                "later": {
+                    "label": "Planifier pour plus tard",
+                    "description": "Choisissez une date et une heure de livraison."
+                },
+                "date": {
+                    "label": "Sélectionner la date"
+                },
+                "time": {
+                    "label": "Sélectionner l'heure"
+                },
+                "required": "Choisissez une date et une heure de livraison"
+            },
+            "preview": {
+                "title": "Titre de votre notification",
+                "message": "Le message de votre notification apparaîtra ici."
+            },
+            "publish": "Publier la notification",
+            "review": {
+                "title": "Vérifier la notification",
+                "audience": "Audience",
+                "audienceValue": "{{total}} membres",
+                "delivery": "Livraison",
+                "immediately": "Immédiatement",
+                "continueEditing": "Modifier",
+                "send": "Envoyer",
+                "schedule": "Planifier"
+            },
+            "leave": {
+                "title": "Quitter la configuration ?",
+                "description": "Vous avez commencé à créer une notification push. Si vous quittez, toutes les informations saisies seront perdues.",
+                "continueEditing": "Modifier",
+                "confirm": "Oui, quitter"
+            }
         }
     },
     "campaigns": {
@@ -771,6 +855,10 @@
                 "last90": "90 derniers jours",
                 "thisMonth": "Ce mois-ci"
             }
+        },
+        "dateField": {
+            "placeholder": "jj/mm/aaaa",
+            "openCalendar": "Ouvrir le calendrier"
         }
     },
     "bank": {

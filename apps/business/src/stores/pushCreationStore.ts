@@ -5,9 +5,9 @@ import type { FormCreatePushNotification } from "@/module/members/component/Crea
 type PushCreationState = {
     currentPushCreationForm: FormCreatePushNotification | undefined;
     /**
-     * Merchant the persisted draft belongs to. Compared against the URL
-     * merchantId in route guards so a draft started for merchant A
-     * doesn't silently publish under merchant B after a switch.
+     * Merchant the persisted draft belongs to. The composer only resumes a
+     * draft when it matches the URL merchantId, so a draft started for
+     * merchant A doesn't leak into merchant B after a switch.
      */
     draftMerchantId: string | undefined;
     setForm: (
@@ -22,10 +22,10 @@ type PushCreationState = {
  * Persists form state for recovery after page refresh or navigation.
  *
  * Storage is intentionally left as zustand's default (`localStorage`,
- * synchronous) so route loaders can call `getState()` in `beforeLoad`
- * without a hydration race — see `/m/$merchantId/push/confirm`. Do not
- * swap in an async storage backend (IDB, network) without first adding
- * `useStore.persist.hasHydrated()` checks at every read site.
+ * synchronous) so the composer can read `getState()` synchronously on
+ * mount without a hydration race. Do not swap in an async storage backend
+ * (IDB, network) without first adding `useStore.persist.hasHydrated()`
+ * checks at every read site.
  */
 export const pushCreationStore = create<PushCreationState>()(
     persist(

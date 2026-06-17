@@ -1,178 +1,163 @@
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-} from "@frak-labs/design-system/components/Card";
-import { Column } from "@frak-labs/design-system/components/Column";
-import { Columns } from "@frak-labs/design-system/components/Columns";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { TextArea } from "@frak-labs/design-system/components/TextArea";
 import { useFormContext } from "react-hook-form";
-import {
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormMessage,
-} from "@/module/forms/Form";
+import { useTranslation } from "react-i18next";
+import { EditCard } from "@/module/common/component/EditCard";
+import { EditField } from "@/module/forms/EditField";
+import { FormControl, FormField } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
-import { PushPreview } from "@/module/members/component/CreatePush/PushPreview";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
+import * as styles from "./push-create.css";
+
+const TITLE_MAX = 40;
+const MESSAGE_MAX = 500;
+
+/** Required-field marker shown after the label. */
+function RequiredMark() {
+    return (
+        <Text as={"span"} color={"error"}>
+            *
+        </Text>
+    );
+}
 
 /**
- *  Build the push payload panel
- * @constructor
+ * Notification content — the title/message/image/launch-url fields.
  */
 export function PushPayloadPanel() {
+    const { t } = useTranslation();
     const { control, watch } = useFormContext<FormCreatePushNotification>();
-    const [title, message, icon] = watch([
-        "payload.title",
-        "payload.body",
-        "payload.icon",
-    ]);
+    const [title, message] = watch(["payload.title", "payload.body"]);
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Message</CardTitle>
-            </CardHeader>
-            <Columns space="xs" alignY="top">
-                <Column width="1/2">
-                    {/*Title field*/}
-                    <FormField
-                        control={control}
-                        name={"payload.title"}
-                        rules={{
-                            required: "Push title required",
-                            minLength: {
-                                value: 8,
-                                message:
-                                    "The notification title require at least 8 characters",
-                            },
-                            maxLength: {
-                                value: 40,
-                                message:
-                                    "The notification title can't exceed 40 characters",
-                            },
-                        }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormDescription
-                                    label={
-                                        <>
-                                            Title
-                                            <span className={"error"}>*</span>
-                                        </>
-                                    }
-                                />
-                                <FormControl>
-                                    <Input
-                                        length={"medium"}
-                                        placeholder={"Brand new shoes"}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    {/*Message field*/}
-                    <FormField
-                        control={control}
-                        name={"payload.body"}
-                        rules={{
-                            required: "Push message required",
-                            minLength: {
-                                value: 10,
-                                message:
-                                    "The message require at least 10 characters",
-                            },
-                            maxLength: {
-                                value: 500,
-                                message:
-                                    "The message can't exceed 500 characters",
-                            },
-                        }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormDescription
-                                    label={
-                                        <>
-                                            Message
-                                            <span className={"error"}>*</span>
-                                        </>
-                                    }
-                                />
-                                <FormControl>
-                                    <TextArea
-                                        length={"medium"}
-                                        placeholder={
-                                            "Discover our brand new product dedicated for Marathon"
-                                        }
-                                        rows={5}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    {/*Image Field*/}
-                    <FormField
-                        control={control}
-                        name={"payload.icon"}
-                        rules={{
-                            required: false,
-                        }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormDescription label={"Image"} />
-                                <FormControl>
-                                    <Input
-                                        length={"medium"}
-                                        placeholder={
-                                            "https://wallet.frak.id/image.jpg"
-                                        }
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    {/*URL Field*/}
-                    <FormField
-                        control={control}
-                        name={"payload.data.url"}
-                        rules={{
-                            required: false,
-                        }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormDescription label={"Launch URL"} />
-                                <FormControl>
-                                    <Input
-                                        length={"medium"}
-                                        placeholder={"https://wallet.frak.id"}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </Column>
-                <Column width="1/2">
-                    <PushPreview
-                        title={title !== "" ? title : "Brand new shoes"}
-                        message={
-                            message !== ""
-                                ? message
-                                : "Discover our brand new product dedicated for Marathon"
+        <EditCard
+            title={t("push.create.content.title")}
+            description={t("push.create.content.description")}
+        >
+            <FormField
+                control={control}
+                name={"payload.title"}
+                rules={{
+                    required: t(
+                        "push.create.content.notificationTitle.required"
+                    ),
+                    minLength: {
+                        value: 8,
+                        message: t("push.create.content.notificationTitle.min"),
+                    },
+                    maxLength: {
+                        value: TITLE_MAX,
+                        message: t("push.create.content.notificationTitle.max"),
+                    },
+                }}
+                render={({ field }) => (
+                    <EditField
+                        label={
+                            <>
+                                {t(
+                                    "push.create.content.notificationTitle.label"
+                                )}
+                                <RequiredMark />
+                            </>
                         }
-                        icon={icon}
-                    />
-                </Column>
-            </Columns>
-        </Card>
+                        hint={t("push.create.charCount", {
+                            current: title?.length ?? 0,
+                            max: TITLE_MAX,
+                        })}
+                    >
+                        <FormControl>
+                            <Input
+                                variant={"bare"}
+                                tone={"muted"}
+                                placeholder={t(
+                                    "push.create.content.notificationTitle.placeholder"
+                                )}
+                                {...field}
+                            />
+                        </FormControl>
+                    </EditField>
+                )}
+            />
+            <FormField
+                control={control}
+                name={"payload.body"}
+                rules={{
+                    required: t("push.create.content.message.required"),
+                    minLength: {
+                        value: 10,
+                        message: t("push.create.content.message.min"),
+                    },
+                    maxLength: {
+                        value: MESSAGE_MAX,
+                        message: t("push.create.content.message.max"),
+                    },
+                }}
+                render={({ field }) => (
+                    <EditField
+                        label={
+                            <>
+                                {t("push.create.content.message.label")}
+                                <RequiredMark />
+                            </>
+                        }
+                        hint={t("push.create.charCount", {
+                            current: message?.length ?? 0,
+                            max: MESSAGE_MAX,
+                        })}
+                    >
+                        <FormControl>
+                            <TextArea
+                                length={"big"}
+                                rows={4}
+                                className={styles.messageArea}
+                                placeholder={t(
+                                    "push.create.content.message.placeholder"
+                                )}
+                                {...field}
+                            />
+                        </FormControl>
+                    </EditField>
+                )}
+            />
+            <FormField
+                control={control}
+                name={"payload.icon"}
+                render={({ field }) => (
+                    <EditField
+                        label={t("push.create.content.image.label")}
+                        hint={t("push.create.content.image.hint")}
+                    >
+                        <FormControl>
+                            <Input
+                                variant={"bare"}
+                                tone={"muted"}
+                                placeholder={t(
+                                    "push.create.content.image.placeholder"
+                                )}
+                                {...field}
+                            />
+                        </FormControl>
+                    </EditField>
+                )}
+            />
+            <FormField
+                control={control}
+                name={"payload.data.url"}
+                render={({ field }) => (
+                    <EditField label={t("push.create.content.launchUrl.label")}>
+                        <FormControl>
+                            <Input
+                                variant={"bare"}
+                                tone={"muted"}
+                                placeholder={t(
+                                    "push.create.content.launchUrl.placeholder"
+                                )}
+                                {...field}
+                            />
+                        </FormControl>
+                    </EditField>
+                )}
+            />
+        </EditCard>
     );
 }

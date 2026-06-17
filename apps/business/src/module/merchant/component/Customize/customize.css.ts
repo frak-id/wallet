@@ -2,16 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
-export const saveFooterContent = style({
-    width: "100%",
-});
-
-export const saveFooterColumn = style({
-    maxWidth: "720px",
-    display: "flex",
-    justifyContent: "center",
-});
-
 export const switchRow = style({
     display: "flex",
     alignItems: "center",

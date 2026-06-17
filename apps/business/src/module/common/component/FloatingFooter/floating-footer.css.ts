@@ -1,4 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 const SIDEBAR_WIDTH_DESKTOP = "240px";
@@ -52,4 +53,30 @@ export const footerBare = style({
 export const buttonWrapper = style({
     position: "relative",
     pointerEvents: "auto",
+});
+
+// `align="content"`: stretch the bar, inset it to the gutter, then cap the
+// inner column at the form width so the button lines up over the content
+// column instead of the viewport centre.
+export const contentWrapper = style({
+    position: "relative",
+    width: "100%",
+    pointerEvents: "auto",
+    paddingLeft: "126px",
+    paddingRight: alias.spacing.l,
+    "@media": {
+        "screen and (max-width: 1024px)": {
+            paddingLeft: alias.spacing.l,
+        },
+        "screen and (max-width: 768px)": {
+            paddingLeft: alias.spacing.s,
+            paddingRight: alias.spacing.s,
+        },
+    },
+});
+
+export const contentColumn = style({
+    maxWidth: "720px",
+    display: "flex",
+    justifyContent: "center",
 });

@@ -83,9 +83,6 @@
             },
             "pushCreate": {
                 "nav": "Create"
-            },
-            "pushConfirm": {
-                "nav": "Confirm"
             }
         },
         "header": {
@@ -151,6 +148,93 @@
             "required": "Push audience is required",
             "reach": "You will reach {{count}} members",
             "minMember": "You need at least 1 member to continue"
+        }
+    },
+    "push": {
+        "create": {
+            "title": "Send Push Notification",
+            "close": "Close",
+            "campaign": {
+                "label": "Campaign name",
+                "placeholder": "E.g. Summer reactivation campaign",
+                "hint": "Internal name used to identify this notification campaign. Members will not see it.",
+                "required": "Campaign name is required",
+                "minLength": "The campaign name requires at least 5 characters",
+                "maxLength": "The campaign name can't exceed 100 characters"
+            },
+            "content": {
+                "title": "Notification content",
+                "description": "Create the push notification your members will receive.",
+                "notificationTitle": {
+                    "label": "Notification title",
+                    "placeholder": "Enter notification title",
+                    "required": "Notification title is required",
+                    "min": "The notification title requires at least 8 characters",
+                    "max": "The notification title can't exceed 40 characters"
+                },
+                "message": {
+                    "label": "Notification message",
+                    "placeholder": "Enter notification message",
+                    "required": "Notification message is required",
+                    "min": "The message requires at least 10 characters",
+                    "max": "The message can't exceed 500 characters"
+                },
+                "image": {
+                    "label": "Image URL",
+                    "placeholder": "https://...",
+                    "hint": "Optional. Display an image in the notification when supported by the device."
+                },
+                "launchUrl": {
+                    "label": "Launch URL",
+                    "placeholder": "https://..."
+                }
+            },
+            "charCount": "{{current}} / {{max}} characters",
+            "audience": {
+                "title": "Audience",
+                "description": "Choose which members should receive this notification.",
+                "matched": "Audience matched: <0>{{total}}</0> members"
+            },
+            "schedule": {
+                "title": "Schedule",
+                "description": "Choose when this notification should be sent.",
+                "now": {
+                    "label": "Send immediately",
+                    "description": "Send as soon as it's published."
+                },
+                "later": {
+                    "label": "Schedule for later",
+                    "description": "Choose a date and time for delivery."
+                },
+                "date": {
+                    "label": "Select date"
+                },
+                "time": {
+                    "label": "Select time"
+                },
+                "required": "Pick a date and time for delivery"
+            },
+            "preview": {
+                "title": "Your notification title",
+                "message": "Your notification message will appear here."
+            },
+            "publish": "Publish notification",
+            "review": {
+                "title": "Review notification",
+                "audience": "Audience",
+                "audienceValue": "{{total}} members",
+                "delivery": "Delivery",
+                "immediately": "Immediately",
+                "continueEditing": "Continue editing",
+                "send": "Send notification",
+                "schedule": "Schedule notification"
+            },
+            "leave": {
+                "title": "Leave notification setup?",
+                "description": "You've started creating a push notification. If you leave, any information you've entered will be lost.",
+                "continueEditing": "Continue editing",
+                "confirm": "Yes, leave"
+            }
         }
     },
     "campaigns": {
@@ -771,6 +855,10 @@
                 "last90": "Last 90 days",
                 "thisMonth": "This month"
             }
+        },
+        "dateField": {
+            "placeholder": "dd/mm/yyyy",
+            "openCalendar": "Open calendar"
         }
     },
     "bank": {

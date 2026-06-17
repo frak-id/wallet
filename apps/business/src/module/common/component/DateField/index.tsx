@@ -6,6 +6,7 @@ import {
 } from "@frak-labs/design-system/components/Popover";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { CalendarIcon } from "@frak-labs/design-system/icons";
+import clsx from "clsx";
 import {
     format,
     isAfter,
@@ -17,7 +18,7 @@ import {
 import { type ChangeEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Calendar } from "@/module/common/component/Calendar";
-import * as styles from "./budget.css";
+import * as styles from "./date-field.css";
 
 type DateFieldProps = {
     value?: string;
@@ -28,6 +29,7 @@ type DateFieldProps = {
     maxDate?: Date;
     /** Accessible name for the input (the field has no visible <label>). */
     ariaLabel?: string;
+    disabled?: boolean;
     /** Fill the field with the error surface (form-level error, e.g. required). */
     error?: boolean;
     /** Message shown when `error` is set (e.g. "Select a start date"). */
@@ -74,6 +76,7 @@ export function DateField({
     minDate,
     maxDate,
     ariaLabel,
+    disabled,
     error,
     errorMessage,
     invalidMessage,
@@ -99,7 +102,7 @@ export function DateField({
         (minDate ? isBefore(date, minDate) : false) ||
         (maxDate ? isAfter(date, maxDate) : false);
 
-    const disabled =
+    const disabledDays =
         minDate || maxDate ? (date: Date) => outOfRange(date) : undefined;
 
     function handleInput(event: ChangeEvent<HTMLInputElement>) {
@@ -130,25 +133,28 @@ export function DateField({
         <Popover open={open} onOpenChange={setOpen}>
             <Stack space="xxs">
                 <div
-                    className={`${styles.dateField}${showError ? ` ${styles.dateFieldError}` : ""}`}
+                    className={clsx(
+                        styles.dateField,
+                        showError && styles.dateFieldError,
+                        disabled && styles.dateFieldDisabled
+                    )}
                 >
                     <input
                         type="text"
                         inputMode="numeric"
                         aria-label={ariaLabel}
+                        aria-invalid={showError || undefined}
+                        disabled={disabled}
                         className={styles.dateInput}
-                        placeholder={t(
-                            "campaigns.create.budget.schedule.datePlaceholder"
-                        )}
+                        placeholder={t("common.dateField.placeholder")}
                         value={text}
                         onChange={handleInput}
                     />
                     <PopoverTrigger asChild>
                         <button
                             type="button"
-                            aria-label={t(
-                                "campaigns.create.budget.schedule.openCalendar"
-                            )}
+                            disabled={disabled}
+                            aria-label={t("common.dateField.openCalendar")}
                             className={styles.dateIconButton}
                         >
                             <CalendarIcon
@@ -166,7 +172,7 @@ export function DateField({
                     mode="single"
                     selected={selected}
                     onSelect={handlePick}
-                    disabled={disabled}
+                    disabled={disabledDays}
                 />
             </PopoverContent>
         </Popover>
