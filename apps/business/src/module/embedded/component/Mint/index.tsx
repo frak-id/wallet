@@ -5,6 +5,7 @@ import {
     CardTitle,
 } from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { Button } from "@/module/common/component/Button";
@@ -143,7 +144,7 @@ function DoMintComponent({
             >
                 {isPending ? infoTxt : "Register your shop"}
             </Button>
-            {error && <p className={"error"}>{error.message}</p>}
+            {error && <Text color="error">{error.message}</Text>}
         </>
     );
 }

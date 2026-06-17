@@ -52,15 +52,3 @@ globalStyle("a", {
     color: vars.text.primary,
     textDecoration: "none",
 });
-
-globalStyle(".error", {
-    color: brand.colors.error[600],
-});
-
-globalStyle(".success", {
-    color: brand.colors.success[600],
-});
-
-globalStyle(".link", {
-    color: brand.colors.primary[500],
-});

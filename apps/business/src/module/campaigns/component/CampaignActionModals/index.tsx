@@ -1,3 +1,4 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import { Archive, Pause, Play, Trash2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -50,7 +51,7 @@ export function ModalPause({
             }
             text={
                 isError ? (
-                    <p className={"error"}>{t("campaigns.actions.error")}</p>
+                    <Text color="error">{t("campaigns.actions.error")}</Text>
                 ) : undefined
             }
             cancel={
@@ -116,7 +117,7 @@ export function ModalResume({
             }
             text={
                 isError ? (
-                    <p className={"error"}>{t("campaigns.actions.error")}</p>
+                    <Text color="error">{t("campaigns.actions.error")}</Text>
                 ) : undefined
             }
             cancel={
@@ -182,7 +183,7 @@ export function ModalArchive({
             }
             text={
                 isError ? (
-                    <p className={"error"}>{t("campaigns.actions.error")}</p>
+                    <Text color="error">{t("campaigns.actions.error")}</Text>
                 ) : undefined
             }
             cancel={
@@ -248,7 +249,7 @@ export function ModalDelete({
             }
             text={
                 isError ? (
-                    <p className={"error"}>{t("campaigns.actions.error")}</p>
+                    <Text color="error">{t("campaigns.actions.error")}</Text>
                 ) : undefined
             }
             cancel={

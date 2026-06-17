@@ -14,6 +14,7 @@ import {
     formLabel,
     formLayout,
     formTitle,
+    validMessage,
 } from "./form.css";
 
 const Form = FormProvider;
@@ -223,7 +224,7 @@ const FormValidMessage = ({
         <p
             ref={ref}
             id={`${formMessageId}-valid`}
-            className={clsx("success", className)}
+            className={clsx(validMessage, className)}
             {...props}
         >
             {children}
