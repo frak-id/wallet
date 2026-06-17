@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { CampaignDetailsStats } from "@/module/campaigns/queries/queryOptions";
 import { Table } from "@/module/common/component/Table";
-import { truncateWallet, useDetailFormatters } from "./parts";
+import { useDetailFormatters } from "./parts";
+import { truncateWallet } from "./truncateWallet";
 
 type Ambassador = CampaignDetailsStats["topAmbassadors"][number];
 

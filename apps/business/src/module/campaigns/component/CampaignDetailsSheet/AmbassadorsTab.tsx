@@ -2,14 +2,9 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useTranslation } from "react-i18next";
 import type { CampaignDetailsStats } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./campaign-details-sheet.css";
-import {
-    BigNumber,
-    MetricCard,
-    Section,
-    truncateWallet,
-    useDetailFormatters,
-} from "./parts";
+import { BigNumber, MetricCard, Section, useDetailFormatters } from "./parts";
 import { TopAmbassadorsTable } from "./TopAmbassadorsTable";
+import { truncateWallet } from "./truncateWallet";
 
 export function AmbassadorsTab({ data }: { data: CampaignDetailsStats }) {
     const { t } = useTranslation();

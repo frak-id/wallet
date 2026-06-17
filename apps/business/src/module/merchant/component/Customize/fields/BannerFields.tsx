@@ -1,26 +1,8 @@
-import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import * as styles from "../customize.css";
-import type { BannerFormValues, ComponentSettingsFormValues } from "../types";
+import type { ComponentSettingsFormValues } from "../types";
 import { ComponentCssField, WordingTextField } from "./shared";
-
-export function getBannerDefaults(
-    components: NonNullable<
-        NonNullable<SdkConfig["placements"]>[string]
-    >["components"]
-): BannerFormValues {
-    const b = components?.banner;
-    return {
-        referralTitle: b?.referralTitle ?? "",
-        referralDescription: b?.referralDescription ?? "",
-        referralCta: b?.referralCta ?? "",
-        inappTitle: b?.inappTitle ?? "",
-        inappDescription: b?.inappDescription ?? "",
-        inappCta: b?.inappCta ?? "",
-        css: b?.rawCss ?? "",
-    };
-}
 
 export function BannerFields({
     form,

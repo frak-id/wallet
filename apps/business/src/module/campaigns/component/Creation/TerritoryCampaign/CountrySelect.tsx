@@ -15,43 +15,16 @@ import {
     ErrorFilledIcon,
     SearchIcon,
 } from "@frak-labs/design-system/icons";
-import { continents, getCountryDataList } from "countries-list";
+import { continents } from "countries-list";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+    COUNTRIES,
+    COUNTRIES_BY_CONTINENT,
+    type ContinentCode,
+    NAME_BY_CODE,
+} from "./countries";
 import * as styles from "./countrySelect.css";
-
-type ContinentCode = keyof typeof continents;
-type Country = { code: string; name: string; continent: ContinentCode };
-
-/**
- * Country list keyed by ISO-3166 alpha-2 code — the canonical value stored in
- * `metadata.territories`. Names are display-only.
- */
-const COUNTRIES: Country[] = getCountryDataList()
-    .map((c) => ({
-        code: c.iso2,
-        name: c.name,
-        continent: c.continent as ContinentCode,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-const NAME_BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c.name]));
-
-/** Display name for an ISO-3166 alpha-2 code (falls back to the code). */
-export function getCountryName(code: string): string {
-    return NAME_BY_CODE.get(code) ?? code;
-}
-
-/** Countries grouped by continent — one pass, O(1) lookup by code. */
-const COUNTRIES_BY_CONTINENT = (() => {
-    const map = new Map<ContinentCode, Country[]>(
-        (Object.keys(continents) as ContinentCode[]).map((c) => [c, []])
-    );
-    for (const country of COUNTRIES) {
-        map.get(country.continent)?.push(country);
-    }
-    return map;
-})();
 
 /** Continents in the order the map declares them, each with its countries. */
 const CONTINENT_GROUPS = (Object.keys(continents) as ContinentCode[]).map(

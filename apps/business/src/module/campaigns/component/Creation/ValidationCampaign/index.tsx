@@ -25,7 +25,7 @@ import {
     getStartDate,
 } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
-import { getCountryName } from "../TerritoryCampaign/CountrySelect";
+import { getCountryName } from "../TerritoryCampaign/countries";
 import { CampaignLaunched } from "./CampaignLaunched";
 import * as styles from "./validation-campaign.css";
 

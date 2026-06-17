@@ -17,8 +17,10 @@ import {
     ComponentPreview,
     ComponentTypeTabs,
 } from "./ComponentEditor";
-import { getBannerDefaults } from "./fields/BannerFields";
-import { getPostPurchaseDefaults } from "./fields/PostPurchaseFields";
+import {
+    getBannerDefaults,
+    getPostPurchaseDefaults,
+} from "./fields/fieldDefaults";
 import { DeletePlacementPanel, PlacementCssPanel } from "./PlacementPanels";
 import type { ComponentSettingsFormValues, ComponentType } from "./types";
 import { updatePlacement, valueOrUndefined } from "./utils";

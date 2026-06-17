@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { BigNumber, truncateWallet } from "./parts";
+import { BigNumber } from "./parts";
+import { truncateWallet } from "./truncateWallet";
 
 describe("truncateWallet", () => {
     it("shortens a full address to head…tail", () => {
