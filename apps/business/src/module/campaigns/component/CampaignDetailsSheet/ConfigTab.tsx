@@ -17,6 +17,7 @@ import { getCampaignDetail } from "@/module/campaigns/api/campaignApi";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { formatDate } from "@/module/common/utils/formatDate";
+import { getNumberFormat } from "@/module/common/utils/intlCache";
 import { currencyStore } from "@/stores/currencyStore";
 import type {
     BudgetConfigItem,
@@ -284,8 +285,8 @@ function RewardValue({
                 })}
             </Text>
             <Stack space="xxs">
-                {reward.tiers.map((tier, index) => (
-                    <div className={styles.tierRow} key={index}>
+                {reward.tiers.map((tier) => (
+                    <div className={styles.tierRow} key={formatTierRange(tier)}>
                         <Text as="span" variant="bodySmall" color="secondary">
                             {formatTierRange(tier)}
                         </Text>
@@ -458,7 +459,7 @@ function ConditionGroupDisplay({ group }: { group: ConditionGroup }) {
                 {group.conditions.map((condition, index) =>
                     isConditionGroup(condition) ? (
                         <ConditionGroupDisplay
-                            key={`group-${index}`}
+                            key={`group-${condition.logic}-${index}`}
                             group={condition}
                         />
                     ) : (
@@ -515,7 +516,7 @@ function ConditionsSection({ conditions }: { conditions: RuleConditions }) {
 
 function formatDuration(seconds: number, locale: string): string {
     const unitFormat = (value: number, unit: "day" | "hour" | "minute") =>
-        new Intl.NumberFormat(locale, {
+        getNumberFormat(locale, {
             style: "unit",
             unit,
             unitDisplay: "long",

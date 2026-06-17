@@ -1,0 +1,9 @@
+{
+    "$schema": "https://react.doctor/schema/config.json",
+    "rules": {
+        "react-doctor/rendering-hydration-mismatch-time": "off"
+    },
+    "ignore": {
+        "files": ["**/.output/**", "**/Dockerfile"]
+    }
+}

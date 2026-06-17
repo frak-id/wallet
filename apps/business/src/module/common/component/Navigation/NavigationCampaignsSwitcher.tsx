@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { pageNav } from "@/module/common/i18n/pageLabel";
-import { NavigationItem, SubNavigationItem } from "./index";
+import { NavigationItem, SubNavigationItem } from "./NavigationItem";
 import { collapsibleContent } from "./navigation.css";
 
 export function NavigationCampaignsSwitcher({

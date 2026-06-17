@@ -46,45 +46,6 @@ export function useMediaUpload() {
     });
 }
 
-type MediaDeleteInput = {
-    merchantId: string;
-    // Accepts "logo", "hero", or "hero-{hash}" for slider variants.
-    type: string;
-};
-
-export function useMediaDelete() {
-    const isDemoMode = useIsDemoMode();
-    return useMutation({
-        mutationKey: ["media", "delete"],
-        mutationFn: async ({ merchantId, type }: MediaDeleteInput) => {
-            if (isDemoMode) {
-                await new Promise((resolve) => setTimeout(resolve, 300));
-                return;
-            }
-
-            const { error } = await authenticatedBackendApi
-                .merchant({ merchantId })
-                .media({ type })
-                .delete();
-
-            if (error) {
-                throw error;
-            }
-        },
-        onSettled: async (
-            _data,
-            _error,
-            { merchantId },
-            _result,
-            { client }
-        ) => {
-            await client.invalidateQueries({
-                queryKey: ["media", "list", merchantId],
-            });
-        },
-    });
-}
-
 export function useMediaList(merchantId: string) {
     const isDemoMode = useIsDemoMode();
     return useQuery({

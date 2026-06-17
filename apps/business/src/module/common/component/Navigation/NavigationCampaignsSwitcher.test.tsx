@@ -22,7 +22,7 @@ vi.mock("@tanstack/react-router", () => ({
     useParams: () => ({}),
 }));
 
-vi.mock("./index", () => ({
+vi.mock("./NavigationItem", () => ({
     NavigationItem: ({
         url,
         children,

@@ -3,7 +3,7 @@ import { type Address, type Hex, slice } from "viem";
 import { useCopyToClipboardWithState } from "@/module/common/hook/useCopyToClipboardWithState";
 import { walletAddress } from "./hash-display.css";
 
-export function formatHash({
+function formatHash({
     hash,
     format = { start: 2, end: 3 },
 }: {

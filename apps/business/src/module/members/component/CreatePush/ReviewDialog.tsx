@@ -14,18 +14,19 @@ import {
     SendIcon,
 } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
+import { getDateTimeFormat } from "@/module/common/utils/intlCache";
 import * as styles from "./review-dialog.css";
 import { deriveScheduledAt } from "./schedule";
 import type { PushSchedule } from "./types";
 
 function formatDelivery(scheduledAt: number, locale: string): string {
     const date = new Date(scheduledAt);
-    const datePart = new Intl.DateTimeFormat(locale, {
+    const datePart = getDateTimeFormat(locale, {
         month: "short",
         day: "numeric",
         year: "numeric",
     }).format(date);
-    const timePart = new Intl.DateTimeFormat(locale, {
+    const timePart = getDateTimeFormat(locale, {
         hour: "2-digit",
         minute: "2-digit",
     }).format(date);

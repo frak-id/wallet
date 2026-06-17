@@ -17,6 +17,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { getDateTimeFormat } from "@/module/common/utils/intlCache";
 import { ChartEmptyState } from "./ChartEmptyState";
 import { EMPTY_AMOUNT } from "./constants";
 import * as styles from "./overview.css";
@@ -132,7 +133,7 @@ function bucketLabelFormatter(
     locale: string,
     granularity: OverviewGranularity
 ): Intl.DateTimeFormat {
-    return new Intl.DateTimeFormat(
+    return getDateTimeFormat(
         locale,
         granularity === "month"
             ? { month: "short", timeZone: "UTC" }

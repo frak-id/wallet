@@ -1,6 +1,7 @@
 import { currentStablecoins, type Stablecoin } from "@frak-labs/app-essentials";
 import type { Currency } from "@frak-labs/core-sdk";
 import { formatUnits, maxUint256 } from "viem";
+import { getNumberFormat } from "./intlCache";
 
 type CurrencyOption = {
     value: Stablecoin;
@@ -97,7 +98,7 @@ export function formatTokenBalance(
 
     const meta = currencyMetadata[stablecoin];
     const numeric = Number(formatUnits(balance, decimals));
-    return new Intl.NumberFormat(meta.locale, {
+    return getNumberFormat(meta.locale, {
         style: "currency",
         currency: meta.currencyCode,
         maximumFractionDigits: numeric % 1 !== 0 ? 2 : 0,

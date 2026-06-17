@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from "react";
+import { createContext, use, useEffect } from "react";
 import type { FieldValues, UseFormReturn } from "react-hook-form";
 
 type SectionSubmit = () => Promise<void>;
@@ -16,7 +16,7 @@ const CustomizeSaveContext = createContext<CustomizeSaveContextValue | null>(
 export const CustomizeSaveProvider = CustomizeSaveContext.Provider;
 
 function useCustomizeSave(): CustomizeSaveContextValue {
-    const context = useContext(CustomizeSaveContext);
+    const context = use(CustomizeSaveContext);
     if (!context) {
         throw new Error(
             "useCustomizeSection must be used within CustomizePage"

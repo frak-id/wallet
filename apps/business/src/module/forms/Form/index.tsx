@@ -4,7 +4,7 @@ import { Slot } from "@radix-ui/react-slot";
 import type { RecipeVariants } from "@vanilla-extract/recipes";
 import clsx from "clsx";
 import type { ComponentPropsWithRef, ReactNode } from "react";
-import { createContext, useContext, useId } from "react";
+import { createContext, use, useId, useMemo } from "react";
 import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
 import { Controller, FormProvider, useFormContext } from "react-hook-form";
 import { Label } from "@/module/forms/Label";
@@ -45,16 +45,17 @@ const FormField = <
 >({
     ...props
 }: ControllerProps<TFieldValues, TName>) => {
+    const value = useMemo(() => ({ name: props.name }), [props.name]);
     return (
-        <FormFieldContext.Provider value={{ name: props.name }}>
+        <FormFieldContext.Provider value={value}>
             <Controller {...props} />
         </FormFieldContext.Provider>
     );
 };
 
 const useFormField = () => {
-    const fieldContext = useContext(FormFieldContext);
-    const itemContext = useContext(FormItemContext);
+    const fieldContext = use(FormFieldContext);
+    const itemContext = use(FormItemContext);
     const { getFieldState, formState } = useFormContext();
 
     const fieldState = getFieldState(fieldContext.name, formState);
@@ -89,9 +90,10 @@ type FormItemProps = ComponentPropsWithRef<"div"> & FormItemRecipeVariants;
 
 const FormItem = ({ ref, variant, className, ...props }: FormItemProps) => {
     const id = useId();
+    const value = useMemo(() => ({ id }), [id]);
 
     return (
-        <FormItemContext.Provider value={{ id }}>
+        <FormItemContext.Provider value={value}>
             <div
                 ref={ref}
                 className={clsx(formItem({ variant }), className)}

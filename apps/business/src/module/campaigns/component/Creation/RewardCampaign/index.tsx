@@ -24,13 +24,7 @@ import {
     PlusIcon,
 } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
-import {
-    createContext,
-    Fragment,
-    type ReactNode,
-    useContext,
-    useMemo,
-} from "react";
+import { createContext, Fragment, type ReactNode, use, useMemo } from "react";
 import {
     type Control,
     Controller,
@@ -72,7 +66,7 @@ type UnitKind = "amount" | "percent";
 
 /** Reward-currency glyph (€/£/$) for `"amount"` units, shared across the step. */
 const CurrencyGlyphContext = createContext<string>("€");
-const useCurrencyGlyph = () => useContext(CurrencyGlyphContext);
+const useCurrencyGlyph = () => use(CurrencyGlyphContext);
 
 const MODELS = [
     {

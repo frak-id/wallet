@@ -24,7 +24,7 @@ import {
     UsdcIcon,
     UsdIcon,
 } from "@frak-labs/design-system/icons";
-import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
+import { type ReactNode, useId, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button as BusinessButton } from "@/module/common/component/Button";
@@ -126,12 +126,8 @@ export function MerchantEditSheet({
 }) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
-    const {
-        mutate: editMerchant,
-        isSuccess: editMerchantSuccess,
-        isPending: editMerchantPending,
-        reset: resetMutation,
-    } = useMerchantUpdate({ merchantId, target: "base" });
+    const { mutate: editMerchant, isPending: editMerchantPending } =
+        useMerchantUpdate({ merchantId, target: "base" });
 
     const formValues = useMemo<FormMerchant>(
         () => ({
@@ -154,20 +150,21 @@ export function MerchantEditSheet({
         onDiscard: () => form.reset(formValues),
     });
 
-    useEffect(() => {
-        if (!editMerchantSuccess) return;
-        form.reset(form.getValues());
-        setOpen(false);
-        resetMutation();
-    }, [editMerchantSuccess, form, resetMutation]);
-
     function onSubmit(values: FormMerchant) {
-        editMerchant({
-            name: values.name,
-            defaultRewardToken: getTokenAddressForStablecoin(
-                values.defaultCurrency
-            ),
-        });
+        editMerchant(
+            {
+                name: values.name,
+                defaultRewardToken: getTokenAddressForStablecoin(
+                    values.defaultCurrency
+                ),
+            },
+            {
+                onSuccess: () => {
+                    form.reset(form.getValues());
+                    setOpen(false);
+                },
+            }
+        );
     }
 
     function requestClose() {

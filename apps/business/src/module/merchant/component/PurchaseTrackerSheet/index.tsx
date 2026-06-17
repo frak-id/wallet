@@ -158,9 +158,7 @@ function PlatformCard({
     const [pendingPlatform, setPendingPlatform] =
         useState<WebhookPlatform | null>(null);
 
-    const webhookUrl = useMemo(() => {
-        return `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/purchases/${currentPlatform}`;
-    }, [merchantId, currentPlatform]);
+    const webhookUrl = `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/purchases/${currentPlatform}`;
 
     const handlePlatformChange = (platform: WebhookPlatform) => {
         if (platform === currentPlatform) return;
