@@ -8,6 +8,24 @@ import {
 import { OrchestrationContext } from "../../orchestration";
 import { businessSessionContext } from "./middleware/session";
 
+async function assertMerchantAccess({
+    businessSession,
+    hasMerchantAccess,
+    merchantId,
+}: {
+    businessSession: unknown;
+    hasMerchantAccess: (merchantId: string) => Promise<boolean>;
+    merchantId: string;
+}) {
+    if (!businessSession) {
+        return status(401, "Unauthorized");
+    }
+    if (!(await hasMerchantAccess(merchantId))) {
+        return status(403, "Forbidden");
+    }
+    return null;
+}
+
 export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
     .use(businessSessionContext)
     .post(
@@ -17,14 +35,12 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             businessSession,
             hasMerchantAccess,
         }) => {
-            if (!businessSession) {
-                return status(401, "Unauthorized");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Forbidden");
-            }
+            const denied = await assertMerchantAccess({
+                businessSession,
+                hasMerchantAccess,
+                merchantId,
+            });
+            if (denied) return denied;
 
             await NotificationContext.services.notifications.cleanupExpiredTokens();
 
@@ -64,14 +80,12 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             businessSession,
             hasMerchantAccess,
         }) => {
-            if (!businessSession) {
-                return status(401, "Unauthorized");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Forbidden");
-            }
+            const denied = await assertMerchantAccess({
+                businessSession,
+                hasMerchantAccess,
+                merchantId,
+            });
+            if (denied) return denied;
 
             if (scheduledAt.getTime() <= Date.now()) {
                 return status(400, "scheduledAt must be in the future");
@@ -105,14 +119,12 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             businessSession,
             hasMerchantAccess,
         }) => {
-            if (!businessSession) {
-                return status(401, "Unauthorized");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Forbidden");
-            }
+            const denied = await assertMerchantAccess({
+                businessSession,
+                hasMerchantAccess,
+                merchantId,
+            });
+            if (denied) return denied;
 
             return NotificationContext.repositories.notificationBroadcast.listScheduled(
                 merchantId
@@ -132,14 +144,12 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             businessSession,
             hasMerchantAccess,
         }) => {
-            if (!businessSession) {
-                return status(401, "Unauthorized");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Forbidden");
-            }
+            const denied = await assertMerchantAccess({
+                businessSession,
+                hasMerchantAccess,
+                merchantId,
+            });
+            if (denied) return denied;
 
             const deleted =
                 await NotificationContext.repositories.notificationBroadcast.deleteScheduled(

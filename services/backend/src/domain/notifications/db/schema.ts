@@ -60,9 +60,9 @@ export const pushTokensTable = pgTable(
  * One row per merchant broadcast; groups the related notification_sent rows.
  * Also acts as the scheduled-notification queue. State is derived from two nullable
  * timestamps:
- *  - scheduledAt null             → immediate broadcast (legacy /send, untouched)
- *  - scheduledAt set, sentAt null → pending scheduled (listable / removable)
- *  - sentAt set                   → claimed by the cron (idempotency guard)
+ *  - scheduledAt null                → immediate broadcast (legacy /send, untouched)
+ *  - scheduledAt set, claimedAt null → pending scheduled (listable / removable)
+ *  - claimedAt set                   → claimed by the cron (idempotency guard)
  */
 export const notificationBroadcastsTable = pgTable(
     "notification_broadcasts",
@@ -73,7 +73,8 @@ export const notificationBroadcastsTable = pgTable(
         /** Audience resolved at send time — null for immediate broadcasts. */
         targets: jsonb("targets").$type<SendNotificationTargets>(),
         scheduledAt: timestamp("scheduled_at"),
-        sentAt: timestamp("sent_at"),
+        /** Stamped when the cron claims the row for delivery (not actual send time). */
+        claimedAt: timestamp("claimed_at"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [

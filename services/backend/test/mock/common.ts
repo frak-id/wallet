@@ -564,6 +564,14 @@ export const notificationServiceMocks = {
     sendNotification: vi.fn(() => Promise.resolve()),
 };
 
+export const notificationBroadcastRepositoryMocks = {
+    create: vi.fn(() =>
+        Promise.resolve({ id: "00000000-0000-0000-0000-000000000001" })
+    ),
+    listScheduled: vi.fn(() => Promise.resolve([] as unknown[])),
+    deleteScheduled: vi.fn(() => Promise.resolve(true)),
+};
+
 const notificationMacroMock = new Elysia({ name: "Macro.notification" }).macro({
     cleanupTokens(_isEnabled?: boolean) {
         return {};
@@ -638,13 +646,7 @@ vi.mock("../../src/domain/notifications", () => ({
     NotificationContext: {
         services: { notifications: notificationServiceMocks },
         repositories: {
-            notificationBroadcast: {
-                create: vi.fn(() =>
-                    Promise.resolve({
-                        id: "00000000-0000-0000-0000-000000000001",
-                    })
-                ),
-            },
+            notificationBroadcast: notificationBroadcastRepositoryMocks,
             notificationSent: {
                 findByWallet: vi.fn(() => Promise.resolve([])),
                 markOpened: vi.fn(() => Promise.resolve(true)),
@@ -662,13 +664,7 @@ vi.mock("../../src/domain/notifications/context", () => ({
     NotificationContext: {
         services: { notifications: notificationServiceMocks },
         repositories: {
-            notificationBroadcast: {
-                create: vi.fn(() =>
-                    Promise.resolve({
-                        id: "00000000-0000-0000-0000-000000000001",
-                    })
-                ),
-            },
+            notificationBroadcast: notificationBroadcastRepositoryMocks,
             notificationSent: {
                 findByWallet: vi.fn(() => Promise.resolve([])),
                 markOpened: vi.fn(() => Promise.resolve(true)),

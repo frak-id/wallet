@@ -44,7 +44,7 @@ export class NotificationBroadcastRepository {
                 and(
                     eq(notificationBroadcastsTable.merchantId, merchantId),
                     isNotNull(notificationBroadcastsTable.scheduledAt),
-                    isNull(notificationBroadcastsTable.sentAt)
+                    isNull(notificationBroadcastsTable.claimedAt)
                 )
             )
             .orderBy(asc(notificationBroadcastsTable.scheduledAt));
@@ -58,7 +58,7 @@ export class NotificationBroadcastRepository {
                     eq(notificationBroadcastsTable.id, id),
                     eq(notificationBroadcastsTable.merchantId, merchantId),
                     isNotNull(notificationBroadcastsTable.scheduledAt),
-                    isNull(notificationBroadcastsTable.sentAt)
+                    isNull(notificationBroadcastsTable.claimedAt)
                 )
             )
             .returning({ id: notificationBroadcastsTable.id });
@@ -66,18 +66,18 @@ export class NotificationBroadcastRepository {
     }
 
     /**
-     * Atomically claim every due scheduled broadcast by stamping `sentAt`.
+     * Atomically claim every due scheduled broadcast by stamping `claimedAt`.
      * The UPDATE ... RETURNING runs under row locks, so concurrent replicas
      * each receive a disjoint set of rows — no double-send without an external lock.
      */
     async claimDueScheduled(now: Date): Promise<NotificationBroadcastSelect[]> {
         return db
             .update(notificationBroadcastsTable)
-            .set({ sentAt: now })
+            .set({ claimedAt: now })
             .where(
                 and(
                     isNotNull(notificationBroadcastsTable.scheduledAt),
-                    isNull(notificationBroadcastsTable.sentAt),
+                    isNull(notificationBroadcastsTable.claimedAt),
                     lte(notificationBroadcastsTable.scheduledAt, now)
                 )
             )
