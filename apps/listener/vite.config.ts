@@ -378,9 +378,9 @@ export default defineConfig(async () => {
         plugins: [
             preact({ reactAliasesEnabled: false }),
             vanillaExtractPlugin(),
-            // Inline Sora @font-face. No `preload` on purpose: the iframe
+            // Inline Inter @font-face. No `preload` on purpose: the iframe
             // boots with no UI, so the woff2 must load lazily with Ring 1.
-            inlineFontFaces({ cssFiles: ["app/fonts/sora.css"] }),
+            inlineFontFaces({ cssFiles: ["app/fonts/inter.css"] }),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
             stripOrphanCrossChunkImports(),

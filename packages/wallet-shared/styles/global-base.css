@@ -3,7 +3,7 @@
  * App-specific styles (like responsive layouts) are in global-wallet.css and global-listener.css
  */
 :root {
-    --font-family: "Sora", sans-serif;
+    --font-family: "Inter", sans-serif;
 }
 
 html {
