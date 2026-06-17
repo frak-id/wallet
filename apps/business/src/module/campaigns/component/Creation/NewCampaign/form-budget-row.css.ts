@@ -23,17 +23,17 @@ export const budgetIcon = style({
 export const budgetLabel = style({
     fontSize: "0.875rem",
     fontWeight: brand.typography.fontWeight.regular,
-    color: "#333843", // TODO: token
+    color: brand.colors.neutral.grey700,
 });
 
 export const budgetValue = style({
     fontSize: "0.875rem",
     fontWeight: brand.typography.fontWeight.medium,
-    color: "#5c59e8", // TODO: token
+    color: brand.colors.primary[500],
 });
 
 export const budgetDivider = style({
-    borderTop: "1px dashed #f0f1f3", // TODO: token
+    borderTop: `1px dashed ${brand.colors.neutral.grey200}`,
     margin: "0.5rem 0",
 });
 

@@ -23,19 +23,19 @@ export const badgeVariants = recipe({
     variants: {
         variant: {
             primary: {
-                backgroundColor: "#e8f8fd",
+                backgroundColor: brandColors.ceruleanBackground,
                 color: brandColors.cerulean,
             },
             secondary: {
-                backgroundColor: "#f0f1f3",
+                backgroundColor: brand.colors.neutral.grey200,
                 color: brand.colors.neutral.grey500,
             },
             success: {
-                backgroundColor: "#e7f4ee",
-                color: "#0d894f",
+                backgroundColor: brand.colors.success[100],
+                color: brand.colors.success[700],
             },
             danger: {
-                backgroundColor: "#feedec",
+                backgroundColor: brand.colors.error[100],
                 color: brand.colors.error[600],
             },
             information: {
@@ -47,8 +47,8 @@ export const badgeVariants = recipe({
                 color: brand.colors.neutral.white,
             },
             warning: {
-                backgroundColor: "#fdf1e8",
-                color: "#e46a11",
+                backgroundColor: brand.colors.warning[100],
+                color: brand.colors.warning[600],
             },
         },
         size: {

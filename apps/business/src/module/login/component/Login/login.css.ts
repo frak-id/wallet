@@ -1,6 +1,6 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 import { loginStackedMedia } from "./breakpoints";
 
@@ -101,7 +101,7 @@ export const rightPanel = style({
 export const screenshotCard = style({
     width: "600px",
     maxWidth: "calc(100% - 48px)",
-    background: "#ffffff",
+    background: brand.colors.neutral.white,
     borderRadius: alias.cornerRadius.l,
     overflow: "hidden",
     boxShadow: "0px 16px 64px 0px rgba(0, 0, 0, 0.08)",

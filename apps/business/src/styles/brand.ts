@@ -12,6 +12,7 @@ export const brandColors = {
     accentTransition: "rgba(246, 55, 237, 0)",
     chartreuseYellow: "#ebff00",
     cerulean: "#13b2e4",
+    ceruleanBackground: "#e8f8fd",
     darkNavy: "#001432",
     blueZodiac: "#123365",
     blueZodiacDarker: "#12244b",

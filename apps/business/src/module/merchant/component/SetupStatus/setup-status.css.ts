@@ -1,40 +1,11 @@
-import { brand } from "@frak-labs/design-system/tokens";
-import { globalStyle, style } from "@vanilla-extract/css";
-
-const overallStatusSuccess = style({
-    width: "100%",
-    padding: "16px",
-    backgroundColor: "#e0f7fa",
-    borderLeft: "4px solid #0ddb84",
-    borderRadius: "4px",
-    marginBottom: "24px",
-});
-
-globalStyle(`${overallStatusSuccess} p`, {
-    marginTop: "8px",
-    color: "#333843",
-    fontSize: "14px",
-});
-
-const overallStatusWarning = style({
-    width: "100%",
-    padding: "16px",
-    backgroundColor: brand.colors.neutral.grey200,
-    borderLeft: "4px solid #ff7a00",
-    borderRadius: "4px",
-    marginBottom: "24px",
-});
-
-globalStyle(`${overallStatusWarning} p`, {
-    marginTop: "8px",
-    color: "#333843",
-    fontSize: "14px",
-});
+import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
+import { style } from "@vanilla-extract/css";
+import { brandColors } from "@/styles/brand";
 
 export const stepItem = style({
-    padding: "16px",
-    borderLeft: "4px solid #e0e2e7",
-    marginBottom: "24px",
+    padding: alias.spacing.m,
+    borderLeft: `${brand.scale[100]} solid ${brand.colors.neutral.grey250}`,
+    marginBottom: alias.spacing.l,
     position: "relative",
     width: "100%",
 });
@@ -42,50 +13,50 @@ export const stepItem = style({
 export const header = style({
     display: "flex",
     alignItems: "center",
-    marginBottom: "8px",
+    marginBottom: alias.spacing.xs,
 });
 
 export const stepPosition = style({
-    color: "#333843",
-    width: "24px",
-    height: "24px",
-    borderColor: "#333843",
+    color: brand.colors.neutral.grey700,
+    width: brand.scale[600],
+    height: brand.scale[600],
+    borderColor: brand.colors.neutral.grey700,
     borderRadius: "50%",
     borderStyle: "solid",
-    borderWidth: "2px",
+    borderWidth: brand.scale[50],
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "14px",
+    fontSize: fontSize.s,
     fontWeight: brand.typography.fontWeight.bold,
-    marginRight: "12px",
+    marginRight: alias.spacing.s,
     flexShrink: 0,
 });
 
 export const stepName = style({
-    fontSize: "18px",
+    fontSize: fontSize.l,
     fontWeight: brand.typography.fontWeight.medium,
     display: "flex",
     alignItems: "center",
-    color: "#1a1c21",
+    color: brand.colors.neutral.grey700,
 });
 
 export const icon = style({
-    color: "#0ddb84",
-    marginLeft: "8px",
+    color: brand.colors.success[600],
+    marginLeft: alias.spacing.xs,
     flexShrink: 0,
 });
 
 export const iconWarning = style({
-    color: "#ff7a00",
-    marginLeft: "8px",
+    color: brand.colors.warning[600],
+    marginLeft: alias.spacing.xs,
     flexShrink: 0,
 });
 
 export const description = style({
-    margin: "8px 0 8px 36px",
-    color: "#03193a",
-    fontSize: "14px",
+    margin: `${alias.spacing.xs} 0 ${alias.spacing.xs} ${brand.scale[900]}`,
+    color: brandColors.blueFrak,
+    fontSize: fontSize.s,
     lineHeight: 1.5,
 });
 
@@ -93,7 +64,7 @@ export const actions = style({
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
-    marginTop: "16px",
-    marginLeft: "36px",
-    gap: "16px",
+    marginTop: alias.spacing.m,
+    marginLeft: brand.scale[900],
+    gap: alias.spacing.m,
 });
