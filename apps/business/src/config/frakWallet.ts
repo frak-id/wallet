@@ -19,48 +19,32 @@ function getWalletUrl(): string {
     return "https://wallet.frak.id";
 }
 
-/**
- * Get the CSS URL for nexus modals based on environment
- * Uses runtime hostname check when available, falls back to environment variables
- */
-function getCssUrl(): `${string}.css` {
-    // First check: if running locally (STAGE not set or not a known stage), use localhost
-    if (isRunningLocally) {
-        return "http://localhost:3001/css/nexus-modals.css";
-    }
-
-    // Runtime check: if we're in the browser and NOT running locally, use the current origin
-    if (typeof window !== "undefined" && window.location) {
-        const origin = window.location.origin;
-        // If we're on a frak.id domain, use that origin
-        if (origin.includes("frak.id")) {
-            return `${origin}/css/nexus-modals.css` as `${string}.css`;
-        }
-        // If we're on localhost but isRunningLocally is false, this might be a test environment
-        // Fall through to environment-based detection
-    }
-
-    // Build-time/server-side: check environment
-    // Determine the business URL based on environment
-    // Check if we're in production
-    const isProd =
-        process.env.STAGE === "prod" || process.env.STAGE === "production";
-
-    if (isProd) {
-        return "https://business.frak.id/css/nexus-modals.css";
-    }
-
-    // Default to dev environment
-    return "https://business-dev.frak.id/css/nexus-modals.css";
-}
-
 export const frakWalletSdkConfig: Omit<FrakWalletSdkConfig, "domain"> = {
     walletUrl: getWalletUrl(),
     metadata: {
         name: "Dashboard",
     },
     customizations: {
-        css: getCssUrl(),
+        i18n: {
+            fr: {
+                "sdk.modal.login.title": "Connectez-vous à votre compte Frak",
+                "sdk.modal.login.description":
+                    "Accédez à votre dashboard et suivez vos gains en temps réel.",
+                "sdk.modal.siweAuthenticate.title":
+                    "Connectez-vous à votre compte Frak",
+                "sdk.modal.siweAuthenticate.description":
+                    "Accédez à votre dashboard et suivez vos gains en temps réel.",
+            },
+            en: {
+                "sdk.modal.login.title": "Log in to your Frak account",
+                "sdk.modal.login.description":
+                    "Access your dashboard and track your earnings in real time.",
+                "sdk.modal.siweAuthenticate.title":
+                    "Log in to your Frak account",
+                "sdk.modal.siweAuthenticate.description":
+                    "Access your dashboard and track your earnings in real time.",
+            },
+        },
     },
     preload: ["modal"],
 };
