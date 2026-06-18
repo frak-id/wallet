@@ -73,6 +73,7 @@ export { PlusIcon } from "./PlusIcon";
 export { ProfileIcon } from "./ProfileIcon";
 export { ProgressCheckIcon } from "./ProgressCheckIcon";
 export { ProgressCheckIconAnimated } from "./ProgressCheckIconAnimated";
+export { QrCodeIcon } from "./QrCodeIcon";
 export { ReferralIcon } from "./ReferralIcon";
 export { RefreshIcon } from "./RefreshIcon";
 export { SafetyIcon } from "./SafetyIcon";
