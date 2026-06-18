@@ -1,3 +1,4 @@
+import { alias } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 const fadeInKeyframes = keyframes({
@@ -34,7 +35,7 @@ export const launchPairing__brighterQRCode = style({
     backgroundColor: "#fff",
     zIndex: 1000,
     color: "#000",
-    borderRadius: "var(--frak-radius-l)",
+    borderRadius: alias.cornerRadius.l,
     display: "flex",
     flexDirection: "column",
     alignItems: "stretch",
