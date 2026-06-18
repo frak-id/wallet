@@ -1,5 +1,7 @@
-import { keyframes, style } from "@vanilla-extract/css";
-import { alias } from "../tokens.css";
+import { style } from "@vanilla-extract/css";
+import { fadeIn } from "../keyframes.css";
+import { vars } from "../theme.css";
+import { alias, onDark, overlay } from "../tokens.css";
 
 /**
  * Status banner card. Visual-only — background, blur backdrop, padding,
@@ -8,18 +10,13 @@ import { alias } from "../tokens.css";
  * each one reserving the same top slot.
  */
 
-const fadeIn = keyframes({
-    from: { opacity: 0, transform: "translateY(-4px)" },
-    to: { opacity: 1, transform: "translateY(0)" },
-});
-
 export const container = style({
     padding: `${alias.spacing.s} ${alias.spacing.m}`,
     borderRadius: alias.cornerRadius.m,
-    backgroundColor: "#000000CC",
+    backgroundColor: overlay.scrim,
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
-    color: "#ffffff",
+    color: vars.text.onAction,
     animation: `${fadeIn} 300ms ease-out`,
     // Re-enable pointer events on the card so screen readers / hover work,
     // while the parent `BannerStack` lets clicks pass through empty areas.
@@ -50,11 +47,11 @@ export const dismissButton = style({
     selectors: {
         "&:hover": {
             opacity: 1,
-            backgroundColor: "#FFFFFF1A",
+            backgroundColor: onDark.surface10,
         },
         "&:focus-visible": {
             opacity: 1,
-            outline: "2px solid #FFFFFF66",
+            outline: `2px solid ${onDark.border40}`,
             outlineOffset: 2,
         },
     },

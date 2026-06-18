@@ -4,15 +4,11 @@ import { base } from "@frak-labs/design-system/utils";
 // injected by <frak-banner> via useLightDomStyles. Without this side-effect import,
 // InAppBanner renders with the `inAppBanner_*` class names but zero matching CSS rules.
 import "@frak-labs/design-system/styles/inAppBanner";
+import { fadeIn } from "@frak-labs/design-system/keyframes";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
-import { keyframes, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 import { buttonReset } from "@/styles/sharedBaseCss.css";
-
-const fadeIn = keyframes({
-    from: { opacity: 0, transform: "translateY(-4px)" },
-    to: { opacity: 1, transform: "translateY(0)" },
-});
 
 // ─── Shared root styles ──────────────────────────────────
 

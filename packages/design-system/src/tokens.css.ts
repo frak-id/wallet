@@ -321,6 +321,21 @@ export const shadow = {
     dialog: "0 4px 24px rgba(0,0,0,0.12)",
 } as const;
 
+/**
+ * Fixed colors for always-dark frosted surfaces (e.g. in-app-browser banners):
+ * identical in light and dark themes, so they bypass the `vars` contract.
+ */
+export const overlay = {
+    scrim: "#000000cc",
+} as const;
+
+export const onDark = {
+    text60: "#ffffff99",
+    border40: "#ffffff66",
+    surface10: "#ffffff1a",
+    accent: "#2bb2ff",
+} as const;
+
 export const fontSize = {
     xxs: "10px",
     xs: "12px",

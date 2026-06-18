@@ -15,6 +15,7 @@
     "./global": "./src/global.ts",
     "./theme": "./src/theme.css.ts",
     "./tokens": "./src/tokens.css.ts",
+    "./keyframes": "./src/keyframes.css.ts",
     "./sprinkles": "./src/sprinkles.css.ts",
     "./utils": "./src/reset.css.ts",
     "./styles/inAppBanner": "./src/styles/inAppBanner.css.ts",

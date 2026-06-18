@@ -1,4 +1,5 @@
-import { keyframes, style, styleVariants } from "@vanilla-extract/css";
+import { style, styleVariants } from "@vanilla-extract/css";
+import { fadeIn } from "../../keyframes.css";
 import { vars } from "../../theme.css";
 import { alias, brand } from "../../tokens.css";
 
@@ -8,11 +9,6 @@ import { alias, brand } from "../../tokens.css";
  * safe-area, z-index) is owned by the host `BannerStack`; this component only
  * paints the card surface + scroll affordances.
  */
-
-const fadeIn = keyframes({
-    from: { opacity: 0, transform: "translateY(-4px)" },
-    to: { opacity: 1, transform: "translateY(0)" },
-});
 
 export const container = style({
     position: "relative",
