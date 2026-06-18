@@ -139,6 +139,7 @@ bun run changeset:release
   - `wallet/` - TanStack Router user wallet (SSR disabled, module-based architecture)
   - `business/` - TanStack Router business dashboard (SPA, nginx in production)
   - `listener/` - Iframe communication app for SDK interactions
+  - `shopify/` - Shopify embedded app (React Router v7)
 - **`packages/`** - Shared internal libraries (workspace-only)
   - `test-foundation/` - Centralized test configuration and utilities (`@frak-labs/test-foundation`)
   - `wallet-shared/` - Shared code exclusively for wallet and listener apps (~97 files)
@@ -167,10 +168,11 @@ bun run changeset:release
     - **Exports**: Barrel exports in `src/index.ts` for clean imports - use `import { X } from "@frak-labs/wallet-shared"`
     - **Import Pattern**: Used 228 times across wallet (153) and listener (75) apps
     - **Known Issues**:
-      - ⚠️ Component duplication with `ui` package (AlertDialog exists in both)
+      - ⚠️ Component duplication with `design-system` (AlertDialog exists in both)
       - ⚠️ Backend type coupling via dev dependency on `@frak-labs/backend-elysia`
     - **Technical Debt**: See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring analysis (conclusion: well-organized, needs targeted fixes not full split)
-  - `ui/` - Radix UI-based component library (generic, reusable across all apps)
+  - `design-system/` - Vanilla Extract design system: tokens + ~28 components (replaces legacy ui)
+  - `ui-preview/` - Embedded preview widgets (business, shopify)
   - `app-essentials/` - Core blockchain utilities and WebAuthn configuration
   - `client/` - API client abstractions (Elysia Eden Treaty integration)
   - `dev-tooling/` - Build configurations (manualChunks, onwarn suppressions, Lightning CSS config)
@@ -187,8 +189,8 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Router
-- **Styling**: Lightning CSS for all Vite apps (wallet, listener, business)
+- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, vanilla-extract, TanStack Router
+- **Styling**: vanilla-extract (CSS-in-TS) via the design-system package; Lightning CSS processes all Vite apps (wallet, listener, business)
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
@@ -198,7 +200,7 @@ bun run changeset:release
 - Use TypeScript for all code; prefer types over interfaces
 - Functional and declarative programming patterns; avoid classes
 - Use absolute imports with `@/...` paths (configured via tsconfig paths)
-- CSS Modules for styling (no Tailwind)
+- vanilla-extract for styling (no Tailwind); CSS Modules only in legacy/shopify
 - Early returns for readability
 - Performance is critical - high workload optimization mandatory
 - WebAuthn-first authentication approach with Account Abstraction
