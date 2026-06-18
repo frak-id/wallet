@@ -3,14 +3,17 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, type UserConfig } from "vite";
+import removeConsole from "vite-plugin-remove-console";
 import {
     getSandboxEnv,
     getSstResource,
+    inlineFontFaces,
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
 
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
+const isProd = process.env.NODE_ENV === "production";
 
 export default defineConfig(async () => {
     const sandboxEnv = await getSandboxEnv();
@@ -26,6 +29,11 @@ export default defineConfig(async () => {
             }),
             viteReact(),
             vanillaExtractPlugin(),
+            ...(isProd ? [removeConsole()] : []),
+            inlineFontFaces({
+                cssFiles: ["public/fonts/inter.css"],
+                preload: ["/fonts/inter-latin.woff2"],
+            }),
         ],
         resolve: {
             tsconfigPaths: true,
@@ -87,6 +95,27 @@ export default defineConfig(async () => {
                                 name: "ui-vendor",
                                 test: /node_modules[\\/](@radix-ui|lucide-react|cmdk|react-hook-form)/,
                                 priority: 30,
+                            },
+                            {
+                                name: "utils-vendor",
+                                test: /node_modules[\\/](date-fns|radash)/,
+                                priority: 28,
+                            },
+                            {
+                                // Full country dataset (~44 KB), pulled in by the
+                                // campaign territory/validation flow. Isolating it
+                                // into its own immutable chunk keeps it out of the
+                                // app-churning `common` bucket for better caching.
+                                name: "countries-vendor",
+                                test: /node_modules[\\/]countries-list/,
+                                priority: 27,
+                            },
+                            {
+                                // Stable workspace UI library — own cache bucket
+                                // so app-code deploys don't bust its hash.
+                                name: "design-system",
+                                test: /packages[\\/]design-system/,
+                                priority: 25,
                             },
                             {
                                 name: "common",
