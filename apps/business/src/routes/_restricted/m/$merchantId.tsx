@@ -1,9 +1,11 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { isDemoMode } from "@/config/auth";
 import { useIsBareShell } from "@/module/common/hook/useIsBareShell";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { BankStatusBanner } from "@/module/merchant/component/BankStatusBanner";
 import { myMerchantsQueryOptions } from "@/module/merchant/queries/queryOptions";
+import { activeMerchantStore } from "@/stores/activeMerchantStore";
 
 /**
  * Layout route that gates every `/m/$merchantId/...` page on the user
@@ -47,6 +49,11 @@ export const Route = createFileRoute("/_restricted/m/$merchantId")({
 
 function MerchantLayout() {
     const { merchantId } = Route.useParams();
+    // Remember this as the merchant the user is working in, so param-less
+    // routes (settings, legacy `/dashboard`) stay on it.
+    useEffect(() => {
+        activeMerchantStore.getState().setLastMerchantId(merchantId);
+    }, [merchantId]);
     // Bare-shell pages (campaign wizard, merchant edit) are immersive
     // full-viewport layouts — the global bank banner would collide with
     // their own toolbars. Hide it there.

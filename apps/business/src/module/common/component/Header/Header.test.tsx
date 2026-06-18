@@ -68,12 +68,10 @@ describe("Header", () => {
         expect(screen.getByTestId("new-campaign-btn")).toBeInTheDocument();
     });
 
-    it("should render the My account menu trigger", () => {
+    it("should render the active merchant name in the menu trigger", () => {
         render(<Header />);
-        const trigger = screen.getByRole("button", {
-            name: "shell.header.myAccount",
-        });
+        const trigger = screen.getByRole("button", { name: "Acme" });
         expect(trigger).toBeInTheDocument();
-        expect(trigger).toHaveTextContent("shell.header.myAccount");
+        expect(trigger).toHaveTextContent("Acme");
     });
 });

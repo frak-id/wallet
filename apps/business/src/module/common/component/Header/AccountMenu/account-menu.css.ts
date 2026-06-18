@@ -90,11 +90,18 @@ export const merchantLink = style({
     display: "flex",
     alignItems: "center",
     gap: alias.spacing.xs,
+    width: "100%",
     padding: alias.spacing.m,
     borderRadius: alias.cornerRadius.m,
     border: "4px solid transparent",
     color: vars.text.primary,
     textDecoration: "none",
+    // Shared by the <a> switch link and the <button> in-place switcher used
+    // on param-less routes — reset the native button chrome.
+    background: "transparent",
+    fontFamily: "inherit",
+    textAlign: "left",
+    cursor: "pointer",
     transition: "background 0.15s ease",
     "@media": {
         "(hover: hover)": {

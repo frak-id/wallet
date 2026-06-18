@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLogout } from "@/module/common/hook/useLogout";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
+import { activeMerchantStore } from "@/stores/activeMerchantStore";
 import * as styles from "./account-menu.css";
 import { buildSwitchTarget } from "./switchTarget";
 
@@ -30,7 +31,15 @@ export function AccountMenu() {
     };
     const logout = useLogout();
 
+    const lastMerchantId = activeMerchantStore((s) => s.lastMerchantId);
+    const setLastMerchantId = activeMerchantStore((s) => s.setLastMerchantId);
+
     const hasMerchants = merchants.length > 0;
+    const activeMerchant =
+        merchants.find((m) => m.id === activeId) ??
+        merchants.find((m) => m.id === lastMerchantId) ??
+        merchants[0];
+    const accountLabel = activeMerchant?.name ?? t("shell.header.myAccount");
     const close = () => setOpen(false);
 
     return (
@@ -39,7 +48,7 @@ export function AccountMenu() {
                 <button
                     type="button"
                     className={styles.trigger}
-                    aria-label={t("shell.header.myAccount")}
+                    aria-label={accountLabel}
                     aria-haspopup="menu"
                 >
                     <span className={styles.triggerContent}>
@@ -52,7 +61,7 @@ export function AccountMenu() {
                             weight="medium"
                             className={styles.label}
                         >
-                            {t("shell.header.myAccount")}
+                            {accountLabel}
                         </Text>
                     </span>
                     <span
@@ -69,52 +78,72 @@ export function AccountMenu() {
                 {hasMerchants && (
                     <ul className={styles.list}>
                         {merchants.map((merchant) => {
-                            const isActive = merchant.id === activeId;
-                            return (
-                                <li key={merchant.id} className={styles.item}>
-                                    <Link
-                                        to={buildSwitchTarget(
-                                            pathname,
-                                            merchant.id
-                                        )}
-                                        replace
-                                        className={clsx(
-                                            styles.merchantLink,
-                                            isActive &&
-                                                styles.merchantLinkActive
-                                        )}
-                                        onClick={close}
-                                    >
-                                        <span className={styles.merchantBody}>
+                            const isActive = merchant.id === activeMerchant?.id;
+                            const className = clsx(
+                                styles.merchantLink,
+                                isActive && styles.merchantLinkActive
+                            );
+                            const body = (
+                                <>
+                                    <span className={styles.merchantBody}>
+                                        <Text
+                                            as="span"
+                                            variant="body"
+                                            weight="medium"
+                                            className={styles.merchantName}
+                                        >
+                                            {merchant.name}
+                                        </Text>
+                                        {merchant.domain && (
                                             <Text
                                                 as="span"
-                                                variant="body"
-                                                weight="medium"
-                                                className={styles.merchantName}
+                                                variant="bodySmall"
+                                                color="secondary"
+                                                className={
+                                                    styles.merchantDomain
+                                                }
                                             >
-                                                {merchant.name}
+                                                {merchant.domain}
                                             </Text>
-                                            {merchant.domain && (
-                                                <Text
-                                                    as="span"
-                                                    variant="bodySmall"
-                                                    color="secondary"
-                                                    className={
-                                                        styles.merchantDomain
-                                                    }
-                                                >
-                                                    {merchant.domain}
-                                                </Text>
-                                            )}
-                                        </span>
-                                        {isActive && (
-                                            <CheckIcon
-                                                width={24}
-                                                height={24}
-                                                className={styles.check}
-                                            />
                                         )}
-                                    </Link>
+                                    </span>
+                                    {isActive && (
+                                        <CheckIcon
+                                            width={24}
+                                            height={24}
+                                            className={styles.check}
+                                        />
+                                    )}
+                                </>
+                            );
+                            return (
+                                <li key={merchant.id} className={styles.item}>
+                                    {activeId ? (
+                                        <Link
+                                            to={buildSwitchTarget(
+                                                pathname,
+                                                merchant.id
+                                            )}
+                                            replace
+                                            className={className}
+                                            onClick={close}
+                                        >
+                                            {body}
+                                        </Link>
+                                    ) : (
+                                        // Param-less route (e.g. /settings):
+                                        // switch context in place, stay put.
+                                        <button
+                                            type="button"
+                                            className={className}
+                                            onClick={() => {
+                                                setLastMerchantId(merchant.id);
+                                                close();
+                                            }}
+                                        >
+                                            {body}
+                                        </button>
+                                    )}
                                 </li>
                             );
                         })}
