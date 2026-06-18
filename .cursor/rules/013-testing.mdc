@@ -138,7 +138,6 @@ Each project has its own setup file importing shared configurations:
 - `apps/listener/tests/vitest-setup.ts`
 - `apps/business/tests/vitest-setup.ts`
 - `packages/wallet-shared/tests/vitest-setup.ts`
-- `packages/ui/tests/vitest-setup.ts`
 - `sdk/core/tests/vitest-setup.ts`
 - `sdk/react/tests/vitest-setup.ts`
 - `services/backend/test/vitest-setup.ts` - Backend-specific setup (Node environment, Viem/Drizzle/Bun mocks)
@@ -311,7 +310,7 @@ it("should handle async operation", async () => {
 ### When to Write Component Tests
 
 Component tests are valuable for:
-- **UI Components** (`packages/ui/component/`) - Core reusable components
+- **UI Components** (`packages/design-system/src/components/`) - Core reusable components
 - **Wallet-Shared Components** (`packages/wallet-shared/src/*/component/`) - Domain-specific UI components
 - **Complex Components** - Components with multiple states, interactions, or edge cases
 - **Critical User Flows** - Components that handle important user interactions
@@ -527,23 +526,6 @@ describe("AlertDialog", () => {
     });
 });
 ```
-
-### UI Package Testing
-
-The UI package (`packages/ui/`) has its own Vitest configuration:
-- **Config**: `packages/ui/vitest.config.ts`
-- **Setup**: `packages/ui/tests/vitest-setup.ts`
-- **Test scripts**: `bun run test`, `bun run test:ui`, `bun run test:coverage`
-
-Run UI package tests:
-```bash
-cd packages/ui
-bun run test              # Run tests
-bun run test:ui           # Run with Vitest UI
-bun run test:coverage     # Run with coverage
-```
-
-UI package tests are included when running `bun run test` from root.
 
 ## Coverage Targets
 

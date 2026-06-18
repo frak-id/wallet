@@ -41,7 +41,7 @@ Analyze the user's request to determine:
    - `apps/shopify/` → Shopify app
    - `plugins/magento/` → Magento plugin
    - `packages/wallet-shared/` → shared wallet/listener code
-   - `packages/ui/` → UI components
+   - `packages/design-system/` → UI components / design tokens
    - `sdk/` → SDK packages
    - `services/backend/` → backend
    - `infra/` → infrastructure

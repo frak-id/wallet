@@ -23,7 +23,7 @@ bun run test         # business-unit Vitest project
 - **Individual Zustand selectors are mandatory here**: this app is the most sensitive to re-render storms (345 files, many subscribers).
 - **Production = nginx with pre-compressed gzip**: CI generates `.gz` siblings; vite `preview` does not serve them — expect size/cache differences.
 - **Restricted-route pattern**: `_restricted` layout centralises auth; do NOT add guards per-route.
-- **Consumes legacy UI**: uses `@frak-labs/ui` (Radix) + `@frak-labs/ui-preview`; design-system migration hasn't reached this app.
+- **UI**: uses `@frak-labs/design-system` (Vanilla Extract) + `@frak-labs/ui-preview`.
 - **Type-safe API** via `@frak-labs/client` (Eden Treaty) — do not hand-roll fetches; the client already carries backend types.
 - **i18n location**: translations live in `src/i18n/locales/{en,fr}/translation.json`; FR is the fallback (bundled), EN is lazy-loaded. Regen types via `bun run i18n:types` after adding keys. Single `translation` namespace — no `customized` namespace (wallet-only).
 

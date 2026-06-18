@@ -1,6 +1,6 @@
 # packages/design-system — Compass
 
-Vanilla Extract design system (28 components). Replaces legacy `packages/ui`. Sprinkles-based responsive; `[data-theme='dark']` switching.
+Vanilla Extract design system (28 components). Replaced the former `packages/ui` (now removed). Sprinkles-based responsive; `[data-theme='dark']` switching.
 
 ## Key Files
 - `src/tokens.css.ts` — brand colors, scale, typography, semantic light/dark tokens
@@ -32,4 +32,4 @@ import { brand, alias } from "@frak-labs/design-system/tokens";
 Default exports · wildcard re-exports · raw hex in components · bypassing `Box` with manual layout CSS · importing brand tokens directly in components.
 
 ## See Also
-Parent `packages/AGENTS.md` · `apps/wallet/AGENTS.md` (primary consumer, migration in progress) · `packages/ui/AGENTS.md` (legacy) · `sdk/components/AGENTS.md` (Web Components consumer).
+Parent `packages/AGENTS.md` · `apps/wallet/AGENTS.md` (primary consumer, migration in progress) · `sdk/components/AGENTS.md` (Web Components consumer).

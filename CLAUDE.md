@@ -161,7 +161,7 @@ bun run changeset:release
       - `polyfills/` - Runtime polyfills (BigInt serialization)
       - `test/` - Testing utilities and shared test helpers
     - **Key Dependencies**:
-      - Workspace: `@frak-labs/ui`, `@frak-labs/app-essentials`, `@frak-labs/client`, `@frak-labs/core-sdk`, `@frak-labs/frame-connector`
+      - Workspace: `@frak-labs/app-essentials`, `@frak-labs/client`, `@frak-labs/core-sdk`, `@frak-labs/frame-connector`
       - External: React 19, Zustand, Viem, Wagmi, TanStack Query, WebAuthn, idb-keyval, OpenPanel
     - **Storage**: Uses lightweight idb-keyval for IndexedDB - service worker optimized (1.73 KB gzipped)
     - **Exports**: Barrel exports in `src/index.ts` for clean imports - use `import { X } from "@frak-labs/wallet-shared"`

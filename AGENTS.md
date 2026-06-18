@@ -24,7 +24,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 | Shopify embedded app | `apps/shopify/app/` (ONLY React Router v7, relative imports) |
 | Backend domains | `services/backend/src/domain/` · cross-domain → `src/orchestration/` |
 | SDK actions | `sdk/core/src/actions/` · React hooks → `sdk/react/src/hook/` |
-| Design tokens / Box | `packages/design-system/` (replaces `packages/ui`) |
+| Design tokens / Box | `packages/design-system/` |
 | Blockchain config/ABIs | `packages/app-essentials/src/blockchain/` |
 | Shared wallet state | `packages/wallet-shared/` (wallet+listener ONLY) |
 | Test mocks/fixtures | `packages/test-foundation/src/` |
