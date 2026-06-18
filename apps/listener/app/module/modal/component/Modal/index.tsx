@@ -1,7 +1,12 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { CloseIcon, LogoFrak } from "@frak-labs/design-system/icons";
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
     InAppBrowserToast,
     LogoFrakWithName,
+    Markdown,
     prefixModalCss,
     trackEvent,
 } from "@frak-labs/wallet-shared/common";
@@ -13,7 +18,6 @@ import {
 import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { clsx as cx } from "clsx";
-import { X } from "lucide-react";
 import {
     type Dispatch,
     type PropsWithChildren,
@@ -29,7 +33,6 @@ import { useShallow } from "zustand/react/shallow";
 import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
 import { FinalModalStep } from "@/module/modal/component/Final";
-import { MetadataInfo } from "@/module/modal/component/Generic";
 import { LoginModalStep } from "@/module/modal/component/Login";
 import { TransactionModalStep } from "@/module/modal/component/Transaction";
 import {
@@ -49,7 +52,6 @@ import {
 } from "@/ui/ListenerUiProvider";
 import { ToastLoading } from "../../../component/ToastLoading";
 import * as styles from "./index.css";
-import { ModalStepIndicator } from "./Step";
 
 // Re-export the lazy handler body so it lands in the Modal default chunk
 // instead of its own .impl shim chunk. See useDisplayModalListener.ts.
@@ -198,12 +200,8 @@ function ListenerModalInner({
      * The inner component to display
      */
     const { titleComponent, footer } = useMemo(() => {
-        // Build the title component we will display
-        const titleComponent = metadata?.header?.title ? (
-            metadata.header.title
-        ) : (
-            <div />
-        );
+        // Build the title text we will display
+        const titleComponent = metadata?.header?.title ?? "";
 
         // The provided by frak component
         const providedBy = (
@@ -237,11 +235,7 @@ function ListenerModalInner({
     }, [metadata]);
 
     return (
-        <ModalComponent
-            title={titleComponent}
-            open={isOpen}
-            onOpenChange={onOpenChange}
-        >
+        <ModalComponent open={isOpen} onOpenChange={onOpenChange}>
             <Toaster position="top-center" />
             <InAppBrowserToast
                 getMergeToken={getMergeToken}
@@ -249,15 +243,16 @@ function ListenerModalInner({
             />
             <ToastLoading />
 
-            <ModalLogoIcon
-                logoUrl={logoUrl}
-                logoFailed={logoFailed}
-                onError={() => setLogoFailed(true)}
-            />
-            <CurrentModalMetadataInfo />
-            <ModalStepIndicator />
-            <CurrentModalStepComponent onError={onError} />
-            {footer}
+            <Stack space="l" className={prefixModalCss("content-stack")}>
+                <ModalHeader
+                    title={titleComponent}
+                    logoUrl={logoUrl}
+                    logoFailed={logoFailed}
+                    onLogoError={() => setLogoFailed(true)}
+                />
+                <CurrentModalStepComponent onError={onError} />
+                {footer}
+            </Stack>
         </ModalComponent>
     );
 }
@@ -271,12 +266,10 @@ function ListenerModalInner({
  * @constructor
  */
 function ModalComponent({
-    title,
     open,
     onOpenChange,
     children,
 }: PropsWithChildren<{
-    title?: ReactNode;
     open: boolean;
     onOpenChange: Dispatch<boolean>;
 }>) {
@@ -288,33 +281,98 @@ function ModalComponent({
                     className={`${prefixModalCss("overlay")} ${styles.alertDialog__overlay}`}
                 />
                 <AlertDialogPrimitive.Content
-                    data-theme="dark"
                     onEscapeKeyDown={() => onOpenChange?.(false)}
-                    className={`${prefixModalCss("content")} ${styles.alertDialog__content} ${styles.alertDialog__withCloseButton}`}
+                    className={`${prefixModalCss("content")} ${styles.alertDialog__content}`}
                 >
-                    <AlertDialogPrimitive.Cancel asChild>
-                        <button
-                            type="button"
-                            className={`${prefixModalCss("close")} ${styles.alertDialog__close}`}
-                            aria-label="Close"
-                        >
-                            <X />
-                        </button>
-                    </AlertDialogPrimitive.Cancel>
-                    <AlertDialogPrimitive.Title
-                        className={`${prefixModalCss("title")} ${styles.alertDialog__title} ${styles.modalListener__title}`}
-                    >
-                        {title}
-                    </AlertDialogPrimitive.Title>
-                    <AlertDialogPrimitive.Description />
-                    <div
-                        className={`${prefixModalCss("description")} ${styles.alertDialog__description}`}
-                    >
-                        {children}
-                    </div>
+                    {children}
                 </AlertDialogPrimitive.Content>
             </AlertDialogPrimitive.Portal>
         </AlertDialogPrimitive.Root>
+    );
+}
+
+/**
+ * Figma modal header — centered logo → title → subtitle.
+ * Wraps the Radix Title/Description nodes (required for a11y) in DS Text.
+ */
+function ModalHeader({
+    title,
+    logoUrl,
+    logoFailed,
+    onLogoError,
+}: {
+    title: ReactNode;
+    logoUrl?: string;
+    logoFailed: boolean;
+    onLogoError: () => void;
+}) {
+    return (
+        <Stack space="none" className={prefixModalCss("header")}>
+            <Inline space="none" align="right">
+                <AlertDialogPrimitive.Cancel asChild>
+                    <button
+                        type="button"
+                        className={`${prefixModalCss("close")} ${styles.alertDialog__close}`}
+                        aria-label="Close"
+                    >
+                        <CloseIcon />
+                    </button>
+                </AlertDialogPrimitive.Cancel>
+            </Inline>
+            <Stack space="m" align="center">
+                {logoUrl && !logoFailed ? (
+                    <img
+                        src={logoUrl}
+                        alt=""
+                        className={styles.modalHeaderLogo}
+                        onError={onLogoError}
+                    />
+                ) : (
+                    <LogoFrak
+                        width={48}
+                        height={48}
+                        className={styles.modalHeaderLogoMark}
+                    />
+                )}
+                <Stack space="xs" align="center">
+                    <CurrentModalTitle metadataTitle={title} />
+                    <CurrentModalMetadataInfo />
+                </Stack>
+            </Stack>
+        </Stack>
+    );
+}
+
+/**
+ * Step-aware modal title — uses the metadata header title when set, otherwise
+ * the current step's i18n title (`sdk.modal.<step>.title`). Wrapped in the
+ * Radix Title for a11y; merchants can override the copy via customizations.i18n.
+ */
+function CurrentModalTitle({ metadataTitle }: { metadataTitle?: ReactNode }) {
+    const { t, i18n } = useListenerTranslation();
+    const currentStep = modalStore(selectCurrentStepObject);
+
+    const stepTitle = useMemo(() => {
+        if (!currentStep) return undefined;
+        const context =
+            currentStep.key === "final"
+                ? currentStep.params.action.key
+                : undefined;
+        const key = `sdk.modal.${currentStep.key}.title`;
+        return i18n.exists(key) ? t(key, { context }) : undefined;
+    }, [currentStep, i18n, t]);
+
+    return (
+        <AlertDialogPrimitive.Title className={styles.modalHeaderTitle}>
+            <Text
+                as="span"
+                variant="heading2"
+                align="center"
+                className={prefixModalCss("title")}
+            >
+                {metadataTitle || stepTitle || ""}
+            </Text>
+        </AlertDialogPrimitive.Title>
     );
 }
 
@@ -344,18 +402,22 @@ function CurrentModalMetadataInfo() {
         return `sdk.modal.${currentStep.key}.description`;
     }, [currentStep, isDismissed]);
 
-    // Get the right message depending on the step
+    // Render the Radix Description (always present for a11y) as the centered
+    // subtitle. Markdown can emit block elements, so it lives in a styled div.
     return useMemo(() => {
-        if (!descriptionKey) return null;
+        const description =
+            descriptionKey && i18n.exists(descriptionKey)
+                ? t(descriptionKey)
+                : undefined;
 
-        // Check if i18n contain the keys
-        const hasDescription = i18n.exists(descriptionKey);
-
-        // Return the matching component
         return (
-            <MetadataInfo
-                description={hasDescription ? t(descriptionKey) : undefined}
-            />
+            <AlertDialogPrimitive.Description asChild>
+                <div
+                    className={`${styles.modalListener__subtitle} ${prefixModalCss("text")}`}
+                >
+                    {description ? <Markdown md={description} /> : null}
+                </div>
+            </AlertDialogPrimitive.Description>
         );
     }, [descriptionKey, i18n, t]);
 }
@@ -430,30 +492,4 @@ function CurrentModalStepComponent({
                 return <>Can't handle {currentStep} yet</>;
         }
     }, [onError, currentStep]);
-}
-
-/**
- * Logo icon with 404 fallback — hides itself on load failure
- */
-function ModalLogoIcon({
-    logoUrl,
-    logoFailed,
-    onError,
-}: {
-    logoUrl?: string;
-    logoFailed: boolean;
-    onError: () => void;
-}) {
-    if (!logoUrl || logoFailed) return null;
-
-    return (
-        <div className={styles.modalListener__iconContainer}>
-            <img
-                src={logoUrl}
-                alt=""
-                className={styles.modalListener__icon}
-                onError={onError}
-            />
-        </div>
-    );
 }

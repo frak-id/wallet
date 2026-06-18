@@ -1,4 +1,4 @@
-import { Markdown, prefixModalCss } from "@frak-labs/wallet-shared/common";
+import { prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import * as styles from "@/module/modal/component/Modal/index.css";
 import {
@@ -10,19 +10,6 @@ import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/ui/ListenerUiProvider";
-
-export function MetadataInfo({ description }: { description?: string }) {
-    if (description) {
-        return (
-            <div
-                className={`${styles.modalListener__text} ${prefixModalCss("text")}`}
-            >
-                <Markdown md={description} />
-            </div>
-        );
-    }
-    return null;
-}
 
 /**
  * A generic dismiss button, if possible with the current request

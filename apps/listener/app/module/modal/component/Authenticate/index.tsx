@@ -1,10 +1,11 @@
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { HandleErrors, prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";
-import * as styles from "@/module/modal/component/Modal/index.css";
 import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 import * as authStyles from "./index.css";
 
@@ -69,23 +70,24 @@ export function SiweAuthenticateModalStep({
                 <p>Uri: {siweMessage?.uri}</p>
             </div>
 
-            <div
-                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
-            >
-                <div>
-                    <button
-                        type={"button"}
-                        className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
-                        disabled={isPending}
-                        onClick={() => {
-                            signMessage({ message });
-                        }}
-                    >
-                        {isPending && <Spinner />}
-                        {t("sdk.modal.siweAuthenticate.primaryAction")}
-                    </button>
-                </div>
-            </div>
+            <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
+                {/* Stay visually primary while pending (spinner + click guard)
+                 * — the DS disabled state is too low-contrast on the light
+                 * modal surface. */}
+                <Button
+                    variant="primary"
+                    size="large"
+                    icon={isPending ? <Spinner size="s" /> : undefined}
+                    aria-busy={isPending}
+                    className={prefixModalCss("button-primary")}
+                    onClick={() => {
+                        if (isPending) return;
+                        signMessage({ message });
+                    }}
+                >
+                    {t("sdk.modal.siweAuthenticate.primaryAction")}
+                </Button>
+            </Stack>
 
             {isError && error && (
                 <HandleErrors

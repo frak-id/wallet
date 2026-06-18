@@ -1,5 +1,9 @@
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
+import { button } from "@frak-labs/design-system/components/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { FaceIdIcon, QrCodeIcon } from "@frak-labs/design-system/icons";
 import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
 import {
     HandleErrors,
@@ -15,7 +19,6 @@ import { useEffect, useMemo } from "react";
 import { useStore } from "zustand";
 import { SsoButton } from "@/module/component/SsoButton";
 import { DismissButton } from "@/module/modal/component/Generic";
-import * as styles from "@/module/modal/component/Modal/index.css";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {
     useListenerTranslation,
@@ -95,53 +98,62 @@ export function LoginModalStep({
         }
     }, [onFinish, session]);
 
+    const primaryClass = `${button({ variant: "primary", size: "large" })} ${prefixModalCss("button-primary")}`;
+    const secondaryClass = `${button({ variant: "secondary", size: "large" })} ${prefixModalCss("button-secondary")}`;
+
     return (
         <>
-            <div
-                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
-            >
+            <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
                 {allowSso && (
-                    <div>
-                        <SsoButton
-                            merchantId={
-                                (resolvingContext?.merchantId as `0x${string}`) ??
-                                "0x"
-                            }
-                            ssoMetadata={ssoMetadata}
-                            text={t("sdk.modal.login.primaryAction")}
-                            className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
-                        />
-                    </div>
+                    <SsoButton
+                        merchantId={
+                            (resolvingContext?.merchantId as `0x${string}`) ??
+                            "0x"
+                        }
+                        ssoMetadata={ssoMetadata}
+                        text={
+                            <>
+                                <FaceIdIcon width={24} height={24} />
+                                {t("sdk.modal.login.primaryAction")}
+                            </>
+                        }
+                        className={primaryClass}
+                    />
                 )}
                 <AuthenticateWithPhone
-                    text={t("sdk.modal.login.secondaryAction")}
-                    className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
+                    text={
+                        <>
+                            <QrCodeIcon width={24} height={24} />
+                            {t("sdk.modal.login.secondaryAction")}
+                        </>
+                    }
+                    className={secondaryClass}
                 />
                 {!allowSso && (
-                    <div>
-                        <button
-                            type={"button"}
-                            className={`${styles.modalListener__buttonSecondary} ${prefixModalCss("button-secondary")}`}
-                            disabled={isLoading || !isWebAuthNSupported}
-                            onClick={() => {
-                                login({});
-                            }}
-                        >
-                            {isLoading && <Spinner />}
-                            {t("sdk.modal.login.secondaryAction")}
-                        </button>
-                    </div>
+                    <button
+                        type={"button"}
+                        className={secondaryClass}
+                        disabled={isLoading || !isWebAuthNSupported}
+                        onClick={() => {
+                            login({});
+                        }}
+                    >
+                        {isLoading ? (
+                            <Spinner size="s" />
+                        ) : (
+                            <FaceIdIcon width={24} height={24} />
+                        )}
+                        {t("sdk.modal.login.secondaryAction")}
+                    </button>
                 )}
 
-                <div>
-                    <DismissButton />
-                </div>
-            </div>
+                <DismissButton />
+            </Stack>
 
             {isSuccess && (
-                <p className={styles.modalListener__success}>
+                <Text variant="body" color="success" align="center">
                     {t("sdk.modal.login.success")}
-                </p>
+                </Text>
             )}
 
             {isError && error && (

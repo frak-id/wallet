@@ -1,3 +1,5 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { keyframes, style, styleVariants } from "@vanilla-extract/css";
 
 const pulseKeyframes = keyframes({
@@ -13,22 +15,22 @@ const spinKeyframes = keyframes({
 export const buttonAuth = style({
     position: "relative",
     overflow: "hidden",
-    background: "linear-gradient(135deg, #425dad 0%, #2d3561 100%)",
+    backgroundColor: vars.surface.primary,
     border: "none",
-    borderRadius: "var(--frak-button-border-radius)",
+    borderRadius: alias.cornerRadius.full,
     boxShadow: [
-        "0 25px 50px -12px rgba(76, 99, 210, 0.25)",
+        "0 25px 50px -12px rgba(0, 67, 239, 0.25)",
         "0 0 0 1px rgba(255, 255, 255, 0.1)",
     ].join(", "),
     transition: "all 0.3s ease",
     cursor: "pointer",
-    color: "var(--frak-color-white)",
+    color: vars.text.onAction,
     transform: "translateY(0)",
     selectors: {
         "&:hover": {
-            background: "linear-gradient(135deg, #5a70d8 0%, #3a4270 100%)",
+            backgroundColor: vars.surface.primaryHover,
             boxShadow: [
-                "0 32px 64px -12px rgba(76, 99, 210, 0.4)",
+                "0 32px 64px -12px rgba(0, 67, 239, 0.4)",
                 "0 0 0 1px rgba(255, 255, 255, 0.15)",
             ].join(", "),
             transform: "translateY(-2px)",
@@ -36,7 +38,7 @@ export const buttonAuth = style({
         "&:active": {
             transform: "translateY(1px)",
             boxShadow: [
-                "0 20px 40px -12px rgba(76, 99, 210, 0.3)",
+                "0 20px 40px -12px rgba(0, 67, 239, 0.3)",
                 "0 0 0 1px rgba(255, 255, 255, 0.1)",
             ].join(", "),
             transition: "all 0.1s ease",
@@ -59,8 +61,7 @@ export const buttonAuth = style({
                 },
                 "&:active": {
                     transform: "translateY(1px)",
-                    background:
-                        "linear-gradient(135deg, #3a4b96 0%, #252a50 100%)",
+                    backgroundColor: vars.surface.primaryPressed,
                 },
             },
         },
@@ -69,9 +70,9 @@ export const buttonAuth = style({
 
 export const size = styleVariants({
     none: { padding: 0 },
-    small: { padding: "12px" },
-    normal: { padding: "var(--frak-spacing-l)" },
-    big: { padding: "var(--frak-spacing-xl)" },
+    small: { padding: alias.spacing.s },
+    normal: { padding: alias.spacing.l },
+    big: { padding: alias.spacing.xl },
 });
 
 export const width = styleVariants({
