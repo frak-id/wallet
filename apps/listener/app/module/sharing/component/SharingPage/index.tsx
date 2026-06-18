@@ -31,7 +31,8 @@ import {
 export { handleDisplaySharingPage } from "@/module/hooks/useDisplaySharingPageListener.impl";
 
 export function ListenerSharingPage() {
-    const { currentRequest, clearRequest } = useSharingListenerUI();
+    const { currentRequest, clearRequest, isRewardLoading } =
+        useSharingListenerUI();
     const { t } = useListenerTranslation();
     const { sourceUrl, merchantId } = useSafeResolvingContext();
     const defaultAttribution = useStore(
@@ -203,6 +204,7 @@ export function ListenerSharingPage() {
             installUrl={installUrl}
             t={t}
             isSharing={isSharing}
+            isRewardLoading={isRewardLoading}
             showConfirmation={showConfirmation}
             onShare={handleShare}
             onCopy={handleCopy}

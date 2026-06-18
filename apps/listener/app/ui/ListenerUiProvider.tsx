@@ -110,6 +110,7 @@ type UIContext = {
     currentRequest: UIRequest | undefined;
     setRequest: (request: UIRequest | undefined) => void;
     clearRequest: () => void;
+    isRewardLoading: boolean;
     translation: {
         lang?: "en" | "fr";
         t: (key: string, options?: TranslationOptions) => string;
@@ -146,12 +147,13 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
     const rewardCurrency =
         currentRequest?.configMetadata?.currency ?? backendSdkConfig?.currency;
-    const { data: formattedReward } = useFormattedEstimatedReward({
-        merchantId: resolvingContext?.merchantId,
-        currency: rewardCurrency,
-        targetInteraction: currentRequest?.targetInteraction,
-        context: currentRequest?.i18n?.context,
-    });
+    const { data: formattedReward, isLoading: isRewardLoading } =
+        useFormattedEstimatedReward({
+            merchantId: resolvingContext?.merchantId,
+            currency: rewardCurrency,
+            targetInteraction: currentRequest?.targetInteraction,
+            context: currentRequest?.i18n?.context,
+        });
 
     // Fallback when no campaign / reward is available: display a zero amount
     // formatted with the resolved currency (e.g. "0 €") so the raw
@@ -346,6 +348,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 currentRequest,
                 setRequest,
                 clearRequest,
+                isRewardLoading,
                 translation,
             }}
         >

@@ -136,9 +136,10 @@ function WalletSharingPage() {
     // Product selection state — default to first product
     const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
-    const { data: estimatedReward } = useFormattedEstimatedReward({
-        merchantId,
-    });
+    const { data: estimatedReward, isLoading: isRewardLoading } =
+        useFormattedEstimatedReward({
+            merchantId,
+        });
 
     // Fire `sharing_page_viewed` once per mount, independent of whether we end up
     // rendering the confirmation screen. Denominator for the sharing funnel.
@@ -311,6 +312,7 @@ function WalletSharingPage() {
             installUrl={installUrl}
             t={t}
             isSharing={isSharing}
+            isRewardLoading={isRewardLoading}
             canShare={canShare}
             showConfirmation={showConfirmation}
             onShare={handleShare}

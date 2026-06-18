@@ -34,7 +34,7 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                 bodyAnonymousId ??
                 headers["x-frak-client-id"] ??
                 request.headers.get("x-frak-client-id");
-                
+
             if (!anonymousId) {
                 throw HttpError.badRequest(
                     "MISSING_ANONYMOUS_ID",
