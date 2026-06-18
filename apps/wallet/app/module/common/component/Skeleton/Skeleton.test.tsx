@@ -38,7 +38,7 @@ describe("Skeleton", () => {
     it("should render with custom className", () => {
         const { container } = render(<Skeleton className="custom-skeleton" />);
 
-        // react-loading-skeleton applies className to the skeleton element
+        // the design-system Skeleton applies className to the skeleton element
         // Check that the className appears somewhere in the rendered output
         const skeletonElements = container.querySelectorAll(
             '[class*="skeleton"]'

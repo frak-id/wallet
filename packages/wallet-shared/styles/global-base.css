@@ -33,10 +33,3 @@ a {
     padding-top: 5px;
     color: var(--frak-color-red);
 }
-
-.react-loading-skeleton {
-    --base-color: var(--frak-skeleton-base-color);
-    --highlight-color: var(--frak-skeleton-highlight-color);
-    border-radius: 12px;
-    opacity: 0.35;
-}

@@ -15,6 +15,6 @@
     "incremental": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["**/*.ts", "../../packages/ui/types/*.d.ts"],
+  "include": ["**/*.ts"],
   "exclude": ["node_modules"]
 }

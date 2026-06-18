@@ -32,7 +32,6 @@ FROM deps AS sdk-builder
 COPY --link sdk ./sdk
 COPY --link packages/rpc ./packages/rpc
 COPY --link packages/dev-tooling ./packages/dev-tooling
-COPY --link packages/ui ./packages/ui
 COPY --link packages/design-system ./packages/design-system
 RUN bun run build:sdk
 

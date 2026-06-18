@@ -30,7 +30,6 @@
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/design-system": "workspace:*",
-    "@frak-labs/ui": "workspace:*",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@frak-labs/wallet-shared": "workspace:*",
     "@tanstack/query-async-storage-persister": "catalog:",
