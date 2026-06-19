@@ -51,6 +51,10 @@ vi.mock("@/module/stores/resolvingContextStore", async () => {
     return { resolvingContextStore };
 });
 
+vi.mock("@frak-labs/wallet-shared/authentication", () => ({
+    WebauthnErrorToast: () => null,
+}));
+
 vi.mock("@frak-labs/wallet-shared/common", () => ({
     Drawer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
     DrawerContent: ({ children }: { children: ReactNode }) => (

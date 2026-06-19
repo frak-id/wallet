@@ -4,9 +4,9 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { FaceIdIcon, QrCodeIcon } from "@frak-labs/design-system/icons";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared/authentication";
 import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
 import {
-    HandleErrors,
     isWebAuthNSupported,
     prefixModalCss,
 } from "@frak-labs/wallet-shared/common";
@@ -59,7 +59,7 @@ export function LoginModalStep({
     // Set the allowSso flag to true by default
     const allowSso = params.allowSso ?? true;
 
-    const { login, isSuccess, isLoading, isError, error } = useLogin({
+    const { login, isSuccess, isLoading, error } = useLogin({
         // On success, transmit the wallet address up a level
         onSuccess: (session) => {
             const lastWebAuthN =
@@ -97,6 +97,12 @@ export function LoginModalStep({
             onFinish({ wallet: session.address, webauthnProof });
         }
     }, [onFinish, session]);
+
+    // Surface login errors in the top modal toast (same UX as the wallet app).
+    useWebauthnErrorToast(error, {
+        operation: "login",
+        onRetry: () => login({}),
+    });
 
     const primaryClass = `${button({ variant: "primary", size: "large" })} ${prefixModalCss("button-primary")}`;
     const secondaryClass = `${button({ variant: "secondary", size: "large" })} ${prefixModalCss("button-secondary")}`;
@@ -154,14 +160,6 @@ export function LoginModalStep({
                 <Text variant="body" color="success" align="center">
                     {t("sdk.modal.login.success")}
                 </Text>
-            )}
-
-            {isError && error && (
-                <HandleErrors
-                    error={error}
-                    operation="login"
-                    onRetry={() => login({})}
-                />
             )}
         </>
     );

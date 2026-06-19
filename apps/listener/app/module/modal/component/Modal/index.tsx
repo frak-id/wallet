@@ -1,8 +1,10 @@
+import { BannerStack } from "@frak-labs/design-system/components/BannerStack";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon, LogoFrak } from "@frak-labs/design-system/icons";
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
+import { WebauthnErrorToast } from "@frak-labs/wallet-shared/authentication";
 import {
     InAppBrowserToast,
     Markdown,
@@ -207,6 +209,10 @@ function ListenerModalInner({
                 parentUrl={parentUrl}
             />
             <ToastLoading />
+
+            <BannerStack>
+                <WebauthnErrorToast />
+            </BannerStack>
 
             <Stack space="l" className={prefixModalCss("content-stack")}>
                 <ModalHeader

@@ -4,7 +4,8 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { HandleErrors, prefixModalCss } from "@frak-labs/wallet-shared/common";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared/authentication";
+import { prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";
@@ -50,7 +51,6 @@ export function SiweAuthenticateModalStep({
     const {
         mutate: signMessage,
         isPending,
-        isError,
         error,
     } = useSignMessage({
         mutation: {
@@ -61,6 +61,12 @@ export function SiweAuthenticateModalStep({
                     message,
                 }),
         },
+    });
+
+    // Surface signing errors in the top modal toast (same UX as the wallet app).
+    useWebauthnErrorToast(error, {
+        operation: "sign",
+        onRetry: () => signMessage({ message }),
     });
 
     return (
@@ -93,14 +99,6 @@ export function SiweAuthenticateModalStep({
                     {t("sdk.modal.siweAuthenticate.primaryAction")}
                 </Button>
             </Stack>
-
-            {isError && error && (
-                <HandleErrors
-                    error={error}
-                    operation="sign"
-                    onRetry={() => signMessage({ message })}
-                />
-            )}
         </>
     );
 }
