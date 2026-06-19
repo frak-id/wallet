@@ -169,7 +169,7 @@ export function CountrySelect({ value, onChange, error }: CountrySelectProps) {
                             <button
                                 type="button"
                                 className={styles.clearButton}
-                                aria-label="Clear all"
+                                aria-label={t("common.clearAll")}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onChange([]);

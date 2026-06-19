@@ -41,6 +41,44 @@
             "title": "Page introuvable",
             "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
             "action": "Aller au tableau de bord"
+        },
+        "boundary": {
+            "message": "Une erreur inattendue est survenue",
+            "technicalDetails": "Détails techniques (développement uniquement)",
+            "retry": "Réessayer",
+            "retryAria": "Réessayer de charger ce contenu",
+            "goBack": "Retour"
+        },
+        "campaign": {
+            "title": "Campagne introuvable",
+            "message": "La campagne que vous recherchez n'existe pas ou vous n'y avez pas accès.",
+            "back": "Retour aux campagnes"
+        },
+        "critical": {
+            "title": "Erreur critique",
+            "message": "Une erreur critique est survenue. Veuillez réessayer ou contacter le support si le problème persiste.",
+            "back": "Aller au tableau de bord"
+        },
+        "dataLoad": {
+            "title": "Échec du chargement des données",
+            "message": "Impossible de charger {{resourceName}}. Vérifiez votre connexion et réessayez."
+        },
+        "campaignCreate": {
+            "title": "Échec de la création de la campagne",
+            "back": "Retour au tableau de bord"
+        },
+        "pushCreate": {
+            "title": "Échec de la création de la notification push",
+            "back": "Retour aux membres"
+        },
+        "merchantNotFound": {
+            "title": "Marchand introuvable",
+            "message": "Le marchand que vous recherchez n'existe pas ou vous n'y avez pas accès.",
+            "back": "Retour au tableau de bord"
+        },
+        "merchantCreate": {
+            "title": "Échec de l'ajout du marchand",
+            "back": "Retour au tableau de bord"
         }
     },
     "shell": {
@@ -533,6 +571,30 @@
                 }
             }
         },
+        "creation": {
+            "budget": {
+                "title": "Budget global",
+                "description": "Le budget est le montant global alloué à votre campagne d'acquisition par bouche-à-oreille. Cette somme sert à verser les récompenses à votre communauté (parrains et nouveaux clients). Frak prélève une commission globale de 20% sur le budget de la campagne, sans frais supplémentaires.",
+                "periodLabel": "Période du budget",
+                "amountLabel": "Montant du budget",
+                "commission": "Commission Frak (20%)",
+                "rewardsDistributed": "Récompenses distribuées (80%)",
+                "periods": {
+                    "daily": "Quotidien",
+                    "weekly": "Hebdomadaire",
+                    "monthly": "Mensuel",
+                    "global": "Global"
+                }
+            },
+            "schedule": {
+                "title": "Calendrier",
+                "description": "Vous pouvez choisir de diffuser vos publicités en continu ou seulement sur une période donnée. Si vous ne définissez pas de date de fin, la campagne s'arrêtera une fois le budget épuisé.",
+                "startDateLabel": "Date de début (optionnel)",
+                "startImmediately": "Démarre dès la publication",
+                "setEndDate": "Définir une date de fin",
+                "pickDate": "Choisir une date"
+            }
+        },
         "tabs": {
             "all": "Tout",
             "active": "Active",
@@ -838,6 +900,15 @@
         "search": {
             "placeholder": "Rechercher"
         },
+        "copy": "Copier dans le presse-papiers",
+        "close": "Fermer",
+        "clearAll": "Tout effacer",
+        "pagination": {
+            "label": "pagination",
+            "previous": "Aller à la page précédente",
+            "next": "Aller à la page suivante",
+            "morePages": "Plus de pages"
+        },
         "dateRange": {
             "label": "Période",
             "clear": "Effacer",
@@ -1023,6 +1094,14 @@
                 "approve": "Il vous sera demandé d'approuver la transaction avec votre portefeuille.",
                 "duration": "L'enregistrement prend généralement moins d'une minute"
             }
+        },
+        "setupStatus": {
+            "title": "État de configuration du marchand",
+            "success": "Bravo ! Votre marchand est correctement configuré.",
+            "warningLine1": "Certains éléments nécessitent votre attention.",
+            "warningLine2": "Veuillez les vérifier et les compléter.",
+            "completeStep": "Compléter cette étape",
+            "documentation": "Documentation"
         }
     },
     "merchantEdit": {
@@ -1287,6 +1366,16 @@
             "title": "CSS global",
             "description": "Styles CSS appliqués à tous les composants SDK, tous emplacements confondus. Le CSS par emplacement peut les surcharger.",
             "toggle": "CSS personnalisé"
+        }
+    },
+    "embedded": {
+        "mint": {
+            "title": "Enregistrez votre boutique sur Frak",
+            "registering": "Enregistrement de {{domain}}",
+            "error": "Impossible d'enregistrer votre produit. Vérifiez que tout est correct.",
+            "alreadyRegistered": "Le domaine est peut-être déjà enregistré.",
+            "close": "Fermer",
+            "register": "Enregistrer votre boutique"
         }
     }
 }

@@ -1,5 +1,6 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { RouteError } from "@/module/common/component/RouteError";
 import { CreatePushNotification } from "@/module/members/component/CreatePush";
 
@@ -10,13 +11,14 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/push/create")({
 });
 
 function CreatePushNotificationError(props: ErrorComponentProps) {
+    const { t } = useTranslation();
     const { merchantId } = Route.useParams();
     return (
         <RouteError
             {...props}
-            title="Failed to Create Push Notification"
+            title={t("errors.pushCreate.title")}
             fallbackPath={`/m/${merchantId}/members`}
-            fallbackLabel="Back to Members"
+            fallbackLabel={t("errors.pushCreate.back")}
         />
     );
 }

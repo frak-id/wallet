@@ -1,4 +1,6 @@
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
 import { RouteError } from "@/module/common/component/RouteError";
 
@@ -7,15 +9,20 @@ export const Route = createFileRoute(
 )({
     staticData: { shell: "bare" },
     component: CampaignsDraftNewPage,
-    errorComponent: (props) => (
+    errorComponent: CampaignsDraftNewError,
+});
+
+function CampaignsDraftNewError(props: ErrorComponentProps) {
+    const { t } = useTranslation();
+    return (
         <RouteError
             {...props}
-            title="Failed to Create Campaign"
+            title={t("errors.campaignCreate.title")}
             fallbackPath="/dashboard"
-            fallbackLabel="Back to Dashboard"
+            fallbackLabel={t("errors.campaignCreate.back")}
         />
-    ),
-});
+    );
+}
 
 function CampaignsDraftNewPage() {
     return <NewCampaign />;

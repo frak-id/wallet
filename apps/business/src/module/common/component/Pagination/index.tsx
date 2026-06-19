@@ -5,6 +5,7 @@ import type {
     ComponentPropsWithRef,
     ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import {
     pagination,
@@ -14,13 +15,16 @@ import {
     paginationMore,
 } from "./pagination.css";
 
-const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
-    <nav
-        aria-label="pagination"
-        className={clsx(pagination, className)}
-        {...props}
-    />
-);
+const Pagination = ({ className, ...props }: ComponentProps<"nav">) => {
+    const { t } = useTranslation();
+    return (
+        <nav
+            aria-label={t("common.pagination.label")}
+            className={clsx(pagination, className)}
+            {...props}
+        />
+    );
+};
 Pagination.displayName = "Pagination";
 
 const PaginationContent = ({
@@ -74,46 +78,55 @@ PaginationLink.displayName = "PaginationLink";
 const PaginationPrevious = ({
     className,
     ...props
-}: ComponentProps<typeof PaginationLink>) => (
-    <PaginationLink
-        aria-label="Go to previous page"
-        size="none"
-        className={clsx(paginationLink, className)}
-        {...props}
-    >
-        <ChevronLeft size={20} />
-    </PaginationLink>
-);
+}: ComponentProps<typeof PaginationLink>) => {
+    const { t } = useTranslation();
+    return (
+        <PaginationLink
+            aria-label={t("common.pagination.previous")}
+            size="none"
+            className={clsx(paginationLink, className)}
+            {...props}
+        >
+            <ChevronLeft size={20} />
+        </PaginationLink>
+    );
+};
 PaginationPrevious.displayName = "PaginationPrevious";
 
 const PaginationNext = ({
     className,
     ...props
-}: ComponentProps<typeof PaginationLink>) => (
-    <PaginationLink
-        aria-label="Go to next page"
-        size="none"
-        className={clsx(paginationLink, className)}
-        {...props}
-    >
-        <ChevronRight size={20} />
-    </PaginationLink>
-);
+}: ComponentProps<typeof PaginationLink>) => {
+    const { t } = useTranslation();
+    return (
+        <PaginationLink
+            aria-label={t("common.pagination.next")}
+            size="none"
+            className={clsx(paginationLink, className)}
+            {...props}
+        >
+            <ChevronRight size={20} />
+        </PaginationLink>
+    );
+};
 PaginationNext.displayName = "PaginationNext";
 
 const PaginationEllipsis = ({
     className,
     ...props
-}: ComponentProps<"span">) => (
-    <span
-        aria-hidden
-        className={clsx(paginationLink, paginationMore, className)}
-        {...props}
-    >
-        <MoreHorizontal size={20} />
-        <span className="sr-only">More pages</span>
-    </span>
-);
+}: ComponentProps<"span">) => {
+    const { t } = useTranslation();
+    return (
+        <span
+            aria-hidden
+            className={clsx(paginationLink, paginationMore, className)}
+            {...props}
+        >
+            <MoreHorizontal size={20} />
+            <span className="sr-only">{t("common.pagination.morePages")}</span>
+        </span>
+    );
+};
 PaginationEllipsis.displayName = "PaginationEllipsis";
 
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";

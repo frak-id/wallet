@@ -367,6 +367,30 @@ export default interface Resources {
           "trigger": "Trigger"
         }
       },
+      "creation": {
+        "budget": {
+          "amountLabel": "Budget Amount",
+          "commission": "Frak commission (20%)",
+          "description": "The budget is the global amount allocated to your word-of-mouth acquisition campaign. This sum is used to pay out rewards to your community (referrers and new customers). Frak takes a global commission of 20% on the campaign budget, at no extra charge.",
+          "periodLabel": "Budget Period",
+          "periods": {
+            "daily": "Daily",
+            "global": "Global",
+            "monthly": "Monthly",
+            "weekly": "Weekly"
+          },
+          "rewardsDistributed": "Rewards distributed (80%)",
+          "title": "Global budget"
+        },
+        "schedule": {
+          "description": "You can choose to run your ads continuously or only during a specific period. If you don't set an end date, the campaign will stop when the budget is exhausted.",
+          "pickDate": "Pick a date",
+          "setEndDate": "Set an end date",
+          "startDateLabel": "Start date (optional)",
+          "startImmediately": "Starts immediately on publish",
+          "title": "Schedule"
+        }
+      },
       "details": {
         "close": "Close campaign details",
         "config": {
@@ -632,6 +656,9 @@ export default interface Resources {
       }
     },
     "common": {
+      "clearAll": "Clear all",
+      "close": "Close",
+      "copy": "Copy to clipboard",
       "dateField": {
         "openCalendar": "Open calendar",
         "placeholder": "dd/mm/yyyy"
@@ -645,6 +672,12 @@ export default interface Resources {
           "last90": "Last 90 days",
           "thisMonth": "This month"
         }
+      },
+      "pagination": {
+        "label": "pagination",
+        "morePages": "More pages",
+        "next": "Go to next page",
+        "previous": "Go to previous page"
       },
       "search": {
         "placeholder": "Search"
@@ -773,14 +806,62 @@ export default interface Resources {
         "title": "Welcome to Frak"
       }
     },
+    "embedded": {
+      "mint": {
+        "alreadyRegistered": "Maybe the domain is already registered.",
+        "close": "Close",
+        "error": "Can't register your product. Double check that everything is right.",
+        "register": "Register your shop",
+        "registering": "Registering {{domain}}",
+        "title": "Register your shop on Frak"
+      }
+    },
     "errors": {
+      "boundary": {
+        "goBack": "Go Back",
+        "message": "An unexpected error occurred",
+        "retry": "Try Again",
+        "retryAria": "Try again to reload this content",
+        "technicalDetails": "Technical Details (Development Only)"
+      },
+      "campaign": {
+        "back": "Back to Campaigns",
+        "message": "The campaign you're looking for doesn't exist or you don't have access to it.",
+        "title": "Campaign Not Found"
+      },
+      "campaignCreate": {
+        "back": "Back to Dashboard",
+        "title": "Failed to Create Campaign"
+      },
+      "critical": {
+        "back": "Go to Dashboard",
+        "message": "A critical error occurred. Please try again or contact support if the problem persists.",
+        "title": "Critical Error"
+      },
+      "dataLoad": {
+        "message": "Unable to load {{resourceName}}. Please check your connection and try again.",
+        "title": "Failed to Load Data"
+      },
       "generic": {
         "title": "Something went wrong"
+      },
+      "merchantCreate": {
+        "back": "Back to Dashboard",
+        "title": "Failed to Add Merchant"
+      },
+      "merchantNotFound": {
+        "back": "Back to Dashboard",
+        "message": "The merchant you're looking for doesn't exist or you don't have access to it.",
+        "title": "Merchant Not Found"
       },
       "notFound": {
         "action": "Go to Dashboard",
         "description": "The page you're looking for doesn't exist or has been moved.",
         "title": "Page Not Found"
+      },
+      "pushCreate": {
+        "back": "Back to Members",
+        "title": "Failed to Create Push Notification"
       }
     },
     "forms": {
@@ -965,6 +1046,14 @@ export default interface Resources {
           "name": "Merchant Name",
           "provider": "Provider"
         }
+      },
+      "setupStatus": {
+        "completeStep": "Complete this step",
+        "documentation": "Documentation",
+        "success": "Great job! Your merchant is set up correctly.",
+        "title": "Merchant setup status",
+        "warningLine1": "Some items need your attention.",
+        "warningLine2": "Please review and complete them."
       }
     },
     "merchantEdit": {

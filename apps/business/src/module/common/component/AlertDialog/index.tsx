@@ -10,6 +10,7 @@ import {
 import clsx from "clsx";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import * as styles from "./alert-dialog.css";
 
 export type AlertDialogComponentProps = {
@@ -52,6 +53,7 @@ export function AlertDialog({
     classNameContent = "",
     classNameTitle = "",
 }: AlertDialogComponentProps) {
+    const { t } = useTranslation();
     return (
         <DSAlertDialog
             defaultOpen={defaultOpen}
@@ -84,7 +86,7 @@ export function AlertDialog({
                         <button
                             type="button"
                             className={styles.close}
-                            aria-label="Close"
+                            aria-label={t("common.close")}
                         >
                             <X />
                         </button>

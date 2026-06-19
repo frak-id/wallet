@@ -3,6 +3,7 @@ import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import * as styles from "./route-error.css";
 
@@ -19,14 +20,16 @@ type ErrorBoundaryProps = {
 function ErrorBoundary({
     error,
     reset,
-    title = "Something went wrong",
+    title,
     message,
     showRetry = true,
     showTechnicalDetails = false,
     fallbackAction,
 }: ErrorBoundaryProps) {
+    const { t } = useTranslation();
+    const resolvedTitle = title ?? t("errors.generic.title");
     const errorMessage =
-        message || error.message || "An unexpected error occurred";
+        message || error.message || t("errors.boundary.message");
 
     const shouldShowTechnicalDetails =
         showTechnicalDetails &&
@@ -55,7 +58,7 @@ function ErrorBoundary({
                     weight="semiBold"
                     className={styles.title}
                 >
-                    <span id={titleId}>{title}</span>
+                    <span id={titleId}>{resolvedTitle}</span>
                 </Text>
                 <Text
                     variant="bodySmall"
@@ -68,7 +71,7 @@ function ErrorBoundary({
                 {shouldShowTechnicalDetails && (
                     <details className={styles.details}>
                         <summary className={styles.detailsSummary}>
-                            Technical Details (Development Only)
+                            {t("errors.boundary.technicalDetails")}
                         </summary>
                         <pre className={styles.stack}>{error.stack}</pre>
                     </details>
@@ -80,9 +83,9 @@ function ErrorBoundary({
                             onClick={reset}
                             variant="primary"
                             width="auto"
-                            aria-label="Try again to reload this content"
+                            aria-label={t("errors.boundary.retryAria")}
                         >
-                            Try Again
+                            {t("errors.boundary.retry")}
                         </Button>
                     ) : null}
                     {fallbackAction}
@@ -95,10 +98,10 @@ function ErrorBoundary({
 export function RouteError({
     error,
     reset,
-    title = "Something went wrong",
+    title,
     message,
     fallbackPath,
-    fallbackLabel = "Go Back",
+    fallbackLabel,
     showRetry = true,
     showTechnicalDetails = false,
 }: ErrorComponentProps & {
@@ -109,6 +112,7 @@ export function RouteError({
     showRetry?: boolean;
     showTechnicalDetails?: boolean;
 }) {
+    const { t } = useTranslation();
     return (
         <ErrorBoundary
             error={error}
@@ -121,7 +125,7 @@ export function RouteError({
                 fallbackPath ? (
                     <Link to={fallbackPath}>
                         <Button variant="secondary" width="auto">
-                            {fallbackLabel}
+                            {fallbackLabel ?? t("errors.boundary.goBack")}
                         </Button>
                     </Link>
                 ) : undefined
@@ -135,14 +139,15 @@ export function CampaignError({
     reset,
     showTechnicalDetails = false,
 }: ErrorComponentProps & { showTechnicalDetails?: boolean }) {
+    const { t } = useTranslation();
     return (
         <RouteError
             error={error}
             reset={reset}
-            title="Campaign Not Found"
-            message="The campaign you're looking for doesn't exist or you don't have access to it."
+            title={t("errors.campaign.title")}
+            message={t("errors.campaign.message")}
             fallbackPath="/campaigns/list"
-            fallbackLabel="Back to Campaigns"
+            fallbackLabel={t("errors.campaign.back")}
             showRetry={false}
             showTechnicalDetails={showTechnicalDetails}
         />
@@ -154,14 +159,15 @@ export function CriticalError({
     reset,
     showTechnicalDetails = false,
 }: ErrorComponentProps & { showTechnicalDetails?: boolean }) {
+    const { t } = useTranslation();
     return (
         <RouteError
             error={error}
             reset={reset}
-            title="Critical Error"
-            message="A critical error occurred. Please try again or contact support if the problem persists."
+            title={t("errors.critical.title")}
+            message={t("errors.critical.message")}
             fallbackPath="/dashboard"
-            fallbackLabel="Go to Dashboard"
+            fallbackLabel={t("errors.critical.back")}
             showRetry={true}
             showTechnicalDetails={showTechnicalDetails}
         />
@@ -177,12 +183,13 @@ export function DataLoadError({
     resourceName?: string;
     showTechnicalDetails?: boolean;
 }) {
+    const { t } = useTranslation();
     return (
         <RouteError
             error={error}
             reset={reset}
-            title="Failed to Load Data"
-            message={`Unable to load ${resourceName}. Please check your connection and try again.`}
+            title={t("errors.dataLoad.title")}
+            message={t("errors.dataLoad.message", { resourceName })}
             showRetry={true}
             showTechnicalDetails={showTechnicalDetails}
         />

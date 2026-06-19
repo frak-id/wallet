@@ -41,6 +41,44 @@
             "title": "Page Not Found",
             "description": "The page you're looking for doesn't exist or has been moved.",
             "action": "Go to Dashboard"
+        },
+        "boundary": {
+            "message": "An unexpected error occurred",
+            "technicalDetails": "Technical Details (Development Only)",
+            "retry": "Try Again",
+            "retryAria": "Try again to reload this content",
+            "goBack": "Go Back"
+        },
+        "campaign": {
+            "title": "Campaign Not Found",
+            "message": "The campaign you're looking for doesn't exist or you don't have access to it.",
+            "back": "Back to Campaigns"
+        },
+        "critical": {
+            "title": "Critical Error",
+            "message": "A critical error occurred. Please try again or contact support if the problem persists.",
+            "back": "Go to Dashboard"
+        },
+        "dataLoad": {
+            "title": "Failed to Load Data",
+            "message": "Unable to load {{resourceName}}. Please check your connection and try again."
+        },
+        "campaignCreate": {
+            "title": "Failed to Create Campaign",
+            "back": "Back to Dashboard"
+        },
+        "pushCreate": {
+            "title": "Failed to Create Push Notification",
+            "back": "Back to Members"
+        },
+        "merchantNotFound": {
+            "title": "Merchant Not Found",
+            "message": "The merchant you're looking for doesn't exist or you don't have access to it.",
+            "back": "Back to Dashboard"
+        },
+        "merchantCreate": {
+            "title": "Failed to Add Merchant",
+            "back": "Back to Dashboard"
         }
     },
     "shell": {
@@ -533,6 +571,30 @@
                 }
             }
         },
+        "creation": {
+            "budget": {
+                "title": "Global budget",
+                "description": "The budget is the global amount allocated to your word-of-mouth acquisition campaign. This sum is used to pay out rewards to your community (referrers and new customers). Frak takes a global commission of 20% on the campaign budget, at no extra charge.",
+                "periodLabel": "Budget Period",
+                "amountLabel": "Budget Amount",
+                "commission": "Frak commission (20%)",
+                "rewardsDistributed": "Rewards distributed (80%)",
+                "periods": {
+                    "daily": "Daily",
+                    "weekly": "Weekly",
+                    "monthly": "Monthly",
+                    "global": "Global"
+                }
+            },
+            "schedule": {
+                "title": "Schedule",
+                "description": "You can choose to run your ads continuously or only during a specific period. If you don't set an end date, the campaign will stop when the budget is exhausted.",
+                "startDateLabel": "Start date (optional)",
+                "startImmediately": "Starts immediately on publish",
+                "setEndDate": "Set an end date",
+                "pickDate": "Pick a date"
+            }
+        },
         "tabs": {
             "all": "All",
             "active": "Active",
@@ -838,6 +900,15 @@
         "search": {
             "placeholder": "Search"
         },
+        "copy": "Copy to clipboard",
+        "close": "Close",
+        "clearAll": "Clear all",
+        "pagination": {
+            "label": "pagination",
+            "previous": "Go to previous page",
+            "next": "Go to next page",
+            "morePages": "More pages"
+        },
         "dateRange": {
             "label": "Date range",
             "clear": "Clear",
@@ -1023,6 +1094,14 @@
                 "approve": "You'll be asked to approve the transaction using your wallet.",
                 "duration": "Registration usually takes less than a minute"
             }
+        },
+        "setupStatus": {
+            "title": "Merchant setup status",
+            "success": "Great job! Your merchant is set up correctly.",
+            "warningLine1": "Some items need your attention.",
+            "warningLine2": "Please review and complete them.",
+            "completeStep": "Complete this step",
+            "documentation": "Documentation"
         }
     },
     "merchantEdit": {
@@ -1287,6 +1366,16 @@
             "title": "Global CSS",
             "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
             "toggle": "Custom CSS"
+        }
+    },
+    "embedded": {
+        "mint": {
+            "title": "Register your shop on Frak",
+            "registering": "Registering {{domain}}",
+            "error": "Can't register your product. Double check that everything is right.",
+            "alreadyRegistered": "Maybe the domain is already registered.",
+            "close": "Close",
+            "register": "Register your shop"
         }
     }
 }

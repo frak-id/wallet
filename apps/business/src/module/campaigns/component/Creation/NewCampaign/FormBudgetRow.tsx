@@ -7,6 +7,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
 import { InputAmount } from "@/module/common/component/InputAmount";
 import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
@@ -33,6 +34,7 @@ const periods: { value: BudgetPeriod; label: string }[] = [
 ];
 
 export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
+    const { t } = useTranslation();
     const form = useFormContext<CampaignDraft>();
     const { control, setValue, watch } = form;
     const budgetConfig = watch("budgetConfig");
@@ -79,7 +81,9 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
     return (
         <Stack space="m">
             <FormItem>
-                <FormDescription label="Budget Period" />
+                <FormDescription
+                    label={t("campaigns.creation.budget.periodLabel")}
+                />
                 <RadioGroup
                     value={period}
                     onValueChange={(val) => {
@@ -102,7 +106,11 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                                         disabled={disabled}
                                     />
                                 </FormControl>
-                                <FormLabel variant="radio">{p.label}</FormLabel>
+                                <FormLabel variant="radio">
+                                    {t(
+                                        `campaigns.creation.budget.periods.${p.value}`
+                                    )}
+                                </FormLabel>
                             </FormItem>
                         ))}
                     </Inline>
@@ -121,7 +129,11 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                     }}
                     render={({ field }) => (
                         <FormItem>
-                            <FormDescription label="Budget Amount" />
+                            <FormDescription
+                                label={t(
+                                    "campaigns.creation.budget.amountLabel"
+                                )}
+                            />
                             <FormMessage />
                             <FormControl>
                                 <InputAmount
@@ -156,7 +168,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                             <CircleDollarSign />
                         </div>
                         <span className={styles.budgetLabel}>
-                            Frak commission (20%)
+                            {t("campaigns.creation.budget.commission")}
                         </span>
                     </div>
                     <div className={styles.budgetValue}>
@@ -172,7 +184,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                             <Wallet />
                         </div>
                         <span className={styles.budgetLabel}>
-                            Rewards distributed (80%)
+                            {t("campaigns.creation.budget.rewardsDistributed")}
                         </span>
                     </div>
                     <div className={styles.budgetValue}>

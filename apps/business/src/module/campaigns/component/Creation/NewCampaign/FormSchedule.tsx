@@ -12,6 +12,7 @@ import {
 import { format, isBefore, startOfDay } from "date-fns";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
@@ -30,6 +31,7 @@ type ScheduleFormValues = {
 };
 
 export function FormSchedule() {
+    const { t } = useTranslation();
     const { control, watch, setValue, getValues } =
         useFormContext<ScheduleFormValues>();
     const [hasEndDate, setHasEndDate] = useState(false);
@@ -43,12 +45,10 @@ export function FormSchedule() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Schedule</CardTitle>
+                <CardTitle>{t("campaigns.creation.schedule.title")}</CardTitle>
             </CardHeader>
             <FormDescription>
-                You can choose to run your ads continuously or only during a
-                specific period. If you don't set an end date, the campaign will
-                stop when the budget is exhausted.
+                {t("campaigns.creation.schedule.description")}
             </FormDescription>
 
             <FormField
@@ -56,7 +56,9 @@ export function FormSchedule() {
                 name="scheduled.startDate"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Start date (optional)</FormLabel>
+                        <FormLabel>
+                            {t("campaigns.creation.schedule.startDateLabel")}
+                        </FormLabel>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <FormControl>
@@ -65,7 +67,9 @@ export function FormSchedule() {
                                             format(new Date(field.value), "PPP")
                                         ) : (
                                             <span>
-                                                Starts immediately on publish
+                                                {t(
+                                                    "campaigns.creation.schedule.startImmediately"
+                                                )}
                                             </span>
                                         )}
                                     </ButtonCalendar>
@@ -134,7 +138,7 @@ export function FormSchedule() {
                                 selected={hasEndDate}
                                 htmlFor="has-end-date"
                             >
-                                Set an end date
+                                {t("campaigns.creation.schedule.setEndDate")}
                             </FormLabel>
                         </FormItem>
                         {hasEndDate && (
@@ -149,7 +153,11 @@ export function FormSchedule() {
                                                         "PPP"
                                                     )
                                                 ) : (
-                                                    <span>Pick a date</span>
+                                                    <span>
+                                                        {t(
+                                                            "campaigns.creation.schedule.pickDate"
+                                                        )}
+                                                    </span>
                                                 )}
                                             </ButtonCalendar>
                                         </FormControl>

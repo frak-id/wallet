@@ -40,7 +40,7 @@ describe("AlertDialog", () => {
     it("should render close button by default", () => {
         render(<AlertDialog title="Test" open={true} />);
 
-        expect(screen.getByLabelText("Close")).toBeInTheDocument();
+        expect(screen.getByLabelText("common.close")).toBeInTheDocument();
     });
 
     it("should not render close button when showCloseButton is false", () => {
@@ -48,7 +48,7 @@ describe("AlertDialog", () => {
             <AlertDialog title="Test" open={true} showCloseButton={false} />
         );
 
-        expect(screen.queryByLabelText("Close")).not.toBeInTheDocument();
+        expect(screen.queryByLabelText("common.close")).not.toBeInTheDocument();
     });
 
     it("should pass through all props to shared AlertDialog", () => {

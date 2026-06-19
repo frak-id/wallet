@@ -1,4 +1,6 @@
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { RouteError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
@@ -14,17 +16,22 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/merchant/")({
         );
     },
     component: MerchantPage,
-    errorComponent: (props) => (
+    errorComponent: MerchantPageError,
+});
+
+function MerchantPageError(props: ErrorComponentProps) {
+    const { t } = useTranslation();
+    return (
         <RouteError
             {...props}
-            title="Merchant Not Found"
-            message="The merchant you're looking for doesn't exist or you don't have access to it."
+            title={t("errors.merchantNotFound.title")}
+            message={t("errors.merchantNotFound.message")}
             fallbackPath="/dashboard"
-            fallbackLabel="Back to Dashboard"
+            fallbackLabel={t("errors.merchantNotFound.back")}
             showRetry={false}
         />
-    ),
-});
+    );
+}
 
 function MerchantPage() {
     const { merchantId } = Route.useParams();
