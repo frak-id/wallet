@@ -27,7 +27,6 @@ import {
     useMemo,
     useState,
 } from "react";
-import { Toaster } from "sonner";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
@@ -203,7 +202,6 @@ function ListenerModalInner({
 
     return (
         <ModalComponent open={isOpen} onOpenChange={onOpenChange}>
-            <Toaster position="top-center" />
             <InAppBrowserToast
                 getMergeToken={getMergeToken}
                 parentUrl={parentUrl}
