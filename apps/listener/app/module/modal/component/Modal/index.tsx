@@ -382,7 +382,7 @@ function CurrentModalMetadataInfo() {
         return (
             <AlertDialogPrimitive.Description asChild>
                 <div
-                    className={`${styles.modalListener__subtitle} ${prefixModalCss("text")}`}
+                    className={`${styles.modalListener__subtitle} ${prefixModalCss("description")}`}
                 >
                     {description ? <Markdown md={description} /> : null}
                 </div>
