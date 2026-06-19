@@ -1,6 +1,6 @@
+import { Button } from "@frak-labs/design-system/components/Button";
 import { prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
-import * as styles from "@/module/modal/component/Modal/index.css";
 import {
     modalStore,
     selectCurrentStepIndex,
@@ -52,12 +52,13 @@ export function DismissButton() {
 
     // Otherwise, button that dismiss the current modal
     return (
-        <button
-            type={"button"}
-            className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
+        <Button
+            variant="ghost"
+            width="full"
+            className={prefixModalCss("button-link")}
             onClick={goToDismiss}
         >
             {t("sdk.modal.dismiss.primaryAction")}
-        </button>
+        </Button>
     );
 }

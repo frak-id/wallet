@@ -29,21 +29,6 @@ export const modalListener__subtitle = style({
     color: vars.text.secondary,
 });
 
-export const modalListener__sharingButtons = style({
-    display: "flex",
-    justifyContent: "center",
-    gap: alias.spacing.xl,
-});
-
-export const modalListener__buttonLink = style({
-    all: "unset",
-    cursor: "pointer",
-    textDecoration: "underline",
-    display: "inline-flex",
-    gap: alias.spacing.xs,
-    color: vars.text.secondary,
-});
-
 /* === Modal shell styles === */
 
 const dialogOverlayShow = keyframes({
