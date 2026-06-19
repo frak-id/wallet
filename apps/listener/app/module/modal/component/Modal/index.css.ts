@@ -44,33 +44,6 @@ export const modalListener__buttonLink = style({
     color: vars.text.secondary,
 });
 
-export const modalTitle__provided = style({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: alias.spacing.xxs,
-    marginLeft: "auto",
-    fontSize: "12px",
-    fontStyle: "italic",
-    fontWeight: 400,
-    letterSpacing: "-0.02em",
-    whiteSpace: "nowrap",
-    color: vars.text.tertiary,
-});
-
-export const modalListener__footer = style({
-    position: "relative",
-    width: "100%",
-    marginTop: alias.spacing.xs,
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-});
-
-export const modalTitle__logo = style({
-    height: "22px",
-    width: "auto",
-});
-
 /* === Modal shell styles === */
 
 const dialogOverlayShow = keyframes({
@@ -107,7 +80,7 @@ export const alertDialog__content = style({
     translate: "-50% -50%",
     zIndex: 220,
     width: "calc(100vw - 32px)",
-    maxWidth: "420px",
+    maxWidth: "448px",
     maxHeight: "calc(100dvh - 32px)",
     boxSizing: "border-box",
     padding: alias.spacing.l,

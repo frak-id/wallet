@@ -134,7 +134,6 @@ describe("ListenerModal", () => {
         fireEvent.error(logo as HTMLImageElement);
 
         expect(document.querySelector("img")).toBeNull();
-        expect(screen.getByText("provided by")).toBeInTheDocument();
         expect(screen.getByText("origin-pairing")).toBeInTheDocument();
     });
 });

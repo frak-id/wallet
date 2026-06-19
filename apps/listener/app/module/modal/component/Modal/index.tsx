@@ -5,7 +5,6 @@ import { CloseIcon, LogoFrak } from "@frak-labs/design-system/icons";
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
     InAppBrowserToast,
-    LogoFrakWithName,
     Markdown,
     prefixModalCss,
     trackEvent,
@@ -17,7 +16,6 @@ import {
 } from "@frak-labs/wallet-shared/pairing";
 import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
-import { clsx as cx } from "clsx";
 import {
     type Dispatch,
     type PropsWithChildren,
@@ -199,40 +197,7 @@ function ListenerModalInner({
     /**
      * The inner component to display
      */
-    const { titleComponent, footer } = useMemo(() => {
-        // Build the title text we will display
-        const titleComponent = metadata?.header?.title ?? "";
-
-        // The provided by frak component
-        const providedBy = (
-            <span
-                className={cx(
-                    styles.modalTitle__provided,
-                    prefixModalCss("provided")
-                )}
-            >
-                provided by{" "}
-                <LogoFrakWithName className={styles.modalTitle__logo} />
-            </span>
-        );
-
-        // Always render the footer with `provided by Frak` on the right.
-        // Previously it sat under the logo when one was present, but that
-        // crammed the attribution into the merchant icon box. Keeping it
-        // in the footer means it always lives in the bottom-right corner
-        // of the modal regardless of logo presence.
-        const footer = (
-            <div className={styles.modalListener__footer}>
-                <OriginPairingState type="modal" />
-                {providedBy}
-            </div>
-        );
-
-        return {
-            titleComponent,
-            footer,
-        };
-    }, [metadata]);
+    const titleComponent = metadata?.header?.title ?? "";
 
     return (
         <ModalComponent open={isOpen} onOpenChange={onOpenChange}>
@@ -251,7 +216,7 @@ function ListenerModalInner({
                     onLogoError={() => setLogoFailed(true)}
                 />
                 <CurrentModalStepComponent onError={onError} />
-                {footer}
+                <OriginPairingState type="modal" />
             </Stack>
         </ModalComponent>
     );
