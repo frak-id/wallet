@@ -16,7 +16,18 @@ export type ConflictTarget = Static<typeof ConflictTargetSchema>;
 
 export const EmailStatusResponseSchema = t.Union([
     t.Object({ used: t.Literal(false) }),
-    t.Object({ used: t.Literal(true), ...conflictTargetFields }),
+    t.Object({
+        used: t.Literal(true),
+        ...conflictTargetFields,
+        /**
+         * @deprecated Backward-compat for old wallet apps shipped before the
+         * merge release. They read a single `authenticatorId` to drive a
+         * targeted `login()`; new clients read `authenticatorIds`. Kept
+         * optional so an un-updated app keeps its "email already used → log in"
+         * path working during rollout. Remove once those apps age out.
+         */
+        authenticatorId: t.Optional(t.String()),
+    }),
 ]);
 export type EmailStatusResponse = Static<typeof EmailStatusResponseSchema>;
 

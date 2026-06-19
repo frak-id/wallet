@@ -29,12 +29,15 @@ export const emailStatusRoutes = new Elysia().post(
 
         // A retired (`unavailable`) address is still taken but has no active
         // wallet to log into — report it used with an empty credential set.
+        const authenticatorIds =
+            resolution.status === "merge" ? resolution.authenticatorIds : [];
         return {
             used: true,
-            authenticatorIds:
-                resolution.status === "merge"
-                    ? resolution.authenticatorIds
-                    : [],
+            authenticatorIds,
+            // Backward-compat for old wallet apps that read a single
+            // `authenticatorId` (see EmailStatusResponseSchema). New clients
+            // read `authenticatorIds`.
+            authenticatorId: authenticatorIds[0],
             wallet:
                 resolution.status === "merge" ? resolution.wallet : undefined,
         } as const;
