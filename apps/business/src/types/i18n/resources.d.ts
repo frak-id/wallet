@@ -1021,6 +1021,7 @@ export default interface Resources {
         "listed": "Listed in Explorer",
         "logo": "Logo",
         "or": "or",
+        "previewDisabledHint": "Enable the Explorer",
         "removeImage": "Remove image",
         "restrictions": {
           "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",

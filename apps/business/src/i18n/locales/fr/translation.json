@@ -1067,6 +1067,7 @@
         "explorer": {
             "title": "Explorer",
             "listed": "Listé dans l'Explorer",
+            "previewDisabledHint": "Activer l'Explorer",
             "heroImage": "Image hero",
             "heroHint": "L'image principale affichée en haut de votre page Explorer.",
             "additionalHero": "Images hero supplémentaires",

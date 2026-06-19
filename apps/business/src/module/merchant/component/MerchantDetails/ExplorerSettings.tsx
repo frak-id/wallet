@@ -1,6 +1,12 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { TextArea } from "@frak-labs/design-system/components/TextArea";
+import {
+    Tooltip as DSTooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@frak-labs/design-system/components/Tooltip";
 import { ExplorerPhonePreview } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -98,6 +104,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
 
     if (!merchant) return null;
 
+    const enabled = form.watch("enabled");
     const watchedHero = form.watch("heroImageUrl");
     const watchedHeroExtras = form.watch("heroImageUrls");
     const watchedLogo = form.watch("logoUrl");
@@ -109,6 +116,16 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
         watchedHero && isValidUrl(watchedHero) ? watchedHero : undefined;
     const previewLogo =
         watchedLogo && isValidUrl(watchedLogo) ? watchedLogo : undefined;
+
+    const preview = (
+        <ExplorerPhonePreview
+            name={merchant.name}
+            heroImageUrl={previewHero}
+            heroImageUrls={watchedHeroExtras}
+            logoUrl={previewLogo}
+            description={watchedDescription || undefined}
+        />
+    );
 
     return (
         <>
@@ -250,13 +267,26 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                 </EditCard>
             </Form>
             <FloatingPhonePreview>
-                <ExplorerPhonePreview
-                    name={merchant.name}
-                    heroImageUrl={previewHero}
-                    heroImageUrls={watchedHeroExtras}
-                    logoUrl={previewLogo}
-                    description={watchedDescription || undefined}
-                />
+                <TooltipProvider>
+                    <DSTooltip delayDuration={0}>
+                        <TooltipTrigger
+                            asChild
+                            onClick={(e) => e.preventDefault()}
+                        >
+                            <div
+                                className={styles.previewWrap}
+                                data-disabled={enabled ? undefined : ""}
+                            >
+                                {preview}
+                            </div>
+                        </TooltipTrigger>
+                        {!enabled && (
+                            <TooltipContent side="top">
+                                {t("merchantEdit.explorer.previewDisabledHint")}
+                            </TooltipContent>
+                        )}
+                    </DSTooltip>
+                </TooltipProvider>
             </FloatingPhonePreview>
         </>
     );
