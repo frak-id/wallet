@@ -748,6 +748,7 @@
                 "device": "Appareil"
             },
             "code": "Vérifie que le code est correct",
+            "scanDescription": "Scanne ce QR code pour te connecter depuis ton mobile.",
             "noCodeNotice": "Confirme cette demande d'appairage pour continuer.",
             "error": {
                 "title": "Requête de connexion invalide",

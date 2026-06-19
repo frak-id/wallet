@@ -892,6 +892,7 @@ export default interface Resources {
         "refresh": "Retry",
         "refreshCode": "Code:",
         "refreshReason": "Reason:",
+        "scanDescription": "Scan this QR code to sign in from your mobile.",
         "signatureRequest": {
           "banner": {
             "cta": "Review",
