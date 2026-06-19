@@ -65,7 +65,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
                     signature,
                 },
                 sub: siweMessage.address,
-                iat: Date.now(),
             });
 
             // Calculate expiration time (1 week from now)

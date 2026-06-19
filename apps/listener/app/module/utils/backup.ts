@@ -81,12 +81,23 @@ export async function restoreBackupData({
         return;
     }
 
-    // Restore all the data to stores
-    if (data.session?.token) {
-        sessionStore.getState().setSession(data.session);
+    // `restore-backup` and the live SSO/pairing flow write this store out of
+    // order, so a late backup must never clobber a fresher session — that
+    // overwrite is the root cause of post-login `/isValid` 401s. Restore the
+    // wallet session only when absent, and the SDK session only when absent or
+    // genuinely newer (`expires` is the mint-ordered freshness signal).
+    const store = sessionStore.getState();
+
+    if (data.session?.token && !store.session?.token) {
+        store.setSession(data.session);
     }
-    if (data.sdkSession) {
-        sessionStore.getState().setSdkSession(data.sdkSession);
+
+    if (
+        data.sdkSession?.token &&
+        (!store.sdkSession ||
+            data.sdkSession.expires > store.sdkSession.expires)
+    ) {
+        store.setSdkSession(data.sdkSession);
     }
 }
 

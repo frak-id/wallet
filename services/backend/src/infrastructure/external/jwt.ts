@@ -164,10 +164,15 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
                 ...morePayload,
                 nbf: undefined,
                 exp: undefined,
-            }).setProtectedHeader({
-                alg,
-                crit,
-            });
+                iat: undefined,
+            })
+                .setProtectedHeader({
+                    alg,
+                    crit,
+                })
+                // RFC-7519 NumericDate (seconds). Set centrally so callers
+                // never pass a millisecond `iat` by hand again.
+                .setIssuedAt();
 
             if (nbf) jwt = jwt.setNotBefore(nbf);
 

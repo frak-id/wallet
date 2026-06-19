@@ -50,7 +50,6 @@ export const loginRoutes = new Elysia()
                 authenticatorId,
                 publicKey: wallet,
                 sub: walletAddress,
-                iat: Date.now(),
                 transports: undefined,
             });
 

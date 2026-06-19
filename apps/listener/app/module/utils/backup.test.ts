@@ -156,6 +156,72 @@ describe("backup", () => {
             expect(setSdkSession).toHaveBeenCalledWith(mockSdkSession);
         });
 
+        test("should not let a stale backup clobber a fresher live session", async () => {
+            // Models the post-login race: SSO already populated the store with
+            // a fresh session + SDK token; a late stale `restore-backup` must
+            // not overwrite either.
+            const backupData = {
+                domain: "example.com",
+                session: { address: "0x123", token: "stale-session-token" },
+                sdkSession: { token: "stale-sdk-token", expires: 1000 },
+                expireAtTimestamp: Date.now() + 1000 * 60 * 60,
+            };
+
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
+            const setSession = vi.fn();
+            const setSdkSession = vi.fn();
+            vi.mocked(sessionStore.getState).mockReturnValue({
+                session: { address: "0x123", token: "fresh-session-token" },
+                sdkSession: {
+                    token: "fresh-sdk-token",
+                    expires: 9_999_999_999,
+                },
+                setSession,
+                setSdkSession,
+            } as never);
+
+            const encoded = await buildEncodedBackup(backupData);
+
+            const { restoreBackupData } = await import("./backup");
+            await restoreBackupData({ backup: encoded, domain: "example.com" });
+
+            expect(setSession).not.toHaveBeenCalled();
+            expect(setSdkSession).not.toHaveBeenCalled();
+        });
+
+        test("should restore a fresher sdkSession over an older in-store one", async () => {
+            const fresherSdk = {
+                token: "fresher-sdk-token",
+                expires: 9_999_999_999,
+            };
+            const backupData = {
+                domain: "example.com",
+                sdkSession: fresherSdk,
+                expireAtTimestamp: Date.now() + 1000 * 60 * 60,
+            };
+
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
+            const setSession = vi.fn();
+            const setSdkSession = vi.fn();
+            vi.mocked(sessionStore.getState).mockReturnValue({
+                session: null,
+                sdkSession: { token: "older-sdk-token", expires: 1000 },
+                setSession,
+                setSdkSession,
+            } as never);
+
+            const encoded = await buildEncodedBackup(backupData);
+
+            const { restoreBackupData } = await import("./backup");
+            await restoreBackupData({ backup: encoded, domain: "example.com" });
+
+            expect(setSdkSession).toHaveBeenCalledWith(fresherSdk);
+        });
+
         test("should restore only session when no sdkSession", async () => {
             const mockSession = {
                 address: "0x123",

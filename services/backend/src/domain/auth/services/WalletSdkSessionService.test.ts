@@ -37,7 +37,6 @@ describe("WalletSdkSessionService", () => {
                 address: mockWallet,
                 scopes: ["interaction"],
                 sub: mockWallet,
-                iat: mockCurrentTime,
                 additionalData: undefined,
             });
 
@@ -70,7 +69,6 @@ describe("WalletSdkSessionService", () => {
                 address: mockWallet,
                 scopes: ["interaction"],
                 sub: mockWallet,
-                iat: mockCurrentTime,
                 additionalData,
             });
 
@@ -97,7 +95,6 @@ describe("WalletSdkSessionService", () => {
                 address: mockWallet,
                 scopes: ["interaction"],
                 sub: mockWallet,
-                iat: mockCurrentTime,
                 additionalData: undefined, // Should be undefined for empty object
             });
 
