@@ -1,3 +1,4 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Download, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -10,7 +11,7 @@ import { AccountMenu } from "./AccountMenu";
 import { HeaderBreadcrumb } from "./HeaderBreadcrumb";
 import {
     actionGroup,
-    demoModeBadge,
+    demoModeLink,
     header,
     headerInner,
     headerLeft,
@@ -52,10 +53,12 @@ export function Header() {
                         {isDemoMode && (
                             <Link
                                 to="/settings"
-                                className={demoModeBadge}
+                                className={demoModeLink}
                                 title={t("shell.header.demoBadgeTitle")}
                             >
-                                {t("shell.header.demoBadge")}
+                                <Badge variant="info" size="medium">
+                                    {t("shell.header.demoBadge")}
+                                </Badge>
                             </Link>
                         )}
                         {showExport && (

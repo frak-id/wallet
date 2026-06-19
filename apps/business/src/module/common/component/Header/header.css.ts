@@ -1,10 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import {
-    alias,
-    brand,
-    easing,
-    transition,
-} from "@frak-labs/design-system/tokens";
+import { alias, easing, transition } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { focusRing } from "@/module/common/styles/interaction.css";
 
@@ -103,25 +98,14 @@ export const actionGroup = style({
     },
 });
 
-export const demoModeBadge = style({
-    display: "inline-flex",
-    alignItems: "center",
-    padding: `${alias.spacing.xxs} ${alias.spacing.s}`,
-    backgroundColor: "rgba(147, 197, 253, 0.15)",
-    color: "#93c5fd",
-    border: "1px solid rgba(147, 197, 253, 0.3)",
-    borderRadius: alias.cornerRadius.m,
-    fontSize: "11px",
-    fontWeight: brand.typography.fontWeight.medium,
-    letterSpacing: "0.5px",
-    cursor: "pointer",
-    textTransform: "lowercase",
-    "@media": {
-        "screen and (max-width: 768px)": {
-            display: "none",
-        },
+export const demoModeLink = style([
+    focusRing,
+    {
+        display: "inline-flex",
+        textDecoration: "none",
+        borderRadius: alias.cornerRadius.full,
     },
-});
+]);
 
 export const hideOnMobile = style({
     "@media": {
