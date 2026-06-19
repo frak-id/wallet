@@ -1,7 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, easing, transition } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { focusRing } from "@/module/common/styles/interaction.css";
+import {
+    focusRing,
+    focusRingInset,
+} from "@/module/common/styles/interaction.css";
 
 export const header = style({
     position: "fixed",
@@ -57,7 +60,7 @@ export const breadcrumb = style({
 });
 
 export const breadcrumbLink = style([
-    focusRing,
+    focusRingInset,
     {
         display: "inline-flex",
         alignItems: "center",
