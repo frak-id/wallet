@@ -11,8 +11,9 @@ export class InstallCodeRepository {
     async create(params: {
         merchantId: string;
         anonymousId: string;
+        pairingId?: string | null;
     }): Promise<InstallCodeSelect> {
-        const { merchantId, anonymousId } = params;
+        const { merchantId, anonymousId, pairingId } = params;
 
         const candidates = generateCandidates();
 
@@ -26,12 +27,13 @@ export class InstallCodeRepository {
             code: string;
             merchant_id: string;
             anonymous_id: string;
+            pairing_id: string | null;
             created_at: Date;
             expires_at: Date;
         }>(sql`
             WITH candidates(code) AS (VALUES ${values})
-            INSERT INTO install_codes (code, merchant_id, anonymous_id, expires_at)
-            SELECT c.code, ${merchantId}::uuid, ${anonymousId}, now() + ${CODE_TTL_HOURS} * interval '1 hour'
+            INSERT INTO install_codes (code, merchant_id, anonymous_id, pairing_id, expires_at)
+            SELECT c.code, ${merchantId}::uuid, ${anonymousId}, ${pairingId ?? null}, now() + ${CODE_TTL_HOURS} * interval '1 hour'
             FROM candidates c
             WHERE NOT EXISTS (
                 SELECT 1 FROM install_codes ic WHERE ic.code = c.code
@@ -53,6 +55,7 @@ export class InstallCodeRepository {
             code: row.code,
             merchantId: row.merchant_id,
             anonymousId: row.anonymous_id,
+            pairingId: row.pairing_id,
             createdAt: row.created_at,
             expiresAt: row.expires_at,
         };

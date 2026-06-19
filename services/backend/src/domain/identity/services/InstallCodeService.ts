@@ -10,6 +10,7 @@ export class InstallCodeService {
     async generate(params: {
         merchantId: string;
         anonymousId: string;
+        pairingId?: string | null;
     }): Promise<{ code: string; expiresAt: Date }> {
         const installCode = await this.installCodeRepository.create(params);
 
@@ -24,9 +25,11 @@ export class InstallCodeService {
         };
     }
 
-    async resolve(params: {
-        code: string;
-    }): Promise<{ merchantId: string; anonymousId: string }> {
+    async resolve(params: { code: string }): Promise<{
+        merchantId: string;
+        anonymousId: string;
+        pairingId: string | null;
+    }> {
         const installCode = await this.installCodeRepository.findByCode(
             params.code
         );
@@ -41,6 +44,7 @@ export class InstallCodeService {
         return {
             merchantId: installCode.merchantId,
             anonymousId: installCode.anonymousId,
+            pairingId: installCode.pairingId,
         };
     }
 }

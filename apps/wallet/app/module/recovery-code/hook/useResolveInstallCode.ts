@@ -11,6 +11,7 @@ type ResolveResult = {
     merchantId: string;
     anonymousId: string;
     merchant: { name: string; domain: string };
+    pairingId?: string;
 };
 
 /**
@@ -55,6 +56,16 @@ export function useResolveInstallCode(
                 anonymousId: data.anonymousId,
                 merchant: data.merchant,
             });
+
+            // Pair-to-install: a pairing-scoped code queues post-auth nav to
+            // `/pairing`, which runs `joinPairing` and authenticates the origin.
+            if (data.pairingId) {
+                pendingActionsStore.getState().addAction({
+                    type: "navigation",
+                    to: "/pairing",
+                    search: { id: data.pairingId },
+                });
+            }
 
             return data;
         },

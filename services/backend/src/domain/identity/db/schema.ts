@@ -147,6 +147,10 @@ export const installCodesTable = pgTable(
         code: varchar("code", { length: 6 }).notNull(),
         merchantId: uuid("merchant_id").notNull(),
         anonymousId: text("anonymous_id").notNull(),
+        // Optional device-pairing scope: the app resolving this code joins
+        // this pairing, handing a distant-webauthn session to the web origin
+        // (SSO pair-to-install). Null for plain referral-attribution codes.
+        pairingId: varchar("pairing_id", { length: 64 }),
         createdAt: timestamp("created_at").notNull().defaultNow(),
         expiresAt: timestamp("expires_at").notNull(),
     },

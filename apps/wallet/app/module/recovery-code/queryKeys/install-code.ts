@@ -7,12 +7,17 @@ export namespace installCodeKey {
     /**
      * Query key for generating a code
      */
-    export const generate = (merchantId?: string, anonymousId?: string) =>
+    export const generate = (
+        merchantId?: string,
+        anonymousId?: string,
+        pairingId?: string
+    ) =>
         [
             base,
             "generate",
             merchantId ?? "none",
             anonymousId ?? "none",
+            pairingId ?? "none",
         ] as const;
 
     /**

@@ -143,6 +143,7 @@ export default interface Resources {
         },
         "pairing": {
           "description": "Scan this QR code to sign in from your mobile.",
+          "installPrompt": "Prefer the app? Install Frak on your phone and enter this code:",
           "title": "Sign in with my mobile"
         },
         "previousWallet": "Your wallet: <strong>{{wallet}}</strong>",

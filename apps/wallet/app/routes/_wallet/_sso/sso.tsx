@@ -9,6 +9,7 @@ import {
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     ArrowLeftIcon,
@@ -20,9 +21,11 @@ import { createRpcClient } from "@frak-labs/frame-connector";
 import type { Session, SsoRpcSchema } from "@frak-labs/wallet-shared";
 import {
     authenticationStore,
+    CodeInput,
     clientIdStore,
     compressedSsoToParams,
     ExternalLink,
+    getOriginPairingClient,
     openExternalUrl,
     PairingView,
     recordError,
@@ -49,6 +52,7 @@ import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { StepLayout } from "@/module/common/component/StepLayout";
+import { useGenerateInstallCode } from "@/module/recovery-code/hook/useGenerateInstallCode";
 
 /**
  * Metadata actually stored on the SSO context — base SsoMetadata plus the
@@ -369,6 +373,7 @@ function Sso() {
                         description={t("authent.sso.pairing.description")}
                         onSuccess={onSuccess}
                     />
+                    <SsoInstallAppPrompt />
                 </Box>
             </PageLayout>
         );
@@ -663,6 +668,45 @@ function PhonePairingAction({ onClick }: { onClick: () => void }) {
                 {t("authent.sso.btn.new.phone")}
             </Button>
         </Box>
+    );
+}
+
+/**
+ * Pair-to-install bridge under the QR: mints an install code bound to the live
+ * pairing so installing the app + typing the code authenticates this desktop.
+ */
+function SsoInstallAppPrompt() {
+    const { t } = useTranslation();
+    const merchantId = useStore(
+        authenticationStore,
+        (state) => state.ssoContext?.merchantId
+    );
+    const clientId = useStore(clientIdStore, (state) => state.clientId);
+    const pairingId = useStore(
+        getOriginPairingClient().store,
+        (state) => state.pairing?.id
+    );
+
+    // Defer until the pairing exists so the minted code carries its scope —
+    // the query key includes pairingId, so an early call mints an unbound code.
+    const ready = Boolean(pairingId);
+    const { data } = useGenerateInstallCode({
+        merchantId: ready ? merchantId : undefined,
+        anonymousId: ready ? (clientId ?? undefined) : undefined,
+        pairingId,
+    });
+
+    if (!data?.code) {
+        return null;
+    }
+
+    return (
+        <Stack space="m" align="center">
+            <Text variant="bodySmall" color="secondary" align="center">
+                {t("authent.sso.pairing.installPrompt")}
+            </Text>
+            <CodeInput value={data.code} mode="alphanumeric" />
+        </Stack>
     );
 }
 

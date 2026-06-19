@@ -11,18 +11,20 @@ import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
 export function useGenerateInstallCode({
     merchantId,
     anonymousId,
+    pairingId,
 }: {
     merchantId?: string;
     anonymousId?: string;
+    pairingId?: string;
 }) {
     return useQuery({
-        queryKey: installCodeKey.generate(merchantId, anonymousId),
+        queryKey: installCodeKey.generate(merchantId, anonymousId, pairingId),
         queryFn: async () => {
             if (!merchantId || !anonymousId) return null;
 
             const { data, error } = await authenticatedBackendApi.user.identity[
                 "install-code"
-            ].generate.post({ merchantId, anonymousId });
+            ].generate.post({ merchantId, anonymousId, pairingId });
 
             if (error || !data) {
                 throw new Error("Failed to generate install code");

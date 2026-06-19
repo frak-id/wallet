@@ -25,7 +25,8 @@
             "header": { "title": "Connectez-vous avec Frak Wallet" },
             "pairing": {
                 "title": "Se connecter avec mon mobile",
-                "description": "Scanne ce QR code pour te connecter depuis ton mobile."
+                "description": "Scanne ce QR code pour te connecter depuis ton mobile.",
+                "installPrompt": "Vous préférez l'app ? Installez Frak sur votre téléphone et saisissez ce code :"
             },
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "redirect": "Vous serez redirigé vers {{ productName }} dans quelques secondes.",

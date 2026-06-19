@@ -12,6 +12,7 @@ const installCodeGenerateRoute = new Elysia()
             const result = await IdentityContext.services.installCode.generate({
                 merchantId: body.merchantId,
                 anonymousId: body.anonymousId,
+                pairingId: body.pairingId,
             });
             return {
                 code: result.code,
@@ -22,6 +23,7 @@ const installCodeGenerateRoute = new Elysia()
             body: t.Object({
                 merchantId: t.String({ format: "uuid" }),
                 anonymousId: t.String(),
+                pairingId: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({
@@ -37,7 +39,7 @@ const installCodeResolveRoute = new Elysia()
     .post(
         "/resolve",
         async ({ body }) => {
-            const { merchantId, anonymousId } =
+            const { merchantId, anonymousId, pairingId } =
                 await IdentityContext.services.installCode.resolve({
                     code: body.code,
                 });
@@ -70,6 +72,7 @@ const installCodeResolveRoute = new Elysia()
             return {
                 merchantId,
                 anonymousId,
+                pairingId: pairingId ?? undefined,
                 merchant: {
                     name: merchant.name,
                     domain: merchant.domain,
@@ -85,6 +88,7 @@ const installCodeResolveRoute = new Elysia()
                 200: t.Object({
                     merchantId: t.String(),
                     anonymousId: t.String(),
+                    pairingId: t.Optional(t.String()),
                     merchant: t.Object({
                         name: t.String(),
                         domain: t.String(),

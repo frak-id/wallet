@@ -27,7 +27,8 @@
             },
             "pairing": {
                 "title": "Sign in with my mobile",
-                "description": "Scan this QR code to sign in from your mobile."
+                "description": "Scan this QR code to sign in from your mobile.",
+                "installPrompt": "Prefer the app? Install Frak on your phone and enter this code:"
             },
             "recover": "Recover wallet from file",
             "redirect": "You will be redirected to {{ productName }} in a few seconds.",
