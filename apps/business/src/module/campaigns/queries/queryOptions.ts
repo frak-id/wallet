@@ -225,26 +225,11 @@ export function validateDraftCampaign(merchantId: string, campaignId: string) {
     return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
         const isPublished = campaign.status !== "draft";
         if (isPublished) {
+            // Published campaigns aren't editable; send them back to the list.
             return {
                 shouldRedirect: true,
                 redirectTo: {
-                    to: "/m/$merchantId/campaigns/edit/$campaignId",
-                    params: { merchantId, campaignId },
-                },
-            };
-        }
-        return { shouldRedirect: false };
-    };
-}
-
-export function validateEditCampaign(merchantId: string, campaignId: string) {
-    return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
-        const isDraft = campaign.status === "draft";
-        if (isDraft) {
-            return {
-                shouldRedirect: true,
-                redirectTo: {
-                    to: "/m/$merchantId/campaigns/draft/$campaignId",
+                    to: "/m/$merchantId/campaigns/list",
                     params: { merchantId, campaignId },
                 },
             };

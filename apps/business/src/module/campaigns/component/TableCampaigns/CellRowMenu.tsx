@@ -75,28 +75,17 @@ export function CellRowMenu({ row, merchantId }: Props) {
                     <span>{t("campaigns.rowMenu.openPerformance")}</span>
                 </Link>
             )}
-            {actions.canEdit &&
-                (isDraft ? (
-                    <Link
-                        to="/m/$merchantId/campaigns/draft/$campaignId"
-                        params={{ merchantId, campaignId: id }}
-                        onClick={() => reset()}
-                        className={styles.rowMenuItem}
-                    >
-                        <PencilIcon width={16} height={16} />
-                        <span>{t("campaigns.rowMenu.edit")}</span>
-                    </Link>
-                ) : (
-                    <Link
-                        to="/m/$merchantId/campaigns/edit/$campaignId"
-                        params={{ merchantId, campaignId: id }}
-                        onClick={() => reset()}
-                        className={styles.rowMenuItem}
-                    >
-                        <PencilIcon width={16} height={16} />
-                        <span>{t("campaigns.rowMenu.edit")}</span>
-                    </Link>
-                ))}
+            {actions.canEdit && (
+                <Link
+                    to="/m/$merchantId/campaigns/draft/$campaignId"
+                    params={{ merchantId, campaignId: id }}
+                    onClick={() => reset()}
+                    className={styles.rowMenuItem}
+                >
+                    <PencilIcon width={16} height={16} />
+                    <span>{t("campaigns.rowMenu.edit")}</span>
+                </Link>
+            )}
         </div>
     );
 

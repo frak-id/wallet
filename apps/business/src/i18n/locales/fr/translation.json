@@ -571,30 +571,6 @@
                 }
             }
         },
-        "creation": {
-            "budget": {
-                "title": "Budget global",
-                "description": "Le budget est le montant global alloué à votre campagne d'acquisition par bouche-à-oreille. Cette somme sert à verser les récompenses à votre communauté (parrains et nouveaux clients). Frak prélève une commission globale de 20% sur le budget de la campagne, sans frais supplémentaires.",
-                "periodLabel": "Période du budget",
-                "amountLabel": "Montant du budget",
-                "commission": "Commission Frak (20%)",
-                "rewardsDistributed": "Récompenses distribuées (80%)",
-                "periods": {
-                    "daily": "Quotidien",
-                    "weekly": "Hebdomadaire",
-                    "monthly": "Mensuel",
-                    "global": "Global"
-                }
-            },
-            "schedule": {
-                "title": "Calendrier",
-                "description": "Vous pouvez choisir de diffuser vos publicités en continu ou seulement sur une période donnée. Si vous ne définissez pas de date de fin, la campagne s'arrêtera une fois le budget épuisé.",
-                "startDateLabel": "Date de début (optionnel)",
-                "startImmediately": "Démarre dès la publication",
-                "setEndDate": "Définir une date de fin",
-                "pickDate": "Choisir une date"
-            }
-        },
         "tabs": {
             "all": "Tout",
             "active": "Active",

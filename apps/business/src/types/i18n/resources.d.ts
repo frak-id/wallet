@@ -367,30 +367,6 @@ export default interface Resources {
           "trigger": "Trigger"
         }
       },
-      "creation": {
-        "budget": {
-          "amountLabel": "Budget Amount",
-          "commission": "Frak commission (20%)",
-          "description": "The budget is the global amount allocated to your word-of-mouth acquisition campaign. This sum is used to pay out rewards to your community (referrers and new customers). Frak takes a global commission of 20% on the campaign budget, at no extra charge.",
-          "periodLabel": "Budget Period",
-          "periods": {
-            "daily": "Daily",
-            "global": "Global",
-            "monthly": "Monthly",
-            "weekly": "Weekly"
-          },
-          "rewardsDistributed": "Rewards distributed (80%)",
-          "title": "Global budget"
-        },
-        "schedule": {
-          "description": "You can choose to run your ads continuously or only during a specific period. If you don't set an end date, the campaign will stop when the budget is exhausted.",
-          "pickDate": "Pick a date",
-          "setEndDate": "Set an end date",
-          "startDateLabel": "Start date (optional)",
-          "startImmediately": "Starts immediately on publish",
-          "title": "Schedule"
-        }
-      },
       "details": {
         "close": "Close campaign details",
         "config": {
