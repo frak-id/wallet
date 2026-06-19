@@ -123,31 +123,4 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 409: t.ErrorResponse,
             },
         }
-    )
-    .get(
-        "/statement",
-        async ({ query: { domain }, businessSession }) => {
-            if (!businessSession) {
-                return status(401, "Authentication required");
-            }
-
-            const statement =
-                MerchantContext.services.registration.buildRegistrationStatement(
-                    domain,
-                    businessSession.wallet
-                );
-
-            return { statement };
-        },
-        {
-            query: t.Object({
-                domain: t.String(),
-            }),
-            response: {
-                200: t.Object({
-                    statement: t.String(),
-                }),
-                401: t.String(),
-            },
-        }
     );
