@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
+import { focusRing } from "@/module/common/styles/interaction.css";
 
 export const navigation = style({
     position: "fixed",
@@ -116,34 +117,37 @@ export const divider = style({
     width: "100%",
 });
 
-const itemBase = style({
-    all: "unset",
-    boxSizing: "border-box",
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-    width: "100%",
-    height: "36px",
-    paddingLeft: alias.spacing.s,
-    paddingRight: alias.spacing.s,
-    borderRadius: alias.cornerRadius.m,
-    cursor: "pointer",
-    color: vars.text.secondary,
-    transition: "background 0.15s ease, color 0.15s ease",
-    selectors: {
-        // `aria-disabled` mirrors `:disabled` — used when the item still needs
-        // hover/focus events (e.g. to show a tooltip), which a native disabled
-        // button would swallow.
-        "&:disabled": {
-            cursor: "not-allowed",
-            color: vars.text.disabled,
-        },
-        '&[aria-disabled="true"]': {
-            cursor: "not-allowed",
-            color: vars.text.disabled,
+const itemBase = style([
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        gap: alias.spacing.xs,
+        width: "100%",
+        height: "36px",
+        paddingLeft: alias.spacing.s,
+        paddingRight: alias.spacing.s,
+        borderRadius: alias.cornerRadius.m,
+        cursor: "pointer",
+        color: vars.text.secondary,
+        transition: "background 0.15s ease, color 0.15s ease",
+        selectors: {
+            // `aria-disabled` mirrors `:disabled` — used when the item still needs
+            // hover/focus events (e.g. to show a tooltip), which a native disabled
+            // button would swallow.
+            "&:disabled": {
+                cursor: "not-allowed",
+                color: vars.text.disabled,
+            },
+            '&[aria-disabled="true"]': {
+                cursor: "not-allowed",
+                color: vars.text.disabled,
+            },
         },
     },
-});
+]);
 
 export const itemListEntry = style({
     listStyle: "none",

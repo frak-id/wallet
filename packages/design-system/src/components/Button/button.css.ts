@@ -17,6 +17,11 @@ export const button = recipe({
         ":focus": {
             outline: "none",
         },
+        // Keyboard-only ring, offset by a bg-coloured gap so it stays visible
+        // on any variant background.
+        ":focus-visible": {
+            boxShadow: `0 0 0 2px ${vars.surface.background}, 0 0 0 4px ${vars.border.focus}`,
+        },
         ":disabled": {
             backgroundColor: vars.surface.disabled,
             color: vars.text.disabled,

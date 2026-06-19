@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
+import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 const fadeIn = keyframes({
     from: { opacity: 0, transform: "translateY(-8px)" },
@@ -56,16 +57,20 @@ export const details = style({
     padding: "1rem",
 });
 
-export const detailsSummary = style({
-    cursor: "pointer",
-    fontWeight: brand.typography.fontWeight.medium,
-    fontSize: "0.875rem",
-    color: vars.text.secondary,
-    userSelect: "none",
-    ":hover": {
-        color: vars.text.primary,
+export const detailsSummary = style([
+    interactive,
+    focusRing,
+    {
+        cursor: "pointer",
+        fontWeight: brand.typography.fontWeight.medium,
+        fontSize: "0.875rem",
+        color: vars.text.secondary,
+        userSelect: "none",
+        ":hover": {
+            color: vars.text.primary,
+        },
     },
-});
+]);
 
 export const stack = style({
     marginTop: "0.75rem",

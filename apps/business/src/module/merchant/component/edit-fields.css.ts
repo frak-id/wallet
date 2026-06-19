@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 /**
  * Upload-field styles shared by the merchant Edit pages (Customize panels
@@ -21,16 +22,19 @@ export const fieldHint = style({
     color: vars.text.tertiary,
 });
 
-export const dropzone = style({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: alias.spacing.m,
-    padding: alias.spacing.m,
-    borderRadius: alias.cornerRadius.m,
-    border: `1px dashed ${vars.border.default}`,
-    backgroundColor: vars.surface.muted,
-});
+export const dropzone = style([
+    focusRing,
+    {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: alias.spacing.m,
+        padding: alias.spacing.m,
+        borderRadius: alias.cornerRadius.m,
+        border: `1px dashed ${vars.border.default}`,
+        backgroundColor: vars.surface.muted,
+    },
+]);
 
 export const dropzoneActive = style({
     borderColor: vars.border.focus,
@@ -41,35 +45,42 @@ export const dropzoneIcon = style({
     color: vars.icon.action,
 });
 
-export const clearButton = style({
-    all: "unset",
-    boxSizing: "border-box",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    width: "24px",
-    height: "24px",
-    borderRadius: alias.cornerRadius.full,
-    color: vars.text.secondary,
-    selectors: {
-        "&:hover": {
-            color: vars.text.primary,
+export const clearButton = style([
+    interactive,
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        width: "24px",
+        height: "24px",
+        borderRadius: alias.cornerRadius.full,
+        color: vars.text.secondary,
+        selectors: {
+            "&:hover": {
+                color: vars.text.primary,
+            },
         },
     },
-});
+]);
 
-export const thumbnailButton = style({
-    all: "unset",
-    boxSizing: "border-box",
-    cursor: "pointer",
-    width: "48px",
-    height: "48px",
-    borderRadius: alias.cornerRadius.m,
-    border: `1px solid ${vars.border.default}`,
-    overflow: "hidden",
-    flexShrink: 0,
-});
+export const thumbnailButton = style([
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        cursor: "pointer",
+        width: "48px",
+        height: "48px",
+        borderRadius: alias.cornerRadius.m,
+        border: `1px solid ${vars.border.default}`,
+        overflow: "hidden",
+        flexShrink: 0,
+    },
+]);
 
 export const thumbnailImage = style({
     display: "block",

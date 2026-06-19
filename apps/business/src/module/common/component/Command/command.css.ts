@@ -1,6 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import {
+    focusRingInset,
+    interactive,
+} from "@/module/common/styles/interaction.css";
 
 export const command = style({
     display: "flex",
@@ -46,10 +50,17 @@ export const commandSeparator = style({
     backgroundColor: brand.colors.neutral.grey250,
 });
 
-export const commandItem = style({
-    display: "flex",
-    alignItems: "center",
-    position: "relative",
-    padding: "6px 8px",
-    cursor: "pointer",
-});
+export const commandItem = style([
+    interactive,
+    focusRingInset,
+    {
+        display: "flex",
+        alignItems: "center",
+        position: "relative",
+        padding: "6px 8px",
+        cursor: "pointer",
+        selectors: {
+            "&:hover": { backgroundColor: vars.surface.muted },
+        },
+    },
+]);

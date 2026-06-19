@@ -1,6 +1,11 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import {
+    focusRing,
+    focusRingInset,
+    interactive,
+} from "@/module/common/styles/interaction.css";
 
 /* ---- trigger (the field) ---- */
 
@@ -85,14 +90,17 @@ export const chip = style({
     overflow: "hidden",
 });
 
-export const chipRemove = style({
-    all: "unset",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: vars.text.primary,
-    cursor: "pointer",
-});
+export const chipRemove = style([
+    focusRing,
+    {
+        all: "unset",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: vars.text.primary,
+        cursor: "pointer",
+    },
+]);
 
 export const right = style({
     display: "flex",
@@ -102,15 +110,22 @@ export const right = style({
     color: vars.icon.secondary,
 });
 
-export const clearButton = style({
-    all: "unset",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    // The CloseCircleIcon is itself the grey circle (X knocked out).
-    color: vars.text.secondary,
-    cursor: "pointer",
-});
+export const clearButton = style([
+    interactive,
+    focusRing,
+    {
+        all: "unset",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        // The CloseCircleIcon is itself the grey circle (X knocked out).
+        color: vars.text.secondary,
+        cursor: "pointer",
+        selectors: {
+            "&:hover": { color: vars.text.primary },
+        },
+    },
+]);
 
 /* ---- popover content ---- */
 
@@ -165,22 +180,26 @@ export const list = style({
 });
 
 /** A continent or (searched) country row. */
-export const row = style({
-    boxSizing: "border-box",
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xxs,
-    height: "48px",
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-    width: "100%",
-    cursor: "pointer",
-    selectors: {
-        "&:hover": {
-            backgroundColor: vars.surface.secondaryHover,
+export const row = style([
+    interactive,
+    focusRingInset,
+    {
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        gap: alias.spacing.xxs,
+        height: "48px",
+        paddingLeft: alias.spacing.m,
+        paddingRight: alias.spacing.m,
+        width: "100%",
+        cursor: "pointer",
+        selectors: {
+            "&:hover": {
+                backgroundColor: vars.surface.secondaryHover,
+            },
         },
     },
-});
+]);
 
 /** A country row nested under an expanded continent (indented, no chevron). */
 export const rowCountry = style({
@@ -200,22 +219,26 @@ export const expandButton = style({
 });
 
 /** A country row is a `<label>` so the native control toggles the checkbox. */
-export const countryLabel = style({
-    boxSizing: "border-box",
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-    height: "48px",
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-    width: "100%",
-    cursor: "pointer",
-    selectors: {
-        "&:hover": {
-            backgroundColor: vars.surface.secondaryHover,
+export const countryLabel = style([
+    interactive,
+    focusRingInset,
+    {
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        gap: alias.spacing.xs,
+        height: "48px",
+        paddingLeft: alias.spacing.m,
+        paddingRight: alias.spacing.m,
+        width: "100%",
+        cursor: "pointer",
+        selectors: {
+            "&:hover": {
+                backgroundColor: vars.surface.secondaryHover,
+            },
         },
     },
-});
+]);
 
 /* ---- empty state (search matched no country) ---- */
 

@@ -1,5 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, brand } from "@frak-labs/design-system/tokens";
+import {
+    alias,
+    brand,
+    easing,
+    transition,
+} from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const tableWrapper = style({
@@ -91,6 +96,7 @@ globalStyle(`${table} a`, {
 
 globalStyle(`${table} > tbody > tr[data-clickable="true"]`, {
     cursor: "pointer",
+    transition: `background-color ${transition.fast} ${easing.default}`,
 });
 
 globalStyle(`${table} > tbody > tr[data-clickable="true"]:hover`, {

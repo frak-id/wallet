@@ -1,6 +1,12 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, brand } from "@frak-labs/design-system/tokens";
+import {
+    alias,
+    brand,
+    easing,
+    transition,
+} from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { focusRing } from "@/module/common/styles/interaction.css";
 
 export const header = style({
     position: "fixed",
@@ -55,24 +61,27 @@ export const breadcrumb = style({
     gap: alias.spacing.xs,
 });
 
-export const breadcrumbLink = style({
-    display: "inline-flex",
-    alignItems: "center",
-    padding: `${alias.spacing.xxs} ${alias.spacing.s}`,
-    borderRadius: alias.cornerRadius.m,
-    color: vars.text.tertiary,
-    textDecoration: "none",
-    transition: "background 0.15s ease, color 0.15s ease",
-    "@media": {
-        "(hover: hover)": {
-            selectors: {
-                "&:hover": {
-                    background: vars.surface.muted,
+export const breadcrumbLink = style([
+    focusRing,
+    {
+        display: "inline-flex",
+        alignItems: "center",
+        padding: `${alias.spacing.xxs} ${alias.spacing.s}`,
+        borderRadius: alias.cornerRadius.m,
+        color: vars.text.tertiary,
+        textDecoration: "none",
+        transition: `background ${transition.fast} ${easing.default}, color ${transition.fast} ${easing.default}`,
+        "@media": {
+            "(hover: hover)": {
+                selectors: {
+                    "&:hover": {
+                        background: vars.surface.muted,
+                    },
                 },
             },
         },
     },
-});
+]);
 
 export const breadcrumbSeparator = style({
     color: vars.text.tertiary,

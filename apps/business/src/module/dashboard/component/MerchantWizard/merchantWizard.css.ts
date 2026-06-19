@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 /** Sub-field label inset 16px to line up with the text inside a bare input. */
 export const inputLabel = style({
@@ -22,15 +23,22 @@ export const currencyGrid = style({
     },
 });
 
-export const currencyCell = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.m,
-    paddingTop: alias.spacing.m,
-    paddingBottom: alias.spacing.m,
-    borderRadius: alias.cornerRadius.l,
-    cursor: "pointer",
-});
+export const currencyCell = style([
+    interactive,
+    focusRing,
+    {
+        display: "flex",
+        alignItems: "center",
+        gap: alias.spacing.m,
+        paddingTop: alias.spacing.m,
+        paddingBottom: alias.spacing.m,
+        borderRadius: alias.cornerRadius.l,
+        cursor: "pointer",
+        selectors: {
+            "&:hover": { backgroundColor: vars.surface.muted },
+        },
+    },
+]);
 
 /** Flag/coin icon + code/provider text sit together (8px gap). */
 export const currencyLabel = style({
@@ -81,20 +89,24 @@ export const dnsRecordValue = style({
     whiteSpace: "nowrap",
 });
 
-export const dnsCopyButton = style({
-    flexShrink: 0,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "3px 0",
-    border: "none",
-    background: "transparent",
-    cursor: "pointer",
-    color: vars.icon.secondary,
-    ":hover": {
-        color: vars.icon.primary,
+export const dnsCopyButton = style([
+    interactive,
+    focusRing,
+    {
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "3px 0",
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: vars.icon.secondary,
+        ":hover": {
+            color: vars.icon.primary,
+        },
     },
-});
+]);
 
 export const dnsHelpBox = style({
     backgroundColor: vars.surface.elevated,

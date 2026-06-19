@@ -1,20 +1,27 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, zIndex } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
+import {
+    focusRing,
+    focusRingInset,
+} from "@/module/common/styles/interaction.css";
 
-export const trigger = style({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: alias.spacing.m,
-    height: "40px",
-    padding: 0,
-    border: "none",
-    background: "transparent",
-    borderRadius: alias.cornerRadius.full,
-    color: vars.text.primary,
-    fontFamily: "inherit",
-    cursor: "pointer",
-});
+export const trigger = style([
+    focusRing,
+    {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: alias.spacing.m,
+        height: "40px",
+        padding: 0,
+        border: "none",
+        background: "transparent",
+        borderRadius: alias.cornerRadius.full,
+        color: vars.text.primary,
+        fontFamily: "inherit",
+        cursor: "pointer",
+    },
+]);
 
 export const triggerContent = style({
     display: "inline-flex",
@@ -86,33 +93,36 @@ export const list = style({
 
 export const item = style({});
 
-export const merchantLink = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-    width: "100%",
-    padding: alias.spacing.m,
-    borderRadius: alias.cornerRadius.m,
-    border: "4px solid transparent",
-    color: vars.text.primary,
-    textDecoration: "none",
-    // Shared by the <a> switch link and the <button> in-place switcher used
-    // on param-less routes — reset the native button chrome.
-    background: "transparent",
-    fontFamily: "inherit",
-    textAlign: "left",
-    cursor: "pointer",
-    transition: "background 0.15s ease",
-    "@media": {
-        "(hover: hover)": {
-            selectors: {
-                "&:hover": {
-                    background: vars.surface.muted,
+export const merchantLink = style([
+    focusRingInset,
+    {
+        display: "flex",
+        alignItems: "center",
+        gap: alias.spacing.xs,
+        width: "100%",
+        padding: alias.spacing.m,
+        borderRadius: alias.cornerRadius.m,
+        border: "4px solid transparent",
+        color: vars.text.primary,
+        textDecoration: "none",
+        // Shared by the <a> switch link and the <button> in-place switcher used
+        // on param-less routes — reset the native button chrome.
+        background: "transparent",
+        fontFamily: "inherit",
+        textAlign: "left",
+        cursor: "pointer",
+        transition: "background 0.15s ease",
+        "@media": {
+            "(hover: hover)": {
+                selectors: {
+                    "&:hover": {
+                        background: vars.surface.muted,
+                    },
                 },
             },
         },
     },
-});
+]);
 
 export const merchantLinkActive = style({
     background: vars.surface.secondary,
@@ -176,18 +186,21 @@ const cellBase = {
     transition: "background 0.15s ease",
 } as const;
 
-export const cell = style({
-    ...cellBase,
-    "@media": {
-        "(hover: hover)": {
-            selectors: {
-                "&:hover": {
-                    background: vars.surface.muted,
+export const cell = style([
+    focusRingInset,
+    {
+        ...cellBase,
+        "@media": {
+            "(hover: hover)": {
+                selectors: {
+                    "&:hover": {
+                        background: vars.surface.muted,
+                    },
                 },
             },
         },
     },
-});
+]);
 
 export const cellIcon = style({
     display: "inline-flex",

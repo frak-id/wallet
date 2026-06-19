@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
+import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 // Anchor for the absolutely-positioned month-nav buttons (left/right
 // 4px). Without it they resolve to the nearest positioned ancestor —
@@ -65,9 +66,9 @@ const navButtonBase = {
     },
 };
 
-export const navButtonPrevious = style([navButtonBase]);
+export const navButtonPrevious = style([interactive, focusRing, navButtonBase]);
 
-export const navButtonNext = style([navButtonBase]);
+export const navButtonNext = style([interactive, focusRing, navButtonBase]);
 
 export const table = style({
     marginTop: alias.spacing.m,
@@ -98,16 +99,20 @@ export const cell = style({
     height: "36px",
 });
 
-export const day = style({
-    padding: 0,
-    width: "36px",
-    height: "36px",
-    justifyContent: "center",
-    borderRadius: alias.cornerRadius.s,
-    selectors: {
-        "&:hover": { backgroundColor: brand.colors.neutral.grey250 },
+export const day = style([
+    interactive,
+    focusRing,
+    {
+        padding: 0,
+        width: "36px",
+        height: "36px",
+        justifyContent: "center",
+        borderRadius: alias.cornerRadius.s,
+        selectors: {
+            "&:hover": { backgroundColor: brand.colors.neutral.grey250 },
+        },
     },
-});
+]);
 
 export const daySelected = style({
     backgroundColor: brand.colors.neutral.grey250,

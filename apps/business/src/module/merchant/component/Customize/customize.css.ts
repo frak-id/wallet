@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
+import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 export const switchRow = style({
     display: "flex",
@@ -61,25 +62,29 @@ export const settingsGrid = style({
     gap: `${alias.spacing.s} ${alias.spacing.m}`,
 });
 
-export const advancedToggle = style({
-    all: "unset",
-    boxSizing: "border-box",
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-    cursor: "pointer",
-    paddingBlock: alias.spacing.s,
-    fontSize: fontSize.s,
-    lineHeight: "22px",
-    fontWeight: brand.typography.fontWeight.medium,
-    color: vars.text.secondary,
-    selectors: {
-        "&:hover": {
-            color: vars.text.primary,
+export const advancedToggle = style([
+    interactive,
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: alias.spacing.xs,
+        cursor: "pointer",
+        paddingBlock: alias.spacing.s,
+        fontSize: fontSize.s,
+        lineHeight: "22px",
+        fontWeight: brand.typography.fontWeight.medium,
+        color: vars.text.secondary,
+        selectors: {
+            "&:hover": {
+                color: vars.text.primary,
+            },
         },
     },
-});
+]);
 
 export const advancedBody = style({
     display: "flex",
@@ -114,20 +119,27 @@ export const dialogBody = style({
     gap: alias.spacing.s,
 });
 
-export const deleteButton = style({
-    all: "unset",
-    boxSizing: "border-box",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-    cursor: "pointer",
-    paddingInline: alias.spacing.m,
-    paddingBlock: alias.spacing.s,
-    borderRadius: alias.cornerRadius.s,
-    border: `1px solid ${vars.border.error}`,
-    color: vars.text.error,
-    backgroundColor: vars.surface.error,
-    fontSize: fontSize.s,
-    lineHeight: "22px",
-    fontWeight: brand.typography.fontWeight.semiBold,
-});
+export const deleteButton = style([
+    interactive,
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: alias.spacing.xs,
+        cursor: "pointer",
+        paddingInline: alias.spacing.m,
+        paddingBlock: alias.spacing.s,
+        borderRadius: alias.cornerRadius.s,
+        border: `1px solid ${vars.border.error}`,
+        color: vars.text.error,
+        backgroundColor: vars.surface.error,
+        fontSize: fontSize.s,
+        lineHeight: "22px",
+        fontWeight: brand.typography.fontWeight.semiBold,
+        selectors: {
+            "&:hover": { backgroundColor: alias.error[200] },
+        },
+    },
+]);

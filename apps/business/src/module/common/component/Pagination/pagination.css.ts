@@ -1,5 +1,6 @@
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 export const pagination = style({
     display: "flex",
@@ -13,13 +14,20 @@ export const paginationContent = style({
     gap: "10px",
 });
 
-export const paginationLink = style({
-    justifyContent: "center",
-    width: "32px",
-    height: "32px",
-    backgroundColor: brand.colors.primary[100],
-    color: brand.colors.primary[500],
-});
+export const paginationLink = style([
+    interactive,
+    focusRing,
+    {
+        justifyContent: "center",
+        width: "32px",
+        height: "32px",
+        backgroundColor: brand.colors.primary[100],
+        color: brand.colors.primary[500],
+        selectors: {
+            "&:hover": { backgroundColor: brand.colors.primary[200] },
+        },
+    },
+]);
 
 export const paginationLinkActive = style({
     backgroundColor: brand.colors.primary[500],

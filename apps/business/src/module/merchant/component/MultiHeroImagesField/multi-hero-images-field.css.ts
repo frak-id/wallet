@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
+import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 export const list = style({
     listStyle: "none",
@@ -45,24 +46,28 @@ export const url = style({
     color: vars.text.tertiary,
 });
 
-export const deleteButton = style({
-    all: "unset",
-    boxSizing: "border-box",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "24px",
-    height: "24px",
-    flexShrink: 0,
-    cursor: "pointer",
-    borderRadius: alias.cornerRadius.full,
-    color: vars.text.secondary,
-    selectors: {
-        "&:hover": {
-            color: vars.text.primary,
+export const deleteButton = style([
+    interactive,
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "24px",
+        height: "24px",
+        flexShrink: 0,
+        cursor: "pointer",
+        borderRadius: alias.cornerRadius.full,
+        color: vars.text.secondary,
+        selectors: {
+            "&:hover": {
+                color: vars.text.primary,
+            },
         },
     },
-});
+]);
 
 export const preview = style({
     position: "absolute",

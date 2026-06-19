@@ -51,8 +51,14 @@ export const tabsTrigger = recipe({
         color: vars.text.disabled,
         cursor: "pointer",
         transition: "background-color 0.15s ease, color 0.15s ease",
-        outlineOffset: "2px",
         whiteSpace: "nowrap",
+        ":focus": {
+            outline: "none",
+        },
+        // Keyboard-only grey ring, matching the rest of the DS controls.
+        ":focus-visible": {
+            boxShadow: `0 0 0 2px ${vars.border.focus}`,
+        },
         selectors: {
             '&:not([data-state="active"]):hover': {
                 color: vars.text.secondary,

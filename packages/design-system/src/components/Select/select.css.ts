@@ -22,7 +22,7 @@ const triggerBase = style({
     transition: `border-color ${transition.base} ${easing.default}`,
 
     ":focus-visible": {
-        boxShadow: `0 0 0 1px ${vars.border.focus}`,
+        boxShadow: `0 0 0 2px ${vars.border.focus}`,
     },
 
     selectors: {
