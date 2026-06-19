@@ -51,7 +51,6 @@
     "./wallet/*": "./src/wallet/*",
     "./tokens/*": "./src/tokens/*",
     "./providers/*": "./src/providers/*",
-    "./styles/*": "./styles/*",
     "./test": "./src/test/factories.ts",
     "./tests/vitest-fixtures": "./tests/vitest-fixtures.ts"
   },

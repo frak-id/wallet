@@ -19,7 +19,7 @@ export const modalListenerWallet__buttonPrimary = style({
     cursor: "pointer",
     lineHeight: "24px",
     textAlign: "center",
-    background: "var(--frak-header-background-color)",
+    background: "rgba(245, 245, 245, 0.1)",
     backdropFilter: "blur(13px)",
     color: "#ffffff",
     fontSize: "16px",

@@ -4,7 +4,7 @@ export const balance = style({
     position: "relative",
     display: "inline-flex",
     flexDirection: "column",
-    color: "var(--frak-color-grayText)",
+    color: "#818c9c",
 });
 
 export const balance__title = style({
