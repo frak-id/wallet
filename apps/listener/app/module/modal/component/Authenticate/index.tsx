@@ -1,13 +1,14 @@
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { HandleErrors, prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";
 import { useListenerTranslation } from "@/ui/ListenerUiProvider";
-import * as authStyles from "./index.css";
 
 /**
  * The component for the siwe authentication step of a modal
@@ -64,11 +65,15 @@ export function SiweAuthenticateModalStep({
 
     return (
         <>
-            <div className={authStyles.textData}>
-                <p>{siweMessage?.statement}</p>
-                <p>Domain: {siweMessage?.domain}</p>
-                <p>Uri: {siweMessage?.uri}</p>
-            </div>
+            {siweMessage?.domain && (
+                <Card variant="secondary" radius="m" padding="default">
+                    <Text variant="bodySmall">
+                        {t("sdk.modal.siweAuthenticate.connectingTo", {
+                            domain: siweMessage.domain,
+                        })}
+                    </Text>
+                </Card>
+            )}
 
             <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
                 {/* Stay visually primary while pending (spinner + click guard)

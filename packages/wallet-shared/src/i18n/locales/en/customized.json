@@ -34,6 +34,7 @@
             },
             "siweAuthenticate": {
                 "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
+                "connectingTo": "Secure connection to {{productName}} ({{domain}})",
                 "primaryAction": "Authenticate",
                 "title": "Authentication"
             }

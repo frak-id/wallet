@@ -34,6 +34,7 @@ export default interface Resources {
           "title": "Transaction"
         },
         "siweAuthenticate": {
+          "connectingTo": "Secure connection to {{productName}} ({{domain}})",
           "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
           "primaryAction": "Authenticate",
           "title": "Authentication"

@@ -35,6 +35,7 @@
             },
             "siweAuthenticate": {
                 "description": "Veuillez vous authentifier avec votre porte-monnaie pour continuer en toute sécurité. Votre signature confirme votre identité.",
+                "connectingTo": "Connexion sécurisée à {{productName}} ({{domain}})",
                 "primaryAction": "Authentifier",
                 "title": "Authentification"
             }
