@@ -65,9 +65,17 @@ export class BackendApi {
     }
 
     async interceptWebSocketRoute(handler: (route: WebSocketRoute) => void) {
-        await this.page.routeWebSocket("**/*/ws*", handler);
+        // Route at the context level: the wallet drives pairing from its
+        // service worker, so the pairing socket is not a page-scoped socket
+        // (page.routeWebSocket / page.on("websocket") never see it).
+        await this.page.context().routeWebSocket("**/*/ws*", handler);
     }
 
+    /**
+     * Capture WebSocket frames by proxying the socket through
+     * {@link interceptWebSocketRoute} (context-scoped, so the SW pairing
+     * socket is covered). Register before the socket opens.
+     */
     async interceptWebsocketAuthMessage({
         onClientMsg,
         onServerMsg,
@@ -75,11 +83,9 @@ export class BackendApi {
         onClientMsg?: (msg: string) => void;
         onServerMsg?: (msg: string) => void;
     }) {
-        await this.interceptWebSocketRoute(async (ws) => {
-            // Here you can handle the WebSocket route, e.g., log messages or modify them
+        await this.interceptWebSocketRoute((ws) => {
             const server = ws.connectToServer();
             ws.onMessage((message) => {
-                // Send msg to server
                 onClientMsg?.(message as string);
                 server.send(message);
             });

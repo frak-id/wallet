@@ -50,8 +50,9 @@ export class PairingTabHelper {
         // Create a PairingPage instance for this tab
         this.pairingPage = new PairingPage(this.rawPairingPage);
 
-        this.rawPairingPage.goto("/");
-        await this.rawPairingPage.waitForLoadState("networkidle");
+        // `goto` awaits "load"; avoid `networkidle`, which never settles on
+        // wallet pages (live sockets + polling).
+        await this.rawPairingPage.goto("/");
 
         // Load the storage state for the pairing tab
         await loadFrakStorageState(this.rawPairingPage);

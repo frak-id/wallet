@@ -54,6 +54,13 @@ export default defineConfig({
             testMatch: /global\.setup\.ts/,
         },
         {
+            // Separate setup for the cross-device pairing state so its more
+            // fragile flow only gates the paired suite.
+            name: "setup-paired",
+            use: { ...devices["Desktop Chrome"] },
+            testMatch: /global-paired\.setup\.ts/,
+        },
+        {
             name: "chromium-on-device",
             use: {
                 ...devices["Desktop Chrome"],
@@ -70,7 +77,7 @@ export default defineConfig({
                 storageState: PAIRED_STORAGE_STATE,
                 permissions: ["clipboard-read"],
             },
-            dependencies: ["setup"],
+            dependencies: ["setup-paired"],
             testMatch: ["**/*pairing*.spec.ts", "**/*all*.spec.ts"],
         },
         {

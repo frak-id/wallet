@@ -138,8 +138,8 @@ export class AuthPage {
     /* -------------------------------------------------------------------------- */
 
     async navigateToLogin() {
+        // `goto` awaits "load"; avoid `networkidle` (never settles here).
         await this.page.goto("/login");
-        await this.page.waitForLoadState("networkidle");
         await this.page.waitForURL("/login");
     }
 
@@ -151,11 +151,11 @@ export class AuthPage {
 
     async verifyLoginReady() {
         await expect(this.page).toHaveURL("/login");
-        // Verify the button is visible
-        const hasButton = await this.page
-            .locator("button", { hasText: "Use biometrics" })
-            .isVisible();
-        expect(hasButton).toBeTruthy();
+        // Auto-waiting assertion (not a one-shot `isVisible()`) so SPA render
+        // timing doesn't make this flaky.
+        await expect(
+            this.page.locator("button", { hasText: "Use biometrics" })
+        ).toBeVisible();
     }
 
     async verifyLoginError() {
@@ -180,13 +180,36 @@ export class AuthPage {
     async verifyPairingReady() {
         // The keypass modal switches to the live pairing view with a status
         // line and the 6-digit confirmation code.
-        await expect(
-            this.page.getByText("Pairing in progress")
-        ).toBeVisible({ timeout: 10_000 });
+        await expect(this.page.getByText("Pairing in progress")).toBeVisible({
+            timeout: 10_000,
+        });
         // Verify the QR code is displayed
         await expect(
             this.page.getByRole("button", { name: "QR Code" }).first()
         ).toBeVisible();
+    }
+
+    /**
+     * Read the pairing id + code from the page. The pairing WebSocket is not
+     * observable from Playwright, and the id only feeds the QR pattern, so both
+     * are exposed via `data-pairing-*` attributes on the QR button.
+     */
+    async getPairingInfo(): Promise<{
+        pairingId: string;
+        pairingCode: string;
+    }> {
+        const qr = this.page.locator("[data-pairing-id]");
+        // Both attributes are populated together with the pairing-initiated
+        // message; wait for the code so we don't read a half-rendered state.
+        await expect(qr).toHaveAttribute("data-pairing-code", /.+/, {
+            timeout: 10_000,
+        });
+        const pairingId = await qr.getAttribute("data-pairing-id");
+        const pairingCode = await qr.getAttribute("data-pairing-code");
+        if (!pairingId || !pairingCode) {
+            throw new Error("Pairing id/code not present on the QR element");
+        }
+        return { pairingId, pairingCode };
     }
 
     /* -------------------------------------------------------------------------- */
@@ -200,9 +223,9 @@ export class AuthPage {
         // Ensure we are on the right page
         await expect(this.page).toHaveURL("/wallet");
 
-        // Ensure we got a big text with `Balance`
+        // Ensure the wallet home rendered (the "Wallet" page heading).
         await expect(
-            this.page.locator("span", { hasText: "Balance" })
+            this.page.getByRole("heading", { name: "Wallet", level: 1 })
         ).toBeVisible();
     }
 }

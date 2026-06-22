@@ -145,6 +145,11 @@ function PairingContent({
                     {pairingInfo ? (
                         <button
                             type="button"
+                            // E2E affordance: the pairing id only feeds the QR
+                            // pattern (not otherwise in the DOM), and the
+                            // pairing socket isn't observable from Playwright.
+                            data-pairing-id={pairingInfo.id}
+                            data-pairing-code={pairingInfo.code}
                             className={styles.launchPairing__qrCode}
                             onClick={() =>
                                 setShowBrighterQRCode(!showBrighterQRCode)

@@ -1,347 +1,144 @@
-# Frak Wallet E2E Testing Strategy
+# Frak Wallet E2E (Playwright)
 
-## Overview
+End-to-end tests for the wallet app and the SDK → listener-iframe modal flows.
+Auth is **pure WebAuthn** (biometrics, no passwords). Because every protected
+view needs an authenticated session, the suite is built around **setup projects
+that produce reusable storage states**.
 
-This document outlines the comprehensive end-to-end testing strategy for the Frak Wallet - a sophisticated blockchain smart wallet that leverages **pure biometric authentication** via WebAuthn with no traditional usernames, passwords, or forms.
+> ⚠️ Not currently run in CI. Treat green/red as a local signal and keep
+> selectors in sync with the app — the UI drifts.
 
-## 🎯 **Key Insights from Implementation**
+## Prerequisites (local)
 
-### Authentication Model
-- **Pure Biometric**: No usernames, emails, or passwords - only WebAuthn/biometrics
-- **Register Button**: `"Create your wallet * in a second with biometry"`
-- **Login Button**: `"Recover your wallet"`
-- **Success Indicator**: Redirect to `/wallet` page
+Most specs talk to the real backend, so the local stack must be running. Start
+the SST dev multiplexer from the repo root:
 
-### UI Structure Discoveries
-- **No `data-testid` attributes**: Use text content selectors instead
-- **CSS Modules**: Generated class names with hashes (e.g., `_buttonAuth_14w03_1`)
-- **ButtonAuth Component**: Main authentication UI component
-- **Wallet Dashboard**: Located at `/wallet` route with grid-based layout
-
-## Architecture Understanding
-
-### User Types
-- **On-Device Users**: Users authenticating with biometry directly on their device via WebAuthn
-- **Remote Users**: Users scanning QR codes to pair their session with another browser/device
-
-### Deployment Modes  
-- **Standalone Mode**: Full wallet webapp with complete feature access
-- **Embedded Mode**: iframe integration within external websites via SDK
-
-### Core Authentication Flows
-- **Registration**: Biometric setup with WebAuthn credential creation
-- **Login**: WebAuthn authentication with existing credentials
-- **Recovery**: Account recovery mechanisms  
-- **Pairing**: QR code-based cross-device authentication
-
-## 🚀 **Working Test Implementation**
-
-### Test Matrix
-
-| Flow | Status | Test File | Key Insights |
-|------|--------|-----------|--------------|
-| ✅ Basic Registration | Working | `on-device-register.spec.ts` | Uses `"Create your wallet"` button text |
-| ✅ Basic Login | Working | `on-device-login.spec.ts` | Uses `"Recover your wallet"` button text |
-| ✅ Registration + Login | Working | `example.spec.ts` | Complete flow validation |
-| ⚠️ Error Scenarios | Partial | Various | Need better error detection |
-| ❌ Analytics | Failing | Various | No analytics endpoints found |
-
-### Working Selectors
-
-```typescript
-// ✅ WORKING - Use these selectors
-"button:has-text('Create your wallet')"  // Registration
-"button:has-text('Recover your wallet')" // Login
-
-// ❌ DON'T USE - These don't exist
-"[data-testid='register-button']"        // No data-testids
-"button.buttonAuth"                      // CSS modules hash classes
-"button:has-text('Login')"               // Wrong text content
-```
-
-## Test Organization Structure
-
-```
-tests/
-├── README.md                          # This file
-├── fixtures.ts                        # Main fixture exports
-├── fixtures/                          # Test utilities
-│   ├── webauthn.fixture.ts            # ✅ Working WebAuthn testing
-│   ├── qrcode.fixture.ts              # QR code generation/scanning
-│   └── i18n.fixture.ts                # i18n fixtures
-├── specs/
-│   └── authentication/               # Auth flow tests
-│       ├── on-device-register.spec.ts  # ✅ Working registration
-│       └── on-device-login.spec.ts     # ✅ Working login
-├── helpers/                          # Test utilities
-│   └── auth.helper.ts                 # ✅ Working navigation/interaction helpers
-└── example.spec.ts                   # ✅ Working complete flow example
-```
-
-## 🔧 **Best Practices for Frak Wallet Testing**
-
-### 1. Selector Strategy
-```typescript
-// ✅ DO: Use text content selectors
-await page.click("button:has-text('Create your wallet')");
-
-// ✅ DO: Use partial class matching for CSS modules
-await page.waitForSelector("button[class*='buttonAuth']");
-
-// ❌ DON'T: Rely on exact CSS class names
-await page.click("button._buttonAuth_14w03_1"); // Hash changes
-
-// ❌ DON'T: Expect data-testid attributes
-await page.click("[data-testid='register-button']"); // Don't exist
-```
-
-### 2. WebAuthn Testing Setup
-```typescript
-// ✅ Virtual Authenticator Configuration
-await webAuthn.enableVirtualAuthenticator({
-    protocol: "ctap2",
-    transport: "internal",
-    hasResidentKey: true,
-    hasUserVerification: true,
-    isUserVerified: true,
-    automaticPresenceSimulation: true,
-});
-```
-
-### 3. Success Detection
-```typescript
-// ✅ Check for wallet page redirect
-await page.waitForURL(/.*\/wallet.*/, { timeout: 15000 });
-
-// ✅ Verify wallet components loaded
-await Promise.race([
-    page.waitForSelector('[class*="grid"]', { timeout: 10000 }),
-    page.waitForSelector('[class*="balance"]', { timeout: 10000 }),
-    page.waitForSelector('main', { timeout: 10000 }),
-]);
-```
-
-### 4. Error Handling
-```typescript
-// ✅ Look for generic error indicators
-const errorSelectors = [
-    "text=error",
-    "text=failed", 
-    "[class*='error']",
-    "[class*='notice']",
-];
-
-// ⚠️ Be flexible with error messages
-// The app may not show detailed error messages for security
-```
-
-### 5. Test Isolation
-```typescript
-// ✅ Clean up after each test
-test.afterEach(async ({ webAuthn }) => {
-    await webAuthn.cleanup(); // Removes virtual authenticator
-});
-
-// ⚠️ Storage clearing is commented out in auth helper
-// The wallet may handle persistence differently
-```
-
-## 🏃 **Running the Tests**
-
-### Environment Commands
 ```bash
-# Local development (default)
+bun run dev   # SST multiplexer: wallet + listener + backend + example sites
+```
+
+The **vanilla partner harness** (needed by the SDK / modal specs) is part of the
+multiplexer but has `autostart: false` — **start it manually in the multiplexer**
+(`infra/example.ts`). It then serves on http://localhost:3013.
+
+The backend must be reachable and migrated (`bun -F @frak-labs/bootstrap start`
+once if it's a fresh DB).
+
+## Running
+
+```bash
+cd apps/wallet
+
+# local stack (default TARGET_ENV=local). On-device + auth specs.
 bun run test:e2e
 
-# Against dev environment
-bun run test:e2e:dev
+# local stack + local vanilla host (needed for the SDK/modal specs)
+bun run test:e2e:local      # FRAK_E2E_HOST_URL=http://localhost:3013/
 
-# Against production (for verification)
-bun run test:e2e:prod
+# remote environments
+bun run test:e2e:dev        # wallet-dev.frak.id
+bun run test:e2e:prod       # wallet.frak.id  (careful)
 
-# Interactive UI mode (dev env)
-bun run test:e2e:dev:ui
+# a single project / file / title
+bunx playwright test --project=chromium-fresh
+bunx playwright test --project=setup
+bunx playwright test specs/home/all.spec.ts
+bunx playwright test -g "should log in via passkey"
 
-# View test reports
+# UI mode, last report, last trace
+bun run test:e2e:ui
 bun run test:e2e:report
 ```
 
-### Running Specific Tests
-```bash
-# Core working tests
-bun run test:e2e:dev --grep "should register new wallet"
-bun run test:e2e:dev --grep "should login existing wallet"
-bun run test:e2e:dev --grep "Example Biometric Wallet Tests"
+`TARGET_ENV` selects the base URL (`local` → `https://localhost:3000`).
+`FRAK_E2E_HOST_URL` is the partner page the SDK specs load (defaults to the
+deployed vanilla demo; set it to `http://localhost:3013/` for a local run).
 
-# All authentication tests (some may fail)
-bun run test:e2e:dev --grep "authentication"
+## Architecture
 
-# Single test file
-bun run test:e2e:dev tests/example.spec.ts
+### Projects (`playwright.config.ts`)
+
+| Project | Depends on | Storage | Purpose |
+|---|---|---|---|
+| `setup` | – | writes `ON_DEVICE_STORAGE_STATE` | Register/login a mocked on-device wallet |
+| `setup-paired` | – | writes `PAIRED_STORAGE_STATE` | Cross-device (distant-webauthn) pairing |
+| `chromium-on-device` | `setup` | on-device state | Authenticated wallet specs (home, history, settings, sdk) |
+| `chromium-paired` | `setup-paired` | paired state | Same specs under a paired session |
+| `chromium-fresh` | – | none | Logged-out, **self-contained** modal/login specs |
+
+The setup projects run first and persist a Playwright storage state under
+`playwright/.storage/`; the authenticated projects load it via `storageState`.
+`setup` and `setup-paired` are split so the (flaky) pairing flow only gates the
+paired suite — never the on-device path.
+
+### WebAuthn
+
+Two mechanisms exist — know which a spec uses:
+
+- **Mocked** (`helpers/mockedWebauthn.helper.ts` + `helpers/webauthn/`):
+  overrides `navigator.credentials.create/get` with a hand-rolled P-256
+  authenticator. Used by `global.setup.ts`. The persisted keypair lives in
+  `playwright/.storage/authenticator-<env>.json`.
+  - This mock **must** satisfy the backend's `@simplewebauthn/server` verifier.
+    Hard-won invariants (see `webauthn/signature.ts`): `getPublicKey()` returns
+    DER **SPKI**; `toJSON()` returns a full `RegistrationResponseJSON`; the
+    attestation signature and COSE key x/y are CBOR **byte strings** (a raw
+    `Uint8Array` becomes a tagged typed array node-cbor emits but the verifier
+    can't read); sign with a **single** SHA-256 (`prehash`), not pre-hash + sign.
+- **Virtual authenticator** (`helpers/webauthn.helper.ts`): Chrome's native
+  CDP `WebAuthn.addVirtualAuthenticator` (real crypto). Used by some
+  authentication specs.
+
+### SDK / listener modal specs (`specs/sdk/*-fresh.spec.ts`)
+
+Run in `chromium-fresh` and are **self-contained** — no `setup` dependency:
+- WebAuthn is mocked client-side (`mockedWebAuthN`).
+- `/auth/login` is stubbed with a canned session (`backendApi.mockLoginSuccess`).
+- They load the partner page (`FRAK_E2E_HOST_URL`), boot the real SDK, and drive
+  the listener iframe (`#frak-wallet`) via `pages/modal.page.ts`.
+- Selectors use the stable `nexus-modal-*` class hooks — the listener can render
+  raw i18n keys before translations load locally, so text selectors are unsafe.
+
+## Layout
+
+```
+tests/
+├── fixtures.ts              # Playwright fixtures (pages, helpers, api)
+├── global.setup.ts          # on-device setup → ON_DEVICE_STORAGE_STATE
+├── global-paired.setup.ts   # pairing setup → PAIRED_STORAGE_STATE
+├── api/                     # backend.api (route/WS mocks, mockLoginSuccess), rpc.api, analytics.api
+├── helpers/                 # mockedWebauthn, webauthn (virtual), sdk, pairingTab, clipboard, storage
+│   └── webauthn/            # hand-rolled attestation/assertion (signature.ts) + types
+├── pages/                   # auth, home, history, settings, pairing, modal page objects
+└── specs/
+    ├── authentication/      # on-device-login/register, pairing-desktop
+    ├── home/ history/ settings/
+    └── sdk/                 # embedded wallet (all, balance-all) + modal-*-fresh
 ```
 
-## 🐛 **Common Issues & Solutions**
+## Gotchas (learned the hard way)
 
-### Issue: Button Not Found
+- **Mocked WebAuthn ↔ backend**: the mock must produce attestations/assertions
+  the real backend verifies. If register 500s or login returns "Invalid
+  signature", debug `webauthn/signature.ts` against `@simplewebauthn` (see the
+  invariants above).
+- **`networkidle` never settles on `/wallet`** (live sockets + polling). Wait on
+  the URL, not `networkidle`.
+- **Use auto-waiting assertions** (`expect(locator).toBeVisible()`), not one-shot
+  `locator.isVisible()`, which races SPA render.
+- **Modal selectors**: prefer `nexus-modal-*` classes / `aria-label` over text;
+  the listener may show raw i18n keys locally.
+- **Pairing socket is service-worker-driven** → WS routing must be at the
+  **context** level (`page.context().routeWebSocket`); capture is still flaky.
+- **Stale storage**: if auth behaves oddly, delete `playwright/.storage/*` to
+  force a fresh credential + re-register.
+
+## Adding a spec
+
+1. Pick the project by auth need: `chromium-fresh` (logged-out / self-contained),
+   `chromium-on-device` (authenticated), `chromium-paired` (distant-webauthn).
+2. Reuse page objects + helpers; add new ones to `fixtures.ts`.
+3. Name on-device files `*on-device*.spec.ts` or `*all*.spec.ts`, pairing
+   `*pairing*.spec.ts`, and self-contained modal files `*fresh*.spec.ts` so they
+   land in the right project (`testMatch`).
 ```
-TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
-Call log: - waiting for locator('button.buttonAuth') to be visible
-```
-**Solution**: Use text content selectors instead:
-```typescript
-await page.waitForSelector("button:has-text('Create your wallet')");
-```
-
-### Issue: CSS Module Classes
-```
-Error: Button class '_buttonAuth_abc123_1' not found
-```
-**Solution**: Use partial class matching:
-```typescript
-await page.waitForSelector("button[class*='buttonAuth']");
-```
-
-### Issue: WebAuthn Ceremony Fails
-```
-Error: Virtual authenticator not enabled
-```
-**Solution**: Ensure virtual authenticator is set up before navigation:
-```typescript
-await webAuthn.enableVirtualAuthenticator();
-await authHelper.navigateToRegister();
-```
-
-### Issue: Test Flakiness
-**Solutions**:
-- Use longer timeouts for WebAuthn operations (15-20 seconds)
-- Wait for `networkidle` before interactions
-- Use `Promise.race()` for multiple success indicators
-
-## 📊 **Test Environments**
-
-| Environment | URL | Purpose | Status |
-|-------------|-----|---------|--------|
-| Local | `http://127.0.0.1:3000` | Development | ✅ Working |
-| Dev | `https://wallet-dev.frak.id` | Integration | ✅ Working |
-| Prod | `https://wallet.frak.id` | E2E Validation | ⚠️ Use carefully |
-
-## 🔐 **Security Considerations**
-
-1. **Test Data**: Virtual authenticators only - no real biometric data
-2. **Credentials**: Test credentials are automatically cleaned up
-3. **Network**: Tests use dev environment by default
-4. **Storage**: Be careful with persistent storage clearing
-
-## 🎯 **Current Implementation Status**
-
-### ✅ Phase 1: Foundation (COMPLETE)
-- ✅ WebAuthn fixture with virtual authenticator
-- ✅ Real selectors for register/login buttons
-- ✅ Basic authentication flow tests
-- ✅ Wallet access verification
-
-### 🔄 Phase 2: Core Features (IN PROGRESS)
-- ⚠️ Error scenario testing (needs better error detection)
-- ❌ Analytics tracking tests (endpoints not found)
-- ❌ Different authenticator types (USB test failing)
-- ❌ Network error simulation (not showing errors)
-
-### 📋 Phase 3: Advanced Scenarios (PLANNED)
-- QR code pairing tests
-- Cross-device authentication
-- Embedded mode testing
-- Recovery flow testing
-
-### 🚀 Phase 4: CI/CD Integration (PLANNED)
-- GitHub Actions integration
-- Automated test runs on PR
-- Performance regression detection
-
-## 🏗️ **Extending the Test Suite**
-
-### Adding New Authentication Tests
-```typescript
-test("should test new auth scenario", async ({ webAuthn, authHelper }) => {
-    // 1. Setup virtual authenticator
-    await webAuthn.enableVirtualAuthenticator();
-    
-    // 2. Navigate and verify page ready
-    await authHelper.navigateToRegister();
-    await authHelper.verifyRegistrationReady();
-    
-    // 3. Perform action
-    await webAuthn.registerWallet();
-    
-    // 4. Verify result
-    await authHelper.verifyRegistrationSuccess();
-    
-    // 5. Cleanup happens automatically in afterEach
-});
-```
-
-### Adding New Fixtures
-```typescript
-// Create new fixture in fixtures/ directory
-export class NewFixture {
-    constructor(private page: Page) {}
-    
-    async newMethod(): Promise<void> {
-        // Implementation
-    }
-}
-
-// Add to fixtures.ts
-export const test = base.extend<WalletFixtures>({
-    // ... existing fixtures
-    newFixture: async ({ page }, use) => {
-        await use(new NewFixture(page));
-    },
-});
-```
-
-## 📈 **Metrics & Monitoring**
-
-### Test Success Metrics
-- **Core Auth Success Rate**: ✅ 100% (register + login working)
-- **Error Scenario Coverage**: ⚠️ ~20% (needs better error detection)
-- **Cross-Device Compatibility**: ❌ 0% (not implemented yet)
-- **Performance**: Fast (2-4 seconds per test)
-
-### Known Limitations
-1. **Error Messages**: App doesn't show detailed error messages
-2. **Analytics**: No analytics endpoints found in dev environment
-3. **Storage**: Persistence behavior not fully understood
-4. **Recovery**: Recovery flow testing not implemented
-
-## 🤝 **Contributing to Tests**
-
-### Before Adding Tests
-1. Run existing tests to understand current behavior
-2. Use the debug pattern to inspect page structure:
-   ```typescript
-   // Take screenshot
-   await page.screenshot({ path: "debug.png", fullPage: true });
-   
-   // Log buttons
-   const buttons = await page.locator("button").all();
-   for (const button of buttons) {
-       console.log(await button.textContent());
-   }
-   ```
-
-### Test Review Checklist
-- [ ] Uses text content selectors, not CSS classes
-- [ ] Handles WebAuthn virtual authenticator properly
-- [ ] Includes proper cleanup in `afterEach`
-- [ ] Has realistic timeouts (10-15 seconds for auth operations)
-- [ ] Tests actual wallet behavior, not assumptions
-
-### Performance Guidelines
-- Keep tests focused and atomic
-- Use parallel execution when possible
-- Avoid unnecessary waits or sleeps
-- Clean up resources properly
-
----
-
-**This testing strategy provides a solid foundation for testing the Frak Wallet's biometric authentication flows while working with the real app structure and constraints.** 
