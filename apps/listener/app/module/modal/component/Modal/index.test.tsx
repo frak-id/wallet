@@ -83,21 +83,8 @@ vi.mock("@frak-labs/wallet-shared/pairing", () => ({
     }),
 }));
 
-vi.mock("./Step", () => ({
-    ModalStepIndicator: () => null,
-}));
-
 vi.mock("../../../component/ToastLoading", () => ({
     ToastLoading: () => null,
-}));
-
-vi.mock("sonner", () => ({
-    Toaster: () => null,
-    toast: { error: () => {}, success: () => {} },
-}));
-
-vi.mock("lucide-react", () => ({
-    X: () => <span>X</span>,
 }));
 
 vi.mock("@radix-ui/react-alert-dialog", () => {

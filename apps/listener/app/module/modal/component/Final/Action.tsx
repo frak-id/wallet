@@ -66,10 +66,8 @@ export function FinalModalActionComponent({
 
 /**
  * Sharing buttons component
- * @param shareWithFrak
+ * @param isModalSuccess
  * @param link
- * @param popupTitle
- * @param text
  */
 function SharingButtons({
     isModalSuccess,
