@@ -138,7 +138,7 @@ export function LoginModalStep({
                 {!allowSso && (
                     <button
                         type={"button"}
-                        className={secondaryClass}
+                        className={primaryClass}
                         disabled={isLoading || !isWebAuthNSupported}
                         onClick={() => {
                             login({});
@@ -149,7 +149,7 @@ export function LoginModalStep({
                         ) : (
                             <FaceIdIcon width={24} height={24} />
                         )}
-                        {t("sdk.modal.login.secondaryAction")}
+                        {t("sdk.modal.login.primaryAction")}
                     </button>
                 )}
 

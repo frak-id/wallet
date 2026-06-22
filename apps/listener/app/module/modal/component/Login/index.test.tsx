@@ -118,7 +118,7 @@ describe("LoginModalStep", () => {
         expect(screen.getByTestId("phone-button")).toBeInTheDocument();
 
         const passkeyButton = screen.getByRole("button", {
-            name: "sdk.modal.login.secondaryAction",
+            name: "sdk.modal.login.primaryAction",
         });
         fireEvent.click(passkeyButton);
 

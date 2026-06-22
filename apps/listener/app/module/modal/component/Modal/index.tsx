@@ -219,7 +219,7 @@ function ListenerModalInner({
                     logoFailed={logoFailed}
                     onLogoError={() => setLogoFailed(true)}
                 />
-                <CurrentModalStepComponent onError={onError} />
+                <CurrentModalStepComponent />
                 <OriginPairingState type="modal" />
             </Stack>
         </ModalComponent>
@@ -395,11 +395,7 @@ function CurrentModalMetadataInfo() {
  * Return the right inner component depending on the current modal step
  * @constructor
  */
-function CurrentModalStepComponent({
-    onError,
-}: {
-    onError: (reason?: string) => void;
-}) {
+function CurrentModalStepComponent() {
     const currentStep = modalStore(selectCurrentStep);
     const currentStepIndex = modalStore((s) => s.currentStep);
     const totalSteps = modalStore((s) => s.steps?.length ?? 0);
@@ -426,6 +422,10 @@ function CurrentModalStepComponent({
     return useMemo(() => {
         // Extract some info about the current modal step
         if (!currentStep) return null;
+
+        // Capture the key up front so the defensive default branch can still
+        // report it — inside `default`, `currentStep` narrows to `never`.
+        const stepKey = currentStep.key;
 
         // Display the right component depending on the step
         switch (currentStep.key) {
@@ -458,7 +458,7 @@ function CurrentModalStepComponent({
                     />
                 );
             default:
-                return <>Can't handle {currentStep} yet</>;
+                return <>Can't handle {stepKey} yet</>;
         }
-    }, [onError, currentStep]);
+    }, [currentStep]);
 }
