@@ -42,7 +42,9 @@ export default defineConfig({
     reporter: "html",
     use: {
         baseURL: config.baseURL,
-        trace: "on-first-retry",
+        // Retain a full trace (network + console) on failure even without
+        // retries, so setup/auth failures are diagnosable from the report.
+        trace: "retain-on-failure",
         screenshot: "only-on-failure",
     },
     projects: [
@@ -70,6 +72,17 @@ export default defineConfig({
             },
             dependencies: ["setup"],
             testMatch: ["**/*pairing*.spec.ts", "**/*all*.spec.ts"],
+        },
+        {
+            // Logged-out context (no storageState) for flows that must start
+            // unauthenticated — e.g. the modal login step. Self-contained: the
+            // specs mock WebAuthn + `/auth/login`, so no `setup` dependency.
+            name: "chromium-fresh",
+            use: {
+                ...devices["Desktop Chrome"],
+                permissions: ["clipboard-read"],
+            },
+            testMatch: ["**/*fresh*.spec.ts"],
         },
     ],
     // We don't use the `webserver` since we rely on the sst multiplexer here

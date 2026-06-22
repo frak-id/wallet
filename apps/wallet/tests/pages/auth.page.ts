@@ -13,8 +13,9 @@ export class AuthPage {
 
     async navigateToRegister() {
         await this.page.goto("/register");
-        await this.page.waitForLoadState("networkidle");
-        await this.page.waitForURL("/register");
+        // The route normalises its search params (e.g. `?new=false`), so an
+        // exact "/register" match never resolves — match loosely instead.
+        await this.page.waitForURL(/\/register/);
     }
 
     /**
@@ -22,30 +23,59 @@ export class AuthPage {
      * Does NOT trigger WebAuthn — use clickRegister() for full registration.
      */
     async navigateToKeypass() {
-        // Click through slides 1 and 2
+        // Slide 1 ("Earn money by recommending") → slide 2
+        await this.page.locator("button", { hasText: "Get started" }).click();
+        // Slide 2 → email input step
         await this.page.locator("button", { hasText: "Continue" }).click();
-        await this.page.waitForTimeout(600); // Allow scroll animation + IntersectionObserver
+        // Email input step (added to the onboarding flow). A unique address
+        // keeps the backend availability check resolving as a "new" email.
+        await this.page.getByLabel("Email").fill(`e2e-${Date.now()}@frak.test`);
         await this.page.locator("button", { hasText: "Continue" }).click();
-        // Wait for last slide button to appear (confirms slide 3 active)
+        // Slide 3 → "Activate my secure space" opens the Keypass modal
         await expect(
             this.page.locator("button", {
                 hasText: "Activate my secure space",
             })
-        ).toBeVisible({ timeout: 5_000 });
-        await this.page.waitForTimeout(600);
+        ).toBeVisible({ timeout: 10_000 });
         await this.page
-            .locator("button", {
-                hasText: "Activate my secure space",
-            })
+            .locator("button", { hasText: "Activate my secure space" })
             .click();
-        // Wait for drawer animation (~250ms) + Vaul portal render
-        await this.page.waitForTimeout(400);
-        // Wait for Keypass screen
+        // Keypass modal — the visible ContentBlock <h1>. (The Radix dialog
+        // title renders a separate <h2> with the same text, so scope by level.)
         await expect(
             this.page.getByRole("heading", {
                 name: "Secure your account",
+                level: 1,
             })
         ).toBeVisible({ timeout: 5_000 });
+    }
+
+    /**
+     * Onboarding inserts a referral-code step after WebAuthn registration.
+     * Skip it when shown (it is absent for users with an existing referrer).
+     */
+    async skipReferralIfPresent() {
+        const skip = this.page.locator("button", { hasText: "Skip" });
+        try {
+            await skip.waitFor({ state: "visible", timeout: 8_000 });
+            await skip.click();
+        } catch {
+            // Referral step not shown — continue.
+        }
+    }
+
+    /**
+     * The notification opt-in step auto-skips once the permission is resolved;
+     * otherwise dismiss it via "Later".
+     */
+    async skipNotificationIfPresent() {
+        const later = this.page.locator("button", { hasText: "Later" });
+        try {
+            await later.waitFor({ state: "visible", timeout: 5_000 });
+            await later.click();
+        } catch {
+            // Notification step auto-skipped — continue.
+        }
     }
 
     async clickRegister() {
@@ -61,11 +91,12 @@ export class AuthPage {
     }
 
     async verifyRegistrationReady() {
-        await expect(this.page).toHaveURL("/register");
+        // The route normalises search params (`?new=false`), so match loosely.
+        await expect(this.page).toHaveURL(/\/register/);
         // Verify the first onboarding slide is visible
         await expect(
             this.page.getByRole("heading", {
-                name: "Slide 1 — Title placeholder",
+                name: "Earn money by recommending",
             })
         ).toBeVisible({ timeout: 10_000 });
     }
@@ -114,7 +145,7 @@ export class AuthPage {
 
     async clickLogin() {
         await this.page
-            .locator("button", { hasText: "Recover your wallet" })
+            .locator("button", { hasText: "Use biometrics" })
             .click();
     }
 
@@ -122,7 +153,7 @@ export class AuthPage {
         await expect(this.page).toHaveURL("/login");
         // Verify the button is visible
         const hasButton = await this.page
-            .locator("button", { hasText: "Recover your wallet" })
+            .locator("button", { hasText: "Use biometrics" })
             .isVisible();
         expect(hasButton).toBeTruthy();
     }
@@ -147,15 +178,15 @@ export class AuthPage {
     }
 
     async verifyPairingReady() {
-        // Verify the confirmation code is displayed
+        // The keypass modal switches to the live pairing view with a status
+        // line and the 6-digit confirmation code.
         await expect(
-            this.page.getByText("Check that the code is correct")
+            this.page.getByText("Pairing in progress")
+        ).toBeVisible({ timeout: 10_000 });
+        // Verify the QR code is displayed
+        await expect(
+            this.page.getByRole("button", { name: "QR Code" }).first()
         ).toBeVisible();
-        // Verify that the qr code is displayed
-        const qrCode = this.page
-            .locator('button:has(svg title:text("QR Code"))')
-            .first();
-        await expect(qrCode).toBeVisible();
     }
 
     /* -------------------------------------------------------------------------- */

@@ -17,10 +17,12 @@ test("Log with mocked webauthn", async ({ page, mockedWebAuthN, authPage }) => {
     await authPage.verifyLoginReady();
     await authPage.clickLogin();
 
-    // Wait 2sec for a potential url change page
+    // Wait for a potential url change to the wallet (login success). Give the
+    // WebAuthn ceremony + backend round-trip enough time on remote envs before
+    // falling back to registration.
     try {
         await page.waitForURL("/wallet", {
-            timeout: 2_000,
+            timeout: 10_000,
             waitUntil: "networkidle",
         });
         await page.context().storageState({ path: ON_DEVICE_STORAGE_STATE });
@@ -36,7 +38,11 @@ test("Log with mocked webauthn", async ({ page, mockedWebAuthN, authPage }) => {
     await authPage.verifyRegistrationReady();
     await authPage.clickRegister();
 
-    // After WebAuthn: notification auto-skipped → welcome screen
+    // Post-registration onboarding steps (each skipped if auto-advanced)
+    await authPage.skipReferralIfPresent();
+    await authPage.skipNotificationIfPresent();
+
+    // Welcome screen
     await authPage.verifyWelcomeScreen();
     await authPage.clickContinueOnWelcome();
 
