@@ -102,6 +102,7 @@
             "lastConnection": "Last connection",
             "currentDeviceConnected": "Connected",
             "recoveryOptions": "Recovery options",
+            "changeEmail": "Change email address",
             "security": {
                 "heading": "Secure your wallet",
                 "headingSecured": "Your wallet is secured",

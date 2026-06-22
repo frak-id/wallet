@@ -29,7 +29,7 @@ const CODE_LENGTH = EMAIL_VERIFICATION.CODE_LENGTH;
 
 type FlowState =
     | { kind: "verify" }
-    | { kind: "changeEmail" }
+    | { kind: "changeEmail"; backTo: "profile" | "verify" }
     | {
           kind: "conflict";
           email: string;
@@ -48,6 +48,8 @@ type FlowState =
 type VerifyEmailProps = {
     /** Code lifted from the magic-link URL hash; auto-submitted once on mount. */
     initialCode?: string;
+    /** Open straight onto the change-email form (entry from an already-verified email's profile row). */
+    startInChangeEmail?: boolean;
 };
 
 function resolveVerifyErrorKey(mutation: {
@@ -130,7 +132,10 @@ function ConflictResolutionStep({
     );
 }
 
-export function VerifyEmail({ initialCode }: VerifyEmailProps) {
+export function VerifyEmail({
+    initialCode,
+    startInChangeEmail,
+}: VerifyEmailProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const session = useStore(sessionStore, selectSession);
@@ -145,7 +150,11 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
     } = useSendEmailVerification();
     const verifyMutation = useVerifyEmailCode();
 
-    const [flowState, setFlowState] = useState<FlowState>({ kind: "verify" });
+    const [flowState, setFlowState] = useState<FlowState>(() =>
+        startInChangeEmail
+            ? { kind: "changeEmail", backTo: "profile" }
+            : { kind: "verify" }
+    );
     const [code, setCode] = useState("");
     const [targetEmail, setTargetEmail] = useState<string | undefined>();
     const autoVerifiedRef = useRef(false);
@@ -288,7 +297,9 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                 conflict={flowState}
                 currentAuthenticatorId={session?.authenticatorId}
                 onStartMerge={setFlowState}
-                onUseDifferent={() => setFlowState({ kind: "changeEmail" })}
+                onUseDifferent={() =>
+                    setFlowState({ kind: "changeEmail", backTo: "verify" })
+                }
                 onBack={goToProfile}
             />
         );
@@ -305,7 +316,11 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                     "wallet.verifyEmail.changeEmail.clearAriaLabel"
                 )}
                 submitLabel={t("wallet.verifyEmail.changeEmail.continue")}
-                onBack={() => setFlowState({ kind: "verify" })}
+                onBack={() =>
+                    flowState.backTo === "profile"
+                        ? goToProfile()
+                        : setFlowState({ kind: "verify" })
+                }
                 onSubmit={handleChangeEmailSubmit}
                 isSubmitting={isSending}
                 submitDisabled={sendData?.status === "unavailable"}
@@ -451,7 +466,7 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                 width="auto"
                 onClick={() => {
                     resetSend();
-                    setFlowState({ kind: "changeEmail" });
+                    setFlowState({ kind: "changeEmail", backTo: "verify" });
                 }}
             >
                 {t("wallet.verifyEmail.changeEmailLink")}
