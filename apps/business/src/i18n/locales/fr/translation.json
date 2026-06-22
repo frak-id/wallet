@@ -1353,5 +1353,10 @@
             "close": "Fermer",
             "register": "Enregistrer votre boutique"
         }
+    },
+    "welcomePopup": {
+        "title": "🚀 Votre nouveau dashboard Frak est arrivé",
+        "description": "Nous avons repensé le dashboard Frak pour simplifier plus que jamais la gestion de vos campagnes et le suivi de vos performances.",
+        "cta": "Découvrir le nouveau dashboard"
     }
 }

@@ -1354,6 +1354,11 @@ export default interface Resources {
         "acquisition": "Acquisition",
         "preview": "Preview"
       }
+    },
+    "welcomePopup": {
+      "cta": "Explore the new dashboard",
+      "description": "We've redesigned the Frak dashboard to make campaign management and performance tracking simpler than ever.",
+      "title": "🚀 Your new Frak dashboard is here"
     }
   }
 }
