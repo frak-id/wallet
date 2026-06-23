@@ -95,9 +95,9 @@ bun run test:watch            # Run in watch mode
 - `packages/test-foundation/src/index.ts` - Centralized test utilities barrel export (@frak-labs/test-foundation)
 - `packages/test-foundation/src/shared-setup.ts` - Browser API mocks (crypto, MessageChannel, IntersectionObserver, ResizeObserver, matchMedia)
 - `packages/test-foundation/src/react-setup.ts` - BigInt serialization for Zustand persist
-- `packages/test-foundation/src/router-mocks.ts` - Router mock factories (react-router, @tanstack/react-router)
+- `packages/test-foundation/src/tanstack-router-mock.ts` - Side-effect module that globally mocks @tanstack/react-router hooks
 - `packages/test-foundation/src/dom-mocks.ts` - DOM mocking utilities (window.origin, document.referrer)
-- `packages/test-foundation/src/wallet-mocks.ts` - Wagmi, WebAuthn, idb-keyval mocks (uses router-mocks)
+- `packages/test-foundation/src/wallet-mocks.ts` - Wagmi, WebAuthn, idb-keyval mocks (uses tanstack-router-mock)
 - `packages/test-foundation/src/apps-setup.ts` - Environment variables for frontend apps
 - `packages/test-foundation/README.md` - Comprehensive test architecture documentation
 - `services/backend/vitest.config.ts` - Backend-specific config (Node environment, path aliases)

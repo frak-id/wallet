@@ -13,19 +13,17 @@
  * - apps-setup.ts: Environment variables
  *
  * Business-specific mocks:
- * - TanStack Router hooks (useNavigate, useRouter, etc.) - via router-mocks.ts
+ * - TanStack Router hooks (useNavigate, useRouter, etc.) - via tanstack-router-mock.ts
  */
 
-import { setupTanStackRouterMock } from "@frak-labs/test-foundation";
+// Global @tanstack/react-router mock (top-level vi.mock side effect).
+import "@frak-labs/test-foundation/tanstack-router-mock";
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
 import "@frak-labs/test-foundation/react-testing-library-setup";
 
 // Import shared React setup (BigInt serialization)
 import "@frak-labs/test-foundation/react-setup";
-
-// Mock TanStack Router hooks (using shared router-mocks.ts abstraction)
-await setupTanStackRouterMock();
 
 // Don't mock TanStack Query globally - tests will create their own QueryClient
 // and mock only the API calls they need. This allows proper query state management.

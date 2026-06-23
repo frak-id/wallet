@@ -47,7 +47,7 @@ Understanding the order in which setup files execute is critical for debugging t
    **Wallet + wallet-shared only:**
    - `wallet-mocks.ts` - Wallet-specific mocks
      - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
-     - TanStack Router hooks (via `router-mocks.ts`)
+     - TanStack Router hooks (via `tanstack-router-mock.ts`)
      - WebAuthn API (ox library)
      - IndexedDB (idb-keyval)
    - `{project}/src/test/setup-msw.ts` - MSW API mocking
@@ -60,7 +60,7 @@ Understanding the order in which setup files execute is critical for debugging t
 
    **Project-specific:**
    - `{project}/tests/vitest-setup.ts` - Project-specific mocks
-     - Business: TanStack Router mocks (via `router-mocks.ts`)
+     - Business: TanStack Router mocks (via `tanstack-router-mock.ts`)
      - Listener: DOM mocks for iframe context (via `dom-mocks.ts`)
 
 ## Package Structure
@@ -78,7 +78,7 @@ packages/test-foundation/
     ├── react-testing-library-setup.ts  # RTL cleanup + jest-dom (5 projects)
     ├── wallet-mocks.ts                 # Wagmi/Router/WebAuthn mocks (2 projects)
     ├── apps-setup.ts                   # Environment variables (3 projects)
-    ├── router-mocks.ts                 # Router mock factories
+    ├── tanstack-router-mock.ts          # @tanstack/react-router mock (side effect)
     └── dom-mocks.ts                    # DOM mocking utilities
 ```
 
@@ -128,51 +128,20 @@ import { getReactOnlyPlugins } from "@frak-labs/test-foundation/vitest.shared";
 plugins: await getReactOnlyPlugins()
 ```
 
-## Router Mock Factories
+## Router Mock (tanstack-router-mock.ts)
 
-The `router-mocks.ts` file provides reusable mock factories for different router libraries, eliminating ~40 lines of duplicated code.
+The `tanstack-router-mock.ts` side-effect module globally mocks
+`@tanstack/react-router` hooks (wallet, wallet-shared, business). The `vi.mock`
+lives at module top level, so importing the module for its side effect is all
+that's needed — no factory call.
 
-### `setupReactRouterMock(options?)`
-
-Global mock for `react-router` (wallet app, wallet-shared package).
-
-**Mocks:**
-- `useNavigate` - Returns mock navigation function
-- `useLocation` - Returns location with pathname, search, hash, state
-- `useParams` - Returns empty params (can be customized per test)
-- `useSearchParams` - Returns URLSearchParams and setter
+**Mocks:** `Link`, `useNavigate`, `useRouter`, `useRouterState`,
+`useMatchRoute`, `useParams`, `useSearch`, `useLocation`.
 
 **Usage:**
 ```typescript
-// In wallet-mocks.ts:
-import { setupReactRouterMock } from "./router-mocks";
-await setupReactRouterMock();
-
-// With custom options:
-await setupReactRouterMock({
-    pathname: "/custom",
-    search: "?foo=bar",
-    hash: "#section"
-});
-```
-
-### `setupTanStackRouterMock(options?)`
-
-Global mock for `@tanstack/react-router` (business app).
-
-**Mocks:**
-- `useNavigate` - Returns mock navigation function
-- `useRouter` - Returns mock router with navigate, buildLocation, history
-- `useMatchRoute` - Returns mock route matching function
-- `useParams` - Returns empty params
-- `useSearch` - Returns empty search object
-- `useLocation` - Returns location with href, pathname, search, hash
-
-**Usage:**
-```typescript
-// In business/tests/vitest-setup.ts:
-import { setupTanStackRouterMock } from "@frak-labs/test-foundation";
-await setupTanStackRouterMock();
+// In wallet-mocks.ts or business/tests/vitest-setup.ts:
+import "@frak-labs/test-foundation/tanstack-router-mock";
 ```
 
 ## DOM Mock Utilities
@@ -293,9 +262,6 @@ The `@frak-labs/test-foundation` package provides a single entry point for test 
 ```typescript
 // ✅ RECOMMENDED: Import utilities from test-foundation
 import {
-    // Router mocks
-    setupTanStackRouterMock,
-    createTanStackRouterMock,
     // DOM mocks
     mockWindowOrigin,
     mockDocumentReferrer,
@@ -355,7 +321,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // 2. Test utilities from test-foundation package
-import { setupTanStackRouterMock, mockWindowOrigin } from "@frak-labs/test-foundation";
+import { mockWindowOrigin } from "@frak-labs/test-foundation";
 
 // 3. Factory functions from wallet-shared
 import { createMockSession } from "@frak-labs/wallet-shared/test";
@@ -412,7 +378,6 @@ If you have existing test files with scattered imports, migrate them like this:
 **Before:**
 ```typescript
 import { test, expect } from "vitest";
-import { setupTanStackRouterMock } from "../../../test-setup/router-mocks";
 import { mockWindowOrigin } from "../../../test-setup/dom-mocks";
 import { createMockSession } from "@frak-labs/wallet-shared/test";
 ```
@@ -423,7 +388,7 @@ import { createMockSession } from "@frak-labs/wallet-shared/test";
 import { test, expect } from "@/tests/vitest-fixtures";
 
 // Test utilities from test-foundation package
-import { setupTanStackRouterMock, mockWindowOrigin } from "@frak-labs/test-foundation";
+import { mockWindowOrigin } from "@frak-labs/test-foundation";
 
 // Factory functions from wallet-shared
 import { createMockSession } from "@frak-labs/wallet-shared/test";
@@ -474,7 +439,7 @@ import { createMockSession } from "@frak-labs/wallet-shared/test";
 - `react-setup.ts` - BigInt serialization
 - `react-testing-library-setup.ts` - RTL cleanup
 - `apps-setup.ts` - Environment variables
-- `business/tests/vitest-setup.ts` - TanStack Router mocks via `router-mocks.ts`
+- `business/tests/vitest-setup.ts` - TanStack Router mocks via `tanstack-router-mock.ts`
 
 **Special Features:**
 - TanStack Router mocks (different from react-router!)
