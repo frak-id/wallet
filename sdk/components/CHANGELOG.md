@@ -1,5 +1,16 @@
 # @frak-labs/components
 
+## 1.0.10
+
+### Patch Changes
+
+- [#247](https://github.com/frak-id/wallet/pull/247) [`51c75cc`](https://github.com/frak-id/wallet/commit/51c75ccb58e021af89f3d06006b318f511ffc2c2) Thanks [@KONFeature](https://github.com/KONFeature)! - ⚡ Dynamically build the listener iframe `#preload=…` hash from the Frak components actually mounted on the page. Pages without any `frak-*` element skip the preload hint entirely; pages with one or more components push `preload=sharing`. `createIframe` now honours `config.preload` so any `setupClient` consumer benefits from the same behaviour.
+
+- [#247](https://github.com/frak-id/wallet/pull/247) [`1c1dbef`](https://github.com/frak-id/wallet/commit/1c1dbef12076e3f7482b8282f35635127e58139d) Thanks [@KONFeature](https://github.com/KONFeature)! - Fix `post_purchase_impression` never firing for `<frak-post-purchase>` when it mounts before the Frak client is ready (e.g. preview mode in the vanilla-js example). The impression effect previously ran against an undefined client — a silent no-op that still flipped the "already tracked" ref, suppressing the real event once the client became ready. The effect now gates on client readiness for every path. Restores the `share_cta_seen` website funnel step, which is sourced exclusively from `post_purchase_impression`.
+
+- Updated dependencies [[`51c75cc`](https://github.com/frak-id/wallet/commit/51c75ccb58e021af89f3d06006b318f511ffc2c2), [`fa88de8`](https://github.com/frak-id/wallet/commit/fa88de8c22db74b58506f503dbd0f6255c1ba25f)]:
+  - @frak-labs/core-sdk@1.1.5
+
 ## 1.0.9
 
 ### Patch Changes
