@@ -101,6 +101,7 @@ export const alias = {
         m: "16px",
         l: "24px",
         xl: "32px",
+        xxl: "48px",
     },
     size: {
         none: "0",
@@ -318,6 +319,23 @@ export const shadow = {
     panel: "4px 4px 4px 0 rgba(0,0,0,0.08)",
     elevated: "0 2px 8px rgba(0,0,0,0.08)",
     dialog: "0 4px 24px rgba(0,0,0,0.12)",
+} as const;
+
+/**
+ * Fixed colors for always-dark frosted surfaces (e.g. in-app-browser banners):
+ * identical in light and dark themes, so they bypass the `vars` contract.
+ */
+export const overlay = {
+    scrim: "#000000cc",
+    /** Subtle darkening for hover/press on any tinted surface (5% black). */
+    hover: "#0000000d",
+} as const;
+
+export const onDark = {
+    text60: "#ffffff99",
+    border40: "#ffffff66",
+    surface10: "#ffffff1a",
+    accent: "#2bb2ff",
 } as const;
 
 export const fontSize = {

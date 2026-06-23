@@ -1,5 +1,5 @@
 import type { MerchantResolveResponse } from "@frak-labs/backend-elysia/api/schemas";
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { authenticatedBackendApi, merchantKey } from "@frak-labs/wallet-shared";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
 type MerchantResolvedConfigArgs = {
@@ -13,17 +13,12 @@ type MerchantResolvedConfigArgs = {
  * Returns the full {@link MerchantResolveResponse} including `sdkConfig` (and its
  * `attribution` defaults). Callers can `select` only the fields they need.
  */
-export function merchantResolvedConfigQueryOptions({
+function merchantResolvedConfigQueryOptions({
     merchantId,
     lang,
 }: MerchantResolvedConfigArgs) {
     return queryOptions({
-        queryKey: [
-            "merchant",
-            "resolvedConfig",
-            merchantId ?? "no-merchant-id",
-            lang ?? "no-lang",
-        ],
+        queryKey: merchantKey.resolvedConfig(merchantId, lang),
         queryFn: async (): Promise<MerchantResolveResponse | null> => {
             if (!merchantId) return null;
             const { data, error } =

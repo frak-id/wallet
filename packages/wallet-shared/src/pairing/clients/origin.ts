@@ -1,3 +1,4 @@
+import type { WsSignatureKind } from "@frak-labs/backend-elysia/domain/pairing";
 import { nanoid } from "nanoid";
 import type { Hex } from "viem";
 import {
@@ -8,10 +9,13 @@ import {
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { identifyAuthenticatedUser, trackEvent } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
+import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
+import type { Session } from "../../types/Session";
 import {
     type OriginIdentityNode,
     type OriginPairingState,
+    PairingNotReadyError,
     PairingSignatureError,
     type PairingSignatureFailure,
     type SignatureRejectReason,
@@ -30,6 +34,38 @@ import { BasePairingClient } from "./base";
 const RESUME_TOKEN_EXPIRED_CODE = 4407;
 
 export type OnPairingSuccessCallback = () => void | Promise<void>;
+
+/**
+ * Options accepted by `OriginPairingClient.initiatePairing`. Held verbatim
+ * for transparent re-initiation when the server signals that the current
+ * pairing is gone (RESUME_TOKEN_EXPIRED).
+ */
+export type InitiatePairingOptions = {
+    onSuccess?: OnPairingSuccessCallback;
+    originNode?: OriginIdentityNode;
+    /**
+     * Pin the pairing to a set of WebAuthn credential ids. Backend rejects
+     * any joiner whose credential is outside this set. Used by the
+     * cross-device wallet merge to guarantee the paired device is the
+     * wallet whose passkeys may participate — passed as a list so wallets
+     * holding multiple passkeys (post-merge wallets accumulate them) can
+     * be reached from any of those credentials.
+     */
+    authenticatorHints?: string[];
+    /**
+     * When true, the minted distant-webauthn session is written to the
+     * tab-scoped `detachedPairingSessionStore` instead of the live
+     * `sessionStore`. The user's active wallet session stays in place; the
+     * pairing credentials live alongside it just long enough to sign the
+     * merge ceremony. Reserved for flows that explicitly opt in — the
+     * cross-device wallet merge today, and nothing else.
+     *
+     * Defaults to `false`, which preserves the legacy "this device becomes
+     * the paired wallet" behaviour used by SSO / login / onboarding / the
+     * listener auth surfaces.
+     */
+    detached?: boolean;
+};
 
 const PING_INTERVAL_MS = 5_000;
 const MAX_UNANSWERED_PINGS = 5;
@@ -114,10 +150,7 @@ export class OriginPairingClient extends BasePairingClient<
      * transparently re-initiate when the server signals that the current
      * pairing/token is gone (RESUME_TOKEN_EXPIRED). Cleared on `reset()`.
      */
-    private lastInitiateOptions: {
-        onSuccess?: OnPairingSuccessCallback;
-        originNode?: OriginIdentityNode;
-    } | null = null;
+    private lastInitiateOptions: InitiatePairingOptions | null = null;
 
     constructor() {
         super();
@@ -169,20 +202,18 @@ export class OriginPairingClient extends BasePairingClient<
     }
 
     /**
-     * Override of base hook — also clear stashed initiate options. After a
-     * hard reset the consumer is expected to start fresh, so any leftover
-     * options would be misleading.
+     * Override of base hook — also clear stashed initiate options. Runs on
+     * both soft and hard resets (the base `reset` dispatches through
+     * `this.softReset`), so any leftover options would be misleading once
+     * the consumer is back to an idle client.
      */
-    override reset(): void {
+    override softReset(): void {
         this.lastInitiateOptions = null;
         this.onPairingSuccess = null;
-        super.reset();
+        super.softReset();
     }
 
-    async initiatePairing(options?: {
-        onSuccess?: OnPairingSuccessCallback;
-        originNode?: OriginIdentityNode;
-    }) {
+    async initiatePairing(options?: InitiatePairingOptions) {
         this.onPairingSuccess = options?.onSuccess ?? null;
         this.lastInitiateOptions = options ?? {};
 
@@ -190,16 +221,71 @@ export class OriginPairingClient extends BasePairingClient<
             this.connect({
                 action: "initiate",
                 originNode: options?.originNode,
+                authenticatorHints: options?.authenticatorHints,
             })
         );
     }
 
     /**
+     * Wait for the pairing to reach the `paired` state, initiating it
+     * from `idle` if necessary. Idempotent across re-entry — calling
+     * while already `paired` resolves synchronously; calling while
+     * `connecting` (or any other transitional state) subscribes to the
+     * store and waits for the next status transition.
+     *
+     * Branches by current status:
+     *  - `paired`            → resolve synchronously.
+     *  - `error|retry-error` → reject with {@link PairingNotReadyError};
+     *                          caller must `reset()` before retrying.
+     *  - `idle`              → run `initiatePairing(options)` and wait.
+     *  - other transitional  → subscribe to the store, wait for the
+     *                          next `paired` / `error` / `retry-error`.
+     *
+     * Crucially never re-runs `initiatePairing` while a handshake is
+     * already in flight — that would `forceConnect`-tear the live WS
+     * and orphan any in-flight signature request.
+     */
+    async ensurePairing(options: InitiatePairingOptions): Promise<void> {
+        const status = this.state.status;
+        if (status === "paired") return;
+        if (status === "error" || status === "retry-error") {
+            throw new PairingNotReadyError(status);
+        }
+
+        await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const finish = (cb: () => void) => {
+                if (settled) return;
+                settled = true;
+                unsubscribe();
+                cb();
+            };
+
+            const unsubscribe = this.store.subscribe((state) => {
+                const next = state.status;
+                if (next === "paired") {
+                    finish(() => resolve());
+                } else if (next === "error" || next === "retry-error") {
+                    finish(() => reject(new PairingNotReadyError(next)));
+                }
+            });
+
+            if (status === "idle") {
+                void this.initiatePairing(options);
+            }
+        });
+    }
+
+    /**
      * Reconnect to the pairing websocket.
      *
-     * Three paths:
-     *  - distant-webauthn session present — reconnect with the wallet token
-     *    (the standard already-paired flow).
+     * Four paths, in priority order:
+     *  - detached pairing session present — reconnect using its token. Takes
+     *    precedence over the live `sessionStore` because a refresh
+     *    mid-detached-merge must keep the pairing-scoped credential, not
+     *    fall back to the user's regular wallet.
+     *  - distant-webauthn session present in `sessionStore` — reconnect with
+     *    the wallet token (the standard already-paired flow).
      *  - no session but `pairing` state persisted — origin is mid-handshake
      *    and the WS dropped before the target authenticated. Use the resume
      *    action with the pairingId/code to re-attach to the topic.
@@ -209,6 +295,14 @@ export class OriginPairingClient extends BasePairingClient<
      * the app was backgrounded on mobile.
      */
     reconnect() {
+        const detached = detachedPairingSessionStore.getState().detached;
+        if (detached) {
+            if (this.isAlive()) return;
+            this.pendingPings = 0;
+            this.connect({ wallet: detached.session.token });
+            return;
+        }
+
         const session = getSafeSession();
 
         if (session && session.type === "distant-webauthn") {
@@ -253,8 +347,28 @@ export class OriginPairingClient extends BasePairingClient<
      * If the WS isn't open right now, the request is queued in the base
      * outbound buffer and flushed when reconnect succeeds. The server
      * dedupes on the request `id` (which doubles as the idempotency key).
+     *
+     * The resolved value depends on the `signatureKind` option:
+     *  - `"onchain"` (default, omitted on the wire for legacy clients):
+     *    target returns the `formatSignature`-wrapped on-chain blob ready
+     *    to plug into a userOp.
+     *  - `"raw-assertion"`: target returns the base64 WebAuthn assertion
+     *    JSON `{id, response: {metadata, signature}}` parseable by
+     *    `WebAuthNService.verifyConsentSignature`. Used by the cross-device
+     *    merge winner-side flow to ferry the loser's consent assertion.
      */
-    async sendSignatureRequest(request: Hex, context?: object): Promise<Hex> {
+    async sendSignatureRequest(
+        request: Hex,
+        options?: { context?: object; signatureKind?: "onchain" }
+    ): Promise<Hex>;
+    async sendSignatureRequest(
+        request: Hex,
+        options: { context?: object; signatureKind: "raw-assertion" }
+    ): Promise<string>;
+    async sendSignatureRequest(
+        request: Hex,
+        options?: { context?: object; signatureKind?: WsSignatureKind }
+    ): Promise<Hex | string> {
         // Reject up-front in states where reconnect won't bring us back
         // (idle = no session yet; error/retry-error = user must take action).
         const status = this.state.status;
@@ -269,7 +383,7 @@ export class OriginPairingClient extends BasePairingClient<
             );
         }
 
-        return new Promise<Hex>((resolve, reject) => {
+        return new Promise<Hex | string>((resolve, reject) => {
             const id = nanoid(16);
 
             const signatureRequests = new Map(this.state.signatureRequests);
@@ -281,7 +395,8 @@ export class OriginPairingClient extends BasePairingClient<
                 payload: {
                     id,
                     request,
-                    context,
+                    context: options?.context,
+                    signatureKind: options?.signatureKind,
                 },
             });
         });
@@ -431,6 +546,10 @@ export class OriginPairingClient extends BasePairingClient<
                 message.payload.id
             );
             if (request) {
+                // `signature` is `Hex` for `signatureKind: "onchain"` and a
+                // base64 WebAuthn assertion `string` for `"raw-assertion"`.
+                // The caller picked the overload that matches the kind it
+                // asked for, so the union here is safe to forward as-is.
                 request.resolve(message.payload.signature);
                 this.removeSignatureRequest(message.payload.id);
             }
@@ -467,30 +586,99 @@ export class OriginPairingClient extends BasePairingClient<
             return;
         }
 
-        // Authenticated message (update session status)
         if (message.type === "authenticated") {
-            // The pairing handshake is complete — the SDK session takes over
-            // from the in-flight pairing state. Drop `pairing` so future
-            // reconnects use the wallet token path and sessionStorage clears.
-            this.setState({ status: "paired", pairing: undefined });
-
-            // Store the session
-            sessionStore.getState().setSession({
-                token: message.payload.token,
-                ...message.payload.wallet,
-            });
-            sessionStore.getState().setSdkSession(message.payload.sdkJwt);
-
-            // Track the event
-            identifyAuthenticatedUser(message.payload.wallet);
-            trackEvent("pairing_completed");
-
-            // And trigger a reconnection
-            this.forceConnect(() => this.reconnect());
-
-            // Trigger the success callback if any
-            this.onPairingSuccess?.();
+            this.handleAuthenticated(message.payload);
+            return;
         }
+
+        if (message.type === "merge-completed") {
+            this.handleMergeCompleted(message.payload);
+            return;
+        }
+    }
+
+    /**
+     * Handle a successful pairing handshake. Writes the minted
+     * distant-webauthn session into `sessionStore` and forces a reconnect
+     * with the new token so the WS keeps flowing as the joined wallet.
+     */
+    private handleAuthenticated(
+        payload: Extract<WsOriginMessage, { type: "authenticated" }>["payload"]
+    ) {
+        // Keep `pairing.id` around past `authenticated` so consumers can
+        // still reference the pairing for downstream cross-device flows.
+        // `reconnect()` already prefers the distant-webauthn session path
+        // over the resume action, so a lingering `pairing` is harmless; it
+        // is fully cleared by `reset()` via `resetState()`.
+        this.setState({ status: "paired" });
+
+        this.applyDistantSession(payload);
+
+        identifyAuthenticatedUser(payload.wallet);
+        trackEvent("pairing_completed");
+
+        this.forceConnect(() => this.reconnect());
+
+        this.onPairingSuccess?.();
+    }
+
+    /**
+     * Apply the freshly minted distant-webauthn session.
+     *
+     * Two branches based on `lastInitiateOptions.detached`:
+     *  - `detached: true` (cross-device merge) — write into the tab-scoped
+     *    `detachedPairingSessionStore`. The user's live wallet session in
+     *    `sessionStore` stays untouched; the pairing credential lives
+     *    alongside it for the duration of the merge.
+     *  - `detached: false` or omitted (SSO / login / onboarding / listener
+     *    auth) — overwrite the live `sessionStore` slot. The user has
+     *    explicitly opted in to becoming the paired wallet on this device,
+     *    so the prior session is intentionally replaced.
+     */
+    private applyDistantSession(
+        payload: Extract<WsOriginMessage, { type: "authenticated" }>["payload"]
+    ) {
+        const session: Session = {
+            token: payload.token,
+            ...payload.wallet,
+        };
+
+        if (this.lastInitiateOptions?.detached) {
+            detachedPairingSessionStore.getState().setDetachedSession({
+                pairingId: payload.wallet.pairingId,
+                session,
+                sdkSession: payload.sdkJwt,
+            });
+            return;
+        }
+
+        sessionStore.getState().setSession(session);
+        sessionStore.getState().setSdkSession(payload.sdkJwt);
+    }
+
+    /**
+     * Cross-device wallet merge completed. Pushed by the backend on both
+     * pairing topics after `WalletMergeOrchestrator.settle` succeeds.
+     *
+     * On the origin (desktop initiator) side we only need to clean up
+     * pairing-scoped state — the detached pairing slot, and the in-flight
+     * `pairing` block so a refresh doesn't trigger a stale resume against
+     * a finalised handshake. Any live-session refresh the desktop needs
+     * (i.e. when desktop authenticated with the loser credential) is
+     * delivered synchronously through the `/merge/settle` HTTP response
+     * and applied by {@link useMergeSettle}; we deliberately do NOT touch
+     * `sessionStore` here. The payload's `session` is for the loser-side
+     * topic on the cross-device flow — origin is never the receiver of
+     * that refresh in the detached architecture.
+     */
+    private handleMergeCompleted(
+        _payload: Extract<
+            WsOriginMessage,
+            { type: "merge-completed" }
+        >["payload"]
+    ) {
+        this.setState({ pairing: undefined });
+        detachedPairingSessionStore.getState().clearDetachedSession();
     }
 
     /**

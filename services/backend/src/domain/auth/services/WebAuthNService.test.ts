@@ -141,7 +141,6 @@ describe("WebAuthNService", () => {
 
             expect(result).toEqual({
                 authenticatorId: "test-credential-id",
-                address: "0x1234567890abcdef1234567890abcdef12345678",
                 publicKey: { x: "0x123", y: "0x456" },
                 transports: ["usb", "nfc"],
             });

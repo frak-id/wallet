@@ -77,11 +77,6 @@ export const mainContentNoNav = style([
         // Reserve the bottom inset once (nav bar / home indicator); `max` keeps
         // a 16px breather on web without double-counting the inset on Android.
         paddingBottom: `max(${alias.spacing.m}, ${safeArea.bottom})`,
-        "@media": {
-            [`(min-width: ${tablet}px)`]: {
-                maxHeight: "758px",
-            },
-        },
         selectors: {
             // Native app: drop the desktop-only height cap so content can use the
             // full device viewport on iPad.

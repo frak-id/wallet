@@ -1,6 +1,6 @@
 import type { UserReferralStatusType } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions } from "@frak-labs/wallet-shared/common/utils/queryOptions";
 import { listenerMerchantKey } from "@/module/queryKeys/merchant";
 
 export function userReferralStatusQueryOptions(merchantId?: string) {

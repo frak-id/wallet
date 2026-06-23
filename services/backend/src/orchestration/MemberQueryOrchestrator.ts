@@ -1,4 +1,14 @@
-import { and, count, eq, inArray, min, type SQL, sql } from "drizzle-orm";
+import {
+    and,
+    count,
+    eq,
+    gte,
+    inArray,
+    lte,
+    min,
+    type SQL,
+    sql,
+} from "drizzle-orm";
 import type { Static } from "elysia";
 import { type Address, getAddress } from "viem";
 import { identityNodesTable } from "../domain/identity/db/schema";
@@ -9,6 +19,7 @@ import {
 } from "../domain/rewards/db/schema";
 import { db } from "../infrastructure/persistence/postgres";
 import type { PricingRepository } from "../infrastructure/pricing/PricingRepository";
+import { buildRewardsExpression, getTokenPrices } from "./campaigns/rewards";
 import type {
     MemberFilterSchema,
     MemberItemSchema,
@@ -26,9 +37,13 @@ export type MemberQueryParams = {
     offset?: number;
     sort?: MemberQuerySort;
     filter?: MemberQueryFilter;
+    /**
+     * Caller's preferred display currency (lowercase SDK `Currency`).
+     * Drives the token→fiat conversion of `totalRewardsFiat`. Normalised
+     * via `toFiatCurrency` (defaults EUR).
+     */
+    currency?: string;
 };
-
-type TokenPriceMap = Map<string, number>;
 
 export class MemberQueryOrchestrator {
     constructor(private readonly pricingRepository: PricingRepository) {}
@@ -58,11 +73,15 @@ export class MemberQueryOrchestrator {
             return { totalResult: 0, members: [] };
         }
 
-        const tokenPrices = await this.getTokenPricesForMerchants(merchantIds);
-        const usdRewardsExpr = this.buildUsdRewardsExpression(tokenPrices);
+        const tokenPrices = await getTokenPrices(
+            this.pricingRepository,
+            inArray(assetLogsTable.merchantId, merchantIds),
+            params.currency
+        );
+        const fiatRewardsExpr = buildRewardsExpression(tokenPrices);
 
         const havingConditions = this.buildHavingConditions(params.filter);
-        const sortExpr = this.buildSortExpression(params.sort, usdRewardsExpr);
+        const sortExpr = this.buildSortExpression(params.sort, fiatRewardsExpr);
 
         const limit = params.limit ?? 20;
         const offset = params.offset ?? 0;
@@ -74,9 +93,9 @@ export class MemberQueryOrchestrator {
                     totalInteractions: count(interactionLogsTable.id).as(
                         "total_interactions"
                     ),
-                    totalRewardsUsd:
-                        sql<number>`COALESCE(SUM(${usdRewardsExpr}), 0)`.as(
-                            "total_rewards_usd"
+                    totalRewardsFiat:
+                        sql<number>`COALESCE(SUM(${fiatRewardsExpr}), 0)`.as(
+                            "total_rewards_fiat"
                         ),
                     firstInteraction: min(interactionLogsTable.createdAt).as(
                         "first_interaction"
@@ -106,7 +125,8 @@ export class MemberQueryOrchestrator {
                 .where(
                     and(
                         eq(identityNodesTable.identityType, "wallet"),
-                        sql`${identityNodesTable.merchantId} IS NULL`
+                        sql`${identityNodesTable.merchantId} IS NULL`,
+                        sql`${identityNodesTable.unlinkedAt} IS NULL`
                     )
                 )
                 .groupBy(identityNodesTable.groupId)
@@ -131,9 +151,9 @@ export class MemberQueryOrchestrator {
                 totalInteractions: count(interactionLogsTable.id).as(
                     "total_interactions"
                 ),
-                totalRewardsUsd:
-                    sql<number>`ROUND(COALESCE(SUM(${usdRewardsExpr}), 0)::NUMERIC, 2)`.as(
-                        "total_rewards_usd"
+                totalRewardsFiat:
+                    sql<number>`ROUND(COALESCE(SUM(${fiatRewardsExpr}), 0)::NUMERIC, 2)`.as(
+                        "total_rewards_fiat"
                     ),
                 firstInteraction: min(interactionLogsTable.createdAt).as(
                     "first_interaction"
@@ -168,7 +188,8 @@ export class MemberQueryOrchestrator {
             .where(
                 and(
                     eq(identityNodesTable.identityType, "wallet"),
-                    sql`${identityNodesTable.merchantId} IS NULL`
+                    sql`${identityNodesTable.merchantId} IS NULL`,
+                    sql`${identityNodesTable.unlinkedAt} IS NULL`
                 )
             )
             .groupBy(
@@ -198,7 +219,7 @@ export class MemberQueryOrchestrator {
             return {
                 user: getAddress(row.walletAddress),
                 totalInteractions: Number(row.totalInteractions),
-                totalRewardsUsd: Number(row.totalRewardsUsd),
+                totalRewardsFiat: Number(row.totalRewardsFiat),
                 firstInteractionTimestamp: row.firstInteraction
                     ? row.firstInteraction.toISOString()
                     : "",
@@ -224,9 +245,6 @@ export class MemberQueryOrchestrator {
         );
         if (merchantIds.length === 0) return 0;
 
-        const tokenPrices = await this.getTokenPricesForMerchants(merchantIds);
-        const usdRewardsExpr = this.buildUsdRewardsExpression(tokenPrices);
-
         const havingConditions = this.buildHavingConditions(filter);
 
         const [result] = await db.select({ total: count() }).from(
@@ -236,10 +254,6 @@ export class MemberQueryOrchestrator {
                     totalInteractions: count(interactionLogsTable.id).as(
                         "total_interactions"
                     ),
-                    totalRewardsUsd:
-                        sql<number>`COALESCE(SUM(${usdRewardsExpr}), 0)`.as(
-                            "total_rewards_usd"
-                        ),
                     firstInteraction: min(interactionLogsTable.createdAt).as(
                         "first_interaction"
                     ),
@@ -268,7 +282,8 @@ export class MemberQueryOrchestrator {
                 .where(
                     and(
                         eq(identityNodesTable.identityType, "wallet"),
-                        sql`${identityNodesTable.merchantId} IS NULL`
+                        sql`${identityNodesTable.merchantId} IS NULL`,
+                        sql`${identityNodesTable.unlinkedAt} IS NULL`
                     )
                 )
                 .groupBy(identityNodesTable.groupId)
@@ -277,51 +292,6 @@ export class MemberQueryOrchestrator {
         );
 
         return result?.total ?? 0;
-    }
-
-    // Produces: CASE WHEN token_address = '0x..' THEN amount * usd_price ... ELSE 0 END
-    private buildUsdRewardsExpression(tokenPrices: TokenPriceMap): SQL {
-        if (tokenPrices.size === 0) {
-            return sql`0`;
-        }
-
-        const whenClauses: SQL[] = [];
-        for (const [token, usdPrice] of tokenPrices) {
-            whenClauses.push(
-                sql`WHEN ${assetLogsTable.tokenAddress} = ${token} THEN ${assetLogsTable.amount}::NUMERIC * ${usdPrice}`
-            );
-        }
-
-        return sql`CASE ${sql.join(whenClauses, sql` `)} ELSE 0 END`;
-    }
-
-    private async getTokenPricesForMerchants(
-        merchantIds: string[]
-    ): Promise<TokenPriceMap> {
-        const tokenRows = await db
-            .selectDistinct({
-                tokenAddress: assetLogsTable.tokenAddress,
-            })
-            .from(assetLogsTable)
-            .where(inArray(assetLogsTable.merchantId, merchantIds));
-
-        const tokens = tokenRows
-            .map((r) => r.tokenAddress)
-            .filter((addr): addr is Address => addr !== null);
-
-        const priceMap: TokenPriceMap = new Map();
-        await Promise.all(
-            tokens.map(async (token) => {
-                const price = await this.pricingRepository.getTokenPrice({
-                    token,
-                });
-                if (price) {
-                    priceMap.set(token, price.usd);
-                }
-            })
-        );
-
-        return priceMap;
     }
 
     private buildHavingConditions(
@@ -344,17 +314,13 @@ export class MemberQueryOrchestrator {
             const minDate = new Date(
                 filter.firstInteractionTimestamp.min * 1000
             );
-            conditions.push(
-                sql`MIN(${interactionLogsTable.createdAt}) >= ${minDate}`
-            );
+            conditions.push(gte(min(interactionLogsTable.createdAt), minDate));
         }
         if (filter?.firstInteractionTimestamp?.max !== undefined) {
             const maxDate = new Date(
                 filter.firstInteractionTimestamp.max * 1000
             );
-            conditions.push(
-                sql`MIN(${interactionLogsTable.createdAt}) <= ${maxDate}`
-            );
+            conditions.push(lte(min(interactionLogsTable.createdAt), maxDate));
         }
 
         if (conditions.length === 0) return undefined;
@@ -363,15 +329,15 @@ export class MemberQueryOrchestrator {
 
     private buildSortExpression(
         sort: MemberQuerySort | undefined,
-        usdRewardsExpr: SQL
+        fiatRewardsExpr: SQL
     ): SQL {
         const direction = sort?.order === "asc" ? sql`ASC` : sql`DESC`;
 
         switch (sort?.by) {
             case "totalInteractions":
                 return sql`COUNT(${interactionLogsTable.id}) ${direction}`;
-            case "totalRewardsUsd":
-                return sql`COALESCE(SUM(${usdRewardsExpr}), 0) ${direction}`;
+            case "totalRewardsFiat":
+                return sql`COALESCE(SUM(${fiatRewardsExpr}), 0) ${direction}`;
             case "firstInteractionTimestamp":
                 return sql`MIN(${interactionLogsTable.createdAt}) ${direction}`;
             default:

@@ -37,10 +37,10 @@
     "/cdn",
     "/src"
   ],
-  "browser": "./cdn/bundle.js",
   "exports": {
     ".": {
       "development": "./src/index.ts",
+      "production": "./src/index.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -52,6 +52,7 @@
     },
     "./actions": {
       "development": "./src/actions/index.ts",
+      "production": "./src/actions/index.ts",
       "import": {
         "types": "./dist/actions.d.ts",
         "default": "./dist/actions.js"

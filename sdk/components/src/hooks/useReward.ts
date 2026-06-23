@@ -23,7 +23,8 @@ function getRewardValue(
             return reward.amount[key];
         case "tiered":
             return reward.tiers.reduce(
-                (acc, tier) => Math.max(acc, tier.amount[key]),
+                (acc, tier) =>
+                    "amount" in tier ? Math.max(acc, tier.amount[key]) : acc,
                 0
             );
         case "percentage":

@@ -15,9 +15,18 @@ vi.mock("../../stores/sessionStore", async () => {
     const actual = await vi.importActual<
         typeof import("../../stores/sessionStore")
     >("../../stores/sessionStore");
+    const { createStore } = await import("zustand/vanilla");
     return {
         ...actual,
-        sessionStore: vi.fn(),
+        sessionStore: createStore<any>(() => ({
+            session: null,
+            sdkSession: null,
+            demoPrivateKey: null,
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+            setDemoPrivateKey: vi.fn(),
+            clearSession: vi.fn(),
+        })),
     };
 });
 
@@ -36,7 +45,7 @@ describe("useGetActivePairings", () => {
     }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
 
-        vi.mocked(sessionStore).mockReturnValue(null);
+        sessionStore.setState({ session: null });
 
         const { result } = renderHook(() => useGetActivePairings(), {
             wrapper: queryWrapper.wrapper,
@@ -52,28 +61,7 @@ describe("useGetActivePairings", () => {
     }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
 
-        vi.mocked(sessionStore).mockImplementation((selector: any) => {
-            const state = {
-                session: mockSession,
-                sdkSession: null,
-                demoPrivateKey: null,
-                setSession: vi.fn(),
-                setSdkSession: vi.fn(),
-                setDemoPrivateKey: vi.fn(),
-                clearSession: vi.fn(),
-            };
-            return selector(state);
-        });
-
-        vi.mocked(sessionStore).getState = vi.fn().mockReturnValue({
-            session: mockSession,
-            sdkSession: null,
-            demoPrivateKey: null,
-            setSession: vi.fn(),
-            setSdkSession: vi.fn(),
-            setDemoPrivateKey: vi.fn(),
-            clearSession: vi.fn(),
-        });
+        sessionStore.setState({ session: mockSession });
 
         const { result } = renderHook(() => useGetActivePairings(), {
             wrapper: queryWrapper.wrapper,
@@ -119,28 +107,7 @@ describe("useGetActivePairings", () => {
             )
         );
 
-        vi.mocked(sessionStore).mockImplementation((selector: any) => {
-            const state = {
-                session: mockSession,
-                sdkSession: null,
-                demoPrivateKey: null,
-                setSession: vi.fn(),
-                setSdkSession: vi.fn(),
-                setDemoPrivateKey: vi.fn(),
-                clearSession: vi.fn(),
-            };
-            return selector(state);
-        });
-
-        vi.mocked(sessionStore).getState = vi.fn().mockReturnValue({
-            session: mockSession,
-            sdkSession: null,
-            demoPrivateKey: null,
-            setSession: vi.fn(),
-            setSdkSession: vi.fn(),
-            setDemoPrivateKey: vi.fn(),
-            clearSession: vi.fn(),
-        });
+        sessionStore.setState({ session: mockSession });
 
         const { result } = renderHook(() => useGetActivePairings(), {
             wrapper: queryWrapper.wrapper,
@@ -171,28 +138,7 @@ describe("useGetActivePairings", () => {
             )
         );
 
-        vi.mocked(sessionStore).mockImplementation((selector: any) => {
-            const state = {
-                session: mockSession,
-                sdkSession: null,
-                demoPrivateKey: null,
-                setSession: vi.fn(),
-                setSdkSession: vi.fn(),
-                setDemoPrivateKey: vi.fn(),
-                clearSession: vi.fn(),
-            };
-            return selector(state);
-        });
-
-        vi.mocked(sessionStore).getState = vi.fn().mockReturnValue({
-            session: mockSession,
-            sdkSession: null,
-            demoPrivateKey: null,
-            setSession: vi.fn(),
-            setSdkSession: vi.fn(),
-            setDemoPrivateKey: vi.fn(),
-            clearSession: vi.fn(),
-        });
+        sessionStore.setState({ session: mockSession });
 
         const { result } = renderHook(() => useGetActivePairings(), {
             wrapper: queryWrapper.wrapper,
@@ -230,28 +176,7 @@ describe("useGetActivePairings", () => {
             )
         );
 
-        vi.mocked(sessionStore).mockImplementation((selector: any) => {
-            const state = {
-                session: mockSession,
-                sdkSession: null,
-                demoPrivateKey: null,
-                setSession: vi.fn(),
-                setSdkSession: vi.fn(),
-                setDemoPrivateKey: vi.fn(),
-                clearSession: vi.fn(),
-            };
-            return selector(state);
-        });
-
-        vi.mocked(sessionStore).getState = vi.fn().mockReturnValue({
-            session: mockSession,
-            sdkSession: null,
-            demoPrivateKey: null,
-            setSession: vi.fn(),
-            setSdkSession: vi.fn(),
-            setDemoPrivateKey: vi.fn(),
-            clearSession: vi.fn(),
-        });
+        sessionStore.setState({ session: mockSession });
 
         const { result } = renderHook(() => useGetActivePairings(), {
             wrapper: queryWrapper.wrapper,

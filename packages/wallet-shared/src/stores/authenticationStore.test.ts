@@ -8,6 +8,7 @@ import {
 import type { Session } from "../types/Session";
 import {
     addLastAuthentication,
+    applyMergeSession,
     authenticationStore,
     selectLastWebAuthNAction,
 } from "./authenticationStore";
@@ -21,8 +22,20 @@ import type {
 vi.mock("../common/storage/authenticators", () => ({
     authenticatorStorage: {
         put: vi.fn(),
+        remove: vi.fn(),
         get: vi.fn(),
         delete: vi.fn(),
+    },
+}));
+
+// Mock the cross-platform recovery hint storage (no-op outside Tauri,
+// but `applyMergeSession` always calls `.set` and we want to assert the
+// payload shape).
+vi.mock("../common/storage/recoveryHint", () => ({
+    recoveryHintStorage: {
+        get: vi.fn(),
+        set: vi.fn(),
+        clear: vi.fn(),
     },
 }));
 
@@ -333,6 +346,106 @@ describe("authenticationStore", () => {
 
             expect(authenticationStore.getState().lastAuthenticator).toBeNull();
             expect(authenticatorStorage.put).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("applyMergeSession", () => {
+        test("evicts the loser-wallet IDB row when the merge swapped addresses", async () => {
+            const { authenticatorStorage } = await import(
+                "../common/storage/authenticators"
+            );
+            const { recoveryHintStorage } = await import(
+                "../common/storage/recoveryHint"
+            );
+
+            const loserAddress =
+                "0x1111111111111111111111111111111111111111" as const;
+            const winnerSession: Session = {
+                token: "winner-token",
+                address: "0x2222222222222222222222222222222222222222",
+                type: "webauthn",
+                authenticatorId: "shared-auth",
+                publicKey: {
+                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
+                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
+                },
+                transports: ["internal"],
+            } as Session;
+
+            await applyMergeSession({
+                previousAddress: loserAddress,
+                session: winnerSession,
+            });
+
+            expect(authenticatorStorage.remove).toHaveBeenCalledWith(
+                loserAddress
+            );
+            expect(authenticatorStorage.put).toHaveBeenCalledWith({
+                wallet: winnerSession.address,
+                authenticatorId: winnerSession.authenticatorId,
+                transports: winnerSession.transports,
+            });
+            expect(recoveryHintStorage.set).toHaveBeenCalledWith({
+                lastAuthenticatorId: winnerSession.authenticatorId,
+                lastWallet: winnerSession.address,
+                lastLoginAt: expect.any(Number),
+            });
+            expect(
+                authenticationStore.getState().lastAuthenticator?.address
+            ).toBe(winnerSession.address);
+        });
+
+        test("skips the IDB eviction when previousAddress equals the new winner (no-op merge)", async () => {
+            const { authenticatorStorage } = await import(
+                "../common/storage/authenticators"
+            );
+
+            const winnerSession: Session = {
+                token: "winner-token",
+                address: "0x2222222222222222222222222222222222222222",
+                type: "webauthn",
+                authenticatorId: "auth-x",
+                publicKey: {
+                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
+                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
+                },
+                transports: ["internal"],
+            } as Session;
+
+            await applyMergeSession({
+                previousAddress: winnerSession.address,
+                session: winnerSession,
+            });
+
+            expect(authenticatorStorage.remove).not.toHaveBeenCalled();
+            expect(authenticatorStorage.put).toHaveBeenCalled();
+        });
+
+        test("still writes the winner entry when previousAddress is undefined", async () => {
+            const { authenticatorStorage } = await import(
+                "../common/storage/authenticators"
+            );
+            const { recoveryHintStorage } = await import(
+                "../common/storage/recoveryHint"
+            );
+
+            const session: Session = {
+                token: "winner-token",
+                address: "0x2222222222222222222222222222222222222222",
+                type: "webauthn",
+                authenticatorId: "auth-x",
+                publicKey: {
+                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
+                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
+                },
+                transports: ["internal"],
+            } as Session;
+
+            await applyMergeSession({ session });
+
+            expect(authenticatorStorage.remove).not.toHaveBeenCalled();
+            expect(authenticatorStorage.put).toHaveBeenCalled();
+            expect(recoveryHintStorage.set).toHaveBeenCalled();
         });
     });
 

@@ -1,61 +1,34 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
-import { Panel } from "@/module/common/component/Panel";
+import { useState } from "react";
 import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
-import styles from "./index.module.css";
+import { ManageBudgetSheet } from "@/module/merchant/component/ManageBudgetSheet";
+import * as styles from "./products.css";
 
 export function MyMerchants() {
     const { merchants } = useMyMerchants();
-
-    return (
-        <Panel variant={"ghost"} title={"My Merchants"} withBadge={false}>
-            <MerchantListSection merchants={merchants} />
-        </Panel>
+    const [budgetMerchantId, setBudgetMerchantId] = useState<string | null>(
+        null
     );
-}
 
-function MerchantListSection({
-    merchants,
-}: {
-    merchants: { id: string; name: string; domain: string }[];
-}) {
-    const navigate = useNavigate();
     return (
-        <div className={styles.contentListSection}>
-            {merchants.map((merchant) => (
-                <MerchantListItem key={merchant.id} merchant={merchant} />
-            ))}
-
-            <Button
-                size={"none"}
-                variant={"ghost"}
-                onClick={() => {
-                    navigate({ to: "/mint" });
-                }}
-            >
-                <MerchantItem
-                    name={
-                        <>
-                            <Plus />
-                            Add a Merchant
-                        </>
-                    }
-                    domain={"domain.com"}
-                    showActions={false}
-                    isLink={false}
+        <>
+            <section className={styles.merchantGrid}>
+                {merchants.map((merchant) => (
+                    <MerchantItem
+                        key={merchant.id}
+                        merchantId={merchant.id}
+                        name={merchant.name}
+                        domain={merchant.domain}
+                        onManageBudget={() => setBudgetMerchantId(merchant.id)}
+                    />
+                ))}
+            </section>
+            {budgetMerchantId && (
+                <ManageBudgetSheet
+                    merchantId={budgetMerchantId}
+                    onClose={() => setBudgetMerchantId(null)}
                 />
-            </Button>
-        </div>
+            )}
+        </>
     );
-}
-
-function MerchantListItem({
-    merchant,
-}: {
-    merchant: { id: string; name: string; domain: string };
-}) {
-    const { id, name, domain } = merchant;
-    return <MerchantItem merchantId={id} name={name} domain={domain} />;
 }

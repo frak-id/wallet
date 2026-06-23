@@ -1,28 +1,51 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { isDemoMode } from "@/config/auth";
-import { Breadcrumb } from "@/module/common/component/Breadcrumb";
-import { Head } from "@/module/common/component/Head";
-import { CriticalError } from "@/module/common/component/RouteError";
-import { queryClient } from "@/module/common/provider/RootProvider";
-import { MyMerchants } from "@/module/dashboard/component/Products";
-import { myMerchantsQueryOptions } from "@/module/merchant/queries/queryOptions";
+import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LinkButton } from "@/module/common/component/LinkButton";
+import { PageShell } from "@/module/common/component/PageShell";
+import { resolveActiveMerchant } from "@/module/common/utils/resolveActiveMerchant";
 
+/**
+ * Dual-purpose `/dashboard` route:
+ *
+ * 1. When the user has at least one merchant, redirects to
+ *    `/m/$first/dashboard`. This keeps legacy bookmarks and Shopify
+ *    deep links working while every workspace view lives under the new
+ *    `/m/$merchantId/...` tree.
+ * 2. When the user has no merchants, renders an explicit onboarding
+ *    empty state so users with a brand-new account aren't dropped onto
+ *    a blank page.
+ */
 export const Route = createFileRoute("/_restricted/dashboard")({
-    loader: () => {
-        queryClient.prefetchQuery(myMerchantsQueryOptions(isDemoMode()));
+    beforeLoad: async () => {
+        const resolved = await resolveActiveMerchant();
+        if (resolved.status === "ok") {
+            throw redirect({
+                to: "/m/$merchantId/dashboard",
+                params: { merchantId: resolved.merchant.id },
+                replace: true,
+            });
+        }
     },
-    component: Dashboard,
-    errorComponent: CriticalError,
+    component: OnboardingDashboard,
 });
 
-function Dashboard() {
+function OnboardingDashboard() {
+    const { t } = useTranslation();
     return (
-        <>
-            <Head
-                title={{ content: "Dashboard" }}
-                leftSection={<Breadcrumb current={"Home"} />}
+        <PageShell page="dashboard">
+            <EmptyState
+                title={t("dashboard.empty.title")}
+                description={t("dashboard.empty.description")}
             />
-            <MyMerchants />
-        </>
+            <LinkButton
+                to="/merchant/new"
+                variant="primary"
+                icon={<Plus size={16} />}
+            >
+                {t("shell.header.addMerchant")}
+            </LinkButton>
+        </PageShell>
     );
 }

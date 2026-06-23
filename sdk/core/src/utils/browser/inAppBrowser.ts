@@ -14,7 +14,7 @@ function checkIsIOS(): boolean {
 /**
  * Whether the current device runs iOS (including iPadOS 13+).
  */
-export const isIOS: boolean = checkIsIOS();
+export const isIOS: boolean = /* @__PURE__ */ checkIsIOS();
 
 /**
  * Check if the current device is a mobile device (iOS, iPadOS, Android,
@@ -48,7 +48,7 @@ function checkInAppBrowser(): boolean {
  * Whether the current browser is a social media in-app browser
  * (Instagram, Facebook).
  */
-export const isInAppBrowser: boolean = checkInAppBrowser();
+export const isInAppBrowser: boolean = /* @__PURE__ */ checkInAppBrowser();
 
 /**
  * Redirect to external browser from in-app WebView.

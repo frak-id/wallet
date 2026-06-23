@@ -10,7 +10,8 @@ import { businessSessionContext } from "../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
 import { merchantAllowedDomainsRoutes } from "./allowedDomains";
 import { merchantBankRoutes } from "./bank";
-import { merchantCampaignStatsRoutes } from "./campaignStats";
+import { merchantCampaignDetailsRoutes } from "./campaignDetails";
+import { merchantCampaignOverviewRoutes } from "./campaignOverview";
 import { merchantCampaignsRoutes } from "./campaigns";
 import { merchantExplorerRoutes } from "./explorer";
 import { merchantMediaRoutes } from "./media";
@@ -186,7 +187,8 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .use(merchantSdkConfigRoutes)
     .use(merchantTransferRoutes)
     .use(merchantCampaignsRoutes)
-    .use(merchantCampaignStatsRoutes)
+    .use(merchantCampaignDetailsRoutes)
+    .use(merchantCampaignOverviewRoutes)
     .use(merchantMembersRoutes)
     .use(merchantWebhooksRoutes)
     .use(merchantMediaRoutes)

@@ -18,11 +18,3 @@ export const sectionContent = style({
     flexDirection: "column",
     gap: alias.spacing.xs,
 });
-
-/**
- * Legal text at bottom of body — smaller, muted.
- */
-export const legalText = style({
-    marginTop: alias.spacing.l,
-    textAlign: "center",
-});

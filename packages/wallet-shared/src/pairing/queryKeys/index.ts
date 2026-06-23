@@ -22,8 +22,11 @@ export namespace pairingKey {
     /**
      * List all the active pairings
      */
-    export const listByWallet = (wallet?: Address) =>
-        [base, "list", wallet] as const;
+    export const list = {
+        all: [base, "list"] as const,
+        byWallet: (wallet?: Address) => [base, "list", wallet] as const,
+    };
+    export const listByWallet = list.byWallet;
 
     /**
      * Namespace for target pairing queries

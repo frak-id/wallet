@@ -14,7 +14,7 @@
         "./react-testing-library-setup": "./src/react-testing-library-setup.ts",
         "./wallet-mocks": "./src/wallet-mocks.ts",
         "./apps-setup": "./src/apps-setup.ts",
-        "./router-mocks": "./src/router-mocks.ts",
+        "./tanstack-router-mock": "./src/tanstack-router-mock.ts",
         "./dom-mocks": "./src/dom-mocks.ts"
     },
     "dependencies": {

@@ -1,243 +1,52 @@
-import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { Input } from "@frak-labs/ui/component/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
-import {
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/module/forms/Form";
-import styles from "../index.module.css";
-import type { BannerFormValues, ComponentSettingsFormValues } from "../types";
-
-export function getBannerDefaults(
-    components: NonNullable<
-        NonNullable<SdkConfig["placements"]>[string]
-    >["components"]
-): BannerFormValues {
-    const b = components?.banner;
-    return {
-        referralTitle: b?.referralTitle ?? "",
-        referralDescription: b?.referralDescription ?? "",
-        referralCta: b?.referralCta ?? "",
-        inappTitle: b?.inappTitle ?? "",
-        inappDescription: b?.inappDescription ?? "",
-        inappCta: b?.inappCta ?? "",
-        css: b?.rawCss ?? "",
-    };
-}
+import { useTranslation } from "react-i18next";
+import * as styles from "../customize.css";
+import type { ComponentSettingsFormValues } from "../types";
+import { ComponentCssField, WordingTextField } from "./shared";
 
 export function BannerFields({
     form,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
+    const { t } = useTranslation();
     return (
-        <div className={styles.customize__settingsGrid}>
-            <FormField
-                control={form.control}
+        <div className={styles.settingsGrid}>
+            <WordingTextField
+                form={form}
                 name="banner.referralTitle"
-                rules={{
-                    maxLength: {
-                        value: 500,
-                        message: "Maximum length is 500 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Referral title</FormLabel>
-                        <FormDescription>
-                            Heading shown when a referral is detected
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={500}
-                                placeholder={"Earn {REWARD} on purchases"}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.referralTitle")}
             />
-
-            <FormField
-                control={form.control}
+            <WordingTextField
+                form={form}
                 name="banner.referralDescription"
-                rules={{
-                    maxLength: {
-                        value: 500,
-                        message: "Maximum length is 500 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>
-                            Referral description
-                        </FormLabel>
-                        <FormDescription>
-                            Body text below the referral title
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={500}
-                                placeholder={
-                                    "Earn rewards after your purchase via the Frak partner app."
-                                }
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.referralDescription")}
             />
-
-            <FormField
-                control={form.control}
+            <WordingTextField
+                form={form}
                 name="banner.referralCta"
-                rules={{
-                    maxLength: {
-                        value: 200,
-                        message: "Maximum length is 200 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>
-                            Referral CTA button
-                        </FormLabel>
-                        <FormDescription>
-                            Dismiss button text for the referral banner
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={200}
-                                placeholder={"Got it"}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.referralCta")}
             />
-
-            <FormField
-                control={form.control}
+            <WordingTextField
+                form={form}
                 name="banner.inappTitle"
-                rules={{
-                    maxLength: {
-                        value: 500,
-                        message: "Maximum length is 500 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>
-                            In-app browser title
-                        </FormLabel>
-                        <FormDescription>
-                            Heading shown when an in-app browser is detected
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={500}
-                                placeholder={"Open in your browser"}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.inappTitle")}
             />
-
-            <FormField
-                control={form.control}
+            <WordingTextField
+                form={form}
                 name="banner.inappDescription"
-                rules={{
-                    maxLength: {
-                        value: 500,
-                        message: "Maximum length is 500 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>
-                            In-app browser description
-                        </FormLabel>
-                        <FormDescription>
-                            Body text explaining why to open in external browser
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={500}
-                                placeholder={
-                                    "For a better experience, open this page in your default browser."
-                                }
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.inappDescription")}
             />
-
-            <FormField
-                control={form.control}
+            <WordingTextField
+                form={form}
                 name="banner.inappCta"
-                rules={{
-                    maxLength: {
-                        value: 200,
-                        message: "Maximum length is 200 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>
-                            In-app browser CTA button
-                        </FormLabel>
-                        <FormDescription>
-                            Button text to redirect to external browser
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={200}
-                                placeholder={"Open browser"}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.inappCta")}
             />
-
-            <FormField
-                control={form.control}
+            <ComponentCssField
+                form={form}
                 name="banner.css"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
-                        <FormDescription>
-                            Custom styles applied to the banner component
-                        </FormDescription>
-                        <FormControl>
-                            <textarea
-                                className={styles.customize__textarea}
-                                placeholder={".frak-banner { ... }"}
-                                rows={4}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.css")}
+                placeholder={".frak-banner { ... }"}
             />
         </div>
     );

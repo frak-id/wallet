@@ -70,13 +70,59 @@ function processbudgetUsed(
     return { canConsume: true, updatedUsed, remaining };
 }
 
+/**
+ * Reverse a prior budget consumption. Mirrors the window-reset rule in
+ * {@link processbudgetUsed}: for a time-windowed budget whose window has
+ * already elapsed (`resetAt < now`), the amount being restored was spent in
+ * that now-expired window, so the window is reset to zero rather than deducted
+ * — subtracting would eat into the fresh window and under-count its real
+ * usage, letting more rewards through than the cap allows. Non-windowed (or
+ * still-current) budgets simply subtract, clamped at zero.
+ */
+export function processBudgetRestore(
+    config: BudgetConfig,
+    used: BudgetUsed,
+    amount: number
+): BudgetUsed {
+    const now = new Date().toISOString();
+    const updatedUsed: BudgetUsed = { ...used };
+
+    for (const budget of config) {
+        const current = updatedUsed[budget.label];
+        if (!current) continue;
+
+        if (
+            budget.durationInSeconds !== null &&
+            current.resetAt &&
+            current.resetAt < now
+        ) {
+            updatedUsed[budget.label] = {
+                used: 0,
+                resetAt: computeNextResetAt(budget.durationInSeconds),
+            };
+            continue;
+        }
+
+        updatedUsed[budget.label] = {
+            ...current,
+            used: Math.max(0, current.used - amount),
+        };
+    }
+
+    return updatedUsed;
+}
+
 export class CampaignRuleRepository {
     private readonly activeRulesCache = new LRUCache<
         string,
         CampaignRuleSelect[]
     >({
         max: 256,
-        ttl: 5 * 60 * 1000,
+        // invalidateMerchantCache only evicts the local instance, so a pause or
+        // archive on another replica stays unseen for up to one TTL — i.e. the
+        // campaign keeps paying. 30s caps that cross-replica staleness window
+        // until a shared invalidation bus replaces this stopgap.
+        ttl: 30 * 1000,
     });
 
     async findById(id: string): Promise<CampaignRuleSelect | null> {
@@ -300,14 +346,11 @@ export class CampaignRuleRepository {
                 return;
             }
 
-            const updatedUsed: BudgetUsed = { ...campaign.budgetUsed };
-
-            for (const budget of campaign.budgetConfig) {
-                const current = updatedUsed[budget.label];
-                if (current) {
-                    current.used = Math.max(0, current.used - amount);
-                }
-            }
+            const updatedUsed = processBudgetRestore(
+                campaign.budgetConfig,
+                campaign.budgetUsed ?? {},
+                amount
+            );
 
             await tx
                 .update(campaignRulesTable)

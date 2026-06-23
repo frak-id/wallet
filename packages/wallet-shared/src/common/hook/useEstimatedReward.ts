@@ -10,16 +10,13 @@ import {
     getCurrencyAmountKey,
     getSupportedCurrency,
 } from "@frak-labs/core-sdk";
-import { queryOptions, useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "../api/backendClient";
+import { merchantKey } from "../queryKeys/merchant";
+import { queryOptions } from "../utils/queryOptions";
 
 export function estimatedRewardsQueryOptions(merchantId?: string) {
     return queryOptions({
-        queryKey: [
-            "merchant",
-            "estimatedRewards",
-            merchantId ?? "no-merchant-id",
-        ],
+        queryKey: merchantKey.estimatedRewards(merchantId),
         queryFn: async (): Promise<EstimatedRewardItem[]> => {
             if (!merchantId) return [];
 
@@ -64,10 +61,27 @@ export function formatEstimatedReward(
 
         case "tiered": {
             const maxTierAmount = reward.tiers.reduce(
-                (max, tier) => Math.max(max, tier.amount[currencyAmountKey]),
+                (max, tier) =>
+                    "amount" in tier
+                        ? Math.max(max, tier.amount[currencyAmountKey])
+                        : max,
                 0
             );
-            return formatAmount(Math.round(maxTierAmount), supportedCurrency);
+            if (maxTierAmount > 0) {
+                return formatAmount(
+                    Math.round(maxTierAmount),
+                    supportedCurrency
+                );
+            }
+            const maxTierPercent = reward.tiers.reduce(
+                (max, tier) =>
+                    "percent" in tier ? Math.max(max, tier.percent) : max,
+                0
+            );
+            if (maxTierPercent > 0) {
+                return `${maxTierPercent} %`;
+            }
+            return formatAmount(0, supportedCurrency);
         }
     }
 }
@@ -83,7 +97,8 @@ function getRewardSortValue(
             return reward.maxAmount?.[key] ?? 0;
         case "tiered":
             return reward.tiers.reduce(
-                (max, tier) => Math.max(max, tier.amount[key]),
+                (max, tier) =>
+                    "amount" in tier ? Math.max(max, tier.amount[key]) : max,
                 0
             );
     }
@@ -134,23 +149,7 @@ export function selectFormattedReward({
     };
 }
 
-export function useFormattedEstimatedReward({
-    merchantId,
-    currency,
-    targetInteraction,
-    context,
-}: {
-    merchantId?: string;
-    currency?: Currency;
-    targetInteraction?: InteractionTypeKey;
-    context?: string;
-}) {
-    return useQuery({
-        ...estimatedRewardsQueryOptions(merchantId),
-        select: selectFormattedReward({
-            currency,
-            targetInteraction,
-            context,
-        }),
-    });
-}
+// `useFormattedEstimatedReward` moved to `useFormattedEstimatedReward.ts` so
+// this module stays Ring 0 (the listener iframe bootstrap consumes
+// `estimatedRewardsQueryOptions` via `queryClient.fetchQuery(...)`).
+// React consumers should import the hook from `./useFormattedEstimatedReward`.

@@ -1,5 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { routeMatchesMock } = vi.hoisted(() => ({
+    routeMatchesMock: vi.fn((): unknown[] => []),
+}));
 
 // Mock the layout components
 vi.mock("@/module/common/component/Header", () => ({
@@ -10,12 +14,16 @@ vi.mock("@/module/common/component/Navigation", () => ({
     Navigation: () => <nav data-testid="navigation" />,
 }));
 
-// Mock Outlet
+// Mock Outlet + the route matches consumed by useIsBareShell
 vi.mock("@tanstack/react-router", async () => {
     const actual = await vi.importActual("@tanstack/react-router");
     return {
         ...actual,
         Outlet: () => <div data-testid="outlet">Child content</div>,
+        useMatches: (options?: { select?: (matches: unknown[]) => unknown }) =>
+            options?.select
+                ? options.select(routeMatchesMock())
+                : routeMatchesMock(),
     };
 });
 
@@ -32,6 +40,10 @@ const RestrictedLayoutRoute = RestrictedRoute.options
     .component as React.ComponentType;
 
 describe("RestrictedLayoutRoute", () => {
+    beforeEach(() => {
+        routeMatchesMock.mockReturnValue([]);
+    });
+
     it("should render all required layout components", () => {
         render(<RestrictedLayoutRoute />);
 
@@ -44,6 +56,17 @@ describe("RestrictedLayoutRoute", () => {
 
         const main = container.querySelector("main");
         expect(main).toBeInTheDocument();
+        expect(screen.getByTestId("outlet")).toBeInTheDocument();
+    });
+
+    it("should hide the shell on bare routes", () => {
+        routeMatchesMock.mockReturnValue([{ staticData: { shell: "bare" } }]);
+
+        const { container } = render(<RestrictedLayoutRoute />);
+
+        expect(screen.queryByTestId("header")).toBeNull();
+        expect(screen.queryByTestId("navigation")).toBeNull();
+        expect(container.querySelector("main")).toBeInTheDocument();
         expect(screen.getByTestId("outlet")).toBeInTheDocument();
     });
 

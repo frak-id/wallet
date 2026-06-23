@@ -8,7 +8,8 @@ import type { loader as rootLoader } from "app/routes/app";
 import type { action } from "app/routes/app.campaigns";
 import type {
     BankStatus,
-    CampaignResponse,
+    CampaignListItem,
+    CampaignListResponse,
 } from "app/services.server/backendMerchant";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,7 +22,7 @@ export function CampaignStatus({
     campaigns,
     bankStatus,
 }: {
-    campaigns: CampaignResponse[];
+    campaigns: CampaignListResponse;
     bankStatus: BankStatus;
 }) {
     const { t } = useTranslation();
@@ -34,7 +35,10 @@ export function CampaignStatus({
 
                 <s-text>{t("status.campaign.description")}</s-text>
 
-                <CampaignTable campaigns={campaigns} />
+                <CampaignTable
+                    campaigns={campaigns.campaigns}
+                    bankDistributionStatus={campaigns.bankDistributionStatus}
+                />
 
                 <s-button onClick={() => setCreationOpen(!creationOpen)}>
                     {t("status.campaign.createOpen")}
@@ -58,7 +62,13 @@ export function CampaignStatus({
     );
 }
 
-function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
+function CampaignTable({
+    campaigns,
+    bankDistributionStatus,
+}: {
+    campaigns: CampaignListItem[];
+    bankDistributionStatus: DistributionStatus | null;
+}) {
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const currencySymbol = (rootData?.shop.preferredCurrency ??
@@ -100,6 +110,7 @@ function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
                         <CampaignTableRow
                             key={campaign.id}
                             campaign={campaign}
+                            bankDistributionStatus={bankDistributionStatus}
                             currencySymbol={currencySymbol}
                         />
                     ))}
@@ -153,7 +164,7 @@ const campaignActionConfig: Record<CampaignActionIntent, CampaignActionConfig> =
     };
 
 function getCampaignActions(
-    status: CampaignResponse["status"]
+    status: CampaignListItem["status"]
 ): CampaignActionIntent[] {
     if (status === "active") {
         return ["pause-campaign", "archive-campaign"];
@@ -172,9 +183,11 @@ function getCampaignActions(
 
 function CampaignTableRow({
     campaign,
+    bankDistributionStatus,
     currencySymbol,
 }: {
-    campaign: CampaignResponse;
+    campaign: CampaignListItem;
+    bankDistributionStatus: DistributionStatus | null;
     currencySymbol: Currency;
 }) {
     const fetcher = useFetcher<typeof action>();
@@ -210,7 +223,7 @@ function CampaignTableRow({
     }, [firstBudget, budgetUsage, currencySymbol, t]);
 
     const rewardSummary = useMemo(() => {
-        const rewards = campaign.rule?.rewards;
+        const rewards = campaign.rewards;
         if (!rewards?.length) return "-";
         return rewards
             .map((r) => {
@@ -224,13 +237,10 @@ function CampaignTableRow({
                 if (r.amountType === "percentage") {
                     return `${who}: ${r.percent}%`;
                 }
-                if (r.amountType === "tiered") {
-                    return `${who}: ${t("status.campaign.tiered")}`;
-                }
-                return who;
+                return `${who}: ${t("status.campaign.tiered")}`;
             })
             .join(", ");
-    }, [campaign.rule?.rewards, currencySymbol, t]);
+    }, [campaign.rewards, currencySymbol, t]);
 
     const handleSubmit = useCallback(
         (
@@ -257,7 +267,7 @@ function CampaignTableRow({
             <s-table-cell>
                 <CampaignStatusBadge
                     status={campaign.status}
-                    bankDistributionStatus={campaign.bankDistributionStatus}
+                    bankDistributionStatus={bankDistributionStatus}
                 />
             </s-table-cell>
             <s-table-cell>{formattedDate}</s-table-cell>
@@ -276,12 +286,18 @@ function CampaignTableRow({
                     ))}
                     <s-button
                         variant="tertiary"
-                        onClick={() =>
-                            window.open(
-                                `${rootData?.businessUrl ?? ""}/campaigns/${campaign.id}`,
-                                "_blank"
-                            )
-                        }
+                        onClick={() => {
+                            // Prefer the merchant-scoped URL when we know
+                            // the merchant id; fall back to the legacy URL
+                            // (the business app redirects to the user's
+                            // first merchant).
+                            const base = rootData?.businessUrl ?? "";
+                            const merchantId = rootData?.merchantId;
+                            const url = merchantId
+                                ? `${base}/m/${merchantId}/campaigns/${campaign.id}`
+                                : `${base}/campaigns/${campaign.id}`;
+                            window.open(url, "_blank");
+                        }}
                     >
                         {t("status.campaign.viewDetails")}
                     </s-button>
@@ -323,7 +339,7 @@ function CampaignStatusBadge({
     status,
     bankDistributionStatus,
 }: {
-    status: CampaignResponse["status"];
+    status: CampaignListItem["status"];
     bankDistributionStatus: DistributionStatus | null;
 }) {
     const { t } = useTranslation();

@@ -1,11 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-    Navigation,
-    NavigationItem,
-    NavigationLabel,
-    SubNavigationItem,
-} from "./index";
+import { Navigation, NavigationItem, SubNavigationItem } from "./index";
+
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
 
 const mockNavigate = vi.fn();
 const mockMatchRoute = vi.fn();
@@ -13,6 +12,7 @@ const mockMatchRoute = vi.fn();
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
     useMatchRoute: () => mockMatchRoute,
+    useParams: () => ({}),
     Link: ({ to, children, className, ...props }: any) => (
         <a href={to} className={className} {...props}>
             {children}
@@ -20,78 +20,85 @@ vi.mock("@tanstack/react-router", () => ({
     ),
 }));
 
-vi.mock("@/assets/icons/Home", () => ({
-    Home: () => <svg data-testid="icon-home" />,
-}));
-
-vi.mock("@/assets/icons/Users", () => ({
-    Users: () => <svg data-testid="icon-users" />,
-}));
-
-vi.mock("@/assets/icons/Cash", () => ({
-    Cash: () => <svg data-testid="icon-cash" />,
-}));
-
-vi.mock("@/assets/icons/Message", () => ({
-    Message: () => <svg data-testid="icon-message" />,
-}));
-
-vi.mock("@/assets/icons/Wallet", () => ({
-    Wallet: () => <svg data-testid="icon-wallet" />,
-}));
-
-vi.mock("@/assets/icons/Gear", () => ({
-    Gear: () => <svg data-testid="icon-gear" />,
-}));
-
-vi.mock("@/assets/icons/Info", () => ({
-    Info: () => <svg data-testid="icon-info" />,
-}));
-
 vi.mock("./NavigationCampaignsSwitcher", () => ({
     NavigationCampaignsSwitcher: () => (
-        <li data-testid="campaigns-switcher">Campaigns</li>
+        <li data-testid="campaigns-switcher">shell.pages.campaigns.nav</li>
     ),
+}));
+
+const mockUseMyMerchants = vi.fn();
+vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
+    useMyMerchants: () => mockUseMyMerchants(),
 }));
 
 describe("Navigation", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockMatchRoute.mockReturnValue(false);
+        mockUseMyMerchants.mockReturnValue({
+            isEmpty: false,
+            merchants: [{ id: "m1" }],
+            owned: [{ id: "m1" }],
+            adminOf: [],
+        });
     });
 
     afterEach(() => {
         cleanup();
     });
 
-    it("should render navigation items", () => {
-        render(<Navigation />);
-
-        expect(screen.getByText("Dashboard")).toBeInTheDocument();
-        expect(screen.getByText("Members")).toBeInTheDocument();
-        expect(screen.getByText("Settings")).toBeInTheDocument();
+    it("should render the Frak logo at the top", () => {
+        const { container } = render(<Navigation />);
+        // LogoFrakWithName renders an <svg> with <title>Frak</title>
+        expect(container.querySelector("svg title")).toHaveTextContent("Frak");
     });
 
-    it("should render navigation icons", () => {
-        const { container } = render(<Navigation />);
+    it("should render the primary navigation items from the Figma spec", () => {
+        render(<Navigation />);
 
         expect(
-            container.querySelector('[data-testid="icon-home"]')
+            screen.getByText("shell.pages.dashboard.nav")
         ).toBeInTheDocument();
+        expect(screen.getByText("shell.pages.members.nav")).toBeInTheDocument();
+        expect(screen.getByText("shell.pages.wallet.nav")).toBeInTheDocument();
+    });
+
+    it("should render section labels", () => {
+        render(<Navigation />);
         expect(
-            container.querySelector('[data-testid="icon-users"]')
+            screen.getByText("shell.sections.acquisition")
         ).toBeInTheDocument();
-        expect(
-            container.querySelector('[data-testid="icon-gear"]')
-        ).toBeInTheDocument();
+        expect(screen.getByText("shell.sections.preview")).toBeInTheDocument();
+    });
+
+    it("should not render dropped items (Revenue, Messenger, Settings, Help)", () => {
+        render(<Navigation />);
+        expect(screen.queryByText("Revenue")).not.toBeInTheDocument();
+        expect(screen.queryByText("Messenger")).not.toBeInTheDocument();
+        expect(screen.queryByText("Settings")).not.toBeInTheDocument();
+        expect(screen.queryByText("Help & FAQ")).not.toBeInTheDocument();
     });
 
     it("should render campaigns switcher", () => {
         const { container } = render(<Navigation />);
-
         expect(
             container.querySelector('[data-testid="campaigns-switcher"]')
         ).toBeInTheDocument();
+    });
+
+    it("disables merchant-scoped items when there are no merchants", () => {
+        mockUseMyMerchants.mockReturnValue({
+            isEmpty: true,
+            merchants: [],
+            owned: [],
+            adminOf: [],
+        });
+        render(<Navigation />);
+
+        const members = screen.getByRole("button", {
+            name: "shell.pages.members.nav",
+        });
+        expect(members).toHaveAttribute("aria-disabled", "true");
     });
 });
 
@@ -109,16 +116,13 @@ describe("NavigationItem", () => {
         const { container } = render(
             <NavigationItem url="/test">Item</NavigationItem>
         );
-
-        const li = container.querySelector("li");
-        expect(li).toBeInTheDocument();
+        expect(container.querySelector("li")).toBeInTheDocument();
     });
 
     it("should render as link for internal URLs", () => {
         const { container } = render(
             <NavigationItem url="/test">Item</NavigationItem>
         );
-
         const link = container.querySelector('a[href="/test"]');
         expect(link).toBeInTheDocument();
         expect(link).toHaveTextContent("Item");
@@ -151,18 +155,15 @@ describe("NavigationItem", () => {
                 Item
             </NavigationItem>
         );
-
         const button = screen.getByRole("button", { name: "Item" });
         expect(button).toBeDisabled();
     });
 
     it("should apply active class when route matches", () => {
         mockMatchRoute.mockReturnValue(true);
-
         const { container } = render(
             <NavigationItem url="/test">Item</NavigationItem>
         );
-
         const link = container.querySelector("a");
         expect(link?.className).toBeTruthy();
     });
@@ -173,7 +174,6 @@ describe("NavigationItem", () => {
                 Item
             </NavigationItem>
         );
-
         const link = container.querySelector("a");
         expect(link?.className).toBeTruthy();
     });
@@ -184,16 +184,13 @@ describe("NavigationItem", () => {
                 Item
             </NavigationItem>
         );
-
         expect(screen.getByText("Right")).toBeInTheDocument();
     });
 
     it("should not navigate when url is not provided", () => {
         render(<NavigationItem>Item</NavigationItem>);
-
         const button = screen.getByRole("button", { name: "Item" });
         fireEvent.click(button);
-
         expect(mockNavigate).not.toHaveBeenCalled();
     });
 });
@@ -210,38 +207,13 @@ describe("SubNavigationItem", () => {
 
     it("should render as sub navigation item", () => {
         render(<SubNavigationItem url="/test">Sub Item</SubNavigationItem>);
-
         expect(screen.getByText("Sub Item")).toBeInTheDocument();
     });
 
-    it("should render as link with isSub styling", () => {
+    it("should render as link", () => {
         const { container } = render(
             <SubNavigationItem url="/test">Sub Item</SubNavigationItem>
         );
-
-        const link = container.querySelector("a");
-        expect(link).toBeInTheDocument();
-    });
-});
-
-describe("NavigationLabel", () => {
-    it("should render icon and label", () => {
-        render(
-            <NavigationLabel icon={<span data-testid="custom-icon">Icon</span>}>
-                Label Text
-            </NavigationLabel>
-        );
-
-        expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
-        expect(screen.getByText("Label Text")).toBeInTheDocument();
-    });
-
-    it("should render label with span", () => {
-        const { container } = render(
-            <NavigationLabel icon={<span>Icon</span>}>Label</NavigationLabel>
-        );
-
-        const span = container.querySelector("span");
-        expect(span).toBeInTheDocument();
+        expect(container.querySelector("a")).toBeInTheDocument();
     });
 });

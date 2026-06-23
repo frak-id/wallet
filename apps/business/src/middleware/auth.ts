@@ -49,8 +49,10 @@ export function requireAuth({ location }: { location: { href: string } }) {
 }
 
 /**
- * beforeLoad hook for login route
- * Redirects to dashboard if already authenticated
+ * beforeLoad hook for login route.
+ * Redirects to /dashboard if already authenticated — the legacy redirect
+ * there resolves the user's first merchant and lands on the new
+ * `/m/$merchantId/dashboard` URL.
  */
 export function redirectIfAuthenticated() {
     const authenticated = isAuthenticated();

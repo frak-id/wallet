@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { CampaignRuleRepository } from "./CampaignRuleRepository";
+import type { BudgetConfig, BudgetUsed } from "../schemas";
+import {
+    CampaignRuleRepository,
+    processBudgetRestore,
+} from "./CampaignRuleRepository";
 
 describe("CampaignRuleRepository.restoreBudgetsBatch", () => {
     it("groups rewards by campaign and forwards a single restoreBudget call per campaign", async () => {
@@ -45,5 +49,71 @@ describe("CampaignRuleRepository.restoreBudgetsBatch", () => {
 
         expect(restored).toEqual({});
         expect(restoreSpy).not.toHaveBeenCalled();
+    });
+});
+
+describe("processBudgetRestore", () => {
+    const lifetimeBudget: BudgetConfig = [
+        { label: "total", durationInSeconds: null, amount: 1000 },
+    ];
+
+    it("subtracts the amount from a non-windowed budget", () => {
+        const used: BudgetUsed = { total: { used: 250 } };
+
+        const result = processBudgetRestore(lifetimeBudget, used, 100);
+
+        expect(result.total.used).toBe(150);
+        expect(result.total.resetAt).toBeUndefined();
+    });
+
+    it("never drives usage below zero", () => {
+        const used: BudgetUsed = { total: { used: 40 } };
+
+        const result = processBudgetRestore(lifetimeBudget, used, 100);
+
+        expect(result.total.used).toBe(0);
+    });
+
+    it("subtracts within a still-current window and keeps resetAt", () => {
+        const resetAt = new Date(Date.now() + 60_000).toISOString();
+        const config: BudgetConfig = [
+            { label: "daily", durationInSeconds: 86_400, amount: 500 },
+        ];
+        const used: BudgetUsed = { daily: { used: 200, resetAt } };
+
+        const result = processBudgetRestore(config, used, 50);
+
+        expect(result.daily.used).toBe(150);
+        expect(result.daily.resetAt).toBe(resetAt);
+    });
+
+    it("resets an elapsed window to zero instead of deducting from the fresh window", () => {
+        const past = new Date(Date.now() - 60_000).toISOString();
+        const config: BudgetConfig = [
+            { label: "daily", durationInSeconds: 86_400, amount: 500 },
+        ];
+        const used: BudgetUsed = { daily: { used: 30, resetAt: past } };
+
+        const result = processBudgetRestore(config, used, 100);
+
+        expect(result.daily.used).toBe(0);
+        expect(result.daily.resetAt).toBeDefined();
+        expect(
+            new Date(result.daily.resetAt as string).getTime()
+        ).toBeGreaterThan(Date.now());
+    });
+
+    it("ignores budgets that have no recorded usage", () => {
+        const result = processBudgetRestore(lifetimeBudget, {}, 100);
+
+        expect(result.total).toBeUndefined();
+    });
+
+    it("does not mutate the input usage object", () => {
+        const used: BudgetUsed = { total: { used: 250 } };
+
+        processBudgetRestore(lifetimeBudget, used, 100);
+
+        expect(used.total.used).toBe(250);
     });
 });

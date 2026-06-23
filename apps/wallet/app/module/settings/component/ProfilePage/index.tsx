@@ -7,8 +7,11 @@ import {
     selectLastAuthenticationAt,
     useGetActivePairings,
 } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
+import { Mail, ShieldCheck } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 // import { Logout } from "@/module/authentication/component/Logout";
@@ -18,7 +21,8 @@ import { PrivateKey } from "@/module/settings/component/PrivateKey";
 import { ProfileIdentityCard } from "@/module/settings/component/ProfileIdentityCard";
 import { ProfileLinksCard } from "@/module/settings/component/ProfileLinksCard";
 import { ProfilePreferencesCard } from "@/module/settings/component/ProfilePreferencesCard";
-// import { ProfileSecurityCard } from "@/module/settings/component/ProfileSecurityCard";
+import { SecurityProgressCard } from "@/module/settings/component/SecurityProgressCard";
+import { useWalletSecurityStatus } from "@/module/settings/hook/useWalletSecurityStatus";
 import * as styles from "./index.css";
 
 export function ProfilePage() {
@@ -26,7 +30,8 @@ export function ProfilePage() {
     const version = process.env.APP_VERSION;
     const displayVersion =
         version && version !== "UNKNOWN" ? version : undefined;
-    const lastAuthenticationAt = authenticationStore(
+    const lastAuthenticationAt = useStore(
+        authenticationStore,
         selectLastAuthenticationAt
     );
     const formattedLastAuthentication = useMemo(() => {
@@ -42,6 +47,8 @@ export function ProfilePage() {
 
     const { data: pairings } = useGetActivePairings();
     const hasPairings = (pairings?.length ?? 0) > 0;
+    const navigate = useNavigate();
+    const { hasRecovery, isEmailVerified } = useWalletSecurityStatus();
 
     return (
         <Box
@@ -51,9 +58,9 @@ export function ProfilePage() {
             className={styles.page}
         >
             <Title size="page">{t("wallet.profile.pageTitle")}</Title>
+            <SecurityProgressCard />
             <ProfileIdentityCard />
             <ProfilePreferencesCard />
-            {/*<ProfileSecurityCard />*/}
             <InfoCard>
                 <InfoRow
                     icon={HeartIcon}
@@ -67,6 +74,29 @@ export function ProfilePage() {
                         icon={SettingsIcon}
                         label={t("wallet.profile.managePairings")}
                         to="/profile/devices"
+                    />
+                </InfoCard>
+            ) : null}
+            {isEmailVerified ? (
+                <InfoCard>
+                    <InfoRow
+                        icon={Mail}
+                        label={t("wallet.profile.changeEmail")}
+                        onClick={() =>
+                            navigate({
+                                to: "/profile/verify-email",
+                                search: { mode: "change" },
+                            })
+                        }
+                    />
+                </InfoCard>
+            ) : null}
+            {hasRecovery ? (
+                <InfoCard>
+                    <InfoRow
+                        icon={ShieldCheck}
+                        label={t("wallet.profile.recoveryOptions")}
+                        to="/profile/recovery"
                     />
                 </InfoCard>
             ) : null}

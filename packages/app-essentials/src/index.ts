@@ -1,8 +1,13 @@
 export {
     addresses,
+    arbitrumChainId,
+    arbitrumSepoliaChainId,
     campaignBankAbi,
+    currentChainId,
     currentStablecoins,
     currentStablecoinsList,
+    type FrakChainId,
+    frakChainIds,
     getExecutionAbi,
     KernelExecuteAbi,
     KernelInitAbi,
@@ -20,4 +25,10 @@ export {
     isRunningInProd,
     isRunningLocally,
 } from "./utils";
-export { WebAuthN } from "./webauthn";
+export {
+    buildMergeConsentChallenge,
+    buildMergeConsentChallengeSlots,
+    formatMergeConsentHourSlot,
+    MERGE_CONSENT_PREFIX,
+    WebAuthN,
+} from "./webauthn";

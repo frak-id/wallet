@@ -1,15 +1,22 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
-import { Panel } from "@/module/common/component/Panel";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/module/common/component/Button";
 import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
-import styles from "./index.module.css";
+import * as styles from "./mint.css";
 
 export function EmbeddedMint() {
+    const { t } = useTranslation();
     const search = useSearch({ from: "/embedded/_layout/mint" });
 
     const { name, domain, setupCode, currency, shopDomain } = useMemo(() => {
@@ -47,8 +54,13 @@ export function EmbeddedMint() {
 
     return (
         <>
-            <Title className={styles.title}>Register your shop on Frak</Title>
-            <Panel withBadge={false} title={`Registering ${domain}`}>
+            <Title className={styles.title}>{t("embedded.mint.title")}</Title>
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        {t("embedded.mint.registering", { domain })}
+                    </CardTitle>
+                </CardHeader>
                 {/* Domain validation info */}
                 {isDomainValidLoading ? (
                     <Spinner />
@@ -63,15 +75,14 @@ export function EmbeddedMint() {
                 ) : (
                     <>
                         <p className={styles.error}>
-                            Can't register your product. Double check that
-                            everything is right.
+                            {t("embedded.mint.error")}
                             <a
                                 href="/dashboard"
                                 target="_blank"
                                 rel="noreferrer"
                                 className={styles.link}
                             >
-                                Maybe the domain is already registered.
+                                {t("embedded.mint.alreadyRegistered")}
                             </a>
                         </p>
                         <Button
@@ -80,11 +91,11 @@ export function EmbeddedMint() {
                             className={styles.button}
                             onClick={close}
                         >
-                            Close
+                            {t("embedded.mint.close")}
                         </Button>
                     </>
                 )}
-            </Panel>
+            </Card>
         </>
     );
 }
@@ -105,6 +116,7 @@ function DoMintComponent({
     currency: Stablecoin;
     shopDomain?: string;
 }) {
+    const { t } = useTranslation();
     // Mint hook
     const {
         infoTxt,
@@ -131,12 +143,12 @@ function DoMintComponent({
                         allowedDomains: shopDomain ? [shopDomain] : undefined,
                     })
                 }
-                isLoading={isPending}
+                loading={isPending}
                 disabled={isPending}
             >
-                {isPending ? infoTxt : "Register your shop"}
+                {isPending ? infoTxt : t("embedded.mint.register")}
             </Button>
-            {error && <p className={"error"}>{error.message}</p>}
+            {error && <Text color="error">{error.message}</Text>}
         </>
     );
 }

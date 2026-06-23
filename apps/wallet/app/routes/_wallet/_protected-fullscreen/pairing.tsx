@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -6,10 +7,14 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { WarningIcon } from "@frak-labs/design-system/icons";
 import {
     CodeInput,
+    detachedPairingSessionStore,
     getTargetPairingClient,
     isPairingNotFoundError,
     type PairingMode,
+    selectSession,
+    sessionStore,
     trackEvent,
+    useLogin,
     usePairingInfo,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -58,6 +63,7 @@ function PairingPage() {
     const { id, mode } = Route.useSearch();
     const navigate = useNavigate();
     const pairingState = useStore(client.store);
+    const session = useStore(sessionStore, selectSession);
     const {
         data: pairingInfo,
         error: pairingError,
@@ -75,6 +81,30 @@ function PairingPage() {
         mode === "embedded" ? "deep_link" : hasPairingCode ? "code" : "qr";
     const viewedAtRef = useRef<number>(Date.now());
     const errorReportedRef = useRef<"not_found" | "transient" | null>(null);
+
+    // When the origin pinned a credential allow-set via `authenticatorHints`,
+    // the backend will close the WS with `FORBIDDEN` if we join with a
+    // credential outside the set. Detect the mismatch up-front so the user
+    // gets a "switch passkey" prompt instead of a useless join attempt.
+    const needsCredentialSwitch = Boolean(
+        pairingInfo?.authenticatorHints?.length &&
+            session?.authenticatorId &&
+            !pairingInfo.authenticatorHints.includes(session.authenticatorId)
+    );
+
+    const { login, isLoading: isSwitchingCredential } = useLogin();
+
+    const onSwitchCredential = useCallback(async () => {
+        if (!pairingInfo?.authenticatorHints?.length || !id) return;
+        try {
+            await login({
+                allowedCredentialIds: pairingInfo.authenticatorHints,
+                detachedPairingId: id,
+            });
+        } catch (err) {
+            console.warn("Failed to switch passkey before pairing join", err);
+        }
+    }, [login, pairingInfo?.authenticatorHints, id]);
 
     // Page mount — emit viewed or no_id for funnel analysis
     useEffect(() => {
@@ -120,6 +150,7 @@ function PairingPage() {
                     mode: pairingModeTag,
                     duration_ms,
                 });
+                detachedPairingSessionStore.getState().clearDetachedSession();
                 client.disconnect();
             }
             navigate({ to: "/wallet", replace: true });
@@ -220,14 +251,38 @@ function PairingPage() {
                     </Text>
                 )}
             </Stack>
+            {needsCredentialSwitch && (
+                <Card variant="muted" padding="default">
+                    <Stack space="xs">
+                        <Text variant="bodySmall" weight="semiBold">
+                            {t("wallet.pairing.switchPasskey.title")}
+                        </Text>
+                        <Text variant="bodySmall" color="secondary">
+                            {t("wallet.pairing.switchPasskey.description")}
+                        </Text>
+                    </Stack>
+                </Card>
+            )}
             <Stack space="m" className={styles.pairingFooter}>
-                <Button
-                    onClick={() => {
-                        actionPairing("join");
-                    }}
-                >
-                    {t("wallet.pairing.confirm")}
-                </Button>
+                {needsCredentialSwitch ? (
+                    <Button
+                        onClick={() => {
+                            void onSwitchCredential();
+                        }}
+                        loading={isSwitchingCredential}
+                        disabled={isSwitchingCredential}
+                    >
+                        {t("wallet.pairing.switchPasskey.confirm")}
+                    </Button>
+                ) : (
+                    <Button
+                        onClick={() => {
+                            actionPairing("join");
+                        }}
+                    >
+                        {t("wallet.pairing.confirm")}
+                    </Button>
+                )}
                 <Button
                     variant="secondary"
                     onClick={() => {

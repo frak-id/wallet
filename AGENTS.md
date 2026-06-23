@@ -24,7 +24,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 | Shopify embedded app | `apps/shopify/app/` (ONLY React Router v7, relative imports) |
 | Backend domains | `services/backend/src/domain/` · cross-domain → `src/orchestration/` |
 | SDK actions | `sdk/core/src/actions/` · React hooks → `sdk/react/src/hook/` |
-| Design tokens / Box | `packages/design-system/` (replaces `packages/ui`) |
+| Design tokens / Box | `packages/design-system/` |
 | Blockchain config/ABIs | `packages/app-essentials/src/blockchain/` |
 | Shared wallet state | `packages/wallet-shared/` (wallet+listener ONLY) |
 | Test mocks/fixtures | `packages/test-foundation/src/` |
@@ -34,6 +34,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 - **Service worker gate**: `apps/wallet` requires `bun run build:sw` BEFORE `dev`/`build` — silent load failure otherwise.
 - **Wallet `@/*` dual resolution**: resolves to both `./app/*` AND `../../packages/design-system/src/*` (tsconfig).
 - **Vanilla Extract migration (in-progress)**: new wallet styles → `.css.ts` + `Box` sprinkles; old `.module.css` is legacy.
+- **No `globalStyle` (monorepo-wide)**: prefer scoped `style()` classes. To style a child/variant, put the same class on both elements (or add a dedicated class) instead of a `${parent} *` descendant selector.
 - **`wallet-shared` scope rule**: imports FORBIDDEN in `business`/`backend`/`shopify`. Wallet+listener only.
 - **Orchestration rule (backend)**: `service → service` and `service → orchestrator` FORBIDDEN. Cross-domain logic lives only in `src/orchestration/`. Access singletons via `{Domain}Context.services.*`, never `new Service()`.
 - **SDK `development` export condition**: monorepo apps consume SDK source directly — rebuild only needed for published artifacts.
@@ -49,7 +50,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 - **Frontend secrets = build-time only** via BuildKit `--mount=type=secret` (never runtime). Backend secrets = K8s env vars from GCP Secret Manager.
 
 ## Anti-Patterns (Forbidden Here)
-`npm`/`pnpm`/`yarn` · `bun test` · Tailwind · `try/catch` without translation purpose · classes · `as any`/`@ts-ignore`/`!` · entire-store Zustand subscriptions · `interface` (except declaration merging) · cross-domain service imports · `<a>` in Shopify · stage `"prod"` in Shopify/SST.
+`npm`/`pnpm`/`yarn` · `bun test` · Tailwind · Vanilla Extract `globalStyle` (use scoped `style()`) · `try/catch` without translation purpose · classes · `as any`/`@ts-ignore`/`!` · entire-store Zustand subscriptions · `interface` (except declaration merging) · cross-domain service imports · `<a>` in Shopify · stage `"prod"` in Shopify/SST.
 
 ## See Also
 Root children: `apps/AGENTS.md` families · `packages/AGENTS.md` · `sdk/AGENTS.md` · `services/backend/AGENTS.md` · `infra/AGENTS.md` · `plugins/{magento,wordpress}/AGENTS.md`.

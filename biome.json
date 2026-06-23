@@ -8,12 +8,16 @@
             "!**/_types",
             "!**/dist",
             "!**/build",
+            "!**/.build",
             "!**/cdn",
             "!**/node_modules",
             "!**/.sst",
             "!**/.react-router",
             "!**/.output",
             "!**/.nitro",
+            "!**/.omo",
+            "!**/.claude",
+            "!**/sst-env.d.ts",
             "!**/tsconfig.json",
             "!**/tsconfig.*.json",
             "!**/package.json",
@@ -25,6 +29,7 @@
             "!**/test-results",
             "!**/coverage",
             "!**/routeTree.gen.ts",
+            "!**/types/i18n/resources.d.ts",
             "!**/src-tauri/gen",
             "!**/src-tauri/target",
             "!**/src-tauri/plugins/**/schema.json",
@@ -141,6 +146,16 @@
                 "rules": {
                     "suspicious": {
                         "noExplicitAny": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["packages/design-system/src/components/charts/**"],
+            "linter": {
+                "rules": {
+                    "complexity": {
+                        "noExcessiveCognitiveComplexity": "off"
                     }
                 }
             }

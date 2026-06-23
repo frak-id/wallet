@@ -54,6 +54,9 @@ export type {
     SharingSource,
     TokensEventMap,
     TokensSendAmountBucket,
+    WalletMergeEventMap,
+    WalletMergeMode,
+    WalletMergeStep,
     WalletModalEventMap,
 } from "./analytics";
 export {
@@ -97,8 +100,8 @@ export {
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
     selectFormattedReward,
-    useFormattedEstimatedReward,
 } from "./hook/useEstimatedReward";
+export { useFormattedEstimatedReward } from "./hook/useFormattedEstimatedReward";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";
 export { useOnlineStatus } from "./hook/useOnlineStatus";
@@ -110,6 +113,7 @@ export { isWebAuthNSupported } from "./lib/webauthn";
 
 // Query Keys
 export { balanceKey } from "./queryKeys/balance";
+export { merchantKey } from "./queryKeys/merchant";
 export { rewardsKey } from "./queryKeys/rewards";
 export { sdkKey } from "./queryKeys/sdk";
 

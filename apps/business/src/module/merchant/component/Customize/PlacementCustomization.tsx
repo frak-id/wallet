@@ -1,54 +1,40 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { Currency } from "@frak-labs/core-sdk";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import {
-    BannerPreview,
-    PostPurchasePreview,
-    ShareButtonPreview,
-} from "@frak-labs/ui-preview";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { Input } from "@frak-labs/design-system/components/Input";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { type UseFormReturn, useForm } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
+import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/module/forms/Form";
-import { FormActions } from "@/module/forms/FormActions";
+import { EditField } from "@/module/forms/EditField";
+import { Form, FormControl, FormField } from "@/module/forms/Form";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import { BannerFields, getBannerDefaults } from "./fields/BannerFields";
-import { ButtonShareFields } from "./fields/ButtonShareFields";
+import { useCustomizeSection } from "../saveRegistry";
 import {
+    ComponentFields,
+    ComponentPreview,
+    ComponentTypeTabs,
+} from "./ComponentEditor";
+import {
+    getBannerDefaults,
     getPostPurchaseDefaults,
-    PostPurchaseFields,
-} from "./fields/PostPurchaseFields";
-import styles from "./index.module.css";
-import {
-    DeletePlacementPanel,
-    PlacementCssPanel,
-    PlacementTranslationsPanel,
-} from "./PlacementPanels";
-import { COMPONENT_LABELS } from "./translations";
+} from "./fields/fieldDefaults";
+import { DeletePlacementPanel, PlacementCssPanel } from "./PlacementPanels";
 import type { ComponentSettingsFormValues, ComponentType } from "./types";
-import { COMPONENT_TYPES } from "./types";
 import { updatePlacement, valueOrUndefined } from "./utils";
+import { WordingPresets } from "./WordingPresets";
 
 export function PlacementCustomization({
     merchantId,
     placementId,
     sdkConfig,
-    onDirtyChange,
     onSelectDefaultTab,
 }: {
     merchantId: string;
     placementId: string;
     sdkConfig: SdkConfig;
-    onDirtyChange: (key: string, isDirty: boolean) => void;
     onSelectDefaultTab: () => void;
 }) {
     const placement = sdkConfig.placements?.[placementId];
@@ -61,19 +47,11 @@ export function PlacementCustomization({
                 merchantId={merchantId}
                 placementId={placementId}
                 sdkConfig={sdkConfig}
-                onDirtyChange={onDirtyChange}
             />
             <PlacementCssPanel
                 merchantId={merchantId}
                 placementId={placementId}
                 sdkConfig={sdkConfig}
-                onDirtyChange={onDirtyChange}
-            />
-            <PlacementTranslationsPanel
-                merchantId={merchantId}
-                placementId={placementId}
-                sdkConfig={sdkConfig}
-                onDirtyChange={onDirtyChange}
             />
             <DeletePlacementPanel
                 merchantId={merchantId}
@@ -109,18 +87,16 @@ function PlacementSettingsPanel({
     merchantId,
     placementId,
     sdkConfig,
-    onDirtyChange,
 }: {
     merchantId: string;
     placementId: string;
     sdkConfig: SdkConfig;
-    onDirtyChange: (key: string, isDirty: boolean) => void;
 }) {
-    const {
-        mutate: editSdkConfig,
-        isPending,
-        isSuccess,
-    } = useMerchantUpdate({ merchantId, target: "sdk-config" });
+    const { t } = useTranslation();
+    const { mutateAsync: editSdkConfig, isSuccess } = useMerchantUpdate({
+        merchantId,
+        target: "sdk-config",
+    });
 
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
@@ -160,14 +136,6 @@ function PlacementSettingsPanel({
             },
         },
     });
-
-    useEffect(() => {
-        onDirtyChange(
-            `placement-${placementId}-settings`,
-            form.formState.isDirty
-        );
-        return () => onDirtyChange(`placement-${placementId}-settings`, false);
-    }, [form.formState.isDirty, onDirtyChange, placementId]);
 
     useEffect(() => {
         if (!isSuccess) return;
@@ -219,7 +187,7 @@ function PlacementSettingsPanel({
                 rawCss: valueOrUndefined(currentValues.banner.css),
             };
 
-            editSdkConfig({
+            return editSdkConfig({
                 placements: updatePlacement(
                     sdkConfig,
                     placementId,
@@ -241,140 +209,87 @@ function PlacementSettingsPanel({
         [editSdkConfig, sdkConfig, placementId]
     );
 
+    useCustomizeSection(`placement-${placementId}-settings`, form, onSubmit);
+
     return (
         <Form {...form}>
-            <Panel title={`Placement settings · ${placementId}`}>
-                <div className={styles.customize__settingsGrid}>
+            <Card radius="m">
+                <Stack space="m">
+                    <Stack space="xxs">
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                        >
+                            {t("customize.placements.settings.title", {
+                                placementId,
+                            })}
+                        </Text>
+                        <Text variant="caption" color="tertiary">
+                            {t("customize.placements.settings.description")}
+                        </Text>
+                    </Stack>
+
                     <FormField
                         control={form.control}
                         name="targetInteraction"
                         rules={{
                             maxLength: {
                                 value: 200,
-                                message: "Maximum length is 200 characters",
+                                message: t(
+                                    "customize.components.targetInteraction.error"
+                                ),
                             },
                         }}
                         render={({ field }) => (
-                            <FormItem>
-                                <FormLabel weight={"medium"}>
-                                    Target interaction
-                                </FormLabel>
-                                <FormDescription>
-                                    Event name that triggers reward calculation
-                                    for this placement (e.g. purchase_completed,
-                                    signup)
-                                </FormDescription>
+                            <EditField
+                                label={t(
+                                    "customize.components.targetInteraction.label"
+                                )}
+                                hint={t(
+                                    "customize.components.targetInteraction.hint"
+                                )}
+                            >
                                 <FormControl>
                                     <Input
-                                        length={"big"}
+                                        variant="bare"
+                                        tone="muted"
                                         maxLength={200}
                                         placeholder={"purchase_completed"}
                                         {...field}
                                     />
                                 </FormControl>
-                                <FormMessage />
-                            </FormItem>
+                            </EditField>
                         )}
                     />
-                </div>
 
-                <div className={styles.customize__componentSelector}>
-                    {COMPONENT_TYPES.map((componentType) => (
-                        <button
-                            key={componentType}
-                            type="button"
-                            className={`${styles.customize__tab} ${
-                                selectedComponent === componentType
-                                    ? styles["customize__tab--active"]
-                                    : ""
-                            }`}
-                            onClick={() => setSelectedComponent(componentType)}
-                        >
-                            {COMPONENT_LABELS[componentType]}
-                        </button>
-                    ))}
-                </div>
+                    <ComponentTypeTabs
+                        selected={selectedComponent}
+                        onSelect={setSelectedComponent}
+                    />
 
-                <PreviewWrapper>
-                    <ComponentPreview
-                        selectedComponent={selectedComponent}
+                    <PreviewWrapper label={t("customize.components.preview")}>
+                        <ComponentPreview
+                            selectedComponent={selectedComponent}
+                            form={form}
+                            currency={(sdkConfig.currency ?? "eur") as Currency}
+                            shopName={sdkConfig.name ?? "My Store"}
+                        />
+                    </PreviewWrapper>
+
+                    <WordingPresets
+                        componentType={selectedComponent}
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
                         shopName={sdkConfig.name ?? "My Store"}
                     />
-                </PreviewWrapper>
 
-                {selectedComponent === "buttonShare" && (
-                    <ButtonShareFields form={form} />
-                )}
-                {selectedComponent === "postPurchase" && (
-                    <PostPurchaseFields form={form} />
-                )}
-                {selectedComponent === "banner" && <BannerFields form={form} />}
-
-                <FormActions
-                    isSuccess={isSuccess}
-                    isPending={isPending}
-                    isDirty={form.formState.isDirty}
-                    onDiscard={() => form.reset(values)}
-                    onSubmit={() => form.handleSubmit(onSubmit)()}
-                />
-            </Panel>
+                    <ComponentFields
+                        selectedComponent={selectedComponent}
+                        form={form}
+                    />
+                </Stack>
+            </Card>
         </Form>
     );
-}
-
-export function ComponentPreview({
-    selectedComponent,
-    form,
-    currency,
-    shopName,
-}: {
-    selectedComponent: ComponentType;
-    form: UseFormReturn<ComponentSettingsFormValues>;
-    currency: Currency;
-    shopName: string;
-}) {
-    const values = form.watch();
-
-    switch (selectedComponent) {
-        case "buttonShare":
-            return (
-                <ShareButtonPreview
-                    text={values.buttonShare.text || "Share and earn!"}
-                    currency={currency}
-                    shopName={shopName}
-                />
-            );
-        case "postPurchase":
-            return (
-                <PostPurchasePreview
-                    messageText={
-                        values.postPurchase.refereeText ||
-                        "You just earned {REWARD}! Share with friends to earn even more."
-                    }
-                    ctaText={
-                        values.postPurchase.ctaText || "Share & earn {REWARD}"
-                    }
-                    currency={currency}
-                    shopName={shopName}
-                />
-            );
-        case "banner":
-            return (
-                <BannerPreview
-                    title={
-                        values.banner.referralTitle ||
-                        "Earn {REWARD} on purchases"
-                    }
-                    description={
-                        values.banner.referralDescription ||
-                        "Earn rewards after your purchase via the Frak partner app."
-                    }
-                    ctaText={values.banner.referralCta || "Got it"}
-                    currency={currency}
-                    shopName={shopName}
-                />
-            );
-    }
 }

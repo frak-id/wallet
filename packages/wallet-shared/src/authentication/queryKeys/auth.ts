@@ -42,4 +42,50 @@ export namespace authKey {
      */
     const checkEmailBase = "checkEmail" as const;
     export const checkEmail = [base, checkEmailBase] as const;
+
+    /**
+     * Query/mutation keys for the post-auth "my email" flow
+     */
+    const myEmailBase = "myEmail" as const;
+    export const myEmail = [base, myEmailBase] as const;
+    export const sendEmailVerification = [
+        base,
+        myEmailBase,
+        "sendVerification",
+    ] as const;
+    export const verifyEmail = [base, myEmailBase, "verify"] as const;
+
+    /**
+     * Best-known "last authenticator" hint read from the platform's
+     * cross-platform recovery KV (iCloud KV on iOS, Block Store on
+     * Android). Survives uninstall and unlocks the reinstall UX. Wiped
+     * by explicit auth-success paths.
+     */
+    export const recoveryHint = [base, "recoveryHint"] as const;
+
+    /**
+     * Keys for the same-device wallet-merge flow. Preview is read-only and
+     * fully recomputable from the same inputs, so the React Query cache is
+     * keyed by the target credential.
+     */
+    const mergeBase = "merge" as const;
+    export const merge = {
+        all: [base, mergeBase] as const,
+        preview: (
+            targetAuthenticatorId: string,
+            requesterAuthenticatorId = ""
+        ) =>
+            [
+                base,
+                mergeBase,
+                "preview",
+                targetAuthenticatorId,
+                requesterAuthenticatorId,
+            ] as const,
+        consent: [base, mergeBase, "consent"] as const,
+        switchAuthenticator: [base, mergeBase, "switchAuthenticator"] as const,
+        sendAddPassKey: [base, mergeBase, "sendAddPassKey"] as const,
+        migrateLoserAssets: [base, mergeBase, "migrateLoserAssets"] as const,
+        settle: [base, mergeBase, "settle"] as const,
+    };
 }

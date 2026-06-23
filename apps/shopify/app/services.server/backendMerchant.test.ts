@@ -3,7 +3,6 @@ import type { AuthenticatedContext } from "../types/context";
 import {
     getFrakWebookStatus,
     getMerchantBankStatus,
-    getMerchantCampaignStats,
     getMerchantCampaigns,
     setupFrakWebhook,
 } from "./backendMerchant";
@@ -195,13 +194,17 @@ describe("getMerchantCampaigns", () => {
 
     it("should return campaigns when API succeeds", async () => {
         const mockCampaigns = [{ id: "c1", title: "Campaign 1" }];
+        const mockResponse = {
+            bankDistributionStatus: "distributing" as const,
+            campaigns: mockCampaigns,
+        };
         const mockGet = vi.fn().mockResolvedValue({
-            data: { campaigns: mockCampaigns },
+            data: mockResponse,
             error: null,
         });
         vi.mocked(resolveMerchantId).mockResolvedValue("merchant-abc");
         vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { get: mockGet, stats: { get: vi.fn() } },
+            campaigns: { get: mockGet },
         } as any);
 
         const result = await getMerchantCampaigns(
@@ -211,7 +214,7 @@ describe("getMerchantCampaigns", () => {
             })
         );
 
-        expect(result).toEqual(mockCampaigns);
+        expect(result).toEqual(mockResponse);
         expect(backendApi.business.merchant).toHaveBeenCalledWith({
             merchantId: "merchant-abc",
         });
@@ -227,7 +230,7 @@ describe("getMerchantCampaigns", () => {
         });
         vi.mocked(resolveMerchantId).mockResolvedValue("merchant-abc-err");
         vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { get: mockGet, stats: { get: vi.fn() } },
+            campaigns: { get: mockGet },
         } as any);
 
         const result = await getMerchantCampaigns(
@@ -242,7 +245,7 @@ describe("getMerchantCampaigns", () => {
         const mockGet = vi.fn().mockRejectedValue(new Error("Network failure"));
         vi.mocked(resolveMerchantId).mockResolvedValue("merchant-abc-throw");
         vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { get: mockGet, stats: { get: vi.fn() } },
+            campaigns: { get: mockGet },
         } as any);
 
         const result = await getMerchantCampaigns(
@@ -260,7 +263,7 @@ describe("getMerchantCampaigns", () => {
         });
         vi.mocked(resolveMerchantId).mockResolvedValue("merchant-abc-noheader");
         vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { get: mockGet, stats: { get: vi.fn() } },
+            campaigns: { get: mockGet },
         } as any);
 
         await getMerchantCampaigns(
@@ -278,7 +281,7 @@ describe("getMerchantCampaigns", () => {
         });
         vi.mocked(resolveMerchantId).mockResolvedValue("merchant-abc-idtoken");
         vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { get: mockGet, stats: { get: vi.fn() } },
+            campaigns: { get: mockGet },
         } as any);
 
         await getMerchantCampaigns(
@@ -300,7 +303,7 @@ describe("getMerchantCampaigns", () => {
             "merchant-abc-bothtoken"
         );
         vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { get: mockGet, stats: { get: vi.fn() } },
+            campaigns: { get: mockGet },
         } as any);
 
         await getMerchantCampaigns(
@@ -434,132 +437,6 @@ describe("getMerchantBankStatus", () => {
 
         expect(mockGet).toHaveBeenCalledWith({
             headers: { "X-Shopify-Session-Token": "param-token" },
-        });
-    });
-});
-
-// ---------------------------------------------------------------------------
-// getMerchantCampaignStats
-// ---------------------------------------------------------------------------
-
-describe("getMerchantCampaignStats", () => {
-    const mockContext = {} as AuthenticatedContext;
-
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
-    it("should return null when merchant not found", async () => {
-        vi.mocked(resolveMerchantId).mockResolvedValue(null);
-
-        const result = await getMerchantCampaignStats(
-            mockContext,
-            makeRequest("https://test.myshopify.com/app")
-        );
-
-        expect(result).toBeNull();
-        expect(backendApi.business.merchant).not.toHaveBeenCalled();
-    });
-
-    it("should return stats when API succeeds", async () => {
-        const mockStats = [{ campaignId: "c1", clicks: 42 }];
-        const mockGet = vi.fn().mockResolvedValue({
-            data: { stats: mockStats },
-            error: null,
-        });
-        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-stats");
-        vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { stats: { get: mockGet }, get: vi.fn() },
-        } as any);
-
-        const result = await getMerchantCampaignStats(
-            mockContext,
-            makeRequest("https://test.myshopify.com/app", {
-                authorization: "Bearer stats-token",
-            })
-        );
-
-        expect(result).toEqual(mockStats);
-        expect(backendApi.business.merchant).toHaveBeenCalledWith({
-            merchantId: "merchant-stats",
-        });
-        expect(mockGet).toHaveBeenCalledWith({
-            headers: { "X-Shopify-Session-Token": "stats-token" },
-        });
-    });
-
-    it("should return null when API returns error", async () => {
-        const mockGet = vi.fn().mockResolvedValue({
-            data: null,
-            error: { status: 500 },
-        });
-        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-stats");
-        vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { stats: { get: mockGet }, get: vi.fn() },
-        } as any);
-
-        const result = await getMerchantCampaignStats(
-            mockContext,
-            makeRequest("https://test.myshopify.com/app")
-        );
-
-        expect(result).toBeNull();
-    });
-
-    it("should return null when API throws exception", async () => {
-        const mockGet = vi
-            .fn()
-            .mockRejectedValue(new Error("Connection refused"));
-        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-stats");
-        vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { stats: { get: mockGet }, get: vi.fn() },
-        } as any);
-
-        const result = await getMerchantCampaignStats(
-            mockContext,
-            makeRequest("https://test.myshopify.com/app")
-        );
-
-        expect(result).toBeNull();
-    });
-
-    it("should pass no headers when request has no token", async () => {
-        const mockGet = vi.fn().mockResolvedValue({
-            data: { stats: [] },
-            error: null,
-        });
-        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-stats");
-        vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { stats: { get: mockGet }, get: vi.fn() },
-        } as any);
-
-        await getMerchantCampaignStats(
-            mockContext,
-            makeRequest("https://test.myshopify.com/app")
-        );
-
-        expect(mockGet).toHaveBeenCalledWith({ headers: undefined });
-    });
-
-    it("should extract token from id_token query param when no Authorization header", async () => {
-        const mockGet = vi.fn().mockResolvedValue({
-            data: { stats: [] },
-            error: null,
-        });
-        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-stats");
-        vi.mocked(backendApi.business.merchant).mockReturnValue({
-            campaigns: { stats: { get: mockGet }, get: vi.fn() },
-        } as any);
-
-        await getMerchantCampaignStats(
-            mockContext,
-            makeRequest(
-                "https://test.myshopify.com/app?id_token=stats-param-token"
-            )
-        );
-
-        expect(mockGet).toHaveBeenCalledWith({
-            headers: { "X-Shopify-Session-Token": "stats-param-token" },
         });
     });
 });

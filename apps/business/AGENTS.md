@@ -1,6 +1,6 @@
 # apps/business — Compass
 
-TanStack Router SPA merchant dashboard. Largest app (345 TS/TSX). Campaigns/products/analytics. Served behind nginx in production.
+TanStack Router SPA merchant dashboard. Largest app (415 TS/TSX). Campaigns/members/analytics. Served behind nginx in production.
 
 ## Quick Commands
 ```bash
@@ -12,8 +12,8 @@ bun run test         # business-unit Vitest project
 
 ## Key Files
 - `src/routes/__root.tsx` — root shell · `src/routes/_restricted/` — auth guards for dashboard
-- `src/module/{campaigns,product,merchant,members,dashboard,forms,login,settings,embedded,common}/` — features
-  - `campaigns/` = 29 hooks · `product/` = 29 hooks · `merchant/` = 17 hooks
+- `src/module/{campaigns,merchant,members,dashboard,forms,login,settings,embedded,common}/` — features
+  - `campaigns/` = 8 hooks · `merchant/` = 23 hooks
 - `src/stores/` — Zustand stores (separate from modules)
 - `nginx.conf` — production SPA fallback; local `preview` differs from prod
 - `vite.config.ts` — `define` block bakes config at build time
@@ -23,11 +23,12 @@ bun run test         # business-unit Vitest project
 - **Individual Zustand selectors are mandatory here**: this app is the most sensitive to re-render storms (345 files, many subscribers).
 - **Production = nginx with pre-compressed gzip**: CI generates `.gz` siblings; vite `preview` does not serve them — expect size/cache differences.
 - **Restricted-route pattern**: `_restricted` layout centralises auth; do NOT add guards per-route.
-- **Consumes legacy UI**: uses `@frak-labs/ui` (Radix) + `@frak-labs/ui-preview`; design-system migration hasn't reached this app.
+- **UI**: uses `@frak-labs/design-system` (Vanilla Extract) + `@frak-labs/ui-preview`.
 - **Type-safe API** via `@frak-labs/client` (Eden Treaty) — do not hand-roll fetches; the client already carries backend types.
+- **i18n location**: translations live in `src/i18n/locales/{en,fr}/translation.json`; FR is the fallback (bundled), EN is lazy-loaded. Regen types via `bun run i18n:types` after adding keys. Single `translation` namespace — no `customized` namespace (wallet-only).
 
 ## Anti-Patterns
-Runtime env var reads · whole-store Zustand subscription · CSS Modules bypass (still CSS Modules here — NOT Vanilla Extract) · Tailwind · adding guards per route instead of via `_restricted`.
+Runtime env var reads · whole-store Zustand subscription · CSS Modules or plain `.css` (use Vanilla Extract `.css.ts`) · Tailwind · adding guards per route instead of via `_restricted`.
 
 ## See Also
 Parent `/AGENTS.md` · `services/backend/AGENTS.md` (API contract) · `packages/client/` (Eden Treaty) · `packages/{ui,ui-preview}/`.

@@ -57,3 +57,20 @@ export function isPairingSignatureError(
 ): err is PairingSignatureError {
     return err instanceof PairingSignatureError;
 }
+
+/**
+ * Thrown by `OriginPairingClient.ensurePairing` when the client is in
+ * a non-recoverable state (`error` after a fatal close, or `retry-error`
+ * after the reconnect budget is exhausted). Callers map the `status`
+ * field onto feature-specific error codes (see e.g.
+ * `apps/wallet/.../walletMerge/errors.ts`).
+ */
+export class PairingNotReadyError extends Error {
+    readonly status: "error" | "retry-error";
+
+    constructor(status: "error" | "retry-error") {
+        super(`Pairing entered ${status} state`);
+        this.name = "PairingNotReadyError";
+        this.status = status;
+    }
+}

@@ -25,6 +25,4 @@ export type AuthenticatorDocument = Readonly<{
     credentialDeviceType: CredentialDeviceType;
     credentialBackedUp: boolean;
     transports?: AuthenticatorTransportFuture[];
-    // Optional email captured at registration (mail <> wallet mapping)
-    email?: string;
 }>;

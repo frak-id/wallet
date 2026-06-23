@@ -8,6 +8,7 @@ import {
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { NumberedCircle } from "@frak-labs/design-system/components/NumberedCircle";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
@@ -58,6 +59,12 @@ export type SharingPageProps = {
      * Whether a share action is currently in progress (pending navigator.share).
      */
     isSharing: boolean;
+    /**
+     * Whether the estimated reward query is still loading.
+     * While true, the reward amount and tagline are replaced by a skeleton so
+     * the card never flashes a placeholder "0" before the real amount resolves.
+     */
+    isRewardLoading?: boolean;
     /**
      * Whether the Web Share API is available in the current browser.
      * When false, the share button is hidden and copy is the only option.
@@ -114,6 +121,7 @@ export function SharingPage({
     installUrl,
     t,
     isSharing,
+    isRewardLoading = false,
     canShare = true,
     showConfirmation,
     onShare,
@@ -190,31 +198,39 @@ export function SharingPage({
                         <div className={styles.creditCardContent}>
                             <div className={styles.creditCardTop}>
                                 <span className={styles.creditCardAmount}>
-                                    {(() => {
-                                        const amount = t(
-                                            "sdk.sharingPage.card.amount"
-                                        );
-                                        const match = amount.match(
-                                            /^([\d\s]+)([.,]\d+)?\s*(.*)$/
-                                        );
-                                        if (!match) return amount;
-                                        const integer = match[1].trim();
-                                        const decimals = match[2] ?? ",00";
-                                        const currency = match[3] ?? "";
-                                        return (
-                                            <>
-                                                {integer}
-                                                <span
-                                                    className={
-                                                        styles.creditCardCurrency
-                                                    }
-                                                >
-                                                    {decimals}
-                                                    {currency}
-                                                </span>
-                                            </>
-                                        );
-                                    })()}
+                                    {isRewardLoading ? (
+                                        <Skeleton
+                                            variant="rect"
+                                            width={90}
+                                            height={36}
+                                        />
+                                    ) : (
+                                        (() => {
+                                            const amount = t(
+                                                "sdk.sharingPage.card.amount"
+                                            );
+                                            const match = amount.match(
+                                                /^([\d\s]+)([.,]\d+)?\s*(.*)$/
+                                            );
+                                            if (!match) return amount;
+                                            const integer = match[1].trim();
+                                            const decimals = match[2] ?? ",00";
+                                            const currency = match[3] ?? "";
+                                            return (
+                                                <>
+                                                    {integer}
+                                                    <span
+                                                        className={
+                                                            styles.creditCardCurrency
+                                                        }
+                                                    >
+                                                        {decimals}
+                                                        {currency}
+                                                    </span>
+                                                </>
+                                            );
+                                        })()
+                                    )}
                                 </span>
                                 <span className={styles.creditCardLabel}>
                                     {t("sdk.sharingPage.card.label")}
@@ -222,7 +238,15 @@ export function SharingPage({
                             </div>
                             <div className={styles.creditCardBottom}>
                                 <span className={styles.creditCardBottomText}>
-                                    {t("sdk.sharingPage.card.tagline1")}
+                                    {isRewardLoading ? (
+                                        <Skeleton
+                                            variant="text"
+                                            width={70}
+                                            height={14}
+                                        />
+                                    ) : (
+                                        t("sdk.sharingPage.card.tagline1")
+                                    )}
                                     <br />
                                     {t("sdk.sharingPage.card.tagline2")}
                                 </span>

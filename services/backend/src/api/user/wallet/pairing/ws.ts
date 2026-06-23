@@ -6,8 +6,8 @@ import {
 } from "@backend-infrastructure";
 import { Elysia } from "elysia";
 import type { StaticWalletTokenDto } from "../../../../domain/auth";
-import { PairingContext } from "../../../../domain/pairing";
 import { WsCloseCode } from "../../../../domain/pairing/dto/WebSocketCloseCode";
+import { OrchestrationContext } from "../../../../orchestration/context";
 
 const initiateRateLimit = { windowMs: 60_000, maxRequests: 10 };
 const initiateStore = createRateLimitStore();
@@ -32,11 +32,12 @@ async function parseWallet(
 
 export const wsRoute = new Elysia()
     .onStart(({ server }) => {
-        // Wire a server-side publisher into the router repo so it can emit
-        // `signature-reject` autonomously (cleanup cron, origin grace expiry)
-        // without needing an `ElysiaWS` sender.
+        // Wire a server-side publisher into the router orchestrator so it
+        // can emit `signature-reject` / `merge-completed` autonomously
+        // (cleanup cron, post-merge settlement) without needing an
+        // `ElysiaWS` sender.
         if (!server) return;
-        PairingContext.repositories.router.setServerPublisher(
+        OrchestrationContext.orchestrators.pairingRouter.setServerPublisher(
             (topic, message) => {
                 server.publish(topic, JSON.stringify(message));
             }
@@ -68,7 +69,7 @@ export const wsRoute = new Elysia()
 
             const wallet = await parseWallet(walletJwt);
 
-            await PairingContext.repositories.connection.handlePairingOpen({
+            await OrchestrationContext.orchestrators.pairing.handleOpen({
                 query: ws.data.query,
                 userAgent,
                 wallet,
@@ -93,10 +94,12 @@ export const wsRoute = new Elysia()
                 return;
             }
 
-            await PairingContext.repositories.router.handleMessage({
-                message,
-                ws,
-                wallet,
-            });
+            await OrchestrationContext.orchestrators.pairingRouter.handleMessage(
+                {
+                    message,
+                    ws,
+                    wallet,
+                }
+            );
         },
     });

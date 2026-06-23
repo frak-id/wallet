@@ -1,16 +1,32 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { InputSearch } from "@frak-labs/ui/component/forms/InputSearch";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import {
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from "@frak-labs/design-system/components/Tabs";
+import { CalendarIcon, RefreshIcon } from "@frak-labs/design-system/icons";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { CalendarIcon, SlidersHorizontal } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Calendar } from "@/module/common/component/Calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/module/common/component/Popover";
-import styles from "./Filter.module.css";
+import { useMemo } from "react";
+import type { DateRange } from "react-day-picker";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/module/common/component/Button";
+import { DateRangePopover } from "@/module/common/component/DateRangePopover";
+import { getDateFnsLocale } from "@/module/common/utils/dateLocale";
+import { InputSearch } from "@/module/forms/InputSearch";
+import type { CampaignStatus } from "@/types/Campaign";
+import * as styles from "./filter.css";
+
+export type CampaignTab = "all" | CampaignStatus | "ended";
+
+const tabValues: CampaignTab[] = [
+    "all",
+    "active",
+    "paused",
+    "draft",
+    "ended",
+    "archived",
+];
 
 type TableCampaignFiltersProps = {
     columnFilters: ColumnFiltersState;
@@ -21,37 +37,56 @@ export function TableCampaignFilters({
     columnFilters,
     setColumnFilters,
 }: TableCampaignFiltersProps) {
-    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+    const { t, i18n } = useTranslation();
+    const locale = getDateFnsLocale(i18n.language);
 
     // Extract current values from columnFilters
     const currentTitle = useMemo(
         () =>
-            (columnFilters.find((filter) => filter.id === "title")
+            (columnFilters.find((filter) => filter.id === "name")
                 ?.value as string) || "",
         [columnFilters]
     );
 
     const currentDate = useMemo(
         () =>
-            columnFilters.find((filter) => filter.id === "date")?.value as Date,
+            columnFilters.find((filter) => filter.id === "date")?.value as
+                | DateRange
+                | undefined,
         [columnFilters]
     );
 
-    // Helper to update title filter
+    const currentStatus = useMemo<CampaignTab>(
+        () =>
+            (columnFilters.find((filter) => filter.id === "status")
+                ?.value as CampaignTab) ?? "all",
+        [columnFilters]
+    );
+
+    // Helper to update the campaign-name filter
     const setTitleFilter = (value: string) => {
         setColumnFilters((prev) => {
-            const filtered = prev.filter((f) => f.id !== "title");
+            const filtered = prev.filter((f) => f.id !== "name");
             if (!value) return filtered;
-            return [...filtered, { id: "title", value }];
+            return [...filtered, { id: "name", value }];
         });
     };
 
     // Helper to update date filter
-    const setDateFilter = (value?: Date) => {
+    const setDateFilter = (value?: DateRange) => {
         setColumnFilters((prev) => {
             const filtered = prev.filter((f) => f.id !== "date");
-            if (!value) return filtered;
+            if (!value?.from) return filtered;
             return [...filtered, { id: "date", value }];
+        });
+    };
+
+    // Helper to update status tab filter. "all" clears the filter.
+    const setStatusFilter = (value: CampaignTab) => {
+        setColumnFilters((prev) => {
+            const filtered = prev.filter((f) => f.id !== "status");
+            if (value === "all") return filtered;
+            return [...filtered, { id: "status", value }];
         });
     };
 
@@ -59,51 +94,81 @@ export function TableCampaignFilters({
     const resetFilters = () => {
         setTitleFilter("");
         setDateFilter(undefined);
+        setStatusFilter("all");
     };
 
     return (
         <div className={styles.filters}>
-            <div className={styles.filters__item}>
+            <Inline space="l" alignY="center">
                 <InputSearch
-                    placeholder={"Search campaign..."}
-                    classNameWrapper={styles.filters__search}
+                    className={styles.filtersSearch}
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}
                 />
-            </div>
-            <div className={styles.filters__item}>
-                <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant={"secondary"}
-                            className={styles.filters__datePickerTrigger}
-                        >
-                            <CalendarIcon size={20} />
-                            <span>
-                                {currentDate && format(currentDate, "PPP")}
-                            </span>
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end">
-                        <Calendar
-                            mode="single"
-                            selected={currentDate}
-                            onSelect={(value) => {
-                                if (!value) return;
-                                setDateFilter(value);
-                                setIsPopoverOpen(false);
-                            }}
-                        />
-                    </PopoverContent>
-                </Popover>
-                <Button
-                    variant={"secondary"}
-                    leftIcon={<SlidersHorizontal size={20} />}
-                    onClick={resetFilters}
+                <Inline space="m" alignY="center">
+                    <DateRangePopover
+                        value={currentDate}
+                        onChange={setDateFilter}
+                        trigger={
+                            <Button variant="filter" size="filter">
+                                <CalendarIcon width={16} height={16} />
+                                <span>
+                                    {currentDate?.from ? (
+                                        currentDate.to ? (
+                                            <>
+                                                {format(
+                                                    currentDate.from,
+                                                    "LLL dd, y",
+                                                    { locale }
+                                                )}{" "}
+                                                -{" "}
+                                                {format(
+                                                    currentDate.to,
+                                                    "LLL dd, y",
+                                                    { locale }
+                                                )}
+                                            </>
+                                        ) : (
+                                            format(
+                                                currentDate.from,
+                                                "LLL dd, y",
+                                                {
+                                                    locale,
+                                                }
+                                            )
+                                        )
+                                    ) : (
+                                        t("campaigns.filter.dateRange")
+                                    )}
+                                </span>
+                            </Button>
+                        }
+                    />
+                    <Button
+                        variant="filter"
+                        size="filter"
+                        icon={<RefreshIcon width={16} height={16} />}
+                        onClick={resetFilters}
+                    >
+                        {t("campaigns.filter.reset")}
+                    </Button>
+                </Inline>
+            </Inline>
+            <Tabs
+                value={currentStatus}
+                onValueChange={(value) => setStatusFilter(value as CampaignTab)}
+            >
+                <TabsList
+                    variant="navigation"
+                    aria-label={t("campaigns.filter.tabsLabel")}
                 >
-                    Reset filters
-                </Button>
-            </div>
+                    {tabValues.map((tab) => (
+                        <TabsTrigger key={tab} value={tab} variant="navigation">
+                            {t(`campaigns.tabs.${tab}`)}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+            </Tabs>
         </div>
     );
 }

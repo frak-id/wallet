@@ -16,7 +16,11 @@ import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { EmailInputStep } from "@/module/onboarding/component/EmailInputStep";
+import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
+import {
+    type EmailAlreadyUsedArgs,
+    EmailInputStep,
+} from "@/module/onboarding/component/EmailInputStep";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
 import { OnboardingStep } from "@/module/onboarding/component/OnboardingStep";
 import { ReferralCodeStep } from "@/module/onboarding/component/ReferralCodeStep";
@@ -29,12 +33,39 @@ import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActi
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./register.css";
 
+type RegisterSearch = {
+    /**
+     * Bypasses the "already has passkeys → /login" redirect guard. Set
+     * when the user explicitly chose to create a new account from a
+     * login surface (e.g. `/login/email` not-found modal, `/login` back
+     * button).
+     */
+    new?: boolean;
+    /**
+     * Pre-fills the onboarding email field. Sent by `/login/email` when
+     * the user types an email the backend can't resolve, accepts the
+     * "create an account" CTA, and lands on `/register`. When present,
+     * the flow skips ahead to the `onboardingThree` step.
+     */
+    email?: string;
+};
+
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
-    beforeLoad: async ({ location }) => {
+    validateSearch: (search: Record<string, unknown>): RegisterSearch => ({
+        new:
+            search.new === true ||
+            search.new === "true" ||
+            search.new === "1" ||
+            search.new === 1,
+        email:
+            typeof search.email === "string" && search.email.length > 0
+                ? search.email
+                : undefined,
+    }),
+    beforeLoad: async ({ search }) => {
         // Skip redirect if user explicitly requested new account creation
-        const search = new URLSearchParams(location.search);
-        if (search.has("new")) return;
+        if (search.new) return;
 
         // If the user already has passkeys stored locally, redirect to login
         const previousAuthenticators = await authenticatorStorage.getAll();
@@ -70,6 +101,7 @@ type OnboardingFlowStep = (typeof ONBOARDING_FLOW_STEPS)[number];
 type FlowStep =
     | OnboardingFlowStep
     | "emailInput"
+    | "emailAlreadyUsed"
     | "referralCode"
     | "notification"
     | "welcome";
@@ -84,12 +116,25 @@ const TOAST_EXIT_MS = 220;
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const [step, setStep] = useState<FlowStep>("onboardingOne");
+    const { email: prefilledEmail } = Route.useSearch();
+    // When the user arrives from `/login/email` with a confirmed-unused
+    // email, jump straight to the secure-space step — the email
+    // collection step would just re-ask for something they already
+    // typed. Otherwise start at the marketing slides as usual.
+    const [step, setStep] = useState<FlowStep>(
+        prefilledEmail ? "onboardingThree" : "onboardingOne"
+    );
     // Hold the email collected on the `emailInput` step. Stays in component
     // state so navigating back to the step pre-fills the field, and is
     // forwarded to the register endpoint when the user activates their
     // secure space.
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(prefilledEmail ?? "");
+    // Captured on the `emailAlreadyUsed` step so the dedicated screen knows
+    // which credential to log in with. Cleared once the user navigates back
+    // to the input step.
+    const [alreadyUsed, setAlreadyUsed] = useState<EmailAlreadyUsedArgs | null>(
+        null
+    );
     const [loginError, setLoginError] = useState<Error | null>(null);
 
     // Detect pairing context once at mount: user landed on /register
@@ -367,34 +412,44 @@ function RegisterPage() {
                             "backward"
                         );
                     }}
-                    onLoginExisting={({
-                        email: existingEmail,
-                        authenticatorId,
-                        wallet,
-                    }) => {
-                        setEmail(existingEmail);
+                    onAlreadyUsed={(args) => {
+                        setEmail(args.email);
+                        setAlreadyUsed(args);
                         flowRef.current?.track("email_input_resolved", {
-                            outcome: "login_existing",
+                            outcome: "already_used",
                         });
+                        goToStep("emailAlreadyUsed");
+                    }}
+                />
+            )}
+            {step === "emailAlreadyUsed" && alreadyUsed && (
+                <EmailAlreadyUsedStep
+                    email={alreadyUsed.email}
+                    isLoginLoading={isLoginLoading}
+                    onLogin={() => {
                         flowRef.current?.track("onboarding_action_clicked", {
                             action: "login",
                         });
                         setLoginError(null);
-                        // Wallet is optional in the response (legacy rows
-                        // without `smart_wallet_address`); fall back to the
-                        // global account chooser when missing.
+                        // Pass every credential id bound to the resolved
+                        // wallet to WebAuthn's `allowCredentials` — a wallet
+                        // routinely accepts multiple passkeys post-merge.
+                        // No `lastAuthentication` here: that store is per
+                        // device, and the resolution we have is from the
+                        // server, not the local hint cache.
                         login(
-                            wallet
+                            alreadyUsed.authenticatorIds.length > 0
                                 ? {
-                                      lastAuthentication: {
-                                          authenticatorId,
-                                          wallet,
-                                      },
+                                      allowedCredentialIds:
+                                          alreadyUsed.authenticatorIds,
                                   }
                                 : {}
                         );
                     }}
-                    isLoginLoading={isLoginLoading}
+                    onBack={() => {
+                        setAlreadyUsed(null);
+                        goToStep("emailInput", "backward");
+                    }}
                     loginError={loginError}
                 />
             )}

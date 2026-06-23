@@ -9,8 +9,9 @@ type InputProps = Omit<
     /**
      * - `"default"` — standard bordered field
      * - `"bare"` — borderless 56px flat card (pair with `tone`)
+     * - `"soft"` — borderless white search field with compact padding
      */
-    variant?: "default" | "bare";
+    variant?: "default" | "bare" | "soft";
     length?: "small" | "medium" | "big";
     /**
      * Surface tone for `variant="bare"`. Use `elevated` (default, white)
@@ -22,6 +23,8 @@ type InputProps = Omit<
     rightSection?: ReactNode;
     error?: boolean;
     className?: string;
+    /** Class for the inner `<input>` (the wrapper takes `className`). */
+    inputClassName?: string;
     ref?: Ref<HTMLInputElement>;
 };
 
@@ -34,6 +37,7 @@ export function Input({
     error,
     disabled,
     className,
+    inputClassName,
     ref,
     ...rest
 }: InputProps) {
@@ -53,7 +57,7 @@ export function Input({
             <Box
                 as="input"
                 ref={ref}
-                className={inputField({ variant })}
+                className={`${inputField({ variant })}${inputClassName ? ` ${inputClassName}` : ""}`}
                 disabled={disabled}
                 {...rest}
             />

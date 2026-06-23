@@ -1,30 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MyMerchants } from "./index";
-
-const mockNavigate = vi.fn();
-
-vi.mock("@tanstack/react-router", () => ({
-    useNavigate: () => mockNavigate,
-}));
 
 vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
     useMyMerchants: vi.fn(),
 }));
 
-vi.mock("@/module/common/component/Panel", () => ({
-    Panel: ({
-        children,
-        title,
-    }: {
-        children: React.ReactNode;
-        title: string;
-    }) => (
-        <div data-testid="panel">
-            <h2>{title}</h2>
-            {children}
-        </div>
-    ),
+vi.mock("@/module/merchant/component/ManageBudgetSheet", () => ({
+    ManageBudgetSheet: () => null,
 }));
 
 vi.mock("@/module/dashboard/component/MerchantItem", () => ({
@@ -42,10 +25,6 @@ vi.mock("@/module/dashboard/component/MerchantItem", () => ({
     ),
 }));
 
-vi.mock("lucide-react", () => ({
-    Plus: () => <span data-testid="plus-icon">+</span>,
-}));
-
 // Import after mocks
 const { useMyMerchants } = await import(
     "@/module/dashboard/hooks/useMyMerchants"
@@ -56,7 +35,7 @@ describe("MyMerchants", () => {
         vi.clearAllMocks();
     });
 
-    it("should render merchants panel when data is available", async () => {
+    it("should render an empty grid when there is no merchant", async () => {
         vi.mocked(useMyMerchants).mockReturnValue({
             merchants: [],
             owned: [],
@@ -66,7 +45,7 @@ describe("MyMerchants", () => {
 
         render(<MyMerchants />);
 
-        expect(screen.getByText("My Merchants")).toBeInTheDocument();
+        expect(screen.queryAllByTestId("merchant-item")).toHaveLength(0);
     });
 
     it("should render merchants list when loaded", async () => {
@@ -90,23 +69,8 @@ describe("MyMerchants", () => {
 
         render(<MyMerchants />);
 
-        expect(screen.getAllByTestId("panel").length).toBeGreaterThan(0);
+        expect(screen.getAllByTestId("merchant-item").length).toBe(2);
         expect(screen.getByText("Merchant 1")).toBeInTheDocument();
         expect(screen.getByText("Merchant 2")).toBeInTheDocument();
-    });
-
-    it("should render empty list with add merchant button", async () => {
-        vi.mocked(useMyMerchants).mockReturnValue({
-            merchants: [],
-            owned: [],
-            adminOf: [],
-            isEmpty: true,
-        });
-
-        render(<MyMerchants />);
-
-        expect(screen.getAllByTestId("panel").length).toBeGreaterThan(0);
-        expect(screen.getAllByText("Add a Merchant").length).toBeGreaterThan(0);
-        expect(screen.getAllByTestId("plus-icon").length).toBeGreaterThan(0);
     });
 });

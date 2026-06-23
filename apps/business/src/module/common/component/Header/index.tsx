@@ -1,42 +1,93 @@
-import { ButtonRefresh } from "@frak-labs/ui/component/ButtonRefresh";
-import { LogoFrak } from "@frak-labs/ui/icons/LogoFrak";
-import { Link } from "@tanstack/react-router";
-import { User } from "lucide-react";
+import { Badge } from "@frak-labs/design-system/components/Badge";
+import { Link, useLocation } from "@tanstack/react-router";
+import { Download, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import styles from "./index.module.css";
+import { Button } from "@/module/common/component/Button";
+import { LinkButton } from "@/module/common/component/LinkButton";
+import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
+import { AccountMenu } from "./AccountMenu";
+import { HeaderBreadcrumb } from "./HeaderBreadcrumb";
+import {
+    actionGroup,
+    demoModeLink,
+    header,
+    headerInner,
+    headerLeft,
+    headerRight,
+    hideOnMobile,
+} from "./header.css";
 
+const CAMPAIGNS_PATH = /^\/m\/[^/]+\/campaigns(\/|$)/;
+const DASHBOARD_PATH = /^\/m\/[^/]+\/dashboard$/;
+const MERCHANT_PATH = /^\/m\/[^/]+\/merchant(\/|$)/;
+const MEMBERS_PATH = /^\/m\/[^/]+\/members$/;
+
+// TODO: drop the legacy `/campaigns`, `/dashboard`, `/merchant/` branches
+// once all entry points are merchant-scoped and the legacy redirect
+// routes (`_restricted/{campaigns,dashboard,merchant}.tsx`) are removed.
 export function Header() {
+    const { t } = useTranslation();
     const isDemoMode = useIsDemoMode();
+    const { pathname } = useLocation();
+    const showCreateCampaign =
+        CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
+    const showAddMerchant =
+        DASHBOARD_PATH.test(pathname) ||
+        pathname === "/dashboard" ||
+        MERCHANT_PATH.test(pathname) ||
+        pathname.startsWith("/merchant/");
+    const showExport =
+        CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
+    const showSendPush = MEMBERS_PATH.test(pathname);
 
     return (
-        <div>
-            <header className={styles.header}>
-                <Link to="/dashboard" className={styles.header__logo}>
-                    <LogoFrak />
-                </Link>
-                <div className={styles.navigationTop__container}>
-                    {isDemoMode && (
-                        <Link
-                            to="/settings"
-                            className={styles.demoModeBadge}
-                            title="Demo mode is active. Click to manage settings."
-                        >
-                            demo
-                        </Link>
-                    )}
-                    <ButtonRefresh />
-                    <Link to="/settings" className={styles.navigationProfile}>
-                        <span>
-                            <span className={styles.navigationProfile__avatar}>
-                                <User />
-                            </span>
-                        </span>
-                        <span className={styles.navigationProfile__infos}>
-                            My account
-                        </span>
-                    </Link>
+        <header className={header}>
+            <div className={headerInner}>
+                <div className={headerLeft}>
+                    <HeaderBreadcrumb />
                 </div>
-            </header>
-        </div>
+                <div className={headerRight}>
+                    <div className={`${actionGroup} ${hideOnMobile}`}>
+                        {isDemoMode && (
+                            <Link
+                                to="/settings"
+                                className={demoModeLink}
+                                title={t("shell.header.demoBadgeTitle")}
+                            >
+                                <Badge variant="info" size="medium">
+                                    {t("shell.header.demoBadge")}
+                                </Badge>
+                            </Link>
+                        )}
+                        {showExport && (
+                            <Button
+                                variant="secondary"
+                                size="small"
+                                rightIcon={<Download size={16} />}
+                            >
+                                {t("shell.header.export")}
+                            </Button>
+                        )}
+                        {showCreateCampaign && (
+                            <ButtonNewCampaign size="small" />
+                        )}
+                        {showSendPush && <ButtonSendPush size="small" />}
+                        {showAddMerchant && (
+                            <LinkButton
+                                to="/merchant/new"
+                                variant="primary"
+                                size="small"
+                                icon={<Plus size={16} />}
+                            >
+                                {t("shell.header.addMerchant")}
+                            </LinkButton>
+                        )}
+                    </div>
+                    <AccountMenu />
+                </div>
+            </div>
+        </header>
     );
 }

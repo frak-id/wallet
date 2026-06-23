@@ -1,12 +1,20 @@
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
-import { cva, cx, type VariantProps } from "class-variance-authority";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
 import type { ComponentPropsWithRef, ReactNode } from "react";
-import { createContext, useContext, useId } from "react";
+import { createContext, use, useId, useMemo } from "react";
 import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
 import { Controller, FormProvider, useFormContext } from "react-hook-form";
 import { Label } from "@/module/forms/Label";
-import styles from "./index.module.css";
+import {
+    formDescription,
+    formItem,
+    formLabel,
+    formLayout,
+    formTitle,
+} from "./form.css";
 
 const Form = FormProvider;
 
@@ -17,7 +25,7 @@ function FormLayout({
     children: ReactNode;
     className?: string;
 }) {
-    return <div className={cx(styles.form__layout, className)}>{children}</div>;
+    return <div className={clsx(formLayout, className)}>{children}</div>;
 }
 
 type FormFieldContextValue<
@@ -37,16 +45,17 @@ const FormField = <
 >({
     ...props
 }: ControllerProps<TFieldValues, TName>) => {
+    const value = useMemo(() => ({ name: props.name }), [props.name]);
     return (
-        <FormFieldContext.Provider value={{ name: props.name }}>
+        <FormFieldContext.Provider value={value}>
             <Controller {...props} />
         </FormFieldContext.Provider>
     );
 };
 
 const useFormField = () => {
-    const fieldContext = useContext(FormFieldContext);
-    const itemContext = useContext(FormItemContext);
+    const fieldContext = use(FormFieldContext);
+    const itemContext = use(FormItemContext);
     const { getFieldState, formState } = useFormContext();
 
     const fieldState = getFieldState(fieldContext.name, formState);
@@ -75,26 +84,19 @@ const FormItemContext = createContext<FormItemContextValue>(
     {} as FormItemContextValue
 );
 
-export type FormItemProps = ComponentPropsWithRef<"div"> &
-    VariantProps<typeof formItemVariants>;
+type FormItemRecipeVariants = NonNullable<RecipeVariants<typeof formItem>>;
 
-export const formItemVariants = cva(styles.form__item, {
-    variants: {
-        variant: {
-            radio: styles.form__radio,
-            checkbox: styles.form__checkbox,
-        },
-    },
-});
+type FormItemProps = ComponentPropsWithRef<"div"> & FormItemRecipeVariants;
 
 const FormItem = ({ ref, variant, className, ...props }: FormItemProps) => {
     const id = useId();
+    const value = useMemo(() => ({ id }), [id]);
 
     return (
-        <FormItemContext.Provider value={{ id }}>
+        <FormItemContext.Provider value={value}>
             <div
                 ref={ref}
-                className={formItemVariants({ variant, className })}
+                className={clsx(formItem({ variant }), className)}
                 {...props}
             />
         </FormItemContext.Provider>
@@ -102,25 +104,10 @@ const FormItem = ({ ref, variant, className, ...props }: FormItemProps) => {
 };
 FormItem.displayName = "FormItem";
 
-export type FormLabelProps = ComponentPropsWithRef<typeof LabelPrimitive.Root> &
-    VariantProps<typeof formLabelVariants>;
+type FormLabelRecipeVariants = NonNullable<RecipeVariants<typeof formLabel>>;
 
-export const formLabelVariants = cva(styles.form__label, {
-    variants: {
-        variant: {
-            radio: styles.form__radioWithLabel,
-            checkbox: styles.form__checkboxWithLabel,
-            light: styles["form__label--light"],
-            dark: styles["form__label--dark"],
-        },
-        selected: {
-            true: styles["form__label--selected"],
-        },
-        weight: {
-            medium: styles["form__label--medium"],
-        },
-    },
-});
+type FormLabelProps = ComponentPropsWithRef<typeof LabelPrimitive.Root> &
+    FormLabelRecipeVariants;
 
 const FormLabel = ({
     ref,
@@ -130,18 +117,14 @@ const FormLabel = ({
     className,
     ...props
 }: FormLabelProps) => {
-    const { error, formItemId } = useFormField();
-    const classNameError = error ? styles.form__error : "";
-
+    const { formItemId } = useFormField();
     return (
         <Label
             ref={ref}
-            className={`${formLabelVariants({
-                variant,
-                selected,
-                weight,
-                className,
-            })} ${classNameError}`}
+            className={clsx(
+                formLabel({ variant, selected, weight }),
+                className
+            )}
             htmlFor={formItemId}
             {...props}
         />
@@ -169,13 +152,10 @@ const FormControl = ({ ref, ...props }: ComponentPropsWithRef<typeof Slot>) => {
 };
 FormControl.displayName = "FormControl";
 
-export const formDescriptionVariants = cva(styles.form__description);
-
-export type FormDescriptionProps = ComponentPropsWithRef<"p"> &
-    VariantProps<typeof formDescriptionVariants> & {
-        label?: string | ReactNode;
-        classNameTitle?: string;
-    };
+type FormDescriptionProps = ComponentPropsWithRef<"p"> & {
+    label?: string | ReactNode;
+    classNameTitle?: string;
+};
 
 const FormDescription = ({
     ref,
@@ -190,14 +170,12 @@ const FormDescription = ({
     return (
         <>
             {label && (
-                <h3 className={`${styles.form__title} ${classNameTitle}`}>
-                    {label}
-                </h3>
+                <h3 className={clsx(formTitle, classNameTitle)}>{label}</h3>
             )}
             <p
                 ref={ref}
                 id={formDescriptionId}
-                className={formDescriptionVariants({ className })}
+                className={clsx(formDescription, className)}
                 {...props}
             >
                 {children}
@@ -208,11 +186,12 @@ const FormDescription = ({
 FormDescription.displayName = "FormDescription";
 
 const FormMessage = ({
-    ref,
-    className = "",
+    className,
     children,
-    ...props
-}: ComponentPropsWithRef<"p">) => {
+}: {
+    className?: string;
+    children?: ReactNode;
+}) => {
     const { error, formMessageId } = useFormField();
     const body = error ? String(error?.message) : children;
 
@@ -221,42 +200,12 @@ const FormMessage = ({
     }
 
     return (
-        <p
-            ref={ref}
-            id={formMessageId}
-            className={`error ${className}`}
-            {...props}
-        >
+        <FieldError id={formMessageId} className={className}>
             {body}
-        </p>
+        </FieldError>
     );
 };
 FormMessage.displayName = "FormMessage";
-
-const FormValidMessage = ({
-    ref,
-    className = "",
-    children,
-    ...props
-}: ComponentPropsWithRef<"p">) => {
-    const { formMessageId, invalid, error } = useFormField();
-
-    if (invalid || !!error) {
-        return null;
-    }
-
-    return (
-        <p
-            ref={ref}
-            id={`${formMessageId}-valid`}
-            className={`success ${className}`}
-            {...props}
-        >
-            {children}
-        </p>
-    );
-};
-FormValidMessage.displayName = "FormValidMessage";
 
 export {
     Form,
@@ -267,5 +216,4 @@ export {
     FormLabel,
     FormLayout,
     FormMessage,
-    FormValidMessage,
 };

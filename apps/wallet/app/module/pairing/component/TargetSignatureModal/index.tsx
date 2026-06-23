@@ -36,7 +36,7 @@ import * as styles from "./index.css";
  *  - Self-gates on a webauthn session — safe to mount at the route root.
  */
 export function TargetSignatureModal() {
-    const session = sessionStore(selectWebauthnSession);
+    const session = useStore(sessionStore, selectWebauthnSession);
     if (!session) return null;
     return <InnerTargetSignatureModal />;
 }

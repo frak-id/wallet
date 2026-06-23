@@ -1,7 +1,4 @@
-import {
-    InputNumber,
-    type InputNumberProps,
-} from "@frak-labs/ui/component/forms/InputNumber";
+import { InputNumber, type InputNumberProps } from "@/module/forms/InputNumber";
 import { currencyStore } from "@/stores/currencyStore";
 
 export function InputAmount({ ...props }: InputNumberProps) {

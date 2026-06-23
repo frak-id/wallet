@@ -22,6 +22,7 @@ export * from "./referral";
 export * from "./sharing";
 export * from "./stores/authenticationStore";
 export * from "./stores/clientIdStore";
+export * from "./stores/detachedPairingSessionStore";
 export * from "./stores/sessionStore";
 // Tokens
 export * from "./tokens";

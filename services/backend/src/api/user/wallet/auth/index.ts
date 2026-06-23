@@ -2,8 +2,11 @@ import { JwtContext, log, rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { WalletAuthResponseDto } from "../../../../domain/auth";
+import { emailRoutes } from "./email";
 import { emailStatusRoutes } from "./emailStatus";
 import { loginRoutes } from "./login";
+import { recoverRoutes } from "./recover";
+import { recoveryRoutes } from "./recovery";
 import { registerRoutes } from "./register";
 import { walletSdkRoutes } from "./sdk";
 
@@ -12,7 +15,10 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     .use(walletSdkRoutes)
     .use(loginRoutes)
     .use(registerRoutes)
+    .use(recoverRoutes)
     .use(emailStatusRoutes)
+    .use(emailRoutes)
+    .use(recoveryRoutes)
     // Logout
     .post("/logout", async ({ cookie: { businessAuth } }) => {
         businessAuth.remove();

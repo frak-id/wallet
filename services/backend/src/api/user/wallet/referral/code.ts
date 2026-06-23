@@ -1,8 +1,9 @@
-import { identityContext, rateLimitMiddleware } from "@backend-infrastructure";
+import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { ReferralCodeContext } from "../../../../domain/referral-code";
 import { OrchestrationContext } from "../../../../orchestration/context";
+import { identityContext } from "../../../middleware/identity";
 
 // Single shared rate limit for all /code/* routes: per-IP (DDoS defence)
 // + per-identity (prevents a single user fanning out across networks).

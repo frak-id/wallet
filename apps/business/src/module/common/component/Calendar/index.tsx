@@ -1,9 +1,11 @@
-import { buttonVariants } from "@frak-labs/ui/component/Button";
-import { cx } from "class-variance-authority";
+import { button } from "@frak-labs/design-system/components/Button";
+import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComponentProps } from "react";
 import { DayPicker } from "react-day-picker";
-import styles from "./index.module.css";
+import { useTranslation } from "react-i18next";
+import { getDateFnsLocale } from "@/module/common/utils/dateLocale";
+import * as styles from "./calendar.css";
 
 export type CalendarProps = ComponentProps<typeof DayPicker>;
 
@@ -13,10 +15,12 @@ export function Calendar({
     showOutsideDays = true,
     ...props
 }: CalendarProps) {
+    const { i18n } = useTranslation();
     return (
         <DayPicker
+            locale={getDateFnsLocale(i18n.language)}
             showOutsideDays={showOutsideDays}
-            className={cx(styles.root, className)}
+            className={clsx(styles.root, className)}
             classNames={{
                 months: styles.months,
                 month_caption: styles.caption,
@@ -29,15 +33,14 @@ export function Calendar({
                 weeks: styles.tbody,
                 week: styles.row,
                 day: styles.cell,
-                day_button: cx(
-                    buttonVariants({ variant: "ghost" }),
-                    styles.day
-                ),
-                range_end: "day-range-end",
+                day_button: `${button({ variant: "ghost" })} ${styles.day}`,
                 selected: styles.daySelected,
                 today: styles.dayToday,
-                outside: cx("day-outside", styles.dayOutside),
+                outside: `day-outside ${styles.dayOutside}`,
                 disabled: styles.dayDisabled,
+                range_start: styles.rangeStart,
+                range_middle: styles.rangeMiddle,
+                range_end: styles.rangeEnd,
                 hidden: "invisible",
                 ...classNames,
             }}

@@ -1,17 +1,33 @@
 import { Plus } from "lucide-react";
-import { LinkButton } from "@/module/common/component/LinkButton";
+import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import {
+    LinkButton,
+    type LinkButtonProps,
+} from "@/module/common/component/LinkButton";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { pushCreationStore } from "@/stores/pushCreationStore";
 
-export function ButtonSendPush() {
+export function ButtonSendPush({
+    size,
+    children,
+}: {
+    size?: LinkButtonProps["size"];
+    children?: ReactNode;
+}) {
+    const { t } = useTranslation();
     const setForm = pushCreationStore((state) => state.setForm);
+    const merchantId = useActiveMerchantId();
 
     return (
         <LinkButton
-            to="/push/create"
+            to="/m/$merchantId/push/create"
+            params={{ merchantId }}
             onClick={() => setForm(undefined)}
-            leftIcon={<Plus size={20} />}
+            icon={<Plus size={16} />}
+            size={size}
         >
-            Send Push
+            {children ?? t("members.sendPushNotification")}
         </LinkButton>
     );
 }

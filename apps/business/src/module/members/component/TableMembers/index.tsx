@@ -1,8 +1,6 @@
 import { formatAmount } from "@frak-labs/core-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
     type ColumnDef,
@@ -10,10 +8,11 @@ import {
     type SortingState,
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
-import { isAddressEqual } from "viem";
+import { useTranslation } from "react-i18next";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { Row } from "@/module/common/component/Row";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Table } from "@/module/common/component/Table";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import type {
     GetMembersPageItem,
     GetMembersParam,
@@ -21,8 +20,8 @@ import type {
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
+import { currencyStore } from "@/stores/currencyStore";
 import { membersStore } from "@/stores/membersStore";
-import styles from "./index.module.css";
 
 const columnHelper = createColumnHelper<GetMembersPageItem>();
 
@@ -32,13 +31,24 @@ const columnHelper = createColumnHelper<GetMembersPageItem>();
  *  - filter on top
  */
 export function TableMembers() {
+    const { t } = useTranslation();
     const filters = membersStore((state) => state.tableFilters);
     const setFilters = membersStore((state) => state.setTableFilters);
-    const selectedMembers = membersStore((state) => state.selectedMembers);
-    const addSelectedMember = membersStore((state) => state.addMember);
-    const removeSelectedMember = membersStore((state) => state.removeMember);
-    const clearSelection = membersStore((state) => state.clearSelection);
     const isDemoMode = useIsDemoMode();
+    const merchantId = useActiveMerchantId();
+    const currency = currencyStore((state) => state.preferredCurrency);
+
+    // Reset pagination when the active merchant changes — the previous
+    // merchant's page index doesn't carry over to a different dataset
+    // and would otherwise land the user on an empty page until they
+    // reset manually. Lives in the component (not the route loader) so
+    // hover-preloading on the merchant switcher doesn't mutate the
+    // currently-viewed list's pagination.
+    useEffect(() => {
+        setFilters((prev) =>
+            prev.offset && prev.offset !== 0 ? { ...prev, offset: 0 } : prev
+        );
+    }, [merchantId, setFilters]);
 
     /**
      * Replicate pagination state for the table using the filter
@@ -87,7 +97,12 @@ export function TableMembers() {
     }, [sortingState, setFilters]);
 
     const { data: page, isPending } = useQuery({
-        ...membersPageQueryOptions(filters, isDemoMode),
+        ...membersPageQueryOptions({
+            merchantId,
+            filters,
+            isDemoMode,
+            currency,
+        }),
         placeholderData: keepPreviousData,
     });
 
@@ -95,44 +110,21 @@ export function TableMembers() {
     const columns = useMemo(
         () =>
             [
-                columnHelper.display({
-                    id: "select",
-                    cell: ({ row }) => {
-                        return (
-                            <Checkbox
-                                id={`select-${row.id}`}
-                                checked={
-                                    !!selectedMembers?.find((a) =>
-                                        isAddressEqual(a, row.original.user)
-                                    )
-                                }
-                                onCheckedChange={(checked) => {
-                                    if (checked) {
-                                        addSelectedMember(row.original.user);
-                                    } else {
-                                        removeSelectedMember(row.original.user);
-                                    }
-                                }}
-                                disabled={false}
-                            />
-                        );
-                    },
-                }),
                 columnHelper.accessor("user", {
                     enableSorting: true,
-                    header: () => "Wallet",
+                    header: () => t("members.columns.wallet"),
                     cell: ({ getValue }) => (
                         <WalletAddress wallet={getValue()} />
                     ),
                 }),
                 columnHelper.accessor("merchantNames", {
                     enableSorting: false,
-                    header: () => "Merchants",
+                    header: () => t("members.columns.merchants"),
                     cell: ({ getValue }) => getValue().join(", "),
                 }),
                 columnHelper.accessor("firstInteractionTimestamp", {
                     enableSorting: true,
-                    header: () => "Member from",
+                    header: () => t("members.columns.memberFrom"),
                     cell: ({ getValue }) =>
                         new Date(
                             Number.parseInt(getValue(), 10) * 1000
@@ -140,29 +132,33 @@ export function TableMembers() {
                 }),
                 columnHelper.accessor("totalInteractions", {
                     enableSorting: true,
-                    header: () => "Interactions",
+                    header: () => t("members.columns.interactions"),
                     cell: ({ getValue }) => getValue(),
                 }),
-                columnHelper.accessor("totalRewardsUsd", {
+                columnHelper.accessor("totalRewardsFiat", {
                     enableSorting: true,
-                    header: () => "Rewards (USD)",
-                    cell: ({ getValue }) => formatAmount(getValue(), "usd"),
+                    header: () =>
+                        t("members.columns.rewards", {
+                            currency: currency.toUpperCase(),
+                        }),
+                    cell: ({ getValue }) => formatAmount(getValue(), currency),
                 }),
             ] as ColumnDef<GetMembersPageItem>[],
-        [selectedMembers, addSelectedMember, removeSelectedMember, isDemoMode]
+        [currency, t]
     );
 
     if (!page || isPending) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     return (
-        <>
+        <Stack space="l">
             <TableMembersFilters />
             {page && (
                 <Table
                     data={page.members}
                     columns={columns}
+                    emptyPlaceholder="–"
                     manualPagination={true}
                     manualSorting={true}
                     rowCount={page.totalResult}
@@ -170,36 +166,12 @@ export function TableMembers() {
                     sorting={sortingState}
                     onSortingChange={setSorting}
                     postTable={
-                        <>
-                            {(selectedMembers?.length ?? 0) > 0 && (
-                                <Row
-                                    align={"center"}
-                                    className={styles.selectedMembersRow}
-                                >
-                                    <p>
-                                        You have selected{" "}
-                                        <strong>
-                                            {selectedMembers?.length}
-                                        </strong>{" "}
-                                        Members
-                                    </p>
-                                    <Button
-                                        type={"button"}
-                                        onClick={() => clearSelection()}
-                                        variant={"outline"}
-                                    >
-                                        Clear selection
-                                    </Button>
-                                </Row>
-                            )}
-
-                            {page.totalResult > (filters.limit ?? 10) && (
-                                <Pagination totalResult={page.totalResult} />
-                            )}
-                        </>
+                        page.totalResult > (filters.limit ?? 10) && (
+                            <Pagination totalResult={page.totalResult} />
+                        )
                     }
                 />
             )}
-        </>
+        </Stack>
     );
 }

@@ -225,6 +225,27 @@
             "when": 1777359724884,
             "tag": "0031_narrow_kinsey_walden",
             "breakpoints": true
+        },
+        {
+            "idx": 32,
+            "version": "7",
+            "when": 1779781969418,
+            "tag": "0032_faulty_the_twelve",
+            "breakpoints": true
+        },
+        {
+            "idx": 33,
+            "version": "7",
+            "when": 1780912141604,
+            "tag": "0033_spotty_network",
+            "breakpoints": true
+        },
+        {
+            "idx": 34,
+            "version": "7",
+            "when": 1781195349058,
+            "tag": "0034_bored_stingray",
+            "breakpoints": true
         }
     ]
 }

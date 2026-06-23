@@ -1,3 +1,4 @@
+import { alias } from "@frak-labs/design-system/tokens";
 import { style, styleVariants } from "@vanilla-extract/css";
 
 export const statusBox = style({
@@ -26,7 +27,7 @@ export const statusBox__indicator = style({
     marginTop: "4px",
     width: "10px",
     height: "10px",
-    borderRadius: "var(--frak-radius-full)",
+    borderRadius: alias.cornerRadius.full,
 });
 
 export const statusBoxIndicatorColor = styleVariants({

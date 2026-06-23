@@ -5,23 +5,10 @@ import {
     styleVariants,
 } from "@vanilla-extract/css";
 
-export const modalListener__header = style({
-    marginBottom: "20px",
-});
-
-export const modalListener__content = style({
-    transform: "translateZ(0)",
-});
-
 export const modalListener__title = style({
     fontSize: "16px",
     textAlign: "left",
     fontWeight: 700,
-});
-
-export const modalListener__subTitle = style({
-    marginBottom: "10px",
-    fontWeight: 600,
 });
 
 export const modalListener__text = style({
@@ -111,24 +98,16 @@ globalStyle(
     }
 );
 
-/* Done state: also tint the inner icon */
-globalStyle(`${stepItemModifier.done} ${modalListener__stepNumberInnerIcon}`, {
+/* Done state: also tint the inner icon. Applied directly to the icon (the step
+ * knows its done/active/last state) instead of an ancestor-state selector. */
+export const stepNumberInnerIconDone = style({
     borderColor: "#0171ec",
     color: "#0171ec",
 });
 
 /* Active last-step animation also pulses the inner icon */
-globalStyle(
-    `${stepItemBase}:last-child${stepItemModifier.active} ${modalListener__stepNumberInnerIcon}`,
-    {
-        animation: `${highlightLastStepKf} 2s forwards`,
-    }
-);
-
-export const modalListener__help = style({
-    marginTop: "20px",
-    fontSize: "12px",
-    color: "#818c9c",
+export const stepNumberInnerIconActiveLast = style({
+    animation: `${highlightLastStepKf} 2s forwards`,
 });
 
 export const modalListener__buttonsWrapper = style({
@@ -216,11 +195,6 @@ export const modalListener__iconContainer = style({
     margin: "0 auto 28px auto",
     width: "50%",
     flexDirection: "column",
-});
-
-globalStyle(`${modalListener__iconContainer} ${modalTitle__provided}`, {
-    alignSelf: "flex-end",
-    marginTop: "-4px",
 });
 
 export const modalListener__icon = style({

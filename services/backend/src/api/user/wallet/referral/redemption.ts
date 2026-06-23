@@ -1,7 +1,8 @@
-import { identityContext, rateLimitMiddleware } from "@backend-infrastructure";
+import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AttributionContext } from "../../../../domain/attribution";
+import { identityContext } from "../../../middleware/identity";
 
 // Per-IP and per-identity rate limits, mirroring `/code/*`. Removing a
 // referrer is a write that's even less hot than redeeming, but we still want

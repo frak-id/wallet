@@ -3,7 +3,7 @@
  * App-specific styles (like responsive layouts) are in global-wallet.css and global-listener.css
  */
 :root {
-    --font-family: "Sora", sans-serif;
+    --font-family: "Inter", sans-serif;
 }
 
 html {
@@ -32,11 +32,4 @@ a {
     display: block;
     padding-top: 5px;
     color: var(--frak-color-red);
-}
-
-.react-loading-skeleton {
-    --base-color: var(--frak-skeleton-base-color);
-    --highlight-color: var(--frak-skeleton-highlight-color);
-    border-radius: 12px;
-    opacity: 0.35;
 }

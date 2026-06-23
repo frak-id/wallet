@@ -95,13 +95,238 @@
             "enableNotifications": "Enable notifications",
             "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
             "biometricPrompt": "Require {{biometryLabel}} at every app launch",
-            "recoveryConfigured": "Configured",
             "privacyPolicy": "Privacy Policy",
             "helpSupport": "Help & support",
             "rateApp": "Rate the app",
             "managePairings": "Manage paired devices",
             "lastConnection": "Last connection",
-            "currentDeviceConnected": "Connected"
+            "currentDeviceConnected": "Connected",
+            "recoveryOptions": "Recovery options",
+            "changeEmail": "Change email address",
+            "security": {
+                "heading": "Secure your wallet",
+                "headingSecured": "Your wallet is secured",
+                "progressLabel": "Wallet security progress",
+                "steps": {
+                    "addEmail": {
+                        "title": "Add an email",
+                        "description": "Protect your wallet and recover your access if you lose or change device.",
+                        "cta": "Add an email"
+                    },
+                    "verifyEmail": {
+                        "title": "Validate your email",
+                        "description": "Confirm your email address so it can be used to recover your wallet.",
+                        "cta": "Validate my email"
+                    },
+                    "setupRecovery": {
+                        "title": "Set up recovery",
+                        "description": "Add a recovery option so you can always restore access to your wallet.",
+                        "cta": "Set up recovery"
+                    },
+                    "updateRecovery": {
+                        "title": "Update recovery options",
+                        "description": "Your recovery expires soon. Refresh it to keep your wallet protected.",
+                        "cta": "Update recovery options"
+                    },
+                    "secured": {
+                        "description": "Your email and recovery are all set. Your wallet is fully protected."
+                    }
+                }
+            }
+        },
+        "addEmail": {
+            "title": "Add your email",
+            "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+            "label": "Email",
+            "placeholder": "your.email@gmail.com",
+            "continue": "Continue",
+            "clearAriaLabel": "Clear email address",
+            "submitError": "Unable to save this email right now. Please try again.",
+            "alreadyUsed": "This email address is already in use and can't be added. Try a different one.",
+            "conflict": {
+                "title": "Email already in use",
+                "description": "This email is already linked to another wallet. Use a different email or come back later.",
+                "descriptionMergeable": "This email is already on another of your accounts. You can combine them into one. We'll guide you through, whether the other account is on this device or another one.",
+                "combine": "Combine my accounts",
+                "useDifferent": "Use a different email",
+                "back": "Back to my profile"
+            },
+            "card": {
+                "title": "Add your email",
+                "description": "Add your email to be able to recover your wallet later."
+            }
+        },
+        "verifyEmail": {
+            "title": "Verify your email",
+            "description": "Enter the 6-digit code we email you to confirm your address. You can paste it or tap the button in the email.",
+            "statusPending": "Not verified yet",
+            "statusPendingNew": "Verify your new email address",
+            "sendCode": "Send verification code",
+            "resendIn": "Resend in {{seconds}}s",
+            "pasteCode": "Paste code",
+            "pasteError": "Couldn't read the clipboard. Paste or type the code manually.",
+            "digitLabel": "Digit {{index}}",
+            "verify": "Verify",
+            "changeEmailLink": "Use a different email",
+            "verifying": {
+                "title": "Verifying your email…",
+                "description": "Hang tight while we confirm your code."
+            },
+            "error": {
+                "invalid": "Incorrect code. Please try again.",
+                "expired": "This code has expired. Send a new one.",
+                "tooManyAttempts": "Too many attempts. Send a new code.",
+                "network": "Something went wrong. Please try again.",
+                "send": "Couldn't send the code. Please try again."
+            },
+            "success": {
+                "title": "Email verified",
+                "description": "{{email}} is now verified. Set up recovery next so you can recover your account if you ever lose access.",
+                "setupRecovery": "Set up recovery",
+                "back": "Back to my profile"
+            },
+            "changeEmail": {
+                "title": "Change your email",
+                "description": "Enter a new email address. We'll send a code to verify it; your current email stays active until then.",
+                "label": "Email",
+                "placeholder": "your.email@gmail.com",
+                "clearAriaLabel": "Clear email address",
+                "continue": "Send code",
+                "alreadyUsed": "This email address is already in use. Try a different one."
+            }
+        },
+        "merge": {
+            "stepIndicator": "Step {{current}}/{{total}}",
+            "peerWaiting": {
+                "title": "Approve on your other device",
+                "description": "We sent the request to your paired device. Confirm it there and we'll continue automatically."
+            },
+            "discovery": {
+                "title": "Combine your accounts",
+                "description": "Pick how you want to confirm: on this device, or on the device that holds your other passkey.",
+                "scanHint": "Scan this code with the device that has your other account.",
+                "preparing": "Preparing a secure connection…",
+                "useThisDevice": "Use this device",
+                "localHint": {
+                    "title": "Both passkeys on this device?",
+                    "body": "Tap above to confirm with the passkey of your other account here. Works automatically if you use iCloud Keychain across your devices."
+                },
+                "localError": "We couldn't find the other passkey on this device. Try scanning the code with your other device instead."
+            },
+            "preview": {
+                "title": "Combine your accounts",
+                "description": "We found another account of yours using {{email}}. Here's what will move when you combine them. No changes happen until you confirm.",
+                "loadingTitle": "Getting things ready…",
+                "loadingDescription": "We're double-checking both accounts before we show you what will move.",
+                "errorTitle": "We couldn't load your accounts",
+                "errorDescription": "Something went wrong while preparing the combine. Please try again.",
+                "errorRetry": "Try again",
+                "winnerBadge": "Stays as primary",
+                "labels": {
+                    "thisAccount": "This account",
+                    "otherAccount": "Your other account"
+                },
+                "combineArrow": "↓ combine into ↓",
+                "stats": {
+                    "referrals": "Referrals",
+                    "interactions": "Interactions",
+                    "assets": "Rewards"
+                },
+                "gains": {
+                    "title": "What you'll get",
+                    "description": "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events, all on one account."
+                },
+                "funds": {
+                    "title": "Funds to move",
+                    "description": "We'll transfer these from your other account to your primary account before combining."
+                },
+                "continue": "Continue",
+                "cancel": "Cancel"
+            },
+            "migrate": {
+                "loadingTitle": "Checking your balances…",
+                "loadingDescription": "We need to know what's on your other account before we move it.",
+                "loading": "Loading your balances, one second.",
+                "readyTitle": "Move your funds",
+                "readyDescription": "Tap below to transfer everything from your other account to your primary account in one go.",
+                "start": "Move my funds",
+                "title": "Moving your funds…",
+                "description": "Sending everything to your primary account before we finalise the combine. This takes a few seconds.",
+                "errorTitle": "We couldn't move your funds",
+                "errorDescription": "Something interrupted the transfer. Your accounts are safe. Tap retry to try again with the latest balances.",
+                "summaryErrorTitle": "We couldn't load your balances",
+                "summaryErrorDescription": "Tap retry. We need this before we can move your funds.",
+                "summaryError": "Loading your balances failed. Tap retry to try again.",
+                "summaryRetry": "Retry",
+                "holdings": {
+                    "title": "Funds to move"
+                },
+                "pending": "Sending the transfer on-chain. Hang tight.",
+                "error": "The transfer didn't go through. Tap retry. We'll re-check your balances and try again.",
+                "retry": "Retry",
+                "cancel": "Cancel"
+            },
+            "consent": {
+                "title": "Confirm with your other passkey",
+                "description": "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.",
+                "help": {
+                    "title": "What happens here",
+                    "description": "Your device will ask you to confirm with face, fingerprint or PIN, same as when you log in. We never see your biometrics."
+                },
+                "verify": "Confirm",
+                "retry": "Try again",
+                "error": "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again.",
+                "remote": {
+                    "title": "Confirm on your other device",
+                    "description": "Scan this QR code with the device that holds your other passkey and approve the prompt there. We'll continue automatically.",
+                    "preparing": "Preparing a secure connection…",
+                    "error": "We couldn't reach your other device. Try again, or pick a different email."
+                }
+            },
+            "sign": {
+                "title": "Authorise the combine",
+                "description": "One last confirmation to bring your two accounts together.",
+                "errorDescription": "Something interrupted the combine. Your accounts are safe. Try again to finish.",
+                "authorise": "Authorise",
+                "retry": "Try again",
+                "cancel": "Cancel",
+                "error": "The combine couldn't be authorised. Tap try again. Your accounts are safe."
+            },
+            "settling": {
+                "title": "Combining your accounts…",
+                "description": "We're putting everything together. This usually takes a few seconds.",
+                "errorTitle": "Almost there",
+                "errorDescription": "Something slipped on our side after you authorised. Tap retry. Your accounts are safe.",
+                "progress": {
+                    "title": "Working on it…",
+                    "body": "Linking your accounts, transferring referrals and rewards. Hang tight."
+                },
+                "error": "The combine couldn't finish. Tap retry. We'll pick up where we left off.",
+                "retry": "Retry",
+                "cancel": "Cancel",
+                "recover": {
+                    "invalidConsent": {
+                        "title": "Confirmation expired",
+                        "body": "Too much time passed since you confirmed with your other passkey. Reconfirm to continue. Your accounts are safe.",
+                        "cta": "Reconfirm"
+                    },
+                    "onChainMismatch": {
+                        "title": "Something looks different",
+                        "body": "Your accounts moved while we were combining them. Let's start over from the preview. Nothing is lost.",
+                        "cta": "Start over"
+                    },
+                    "migrateReverted": {
+                        "title": "Funds didn't move",
+                        "body": "The transfer didn't land on-chain. Run it again to finish. Your accounts are safe.",
+                        "cta": "Move funds again"
+                    }
+                }
+            },
+            "success": {
+                "title": "Your accounts are now one",
+                "description": "{{email}} is linked to your wallet. Everything from your other account moved over: referrals, history, rewards.",
+                "back": "Back to my profile"
+            }
         },
         "referral": {
             "title": "Referrals",
@@ -234,7 +459,20 @@
             "privy": "Connect via Privy",
             "useQRCode": "Use QR code to connect",
             "useMyAccount": "Continue with my account",
-            "anotherAccount": "Connect another account"
+            "anotherAccount": "Connect another account",
+            "useEmail": "Sign in with email",
+            "email": {
+                "title": "Sign in with your email",
+                "description": "Enter the email linked to your wallet. We'll surface every passkey attached to it so you can pick the right one.",
+                "submit": "Continue",
+                "checkError": "Unable to verify this email right now. Please try again.",
+                "notFound": {
+                    "title": "No account found",
+                    "description": "We couldn't find a wallet linked to {{email}}. Want to create one with this email?",
+                    "create": "Create an account",
+                    "useDifferent": "Use a different email"
+                }
+            }
         },
         "notifications": {
             "noNotifications": "No notifications"
@@ -250,45 +488,200 @@
             "text": "You got {{eurClaimable}} EUR pending thanks to your referral activities!",
             "title": "Pending referral reward"
         },
-        "recovery": {
-            "title": "Recover a wallet",
-            "step1": "Upload your recovery file",
-            "step2": "Review recovery data",
-            "step3": "Decryption with password",
-            "step4": "Create new passkey",
-            "step5": "Execute recovery",
-            "step6": "Success",
-            "uploadOrDrag": "Upload or drag recovery file",
-            "invalidFile": "Invalid file",
-            "continue": "Continue recovery",
-            "invalidPassword": "Invalid password",
-            "errorLoading": "Error loading recovery account",
-            "needCreatePasskey": "You need to create a new passkey on your device",
-            "createPasskey": "create passkey",
-            "loadingRecovery": "Loading recovery",
-            "pushPasskey": "Push new passkey",
-            "status": {
-                "loading": "Loading ...",
-                "walletAlready": "Wallet already recovered",
-                "inProgress": "In progress",
-                "done": "Done",
-                "error": "Error",
-                "pending": "Pending"
+        "recoveryUsage": {
+            "stepIndicator": "Step {{current}}/{{total}}",
+            "title": "Recover your wallet",
+            "description": "Enter your email and we'll send you a recovery link, if your wallet is set up for email recovery.",
+            "email": {
+                "label": "Email address",
+                "placeholder": "you@example.com",
+                "action": "Send recovery link",
+                "sent": "If that email is registered and verified, we've sent your recovery link. Check your inbox.",
+                "error": "Something went wrong. Please try again."
             },
-            "successful": "Recovery is successful, you can now <pLink>login</pLink>"
+            "blob": {
+                "toggle": "I have a recovery backup instead",
+                "label": "Recovery backup",
+                "placeholder": "Paste your recovery backup here",
+                "paste": "Paste",
+                "continue": "Continue",
+                "invalid": "This doesn't look like a valid recovery backup. Make sure you copied the whole code."
+            },
+            "password": {
+                "title": "Unlock your backup",
+                "description": "Enter the recovery password you chose during setup. It never leaves this device.",
+                "placeholder": "Enter your recovery password",
+                "invalid": "That password doesn't match this backup.",
+                "continue": "Continue"
+            },
+            "validate": {
+                "loadingTitle": "Checking your recovery",
+                "loadingDescription": "Reading this wallet's recovery configuration on-chain…",
+                "title": "Confirm recovery",
+                "description": "Confirm to add a new passkey to this wallet. You'll be asked to create it on this device.",
+                "walletLabel": "Wallet",
+                "expiresLabel": "Usable until",
+                "never": "No expiry",
+                "authorise": "Recover my wallet",
+                "retry": "Try again",
+                "failed": "Recovery failed.",
+                "failedDescription": "Something went wrong while recovering your wallet. You can try again.",
+                "cancelled": "Recovery was cancelled.",
+                "cancelledDescription": "You cancelled the prompt. You can try again whenever you're ready.",
+                "tryAnother": "Use a different backup",
+                "notConfigured": {
+                    "title": "No recovery on this wallet",
+                    "description": "This wallet doesn't have recovery enabled, so it can't be recovered with a backup."
+                },
+                "guardianMismatch": {
+                    "title": "Backup doesn't match",
+                    "description": "This backup belongs to a different recovery setup than the one configured on this wallet."
+                },
+                "tooEarly": {
+                    "title": "Not available yet",
+                    "description": "For your security, this wallet can only be recovered from {{date}}. Please come back then."
+                },
+                "expired": {
+                    "title": "Recovery expired",
+                    "description": "This recovery expired on {{date}}. Set up recovery again from a logged-in device to get a fresh backup."
+                }
+            },
+            "success": {
+                "title": "Welcome back",
+                "description": "Your new passkey has been added and your wallet is recovered. You're now signed in.",
+                "done": "Go to my wallet"
+            }
         },
         "recoverySetup": {
-            "currentGuardian": "Current guardian:",
-            "disclaimer": "Warning<br />- We do not store any information related to your wallet recovery.<br />- You are solely responsible for keeping your recovery file and password secure and private.\n                <br />- The recovery file can be generated now, but the actual recovery process will only be available one week after the file is created to prevent malicious usage.",
-            "download": "Download my recovery file",
-            "generating": "Generating recovery data",
-            "setupNew": "Setup new recovery",
-            "setupOn": "Setup recovery on {{name}}",
-            "step1": "Encryption password",
-            "step2": "Generate recovery data",
-            "step3": "Download recovery file",
-            "step4": "Enable recovery on-chain",
-            "title": "Recovery setup"
+            "stepIndicator": "Step {{current}}/{{total}}",
+            "password": {
+                "title": "Protect your recovery",
+                "description": "Choose a password to encrypt your recovery backup, and optionally control when it can be used.",
+                "label": "Password",
+                "placeholder": "Enter a strong password",
+                "hint": "At least {{min}} characters.",
+                "toggle": "Toggle password visibility",
+                "startLabel": "Start date (optional)",
+                "startHelp": "Recovery can only be used after this date. Defaults to one week from now as a safety delay.",
+                "endLabel": "End date (optional)",
+                "endHelp": "Recovery stops working after this date. Defaults to and is capped at two years from now.",
+                "dateRangeError": "The start date must be before the end date.",
+                "warning": "Choose a strong password. We can never reset or recover it — if you forget it, your backup is permanently useless.",
+                "continue": "Continue"
+            },
+            "sign": {
+                "title": "Authorize recovery",
+                "description": "Confirm to enable recovery on your wallet. This creates your recovery key and registers it on-chain.",
+                "authorise": "Authorize recovery",
+                "retry": "Try again",
+                "failedDescription": "Something went wrong while enabling recovery. You can try again.",
+                "failed": "Recovery setup failed.",
+                "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+                "cancelled": "Authorization was cancelled."
+            },
+            "backup": {
+                "title": "Save your backup",
+                "description": "This is your encrypted recovery backup. Keep your own copy somewhere safe, like a password manager.",
+                "reveal": "Reveal",
+                "hide": "Hide",
+                "copy": "Copy",
+                "copied": "Copied",
+                "warning": "Anyone who has both this backup code and your password can take full control of your wallet. Store them in separate places.",
+                "saveError": "We couldn't save your backup to our servers. Please retry before continuing.",
+                "retry": "Save again",
+                "continue": "Done"
+            },
+            "success": {
+                "title": "Recovery is set up",
+                "description": "Your wallet recovery is now active and your encrypted backup is saved.",
+                "done": "Back to my profile"
+            },
+            "config": {
+                "title": "Recovery",
+                "description": "Recovery lets you restore your wallet if you lose access to this device.",
+                "activeTitle": "Recovery is active",
+                "statusLabel": "Status",
+                "active": "Active",
+                "startLabel": "Usable from",
+                "endLabel": "Expires",
+                "never": "Never",
+                "refreshTitle": "Manage recovery",
+                "refreshDescription": "Keep your current recovery key and move its validity window, or replace it with a brand new one.",
+                "updateDatesAction": "Change validity dates",
+                "replaceKeyAction": "Replace recovery key",
+                "deleteTitle": "Delete recovery",
+                "deleteDescription": "Turn recovery off completely. Your recovery key is disabled on-chain and your encrypted backup is deleted.",
+                "deleteAction": "Turn off recovery",
+                "testTitle": "Check your password",
+                "testDescription": "Check that you still remember your recovery password. It never leaves this device.",
+                "testPlaceholder": "Enter your password",
+                "testButton": "Test password",
+                "testValid": "Password is correct.",
+                "testInvalid": "That password doesn't match your backup."
+            },
+            "refresh": {
+                "replaceNote": "This replaces your current recovery key and password. Your old backup stops working once you authorize the change.",
+                "signDescription": "Confirm to replace your recovery key on-chain. Your previous key stops working immediately.",
+                "successTitle": "Recovery key replaced",
+                "successDescription": "Your new recovery key is active and your previous backup has been replaced."
+            },
+            "dates": {
+                "password": {
+                    "title": "Confirm your password",
+                    "description": "Enter your recovery password to keep your current recovery key. It never leaves this device.",
+                    "placeholder": "Enter your password",
+                    "continue": "Continue",
+                    "invalid": "That password doesn't match your backup. If you've lost it, create a new recovery key instead.",
+                    "replaceAction": "Create a new recovery key"
+                },
+                "dates": {
+                    "title": "Update validity dates",
+                    "description": "Choose when your recovery can be used. Your recovery key stays the same.",
+                    "continue": "Continue"
+                },
+                "confirm": {
+                    "title": "Confirm the new dates",
+                    "description": "Confirm to update your recovery validity on-chain. Your recovery key stays the same.",
+                    "keyLabel": "Recovery key",
+                    "keyUnchanged": "Unchanged",
+                    "authorise": "Update dates",
+                    "retry": "Try again",
+                    "failedDescription": "Something went wrong while updating your recovery. You can try again.",
+                    "failed": "Recovery update failed.",
+                    "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+                    "cancelled": "Authorization was cancelled."
+                },
+                "success": {
+                    "title": "Validity updated",
+                    "description": "Your recovery validity dates are now updated on-chain.",
+                    "done": "Back to my profile"
+                }
+            },
+            "delete": {
+                "password": {
+                    "title": "Confirm your password",
+                    "description": "Enter your recovery password to confirm you want to delete recovery. It never leaves this device.",
+                    "placeholder": "Enter your password",
+                    "continue": "Continue",
+                    "invalid": "That password doesn't match your backup. Enter the correct password to delete recovery."
+                },
+                "confirm": {
+                    "title": "Delete recovery",
+                    "description": "This disables your recovery key on-chain and deletes your encrypted backup. This can't be undone — you'll have to set recovery up again from scratch.",
+                    "warning": "Once deleted, your current recovery key and backup stop working permanently. You can set up a new recovery anytime.",
+                    "authorise": "Delete recovery",
+                    "retry": "Try again",
+                    "failedDescription": "Something went wrong while deleting your recovery. You can try again.",
+                    "failed": "Recovery deletion failed.",
+                    "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+                    "cancelled": "Authorization was cancelled."
+                },
+                "success": {
+                    "title": "Recovery deleted",
+                    "description": "Your recovery key has been disabled on-chain and your encrypted backup has been deleted.",
+                    "done": "Back to my profile"
+                }
+            }
         },
         "register": {
             "button": {
@@ -303,7 +696,7 @@
         },
         "registerDemo": {
             "title": "Try Frak in demo mode",
-            "description": "Spin up a temporary wallet to explore Frak. No biometrics, no recovery — just a sandbox.",
+            "description": "Spin up a temporary wallet to explore Frak. No biometrics, no recovery, just a sandbox.",
             "button": {
                 "create": "Create your demo wallet",
                 "error": "Error during registration, please try again",
@@ -369,6 +762,11 @@
             },
             "cancel": "Cancel",
             "confirm": "Confirm the code",
+            "switchPasskey": {
+                "title": "Different passkey required",
+                "description": "This pairing was started with another passkey from your wallet. Switch to it on this device to continue.",
+                "confirm": "Switch passkey"
+            },
             "pendingPairing": {
                 "title": "Pairing in progress",
                 "description": "Please authenticate to continue.",
@@ -532,9 +930,9 @@
         "validate": "Validate the code",
         "digitLabel": "Character",
         "error": {
-            "invalid": "Incorrect or expired code — check the code copied from wallet.frak.id",
+            "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
             "alreadyLinked": "This code has already been used.",
-            "generic": "Something went wrong — please try again."
+            "generic": "Something went wrong, please try again."
         },
         "success": {
             "title": "Your referral link has been found!",
@@ -582,8 +980,10 @@
             "continue": "Continue",
             "clearAriaLabel": "Clear email address",
             "alreadyUsed": {
-                "message": "Oops, it looks like this email is already used. Would you like to login instead?",
-                "login": "Login"
+                "title": "You already have a wallet",
+                "description": "{{email}} is already linked to a wallet. Log in with biometrics to access it, or recover your wallet if you can no longer log in.",
+                "login": "Log in with biometrics",
+                "recover": "Recover my wallet"
             },
             "checkError": "Unable to verify this email right now. Please try again."
         },
@@ -698,7 +1098,7 @@
         "linkWallet": "Link wallet",
         "status": {
             "settingUp": "Setting up...",
-            "created": "Account created — complete verification on Monerium",
+            "created": "Account created, complete verification on Monerium",
             "pending": "Verification in progress",
             "approved": "Verified ✓",
             "rejected": "Verification failed"

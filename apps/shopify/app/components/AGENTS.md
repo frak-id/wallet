@@ -1,6 +1,6 @@
 # components/ — Polaris UI Components
 
-38 files across 14 feature directories. All use Shopify Polaris v13. No custom design system.
+36 files across 14 feature directories. All use Shopify Polaris v13. No custom design system.
 
 ## STRUCTURE
 
@@ -18,10 +18,8 @@ components/
 │   ├── ButtonTab.tsx
 │   ├── CustomizationsTab.tsx
 │   └── WalletButtonTab.tsx
-├── Customizations/       # i18n field editors
-│   ├── Field.tsx         # Language-aware input
-│   ├── Section.tsx       # Modal/sharing/social sections
-│   └── LanguageSelector.tsx
+├── Customizations/       # Logo field (wording editors are Frak-managed, removed)
+│   └── Field.tsx         # LogoField
 ├── ModalPreview/         # Markdown → React preview (uses CSS modules)
 ├── SocialPreview/        # Social media preview (uses CSS modules)
 ├── WalletGated/          # Wallet connection gate + timeout error (connection gate)

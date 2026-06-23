@@ -24,6 +24,7 @@ CronRegistry.register(
                 {
                     processedCount: result.processedCount,
                     rewardsCreated: result.rewardsCreated,
+                    deferredCount: result.deferredCount,
                     errorCount: result.errors.length,
                 },
                 "Reward calculation job completed"

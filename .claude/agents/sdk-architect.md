@@ -90,7 +90,7 @@ You're working within the Frak Wallet monorepo:
 - Use Bun as the package manager (never npm/pnpm/yarn)
 - Follow the existing package structure in `sdk/` directory
 - Integrate with core blockchain utilities from `packages/app-essentials`
-- Leverage shared UI components from `packages/ui` when building React SDKs
+- Leverage shared UI components from `packages/design-system` when building React SDKs
 - Ensure compatibility with the WebAuthn-first authentication approach
 - Consider multi-chain blockchain support via Viem abstractions
 

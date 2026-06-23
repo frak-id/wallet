@@ -9,9 +9,12 @@ import { Box } from "../Box";
 import { Spinner } from "../Spinner";
 import { button } from "./button.css";
 
+export { button } from "./button.css";
+
 type CommonButtonProps = RecipeVariants<typeof button> & {
     children: ReactNode;
     icon?: ReactNode;
+    rightIcon?: ReactNode;
     /** Show a spinner and disable the button */
     loading?: boolean;
 };
@@ -39,6 +42,7 @@ export function Button(props: ButtonProps) {
         width,
         children,
         icon,
+        rightIcon,
         loading,
         className,
         color: _color,
@@ -48,6 +52,8 @@ export function Button(props: ButtonProps) {
 
     // `<a>` doesn't accept `type` or `disabled` — only apply them when we
     // render a real button so we don't emit invalid attributes on anchors.
+    // For the anchor case mirror disabled/loading semantics via
+    // `aria-disabled` (recipe applies pointer-events: none on the selector).
     const buttonOnlyProps =
         as === "button"
             ? {
@@ -58,7 +64,14 @@ export function Button(props: ButtonProps) {
                       (rest as ButtonHTMLAttributes<HTMLButtonElement>)
                           .disabled || loading,
               }
-            : {};
+            : {
+                  "aria-disabled":
+                      loading ||
+                      (rest as AnchorHTMLAttributes<HTMLAnchorElement>)[
+                          "aria-disabled"
+                      ] ||
+                      undefined,
+              };
 
     return (
         <Box
@@ -70,6 +83,7 @@ export function Button(props: ButtonProps) {
         >
             {loading ? <Spinner size="s" /> : icon}
             {children}
+            {rightIcon}
         </Box>
     );
 }

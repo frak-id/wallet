@@ -1,71 +1,60 @@
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import { Badge } from "@/module/common/component/Badge";
-import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
-import styles from "./CampaignStateTag.module.css";
-
-const bankHealthLabels: Record<string, string> = {
-    depleted: "Bank empty — rewards can't distribute",
-    paused: "Bank paused — distribution stopped",
-    warning: "Needs attention — check your reward budget",
-    not_deployed: "Bank not set up",
-};
-
-const bankBadgeLabels: Record<string, string> = {
-    depleted: "No funds",
-    paused: "Paused",
-    warning: "Needs attention",
-    not_deployed: "Setup needed",
-};
+import { Badge } from "@frak-labs/design-system/components/Badge";
+import { useTranslation } from "react-i18next";
+import { isEnded } from "@/module/campaigns/component/TableCampaigns/isEnded";
+import type { CampaignStatus } from "@/types/Campaign";
+import * as styles from "./campaign-state-tag.css";
 
 export function CampaignStateTag({
     status,
-    bankDistributionStatus,
+    expiresAt,
 }: {
     status: CampaignStatus;
-    bankDistributionStatus?: DistributionStatus | null;
+    expiresAt: string | null;
 }) {
-    const statusBadge = (() => {
-        switch (status) {
-            case "draft":
-                return <Badge variant={"secondary"}>Draft</Badge>;
-            case "active":
-                return <Badge variant={"success"}>Active</Badge>;
-            case "paused":
-                return <Badge variant={"warning"}>Paused</Badge>;
-            case "archived":
-                return <Badge variant={"secondary"}>Archived</Badge>;
-            default:
-                return <Badge variant={"danger"}>Unknown</Badge>;
-        }
-    })();
+    const { t } = useTranslation();
+    const ended = isEnded(status, expiresAt);
 
-    const showBankWarning =
-        status === "active" &&
-        bankDistributionStatus &&
-        bankDistributionStatus !== "distributing";
-
-    if (!showBankWarning) {
-        return statusBadge;
+    if (ended) {
+        return (
+            <Badge variant="disabled" size="small">
+                {t("campaigns.status.ended")}
+            </Badge>
+        );
     }
-
-    const bankLabel = bankHealthLabels[bankDistributionStatus] ?? "Bank issue";
-    const badgeLabel = bankBadgeLabels[bankDistributionStatus] ?? "Issue";
-
-    return (
-        <span className={styles.campaignStateTag}>
-            {statusBadge}
-            <Tooltip content={bankLabel}>
+    switch (status) {
+        case "draft":
+            return (
                 <Badge
-                    variant={
-                        bankDistributionStatus === "depleted"
-                            ? "danger"
-                            : "warning"
-                    }
+                    variant="neutral"
                     size="small"
+                    className={styles.draftTag}
                 >
-                    {badgeLabel}
+                    {t("campaigns.status.draft")}
                 </Badge>
-            </Tooltip>
-        </span>
-    );
+            );
+        case "active":
+            return (
+                <Badge variant="success" size="small">
+                    {t("campaigns.status.active")}
+                </Badge>
+            );
+        case "paused":
+            return (
+                <Badge variant="warning" size="small">
+                    {t("campaigns.status.paused")}
+                </Badge>
+            );
+        case "archived":
+            return (
+                <Badge variant="disabled" size="small">
+                    {t("campaigns.status.archived")}
+                </Badge>
+            );
+        default:
+            return (
+                <Badge variant="error" size="small">
+                    {t("campaigns.status.unknown")}
+                </Badge>
+            );
+    }
 }

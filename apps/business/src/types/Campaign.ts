@@ -1,26 +1,23 @@
-import type { CampaignResponse } from "@frak-labs/backend-elysia/domain/campaign";
+import type {
+    CampaignListItem as ApiCampaignListItem,
+    CampaignListResponse as ApiCampaignListResponse,
+    CampaignListReward,
+} from "@frak-labs/backend-elysia/api/schemas";
 
 export type {
     BudgetConfig,
     BudgetConfigItem,
-    BudgetUsed,
-    CampaignGoal,
     CampaignMetadata,
-    CampaignResponse,
     CampaignResponse as Campaign,
     CampaignRuleDefinition,
     CampaignStatus,
     CampaignTrigger,
     ConditionGroup,
-    ConditionOperator,
-    FixedRewardDefinition,
-    PercentageRewardDefinition,
     RewardChaining,
     RewardDefinition,
     RuleCondition,
     RuleConditions,
     SpecialCategory,
-    TieredRewardDefinition,
 } from "@frak-labs/backend-elysia/domain/campaign";
 
 export type CampaignActions = {
@@ -32,8 +29,16 @@ export type CampaignActions = {
     canArchive: boolean;
 };
 
-export type CampaignWithActions = {
+export type CampaignListItem = ApiCampaignListItem;
+export type CampaignListItemWithActions = ApiCampaignListItem & {
     actions: CampaignActions;
-} & CampaignResponse;
+};
+export type { CampaignListReward };
+export type CampaignListResponse = Omit<
+    ApiCampaignListResponse,
+    "campaigns"
+> & {
+    campaigns: CampaignListItemWithActions[];
+};
 
 export type { DistributionStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";

@@ -13,11 +13,12 @@ import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { ButtonAction } from "@/module/modal/component/ButtonAction";
 import * as styles from "@/module/modal/component/Modal/index.css";
-import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
 
 export function FinalModalActionComponent({
@@ -73,12 +74,13 @@ function SharingButtons({
     link?: string;
 }) {
     const { sourceUrl, merchantId } = useSafeResolvingContext();
-    const clientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
     const { mutate: trackSharing } = useTrackSharing();
-    const defaultAttribution = resolvingContextStore(
+    const defaultAttribution = useStore(
+        resolvingContextStore,
         (s) => s.backendSdkConfig?.attribution
     );
 

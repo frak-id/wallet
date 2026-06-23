@@ -1,13 +1,15 @@
-import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
-import { Panel } from "@/module/common/component/Panel";
+import { useTranslation } from "react-i18next";
+import { EditCard } from "@/module/common/component/EditCard";
+import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
-import styles from "./NewsletterShareLink.module.css";
+import * as styles from "./merchant-summary.css";
 
 function buildShareUrl(domain: string): string {
     return `https://${domain}/?frakAction=share`;
 }
 
 export function NewsletterShareLink({ merchantId }: { merchantId: string }) {
+    const { t } = useTranslation();
     const { data: merchant } = useMerchant({ merchantId });
 
     if (!merchant?.domain) return null;
@@ -15,16 +17,17 @@ export function NewsletterShareLink({ merchantId }: { merchantId: string }) {
     const shareUrl = buildShareUrl(merchant.domain);
 
     return (
-        <Panel title={"Newsletter sharing link"} withBadge={false}>
-            <p className={styles.description}>
-                Paste this link into your newsletter or any marketing email.
-                When a customer clicks it, your storefront opens with the Frak
-                sharing modal, pre-filled with your current campaign rewards, so
-                they can share and earn in one tap.
-            </p>
-            <TextWithCopy text={shareUrl} style={{ width: "100%" }}>
-                <pre>{shareUrl}</pre>
-            </TextWithCopy>
-        </Panel>
+        <EditCard
+            title={t("merchantEdit.newsletter.title")}
+            description={t("merchantEdit.newsletter.description")}
+        >
+            <div className={styles.detailCells}>
+                <div className={styles.detailCell}>
+                    <TextWithCopy text={shareUrl}>
+                        <span className={styles.cellLabel}>{shareUrl}</span>
+                    </TextWithCopy>
+                </div>
+            </div>
+        </EditCard>
     );
 }

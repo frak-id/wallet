@@ -10,12 +10,15 @@ export type {
     WsPingRequest,
     WsPongRequest,
     WsRequestDirectMessage,
+    WsSignatureKind,
     WsSignatureRejectRequest,
     WsSignatureRequest as WsDirectSignatureRequest,
     WsSignatureResponseRequest,
 } from "./dto/WebsocketDirectMessage";
 export type {
     WsAuthenticated,
+    WsMergeCompleted,
+    WsMergeCompletedSession,
     WsPartnerConnected,
     WsPingPong,
     WsSignatureReject,

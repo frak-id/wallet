@@ -7,16 +7,27 @@ import {
 import type { CampaignDraft } from "./campaignStore";
 import {
     buildApiPayload,
-    buildScheduleConditions,
     campaignToDraft,
+    getMinPurchaseAmount,
+    getReferralOnly,
+    getStartDate,
+    setMinPurchaseAmount,
+    setReferralOnly,
+    setStartDate,
 } from "./campaignStore";
+
+const REFERRAL_CONDITION = {
+    field: "attribution.referrerIdentityGroupId",
+    operator: "exists" as const,
+    value: true,
+};
 
 const mockCampaignDraft: CampaignDraft = {
     merchantId: "mock-merchant-id",
     name: "Test Campaign",
     rule: {
         trigger: "purchase",
-        conditions: [],
+        conditions: [REFERRAL_CONDITION],
         rewards: [
             {
                 recipient: "referrer",
@@ -38,13 +49,8 @@ const mockCampaignDraft: CampaignDraft = {
             amount: 100,
         },
     ],
-    scheduled: {
-        startDate: new Date("2024-01-01"),
-        endDate: new Date("2024-12-31"),
-    },
+    expiresAt: "2024-12-31T00:00:00.000Z",
     priority: 0,
-    referralOnly: true,
-    minPurchaseAmount: 0,
 };
 
 describe("campaignStore", () => {
@@ -58,6 +64,8 @@ describe("campaignStore", () => {
             expect(state.draft.name).toBe("");
             expect(state.draft.rule.trigger).toBe("purchase");
             expect(state.draft.metadata.goal).toBeUndefined();
+            // Referral-only is the default, encoded as a rule condition.
+            expect(getReferralOnly(state.draft.rule)).toBe(true);
         });
     });
 
@@ -77,7 +85,7 @@ describe("campaignStore", () => {
         }: TestContext) => {
             freshCampaignStore.getState().setDraft(mockCampaignDraft);
 
-            const stored = localStorage.getItem("campaign-draft-v4");
+            const stored = localStorage.getItem("campaign-draft-v6");
             expect(stored).toBeTruthy();
         });
     });
@@ -119,15 +127,6 @@ describe("campaignStore", () => {
 
             expect(freshCampaignStore.getState().isSuccess).toBe(true);
         });
-
-        test("should set isSuccess to false", ({
-            freshCampaignStore,
-        }: TestContext) => {
-            freshCampaignStore.getState().setSuccess(true);
-            freshCampaignStore.getState().setSuccess(false);
-
-            expect(freshCampaignStore.getState().isSuccess).toBe(false);
-        });
     });
 
     describe("reset", () => {
@@ -144,23 +143,13 @@ describe("campaignStore", () => {
             expect(state.draft.name).toBe("");
             expect(state.draft.rule.trigger).toBe("purchase");
         });
-
-        test("should reset persisted state", ({
-            freshCampaignStore,
-        }: TestContext) => {
-            freshCampaignStore.getState().setDraft(mockCampaignDraft);
-            freshCampaignStore.getState().reset();
-
-            const stored = localStorage.getItem("campaign-draft-v4");
-            expect(stored).toBeTruthy();
-        });
     });
 
     describe("persistence", () => {
         test("should persist draft", ({ freshCampaignStore }: TestContext) => {
             freshCampaignStore.getState().setDraft(mockCampaignDraft);
 
-            const stored = localStorage.getItem("campaign-draft-v4");
+            const stored = localStorage.getItem("campaign-draft-v6");
             expect(stored).toBeTruthy();
 
             const parsed = JSON.parse(stored || "{}");
@@ -172,7 +161,7 @@ describe("campaignStore", () => {
         }: TestContext) => {
             freshCampaignStore.getState().setSuccess(true);
 
-            const stored = localStorage.getItem("campaign-draft-v4");
+            const stored = localStorage.getItem("campaign-draft-v6");
             if (stored) {
                 const parsed = JSON.parse(stored);
                 expect(parsed.state.isSuccess).toBeUndefined();
@@ -181,146 +170,81 @@ describe("campaignStore", () => {
     });
 });
 
-describe("buildScheduleConditions", () => {
-    test("should return empty array when no dates", () => {
-        const result = buildScheduleConditions({});
-        expect(result).toEqual([]);
+describe("rule condition helpers", () => {
+    test("getReferralOnly reflects the referral condition", () => {
+        expect(getReferralOnly(mockCampaignDraft.rule)).toBe(true);
+        const without = setReferralOnly(mockCampaignDraft.rule, false);
+        expect(getReferralOnly(without)).toBe(false);
     });
 
-    test("should add gte condition for startDate", () => {
-        const startDate = new Date("2024-01-01T00:00:00Z");
-        const result = buildScheduleConditions({ startDate });
-
-        expect(result).toHaveLength(1);
-        expect(result[0]).toEqual({
-            field: "time.timestamp",
-            operator: "gte",
-            value: Math.floor(startDate.getTime() / 1000),
-        });
-    });
-
-    test("should add lte condition for endDate", () => {
-        const endDate = new Date("2024-12-31T23:59:59Z");
-        const result = buildScheduleConditions({ endDate });
-
-        expect(result).toHaveLength(1);
-        expect(result[0]).toEqual({
-            field: "time.timestamp",
-            operator: "lte",
-            value: Math.floor(endDate.getTime() / 1000),
-        });
-    });
-
-    test("should add both conditions when both dates provided", () => {
-        const startDate = new Date("2024-01-01T00:00:00Z");
-        const endDate = new Date("2024-12-31T23:59:59Z");
-        const result = buildScheduleConditions({ startDate, endDate });
-
-        expect(result).toHaveLength(2);
-        expect(result[0]).toEqual({
-            field: "time.timestamp",
-            operator: "gte",
-            value: Math.floor(startDate.getTime() / 1000),
-        });
-        expect(result[1]).toEqual({
-            field: "time.timestamp",
-            operator: "lte",
-            value: Math.floor(endDate.getTime() / 1000),
-        });
-    });
-});
-
-describe("buildApiPayload", () => {
-    test("should convert draft to API payload", () => {
-        const result = buildApiPayload(mockCampaignDraft);
-
-        expect(result.merchantId).toBe(mockCampaignDraft.merchantId);
-        expect(result.name).toBe(mockCampaignDraft.name);
-        expect(result.metadata).toEqual(mockCampaignDraft.metadata);
-        expect(result.budgetConfig).toEqual(mockCampaignDraft.budgetConfig);
-        expect(result.priority).toBe(mockCampaignDraft.priority);
-    });
-
-    test("should include schedule conditions in rule.conditions", () => {
-        const result = buildApiPayload(mockCampaignDraft);
-
-        expect(result.rule.conditions).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    field: "time.timestamp",
-                    operator: "gte",
-                }),
-                expect.objectContaining({
-                    field: "time.timestamp",
-                    operator: "lte",
-                }),
-            ])
-        );
-    });
-    test("should set expiresAt from endDate", () => {
-        const result = buildApiPayload(mockCampaignDraft);
-        expect(result.expiresAt).toBe(
-            mockCampaignDraft.scheduled.endDate?.toISOString()
-        );
-    });
-    test("should preserve existing non-timestamp conditions", () => {
-        const draftWithConditions: CampaignDraft = {
-            ...mockCampaignDraft,
-            rule: {
-                ...mockCampaignDraft.rule,
-                conditions: [
-                    { field: "user.country", operator: "eq", value: "US" },
-                ],
-            },
+    test("setReferralOnly adds/removes only the referral condition", () => {
+        const base = {
+            ...mockCampaignDraft.rule,
+            conditions: [
+                { field: "user.country", operator: "eq" as const, value: "US" },
+            ],
         };
-
-        const result = buildApiPayload(draftWithConditions);
-
-        expect(result.rule.conditions).toEqual(
+        const on = setReferralOnly(base, true);
+        expect(getReferralOnly(on)).toBe(true);
+        // Unrelated condition preserved.
+        expect(on.conditions).toEqual(
             expect.arrayContaining([
                 { field: "user.country", operator: "eq", value: "US" },
             ])
         );
+        const off = setReferralOnly(on, false);
+        expect(getReferralOnly(off)).toBe(false);
+        expect(off.conditions).toEqual([
+            { field: "user.country", operator: "eq", value: "US" },
+        ]);
     });
 
-    test("should always include rule in payload (validation handled by save hook)", () => {
-        const draftWithEmptyRewards: CampaignDraft = {
+    test("get/setMinPurchaseAmount round-trips through conditions", () => {
+        expect(getMinPurchaseAmount(mockCampaignDraft.rule)).toBe(0);
+        const withMin = setMinPurchaseAmount(mockCampaignDraft.rule, 25);
+        expect(getMinPurchaseAmount(withMin)).toBe(25);
+        // 0 removes the condition.
+        const cleared = setMinPurchaseAmount(withMin, 0);
+        expect(getMinPurchaseAmount(cleared)).toBe(0);
+    });
+
+    test("get/setStartDate round-trips an ISO string", () => {
+        expect(getStartDate(mockCampaignDraft.rule)).toBeUndefined();
+        const iso = "2024-06-01T00:00:00.000Z";
+        const withStart = setStartDate(mockCampaignDraft.rule, iso);
+        expect(getStartDate(withStart)).toBe(iso);
+        const cleared = setStartDate(withStart, undefined);
+        expect(getStartDate(cleared)).toBeUndefined();
+    });
+});
+
+describe("buildApiPayload", () => {
+    test("passes the draft through near-identity", () => {
+        const result = buildApiPayload(mockCampaignDraft);
+
+        expect(result.merchantId).toBe(mockCampaignDraft.merchantId);
+        expect(result.name).toBe(mockCampaignDraft.name);
+        expect(result.rule).toEqual(mockCampaignDraft.rule);
+        expect(result.metadata).toEqual(mockCampaignDraft.metadata);
+        expect(result.budgetConfig).toEqual(mockCampaignDraft.budgetConfig);
+        expect(result.expiresAt).toBe(mockCampaignDraft.expiresAt);
+        expect(result.priority).toBe(mockCampaignDraft.priority);
+    });
+
+    test("does not send rewardToken as a top-level field", () => {
+        const result = buildApiPayload({
             ...mockCampaignDraft,
-            id: "existing-campaign-id",
-            rule: {
-                ...mockCampaignDraft.rule,
-                rewards: [],
-            },
-        };
+            rewardToken: "0x1234567890123456789012345678901234567890",
+        });
+        expect("rewardToken" in result).toBe(false);
+    });
 
-        const result = buildApiPayload(draftWithEmptyRewards);
-
-        expect(result.rule).toBeDefined();
-        expect(result.rule.rewards).toEqual([]);
+    test("does not mutate rule conditions", () => {
+        const result = buildApiPayload(mockCampaignDraft);
+        expect(result.rule.conditions).toBe(mockCampaignDraft.rule.conditions);
     });
 });
 
-test("should include referral condition when referralOnly is true", () => {
-    const draft = { ...mockCampaignDraft, referralOnly: true };
-    const result = buildApiPayload(draft);
-    expect(result.rule.conditions).toEqual(
-        expect.arrayContaining([
-            expect.objectContaining({
-                field: "attribution.referrerIdentityGroupId",
-                operator: "exists",
-            }),
-        ])
-    );
-});
-
-test("should not include referral condition when referralOnly is false", () => {
-    const draft = { ...mockCampaignDraft, referralOnly: false };
-    const result = buildApiPayload(draft);
-    const hasReferralCondition = (
-        result.rule.conditions as Array<{ field: string }>
-    ).some((c) => c.field === "attribution.referrerIdentityGroupId");
-    expect(hasReferralCondition).toBe(false);
-});
 describe("campaignToDraft", () => {
     test("should convert campaign to draft", () => {
         const campaign = {
@@ -329,13 +253,14 @@ describe("campaignToDraft", () => {
             name: "Test Campaign",
             rule: {
                 trigger: "purchase" as const,
-                conditions: [],
+                conditions: [REFERRAL_CONDITION],
                 rewards: [
                     {
                         recipient: "referrer" as const,
                         type: "token" as const,
                         amountType: "fixed" as const,
                         amount: 10,
+                        token: "0xabcabcabcabcabcabcabcabcabcabcabcabcabca" as const,
                     },
                 ],
             },
@@ -359,13 +284,15 @@ describe("campaignToDraft", () => {
         expect(result.rule).toEqual(campaign.rule);
         expect(result.metadata).toEqual(campaign.metadata);
         expect(result.budgetConfig).toEqual(campaign.budgetConfig);
-        expect(result.scheduled.endDate).toEqual(
-            new Date("2024-12-31T23:59:59.000Z")
-        );
+        expect(result.expiresAt).toBe("2024-12-31T23:59:59.000Z");
         expect(result.priority).toBe(1);
+        // rewardToken derived from the first reward carrying a token.
+        expect(result.rewardToken).toBe(
+            "0xabcabcabcabcabcabcabcabcabcabcabcabcabca"
+        );
     });
 
-    test("should handle null metadata", () => {
+    test("should handle null metadata/budget/expiresAt", () => {
         const campaign = {
             id: "campaign-123",
             merchantId: "merchant-456",
@@ -389,75 +316,53 @@ describe("campaignToDraft", () => {
             territories: [],
         });
         expect(result.budgetConfig).toEqual([]);
-        expect(result.scheduled.endDate).toBeUndefined();
+        expect(result.expiresAt).toBeUndefined();
+        expect(result.rewardToken).toBeUndefined();
     });
-});
 
-test("should detect referralOnly from conditions", () => {
-    const campaign = {
+    const withRewardToken = (token: string) => ({
         id: "campaign-123",
         merchantId: "merchant-456",
         name: "Test Campaign",
         rule: {
             trigger: "purchase" as const,
-            conditions: [
+            conditions: [REFERRAL_CONDITION],
+            rewards: [
                 {
-                    field: "attribution.referrerIdentityGroupId",
-                    operator: "exists" as const,
-                    value: true,
+                    recipient: "referrer" as const,
+                    type: "token" as const,
+                    amountType: "fixed" as const,
+                    amount: 10,
+                    token: token as `0x${string}`,
                 },
             ],
-            rewards: [],
         },
-        metadata: null,
-        budgetConfig: null,
-        expiresAt: null,
         priority: 0,
-    };
-    const result = campaignToDraft(campaign);
-    expect(result.referralOnly).toBe(true);
-});
+    });
 
-test("should set referralOnly to false when condition is absent", () => {
-    const campaign = {
-        id: "campaign-123",
-        merchantId: "merchant-456",
-        name: "Test Campaign",
-        rule: {
-            trigger: "purchase" as const,
-            conditions: [
-                {
-                    field: "user.country",
-                    operator: "eq" as const,
-                    value: "US",
-                },
-            ],
-            rewards: [],
-        },
-        metadata: null,
-        budgetConfig: null,
-        expiresAt: null,
-        priority: 0,
-    };
-    const result = campaignToDraft(campaign);
-    expect(result.referralOnly).toBe(false);
-});
+    test("drops rewardToken when it equals the merchant default", () => {
+        const token = "0xabcabcabcabcabcabcabcabcabcabcabcabcabca";
+        const result = campaignToDraft(withRewardToken(token), token);
 
-test("should default referralOnly to true for empty conditions", () => {
-    const campaign = {
-        id: "campaign-123",
-        merchantId: "merchant-456",
-        name: "Test Campaign",
-        rule: {
-            trigger: "purchase" as const,
-            conditions: [],
-            rewards: [],
-        },
-        metadata: null,
-        budgetConfig: null,
-        expiresAt: null,
-        priority: 0,
-    };
-    const result = campaignToDraft(campaign);
-    expect(result.referralOnly).toBe(true);
+        expect(result.rewardToken).toBeUndefined();
+    });
+
+    test("matches the merchant default case-insensitively", () => {
+        const result = campaignToDraft(
+            withRewardToken("0xABCABCABCABCABCABCABCABCABCABCABCABCABCA"),
+            "0xabcabcabcabcabcabcabcabcabcabcabcabcabca"
+        );
+
+        expect(result.rewardToken).toBeUndefined();
+    });
+
+    test("keeps rewardToken when it differs from the merchant default", () => {
+        const token = "0xabcabcabcabcabcabcabcabcabcabcabcabcabca";
+        const result = campaignToDraft(
+            withRewardToken(token),
+            "0x1111111111111111111111111111111111111111"
+        );
+
+        expect(result.rewardToken).toBe(token);
+    });
 });

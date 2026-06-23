@@ -114,3 +114,10 @@ export const WebAuthN = {
     androidApkOrigins,
     iosPasskeyOrigin,
 };
+
+export {
+    buildMergeConsentChallenge,
+    buildMergeConsentChallengeSlots,
+    formatMergeConsentHourSlot,
+    MERGE_CONSENT_PREFIX,
+} from "./mergeConsent";

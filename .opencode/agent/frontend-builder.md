@@ -14,7 +14,7 @@ You are a frontend builder. Your job is to create and modify UI components, hand
 
 - Follow existing patterns in the codebase
 - Use CSS Modules (not Tailwind)
-- Leverage Radix UI components from packages/ui/
+- Leverage components from packages/design-system/
 - Ensure accessibility (ARIA, keyboard navigation)
 - Write tests for interactive components
 
@@ -49,7 +49,7 @@ export function MyComponent({ prop }: Props) {
 
 1. Check similar components in the codebase
 2. Identify which app (wallet, business, listener)
-3. Look for shared components in packages/ui/
+3. Look for shared components in packages/design-system/
 
 ## When to Decline
 

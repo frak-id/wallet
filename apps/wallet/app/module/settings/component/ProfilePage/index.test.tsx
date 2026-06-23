@@ -12,6 +12,7 @@ vi.mock("react-i18next", () => ({
                     "wallet.profile.lastConnection": "Dernière connexion",
                     "wallet.profile.managePairings":
                         "Gérer les appareils connectés",
+                    "wallet.profile.recoveryOptions": "Options de récupération",
                     "wallet.referral.menuLabel": "Parrainages",
                 }) as Record<string, string>
             )[key] ??
@@ -51,6 +52,14 @@ vi.mock("@/module/settings/component/PrivateKey", () => ({
     PrivateKey: () => null,
 }));
 
+vi.mock("@/module/settings/component/SecurityProgressCard", () => ({
+    SecurityProgressCard: () => <div>security-card</div>,
+}));
+
+vi.mock("@/module/settings/hook/useWalletSecurityStatus", () => ({
+    useWalletSecurityStatus: () => ({ hasRecovery: true }),
+}));
+
 vi.mock("@/module/common/component/InfoCard", () => ({
     InfoCard: ({ children }: { children: React.ReactNode }) => (
         <div data-testid="info-card">{children}</div>
@@ -81,6 +90,12 @@ describe("ProfilePage", () => {
         ).toBeInTheDocument();
         expect(view.getByText("identity-card")).toBeInTheDocument();
         expect(view.getByText("preferences-card")).toBeInTheDocument();
+        expect(view.getByText("security-card")).toBeInTheDocument();
+        expect(
+            view
+                .getByText("Options de récupération")
+                .closest("[data-testid='info-row']")
+        ).toHaveAttribute("data-to", "/profile/recovery");
         expect(view.getByText("Parrainages")).toBeInTheDocument();
         expect(
             view.getByText("Parrainages").closest("[data-testid='info-row']")

@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import type { StoreApi } from "zustand/vanilla";
 import {
     afterEach,
     beforeEach,
@@ -9,48 +10,53 @@ import {
     test,
 } from "../../../tests/vitest-fixtures";
 import { server } from "../../test/msw/server";
+import type { SdkSession, Session } from "../../types/Session";
 import { useDeletePairing } from "./useDeletePairing";
+
+type MockSessionState = {
+    session: Session | null;
+    sdkSession: SdkSession | null;
+    demoPrivateKey: `0x${string}` | null;
+};
 
 vi.mock("../../stores/sessionStore", async () => {
     const actual = await vi.importActual<
         typeof import("../../stores/sessionStore")
     >("../../stores/sessionStore");
+    const { createStore } = await import("zustand/vanilla");
     return {
         ...actual,
-        sessionStore: vi.fn(),
+        sessionStore: createStore<MockSessionState>(() => ({
+            session: null,
+            sdkSession: null,
+            demoPrivateKey: null,
+        })),
     };
 });
 
 describe("useDeletePairing", () => {
     beforeEach(async ({ queryWrapper, mockSession }) => {
-        const { sessionStore } = await import("../../stores/sessionStore");
+        // `vi.mock` swaps `sessionStore` for a vanilla store typed against
+        // `MockSessionState`, but TypeScript resolves the import against the
+        // real `SessionStore` type. Cast through the mock shape so
+        // `setState` stays typed.
+        const { sessionStore } = (await import(
+            "../../stores/sessionStore"
+        )) as unknown as { sessionStore: StoreApi<MockSessionState> };
 
         queryWrapper.client.clear();
         vi.clearAllMocks();
 
-        // Mock sessionStore for authentication
-        vi.mocked(sessionStore).mockImplementation((selector: any) => {
-            const state = {
+        // Seed the mock store with a valid wallet session so the hook's
+        // authenticated client picks up the address.
+        sessionStore.setState(
+            {
                 session: mockSession,
                 sdkSession: null,
                 demoPrivateKey: null,
-                setSession: vi.fn(),
-                setSdkSession: vi.fn(),
-                setDemoPrivateKey: vi.fn(),
-                clearSession: vi.fn(),
-            };
-            return selector(state);
-        });
-
-        vi.mocked(sessionStore).getState = vi.fn().mockReturnValue({
-            session: mockSession,
-            sdkSession: null,
-            demoPrivateKey: null,
-            setSession: vi.fn(),
-            setSdkSession: vi.fn(),
-            setDemoPrivateKey: vi.fn(),
-            clearSession: vi.fn(),
-        });
+            },
+            true
+        );
     });
 
     afterEach(() => {

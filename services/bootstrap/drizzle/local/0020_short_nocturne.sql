@@ -1,0 +1,1 @@
+ALTER TABLE "identity_nodes" ADD COLUMN "unlinked_at" timestamp;

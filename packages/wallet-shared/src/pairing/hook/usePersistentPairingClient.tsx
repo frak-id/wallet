@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useStore } from "zustand";
 import {
     selectDistantWebauthnSession,
     selectWebauthnSession,
@@ -33,8 +34,11 @@ function reconnectPairingClient(
  *    without firing a close event (zombie connections).
  */
 export function usePersistentPairingClient() {
-    const webauthnSession = sessionStore(selectWebauthnSession);
-    const distantWebauthnSession = sessionStore(selectDistantWebauthnSession);
+    const webauthnSession = useStore(sessionStore, selectWebauthnSession);
+    const distantWebauthnSession = useStore(
+        sessionStore,
+        selectDistantWebauthnSession
+    );
 
     const webauthnAddress = webauthnSession?.address;
     const distantWebauthnAddress = distantWebauthnSession?.address;

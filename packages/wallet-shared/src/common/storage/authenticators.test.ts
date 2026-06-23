@@ -147,6 +147,70 @@ describe("authenticatorStorage", () => {
         });
     });
 
+    describe("remove", () => {
+        it("should drop only the matching wallet entry", async () => {
+            const target =
+                "0x1111111111111111111111111111111111111111" as `0x${string}`;
+            const keep =
+                "0x2222222222222222222222222222222222222222" as `0x${string}`;
+
+            const existing: PreviousAuthenticatorModel[] = [
+                { wallet: target, authenticatorId: "loser-auth" },
+                { wallet: keep, authenticatorId: "winner-auth" },
+            ];
+
+            vi.mocked(idbKeyval.get).mockResolvedValue(existing);
+            vi.mocked(idbKeyval.set).mockResolvedValue(undefined);
+
+            await authenticatorStorage.remove(target);
+
+            expect(idbKeyval.set).toHaveBeenCalledWith(
+                "previous-authenticators",
+                [{ wallet: keep, authenticatorId: "winner-auth" }],
+                expect.anything()
+            );
+        });
+
+        it("should be a no-op when the store is empty", async () => {
+            vi.mocked(idbKeyval.get).mockResolvedValue(undefined);
+
+            await authenticatorStorage.remove(
+                "0x1111111111111111111111111111111111111111" as `0x${string}`
+            );
+
+            expect(idbKeyval.set).not.toHaveBeenCalled();
+        });
+
+        it("should be a no-op when no entry matches", async () => {
+            const existing: PreviousAuthenticatorModel[] = [
+                {
+                    wallet: "0x2222222222222222222222222222222222222222" as `0x${string}`,
+                    authenticatorId: "auth",
+                },
+            ];
+
+            vi.mocked(idbKeyval.get).mockResolvedValue(existing);
+
+            await authenticatorStorage.remove(
+                "0x1111111111111111111111111111111111111111" as `0x${string}`
+            );
+
+            expect(idbKeyval.set).not.toHaveBeenCalled();
+        });
+
+        it("should swallow NotFoundError without throwing", async () => {
+            vi.mocked(idbKeyval.get).mockRejectedValue(
+                new DOMException("Store not found", "NotFoundError")
+            );
+
+            await expect(
+                authenticatorStorage.remove(
+                    "0x1111111111111111111111111111111111111111" as `0x${string}`
+                )
+            ).resolves.toBeUndefined();
+        });
+    });
+
     describe("getAll", () => {
         it("should return all authenticators", async () => {
             const authenticators: PreviousAuthenticatorModel[] = [

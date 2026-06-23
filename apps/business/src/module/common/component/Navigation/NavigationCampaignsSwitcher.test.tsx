@@ -2,12 +2,16 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 const mockUseMediaQuery = vi.fn();
 const mockUseLocation = vi.fn();
 const mockNavigate = vi.fn();
 const mockMatchRoute = vi.fn();
 
-vi.mock("@frak-labs/ui/hook/useMediaQuery", () => ({
+vi.mock("@frak-labs/design-system/hooks/useMediaQuery", () => ({
     useMediaQuery: () => mockUseMediaQuery(),
 }));
 
@@ -15,48 +19,28 @@ vi.mock("@tanstack/react-router", () => ({
     useLocation: () => mockUseLocation(),
     useNavigate: () => mockNavigate,
     useMatchRoute: () => mockMatchRoute,
+    useParams: () => ({}),
 }));
 
-vi.mock("@/assets/icons/Laptop", () => ({
-    Laptop: () => <svg data-testid="icon-laptop" />,
-}));
-
-vi.mock("@/assets/icons/ChevronDown", () => ({
-    ChevronDown: () => <svg data-testid="icon-chevron-down" />,
-}));
-
-vi.mock("@/assets/icons/ChevronUp", () => ({
-    ChevronUp: () => <svg data-testid="icon-chevron-up" />,
-}));
-
-vi.mock("./index", () => ({
+vi.mock("./NavigationItem", () => ({
     NavigationItem: ({
         url,
         children,
         isActive,
+        icon,
         rightSection,
     }: {
         url?: string;
         children: React.ReactNode;
         isActive?: boolean;
+        icon?: React.ReactNode;
         rightSection?: React.ReactNode;
     }) => (
         <li data-testid="navigation-item" data-url={url} data-active={isActive}>
+            {icon}
             {children}
             {rightSection}
         </li>
-    ),
-    NavigationLabel: ({
-        icon,
-        children,
-    }: {
-        icon: React.ReactNode;
-        children: React.ReactNode;
-    }) => (
-        <>
-            {icon}
-            <span>{children}</span>
-        </>
     ),
     SubNavigationItem: ({
         url,
@@ -85,8 +69,9 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const item = screen.getByTestId("navigation-item");
         expect(item).toHaveAttribute("data-url", "/campaigns/list");
-        expect(screen.getByText("Campaigns")).toBeInTheDocument();
-        expect(screen.getByTestId("icon-laptop")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaigns.nav")
+        ).toBeInTheDocument();
     });
 
     it("should render desktop collapsible navigation when not on mobile", () => {
@@ -97,10 +82,12 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const item = screen.getByTestId("navigation-item");
         expect(item).toBeInTheDocument();
-        expect(screen.getByText("Campaigns")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaigns.nav")
+        ).toBeInTheDocument();
     });
 
-    it("should show sub-navigation items when expanded", () => {
+    it("should show both sub-navigation items when expanded", () => {
         mockUseMediaQuery.mockReturnValue(false);
         mockUseLocation.mockReturnValue({ pathname: "/campaigns/list" });
 
@@ -108,10 +95,13 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const subItems = screen.getAllByTestId("sub-navigation-item");
         expect(subItems).toHaveLength(2);
-        expect(subItems[0]).toHaveAttribute("data-url", "/campaigns/list");
-        expect(subItems[1]).toHaveAttribute(
-            "data-url",
-            "/campaigns/performance"
-        );
+        expect(subItems[0]).toHaveAttribute("data-url", "/campaigns");
+        expect(subItems[1]).toHaveAttribute("data-url", "/campaigns/list");
+        expect(
+            screen.getByText("shell.pages.campaignsOverview.nav")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaignsList.nav")
+        ).toBeInTheDocument();
     });
 });

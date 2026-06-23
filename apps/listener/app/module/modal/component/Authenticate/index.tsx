@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";
 import * as styles from "@/module/modal/component/Modal/index.css";
-import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
+import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 import * as authStyles from "./index.css";
 
 /**

@@ -17,6 +17,7 @@ import {
     addLastAuthentication,
     authenticationStore,
 } from "../../stores/authenticationStore";
+import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
 import { authKey } from "../queryKeys/auth";
@@ -28,7 +29,28 @@ import { getTauriGetFn } from "../webauthn/tauriBridge";
 
 type UseLoginArgs = {
     lastAuthentication?: PreviousAuthenticatorModel;
+    /**
+     * Explicit allow-list passed to WebAuthn's `allowCredentials`. Used by
+     * email-scoped login paths where the backend resolves an email to every
+     * credential currently bound to the wallet (post-merge a single wallet
+     * routinely accepts multiple passkeys). When provided, takes precedence
+     * over `lastAuthentication.authenticatorId`.
+     */
+    allowedCredentialIds?: string[];
     merchantId?: string;
+    /**
+     * When set, the freshly minted session is written to the tab-scoped
+     * `detachedPairingSessionStore` under this pairing id instead of the
+     * live `sessionStore`. The user's existing app session stays in place.
+     *
+     * Used by the cross-device merge target flow: the scanner authenticates
+     * with the hint credential to satisfy the backend's authenticator match
+     * without losing their normal wallet identity. Skips the "claim this
+     * identity" side effects (`addLastAuthentication`, `recoveryHintStorage`,
+     * `identifyAuthenticatedUser`) — those would mislabel the user as the
+     * detached credential's owner across analytics + recovery surfaces.
+     */
+    detachedPairingId?: string;
     // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
 } | void;
 
@@ -71,8 +93,11 @@ export function useLogin(
             // a flag through getTauriGetFn → the register/authenticate plugin commands,
             // then mapping the resulting signal to the `no-credential` kind.
             const tauriGetFn = getTauriGetFn();
+            const allowedCredentialIds =
+                args?.allowedCredentialIds ??
+                args?.lastAuthentication?.authenticatorId;
             const { metadata, signature, raw } = await WebAuthnP256.sign({
-                credentialId: args?.lastAuthentication?.authenticatorId,
+                credentialId: allowedCredentialIds,
                 rpId: WebAuthN.rpId,
                 userVerification: "required",
                 challenge,
@@ -110,6 +135,15 @@ export function useLogin(
             const { token, sdkJwt, ...authentication } = data;
             const session = { ...authentication, token } as Session;
 
+            if (args?.detachedPairingId) {
+                detachedPairingSessionStore.getState().setDetachedSession({
+                    pairingId: args.detachedPairingId,
+                    session,
+                    sdkSession: sdkJwt,
+                });
+                return session;
+            }
+
             await addLastAuthentication(session);
 
             // Persist a tiny uninstall-resilient hint so the next fresh
@@ -126,13 +160,24 @@ export function useLogin(
             return session;
         },
         onMutate: (vars, mutationCtx) => {
-            const method = vars?.lastAuthentication ? "specific" : "global";
+            const hasSpecificHint = Boolean(
+                vars?.lastAuthentication ||
+                    (vars?.allowedCredentialIds &&
+                        vars.allowedCredentialIds.length > 0)
+            );
+            const method = hasSpecificHint ? "specific" : "global";
             const flow = startFlow("auth_login", { method });
             options?.onMutate?.(vars, mutationCtx);
             return { flow, method };
         },
         onSuccess: (session, vars, ctx, mutationCtx) => {
-            identifyAuthenticatedUser(session);
+            // Skip the analytics identify call when the session is a
+            // detached pairing-scoped credential — the user isn't actually
+            // "becoming" this identity in the app, just authenticating to
+            // sign cross-device merge messages.
+            if (!vars?.detachedPairingId) {
+                identifyAuthenticatedUser(session);
+            }
             ctx?.flow.end("succeeded", { method: ctx?.method });
             options?.onSuccess?.(session, vars, ctx, mutationCtx);
         },

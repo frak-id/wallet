@@ -240,7 +240,7 @@ function deepLinkToRoute(params: DeepLinkParams): Route {
  * Route deep link params to the appropriate screen.
  * Called when the user is already authenticated, or for public actions.
  */
-export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
+function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     const route = deepLinkToRoute(params);
     if (route) {
         // Deep links are entry-point navigations, not part of an in-app flow,

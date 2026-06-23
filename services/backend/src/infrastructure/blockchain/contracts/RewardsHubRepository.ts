@@ -1,8 +1,21 @@
-import { log, viemClient } from "@backend-infrastructure";
 import { addresses, rewarderHubAbi } from "@frak-labs/app-essentials";
-import { type Address, encodeFunctionData, getAddress, type Hex } from "viem";
-import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
+import {
+    type Address,
+    encodeFunctionData,
+    getAddress,
+    type Hex,
+    TransactionNotFoundError,
+    TransactionReceiptNotFoundError,
+} from "viem";
+import {
+    getTransaction,
+    getTransactionReceipt,
+    sendTransaction,
+    waitForTransactionReceipt,
+} from "viem/actions";
+import { log } from "../../external/logger";
 import { adminWalletsRepository } from "../../keys/AdminWalletsRepository";
+import { viemClient } from "../client";
 
 type RewardOp = {
     isLock: boolean;
@@ -21,6 +34,38 @@ type PushRewardParams = {
     attestation: Hex;
 };
 
+type PushRewardsOptions = {
+    confirmations: number;
+    /**
+     * Persists the broadcast tx hash before the receipt wait. A crash mid-wait
+     * then leaves a `processing` row carrying its hash, so recovery reconciles
+     * it against the chain instead of blindly re-sending (double-pay).
+     */
+    onBroadcast?: (txHash: Hex) => Promise<void>;
+};
+
+/**
+ * Broadcast outcome. `timeout` means the tx was broadcast but no receipt was
+ * seen in time (or the RPC failed) — the funds may still move, so the caller
+ * must NOT revert; reconciliation decides later from the persisted hash.
+ */
+type SettlementTxResult =
+    | { status: "confirmed"; txHash: Hex; blockNumber: bigint }
+    | { status: "timeout"; txHash: Hex }
+    | { status: "reverted"; txHash: Hex };
+
+type SettlementReceipt = {
+    status: "success" | "reverted";
+    blockNumber: bigint;
+};
+
+/**
+ * Upper bound on the confirmation wait. viem already defaults to 180s, but we
+ * pin it explicitly so a stalled RPC can't keep a settlement run parked for
+ * the full default; on timeout viem throws and the batch reverts to `pending`.
+ */
+const RECEIPT_TIMEOUT_MS = 120_000;
+
 function sortOpsByBankAndToken(ops: RewardOp[]): RewardOp[] {
     return [...ops].sort((a, b) => {
         const bankCompare = a.bank
@@ -32,10 +77,10 @@ function sortOpsByBankAndToken(ops: RewardOp[]): RewardOp[] {
 }
 
 export class RewardsHubRepository {
-    async pushRewards(rewards: PushRewardParams[]): Promise<{
-        txHash: Hex;
-        blockNumber: bigint;
-    }> {
+    async pushRewards(
+        rewards: PushRewardParams[],
+        options: PushRewardsOptions
+    ): Promise<SettlementTxResult> {
         if (rewards.length === 0) {
             throw new Error("No rewards to push");
         }
@@ -50,18 +95,54 @@ export class RewardsHubRepository {
         }));
 
         const sortedOps = sortOpsByBankAndToken(ops);
-        return this.executeTransaction(sortedOps);
+        return this.executeTransaction(sortedOps, options);
     }
 
-    private async executeTransaction(args: RewardOp[]): Promise<{
-        txHash: Hex;
-        blockNumber: bigint;
-    }> {
+    /**
+     * `null` strictly means "the chain has no receipt for this hash". Any
+     * other failure (RPC down, timeout) is rethrown — reconciliation must
+     * not mistake an unreachable RPC for a dropped tx and re-send.
+     */
+    async getReceipt(txHash: Hex): Promise<SettlementReceipt | null> {
+        try {
+            const receipt = await getTransactionReceipt(viemClient, {
+                hash: txHash,
+            });
+            return {
+                status: receipt.status,
+                blockNumber: receipt.blockNumber,
+            };
+        } catch (error) {
+            if (error instanceof TransactionReceiptNotFoundError) return null;
+            throw error;
+        }
+    }
+
+    /** `false` strictly means "no node knows this tx"; RPC failures rethrow. */
+    async isTransactionKnown(txHash: Hex): Promise<boolean> {
+        try {
+            await getTransaction(viemClient, { hash: txHash });
+            return true;
+        } catch (error) {
+            if (error instanceof TransactionNotFoundError) return false;
+            throw error;
+        }
+    }
+
+    private async executeTransaction(
+        args: RewardOp[],
+        options: PushRewardsOptions
+    ): Promise<SettlementTxResult> {
         const mutex = adminWalletsRepository.getMutexForAccount({
             key: "rewarder",
         });
 
-        return mutex.runExclusive(async () => {
+        // The mutex exists only to serialize nonce allocation on the shared
+        // rewarder EOA, so it must wrap the broadcast and nothing more. Holding
+        // it across `waitForTransactionReceipt` would block every other
+        // settlement push for the entire confirmation window (or a stalled-RPC
+        // timeout), which is exactly the head-of-line stall we are avoiding.
+        const txHash = await mutex.runExclusive(async () => {
             const account = await adminWalletsRepository.getKeySpecificAccount({
                 key: "rewarder",
             });
@@ -88,21 +169,35 @@ export class RewardsHubRepository {
                     functionName: "batch",
                     contractAddress: addresses.rewarderHub,
                     account: account.address,
-                    opsCount: Array.isArray(args[0]) ? args[0].length : 1,
+                    opsCount: args.length,
                 },
                 "Executing RewardsHub transaction"
             );
 
-            const txHash = await sendTransaction(viemClient, {
+            return sendTransaction(viemClient, {
                 account,
                 to: addresses.rewarderHub,
                 data,
                 chain: viemClient.chain,
             });
+        });
 
+        // Best-effort persist of the hash before awaiting; a failure here is
+        // recovered by the settled-status write, so it must not abort the wait.
+        try {
+            await options.onBroadcast?.(txHash);
+        } catch (error) {
+            log.error(
+                { error, txHash },
+                "Failed to persist settlement tx hash before receipt wait"
+            );
+        }
+
+        try {
             const receipt = await waitForTransactionReceipt(viemClient, {
                 hash: txHash,
-                confirmations: 4,
+                confirmations: options.confirmations,
+                timeout: RECEIPT_TIMEOUT_MS,
             });
 
             log.info(
@@ -111,17 +206,29 @@ export class RewardsHubRepository {
                     txHash,
                     blockNumber: receipt.blockNumber,
                     gasUsed: receipt.gasUsed,
+                    status: receipt.status,
                 },
-                "RewardsHub transaction confirmed"
+                "RewardsHub transaction mined"
             );
 
-            return {
-                txHash,
-                blockNumber: receipt.blockNumber,
-            };
-        });
+            return receipt.status === "success"
+                ? {
+                      status: "confirmed",
+                      txHash,
+                      blockNumber: receipt.blockNumber,
+                  }
+                : { status: "reverted", txHash };
+        } catch (error) {
+            // Broadcast succeeded but the receipt is unknown (timeout/RPC error).
+            // Re-sending could double-pay, so hand off to reconciliation.
+            log.warn(
+                { error, txHash },
+                "Settlement receipt unresolved; leaving for reconciliation"
+            );
+            return { status: "timeout", txHash };
+        }
     }
 }
 
-export type { PushRewardParams };
+export type { PushRewardParams, SettlementTxResult };
 export const rewardsHubRepository = new RewardsHubRepository();

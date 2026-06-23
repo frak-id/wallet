@@ -1,8 +1,7 @@
-import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { resolvingContextStore } from "../stores/resolvingContextStore";
-import { useSendInteractionListener } from "./useSendInteractionListener";
+import { createSendInteractionHandler } from "./useSendInteractionListener";
 
 const { mockTrackInteractionPost } = vi.hoisted(() => ({
     mockTrackInteractionPost: vi.fn(),
@@ -39,28 +38,23 @@ vi.mock("@frak-labs/wallet-shared/stores/clientIdStore", () => ({
     },
 }));
 
-describe("useSendInteractionListener", () => {
-    beforeEach(({ queryWrapper }) => {
-        queryWrapper.client.clear();
+describe("createSendInteractionHandler", () => {
+    beforeEach(() => {
         vi.clearAllMocks();
         resolvingContextStore.setState({ context: undefined });
     });
 
-    test("should submit interaction from rpc context when trust level is verified", async ({
-        queryWrapper,
-    }) => {
+    test("should submit interaction from rpc context when trust level is verified", async () => {
         mockTrackInteractionPost.mockResolvedValue({
             data: { success: true },
             error: null,
         });
 
-        resolvingContextStore.setState({ trustLevel: "verified" });
-
-        const { result } = renderHook(() => useSendInteractionListener(), {
-            wrapper: queryWrapper.wrapper,
+        const handler = createSendInteractionHandler({
+            getTrustLevel: () => "verified",
         });
 
-        await result.current([{ type: "sharing" }], {
+        await handler([{ type: "sharing" }], {
             origin: "https://example.com",
             source: null,
             merchantId: "merchant-id",
@@ -68,11 +62,13 @@ describe("useSendInteractionListener", () => {
             clientId: "client-id",
         });
 
-        await waitFor(() => {
-            expect(mockTrackInteractionPost).toHaveBeenCalledWith({
-                type: "sharing",
-                merchantId: "merchant-id",
-            });
+        // Microtask drain so the fire-and-forget sendInteraction settles.
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(mockTrackInteractionPost).toHaveBeenCalledWith({
+            type: "sharing",
+            merchantId: "merchant-id",
         });
         expect(mockSetClientId).toHaveBeenCalledWith("client-id");
     });

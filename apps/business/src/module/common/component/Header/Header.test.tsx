@@ -2,41 +2,76 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Header } from "./index";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
         <a href={to} data-testid={`link-${to.replace(/\//g, "")}`}>
             {children}
         </a>
     ),
-}));
-
-vi.mock("@frak-labs/ui/component/ButtonRefresh", () => ({
-    ButtonRefresh: () => <button type="button" data-testid="refresh-btn" />,
+    useLocation: () => ({ pathname: "/m/merchant-1/campaigns/list" }),
+    useParams: () => ({ merchantId: "merchant-1" }),
+    useNavigate: () => vi.fn(),
 }));
 
 vi.mock("@/module/common/atoms/demoMode", () => ({
     useIsDemoMode: () => false,
+    useDemoMode: () => ({ isDemoMode: false, setDemoMode: vi.fn() }),
+}));
+
+vi.mock("@/module/campaigns/component/ButtonNewCampaign", () => ({
+    ButtonNewCampaign: () => (
+        <button type="button" data-testid="new-campaign-btn">
+            Create campaign
+        </button>
+    ),
+}));
+
+vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
+    useMyMerchants: () => ({
+        merchants: [{ id: "merchant-1", name: "Acme", domain: "acme.example" }],
+        owned: [{ id: "merchant-1", name: "Acme", domain: "acme.example" }],
+        adminOf: [],
+        isEmpty: false,
+    }),
 }));
 
 describe("Header", () => {
-    it("should render logo link to /dashboard", () => {
-        render(<Header />);
-        const logoLink = screen.getByTestId("link-dashboard");
-        expect(logoLink).toBeInTheDocument();
-        expect(logoLink).toHaveAttribute("href", "/dashboard");
-    });
-
-    it("should render LogoFrak icon inside link", () => {
-        render(<Header />);
-        const logoLink = screen.getByTestId("link-dashboard");
-        // LogoFrak renders as SVG
-        const svg = logoLink.querySelector("svg");
-        expect(svg).toBeInTheDocument();
-    });
-
     it("should render as header element", () => {
         const { container } = render(<Header />);
         const header = container.querySelector("header");
         expect(header).toBeInTheDocument();
+    });
+
+    it("should render breadcrumb with current pathname", () => {
+        render(<Header />);
+        expect(
+            screen.getByRole("navigation", {
+                name: "shell.header.breadcrumbLabel",
+            })
+        ).toBeInTheDocument();
+        // /campaigns/list → "Campaigns" (link) / "List" (current)
+        expect(
+            screen.getByText("shell.pages.campaigns.nav")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaignsList.nav")
+        ).toBeInTheDocument();
+    });
+
+    it("should render contextual export and create campaign buttons on /campaigns", () => {
+        render(<Header />);
+        expect(screen.getByText("shell.header.export")).toBeInTheDocument();
+        expect(screen.getByTestId("new-campaign-btn")).toBeInTheDocument();
+    });
+
+    it("should render the active merchant name in the menu trigger", () => {
+        render(<Header />);
+        const trigger = screen.getByRole("button", { name: "Acme" });
+        expect(trigger).toBeInTheDocument();
+        expect(trigger).toHaveTextContent("Acme");
     });
 });

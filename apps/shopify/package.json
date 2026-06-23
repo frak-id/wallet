@@ -77,7 +77,7 @@
     "bun-types": "latest",
     "drizzle-kit": "^0.31.10",
     "preact": "^10.29.0",
-    "sst": "3.18.9",
+    "sst": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "^4.1.4"

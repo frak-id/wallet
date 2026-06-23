@@ -1,9 +1,15 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@frak-labs/design-system/components/Popover";
+import clsx from "clsx";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
-import type { ComponentPropsWithRef } from "react";
+import type { ButtonHTMLAttributes, Ref } from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/module/common/component/Badge";
+import { Button } from "@/module/common/component/Button";
 import {
     Command,
     CommandEmpty,
@@ -13,13 +19,9 @@ import {
     CommandList,
     CommandSeparator,
 } from "@/module/common/component/Command";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/module/common/component/Popover";
 import { Separator } from "@/module/common/component/Separator";
-import styles from "./index.module.css";
+import { Tooltip } from "@/module/common/component/Tooltip";
+import * as styles from "./multi-select.css";
 
 type Option = {
     name: string;
@@ -27,12 +29,19 @@ type Option = {
     tooltip?: string;
 };
 
-export type MultiSelectProps = ComponentPropsWithRef<typeof Button> & {
+// The trigger is fixed to `variant="secondary"` so we intentionally do NOT
+// extend the DS Button recipe variants here — exposing them on a multi-select
+// would invite drift between callsites. Use raw button HTML attrs as the base.
+export type MultiSelectProps = Omit<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    "value" | "onChange"
+> & {
+    ref?: Ref<HTMLButtonElement>;
+    value?: string[];
     options: Option[];
     onValueChange: (value: Option[]) => void;
     placeholder?: string;
     animation?: number;
-    asChild?: boolean;
     className?: string;
 };
 
@@ -41,11 +50,13 @@ export const MultiSelect = ({
     options,
     onValueChange,
     value,
-    placeholder = "Select options",
-    asChild = false,
+    placeholder,
     className,
     ...props
 }: MultiSelectProps) => {
+    const { t } = useTranslation();
+    const resolvedPlaceholder =
+        placeholder ?? t("forms.multiSelect.placeholder");
     const namesFromValue = Array.isArray(value)
         ? value.map(
               (v: string) =>
@@ -80,11 +91,11 @@ export const MultiSelect = ({
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
                 <Button
-                    variant={"trigger"}
+                    variant={"secondary"}
                     ref={ref}
                     {...props}
                     onClick={handleTogglePopover}
-                    className={styles.multiSelect__trigger}
+                    className={styles.multiSelectTrigger}
                 >
                     {selectedNames.size > 0 ? (
                         <SelectedValues
@@ -94,8 +105,8 @@ export const MultiSelect = ({
                             handleClear={handleClear}
                         />
                     ) : (
-                        <div className={styles.multiSelect__triggerInner}>
-                            <span>{placeholder}</span>
+                        <div className={styles.multiSelectTriggerInner}>
+                            <span>{resolvedPlaceholder}</span>
                             <ChevronDown size={20} />
                         </div>
                     )}
@@ -106,10 +117,12 @@ export const MultiSelect = ({
                 onEscapeKeyDown={() => setIsPopoverOpen(false)}
             >
                 <Command>
-                    <CommandInput placeholder="Search..." />
+                    <CommandInput placeholder={t("forms.multiSelect.search")} />
                     <CommandSeparator />
                     <CommandList>
-                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandEmpty>
+                            {t("forms.multiSelect.noResults")}
+                        </CommandEmpty>
                         <CommandGroup>
                             <OptionsList
                                 selectedValues={selectedNames}
@@ -120,28 +133,26 @@ export const MultiSelect = ({
                     </CommandList>
                     <CommandSeparator />
                     <CommandGroup>
-                        <div className={styles.multiSelect__actions}>
+                        <div className={styles.multiSelectActions}>
                             {selectedNames.size > 0 && (
                                 <>
                                     <CommandItem
                                         onSelect={handleClear}
-                                        className={styles.multiSelect__button}
+                                        className={styles.multiSelectButton}
                                     >
-                                        Clear
+                                        {t("forms.multiSelect.clear")}
                                     </CommandItem>
                                     <Separator
                                         orientation="vertical"
-                                        className={
-                                            styles.multiSelect__separator
-                                        }
+                                        className={styles.multiSelectSeparator}
                                     />
                                 </>
                             )}
                             <CommandItem
                                 onSelect={() => setIsPopoverOpen(false)}
-                                className={styles.multiSelect__button}
+                                className={styles.multiSelectButton}
                             >
-                                Close
+                                {t("forms.multiSelect.close")}
                             </CommandItem>
                         </div>
                     </CommandGroup>
@@ -152,14 +163,6 @@ export const MultiSelect = ({
 };
 MultiSelect.displayName = "MultiSelect";
 
-/**
- * List of selected values
- * @param selectedValues
- * @param options
- * @param toggleOption
- * @param handleClear
- * @constructor
- */
 function SelectedValues({
     selectedValues,
     options,
@@ -172,8 +175,8 @@ function SelectedValues({
     handleClear: () => void;
 }) {
     return (
-        <div className={styles.multiSelect__triggerInner}>
-            <div className={styles.multiSelect__triggerBadges}>
+        <div className={styles.multiSelectTriggerInner}>
+            <div className={styles.multiSelectTriggerBadges}>
                 {selectedValues.size > 2 && (
                     <SelectedValuesMore size={selectedValues.size} />
                 )}
@@ -183,8 +186,8 @@ function SelectedValues({
                         .map((option) => (
                             <Badge
                                 key={option.name}
-                                variant={"information"}
-                                className={styles.multiSelect__badge}
+                                variant={"secondary"}
+                                className={styles.multiSelectBadge}
                             >
                                 {option?.name}
                                 <X
@@ -198,7 +201,7 @@ function SelectedValues({
                             </Badge>
                         ))}
             </div>
-            <div className={styles.multiSelect__actions}>
+            <div className={styles.multiSelectActions}>
                 <XIcon
                     onClick={(event) => {
                         event.stopPropagation();
@@ -208,7 +211,7 @@ function SelectedValues({
                 />
                 <Separator
                     orientation="vertical"
-                    className={styles.multiSelect__triggerSeparator}
+                    className={styles.multiSelectTriggerSeparator}
                 />
                 <ChevronDown size={20} />
             </div>
@@ -216,33 +219,22 @@ function SelectedValues({
     );
 }
 
-/**
- * When more than 2 selected values
- * @param size
- * @constructor
- */
 function SelectedValuesMore({ size }: { size: number }) {
+    const { t } = useTranslation();
     return (
-        <div className={styles.multiSelect__triggerInner}>
-            <div className={styles.multiSelect__triggerBadges}>
+        <div className={styles.multiSelectTriggerInner}>
+            <div className={styles.multiSelectTriggerBadges}>
                 <Badge
-                    variant={"information"}
-                    className={styles.multiSelect__badge}
+                    variant={"secondary"}
+                    className={styles.multiSelectBadge}
                 >
-                    {size} selected
+                    {t("forms.multiSelect.selectedCount", { count: size })}
                 </Badge>
             </div>
         </div>
     );
 }
 
-/**
- * List of all options
- * @param selectedValues
- * @param options
- * @param toggleOption
- * @constructor
- */
 function OptionsList({
     selectedValues,
     options,
@@ -260,13 +252,17 @@ function OptionsList({
                 onSelect={() => toggleOption(option)}
             >
                 <div
-                    className={`${styles.multiSelect__checks} ${
+                    className={clsx(
+                        styles.multiSelectChecks,
                         isSelected
-                            ? styles["multiSelect__checks--selected"]
-                            : styles["multiSelect__checks--notSelected"]
-                    }`}
+                            ? styles.multiSelectChecksSelected
+                            : styles.multiSelectChecksNotSelected
+                    )}
                 >
-                    <CheckIcon size={12} />
+                    <CheckIcon
+                        size={12}
+                        className={isSelected ? undefined : styles.checkHidden}
+                    />
                 </div>
                 <Tooltip content={option.tooltip} hidden={!option.tooltip}>
                     <span>{option.name}</span>

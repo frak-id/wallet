@@ -36,6 +36,7 @@ describe("useGetRewardHistory", () => {
 
     const mockItem = {
         merchant: {
+            id: "merchant-1",
             name: "Frak",
             domain: "frak.id",
         },

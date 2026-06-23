@@ -16,6 +16,13 @@ const wrapperBase = style({
         "&:focus-within": {
             borderColor: vars.border.focus,
         },
+        // Fill with the error surface whenever the field is invalid —
+        // FormControl sets aria-invalid, so this works without an explicit
+        // `error` prop.
+        '&:has(textarea[aria-invalid="true"])': {
+            backgroundColor: vars.surface.error,
+            borderColor: vars.border.error,
+        },
     },
 });
 
@@ -57,7 +64,15 @@ const fieldBase = style({
         "&:disabled": {
             cursor: "not-allowed",
         },
+        // Focus is indicated by the wrapper border (:focus-within).
+        "&:focus": {
+            outline: "none",
+        },
     },
+});
+
+const fieldNoResize = style({
+    resize: "none",
 });
 
 export const textareaStyles = {
@@ -65,4 +80,5 @@ export const textareaStyles = {
     wrapperError,
     wrapperDisabled,
     field: fieldBase,
+    fieldNoResize,
 };

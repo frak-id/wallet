@@ -1,27 +1,76 @@
-import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
+import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
+import {
+    ChecklistIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
+} from "@frak-labs/design-system/icons";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ChevronDown } from "@/assets/icons/ChevronDown";
-import { ChevronUp } from "@/assets/icons/ChevronUp";
-import { Laptop } from "@/assets/icons/Laptop";
-import { NavigationItem, NavigationLabel, SubNavigationItem } from "./index";
+import { useTranslation } from "react-i18next";
+import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { pageNav } from "@/module/common/i18n/pageLabel";
+import { NavigationItem, SubNavigationItem } from "./NavigationItem";
+import { collapsibleContent, itemList } from "./navigation.css";
 
-export function NavigationCampaignsSwitcher() {
+export function NavigationCampaignsSwitcher({
+    disabled,
+    tooltip,
+}: {
+    disabled?: boolean;
+    tooltip?: string;
+}) {
+    const { t } = useTranslation();
     const isMobile = useMediaQuery("(max-width : 768px)");
+    const merchantId = useOptionalActiveMerchantId();
+
+    // TODO: remove the legacy fallback once all entry points land users
+    // inside a `/m/$merchantId/...` route.
+    const listUrl = merchantId
+        ? `/m/${merchantId}/campaigns/list`
+        : "/campaigns/list";
+    const overviewUrl = merchantId
+        ? `/m/${merchantId}/campaigns`
+        : "/campaigns";
+
+    // No merchant ⇒ every campaigns route bounces to /dashboard; show a single
+    // disabled entry (no expandable sub-items) with the reason.
+    if (disabled) {
+        return (
+            <NavigationItem
+                disabled
+                tooltip={tooltip}
+                icon={<ChecklistIcon width={20} height={20} />}
+            >
+                {pageNav(t, "campaigns")}
+            </NavigationItem>
+        );
+    }
 
     return isMobile ? (
-        <NavigationItem url="/campaigns/list">
-            <NavigationLabel icon={<Laptop />}>Campaigns</NavigationLabel>
+        <NavigationItem
+            url={listUrl}
+            icon={<ChecklistIcon width={20} height={20} />}
+        >
+            {pageNav(t, "campaigns")}
         </NavigationItem>
     ) : (
-        <NavigationCampaigns />
+        <NavigationCampaigns listUrl={listUrl} overviewUrl={overviewUrl} />
     );
 }
 
-function NavigationCampaigns() {
+function NavigationCampaigns({
+    listUrl,
+    overviewUrl,
+}: {
+    listUrl: string;
+    overviewUrl: string;
+}) {
+    const { t } = useTranslation();
     const location = useLocation();
-    const isCampaignsRoute = location.pathname.startsWith("/campaigns");
+    const isCampaignsRoute =
+        location.pathname.startsWith("/campaigns") ||
+        /^\/m\/[^/]+\/campaigns/.test(location.pathname);
     const [isOpen, setIsOpen] = useState(isCampaignsRoute);
 
     // Keep menu open when navigating to any campaigns route
@@ -36,18 +85,25 @@ function NavigationCampaigns() {
             <Collapsible.Trigger asChild>
                 <NavigationItem
                     isActive={isOpen}
-                    rightSection={isOpen ? <ChevronUp /> : <ChevronDown />}
+                    icon={<ChecklistIcon width={20} height={20} />}
+                    rightSection={
+                        isOpen ? (
+                            <ChevronUpIcon width={16} height={16} />
+                        ) : (
+                            <ChevronDownIcon width={16} height={16} />
+                        )
+                    }
                 >
-                    <Laptop /> Campaigns
+                    {pageNav(t, "campaigns")}
                 </NavigationItem>
             </Collapsible.Trigger>
-            <Collapsible.Content>
-                <ul>
-                    <SubNavigationItem url="/campaigns/list">
-                        List
+            <Collapsible.Content className={collapsibleContent}>
+                <ul className={itemList}>
+                    <SubNavigationItem url={overviewUrl} fuzzy={false}>
+                        {pageNav(t, "campaignsOverview")}
                     </SubNavigationItem>
-                    <SubNavigationItem url="/campaigns/performance">
-                        Performance
+                    <SubNavigationItem url={listUrl}>
+                        {pageNav(t, "campaignsList")}
                     </SubNavigationItem>
                 </ul>
             </Collapsible.Content>

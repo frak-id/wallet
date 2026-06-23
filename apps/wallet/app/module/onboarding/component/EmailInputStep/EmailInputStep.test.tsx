@@ -36,29 +36,27 @@ beforeEach(() => {
 function renderStep(overrides?: {
     onContinue?: (email: string) => void;
     onBack?: () => void;
-    onLoginExisting?: (args: {
+    onAlreadyUsed?: (args: {
         email: string;
-        authenticatorId: string;
+        authenticatorIds: string[];
         wallet?: `0x${string}`;
     }) => void;
-    isLoginLoading?: boolean;
     initialValue?: string;
 }) {
     const onContinue = overrides?.onContinue ?? vi.fn();
     const onBack = overrides?.onBack ?? vi.fn();
-    const onLoginExisting = overrides?.onLoginExisting ?? vi.fn();
+    const onAlreadyUsed = overrides?.onAlreadyUsed ?? vi.fn();
     render(
         (
             <EmailInputStep
                 onContinue={onContinue}
                 onBack={onBack}
-                onLoginExisting={onLoginExisting}
-                isLoginLoading={overrides?.isLoginLoading}
+                onAlreadyUsed={onAlreadyUsed}
                 initialValue={overrides?.initialValue}
             />
         ) as ReactElement
     );
-    return { onContinue, onBack, onLoginExisting };
+    return { onContinue, onBack, onAlreadyUsed };
 }
 
 function getContinueButton() {
@@ -144,47 +142,39 @@ describe("EmailInputStep", () => {
         expect(onContinue).not.toHaveBeenCalled();
     });
 
-    it("renders the already-used block when the backend says so", async () => {
+    it("bubbles already-used result up via onAlreadyUsed", async () => {
         checkEmailMock.mockResolvedValue({
             used: true,
-            authenticatorId: "cred-123",
+            authenticatorIds: ["cred-123", "cred-456"],
             wallet: "0xabc0000000000000000000000000000000000def",
         });
-        const { onContinue, onLoginExisting } = renderStep();
+        const { onContinue, onAlreadyUsed } = renderStep();
         fireEvent.change(getInput(), { target: { value: "taken@frak.id" } });
         fireEvent.click(getContinueButton());
 
-        await screen.findByText("onboarding.email.alreadyUsed.message");
+        await waitFor(() => {
+            expect(onAlreadyUsed).toHaveBeenCalledWith({
+                email: "taken@frak.id",
+                authenticatorIds: ["cred-123", "cred-456"],
+                wallet: "0xabc0000000000000000000000000000000000def",
+            });
+        });
         expect(onContinue).not.toHaveBeenCalled();
-        // Continue CTA stays disabled until the user edits the email.
-        expect(getContinueButton()).toBeDisabled();
-
-        const loginBtn = screen.getByRole("button", {
-            name: "onboarding.email.alreadyUsed.login",
-        });
-        fireEvent.click(loginBtn);
-        expect(onLoginExisting).toHaveBeenCalledWith({
-            email: "taken@frak.id",
-            authenticatorId: "cred-123",
-            wallet: "0xabc0000000000000000000000000000000000def",
-        });
     });
 
-    it("dismisses the already-used block once the user edits the email", async () => {
+    it("treats a used result with no active bindings as a fresh email", async () => {
         checkEmailMock.mockResolvedValue({
             used: true,
-            authenticatorId: "cred-123",
+            authenticatorIds: [],
         });
-        renderStep();
-        fireEvent.change(getInput(), { target: { value: "taken@frak.id" } });
+        const { onContinue, onAlreadyUsed } = renderStep();
+        fireEvent.change(getInput(), { target: { value: "stale@frak.id" } });
         fireEvent.click(getContinueButton());
-        await screen.findByText("onboarding.email.alreadyUsed.message");
 
-        fireEvent.change(getInput(), { target: { value: "fresh@frak.id" } });
-        expect(
-            screen.queryByText("onboarding.email.alreadyUsed.message")
-        ).toBeNull();
-        expect(getContinueButton()).not.toBeDisabled();
+        await waitFor(() => {
+            expect(onContinue).toHaveBeenCalledWith("stale@frak.id");
+        });
+        expect(onAlreadyUsed).not.toHaveBeenCalled();
     });
 
     it("shows a retryable error when the check itself fails", async () => {

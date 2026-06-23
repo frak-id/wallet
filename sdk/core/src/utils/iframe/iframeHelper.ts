@@ -1,6 +1,6 @@
 import { getBackendUrl } from "../../config/backendUrl";
 import { getClientId } from "../../config/clientId";
-import type { FrakWalletSdkConfig } from "../../types";
+import type { FrakWalletSdkConfig, ListenerPreloadOption } from "../../types";
 
 /**
  * Base props for the iframe
@@ -64,12 +64,41 @@ export function createIframe({
     preconnect(walletUrl);
     preconnect(getBackendUrl(walletUrl));
 
-    iframe.src = `${walletUrl}/listener?clientId=${encodeURIComponent(clientId)}`;
+    iframe.src = buildListenerUrl({
+        walletUrl,
+        clientId,
+        preload: config?.preload,
+    });
 
     return new Promise((resolve) => {
         iframe.addEventListener("load", () => resolve(iframe));
         document.body.appendChild(iframe);
     });
+}
+
+/**
+ * Build the listener iframe URL.
+ *
+ * Query params:
+ *  - `clientId` — anonymous SDK client identifier used for funnel joining.
+ *
+ * Hash params (consumed by `apps/listener/app/bootstrap.ts#setupPreloadHints`):
+ *  - `preload=modal,sharing` — idle-warms the matching Ring 1 + Ring 2 chunks.
+ *    Skipped entirely when no preload hints are provided so the listener
+ *    doesn't pay for warm-ups that nobody asked for.
+ */
+function buildListenerUrl({
+    walletUrl,
+    clientId,
+    preload,
+}: {
+    walletUrl: string;
+    clientId: string;
+    preload?: ListenerPreloadOption[];
+}): string {
+    const base = `${walletUrl}/listener?clientId=${encodeURIComponent(clientId)}`;
+    if (!preload || preload.length === 0) return base;
+    return `${base}#preload=${preload.join(",")}`;
 }
 
 /**

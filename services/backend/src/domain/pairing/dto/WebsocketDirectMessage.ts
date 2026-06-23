@@ -2,6 +2,21 @@ import type { Hex } from "viem";
 import type { SignatureRejectReason } from "./SignatureRejectReason";
 
 /**
+ * Discriminates how the target should produce and how the origin should
+ * interpret the value carried back in `signature-response.signature`.
+ *
+ * - `"onchain"` (default, omitted on the wire for legacy clients): target
+ *   wraps a WebAuthn assertion with `formatSignature` and returns it as a
+ *   Hex blob ready to plug into a userOp / smart-account validator.
+ * - `"raw-assertion"`: target returns the raw base64-encoded WebAuthn
+ *   assertion JSON (`{id, response: {metadata, signature}}`), parseable by
+ *   `WebAuthNService.verifyConsentSignature`. Used by the cross-device
+ *   wallet merge to ferry the loser's deterministic merge-consent
+ *   assertion back to the requester without an on-chain wrapping step.
+ */
+export type WsSignatureKind = "onchain" | "raw-assertion";
+
+/**
  * When a pairing is initiated by the origin
  *
  * `originResumeToken` is a short-lived JWT that authorises the origin to
@@ -28,19 +43,50 @@ export type WsPingRequest = {
 };
 
 /**
+ * Common signature-request fields shared by the direct (origin → server)
+ * and topic (server → target) DTOs. The topic variant adds `pairingId`
+ * and `partnerDeviceName`; the direct variant carries only what the
+ * origin knows at send time.
+ */
+export type WsSignatureRequestBase = {
+    // The id of the request
+    id: string;
+    // The request
+    request: Hex;
+    // Some optional context
+    context?: object;
+    // How the response should be shaped. Defaults to "onchain" when
+    // omitted (legacy clients).
+    signatureKind?: WsSignatureKind;
+};
+
+/**
+ * Common signature-response fields. The direct (target → server) and
+ * topic (server → origin) DTOs carry the same payload shape; the only
+ * difference is the transport context.
+ */
+export type WsSignatureResponseBase = {
+    // The pairing id
+    pairingId: string;
+    // The id of the request
+    id: string;
+    // The signature response. Hex for `signatureKind: "onchain"`
+    // (default), base64 WebAuthn assertion JSON for
+    // `signatureKind: "raw-assertion"`.
+    signature: Hex | string;
+    // Echoes the kind from the matching `signature-request` so the
+    // receiver can pick the right decoder without consulting its own
+    // bookkeeping. Optional for legacy `onchain` clients.
+    signatureKind?: WsSignatureKind;
+};
+
+/**
  * When the origin want to send a signature request
  *  from origin
  */
 export type WsSignatureRequest = {
     type: "signature-request";
-    payload: {
-        // The id of the request
-        id: string;
-        // The request
-        request: Hex;
-        // Some optional context
-        context?: object;
-    };
+    payload: WsSignatureRequestBase;
 };
 
 /**
@@ -61,14 +107,7 @@ export type WsPongRequest = {
  */
 export type WsSignatureResponseRequest = {
     type: "signature-response";
-    payload: {
-        // The pairing id
-        pairingId: string;
-        // The id of the request
-        id: string;
-        // The signature response
-        signature: Hex;
-    };
+    payload: WsSignatureResponseBase;
 };
 /**
  * When either side sends a signature rejection / cancellation.

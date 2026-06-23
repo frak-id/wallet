@@ -17,14 +17,19 @@ export {
     AdminWalletsRepository,
     adminWalletsRepository,
 } from "./keys/AdminWalletsRepository";
-// Session + identity macros
-export { identityContext, sessionContext } from "./macro";
+// Session macro
+export { sessionContext } from "./macro";
 // Events
 export { eventEmitter } from "./messaging/events";
 // Database
 export { getLibsqlClient, getLibsqlDb } from "./persistence/libsql";
 export { db } from "./persistence/postgres";
 export {
+    FxRateRepository,
+    fxRateRepository,
+} from "./pricing/FxRateRepository";
+export {
+    type FiatToTokenConversion,
     PricingRepository,
     pricingRepository,
     type TokenPrice,

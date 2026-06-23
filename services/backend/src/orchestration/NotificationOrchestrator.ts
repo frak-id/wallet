@@ -1,9 +1,12 @@
 import type { SendNotificationPayload } from "@backend-domain/notifications";
 import { eventEmitter, log } from "@backend-infrastructure";
-import type { NotificationEvent, NotificationEventItem } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
+import type {
+    NotificationEvent,
+    NotificationEventItem,
+} from "../domain/notifications/events";
 import type { NotificationsService } from "../domain/notifications/services/NotificationsService";
 
 // Stage-scoped wallet URL: prod backend points users at wallet.frak.id,

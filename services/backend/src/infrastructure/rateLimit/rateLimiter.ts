@@ -1,5 +1,5 @@
-import { log } from "@backend-infrastructure";
 import { Elysia, status } from "elysia";
+import { log } from "../external/logger";
 import { getClientIp } from "./ipExtraction";
 
 interface RateLimitWindow {

@@ -6,7 +6,7 @@ export type SdkHandshakeFailureReason =
 
 export type SdkLifecycleEventMap = {
     sdk_initialized: {
-        sdkVersion?: string;
+        sdk_version?: string;
     };
     sdk_iframe_connected: {
         handshake_duration_ms: number;

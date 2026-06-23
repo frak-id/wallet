@@ -117,6 +117,12 @@ export type SettlementResult = {
     failedCount: number;
     txHashes: Hex[];
     banks: Set<Address>;
+    /**
+     * Ids of rewards whose on-chain push actually confirmed. Tracked
+     * separately from `settledCount` so callers notify only truly-settled
+     * rewards, never ones reverted to `pending` by a failed bank batch.
+     */
+    settledAssetLogIds: string[];
     errors: {
         assetLogId: string;
         error: string;

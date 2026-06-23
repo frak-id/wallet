@@ -1,97 +1,104 @@
-import { useCallback, useState } from "react";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { UploadIcon } from "@frak-labs/design-system/icons";
+import clsx from "clsx";
+import { useCallback, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useTranslation } from "react-i18next";
+import { imageAccept } from "@/module/merchant/component/ImageUploadField";
 import {
-    useMediaDelete,
+    useMediaList,
     useMediaUpload,
 } from "@/module/merchant/hook/useMediaUpload";
-import styles from "./index.module.css";
+import { getUploadErrorMessage } from "@/module/merchant/utils/uploadError";
+import * as fieldStyles from "../edit-fields.css";
+import * as styles from "./multi-hero-images-field.css";
 
 type MultiHeroImagesFieldProps = {
     merchantId: string;
     values: string[];
     onChange: (values: string[]) => void;
+    /** URLs already used elsewhere (e.g. the main hero) to hide from the picker. */
+    excludeUrls?: string[];
 };
 
 const MAX_IMAGES = 4;
-
-const imageAccept = {
-    "image/png": [".png"],
-    "image/jpeg": [".jpg", ".jpeg"],
-    "image/webp": [".webp"],
-    "image/svg+xml": [".svg"],
-    "image/gif": [".gif"],
-};
-
-const restrictionsText =
-    "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 — Max 10MB";
-
-// Extract storage key (e.g. "hero-abc12345") from a stored URL.
-function urlToType(url: string): string | null {
-    const match = url.match(/\/([^/]+)\.(?:webp|svg)(?:\?.*)?$/);
-    return match?.[1] ?? null;
-}
 
 export function MultiHeroImagesField({
     merchantId,
     values,
     onChange,
+    excludeUrls,
 }: MultiHeroImagesFieldProps) {
+    const { t } = useTranslation();
     const {
-        mutate: upload,
-        isPending: isUploading,
+        mutateAsync: uploadAsync,
+        isPending,
         error: uploadError,
         reset: resetUpload,
     } = useMediaUpload();
-    const { mutate: deleteMedia } = useMediaDelete();
     const [hoveredUrl, setHoveredUrl] = useState<string | null>(null);
 
     const reachedLimit = values.length >= MAX_IMAGES;
-    const isPending = isUploading;
 
     const onDrop = useCallback(
-        (files: File[]) => {
-            const file = files[0];
-            if (!file || reachedLimit) return;
+        async (files: File[]) => {
+            // The backend takes one image per request — upload the batch
+            // sequentially, appending each slide as it lands.
+            const batch = files.slice(0, MAX_IMAGES - values.length);
+            if (!batch.length) return;
 
             resetUpload();
-            upload(
-                { merchantId, image: file, type: "hero-extra" },
-                {
-                    onSuccess: (data) => {
-                        if (!data?.url) return;
-                        onChange([...values, data.url]);
-                    },
+            const next = [...values];
+            for (const file of batch) {
+                try {
+                    const data = await uploadAsync({
+                        merchantId,
+                        image: file,
+                        type: "hero-extra",
+                    });
+                    if (data?.url) {
+                        next.push(data.url);
+                        onChange([...next]);
+                    }
+                } catch {
+                    // Surfaced via uploadError (e.g. duplicate image);
+                    // keep uploading the rest of the batch.
                 }
-            );
+            }
         },
-        [merchantId, upload, resetUpload, onChange, values, reachedLimit]
+        [merchantId, uploadAsync, resetUpload, onChange, values]
     );
 
+    // Removing a slide only updates the form value — the bucket file is kept
+    // so "Discard changes" can restore the saved config, and it stays
+    // pickable in the existing-images list.
     const handleDelete = useCallback(
         (url: string) => {
-            const type = urlToType(url);
-            const remaining = values.filter((v) => v !== url);
-            if (type) {
-                deleteMedia({ merchantId, type });
-            }
-            onChange(remaining);
+            onChange(values.filter((v) => v !== url));
         },
-        [merchantId, deleteMedia, onChange, values]
+        [onChange, values]
     );
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    // No maxFiles: dropzone would reject oversized selections wholesale —
+    // onDrop slices the batch to the remaining slots instead.
+    const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
         onDrop,
         accept: imageAccept,
-        maxFiles: 1,
+        multiple: true,
         disabled: isPending || reachedLimit,
+        noClick: true,
     });
 
     const errorMessage = getUploadErrorMessage(uploadError);
 
     return (
-        <div className={styles.field}>
+        <Stack space="m">
             {values.length > 0 && (
-                <ul className={styles.list}>
+                <Stack as="ul" space="xs" className={styles.list}>
                     {values.map((url) => (
                         <li
                             key={url}
@@ -104,7 +111,11 @@ export function MultiHeroImagesField({
                             }
                         >
                             <div className={styles.thumb}>
-                                <img src={url} alt="Hero variant" />
+                                <img
+                                    src={url}
+                                    alt={t("merchantEdit.explorer.heroImage")}
+                                    className={styles.image}
+                                />
                             </div>
                             <span className={styles.url} title={url}>
                                 {url}
@@ -113,55 +124,141 @@ export function MultiHeroImagesField({
                                 type="button"
                                 className={styles.deleteButton}
                                 onClick={() => handleDelete(url)}
-                                title="Remove image"
+                                title={t("merchantEdit.explorer.removeImage")}
                             >
                                 ✕
                             </button>
                             {hoveredUrl === url && (
                                 <div className={styles.preview}>
-                                    <img src={url} alt="Hero preview" />
+                                    <img
+                                        src={url}
+                                        alt={t(
+                                            "merchantEdit.explorer.heroImage"
+                                        )}
+                                        className={styles.image}
+                                    />
                                 </div>
                             )}
                         </li>
                     ))}
-                </ul>
+                </Stack>
             )}
 
             {!reachedLimit && (
                 <div
                     {...getRootProps({
-                        className: `${styles.dropzone} ${isDragActive ? styles.dropzoneActive : ""} ${isPending ? styles.dropzonePending : ""}`,
+                        className: clsx(
+                            fieldStyles.dropzone,
+                            isDragActive && fieldStyles.dropzoneActive
+                        ),
                     })}
                 >
                     <input {...getInputProps()} />
-                    <span className={styles.dropzoneText}>
-                        {isPending
-                            ? "Uploading..."
-                            : isDragActive
-                              ? "Drop image here"
-                              : `Add image (${values.length}/${MAX_IMAGES})`}
-                    </span>
+                    <IconCircle size="md">
+                        <UploadIcon
+                            width={24}
+                            height={24}
+                            className={fieldStyles.dropzoneIcon}
+                        />
+                    </IconCircle>
+                    <Stack space="xs" align="center">
+                        <Text variant="body" color="secondary">
+                            {isPending
+                                ? t("merchantEdit.explorer.uploading")
+                                : isDragActive
+                                  ? t("merchantEdit.explorer.dropHere")
+                                  : t("merchantEdit.explorer.dragAndDrop")}
+                        </Text>
+                        <Text variant="bodySmall" color="disabled">
+                            {t("merchantEdit.explorer.or")}
+                        </Text>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="small"
+                            width="auto"
+                            onClick={open}
+                            disabled={isPending}
+                        >
+                            {t("merchantEdit.explorer.browseFiles")}
+                        </Button>
+                        <Text variant="caption" color="disabled" align="center">
+                            {`${t("merchantEdit.explorer.restrictions.hero")} — ${values.length}/${MAX_IMAGES}`}
+                        </Text>
+                    </Stack>
                 </div>
             )}
 
-            <p className={styles.restrictions}>{restrictionsText}</p>
-            {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-        </div>
+            {errorMessage && (
+                <Text variant="caption" color="error">
+                    {errorMessage}
+                </Text>
+            )}
+
+            {!reachedLimit && (
+                <ExistingFilePicker
+                    merchantId={merchantId}
+                    usedUrls={[...values, ...(excludeUrls ?? [])]}
+                    onPick={(url) => onChange([...values, url])}
+                />
+            )}
+        </Stack>
     );
 }
 
-function getUploadErrorMessage(error: unknown): string | null {
-    if (!error) return null;
-    if (
-        typeof error === "object" &&
-        error !== null &&
-        "value" in error &&
-        typeof (error as { value: unknown }).value === "object" &&
-        (error as { value: null | object }).value !== null &&
-        "error" in (error as { value: { error: unknown } }).value
-    ) {
-        return String((error as { value: { error: string } }).value.error);
-    }
-    if (error instanceof Error) return error.message;
-    return "Upload failed";
+/** Bucket images not yet used anywhere, addable to the slider in one click. */
+function ExistingFilePicker({
+    merchantId,
+    usedUrls,
+    onPick,
+}: {
+    merchantId: string;
+    usedUrls: string[];
+    onPick: (url: string) => void;
+}) {
+    const { t } = useTranslation();
+    const { data: files } = useMediaList(merchantId);
+
+    const pickableFiles = useMemo(() => {
+        if (!files?.length) return [];
+        return files.filter(
+            (f) =>
+                (f.type === "hero" || f.type.startsWith("hero-")) &&
+                !usedUrls.includes(f.url)
+        );
+    }, [files, usedUrls]);
+
+    if (!pickableFiles.length) return null;
+
+    return (
+        <Stack space="xs">
+            <Text
+                as="span"
+                variant="bodySmall"
+                weight="medium"
+                color="secondary"
+                className={fieldStyles.fieldLabel}
+            >
+                {t("merchantEdit.explorer.useExisting")}
+            </Text>
+            <Inline space="xs">
+                {pickableFiles.map((file) => (
+                    <button
+                        key={file.url}
+                        type="button"
+                        className={fieldStyles.thumbnailButton}
+                        onClick={() => onPick(file.url)}
+                        title={file.type}
+                    >
+                        <img
+                            className={fieldStyles.thumbnailImage}
+                            src={file.url}
+                            alt={file.type}
+                            loading="lazy"
+                        />
+                    </button>
+                ))}
+            </Inline>
+        </Stack>
+    );
 }

@@ -1,95 +1,66 @@
-import { Link } from "@tanstack/react-router";
-import { Palette, Pen, Users, WalletMinimal } from "lucide-react";
-import type { HTMLAttributes, PropsWithChildren, ReactElement } from "react";
-import styles from "./index.module.css";
+import { Avatar } from "@frak-labs/design-system/components/Avatar";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { useTranslation } from "react-i18next";
+import { LinkButton } from "@/module/common/component/LinkButton";
+import * as styles from "./merchant-item.css";
 
-interface MerchantItemProps
-    extends Omit<HTMLAttributes<HTMLSpanElement>, "className"> {
-    /**
-     * Merchant UUID for navigation
-     */
-    merchantId?: string;
-    name?: string | ReactElement<unknown>;
-    domain?: string;
-    showActions?: boolean;
-    isLink?: boolean;
-}
+type MerchantItemProps = {
+    merchantId: string;
+    name: string;
+    domain: string;
+    onManageBudget: () => void;
+};
 
 export function MerchantItem({
     merchantId,
     name,
     domain,
-    showActions = true,
-    isLink = true,
-    children,
-    ...props
-}: PropsWithChildren<MerchantItemProps>) {
+    onManageBudget,
+}: MerchantItemProps) {
+    const { t } = useTranslation();
+
     return (
-        <span className={styles.merchantItem} {...props}>
-            <p className={styles.merchantItem__name}>
-                {name}
-                {domain && isLink && (
-                    <a
-                        href={`//${domain}`}
-                        target={"_blank"}
-                        rel={"noreferrer"}
-                        className={styles.merchantItem__domain}
+        <Card className={styles.cell}>
+            <div className={styles.avatarWrap}>
+                <Avatar name={name} />
+            </div>
+            <Stack space="xs" className={styles.body}>
+                <Stack space="xxs">
+                    <Text
+                        variant="body"
+                        weight="medium"
+                        title={name}
+                        className={styles.name}
                     >
+                        {name}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
                         {domain}
-                    </a>
-                )}
-                {domain && !isLink && (
-                    <span className={styles.merchantItem__domain}>
-                        {domain}
-                    </span>
-                )}
-            </p>
-            {showActions && <MerchantActions merchantId={merchantId} />}
-        </span>
-    );
-}
-
-function MerchantActions({ merchantId }: { merchantId?: string }) {
-    if (!merchantId) return null;
-
-    return (
-        <ul className={styles.merchantItem__actions}>
-            <li>
-                <Link
-                    to="/merchant/$id/funding"
-                    params={{ id: merchantId }}
-                    title={"Manage the merchant balance"}
-                >
-                    <WalletMinimal />
-                </Link>
-            </li>
-            <li>
-                <Link
-                    to="/merchant/$id/customize"
-                    params={{ id: merchantId }}
-                    title={"Customize SDK appearance"}
-                >
-                    <Palette />
-                </Link>
-            </li>
-            <li>
-                <Link
-                    to="/merchant/$id"
-                    params={{ id: merchantId }}
-                    title={"Edit your merchant"}
-                >
-                    <Pen />
-                </Link>
-            </li>
-            <li>
-                <Link
-                    to="/merchant/$id/team"
-                    params={{ id: merchantId }}
-                    title={"Manage your team"}
-                >
-                    <Users />
-                </Link>
-            </li>
-        </ul>
+                    </Text>
+                </Stack>
+                <Inline space="xs">
+                    <Button
+                        variant="primary"
+                        size="small"
+                        width="auto"
+                        onClick={onManageBudget}
+                    >
+                        {t("dashboard.actions.manageBudget")}
+                    </Button>
+                    <LinkButton
+                        to="/m/$merchantId/merchant/customize"
+                        params={{ merchantId }}
+                        variant="secondary"
+                        size="small"
+                    >
+                        {t("dashboard.actions.edit")}
+                    </LinkButton>
+                </Inline>
+            </Stack>
+        </Card>
     );
 }

@@ -14,6 +14,7 @@ export { TargetPairingClient } from "./clients/target";
 export { LaunchPairing } from "./component/LaunchPairing";
 export { OriginPairingState } from "./component/OriginPairingState";
 
+export { PairingQrCode } from "./component/PairingQrCode";
 export { PairingStatus } from "./component/PairingStatus";
 export {
     StatusBoxModal,
@@ -45,6 +46,7 @@ export type {
 // Errors
 export {
     isPairingSignatureError,
+    PairingNotReadyError,
     PairingSignatureError,
 } from "./types/errors";
 // Types

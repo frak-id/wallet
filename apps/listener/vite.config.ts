@@ -1,8 +1,10 @@
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import * as process from "node:process";
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
+import preact from "@preact/preset-vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
-import react from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
@@ -10,6 +12,7 @@ import removeConsole from "vite-plugin-remove-console";
 import {
     getSandboxEnv,
     getSstResource,
+    inlineFontFaces,
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
@@ -27,7 +30,45 @@ const tauriStub = path.resolve(
     "../../packages/wallet-shared/src/stubs/tauri-noop.ts"
 );
 
+// Absolute paths for preact aliases. The listener installs preact directly
+// (`apps/listener/node_modules/preact`), but `wallet-shared` (and other workspace
+// packages consumed via the `development` export condition) import from "react"
+// and have no preact in their own `node_modules`. Resolving aliases to absolute
+// paths sidesteps Bun's per-package node_modules layout so every importer ends
+// up bundling the same preact/compat module.
+const preactCompat = path.resolve(__dirname, "node_modules/preact/compat");
+const preactCompatClient = path.resolve(
+    __dirname,
+    "node_modules/preact/compat/client"
+);
+const preactJsxRuntime = path.resolve(
+    __dirname,
+    "node_modules/preact/jsx-runtime"
+);
+
 const DEBUG = JSON.stringify(false);
+
+// Single source of truth for the lazy (Ring 1/2) chunk name roots, consumed by
+// the modulePreload filter, the orphan-import stripper and the eager-CSS
+// stripper. Add a new lazy chunk group here, not in each regex.
+const LAZY_CHUNK_NAMES = [
+    "blockchain-vendor",
+    "BaseProvider",
+    "Modal",
+    "Wallet",
+    "SharingPage",
+    "ccip",
+    "secp256k1",
+    "lazy-shared",
+    "ui-vendor",
+    "ui-runtime",
+] as const;
+const LAZY_CHUNK_ALTERNATION = LAZY_CHUNK_NAMES.join("|");
+
+// Hard ceiling on gzipped JS the iframe fetches synchronously on boot (eager
+// static-import closure from the entry). Audit measured ~9.4 KB; 15 KB leaves
+// headroom while failing the build if a lazy chunk leaks into the eager path.
+const EAGER_JS_BUDGET_GZIP = 15 * 1024;
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
@@ -38,40 +79,197 @@ const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
 
 /**
- * Rolldown emits a side-effect-only `import "./blockchain-vendor-*.js";` at the
- * top of `common-*.js` even though no symbols from that chunk are bound and
- * `bundle-stats` shows zero real edges. This appears to be a chunking artifact:
- * once viem/wagmi land in their own vendor chunk while the dynamic-import
- * boundary (BlockchainProvider) lives in a chunk reachable from the eager entry,
- * Rolldown preserves a static evaluation-order import "just in case".
+ * Rolldown emits a side-effect-only `import "./<chunk>.js";` at the top of
+ * downstream chunks even when the imported chunk is empty or has no bound
+ * symbols. This appears to be a chunking artifact: side-effect-free
+ * re-export barrels (e.g. from workspace `dist/index.js`) collapse to a
+ * zero-byte chunk, but Rolldown preserves the static-evaluation-order
+ * import "just in case".
  *
- * Effect on the iframe: the browser fetches blockchain-vendor.js (~52 KB gz)
- * on cold boot even though the modulePreload filter strips it from the HTML.
- * That defeats the entire lazy-blockchain effort.
+ * Effect on the iframe: the browser fetches the chunk on cold boot even
+ * though it is empty (or near-empty) and the modulePreload filter strips
+ * it from the HTML. That extra round trip defeats the lazy strategy.
  *
- * The bound dynamic import (`__vitePreload(() => import('./BaseProvider...'))`)
- * is preserved by this plugin — only the orphan side-effect import statement is
- * removed.
+ * This plugin:
+ *  1. Scans the emitted bundle for chunks with empty/whitespace-only code.
+ *  2. Strips every `import "./<name>.js";` referencing those orphan chunks.
+ *  3. Deletes the orphan chunks from the bundle so they aren't written.
+ *
+ * It ALSO strips orphan side-effect imports of known lazy-only chunks
+ * (blockchain-vendor, BaseProvider, ui-vendor, ui-runtime, lazy-shared,
+ * Modal, Wallet, SharingPage). Those chunks are not empty, but Rolldown
+ * sometimes hoists their side-effect imports into eager chunks even when
+ * no bound symbols cross the boundary — forcing the iframe to download
+ * lazy chunks on boot. Real dynamic-import call sites (`__vitePreload(...)`)
+ * are preserved because they don't use the top-level `import "...";` form.
  */
 function stripOrphanCrossChunkImports() {
-    const ORPHAN_IMPORT_RE =
-        /^import\s*"\.\/(?:blockchain-vendor|BaseProvider|ui-vendor|lazy-shared|Modal|Wallet|SharingPage)-[A-Za-z0-9_-]+\.js";\n?/gm;
+    const LAZY_ORPHAN_RE = new RegExp(
+        `import\\s*"\\./(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.js";`,
+        "g"
+    );
     return {
         name: "strip-orphan-cross-chunk-imports",
         apply: "build" as const,
         generateBundle(_options: unknown, bundle: Record<string, unknown>) {
+            type Chunk = { type?: string; fileName?: string; code?: string };
+            const chunks = Object.entries(bundle) as [string, Chunk][];
+
+            // Pass 1: drop chunks whose code is empty (zero-byte phantoms
+            // produced by Rolldown when a side-effect-free re-export barrel
+            // collapses to nothing). Their import statements would otherwise
+            // remain in every consumer chunk on cold boot.
+            const orphanFileNames: string[] = [];
+            for (const [key, file] of chunks) {
+                if (
+                    file.type === "chunk" &&
+                    file.fileName &&
+                    typeof file.code === "string" &&
+                    file.code.trim() === ""
+                ) {
+                    orphanFileNames.push(file.fileName);
+                    delete bundle[key];
+                }
+            }
+            const orphanPatterns = orphanFileNames.map((name) => {
+                const escaped = name
+                    .replace(/^assets\//, "")
+                    .replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+                return new RegExp(`import\\s*"\\./${escaped}";`, "g");
+            });
+            // Pass 2: strip orphan side-effect imports from surviving chunks.
             for (const file of Object.values(bundle)) {
                 const f = file as {
                     type?: string;
-                    fileName?: string;
                     code?: string;
                 };
-                if (f.type !== "chunk" || !f.fileName?.includes("common-")) {
+                if (f.type === "chunk" && typeof f.code === "string") {
+                    f.code = f.code.replace(LAZY_ORPHAN_RE, "");
+                    for (const re of orphanPatterns) {
+                        f.code = f.code.replace(re, "");
+                    }
+                }
+            }
+        },
+    };
+}
+
+/**
+ * Drop render-blocking `<link rel="stylesheet">` tags for lazy chunks (e.g.
+ * `ui-runtime.css`) from `index.html`. Vite emits them even though the chunk's
+ * JS is dynamic-imported and the CSS is already in the chunk's `__vitePreload`
+ * dep map (so the dynamic import re-injects it on Ring 1 mount). On the bare
+ * RPC boot path — no UI shown — the eager link is pure waste blocking first paint.
+ */
+function stripEagerLazyCss() {
+    // Key on the href chunk-name alone, not rel="stylesheet" before href: a Vite
+    // upgrade that reorders <link> attributes would otherwise silently no-op this
+    // stripper. assertEagerBundleBudget fails the build if a lazy CSS link slips
+    // through, so any future break is loud rather than silent.
+    const lazyCssLinkRe = new RegExp(
+        `\\s*<link\\b[^>]*\\bhref="[^"]*(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.css"[^>]*>`,
+        "g"
+    );
+    return {
+        name: "strip-eager-lazy-css",
+        apply: "build" as const,
+        transformIndexHtml: {
+            order: "post" as const,
+            handler(html: string) {
+                return html.replace(lazyCssLinkRe, "");
+            },
+        },
+    };
+}
+
+/**
+ * Fail loudly if {@link stripEagerLazyCss} no-op'd (e.g. a Vite upgrade changed
+ * the `<link>` attribute order/format): a surviving lazy-chunk CSS link would
+ * ship a render-blocking stylesheet on every iframe boot. Keyed on the href
+ * chunk-name so it is attribute-order independent, mirroring the stripper.
+ */
+function assertNoLazyCssLeak(htmlSource: string) {
+    const leakedLazyCssRe = new RegExp(
+        `<link\\b[^>]*\\bhref="[^"]*(?:${LAZY_CHUNK_ALTERNATION})-[A-Za-z0-9_-]+\\.css"`
+    );
+    if (leakedLazyCssRe.test(htmlSource)) {
+        throw new Error(
+            "Lazy-chunk CSS leaked into boot index.html — stripEagerLazyCss matched nothing (did Vite change <link> output?)."
+        );
+    }
+}
+
+/**
+ * Fail the build if the eager boot JS exceeds {@link EAGER_JS_BUDGET_GZIP}.
+ *
+ * "Eager" = the JS the booted `index.html` pulls synchronously: the entry
+ * `<script type=module>` plus every `<link rel=modulepreload>`. That list is
+ * Vite's own curated boot set — the `modulePreload` filter has already dropped
+ * the lazy Ring 1/2 chunks — so the gate measures exactly what ships on boot,
+ * with no fragile re-derivation of the module graph.
+ *
+ * Mechanical KPI gate: if a renamed/new lazy chunk slips past the modulePreload
+ * filter it lands in the preload list and is counted here, failing the build
+ * instead of silently shipping on every iframe boot.
+ */
+function assertEagerBundleBudget() {
+    // Capture the bundle-key path (assets/<name>.js) regardless of the `/listener`
+    // base prefix, from the entry <script src> and each modulepreload <link href>.
+    const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
+    const preloadRe =
+        /<link\b[^>]*\brel="modulepreload"[^>]*\bhref="[^"]*?(assets\/[^"]+\.js)"/g;
+
+    return {
+        name: "assert-eager-bundle-budget",
+        apply: "build" as const,
+        // writeBundle (post-write) so the final, fully-transformed index.html and
+        // every chunk are on disk — avoids in-memory bundle timing/encoding edge
+        // cases where the emitted HTML asset isn't yet a string in generateBundle.
+        writeBundle(options: { dir?: string }) {
+            const dir = options.dir;
+            if (!dir) return;
+
+            let htmlSource: string;
+            try {
+                htmlSource = readFileSync(
+                    path.join(dir, "index.html"),
+                    "utf-8"
+                );
+            } catch {
+                return;
+            }
+
+            assertNoLazyCssLeak(htmlSource);
+
+            const eager = new Set<string>();
+            for (const re of [scriptRe, preloadRe]) {
+                for (const m of htmlSource.matchAll(re)) eager.add(m[1]);
+            }
+
+            let totalGzip = 0;
+            const breakdown: string[] = [];
+            for (const key of eager) {
+                let code: Buffer;
+                try {
+                    code = readFileSync(path.join(dir, key));
+                } catch {
                     continue;
                 }
-                if (typeof f.code === "string") {
-                    f.code = f.code.replace(ORPHAN_IMPORT_RE, "");
-                }
+                const gz = gzipSync(code).length;
+                totalGzip += gz;
+                breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
+            }
+
+            const totalKb = (totalGzip / 1024).toFixed(2);
+            console.log(
+                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${EAGER_JS_BUDGET_GZIP / 1024} KB)`
+            );
+            if (totalGzip > EAGER_JS_BUDGET_GZIP) {
+                throw new Error(
+                    `Eager boot JS budget exceeded: ${totalKb} KB gz > ${EAGER_JS_BUDGET_GZIP / 1024} KB.\n${breakdown
+                        .sort()
+                        .join("\n")}`
+                );
             }
         },
     };
@@ -94,6 +292,44 @@ export default defineConfig(async () => {
             alias: [
                 { find: /^@tauri-apps\/.*$/, replacement: tauriStub },
                 { find: /^tauri-plugin-.*$/, replacement: tauriStub },
+                // Override @preact/preset-vite defaults with absolute paths so
+                // workspace packages (wallet-shared, design-system, ui) resolve
+                // correctly under Bun's per-package node_modules layout.
+                // Listener installs preact directly; absolute paths sidestep
+                // bare-specifier resolution from sibling workspace packages.
+                {
+                    find: /^preact$/,
+                    replacement: path.resolve(__dirname, "node_modules/preact"),
+                },
+                { find: /^preact\/compat$/, replacement: preactCompat },
+                {
+                    find: /^preact\/compat\/client$/,
+                    replacement: preactCompatClient,
+                },
+                {
+                    find: /^preact\/jsx-runtime$/,
+                    replacement: preactJsxRuntime,
+                },
+                {
+                    find: /^preact\/hooks$/,
+                    replacement: path.resolve(
+                        __dirname,
+                        "node_modules/preact/hooks"
+                    ),
+                },
+                // React shim: aliased to preact/compat so existing
+                // `import ... from "react"` keeps working unchanged.
+                { find: /^react$/, replacement: preactCompat },
+                { find: /^react-dom$/, replacement: preactCompat },
+                {
+                    find: /^react-dom\/client$/,
+                    replacement: preactCompatClient,
+                },
+                { find: /^react\/jsx-runtime$/, replacement: preactJsxRuntime },
+                {
+                    find: /^react\/jsx-dev-runtime$/,
+                    replacement: preactJsxRuntime,
+                },
             ],
         },
         define: {
@@ -140,11 +376,16 @@ export default defineConfig(async () => {
             "process.env.APP_VERSION": "undefined",
         },
         plugins: [
-            react(),
+            preact({ reactAliasesEnabled: false }),
             vanillaExtractPlugin(),
+            // Inline Inter @font-face. No `preload` on purpose: the iframe
+            // boots with no UI, so the woff2 must load lazily with Ring 1.
+            inlineFontFaces({ cssFiles: ["app/fonts/inter.css"] }),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
             stripOrphanCrossChunkImports(),
+            stripEagerLazyCss(),
+            assertEagerBundleBudget(),
         ],
         server: {
             port: 3002,
@@ -174,17 +415,25 @@ export default defineConfig(async () => {
             modulePreload: {
                 resolveDependencies: (_filename, deps, { hostType }) => {
                     if (hostType !== "html") return deps;
-                    return deps.filter(
-                        (d) =>
-                            !/(?:blockchain-vendor|BaseProvider|Modal|Wallet|SharingPage|ccip|secp256k1|lazy-shared|ui-vendor)-/.test(
-                                d
-                            )
+                    const lazyDepRe = new RegExp(
+                        `(?:${LAZY_CHUNK_ALTERNATION})-`
                     );
+                    return deps.filter((d) => !lazyDepRe.test(d));
                 },
             },
             target: "baseline-widely-available",
+            // Coarse per-chunk warning only: kept just above the largest legit
+            // lazy chunk (blockchain-vendor ~285 KB) to avoid routine noise on
+            // intentionally heavy lazy chunks. The KPI that matters — the eager
+            // boot path — is enforced as a hard build failure by
+            // `assertEagerBundleBudget`, not by this number.
             chunkSizeWarningLimit: 300,
             rolldownOptions: {
+                // Skip emitting facade chunks for dynamic-import entry points.
+                // Combined with `includeDependenciesRecursively: false`, this lets
+                // Rolldown route `@/ui/runtime` directly to the `ui-runtime` chunk
+                // instead of creating a 73-byte re-export shim.
+                preserveEntrySignatures: false,
                 experimental: {
                     attachDebugInfo: isProd ? "none" : "full",
                     lazyBarrel: true,
@@ -199,30 +448,22 @@ export default defineConfig(async () => {
                     inlineConst: { mode: "all", pass: 3 },
                 },
                 output: {
+                    // TODO: Lazy bundle leaking into eager ones, we removed `includeDependenciesRecursively: false` that was causing issue in some chunks.
                     codeSplitting: {
                         // Only chunk stuff shared by at least 2 modules
                         minShareCount: 2,
                         groups: [
-                            // Vite's `__vitePreload` helper (virtual module).
-                            // Pinned to its own tiny chunk (1.2 KB) so it doesn't
-                            // get hoisted into a heavy lazy chunk — if that
-                            // happens the eager entry statically imports that
-                            // chunk just to obtain the dynamic-import wrapper.
-                            // (Tested: removing this group hoists the helper into
-                            // `blockchain-vendor` and drags 165 KB into eager.)
-                            //
                             // NOTE: Rolldown's `\0rolldown/runtime.js` is emitted
                             // as its own hardcoded `rolldown-runtime` chunk by the
                             // native core — user-defined `codeSplitting.groups`
-                            // cannot redirect it (verified empirically). The two
-                            // tiny runtime chunks (~0.7 KB + ~1.2 KB) therefore
-                            // remain separate.
-                            {
-                                name: "vite-preload",
-                                test: /vite[\\/]preload-helper/,
-                                priority: 50,
-                            },
-
+                            // cannot redirect it (verified empirically). That tiny
+                            // chunk (~0.8 KB) therefore remains separate.
+                            //
+                            // `vite/preload-helper` (1.2 KB) used to be pinned to
+                            // its own chunk; the wider `common` regex below claims
+                            // it now, saving an HTTP request without dragging lazy
+                            // chunks into eager (common is the only static dependency
+                            // root the preload helper has).
                             // ============================================
                             // EAGER chunks (loaded on every iframe boot)
                             // ============================================
@@ -233,18 +474,42 @@ export default defineConfig(async () => {
                             // chunk — the marginal caching gain from finer
                             // splits doesn't justify the extra HTTP requests
                             // visible in partner network tabs.
+                            // ui-runtime hosts everything Preact/React-ish:
+                            // preact, i18next, react-i18next, @tanstack/react-query,
+                            // plus the listener's own provider tree (`app/ui/`).
+                            // It is pulled in dynamically the first time a
+                            // partner site triggers UI — NOT tagged $initial.
+                            // Higher priority than `vendor` so its rule wins for
+                            // node_modules that match both regexes.
+                            {
+                                name: "ui-runtime",
+                                // Only the React-bindings live here (lazy).
+                                // The headless @tanstack/query-* libs are
+                                // imported eagerly by `app/queryClient.ts` and
+                                // therefore moved to `vendor`. If `@tanstack`
+                                // is matched broadly here, the eager entry is
+                                // forced to statically import this whole
+                                // chunk, defeating the lazy strategy.
+                                test: /(?:node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack[\\/]react-query|@tanstack[\\/]react-query-persist-client)[\\/])|(?:node_modules[\\/]zustand[\\/]esm[\\/]react(?:[\\/]|\.mjs))|(?:apps[\\/]listener[\\/]app[\\/](?:ui[\\/]|module[\\/]hooks[\\/]useListenerDataPreload))|(?:packages[\\/]wallet-shared[\\/]src[\\/](?:i18n[\\/]config|common[\\/](?:hook[\\/]useGetSafeSdkSession|queryKeys[\\/]sdk)))/,
+                                priority: 45,
+                                minShareCount: 1,
+                            },
+
+                            // `vendor` keeps Ring-0-eager runtime libs:
+                            // zustand stores, idb-keyval, elysia client,
+                            // clsx, nanoid, and the headless @tanstack/query-*
+                            // libs that the eager `queryClient.ts` needs.
                             {
                                 name: "vendor",
-                                tags: ["$initial"],
-                                test: /node_modules[\\/](?:react|react-dom|scheduler|react[\\/]jsx-runtime|i18next|i18next-browser-languagedetector|react-i18next|@tanstack|zustand|idb-keyval|nanoid|@elysiajs|clsx)[\\/]/,
+                                // tags omitted on purpose: marking $initial
+                                // makes Rolldown reject shared-with-lazy modules
+                                // (verified: @tanstack/query-core, zustand, etc.
+                                // would otherwise fall through to ui-runtime).
+                                test: /node_modules[\\/](?:zustand|idb-keyval|nanoid|@elysiajs|clsx|@tanstack[\\/](?:query-core|query-async-storage-persister|query-persist-client-core))[\\/]/,
                                 priority: 40,
                                 // CRITICAL: must be 1, otherwise the global
                                 // `minShareCount: 2` keeps single-entry node_modules
-                                // (e.g. `react-dom/cjs/react-dom-client.production.js`,
-                                // 174 KB — only the eager entry imports it for
-                                // `createRoot`) inside the `index` entry chunk
-                                // instead of vendor. Forces ALL matching node_modules
-                                // into vendor regardless of how many entries reach them.
+                                // inside the `index` entry chunk instead of vendor.
                                 minShareCount: 1,
                             },
 
@@ -256,8 +521,8 @@ export default defineConfig(async () => {
                             //   permissionless + BaseProvider + provider glue.
                             //   Modal/Wallet only.
                             // • `ui-vendor` → heavy lazy UI libs (@radix-ui,
-                            //   cuer, micromark). radix + alert-dialog are
-                            //   Modal-only; cuer + micromark land here through
+                            //   qr, micromark). radix + alert-dialog are
+                            //   Modal-only; qr + micromark land here through
                             //   wallet-shared pairing/Markdown which Modal+Wallet
                             //   share. SharingPage pulls @radix-ui/react-accordion
                             //   via design-system Accordion (FAQ section).
@@ -273,20 +538,32 @@ export default defineConfig(async () => {
                             // on first display.
                             {
                                 name: "blockchain-vendor",
-                                test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]))/,
+                                test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox|abitype|radash|mipd|eventemitter3)[\\/])|(?:packages[\\/]app-essentials[\\/]src[\\/](?:blockchain|webauthn))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]|authentication[\\/]webauthn[\\/]tauriBridge))/,
                                 priority: 35,
+                                // CRITICAL: must be 1 so viem's dynamically
+                                // imported subtree (ccip OffchainLookup errors)
+                                // lands here instead of its own chunk.
+                                minShareCount: 1,
                             },
                             {
                                 name: "ui-vendor",
-                                test: /node_modules[\\/](?:@radix-ui|micromark|cuer)[\\/]/,
+                                test: /node_modules[\\/](?:@radix-ui|micromark|qr)[\\/]/,
                                 priority: 30,
                             },
                             {
                                 name: "lazy-shared",
-                                test: /(?:node_modules[\\/](?:sonner|lucide-react)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/]hook[\\/]useCopyToClipboardWithState|sharing))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction)|hooks[\\/]useTrackSharing))/,
+                                test: /(?:node_modules[\\/](?:sonner|lucide-react|use-sync-external-store|@vanilla-extract)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/](?:hook[\\/](?:useCopyToClipboardWithState|useFormattedEstimatedReward)|utils[\\/]openExternalUrl)|sharing|pairing[\\/](?:clients|types)))|(?:sdk[\\/]core[\\/]src[\\/](?:context|types[\\/]context))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction|deprecatedModalMetadataMapper)|hooks[\\/](?:useTrackSharing|useDisplaySharingPageListener\.impl)|sharing[\\/]component))/,
                                 priority: 25,
                                 minShareCount: 1,
                             },
+                            // No explicit Modal/Wallet group: default chunking
+                            // emits a single chunk per dynamic-import boundary
+                            // (Modal/index.tsx and Wallet/index.tsx). Each
+                            // boundary now re-exports its lazy handler body
+                            // (handleDisplayModal / handleDisplayEmbeddedWallet)
+                            // from useDisplay*.impl so the impl modules land in
+                            // the same default chunk as their parent component
+                            // tree — collapsing the previous 1-2 KB shim chunks.
                             // (i18n locale chunking is implicit — the per-language
                             // barrel module `wallet-shared/i18n/locales/{en,fr}`
                             // is the single dynamic-import target. Both bundled
@@ -325,9 +602,17 @@ export default defineConfig(async () => {
                             // chunk to get back its own Provider.
                             {
                                 name: "common",
+                                // `$initial` keeps lazy-only workspace files
+                                // (pairing clients/hooks, identity, listener
+                                // hook .impl chunks) out of this chunk — they
+                                // belong in `lazy-shared` / their boundary chunk.
                                 tags: ["$initial"],
-                                test: /(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|identity|types|pairing[\\/](?:clients|hook|queryKeys|types)|common[\\/](?:analytics|api|hook|lib|utils)))|(?:packages[\\/]app-essentials[\\/])|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|hooks|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)))/,
+                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayEmbeddedWallet(?!\.impl)|useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
                                 priority: 28,
+                                // Single-importer modules must still land here
+                                // (e.g. wallet-shared/common/api/backendClient.ts
+                                // is only reached via the eager api hooks).
+                                minShareCount: 1,
                             },
                         ],
                     },

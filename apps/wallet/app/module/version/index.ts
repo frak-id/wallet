@@ -6,4 +6,3 @@
  * exposed at `GET /common/version`.
  */
 export { VersionGate } from "./component/VersionGate";
-export { useVersionGate } from "./hook/useVersionGate";

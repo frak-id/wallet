@@ -165,18 +165,6 @@ export async function shopBrandInfo({
             query shopBrandInfo {
                 shop {
                     description
-                    brand {
-                        squareLogo {
-                            image {
-                                url
-                            }
-                        }
-                        coverImage {
-                            image {
-                                url
-                            }
-                        }
-                    }
                 }
             }
         `);
@@ -184,10 +172,12 @@ export async function shopBrandInfo({
             data: { shop },
         } = await response.json();
 
+        // Brand assets (logo/cover) live on Shop.brand in the Storefront API
+        // only — no Admin API equivalent, so they can't be prefilled here.
         const brandInfo: ShopBrandInfo = {
             description: shop.description || null,
-            logoUrl: shop.brand?.squareLogo?.image?.url || null,
-            coverImageUrl: shop.brand?.coverImage?.image?.url || null,
+            logoUrl: null,
+            coverImageUrl: null,
         };
 
         shopBrandCache.set(sessionShop, brandInfo);

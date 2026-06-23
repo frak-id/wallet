@@ -1,25 +1,66 @@
 import { Indicator, Root } from "@radix-ui/react-checkbox";
-import { Check, Minus } from "lucide-react";
+import clsx from "clsx";
 import type { ComponentPropsWithRef } from "react";
-import { checkboxIndicator, checkboxRoot } from "./checkbox.css";
+import {
+    box,
+    glyph,
+    indicator,
+    root,
+    rootLarge,
+    squareFill,
+} from "./checkbox.css";
+
+/* Squircle + check / minus glyphs taken verbatim from the DS checkbox design. */
+
+/** The 2px rounded-square ring (off state). */
+const OFF_RING =
+    "M11.2 2C12.7731 2 13.8327 2.00156 14.6495 2.06829C15.443 2.13312 15.8296 2.24935 16.089 2.38148C16.7475 2.71703 17.283 3.25247 17.6185 3.91103C17.7507 4.17035 17.8669 4.55702 17.9317 5.35047C17.9984 6.16728 18 7.22685 18 8.8V11.2C18 12.7731 17.9984 13.8327 17.9317 14.6495C17.8669 15.443 17.7507 15.8296 17.6185 16.089C17.283 16.7475 16.7475 17.283 16.089 17.6185C15.8296 17.7507 15.443 17.8669 14.6495 17.9317C13.8327 17.9984 12.7731 18 11.2 18H8.8C7.22685 18 6.16728 17.9984 5.35047 17.9317C4.55702 17.8669 4.17035 17.7507 3.91103 17.6185C3.25247 17.283 2.71703 16.7475 2.38148 16.089C2.24935 15.8296 2.13312 15.443 2.06829 14.6495C2.00156 13.8327 2 12.7731 2 11.2V8.8C2 7.22685 2.00156 6.16728 2.06829 5.35047C2.13312 4.55702 2.24935 4.17035 2.38148 3.91103C2.71703 3.25247 3.25247 2.71703 3.91103 2.38148C4.17035 2.24935 4.55702 2.13312 5.35047 2.06829C6.16728 2.00156 7.22685 2 8.8 2H11.2ZM0.599464 3.00305C0 4.17957 0 5.71971 0 8.8V11.2C0 14.2803 0 15.8204 0.599464 16.9969C1.12677 18.0318 1.96816 18.8732 3.00305 19.4005C4.17957 20 5.71971 20 8.8 20H11.2C14.2803 20 15.8204 20 16.9969 19.4005C18.0318 18.8732 18.8732 18.0318 19.4005 16.9969C20 15.8204 20 14.2803 20 11.2V8.8C20 5.71971 20 4.17957 19.4005 3.00305C18.8732 1.96816 18.0318 1.12677 16.9969 0.599464C15.8204 0 14.2803 0 11.2 0H8.8C5.71971 0 4.17957 0 3.00305 0.599464C1.96816 1.12677 1.12677 1.96816 0.599464 3.00305Z";
+
+/** The solid rounded square (checked fill). */
+const SQUARE_FILL =
+    "M0.599464 3.00305C0 4.17957 0 5.71971 0 8.8V11.2C0 14.2803 0 15.8204 0.599464 16.9969C1.12677 18.0318 1.96816 18.8732 3.00305 19.4005C4.17957 20 5.71971 20 8.8 20H11.2C14.2803 20 15.8204 20 16.9969 19.4005C18.0318 18.8732 18.8732 18.0318 19.4005 16.9969C20 15.8204 20 14.2803 20 11.2V8.8C20 5.71971 20 4.17957 19.4005 3.00305C18.8732 1.96816 18.0318 1.12677 16.9969 0.599464C15.8204 0 14.2803 0 11.2 0H8.8C5.71971 0 4.17957 0 3.00305 0.599464C1.96816 1.12677 1.12677 1.96816 0.599464 3.00305Z";
+
+const CHECK_PATH =
+    "M14.8194 6.54049C15.2269 6.9479 15.2269 7.60843 14.8194 8.01583L9.37655 13.4587C8.96915 13.8661 8.30862 13.8661 7.90122 13.4587L5.17977 10.7373C4.77237 10.3299 4.77237 9.66934 5.17977 9.26194C5.58717 8.85454 6.24771 8.85454 6.65511 9.26194L8.63889 11.2457L13.3441 6.54049C13.7515 6.13309 14.412 6.13309 14.8194 6.54049Z";
+const MINUS_PATH =
+    "M6.49062 8.90039H13.5094C14.1169 8.90039 14.6094 9.39288 14.6094 10.0004C14.6094 10.6079 14.1169 11.1004 13.5094 11.1004H6.49063C5.88311 11.1004 5.39062 10.6079 5.39062 10.0004C5.39062 9.39288 5.88311 8.90039 6.49062 8.90039Z";
 
 type CheckboxProps = ComponentPropsWithRef<typeof Root> & {
     className?: string;
+    /** Layout box: `m` = 20px (default), `l` = 24px (20px glyph + 2px halo). */
+    size?: "m" | "l";
 };
 
-export function Checkbox({ ref, className, ...props }: CheckboxProps) {
-    const combinedClassName = [checkboxRoot, className]
-        .filter(Boolean)
-        .join(" ");
+export function Checkbox({
+    ref,
+    className,
+    size = "m",
+    ...props
+}: CheckboxProps) {
+    const combinedClassName = clsx(root, size === "l" && rootLarge, className);
 
     return (
         <Root className={combinedClassName} ref={ref} {...props}>
-            <Indicator className={checkboxIndicator}>
-                {props.checked === "indeterminate" ? (
-                    <Minus size={12} />
-                ) : (
-                    <Check size={14} />
-                )}
+            <svg
+                className={box}
+                viewBox="0 0 20 20"
+                fill="none"
+                aria-hidden="true"
+            >
+                <path d={OFF_RING} fillRule="evenodd" clipRule="evenodd" />
+            </svg>
+            <Indicator className={indicator}>
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path className={squareFill} d={SQUARE_FILL} />
+                    <path
+                        className={glyph}
+                        d={
+                            props.checked === "indeterminate"
+                                ? MINUS_PATH
+                                : CHECK_PATH
+                        }
+                    />
+                </svg>
             </Indicator>
         </Root>
     );

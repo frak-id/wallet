@@ -1,7 +1,6 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { RpcPromiseHandler } from "@frak-labs/frame-connector";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
-import { useCallback } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
 
 type OnGetMergeToken = RpcPromiseHandler<
@@ -11,13 +10,13 @@ type OnGetMergeToken = RpcPromiseHandler<
 >;
 
 /**
- * RPC handler for `frak_getMergeToken`.
+ * RPC handler factory for `frak_getMergeToken`.
  *
  * Returns a merge token that allows the current anonymous identity
  * to be linked when reopening the page in an external browser.
  */
-export function useOnGetMergeToken(): OnGetMergeToken {
-    return useCallback(async (_params, context) => {
+export function createGetMergeTokenHandler(): OnGetMergeToken {
+    return async (_params, context) => {
         const { merchantId, clientId } = context;
         if (!clientId || !merchantId) return null;
 
@@ -27,5 +26,5 @@ export function useOnGetMergeToken(): OnGetMergeToken {
                 merchantId,
             });
         return data?.mergeToken ?? null;
-    }, []);
+    };
 }

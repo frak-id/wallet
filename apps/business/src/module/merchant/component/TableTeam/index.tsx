@@ -1,107 +1,155 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@frak-labs/design-system/components/Table";
+import { DeleteIcon } from "@frak-labs/design-system/icons";
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import type { ColumnDef } from "@tanstack/react-table";
-import { type CellContext, createColumnHelper } from "@tanstack/react-table";
+import { Undo2 } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import type { Address } from "viem";
 import { isAddressEqual, zeroAddress } from "viem";
-import { Badge } from "@/module/common/component/Badge";
-import { Table } from "@/module/common/component/Table";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
-import { ButtonAddTeam } from "@/module/merchant/component/ButtonAddTeam";
-import { DeleteTeamMemberModal } from "@/module/merchant/component/TableTeam/Modal";
 import {
     type MerchantAdministrator,
     useGetMerchantAdministrators,
 } from "@/module/merchant/hook/useGetMerchantAdministrators";
-import styles from "./index.module.css";
+import * as styles from "./table-team.css";
 
-export type ManageTeamTableData = MerchantAdministrator;
+type Props = {
+    merchantId: string;
+    stagedRemovals: Address[];
+    onToggleRemoval: (wallet: Address) => void;
+    /** Lock the row actions while a save is running. */
+    disabled?: boolean;
+};
 
-const columnHelper = createColumnHelper<ManageTeamTableData>();
-
-export function TableTeam({ merchantId }: { merchantId: string }) {
+export function TableTeam({
+    merchantId,
+    stagedRemovals,
+    onToggleRemoval,
+    disabled,
+}: Props) {
+    const { t } = useTranslation();
     const { hasAccess } = useHasRoleOnMerchant({ merchantId });
     const { data: administrators, isLoading } = useGetMerchantAdministrators({
         merchantId,
     });
 
-    const columns = useMemo(
-        () =>
-            [
-                columnHelper.accessor("wallet", {
-                    enableSorting: false,
-                    header: "Wallet",
-                    cell: ({ getValue, row }) => (
-                        <>
-                            {row.original.isMe && "Me: "}
-                            <WalletAddress wallet={getValue()} />
-                        </>
-                    ),
-                }),
-                columnHelper.accessor("isOwner", {
-                    enableSorting: false,
-                    header: "Role",
-                    cell: ({ getValue }) => (
-                        <Badge variant={getValue() ? "success" : "warning"}>
-                            {getValue() ? "Owner" : "Admin"}
-                        </Badge>
-                    ),
-                }),
-                columnHelper.display({
-                    header: "Action",
-                    cell: ({ row }) => (
-                        <CellActions row={row} merchantId={merchantId} />
-                    ),
-                }),
-            ] as ColumnDef<ManageTeamTableData>[],
-        [merchantId]
-    );
-
     if (!administrators || isLoading) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={160} />;
     }
 
     return (
-        <Table
-            data={administrators}
-            columns={columns}
-            preTable={
-                hasAccess && (
-                    <ButtonAddTeam merchantId={merchantId}>
-                        <Button variant={"submit"}>Add Team Member</Button>
-                    </ButtonAddTeam>
-                )
-            }
-        />
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>
+                        {t("merchantEdit.team.headers.wallet")}
+                    </TableHead>
+                    <TableHead hug>
+                        {t("merchantEdit.team.headers.role")}
+                    </TableHead>
+                    <TableHead hug>
+                        {t("merchantEdit.team.headers.action")}
+                    </TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {administrators.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={3} align="center" muted>
+                            {t("common.table.empty")}
+                        </TableCell>
+                    </TableRow>
+                ) : (
+                    administrators.map((admin) => (
+                        <AdminRow
+                            key={admin.wallet}
+                            admin={admin}
+                            hasAccess={hasAccess}
+                            isStaged={stagedRemovals.some((a) =>
+                                isAddressEqual(a, admin.wallet)
+                            )}
+                            onToggleRemoval={onToggleRemoval}
+                            disabled={disabled}
+                        />
+                    ))
+                )}
+            </TableBody>
+        </Table>
     );
 }
 
-function CellActions({
-    row,
-    merchantId,
-}: Pick<CellContext<ManageTeamTableData, unknown>, "row"> & {
-    merchantId: string;
+function AdminRow({
+    admin,
+    hasAccess,
+    isStaged,
+    onToggleRemoval,
+    disabled,
+}: {
+    admin: MerchantAdministrator;
+    hasAccess: boolean;
+    isStaged: boolean;
+    onToggleRemoval: (wallet: Address) => void;
+    disabled?: boolean;
 }) {
-    const { data: wallletStatus } = useWalletStatus();
-    const { hasAccess } = useHasRoleOnMerchant({ merchantId });
+    const { t } = useTranslation();
+    const { data: walletStatus } = useWalletStatus();
 
-    const canDoActions = useMemo(() => {
-        if (row.original.isOwner) return false;
+    const canRemove = useMemo(() => {
+        if (admin.isOwner) return false;
         if (hasAccess) return true;
-
         return isAddressEqual(
-            row.original.wallet,
-            wallletStatus?.wallet ?? zeroAddress
+            admin.wallet,
+            walletStatus?.wallet ?? zeroAddress
         );
-    }, [hasAccess, row, wallletStatus]);
-
-    if (!canDoActions) return null;
+    }, [admin, hasAccess, walletStatus]);
 
     return (
-        <div className={styles.table__actions}>
-            <DeleteTeamMemberModal row={row} merchantId={merchantId} />
-        </div>
+        <TableRow className={isStaged ? styles.rowStaged : undefined}>
+            <TableCell>
+                {admin.isMe && `${t("merchantEdit.team.me")} `}
+                <WalletAddress wallet={admin.wallet} />
+            </TableCell>
+            <TableCell align="right" hug>
+                <Badge
+                    size="small"
+                    variant={admin.isOwner ? "success" : "warning"}
+                >
+                    {admin.isOwner
+                        ? t("merchantEdit.team.roles.owner")
+                        : t("merchantEdit.team.roles.admin")}
+                </Badge>
+            </TableCell>
+            <TableCell align="right" hug>
+                {canRemove && (
+                    <button
+                        type="button"
+                        className={styles.iconButton}
+                        disabled={disabled}
+                        aria-label={
+                            isStaged
+                                ? t("merchantEdit.team.undoRemove")
+                                : t("merchantEdit.team.removeMember")
+                        }
+                        onClick={() => onToggleRemoval(admin.wallet)}
+                    >
+                        {isStaged ? (
+                            <Undo2 size={24} />
+                        ) : (
+                            <DeleteIcon width={24} height={24} />
+                        )}
+                    </button>
+                )}
+            </TableCell>
+        </TableRow>
     );
 }

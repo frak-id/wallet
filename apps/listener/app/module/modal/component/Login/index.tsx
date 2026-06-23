@@ -12,14 +12,15 @@ import {
     sessionStore,
 } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useEffect, useMemo } from "react";
+import { useStore } from "zustand";
 import { SsoButton } from "@/module/component/SsoButton";
 import { DismissButton } from "@/module/modal/component/Generic";
 import * as styles from "@/module/modal/component/Modal/index.css";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {
     useListenerTranslation,
     useModalListenerUI,
-} from "@/module/providers/ListenerUiProvider";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+} from "@/ui/ListenerUiProvider";
 import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
 
 /**
@@ -34,7 +35,10 @@ export function LoginModalStep({
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
 }) {
-    const resolvingContext = resolvingContextStore((state) => state.context);
+    const resolvingContext = useStore(
+        resolvingContextStore,
+        (state) => state.context
+    );
     const { t } = useListenerTranslation();
     const {
         currentRequest: { homepageLink, logoUrl },
@@ -69,7 +73,7 @@ export function LoginModalStep({
         },
     });
 
-    const session = sessionStore(selectSession);
+    const session = useStore(sessionStore, selectSession);
 
     /**
      * Listen to the session status, and exit directly after a session is set in the storage

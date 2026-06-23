@@ -29,6 +29,30 @@ export const rewarderClaimBatchAbi = {
     stateMutability: "nonpayable",
 } as const;
 
+/**
+ * RewarderHub `claim(token) -> uint256` write. Used by the merge asset
+ * migration to batch per-token claims inside the loser's kernel
+ * `executeBatch`. Reverts on an empty claim — the migrate mutation
+ * surfaces that as a retryable error so the next attempt rebuilds calls
+ * from a fresh summary read.
+ */
+export const rewarderClaimAbi = {
+    type: "function",
+    name: "claim",
+    inputs: [{ name: "_token", type: "address" }],
+    outputs: [{ name: "claimed", type: "uint256" }],
+    stateMutability: "nonpayable",
+} as const;
+
+/** ERC20 `balanceOf(account) -> uint256` view. */
+export const erc20BalanceOfAbi = {
+    type: "function",
+    name: "balanceOf",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+} as const;
+
 /** ERC20 `decimals() -> uint8` view. */
 export const erc20DecimalsAbi = {
     type: "function",

@@ -8,12 +8,14 @@ import {
     nexusRpcSecret,
     pimlicoApiKey,
     productSetupCodeSalt,
+    resendApiKey,
     rustfsCdnBaseUrl,
     rustfsEndpoint,
     shopifyApiSecret,
     shopifyClientId,
     sqldUrl,
     vapidPublicKey,
+    walletUrl,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
 
@@ -73,6 +75,7 @@ export const elysiaEnv = {
     // Global
     STAGE: normalizedStageName,
     ERPC_URL: erpcUrl,
+    FRAK_WALLET_URL: walletUrl,
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
     ...postgresEnv,
@@ -102,6 +105,10 @@ export const elysiaEnv = {
     AIRTABLE_API_KEY: new sst.Secret("AIRTABLE_API_KEY").value,
     SLACK_BOT_TOKEN: new sst.Secret("SLACK_BOT_TOKEN").value,
 
+    // Resend (transactional email)
+    RESEND_API_KEY: resendApiKey.value,
+    RESEND_FROM_EMAIL: "noreply@frak-labs.com",
+
     // Shopify related
     SHOPIFY_API_SECRET: shopifyApiSecret.value,
     SHOPIFY_CLIENT_ID: shopifyClientId.value,
@@ -117,6 +124,15 @@ export const elysiaEnv = {
     RUSTFS_ACCESS_KEY: rustfsAccessKey,
     RUSTFS_SECRET_KEY: rustfsSecretKey,
     RUSTFS_CDN_BASE_URL: rustfsCdnBaseUrl,
+
+    // OpenPanel client
+    OPEN_PANEL_API_URL: "https://op-api.gcp.frak.id/",
+    OPEN_PANEL_WALLET_PROJECT_ID: isProd ? "wallet" : "wallet-dev",
+    OPEN_PANEL_BACKEND_CLIENT_ID: new sst.Secret("OPEN_PANEL_BACKEND_CLIENT_ID")
+        .value,
+    OPEN_PANEL_BACKEND_CLIENT_SECRET: new sst.Secret(
+        "OPEN_PANEL_BACKEND_CLIENT_SECRET"
+    ).value,
 
     // Mobile app version floor (hard-update gate). `0.0.0` = disabled.
     // Bump when shipping a breaking change that requires a forced upgrade.

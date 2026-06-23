@@ -14,7 +14,12 @@
         "jsx": "preserve",
         "incremental": true,
         "verbatimModuleSyntax": true,
-        "types": ["vitest/globals", "@testing-library/jest-dom"]
+        "types": ["vitest/globals", "@testing-library/jest-dom"],
+        "paths": {
+            "@tinymomentum/liquid-glass-react": [
+                "../../node_modules/@tinymomentum/liquid-glass-react/dist"
+            ]
+        }
     },
     "include": ["**/*.d.ts", "**/*.ts", "**/*.tsx"],
     "exclude": ["node_modules"]

@@ -1,6 +1,6 @@
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
@@ -62,7 +62,7 @@ export class IdentityOrchestrator {
         if (
             weight1.wallet &&
             weight2.wallet &&
-            weight1.wallet !== weight2.wallet
+            !isAddressEqual(weight1.wallet, weight2.wallet)
         ) {
             throw HttpError.conflict(
                 "WALLET_CONFLICT",
@@ -73,7 +73,10 @@ export class IdentityOrchestrator {
         const { anchorGroupId, mergingGroupId } =
             this.weightService.determineAnchor(weight1, weight2);
 
-        await this.mergeService.mergeGroups({ anchorGroupId, mergingGroupId });
+        await this.mergeService.mergeGroups({
+            anchorGroupId,
+            mergingGroupIds: [mergingGroupId],
+        });
 
         this.weightService.invalidateWeight(mergingGroupId);
         this.identityRepository.invalidateCachesForGroup(mergingGroupId);
@@ -115,7 +118,7 @@ export class IdentityOrchestrator {
             return { finalGroupId: anchorGroupId, merged: false };
         }
 
-        await this.mergeService.mergeMultipleGroups({
+        await this.mergeService.mergeGroups({
             anchorGroupId,
             mergingGroupIds,
         });
@@ -136,13 +139,19 @@ export class IdentityOrchestrator {
      * Anchor a wallet to its anonymous fingerprint (when both are known) and
      * swallow any failure. Used by the auth routes after a successful login or
      * registration so an identity-graph hiccup never blocks the auth response.
+     *
+     * When `email` is provided, attach it to the resolved wallet group as a
+     * dedicated email identity node — unless that email already belongs to a
+     * different group, in which case we log + skip (collisions are owned by
+     * the explicit wallet-merge flow, not by silent registration writes).
      */
     async linkWalletToFingerprint(params: {
         walletAddress: Address;
         clientId?: string;
         merchantId?: string;
+        email?: string;
     }): Promise<void> {
-        const { walletAddress, clientId, merchantId } = params;
+        const { walletAddress, clientId, merchantId, email } = params;
         try {
             const nodes: IdentityNode[] = [
                 { type: "wallet", value: walletAddress },
@@ -154,7 +163,27 @@ export class IdentityOrchestrator {
                     merchantId,
                 });
             }
-            await this.resolveAndAssociate(nodes);
+            const result = await this.resolveAndAssociate(nodes);
+
+            if (email) {
+                const existing =
+                    await this.identityRepository.findGroupByIdentity({
+                        type: "email",
+                        value: email,
+                    });
+                if (existing && existing.id !== result.finalGroupId) {
+                    log.warn(
+                        { walletAddress, email, existingGroupId: existing.id },
+                        "Email already belongs to a different identity group; skipping attach at register"
+                    );
+                } else if (!existing) {
+                    await this.identityRepository.addNode({
+                        groupId: result.finalGroupId,
+                        type: "email",
+                        value: email,
+                    });
+                }
+            }
         } catch (err: unknown) {
             log.error(
                 { err, walletAddress, merchantId },

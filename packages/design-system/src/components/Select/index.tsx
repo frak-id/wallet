@@ -1,7 +1,8 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
 import clsx from "clsx";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
+import { ChevronDownIcon } from "../../icons";
 import { selectStyles, triggerLength } from "./select.css";
 
 /**
@@ -30,23 +31,44 @@ export type SelectTriggerProps = ComponentPropsWithRef<
 > & {
     /** Preset width: `medium` (320 px) or `big` (100 %). */
     length?: SelectTriggerLength;
+    /**
+     * `"bare"` — borderless 56px flat card (pairs with `Input variant="bare"`;
+     * `length` is ignored). Use `tone` to pick the surface.
+     */
+    variant?: "default" | "bare";
+    /** Surface tone for `variant="bare"`: `elevated` (white) or `muted`. */
+    tone?: "elevated" | "muted";
 };
 
 export function SelectTrigger({
     ref,
     length,
+    variant = "default",
+    tone,
     className,
     children,
     ...props
 }: SelectTriggerProps) {
-    const base = length ? triggerLength[length] : selectStyles.trigger;
+    const base =
+        variant === "bare"
+            ? clsx(
+                  selectStyles.triggerBare,
+                  tone === "muted" && selectStyles.triggerBareMuted
+              )
+            : length
+              ? triggerLength[length]
+              : selectStyles.trigger;
     const combined = clsx(base, className);
 
     return (
         <SelectPrimitive.Trigger ref={ref} className={combined} {...props}>
             {children}
             <SelectPrimitive.Icon asChild>
-                <ChevronDown size={20} className={selectStyles.icon} />
+                <ChevronDownIcon
+                    width={24}
+                    height={24}
+                    className={selectStyles.icon}
+                />
             </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
     );
@@ -95,6 +117,7 @@ export function SelectContent({
     className,
     children,
     position = "popper",
+    sideOffset = 8,
     ...props
 }: ComponentPropsWithRef<typeof SelectPrimitive.Content>) {
     const combined = clsx(selectStyles.content, className);
@@ -105,6 +128,7 @@ export function SelectContent({
                 ref={ref}
                 className={combined}
                 position={position}
+                sideOffset={sideOffset}
                 {...props}
             >
                 <SelectScrollUpButton />
@@ -131,11 +155,6 @@ export function SelectItem({
 
     return (
         <SelectPrimitive.Item ref={ref} className={combined} {...props}>
-            <span className={selectStyles.itemIndicator}>
-                <SelectPrimitive.ItemIndicator asChild>
-                    <Check size={16} />
-                </SelectPrimitive.ItemIndicator>
-            </span>
             <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
         </SelectPrimitive.Item>
     );

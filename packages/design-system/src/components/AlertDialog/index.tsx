@@ -4,6 +4,7 @@ import { Overlay } from "../Overlay";
 import {
     alertDialogContentStyle,
     alertDialogDescriptionStyle,
+    alertDialogOverlayStyle,
     alertDialogTitleStyle,
 } from "./alertDialog.css";
 
@@ -86,7 +87,7 @@ export function AlertDialogContent({
     return (
         <RadixAlertDialog.Portal>
             <RadixAlertDialog.Overlay asChild>
-                <Overlay />
+                <Overlay className={alertDialogOverlayStyle} />
             </RadixAlertDialog.Overlay>
             <RadixAlertDialog.Content className={combinedClassName} {...props}>
                 {children}

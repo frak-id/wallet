@@ -17,10 +17,23 @@ export const button = recipe({
         ":focus": {
             outline: "none",
         },
+        // Keyboard-only ring, offset by a bg-coloured gap so it stays visible
+        // on any variant background.
+        ":focus-visible": {
+            boxShadow: `0 0 0 2px ${vars.surface.background}, 0 0 0 4px ${vars.border.focus}`,
+        },
         ":disabled": {
             backgroundColor: vars.surface.disabled,
             color: vars.text.disabled,
             cursor: "not-allowed",
+        },
+        selectors: {
+            '&[aria-disabled="true"]': {
+                backgroundColor: vars.surface.disabled,
+                color: vars.text.disabled,
+                cursor: "not-allowed",
+                pointerEvents: "none",
+            },
         },
         lineHeight: "100%",
     },
@@ -70,13 +83,34 @@ export const button = recipe({
                 color: vars.text.error,
                 border: "none",
             },
+            /**
+             * Filter chip — neutral grey card used for dashboard
+             * filter triggers (date range, status, etc.). Square-ish
+             * 12px radius, Body-Secondary Medium label.
+             */
+            filter: {
+                backgroundColor: vars.surface.disabled,
+                color: vars.text.primary,
+                borderRadius: alias.cornerRadius.m,
+                border: "none",
+                "@media": {
+                    "(hover: hover)": {
+                        selectors: {
+                            "&:not(:disabled):hover": {
+                                backgroundColor: alias.neutral[300],
+                            },
+                        },
+                    },
+                },
+            },
         },
         size: {
             small: {
+                // 36px tall: 2×8 padding + 20px line.
                 paddingBlock: alias.spacing.xs,
                 paddingInline: alias.spacing.m,
                 fontSize: fontSize.s,
-                lineHeight: "21px",
+                lineHeight: "20px",
                 fontWeight: 600,
             },
             medium: {
@@ -85,7 +119,10 @@ export const button = recipe({
                 fontWeight: 600,
             },
             large: {
-                padding: alias.spacing.m,
+                // Fixed height so a 24px icon doesn't inflate the button.
+                height: "48px",
+                paddingBlock: 0,
+                paddingInline: alias.spacing.l,
                 fontSize: fontSize.m,
                 fontWeight: 600,
             },
@@ -93,6 +130,14 @@ export const button = recipe({
                 padding: 0,
                 fontSize: fontSize.s,
                 fontWeight: 600,
+            },
+            filter: {
+                height: "36px",
+                paddingBlock: 0,
+                paddingInline: alias.spacing.m,
+                fontSize: fontSize.s,
+                lineHeight: "22px",
+                fontWeight: 500,
             },
         },
         width: {

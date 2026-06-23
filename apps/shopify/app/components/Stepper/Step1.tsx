@@ -9,6 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useRouteLoaderData } from "react-router";
+import { LoginWithFrak } from "../LoginWithFrak";
 import { CollapsibleStep } from "./CollapsibleStep";
 
 /**
@@ -41,6 +42,7 @@ export function Step1({
     const { failedSteps } = validateCompleteOnboarding(onboardingData);
 
     const isConnected = !!merchantId;
+    const isLoggedIn = !!walletStatus?.wallet;
 
     // Pre-fetch mint URL so it's available synchronously at click time
     // (avoids popup blocker — no async gap between click and window.open)
@@ -186,14 +188,17 @@ export function Step1({
             title={t("status.connectionStatus.title")}
         >
             <s-text>{t("stepper.step1.description")}</s-text>
-            <s-button
-                onClick={handleClick}
-                variant="primary"
-                loading={isMintUrlLoading || awaitingMerchant}
-                disabled={!mintUrl || awaitingMerchant}
-            >
-                {t("status.modal.button")}
-            </s-button>
+            <s-stack direction="inline" gap="small">
+                <s-button
+                    onClick={handleClick}
+                    variant="primary"
+                    loading={isMintUrlLoading || awaitingMerchant}
+                    disabled={!isLoggedIn || !mintUrl || awaitingMerchant}
+                >
+                    {t("status.modal.button")}
+                </s-button>
+                <LoginWithFrak variant="secondary" disabled={isLoggedIn} />
+            </s-stack>
         </CollapsibleStep>
     );
 }

@@ -19,7 +19,10 @@ export type {
     SmartAccountConnectorClient,
     SmartAccountProviderType,
 } from "./smartWallet/provider";
-export { getSmartAccountProvider } from "./smartWallet/provider";
+export {
+    buildSmartAccount,
+    getSmartAccountProvider,
+} from "./smartWallet/provider";
 export type { AccountMetadata } from "./smartWallet/signature";
 export {
     fetchAccountMetadata,

@@ -1,208 +1,262 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { CheckCircleFilledIcon } from "@frak-labs/design-system/icons";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
+import { EditCard } from "@/module/common/component/EditCard";
+import { pageBottomSpacer } from "@/module/common/component/FloatingFooter/floating-footer.css";
+import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
+import { currencyMetadata } from "@/module/common/utils/currencyOptions";
+import { detectStablecoinFromAddress } from "@/module/common/utils/stablecoin";
 import {
-    currentStablecoins,
-    getTokenAddressForStablecoin,
-    type Stablecoin,
-} from "@frak-labs/app-essentials";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import type { Address } from "viem";
-import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
-import { Panel } from "@/module/common/component/Panel";
-import { CurrencySelector } from "@/module/forms/CurrencySelector";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormLayout,
-    FormMessage,
-} from "@/module/forms/Form";
-import { InputWithToggle } from "@/module/forms/InputWithToggle";
-import { MerchantHead } from "@/module/merchant/component/MerchantHead";
+    DetailCell,
+    DetailCells,
+} from "@/module/merchant/component/DetailCell";
+import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
-import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import { AllowedDomains } from "./AllowedDomains";
+import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
+import { AllowedDomainsSheet } from "../AllowedDomainsSheet";
+import { SaveFooter } from "../Customize/SaveFooter";
+import { MerchantEditSheet } from "../MerchantEditSheet";
+import { PurchaseTrackerSheet } from "../PurchaseTrackerSheet";
+import { CustomizeSaveProvider } from "../saveRegistry";
 import { ExplorerSettings } from "./ExplorerSettings";
+import * as styles from "./merchant-summary.css";
 import { NewsletterShareLink } from "./NewsletterShareLink";
-import { PurchasseTrackerSetup } from "./PurchaseTracker";
 
-type FormMerchant = {
-    name: string;
-    domain: string;
-    defaultCurrency: Stablecoin;
-};
-
-function detectStablecoinFromAddress(address: Address): Stablecoin | undefined {
-    for (const [key, value] of Object.entries(currentStablecoins)) {
-        if (value.toLowerCase() === address.toLowerCase()) {
-            return key as Stablecoin;
-        }
-    }
-    return undefined;
-}
+const DOMAIN_PREVIEW_COUNT = 3;
 
 export function MerchantDetails({ merchantId }: { merchantId: string }) {
+    const { t } = useTranslation();
     const { data: merchant } = useMerchant({ merchantId });
-    const {
-        mutate: editMerchant,
-        isSuccess: editMerchantSuccess,
-        isPending: editMerchantPending,
-    } = useMerchantUpdate({ merchantId, target: "base" });
 
-    const formValues = useMemo(
-        () =>
-            merchant
-                ? {
-                      name: merchant.name,
-                      domain: merchant.domain,
-                      defaultCurrency:
-                          detectStablecoinFromAddress(
-                              merchant.defaultRewardToken
-                          ) ?? "eure",
-                  }
-                : undefined,
-        [merchant]
+    const [dirtySections, setDirtySections] = useState<Record<string, boolean>>(
+        {}
+    );
+    const [isSaving, setIsSaving] = useState(false);
+    // Lazy init: useRef(new Map()) would rebuild and discard the Map on
+    // every render.
+    const submitHandlers = useRef<Map<string, () => Promise<void>> | null>(
+        null
+    );
+    if (submitHandlers.current === null) {
+        submitHandlers.current = new Map();
+    }
+    const handlers = submitHandlers.current;
+
+    const onDirtyChange = useCallback((key: string, isDirty: boolean) => {
+        setDirtySections((prev) => {
+            if (prev[key] === isDirty) return prev;
+            return { ...prev, [key]: isDirty };
+        });
+    }, []);
+
+    const registerSection = useCallback(
+        (key: string, submit: () => Promise<void>) => {
+            handlers.set(key, submit);
+            return () => {
+                if (handlers.get(key) === submit) {
+                    handlers.delete(key);
+                }
+            };
+        },
+        [handlers]
     );
 
-    const form = useForm<FormMerchant>({
-        values: formValues,
-        defaultValues: {
-            name: "",
-            domain: "",
-            defaultCurrency: "eure",
-        },
-    });
+    const saveContext = useMemo(
+        () => ({ registerSection, onDirtyChange }),
+        [registerSection, onDirtyChange]
+    );
 
-    useEffect(() => {
-        if (!editMerchantSuccess) return;
-        form.reset(form.getValues());
-    }, [editMerchantSuccess, form.reset, form.getValues, form]);
+    const hasUnsavedChanges = useMemo(
+        () => Object.values(dirtySections).some(Boolean),
+        [dirtySections]
+    );
 
-    function onSubmit(values: FormMerchant) {
-        editMerchant({
-            name: values.name,
-            defaultRewardToken: getTokenAddressForStablecoin(
-                values.defaultCurrency
-            ),
-        });
-    }
+    const [saveError, setSaveError] = useState(false);
+
+    const saveAll = useCallback(async () => {
+        setIsSaving(true);
+        setSaveError(false);
+        try {
+            // Sequential on purpose: the backend merges each section over a
+            // fresh read, so concurrent saves would drop fields.
+            for (const [key, isDirty] of Object.entries(dirtySections)) {
+                if (!isDirty) continue;
+                try {
+                    await handlers.get(key)?.();
+                } catch {
+                    // Failed/invalid section stays dirty; keep saving the rest.
+                    setSaveError(true);
+                }
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    }, [dirtySections, handlers]);
+
+    const { guard: guardNavigate, dialogProps: discardDialogProps } =
+        useDiscardGuard({ isDirty: hasUnsavedChanges });
+
+    const stablecoin = merchant
+        ? (detectStablecoinFromAddress(merchant.defaultRewardToken) ?? "eure")
+        : undefined;
+    const currency = stablecoin ? currencyMetadata[stablecoin] : undefined;
 
     return (
-        <FormLayout>
-            <MerchantHead merchantId={merchantId} />
-            <Form {...form}>
-                {merchant && (
-                    <Panel title={"Details of the merchant"}>
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            rules={{
-                                required: "Missing merchant name",
-                            }}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel weight={"medium"}>
-                                        Enter your merchant name
-                                    </FormLabel>
-                                    <FormControl>
-                                        <InputWithToggle
-                                            length={"medium"}
-                                            placeholder={"Merchant name...."}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
+        <CustomizeSaveProvider value={saveContext}>
+            <div className={pageBottomSpacer}>
+                <EditPageLayout
+                    merchantId={merchantId}
+                    page="details"
+                    guardNavigate={guardNavigate}
+                >
+                    {merchant && (
+                        <EditCard title={t("merchantEdit.details.title")}>
+                            <DetailCells>
+                                <DetailCell
+                                    label={t("merchantEdit.details.name")}
+                                    value={merchant.name}
+                                />
+                                <DetailCell
+                                    label={t("merchantEdit.details.domain")}
+                                    value={merchant.domain}
+                                />
+                                <DetailCell
+                                    label={t("merchantEdit.details.currency")}
+                                    value={currency ? currency.label : "—"}
+                                />
+                            </DetailCells>
+                            <Inline space="s">
+                                <MerchantEditSheet
+                                    merchant={merchant}
+                                    merchantId={merchantId}
+                                />
+                            </Inline>
+                        </EditCard>
+                    )}
+                    {merchant && (
+                        <EditCard
+                            title={t("merchantEdit.domains.title")}
+                            description={t("merchantEdit.domains.description")}
+                        >
+                            {merchant.allowedDomains.length > 0 ? (
+                                <Inline space="xs">
+                                    {merchant.allowedDomains
+                                        .slice(0, DOMAIN_PREVIEW_COUNT)
+                                        .map((domain) => (
+                                            <span
+                                                key={domain}
+                                                className={styles.domainTag}
+                                            >
+                                                {domain}
+                                            </span>
+                                        ))}
+                                    {merchant.allowedDomains.length >
+                                        DOMAIN_PREVIEW_COUNT && (
+                                        <span className={styles.domainTag}>
+                                            {t("merchantEdit.domains.more", {
+                                                count:
+                                                    merchant.allowedDomains
+                                                        .length -
+                                                    DOMAIN_PREVIEW_COUNT,
+                                            })}
+                                        </span>
+                                    )}
+                                </Inline>
+                            ) : (
+                                <p className={styles.cellsEmpty}>
+                                    {t("merchantEdit.domains.empty")}
+                                </p>
                             )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="domain"
-                            rules={{
-                                required: "Missing domain name",
-                            }}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel weight={"medium"}>
-                                        Your domain name
-                                    </FormLabel>
-                                    <FormControl>
-                                        <InputWithToggle
-                                            length={"medium"}
-                                            placeholder={"Domain name...."}
-                                            {...field}
-                                            disabled={true}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="defaultCurrency"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel weight={"medium"}>
-                                        Default reward currency
-                                    </FormLabel>
-                                    <FormControl>
-                                        <CurrencySelector
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Columns>
-                            <Column>
-                                {editMerchantSuccess && (
-                                    <ActionsMessageSuccess />
-                                )}
-                            </Column>
-                            <Column>
-                                <Button
-                                    variant={"informationOutline"}
-                                    onClick={() => {
-                                        form.reset(formValues);
-                                    }}
-                                    disabled={
-                                        editMerchantPending ||
-                                        !form.formState.isDirty
-                                    }
-                                >
-                                    Discard Changes
-                                </Button>
-                                <Button
-                                    variant={"submit"}
-                                    onClick={() => {
-                                        form.handleSubmit(onSubmit)();
-                                    }}
-                                    disabled={
-                                        editMerchantPending ||
-                                        !form.formState.isDirty
-                                    }
-                                    isLoading={editMerchantPending}
-                                >
-                                    Validate
-                                </Button>
-                            </Column>
-                        </Columns>
-                    </Panel>
-                )}
-            </Form>
-            <AllowedDomains
-                merchantId={merchantId}
-                allowedDomains={merchant?.allowedDomains ?? []}
+                            <Inline space="s">
+                                <AllowedDomainsSheet
+                                    merchantId={merchantId}
+                                    allowedDomains={merchant.allowedDomains}
+                                />
+                            </Inline>
+                        </EditCard>
+                    )}
+                    <NewsletterShareLink merchantId={merchantId} />
+                    <ExplorerSettings merchantId={merchantId} />
+                    <PurchaseTrackerSummary merchantId={merchantId} />
+                    {saveError && (
+                        <Text variant="caption" color="error">
+                            {t("merchantEdit.saveError")}
+                        </Text>
+                    )}
+                </EditPageLayout>
+            </div>
+            <SaveFooter
+                disabled={!hasUnsavedChanges}
+                isSaving={isSaving}
+                onSave={saveAll}
+                label={t("merchantEdit.saveAll")}
             />
-            <NewsletterShareLink merchantId={merchantId} />
-            <ExplorerSettings merchantId={merchantId} />
-            <PurchasseTrackerSetup merchantId={merchantId} />
-        </FormLayout>
+            <DiscardChangesDialog {...discardDialogProps} />
+        </CustomizeSaveProvider>
+    );
+}
+
+function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
+    const { t } = useTranslation();
+    const { data: webhookStatus, isLoading } = usePurchaseWebhookStatus({
+        merchantId,
+    });
+
+    return (
+        <EditCard
+            title={t("merchantEdit.purchaseTracker.title")}
+            description={t("merchantEdit.purchaseTracker.description")}
+        >
+            {isLoading || !webhookStatus ? (
+                <Spinner />
+            ) : (
+                <DetailCells>
+                    <DetailCell
+                        label={t("merchantEdit.purchaseTracker.status")}
+                        value={
+                            webhookStatus.setup ? (
+                                <Inline
+                                    as="span"
+                                    space="xxs"
+                                    alignY="center"
+                                    className={styles.statusSuccess}
+                                >
+                                    {t(
+                                        "merchantEdit.purchaseTracker.registered"
+                                    )}
+                                    <CheckCircleFilledIcon
+                                        width={16}
+                                        height={16}
+                                    />
+                                </Inline>
+                            ) : (
+                                t("merchantEdit.purchaseTracker.notRegistered")
+                            )
+                        }
+                    />
+                    {webhookStatus.setup && (
+                        <DetailCell
+                            label={t("merchantEdit.purchaseTracker.platform")}
+                            value={webhookStatus.platform}
+                        />
+                    )}
+                    {webhookStatus.setup && webhookStatus.stats && (
+                        <DetailCell
+                            label={t("merchantEdit.purchaseTracker.tracked")}
+                            value={
+                                webhookStatus.stats.totalPurchaseHandled ?? 0
+                            }
+                        />
+                    )}
+                </DetailCells>
+            )}
+            <Inline space="s">
+                <PurchaseTrackerSheet merchantId={merchantId} />
+            </Inline>
+        </EditCard>
     );
 }

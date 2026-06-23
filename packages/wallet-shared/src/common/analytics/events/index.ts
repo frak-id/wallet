@@ -2,6 +2,7 @@ import type { AuthEventMap } from "./auth";
 import type { DeepLinkEventMap } from "./deepLink";
 import type { DiagnosticsEventMap } from "./diagnostics";
 import type { EmbeddedWalletEventMap } from "./embeddedWallet";
+import type { ExplorerEventMap } from "./explorer";
 import type { InstallEventMap } from "./install";
 import type { ListenerMiscEventMap } from "./listener";
 import type { ModalEventMap, WalletModalEventMap } from "./modal";
@@ -12,11 +13,13 @@ import type { PairingEventMap } from "./pairing";
 import type { SharingEventMap } from "./sharing";
 import type { TokensEventMap } from "./tokens";
 import type { ListenerTxEventMap } from "./transaction";
+import type { WalletMergeEventMap } from "./walletMerge";
 
 export type { AuthEventMap } from "./auth";
 export type { DeepLinkEventMap, DeepLinkSource } from "./deepLink";
 export type { AppErrorSource, DiagnosticsEventMap } from "./diagnostics";
 export type { EmbeddedWalletEventMap } from "./embeddedWallet";
+export type { ExplorerEventMap } from "./explorer";
 export type {
     FlowEndExtras,
     FlowEvents,
@@ -57,6 +60,11 @@ export type {
 export type { SharingEventMap, SharingSource } from "./sharing";
 export type { TokensEventMap, TokensSendAmountBucket } from "./tokens";
 export type { ListenerTxEventMap } from "./transaction";
+export type {
+    WalletMergeEventMap,
+    WalletMergeMode,
+    WalletMergeStep,
+} from "./walletMerge";
 
 export type EventMap = AuthEventMap &
     SharingEventMap &
@@ -72,4 +80,6 @@ export type EventMap = AuthEventMap &
     InstallEventMap &
     MoneriumEventMap &
     DeepLinkEventMap &
-    DiagnosticsEventMap;
+    DiagnosticsEventMap &
+    WalletMergeEventMap &
+    ExplorerEventMap;

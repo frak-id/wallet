@@ -1,10 +1,10 @@
-import { JwtContext } from "@backend-infrastructure";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, status, t } from "elysia";
 import type {
     StaticWalletSdkTokenDto,
     StaticWalletTokenDto,
 } from "../../domain/auth/models/WalletSessionDto";
+import { JwtContext } from "../external/jwt";
 
 type OptionalWalletSession =
     | StaticWalletTokenDto

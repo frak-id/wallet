@@ -102,9 +102,9 @@ Located in `packages/test-foundation/` workspace package (`@frak-labs/test-found
 - **`react-setup.ts`** - React-specific setup:
   - BigInt serialization for Zustand persist middleware
 
-- **`router-mocks.ts`** - Router mock factory functions:
-  - `setupTanStackRouterMock()` - For @tanstack/react-router (wallet, wallet-shared, business)
-  - `createTanStackRouterMock()` - Factory function for creating custom router mocks
+- **`tanstack-router-mock.ts`** - Side-effect module that globally mocks
+  @tanstack/react-router hooks (wallet, wallet-shared, business). Import it for
+  its side effect; the `vi.mock` lives at module top level.
 
 - **`dom-mocks.ts`** - DOM mocking utilities:
   - `mockWindowOrigin()` - Mock window.origin property
@@ -115,7 +115,7 @@ Located in `packages/test-foundation/` workspace package (`@frak-labs/test-found
   - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
   - WebAuthn API (ox library)
   - IndexedDB (idb-keyval)
-  - Uses `router-mocks.ts` for TanStack Router mocking
+  - Uses `tanstack-router-mock.ts` for TanStack Router mocking
 
 - **`apps-setup.ts`** - Frontend app-specific setup:
   - Environment variables (STAGE, BACKEND_URL, etc.)
@@ -138,7 +138,6 @@ Each project has its own setup file importing shared configurations:
 - `apps/listener/tests/vitest-setup.ts`
 - `apps/business/tests/vitest-setup.ts`
 - `packages/wallet-shared/tests/vitest-setup.ts`
-- `packages/ui/tests/vitest-setup.ts`
 - `sdk/core/tests/vitest-setup.ts`
 - `sdk/react/tests/vitest-setup.ts`
 - `services/backend/test/vitest-setup.ts` - Backend-specific setup (Node environment, Viem/Drizzle/Bun mocks)
@@ -238,20 +237,14 @@ export default mergeConfig(
 );
 ```
 
-### Router Mock Utilities (router-mocks.ts)
+### Router Mock Utilities (tanstack-router-mock.ts)
 
-Use router mock factories in project setup files:
+Import the side-effect module from a project setup file to globally mock
+@tanstack/react-router hooks:
 
 ```typescript
 // For @tanstack/react-router (wallet, wallet-shared, business)
-import { setupTanStackRouterMock } from "@frak-labs/test-foundation";
-await setupTanStackRouterMock();
-
-// With custom state
-await setupTanStackRouterMock({
-    pathname: "/custom",
-    search: "?foo=bar"
-});
+import "@frak-labs/test-foundation/tanstack-router-mock";
 ```
 
 ### DOM Mock Utilities (dom-mocks.ts)
@@ -311,7 +304,7 @@ it("should handle async operation", async () => {
 ### When to Write Component Tests
 
 Component tests are valuable for:
-- **UI Components** (`packages/ui/component/`) - Core reusable components
+- **UI Components** (`packages/design-system/src/components/`) - Core reusable components
 - **Wallet-Shared Components** (`packages/wallet-shared/src/*/component/`) - Domain-specific UI components
 - **Complex Components** - Components with multiple states, interactions, or edge cases
 - **Critical User Flows** - Components that handle important user interactions
@@ -527,23 +520,6 @@ describe("AlertDialog", () => {
     });
 });
 ```
-
-### UI Package Testing
-
-The UI package (`packages/ui/`) has its own Vitest configuration:
-- **Config**: `packages/ui/vitest.config.ts`
-- **Setup**: `packages/ui/tests/vitest-setup.ts`
-- **Test scripts**: `bun run test`, `bun run test:ui`, `bun run test:coverage`
-
-Run UI package tests:
-```bash
-cd packages/ui
-bun run test              # Run tests
-bun run test:ui           # Run with Vitest UI
-bun run test:coverage     # Run with coverage
-```
-
-UI package tests are included when running `bun run test` from root.
 
 ## Coverage Targets
 

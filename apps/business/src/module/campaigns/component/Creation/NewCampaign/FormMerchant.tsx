@@ -4,69 +4,62 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@frak-labs/ui/component/Select";
-import { useEffect } from "react";
-import { useFormContext } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
+} from "@frak-labs/design-system/components/Select";
+import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
-import {
-    FormControl,
-    FormField,
-    FormItem,
-    FormMessage,
-} from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
+import { campaignStore } from "@/stores/campaignStore";
+import { WizardFieldCard } from "../WizardFieldCard";
 
-export function FormMerchant() {
-    const { setValue, control } = useFormContext<Campaign>();
+/**
+ * Merchant selector for step 0. Routes are merchant-scoped, so switching
+ * merchant resets the draft and navigates to the new merchant's blank
+ * campaign rather than mutating the current one.
+ */
+export function FormMerchant({ merchantId }: { merchantId: string }) {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { merchants } = useMyMerchants();
+    const resetDraft = campaignStore((s) => s.reset);
+    const selectedMerchant = merchants.find((m) => m.id === merchantId);
 
-    const { isEmpty, merchants } = useMyMerchants();
-    const isDisabled = isEmpty || merchants.length === 0;
-
-    useEffect(() => {
-        if (merchants.length !== 1) return;
-        const merchant = merchants[0];
-
-        setValue("merchantId", merchant.id);
-    }, [merchants]);
+    function handleChange(nextMerchantId: string) {
+        if (nextMerchantId === merchantId) return;
+        resetDraft();
+        navigate({
+            to: "/m/$merchantId/campaigns/draft/new",
+            params: { merchantId: nextMerchantId },
+        });
+    }
 
     return (
-        <Panel title="Merchant" aria-disabled={isDisabled}>
-            <FormField
-                control={control}
-                name="merchantId"
-                rules={{ required: "Select a merchant" }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormControl>
-                            <Select
-                                name={field.name}
-                                onValueChange={(merchantId) => {
-                                    if (merchantId === "") return;
-                                    field.onChange(merchantId);
-                                }}
-                                value={field.value}
-                                disabled={isDisabled}
-                            >
-                                <SelectTrigger length={"medium"} {...field}>
-                                    <SelectValue placeholder="Select a merchant" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {merchants.map((merchant) => (
-                                        <SelectItem
-                                            key={merchant.id}
-                                            value={merchant.id}
-                                        >
-                                            {merchant.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </Panel>
+        <WizardFieldCard
+            insetLabel
+            space="xs"
+            label={t("campaigns.create.basics.merchant.label")}
+        >
+            <Select
+                value={merchantId || undefined}
+                onValueChange={handleChange}
+            >
+                <SelectTrigger variant="bare" tone="muted">
+                    {/* Closed trigger shows the domain only; items keep "name — domain". */}
+                    <SelectValue
+                        placeholder={t(
+                            "campaigns.create.basics.merchant.placeholder"
+                        )}
+                    >
+                        {selectedMerchant?.domain}
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    {merchants.map((merchant) => (
+                        <SelectItem key={merchant.id} value={merchant.id}>
+                            {merchant.name} — {merchant.domain}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </WizardFieldCard>
     );
 }

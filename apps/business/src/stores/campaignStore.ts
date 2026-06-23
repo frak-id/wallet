@@ -1,4 +1,4 @@
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -7,23 +7,42 @@ import type {
     CampaignRuleDefinition,
     ConditionGroup,
     RuleCondition,
+    RuleConditions,
 } from "@/types/Campaign";
 
+/**
+ * Local draft for the creation wizard. Mirrors the backend create/update body
+ * 1:1 — `buildApiPayload` is a near-identity pass — so there is no parallel
+ * DTO to keep in sync. The UI toggles that map to rule conditions
+ * (referral-only, minimum purchase, start date) live inside `rule.conditions`
+ * and are read/written through the helpers below.
+ */
 export type CampaignDraft = {
     id?: string;
     merchantId: string;
     name: string;
+    /**
+     * UI-only pending currency selection. Applied onto `rule.rewards[].token`
+     * when the reward step builds the rewards; never sent on its own. Left
+     * undefined → the backend fills the merchant default at create time.
+     */
     rewardToken?: Hex;
     rule: CampaignRuleDefinition;
     metadata: CampaignMetadata;
     budgetConfig: BudgetConfigItem[];
-    scheduled: {
-        startDate?: Date;
-        endDate?: Date;
-    };
+    /** ISO-8601 campaign end — sent verbatim as the backend's `expiresAt`. */
+    expiresAt?: string;
     priority: number;
-    referralOnly: boolean;
-    minPurchaseAmount: number;
+};
+
+const TIME_FIELD = "time.timestamp";
+const REFERRAL_FIELD = "attribution.referrerIdentityGroupId";
+const MIN_PURCHASE_FIELD = "purchase.amount";
+
+const REFERRAL_CONDITION: RuleCondition = {
+    field: REFERRAL_FIELD,
+    operator: "exists",
+    value: true,
 };
 
 const initialDraft: CampaignDraft = {
@@ -31,7 +50,9 @@ const initialDraft: CampaignDraft = {
     name: "",
     rule: {
         trigger: "purchase",
-        conditions: [],
+        // Referral-only is the default — encoded as the condition itself, so
+        // the draft already matches what the backend stores.
+        conditions: [REFERRAL_CONDITION],
         rewards: [],
     },
     metadata: {
@@ -40,10 +61,7 @@ const initialDraft: CampaignDraft = {
         territories: [],
     },
     budgetConfig: [],
-    scheduled: {},
     priority: 0,
-    referralOnly: true,
-    minPurchaseAmount: 0,
 };
 
 type CampaignState = {
@@ -68,163 +86,177 @@ export const campaignStore = create<CampaignState>()(
             reset: () => set({ draft: initialDraft, isSuccess: false }),
         }),
         {
-            name: "campaign-draft-v4",
+            // v6: rewardToken now means "explicit non-default currency" — a
+            // token equal to the merchant default is dropped on hydration.
+            // Bump invalidates pre-fix drafts that baked the default in.
+            name: "campaign-draft-v6",
             partialize: (s) => ({ draft: s.draft }),
         }
     )
 );
 
+/* ------------------------------------------------------------------ */
+/*  Rule-condition helpers                                            */
+/*                                                                    */
+/*  These are the single source of truth for the form toggles that    */
+/*  are stored as conditions. They operate on the flat, top-level     */
+/*  condition list; a grouped rule (`ConditionGroup`) is read         */
+/*  best-effort and its nested groups are preserved untouched on      */
+/*  write (no UI produces groups today).                              */
+/* ------------------------------------------------------------------ */
+
+function dateToTimestamp(date: string): number {
+    return Math.floor(new Date(date).getTime() / 1000);
+}
+
+function topLevelConditions(conditions: RuleConditions): {
+    list: RuleCondition[];
+    rebuild: (next: RuleCondition[]) => RuleConditions;
+} {
+    if (Array.isArray(conditions)) {
+        return { list: conditions, rebuild: (next) => next };
+    }
+    const list: RuleCondition[] = [];
+    const nested: ConditionGroup[] = [];
+    for (const c of conditions.conditions) {
+        if ("field" in c) list.push(c);
+        else nested.push(c);
+    }
+    return {
+        list,
+        rebuild: (next) => ({
+            ...conditions,
+            conditions: [...next, ...nested],
+        }),
+    };
+}
+
+function setCondition(
+    rule: CampaignRuleDefinition,
+    match: (c: RuleCondition) => boolean,
+    next: RuleCondition | null
+): CampaignRuleDefinition {
+    const { list, rebuild } = topLevelConditions(rule.conditions);
+    const without = list.filter((c) => !match(c));
+    const updated = next ? [...without, next] : without;
+    return { ...rule, conditions: rebuild(updated) };
+}
+
+export function getReferralOnly(rule: CampaignRuleDefinition): boolean {
+    return topLevelConditions(rule.conditions).list.some(
+        (c) => c.field === REFERRAL_FIELD && c.operator === "exists"
+    );
+}
+
+export function setReferralOnly(
+    rule: CampaignRuleDefinition,
+    enabled: boolean
+): CampaignRuleDefinition {
+    return setCondition(
+        rule,
+        (c) => c.field === REFERRAL_FIELD,
+        enabled ? REFERRAL_CONDITION : null
+    );
+}
+
+export function getMinPurchaseAmount(rule: CampaignRuleDefinition): number {
+    const found = topLevelConditions(rule.conditions).list.find(
+        (c) => c.field === MIN_PURCHASE_FIELD && c.operator === "gte"
+    );
+    return typeof found?.value === "number" ? found.value : 0;
+}
+
+export function setMinPurchaseAmount(
+    rule: CampaignRuleDefinition,
+    amount: number
+): CampaignRuleDefinition {
+    return setCondition(
+        rule,
+        (c) => c.field === MIN_PURCHASE_FIELD && c.operator === "gte",
+        amount > 0
+            ? { field: MIN_PURCHASE_FIELD, operator: "gte", value: amount }
+            : null
+    );
+}
+
+export function getStartDate(rule: CampaignRuleDefinition): string | undefined {
+    const found = topLevelConditions(rule.conditions).list.find(
+        (c) => c.field === TIME_FIELD && c.operator === "gte"
+    );
+    return typeof found?.value === "number"
+        ? new Date(found.value * 1000).toISOString()
+        : undefined;
+}
+
+export function setStartDate(
+    rule: CampaignRuleDefinition,
+    date: string | undefined
+): CampaignRuleDefinition {
+    return setCondition(
+        rule,
+        (c) => c.field === TIME_FIELD && c.operator === "gte",
+        date
+            ? {
+                  field: TIME_FIELD,
+                  operator: "gte",
+                  value: dateToTimestamp(date),
+              }
+            : null
+    );
+}
+
 /**
- * Convert a Date (or ISO string from Zustand persist deserialization) to unix timestamp
+ * Draft → create/update body. Near-identity: the draft already holds the
+ * backend shape (conditions, expiresAt). `rewardToken` is intentionally not
+ * sent — it is applied onto `rule.rewards` by the reward step, and the
+ * backend resolves the merchant default for any reward left without a token.
  */
-function dateToTimestamp(date: Date | string): number {
-    const d = date instanceof Date ? date : new Date(date);
-    return Math.floor(d.getTime() / 1000);
-}
-
-export function buildScheduleConditions(
-    scheduled: CampaignDraft["scheduled"]
-): RuleCondition[] {
-    const conditions: RuleCondition[] = [];
-
-    if (scheduled.startDate) {
-        conditions.push({
-            field: "time.timestamp",
-            operator: "gte",
-            value: dateToTimestamp(scheduled.startDate),
-        });
-    }
-
-    if (scheduled.endDate) {
-        conditions.push({
-            field: "time.timestamp",
-            operator: "lte",
-            value: dateToTimestamp(scheduled.endDate),
-        });
-    }
-
-    return conditions;
-}
-
-export const REFERRAL_CONDITION = {
-    field: "attribution.referrerIdentityGroupId",
-    operator: "exists" as const,
-    value: true,
-};
-
-export const MIN_PURCHASE_AMOUNT_FIELD = "purchase.amount";
-
 export function buildApiPayload(draft: CampaignDraft) {
-    const scheduleConditions = buildScheduleConditions(draft.scheduled);
-
-    const existingConditions = Array.isArray(draft.rule.conditions)
-        ? draft.rule.conditions
-              .filter((c) => !("field" in c && c.field === "time.timestamp"))
-              .filter(
-                  (c) =>
-                      !(
-                          "field" in c &&
-                          c.field === "attribution.referrerIdentityGroupId"
-                      )
-              )
-              .filter(
-                  (c) =>
-                      !(
-                          "field" in c &&
-                          c.field === MIN_PURCHASE_AMOUNT_FIELD &&
-                          c.operator === "gte"
-                      )
-              )
-        : draft.rule.conditions;
-
-    const referralConditions =
-        (draft.referralOnly ?? true) ? [REFERRAL_CONDITION] : [];
-
-    const minPurchaseConditions: RuleCondition[] =
-        draft.rule.trigger === "purchase" && draft.minPurchaseAmount > 0
-            ? [
-                  {
-                      field: MIN_PURCHASE_AMOUNT_FIELD,
-                      operator: "gte",
-                      value: draft.minPurchaseAmount,
-                  },
-              ]
-            : [];
-
-    const allConditions: RuleCondition[] | ConditionGroup = Array.isArray(
-        existingConditions
-    )
-        ? [
-              ...referralConditions,
-              ...minPurchaseConditions,
-              ...existingConditions,
-              ...scheduleConditions,
-          ]
-        : {
-              ...existingConditions,
-              conditions: [
-                  ...referralConditions,
-                  ...minPurchaseConditions,
-                  ...existingConditions.conditions,
-                  ...scheduleConditions,
-              ],
-          };
-
-    const rewards = draft.rewardToken
-        ? draft.rule.rewards.map((reward) => ({
-              ...reward,
-              token: reward.token ?? draft.rewardToken,
-          }))
-        : draft.rule.rewards;
-
     return {
         merchantId: draft.merchantId,
         name: draft.name,
-        rule: {
-            ...draft.rule,
-            conditions: allConditions,
-            rewards,
-        },
+        rule: draft.rule,
         metadata: draft.metadata,
         budgetConfig: draft.budgetConfig,
-        expiresAt: draft.scheduled.endDate
-            ? (draft.scheduled.endDate instanceof Date
-                  ? draft.scheduled.endDate
-                  : new Date(draft.scheduled.endDate)
-              ).toISOString()
-            : undefined,
+        expiresAt: draft.expiresAt,
         priority: draft.priority,
     };
 }
 
-export function campaignToDraft(campaign: {
-    id: string;
-    merchantId: string;
-    name: string;
-    rule: CampaignRuleDefinition;
-    metadata?: CampaignMetadata | null;
-    budgetConfig?: BudgetConfigItem[] | null;
-    expiresAt?: string | null;
-    priority: number;
-}): CampaignDraft {
-    const existingToken = campaign.rule.rewards.find((r) => r.token)?.token as
+/**
+ * Backend campaign → draft. Reward token is derived from the rewards. The
+ * backend bakes the merchant default onto every reward at write time, so a
+ * stored token equal to `defaultRewardToken` means the campaign uses the
+ * default — drop it back to undefined to round-trip the "use default" choice.
+ */
+export function campaignToDraft(
+    campaign: {
+        id: string;
+        merchantId: string;
+        name: string;
+        rule: CampaignRuleDefinition;
+        metadata?: CampaignMetadata | null;
+        budgetConfig?: BudgetConfigItem[] | null;
+        expiresAt?: string | null;
+        priority: number;
+    },
+    defaultRewardToken?: Address
+): CampaignDraft {
+    const storedToken = campaign.rule.rewards.find((r) => r.token)?.token as
         | Hex
         | undefined;
-
-    const hasReferralCondition = Array.isArray(campaign.rule.conditions)
-        ? campaign.rule.conditions.some(
-              (c) =>
-                  "field" in c &&
-                  c.field === "attribution.referrerIdentityGroupId" &&
-                  c.operator === "exists"
-          )
-        : false;
+    const rewardToken =
+        storedToken &&
+        defaultRewardToken &&
+        storedToken.toLowerCase() === defaultRewardToken.toLowerCase()
+            ? undefined
+            : storedToken;
 
     return {
         id: campaign.id,
         merchantId: campaign.merchantId,
         name: campaign.name,
-        rewardToken: existingToken,
+        rewardToken,
         rule: campaign.rule,
         metadata: campaign.metadata ?? {
             goal: undefined,
@@ -232,24 +264,7 @@ export function campaignToDraft(campaign: {
             territories: [],
         },
         budgetConfig: campaign.budgetConfig ?? [],
-        scheduled: {
-            endDate: campaign.expiresAt
-                ? new Date(campaign.expiresAt)
-                : undefined,
-        },
+        expiresAt: campaign.expiresAt ?? undefined,
         priority: campaign.priority,
-        referralOnly:
-            hasReferralCondition ||
-            (Array.isArray(campaign.rule.conditions) &&
-                campaign.rule.conditions.length === 0),
-        minPurchaseAmount:
-            (Array.isArray(campaign.rule.conditions)
-                ? (campaign.rule.conditions.find(
-                      (c) =>
-                          "field" in c &&
-                          c.field === MIN_PURCHASE_AMOUNT_FIELD &&
-                          c.operator === "gte"
-                  )?.value as number | undefined)
-                : undefined) ?? 0,
     };
 }

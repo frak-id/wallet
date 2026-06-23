@@ -1,135 +1,79 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import type { UseFormReturn } from "react-hook-form";
 import {
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/module/forms/Form";
-import styles from "../index.module.css";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@frak-labs/design-system/components/Select";
+import type { UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { EditField } from "@/module/forms/EditField";
+import { FormControl, FormField } from "@/module/forms/Form";
+import * as styles from "../customize.css";
 import type { ComponentSettingsFormValues } from "../types";
+import { ComponentCssField, WordingTextField } from "./shared";
 
 export function ButtonShareFields({
     form,
 }: {
     form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
+    const { t } = useTranslation();
     return (
-        <div className={styles.customize__settingsGrid}>
-            <FormField
-                control={form.control}
+        <div className={styles.settingsGrid}>
+            <WordingTextField
+                form={form}
                 name="buttonShare.text"
-                rules={{
-                    maxLength: {
-                        value: 500,
-                        message: "Maximum length is 500 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Button text</FormLabel>
-                        <FormDescription>
-                            Label displayed on the share button. Embed{" "}
-                            <code>{"{REWARD}"}</code> to display the estimated
-                            reward amount inline (e.g.{" "}
-                            <em>Share and earn up to {"{REWARD}"}!</em>).
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={500}
-                                placeholder={"Share and earn!"}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.text")}
             />
-
-            <FormField
-                control={form.control}
+            <WordingTextField
+                form={form}
                 name="buttonShare.noRewardText"
-                rules={{
-                    maxLength: {
-                        value: 500,
-                        message: "Maximum length is 500 characters",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>
-                            No-reward fallback text
-                        </FormLabel>
-                        <FormDescription>
-                            Shown instead when the button text contains{" "}
-                            <code>{"{REWARD}"}</code> but no reward is available
-                            for this campaign
-                        </FormDescription>
-                        <FormControl>
-                            <Input
-                                length={"big"}
-                                maxLength={500}
-                                placeholder={"Share even without rewards"}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.noRewardText")}
             />
-
             <FormField
                 control={form.control}
                 name="buttonShare.clickAction"
                 render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Click action</FormLabel>
-                        <FormDescription>
-                            What happens when a visitor clicks the share button
-                        </FormDescription>
-                        <FormControl>
-                            <select
-                                className={styles.customize__select}
-                                value={field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                            >
-                                <option value="embedded-wallet">
-                                    Embedded wallet
-                                </option>
-                                <option value="share-modal">Share modal</option>
-                                <option value="sharing-page">
-                                    Sharing page
-                                </option>
-                            </select>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                    <EditField
+                        label={t("customize.components.clickAction.label")}
+                        hint={t("customize.components.clickAction.hint")}
+                    >
+                        <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                        >
+                            <FormControl>
+                                <SelectTrigger variant="bare" tone="muted">
+                                    <SelectValue />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="embedded-wallet">
+                                    {t(
+                                        "customize.components.clickAction.embeddedWallet"
+                                    )}
+                                </SelectItem>
+                                <SelectItem value="share-modal">
+                                    {t(
+                                        "customize.components.clickAction.shareModal"
+                                    )}
+                                </SelectItem>
+                                <SelectItem value="sharing-page">
+                                    {t(
+                                        "customize.components.clickAction.sharingPage"
+                                    )}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </EditField>
                 )}
             />
-
-            <FormField
-                control={form.control}
+            <ComponentCssField
+                form={form}
                 name="buttonShare.css"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
-                        <FormDescription>
-                            Custom styles applied to the share button
-                        </FormDescription>
-                        <FormControl>
-                            <textarea
-                                className={styles.customize__textarea}
-                                placeholder={".frak-button-share { ... }"}
-                                rows={4}
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+                label={t("customize.components.fields.css")}
+                placeholder={".frak-button-share { ... }"}
             />
         </div>
     );

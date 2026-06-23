@@ -1,46 +1,52 @@
-import { cx } from "class-variance-authority";
-import iPhone from "./assets/iPhone.png";
-import styles from "./PushPreview.module.css";
+import glass from "./assets/notification-glass.webp";
+import iconPlaceholder from "./assets/notification-icon-placeholder.webp";
+import phone1x from "./assets/wallet-2x1.webp";
+import phone2x from "./assets/wallet-2x2.webp";
+import * as styles from "./push-preview.css";
 
 type PushPreviewProps = {
     title?: string;
     message?: string;
     icon?: string;
-    className?: string;
-    classNameDate?: string;
 };
 
-export function PushPreview(props: PushPreviewProps) {
+/**
+ * iPhone lock-screen mock with a live glass notification overlaid on the
+ * exported wallpaper frame.
+ */
+export function PushPreview({ title, message, icon }: PushPreviewProps) {
     return (
-        <div className={styles.pushPreview}>
-            <img src={iPhone} alt={"iPhone"} />
-            <div className={styles.pushPreview__notificationWrapper}>
-                <PushPreviewNotification {...props} />
-            </div>
-        </div>
-    );
-}
-
-export function PushPreviewNotification({
-    title,
-    message,
-    icon,
-    className,
-    classNameDate,
-}: PushPreviewProps) {
-    return (
-        <div className={cx(styles.pushPreview__notification, className)}>
-            {icon && (
-                <span className={styles.pushPreview__icon}>
-                    <img src={icon} alt={""} width={20} height={20} />
+        <div className={styles.phone}>
+            <img
+                src={phone1x}
+                srcSet={`${phone1x} 1x, ${phone2x} 2x`}
+                alt=""
+                width={353}
+                height={735}
+                decoding="async"
+                fetchPriority="low"
+                className={styles.phoneImage}
+            />
+            <div
+                className={styles.notification}
+                style={{ backgroundImage: `url(${glass})` }}
+            >
+                <span className={styles.icon}>
+                    <img
+                        src={icon || iconPlaceholder}
+                        alt=""
+                        className={styles.iconImage}
+                        width={31}
+                        height={31}
+                    />
                 </span>
-            )}
-            <div>
-                <p className={styles.pushPreview__title}>{title}</p>
-                <pre className={styles.pushPreview__text}>{message}</pre>
-                <p className={cx(styles.pushPreview__date, classNameDate)}>
-                    now
-                </p>
+                <div className={styles.body}>
+                    <div className={styles.text}>
+                        <p className={styles.title}>{title}</p>
+                        <p className={styles.message}>{message}</p>
+                    </div>
+                    <span className={styles.time}>now</span>
+                </div>
             </div>
         </div>
     );

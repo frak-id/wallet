@@ -1,7 +1,0 @@
-.pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 24px;
-    border-top: 1px solid var(--frak-pagination-border-color);
-}

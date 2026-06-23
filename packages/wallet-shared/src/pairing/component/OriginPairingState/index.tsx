@@ -21,7 +21,7 @@ type OriginPairingStateProps = {
  * Visible on listener, embedded wallet, and wallet
  */
 export function OriginPairingState({ type }: OriginPairingStateProps) {
-    const session = sessionStore(selectDistantWebauthnSession);
+    const session = useStore(sessionStore, selectDistantWebauthnSession);
     if (!session) return null;
     return <InnerOriginPairingState type={type} />;
 }

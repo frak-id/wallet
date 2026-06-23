@@ -7,6 +7,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
+import { onboardingKey } from "../queryKeys/onboarding";
 import { getInstallReferrer } from "../utils/installReferrer";
 
 type ReferrerData = {
@@ -23,7 +24,7 @@ type ReferrerData = {
  */
 export function useInstallReferrer() {
     return useQuery<ReferrerData | null>({
-        queryKey: ["install-referrer"],
+        queryKey: onboardingKey.installReferrer,
         queryFn: async () => {
             trackEvent("install_referrer_checked");
             let referrer: string;

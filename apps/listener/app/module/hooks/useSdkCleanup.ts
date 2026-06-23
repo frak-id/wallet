@@ -4,7 +4,7 @@ import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { modalStore } from "@/module/stores/modalStore";
-import { useListenerUI } from "../providers/ListenerUiProvider";
+import { useListenerUI } from "@/ui/ListenerUiProvider";
 
 /**
  * Hook used to trigger a cleanup of the SDK

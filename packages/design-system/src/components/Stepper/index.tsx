@@ -1,0 +1,186 @@
+import clsx from "clsx";
+import { CheckIcon } from "../../icons";
+import { Text } from "../Text";
+import * as styles from "./stepper.css";
+
+type StepStatus = "default" | "active" | "completed";
+
+export type StepperStep = {
+    title: string;
+    description?: string;
+};
+
+export type StepperProps = {
+    /** Ordered list of steps to display. */
+    steps: StepperStep[];
+    /** Index of the current (active) step. Steps before it are completed, after it are default. */
+    activeStep: number;
+    /** When provided, completed steps become clickable to navigate back. */
+    onStepClick?: (index: number) => void;
+    className?: string;
+};
+
+function getStatus(index: number, activeStep: number): StepStatus {
+    if (index < activeStep) return "completed";
+    if (index === activeStep) return "active";
+    return "default";
+}
+
+const titleColor = {
+    default: "tertiary",
+    active: "action",
+    completed: "primary",
+} as const;
+
+const descriptionColor = {
+    default: "disabled",
+    active: "secondary",
+    completed: "secondary",
+} as const;
+
+const statusLabel = {
+    default: "upcoming",
+    active: "current",
+    completed: "completed",
+} as const;
+
+export function Stepper({
+    steps,
+    activeStep,
+    onStepClick,
+    className,
+}: StepperProps) {
+    return (
+        <ol className={clsx(styles.root, className)}>
+            {steps.map((stepItem, index) => {
+                const status = getStatus(index, activeStep);
+                const isLast = index === steps.length - 1;
+                const isClickable = !!onStepClick && status === "completed";
+                // Only the step just crossed animates; earlier ones render
+                // settled, so navigating doesn't replay every line at once.
+                const justCompleted = index === activeStep - 1;
+
+                const content = (
+                    <>
+                        <span className={styles.indicatorColumn}>
+                            <span className={styles.indicator[status]}>
+                                {status === "active" && <ActiveRing />}
+                                {status === "completed" ? (
+                                    <CheckIcon
+                                        className={clsx(
+                                            styles.checkIcon,
+                                            justCompleted && styles.checkIconPop
+                                        )}
+                                    />
+                                ) : (
+                                    index + 1
+                                )}
+                            </span>
+                            {!isLast && (
+                                <Connector
+                                    status={status}
+                                    animate={justCompleted}
+                                />
+                            )}
+                        </span>
+                        <span className={styles.cell}>
+                            <Text
+                                variant="body"
+                                weight="medium"
+                                color={titleColor[status]}
+                                className={styles.cellText}
+                            >
+                                {stepItem.title}
+                            </Text>
+                            {stepItem.description && (
+                                <Text
+                                    variant="bodySmall"
+                                    color={descriptionColor[status]}
+                                    className={styles.cellText}
+                                >
+                                    {stepItem.description}
+                                </Text>
+                            )}
+                        </span>
+                    </>
+                );
+
+                const ariaLabel = `Step ${index + 1}: ${stepItem.title}, ${statusLabel[status]}`;
+
+                return (
+                    <li
+                        key={stepItem.title}
+                        className={styles.item}
+                        aria-label={isClickable ? undefined : ariaLabel}
+                        aria-current={status === "active" ? "step" : undefined}
+                    >
+                        {isClickable ? (
+                            <button
+                                type="button"
+                                className={clsx(
+                                    styles.step,
+                                    styles.stepInteractive
+                                )}
+                                onClick={() => onStepClick?.(index)}
+                                aria-label={ariaLabel}
+                            >
+                                {content}
+                            </button>
+                        ) : (
+                            <div className={styles.step}>{content}</div>
+                        )}
+                    </li>
+                );
+            })}
+        </ol>
+    );
+}
+
+/** Dashed ring around the active indicator (2-2 round-capped dashes). */
+function ActiveRing() {
+    return (
+        <svg
+            className={styles.activeRing}
+            viewBox="0 0 33 33"
+            fill="none"
+            aria-hidden="true"
+        >
+            <circle
+                cx="16.5"
+                cy="16.5"
+                r="16"
+                strokeLinecap="round"
+                strokeDasharray="2 2"
+            />
+        </svg>
+    );
+}
+
+function Connector({
+    status,
+    animate,
+}: {
+    status: StepStatus;
+    animate: boolean;
+}) {
+    if (status === "active") {
+        return (
+            <span className={styles.connectorWrap}>
+                <span className={styles.connectorDashed} />
+            </span>
+        );
+    }
+    return (
+        <span className={styles.connectorWrap}>
+            <span className={styles.connectorBase} />
+            {status === "completed" && (
+                <span
+                    className={clsx(
+                        styles.connectorFill,
+                        animate && styles.connectorFillSweep
+                    )}
+                />
+            )}
+        </span>
+    );
+}

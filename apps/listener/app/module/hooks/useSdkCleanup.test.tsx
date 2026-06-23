@@ -33,7 +33,7 @@ vi.mock("@frak-labs/wallet-shared/stores/sessionStore", () => ({
 
 // Mock ListenerUiProvider
 const mockCurrentRequest = { type: "modal" as const };
-vi.mock("../providers/ListenerUiProvider", () => ({
+vi.mock("@/ui/ListenerUiProvider", () => ({
     useListenerUI: () => ({ currentRequest: mockCurrentRequest }),
 }));
 

@@ -155,14 +155,14 @@ describe("Analytics", () => {
                 expect.objectContaining({
                     profileId: baseSession.address,
                     properties: expect.objectContaining({
-                        sessionType: "webauthn",
+                        session_type: "webauthn",
                     }),
                 })
             );
             expect(mockTrack).toHaveBeenCalledWith("user_logged_in");
         });
 
-        it("defaults sessionType to webauthn when absent", () => {
+        it("defaults session_type to webauthn when absent", () => {
             if (!openPanel) return;
             const session = {
                 ...baseSession,
@@ -172,7 +172,7 @@ describe("Analytics", () => {
             expect(mockIdentify).toHaveBeenCalledWith(
                 expect.objectContaining({
                     properties: expect.objectContaining({
-                        sessionType: "webauthn",
+                        session_type: "webauthn",
                     }),
                 })
             );

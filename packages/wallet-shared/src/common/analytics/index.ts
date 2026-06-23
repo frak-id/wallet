@@ -7,6 +7,7 @@ export type {
     DiagnosticsEventMap,
     EmbeddedWalletEventMap,
     EventMap,
+    ExplorerEventMap,
     FlowEndExtras,
     FlowEvents,
     FlowOutcome,
@@ -35,6 +36,9 @@ export type {
     SharingSource,
     TokensEventMap,
     TokensSendAmountBucket,
+    WalletMergeEventMap,
+    WalletMergeMode,
+    WalletMergeStep,
     WalletModalEventMap,
 } from "./events";
 export {

@@ -18,11 +18,6 @@ import type {
  */
 export type WalletTestFixtures = BaseTestFixtures & {
     /**
-     * Fresh recovery store that auto-resets before and after each test
-     */
-    freshRecoveryStore: typeof import("@/module/stores/recoveryStore").recoveryStore;
-
-    /**
      * Mock notification adapter matching the NotificationAdapter shape
      */
     mockNotificationAdapter: {
@@ -66,30 +61,8 @@ export type WalletTestFixtures = BaseTestFixtures & {
  * ```
  */
 export const test = baseTest.extend<
-    Pick<
-        WalletTestFixtures,
-        "freshRecoveryStore" | "mockNotificationAdapter" | "mockBrowserAPIs"
-    >
+    Pick<WalletTestFixtures, "mockNotificationAdapter" | "mockBrowserAPIs">
 >({
-    /**
-     * Provides a fresh recovery store that auto-resets after each test
-     * Note: Only resets after use to avoid redundant overhead
-     */
-    freshRecoveryStore: async (
-        // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-        {},
-        use: (
-            value: typeof import("@/module/stores/recoveryStore").recoveryStore
-        ) => Promise<void>
-    ) => {
-        const { recoveryStore } = await import("@/module/stores/recoveryStore");
-
-        await use(recoveryStore);
-
-        // Reset after use
-        recoveryStore.getState().reset();
-    },
-
     /**
      * Provides a mock notification adapter
      * Returns default mock values matching the NotificationAdapter shape

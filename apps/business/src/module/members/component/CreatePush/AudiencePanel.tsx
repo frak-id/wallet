@@ -1,118 +1,96 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { useMutation } from "@tanstack/react-query";
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useFormContext } from "react-hook-form";
-import type { Address } from "viem";
+import { useFormContext, useWatch } from "react-hook-form";
+import { Trans, useTranslation } from "react-i18next";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { Panel } from "@/module/common/component/Panel";
+import { EditCard } from "@/module/common/component/EditCard";
+import { useDebouncedValue } from "@/module/common/hook/useDebouncedValue";
 import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
-import {
-    type GetMembersParam,
-    getMerchantsMembersCount,
-} from "@/module/members/api/getMerchantMembers";
+import { getMerchantsMembersCount } from "@/module/members/api/getMerchantMembers";
+import { AudienceFilter } from "@/module/members/component/CreatePush/AudienceFilter";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
-import { MembersFiltering } from "@/module/members/component/MembersFiltering";
-import { membersStore } from "@/stores/membersStore";
+
+const COUNT_DEBOUNCE_MS = 400;
 
 /**
- * Audience panel
- * @constructor
+ * Audience panel — push audiences are always filter-based.
  */
 export function AudiencePanel() {
+    const { t } = useTranslation();
     const { control } = useFormContext<FormCreatePushNotification>();
-    const selectedMembers = membersStore((state) => state.selectedMembers);
 
     return (
-        <Panel title={"Audience"}>
+        <EditCard
+            title={t("push.create.audience.title")}
+            description={t("push.create.audience.description")}
+        >
             <FormField
                 control={control}
                 name={"target"}
                 rules={{
-                    required: "Push audience is required",
+                    required: t("members.audience.required"),
                 }}
                 render={() => (
                     <FormItem>
-                        {selectedMembers?.length && (
-                            <PreSelectedMembers members={selectedMembers} />
-                        )}
-                        {!selectedMembers?.length && <SelectAudience />}
+                        <SelectAudience />
                         <FormMessage />
                     </FormItem>
                 )}
             />
-        </Panel>
-    );
-}
-
-/**
- * If the members are pre-selected, directly set the right value
- * @param members
- * @constructor
- */
-function PreSelectedMembers({ members }: { members: Address[] }) {
-    const clearSelection = membersStore((state) => state.clearSelection);
-    const { setValue } = useFormContext<FormCreatePushNotification>();
-
-    useEffect(() => {
-        setValue("target.wallets", members);
-        setValue("targetCount", members.length);
-    }, [members, setValue]);
-
-    return (
-        <>
-            <p>
-                You have selected <strong>{members.length}</strong> members to
-                receive the notification
-            </p>
-
-            <Button
-                onClick={() => {
-                    clearSelection();
-                    setValue("target", undefined);
-                    setValue("targetCount", 0);
-                }}
-                variant={"danger"}
-            >
-                Clear selected members
-            </Button>
-        </>
+        </EditCard>
     );
 }
 
 function SelectAudience() {
-    const { setValue, getValues } =
+    const { t } = useTranslation();
+    const { control, setValue, getValues } =
         useFormContext<FormCreatePushNotification>();
-    const initialValue = getValues("target.filter");
     const isDemoMode = useIsDemoMode();
 
-    const { mutate: computeAudienceSize, data: targetAudience } = useMutation({
-        mutationKey: ["create-push", "compute-audience-size"],
-        mutationFn: async (filter: GetMembersParam["filter"]) => {
-            return getMerchantsMembersCount({ filter }, isDemoMode);
-        },
+    // Watch the committed filter and debounce it so rapid edits collapse into
+    // a single count request. The query key dedupes identical filters, and
+    // keepPreviousData holds the last count during a refetch (no flicker).
+    const filter = useWatch({ control, name: "target.filter" });
+    const debouncedFilter = useDebouncedValue(filter, COUNT_DEBOUNCE_MS);
+
+    const { data: count } = useQuery({
+        queryKey: [
+            "create-push",
+            "audience-count",
+            debouncedFilter,
+            isDemoMode,
+        ],
+        queryFn: () =>
+            getMerchantsMembersCount({ filter: debouncedFilter }, isDemoMode),
+        enabled: debouncedFilter !== undefined,
+        placeholderData: keepPreviousData,
     });
 
     useEffect(() => {
-        if (!initialValue) return;
-        computeAudienceSize(initialValue);
-    }, [initialValue, computeAudienceSize]);
+        if (count !== undefined) setValue("targetCount", count);
+    }, [count, setValue]);
 
     return (
-        <>
-            <MembersFiltering
-                onFilterSet={(filter) => {
-                    computeAudienceSize(filter);
-                    setValue("target.filter", filter);
-                    setValue("targetCount", targetAudience ?? 0);
-                }}
-                initialValue={initialValue}
+        <Stack space={"m"}>
+            <AudienceFilter
+                initialValue={getValues("target.filter")}
+                onFilterSet={(updated) => setValue("target.filter", updated)}
             />
-            <p>
-                You will reach <strong>{targetAudience ?? 0}</strong> members
-            </p>
-            {targetAudience === 0 && (
-                <p className={"error"}>You need a least 1 member to continue</p>
+            <Text variant={"body"}>
+                <Trans
+                    i18nKey={"push.create.audience.matched"}
+                    values={{ total: count ?? 0 }}
+                    components={[
+                        <Text key={"count"} as={"span"} weight={"semiBold"} />,
+                    ]}
+                />
+            </Text>
+            {count === 0 && (
+                <FieldError>{t("members.audience.minMember")}</FieldError>
             )}
-        </>
+        </Stack>
     );
 }

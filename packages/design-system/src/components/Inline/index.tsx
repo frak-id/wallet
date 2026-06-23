@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { ReactNode } from "react";
 import type { ResponsiveSpace } from "../../sprinkles.css";
 import { Box } from "../Box";
@@ -33,6 +34,7 @@ export type InlineProps = {
     fill?: boolean;
     wrap?: boolean;
     as?: ValidInlineElement;
+    className?: string;
     children?: ReactNode;
 };
 
@@ -46,6 +48,7 @@ export function Inline({
     fill,
     wrap = true,
     as = "div",
+    className,
     children,
 }: InlineProps) {
     return (
@@ -59,7 +62,7 @@ export function Inline({
             paddingY={paddingY}
             justifyContent={align ? alignToJustifyContent[align] : undefined}
             alignItems={alignY ? alignYToFlexAlign[alignY] : undefined}
-            className={fill ? styles.fill : undefined}
+            className={clsx(fill && styles.fill, className)}
         >
             {children}
         </Box>

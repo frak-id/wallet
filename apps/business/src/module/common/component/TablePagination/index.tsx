@@ -1,4 +1,5 @@
 import usePagination from "@lucasmogari/react-pagination";
+import { useTranslation } from "react-i18next";
 import {
     Pagination,
     PaginationContent,
@@ -8,7 +9,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/module/common/component/Pagination";
-import styles from "./index.module.css";
+import { pagination } from "./table-pagination.css";
 
 type TablePaginationProps = {
     onPageChange: (page: number) => void;
@@ -25,6 +26,7 @@ export function TablePagination({
     itemsPerPage,
     maxPageItems = 7,
 }: TablePaginationProps) {
+    const { t } = useTranslation();
     const { getPageItem, size, fromItem, toItem } = usePagination({
         totalItems,
         page,
@@ -42,9 +44,13 @@ export function TablePagination({
     });
 
     return (
-        <div className={styles.pagination}>
+        <div className={pagination}>
             <p>
-                Showing {fromItem}-{toItem} from {totalItems}
+                {t("common.pagination.showing", {
+                    from: fromItem,
+                    to: toItem,
+                    total: totalItems,
+                })}
             </p>
             <Pagination>
                 <PaginationContent>

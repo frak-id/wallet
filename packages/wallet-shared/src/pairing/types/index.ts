@@ -7,6 +7,7 @@ export type {
 } from "./errors";
 export {
     isPairingSignatureError,
+    PairingNotReadyError,
     PairingSignatureError,
 } from "./errors";
 export * from "./pairing";

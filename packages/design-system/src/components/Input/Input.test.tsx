@@ -70,4 +70,19 @@ describe("Input", () => {
         const wrapper = container.querySelector("span");
         expect(wrapper?.className).toContain("custom");
     });
+
+    it("should render the soft variant", () => {
+        const { container } = render(
+            <Input
+                variant="soft"
+                placeholder="Search"
+                aria-label="search"
+                leftSection={<span data-testid="left">i</span>}
+            />
+        );
+        const wrapper = container.querySelector("span");
+        expect(wrapper).toBeTruthy();
+        expect(screen.getByPlaceholderText("Search")).toBeInTheDocument();
+        expect(screen.getByTestId("left")).toBeInTheDocument();
+    });
 });

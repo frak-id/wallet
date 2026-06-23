@@ -1,0 +1,123 @@
+{
+    "kpis": {
+        "ambassadors": { "current": 14446, "previous": 12898 },
+        "shares": { "current": 7210, "previous": 6676 },
+        "revenue": { "current": 286000, "previous": 272381, "currency": "EUR" },
+        "totalRewardsFiat": { "current": 297.6, "previous": 280 },
+        "purchaseCount": { "current": 24, "previous": 22 }
+    },
+    "funnels": {
+        "website": [
+            {
+                "kind": "share_cta_seen",
+                "value": 48200,
+                "previousValue": 68857
+            },
+            {
+                "kind": "share_initiated",
+                "value": 14460,
+                "previousValue": 28920
+            },
+            { "kind": "link_shared", "value": 7230, "previousValue": 11123 },
+            { "kind": "referred", "value": 4800, "previousValue": 9600 },
+            { "kind": "converted", "value": 2384, "previousValue": 2950 }
+        ],
+        "wallet": [
+            {
+                "kind": "explorer_impressions",
+                "value": 24600,
+                "previousValue": 30000
+            },
+            {
+                "kind": "brand_page_opened",
+                "value": 4430,
+                "previousValue": 8054
+            },
+            { "kind": "share_initiated", "value": 1990, "previousValue": 3062 },
+            { "kind": "link_shared", "value": 700, "previousValue": 1750 },
+            { "kind": "referred", "value": 420, "previousValue": 840 },
+            { "kind": "converted", "value": 210, "previousValue": 270 }
+        ]
+    },
+    "topCampaigns": [
+        {
+            "id": "camp_001",
+            "name": "Summer referral campaign",
+            "status": "active",
+            "rewardsCount": 1284
+        },
+        {
+            "id": "camp_002",
+            "name": "Special offer spring",
+            "status": "active",
+            "rewardsCount": 742
+        },
+        {
+            "id": "camp_004",
+            "name": "Campagne test",
+            "status": "ended",
+            "rewardsCount": 318
+        },
+        {
+            "id": "camp_003",
+            "name": "Launch Prd",
+            "status": "paused",
+            "rewardsCount": 96
+        }
+    ],
+    "statusBreakdown": {
+        "active": 7,
+        "paused": 1,
+        "draft": 1,
+        "ended": 1
+    },
+    "series": {
+        "granularity": "month",
+        "buckets": [
+            {
+                "bucket": "2025-01-01T00:00:00.000Z",
+                "purchaseCount": 3500,
+                "revenue": 5000
+            },
+            {
+                "bucket": "2025-02-01T00:00:00.000Z",
+                "purchaseCount": 2200,
+                "revenue": 8000
+            },
+            {
+                "bucket": "2025-03-01T00:00:00.000Z",
+                "purchaseCount": 4500,
+                "revenue": 12000
+            },
+            {
+                "bucket": "2025-04-01T00:00:00.000Z",
+                "purchaseCount": 1200,
+                "revenue": 14000
+            },
+            {
+                "bucket": "2025-05-01T00:00:00.000Z",
+                "purchaseCount": 1700,
+                "revenue": 13500
+            },
+            {
+                "bucket": "2025-06-01T00:00:00.000Z",
+                "purchaseCount": 3000,
+                "revenue": 14200
+            }
+        ]
+    },
+    "sharing": {
+        "platform": [
+            { "kind": "merchant_site", "value": 70 },
+            { "kind": "wallet_app", "value": 30 }
+        ],
+        "device": [
+            { "kind": "desktop", "value": 60 },
+            { "kind": "mobile", "value": 40 }
+        ]
+    },
+    "accurateKpis": {
+        "ambassadors": { "current": 17920, "previous": 15440 },
+        "shares": { "current": 9180, "previous": 8412 }
+    }
+}

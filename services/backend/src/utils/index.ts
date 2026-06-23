@@ -1,13 +1,9 @@
 export { buildAttestation } from "./attestation";
 export { validateBodyHmac } from "./bodyHmac";
 export { noContentPatch } from "./elysiaNoContentPatch";
-export type {
-    FrakEvents,
-    NotificationEvent,
-    NotificationEventItem,
-} from "./events";
 export { HttpError } from "./httpError";
 export { MutexCron } from "./mutexCron";
+export { safeRatio, toNumber } from "./numeric";
 export { processCss, processScopedCss } from "./processCss";
 export {
     CANDIDATE_BATCH_SIZE,
@@ -21,3 +17,11 @@ export {
 } from "./sixDigitCode";
 
 export { type ErrorResponse, type TokenAmount, t } from "./typebox/typeSystem";
+export {
+    type DateRange,
+    endOfIsoDay,
+    type ResolvedWindow,
+    resolveWindow,
+    startOfIsoDay,
+    type WindowQuery,
+} from "./window";

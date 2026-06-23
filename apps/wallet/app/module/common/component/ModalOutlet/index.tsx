@@ -9,7 +9,7 @@ import { TransferModal } from "@/module/tokens/component/TransferModal";
 
 // Lazy-loaded: each modal is reached only via explicit user action and pulls a
 // non-trivial subtree (e.g. MoneriumBankFlow ~70KB across 12 files; Keypass pulls
-// AuthenticateWithPhone → LaunchPairing → cuer + react-hook-form). Keeping them
+// AuthenticateWithPhone → LaunchPairing → qr + react-hook-form). Keeping them
 // out of the entry chunk shrinks first paint by ~150KB. Modal animations mask
 // the ~50ms chunk fetch so `fallback={null}` is fine.
 const ExplorerDetail = lazy(() =>
@@ -41,6 +41,13 @@ const EditReferralCodeSheet = lazy(() =>
     import("@/module/referral/component/EditReferralCodeSheet").then((m) => ({
         default: m.EditReferralCodeSheet,
     }))
+);
+const EmailNotFoundModal = lazy(() =>
+    import("@/module/authentication/component/EmailNotFoundModal").then(
+        (m) => ({
+            default: m.EmailNotFoundModal,
+        })
+    )
 );
 const WelcomeDetail = lazy(() =>
     import("@/module/wallet/component/WelcomeCard/WelcomeDetail").then((m) => ({
@@ -161,6 +168,10 @@ function renderModal(
                         />
                     )}
                 </DetailOverlay>
+            );
+        case "emailNotFound":
+            return (
+                <EmailNotFoundModal onClose={closeModal} email={modal.email} />
             );
     }
 }

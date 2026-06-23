@@ -1,0 +1,179 @@
+import { Card } from "@frak-labs/design-system/components/Card";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import type { ReactNode } from "react";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import * as styles from "./campaign-details-sheet.css";
+
+/**
+ * Locale-bound number/currency/percent formatters for the details sheet.
+ *
+ * `currency` is the campaign's reporting currency — the modal purchase
+ * currency the backend already converted spend / CPA / earnings into.
+ * Revenue/GMV and rewards on a single campaign are coherent only in this
+ * one unit (no fiat↔fiat FX), so the whole sheet formats against it
+ * rather than the user's global preference. ISO-4217, uppercased for
+ * `Intl`, defaulting to EUR when the campaign has no purchases yet.
+ */
+export function useDetailFormatters(currency?: string) {
+    const { i18n } = useTranslation();
+    const locale = i18n.language;
+    const currencyCode = (currency || "EUR").toUpperCase();
+    return useMemo(
+        () => ({
+            integer: new Intl.NumberFormat(locale, {
+                maximumFractionDigits: 0,
+            }),
+            decimal1: new Intl.NumberFormat(locale, {
+                maximumFractionDigits: 1,
+            }),
+            currency: new Intl.NumberFormat(locale, {
+                style: "currency",
+                currency: currencyCode,
+                maximumFractionDigits: 2,
+            }),
+            currency0: new Intl.NumberFormat(locale, {
+                style: "currency",
+                currency: currencyCode,
+                maximumFractionDigits: 0,
+            }),
+            percent0: new Intl.NumberFormat(locale, {
+                style: "percent",
+                maximumFractionDigits: 0,
+            }),
+            percent1: new Intl.NumberFormat(locale, {
+                style: "percent",
+                maximumFractionDigits: 1,
+            }),
+        }),
+        [locale, currencyCode]
+    );
+}
+
+/**
+ * Large metric value. For currency amounts the cents render smaller (Figma
+ * "Decimals" slot); counts, percentages and ratios stay a single size. The
+ * whole value is exposed to assistive tech as one unit via `aria-label`.
+ */
+export function BigNumber({
+    format,
+    value,
+    prefix,
+}: {
+    format: Intl.NumberFormat;
+    value: number;
+    prefix?: string;
+}) {
+    const ariaLabel = `${prefix ?? ""}${format.format(value)}`;
+    const parts = format.formatToParts(value);
+    const hasCurrency = parts.some((part) => part.type === "currency");
+
+    return (
+        <span className={styles.amount} role="img" aria-label={ariaLabel}>
+            {prefix}
+            {hasCurrency
+                ? parts.map((part, index) =>
+                      part.type === "fraction" || part.type === "decimal" ? (
+                          <span
+                              key={`${part.type}-${index}`}
+                              className={styles.amountFraction}
+                          >
+                              {part.value}
+                          </span>
+                      ) : (
+                          part.value
+                      )
+                  )
+                : format.format(value)}
+        </span>
+    );
+}
+
+export function TrendLine({
+    trend,
+    tone,
+    children,
+}: {
+    trend: "up" | "down";
+    tone: "success" | "warning";
+    children: ReactNode;
+}) {
+    return (
+        <Text
+            as="span"
+            variant="bodySmall"
+            weight="medium"
+            color={tone}
+            className={styles.trendLine}
+        >
+            <span aria-hidden="true">{trend === "up" ? "▲" : "▼"}</span>{" "}
+            {children}
+        </Text>
+    );
+}
+
+export function Section({
+    title,
+    children,
+}: {
+    title: string;
+    children: ReactNode;
+}) {
+    return (
+        <Stack space="xs" as="section">
+            <Text as="h3" variant="bodySmall" weight="medium" color="secondary">
+                {title}
+            </Text>
+            {children}
+        </Stack>
+    );
+}
+
+/** Label + optional descriptor, big value, optional sub-line and footer. */
+export function MetricCard({
+    label,
+    descriptor,
+    children,
+    sub,
+    footer,
+}: {
+    label: string;
+    descriptor?: string;
+    children: ReactNode;
+    sub?: ReactNode;
+    footer?: ReactNode;
+}) {
+    return (
+        <Card radius="m">
+            <Stack space="xxs">
+                <Inline space="xs" alignY="baseline">
+                    <Text
+                        as="span"
+                        variant="bodySmall"
+                        weight="medium"
+                        color="secondary"
+                    >
+                        {label}
+                    </Text>
+                    {descriptor && (
+                        <Text as="span" variant="caption" color="disabled">
+                            {descriptor}
+                        </Text>
+                    )}
+                </Inline>
+                {/* The sub-line sits flush under the big value. */}
+                <Stack space="none">
+                    {children}
+                    {sub && (
+                        <Text as="span" variant="bodySmall" color="tertiary">
+                            {sub}
+                        </Text>
+                    )}
+                </Stack>
+                {footer}
+            </Stack>
+        </Card>
+    );
+}

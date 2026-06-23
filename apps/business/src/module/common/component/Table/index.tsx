@@ -1,3 +1,5 @@
+import { Text } from "@frak-labs/design-system/components/Text";
+import { ArrowUpIcon } from "@frak-labs/design-system/icons";
 import type { SortingState, TableOptions } from "@tanstack/react-table";
 import {
     type Column,
@@ -7,28 +9,65 @@ import {
     getFilteredRowModel,
     getSortedRowModel,
     type PaginationState,
+    type Row,
     type RowPinningState,
     type RowSelectionState,
     useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
+import clsx from "clsx";
 import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
-import styles from "./index.module.css";
+import { useTranslation } from "react-i18next";
+import {
+    preTable as preTableStyle,
+    tableButton,
+    tableButtonEnd,
+    tableFilterIcon,
+    tableFilterIconDesc,
+    table as tableStyle,
+    tableWrapper,
+} from "./table.css";
+
+declare module "@tanstack/react-table" {
+    interface ColumnMeta<TData, TValue> {
+        align?: "left" | "right";
+    }
+}
 
 export type ReactTableProps<TData> = {
     classNameWrapper?: string;
     className?: string;
     preTable?: ReactNode;
     postTable?: ReactNode;
+    /**
+     * When set, the empty state renders as a full data row: the empty message
+     * in the first column and this placeholder (e.g. `"–"`) in every other,
+     * matching designs that keep the column grid visible. When omitted, the
+     * message spans all columns in a single cell.
+     */
+    emptyPlaceholder?: ReactNode;
     // Some custom configs
     enableFiltering?: boolean;
+    onRowClick?: (row: Row<TData>) => void;
     // Some states
     sorting?: SortingState;
     columnFilters?: ColumnFiltersState;
     rowSelection?: RowSelectionState;
     rowPinning?: RowPinningState;
     pagination?: PaginationState;
+    /**
+     * Per-row data-* attributes. Each entry maps an attribute name (e.g.
+     * `data-selected`) to a function returning its stringified value (or
+     * undefined to omit). Used to drive row-level visual states from CSS
+     * without polluting the column definitions.
+     */
+    rowDataAttributes?: Record<string, (row: Row<TData>) => string | undefined>;
+    /**
+     * Whether any row in the dataset is currently selected. When true the
+     * table receives `data-any-selected="true"` so unselected rows can be
+     * dimmed via CSS.
+     */
+    anySelected?: boolean;
 } & Omit<
     TableOptions<TData>,
     "state" | "getCoreRowModel" | "getSortedRowModel" | "getFilteredRowModel"
@@ -41,14 +80,19 @@ export function Table<TData extends object>({
     className = "",
     preTable,
     postTable,
+    emptyPlaceholder,
     sorting,
     enableFiltering = false,
+    onRowClick,
     columnFilters,
     rowSelection,
     rowPinning,
     pagination,
+    rowDataAttributes,
+    anySelected,
     ...additionalProps
 }: ReactTableProps<TData>) {
+    const { t } = useTranslation();
     const [sortingInner, setSortingInner] = useState<SortingState>([]);
 
     /**
@@ -88,49 +132,114 @@ export function Table<TData extends object>({
     );
 
     return (
-        <div className={`${styles.tableWrapper} ${classNameWrapper}`}>
-            {preTable && <div className={styles.preTable}>{preTable}</div>}
+        <div className={clsx(tableWrapper, classNameWrapper)}>
+            {preTable && <div className={preTableStyle}>{preTable}</div>}
 
-            <table className={`${styles.table} ${className}`}>
+            <table
+                className={clsx(tableStyle, className)}
+                data-any-selected={anySelected ? "true" : undefined}
+            >
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                                <th key={header.id}>
-                                    {header.isPlaceholder ? null : (
-                                        <Sorting {...header.column}>
-                                            {flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                        </Sorting>
-                                    )}
-                                </th>
-                            ))}
+                            {headerGroup.headers.map((header) => {
+                                const size = header.column.columnDef.size;
+                                const align =
+                                    header.column.columnDef.meta?.align;
+                                return (
+                                    <th
+                                        key={header.id}
+                                        scope="col"
+                                        style={{
+                                            ...(size !== undefined && {
+                                                width: size,
+                                            }),
+                                            ...(align === "right" && {
+                                                textAlign: "right",
+                                            }),
+                                        }}
+                                    >
+                                        {header.isPlaceholder ? null : (
+                                            <Sorting {...header.column}>
+                                                {flexRender(
+                                                    header.column.columnDef
+                                                        .header,
+                                                    header.getContext()
+                                                )}
+                                            </Sorting>
+                                        )}
+                                    </th>
+                                );
+                            })}
                         </tr>
                     ))}
                 </thead>
 
                 <tbody>
                     {rowModel.rows.length === 0 ? (
-                        <tr>
-                            <td colSpan={table.options.columns.length}>
-                                No results
-                            </td>
-                        </tr>
-                    ) : (
-                        rowModel.rows.map((row) => (
-                            <tr key={row.id}>
-                                {row.getVisibleCells().map((cell) => (
-                                    <td key={cell.id}>
-                                        {flexRender(
-                                            cell.column.columnDef.cell,
-                                            cell.getContext()
-                                        )}
-                                    </td>
-                                ))}
+                        emptyPlaceholder !== undefined ? (
+                            <EmptyRow
+                                columns={table.getVisibleLeafColumns()}
+                                message={t("common.table.empty")}
+                                placeholder={emptyPlaceholder}
+                            />
+                        ) : (
+                            <tr>
+                                <td colSpan={table.options.columns.length}>
+                                    {t("common.table.empty")}
+                                </td>
                             </tr>
-                        ))
+                        )
+                    ) : (
+                        rowModel.rows.map((row) => {
+                            const extraAttrs = rowDataAttributes
+                                ? Object.fromEntries(
+                                      Object.entries(rowDataAttributes)
+                                          .map(([name, fn]) => [name, fn(row)])
+                                          .filter(
+                                              ([, value]) => value !== undefined
+                                          )
+                                  )
+                                : undefined;
+                            return (
+                                <tr
+                                    key={row.id}
+                                    data-clickable={
+                                        onRowClick ? "true" : undefined
+                                    }
+                                    onClick={
+                                        onRowClick
+                                            ? () => onRowClick(row)
+                                            : undefined
+                                    }
+                                    {...extraAttrs}
+                                >
+                                    {row.getVisibleCells().map((cell) => {
+                                        const size = cell.column.columnDef.size;
+                                        const align =
+                                            cell.column.columnDef.meta?.align;
+                                        return (
+                                            <td
+                                                key={cell.id}
+                                                style={{
+                                                    ...(size !== undefined && {
+                                                        width: size,
+                                                    }),
+                                                    ...(align === "right" && {
+                                                        textAlign: "right",
+                                                    }),
+                                                }}
+                                            >
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            );
+                        })
                     )}
                 </tbody>
 
@@ -139,7 +248,7 @@ export function Table<TData extends object>({
                         {footerGroups.map((footerGroup) => (
                             <tr key={footerGroup.id}>
                                 {footerGroup.headers.map((header) => (
-                                    <th key={header.id}>
+                                    <th key={header.id} scope="col">
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
@@ -161,6 +270,55 @@ export function Table<TData extends object>({
 }
 
 /**
+ * Empty state rendered as a full data row so the column grid stays visible.
+ * The message lands in the first data (accessor) column; other data columns
+ * show the placeholder; display columns (checkbox, actions) stay blank.
+ */
+function EmptyRow<TData>({
+    columns,
+    message,
+    placeholder,
+}: {
+    columns: Column<TData, unknown>[];
+    message: ReactNode;
+    placeholder: ReactNode;
+}) {
+    const firstDataIndex = columns.findIndex(
+        (column) => typeof column.accessorFn === "function"
+    );
+    return (
+        <tr>
+            {columns.map((column, index) => {
+                const size = column.columnDef.size;
+                const align = column.columnDef.meta?.align;
+                const isData = typeof column.accessorFn === "function";
+                return (
+                    <td
+                        key={column.id}
+                        style={{
+                            ...(size !== undefined && { width: size }),
+                            ...(align === "right" && { textAlign: "right" }),
+                        }}
+                    >
+                        {isData ? (
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                color="tertiary"
+                            >
+                                {index === firstDataIndex
+                                    ? message
+                                    : placeholder}
+                            </Text>
+                        ) : null}
+                    </td>
+                );
+            })}
+        </tr>
+    );
+}
+
+/**
  * Sorting wrapper for headers
  * @param children
  * @param column
@@ -173,21 +331,21 @@ function Sorting<TData>({
     if (!column.getCanSort()) {
         return <span>{children}</span>;
     }
-    const isSorted = column.getIsSorted();
-    const Icon =
-        isSorted === false
-            ? ArrowDownUp
-            : isSorted === "asc"
-              ? ArrowUp
-              : ArrowDown;
+    const isSortedDesc = column.getIsSorted() === "desc";
+    const align = column.columnDef.meta?.align;
     return (
         <button
-            className={styles.table__button}
+            className={clsx(tableButton, align === "right" && tableButtonEnd)}
             type={"button"}
             onClick={column.getToggleSortingHandler()}
         >
             {children}
-            {Icon && <Icon className={styles.table__filterIcon} />}
+            <ArrowUpIcon
+                className={clsx(
+                    tableFilterIcon,
+                    isSortedDesc && tableFilterIconDesc
+                )}
+            />
         </button>
     );
 }

@@ -127,8 +127,8 @@ export function identifyAuthenticatedUser(session: Omit<Session, "token">) {
     openPanel.identify({
         profileId: session.address,
         properties: {
-            sessionType: session.type ?? "webauthn",
-            sessionSrc: "pairing",
+            session_type: session.type ?? "webauthn",
+            session_src: "pairing",
             ...getPlatformInfo(),
             ...pendingProfileProps,
         },

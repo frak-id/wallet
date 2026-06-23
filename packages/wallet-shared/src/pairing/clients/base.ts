@@ -26,6 +26,20 @@ type ConnectionParams =
     | {
           action: "initiate";
           originNode?: OriginIdentityNode;
+          /**
+           * Optional WebAuthn credential-id allow-set the joining target
+           * must match one of. Persisted on the pairing row server-side;
+           * `handleJoin` closes the WS with `FORBIDDEN` if the joiner's
+           * `authenticatorId` is outside the set. Used by the cross-device
+           * wallet merge to pin the pairing to the wallet whose passkeys
+           * may participate — a list (not a single id) so wallets holding
+           * multiple passkeys can be reached from any of them.
+           *
+           * Serialised on the wire as a comma-separated string (query
+           * params are `Record<string, string>` on the backend); the
+           * orchestrator splits on `,` and trims whitespace.
+           */
+          authenticatorHints?: string[];
       }
     | {
           action: "join";
@@ -74,6 +88,24 @@ function computeBackoffDelay(attempt: number): number {
     );
     // Full jitter: pick a random value in [0, exponentialDelay]
     return Math.round(Math.random() * exponentialDelay);
+}
+
+function serialiseConnectionParams(
+    params: ConnectionParams
+): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const [key, value] of Object.entries(params)) {
+        if (value === undefined || value === null) continue;
+        if (key === "originNode") {
+            out.originNode = btoa(JSON.stringify(value));
+        } else if (key === "authenticatorHints" && Array.isArray(value)) {
+            if (value.length === 0) continue;
+            out.authenticatorHints = value.join(",");
+        } else if (typeof value === "string") {
+            out[key] = value;
+        }
+    }
+    return out;
 }
 
 export abstract class BasePairingClient<
@@ -238,19 +270,29 @@ export abstract class BasePairingClient<
     }
 
     /**
-     * Hard reset: close the WS, reject any pending requests, clear the
-     * local session token, and put the client back into its initial state.
-     * Used as the recovery action after a non-retryable server rejection
-     * (e.g. 4401 invalid token) so the app can route the user back to a
-     * fresh sign-in flow.
+     * Flow-level teardown: close the WS, reject any pending requests, and
+     * put the client back into its initial state — without touching
+     * `sessionStore`. Used when a caller wants to abandon a pairing
+     * handshake (e.g. wallet merge cancelled by the user) but keep the
+     * live wallet session intact.
      */
-    reset() {
+    softReset() {
         this.closeSocket();
         this.rejectPending({
             code: "connection-lost",
             detail: "client reset",
         });
         this.resetState();
+    }
+
+    /**
+     * Hard reset: `softReset` + clear the local session token. Used as the
+     * recovery action after a non-retryable server rejection (e.g. 4401
+     * invalid token) so the app can route the user back to a fresh sign-in
+     * flow.
+     */
+    reset() {
+        this.softReset();
         sessionStore.getState().clearSession();
     }
 
@@ -298,13 +340,7 @@ export abstract class BasePairingClient<
             return;
         }
 
-        const query =
-            "originNode" in params && params.originNode
-                ? {
-                      ...params,
-                      originNode: btoa(JSON.stringify(params.originNode)),
-                  }
-                : params;
+        const query = serialiseConnectionParams(params);
 
         this.connection = authenticatedWalletApi.pairings.ws.subscribe({
             query,

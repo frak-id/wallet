@@ -1,4 +1,8 @@
 import type {
+    CampaignListItem,
+    CampaignListResponse,
+} from "@frak-labs/backend-elysia/api/schemas";
+import type {
     BudgetConfigItem,
     CampaignMetadata,
     CampaignResponse,
@@ -6,13 +10,18 @@ import type {
     CampaignStatus,
 } from "@frak-labs/backend-elysia/domain/campaign";
 import type { BankStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
-import type { CampaignStatsItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { LRUCache } from "lru-cache";
 import type { AuthenticatedContext } from "../types/context";
 import { backendApi } from "../utils/backendApi";
 import { resolveMerchantId } from "./merchant";
 
-export type { BankStatus, CampaignResponse, CampaignStatsItem, CampaignStatus };
+export type {
+    BankStatus,
+    CampaignListItem,
+    CampaignListResponse,
+    CampaignResponse,
+    CampaignStatus,
+};
 
 // ---------------------------------------------------------------------------
 // JWT extraction — Shopify App Bridge session token
@@ -52,7 +61,7 @@ function buildBackendHeaders(
 // Caches — short TTL, navigation-scoped
 // ---------------------------------------------------------------------------
 
-const campaignsCache = new LRUCache<string, CampaignResponse[]>({
+const campaignsCache = new LRUCache<string, CampaignListResponse>({
     max: 512,
     ttl: 5_000,
 });
@@ -72,7 +81,7 @@ const bankStatusCache = new LRUCache<string, BankStatus>({
 export async function getMerchantCampaigns(
     context: AuthenticatedContext,
     request: Request
-): Promise<CampaignResponse[] | null> {
+): Promise<CampaignListResponse | null> {
     const merchantId = await resolveMerchantId(context);
     if (!merchantId) {
         return null;
@@ -96,9 +105,9 @@ export async function getMerchantCampaigns(
             return null;
         }
 
-        const campaigns = data.campaigns as CampaignResponse[];
-        campaignsCache.set(merchantId, campaigns);
-        return campaigns;
+        const response = data as CampaignListResponse;
+        campaignsCache.set(merchantId, response);
+        return response;
     } catch (error) {
         console.error(
             `[backendMerchant] campaigns fetch error for ${merchantId}:`,
@@ -143,40 +152,6 @@ export async function getMerchantBankStatus(
     } catch (error) {
         console.error(
             `[backendMerchant] bank fetch error for ${merchantId}:`,
-            error
-        );
-        return null;
-    }
-}
-
-/**
- * Fetch campaign stats for the current merchant from the Frak backend.
- */
-export async function getMerchantCampaignStats(
-    context: AuthenticatedContext,
-    request: Request
-): Promise<CampaignStatsItem[] | null> {
-    const merchantId = await resolveMerchantId(context);
-    if (!merchantId) {
-        return null;
-    }
-
-    try {
-        const { data, error } = await backendApi.business
-            .merchant({ merchantId })
-            .campaigns.stats.get({
-                headers: buildBackendHeaders(request),
-            });
-        if (error) {
-            console.error(
-                `[backendMerchant] stats fetch failed (${error}) for ${merchantId}`
-            );
-            return null;
-        }
-        return data.stats;
-    } catch (error) {
-        console.error(
-            `[backendMerchant] stats fetch error for ${merchantId}:`,
             error
         );
         return null;

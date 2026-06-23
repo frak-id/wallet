@@ -1,6 +1,7 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
 import {
     deleteQueryParamCaseInsensitive,
+    type FrakWalletSdkConfig,
     getQueryParamCaseInsensitive,
     setupClient,
     trackEvent,
@@ -8,6 +9,7 @@ import {
 } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { openSharingPage } from "../actions/sharingPage";
+import { detectListenerPreloads } from "../utils/dom/detectListenerPreloads";
 import { decodeProductsParam } from "../utils/sharingPageProducts";
 import { dispatchClientReadyEvent } from "./clientReady";
 
@@ -63,7 +65,7 @@ async function doInit(): Promise<void> {
     console.log("[Frak SDK] Starting initialization");
 
     const client = await setupClient({
-        config: window.FrakSetup.config,
+        config: withDynamicPreload(window.FrakSetup.config),
     });
 
     if (!client) {
@@ -83,6 +85,21 @@ async function doInit(): Promise<void> {
 
     // Handle the action query param
     handleActionQueryParam();
+}
+
+/**
+ * Inject a dynamically-computed `preload` list when the caller hasn't set
+ * one explicitly.
+ *
+ * Rationale: the listener iframe warms Ring 1/Ring 2 chunks based on the
+ * `#preload=...` hash. The components CDN entry can detect which Frak
+ * components are actually on the page and avoid the warm-up cost when none
+ * are mounted. An explicit `config.preload` (including `[]`) is respected
+ * as an escape hatch.
+ */
+function withDynamicPreload(config: FrakWalletSdkConfig): FrakWalletSdkConfig {
+    if (config.preload !== undefined) return config;
+    return { ...config, preload: detectListenerPreloads() };
 }
 
 /**

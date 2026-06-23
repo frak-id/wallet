@@ -7,7 +7,6 @@
  * Usage:
  * ```ts
  * import {
- *     setupTanStackRouterMock,
  *     mockWindowOrigin,
  *     getReactTestPlugins
  * } from '@frak-labs/test-foundation';
@@ -15,7 +14,6 @@
  *
  * Instead of:
  * ```ts
- * import { setupTanStackRouterMock } from '../../../packages/test-foundation/src/router-mocks';
  * import { mockWindowOrigin } from '../../../packages/test-foundation/src/dom-mocks';
  * import { getReactTestPlugins } from '../../packages/test-foundation/src/vitest.shared';
  * ```
@@ -34,12 +32,6 @@ export {
     mockWindowOrigin,
     setupListenerDomMocks,
 } from "./dom-mocks";
-
-// Router mocking utilities
-export {
-    createTanStackRouterMock,
-    setupTanStackRouterMock,
-} from "./router-mocks";
 
 // Vitest plugin configuration helpers
 export { getReactOnlyPlugins, getReactTestPlugins } from "./vitest.shared";

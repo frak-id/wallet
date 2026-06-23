@@ -1,8 +1,10 @@
+import { currentStablecoins } from "@frak-labs/app-essentials";
 import { describe, expect, it } from "vitest";
 import {
     currencyMetadata,
     currencyOptions,
     formatTokenBalance,
+    tokenAddressToCurrencyGlyph,
 } from "./currencyOptions";
 
 describe("currencyOptions", () => {
@@ -207,5 +209,32 @@ describe("formatTokenBalance", () => {
             expect(result).toContain("$");
             expect(result).toContain("1");
         });
+    });
+});
+
+describe("tokenAddressToCurrencyGlyph", () => {
+    it("resolves each stablecoin address to its glyph", () => {
+        expect(tokenAddressToCurrencyGlyph(currentStablecoins.eure)).toBe("€");
+        expect(tokenAddressToCurrencyGlyph(currentStablecoins.gbpe)).toBe("£");
+        expect(tokenAddressToCurrencyGlyph(currentStablecoins.usde)).toBe("$");
+        // USDC is USD-denominated, so it shares the "$" glyph.
+        expect(tokenAddressToCurrencyGlyph(currentStablecoins.usdc)).toBe("$");
+    });
+
+    it("is case-insensitive on the address", () => {
+        expect(
+            tokenAddressToCurrencyGlyph(
+                currentStablecoins.gbpe.toUpperCase() as `0x${string}`
+            )
+        ).toBe("£");
+    });
+
+    it("falls back to € for an unknown or missing token", () => {
+        expect(tokenAddressToCurrencyGlyph(undefined)).toBe("€");
+        expect(
+            tokenAddressToCurrencyGlyph(
+                "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+            )
+        ).toBe("€");
     });
 });

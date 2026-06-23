@@ -1,13 +1,6 @@
 import { style, styleVariants } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import {
-    alias,
-    easing,
-    fontSize,
-    shadow,
-    transition,
-    zIndex,
-} from "../../tokens.css";
+import { alias, easing, fontSize, transition, zIndex } from "../../tokens.css";
 
 /**
  * Trigger — base + length variants
@@ -29,7 +22,7 @@ const triggerBase = style({
     transition: `border-color ${transition.base} ${easing.default}`,
 
     ":focus-visible": {
-        boxShadow: `0 0 0 1px ${vars.border.focus}`,
+        boxShadow: `0 0 0 2px ${vars.border.focus}`,
     },
 
     selectors: {
@@ -45,8 +38,30 @@ export const triggerLength = styleVariants({
     big: [triggerBase, { width: "100%" }],
 });
 
+/** Borderless 56px flat-card trigger — pairs with `Input variant="bare"`. */
+const triggerBare = style([
+    triggerBase,
+    {
+        width: "100%",
+        height: "56px",
+        padding: `0 ${alias.spacing.m}`,
+        gap: alias.spacing.m,
+        borderRadius: alias.cornerRadius.m,
+        border: "none",
+        backgroundColor: vars.surface.elevated,
+        fontSize: fontSize.m,
+        lineHeight: "26px",
+    },
+]);
+
+const triggerBareMuted = style({
+    backgroundColor: vars.surface.muted,
+});
+
 export const selectStyles = {
     trigger: triggerBase,
+    triggerBare,
+    triggerBareMuted,
 
     icon: style({
         color: vars.icon.secondary,
@@ -56,23 +71,25 @@ export const selectStyles = {
     content: style({
         overflow: "hidden",
         backgroundColor: vars.surface.elevated,
-        border: `1px solid ${vars.border.default}`,
-        borderRadius: alias.cornerRadius.s,
-        boxShadow: shadow.elevated,
+        borderRadius: alias.cornerRadius.m,
+        boxShadow: "0px 3px 4px rgba(115, 115, 115, 0.16)",
         maxHeight: "384px",
         minWidth: "var(--radix-select-trigger-width)",
         zIndex: zIndex.popover,
     }),
 
     viewport: style({
-        padding: alias.spacing.xxs,
+        padding: 0,
     }),
 
     item: style({
-        fontSize: fontSize.s,
+        display: "flex",
+        alignItems: "center",
+        height: "48px",
+        fontSize: "16px",
+        lineHeight: "26px",
         color: vars.text.primary,
-        borderRadius: alias.cornerRadius.xs,
-        padding: `7px 35px 7px 25px`,
+        padding: "12px 16px",
         position: "relative",
         userSelect: "none",
         whiteSpace: "nowrap",
@@ -89,6 +106,9 @@ export const selectStyles = {
             "&[data-highlighted]": {
                 backgroundColor: vars.surface.secondaryHover,
             },
+            '&[data-state="checked"]': {
+                backgroundColor: vars.surface.secondary,
+            },
         },
     }),
 
@@ -102,16 +122,6 @@ export const selectStyles = {
         height: "1px",
         backgroundColor: vars.border.default,
         margin: alias.spacing.xxs,
-    }),
-
-    itemIndicator: style({
-        position: "absolute",
-        left: alias.spacing.xxs,
-        top: "50%",
-        transform: "translateY(-50%)",
-        height: "20px",
-        display: "inline-flex",
-        alignItems: "center",
     }),
 
     scrollButton: style({

@@ -40,7 +40,10 @@ export function isChromiumAndroid(): boolean {
  *
  * Format: intent://path#Intent;scheme=<scheme>;end
  */
-const DEEP_LINK_SCHEME_NAME = DEEP_LINK_SCHEME.replace("://", "");
+const DEEP_LINK_SCHEME_NAME = /* @__PURE__ */ DEEP_LINK_SCHEME.replace(
+    "://",
+    ""
+);
 
 export function toAndroidIntentUrl(deepLink: string): string {
     // Extract everything after the scheme (e.g. "frakwallet://" or "frakwallet-dev://")

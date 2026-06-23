@@ -1,9 +1,12 @@
 import type { Address, Hex } from "viem";
-import type { WebAuthNWallet } from "./WebAuthN";
 
 export type CurrentRecovery = {
     executor: Address;
     guardianAddress: Address;
+    /** Recovery becomes executable after this unix timestamp (seconds). */
+    validAfter: number;
+    /** Recovery stops working after this unix timestamp (seconds); 0 = never. */
+    validUntil: number;
 };
 
 export type GeneratedRecoveryData = {
@@ -11,13 +14,4 @@ export type GeneratedRecoveryData = {
     guardianAddress: Address;
     // The tx to setup the recovery
     setupTxData: Hex;
-};
-
-export type RecoveryFileContent = {
-    // The wallet data
-    initialWallet: WebAuthNWallet;
-    // The guardian address
-    guardianAddress: Address;
-    // The encrypted guardian private key
-    guardianPrivateKeyEncrypted: string;
 };

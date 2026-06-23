@@ -145,11 +145,19 @@ export class EstimatedRewardService {
         return {
             payoutType: "tiered",
             tierField: rewardDef.tierField,
-            tiers: rewardDef.tiers.map((tier) => ({
-                minValue: tier.minValue,
-                maxValue: tier.maxValue,
-                amount: this.toTokenAmount(tier.amount, price),
-            })),
+            tiers: rewardDef.tiers.map((tier) =>
+                "percent" in tier
+                    ? {
+                          minValue: tier.minValue,
+                          maxValue: tier.maxValue,
+                          percent: tier.percent,
+                      }
+                    : {
+                          minValue: tier.minValue,
+                          maxValue: tier.maxValue,
+                          amount: this.toTokenAmount(tier.amount, price),
+                      }
+            ),
         };
     }
 

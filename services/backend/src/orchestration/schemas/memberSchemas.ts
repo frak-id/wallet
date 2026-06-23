@@ -24,7 +24,7 @@ export const MemberSortSchema = t.Object({
 export const MemberItemSchema = t.Object({
     user: t.Hex(),
     totalInteractions: t.Number(),
-    totalRewardsUsd: t.Number(),
+    totalRewardsFiat: t.Number(),
     firstInteractionTimestamp: t.String(),
     merchantIds: t.Array(t.String()),
     merchantNames: t.Array(t.String()),

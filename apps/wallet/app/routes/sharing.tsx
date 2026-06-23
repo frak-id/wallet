@@ -13,6 +13,7 @@ import {
     SharingPage,
     saveConfirmation,
     sessionStore,
+    sharingKey,
     trackEvent,
     useCopyToClipboardWithState,
     useFormattedEstimatedReward,
@@ -23,6 +24,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
 
 /**
@@ -127,16 +129,17 @@ function WalletSharingPage() {
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
-    const storeClientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const storeClientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
 
     // Product selection state — default to first product
     const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
-    const { data: estimatedReward } = useFormattedEstimatedReward({
-        merchantId,
-    });
+    const { data: estimatedReward, isLoading: isRewardLoading } =
+        useFormattedEstimatedReward({
+            merchantId,
+        });
 
     // Fire `sharing_page_viewed` once per mount, independent of whether we end up
     // rendering the confirmation screen. Denominator for the sharing funnel.
@@ -166,7 +169,7 @@ function WalletSharingPage() {
 
     // Fallback: resolve clientId from the backend via checkout token when not directly provided
     const { data: resolvedClientId } = useQuery({
-        queryKey: ["order-client", merchantId, checkoutToken],
+        queryKey: sharingKey.orderClient(merchantId, checkoutToken),
         queryFn: async () => {
             if (!merchantId || !checkoutToken) return null;
             const { data, error } = await authenticatedBackendApi.user.identity[
@@ -309,6 +312,7 @@ function WalletSharingPage() {
             installUrl={installUrl}
             t={t}
             isSharing={isSharing}
+            isRewardLoading={isRewardLoading}
             canShare={canShare}
             showConfirmation={showConfirmation}
             onShare={handleShare}

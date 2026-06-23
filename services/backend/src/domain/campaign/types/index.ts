@@ -35,8 +35,13 @@ type PurchaseItem = {
 
 export type PurchaseContext = {
     orderId: string;
+    /**
+     * Order total in `currency` units — raw fiat, never FX-normalized.
+     * Percentage and tiered (`tierField: purchase.amount`) rewards convert
+     * it into reward-token units at evaluation time; plain rule conditions
+     * compare it as-is and are therefore order-currency-relative.
+     */
     amount: number;
-    subtotal?: number;
     currency: string;
     items: PurchaseItem[];
     isFirstPurchase?: boolean;
@@ -108,6 +113,18 @@ export type EvaluationResult = {
         campaignRuleId: string;
         error: string;
     }[];
+    /**
+     * True when a matched percentage or tiered reward could not convert the
+     * purchase amount into token units (no FX rate for the purchase currency
+     * or token price unavailable). The orchestrator leaves the interaction
+     * unprocessed so the next cron run retries it — failure is logged only,
+     * nothing is persisted. TODO: if production logs ever show a row stuck
+     * on this path (starving the batch), add an attempt counter + backoff
+     * on interaction_logs.
+     */
+    deferForUnpriceableReward: boolean;
+    /** Why pricing failed — logged by the orchestrator, not persisted. */
+    deferReason?: string;
 };
 
 export type BudgetConsumptionResult = {

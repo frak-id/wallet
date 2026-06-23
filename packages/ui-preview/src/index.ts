@@ -3,6 +3,9 @@
 // Explorer card preview
 export type { ExplorerCardPreviewProps } from "./explorer-card";
 export { ExplorerCardPreview } from "./explorer-card";
+// Explorer phone preview (CSS phone-frame mockup)
+export type { ExplorerPhonePreviewProps } from "./explorer-phone";
+export { ExplorerPhonePreview } from "./explorer-phone";
 export type {
     BannerPreviewProps,
     PostPurchasePreviewProps,

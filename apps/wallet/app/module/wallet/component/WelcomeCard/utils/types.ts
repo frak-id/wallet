@@ -7,7 +7,7 @@ export const allWelcomeSlideIds = ["intro", "notifications", "invite"] as const;
 
 export type WelcomeSlideId = (typeof allWelcomeSlideIds)[number];
 
-export type IntroWelcomeSlide = {
+type IntroWelcomeSlide = {
     id: WelcomeSlideId;
     kind: "intro";
     title: string;

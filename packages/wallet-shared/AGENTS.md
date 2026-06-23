@@ -17,7 +17,7 @@ Shared state/flows for **wallet + listener ONLY** (enforced by convention). 201 
 - **`idb-keyval` not `idb`**: ~1.73 KB gzipped, works inside service worker context. Heavy IDB wrappers break the SW bundle.
 - **BigInt serialization polyfill**: required by Zustand `persist`; lives in `test-foundation/react-setup.ts` for tests, present in app entrypoints.
 - **Barrel from package root only**: `import { ... } from "@frak-labs/wallet-shared"` — internal paths discouraged.
-- **Known duplication**: `AlertDialog` exists here and in `packages/ui`; pick based on app context (wallet uses this one).
+- **Known duplication**: `AlertDialog` exists here and in `design-system`; pick based on app context (wallet uses this one).
 
 ## Anti-Patterns
 Importing in business/backend/shopify · entire-store subscriptions · heavy IDB libs · internal-path imports.

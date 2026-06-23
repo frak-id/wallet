@@ -1,10 +1,7 @@
-import {
-    currentStablecoins,
-    stablecoins,
-    usdcArbitrumAddress,
-} from "@frak-labs/app-essentials/blockchain";
+import { stablecoins } from "@frak-labs/app-essentials/blockchain";
 import type { Address } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { FxRateRepository } from "./FxRateRepository";
 import type { TokenPrice } from "./PricingRepository";
 import { PricingRepository } from "./PricingRepository";
 
@@ -23,10 +20,14 @@ vi.mock("ky", () => ({
 
 describe("PricingRepository", () => {
     let repository: PricingRepository;
+    const mockGetRate = vi.fn();
+    const fxRates = { getRate: mockGetRate } as unknown as FxRateRepository;
 
     beforeEach(() => {
-        repository = new PricingRepository();
         vi.clearAllMocks();
+        // FX providers unreachable by default; tests opt in to rates.
+        mockGetRate.mockResolvedValue(undefined);
+        repository = new PricingRepository(fxRates);
         process.env.COIN_GECKO_API_KEY = "test-api-key";
     });
 
@@ -54,77 +55,6 @@ describe("PricingRepository", () => {
                 expect.objectContaining({
                     searchParams: {
                         contract_addresses: mockToken,
-                        vs_currencies: "usd,eur,gbp",
-                    },
-                })
-            );
-        });
-
-        it("should return fixed rate for USDe stablecoin", async () => {
-            mockGet.mockRejectedValueOnce(new Error("API error"));
-
-            const result = await repository.getTokenPrice({
-                token: currentStablecoins.usde,
-            });
-
-            expect(result).toEqual({
-                usd: 1,
-                eur: 0.85,
-                gbp: 0.75,
-            });
-        });
-
-        it("should return fixed rate for EURe stablecoin", async () => {
-            mockGet.mockRejectedValueOnce(new Error("API error"));
-
-            const result = await repository.getTokenPrice({
-                token: currentStablecoins.eure,
-            });
-
-            expect(result).toEqual({
-                usd: 1.18,
-                eur: 1,
-                gbp: 0.88,
-            });
-        });
-
-        it("should return fixed rate for GBPe stablecoin", async () => {
-            mockGet.mockRejectedValueOnce(new Error("API error"));
-
-            const result = await repository.getTokenPrice({
-                token: currentStablecoins.gbpe,
-            });
-
-            expect(result).toEqual({
-                usd: 1.33,
-                eur: 1.14,
-                gbp: 1,
-            });
-        });
-
-        it("should replace mUSD token with USDC address", async () => {
-            const mockPrice: TokenPrice = {
-                usd: 1.0,
-                eur: 0.85,
-                gbp: 0.75,
-            };
-
-            mockGet.mockResolvedValue({
-                json: async () => ({
-                    [usdcArbitrumAddress.toLowerCase()]: mockPrice,
-                }),
-            });
-
-            const result = await repository.getTokenPrice({
-                token: stablecoins.testnet.usdc,
-            });
-
-            expect(result).toEqual(mockPrice);
-            expect(mockGet).toHaveBeenCalledWith(
-                "simple/token_price/arbitrum-one",
-                expect.objectContaining({
-                    searchParams: {
-                        contract_addresses: usdcArbitrumAddress,
                         vs_currencies: "usd,eur,gbp",
                     },
                 })
@@ -244,56 +174,198 @@ describe("PricingRepository", () => {
             const result = await repository.getTokenPrice({ token: mockToken });
             expect(result).toBeUndefined();
         });
+    });
 
-        it("should handle malformed API responses", async () => {
-            const mockToken =
-                "0x1234567890abcdef1234567890abcdef12345678" as Address;
+    describe("pegged stablecoins", () => {
+        it("prices USDe from its 1:1 USD peg plus FX, without CoinGecko", async () => {
+            mockGetRate.mockImplementation(
+                async ({ from, to }: { from: string; to: string }) => {
+                    if (from === "usd" && to === "eur") return 0.86;
+                    if (from === "usd" && to === "gbp") return 0.74;
+                    return undefined;
+                }
+            );
 
-            mockGet.mockResolvedValue({
-                json: async () => ({}),
+            const result = await repository.getTokenPrice({
+                token: stablecoins.prod.usde,
             });
 
-            const result = await repository.getTokenPrice({ token: mockToken });
+            expect(result).toEqual({ usd: 1, eur: 0.86, gbp: 0.74 });
+            expect(mockGet).not.toHaveBeenCalled();
+        });
+
+        it("prices EURe from its EUR peg", async () => {
+            mockGetRate.mockImplementation(
+                async ({ from, to }: { from: string; to: string }) => {
+                    if (from === "eur" && to === "usd") return 1.16;
+                    if (from === "eur" && to === "gbp") return 0.87;
+                    return undefined;
+                }
+            );
+
+            const result = await repository.getTokenPrice({
+                token: stablecoins.prod.eure,
+            });
+
+            expect(result).toEqual({ usd: 1.16, eur: 1, gbp: 0.87 });
+            expect(mockGet).not.toHaveBeenCalled();
+        });
+
+        it("returns undefined when FX providers are down — never a stale guess", async () => {
+            const result = await repository.getTokenPrice({
+                token: stablecoins.prod.gbpe,
+            });
+
             expect(result).toBeUndefined();
+            expect(mockGet).not.toHaveBeenCalled();
+        });
+
+        it("prices testnet stablecoins identically (unlisted on CoinGecko)", async () => {
+            mockGetRate.mockResolvedValue(1.1);
+            for (const token of [
+                stablecoins.testnet.eure,
+                stablecoins.testnet.gbpe,
+                stablecoins.testnet.usde,
+                stablecoins.testnet.usdc,
+            ]) {
+                const result = await repository.getTokenPrice({ token });
+                expect(result).toBeDefined();
+            }
+            expect(mockGet).not.toHaveBeenCalled();
         });
     });
 
-    describe("getExchangeRate", () => {
-        it("should return 1 for same currency", async () => {
-            const result = await repository.getExchangeRate({
-                fromCurrency: "eur",
-                toCurrency: "eur",
+    describe("convertFiatToTokenAmount", () => {
+        const token = "0x1234567890abcdef1234567890abcdef12345678" as Address;
+
+        it("passes the amount through when the order currency is the token's peg", async () => {
+            const result = await repository.convertFiatToTokenAmount({
+                token: stablecoins.prod.eure,
+                fiatAmount: 5,
+                currency: "EUR",
             });
 
-            expect(result).toBe(1);
+            expect(result).toEqual({ converted: true, tokenAmount: 5 });
+            expect(mockGetRate).not.toHaveBeenCalled();
+            expect(mockGet).not.toHaveBeenCalled();
         });
 
-        it("should return 1 for different currencies (placeholder)", async () => {
-            const result = await repository.getExchangeRate({
-                fromCurrency: "eur",
-                toCurrency: "usd",
+        it("converts an exotic order currency into the peg via FX", async () => {
+            mockGetRate.mockResolvedValue(0.0062);
+
+            const result = await repository.convertFiatToTokenAmount({
+                token: stablecoins.prod.usde,
+                fiatAmount: 10_000,
+                currency: "JPY",
             });
 
-            expect(result).toBe(1);
+            expect(result).toEqual({ converted: true, tokenAmount: 62 });
+            expect(mockGetRate).toHaveBeenCalledWith({
+                from: "jpy",
+                to: "usd",
+            });
+            expect(mockGet).not.toHaveBeenCalled();
         });
 
-        it("should handle all currency combinations", async () => {
-            const currencies = ["eur", "usd", "gbp"] as const;
+        it("defers when no FX rate exists for the order currency", async () => {
+            const result = await repository.convertFiatToTokenAmount({
+                token: stablecoins.prod.usde,
+                fiatAmount: 100,
+                currency: "XXX",
+            });
 
-            for (const from of currencies) {
-                for (const to of currencies) {
-                    const result = await repository.getExchangeRate({
-                        fromCurrency: from,
-                        toCurrency: to,
-                    });
+            expect(result).toEqual({
+                converted: false,
+                reason: "fx_rate_unavailable",
+            });
+        });
 
-                    if (from === to) {
-                        expect(result).toBe(1);
-                    } else {
-                        expect(result).toBe(1); // Placeholder implementation
-                    }
-                }
-            }
+        it("divides the fiat amount by the token's spot price in that currency", async () => {
+            mockGet.mockResolvedValue({
+                json: async () => ({
+                    [token.toLowerCase()]: { usd: 1.25, eur: 1, gbp: 0.9 },
+                }),
+            });
+
+            const result = await repository.convertFiatToTokenAmount({
+                token,
+                fiatAmount: 5,
+                currency: "usd",
+            });
+
+            expect(result).toEqual({ converted: true, tokenAmount: 4 });
+        });
+
+        it("normalises the currency code case before picking the price", async () => {
+            mockGet.mockResolvedValue({
+                json: async () => ({
+                    [token.toLowerCase()]: { usd: 2, eur: 1, gbp: 1 },
+                }),
+            });
+
+            const result = await repository.convertFiatToTokenAmount({
+                token,
+                fiatAmount: 10,
+                currency: "USD",
+            });
+
+            expect(result).toEqual({ converted: true, tokenAmount: 5 });
+        });
+
+        it("hops an exotic order currency through USD for a non-pegged token", async () => {
+            mockGet.mockResolvedValue({
+                json: async () => ({
+                    [token.toLowerCase()]: { usd: 2, eur: 1.7, gbp: 1.5 },
+                }),
+            });
+            mockGetRate.mockResolvedValue(0.1);
+
+            const result = await repository.convertFiatToTokenAmount({
+                token,
+                fiatAmount: 100,
+                currency: "SEK",
+            });
+
+            // 100 SEK × 0.1 (SEK→USD) ÷ 2 (USD per token) = 5 tokens
+            expect(result).toEqual({ converted: true, tokenAmount: 5 });
+            expect(mockGetRate).toHaveBeenCalledWith({
+                from: "sek",
+                to: "usd",
+            });
+        });
+
+        it("defers an exotic currency when FX is unavailable for a non-pegged token", async () => {
+            mockGet.mockResolvedValue({
+                json: async () => ({
+                    [token.toLowerCase()]: { usd: 2, eur: 1.7, gbp: 1.5 },
+                }),
+            });
+
+            const result = await repository.convertFiatToTokenAmount({
+                token,
+                fiatAmount: 100,
+                currency: "JPY",
+            });
+
+            expect(result).toEqual({
+                converted: false,
+                reason: "fx_rate_unavailable",
+            });
+        });
+
+        it("returns token_price_unavailable when the token has no price", async () => {
+            mockGet.mockResolvedValue({ json: async () => ({}) });
+
+            const result = await repository.convertFiatToTokenAmount({
+                token,
+                fiatAmount: 5,
+                currency: "eur",
+            });
+
+            expect(result).toEqual({
+                converted: false,
+                reason: "token_price_unavailable",
+            });
         });
     });
 
@@ -359,7 +431,7 @@ describe("PricingRepository", () => {
 
         it("should handle missing API key", () => {
             delete process.env.COIN_GECKO_API_KEY;
-            const newRepository = new PricingRepository();
+            const newRepository = new PricingRepository(fxRates);
             expect(newRepository).toBeDefined();
         });
     });

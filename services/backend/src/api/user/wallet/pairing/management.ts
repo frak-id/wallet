@@ -24,6 +24,12 @@ export const managementRoutes = new Elysia()
                 originName: pairing.originName,
                 createdAt: pairing.createdAt,
                 pairingCode: pairing.pairingCode,
+                // Surface the credential set the origin pinned (if any)
+                // so the joining mobile can self-check and offer the user
+                // a passkey switch before attempting to join — joining
+                // with a credential outside the set is rejected at
+                // `handleJoin`.
+                authenticatorHints: pairing.authenticatorHints ?? undefined,
             };
         },
         {
@@ -33,6 +39,7 @@ export const managementRoutes = new Elysia()
                     originName: t.String(),
                     createdAt: t.Date(),
                     pairingCode: t.String(),
+                    authenticatorHints: t.Optional(t.Array(t.String())),
                 }),
                 404: t.String(),
             },

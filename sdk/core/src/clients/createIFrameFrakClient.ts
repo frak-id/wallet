@@ -153,11 +153,11 @@ export function createIFrameFrakClient({
                 if (!payload?.properties) return true;
 
                 // Check if we we got the properties once initialized
-                if (!("sdkVersion" in payload.properties)) {
+                if (!("sdk_version" in payload.properties)) {
                     payload.properties = {
                         ...payload.properties,
-                        sdkVersion: process.env.SDK_VERSION,
-                        userAnonymousClientId: getClientId(),
+                        sdk_version: process.env.SDK_VERSION,
+                        user_anonymous_client_id: getClientId(),
                     };
                 }
 
@@ -165,12 +165,12 @@ export function createIFrameFrakClient({
             },
         });
         openPanel.setGlobalProperties({
-            sdkVersion: process.env.SDK_VERSION,
-            userAnonymousClientId: getClientId(),
+            sdk_version: process.env.SDK_VERSION,
+            user_anonymous_client_id: getClientId(),
         });
         openPanel.init();
         openPanel.track("sdk_initialized", {
-            sdkVersion: process.env.SDK_VERSION,
+            sdk_version: process.env.SDK_VERSION,
         });
 
         // Race the connection against the heartbeat timeout so we can
@@ -398,7 +398,7 @@ async function postConnectionSetup({
             const current = openPanel.global ?? {};
             openPanel.setGlobalProperties({
                 ...current,
-                merchantId: resolved.merchantId,
+                merchant_id: resolved.merchantId,
                 domain: resolved.domain ?? "",
             });
         }

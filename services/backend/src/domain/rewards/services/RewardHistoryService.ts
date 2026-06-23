@@ -52,6 +52,7 @@ export class RewardHistoryService {
 
         return {
             merchant: {
+                id: log.merchantId,
                 name: log.merchantName,
                 domain: log.merchantDomain,
                 heroImageUrl:

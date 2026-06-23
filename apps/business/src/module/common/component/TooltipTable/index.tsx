@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from "react";
-import styles from "./index.module.css";
+import { tooltipTable } from "./tooltip-table.css";
 
 export function TooltipTable({
     content,
@@ -16,7 +16,7 @@ export function TooltipTable({
         <>
             {showTooltip && (
                 <span
-                    className={styles.tooltipTable}
+                    className={tooltipTable}
                     {...props}
                     onMouseLeave={() => setShowTooltip(false)}
                 >

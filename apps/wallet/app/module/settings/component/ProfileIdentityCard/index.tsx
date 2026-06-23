@@ -156,8 +156,8 @@ export function ProfileIdentityCard() {
     const { t } = useTranslation();
     const isHydrated = useHydrated();
     const { address } = useConnection();
-    const webauthnWallet = sessionStore(selectWebauthnSession);
-    const ecdsaWallet = sessionStore(selectEcdsaSession);
+    const webauthnWallet = useStore(sessionStore, selectWebauthnSession);
+    const ecdsaWallet = useStore(sessionStore, selectEcdsaSession);
 
     const authenticatorValue = useMemo(() => {
         if (!webauthnWallet) return null;

@@ -275,10 +275,10 @@ export async function baseFrakWallet<
                 }
 
                 // The margin depend on the chain, if testnet x5, if mainnet x1.5
-                const margin = client?.chain?.testnet === true ? 500n : 150n;
+                const margin = client?.chain?.testnet === true ? 600n : 150n;
                 // Verification gas margin, 20% on testnet, 5% on mainnet
                 const verificationMargin =
-                    client?.chain?.testnet === true ? 120n : 105n;
+                    client?.chain?.testnet === true ? 150n : 105n;
                 // Use the estimation with 25% of error margin on the estimation
                 return {
                     callGasLimit:

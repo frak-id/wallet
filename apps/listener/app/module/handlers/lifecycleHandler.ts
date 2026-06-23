@@ -12,14 +12,16 @@ import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/bac
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import type { SdkSession, Session } from "@frak-labs/wallet-shared/types";
-import { getI18n } from "react-i18next";
+import {
+    enqueueI18nOverride,
+    enqueueLanguageChange,
+} from "@/i18nOverrideQueue";
 import {
     iframeClientId,
     resolvingContextStore,
 } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { restoreBackupData } from "@/module/utils/backup";
-import { mapI18nConfig } from "@/module/utils/i18nMapper";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**
@@ -54,10 +56,10 @@ export const clientLifecycleHandler: LifecycleHandler<
             ) {
                 return;
             }
-            // Get the current i18n instance
-            const i18n = getI18n();
-            // Type assertion is safe here because we validate it's an object above
-            await mapI18nConfig(override, i18n);
+            // Queue the override — it'll either apply immediately if the
+            // UI runtime is mounted, or wait until `mountUiRuntime` drains
+            // the queue. Keeps i18next out of the eager bundle.
+            enqueueI18nOverride(override);
             return;
         }
 
@@ -255,7 +257,10 @@ async function handleResolvedConfig(
     if (!data.sdkConfig) return;
 
     applyBackendCss(data.sdkConfig);
-    await applyBackendLang(data.sdkConfig);
+    if (data.sdkConfig.lang) {
+        // Queue — drained by Ring 1 once i18next is initialised.
+        enqueueLanguageChange(data.sdkConfig.lang);
+    }
 }
 
 function applyBackendCss(sdkConfig: ResolvedSdkConfig): void {
@@ -268,13 +273,6 @@ function applyBackendCss(sdkConfig: ResolvedSdkConfig): void {
     style.id = BACKEND_CSS_STYLE_ID;
     style.textContent = sdkConfig.css;
     document.head.appendChild(style);
-}
-
-async function applyBackendLang(sdkConfig: ResolvedSdkConfig): Promise<void> {
-    const i18n = getI18n();
-    if (sdkConfig.lang && sdkConfig.lang !== i18n.language) {
-        await i18n.changeLanguage(sdkConfig.lang);
-    }
 }
 
 async function handleSsoRedirectComplete(data: {

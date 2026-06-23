@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useStore } from "zustand";
 import {
     authenticationStore,
     selectLastWebAuthNAction,
@@ -18,10 +19,16 @@ import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
  */
 export function useGetSafeSdkSession() {
     // Using zustand hooks
-    const currentSdkSession = sessionStore(selectSdkSession);
-    const currentSession = sessionStore(selectSession);
-    const lastWebAuthnAction = authenticationStore(selectLastWebAuthNAction);
-    const setSdkSession = sessionStore((state) => state.setSdkSession);
+    const currentSdkSession = useStore(sessionStore, selectSdkSession);
+    const currentSession = useStore(sessionStore, selectSession);
+    const lastWebAuthnAction = useStore(
+        authenticationStore,
+        selectLastWebAuthNAction
+    );
+    const setSdkSession = useStore(
+        sessionStore,
+        (state) => state.setSdkSession
+    );
 
     /**
      * Generate an SDK session from the last webauthn action if possible
@@ -81,29 +88,34 @@ export function useGetSafeSdkSession() {
                 }
             }
 
-            // Otherwise, try to craft a new token from the last webauthn action
+            // The current token is missing or invalid. A failed `isValid` no
+            // longer wipes the session (see `backendClient` onResponse) — we
+            // own recovery here so a transient/stale token can't log the user
+            // out. Exhaust every renewal path before dropping anything.
             const sdkSessionFromWebAuthN = await genSessionFromWebAuthnAction();
             if (sdkSessionFromWebAuthN) {
                 return sdkSessionFromWebAuthN;
             }
 
-            // If we got a user session, we can try to generate a new token
+            // Then try to mint from the wallet cookie (can fail in third
+            // parties context)
             const session = getSafeSession();
-            if (!session) {
-                return null;
-            }
-
-            // Otherwise, craft a new token from the cookie (can fail in third parties context)
-            const { data, error } =
-                await authenticatedWalletApi.auth.sdk.generate.get();
-            if (error) {
+            if (session) {
+                const { data, error } =
+                    await authenticatedWalletApi.auth.sdk.generate.get();
+                if (!error && data) {
+                    setSdkSession(data);
+                    return data;
+                }
                 console.error("Unable to generate a new token", error);
-                return null;
             }
 
-            // Save the token and return it
-            setSdkSession(data);
-            return data;
+            // Renewal exhausted: drop only the stale SDK token, leaving the
+            // wallet session intact, so we stop replaying an invalid token.
+            if (sdkSession) {
+                setSdkSession(null);
+            }
+            return null;
         },
     });
     return {

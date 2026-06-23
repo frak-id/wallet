@@ -1,0 +1,2 @@
+DROP INDEX "asset_logs_pending_expirable_idx";--> statement-breakpoint
+CREATE INDEX "asset_logs_pending_expirable_idx" ON "asset_logs" USING btree ("expires_at") WHERE "status" IN ('pending', 'bank_depleted') AND "expires_at" IS NOT NULL;

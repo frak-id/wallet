@@ -1,12 +1,13 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { Row } from "@/module/common/component/Row";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/module/common/component/Button";
 import { Form } from "@/module/forms/Form";
 import type { GetMembersParam } from "@/module/members/api/getMerchantMembers";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
-import { MerchantFiltering } from "@/module/members/component/MembersFiltering/MerchantFiltering";
 import { membersStore } from "@/stores/membersStore";
 
 /**
@@ -15,19 +16,33 @@ import { membersStore } from "@/stores/membersStore";
 export type FormMembersFiltering = GetMembersParam["filter"] & {};
 
 /**
- * Members filtering
+ * Members filtering — scoped to the active merchant.
+ *
+ * The `merchantIds` filter is set by the route loader and is intentionally
+ * not editable here: members are always scoped to the merchant in the URL
+ * (the header switcher is the source of truth for cross-merchant moves).
  */
+/**
+ * Which filter fields to render. `"all"` (default) keeps both — used by the
+ * push-creation audience panel. The members table's "Filters" popover renders
+ * only `"interactions"`; its date range lives in a separate range picker.
+ */
+export type MembersFilteringSection = "all" | "interactions";
+
 export function MembersFiltering({
     onFilterSet,
     initialValue,
     disabled,
     showResetButton,
+    section = "all",
 }: {
     onFilterSet: (filter: FormMembersFiltering) => void;
     initialValue?: FormMembersFiltering;
     disabled?: boolean;
     showResetButton?: boolean;
+    section?: MembersFilteringSection;
 }) {
+    const { t } = useTranslation();
     const setFiltersDirtyCount = membersStore(
         (state) => state.setTableFiltersCount
     );
@@ -38,13 +53,15 @@ export function MembersFiltering({
     });
 
     function resetForm() {
-        const defaultValues = {
-            merchantIds: undefined,
-            interactions: undefined,
-            firstInteractionTimestamp: undefined,
-        };
-        form.reset(defaultValues);
-        onFilterSet(defaultValues);
+        // Only clear the slice this section owns; preserve the other so the
+        // interactions popover doesn't wipe a date range set elsewhere.
+        const cleared: FormMembersFiltering = { ...initialValue };
+        if (section === "all") {
+            cleared.firstInteractionTimestamp = undefined;
+        }
+        cleared.interactions = undefined;
+        form.reset(cleared);
+        onFilterSet(cleared);
         setFiltersDirtyCount(0);
     }
 
@@ -52,8 +69,8 @@ export function MembersFiltering({
         async (data: FormMembersFiltering) => {
             data.interactions = fixInteractions(data.interactions);
 
-            // Fix merchantIds if no filter provided
-            data.merchantIds = fixMerchantIds(data.merchantIds);
+            // Always preserve the merchant scope set by the route loader.
+            data.merchantIds = initialValue?.merchantIds;
 
             // Fix firstInteractionTimestamp if no filter provided
             data.firstInteractionTimestamp = fixFirstInteractionTimestamp(
@@ -62,7 +79,7 @@ export function MembersFiltering({
 
             onFilterSet(data);
         },
-        [onFilterSet]
+        [onFilterSet, initialValue?.merchantIds]
     );
 
     const commonProps = {
@@ -72,20 +89,24 @@ export function MembersFiltering({
 
     return (
         <Form {...form}>
-            <MerchantFiltering {...commonProps} />
-            <MembershipDateFiltering {...commonProps} />
-            <InteractionsFiltering {...commonProps} />
-            <Row>
-                {showResetButton && (
-                    <Button
-                        type={"button"}
-                        variant={"secondary"}
-                        onClick={resetForm}
-                    >
-                        Reset filter
-                    </Button>
+            <Stack space="m">
+                {section === "all" && (
+                    <MembershipDateFiltering {...commonProps} />
                 )}
-            </Row>
+                <InteractionsFiltering {...commonProps} />
+
+                {showResetButton && (
+                    <Inline space="m" alignY="bottom" align="right">
+                        <Button
+                            type={"button"}
+                            variant={"secondary"}
+                            onClick={resetForm}
+                        >
+                            {t("members.filters.reset")}
+                        </Button>
+                    </Inline>
+                )}
+            </Stack>
         </Form>
     );
 }
@@ -101,13 +122,6 @@ const fixInteractions = (
         return undefined;
     }
     return interactions;
-};
-
-const fixMerchantIds = (merchantIds: FormMembersFiltering["merchantIds"]) => {
-    if (!merchantIds?.length) {
-        return undefined;
-    }
-    return merchantIds;
 };
 
 /**

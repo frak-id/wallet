@@ -1,6 +1,7 @@
-import { keyframes, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { fadeIn } from "../keyframes.css";
 import { vars } from "../theme.css";
-import { alias, brand, fontSize } from "../tokens.css";
+import { alias, brand, fontSize, onDark, overlay } from "../tokens.css";
 
 /**
  * Shared in-app browser banner styles.
@@ -12,11 +13,6 @@ import { alias, brand, fontSize } from "../tokens.css";
  * Both render the same dark translucent alert when the page is opened inside a
  * social-media in-app browser (Instagram, Facebook WebView).
  */
-
-const fadeIn = keyframes({
-    from: { opacity: 0, transform: "translateY(-4px)" },
-    to: { opacity: 1, transform: "translateY(0)" },
-});
 
 export const container = style({
     position: "fixed",
@@ -30,10 +26,10 @@ export const container = style({
     padding: `${alias.spacing.s} ${alias.spacing.m}`,
     paddingRight: alias.spacing.xl,
     borderRadius: alias.cornerRadius.m,
-    backgroundColor: "#000000CC",
+    backgroundColor: overlay.scrim,
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
-    color: "#ffffff",
+    color: vars.text.onAction,
     animation: `${fadeIn} 300ms ease-out`,
 });
 
@@ -50,7 +46,7 @@ export const iconWrapper = style({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#ffffff",
+    color: vars.text.onAction,
 });
 
 export const title = style({
@@ -83,7 +79,7 @@ export const cta = style({
     display: "inline-flex",
     alignItems: "center",
     gap: alias.spacing.xxs,
-    color: "#2BB2FF",
+    color: onDark.accent,
     fontSize: fontSize.s,
     fontWeight: brand.typography.fontWeight.semiBold,
     textDecoration: "underline",
@@ -91,7 +87,7 @@ export const cta = style({
     cursor: "pointer",
     selectors: {
         "&:focus-visible": {
-            outline: "2px solid #2BB2FF",
+            outline: `2px solid ${onDark.accent}`,
             outlineOffset: "2px",
             borderRadius: alias.cornerRadius.xs,
         },
@@ -109,11 +105,11 @@ export const closeButton = style({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: alias.cornerRadius.full,
-    color: "rgba(255, 255, 255, 0.6)",
+    color: onDark.text60,
     cursor: "pointer",
     selectors: {
         "&:focus-visible": {
-            outline: "2px solid #ffffff",
+            outline: `2px solid ${vars.text.onAction}`,
             outlineOffset: "2px",
         },
     },

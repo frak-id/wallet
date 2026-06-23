@@ -20,6 +20,13 @@ export {
     stablecoins,
     usdcArbitrumAddress,
 } from "./addresses";
+export {
+    arbitrumChainId,
+    arbitrumSepoliaChainId,
+    currentChainId,
+    type FrakChainId,
+    frakChainIds,
+} from "./chains";
 export { getTransport, getViemClientFromChain } from "./provider";
 export { getErpcTransport } from "./transport/erpc-transport";
 // Actions

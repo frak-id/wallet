@@ -14,6 +14,7 @@ export namespace sdkKey {
      */
     const tokenBase = "token" as const;
     export const token = {
+        all: [base, tokenBase] as const,
         bySession: (address?: Hex, lastActionWallet?: Hex) =>
             [
                 base,

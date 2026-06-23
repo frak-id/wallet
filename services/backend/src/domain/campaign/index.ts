@@ -1,3 +1,9 @@
+export {
+    META_CPA_BENCHMARK,
+    META_CPA_FALLBACK,
+    metaCpaForCurrency,
+    PLATFORM_FEE_PCT,
+} from "./benchmarks";
 export { CampaignContext } from "./context";
 export {
     type CampaignRuleInsert,

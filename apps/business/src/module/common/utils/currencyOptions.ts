@@ -1,6 +1,7 @@
 import { currentStablecoins, type Stablecoin } from "@frak-labs/app-essentials";
 import type { Currency } from "@frak-labs/core-sdk";
 import { formatUnits, maxUint256 } from "viem";
+import { getNumberFormat } from "./intlCache";
 
 type CurrencyOption = {
     value: Stablecoin;
@@ -97,7 +98,7 @@ export function formatTokenBalance(
 
     const meta = currencyMetadata[stablecoin];
     const numeric = Number(formatUnits(balance, decimals));
-    return new Intl.NumberFormat(meta.locale, {
+    return getNumberFormat(meta.locale, {
         style: "currency",
         currency: meta.currencyCode,
         maximumFractionDigits: numeric % 1 !== 0 ? 2 : 0,
@@ -107,7 +108,7 @@ export function formatTokenBalance(
 /**
  * Resolve a token address to its Currency code (e.g. "eur", "usd", "gbp")
  */
-export function tokenAddressToCurrency(
+function tokenAddressToCurrency(
     tokenAddress: string | undefined
 ): Currency | undefined {
     if (!tokenAddress) return undefined;
@@ -118,4 +119,23 @@ export function tokenAddressToCurrency(
         }
     }
     return undefined;
+}
+
+/** Monetary glyph per ISO currency code (USDC shares the USD "$" glyph). */
+const CURRENCY_GLYPHS: Record<string, string> = {
+    eur: "€",
+    gbp: "£",
+    usd: "$",
+};
+
+/**
+ * Resolve a reward-token address to its display glyph (€ / £ / $). Falls back
+ * to € for an unknown/undefined token (e.g. a merchant default from another
+ * environment), matching the historical hardcoded default.
+ */
+export function tokenAddressToCurrencyGlyph(
+    tokenAddress: string | undefined
+): string {
+    const currency = tokenAddressToCurrency(tokenAddress);
+    return (currency && CURRENCY_GLYPHS[currency]) || "€";
 }

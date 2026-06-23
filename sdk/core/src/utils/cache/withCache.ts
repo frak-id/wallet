@@ -5,20 +5,35 @@ type CacheEntry<TData> = {
     created: number;
 };
 
-/** Global cache for in-flight promises (dedup concurrent calls) */
-const promiseCache = new LruMap<Promise<unknown>>(1024);
-
-/** Global cache for resolved responses (TTL-based) */
-const responseCache = new LruMap<CacheEntry<unknown>>(1024);
-
 /** Default cache time: 30 seconds */
 export const DEFAULT_CACHE_TIME = 30_000;
 
 /** Short negative cache to avoid flooding on transient failures */
 const NEGATIVE_CACHE_TIME = 1_000;
 
-/** Tracks recently failed keys to avoid request floods */
-const failureCache = new LruMap<number>(1024);
+type CacheStore = {
+    /** In-flight promises (dedup concurrent calls) */
+    promiseCache: LruMap<Promise<unknown>>;
+    /** Resolved responses (TTL-based) */
+    responseCache: LruMap<CacheEntry<unknown>>;
+    /** Recently failed keys to avoid request floods */
+    failureCache: LruMap<number>;
+};
+
+// Allocate the three LruMaps lazily on first use rather than at module init.
+// Eager top-level allocation is a side effect at odds with `sideEffects: false`
+// and runs for every consumer that merely imports this module.
+let store: CacheStore | undefined;
+function caches(): CacheStore {
+    if (!store) {
+        store = {
+            promiseCache: new LruMap<Promise<unknown>>(1024),
+            responseCache: new LruMap<CacheEntry<unknown>>(1024),
+            failureCache: new LruMap<number>(1024),
+        };
+    }
+    return store;
+}
 
 type WithCacheOptions = {
     /** The key to cache the data against */
@@ -47,6 +62,7 @@ export async function withCache<TData>(
     fn: () => Promise<TData>,
     { cacheKey, cacheTime = DEFAULT_CACHE_TIME }: WithCacheOptions
 ): Promise<TData> {
+    const { promiseCache, responseCache, failureCache } = caches();
     // Check response cache — return immediately if fresh
     if (cacheTime > 0) {
         const cached = responseCache.get(cacheKey) as
@@ -101,11 +117,13 @@ export function getCache(cacheKey: string) {
     return {
         /** Clear both the pending promise and the cached response */
         clear: () => {
+            const { promiseCache, responseCache } = caches();
             promiseCache.delete(cacheKey);
             responseCache.delete(cacheKey);
         },
         /** Check if a non-expired response exists */
         has: (cacheTime: number = DEFAULT_CACHE_TIME) => {
+            const { responseCache } = caches();
             const cached = responseCache.get(cacheKey);
             if (!cached) return false;
             return Date.now() - cached.created < cacheTime;
@@ -118,7 +136,8 @@ export function getCache(cacheKey: string) {
  * Called automatically when the client is destroyed.
  */
 export function clearAllCache() {
-    promiseCache.clear();
-    responseCache.clear();
-    failureCache.clear();
+    if (!store) return;
+    store.promiseCache.clear();
+    store.responseCache.clear();
+    store.failureCache.clear();
 }

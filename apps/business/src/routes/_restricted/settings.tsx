@@ -1,72 +1,46 @@
-import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useDemoMode } from "@/module/common/atoms/demoMode";
-import { Head } from "@/module/common/component/Head";
-import { Panel } from "@/module/common/component/Panel";
-import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
-import { SelectCurrency } from "@/module/settings/SelectCurrency";
-import { useAuthStore } from "@/stores/authStore";
-import styles from "./settings.module.css";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@frak-labs/design-system/components/Tabs";
+import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
+import { PageShell } from "@/module/common/component/PageShell";
+import { CurrencyCard } from "@/module/settings/CurrencyCard";
+import { DemoModeCard } from "@/module/settings/DemoModeCard";
+import { LanguageCard } from "@/module/settings/LanguageCard";
+import { WalletAddressCard } from "@/module/settings/WalletAddressCard";
+import { content, tabContent } from "./settings.css";
 
 export const Route = createFileRoute("/_restricted/settings")({
     component: Settings,
 });
 
 function Settings() {
-    const navigate = useNavigate();
-    const { data: walletStatus } = useWalletStatus();
-    const { isDemoMode, setDemoMode } = useDemoMode();
-    const [isHydrated, setIsHydrated] = useState(false);
-
-    // Prevent hydration mismatch by waiting for client-side hydration
-    useEffect(() => {
-        setIsHydrated(true);
-    }, []);
+    const { t } = useTranslation();
 
     return (
-        <>
-            <Head title={{ content: "Settings" }} />
-
-            <Panel title="Wallet">
-                <p className={styles.walletAddress}>
-                    Your wallet address is {walletStatus?.wallet}
-                </p>
-            </Panel>
-
-            <Panel title="Currency">
-                <SelectCurrency />
-            </Panel>
-
-            {isHydrated && !isDemoMode && (
-                <Panel title="Demo Mode">
-                    <DemoModeSwitch />
-                </Panel>
-            )}
-
-            <Panel title="Logout">
-                <p>
-                    {isHydrated && isDemoMode
-                        ? "Exit demo mode and return to the login page."
-                        : "You will be logged out of your account."}
-                </p>
-                <Button
-                    variant={"submit"}
-                    className={styles.logoutButton}
-                    onClick={() => {
-                        // If in demo mode, exit demo mode first
-                        if (isDemoMode) {
-                            setDemoMode(false);
-                        }
-                        // Clear auth and redirect to login
-                        useAuthStore.getState().clearAuth();
-                        navigate({ to: "/login" });
-                    }}
-                >
-                    {isHydrated && isDemoMode ? "Exit Demo Mode" : "Logout"}
-                </Button>
-            </Panel>
-        </>
+        <PageShell page="settings" space="l">
+            <Tabs defaultValue="usage" className={content}>
+                <TabsList variant="navigation">
+                    <TabsTrigger variant="navigation" value="usage">
+                        {t("settings.tabs.usage")}
+                    </TabsTrigger>
+                    <TabsTrigger variant="navigation" value="billing" disabled>
+                        {t("settings.tabs.billing")}
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent value="usage" className={tabContent}>
+                    <Stack space="l">
+                        <WalletAddressCard />
+                        <CurrencyCard />
+                        <LanguageCard />
+                        <DemoModeCard />
+                    </Stack>
+                </TabsContent>
+            </Tabs>
+        </PageShell>
     );
 }

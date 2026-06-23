@@ -5,12 +5,13 @@ import {
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { decodeJwt } from "jose";
+import { useStore } from "zustand";
 import { Panel } from "@/module/common/component/Panel";
 import * as styles from "./index.css";
 
 export function DemoAccount() {
-    const demoPkey = sessionStore(selectDemoPrivateKey);
-    const sdkSession = sessionStore(selectSdkSession);
+    const demoPkey = useStore(sessionStore, selectDemoPrivateKey);
+    const sdkSession = useStore(sessionStore, selectSdkSession);
 
     const isDemoAccount = (() => {
         if (demoPkey) return true;

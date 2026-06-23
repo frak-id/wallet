@@ -11,6 +11,7 @@ import {
     DetailSheetFooter,
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
+import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CalendarIcon,
@@ -38,7 +39,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { GlassButton } from "@/module/common/component/GlassButton";
+import { useStore } from "zustand";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
@@ -51,8 +52,8 @@ type ExplorerDetailProps = {
 };
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
-    const clientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
@@ -429,7 +430,10 @@ function getRewardEurValue(reward: EstimatedReward): number {
             return reward.maxAmount?.eurAmount ?? 0;
         case "tiered":
             return reward.tiers.reduce(
-                (max, tier) => Math.max(max, tier.amount.eurAmount),
+                (max, tier) =>
+                    "amount" in tier
+                        ? Math.max(max, tier.amount.eurAmount)
+                        : max,
                 0
             );
     }

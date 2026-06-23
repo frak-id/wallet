@@ -22,7 +22,7 @@ import type { MoneriumOrder } from "@/module/monerium/utils/moneriumTypes";
  * Discriminated union of every modal in the wallet app.
  * Extend with new variants (and optional per-variant props) as needed.
  */
-export type ModalState =
+type ModalState =
     | { id: "emptyTransfer" }
     | { id: "emptyPendingGains" }
     | { id: "pendingGains" }
@@ -38,7 +38,8 @@ export type ModalState =
     | { id: "moneriumBankFlow" }
     | { id: "moneriumOrderDetail"; order: MoneriumOrder }
     | { id: "rewardDetail"; item: RewardHistoryItem }
-    | { id: "editReferralCode"; onSaved: () => void };
+    | { id: "editReferralCode"; onSaved: () => void }
+    | { id: "emailNotFound"; email: string };
 
 const maxStackDepth = 5;
 
@@ -114,8 +115,21 @@ modalStore.subscribe((state, prev) => {
         trackEvent("wallet_modal_opened", {
             modal: current,
             from_stack: fromStack,
+            merchant_id: getModalMerchantId(state.modal),
         });
     } else {
         currentOpenedAt = null;
     }
 });
+
+function getModalMerchantId(modal: ModalState | null): string | undefined {
+    if (!modal) return undefined;
+    switch (modal.id) {
+        case "explorerDetail":
+            return modal.merchant.id;
+        case "rewardDetail":
+            return modal.item.merchant.id;
+        default:
+            return undefined;
+    }
+}

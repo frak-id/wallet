@@ -1,13 +1,5 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 
-export type TranslationLang = "default" | "en" | "fr";
-
-export type TranslationFormValues = {
-    translationsDefault: Record<string, string>;
-    translationsEn: Record<string, string>;
-    translationsFr: Record<string, string>;
-};
-
 export type SdkIdentityFormValues = {
     name: string;
     logoUrl: string;
@@ -38,9 +30,7 @@ type ComponentFormFields<T> = Required<Omit<T, "css" | "rawCss">> & {
     css: string;
 };
 
-export type ButtonShareFormValues = ComponentFormFields<
-    ComponentOf<"buttonShare">
->;
+type ButtonShareFormValues = ComponentFormFields<ComponentOf<"buttonShare">>;
 export type PostPurchaseFormValues = ComponentFormFields<
     ComponentOf<"postPurchase">
 >;

@@ -5,7 +5,7 @@ import {
     publishCampaign,
     resumeCampaign,
 } from "@/module/campaigns/api/campaignApi";
-import type { Campaign, CampaignStatus } from "@/types/Campaign";
+import type { Campaign } from "@/types/Campaign";
 
 type StatusTransitionAction = "publish" | "pause" | "resume" | "archive";
 
@@ -47,19 +47,4 @@ export function useStatusTransition() {
             });
         },
     });
-}
-
-export function getAvailableTransitions(
-    status: CampaignStatus
-): StatusTransitionAction[] {
-    switch (status) {
-        case "draft":
-            return ["publish"];
-        case "active":
-            return ["pause", "archive"];
-        case "paused":
-            return ["resume", "archive"];
-        default:
-            return [];
-    }
 }

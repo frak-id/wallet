@@ -3,11 +3,7 @@ export type { BalanceItem } from "./Balance";
 export type { HistoryGroup } from "./HistoryGroup";
 // i18n types are ambient declarations (i18n.d.ts, resources.d.ts)
 // and are automatically included by TypeScript
-export type {
-    CurrentRecovery,
-    GeneratedRecoveryData,
-    RecoveryFileContent,
-} from "./Recovery";
+export type { CurrentRecovery, GeneratedRecoveryData } from "./Recovery";
 
 export type {
     AssetStatus,

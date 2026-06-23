@@ -8,13 +8,13 @@ vi.mock("@/module/hooks/useGetMergeToken", () => ({
     useGetMergeToken: () => vi.fn(),
 }));
 
-vi.mock("@/module/providers/BlockchainProvider", () => ({
+vi.mock("@/ui/BlockchainProvider", () => ({
     BlockchainProvider: ({ children }: { children: ReactNode }) => (
         <>{children}</>
     ),
 }));
 
-vi.mock("@/module/providers/ListenerUiProvider", () => ({
+vi.mock("@/ui/ListenerUiProvider", () => ({
     useListenerUI: () => ({
         clearRequest: vi.fn(),
     }),
@@ -26,22 +26,14 @@ vi.mock("@/module/providers/ListenerUiProvider", () => ({
     }),
 }));
 
-vi.mock("@/module/stores/modalStore", () => {
-    const state = {
+vi.mock("@/module/stores/modalStore", async () => {
+    const { create } = await import("zustand");
+    const modalStore = create<{ results: object; steps: never[] }>(() => ({
         results: {},
         steps: [],
-    };
-
-    const store = Object.assign(
-        (selector?: (storeState: typeof state) => unknown) =>
-            selector ? selector(state) : state,
-        {
-            getState: () => state,
-        }
-    );
-
+    }));
     return {
-        modalStore: store,
+        modalStore,
         selectCurrentStep: () => null,
         selectCurrentStepObject: () => null,
         selectIsDismissed: () => false,
@@ -49,16 +41,15 @@ vi.mock("@/module/stores/modalStore", () => {
     };
 });
 
-vi.mock("@/module/stores/resolvingContextStore", () => ({
-    resolvingContextStore: (
-        selector: (state: { context: { sourceUrl: string } }) => unknown
-    ) =>
-        selector({
-            context: {
-                sourceUrl: "https://example.com",
-            },
-        }),
-}));
+vi.mock("@/module/stores/resolvingContextStore", async () => {
+    const { createStore } = await import("zustand/vanilla");
+    const resolvingContextStore = createStore(() => ({
+        context: {
+            sourceUrl: "https://example.com",
+        },
+    }));
+    return { resolvingContextStore };
+});
 
 vi.mock("@frak-labs/wallet-shared/common", () => ({
     Drawer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -96,12 +87,36 @@ vi.mock("../../../component/ToastLoading", () => ({
     ToastLoading: () => null,
 }));
 
+vi.mock("sonner", () => ({
+    Toaster: () => null,
+    toast: { error: () => {}, success: () => {} },
+}));
+
+vi.mock("lucide-react", () => ({
+    X: () => <span>X</span>,
+}));
+
+vi.mock("@radix-ui/react-alert-dialog", () => {
+    const Stub = ({ children }: { children?: ReactNode }) => <>{children}</>;
+    return {
+        Root: Stub,
+        Trigger: Stub,
+        Portal: Stub,
+        Overlay: Stub,
+        Content: Stub,
+        Title: Stub,
+        Description: Stub,
+        Action: Stub,
+        Cancel: Stub,
+    };
+});
+
 describe("ListenerModal", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    test("should show footer when logo image fails to load", () => {
+    test("should hide logo when image fails to load", () => {
         render(
             <ListenerModal
                 type="modal"
@@ -114,13 +129,12 @@ describe("ListenerModal", () => {
             />
         );
 
-        expect(screen.queryByText("origin-pairing")).not.toBeInTheDocument();
-
         const logo = document.querySelector("img");
         expect(logo).toBeTruthy();
         fireEvent.error(logo as HTMLImageElement);
 
-        expect(screen.getByText("origin-pairing")).toBeInTheDocument();
+        expect(document.querySelector("img")).toBeNull();
         expect(screen.getByText("provided by")).toBeInTheDocument();
+        expect(screen.getByText("origin-pairing")).toBeInTheDocument();
     });
 });

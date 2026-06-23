@@ -23,12 +23,23 @@ export const AssetStatusSchema = t.Union([
     t.Literal("pending"),
     t.Literal("processing"),
     t.Literal("settled"),
-    t.Literal("consumed"),
     t.Literal("cancelled"),
     t.Literal("expired"),
     t.Literal("bank_depleted"),
 ]);
 export type AssetStatus = Static<typeof AssetStatusSchema>;
+
+/**
+ * Status surfaced to wallet clients. Superset of {@link AssetStatusSchema}
+ * with the display-only `consumed` state, which the wallet derives from
+ * `settled` (the backend cannot yet observe the on-chain settled → consumed
+ * transition, so `consumed` is never persisted to `asset_logs.status`).
+ */
+export const RewardDisplayStatusSchema = t.Union([
+    ...AssetStatusSchema.anyOf,
+    t.Literal("consumed"),
+]);
+export type RewardDisplayStatus = Static<typeof RewardDisplayStatusSchema>;
 
 /**
  * Reason a reward was moved to a terminal non-settled status.
@@ -60,6 +71,7 @@ export type RecipientType = Static<typeof RecipientTypeSchema>;
 // =============================================================================
 
 const MerchantInfoSchema = t.Object({
+    id: t.String(),
     name: t.String(),
     domain: t.String(),
     heroImageUrl: t.Optional(t.String()),
@@ -82,7 +94,7 @@ export const RewardHistoryItemSchema = t.Object({
     merchant: MerchantInfoSchema,
     token: TokenInfoSchema,
     amount: t.TokenAmount,
-    status: AssetStatusSchema,
+    status: RewardDisplayStatusSchema,
     role: RecipientTypeSchema,
     trigger: InteractionTypeSchema,
     txHash: t.Optional(t.String()),

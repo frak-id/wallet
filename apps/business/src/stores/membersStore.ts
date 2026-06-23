@@ -1,15 +1,7 @@
-import { unique } from "radash";
-import { type Address, getAddress, isAddressEqual } from "viem";
 import { create } from "zustand";
 import type { GetMembersParam } from "@/module/members/api/getMerchantMembers";
 
 type MembersState = {
-    // Member selection
-    selectedMembers: Address[] | undefined;
-    addMember: (address: Address) => void;
-    removeMember: (address: Address) => void;
-    clearSelection: () => void;
-
     // Table filtering
     tableFilters: GetMembersParam;
     setTableFilters: (
@@ -24,39 +16,12 @@ type MembersState = {
 };
 
 /**
- * Store for members management
- * Handles member selection, table filtering, and filter counts
+ * Store for members management — table filtering and active-filter count.
+ *
+ * Push audiences are filter-based: the Members table no longer tracks a
+ * per-row selection. The push flow reads the current `tableFilters.filter`.
  */
-export const membersStore = create<MembersState>((set, get) => ({
-    // Member selection state
-    selectedMembers: undefined,
-
-    addMember: (address) => {
-        const selectedMembers = get().selectedMembers;
-        if (selectedMembers) {
-            // Deduplicate the selected members
-            const newSelectedMembers = [...selectedMembers, address];
-            set({ selectedMembers: unique(newSelectedMembers, getAddress) });
-        } else {
-            set({ selectedMembers: [address] });
-        }
-    },
-
-    removeMember: (address) => {
-        const selectedMembers = get().selectedMembers;
-        if (selectedMembers) {
-            set({
-                selectedMembers: selectedMembers.filter(
-                    (a) => !isAddressEqual(a, address)
-                ),
-            });
-        }
-    },
-
-    clearSelection: () => {
-        set({ selectedMembers: undefined });
-    },
-
+export const membersStore = create<MembersState>((set) => ({
     // Table filtering state
     tableFilters: {
         limit: 10,

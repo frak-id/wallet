@@ -1,10 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { type Hex, keccak256, toHex } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import {
-    type MerchantData,
-    merchantQueryOptions,
-} from "@/module/merchant/queries/queryOptions";
+import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";
 
 /**
  * Compute productId from domain (keccak256 hash)
@@ -36,7 +33,3 @@ export function useMerchant({ merchantId }: { merchantId: string }) {
             : undefined,
     };
 }
-
-export type MerchantWithProductId = MerchantData & {
-    productId?: Hex;
-};

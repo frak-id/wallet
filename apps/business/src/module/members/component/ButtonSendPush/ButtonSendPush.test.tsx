@@ -2,23 +2,37 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ButtonSendPush } from "./index";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 const mockNavigate = vi.fn();
 const mockSetForm = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
-    Link: ({ to, children, onClick }: any) => (
-        <a
-            href={to}
-            onClick={(e) => {
-                e.preventDefault();
-                onClick?.();
-                mockNavigate({ to });
-            }}
-        >
-            {children}
-        </a>
-    ),
+    useParams: () => ({ merchantId: "merchant-1" }),
+    Link: ({ to, params, children, onClick }: any) => {
+        const href =
+            params && typeof to === "string" && to.includes("$")
+                ? to.replace(
+                      /\$(\w+)/g,
+                      (_: string, name: string) => params[name] ?? ""
+                  )
+                : to;
+        return (
+            <a
+                href={href}
+                onClick={(e) => {
+                    e.preventDefault();
+                    onClick?.();
+                    mockNavigate({ to: href });
+                }}
+            >
+                {children}
+            </a>
+        );
+    },
 }));
 
 vi.mock("@/stores/pushCreationStore", () => ({
@@ -38,27 +52,31 @@ vi.mock("lucide-react", () => ({
 }));
 
 describe("ButtonSendPush", () => {
-    it("should render button with 'Send Push' text", () => {
+    it("should render button with the default send-push label", () => {
         render(<ButtonSendPush />);
 
-        expect(screen.getByText("Send Push")).toBeInTheDocument();
+        expect(
+            screen.getByText("members.sendPushNotification")
+        ).toBeInTheDocument();
     });
 
-    it("should render with Plus icon (size 20) on left", () => {
+    it("should render with Plus icon (size 16) on left", () => {
         render(<ButtonSendPush />);
 
         const icon = screen.getByTestId("plus-icon");
         expect(icon).toBeInTheDocument();
-        expect(icon).toHaveAttribute("data-size", "20");
+        expect(icon).toHaveAttribute("data-size", "16");
     });
 
-    it("should call setForm(undefined) and navigate when clicked", () => {
+    it("should call setForm(undefined) and navigate to the merchant-scoped push route when clicked", () => {
         render(<ButtonSendPush />);
 
-        const button = screen.getByText("Send Push");
+        const button = screen.getByText("members.sendPushNotification");
         fireEvent.click(button);
 
         expect(mockSetForm).toHaveBeenCalledWith(undefined);
-        expect(mockNavigate).toHaveBeenCalledWith({ to: "/push/create" });
+        expect(mockNavigate).toHaveBeenCalledWith({
+            to: "/m/merchant-1/push/create",
+        });
     });
 });

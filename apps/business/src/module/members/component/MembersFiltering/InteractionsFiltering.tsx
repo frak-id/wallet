@@ -1,16 +1,16 @@
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { useEffect, useState } from "react";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Row } from "@/module/common/component/Row";
+import { useTranslation } from "react-i18next";
 import {
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import styles from "./index.module.css";
 
 export function InteractionsFiltering({
     disabled,
@@ -19,75 +19,39 @@ export function InteractionsFiltering({
     disabled?: boolean;
     onSubmit: (data: FormMembersFiltering) => void;
 }) {
-    const { control, handleSubmit, setValue } =
-        useFormContext<FormMembersFiltering>();
+    const { t } = useTranslation();
+    const { control, handleSubmit } = useFormContext<FormMembersFiltering>();
     const currentInteractions = useWatch({ control, name: "interactions" });
-    const inputDisabled = currentInteractions === undefined;
-    const isAllUndefined =
-        currentInteractions?.min === undefined &&
-        currentInteractions?.max === undefined;
-    const [checked, setIsChecked] = useState<boolean | "indeterminate">(
-        "indeterminate"
-    );
-
-    useEffect(() => {
-        setIsChecked(!inputDisabled);
-    }, [inputDisabled]);
-
-    /**
-     * If form is disabled and all values are undefined, return null to hide the component
-     */
-    if (disabled && isAllUndefined) return null;
 
     return (
-        <>
-            <FormItem variant={"checkbox"}>
-                <Checkbox
-                    checked={checked === true}
-                    disabled={disabled}
-                    id={"interaction-filters"}
-                    onCheckedChange={(checked) => {
-                        setValue(
-                            "interactions",
-                            checked
-                                ? { min: undefined, max: undefined }
-                                : undefined
-                        );
-                        !checked && handleSubmit(onSubmit)();
-                    }}
-                />
-                <FormLabel
-                    weight={"medium"}
-                    variant={"checkbox"}
-                    selected={checked === true}
-                    htmlFor={"interaction-filters"}
-                >
-                    Interactions
-                </FormLabel>
-            </FormItem>
-            <Row className={styles.formFromTo__row}>
+        <Stack space="xs">
+            <Text as="p" variant="overline" color="secondary">
+                {t("members.filters.interactions")}
+            </Text>
+            <Inline space="m" alignY="bottom">
                 <FormField
                     control={control}
                     name={"interactions.min"}
-                    disabled={inputDisabled || disabled}
+                    disabled={disabled}
                     rules={{
                         required: false,
                         min: {
                             value: 0,
-                            message:
-                                "Minimum interactions count must be greater than 0",
+                            message: t("members.filters.minInteractionsError"),
                         },
                     }}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel variant={"light"} weight={"medium"}>
-                                From
+                                {t("members.filters.min")}
                             </FormLabel>
                             <Input
                                 type={"number"}
                                 {...field}
-                                value={inputDisabled ? "" : (field.value ?? "")}
-                                placeholder={"Min interactions"}
+                                value={field.value ?? ""}
+                                placeholder={t(
+                                    "members.filters.minInteractions"
+                                )}
                                 length={"small"}
                                 onBlur={handleSubmit(onSubmit)}
                             />
@@ -98,13 +62,12 @@ export function InteractionsFiltering({
                 <FormField
                     control={control}
                     name={"interactions.max"}
-                    disabled={inputDisabled || disabled}
+                    disabled={disabled}
                     rules={{
                         required: false,
                         min: {
                             value: 0,
-                            message:
-                                "Maximum interactions count must be greater than 0",
+                            message: t("members.filters.maxInteractionsError"),
                         },
                         validate: (value) => {
                             if (
@@ -121,20 +84,24 @@ export function InteractionsFiltering({
                                 ) >=
                                 Number.parseInt(value as unknown as string, 10)
                             ) {
-                                return "Max interactions should be greater than minimum";
+                                return t(
+                                    "members.filters.maxGreaterThanMinError"
+                                );
                             }
                         },
                     }}
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel variant={"light"} weight={"medium"}>
-                                To
+                                {t("members.filters.max")}
                             </FormLabel>
                             <Input
                                 type={"number"}
                                 {...field}
-                                value={inputDisabled ? "" : (field.value ?? "")}
-                                placeholder={"Max interactions"}
+                                value={field.value ?? ""}
+                                placeholder={t(
+                                    "members.filters.maxInteractions"
+                                )}
                                 length={"small"}
                                 onBlur={handleSubmit(onSubmit)}
                             />
@@ -142,7 +109,7 @@ export function InteractionsFiltering({
                         </FormItem>
                     )}
                 />
-            </Row>
-        </>
+            </Inline>
+        </Stack>
     );
 }

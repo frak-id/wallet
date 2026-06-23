@@ -10,7 +10,10 @@ export function useMyMerchants() {
     // Combine owned and admin merchants into a single list
     // CRITICAL: useMemo prevents new array on every render (would cause infinite loops in useEffect)
     const merchants = useMemo(
-        () => [...(data.owned ?? []), ...(data.adminOf ?? [])],
+        () =>
+            [...(data.owned ?? []), ...(data.adminOf ?? [])].sort((a, b) =>
+                a.name.localeCompare(b.name)
+            ),
         [data.owned, data.adminOf]
     );
 

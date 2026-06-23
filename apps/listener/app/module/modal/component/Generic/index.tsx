@@ -2,14 +2,14 @@ import { Markdown, prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import * as styles from "@/module/modal/component/Modal/index.css";
 import {
-    useListenerTranslation,
-    useModalListenerUI,
-} from "@/module/providers/ListenerUiProvider";
-import {
     modalStore,
     selectCurrentStepIndex,
     selectSteps,
 } from "@/module/stores/modalStore";
+import {
+    useListenerTranslation,
+    useModalListenerUI,
+} from "@/ui/ListenerUiProvider";
 
 export function MetadataInfo({ description }: { description?: string }) {
     if (description) {

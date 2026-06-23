@@ -14,9 +14,6 @@ const config: KnipConfig = {
             entry: ["app/*.{ts,tsx}"],
             project: ["app/**/*.{ts,tsx}"],
         },
-        "packages/ui": {
-            entry: "**/*.{ts,tsx}",
-        },
         "packages/rpc": {
             entry: "**/*.ts",
         },

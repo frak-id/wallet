@@ -1,171 +1,102 @@
-import { mergeElement } from "@frak-labs/ui/utils/mergeElement";
-import { Link, useMatchRoute } from "@tanstack/react-router";
-import { cx } from "class-variance-authority";
-import type { PropsWithChildren, ReactNode } from "react";
-import { Cash } from "@/assets/icons/Cash";
-import { Gear } from "@/assets/icons/Gear";
-import { Home } from "@/assets/icons/Home";
-import { Info } from "@/assets/icons/Info";
-import { Message } from "@/assets/icons/Message";
-import { Users } from "@/assets/icons/Users";
-import { Wallet } from "@/assets/icons/Wallet";
-import styles from "./index.module.css";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import {
+    LogoFrakBadge,
+    LogoFrakWithName,
+    PeopleFilledIcon,
+    TabGridIcon,
+    WalletIcon,
+} from "@frak-labs/design-system/icons";
+import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
+import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { pageNav, sectionLabel } from "@/module/common/i18n/pageLabel";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
+import { NavigationItem, SubNavigationItem } from "./NavigationItem";
+import {
+    divider,
+    itemList,
+    logoBadge,
+    logoFull,
+    logoWrapper,
+    navigation,
+    sectionLabel as sectionLabelClass,
+} from "./navigation.css";
+
+export { NavigationItem, SubNavigationItem };
 
 export function Navigation() {
+    const { t } = useTranslation();
+    const merchantId = useOptionalActiveMerchantId();
+    // Merchant-scoped sections (campaigns, members) bounce back to /dashboard
+    // until a merchant exists — disable them and explain why instead of letting
+    // the click silently no-op.
+    const { isEmpty } = useMyMerchants();
+    const noMerchantHint = isEmpty ? t("shell.nav.noMerchantHint") : undefined;
+    const dashboardUrl = merchantId
+        ? `/m/${merchantId}/dashboard`
+        : "/dashboard";
+    const membersUrl = merchantId ? `/m/${merchantId}/members` : "/members";
     return (
-        <nav className={styles.navigation}>
-            <ul className={styles.navigation__list}>
-                <NavigationItem url="/dashboard">
-                    <NavigationLabel icon={<Home />}>Dashboard</NavigationLabel>
-                </NavigationItem>
-                <NavigationCampaignsSwitcher />
-                <NavigationItem url="/members">
-                    <NavigationLabel icon={<Users />}>Members</NavigationLabel>
-                </NavigationItem>
-                <NavigationItem url="/revenue" disabled={true}>
-                    <NavigationLabel icon={<Cash />}>Revenue</NavigationLabel>
-                </NavigationItem>
-                <NavigationItem url="/messenger" disabled={true}>
-                    <NavigationLabel icon={<Message />}>
-                        Messenger
-                    </NavigationLabel>
-                </NavigationItem>
-                <NavigationItem
-                    url={process.env.FRAK_WALLET_URL}
-                    className={styles.navigation__itemToBottom}
-                >
-                    <NavigationLabel icon={<Wallet />}>Wallet</NavigationLabel>
-                </NavigationItem>
-                <NavigationItem url="/settings">
-                    <NavigationLabel icon={<Gear />}>Settings</NavigationLabel>
-                </NavigationItem>
-                <NavigationItem url="/help" disabled={true}>
-                    <NavigationLabel icon={<Info />}>
-                        Help & FAQ
-                    </NavigationLabel>
-                </NavigationItem>
-            </ul>
-        </nav>
-    );
-}
+        <Stack as="nav" space="none" className={navigation}>
+            <Link to={dashboardUrl} className={logoWrapper}>
+                <LogoFrakWithName
+                    width={105}
+                    height={40}
+                    className={logoFull}
+                />
+                <LogoFrakBadge width={32} height={32} className={logoBadge} />
+            </Link>
 
-type NavigationItemProps = {
-    url?: string;
-    className?: string;
-    isSub?: boolean;
-    rightSection?: ReactNode;
-    isActive?: boolean;
-    disabled?: boolean;
-};
+            <Stack space="xs">
+                <ul className={itemList}>
+                    <NavigationItem
+                        url={dashboardUrl}
+                        icon={<TabGridIcon width={20} height={20} />}
+                    >
+                        {pageNav(t, "dashboard")}
+                    </NavigationItem>
+                </ul>
 
-export function NavigationItem({
-    children,
-    isSub = false,
-    url,
-    className = "",
-    rightSection,
-    isActive,
-    disabled,
-    ...props
-}: PropsWithChildren<NavigationItemProps>) {
-    const matchRoute = useMatchRoute();
-    const isRouteActive = url ? matchRoute({ to: url, fuzzy: true }) : false;
+                <hr className={divider} />
 
-    const activeClassName =
-        isRouteActive || isActive
-            ? styles["navigationItem__button--active"]
-            : "";
+                <ul className={itemList}>
+                    <li className={sectionLabelClass}>
+                        <Text variant="bodySmall" color="tertiary">
+                            {sectionLabel(t, "acquisition")}
+                        </Text>
+                    </li>
+                    <NavigationCampaignsSwitcher
+                        disabled={isEmpty}
+                        tooltip={noMerchantHint}
+                    />
+                    <NavigationItem
+                        url={membersUrl}
+                        icon={<PeopleFilledIcon width={20} height={20} />}
+                        disabled={isEmpty}
+                        tooltip={noMerchantHint}
+                    >
+                        {pageNav(t, "members")}
+                    </NavigationItem>
+                </ul>
 
-    const buttonClassName = cx(
-        styles.navigationItem__button,
-        !isSub && activeClassName
-    );
+                <hr className={divider} />
 
-    const content = (
-        <>
-            {children}
-            {rightSection &&
-                mergeElement(rightSection, {
-                    className: styles.navigationItem__rightSection,
-                })}
-        </>
-    );
-
-    // Disabled items render as buttons without navigation
-    if (disabled) {
-        return (
-            <li className={className}>
-                <button
-                    type="button"
-                    className={buttonClassName}
-                    disabled={true}
-                    {...props}
-                >
-                    {content}
-                </button>
-            </li>
-        );
-    }
-
-    // External links open in new tab
-    if (url?.startsWith("http")) {
-        return (
-            <li className={className}>
-                <button
-                    type="button"
-                    className={buttonClassName}
-                    onClick={() =>
-                        window.open(url, "_blank", "noopener,noreferrer")
-                    }
-                    {...props}
-                >
-                    {content}
-                </button>
-            </li>
-        );
-    }
-
-    // Internal links use TanStack Router Link for preloading
-    if (url) {
-        return (
-            <li className={className}>
-                <Link to={url} className={buttonClassName} {...props}>
-                    {content}
-                </Link>
-            </li>
-        );
-    }
-
-    // No URL provided, render as button
-    return (
-        <li className={className}>
-            <button type="button" className={buttonClassName} {...props}>
-                {content}
-            </button>
-        </li>
-    );
-}
-
-export function SubNavigationItem({
-    children,
-    ...props
-}: PropsWithChildren<NavigationItemProps>) {
-    return (
-        <NavigationItem isSub={true} {...props}>
-            {children}
-        </NavigationItem>
-    );
-}
-
-export function NavigationLabel({
-    icon,
-    children,
-}: PropsWithChildren<{ icon: ReactNode }>) {
-    return (
-        <>
-            {icon}
-            <span className={styles.navigationItem__label}>{children}</span>
-        </>
+                <ul className={itemList}>
+                    <li className={sectionLabelClass}>
+                        <Text variant="bodySmall" color="tertiary">
+                            {sectionLabel(t, "preview")}
+                        </Text>
+                    </li>
+                    <NavigationItem
+                        url={process.env.FRAK_WALLET_URL}
+                        icon={<WalletIcon width={20} height={20} />}
+                    >
+                        {pageNav(t, "wallet")}
+                    </NavigationItem>
+                </ul>
+            </Stack>
+        </Stack>
     );
 }

@@ -10,6 +10,7 @@ import {
     CampaignResponseSchema,
     type CampaignRuleDefinition,
     type CampaignStatus,
+    type RewardDefinition,
 } from "../../../domain/campaign";
 import {
     CampaignBankContext,
@@ -17,8 +18,12 @@ import {
 } from "../../../domain/campaign-bank";
 import type { DistributionStatus } from "../../../domain/campaign-bank/schemas";
 import { MerchantContext } from "../../../domain/merchant";
+import { OrchestrationContext } from "../../../orchestration/context";
 import {
     CampaignCreateBodySchema,
+    type CampaignListItem,
+    CampaignListResponseSchema,
+    type CampaignListReward,
     CampaignUpdateBodySchema,
     MerchantCampaignParamSchema,
     MerchantIdParamSchema,
@@ -97,6 +102,60 @@ function formatCampaign(
     };
 }
 
+function toRewardSummary(reward: RewardDefinition): CampaignListReward {
+    switch (reward.amountType) {
+        case "fixed":
+            return {
+                recipient: reward.recipient,
+                amountType: "fixed",
+                amount: reward.amount,
+            };
+        case "percentage":
+            return {
+                recipient: reward.recipient,
+                amountType: "percentage",
+                percent: reward.percent,
+            };
+        case "tiered":
+            return {
+                recipient: reward.recipient,
+                amountType: "tiered",
+                tiers: reward.tiers,
+            };
+    }
+}
+
+function toListItem(campaign: {
+    id: string;
+    name: string;
+    status: CampaignStatus;
+    rule: CampaignRuleDefinition;
+    budgetConfig: BudgetConfig | null;
+    budgetUsed: BudgetUsed | null;
+    expiresAt: Date | null;
+    publishedAt: Date | null;
+    createdAt: Date;
+}): Omit<CampaignListItem, "stats"> {
+    return {
+        id: campaign.id,
+        name: campaign.name,
+        status: campaign.status,
+        rewards: (campaign.rule.rewards ?? []).map(toRewardSummary),
+        budgetConfig: Array.isArray(campaign.budgetConfig)
+            ? campaign.budgetConfig
+            : null,
+        budgetUsed:
+            campaign.budgetUsed &&
+            typeof campaign.budgetUsed === "object" &&
+            Object.keys(campaign.budgetUsed).length > 0
+                ? campaign.budgetUsed
+                : null,
+        expiresAt: campaign.expiresAt?.toISOString() ?? null,
+        publishedAt: campaign.publishedAt?.toISOString() ?? null,
+        createdAt: campaign.createdAt.toISOString(),
+    };
+}
+
 export const merchantCampaignsRoutes = new Elysia({
     prefix: "/:merchantId/campaigns",
 })
@@ -123,7 +182,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 ? (query.status.split(",") as CampaignStatus[])
                 : undefined;
 
-            const [campaigns, bankStatus] = await Promise.all([
+            const [campaigns, bankStatus, stats] = await Promise.all([
                 CampaignContext.services.management.getByMerchant(
                     merchantId,
                     statusFilter
@@ -131,9 +190,12 @@ export const merchantCampaignsRoutes = new Elysia({
                 CampaignBankContext.services.campaignBank.getBankStatus(
                     merchantId
                 ),
+                OrchestrationContext.orchestrators.campaignStats.getStatsForMerchant(
+                    merchantId
+                ),
             ]);
 
-            let distributionStatus: DistributionStatus = "not_deployed";
+            let bankDistributionStatus: DistributionStatus = "not_deployed";
             if (bankStatus.bankAddress) {
                 const [onChainState, tokenDecimals] = await Promise.all([
                     CampaignBankContext.repositories.campaignBank.getBankOnChainState(
@@ -142,16 +204,20 @@ export const merchantCampaignsRoutes = new Elysia({
                     ),
                     getTokenDecimals(),
                 ]);
-                distributionStatus = computeDistributionStatus(
+                bankDistributionStatus = computeDistributionStatus(
                     onChainState,
                     tokenDecimals
                 );
             }
 
+            const statsById = new Map(stats.map((s) => [s.campaignId, s]));
+
             return {
-                campaigns: campaigns.map((campaign) =>
-                    formatCampaign(campaign, distributionStatus)
-                ),
+                bankDistributionStatus,
+                campaigns: campaigns.map((campaign) => ({
+                    ...toListItem(campaign),
+                    stats: statsById.get(campaign.id) ?? null,
+                })),
             };
         },
         {
@@ -160,7 +226,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 status: t.Optional(t.String()),
             }),
             response: {
-                200: t.Object({ campaigns: t.Array(CampaignResponseSchema) }),
+                200: CampaignListResponseSchema,
                 401: t.String(),
                 403: t.String(),
             },

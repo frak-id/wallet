@@ -1,4 +1,4 @@
-import iphoneBgUrl from "@frak-labs/design-system/assets/iphone.png";
+import iphoneBgUrl from "@frak-labs/design-system/assets/iphone.webp";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";

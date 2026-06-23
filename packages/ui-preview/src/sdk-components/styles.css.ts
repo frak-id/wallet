@@ -1,9 +1,5 @@
-import { keyframes, style } from "@vanilla-extract/css";
-
-const fadeIn = keyframes({
-    from: { opacity: 0, transform: "translateY(-4px)" },
-    to: { opacity: 1, transform: "translateY(0)" },
-});
+import { fadeIn } from "@frak-labs/design-system/keyframes";
+import { style } from "@vanilla-extract/css";
 
 // ─── Banner Preview ─────────────────────────────────────
 

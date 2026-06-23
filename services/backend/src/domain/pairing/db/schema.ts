@@ -17,6 +17,28 @@ export const pairingTable = pgTable(
         id: serial("id").primaryKey(),
         pairingId: varchar("pairing_id").notNull(), // Public ID for the pairing
         wallet: customHex("wallet"), // Null until target resolves pairing
+        // Credential the target used to resolve this pairing. Captured at
+        // join so resume can replay the exact `authenticated` payload (id +
+        // pubkey + transports) without a wallet -> binding lookup. Null
+        // until the pairing is resolved; null for legacy rows created
+        // before this column existed (those resumes fall through to the
+        // "no authenticator" close branch — pairings TTL out within minutes
+        // so the legacy window is bounded).
+        authenticatorId: varchar("authenticator_id"),
+
+        // Credentials the joiner is allowed to resolve this pairing with.
+        // Used by the cross-device wallet merge: the origin initiating a
+        // merge pins every credential currently bound to the wallet it
+        // intends to merge with; `handleJoin` rejects any mobile joining
+        // with a credential outside this list. Null/empty means no
+        // enforcement (regular pairings — login, SSO, listener).
+        //
+        // List rather than single hint so a wallet that holds multiple
+        // passkeys (post-merge wallets accumulate them) can be reached
+        // from any of those credentials. The peer authenticates with
+        // whichever cred its OS surfaces; the join check is a set
+        // membership rather than equality.
+        authenticatorHints: varchar("authenticator_hints").array(),
 
         // Origin device info
         originUserAgent: varchar("origin_user_agent").notNull(),
@@ -57,6 +79,8 @@ export const pairingSignatureRequestTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
         expiresAt: timestamp("expires_at").notNull(),
         processedAt: timestamp("processed_at"),
+
+        kind: varchar("kind").$type<"onchain" | "raw-assertion">(),
 
         signature: customHex("signature"),
     },
