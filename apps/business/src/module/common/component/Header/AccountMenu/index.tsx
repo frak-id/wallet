@@ -125,6 +125,8 @@ export function AccountMenu() {
                                                 merchant.id
                                             )}
                                             replace
+                                            // Override global "render" preload so opening stays instant with many merchants.
+                                            preload="intent"
                                             className={className}
                                             onClick={close}
                                         >
