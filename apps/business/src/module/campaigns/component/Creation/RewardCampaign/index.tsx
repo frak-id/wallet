@@ -955,7 +955,13 @@ function TieredReveal({
     const hasCpa = tiers.some((tier) => Number(tier.cpa) > 0);
 
     function addTier() {
-        globalArray.append({ from: "", to: "", cpa: "", unit: "percent" });
+        // Chain ranges gaplessly: new tier starts at the previous max. Bounds
+        // are inclusive and the backend resolves the shared boundary to the
+        // upper tier (sorted by minValue desc), so no basket value falls
+        // through — unlike a +1 step, which would skip fractional baskets.
+        const prevTo = tiers.at(-1)?.to;
+        const from = typeof prevTo === "number" ? prevTo : "";
+        globalArray.append({ from, to: "", cpa: "", unit: "percent" });
         ambassadorArray.append({ reward: "" });
         refereeArray.append({ reward: "" });
     }
