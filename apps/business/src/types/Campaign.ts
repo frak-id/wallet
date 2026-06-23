@@ -3,19 +3,16 @@ import type {
     CampaignListResponse as ApiCampaignListResponse,
     CampaignListReward,
 } from "@frak-labs/backend-elysia/api/schemas";
-import type { CampaignResponse } from "@frak-labs/backend-elysia/domain/campaign";
 
 export type {
     BudgetConfig,
     BudgetConfigItem,
-    CampaignGoal,
     CampaignMetadata,
     CampaignResponse as Campaign,
     CampaignRuleDefinition,
     CampaignStatus,
     CampaignTrigger,
     ConditionGroup,
-    FixedRewardDefinition,
     RewardChaining,
     RewardDefinition,
     RuleCondition,
@@ -31,10 +28,6 @@ export type CampaignActions = {
     canResume: boolean;
     canArchive: boolean;
 };
-
-export type CampaignWithActions = {
-    actions: CampaignActions;
-} & CampaignResponse;
 
 export type CampaignListItem = ApiCampaignListItem;
 export type CampaignListItemWithActions = ApiCampaignListItem & {

@@ -128,11 +128,8 @@
         "link": "Configuring Frak application in your theme",
         "todo": "Please activate the Frak application in your theme by following the instructions below"
     },
-    "gated": {
-        "configure": "Configure Frak",
-        "create": "CREATE AN ACCOUNT",
-        "start": "Create a Frak wallet to start using the app.",
-        "alreadyGotAnAccount": "I already have an account"
+    "login": {
+        "withFrak": "Login with Frak"
     },
     "status": {
         "connected": "Connected to Frak",

@@ -1,11 +1,9 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
 import {
     Sheet,
     SheetContent,
-    SheetToolbar,
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
@@ -19,9 +17,14 @@ import { Badge } from "@/module/common/component/Badge";
 import { Button as BusinessButton } from "@/module/common/component/Button";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { EditCard } from "@/module/common/component/EditCard";
+import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField } from "@/module/forms/Form";
+import {
+    DetailCell,
+    DetailCells,
+} from "@/module/merchant/component/DetailCell";
 import {
     usePurchaseWebhookStatus,
     type WebhookPlatform,
@@ -48,14 +51,10 @@ export function PurchaseTrackerSheet({ merchantId }: { merchantId: string }) {
                 padded={false}
                 hideCloseButton
             >
-                <SheetToolbar
+                <SheetCloseToolbar
                     size="large"
-                    leading={
-                        <GlassCloseButton
-                            onClick={() => setOpen(false)}
-                            aria-label={t("merchantEdit.close")}
-                        />
-                    }
+                    onClose={() => setOpen(false)}
+                    closeLabel={t("merchantEdit.close")}
                     title={t("merchantEdit.purchaseTracker.title")}
                     subtitle={t(
                         "merchantEdit.purchaseTracker.sheet.description"
@@ -99,13 +98,11 @@ function StatusCard({ status }: { status: WebhookStatus }) {
 
     return (
         <EditCard title={t("merchantEdit.purchaseTracker.status")}>
-            <div className={cells.detailCells}>
-                <div className={cells.detailCell}>
-                    <span className={cells.cellLabel}>
-                        {t("merchantEdit.purchaseTracker.status")}
-                    </span>
-                    <span className={cells.cellValue}>
-                        {status.setup ? (
+            <DetailCells>
+                <DetailCell
+                    label={t("merchantEdit.purchaseTracker.status")}
+                    value={
+                        status.setup ? (
                             <Inline
                                 as="span"
                                 space="xxs"
@@ -117,20 +114,16 @@ function StatusCard({ status }: { status: WebhookStatus }) {
                             </Inline>
                         ) : (
                             t("merchantEdit.purchaseTracker.notRegistered")
-                        )}
-                    </span>
-                </div>
+                        )
+                    }
+                />
                 {status.setup && status.platform && (
-                    <div className={cells.detailCell}>
-                        <span className={cells.cellLabel}>
-                            {t("merchantEdit.purchaseTracker.platform")}
-                        </span>
-                        <span className={cells.cellValue}>
-                            {status.platform}
-                        </span>
-                    </div>
+                    <DetailCell
+                        label={t("merchantEdit.purchaseTracker.platform")}
+                        value={status.platform}
+                    />
                 )}
-            </div>
+            </DetailCells>
         </EditCard>
     );
 }
@@ -560,14 +553,15 @@ function StatsCard({
 
     return (
         <EditCard title={t("merchantEdit.purchaseTracker.sheet.stats.title")}>
-            <div className={cells.detailCells}>
+            <DetailCells>
                 {rows.map((row) => (
-                    <div key={row.key} className={cells.detailCell}>
-                        <span className={cells.cellLabel}>{row.label}</span>
-                        <span className={cells.cellValue}>{row.value}</span>
-                    </div>
+                    <DetailCell
+                        key={row.key}
+                        label={row.label}
+                        value={row.value}
+                    />
                 ))}
-            </div>
+            </DetailCells>
         </EditCard>
     );
 }

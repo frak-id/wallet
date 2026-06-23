@@ -134,64 +134,85 @@ export function RouteError({
     );
 }
 
-export function CampaignError({
-    error,
-    reset,
-    showTechnicalDetails = false,
-}: ErrorComponentProps & { showTechnicalDetails?: boolean }) {
+export function CampaignError(props: ErrorComponentProps) {
     const { t } = useTranslation();
     return (
         <RouteError
-            error={error}
-            reset={reset}
+            {...props}
             title={t("errors.campaign.title")}
             message={t("errors.campaign.message")}
             fallbackPath="/campaigns/list"
             fallbackLabel={t("errors.campaign.back")}
             showRetry={false}
-            showTechnicalDetails={showTechnicalDetails}
         />
     );
 }
 
-export function CriticalError({
-    error,
-    reset,
-    showTechnicalDetails = false,
-}: ErrorComponentProps & { showTechnicalDetails?: boolean }) {
+export function CriticalError(props: ErrorComponentProps) {
     const { t } = useTranslation();
     return (
         <RouteError
-            error={error}
-            reset={reset}
+            {...props}
             title={t("errors.critical.title")}
             message={t("errors.critical.message")}
             fallbackPath="/dashboard"
             fallbackLabel={t("errors.critical.back")}
             showRetry={true}
-            showTechnicalDetails={showTechnicalDetails}
+        />
+    );
+}
+
+export function MerchantNotFoundError(props: ErrorComponentProps) {
+    const { t } = useTranslation();
+    return (
+        <RouteError
+            {...props}
+            title={t("errors.merchantNotFound.title")}
+            message={t("errors.merchantNotFound.message")}
+            fallbackPath="/dashboard"
+            fallbackLabel={t("errors.merchantNotFound.back")}
+            showRetry={false}
+        />
+    );
+}
+
+export function MerchantCreateError(props: ErrorComponentProps) {
+    const { t } = useTranslation();
+    return (
+        <RouteError
+            {...props}
+            title={t("errors.merchantCreate.title")}
+            fallbackPath="/dashboard"
+            fallbackLabel={t("errors.merchantCreate.back")}
+        />
+    );
+}
+
+export function CampaignCreateError(props: ErrorComponentProps) {
+    const { t } = useTranslation();
+    return (
+        <RouteError
+            {...props}
+            title={t("errors.campaignCreate.title")}
+            fallbackPath="/dashboard"
+            fallbackLabel={t("errors.campaignCreate.back")}
         />
     );
 }
 
 export function DataLoadError({
-    error,
-    reset,
     resourceName = "data",
-    showTechnicalDetails = false,
+    ...props
 }: ErrorComponentProps & {
     resourceName?: string;
-    showTechnicalDetails?: boolean;
 }) {
     const { t } = useTranslation();
     return (
         <RouteError
-            error={error}
-            reset={reset}
+            {...props}
             title={t("errors.dataLoad.title")}
             message={t("errors.dataLoad.message", { resourceName })}
             showRetry={true}
-            showTechnicalDetails={showTechnicalDetails}
         />
     );
 }

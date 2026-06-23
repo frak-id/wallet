@@ -59,5 +59,3 @@ export function HighlightSegment({
 }
 
 HighlightSegment.displayName = "HighlightSegment";
-
-export default HighlightSegment;

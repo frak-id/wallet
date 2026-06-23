@@ -65,13 +65,6 @@ export const contentWrapper = style({
     padding: alias.spacing.m,
 });
 
-export const merchantName = style({
-    fontSize: 16,
-    fontWeight: 600,
-    color: vars.text.primary,
-    lineHeight: 1.3,
-});
-
 export const imagePlaceholder = style({
     width: "100%",
     height: "100%",

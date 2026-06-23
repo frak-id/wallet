@@ -373,5 +373,3 @@ export function PieChart({
 }
 
 PieChart.displayName = "PieChart";
-
-export default PieChart;

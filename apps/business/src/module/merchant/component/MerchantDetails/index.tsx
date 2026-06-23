@@ -10,6 +10,10 @@ import { pageBottomSpacer } from "@/module/common/component/FloatingFooter/float
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
 import { detectStablecoinFromAddress } from "@/module/common/utils/stablecoin";
+import {
+    DetailCell,
+    DetailCells,
+} from "@/module/merchant/component/DetailCell";
 import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
@@ -111,32 +115,20 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                 >
                     {merchant && (
                         <EditCard title={t("merchantEdit.details.title")}>
-                            <div className={styles.detailCells}>
-                                <div className={styles.detailCell}>
-                                    <span className={styles.cellLabel}>
-                                        {t("merchantEdit.details.name")}
-                                    </span>
-                                    <span className={styles.cellValue}>
-                                        {merchant.name}
-                                    </span>
-                                </div>
-                                <div className={styles.detailCell}>
-                                    <span className={styles.cellLabel}>
-                                        {t("merchantEdit.details.domain")}
-                                    </span>
-                                    <span className={styles.cellValue}>
-                                        {merchant.domain}
-                                    </span>
-                                </div>
-                                <div className={styles.detailCell}>
-                                    <span className={styles.cellLabel}>
-                                        {t("merchantEdit.details.currency")}
-                                    </span>
-                                    <span className={styles.cellValue}>
-                                        {currency ? currency.label : "—"}
-                                    </span>
-                                </div>
-                            </div>
+                            <DetailCells>
+                                <DetailCell
+                                    label={t("merchantEdit.details.name")}
+                                    value={merchant.name}
+                                />
+                                <DetailCell
+                                    label={t("merchantEdit.details.domain")}
+                                    value={merchant.domain}
+                                />
+                                <DetailCell
+                                    label={t("merchantEdit.details.currency")}
+                                    value={currency ? currency.label : "—"}
+                                />
+                            </DetailCells>
                             <Inline space="s">
                                 <MerchantEditSheet
                                     merchant={merchant}
@@ -222,13 +214,11 @@ function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
             {isLoading || !webhookStatus ? (
                 <Spinner />
             ) : (
-                <div className={styles.detailCells}>
-                    <div className={styles.detailCell}>
-                        <span className={styles.cellLabel}>
-                            {t("merchantEdit.purchaseTracker.status")}
-                        </span>
-                        <span className={styles.cellValue}>
-                            {webhookStatus.setup ? (
+                <DetailCells>
+                    <DetailCell
+                        label={t("merchantEdit.purchaseTracker.status")}
+                        value={
+                            webhookStatus.setup ? (
                                 <Inline
                                     as="span"
                                     space="xxs"
@@ -245,30 +235,24 @@ function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
                                 </Inline>
                             ) : (
                                 t("merchantEdit.purchaseTracker.notRegistered")
-                            )}
-                        </span>
-                    </div>
+                            )
+                        }
+                    />
                     {webhookStatus.setup && (
-                        <div className={styles.detailCell}>
-                            <span className={styles.cellLabel}>
-                                {t("merchantEdit.purchaseTracker.platform")}
-                            </span>
-                            <span className={styles.cellValue}>
-                                {webhookStatus.platform}
-                            </span>
-                        </div>
+                        <DetailCell
+                            label={t("merchantEdit.purchaseTracker.platform")}
+                            value={webhookStatus.platform}
+                        />
                     )}
                     {webhookStatus.setup && webhookStatus.stats && (
-                        <div className={styles.detailCell}>
-                            <span className={styles.cellLabel}>
-                                {t("merchantEdit.purchaseTracker.tracked")}
-                            </span>
-                            <span className={styles.cellValue}>
-                                {webhookStatus.stats.totalPurchaseHandled ?? 0}
-                            </span>
-                        </div>
+                        <DetailCell
+                            label={t("merchantEdit.purchaseTracker.tracked")}
+                            value={
+                                webhookStatus.stats.totalPurchaseHandled ?? 0
+                            }
+                        />
                     )}
-                </div>
+                </DetailCells>
             )}
             <Inline space="s">
                 <PurchaseTrackerSheet merchantId={merchantId} />

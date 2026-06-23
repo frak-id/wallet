@@ -57,7 +57,7 @@ export type RewardFormValues = {
     lockupDays: number | "";
 };
 
-export const FRAK_COMMISSION_PERCENT = 20;
+const FRAK_COMMISSION_PERCENT = 20;
 /** Share of the Target CPA that reaches users (the rest is Frak's commission). */
 const REWARDS_SHARE = 1 - FRAK_COMMISSION_PERCENT / 100;
 /** Frak's recommended split of the rewards pool, in favour of the Ambassador. */

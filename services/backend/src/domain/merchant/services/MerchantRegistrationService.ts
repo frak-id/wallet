@@ -84,7 +84,7 @@ export class MerchantRegistrationService {
         { valid: true; wallet: Address } | { valid: false; error: string }
     > {
         const siweMessage = parseSiweMessage(params.message);
-        if (!siweMessage?.address) {
+        if (!siweMessage?.address || !siweMessage.statement) {
             return { valid: false, error: "Invalid SIWE message format" };
         }
 
@@ -97,11 +97,12 @@ export class MerchantRegistrationService {
             return { valid: false, error: "SIWE message validation failed" };
         }
 
-        const expectedStatement = this.buildRegistrationStatement(
+        const expectedStatements = this.buildRegistrationStatements(
             params.domain,
             siweMessage.address
         );
-        if (siweMessage.statement !== expectedStatement) {
+
+        if (!expectedStatements.includes(siweMessage.statement)) {
             return {
                 valid: false,
                 error: "SIWE statement does not match expected registration statement",
@@ -120,8 +121,14 @@ export class MerchantRegistrationService {
         return { valid: true, wallet: siweMessage.address };
     }
 
-    buildRegistrationStatement(domain: string, wallet: Address): string {
-        return `I authorize registration of merchant "${domain}" to wallet ${wallet}`;
+    private buildRegistrationStatements(
+        domain: string,
+        wallet: Address
+    ): string[] {
+        return [
+            `I authorize registration of merchant "${domain}" to wallet ${wallet}`,
+            `I authorize registration of merchant "${domain}" to wallet ${wallet.toLocaleLowerCase()}`,
+        ];
     }
 
     getDnsTxtString(domain: string, wallet: Address): string {

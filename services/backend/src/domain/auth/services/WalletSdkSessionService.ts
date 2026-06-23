@@ -20,7 +20,6 @@ export class WalletSdkSessionService {
             scopes: ["interaction"],
             // Some JWT specific infos
             sub: wallet,
-            iat: Date.now(),
             // Additional data
             additionalData:
                 additionalData && Object.keys(additionalData).length > 0

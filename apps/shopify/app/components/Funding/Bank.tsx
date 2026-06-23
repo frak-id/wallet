@@ -17,6 +17,7 @@ import {
     formatTokenBalance,
     getTokenStatus,
 } from "../../utils/tokenStatus";
+import { LoginWithFrak } from "../LoginWithFrak";
 
 export function BankingStatus({ bankStatus }: { bankStatus: BankStatus }) {
     const { t } = useTranslation();
@@ -57,6 +58,7 @@ function BankView({
     const { data: bankData, isLoading } = useMerchantBank({ bankAddress });
     const { data: walletStatus } = useWalletStatus();
     const walletAddress = walletStatus?.wallet;
+    const isLoggedIn = !!walletAddress;
     const { t } = useTranslation();
     const [activeAction, setActiveAction] = useState<ActiveAction>(null);
 
@@ -69,8 +71,21 @@ function BankView({
 
     return (
         <s-stack gap="base">
-            {isManager && walletAddress && (
-                <DistributionToggle bankAddress={bankAddress} isOpen={isOpen} />
+            {isManager && (
+                <DistributionToggle
+                    bankAddress={bankAddress}
+                    isOpen={isOpen}
+                    disabled={!isLoggedIn}
+                />
+            )}
+
+            {isManager && !isLoggedIn && (
+                <s-banner tone="info">
+                    <s-stack gap="small">
+                        <p>{t("status.bank.connectWallet")}</p>
+                        <LoginWithFrak />
+                    </s-stack>
+                </s-banner>
             )}
 
             {allTokensEmpty && isOpen && (
@@ -97,12 +112,6 @@ function BankView({
                     onClose={() => setActiveAction(null)}
                 />
             )}
-
-            {isManager && !walletAddress && (
-                <s-banner tone="info">
-                    <p>{t("status.bank.connectWallet")}</p>
-                </s-banner>
-            )}
         </s-stack>
     );
 }
@@ -110,9 +119,11 @@ function BankView({
 function DistributionToggle({
     bankAddress,
     isOpen,
+    disabled = false,
 }: {
     bankAddress: Address;
     isOpen: boolean;
+    disabled?: boolean;
 }) {
     const { setOpenStatus, isSettingOpenStatus } = useSetBankOpenStatus({
         bankAddress,
@@ -135,7 +146,7 @@ function DistributionToggle({
                 variant={isOpen ? "secondary" : "primary"}
                 onClick={() => setOpenStatus({ isOpen: !isOpen })}
                 loading={isSettingOpenStatus}
-                disabled={isSettingOpenStatus}
+                disabled={isSettingOpenStatus || disabled}
             >
                 {isOpen
                     ? t("status.bank.disableDistribution")
@@ -161,7 +172,8 @@ function TokenTable({
     onAction: (action: ActiveAction) => void;
 }) {
     const { t } = useTranslation();
-    const showActions = isManager && !!walletAddress;
+    const showActions = isManager;
+    const actionsDisabled = !walletAddress;
 
     return (
         <s-table>
@@ -185,6 +197,7 @@ function TokenTable({
                         isBankOpen={isBankOpen}
                         bankAddress={bankAddress}
                         showActions={showActions}
+                        actionsDisabled={actionsDisabled}
                         onAction={onAction}
                     />
                 ))}
@@ -198,12 +211,14 @@ function TokenRow({
     isBankOpen,
     bankAddress,
     showActions,
+    actionsDisabled,
     onAction,
 }: {
     token: TokenData;
     isBankOpen: boolean;
     bankAddress: Address;
     showActions: boolean;
+    actionsDisabled: boolean;
     onAction: (action: ActiveAction) => void;
 }) {
     const stablecoin = token.symbol as Stablecoin;
@@ -230,6 +245,7 @@ function TokenRow({
                         token={token}
                         bankAddress={bankAddress}
                         isBankOpen={isBankOpen}
+                        disabled={actionsDisabled}
                         onAction={onAction}
                     />
                 </s-table-cell>
@@ -263,11 +279,13 @@ function TokenRowActions({
     token,
     bankAddress,
     isBankOpen,
+    disabled,
     onAction,
 }: {
     token: TokenData;
     bankAddress: Address;
     isBankOpen: boolean;
+    disabled: boolean;
     onAction: (action: ActiveAction) => void;
 }) {
     const { t } = useTranslation();
@@ -286,6 +304,7 @@ function TokenRowActions({
             {needsAllowanceIncrease && (
                 <s-button
                     onClick={() => onAction({ token, type: "allowance" })}
+                    disabled={disabled}
                 >
                     {t("status.bank.increaseLimit")}
                 </s-button>
@@ -295,7 +314,7 @@ function TokenRowActions({
                     variant="secondary"
                     onClick={() => revokeAllowance({ token: token.address })}
                     loading={isRevoking}
-                    disabled={isRevoking}
+                    disabled={isRevoking || disabled}
                 >
                     {t("status.bank.pauseRewards")}
                 </s-button>
@@ -304,6 +323,7 @@ function TokenRowActions({
                 <s-button
                     variant="secondary"
                     onClick={() => onAction({ token, type: "withdraw" })}
+                    disabled={disabled}
                 >
                     {t("status.bank.withdraw")}
                 </s-button>

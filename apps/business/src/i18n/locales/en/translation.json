@@ -883,7 +883,8 @@
             "label": "pagination",
             "previous": "Go to previous page",
             "next": "Go to next page",
-            "morePages": "More pages"
+            "morePages": "More pages",
+            "showing": "Showing {{from}}-{{to}} from {{total}}"
         },
         "dateRange": {
             "label": "Date range",
@@ -1353,5 +1354,10 @@
             "close": "Close",
             "register": "Register your shop"
         }
+    },
+    "welcomePopup": {
+        "title": "🚀 Your new Frak dashboard is here",
+        "description": "We've redesigned the Frak dashboard to make campaign management and performance tracking simpler than ever.",
+        "cta": "Explore the new dashboard"
     }
 }

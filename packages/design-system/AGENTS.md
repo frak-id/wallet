@@ -1,14 +1,21 @@
 # packages/design-system — Compass
 
-Vanilla Extract design system (28 components). Replaced the former `packages/ui` (now removed). Sprinkles-based responsive; `[data-theme='dark']` switching.
+Vanilla Extract design system. Sprinkles-based responsive; `[data-theme='dark']` switching.
 
 ## Key Files
 - `src/tokens.css.ts` — brand colors, scale, typography, semantic light/dark tokens
 - `src/theme.css.ts` — `createThemeContract` + `createGlobalTheme`; exports `vars`
 - `src/sprinkles.css.ts` — responsive conditions (mobile/tablet/desktop) + color-mode
-- `src/breakpoints.ts` · `src/reset.css.ts` · `src/defaults.css.ts`
+- `src/breakpoints.ts` · `src/reset.css.ts` · `src/reset-globals.css.ts` · `src/defaults.css.ts`
 - `src/components/Box/` — polymorphic layout primitive (sprinkles-powered)
-- `src/components/` — 28 components: Text, Button, Card, Input/TextArea/Select, Dialog/Drawer/Accordion/AlertDialog/Tooltip/Overlay, Stack/Inline/Column/Columns, Badge/Checkbox/Switch/Slider/Spinner/Skeleton, BottomTabBar/EmptyState/SectionHeader/StatCard
+- `src/components/` — components grouped by role (+ vendored `charts/`):
+  - Layout: Box, Stack, Inline, Column, Columns
+  - Typography/feedback: Text, Badge, Spinner, Skeleton, ProgressBar, AlertMessage, StatusBanner, FieldError, EmptyState
+  - Inputs: Button, Input, TextArea, Select, Checkbox, RadioGroup, Switch, Slider, TimeInput
+  - Overlays: Dialog, Drawer, Sheet, DetailSheet, ResponsiveModal, Popover, Tooltip, ConfirmationTooltip, Accordion, AlertDialog, Overlay, ToastSurface
+  - Surfaces/data: Card, Table, Avatar, StatCard, DeltaIndicator, IconCircle, NumberedCircle, Stepper, Tabs, LegendItem
+  - Glass/mobile: GlassButton, GlassCloseButton, InAppBanner, BannerStack, PullToRefresh
+  - Charts: `charts/` (vendored visx) + FunnelChart
 
 ## Usage
 ```ts

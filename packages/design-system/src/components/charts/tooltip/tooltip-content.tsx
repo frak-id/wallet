@@ -66,5 +66,3 @@ export function TooltipContent({
 }
 
 TooltipContent.displayName = "TooltipContent";
-
-export default TooltipContent;

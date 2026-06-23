@@ -22,7 +22,7 @@ import type { MoneriumOrder } from "@/module/monerium/utils/moneriumTypes";
  * Discriminated union of every modal in the wallet app.
  * Extend with new variants (and optional per-variant props) as needed.
  */
-export type ModalState =
+type ModalState =
     | { id: "emptyTransfer" }
     | { id: "emptyPendingGains" }
     | { id: "pendingGains" }

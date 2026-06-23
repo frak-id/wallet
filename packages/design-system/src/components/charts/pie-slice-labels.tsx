@@ -81,5 +81,3 @@ export function PieSliceLabels({
 }
 
 PieSliceLabels.displayName = "PieSliceLabels";
-
-export default PieSliceLabels;

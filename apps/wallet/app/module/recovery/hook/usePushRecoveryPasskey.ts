@@ -22,7 +22,7 @@ import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
 import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
 
 /** The freshly-created passkey we want to register on the recovered wallet. */
-export type RecoveryPasskey = {
+type RecoveryPasskey = {
     authenticatorId: string;
     publicKey: { x: Hex; y: Hex };
 };

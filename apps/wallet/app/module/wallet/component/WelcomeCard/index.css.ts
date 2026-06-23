@@ -117,12 +117,6 @@ export const slideDescription = style({
     margin: 0,
 });
 
-export const featureItem = style({
-    display: "flex",
-    alignItems: "flex-start",
-    gap: alias.spacing.xxs,
-});
-
 export const featureIcon = style({
     width: "12px",
     height: "20px",

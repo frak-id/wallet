@@ -43,5 +43,3 @@ export function PatternArea({
 }
 
 PatternArea.displayName = "PatternArea";
-
-export default PatternArea;

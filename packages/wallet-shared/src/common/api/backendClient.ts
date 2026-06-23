@@ -34,9 +34,17 @@ export const authenticatedBackendApi = treaty<App>(backendUrl, {
         // Return the new headers
         return headers;
     },
-    // Auto cleanup session on 401 response (only for auth-critical endpoints)
+    // Auto cleanup session on a hard 401 — except the SDK-session validation
+    // probe (`/wallet/auth/sdk/isValid`), whose 401s are recoverable and owned
+    // by `useGetSafeSdkSession` (renew-then-drop). Wiping the whole session on
+    // that probe was logging users out right after login. Every other 401 —
+    // including `/wallet/auth/sdk/generate`, which authenticates with the wallet
+    // token — still means a dead session and must clear.
     onResponse(response) {
-        if (response.status === 401) {
+        if (
+            response.status === 401 &&
+            !response.url.includes("/wallet/auth/sdk/isValid")
+        ) {
             sessionStore.getState().clearSession();
         }
     },

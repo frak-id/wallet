@@ -1,11 +1,11 @@
-export type SecurityStepKey =
+type SecurityStepKey =
     | "addEmail"
     | "verifyEmail"
     | "setupRecovery"
     | "updateRecovery"
     | "secured";
 
-export type SecurityStepTarget =
+type SecurityStepTarget =
     | "/profile/add-email"
     | "/profile/verify-email"
     | "/profile/recovery";

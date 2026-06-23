@@ -53,7 +53,7 @@ export function AccountMenu() {
                 >
                     <span className={styles.triggerContent}>
                         <span className={styles.avatar}>
-                            <ProfileIcon />
+                            <ProfileIcon className={styles.avatarIcon} />
                         </span>
                         <Text
                             as="span"

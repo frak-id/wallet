@@ -62,5 +62,3 @@ export function ReferenceLine({
 }
 
 ReferenceLine.displayName = "ReferenceLine";
-
-export default ReferenceLine;

@@ -7,7 +7,8 @@ import {
     selectLastAuthenticationAt,
     useGetActivePairings,
 } from "@frak-labs/wallet-shared";
-import { ShieldCheck } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Mail, ShieldCheck } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
@@ -46,7 +47,8 @@ export function ProfilePage() {
 
     const { data: pairings } = useGetActivePairings();
     const hasPairings = (pairings?.length ?? 0) > 0;
-    const { hasRecovery } = useWalletSecurityStatus();
+    const navigate = useNavigate();
+    const { hasRecovery, isEmailVerified } = useWalletSecurityStatus();
 
     return (
         <Box
@@ -72,6 +74,20 @@ export function ProfilePage() {
                         icon={SettingsIcon}
                         label={t("wallet.profile.managePairings")}
                         to="/profile/devices"
+                    />
+                </InfoCard>
+            ) : null}
+            {isEmailVerified ? (
+                <InfoCard>
+                    <InfoRow
+                        icon={Mail}
+                        label={t("wallet.profile.changeEmail")}
+                        onClick={() =>
+                            navigate({
+                                to: "/profile/verify-email",
+                                search: { mode: "change" },
+                            })
+                        }
                     />
                 </InfoCard>
             ) : null}

@@ -9,7 +9,7 @@ Centralised Vitest 4 config + shared mocks + fixtures. Consumed by all 10 Vitest
 - `src/react-testing-library-setup.ts` — RTL cleanup + jest-dom matchers
 - `src/wallet-mocks.ts` — Wagmi hooks, Router, WebAuthn (ox), `idb-keyval` (wallet + wallet-shared only)
 - `src/apps-setup.ts` — env vars + OpenPanel mock (wallet, listener, business)
-- `src/router-mocks.ts` — `setupReactRouterMock`, `setupTanStackRouterMock`, `MockLink`
+- `src/tanstack-router-mock.ts` — side-effect module that globally mocks @tanstack/react-router hooks (incl. `MockLink`)
 - `src/dom-mocks.ts` — `mockWindowOrigin`, `mockDocumentReferrer`, `setupListenerDomMocks`
 - `src/index.ts` — barrel (import utilities from `@frak-labs/test-foundation`)
 

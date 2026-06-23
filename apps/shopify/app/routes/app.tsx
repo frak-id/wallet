@@ -1,8 +1,6 @@
-import { useWalletStatus } from "@frak-labs/react-sdk";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { Skeleton } from "app/components/Skeleton";
-import { WalletGated } from "app/components/WalletGated";
 import {
     ensureComponentsUrlMetafield,
     ensureKlaviyoShareMetafields,
@@ -105,9 +103,7 @@ function AppContent({
                             isThemeSupported={isThemeSupported}
                             onboardingDataPromise={onboardingDataPromise}
                         />
-                        <WalletGated>
-                            {isLoading ? <Skeleton /> : <Outlet />}
-                        </WalletGated>
+                        {isLoading ? <Skeleton /> : <Outlet />}
                     </>
                 );
             }}
@@ -125,7 +121,9 @@ export const headers: HeadersFunction = (headersArgs) => {
 };
 
 /**
- * Show the navigation menu only if theme supports the block and wallet is connected
+ * Show the navigation menu only if the theme supports the block and onboarding
+ * critical steps are complete. Wallet connection is no longer required here —
+ * it is requested at the point of need (product registration, bank actions).
  * @param isThemeSupported
  */
 function Navigation({
@@ -135,11 +133,9 @@ function Navigation({
     isThemeSupported: boolean;
     onboardingDataPromise: Promise<OnboardingStepData>;
 }) {
-    const { data: walletStatus } = useWalletStatus();
-
     return (
         <NavigationRoot>
-            {isThemeSupported && walletStatus?.wallet && (
+            {isThemeSupported && (
                 <Suspense>
                     <Await resolve={onboardingDataPromise}>
                         {(onboardingData) => {

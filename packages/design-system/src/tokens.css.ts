@@ -327,6 +327,8 @@ export const shadow = {
  */
 export const overlay = {
     scrim: "#000000cc",
+    /** Subtle darkening for hover/press on any tinted surface (5% black). */
+    hover: "#0000000d",
 } as const;
 
 export const onDark = {

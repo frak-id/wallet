@@ -14,7 +14,6 @@ import {
     formLabel,
     formLayout,
     formTitle,
-    validMessage,
 } from "./form.css";
 
 const Form = FormProvider;
@@ -208,31 +207,6 @@ const FormMessage = ({
 };
 FormMessage.displayName = "FormMessage";
 
-const FormValidMessage = ({
-    ref,
-    className = "",
-    children,
-    ...props
-}: ComponentPropsWithRef<"p">) => {
-    const { formMessageId, invalid, error } = useFormField();
-
-    if (invalid || !!error) {
-        return null;
-    }
-
-    return (
-        <p
-            ref={ref}
-            id={`${formMessageId}-valid`}
-            className={clsx(validMessage, className)}
-            {...props}
-        >
-            {children}
-        </p>
-    );
-};
-FormValidMessage.displayName = "FormValidMessage";
-
 export {
     Form,
     FormControl,
@@ -242,5 +216,4 @@ export {
     FormLabel,
     FormLayout,
     FormMessage,
-    FormValidMessage,
 };

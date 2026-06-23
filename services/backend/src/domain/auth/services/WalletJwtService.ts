@@ -53,7 +53,6 @@ export class WalletJwtService {
             publicKey,
             transports,
             sub: walletAddress,
-            iat: Date.now(),
         });
 
         const sdkJwt = await this.sdkSessionService.generateSdkJwt({

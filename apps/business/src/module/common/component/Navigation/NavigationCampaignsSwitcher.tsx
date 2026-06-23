@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { pageNav } from "@/module/common/i18n/pageLabel";
 import { NavigationItem, SubNavigationItem } from "./NavigationItem";
-import { collapsibleContent } from "./navigation.css";
+import { collapsibleContent, itemList } from "./navigation.css";
 
 export function NavigationCampaignsSwitcher({
     disabled,
@@ -98,7 +98,7 @@ function NavigationCampaigns({
                 </NavigationItem>
             </Collapsible.Trigger>
             <Collapsible.Content className={collapsibleContent}>
-                <ul>
+                <ul className={itemList}>
                     <SubNavigationItem url={overviewUrl} fuzzy={false}>
                         {pageNav(t, "campaignsOverview")}
                     </SubNavigationItem>

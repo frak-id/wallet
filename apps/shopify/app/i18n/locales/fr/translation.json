@@ -129,11 +129,8 @@
         "todo": "Veuillez activer l'application Frak dans votre thème en suivant les instructions ci-dessous"
     },
 
-    "gated": {
-        "configure": "Configurer Frak",
-        "create": "CREER UN COMPTE",
-        "start": "Créez un porte-monnaie Frak pour commencer à utiliser l'application.",
-        "alreadyGotAnAccount": "J'ai déjà un compte"
+    "login": {
+        "withFrak": "Se connecter avec Frak"
     },
     "status": {
         "connected": "Connecté à Frak",

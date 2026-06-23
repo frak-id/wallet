@@ -33,7 +33,7 @@ export type TrustLevel = "pending" | "verified" | "dev-override" | "unverified";
 /**
  * IFrame resolving context (from WalletRpcContext without source)
  */
-export type IFrameResolvingContext = {
+type IFrameResolvingContext = {
     merchantId: string;
     origin: string;
     sourceUrl: string;

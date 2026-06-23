@@ -1,6 +1,6 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, zIndex } from "@frak-labs/design-system/tokens";
-import { globalStyle, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 import {
     focusRing,
     focusRingInset,
@@ -41,7 +41,7 @@ export const avatar = style({
     flexShrink: 0,
 });
 
-globalStyle(`${avatar} > svg`, {
+export const avatarIcon = style({
     width: "24px",
     height: "24px",
 });

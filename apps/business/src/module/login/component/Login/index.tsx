@@ -1,9 +1,7 @@
-import { tablet } from "@frak-labs/design-system/breakpoints";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
@@ -24,7 +22,6 @@ export function Login() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [, startTransition] = useTransition();
-    const isMobile = useMediaQuery(`(max-width: ${tablet - 1}px)`);
 
     const { mutate: authenticate, isPending } = useSiweAuthenticate({
         mutations: {
@@ -82,7 +79,12 @@ export function Login() {
                 >
                     {t("auth.login.heroTitleLine1")}
                     <br />
-                    <Text as="span" variant="display1" color="action">
+                    <Text
+                        as="span"
+                        variant="display1"
+                        color="action"
+                        className={styles.title}
+                    >
                         {t("auth.login.heroTitleLine2")}
                     </Text>
                 </Text>
@@ -92,7 +94,7 @@ export function Login() {
                 <Button
                     variant="primary"
                     size="large"
-                    width={isMobile ? "full" : "auto"}
+                    width="auto"
                     loading={isPending}
                     onClick={handleConnect}
                 >

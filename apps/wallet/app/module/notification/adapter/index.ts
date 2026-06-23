@@ -1,5 +1,4 @@
 export type {
-    NotificationAdapter,
     NotificationPermissionStatus,
     PushTokenPayload,
 } from "./adapter";

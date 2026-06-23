@@ -341,6 +341,35 @@ describe("useGetSafeSdkSession", () => {
         expect(mockBackendAPI.generate.get).not.toHaveBeenCalled();
     });
 
+    test("should drop only the stale SDK token when validation and all renewals fail", async ({
+        queryWrapper,
+        mockSdkSession,
+    }) => {
+        mockSessionState.sdkSession = mockSdkSession;
+        mockSessionState.session = null;
+        mockAuthState.lastWebAuthNAction = null;
+
+        mockSafeSession.getSafeSdkSession.mockReturnValue(null);
+        mockSafeSession.getSafeSession.mockReturnValue(null);
+
+        mockBackendAPI.isValid.get.mockResolvedValue({
+            data: { isValid: false },
+            error: null,
+        });
+
+        const { result } = renderHook(() => useGetSafeSdkSession(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current.isLoading).toBe(false);
+        });
+
+        expect(result.current.sdkSession).toBeNull();
+        expect(mockSetSdkSession).toHaveBeenCalledWith(null);
+        expect(mockBackendAPI.generate.get).not.toHaveBeenCalled();
+    });
+
     test("should handle error when validating session", async ({
         queryWrapper,
         mockSdkSession,

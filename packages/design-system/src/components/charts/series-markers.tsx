@@ -286,5 +286,3 @@ function SeriesMarkersActiveHighlight({
         />
     );
 }
-
-export default SeriesMarkers;

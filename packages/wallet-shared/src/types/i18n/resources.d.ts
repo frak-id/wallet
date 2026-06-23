@@ -960,6 +960,7 @@ export default interface Resources {
       },
       "profile": {
         "biometricPrompt": "Require {{biometryLabel}} at every app launch",
+        "changeEmail": "Change email address",
         "currentDeviceConnected": "Connected",
         "enableNotifications": "Enable notifications",
         "helpSupport": "Help & support",

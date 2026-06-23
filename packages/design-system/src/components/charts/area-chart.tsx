@@ -179,5 +179,3 @@ export function AreaChart({
 }
 
 export { Area, type AreaProps } from "./area";
-
-export default AreaChart;

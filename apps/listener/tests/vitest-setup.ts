@@ -13,6 +13,22 @@
  */
 
 import { setupListenerDomMocks } from "@frak-labs/test-foundation";
+import { vi } from "vitest";
+
+// Stub OpenPanel so the analytics singleton never issues real network requests
+// (its batched flushes retry on a timer and outlive the test lifecycle).
+vi.mock("@openpanel/web", () => ({
+    OpenPanel: class {
+        global = {};
+        profileId: string | undefined = undefined;
+        init() {}
+        track() {}
+        identify() {}
+        setGlobalProperties() {}
+        setProfileId() {}
+        clear() {}
+    },
+}));
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
 import "@frak-labs/test-foundation/react-testing-library-setup";

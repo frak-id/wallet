@@ -110,6 +110,7 @@ export const triggerIcon = style({
     flexShrink: 0,
     borderRadius: alias.cornerRadius.full,
     backgroundColor: vars.surface.secondary,
+    color: vars.icon.action,
     fontSize: "20px",
 });
 

@@ -11,13 +11,13 @@ type OnboardingBaseProps = {
     flow_id?: string;
 };
 
-export type ReferralCodeOutcome =
+type ReferralCodeOutcome =
     | "applied"
     | "skipped"
     | "auto_skipped_existing"
     | "error";
 
-export type EmailInputOutcome =
+type EmailInputOutcome =
     | "submitted"
     | "back"
     | "login_existing"
