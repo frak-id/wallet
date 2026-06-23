@@ -372,10 +372,10 @@ function accumulateReward(
                 ? reward.expiresAt
                 : acc.earliestExpiry,
         minPendingDays:
-            reward.pendingRewardExpirationDays != null
+            reward.defaultLockupSeconds != null
                 ? Math.min(
                       acc.minPendingDays ?? Number.POSITIVE_INFINITY,
-                      reward.pendingRewardExpirationDays
+                      Math.floor(reward.defaultLockupSeconds / 1440) // seconds -> day (60/60/24)
                   )
                 : acc.minPendingDays,
     };

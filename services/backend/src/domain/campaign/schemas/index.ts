@@ -262,6 +262,7 @@ const EstimatedRewardItemSchema = t.Object({
     referrer: t.Optional(EstimatedRewardSchema),
     referee: t.Optional(EstimatedRewardSchema),
     conditions: RuleConditionsSchema,
+    defaultLockupSeconds: t.Optional(t.Number()),
     pendingRewardExpirationDays: t.Optional(t.Number()),
     maxRewardsPerUser: t.Optional(t.Number()),
     merchantMaxRewardsPerUser: t.Optional(t.Number()),
