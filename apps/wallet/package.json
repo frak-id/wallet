@@ -54,6 +54,7 @@
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/design-system": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
+    "@frak-labs/rewards": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
     "@tanstack/query-async-storage-persister": "catalog:",
     "@tanstack/react-query": "catalog:",

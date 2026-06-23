@@ -5,7 +5,7 @@ import {
     buildTierExample,
     pickFlatBasket,
     pickTierBasket,
-} from "./rewardExample";
+} from "./example";
 
 type PercentageReward = Extract<EstimatedReward, { payoutType: "percentage" }>;
 

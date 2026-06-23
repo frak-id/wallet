@@ -1,14 +1,32 @@
 import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type { EstimatedReward } from "@frak-labs/core-sdk";
 import { formatAmount } from "@frak-labs/core-sdk";
-import { formatEstimatedReward } from "@frak-labs/wallet-shared";
+import { formatEstimatedReward } from "@frak-labs/rewards";
 import {
     extractMinPurchaseAmount,
-    formatDate,
-    getDaysRemaining,
-    lockupSecondsToDays,
     selectDisplayCampaign,
-} from "./campaignDisplay";
+} from "@frak-labs/rewards/campaign";
+
+const SECONDS_PER_DAY = 86400;
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+function formatDate(date: Date, locale: string): string {
+    return date.toLocaleDateString(locale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
+}
+
+function getDaysRemaining(end: Date, now: Date): number | null {
+    const diffMs = end.getTime() - now.getTime();
+    if (diffMs <= 0) return null;
+    return Math.ceil(diffMs / MS_PER_DAY);
+}
+
+function lockupSecondsToDays(seconds: number | undefined): number | undefined {
+    return seconds != null ? Math.floor(seconds / SECONDS_PER_DAY) : undefined;
+}
 
 export type CampaignView = {
     status: "live" | "upcoming";

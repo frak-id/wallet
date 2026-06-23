@@ -5,32 +5,14 @@ import {
     getCurrencyAmountKey,
     getSupportedCurrency,
     type InteractionTypeKey,
-    type TokenAmountType,
 } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
+import {
+    formatEstimatedReward,
+    getRewardValue,
+    selectBestReward,
+} from "@frak-labs/rewards";
 import { useEffect, useState } from "preact/hooks";
-import { formatEstimatedReward } from "@/utils/format/formatReward";
-
-/**
- * Get the comparable fiat value of a reward for ranking purposes.
- */
-function getRewardValue(
-    reward: EstimatedReward,
-    key: keyof TokenAmountType
-): number {
-    switch (reward.payoutType) {
-        case "fixed":
-            return reward.amount[key];
-        case "tiered":
-            return reward.tiers.reduce(
-                (acc, tier) =>
-                    "amount" in tier ? Math.max(acc, tier.amount[key]) : acc,
-                0
-            );
-        case "percentage":
-            return 0;
-    }
-}
 
 /**
  * Pick the best referrer reward from merchant info and format it.
@@ -41,41 +23,28 @@ function resolveBestReward(
     currency: Currency | undefined,
     targetInteraction?: InteractionTypeKey
 ): string | undefined {
-    const filteredRewards = targetInteraction
-        ? rewards.filter((r) => r.interactionTypeKey === targetInteraction)
-        : rewards;
+    const best = selectBestReward(rewards, { currency, targetInteraction });
+    if (!best) return undefined;
 
-    const referrerRewards = filteredRewards
-        .map((r) => r.referrer)
-        .filter((r): r is EstimatedReward => r !== undefined);
+    const key = getCurrencyAmountKey(getSupportedCurrency(currency));
 
-    if (referrerRewards.length === 0) return undefined;
-
-    const supportedCurrency = getSupportedCurrency(currency);
-    const key = getCurrencyAmountKey(supportedCurrency);
-
-    // Find the best reward by comparable value
-    let bestReward = referrerRewards[0];
-    let bestValue = getRewardValue(bestReward, key);
-
-    for (let i = 1; i < referrerRewards.length; i++) {
-        const value = getRewardValue(referrerRewards[i], key);
-        if (value > bestValue) {
-            bestReward = referrerRewards[i];
-            bestValue = value;
-        }
-    }
-
-    // If best value is 0, fall back to a percentage reward (displays as "X %")
-    if (bestValue <= 0) {
-        const percentageReward = referrerRewards.find(
-            (r) => r.payoutType === "percentage"
-        );
+    // When the best comparable value is 0 (e.g. only uncapped percentages),
+    // fall back to a percentage reward so it still displays as "X %".
+    if (getRewardValue(best, key) <= 0) {
+        const percentageReward = (
+            targetInteraction
+                ? rewards.filter(
+                      (r) => r.interactionTypeKey === targetInteraction
+                  )
+                : rewards
+        )
+            .map((r) => r.referrer)
+            .find((r): r is EstimatedReward => r?.payoutType === "percentage");
         if (!percentageReward) return undefined;
-        bestReward = percentageReward;
+        return formatEstimatedReward(percentageReward, currency);
     }
 
-    return formatEstimatedReward(bestReward, currency);
+    return formatEstimatedReward(best, currency);
 }
 
 /**

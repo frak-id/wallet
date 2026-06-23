@@ -9,16 +9,16 @@ import {
     ClockIcon,
     CoinsIcon,
 } from "@frak-labs/design-system/icons";
+import {
+    buildPercentageExample,
+    buildTierExample,
+    type RewardExample,
+} from "@frak-labs/rewards";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import type { CampaignView } from "./campaignView";
 import * as styles from "./index.css";
-import {
-    buildPercentageExample,
-    buildTierExample,
-    type RewardExample,
-} from "./rewardExample";
 
 type FlatReward = Exclude<EstimatedReward, { payoutType: "tiered" }>;
 type TieredReward = Extract<EstimatedReward, { payoutType: "tiered" }>;
