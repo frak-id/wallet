@@ -97,7 +97,7 @@ export const button = recipe({
                     "(hover: hover)": {
                         selectors: {
                             "&:not(:disabled):hover": {
-                                backgroundColor: "#d4d4d4",
+                                backgroundColor: alias.neutral[300],
                             },
                         },
                     },

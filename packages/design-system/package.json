@@ -4,8 +4,6 @@
   "private": true,
   "type": "module",
   "license": "GNU GPL 3.0",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
   "exports": {
     "./components/charts": "./src/components/charts/index.ts",
     "./components/*": "./src/components/*/index.tsx",

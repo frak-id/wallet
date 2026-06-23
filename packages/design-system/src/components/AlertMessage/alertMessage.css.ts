@@ -1,7 +1,7 @@
 import { style, styleVariants } from "@vanilla-extract/css";
 import { fadeIn } from "../../keyframes.css";
 import { vars } from "../../theme.css";
-import { alias, brand } from "../../tokens.css";
+import { alias, brand, overlay, semanticLight } from "../../tokens.css";
 
 /**
  * Tone-tinted floating "alert message" card used as the WebAuthn error toast,
@@ -178,7 +178,7 @@ export const close = style({
     borderRadius: alias.cornerRadius.full,
     transition: "background-color 150ms ease-out",
     selectors: {
-        "&:hover": { backgroundColor: "#0000000d" },
+        "&:hover": { backgroundColor: overlay.hover },
         "&:focus-visible": {
             outline: `2px solid ${vars.border.focus}`,
             outlineOffset: "2px",
@@ -187,12 +187,23 @@ export const close = style({
 });
 
 /**
- * Edge-fade overlays signalling scrollable overflow (Figma 56px gradient). Built
- * from the literal light-theme surface hexes so the fade stays the same hue as
- * the surface (a `transparent` keyword would grey-shift the gradient). The
- * bottom variant is reused for the top edge via a 180° rotation.
+ * Edge-fade overlays signalling scrollable overflow (Figma 56px gradient). The
+ * fade-out stop reuses the surface colour at 0 alpha (not the `transparent`
+ * keyword, which grey-shifts the gradient toward black). Sourced from the
+ * light-theme surface tokens — these are intentionally light-only; dark mode
+ * would need its own fade hues. The bottom variant is reused for the top edge
+ * via a 180° rotation.
  */
 const FADE_HEIGHT = "56px";
+
+/** Same-hue transparent stop so the gradient fades to nothing, no grey-shift. */
+function edgeFade(hex: string) {
+    const n = hex.replace("#", "");
+    const r = Number.parseInt(n.slice(0, 2), 16);
+    const g = Number.parseInt(n.slice(2, 4), 16);
+    const b = Number.parseInt(n.slice(4, 6), 16);
+    return `linear-gradient(to top, ${hex} 0%, rgba(${r},${g},${b},0) 100%)`;
+}
 
 export const fade = style({
     position: "absolute",
@@ -213,16 +224,7 @@ export const fadeBottom = style({ bottom: 0 });
 // `to top` → opaque at the bottom edge, transparent upward (the bottom fade).
 // `fadeTop` rotates 180° so the opaque edge sits at the top.
 export const fadeTone = styleVariants({
-    neutral: {
-        backgroundImage:
-            "linear-gradient(to top, #f2f6fe 0%, rgba(242,246,254,0) 100%)",
-    },
-    warning: {
-        backgroundImage:
-            "linear-gradient(to top, #fef9f2 0%, rgba(254,249,242,0) 100%)",
-    },
-    danger: {
-        backgroundImage:
-            "linear-gradient(to top, #fce8ea 0%, rgba(252,232,234,0) 100%)",
-    },
+    neutral: { backgroundImage: edgeFade(semanticLight.surface.secondary) },
+    warning: { backgroundImage: edgeFade(semanticLight.surface.warning) },
+    danger: { backgroundImage: edgeFade(semanticLight.surface.error) },
 });
