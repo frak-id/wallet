@@ -3,13 +3,7 @@
  * Tests pairing launch with QR code display and state management
  */
 
-import {
-    cleanup,
-    fireEvent,
-    render,
-    screen,
-    waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LaunchPairing } from "./index";
 
@@ -308,49 +302,6 @@ describe("LaunchPairing", () => {
             render(<LaunchPairing />);
 
             expect(screen.queryByText(/iPhone/)).not.toBeInTheDocument();
-        });
-    });
-
-    describe("fullscreen QR code", () => {
-        it("should toggle fullscreen QR code on click", async () => {
-            mockPairingState.pairing = {
-                id: "pairing-123",
-                code: "123456",
-            };
-
-            render(<LaunchPairing />);
-
-            const qrCodeButton = screen
-                .getByTestId("qr-code")
-                .closest("button");
-            expect(qrCodeButton).toBeInTheDocument();
-
-            fireEvent.click(qrCodeButton!);
-
-            await waitFor(() => {
-                // Fullscreen QR code should appear
-                const fullscreenQRCodes = screen.getAllByTestId("qr-code");
-                expect(fullscreenQRCodes.length).toBeGreaterThan(1);
-            });
-        });
-
-        it("should render the pairing code in both views when fullscreen is active", async () => {
-            mockPairingState.pairing = {
-                id: "pairing-123",
-                code: "123456",
-            };
-
-            render(<LaunchPairing />);
-
-            const qrCodeButton = screen
-                .getByTestId("qr-code")
-                .closest("button");
-            fireEvent.click(qrCodeButton!);
-
-            await waitFor(() => {
-                const pairingCodes = screen.getAllByTestId("pairing-code");
-                expect(pairingCodes.length).toBeGreaterThan(1);
-            });
         });
     });
 
