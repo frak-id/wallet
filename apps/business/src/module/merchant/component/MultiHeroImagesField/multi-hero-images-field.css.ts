@@ -1,6 +1,6 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize } from "@frak-labs/design-system/tokens";
-import { globalStyle, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 export const list = style({
@@ -29,7 +29,8 @@ export const thumb = style({
     backgroundColor: vars.surface.muted,
 });
 
-globalStyle(`${thumb} img`, {
+// Shared by the thumbnail and hover-preview <img> elements.
+export const image = style({
     display: "block",
     width: "100%",
     height: "100%",
@@ -82,11 +83,4 @@ export const preview = style({
     border: `1px solid ${vars.border.default}`,
     backgroundColor: vars.surface.muted,
     boxShadow: "0 8px 24px rgba(0, 0, 0, 0.18)",
-});
-
-globalStyle(`${preview} img`, {
-    display: "block",
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
 });

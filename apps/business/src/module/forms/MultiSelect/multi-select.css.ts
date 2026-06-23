@@ -89,6 +89,7 @@ export const multiSelectChecksNotSelected = style({
     opacity: 0.5,
 });
 
-globalStyle(`${multiSelectChecksNotSelected} svg`, {
+// Applied to the CheckIcon when an option is not selected (keeps the box size).
+export const checkHidden = style({
     visibility: "hidden",
 });

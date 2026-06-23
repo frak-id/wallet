@@ -1,6 +1,6 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
-import { globalStyle, keyframes, style } from "@vanilla-extract/css";
+import { keyframes, style } from "@vanilla-extract/css";
 import { focusRing } from "@/module/common/styles/interaction.css";
 
 export const navigation = style({
@@ -52,16 +52,8 @@ export const logoBadge = style({
     },
 });
 
+// Also applied to the nested submenu <ul> (NavigationCampaignsSwitcher).
 export const itemList = style({
-    listStyle: "none",
-    margin: 0,
-    padding: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xxs,
-});
-
-globalStyle(`${itemList} ul`, {
     listStyle: "none",
     margin: 0,
     padding: 0,

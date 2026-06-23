@@ -111,19 +111,17 @@ globalStyle(
     }
 );
 
-/* Done state: also tint the inner icon */
-globalStyle(`${stepItemModifier.done} ${modalListener__stepNumberInnerIcon}`, {
+/* Done state: also tint the inner icon. Applied directly to the icon (the step
+ * knows its done/active/last state) instead of an ancestor-state selector. */
+export const stepNumberInnerIconDone = style({
     borderColor: "#0171ec",
     color: "#0171ec",
 });
 
 /* Active last-step animation also pulses the inner icon */
-globalStyle(
-    `${stepItemBase}:last-child${stepItemModifier.active} ${modalListener__stepNumberInnerIcon}`,
-    {
-        animation: `${highlightLastStepKf} 2s forwards`,
-    }
-);
+export const stepNumberInnerIconActiveLast = style({
+    animation: `${highlightLastStepKf} 2s forwards`,
+});
 
 export const modalListener__help = style({
     marginTop: "20px",

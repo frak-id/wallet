@@ -259,7 +259,10 @@ function OptionsList({
                             : styles.multiSelectChecksNotSelected
                     )}
                 >
-                    <CheckIcon size={12} />
+                    <CheckIcon
+                        size={12}
+                        className={isSelected ? undefined : styles.checkHidden}
+                    />
                 </div>
                 <Tooltip content={option.tooltip} hidden={!option.tooltip}>
                     <span>{option.name}</span>

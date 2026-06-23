@@ -1,4 +1,5 @@
 import { prefixModalCss } from "@frak-labs/wallet-shared/common";
+import { clsx } from "clsx";
 import { Fingerprint, HandCoins, SendHorizonal, Share } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import * as styles from "@/module/modal/component/Modal/index.css";
@@ -67,28 +68,33 @@ export function ModalStepIndicator() {
 
     return (
         <StepsContainer>
-            {stepsData.map(({ name, icon }, index) => (
-                <StepItem
-                    key={name}
-                    isActive={index === activeStep}
-                    isDone={index < activeStep}
-                >
-                    <span
-                        className={`${prefixModalCss("step-number")} ${
-                            styles.modalListener__stepNumber
-                        }`}
-                    >
+            {stepsData.map(({ name, icon }, index) => {
+                const isActive = index === activeStep;
+                const isDone = index < activeStep;
+                const isLast = index === stepsData.length - 1;
+                return (
+                    <StepItem key={name} isActive={isActive} isDone={isDone}>
                         <span
-                            className={
-                                styles.modalListener__stepNumberInnerIcon
-                            }
+                            className={`${prefixModalCss("step-number")} ${
+                                styles.modalListener__stepNumber
+                            }`}
                         >
-                            {icon}
+                            <span
+                                className={clsx(
+                                    styles.modalListener__stepNumberInnerIcon,
+                                    isDone && styles.stepNumberInnerIconDone,
+                                    isActive &&
+                                        isLast &&
+                                        styles.stepNumberInnerIconActiveLast
+                                )}
+                            >
+                                {icon}
+                            </span>
                         </span>
-                    </span>
-                    {name}
-                </StepItem>
-            ))}
+                        {name}
+                    </StepItem>
+                );
+            })}
         </StepsContainer>
     );
 }

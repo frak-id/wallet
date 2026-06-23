@@ -114,6 +114,7 @@ export function MultiHeroImagesField({
                                 <img
                                     src={url}
                                     alt={t("merchantEdit.explorer.heroImage")}
+                                    className={styles.image}
                                 />
                             </div>
                             <span className={styles.url} title={url}>
@@ -134,6 +135,7 @@ export function MultiHeroImagesField({
                                         alt={t(
                                             "merchantEdit.explorer.heroImage"
                                         )}
+                                        className={styles.image}
                                     />
                                 </div>
                             )}
