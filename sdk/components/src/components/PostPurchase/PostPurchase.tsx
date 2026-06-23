@@ -27,8 +27,10 @@ import {
 import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
+import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import {
     applyRewardPlaceholder,
@@ -146,6 +148,7 @@ export function PostPurchase({
     const isPreview = !!preview;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const placement = usePlacement(placementId);
+    const lang = useLang();
 
     useLightDomStyles(
         "frak-post-purchase",
@@ -239,42 +242,44 @@ export function PostPurchase({
     const resolvedBadgeText = propBadgeText ?? postPurchaseConfig?.badgeText;
 
     const texts = useMemo(() => {
+        const defaults = componentDefaults[lang].postPurchase;
         const message =
             resolvedVariant === "referee"
                 ? rewardText
                     ? applyRewardPlaceholder(
                           propRefereeText ??
                               postPurchaseConfig?.refereeText ??
-                              "You just earned {REWARD}! Share with friends to earn even more.",
+                              defaults.refereeText,
                           rewardText
                       )
                     : (propRefereeText ??
                       postPurchaseConfig?.refereeNoRewardText ??
-                      "You just earned a reward! Share with friends to earn even more.")
+                      defaults.refereeNoRewardText)
                 : rewardText
                   ? applyRewardPlaceholder(
                         propReferrerText ??
                             postPurchaseConfig?.referrerText ??
-                            "Earn {REWARD} by sharing this with your friends!",
+                            defaults.referrerText,
                         rewardText
                     )
                   : (propReferrerText ??
                     postPurchaseConfig?.referrerNoRewardText ??
-                    "Share this with your friends and earn rewards!");
+                    defaults.referrerNoRewardText);
 
         const cta = rewardText
             ? applyRewardPlaceholder(
                   propCtaText ??
                       postPurchaseConfig?.ctaText ??
-                      "Share & earn {REWARD}",
+                      defaults.ctaText,
                   rewardText
               )
             : (propCtaText ??
               postPurchaseConfig?.ctaNoRewardText ??
-              "Share & earn");
+              defaults.ctaNoRewardText);
 
         return { message, cta };
     }, [
+        lang,
         resolvedVariant,
         rewardText,
         postPurchaseConfig,

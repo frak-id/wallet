@@ -9,6 +9,14 @@ type ComponentCopy = {
     buttonShare: {
         text: string;
     };
+    postPurchase: {
+        refereeText: string;
+        refereeNoRewardText: string;
+        referrerText: string;
+        referrerNoRewardText: string;
+        ctaText: string;
+        ctaNoRewardText: string;
+    };
     openInApp: {
         text: string;
         ariaLabel: string;
@@ -48,6 +56,17 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
         buttonShare: {
             text: "Share and earn!",
         },
+        postPurchase: {
+            refereeText:
+                "You just earned {REWARD}! Share with friends to earn even more.",
+            refereeNoRewardText:
+                "You just earned a reward! Share with friends to earn even more.",
+            referrerText: "Earn {REWARD} by sharing this with your friends!",
+            referrerNoRewardText:
+                "Share this with your friends and earn rewards!",
+            ctaText: "Share & earn {REWARD}",
+            ctaNoRewardText: "Share & earn",
+        },
         openInApp: {
             text: "Open in App",
             ariaLabel: "Open in Frak Wallet app",
@@ -71,6 +90,17 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
     fr: {
         buttonShare: {
             text: "Partagez et gagnez !",
+        },
+        postPurchase: {
+            refereeText:
+                "Vous venez de gagner {REWARD} ! Partagez avec vos amis pour gagner encore plus.",
+            refereeNoRewardText:
+                "Vous venez de gagner une récompense ! Partagez avec vos amis pour gagner encore plus.",
+            referrerText: "Gagnez {REWARD} en partageant avec vos amis !",
+            referrerNoRewardText:
+                "Partagez avec vos amis et gagnez des récompenses !",
+            ctaText: "Partagez et gagnez {REWARD}",
+            ctaNoRewardText: "Partagez et gagnez",
         },
         openInApp: {
             text: "Ouvrir dans l'app",
