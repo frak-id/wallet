@@ -65,10 +65,11 @@ const LAZY_CHUNK_NAMES = [
 ] as const;
 const LAZY_CHUNK_ALTERNATION = LAZY_CHUNK_NAMES.join("|");
 
-// Hard ceiling on gzipped JS the iframe fetches synchronously on boot (eager
-// static-import closure from the entry). Audit measured ~9.4 KB; 15 KB leaves
-// headroom while failing the build if a lazy chunk leaks into the eager path.
-const EAGER_JS_BUDGET_GZIP = 15 * 1024;
+// Hard ceiling on the gzipped eager boot JS (transitive static-import closure
+// from the entry, walked by `assertEagerBundleBudget`). Measured ~28 KB; 32 KB
+// leaves headroom while failing the build if a lazy chunk leaks into the eager
+// path.
+const EAGER_JS_BUDGET_GZIP = 32 * 1024;
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
@@ -202,22 +203,46 @@ function assertNoLazyCssLeak(htmlSource: string) {
 /**
  * Fail the build if the eager boot JS exceeds {@link EAGER_JS_BUDGET_GZIP}.
  *
- * "Eager" = the JS the booted `index.html` pulls synchronously: the entry
- * `<script type=module>` plus every `<link rel=modulepreload>`. That list is
- * Vite's own curated boot set — the `modulePreload` filter has already dropped
- * the lazy Ring 1/2 chunks — so the gate measures exactly what ships on boot,
- * with no fragile re-derivation of the module graph.
- *
- * Mechanical KPI gate: if a renamed/new lazy chunk slips past the modulePreload
- * filter it lands in the preload list and is counted here, failing the build
- * instead of silently shipping on every iframe boot.
+ * "Eager" = the transitive static-import closure from the entry script. We walk
+ * it from disk instead of trusting the `<link rel=modulepreload>` list, which
+ * the `modulePreload` filter strips lazy chunks from — a static `import` still
+ * fetches the target on boot, so the preload list under-reports.
  */
+// Static module specifiers that ship on boot: `import ... from "./x.js"`, bare
+// `import "./x.js"`, and `export ... from "./x.js"` re-exports. The leading
+// non-identifier boundary (`[^\w$]`) anchors the keyword as a statement — it
+// covers `;`/`}`/newline separation (rolldown emits imports newline-separated,
+// no semicolons) without matching identifiers like `myimport`. The optional
+// `from` clause excludes dynamic `import("./x.js")`; `"\./"` excludes the
+// `"assets/*.js"` preload-helper dep arrays.
+const STATIC_IMPORT_RE =
+    /(?:^|[^\w$])(?:import|export)\s*(?:[^"';]*from\s*)?"\.\/([^"]+\.js)"/g;
+
+function collectEagerClosure(dir: string, entries: string[]) {
+    // Maps each reachable chunk key to its bytes so the budget gate gzips what
+    // was already read here (one disk read per chunk, no re-encode).
+    const eager = new Map<string, Buffer>();
+    const stack = [...entries];
+    while (stack.length > 0) {
+        const key = stack.pop();
+        if (!key || eager.has(key)) continue;
+        let code: Buffer;
+        try {
+            code = readFileSync(path.join(dir, key));
+        } catch {
+            continue;
+        }
+        eager.set(key, code);
+        for (const m of code.toString("utf-8").matchAll(STATIC_IMPORT_RE)) {
+            const dep = `assets/${m[1]}`;
+            if (!eager.has(dep)) stack.push(dep);
+        }
+    }
+    return eager;
+}
+
 function assertEagerBundleBudget() {
-    // Capture the bundle-key path (assets/<name>.js) regardless of the `/listener`
-    // base prefix, from the entry <script src> and each modulepreload <link href>.
     const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
-    const preloadRe =
-        /<link\b[^>]*\brel="modulepreload"[^>]*\bhref="[^"]*?(assets\/[^"]+\.js)"/g;
 
     return {
         name: "assert-eager-bundle-budget",
@@ -241,20 +266,14 @@ function assertEagerBundleBudget() {
 
             assertNoLazyCssLeak(htmlSource);
 
-            const eager = new Set<string>();
-            for (const re of [scriptRe, preloadRe]) {
-                for (const m of htmlSource.matchAll(re)) eager.add(m[1]);
-            }
+            const entries: string[] = [];
+            for (const m of htmlSource.matchAll(scriptRe)) entries.push(m[1]);
+
+            const eager = collectEagerClosure(dir, entries);
 
             let totalGzip = 0;
             const breakdown: string[] = [];
-            for (const key of eager) {
-                let code: Buffer;
-                try {
-                    code = readFileSync(path.join(dir, key));
-                } catch {
-                    continue;
-                }
+            for (const [key, code] of eager) {
                 const gz = gzipSync(code).length;
                 totalGzip += gz;
                 breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
@@ -448,7 +467,6 @@ export default defineConfig(async () => {
                     inlineConst: { mode: "all", pass: 3 },
                 },
                 output: {
-                    // TODO: Lazy bundle leaking into eager ones, we removed `includeDependenciesRecursively: false` that was causing issue in some chunks.
                     codeSplitting: {
                         // Only chunk stuff shared by at least 2 modules
                         minShareCount: 2,
@@ -592,14 +610,13 @@ export default defineConfig(async () => {
                             // ensures only modules statically reachable from
                             // accidentally drift in.
                             //
-                            // CRITICAL: priority MUST be higher than `lazy-shared`.
-                            // Otherwise Rolldown's default
-                            // `includeDependenciesRecursively: true` lets
-                            // `lazy-shared` claim eager modules (e.g.
-                            // ListenerUiProvider) that lazy boundaries reach
-                            // via shared hooks (useSharingListenerUI etc.),
-                            // forcing the entry to statically import the lazy
-                            // chunk to get back its own Provider.
+                            // CRITICAL: priority MUST be higher than EVERY lazy
+                            // group. Otherwise `includeDependenciesRecursively`
+                            // lets a higher-priority lazy group recursively claim
+                            // these eager `$initial` modules, forcing the entry to
+                            // static-import the lazy chunk to get them back and
+                            // dragging it onto iframe boot. `$initial` keeps this
+                            // group from stealing genuinely lazy members.
                             {
                                 name: "common",
                                 // `$initial` keeps lazy-only workspace files
@@ -608,7 +625,7 @@ export default defineConfig(async () => {
                                 // belong in `lazy-shared` / their boundary chunk.
                                 tags: ["$initial"],
                                 test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayEmbeddedWallet(?!\.impl)|useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
-                                priority: 28,
+                                priority: 50,
                                 // Single-importer modules must still land here
                                 // (e.g. wallet-shared/common/api/backendClient.ts
                                 // is only reached via the eager api hooks).
