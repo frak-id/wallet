@@ -81,6 +81,11 @@ export const menu = style({
     background: vars.surface.background,
     borderRadius: alias.cornerRadius.m,
     boxShadow: "0px 4px 16px 0px rgba(115, 115, 115, 0.2)",
+    // Cap to Radix's available height; the list below absorbs the overflow.
+    display: "flex",
+    flexDirection: "column",
+    maxHeight: "var(--radix-popover-content-available-height)",
+    overflow: "hidden",
 });
 
 export const list = style({
@@ -89,6 +94,27 @@ export const list = style({
     padding: 0,
     display: "flex",
     flexDirection: "column",
+    // Scrolls only when the menu hits its cap; Settings/Logout stay pinned.
+    minHeight: 0,
+    overflowY: "auto",
+    // DS-skinned scrollbar: thin rounded thumb.
+    scrollbarWidth: "thin",
+    scrollbarColor: `${vars.border.default} transparent`,
+    selectors: {
+        "&::-webkit-scrollbar": {
+            width: "8px",
+        },
+        "&::-webkit-scrollbar-track": {
+            background: "transparent",
+        },
+        "&::-webkit-scrollbar-thumb": {
+            background: vars.border.default,
+            borderRadius: alias.cornerRadius.full,
+            // Inset so the thumb reads as a slim pill.
+            border: "2px solid transparent",
+            backgroundClip: "padding-box",
+        },
+    },
 });
 
 export const item = style({});
