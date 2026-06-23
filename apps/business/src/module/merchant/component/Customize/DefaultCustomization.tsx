@@ -200,6 +200,7 @@ function GlobalComponentsPanel({
                             currency={(sdkConfig.currency ?? "eur") as Currency}
                             shopName={sdkConfig.name ?? "My Store"}
                             lang={activeLang}
+                            configLang={sdkConfig.lang}
                         />
                     </PreviewWrapper>
 

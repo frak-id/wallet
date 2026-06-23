@@ -1,4 +1,5 @@
-import type { Currency } from "@frak-labs/core-sdk";
+import { componentDefaults } from "@frak-labs/components/i18n/defaults";
+import type { Currency, Language } from "@frak-labs/core-sdk";
 import {
     Tabs,
     TabsList,
@@ -17,6 +18,7 @@ import * as styles from "./customize.css";
 import { BannerFields } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
 import { PostPurchaseFields } from "./fields/PostPurchaseFields";
+import { resolveBuiltInLang, resolvePreviewWording } from "./localizable";
 import { COMPONENT_LABEL_KEYS } from "./translations";
 import type {
     ComponentSettingsFormValues,
@@ -152,20 +154,27 @@ export function ComponentPreview({
     currency,
     shopName,
     lang,
+    configLang,
 }: {
     selectedComponent: ComponentType;
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
     shopName: string;
     lang: WordingLang;
+    configLang: Language | null | undefined;
 }) {
     const values = form.watch();
+    const defaults = componentDefaults[resolveBuiltInLang(lang, configLang)];
 
     switch (selectedComponent) {
         case "buttonShare":
             return (
                 <ShareButtonPreview
-                    text={values.buttonShare.text[lang] || "Share and earn!"}
+                    text={resolvePreviewWording(
+                        values.buttonShare.text,
+                        lang,
+                        defaults.buttonShare.text
+                    )}
                     currency={currency}
                     shopName={shopName}
                 />
@@ -173,14 +182,16 @@ export function ComponentPreview({
         case "postPurchase":
             return (
                 <PostPurchasePreview
-                    messageText={
-                        values.postPurchase.refereeText[lang] ||
-                        "You just earned {REWARD}! Share with friends to earn even more."
-                    }
-                    ctaText={
-                        values.postPurchase.ctaText[lang] ||
-                        "Share & earn {REWARD}"
-                    }
+                    messageText={resolvePreviewWording(
+                        values.postPurchase.refereeText,
+                        lang,
+                        defaults.postPurchase.refereeText
+                    )}
+                    ctaText={resolvePreviewWording(
+                        values.postPurchase.ctaText,
+                        lang,
+                        defaults.postPurchase.ctaText
+                    )}
                     currency={currency}
                     shopName={shopName}
                 />
@@ -188,15 +199,21 @@ export function ComponentPreview({
         case "banner":
             return (
                 <BannerPreview
-                    title={
-                        values.banner.referralTitle[lang] ||
-                        "Earn {REWARD} on purchases"
-                    }
-                    description={
-                        values.banner.referralDescription[lang] ||
-                        "Earn rewards after your purchase via the Frak partner app."
-                    }
-                    ctaText={values.banner.referralCta[lang] || "Got it"}
+                    title={resolvePreviewWording(
+                        values.banner.referralTitle,
+                        lang,
+                        defaults.banner.referralTitleReward
+                    )}
+                    description={resolvePreviewWording(
+                        values.banner.referralDescription,
+                        lang,
+                        defaults.banner.referralDescription
+                    )}
+                    ctaText={resolvePreviewWording(
+                        values.banner.referralCta,
+                        lang,
+                        defaults.banner.referralCta
+                    )}
                     currency={currency}
                     shopName={shopName}
                 />

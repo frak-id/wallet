@@ -66,6 +66,12 @@
       "import": "./dist/banner.js",
       "types": "./dist/banner.d.ts"
     },
+    "./i18n/defaults": {
+      "development": "./src/i18n/defaults.ts",
+      "production": "./src/i18n/defaults.ts",
+      "import": "./dist/i18n/defaults.js",
+      "types": "./dist/i18n/defaults.d.ts"
+    },
     "./cdn": {
       "import": "./cdn/components.js"
     },

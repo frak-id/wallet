@@ -1,5 +1,6 @@
 import type { LocalizableString } from "@frak-labs/backend-elysia/domain/merchant";
-import type { LocalizedText } from "./types";
+import type { Language } from "@frak-labs/core-sdk";
+import type { LocalizedText, WordingLang } from "./types";
 
 /**
  * Stored config value -> editable tier inputs. A bare string loads into the
@@ -39,4 +40,32 @@ export function fromLocalizedText(
         ...(en && { en }),
         ...(fr && { fr }),
     };
+}
+
+/**
+ * Preview wording for a tab: backend `resolveLocalizable` cascade (selected tier
+ * -> default -> en -> fr), then the SDK built-in default. `||` not `??` because a
+ * blank tier (empty string) means "not set".
+ */
+export function resolvePreviewWording(
+    value: LocalizedText,
+    lang: WordingLang,
+    builtInDefault: string
+): string {
+    return (
+        value[lang] || value.default || value.en || value.fr || builtInDefault
+    );
+}
+
+/**
+ * Language used to look up the SDK built-in default. `en`/`fr` map directly; the
+ * language-agnostic `default` tab borrows the merchant's identity language,
+ * falling back to English like the SDK's `useLang`.
+ */
+export function resolveBuiltInLang(
+    lang: WordingLang,
+    configLang: Language | null | undefined
+): Language {
+    if (lang === "en" || lang === "fr") return lang;
+    return configLang ?? "en";
 }
