@@ -4,14 +4,14 @@ import type {
     OriginIdentityNode,
 } from "@frak-labs/wallet-shared/pairing";
 import { LaunchPairing } from "@frak-labs/wallet-shared/pairing";
-import { type ElementType, useMemo, useState } from "react";
+import { type ElementType, type ReactNode, useMemo, useState } from "react";
 import { useStore } from "zustand/react";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import * as styles from "./index.css";
 
 type AuthenticateWithPhoneProps = {
     as?: ElementType;
-    text: string;
+    text: ReactNode;
     className?: string;
     width?: "auto" | "full";
     onSuccess?: OnPairingSuccessCallback;

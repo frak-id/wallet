@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { FinalStep } from "@/module/final/component/FinalStep";
 import { FullDialog } from "@/module/full/component/FullDialog";
 import { ProductInfo } from "@/module/productInfo/component/WalletStatus";
 import { Sso } from "@/module/sso/component/WalletStatus";
@@ -21,6 +22,7 @@ function Home() {
             <Sso />
             <WalletLogin />
             <SendTransaction />
+            <FinalStep />
         </div>
     );
 }

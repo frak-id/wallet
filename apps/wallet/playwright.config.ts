@@ -42,7 +42,9 @@ export default defineConfig({
     reporter: "html",
     use: {
         baseURL: config.baseURL,
-        trace: "on-first-retry",
+        // Retain a full trace (network + console) on failure even without
+        // retries, so setup/auth failures are diagnosable from the report.
+        trace: "retain-on-failure",
         screenshot: "only-on-failure",
     },
     projects: [
@@ -50,6 +52,13 @@ export default defineConfig({
             name: "setup",
             use: { ...devices["Desktop Chrome"] },
             testMatch: /global\.setup\.ts/,
+        },
+        {
+            // Separate setup for the cross-device pairing state so its more
+            // fragile flow only gates the paired suite.
+            name: "setup-paired",
+            use: { ...devices["Desktop Chrome"] },
+            testMatch: /global-paired\.setup\.ts/,
         },
         {
             name: "chromium-on-device",
@@ -68,8 +77,19 @@ export default defineConfig({
                 storageState: PAIRED_STORAGE_STATE,
                 permissions: ["clipboard-read"],
             },
-            dependencies: ["setup"],
+            dependencies: ["setup-paired"],
             testMatch: ["**/*pairing*.spec.ts", "**/*all*.spec.ts"],
+        },
+        {
+            // Logged-out context (no storageState) for flows that must start
+            // unauthenticated — e.g. the modal login step. Self-contained: the
+            // specs mock WebAuthn + `/auth/login`, so no `setup` dependency.
+            name: "chromium-fresh",
+            use: {
+                ...devices["Desktop Chrome"],
+                permissions: ["clipboard-read"],
+            },
+            testMatch: ["**/*fresh*.spec.ts"],
         },
     ],
     // We don't use the `webserver` since we rely on the sst multiplexer here

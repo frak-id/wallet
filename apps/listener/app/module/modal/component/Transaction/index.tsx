@@ -1,8 +1,14 @@
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { DEEP_LINK_SCHEME } from "@frak-labs/core-sdk";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared/authentication";
 import {
     type Flow,
-    HandleErrors,
+    prefixModalCss,
     startFlow,
     ua,
     useMountedTimeout,
@@ -13,11 +19,9 @@ import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/mul
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useConnection, useSendTransaction } from "wagmi";
 import { useStore } from "zustand";
-import { ButtonAuth } from "@/module/component/ButtonAuth";
 import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
 import { AccordionTransactions } from "@/module/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/ui/ListenerUiProvider";
-import * as styles from "./index.css";
 
 const mobileWalletDeepLink = `${DEEP_LINK_SCHEME}wallet`;
 
@@ -126,33 +130,37 @@ function DesktopTransactionStep({
     toSendTx,
     sendTransaction,
     isPending,
-    isError,
     error,
 }: TransactionStepProps) {
     const { t } = useListenerTranslation();
+
+    // Surface signing errors in the top modal toast (same UX as the wallet app).
+    useWebauthnErrorToast(error, {
+        operation: "sign",
+        onRetry: () => sendTransaction(toSendTx),
+    });
 
     return (
         <>
             <AccordionTransactions txs={txs} />
 
-            <ButtonAuth
-                size={"small"}
-                width={"full"}
-                disabled={isPending}
-                onClick={() => sendTransaction(toSendTx)}
-            >
-                {t("sdk.modal.sendTransaction.primaryAction", {
-                    count: txs.length,
-                })}
-            </ButtonAuth>
-
-            {isError && error && (
-                <HandleErrors
-                    error={error}
-                    operation="sign"
-                    onRetry={() => sendTransaction(toSendTx)}
-                />
-            )}
+            <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
+                <Button
+                    variant="primary"
+                    size="large"
+                    icon={isPending ? <Spinner size="s" /> : undefined}
+                    aria-busy={isPending}
+                    className={prefixModalCss("button-primary")}
+                    onClick={() => {
+                        if (isPending) return;
+                        sendTransaction(toSendTx);
+                    }}
+                >
+                    {t("sdk.modal.sendTransaction.primaryAction", {
+                        count: txs.length,
+                    })}
+                </Button>
+            </Stack>
         </>
     );
 }
@@ -210,23 +218,37 @@ function MobileTransactionStep({
         }
     }, [isPending, isError, status, clearTxTimeout]);
 
+    // Surface signing errors in the top modal toast (same UX as the wallet app).
+    useWebauthnErrorToast(error, {
+        operation: "sign",
+        onRetry: triggerTransaction,
+    });
+
     if (appNotFound) {
         return (
-            <div className={styles.mobileTx__appNotFound}>
-                <p className={styles.mobileTx__appNotFoundText}>
-                    {t("mobile-tx.appNotFound")}
-                </p>
-                <p className={styles.mobileTx__appNotFoundHint}>
-                    {t("mobile-tx.appNotFoundHint")}
-                </p>
-                <button
-                    type="button"
-                    onClick={() => setAppNotFound(false)}
-                    className={styles.mobileTx__retryButton}
-                >
-                    {t("mobile-tx.retry")}
-                </button>
-            </div>
+            <Card variant="secondary" radius="m" padding="default">
+                <Stack space="m" align="center">
+                    <Stack space="xs" align="center">
+                        <Text variant="body" weight="semiBold" align="center">
+                            {t("mobile-tx.appNotFound")}
+                        </Text>
+                        <Text
+                            variant="bodySmall"
+                            color="secondary"
+                            align="center"
+                        >
+                            {t("mobile-tx.appNotFoundHint")}
+                        </Text>
+                    </Stack>
+                    <Button
+                        variant="secondary"
+                        size="large"
+                        onClick={() => setAppNotFound(false)}
+                    >
+                        {t("mobile-tx.retry")}
+                    </Button>
+                </Stack>
+            </Card>
         );
     }
 
@@ -234,53 +256,52 @@ function MobileTransactionStep({
         <>
             <AccordionTransactions txs={txs} />
 
-            <ButtonAuth
-                size={"small"}
-                width={"full"}
-                disabled={isPending}
-                onClick={triggerTransaction}
-            >
-                {t("mobile-tx.sendTransaction")}
-            </ButtonAuth>
+            <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
+                <Button
+                    variant="primary"
+                    size="large"
+                    icon={isPending ? <Spinner size="s" /> : undefined}
+                    aria-busy={isPending}
+                    className={prefixModalCss("button-primary")}
+                    onClick={() => {
+                        if (isPending) return;
+                        triggerTransaction();
+                    }}
+                >
+                    {t("mobile-tx.sendTransaction")}
+                </Button>
+            </Stack>
 
             {/* Waiting state - show after user triggered tx + deep link */}
             {isPending && status === "waiting" && (
-                <div className={styles.mobileTx__statusContainer}>
-                    <p className={styles.mobileTx__statusText}>
+                <Stack space="xs" align="center">
+                    <Text variant="bodySmall" align="center">
                         {t("mobile-tx.waiting")}
-                    </p>
-                    <button
-                        type="button"
+                    </Text>
+                    <Button
+                        variant="ghost"
+                        size="small"
                         onClick={() => emitDeepLink(true)}
-                        className={styles.mobileTx__reopenLink}
                     >
                         {t("mobile-tx.reopenWallet")}
-                    </button>
-                </div>
+                    </Button>
+                </Stack>
             )}
 
             {/* Timeout state */}
             {status === "timeout" && (
-                <div className={styles.mobileTx__statusContainer}>
-                    <p className={styles.mobileTx__timeoutText}>
+                <Stack space="m" align="center">
+                    <Text variant="bodySmall" color="error" align="center">
                         {t("mobile-tx.timeout")}
-                    </p>
-                    <button
-                        type="button"
+                    </Text>
+                    <Button
+                        variant="secondary"
+                        size="large"
                         onClick={triggerTransaction}
-                        className={styles.mobileTx__retryButton}
                     >
                         {t("mobile-tx.retry")}
-                    </button>
-                </div>
-            )}
-
-            {isError && error && (
-                <HandleErrors
-                    error={error}
-                    operation="sign"
-                    onRetry={triggerTransaction}
-                />
+                    </Button>
+                </Stack>
             )}
         </>
     );

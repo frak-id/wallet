@@ -1,4 +1,9 @@
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { ConfirmationTooltip } from "@frak-labs/design-system/components/ConfirmationTooltip";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
+import { CopyIcon, ShareIcon } from "@frak-labs/design-system/icons";
 import {
     prefixModalCss,
     trackEvent,
@@ -10,12 +15,9 @@ import {
 } from "@frak-labs/wallet-shared/sharing";
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { Copy, Share } from "lucide-react";
-import { useMemo } from "react";
-import { toast } from "sonner";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "zustand";
-import { ButtonAction } from "@/module/modal/component/ButtonAction";
-import * as styles from "@/module/modal/component/Modal/index.css";
+import * as styles from "@/module/modal/component/Final/index.css";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { useListenerTranslation } from "@/ui/ListenerUiProvider";
@@ -42,29 +44,30 @@ export function FinalModalActionComponent({
     }
 
     return (
-        <button
-            type={"button"}
-            className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
-            onClick={() => {
-                onFinish({});
-                trackEvent("modal_dismissed", {
-                    last_step: "final",
-                    completed: true,
-                    source: "final_action",
-                });
-            }}
-        >
-            {t("sdk.modal.dismiss.primaryAction")}
-        </button>
+        <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
+            <Button
+                variant="primary"
+                size="large"
+                className={prefixModalCss("button-primary")}
+                onClick={() => {
+                    onFinish({});
+                    trackEvent("modal_dismissed", {
+                        last_step: "final",
+                        completed: true,
+                        source: "final_action",
+                    });
+                }}
+            >
+                {t("sdk.modal.dismiss.primaryAction")}
+            </Button>
+        </Stack>
     );
 }
 
 /**
  * Sharing buttons component
- * @param shareWithFrak
+ * @param isModalSuccess
  * @param link
- * @param popupTitle
- * @param text
  */
 function SharingButtons({
     isModalSuccess,
@@ -79,6 +82,14 @@ function SharingButtons({
     const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
     const { mutate: trackSharing } = useTrackSharing();
+
+    // Shared "copied / shared" confirmation pill, auto-hidden after 2s.
+    const [confirmation, setConfirmation] = useState<string | null>(null);
+    useEffect(() => {
+        if (!confirmation) return;
+        const timer = setTimeout(() => setConfirmation(null), 2000);
+        return () => clearTimeout(timer);
+    }, [confirmation]);
     const defaultAttribution = useStore(
         resolvingContextStore,
         (s) => s.backendSdkConfig?.attribution
@@ -119,40 +130,58 @@ function SharingButtons({
             source: "modal",
             merchantId,
             onShared: () => trackSharing(),
-            onSuccess: (message) => {
-                message && toast.success(message as string);
+            onSuccess: (didShare) => {
+                if (didShare) {
+                    setConfirmation(t("sharing.btn.shareSuccess"));
+                }
             },
         }
     );
 
     return (
-        <div className={styles.modalListener__sharingButtons}>
-            <ButtonAction
-                onClick={async () => {
-                    if (!finalSharingLink) return;
-                    copy(finalSharingLink);
-                    trackEvent("sharing_link_copied", {
-                        source: "modal",
-                        merchant_id: merchantId,
-                        link: finalSharingLink,
-                    });
-                    trackSharing();
-                    toast.success(t("sharing.btn.copySuccess"));
-                }}
-            >
-                <Copy size={32} absoluteStrokeWidth={true} />
-                {t("sharing.btn.copy")}
-            </ButtonAction>
-            <ButtonAction
-                disabled={isSharing}
-                onClick={() => {
-                    if (!finalSharingLink) return;
-                    triggerSharing();
-                }}
-            >
-                <Share size={32} absoluteStrokeWidth={true} />{" "}
-                {t("sharing.btn.share")}
-            </ButtonAction>
-        </div>
+        <>
+            {confirmation && (
+                <ToastSurface
+                    placement="top-center"
+                    className={styles.copiedToast}
+                >
+                    <ConfirmationTooltip>{confirmation}</ConfirmationTooltip>
+                </ToastSurface>
+            )}
+            <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
+                <Button
+                    variant="primary"
+                    size="large"
+                    icon={<ShareIcon width={24} height={24} />}
+                    disabled={isSharing}
+                    className={prefixModalCss("button-primary")}
+                    onClick={() => {
+                        if (!finalSharingLink) return;
+                        triggerSharing();
+                    }}
+                >
+                    {t("sharing.btn.share")}
+                </Button>
+                <Button
+                    variant="secondary"
+                    size="large"
+                    icon={<CopyIcon width={24} height={24} />}
+                    className={prefixModalCss("button-secondary")}
+                    onClick={async () => {
+                        if (!finalSharingLink) return;
+                        copy(finalSharingLink);
+                        trackEvent("sharing_link_copied", {
+                            source: "modal",
+                            merchant_id: merchantId,
+                            link: finalSharingLink,
+                        });
+                        trackSharing();
+                        setConfirmation(t("sharing.btn.copySuccess"));
+                    }}
+                >
+                    {t("sharing.btn.copy")}
+                </Button>
+            </Stack>
+        </>
     );
 }

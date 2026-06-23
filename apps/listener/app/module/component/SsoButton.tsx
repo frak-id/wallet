@@ -64,7 +64,7 @@ export function SsoButton({
 }: {
     merchantId: Hex;
     ssoMetadata: SsoMetadata;
-    text: string;
+    text: ReactNode;
     className?: string;
 }) {
     // Get the current listener context (with a request)

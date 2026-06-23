@@ -18,7 +18,6 @@ export const launchPairing = style({
 });
 
 export const launchPairing__status = style({
-    marginTop: "8px",
     textAlign: "center",
 });
 

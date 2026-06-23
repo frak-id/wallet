@@ -161,7 +161,34 @@ export class MockedWebAuthNHelper {
                         rawId: response.rawId,
                         authenticatorAttachment:
                             response.authenticatorAttachment,
-                        toJSON: () => ({}) as RegistrationResponseJSON,
+                        // `useRegister` encodes the credential via
+                        // `JSON.stringify`, which invokes `toJSON()`. The real
+                        // browser returns the full RegistrationResponseJSON;
+                        // returning `{}` here makes the backend reject the
+                        // registration ("Missing credential ID").
+                        toJSON: () =>
+                            ({
+                                id: response.id,
+                                rawId: response.id,
+                                type: response.type,
+                                authenticatorAttachment:
+                                    response.authenticatorAttachment,
+                                response: {
+                                    clientDataJSON:
+                                        response.response.clientDataJSON,
+                                    attestationObject:
+                                        response.response.attestationObject,
+                                    transports: response.response.transports,
+                                    publicKeyAlgorithm:
+                                        response.response.publicKeyAlgorithm,
+                                    publicKey: response.response.publicKey,
+                                    authenticatorData:
+                                        response.response.authenticatorData,
+                                },
+                                clientExtensionResults: {
+                                    credProps: { rk: true },
+                                },
+                            }) as RegistrationResponseJSON,
                         response: {
                             attestationObject: base64URLStringToBuffer(
                                 response.response.attestationObject
@@ -258,8 +285,11 @@ export class MockedWebAuthNHelper {
         COSEKey.set(1, EC2_TYPE); // Key type: EC2
         COSEKey.set(3, EC2_SHA256_ALGO); // Algorithm: ECDSA w/ SHA-256
         COSEKey.set(-1, 1); // Curve: P-256
-        COSEKey.set(-2, x);
-        COSEKey.set(-3, y);
+        // Buffers (not Uint8Arrays) so node-cbor emits plain byte strings —
+        // a raw Uint8Array becomes a CBOR tagged typed array (tag 64), which
+        // makes the verifier's `importKey` reject the coordinates.
+        COSEKey.set(-2, Buffer.from(x));
+        COSEKey.set(-3, Buffer.from(y));
 
         const cbor = await import("cbor");
         return cbor.default.encodeOne(COSEKey);

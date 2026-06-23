@@ -22,8 +22,8 @@ export default interface Resources {
           "description": "Login to your Frak account to get the best experience on **{{productName}}**",
           "description_reward": "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
           "description_sharing": "{{productName}} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
-          "primaryAction": "I create my wallet under 30sec",
-          "secondaryAction": "Use a QR code to connect",
+          "primaryAction": "Create my account in 30 sec",
+          "secondaryAction": "Use a QR code",
           "success": "Connection successful",
           "title": "Connection"
         },
@@ -34,6 +34,7 @@ export default interface Resources {
           "title": "Transaction"
         },
         "siweAuthenticate": {
+          "connectingTo": "Secure connection to {{productName}} ({{domain}})",
           "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
           "primaryAction": "Authenticate",
           "title": "Authentication"
@@ -892,6 +893,7 @@ export default interface Resources {
         "refresh": "Retry",
         "refreshCode": "Code:",
         "refreshReason": "Reason:",
+        "scanDescription": "Scan this QR code to sign in from your mobile.",
         "signatureRequest": {
           "banner": {
             "cta": "Review",

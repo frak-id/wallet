@@ -25,7 +25,8 @@ import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { ListenerUiProvider } from "@/ui/ListenerUiProvider";
 import { ListenerUiRenderer } from "@/ui/ListenerUiRenderer";
 import { RootProvider } from "@/ui/RootProvider";
-import "@/styles/all.css";
+import "@frak-labs/design-system/global";
+import "@/styles/global.css";
 
 let mounted = false;
 

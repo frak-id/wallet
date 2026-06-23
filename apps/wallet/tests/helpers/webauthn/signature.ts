@@ -64,17 +64,23 @@ export async function getRegistrationResponse(
     // Client data hash
     const clientDataHash = createHash("sha256").update(clientDataJSON).digest();
     const verifyData = Buffer.concat([authData, clientDataHash]);
-    const digest = createHash("sha256").update(verifyData).digest();
 
-    // Sign it
-    const signature = p256.sign(digest, authenticator.privateKey, {
+    // Sign with a single SHA-256 via `prehash`. Hashing first and signing the
+    // digest double-hashes — the verifier (WebCrypto / ox) hashes the raw data
+    // once, so the signature must be over sha256(verifyData).
+    const signature = p256.sign(verifyData, authenticator.privateKey, {
         format: "der",
+        prehash: true,
     });
 
     // Build the attestation object
     const attestationStmtMap = new Map<string, number | Uint8Array>();
     attestationStmtMap.set("alg", EC2_SHA256_ALGO);
-    attestationStmtMap.set("sig", signature);
+    // node-cbor encodes a plain Uint8Array as a tagged typed array (CBOR
+    // tag 64), which @simplewebauthn does not unwrap — it then reads an empty
+    // signature ("Input buffer has zero length"). A Buffer encodes as a plain
+    // CBOR byte string, which the verifier handles.
+    attestationStmtMap.set("sig", Buffer.from(signature));
 
     const attestationObjMap = new Map<
         string,
@@ -97,9 +103,17 @@ export async function getRegistrationResponse(
             attestationObject:
                 Buffer.from(attestationObject).toString("base64url"),
             clientDataJSON: Buffer.from(clientDataJSON).toString("base64url"),
-            publicKey: Buffer.from(authenticator.publicKey).toString(
-                "base64url"
-            ),
+            // `AuthenticatorAttestationResponse.getPublicKey()` must return a
+            // DER SubjectPublicKeyInfo (SPKI) — ox feeds it straight into
+            // `crypto.subtle.importKey("spki", …)`. Prepend the standard P-256
+            // SPKI header to the raw uncompressed key (0x04‖x‖y).
+            publicKey: Buffer.concat([
+                Buffer.from(
+                    "3059301306072a8648ce3d020106082a8648ce3d030107034200",
+                    "hex"
+                ),
+                Buffer.from(authenticator.publicKey),
+            ]).toString("base64url"),
             publicKeyAlgorithm: EC2_SHA256_ALGO,
             transports: ["internal"],
             authenticatorData: Buffer.from(authData).toString("base64url"),
@@ -157,11 +171,13 @@ export function getAuthenticationResponse(
     // Client data hash
     const clientDataHash = createHash("sha256").update(clientDataJSON).digest();
     const verifyData = Buffer.concat([authData, clientDataHash]);
-    const digest = createHash("sha256").update(verifyData).digest();
 
-    // Sign it
-    const signature = p256.sign(digest, authenticator.privateKey, {
+    // Sign with a single SHA-256 via `prehash`. Hashing first and signing the
+    // digest double-hashes — the verifier (WebCrypto / ox) hashes the raw data
+    // once, so the signature must be over sha256(verifyData).
+    const signature = p256.sign(verifyData, authenticator.privateKey, {
         format: "der",
+        prehash: true,
     });
 
     return {

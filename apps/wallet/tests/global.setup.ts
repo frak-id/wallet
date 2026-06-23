@@ -1,7 +1,4 @@
-import {
-    ON_DEVICE_STORAGE_STATE,
-    PAIRED_STORAGE_STATE,
-} from "../playwright.config";
+import { ON_DEVICE_STORAGE_STATE } from "../playwright.config";
 import { test } from "./fixtures";
 
 /**
@@ -17,12 +14,14 @@ test("Log with mocked webauthn", async ({ page, mockedWebAuthN, authPage }) => {
     await authPage.verifyLoginReady();
     await authPage.clickLogin();
 
-    // Wait 2sec for a potential url change page
+    // Wait for a potential url change to the wallet (login success). Give the
+    // WebAuthn ceremony + backend round-trip enough time on remote envs before
+    // falling back to registration.
     try {
-        await page.waitForURL("/wallet", {
-            timeout: 2_000,
-            waitUntil: "networkidle",
-        });
+        // Detect login success by the URL change only. `networkidle` never
+        // settles on /wallet (live sockets + balance polling), which would
+        // make the probe miss a successful login and fall into registration.
+        await page.waitForURL("/wallet", { timeout: 10_000 });
         await page.context().storageState({ path: ON_DEVICE_STORAGE_STATE });
         return;
     } catch (_e) {
@@ -36,7 +35,11 @@ test("Log with mocked webauthn", async ({ page, mockedWebAuthN, authPage }) => {
     await authPage.verifyRegistrationReady();
     await authPage.clickRegister();
 
-    // After WebAuthn: notification auto-skipped → welcome screen
+    // Post-registration onboarding steps (each skipped if auto-advanced)
+    await authPage.skipReferralIfPresent();
+    await authPage.skipNotificationIfPresent();
+
+    // Welcome screen
     await authPage.verifyWelcomeScreen();
     await authPage.clickContinueOnWelcome();
 
@@ -45,54 +48,4 @@ test("Log with mocked webauthn", async ({ page, mockedWebAuthN, authPage }) => {
 
     // Save the state in storage
     await page.context().storageState({ path: ON_DEVICE_STORAGE_STATE });
-});
-
-/**
- * Setup the wallet for the global tests
- *  - If mocked webauthn not registered yet, register it
- *  - Otherwise, do a login to ensure the wallet is registered
- */
-test("Log with paired wallet", async ({
-    page,
-    pairingTab,
-    authPage,
-    backendApi,
-}) => {
-    await pairingTab.setup();
-
-    // Setup pairing interceptor
-    let pairingId: string | undefined;
-    let pairingCode: string | undefined;
-    await backendApi.interceptWebsocketAuthMessage({
-        onServerMsg: (message) => {
-            // Intercept pairing id + code
-            const msgPayload = JSON.parse(message as string);
-            if (msgPayload.type === "pairing-initiated") {
-                pairingId = msgPayload.payload.pairingId;
-                pairingCode = msgPayload.payload.pairingCode;
-            }
-        },
-    });
-
-    // Go to registration and advance to Keypass step (where QR code button is)
-    await authPage.navigateToRegister();
-    await authPage.verifyRegistrationReady();
-    await authPage.navigateToKeypass();
-
-    // Startup a pairing flow
-    await authPage.clickPairing();
-    await authPage.verifyPairingReady();
-
-    if (!pairingId || !pairingCode) {
-        throw new Error("Pairing ID or code is not defined");
-    }
-
-    // Confirm pairing in the pairing tab
-    await pairingTab.confirmPairing(pairingId, pairingCode);
-
-    // Ensure that the wallet is authenticated
-    await authPage.verifyWalletPage();
-
-    // Save the state in storage
-    await page.context().storageState({ path: PAIRED_STORAGE_STATE });
 });

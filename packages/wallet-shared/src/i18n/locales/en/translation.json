@@ -751,6 +751,7 @@
                 "device": "Device"
             },
             "code": "Check that the code is correct",
+            "scanDescription": "Scan this QR code to sign in from your mobile.",
             "noCodeNotice": "Confirm this pairing request to continue.",
             "error": {
                 "title": "Invalid pairing request",
