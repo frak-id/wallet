@@ -1,5 +1,12 @@
 # @frak-labs/ui-preview
 
+## 0.0.9
+
+### Patch Changes
+
+- Updated dependencies [[`51c75cc`](https://github.com/frak-id/wallet/commit/51c75ccb58e021af89f3d06006b318f511ffc2c2), [`fa88de8`](https://github.com/frak-id/wallet/commit/fa88de8c22db74b58506f503dbd0f6255c1ba25f)]:
+  - @frak-labs/core-sdk@1.1.5
+
 ## 0.0.8
 
 ### Patch Changes

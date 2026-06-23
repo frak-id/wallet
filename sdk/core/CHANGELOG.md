@@ -1,5 +1,13 @@
 # @frak-labs/core-sdk
 
+## 1.1.5
+
+### Patch Changes
+
+- [#247](https://github.com/frak-id/wallet/pull/247) [`51c75cc`](https://github.com/frak-id/wallet/commit/51c75ccb58e021af89f3d06006b318f511ffc2c2) Thanks [@KONFeature](https://github.com/KONFeature)! - ⚡ Dynamically build the listener iframe `#preload=…` hash from the Frak components actually mounted on the page. Pages without any `frak-*` element skip the preload hint entirely; pages with one or more components push `preload=sharing`. `createIframe` now honours `config.preload` so any `setupClient` consumer benefits from the same behaviour.
+
+- [#247](https://github.com/frak-id/wallet/pull/247) [`fa88de8`](https://github.com/frak-id/wallet/commit/fa88de8c22db74b58506f503dbd0f6255c1ba25f) Thanks [@KONFeature](https://github.com/KONFeature)! - Normalise OpenPanel analytics property keys to snake_case so they match the per-event convention (`merchant_id`, `flow_id`, `has_reward`) already used elsewhere in the codebase and by the backend filters. Renamed: `merchantId` → `merchant_id`, `sdkVersion` → `sdk_version`, `userAnonymousClientId` → `user_anonymous_client_id`, `referrerClientId` → `referrer_client_id`, `referrerWallet` → `referrer_wallet`, `walletStatus` → `wallet_status`. Fixes the backend's `properties.merchant_id` filter silently missing every SDK-emitted event (banner_impression, post_purchase_impression, share_button_clicked, sdk_initialized, sdk_iframe_connected, sdk_iframe_handshake_failed, user_referred_started).
+
 ## 1.1.4
 
 ### Patch Changes
