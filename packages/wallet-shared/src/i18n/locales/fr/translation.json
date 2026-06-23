@@ -1253,6 +1253,7 @@
             "immediate": "Immédiate",
             "pendingDays": "{{count}} jour",
             "pendingDays_other": "{{count}} jours",
+            "minPurchase": "Achat minimum",
             "instructions": "Instructions",
             "step1Title": "Partage un article à tes ami·e·s",
             "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",

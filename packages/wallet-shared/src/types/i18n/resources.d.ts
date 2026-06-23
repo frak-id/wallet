@@ -267,6 +267,7 @@ export default interface Resources {
         "immediate": "Immediate",
         "instructions": "Instructions",
         "legal": "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.",
+        "minPurchase": "Minimum purchase",
         "pendingDays": "{{count}} day",
         "pendingDays_other": "{{count}} days",
         "readMore": "Read more",

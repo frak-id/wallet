@@ -1,6 +1,11 @@
-import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
+import type {
+    ConditionGroup,
+    EstimatedRewardItem,
+    RuleCondition,
+    RuleConditions,
+} from "@frak-labs/backend-elysia/domain/campaign";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
-import type { EstimatedReward } from "@frak-labs/core-sdk";
+import { type EstimatedReward, formatAmount } from "@frak-labs/core-sdk";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -335,6 +340,7 @@ type RewardSummary = {
     daysRemaining?: number | null;
     isImmediate: boolean;
     pendingDays?: number;
+    minPurchaseAmount?: string;
 };
 
 type RewardAccumulator = {
@@ -344,6 +350,7 @@ type RewardAccumulator = {
     bestRefereeValue: number;
     earliestExpiry?: string;
     minPendingDays?: number;
+    minPurchaseAmount?: number;
 };
 
 function accumulateReward(
@@ -375,10 +382,62 @@ function accumulateReward(
             reward.defaultLockupSeconds != null
                 ? Math.min(
                       acc.minPendingDays ?? Number.POSITIVE_INFINITY,
-                      Math.floor(reward.defaultLockupSeconds / 1440) // seconds -> day (60/60/24)
+                      Math.floor(reward.defaultLockupSeconds / 86400) // seconds -> day (60/60/24)
                   )
                 : acc.minPendingDays,
+        minPurchaseAmount: foldMinPurchaseAmount(
+            acc.minPurchaseAmount,
+            findMinPurchaseAmount(reward.conditions)
+        ),
     };
+}
+
+const MIN_PURCHASE_OPERATORS: ReadonlySet<RuleCondition["operator"]> = new Set([
+    "gt",
+    "gte",
+    "between",
+]);
+
+function foldMinPurchaseAmount(
+    current: number | undefined,
+    candidate: number | undefined
+): number | undefined {
+    if (candidate == null) return current;
+    return current == null ? candidate : Math.min(current, candidate);
+}
+
+function conditionValueToNumber(
+    value: RuleCondition["value"]
+): number | undefined {
+    if (typeof value === "number") return value;
+    if (typeof value === "string" && value.trim() !== "") {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+}
+
+// Minimum spend is encoded as a `purchase.amount` rule condition, nested in
+// either a flat list or recursive groups — walk both for the lowest threshold.
+function findMinPurchaseAmount(conditions: RuleConditions): number | undefined {
+    const nodes: Array<RuleCondition | ConditionGroup> = Array.isArray(
+        conditions
+    )
+        ? conditions
+        : conditions.conditions;
+
+    let min: number | undefined;
+    for (const node of nodes) {
+        const candidate =
+            "logic" in node
+                ? findMinPurchaseAmount(node)
+                : node.field === "purchase.amount" &&
+                    MIN_PURCHASE_OPERATORS.has(node.operator)
+                  ? conditionValueToNumber(node.value)
+                  : undefined;
+        min = foldMinPurchaseAmount(min, candidate);
+    }
+    return min;
 }
 
 function buildRewardSummary(
@@ -406,6 +465,10 @@ function buildRewardSummary(
             : undefined,
         isImmediate: acc.minPendingDays == null || acc.minPendingDays === 0,
         pendingDays: acc.minPendingDays,
+        minPurchaseAmount:
+            acc.minPurchaseAmount != null && acc.minPurchaseAmount > 0
+                ? formatAmount(acc.minPurchaseAmount)
+                : undefined,
     };
 }
 
@@ -535,6 +598,18 @@ function CampaignInfoSection({
                         </Text>
                     }
                 />
+                {rewardSummary.minPurchaseAmount && (
+                    <InfoRow
+                        labelVariant="bodySmall"
+                        labelColor="secondary"
+                        label={t("explorer.detail.minPurchase")}
+                        action={
+                            <Text variant="bodySmall" weight="medium">
+                                {rewardSummary.minPurchaseAmount}
+                            </Text>
+                        }
+                    />
+                )}
             </InfoCard>
 
             <InstructionList
