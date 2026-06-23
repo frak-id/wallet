@@ -15,7 +15,7 @@
  * cheap; when the modal actually opens, `React.lazy` resolves synchronously
  * from the in-flight or settled promise.
  */
-export function preloadModalChunks() {
+function preloadModalChunks() {
     // Auth/recovery — Keypass fires on login + post-onboarding flows
     void import("@/module/onboarding/component/Keypass");
     // Email-login dead-end: opened from /login/email when no wallet is

@@ -65,5 +65,3 @@ export function NumericYAxis({
 }
 
 NumericYAxis.displayName = "NumericYAxis";
-
-export default NumericYAxis;

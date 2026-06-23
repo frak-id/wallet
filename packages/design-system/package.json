@@ -22,7 +22,6 @@
     "./assets/iphone.webp": "./src/assets/iphone.webp"
   },
   "dependencies": {
-    "@number-flow/react": "^0.6.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.13",
     "@radix-ui/react-checkbox": "^1.1.4",
@@ -40,10 +39,8 @@
     "@vanilla-extract/sprinkles": "^1.6.5",
     "@visx/curve": "4.0.1-alpha.0",
     "@visx/event": "4.0.1-alpha.0",
-    "@visx/gradient": "4.0.1-alpha.0",
     "@visx/grid": "4.0.1-alpha.0",
     "@visx/group": "4.0.1-alpha.0",
-    "@visx/pattern": "4.0.1-alpha.0",
     "@visx/responsive": "4.0.1-alpha.0",
     "@visx/scale": "4.0.1-alpha.0",
     "@visx/shape": "4.0.1-alpha.0",

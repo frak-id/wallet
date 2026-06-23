@@ -43,5 +43,3 @@ export function SeriesHighlightLayer({
 }
 
 SeriesHighlightLayer.displayName = "SeriesHighlightLayer";
-
-export default SeriesHighlightLayer;

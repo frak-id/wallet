@@ -14,7 +14,7 @@ import type {
     MoneriumTokenResponse,
 } from "@/module/monerium/utils/moneriumTypes";
 
-export class MoneriumApiError extends Error {
+class MoneriumApiError extends Error {
     constructor(
         public readonly status: number,
         message: string
@@ -97,7 +97,7 @@ export async function exchangeCodeForTokens(
  * Coalesces concurrent callers onto a single in-flight refresh promise so we
  * never fire two `/auth/token` requests in parallel.
  */
-export async function refreshAccessToken(): Promise<void> {
+async function refreshAccessToken(): Promise<void> {
     if (activeRefresh) return activeRefresh;
     activeRefresh = doRefreshWithBackoff().finally(() => {
         activeRefresh = null;
@@ -286,9 +286,4 @@ export async function getOrders(
     return moneriumFetch<MoneriumOrdersResponse>(
         `/orders${buildOrdersQuery(params)}`
     );
-}
-
-/** Retrieve a single order by its UUID. */
-export async function getOrder(orderId: string): Promise<MoneriumOrder> {
-    return moneriumFetch<MoneriumOrder>(`/orders/${orderId}`);
 }

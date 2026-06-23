@@ -89,7 +89,7 @@ export type ModalUiType = {
 /**
  * Type for the sharing page ui type
  */
-export type SharingPageUiType = {
+type SharingPageUiType = {
     type: "sharing";
     params: DisplaySharingPageParamsType;
     emitter: (

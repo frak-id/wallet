@@ -154,5 +154,3 @@ const BarXAxisInner = memo(function BarXAxisInner({
 });
 
 BarXAxis.displayName = "BarXAxis";
-
-export default BarXAxis;

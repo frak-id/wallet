@@ -360,5 +360,3 @@ export function useChart(): ChartContextValue {
     // re-rendering on hover.
     return { ...stable, ...hover };
 }
-
-export default ChartStableContext;

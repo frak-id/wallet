@@ -5,23 +5,10 @@ import {
     styleVariants,
 } from "@vanilla-extract/css";
 
-export const modalListener__header = style({
-    marginBottom: "20px",
-});
-
-export const modalListener__content = style({
-    transform: "translateZ(0)",
-});
-
 export const modalListener__title = style({
     fontSize: "16px",
     textAlign: "left",
     fontWeight: 700,
-});
-
-export const modalListener__subTitle = style({
-    marginBottom: "10px",
-    fontWeight: 600,
 });
 
 export const modalListener__text = style({
@@ -121,12 +108,6 @@ export const stepNumberInnerIconDone = style({
 /* Active last-step animation also pulses the inner icon */
 export const stepNumberInnerIconActiveLast = style({
     animation: `${highlightLastStepKf} 2s forwards`,
-});
-
-export const modalListener__help = style({
-    marginTop: "20px",
-    fontSize: "12px",
-    color: "#818c9c",
 });
 
 export const modalListener__buttonsWrapper = style({

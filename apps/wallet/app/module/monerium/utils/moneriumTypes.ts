@@ -9,7 +9,7 @@ export type MoneriumTokenResponse = {
     userId: string;
 };
 
-export type MoneriumProfile = {
+type MoneriumProfile = {
     id: string;
     name: string;
     kind: "personal" | "corporate";
@@ -20,7 +20,7 @@ export type MoneriumProfilesResponse = {
     profiles: MoneriumProfile[];
 };
 
-export type MoneriumAddress = {
+type MoneriumAddress = {
     profile: string;
     address: Address;
     chains: string[];
@@ -42,7 +42,7 @@ export type MoneriumPostAddressResponse = {
  * any absent field is omitted from the payload (`JSON.stringify` drops
  * `undefined`), which is preferable to sending an empty string.
  */
-export type MoneriumOrderDetails = {
+type MoneriumOrderDetails = {
     firstName?: string;
     lastName?: string;
     country?: string;
@@ -65,7 +65,7 @@ export type MoneriumNewOrder = {
     memo?: string;
 };
 
-export type MoneriumOrderKind = "issue" | "redeem";
+type MoneriumOrderKind = "issue" | "redeem";
 export type MoneriumOrderState =
     | "placed"
     | "pending"

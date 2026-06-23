@@ -27,5 +27,3 @@ export const MergeError = {
     OnChainPasskeyMissing: "MERGE_ON_CHAIN_PASSKEY_MISSING",
     OnChainPasskeyMismatch: "MERGE_ON_CHAIN_PASSKEY_MISMATCH",
 } as const;
-
-export type MergeErrorCode = (typeof MergeError)[keyof typeof MergeError];

@@ -27,10 +27,6 @@ export type NotificationPermissionStatus =
     | "prompt"
     | "prompt-with-rationale";
 
-export type NotificationAdapterEventMap = {
-    "token-update": CustomEvent<PushTokenPayload>;
-};
-
 export type NotificationAdapter = {
     initPromise: Promise<void>;
     isSupported: () => boolean;

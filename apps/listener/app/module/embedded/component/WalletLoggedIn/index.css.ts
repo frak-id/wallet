@@ -14,16 +14,6 @@ export const balance__title = style({
     fontWeight: 400,
 });
 
-export const balance__status = style({
-    position: "absolute",
-    bottom: "6px",
-    marginLeft: "4px",
-    fontSize: "11px",
-    fontWeight: 400,
-    fontStyle: "italic",
-    whiteSpace: "nowrap",
-});
-
 export const balance__amount = style({
     fontSize: "34px",
     fontWeight: 600,

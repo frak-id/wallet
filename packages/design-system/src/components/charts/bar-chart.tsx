@@ -631,5 +631,3 @@ export function BarChart({
 }
 
 BarChart.displayName = "BarChart";
-
-export default BarChart;

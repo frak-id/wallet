@@ -119,11 +119,6 @@ function normalizeIban(iban: string): string {
 export const selectKnownIbans = (state: IbanStoreState) => state.knownIbans;
 
 /**
- * Selector — return the raw last-used IBAN string (may be null).
- */
-export const selectLastUsedIban = (state: IbanStoreState) => state.lastUsedIban;
-
-/**
  * Selector — return the effective IBAN entry to pre-select for a new transfer.
  *
  * Resolution order:
@@ -145,9 +140,3 @@ export const selectEffectiveIban = (
 
     return state.knownIbans[0] ?? null;
 };
-
-/**
- * Selector — true when no IBAN has been saved yet.
- */
-export const selectHasNoIban = (state: IbanStoreState) =>
-    state.knownIbans.length === 0;

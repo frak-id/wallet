@@ -108,7 +108,7 @@ export function formatTokenBalance(
 /**
  * Resolve a token address to its Currency code (e.g. "eur", "usd", "gbp")
  */
-export function tokenAddressToCurrency(
+function tokenAddressToCurrency(
     tokenAddress: string | undefined
 ): Currency | undefined {
     if (!tokenAddress) return undefined;

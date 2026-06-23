@@ -87,7 +87,7 @@ export type PendingRegistration = {
     createdAt: number;
 };
 
-export type SsoContext = {
+type SsoContext = {
     merchantId?: string;
     redirectUrl?: string;
     directExit?: boolean;
@@ -95,7 +95,7 @@ export type SsoContext = {
     id?: Hex;
 };
 
-export type AppSpecificSsoMetadata = SsoMetadata & {
+type AppSpecificSsoMetadata = SsoMetadata & {
     name?: string;
     css?: string;
 };

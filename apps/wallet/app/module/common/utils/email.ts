@@ -7,7 +7,7 @@
  * through the network, and keeps the "Continue" CTA disabled until the
  * value looks like something the backend will accept.
  */
-export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Whitespace-tolerant validity check. Mirrors the trim() the backend does

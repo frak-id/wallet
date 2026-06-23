@@ -20,5 +20,3 @@ export function GiftIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
         </svg>
     );
 }
-
-export default GiftIcon;
