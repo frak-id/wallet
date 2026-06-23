@@ -653,7 +653,8 @@ export default interface Resources {
         "label": "pagination",
         "morePages": "More pages",
         "next": "Go to next page",
-        "previous": "Go to previous page"
+        "previous": "Go to previous page",
+        "showing": "Showing {{from}}-{{to}} from {{total}}"
       },
       "search": {
         "placeholder": "Search"

@@ -1,11 +1,9 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
 import {
     Sheet,
     SheetContent,
-    SheetToolbar,
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -14,6 +12,7 @@ import { type PropsWithChildren, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type Address, isAddress } from "viem";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
+import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { useAdminMutation } from "@/module/merchant/hook/useAdminMutation";
 import * as styles from "./add-team-sheet.css";
@@ -83,14 +82,10 @@ export function ButtonAddTeam({
                     requestClose();
                 }}
             >
-                <SheetToolbar
+                <SheetCloseToolbar
                     size="large"
-                    leading={
-                        <GlassCloseButton
-                            onClick={requestClose}
-                            aria-label={t("merchantEdit.close")}
-                        />
-                    }
+                    onClose={requestClose}
+                    closeLabel={t("merchantEdit.close")}
                     title={t("merchantEdit.team.add.title")}
                     subtitle={t("merchantEdit.team.add.description")}
                 />

@@ -3,7 +3,6 @@ import {
     type Stablecoin,
 } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
 import {
@@ -13,7 +12,6 @@ import {
 import {
     Sheet,
     SheetContent,
-    SheetToolbar,
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -29,6 +27,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button as BusinessButton } from "@/module/common/component/Button";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
+import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
 import { detectStablecoinFromAddress } from "@/module/common/utils/stablecoin";
@@ -201,14 +200,10 @@ export function MerchantEditSheet({
                     requestClose();
                 }}
             >
-                <SheetToolbar
+                <SheetCloseToolbar
                     size="large"
-                    leading={
-                        <GlassCloseButton
-                            onClick={requestClose}
-                            aria-label={t("merchantEdit.close")}
-                        />
-                    }
+                    onClose={requestClose}
+                    closeLabel={t("merchantEdit.close")}
                     title={t("merchantEdit.editMerchant.title")}
                     subtitle={t("merchantEdit.editMerchant.description")}
                 />

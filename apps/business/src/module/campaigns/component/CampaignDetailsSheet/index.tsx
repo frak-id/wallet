@@ -1,9 +1,4 @@
-import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
-import {
-    Sheet,
-    SheetContent,
-    SheetToolbar,
-} from "@frak-labs/design-system/components/Sheet";
+import { Sheet, SheetContent } from "@frak-labs/design-system/components/Sheet";
 import {
     Tabs,
     TabsContent,
@@ -16,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { campaignDetailsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import type { CampaignListItemWithActions } from "@/types/Campaign";
 import { AmbassadorsTab } from "./AmbassadorsTab";
@@ -89,13 +85,9 @@ function CampaignDetailsContent({
 
     return (
         <>
-            <SheetToolbar
-                leading={
-                    <GlassCloseButton
-                        onClick={onClose}
-                        aria-label={t("campaigns.details.close")}
-                    />
-                }
+            <SheetCloseToolbar
+                onClose={onClose}
+                closeLabel={t("campaigns.details.close")}
                 title={campaign.name}
                 subtitle={
                     <>

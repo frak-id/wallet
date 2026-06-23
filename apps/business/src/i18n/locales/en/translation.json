@@ -883,7 +883,8 @@
             "label": "pagination",
             "previous": "Go to previous page",
             "next": "Go to next page",
-            "morePages": "More pages"
+            "morePages": "More pages",
+            "showing": "Showing {{from}}-{{to}} from {{total}}"
         },
         "dateRange": {
             "label": "Date range",
