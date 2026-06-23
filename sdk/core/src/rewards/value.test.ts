@@ -1,5 +1,5 @@
-import type { EstimatedReward } from "@frak-labs/core-sdk";
 import { describe, expect, it } from "vitest";
+import type { EstimatedReward } from "../types";
 import { getRewardEurValue, getRewardValue, selectBestReward } from "./value";
 
 const amount = (eur: number) => ({

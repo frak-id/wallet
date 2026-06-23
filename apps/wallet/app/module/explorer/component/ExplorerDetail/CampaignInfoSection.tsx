@@ -13,7 +13,7 @@ import {
     buildPercentageExample,
     buildTierExample,
     type RewardExample,
-} from "@frak-labs/rewards";
+} from "@frak-labs/core-sdk/rewards";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";

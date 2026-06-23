@@ -1,11 +1,10 @@
-import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
-import type { EstimatedReward } from "@frak-labs/core-sdk";
+import type { EstimatedReward, MerchantReward } from "@frak-labs/core-sdk";
 import { formatAmount } from "@frak-labs/core-sdk";
-import { formatEstimatedReward } from "@frak-labs/rewards";
 import {
     extractMinPurchaseAmount,
+    formatEstimatedReward,
     selectDisplayCampaign,
-} from "@frak-labs/rewards/campaign";
+} from "@frak-labs/core-sdk/rewards";
 
 const SECONDS_PER_DAY = 86400;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -43,7 +42,7 @@ export type CampaignView = {
 };
 
 export function buildCampaignView(
-    rewards: EstimatedRewardItem[],
+    rewards: MerchantReward[],
     locale: string,
     now: Date = new Date()
 ): CampaignView | null {

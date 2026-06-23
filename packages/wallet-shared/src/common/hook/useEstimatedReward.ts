@@ -1,5 +1,8 @@
-import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
-import type { Currency, InteractionTypeKey } from "@frak-labs/core-sdk";
+import type {
+    Currency,
+    InteractionTypeKey,
+    MerchantReward,
+} from "@frak-labs/core-sdk";
 import {
     getCurrencyAmountKey,
     getSupportedCurrency,
@@ -8,7 +11,7 @@ import {
     formatEstimatedReward,
     getRewardValue,
     selectBestReward,
-} from "@frak-labs/rewards";
+} from "@frak-labs/core-sdk/rewards";
 import { authenticatedBackendApi } from "../api/backendClient";
 import { merchantKey } from "../queryKeys/merchant";
 import { queryOptions } from "../utils/queryOptions";
@@ -20,7 +23,7 @@ export { formatEstimatedReward };
 export function estimatedRewardsQueryOptions(merchantId?: string) {
     return queryOptions({
         queryKey: merchantKey.estimatedRewards(merchantId),
-        queryFn: async (): Promise<EstimatedRewardItem[]> => {
+        queryFn: async (): Promise<MerchantReward[]> => {
             if (!merchantId) return [];
 
             const { data, error } = await authenticatedBackendApi.user.merchant[
@@ -31,7 +34,7 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
 
             if (error || !data) return [];
 
-            return data.rewards as EstimatedRewardItem[];
+            return data.rewards as MerchantReward[];
         },
         enabled: !!merchantId,
         staleTime: 5 * 60 * 1000,
@@ -52,7 +55,7 @@ export function selectFormattedReward({
     targetInteraction?: InteractionTypeKey;
     context?: string;
 }) {
-    return (rewards: EstimatedRewardItem[]): string | undefined => {
+    return (rewards: MerchantReward[]): string | undefined => {
         const best = selectBestReward(rewards, {
             currency,
             targetInteraction,

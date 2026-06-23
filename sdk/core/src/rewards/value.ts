@@ -1,11 +1,7 @@
-import {
-    type Currency,
-    type EstimatedReward,
-    getCurrencyAmountKey,
-    getSupportedCurrency,
-    type InteractionTypeKey,
-    type TokenAmountType,
-} from "@frak-labs/core-sdk";
+import type { InteractionTypeKey } from "../constants/interactionTypes";
+import type { Currency, EstimatedReward, TokenAmountType } from "../types";
+import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
+import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 
 /**
  * Comparable fiat value of a single reward, used to rank rewards against each

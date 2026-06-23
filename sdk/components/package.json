@@ -88,7 +88,6 @@
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
-    "@frak-labs/rewards": "workspace:*",
     "preact": "^10.29.0",
     "preact-custom-element": "^4.6.0",
     "@frak-labs/design-system": "workspace:*"

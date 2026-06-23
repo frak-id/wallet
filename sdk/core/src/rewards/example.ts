@@ -1,4 +1,4 @@
-import type { EstimatedReward } from "@frak-labs/core-sdk";
+import type { EstimatedReward } from "../types";
 
 type PercentageReward = Extract<EstimatedReward, { payoutType: "percentage" }>;
 

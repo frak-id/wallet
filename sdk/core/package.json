@@ -71,6 +71,18 @@
         "types": "./dist/bundle.d.cts",
         "default": "./dist/bundle.cjs"
       }
+    },
+    "./rewards": {
+      "development": "./src/rewards/index.ts",
+      "production": "./src/rewards/index.ts",
+      "import": {
+        "types": "./dist/rewards.d.ts",
+        "default": "./dist/rewards.js"
+      },
+      "require": {
+        "types": "./dist/rewards.d.cts",
+        "default": "./dist/rewards.cjs"
+      }
     }
   },
   "scripts": {

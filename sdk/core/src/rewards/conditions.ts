@@ -1,8 +1,4 @@
-import type {
-    ConditionGroup,
-    RuleCondition,
-    RuleConditions,
-} from "@frak-labs/backend-elysia/domain/campaign";
+import type { ConditionGroup, RuleCondition, RuleConditions } from "../types";
 
 type ConditionNode = RuleCondition | ConditionGroup;
 

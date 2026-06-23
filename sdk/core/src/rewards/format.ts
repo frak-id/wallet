@@ -1,10 +1,7 @@
-import {
-    type Currency,
-    type EstimatedReward,
-    formatAmount,
-    getCurrencyAmountKey,
-    getSupportedCurrency,
-} from "@frak-labs/core-sdk";
+import type { Currency, EstimatedReward } from "../types";
+import { formatAmount } from "../utils/format/formatAmount";
+import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
+import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 
 /**
  * Format an {@link EstimatedReward} into a human-readable string.

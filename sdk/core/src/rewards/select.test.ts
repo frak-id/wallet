@@ -1,9 +1,5 @@
-import type {
-    EstimatedRewardItem,
-    RuleConditions,
-} from "@frak-labs/backend-elysia/domain/campaign";
-import type { EstimatedReward } from "@frak-labs/core-sdk";
 import { describe, expect, it } from "vitest";
+import type { EstimatedReward, MerchantReward, RuleConditions } from "../types";
 import { selectDisplayCampaign } from "./select";
 
 const NOW = new Date("2025-01-15T00:00:00Z");
@@ -23,7 +19,7 @@ function campaign(opts: {
     conditions?: RuleConditions;
     expiresAt?: string | null;
     defaultLockupSeconds?: number;
-}): EstimatedRewardItem {
+}): MerchantReward {
     return {
         campaignId: opts.id,
         name: opts.id,

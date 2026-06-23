@@ -1,8 +1,8 @@
-import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
-import { getRewardEurValue } from "../value";
+import type { MerchantReward } from "../types";
 import { extractStartDate } from "./conditions";
+import { getRewardEurValue } from "./value";
 
-function campaignRewardValue(campaign: EstimatedRewardItem): number {
+function campaignRewardValue(campaign: MerchantReward): number {
     const referrer = campaign.referrer
         ? getRewardEurValue(campaign.referrer)
         : 0;
@@ -11,19 +11,19 @@ function campaignRewardValue(campaign: EstimatedRewardItem): number {
 }
 
 export type DisplayCampaign = {
-    campaign: EstimatedRewardItem;
+    campaign: MerchantReward;
     status: "live" | "upcoming";
     startsAt?: Date;
 };
 
-function isExpired(campaign: EstimatedRewardItem, nowMs: number): boolean {
+function isExpired(campaign: MerchantReward, nowMs: number): boolean {
     return (
         campaign.expiresAt != null &&
         new Date(campaign.expiresAt).getTime() <= nowMs
     );
 }
 
-function hasStarted(campaign: EstimatedRewardItem, nowMs: number): boolean {
+function hasStarted(campaign: MerchantReward, nowMs: number): boolean {
     const startsAt = extractStartDate(campaign.conditions);
     return startsAt == null || startsAt.getTime() <= nowMs;
 }
@@ -31,7 +31,7 @@ function hasStarted(campaign: EstimatedRewardItem, nowMs: number): boolean {
 // The endpoint does not gate on the start-date condition, so future-start
 // campaigns come through: prefer the richest started one, else the soonest.
 export function selectDisplayCampaign(
-    rewards: EstimatedRewardItem[],
+    rewards: MerchantReward[],
     now: Date = new Date()
 ): DisplayCampaign | undefined {
     const nowMs = now.getTime();
@@ -51,9 +51,7 @@ export function selectDisplayCampaign(
             startsAt: extractStartDate(campaign.conditions),
         }))
         .filter(
-            (
-                entry
-            ): entry is { campaign: EstimatedRewardItem; startsAt: Date } =>
+            (entry): entry is { campaign: MerchantReward; startsAt: Date } =>
                 entry.startsAt != null
         );
     if (upcoming.length === 0) return undefined;

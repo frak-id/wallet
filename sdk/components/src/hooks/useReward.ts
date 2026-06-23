@@ -11,7 +11,7 @@ import {
     formatEstimatedReward,
     getRewardValue,
     selectBestReward,
-} from "@frak-labs/rewards";
+} from "@frak-labs/core-sdk/rewards";
 import { useEffect, useState } from "preact/hooks";
 
 /**

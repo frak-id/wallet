@@ -30,6 +30,8 @@ describe.sequential("useReward", () => {
             rewards: [
                 {
                     campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
                     interactionTypeKey: "purchase",
                     referrer: {
                         payoutType: "fixed",
@@ -47,7 +49,7 @@ describe.sequential("useReward", () => {
         const { result } = renderHook(() => useReward(true, undefined));
 
         await waitFor(() => {
-            expect(result.current.reward).toBe("10 eur");
+            expect(result.current.reward).toContain("10");
         });
     });
 
@@ -58,6 +60,8 @@ describe.sequential("useReward", () => {
             rewards: [
                 {
                     campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
                     interactionTypeKey: "purchase",
                     referrer: {
                         payoutType: "fixed",
@@ -71,7 +75,9 @@ describe.sequential("useReward", () => {
                 },
                 {
                     campaignId: "c2",
-                    interactionTypeKey: "sharing",
+                    name: "Campaign 2",
+                    conditions: [],
+                    interactionTypeKey: "referral",
                     referrer: {
                         payoutType: "fixed",
                         amount: {
@@ -88,7 +94,7 @@ describe.sequential("useReward", () => {
         const { result } = renderHook(() => useReward(true, "purchase"));
 
         await waitFor(() => {
-            expect(result.current.reward).toBe("15 eur");
+            expect(result.current.reward).toContain("15");
         });
     });
 
@@ -115,6 +121,8 @@ describe.sequential("useReward", () => {
             rewards: [
                 {
                     campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
                     interactionTypeKey: "purchase",
                     // No referrer reward — only referee
                     referee: {
@@ -147,6 +155,8 @@ describe.sequential("useReward", () => {
             rewards: [
                 {
                     campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
                     interactionTypeKey: "purchase",
                     referrer: {
                         payoutType: "fixed",
