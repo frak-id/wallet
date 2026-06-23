@@ -48,9 +48,9 @@ describe("matchButtonSharePreset", () => {
     });
 
     it("matches with surrounding whitespace", () => {
-        expect(matchButtonSharePreset(`  ${BUTTON_SHARE_PRESETS[1].en}  `)).toBe(
-            1
-        );
+        expect(
+            matchButtonSharePreset(`  ${BUTTON_SHARE_PRESETS[1].en}  `)
+        ).toBe(1);
     });
 
     it("returns null for custom text and empty values", () => {

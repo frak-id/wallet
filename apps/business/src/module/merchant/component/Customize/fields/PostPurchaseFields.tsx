@@ -16,6 +16,12 @@ export function PostPurchaseFields({
         <div className={styles.settingsGrid}>
             <WordingTextField
                 form={form}
+                name="postPurchase.badgeText"
+                label={t("customize.components.fields.badgeText")}
+                lang={lang}
+            />
+            <WordingTextField
+                form={form}
                 name="postPurchase.refereeText"
                 label={t("customize.components.fields.refereeText")}
                 lang={lang}

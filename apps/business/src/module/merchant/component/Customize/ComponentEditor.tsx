@@ -182,6 +182,11 @@ export function ComponentPreview({
         case "postPurchase":
             return (
                 <PostPurchasePreview
+                    badgeText={resolvePreviewWording(
+                        values.postPurchase.badgeText,
+                        lang,
+                        ""
+                    )}
                     messageText={resolvePreviewWording(
                         values.postPurchase.refereeText,
                         lang,

@@ -44,6 +44,7 @@ type ButtonShareFormValues = {
 };
 
 export type PostPurchaseFormValues = {
+    badgeText: LocalizedText;
     refereeText: LocalizedText;
     refereeNoRewardText: LocalizedText;
     referrerText: LocalizedText;

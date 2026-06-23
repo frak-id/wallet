@@ -677,6 +677,7 @@ export default interface Resources {
         },
         "description": "Choose the wording that best matches your brand for each component.",
         "fields": {
+          "badgeText": "Badge text",
           "css": "Component CSS",
           "ctaNoRewardText": "CTA text (no reward)",
           "ctaText": "CTA text",

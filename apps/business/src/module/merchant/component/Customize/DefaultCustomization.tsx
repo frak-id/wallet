@@ -57,6 +57,7 @@ const getGlobalComponentsValues = ({
         css: c?.buttonShare?.rawCss ?? "",
     },
     postPurchase: {
+        badgeText: toLocalizedText(c?.postPurchase?.badgeText),
         refereeText: toLocalizedText(c?.postPurchase?.refereeText),
         refereeNoRewardText: toLocalizedText(
             c?.postPurchase?.refereeNoRewardText
@@ -125,6 +126,7 @@ function GlobalComponentsPanel({
                         rawCss: val(v.buttonShare.css),
                     },
                     postPurchase: {
+                        badgeText: fromLocalizedText(v.postPurchase.badgeText),
                         refereeText: fromLocalizedText(
                             v.postPurchase.refereeText
                         ),

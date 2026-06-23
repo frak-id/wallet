@@ -1,6 +1,6 @@
 import { type ResolvedPlacement, sdkConfigStore } from "@frak-labs/core-sdk";
-import { useCallback } from "preact/hooks";
 import { useSyncExternalStore } from "preact/compat";
+import { useCallback } from "preact/hooks";
 import { subscribeSdkConfig } from "./sdkConfigSubscription";
 
 function getPlacement(id: string): ResolvedPlacement | undefined {

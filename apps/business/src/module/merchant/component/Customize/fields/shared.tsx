@@ -10,6 +10,7 @@ export type WordingFieldName = Extract<
     FieldPath<ComponentSettingsFormValues>,
     | `buttonShare.${"text" | "noRewardText"}`
     | `postPurchase.${
+          | "badgeText"
           | "refereeText"
           | "refereeNoRewardText"
           | "referrerText"

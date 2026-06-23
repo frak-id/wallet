@@ -26,6 +26,7 @@ export function getPostPurchaseDefaults(
 ): PostPurchaseFormValues {
     const pp = components?.postPurchase;
     return {
+        badgeText: toLocalizedText(pp?.badgeText),
         refereeText: toLocalizedText(pp?.refereeText),
         refereeNoRewardText: toLocalizedText(pp?.refereeNoRewardText),
         referrerText: toLocalizedText(pp?.referrerText),

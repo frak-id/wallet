@@ -62,6 +62,7 @@ const OpenInAppComponentSchema = t.Object({
 });
 
 const PostPurchaseComponentSchema = t.Object({
+    badgeText: t.Optional(LocalizableStringSchema),
     refereeText: t.Optional(LocalizableStringSchema),
     refereeNoRewardText: t.Optional(LocalizableStringSchema),
     referrerText: t.Optional(LocalizableStringSchema),
@@ -141,6 +142,7 @@ const ResolvedComponentsSchema = t.Object({
     ),
     postPurchase: t.Optional(
         t.Object({
+            badgeText: t.Optional(t.String()),
             refereeText: t.Optional(t.String()),
             refereeNoRewardText: t.Optional(t.String()),
             referrerText: t.Optional(t.String()),

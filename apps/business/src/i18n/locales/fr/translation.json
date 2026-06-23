@@ -1324,6 +1324,7 @@
             "fields": {
                 "text": "Texte du bouton",
                 "noRewardText": "Texte du bouton (sans récompense)",
+                "badgeText": "Texte du badge",
                 "refereeText": "Message du filleul",
                 "refereeNoRewardText": "Message du filleul (sans récompense)",
                 "referrerText": "Message du parrain",

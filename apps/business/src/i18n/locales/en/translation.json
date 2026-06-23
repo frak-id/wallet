@@ -1324,6 +1324,7 @@
             "fields": {
                 "text": "Button text",
                 "noRewardText": "Button text (no reward)",
+                "badgeText": "Badge text",
                 "refereeText": "Referee message",
                 "refereeNoRewardText": "Referee message (no reward)",
                 "referrerText": "Referrer message",

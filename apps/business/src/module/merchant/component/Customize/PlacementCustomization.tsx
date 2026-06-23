@@ -124,6 +124,7 @@ function PlacementSettingsPanel({
                 css: "",
             },
             postPurchase: {
+                badgeText: toLocalizedText(undefined),
                 refereeText: toLocalizedText(undefined),
                 refereeNoRewardText: toLocalizedText(undefined),
                 referrerText: toLocalizedText(undefined),
@@ -160,6 +161,9 @@ function PlacementSettingsPanel({
                 rawCss: valueOrUndefined(currentValues.buttonShare.css),
             };
             const postPurchase = {
+                badgeText: fromLocalizedText(
+                    currentValues.postPurchase.badgeText
+                ),
                 refereeText: fromLocalizedText(
                     currentValues.postPurchase.refereeText
                 ),
