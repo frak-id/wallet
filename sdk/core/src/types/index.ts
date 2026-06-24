@@ -53,9 +53,15 @@ export type {
 } from "./rpc/embedded";
 export type { SendInteractionParamsType } from "./rpc/interaction";
 export type {
+    ConditionGroup,
+    ConditionOperator,
     EstimatedReward,
     GetMerchantInformationReturnType,
+    MerchantReward,
     RewardTier,
+    RuleCondition,
+    RuleConditions,
+    RuleField,
     TokenAmountType,
 } from "./rpc/merchantInformation";
 export type {

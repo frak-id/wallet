@@ -45,7 +45,7 @@ export function createGetMerchantInformationHandler(): OnGetMerchantInformation 
                 name: backendConfig?.name ?? "",
                 domain,
             },
-            rewards: rewards as GetMerchantInformationReturnType["rewards"],
+            rewards,
         } satisfies GetMerchantInformationReturnType;
     };
 }

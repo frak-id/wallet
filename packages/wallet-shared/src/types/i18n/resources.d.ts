@@ -270,18 +270,22 @@ export default interface Resources {
         "minPurchase": "Minimum purchase",
         "pendingDays": "{{count}} day",
         "pendingDays_other": "{{count}} days",
+        "percentExample": "e.g. {{reward}} for a {{basket}} order",
+        "percentOfBasket": "{{percent}}% of basket",
         "readMore": "Read more",
         "refereeReward": "Reward as referee",
         "referrerReward": "Reward as referrer",
         "rewardPerReferral": "{{amount}} per referral",
         "share": "Share",
         "shareAndEarn": "Share and earn",
+        "startingOn": "Starting on {{date}}",
         "step1Description": "A personal link is automatically generated with each share.",
         "step1Title": "Share a product with your friends",
         "step2Description": "Every order made through your link on {{name}} earns you cash directly in your wallet.",
         "step2Title": "Earn {{amount}} for every purchase you help generate",
         "step3Description": "In one click, transfer your earnings to your bank account.",
-        "step3Title": "Collect your earnings in your wallet"
+        "step3Title": "Collect your earnings in your wallet",
+        "tierAndAbove": "{{min}} and above"
       },
       "empty": {
         "description": "New offers are coming soon. Check back later!",

@@ -184,7 +184,7 @@ export default defineConfig([
         dts: true,
         outDir: "./dist",
         alias: preactCompatAlias,
-        deps: { alwaysBundle: [/design-system/] },
+        deps: { alwaysBundle: [/design-system/, /rewards/] },
         plugins: [vanillaExtractInlinePlugin(), nodePolyfills()],
     },
     {

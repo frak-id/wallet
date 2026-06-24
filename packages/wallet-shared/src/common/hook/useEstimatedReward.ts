@@ -1,15 +1,12 @@
-import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type {
     Currency,
-    EstimatedReward,
     InteractionTypeKey,
-    TokenAmountType,
+    MerchantReward,
 } from "@frak-labs/core-sdk";
 import {
-    formatAmount,
-    getCurrencyAmountKey,
-    getSupportedCurrency,
-} from "@frak-labs/core-sdk";
+    formatBestReward,
+    type RewardAudience,
+} from "@frak-labs/core-sdk/rewards";
 import { authenticatedBackendApi } from "../api/backendClient";
 import { merchantKey } from "../queryKeys/merchant";
 import { queryOptions } from "../utils/queryOptions";
@@ -17,7 +14,7 @@ import { queryOptions } from "../utils/queryOptions";
 export function estimatedRewardsQueryOptions(merchantId?: string) {
     return queryOptions({
         queryKey: merchantKey.estimatedRewards(merchantId),
-        queryFn: async (): Promise<EstimatedRewardItem[]> => {
+        queryFn: async (): Promise<MerchantReward[]> => {
             if (!merchantId) return [];
 
             const { data, error } = await authenticatedBackendApi.user.merchant[
@@ -28,7 +25,7 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
 
             if (error || !data) return [];
 
-            return data.rewards as EstimatedRewardItem[];
+            return data.rewards as MerchantReward[];
         },
         enabled: !!merchantId,
         staleTime: 5 * 60 * 1000,
@@ -37,76 +34,11 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
 }
 
 /**
- * Format a single EstimatedReward into a display string:
- *  - fixed: "10 €"
- *  - percentage: "15 %"
- *  - tiered: "50 €" (max tier amount)
- */
-export function formatEstimatedReward(
-    reward: EstimatedReward,
-    currency?: Currency
-): string {
-    const supportedCurrency = getSupportedCurrency(currency);
-    const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
-
-    switch (reward.payoutType) {
-        case "fixed":
-            return formatAmount(
-                Math.round(reward.amount[currencyAmountKey]),
-                supportedCurrency
-            );
-
-        case "percentage":
-            return `${reward.percent} %`;
-
-        case "tiered": {
-            const maxTierAmount = reward.tiers.reduce(
-                (max, tier) =>
-                    "amount" in tier
-                        ? Math.max(max, tier.amount[currencyAmountKey])
-                        : max,
-                0
-            );
-            if (maxTierAmount > 0) {
-                return formatAmount(
-                    Math.round(maxTierAmount),
-                    supportedCurrency
-                );
-            }
-            const maxTierPercent = reward.tiers.reduce(
-                (max, tier) =>
-                    "percent" in tier ? Math.max(max, tier.percent) : max,
-                0
-            );
-            if (maxTierPercent > 0) {
-                return `${maxTierPercent} %`;
-            }
-            return formatAmount(0, supportedCurrency);
-        }
-    }
-}
-
-function getRewardSortValue(
-    reward: EstimatedReward,
-    key: keyof TokenAmountType
-): number {
-    switch (reward.payoutType) {
-        case "fixed":
-            return reward.amount[key];
-        case "percentage":
-            return reward.maxAmount?.[key] ?? 0;
-        case "tiered":
-            return reward.tiers.reduce(
-                (max, tier) =>
-                    "amount" in tier ? Math.max(max, tier.amount[key]) : max,
-                0
-            );
-    }
-}
-
-/**
- * Select function factory: extracts the best reward for a given context.
- * Handles referrer vs referee selection, interaction filtering, and picks the highest-value candidate.
+ * Select-function factory: picks the best reward for the given context and
+ * formats it, returning `undefined` when nothing is worth advertising.
+ *
+ * The `"referred"` context marks the viewer as the referee, so their reward
+ * side is shown instead of the referrer's.
  */
 export function selectFormattedReward({
     currency,
@@ -117,39 +49,8 @@ export function selectFormattedReward({
     targetInteraction?: InteractionTypeKey;
     context?: string;
 }) {
-    return (rewards: EstimatedRewardItem[]): string | undefined => {
-        if (rewards.length === 0) return undefined;
-
-        const useReferrerReward = context !== "referred";
-        const supportedCurrency = getSupportedCurrency(currency);
-        const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
-
-        const filtered = targetInteraction
-            ? rewards.filter((r) => r.interactionTypeKey === targetInteraction)
-            : rewards;
-
-        const candidates = filtered
-            .map((r) => (useReferrerReward ? r.referrer : r.referee))
-            .filter((r): r is EstimatedReward => r !== undefined);
-
-        if (candidates.length === 0) return undefined;
-
-        const best = candidates.reduce((acc, current) => {
-            const accValue = getRewardSortValue(acc, currencyAmountKey);
-            const currentValue = getRewardSortValue(current, currencyAmountKey);
-            return currentValue > accValue ? current : acc;
-        });
-
-        // A reward of 0 is not worth advertising — callers rely on `undefined`
-        // to hide badges / copy (e.g. explorer card falls back to the description,
-        // listener modal falls back to a locally-formatted "0 €" string).
-        if (getRewardSortValue(best, currencyAmountKey) <= 0) return undefined;
-
-        return formatEstimatedReward(best, currency);
-    };
+    const audience: RewardAudience =
+        context === "referred" ? "referee" : "referrer";
+    return (rewards: MerchantReward[]): string | undefined =>
+        formatBestReward(rewards, { currency, targetInteraction, audience });
 }
-
-// `useFormattedEstimatedReward` moved to `useFormattedEstimatedReward.ts` so
-// this module stays Ring 0 (the listener iframe bootstrap consumes
-// `estimatedRewardsQueryOptions` via `queryClient.fetchQuery(...)`).
-// React consumers should import the hook from `./useFormattedEstimatedReward`.

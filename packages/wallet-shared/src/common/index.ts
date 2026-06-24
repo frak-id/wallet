@@ -98,7 +98,6 @@ export { PaginationDots } from "./component/PaginationDots";
 export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
 export {
     estimatedRewardsQueryOptions,
-    formatEstimatedReward,
     selectFormattedReward,
 } from "./hook/useEstimatedReward";
 export { useFormattedEstimatedReward } from "./hook/useFormattedEstimatedReward";
