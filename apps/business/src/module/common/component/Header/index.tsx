@@ -67,6 +67,7 @@ export function Header() {
                             <Button
                                 variant="secondary"
                                 size="small"
+                                disabled
                                 rightIcon={<Download size={16} />}
                             >
                                 {t("shell.header.export")}

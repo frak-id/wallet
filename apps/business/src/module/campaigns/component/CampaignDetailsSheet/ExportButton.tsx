@@ -13,6 +13,7 @@ export function ExportButton() {
             variant="secondary"
             size="small"
             width="auto"
+            disabled
             rightIcon={<ExportIcon />}
             onClick={() => {
                 // TODO: wire export once a backend export endpoint lands.
