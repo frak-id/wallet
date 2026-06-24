@@ -1,7 +1,8 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { pushCreationStore } from "@/stores/pushCreationStore";
+import { deriveScheduledAt } from "./schedule";
 import type { FormCreatePushNotification } from "./types";
 
 /**
@@ -27,12 +28,20 @@ function extractSendError(error: unknown): string {
 }
 
 /**
- * Publish (send) the composed push notification. On success the draft is
- * cleared and the user returns to the members list.
+ * Publish the composed push notification.
+ *
+ * - new + immediate    → `POST /send`
+ * - new + scheduled    → `POST /schedule`
+ * - edit + scheduled   → `PUT /scheduled/:id` (updates in place, no duplicate)
+ * - edit + immediate   → `POST /send`, then drop the now-stale scheduled row
+ *
+ * On success the draft is cleared, the history query refreshed and the user
+ * returns to the members list.
  */
 export function useSendPushNotification(merchantId: string) {
     const clearForm = pushCreationStore((state) => state.clearForm);
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     return useMutation({
         mutationKey: ["push", "publish"],
@@ -41,30 +50,72 @@ export function useSendPushNotification(merchantId: string) {
                 throw new Error("No target specified");
             }
             const { payload, target } = data;
+            const normalizedPayload = {
+                ...payload,
+                body: payload.body ?? "",
+                silent: payload.silent ?? false,
+            };
+            const scheduledAt = deriveScheduledAt(data.schedule);
+            const { editingId } = data;
+
             // Eden Treaty returns `{ data, error }` rather than throwing —
             // surface the error so `onError` fires and we keep the draft
             // intact for retry on a transient backend failure.
+            if (scheduledAt !== undefined) {
+                const scheduledDate = new Date(scheduledAt);
+                // Editing a planned notification updates it in place rather
+                // than queueing a duplicate broadcast.
+                const { error } = editingId
+                    ? await authenticatedBackendApi.notifications
+                          .scheduled({ id: editingId })
+                          .put({
+                              merchantId,
+                              targets: target,
+                              payload: normalizedPayload,
+                              scheduledAt: scheduledDate,
+                          })
+                    : await authenticatedBackendApi.notifications.schedule.post(
+                          {
+                              merchantId,
+                              targets: target,
+                              payload: normalizedPayload,
+                              scheduledAt: scheduledDate,
+                          }
+                      );
+                if (error) {
+                    throw new Error(extractSendError(error));
+                }
+                return;
+            }
+
             const { error: sendError } =
                 await authenticatedBackendApi.notifications.send.post({
                     merchantId,
                     targets: target,
-                    payload: {
-                        ...payload,
-                        body: payload.body ?? "",
-                        silent: payload.silent ?? false,
-                    },
-                    // scheduledAt is intentionally not sent yet — the backend
-                    // DTO doesn't accept it until delayed delivery lands
-                    // (feat/scheduled-notifications). Wire it there.
+                    payload: normalizedPayload,
                 });
             if (sendError) {
                 throw new Error(extractSendError(sendError));
+            }
+
+            // Switching a planned notification to immediate delivery: the
+            // broadcast just went out via /send, so remove the scheduled row
+            // it replaced (best-effort — a leftover would re-send at its time).
+            if (editingId) {
+                await authenticatedBackendApi.notifications
+                    .broadcasts({ id: editingId })
+                    .delete({}, { query: { merchantId } });
             }
         },
         onSuccess: () => {
             // Cleanup on the success path only, so a transient failure
             // leaves the draft intact for retry.
             clearForm();
+            // Refresh the push-history table so the freshly sent/scheduled
+            // broadcast shows up without a manual reload.
+            queryClient.invalidateQueries({
+                queryKey: ["push", "history", merchantId],
+            });
             navigate({
                 to: "/m/$merchantId/members",
                 params: { merchantId },

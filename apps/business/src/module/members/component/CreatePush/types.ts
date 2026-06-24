@@ -12,6 +12,12 @@ export type PushSchedule = {
 };
 
 export type FormCreatePushNotification = {
+    /**
+     * Id of the scheduled broadcast being edited. Set when the composer is
+     * opened from "Edit" on a planned notification — drives an update instead
+     * of a fresh create on save. Undefined for brand-new notifications.
+     */
+    editingId?: string;
     pushCampaignTitle: string;
     payload: NotificationPayload;
     target?:

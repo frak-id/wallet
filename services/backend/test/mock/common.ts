@@ -564,6 +564,17 @@ export const notificationServiceMocks = {
     sendNotification: vi.fn(() => Promise.resolve()),
 };
 
+export const notificationBroadcastRepositoryMocks = {
+    create: vi.fn(() =>
+        Promise.resolve({ id: "00000000-0000-0000-0000-000000000001" })
+    ),
+    listScheduled: vi.fn(() => Promise.resolve([] as unknown[])),
+    updateScheduled: vi.fn(() => Promise.resolve(true)),
+    deleteScheduled: vi.fn(() => Promise.resolve(true)),
+    listBroadcasts: vi.fn(() => Promise.resolve([] as unknown[])),
+    deleteBroadcast: vi.fn(() => Promise.resolve(true)),
+};
+
 const notificationMacroMock = new Elysia({ name: "Macro.notification" }).macro({
     cleanupTokens(_isEnabled?: boolean) {
         return {};
@@ -590,12 +601,6 @@ const SendNotificationTargetsDto = t.Union([
                     t.Object({
                         min: t.Number(),
                         max: t.Number(),
-                    })
-                ),
-                rewards: t.Partial(
-                    t.Object({
-                        min: t.String(),
-                        max: t.String(),
                     })
                 ),
                 firstInteractionTimestamp: t.Partial(
@@ -634,17 +639,29 @@ const SendNotificationPayloadDto = t.Object({
     ),
 });
 
+const PushHistoryItemSchema = t.Object({
+    id: t.String(),
+    title: t.String(),
+    status: t.Union([t.Literal("scheduled"), t.Literal("sent")]),
+    scheduledAt: t.Number(),
+    audienceLabel: t.String(),
+    sent: t.Union([t.Number(), t.Null()]),
+    opened: t.Union([t.Number(), t.Null()]),
+    payload: t.Object({
+        title: t.String(),
+        body: t.String(),
+        icon: t.Optional(t.String()),
+        url: t.Optional(t.String()),
+    }),
+    target: t.Optional(SendNotificationTargetsDto),
+    targetCount: t.Number(),
+});
+
 vi.mock("../../src/domain/notifications", () => ({
     NotificationContext: {
         services: { notifications: notificationServiceMocks },
         repositories: {
-            notificationBroadcast: {
-                create: vi.fn(() =>
-                    Promise.resolve({
-                        id: "00000000-0000-0000-0000-000000000001",
-                    })
-                ),
-            },
+            notificationBroadcast: notificationBroadcastRepositoryMocks,
             notificationSent: {
                 findByWallet: vi.fn(() => Promise.resolve([])),
                 markOpened: vi.fn(() => Promise.resolve(true)),
@@ -656,19 +673,14 @@ vi.mock("../../src/domain/notifications", () => ({
     FcmSender: vi.fn(() => fcmSenderMocks),
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
+    PushHistoryItemSchema,
 }));
 
 vi.mock("../../src/domain/notifications/context", () => ({
     NotificationContext: {
         services: { notifications: notificationServiceMocks },
         repositories: {
-            notificationBroadcast: {
-                create: vi.fn(() =>
-                    Promise.resolve({
-                        id: "00000000-0000-0000-0000-000000000001",
-                    })
-                ),
-            },
+            notificationBroadcast: notificationBroadcastRepositoryMocks,
             notificationSent: {
                 findByWallet: vi.fn(() => Promise.resolve([])),
                 markOpened: vi.fn(() => Promise.resolve(true)),
@@ -715,6 +727,11 @@ vi.mock("../../src/domain/business/context", () => ({
 export const notificationOrchestratorMocks = {
     sendNotifications: vi.fn(() => Promise.resolve()),
     sendPromotionalNotification: vi.fn(() => Promise.resolve()),
+    resolveWalletsFromTargets: vi.fn(
+        (targets: { wallets?: `0x${string}`[] }, _merchantId: string) =>
+            Promise.resolve("wallets" in targets ? (targets.wallets ?? []) : [])
+    ),
+    processDueScheduledNotifications: vi.fn(() => Promise.resolve()),
 };
 
 export const rewardHistoryOrchestratorMocks = {

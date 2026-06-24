@@ -47,16 +47,7 @@ export function CreatePushNotification() {
             state.draftMerchantId === merchantId
                 ? state.currentPushCreationForm
                 : undefined;
-        if (!draft) return undefined;
-        // Scheduling is greyed out for now — coerce any "later" draft back to
-        // immediate so it can't resurrect a misleading "Schedule" confirmation.
-        if (draft.schedule?.type !== "now") {
-            return {
-                ...draft,
-                schedule: { type: "now" as const, date: "", time: "" },
-            };
-        }
-        return draft;
+        return draft ?? undefined;
     });
 
     const form = useForm<FormCreatePushNotification>({
@@ -124,7 +115,9 @@ export function CreatePushNotification() {
                     disabled={!canPublish}
                     onClick={form.handleSubmit(onValid)}
                 >
-                    {t("push.create.publish")}
+                    {values.editingId
+                        ? t("push.create.update")
+                        : t("push.create.publish")}
                 </Button>
             </FloatingFooter>
             <ReviewDialog

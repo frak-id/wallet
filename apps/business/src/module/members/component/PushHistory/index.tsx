@@ -31,7 +31,13 @@ export function PushHistory() {
     const filters = pushHistoryStore((state) => state.filters);
 
     const rows = useMemo(
-        () => (history ? filterPushHistory(history, filters) : []),
+        () =>
+            history
+                ? // Most recent programmation date first (scheduled or sent).
+                  filterPushHistory(history, filters).sort(
+                      (a, b) => b.scheduledAt - a.scheduledAt
+                  )
+                : [],
         [history, filters]
     );
 
