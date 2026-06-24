@@ -1322,6 +1322,10 @@
                 "referral": "Parrainage",
                 "inapp": "In-app"
             },
+            "rewardToken": {
+                "hint": "Astuce : insérez <token>{REWARD}</token> dans un texte pour afficher la récompense de la campagne en cours.",
+                "copy": "Copier {REWARD}"
+            },
             "targetInteraction": {
                 "label": "Interaction cible",
                 "hint": "Nom de l'événement qui déclenche le calcul de la récompense pour cet emplacement (ex. purchase_completed, signup)",

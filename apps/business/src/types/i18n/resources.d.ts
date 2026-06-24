@@ -702,6 +702,10 @@ export default interface Resources {
           "referrer": "Referrer view"
         },
         "preview": "Preview",
+        "rewardToken": {
+          "copy": "Copy {REWARD}",
+          "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward."
+        },
         "targetInteraction": {
           "error": "Maximum length is 200 characters",
           "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",

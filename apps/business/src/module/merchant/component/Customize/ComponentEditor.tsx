@@ -20,6 +20,7 @@ import * as styles from "./customize.css";
 import { BannerFields } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
 import { PostPurchaseFields } from "./fields/PostPurchaseFields";
+import { RewardTokenHint } from "./fields/shared";
 import { resolveBuiltInLang, resolvePreviewWording } from "./localizable";
 import { COMPONENT_LABEL_KEYS } from "./translations";
 import type {
@@ -132,6 +133,27 @@ export function AdvancedDisclosure({
 }
 
 export function ComponentFields({
+    selectedComponent,
+    form,
+    lang,
+}: {
+    selectedComponent: ComponentType;
+    form: UseFormReturn<ComponentSettingsFormValues>;
+    lang: WordingLang;
+}) {
+    return (
+        <Stack space="m">
+            <RewardTokenHint />
+            <ComponentFieldsBody
+                selectedComponent={selectedComponent}
+                form={form}
+                lang={lang}
+            />
+        </Stack>
+    );
+}
+
+function ComponentFieldsBody({
     selectedComponent,
     form,
     lang,

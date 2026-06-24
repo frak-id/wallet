@@ -1322,6 +1322,10 @@
                 "referral": "Referral",
                 "inapp": "In-app"
             },
+            "rewardToken": {
+                "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward.",
+                "copy": "Copy {REWARD}"
+            },
             "targetInteraction": {
                 "label": "Target interaction",
                 "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
