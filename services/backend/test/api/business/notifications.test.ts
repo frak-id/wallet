@@ -20,12 +20,10 @@ describe("Business Notifications Route API", () => {
         JwtContextMock.business.verify.mockClear();
 
         notificationBroadcastRepositoryMocks.create.mockClear();
-        notificationBroadcastRepositoryMocks.listScheduled.mockClear();
         notificationBroadcastRepositoryMocks.updateScheduled.mockClear();
         notificationBroadcastRepositoryMocks.updateScheduled.mockResolvedValue(
             true as never
         );
-        notificationBroadcastRepositoryMocks.deleteScheduled.mockClear();
         notificationBroadcastRepositoryMocks.listBroadcasts.mockClear();
         notificationBroadcastRepositoryMocks.deleteBroadcast.mockClear();
         notificationBroadcastRepositoryMocks.listBroadcasts.mockResolvedValue(
@@ -37,12 +35,6 @@ describe("Business Notifications Route API", () => {
         notificationBroadcastRepositoryMocks.create.mockResolvedValue({
             id: "00000000-0000-0000-0000-000000000001",
         } as never);
-        notificationBroadcastRepositoryMocks.listScheduled.mockResolvedValue(
-            [] as never
-        );
-        notificationBroadcastRepositoryMocks.deleteScheduled.mockResolvedValue(
-            true as never
-        );
     });
 
     describe("POST /send", () => {
@@ -360,7 +352,7 @@ describe("Business Notifications Route API", () => {
         });
     });
 
-    describe("PUT /scheduled/:id", () => {
+    describe("PUT /broadcasts/:id", () => {
         const merchantId = "00000000-0000-0000-0000-000000000001";
         const scheduledId = "00000000-0000-0000-0000-0000000000aa";
         const futureDate = new Date(Date.now() + 60_000).toISOString();
@@ -376,7 +368,7 @@ describe("Business Notifications Route API", () => {
         it("should return 401 when businessSession is missing", async () => {
             const response = await notificationsRoutes.handle(
                 new Request(
-                    `http://localhost/notifications/scheduled/${scheduledId}`,
+                    `http://localhost/notifications/broadcasts/${scheduledId}`,
                     {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
@@ -398,7 +390,7 @@ describe("Business Notifications Route API", () => {
 
             const response = await notificationsRoutes.handle(
                 new Request(
-                    `http://localhost/notifications/scheduled/${scheduledId}`,
+                    `http://localhost/notifications/broadcasts/${scheduledId}`,
                     {
                         method: "PUT",
                         headers: {
@@ -431,7 +423,7 @@ describe("Business Notifications Route API", () => {
 
             const response = await notificationsRoutes.handle(
                 new Request(
-                    `http://localhost/notifications/scheduled/${scheduledId}`,
+                    `http://localhost/notifications/broadcasts/${scheduledId}`,
                     {
                         method: "PUT",
                         headers: {
@@ -456,7 +448,7 @@ describe("Business Notifications Route API", () => {
 
             const response = await notificationsRoutes.handle(
                 new Request(
-                    `http://localhost/notifications/scheduled/${scheduledId}`,
+                    `http://localhost/notifications/broadcasts/${scheduledId}`,
                     {
                         method: "PUT",
                         headers: {
@@ -479,73 +471,6 @@ describe("Business Notifications Route API", () => {
                     targets: validBody.targets,
                 })
             );
-        });
-    });
-
-    describe("GET /scheduled", () => {
-        const merchantId = "00000000-0000-0000-0000-000000000001";
-
-        it("should return 401 when businessSession is missing", async () => {
-            const response = await notificationsRoutes.handle(
-                new Request(
-                    `http://localhost/notifications/scheduled?merchantId=${merchantId}`
-                )
-            );
-
-            expect(response.status).toBe(401);
-            expect(
-                notificationBroadcastRepositoryMocks.listScheduled
-            ).not.toHaveBeenCalled();
-        });
-
-        it("should return 422 when merchantId is missing", async () => {
-            setMockBusinessSession({
-                wallet: "0x1111111111111111111111111111111111111111",
-            });
-
-            const response = await notificationsRoutes.handle(
-                new Request("http://localhost/notifications/scheduled", {
-                    headers: { "x-business-auth": "valid-token" },
-                })
-            );
-
-            expect(response.status).toBe(422);
-        });
-
-        it("should return the merchant's scheduled broadcasts", async () => {
-            setMockBusinessSession({
-                wallet: "0x1111111111111111111111111111111111111111",
-            });
-
-            const scheduled = [
-                {
-                    id: "00000000-0000-0000-0000-0000000000aa",
-                    payload: { title: "T", body: "B" },
-                    targets: {
-                        wallets: ["0x1111111111111111111111111111111111111111"],
-                    },
-                    scheduledAt: "2030-01-01T00:00:00.000Z",
-                    createdAt: "2025-01-01T00:00:00.000Z",
-                },
-            ];
-            notificationBroadcastRepositoryMocks.listScheduled.mockResolvedValue(
-                scheduled as never
-            );
-
-            const response = await notificationsRoutes.handle(
-                new Request(
-                    `http://localhost/notifications/scheduled?merchantId=${merchantId}`,
-                    { headers: { "x-business-auth": "valid-token" } }
-                )
-            );
-
-            expect(response.status).toBe(200);
-            expect(
-                notificationBroadcastRepositoryMocks.listScheduled
-            ).toHaveBeenCalledWith(merchantId);
-
-            const data = await response.json();
-            expect(data).toEqual(scheduled);
         });
     });
 
@@ -728,73 +653,6 @@ describe("Business Notifications Route API", () => {
             expect(
                 notificationBroadcastRepositoryMocks.deleteBroadcast
             ).toHaveBeenCalledWith(broadcastId, merchantId);
-
-            const data = await response.json();
-            expect(data).toEqual({ deleted: true });
-        });
-    });
-
-    describe("DELETE /scheduled/:id", () => {
-        const merchantId = "00000000-0000-0000-0000-000000000001";
-        const scheduledId = "00000000-0000-0000-0000-0000000000aa";
-
-        it("should return 401 when businessSession is missing", async () => {
-            const response = await notificationsRoutes.handle(
-                new Request(
-                    `http://localhost/notifications/scheduled/${scheduledId}?merchantId=${merchantId}`,
-                    { method: "DELETE" }
-                )
-            );
-
-            expect(response.status).toBe(401);
-            expect(
-                notificationBroadcastRepositoryMocks.deleteScheduled
-            ).not.toHaveBeenCalled();
-        });
-
-        it("should return 404 when the scheduled notification does not exist", async () => {
-            setMockBusinessSession({
-                wallet: "0x1111111111111111111111111111111111111111",
-            });
-            notificationBroadcastRepositoryMocks.deleteScheduled.mockResolvedValue(
-                false as never
-            );
-
-            const response = await notificationsRoutes.handle(
-                new Request(
-                    `http://localhost/notifications/scheduled/${scheduledId}?merchantId=${merchantId}`,
-                    {
-                        method: "DELETE",
-                        headers: { "x-business-auth": "valid-token" },
-                    }
-                )
-            );
-
-            expect(response.status).toBe(404);
-        });
-
-        it("should delete the scheduled notification and return 200", async () => {
-            setMockBusinessSession({
-                wallet: "0x1111111111111111111111111111111111111111",
-            });
-            notificationBroadcastRepositoryMocks.deleteScheduled.mockResolvedValue(
-                true as never
-            );
-
-            const response = await notificationsRoutes.handle(
-                new Request(
-                    `http://localhost/notifications/scheduled/${scheduledId}?merchantId=${merchantId}`,
-                    {
-                        method: "DELETE",
-                        headers: { "x-business-auth": "valid-token" },
-                    }
-                )
-            );
-
-            expect(response.status).toBe(200);
-            expect(
-                notificationBroadcastRepositoryMocks.deleteScheduled
-            ).toHaveBeenCalledWith(scheduledId, merchantId);
 
             const data = await response.json();
             expect(data).toEqual({ deleted: true });

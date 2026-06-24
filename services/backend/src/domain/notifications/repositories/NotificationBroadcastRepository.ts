@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { and, asc, desc, eq, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import {
     type NotificationBroadcastSelect,
     notificationBroadcastsTable,
@@ -9,11 +9,6 @@ import type {
     SendNotificationPayload,
     SendNotificationTargets,
 } from "../dto/SendNotificationDto";
-
-export type ScheduledBroadcastSelect = Pick<
-    NotificationBroadcastSelect,
-    "id" | "payload" | "targets" | "scheduledAt" | "createdAt"
->;
 
 /**
  * A broadcast row enriched with delivery stats aggregated from
@@ -37,28 +32,6 @@ export class NotificationBroadcastRepository {
             .values(params)
             .returning();
         return result;
-    }
-
-    async listScheduled(
-        merchantId: string
-    ): Promise<ScheduledBroadcastSelect[]> {
-        return db
-            .select({
-                id: notificationBroadcastsTable.id,
-                payload: notificationBroadcastsTable.payload,
-                targets: notificationBroadcastsTable.targets,
-                scheduledAt: notificationBroadcastsTable.scheduledAt,
-                createdAt: notificationBroadcastsTable.createdAt,
-            })
-            .from(notificationBroadcastsTable)
-            .where(
-                and(
-                    eq(notificationBroadcastsTable.merchantId, merchantId),
-                    isNotNull(notificationBroadcastsTable.scheduledAt),
-                    isNull(notificationBroadcastsTable.claimedAt)
-                )
-            )
-            .orderBy(asc(notificationBroadcastsTable.scheduledAt));
     }
 
     /**
@@ -131,21 +104,6 @@ export class NotificationBroadcastRepository {
                 targets: params.targets,
                 scheduledAt: params.scheduledAt,
             })
-            .where(
-                and(
-                    eq(notificationBroadcastsTable.id, id),
-                    eq(notificationBroadcastsTable.merchantId, merchantId),
-                    isNotNull(notificationBroadcastsTable.scheduledAt),
-                    isNull(notificationBroadcastsTable.claimedAt)
-                )
-            )
-            .returning({ id: notificationBroadcastsTable.id });
-        return results.length > 0;
-    }
-
-    async deleteScheduled(id: string, merchantId: string): Promise<boolean> {
-        const results = await db
-            .delete(notificationBroadcastsTable)
             .where(
                 and(
                     eq(notificationBroadcastsTable.id, id),

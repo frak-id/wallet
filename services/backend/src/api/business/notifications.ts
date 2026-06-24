@@ -150,7 +150,7 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
         }
     )
     .put(
-        "/scheduled/:id",
+        "/broadcasts/:id",
         async ({
             params: { id },
             body: { targets, payload, merchantId, scheduledAt },
@@ -190,30 +190,6 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
                 targets: SendNotificationTargetsDto,
                 payload: SendNotificationPayloadDto,
                 scheduledAt: t.Date(),
-            }),
-        }
-    )
-    .get(
-        "/scheduled",
-        async ({
-            query: { merchantId },
-            businessSession,
-            hasMerchantAccess,
-        }) => {
-            const denied = await assertMerchantAccess({
-                businessSession,
-                hasMerchantAccess,
-                merchantId,
-            });
-            if (denied) return denied;
-
-            return NotificationContext.repositories.notificationBroadcast.listScheduled(
-                merchantId
-            );
-        },
-        {
-            query: t.Object({
-                merchantId: t.String({ format: "uuid" }),
             }),
         }
     )
@@ -272,42 +248,6 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
 
             if (!deleted) {
                 return status(404, "Broadcast not found");
-            }
-
-            return { deleted };
-        },
-        {
-            params: t.Object({
-                id: t.String({ format: "uuid" }),
-            }),
-            query: t.Object({
-                merchantId: t.String({ format: "uuid" }),
-            }),
-        }
-    )
-    .delete(
-        "/scheduled/:id",
-        async ({
-            params: { id },
-            query: { merchantId },
-            businessSession,
-            hasMerchantAccess,
-        }) => {
-            const denied = await assertMerchantAccess({
-                businessSession,
-                hasMerchantAccess,
-                merchantId,
-            });
-            if (denied) return denied;
-
-            const deleted =
-                await NotificationContext.repositories.notificationBroadcast.deleteScheduled(
-                    id,
-                    merchantId
-                );
-
-            if (!deleted) {
-                return status(404, "Scheduled notification not found");
             }
 
             return { deleted };

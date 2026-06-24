@@ -568,9 +568,7 @@ export const notificationBroadcastRepositoryMocks = {
     create: vi.fn(() =>
         Promise.resolve({ id: "00000000-0000-0000-0000-000000000001" })
     ),
-    listScheduled: vi.fn(() => Promise.resolve([] as unknown[])),
     updateScheduled: vi.fn(() => Promise.resolve(true)),
-    deleteScheduled: vi.fn(() => Promise.resolve(true)),
     listBroadcasts: vi.fn(() => Promise.resolve([] as unknown[])),
     deleteBroadcast: vi.fn(() => Promise.resolve(true)),
 };

@@ -67,7 +67,7 @@ export function useSendPushNotification(merchantId: string) {
                 // than queueing a duplicate broadcast.
                 const { error } = editingId
                     ? await authenticatedBackendApi.notifications
-                          .scheduled({ id: editingId })
+                          .broadcasts({ id: editingId })
                           .put({
                               merchantId,
                               targets: target,
