@@ -15,10 +15,6 @@ type MembersSectionTab = "members" | "push";
  * floating white pill, per the "Tabs - Navigation bar" design). The active trigger is
  * a router `Link` so the tabs double as navigation between the two routes; the
  * `value` drives the active pill via Radix's `data-state`.
- *
- * The Push notifications tab is disabled for now (greyed, non-clickable) until
- * the backend lands — mirroring the disabled Billing tab in Settings. The
- * `/push` route stays reachable directly for development.
  */
 export function MembersSectionTabs({
     active,
@@ -36,8 +32,10 @@ export function MembersSectionTabs({
                         {t("members.tabs.members")}
                     </Link>
                 </TabsTrigger>
-                <TabsTrigger value="push" variant="navigation" disabled>
-                    {t("members.tabs.push")}
+                <TabsTrigger value="push" variant="navigation" asChild>
+                    <Link to="/m/$merchantId/push" params={{ merchantId }}>
+                        {t("members.tabs.push")}
+                    </Link>
                 </TabsTrigger>
             </TabsList>
         </Tabs>

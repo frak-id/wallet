@@ -1,22 +1,45 @@
 import { BinIcon, PencilIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
+import { startOfDay } from "date-fns";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { RowMenu, RowMenuItem } from "@/module/common/component/RowMenu";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
+import type {
+    FormCreatePushNotification,
+    PushSchedule,
+} from "@/module/members/component/CreatePush/types";
 import { pushCreationStore } from "@/stores/pushCreationStore";
 import type { PushHistoryItem } from "./types";
 import { useDeletePushBroadcast } from "./usePushHistory";
 
 /**
+ * Rebuild the composer's schedule fields from a scheduled broadcast's delivery
+ * timestamp: the `date` is the local-midnight ISO day (matching DateField) and
+ * `time` is local `HH:mm` (matching deriveScheduledAt).
+ */
+function scheduleFromItem(item: PushHistoryItem): PushSchedule {
+    if (item.status !== "scheduled") {
+        return { type: "now", date: "", time: "" };
+    }
+    const delivery = new Date(item.scheduledAt);
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return {
+        type: "later",
+        date: startOfDay(delivery).toISOString(),
+        time: `${pad(delivery.getHours())}:${pad(delivery.getMinutes())}`,
+    };
+}
+
+/**
  * Build a composer draft from a history row so "Edit" resumes the creation
- * flow fully prefilled (campaign name, notification content, audience).
- * Scheduling stays `now` — delayed delivery isn't wired yet (see CreatePush).
+ * flow fully prefilled (campaign name, notification content, audience and
+ * delivery time). `editingId` flags it as an update of the existing broadcast.
  */
 function itemToDraft(item: PushHistoryItem): FormCreatePushNotification {
     return {
+        editingId: item.id,
         pushCampaignTitle: item.title,
         payload: {
             title: item.payload.title,
@@ -26,7 +49,7 @@ function itemToDraft(item: PushHistoryItem): FormCreatePushNotification {
         },
         target: item.target,
         targetCount: item.targetCount,
-        schedule: { type: "now", date: "", time: "" },
+        schedule: scheduleFromItem(item),
     };
 }
 
@@ -40,11 +63,17 @@ export function CellRowMenu({ item }: { item: PushHistoryItem }) {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const setForm = pushCreationStore((state) => state.setForm);
     const deleteMutation = useDeletePushBroadcast(merchantId);
-    const canEdit = item.status === "scheduled";
+    // Sent notifications are immutable history: no edit, no delete. Only
+    // pending scheduled broadcasts can be changed or removed.
+    const canModify = item.status === "scheduled";
 
     function handleEdit() {
         setForm(itemToDraft(item), merchantId);
         navigate({ to: "/m/$merchantId/push/create", params: { merchantId } });
+    }
+
+    if (!canModify) {
+        return null;
     }
 
     return (
@@ -56,17 +85,15 @@ export function CellRowMenu({ item }: { item: PushHistoryItem }) {
             >
                 {({ close }) => (
                     <>
-                        {canEdit && (
-                            <RowMenuItem
-                                icon={<PencilIcon width={16} height={16} />}
-                                onClick={() => {
-                                    close();
-                                    handleEdit();
-                                }}
-                            >
-                                {t("push.history.rowMenu.edit")}
-                            </RowMenuItem>
-                        )}
+                        <RowMenuItem
+                            icon={<PencilIcon width={16} height={16} />}
+                            onClick={() => {
+                                close();
+                                handleEdit();
+                            }}
+                        >
+                            {t("push.history.rowMenu.edit")}
+                        </RowMenuItem>
                         <RowMenuItem
                             destructive
                             icon={<BinIcon width={16} height={16} />}

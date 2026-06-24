@@ -21,7 +21,19 @@ describe("Business Notifications Route API", () => {
 
         notificationBroadcastRepositoryMocks.create.mockClear();
         notificationBroadcastRepositoryMocks.listScheduled.mockClear();
+        notificationBroadcastRepositoryMocks.updateScheduled.mockClear();
+        notificationBroadcastRepositoryMocks.updateScheduled.mockResolvedValue(
+            true as never
+        );
         notificationBroadcastRepositoryMocks.deleteScheduled.mockClear();
+        notificationBroadcastRepositoryMocks.listBroadcasts.mockClear();
+        notificationBroadcastRepositoryMocks.deleteBroadcast.mockClear();
+        notificationBroadcastRepositoryMocks.listBroadcasts.mockResolvedValue(
+            [] as never
+        );
+        notificationBroadcastRepositoryMocks.deleteBroadcast.mockResolvedValue(
+            true as never
+        );
         notificationBroadcastRepositoryMocks.create.mockResolvedValue({
             id: "00000000-0000-0000-0000-000000000001",
         } as never);
@@ -348,6 +360,128 @@ describe("Business Notifications Route API", () => {
         });
     });
 
+    describe("PUT /scheduled/:id", () => {
+        const merchantId = "00000000-0000-0000-0000-000000000001";
+        const scheduledId = "00000000-0000-0000-0000-0000000000aa";
+        const futureDate = new Date(Date.now() + 60_000).toISOString();
+        const validBody = {
+            merchantId,
+            targets: {
+                wallets: ["0x1111111111111111111111111111111111111111"],
+            },
+            payload: { title: "Updated", body: "Updated body" },
+            scheduledAt: futureDate,
+        };
+
+        it("should return 401 when businessSession is missing", async () => {
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/scheduled/${scheduledId}`,
+                    {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(validBody),
+                    }
+                )
+            );
+
+            expect(response.status).toBe(401);
+            expect(
+                notificationBroadcastRepositoryMocks.updateScheduled
+            ).not.toHaveBeenCalled();
+        });
+
+        it("should return 400 when scheduledAt is in the past", async () => {
+            setMockBusinessSession({
+                wallet: "0x1111111111111111111111111111111111111111",
+            });
+
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/scheduled/${scheduledId}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-business-auth": "valid-token",
+                        },
+                        body: JSON.stringify({
+                            ...validBody,
+                            scheduledAt: new Date(
+                                Date.now() - 60_000
+                            ).toISOString(),
+                        }),
+                    }
+                )
+            );
+
+            expect(response.status).toBe(400);
+            expect(
+                notificationBroadcastRepositoryMocks.updateScheduled
+            ).not.toHaveBeenCalled();
+        });
+
+        it("should return 404 when the scheduled notification does not exist", async () => {
+            setMockBusinessSession({
+                wallet: "0x1111111111111111111111111111111111111111",
+            });
+            notificationBroadcastRepositoryMocks.updateScheduled.mockResolvedValue(
+                false as never
+            );
+
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/scheduled/${scheduledId}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-business-auth": "valid-token",
+                        },
+                        body: JSON.stringify(validBody),
+                    }
+                )
+            );
+
+            expect(response.status).toBe(404);
+        });
+
+        it("should update the scheduled notification and return 200", async () => {
+            setMockBusinessSession({
+                wallet: "0x1111111111111111111111111111111111111111",
+            });
+            notificationBroadcastRepositoryMocks.updateScheduled.mockResolvedValue(
+                true as never
+            );
+
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/scheduled/${scheduledId}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-business-auth": "valid-token",
+                        },
+                        body: JSON.stringify(validBody),
+                    }
+                )
+            );
+
+            expect(response.status).toBe(200);
+            expect(
+                notificationBroadcastRepositoryMocks.updateScheduled
+            ).toHaveBeenCalledWith(
+                scheduledId,
+                merchantId,
+                expect.objectContaining({
+                    payload: validBody.payload,
+                    targets: validBody.targets,
+                })
+            );
+        });
+    });
+
     describe("GET /scheduled", () => {
         const merchantId = "00000000-0000-0000-0000-000000000001";
 
@@ -412,6 +546,191 @@ describe("Business Notifications Route API", () => {
 
             const data = await response.json();
             expect(data).toEqual(scheduled);
+        });
+    });
+
+    describe("GET /broadcasts", () => {
+        const merchantId = "00000000-0000-0000-0000-000000000001";
+
+        it("should return 401 when businessSession is missing", async () => {
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/broadcasts?merchantId=${merchantId}`
+                )
+            );
+
+            expect(response.status).toBe(401);
+            expect(
+                notificationBroadcastRepositoryMocks.listBroadcasts
+            ).not.toHaveBeenCalled();
+        });
+
+        it("should return 422 when merchantId is missing", async () => {
+            setMockBusinessSession({
+                wallet: "0x1111111111111111111111111111111111111111",
+            });
+
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/broadcasts", {
+                    headers: { "x-business-auth": "valid-token" },
+                })
+            );
+
+            expect(response.status).toBe(422);
+        });
+
+        it("should map broadcasts to push-history rows", async () => {
+            setMockBusinessSession({
+                wallet: "0x1111111111111111111111111111111111111111",
+            });
+
+            notificationBroadcastRepositoryMocks.listBroadcasts.mockResolvedValue(
+                [
+                    {
+                        id: "00000000-0000-0000-0000-0000000000aa",
+                        merchantId,
+                        payload: {
+                            title: "Scheduled",
+                            body: "Body",
+                            data: { url: "https://x.example" },
+                        },
+                        targets: {
+                            wallets: [
+                                "0x1111111111111111111111111111111111111111",
+                            ],
+                        },
+                        scheduledAt: new Date("2030-01-01T00:00:00.000Z"),
+                        claimedAt: null,
+                        createdAt: new Date("2025-01-01T00:00:00.000Z"),
+                        sentCount: 0,
+                        openedCount: 0,
+                    },
+                    {
+                        id: "00000000-0000-0000-0000-0000000000bb",
+                        merchantId,
+                        payload: { title: "Delivered", body: "Body" },
+                        targets: { filter: {} },
+                        scheduledAt: null,
+                        claimedAt: null,
+                        createdAt: new Date("2025-02-01T00:00:00.000Z"),
+                        sentCount: 10,
+                        openedCount: 4,
+                    },
+                ] as never
+            );
+
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/broadcasts?merchantId=${merchantId}`,
+                    { headers: { "x-business-auth": "valid-token" } }
+                )
+            );
+
+            expect(response.status).toBe(200);
+            expect(
+                notificationBroadcastRepositoryMocks.listBroadcasts
+            ).toHaveBeenCalledWith(merchantId);
+
+            const data = await response.json();
+            expect(data).toEqual([
+                {
+                    id: "00000000-0000-0000-0000-0000000000aa",
+                    title: "Scheduled",
+                    status: "scheduled",
+                    scheduledAt: new Date("2030-01-01T00:00:00.000Z").getTime(),
+                    audienceLabel: "1 members",
+                    sent: null,
+                    opened: null,
+                    payload: {
+                        title: "Scheduled",
+                        body: "Body",
+                        url: "https://x.example",
+                    },
+                    target: {
+                        wallets: ["0x1111111111111111111111111111111111111111"],
+                    },
+                    targetCount: 1,
+                },
+                {
+                    id: "00000000-0000-0000-0000-0000000000bb",
+                    title: "Delivered",
+                    status: "sent",
+                    scheduledAt: new Date("2025-02-01T00:00:00.000Z").getTime(),
+                    audienceLabel: "All members",
+                    sent: 10,
+                    opened: 4,
+                    payload: { title: "Delivered", body: "Body" },
+                    target: { filter: {} },
+                    targetCount: 10,
+                },
+            ]);
+        });
+    });
+
+    describe("DELETE /broadcasts/:id", () => {
+        const merchantId = "00000000-0000-0000-0000-000000000001";
+        const broadcastId = "00000000-0000-0000-0000-0000000000aa";
+
+        it("should return 401 when businessSession is missing", async () => {
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/broadcasts/${broadcastId}?merchantId=${merchantId}`,
+                    { method: "DELETE" }
+                )
+            );
+
+            expect(response.status).toBe(401);
+            expect(
+                notificationBroadcastRepositoryMocks.deleteBroadcast
+            ).not.toHaveBeenCalled();
+        });
+
+        it("should return 404 when the broadcast does not exist", async () => {
+            setMockBusinessSession({
+                wallet: "0x1111111111111111111111111111111111111111",
+            });
+            notificationBroadcastRepositoryMocks.deleteBroadcast.mockResolvedValue(
+                false as never
+            );
+
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/broadcasts/${broadcastId}?merchantId=${merchantId}`,
+                    {
+                        method: "DELETE",
+                        headers: { "x-business-auth": "valid-token" },
+                    }
+                )
+            );
+
+            expect(response.status).toBe(404);
+        });
+
+        it("should delete the broadcast and return 200", async () => {
+            setMockBusinessSession({
+                wallet: "0x1111111111111111111111111111111111111111",
+            });
+            notificationBroadcastRepositoryMocks.deleteBroadcast.mockResolvedValue(
+                true as never
+            );
+
+            const response = await notificationsRoutes.handle(
+                new Request(
+                    `http://localhost/notifications/broadcasts/${broadcastId}?merchantId=${merchantId}`,
+                    {
+                        method: "DELETE",
+                        headers: { "x-business-auth": "valid-token" },
+                    }
+                )
+            );
+
+            expect(response.status).toBe(200);
+            expect(
+                notificationBroadcastRepositoryMocks.deleteBroadcast
+            ).toHaveBeenCalledWith(broadcastId, merchantId);
+
+            const data = await response.json();
+            expect(data).toEqual({ deleted: true });
         });
     });
 

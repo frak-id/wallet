@@ -6,7 +6,6 @@ import {
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { TimeInput } from "@frak-labs/design-system/components/TimeInput";
-import clsx from "clsx";
 import { startOfDay } from "date-fns";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -64,15 +63,10 @@ export function SchedulePanel() {
                             description={t(
                                 "push.create.schedule.later.description"
                             )}
-                            disabled
-                            badge={t("push.create.schedule.later.comingSoon")}
                         />
                     </RadioGroup>
                 )}
             />
-            {/* Scheduling is greyed out until delayed delivery lands (backend
-                DTO + cron, feat/scheduled-notifications). This block is the
-                future feature's UI — kept so re-enabling is one prop. */}
             {scheduleType === "later" && (
                 <div className={styles.dateRow}>
                     <div className={styles.dateField}>
@@ -129,34 +123,20 @@ function ScheduleOption({
     value,
     label,
     description,
-    disabled,
-    badge,
 }: {
     value: string;
     label: string;
     description: string;
-    disabled?: boolean;
-    badge?: string;
 }) {
     return (
         // biome-ignore lint/a11y/noLabelWithoutControl: wraps a labelable Radix radio button
-        <label
-            className={clsx(
-                styles.scheduleCell,
-                disabled && styles.scheduleCellDisabled
-            )}
-        >
-            <RadioGroupItem value={value} size={"l"} disabled={disabled} />
+        <label className={styles.scheduleCell}>
+            <RadioGroupItem value={value} size={"l"} />
             <Stack space={"xxs"}>
                 <Inline space={"xs"} alignY={"center"}>
                     <Text variant={"body"} weight={"medium"}>
                         {label}
                     </Text>
-                    {badge && (
-                        <Text variant={"bodySmall"} color={"secondary"}>
-                            {badge}
-                        </Text>
-                    )}
                 </Inline>
                 <Text variant={"bodySmall"} color={"secondary"}>
                     {description}

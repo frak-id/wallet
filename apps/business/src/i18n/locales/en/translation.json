@@ -237,8 +237,7 @@
                 },
                 "later": {
                     "label": "Schedule for later",
-                    "description": "Choose a date and time for delivery.",
-                    "comingSoon": "Coming soon"
+                    "description": "Choose a date and time for delivery."
                 },
                 "date": {
                     "label": "Select date"
@@ -253,6 +252,7 @@
                 "message": "Your notification message will appear here."
             },
             "publish": "Publish notification",
+            "update": "Update notification",
             "review": {
                 "title": "Review notification",
                 "audience": "Audience",

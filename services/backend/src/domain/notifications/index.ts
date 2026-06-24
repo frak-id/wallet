@@ -11,6 +11,14 @@ export {
     pushTokensTable,
 } from "./db/schema";
 export {
+    type PushHistoryItem,
+    PushHistoryItemSchema,
+    type PushHistoryPayload,
+    PushHistoryPayloadSchema,
+    type PushHistoryStatus,
+    PushHistoryStatusSchema,
+} from "./dto/PushHistoryDto";
+export {
     type LocalisedNotificationPayload,
     type SendNotificationPayload,
     SendNotificationPayloadDto,

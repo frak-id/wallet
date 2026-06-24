@@ -237,8 +237,7 @@
                 },
                 "later": {
                     "label": "Planifier pour plus tard",
-                    "description": "Choisissez une date et une heure de livraison.",
-                    "comingSoon": "Bientôt disponible"
+                    "description": "Choisissez une date et une heure de livraison."
                 },
                 "date": {
                     "label": "Sélectionner la date"
@@ -253,6 +252,7 @@
                 "message": "Le message de votre notification apparaîtra ici."
             },
             "publish": "Publier la notification",
+            "update": "Mettre à jour la notification",
             "review": {
                 "title": "Vérifier la notification",
                 "audience": "Audience",
