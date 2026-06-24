@@ -24,6 +24,16 @@ const imageConstraints = {
         minRatio: 1.33, // 4:3
         maxRatio: 2, // 2:1
     },
+    // Small, roughly-square illustration shown in place of the gift icon on the
+    // post-purchase card and the referral banner.
+    icon: {
+        maxWidth: 512,
+        maxHeight: 512,
+        minWidth: 64,
+        minHeight: 64,
+        minRatio: 0.5, // 1:2 (tall)
+        maxRatio: 2, // 2:1 (wide)
+    },
 } as const;
 
 export type ImageType = keyof typeof imageConstraints;

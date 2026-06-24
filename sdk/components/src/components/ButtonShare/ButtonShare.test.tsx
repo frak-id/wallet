@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as embeddedWalletUtils from "@/actions/embeddedWallet";
 import * as sharingPageUtils from "@/actions/sharingPage";
 import * as useClientReadyHook from "@/hooks/useClientReady";
+import * as useLangHook from "@/hooks/useLang";
 import * as useRewardHook from "@/hooks/useReward";
 import { ButtonShare } from "./ButtonShare";
 
@@ -18,6 +19,10 @@ vi.mock("@/hooks/useClientReady", () => ({
 
 vi.mock("@/hooks/useReward", () => ({
     useReward: vi.fn(() => ({ reward: undefined })),
+}));
+
+vi.mock("@/hooks/useLang", () => ({
+    useLang: vi.fn(() => "en"),
 }));
 
 vi.mock("@/actions/embeddedWallet", () => ({
@@ -42,12 +47,27 @@ describe.sequential("ButtonShare", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
         });
+        vi.mocked(useLangHook.useLang).mockReturnValue("en");
     });
 
     it("should render with default props", () => {
         render(<ButtonShare />);
         const button = screen.getByRole("button");
         expect(button).toHaveTextContent("Share and earn!");
+    });
+
+    it("should render the localized default text for the resolved language", () => {
+        vi.mocked(useLangHook.useLang).mockReturnValue("fr");
+        render(<ButtonShare />);
+        const button = screen.getByRole("button");
+        expect(button).toHaveTextContent("Partagez et gagnez !");
+    });
+
+    it("should prefer an explicit text prop over the localized default", () => {
+        vi.mocked(useLangHook.useLang).mockReturnValue("fr");
+        render(<ButtonShare text="Custom share text" />);
+        const button = screen.getByRole("button");
+        expect(button).toHaveTextContent("Custom share text");
     });
 
     it("should render with custom text", () => {

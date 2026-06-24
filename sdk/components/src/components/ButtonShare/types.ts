@@ -14,7 +14,9 @@ export type ButtonShareProps = {
      * estimated reward and substitutes the placeholder. When no reward is
      * available, `noRewardText` is used as a fallback (or the placeholder is
      * stripped if no fallback is provided).
-     * @defaultValue `"Share and earn!"`
+     *
+     * When omitted, a built-in localized default is used based on the
+     * resolved language (`"Share and earn!"` / `"Partagez et gagnez !"`).
      */
     text?: string;
     /**

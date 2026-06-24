@@ -1,14 +1,10 @@
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    estimatedRewardsQueryOptions,
-    trackEvent,
-} from "@frak-labs/wallet-shared";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef } from "react";
+import { trackEvent } from "@frak-labs/wallet-shared";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { buildCampaignView } from "../../campaignView";
+import { useCampaignView } from "../../campaignView";
 import * as styles from "./index.css";
 import { LogoCutout } from "./LogoCutout";
 
@@ -18,7 +14,7 @@ type ExplorerCardProps = {
 };
 
 export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { name, domain, explorerConfig } = merchant;
     const heroImageUrl = explorerConfig?.heroImageUrl;
     const logoUrl = explorerConfig?.logoUrl;
@@ -54,14 +50,7 @@ export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
         return () => observer.disconnect();
     }, [merchant.id]);
 
-    const { data: rewards } = useQuery(
-        estimatedRewardsQueryOptions(merchant.id)
-    );
-
-    const view = useMemo(
-        () => buildCampaignView(rewards ?? [], i18n.language),
-        [rewards, i18n.language]
-    );
+    const view = useCampaignView(merchant.id);
 
     return (
         <Box

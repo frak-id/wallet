@@ -1,31 +1,25 @@
-import {
-    type ResolvedPlacement,
-    type SdkResolvedConfig,
-    sdkConfigStore,
-} from "@frak-labs/core-sdk";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { type ResolvedPlacement, sdkConfigStore } from "@frak-labs/core-sdk";
+import { useSyncExternalStore } from "preact/compat";
+import { useCallback } from "preact/hooks";
+import { subscribeSdkConfig } from "./sdkConfigSubscription";
 
 function getPlacement(id: string): ResolvedPlacement | undefined {
     return sdkConfigStore.getConfig().placements?.[id];
 }
 
+/**
+ * Subscribe to a single resolved placement from the SDK config store.
+ *
+ * Backed by `useSyncExternalStore`: the snapshot is the stored placement
+ * object reference (stable between `frak:config` dispatches), so the component
+ * only re-renders when that placement actually changes.
+ */
 export function usePlacement(
     placementId?: string
 ): ResolvedPlacement | undefined {
-    const [configVersion, setConfigVersion] = useState(0);
-
-    useEffect(() => {
-        const onConfig = (_e: CustomEvent<SdkResolvedConfig>) => {
-            setConfigVersion((v) => v + 1);
-        };
-        window.addEventListener("frak:config", onConfig);
-        // Re-check in case event fired between render and effect mount
-        setConfigVersion((v) => v + 1);
-        return () => window.removeEventListener("frak:config", onConfig);
-    }, []);
-
-    return useMemo(
+    const getSnapshot = useCallback(
         () => (placementId ? getPlacement(placementId) : undefined),
-        [placementId, configVersion]
+        [placementId]
     );
+    return useSyncExternalStore(subscribeSdkConfig, getSnapshot);
 }

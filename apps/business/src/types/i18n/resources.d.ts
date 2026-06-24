@@ -667,16 +667,14 @@ export default interface Resources {
       "components": {
         "advanced": "Advanced settings",
         "banner": "Banner",
-        "buttonShare": "Share button",
-        "clickAction": {
-          "embeddedWallet": "Embedded wallet",
-          "hint": "What happens when a visitor clicks the share button",
-          "label": "Click action",
-          "shareModal": "Share modal",
-          "sharingPage": "Sharing page"
+        "bannerGroups": {
+          "inapp": "In-app",
+          "referral": "Referral"
         },
+        "buttonShare": "Share button",
         "description": "Choose the wording that best matches your brand for each component.",
         "fields": {
+          "badgeText": "Badge text",
           "css": "Component CSS",
           "ctaNoRewardText": "CTA text (no reward)",
           "ctaText": "CTA text",
@@ -693,8 +691,26 @@ export default interface Resources {
           "referrerText": "Referrer message",
           "text": "Button text"
         },
+        "image": {
+          "description": "Replace the default gift icon with your own image.",
+          "hint": "Paste an image URL or upload one below.",
+          "label": "Illustration"
+        },
         "postPurchase": "Post Purchase",
+        "postPurchaseGroups": {
+          "referee": "Referee message",
+          "referrer": "Referrer message",
+          "shared": "Badge & CTA"
+        },
+        "postPurchasePreview": {
+          "referee": "Referee view",
+          "referrer": "Referrer view"
+        },
         "preview": "Preview",
+        "rewardToken": {
+          "copy": "Copy {REWARD}",
+          "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward."
+        },
         "targetInteraction": {
           "error": "Maximum length is 200 characters",
           "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
@@ -1095,6 +1111,7 @@ export default interface Resources {
         "removeImage": "Remove image",
         "restrictions": {
           "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
+          "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 to 2:1 (Max 10MB)",
           "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)"
         },
         "title": "Explorer",

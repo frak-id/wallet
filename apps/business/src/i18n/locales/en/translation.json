@@ -1173,7 +1173,8 @@
             "invalidUrl": "Enter a valid image URL (https://…)",
             "restrictions": {
                 "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)"
+                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 to 2:1 (Max 10MB)"
             },
             "descriptionPlaceholder": "Merchant description..."
         },
@@ -1341,12 +1342,27 @@
             "banner": "Banner",
             "preview": "Preview",
             "advanced": "Advanced settings",
-            "clickAction": {
-                "label": "Click action",
-                "hint": "What happens when a visitor clicks the share button",
-                "embeddedWallet": "Embedded wallet",
-                "shareModal": "Share modal",
-                "sharingPage": "Sharing page"
+            "postPurchasePreview": {
+                "referee": "Referee view",
+                "referrer": "Referrer view"
+            },
+            "postPurchaseGroups": {
+                "shared": "Badge & CTA",
+                "referee": "Referee message",
+                "referrer": "Referrer message"
+            },
+            "bannerGroups": {
+                "referral": "Referral",
+                "inapp": "In-app"
+            },
+            "rewardToken": {
+                "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward.",
+                "copy": "Copy {REWARD}"
+            },
+            "image": {
+                "label": "Illustration",
+                "description": "Replace the default gift icon with your own image.",
+                "hint": "Paste an image URL or upload one below."
             },
             "targetInteraction": {
                 "label": "Target interaction",
@@ -1356,6 +1372,7 @@
             "fields": {
                 "text": "Button text",
                 "noRewardText": "Button text (no reward)",
+                "badgeText": "Badge text",
                 "refereeText": "Referee message",
                 "refereeNoRewardText": "Referee message (no reward)",
                 "referrerText": "Referrer message",

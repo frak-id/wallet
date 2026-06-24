@@ -1,8 +1,10 @@
 import type { InteractionTypeKey } from "@frak-labs/core-sdk";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
+import { useLang } from "@/hooks/useLang";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
+import { componentDefaults } from "@/i18n/defaults";
 import { buildStyleContent } from "@/styles/sharedCss";
 import { GiftIcon } from "./assets/GiftIcon";
 import type { ButtonWalletProps } from "./types";
@@ -96,6 +98,7 @@ export function ButtonWallet({
     useReward: rawUseReward,
     targetInteraction,
 }: ButtonWalletProps) {
+    const lang = useLang();
     const placement = usePlacement(placementId);
 
     const resolvedTargetInteraction = useMemo<InteractionTypeKey | undefined>(
@@ -147,7 +150,7 @@ export function ButtonWallet({
             </style>
             <button
                 type={"button"}
-                aria-label="Open wallet"
+                aria-label={componentDefaults[lang].buttonWallet.ariaLabel}
                 part="button"
                 disabled={!isClientReady}
                 class={buttonClass}

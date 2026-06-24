@@ -1173,7 +1173,8 @@
             "invalidUrl": "Saisissez une URL d'image valide (https://…)",
             "restrictions": {
                 "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 à 2:1 (Max 10 Mo)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)"
+                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 à 2:1 (Max 10 Mo)"
             },
             "descriptionPlaceholder": "Description du marchand..."
         },
@@ -1341,12 +1342,27 @@
             "banner": "Bannière",
             "preview": "Aperçu",
             "advanced": "Réglages avancés",
-            "clickAction": {
-                "label": "Action au clic",
-                "hint": "Ce qui se passe quand un visiteur clique sur le bouton de partage",
-                "embeddedWallet": "Wallet intégré",
-                "shareModal": "Fenêtre de partage",
-                "sharingPage": "Page de partage"
+            "postPurchasePreview": {
+                "referee": "Vue filleul",
+                "referrer": "Vue parrain"
+            },
+            "postPurchaseGroups": {
+                "shared": "Badge et CTA",
+                "referee": "Message filleul",
+                "referrer": "Message parrain"
+            },
+            "bannerGroups": {
+                "referral": "Parrainage",
+                "inapp": "In-app"
+            },
+            "rewardToken": {
+                "hint": "Astuce : insérez <token>{REWARD}</token> dans un texte pour afficher la récompense de la campagne en cours.",
+                "copy": "Copier {REWARD}"
+            },
+            "image": {
+                "label": "Illustration",
+                "description": "Remplacez l'icône cadeau par défaut par votre propre image.",
+                "hint": "Collez l'URL d'une image ou importez-en une ci-dessous."
             },
             "targetInteraction": {
                 "label": "Interaction cible",
@@ -1356,6 +1372,7 @@
             "fields": {
                 "text": "Texte du bouton",
                 "noRewardText": "Texte du bouton (sans récompense)",
+                "badgeText": "Texte du badge",
                 "refereeText": "Message du filleul",
                 "refereeNoRewardText": "Message du filleul (sans récompense)",
                 "referrerText": "Message du parrain",

@@ -4,6 +4,7 @@ import { LRUCache } from "lru-cache";
 import { keccak256, toHex } from "viem";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 import type {
+    LocalizableString,
     MerchantResolveResponse,
     Placement,
     ResolvedPlacement,
@@ -14,6 +15,35 @@ import type {
 function processRawCss(rawCss: string | null | undefined): string | undefined {
     if (rawCss) return processCss(rawCss);
     return rawCss ?? undefined;
+}
+
+function resolveLocalizable(
+    value: LocalizableString | undefined,
+    lang: Language
+): string | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value === "string") return value;
+    // Fall through lang -> default -> other langs so a partially-translated
+    // field never renders blank.
+    return value[lang] ?? value.default ?? value.en ?? value.fr;
+}
+
+/**
+ * Resolve a fixed set of localizable text fields on a component to plain
+ * per-language strings, dropping any that resolve to `undefined`. Keyed by the
+ * field names so each component just declares which of its keys are localizable.
+ */
+function resolveLocalizableFields<K extends string>(
+    component: Partial<Record<K, LocalizableString>>,
+    fields: readonly K[],
+    lang: Language
+): Partial<Record<K, string>> {
+    const resolved: Partial<Record<K, string>> = {};
+    for (const field of fields) {
+        const value = resolveLocalizable(component[field], lang);
+        if (value !== undefined) resolved[field] = value;
+    }
+    return resolved;
 }
 
 function processRawScopedCss(
@@ -62,9 +92,7 @@ export class MerchantResolveService {
         }
 
         if (result.components) {
-            result.components = this.processGlobalComponentsCss(
-                result.components
-            );
+            result.components = this.processComponentsCss(result.components);
         }
 
         return result;
@@ -154,27 +182,38 @@ export class MerchantResolveService {
 
         if (result.components) {
             result.components = this.processComponentsCss(
-                placementId,
-                result.components
+                result.components,
+                placementId
             );
         }
 
         return result;
     }
 
+    /**
+     * Sanitize each component's `rawCss` into scoped/minified `css`. With a
+     * `placementId`, the share/open-in-app/banner elements are scoped to that
+     * placement; `buttonWallet` is a fixed overlay and is never scoped. The
+     * same component shape backs both placement-level and global config.
+     */
     private processComponentsCss(
-        placementId: string,
-        components: NonNullable<Placement["components"]>
-    ): NonNullable<Placement["components"]> {
+        components: NonNullable<SdkConfig["components"]>,
+        placementId?: string
+    ): NonNullable<SdkConfig["components"]> {
+        const scoped = (rawCss: string, element: string) =>
+            placementId
+                ? processRawScopedCss(
+                      rawCss,
+                      `${element}[placement="${placementId}"]`
+                  )
+                : processRawCss(rawCss);
+
         const result = { ...components };
 
         if (result.buttonShare?.rawCss !== undefined) {
             result.buttonShare = {
                 ...result.buttonShare,
-                css: processRawScopedCss(
-                    result.buttonShare.rawCss,
-                    `frak-button-share[placement="${placementId}"]`
-                ),
+                css: scoped(result.buttonShare.rawCss, "frak-button-share"),
             };
         }
 
@@ -188,20 +227,14 @@ export class MerchantResolveService {
         if (result.openInApp?.rawCss !== undefined) {
             result.openInApp = {
                 ...result.openInApp,
-                css: processRawScopedCss(
-                    result.openInApp.rawCss,
-                    `frak-open-in-app[placement="${placementId}"]`
-                ),
+                css: scoped(result.openInApp.rawCss, "frak-open-in-app"),
             };
         }
 
         if (result.banner?.rawCss !== undefined) {
             result.banner = {
                 ...result.banner,
-                css: processRawScopedCss(
-                    result.banner.rawCss,
-                    `frak-banner[placement="${placementId}"]`
-                ),
+                css: scoped(result.banner.rawCss, "frak-banner"),
             };
         }
 
@@ -210,11 +243,9 @@ export class MerchantResolveService {
 
     private resolveLanguage(
         sdkConfig: SdkConfig | null | undefined,
-        queryLang: string | undefined
+        queryLang: Language | undefined
     ): Language {
-        if (sdkConfig?.lang) return sdkConfig.lang;
-        if (queryLang === "fr" || queryLang === "en") return queryLang;
-        return "en";
+        return sdkConfig?.lang ?? queryLang ?? "en";
     }
 
     private mergeTranslations(
@@ -240,31 +271,10 @@ export class MerchantResolveService {
 
             resolvedPlacements[id] = {
                 ...(placement.components && {
-                    components: {
-                        ...(placement.components.buttonShare && {
-                            buttonShare: stripRawCss(
-                                placement.components.buttonShare
-                            ),
-                        }),
-                        ...(placement.components.buttonWallet && {
-                            buttonWallet: stripRawCss(
-                                placement.components.buttonWallet
-                            ),
-                        }),
-                        ...(placement.components.openInApp && {
-                            openInApp: stripRawCss(
-                                placement.components.openInApp
-                            ),
-                        }),
-                        ...(placement.components.postPurchase && {
-                            postPurchase: stripRawCss(
-                                placement.components.postPurchase
-                            ),
-                        }),
-                        ...(placement.components.banner && {
-                            banner: stripRawCss(placement.components.banner),
-                        }),
-                    },
+                    components: this.buildResolvedComponents(
+                        placement.components,
+                        lang
+                    ),
                 }),
                 ...(placement.targetInteraction && {
                     targetInteraction: placement.targetInteraction,
@@ -305,7 +315,10 @@ export class MerchantResolveService {
             ...(mergedTranslations && { translations: mergedTranslations }),
             ...(resolvedPlacements && { placements: resolvedPlacements }),
             ...(sdkConfig.components && {
-                components: this.buildResolvedComponents(sdkConfig.components),
+                components: this.buildResolvedComponents(
+                    sdkConfig.components,
+                    lang
+                ),
             }),
             ...(sdkConfig.attribution && {
                 attribution: sdkConfig.attribution,
@@ -313,60 +326,75 @@ export class MerchantResolveService {
         };
     }
 
-    private processGlobalComponentsCss(
-        components: NonNullable<SdkConfig["components"]>
-    ): NonNullable<SdkConfig["components"]> {
-        const result = { ...components };
-
-        if (result.buttonShare?.rawCss !== undefined) {
-            result.buttonShare = {
-                ...result.buttonShare,
-                css: processRawCss(result.buttonShare.rawCss),
-            };
-        }
-
-        if (result.buttonWallet?.rawCss !== undefined) {
-            result.buttonWallet = {
-                ...result.buttonWallet,
-                css: processRawCss(result.buttonWallet.rawCss),
-            };
-        }
-
-        if (result.openInApp?.rawCss !== undefined) {
-            result.openInApp = {
-                ...result.openInApp,
-                css: processRawCss(result.openInApp.rawCss),
-            };
-        }
-
-        if (result.banner?.rawCss !== undefined) {
-            result.banner = {
-                ...result.banner,
-                css: processRawCss(result.banner.rawCss),
-            };
-        }
-
-        return result;
-    }
-
     private buildResolvedComponents(
-        components: NonNullable<SdkConfig["components"]>
+        components: NonNullable<SdkConfig["components"]>,
+        lang: Language
     ): ResolvedPlacement["components"] {
+        const { buttonShare, buttonWallet, openInApp, postPurchase, banner } =
+            components;
         return {
-            ...(components.buttonShare && {
-                buttonShare: stripRawCss(components.buttonShare),
+            ...(buttonShare && {
+                buttonShare: {
+                    ...resolveLocalizableFields(
+                        buttonShare,
+                        ["text", "noRewardText"] as const,
+                        lang
+                    ),
+                    ...(buttonShare.clickAction && {
+                        clickAction: buttonShare.clickAction,
+                    }),
+                    ...(buttonShare.css && { css: buttonShare.css }),
+                },
             }),
-            ...(components.buttonWallet && {
-                buttonWallet: stripRawCss(components.buttonWallet),
+            ...(buttonWallet && { buttonWallet: stripRawCss(buttonWallet) }),
+            ...(openInApp && {
+                openInApp: {
+                    ...resolveLocalizableFields(
+                        openInApp,
+                        ["text"] as const,
+                        lang
+                    ),
+                    ...(openInApp.css && { css: openInApp.css }),
+                },
             }),
-            ...(components.openInApp && {
-                openInApp: stripRawCss(components.openInApp),
+            ...(postPurchase && {
+                postPurchase: {
+                    ...resolveLocalizableFields(
+                        postPurchase,
+                        [
+                            "refereeText",
+                            "refereeNoRewardText",
+                            "referrerText",
+                            "referrerNoRewardText",
+                            "ctaText",
+                            "ctaNoRewardText",
+                            "badgeText",
+                        ] as const,
+                        lang
+                    ),
+                    ...(postPurchase.imageUrl && {
+                        imageUrl: postPurchase.imageUrl,
+                    }),
+                    ...(postPurchase.css && { css: postPurchase.css }),
+                },
             }),
-            ...(components.postPurchase && {
-                postPurchase: stripRawCss(components.postPurchase),
-            }),
-            ...(components.banner && {
-                banner: stripRawCss(components.banner),
+            ...(banner && {
+                banner: {
+                    ...resolveLocalizableFields(
+                        banner,
+                        [
+                            "referralTitle",
+                            "referralDescription",
+                            "referralCta",
+                            "inappTitle",
+                            "inappDescription",
+                            "inappCta",
+                        ] as const,
+                        lang
+                    ),
+                    ...(banner.imageUrl && { imageUrl: banner.imageUrl }),
+                    ...(banner.css && { css: banner.css }),
+                },
             }),
         };
     }

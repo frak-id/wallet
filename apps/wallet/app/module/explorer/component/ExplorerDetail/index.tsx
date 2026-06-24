@@ -24,7 +24,6 @@ import {
     buildSharingLink,
     clientIdStore,
     ExternalLink,
-    estimatedRewardsQueryOptions,
     mergeTokenQueryOptions,
     sessionStore,
     trackEvent,
@@ -38,8 +37,8 @@ import { Trans, useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
+import { useCampaignView } from "../../campaignView";
 import { CampaignInfoSection } from "./CampaignInfoSection";
-import { buildCampaignView } from "../../campaignView";
 import * as styles from "./index.css";
 
 type ExplorerDetailProps = {
@@ -53,15 +52,9 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
-    const { data: rewards } = useQuery(
-        estimatedRewardsQueryOptions(merchant.id)
-    );
-    const view = useMemo(
-        () => buildCampaignView(rewards ?? [], i18n.language),
-        [rewards, i18n.language]
-    );
+    const view = useCampaignView(merchant.id);
 
     const images = useMemo(() => {
         const main = merchant.explorerConfig?.heroImageUrl;
