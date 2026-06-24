@@ -385,7 +385,11 @@ describe.sequential("Banner", () => {
             expect(container.querySelector(".frak-banner")).toBeInTheDocument();
         });
 
-        expect(useRewardHook.useReward).toHaveBeenCalledWith(true, "referral");
+        expect(useRewardHook.useReward).toHaveBeenCalledWith(
+            true,
+            "referral",
+            "referee"
+        );
     });
 
     it("should pass undefined interaction to useReward by default", async () => {
@@ -397,6 +401,10 @@ describe.sequential("Banner", () => {
             expect(container.querySelector(".frak-banner")).toBeInTheDocument();
         });
 
-        expect(useRewardHook.useReward).toHaveBeenCalledWith(true, undefined);
+        expect(useRewardHook.useReward).toHaveBeenCalledWith(
+            true,
+            undefined,
+            "referee"
+        );
     });
 });

@@ -1,7 +1,4 @@
-import type { InteractionTypeKey } from "../constants/interactionTypes";
-import type { Currency, EstimatedReward, TokenAmountType } from "../types";
-import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
-import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
+import type { EstimatedReward, TokenAmountType } from "../types";
 
 /**
  * Comparable fiat value of a single reward, used to rank rewards against each
@@ -30,64 +27,42 @@ export function getRewardValue(
     }
 }
 
-/**
- * Comparable value of a reward expressed in euros — the default ranking metric
- * for campaign selection.
- */
-export function getRewardEurValue(reward: EstimatedReward): number {
-    return getRewardValue(reward, "eurAmount");
+// Highest percent a reward exposes (flat percentage, or the richest percent
+// tier), or 0 when it carries none. Mirrors what `formatEstimatedReward`
+// renders as "X %" when a reward has no money value.
+function maxRewardPercent(reward: EstimatedReward): number {
+    if (reward.payoutType === "percentage") return reward.percent;
+    if (reward.payoutType === "tiered") {
+        return reward.tiers.reduce(
+            (max, tier) =>
+                "percent" in tier ? Math.max(max, tier.percent) : max,
+            0
+        );
+    }
+    return 0;
 }
 
-/**
- * Minimal shape required to pick a reward out of a list of campaigns. Both the
- * lean merchant-information rewards (SDK, `interactionTypeKey: InteractionTypeKey`)
- * and the richer estimated-reward items (wallet/listener, where the backend
- * types it as a plain `string`) satisfy it — hence the widened key type.
- */
-export type RewardCampaignLike = {
-    interactionTypeKey: string;
-    referrer?: EstimatedReward;
-    referee?: EstimatedReward;
-};
+// A reward with no money value (an uncapped percentage, or a percent-only
+// tier set) still renders as "X %", so it is worth surfacing. We give it a
+// positive ranking weight derived from its percent but scaled far below any
+// real-money reward, so the two invariants the UI relies on hold: (1) a reward
+// with real money always outranks a percentage-only reward, and (2) a
+// percentage-only reward still outranks a zero-value reward. Together they
+// guarantee the reward the ranking picks is always one we can display.
+const PERCENT_ONLY_RANK_WEIGHT = 1e-6;
 
 /**
- * Pick the highest-value reward across a list of campaigns.
+ * Ranking weight used to pick the single most attractive reward to surface.
  *
- * Selects the referrer reward by default, or the referee reward when
- * `context` is `"referred"`. Optionally filters by interaction type first.
- * Returns the reward itself (unformatted, no zero/empty policy applied) so
- * callers stay free to decide how to render or suppress low-value rewards.
+ * Mirrors {@link getRewardValue} (money value) but lifts a percentage-only
+ * reward to a tiny positive weight instead of `0`, so it is never buried
+ * behind a zero-value reward when choosing what to display.
  */
-export function selectBestReward(
-    campaigns: readonly RewardCampaignLike[],
-    {
-        currency,
-        targetInteraction,
-        context,
-    }: {
-        currency?: Currency;
-        targetInteraction?: InteractionTypeKey;
-        context?: string;
-    } = {}
-): EstimatedReward | undefined {
-    const useReferrer = context !== "referred";
-    const key = getCurrencyAmountKey(getSupportedCurrency(currency));
-
-    const candidates = (
-        targetInteraction
-            ? campaigns.filter(
-                  (c) => c.interactionTypeKey === targetInteraction
-              )
-            : campaigns
-    )
-        .map((c) => (useReferrer ? c.referrer : c.referee))
-        .filter((r): r is EstimatedReward => r !== undefined);
-
-    if (candidates.length === 0) return undefined;
-
-    return candidates.reduce((best, current) =>
-        getRewardValue(current, key) > getRewardValue(best, key)
-            ? current
-            : best
-    );
+export function getRewardRank(
+    reward: EstimatedReward,
+    key: keyof TokenAmountType
+): number {
+    const value = getRewardValue(reward, key);
+    if (value > 0) return value;
+    return maxRewardPercent(reward) * PERCENT_ONLY_RANK_WEIGHT;
 }

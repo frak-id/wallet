@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { EstimatedReward } from "../types";
-import { applyRewardPlaceholder, formatEstimatedReward } from "./format";
+import {
+    applyRewardPlaceholder,
+    formatEstimatedReward,
+    formatRewardOrHide,
+} from "./format";
 
 const amount = (eur: number) => ({
     amount: eur,
@@ -66,6 +70,61 @@ describe("formatEstimatedReward", () => {
         const formatted = formatEstimatedReward(reward, "usd");
         expect(formatted).toContain("5");
         expect(formatted).toContain("$");
+    });
+});
+
+describe("formatRewardOrHide", () => {
+    it("returns undefined for a missing reward", () => {
+        expect(formatRewardOrHide(undefined)).toBeUndefined();
+    });
+
+    it("formats a fixed reward that carries money value", () => {
+        const formatted = formatRewardOrHide({
+            payoutType: "fixed",
+            amount: amount(5),
+        });
+        expect(formatted).toContain("5");
+        expect(formatted).toContain("€");
+    });
+
+    it("hides a fixed reward with no money value", () => {
+        expect(
+            formatRewardOrHide({ payoutType: "fixed", amount: amount(0) })
+        ).toBeUndefined();
+    });
+
+    it("always shows a capped percentage as a percent string", () => {
+        expect(
+            formatRewardOrHide({
+                payoutType: "percentage",
+                percent: 10,
+                percentOf: "purchase_amount",
+                maxAmount: amount(50),
+            })
+        ).toBe("10 %");
+    });
+
+    it("shows an uncapped percentage as a percent string (no money value)", () => {
+        expect(
+            formatRewardOrHide({
+                payoutType: "percentage",
+                percent: 8,
+                percentOf: "purchase_amount",
+            })
+        ).toBe("8 %");
+    });
+
+    it("shows a percent-only tiered reward instead of hiding it", () => {
+        expect(
+            formatRewardOrHide({
+                payoutType: "tiered",
+                tierField: "purchase.amount",
+                tiers: [
+                    { minValue: 0, maxValue: 50, percent: 5 },
+                    { minValue: 50, percent: 12 },
+                ],
+            })
+        ).toBe("12 %");
     });
 });
 

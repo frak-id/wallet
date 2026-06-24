@@ -148,6 +148,47 @@ describe.sequential("useReward", () => {
         expect(result.current.reward).toBeUndefined();
     });
 
+    it("should format the referee reward when audience is 'referee'", async () => {
+        vi.mocked(getMerchantInformation).mockResolvedValue({
+            id: "merchant-1",
+            onChainMetadata: { name: "Test", domain: "test.com" },
+            rewards: [
+                {
+                    campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
+                    interactionTypeKey: "purchase",
+                    referrer: {
+                        payoutType: "fixed",
+                        amount: {
+                            amount: 50,
+                            eurAmount: 50,
+                            usdAmount: 55,
+                            gbpAmount: 45,
+                        },
+                    },
+                    referee: {
+                        payoutType: "fixed",
+                        amount: {
+                            amount: 7,
+                            eurAmount: 7,
+                            usdAmount: 8,
+                            gbpAmount: 6,
+                        },
+                    },
+                },
+            ],
+        });
+
+        const { result } = renderHook(() =>
+            useReward(true, undefined, "referee")
+        );
+
+        await waitFor(() => {
+            expect(result.current.reward).toContain("7");
+        });
+    });
+
     it("should refetch when targetInteraction changes", async () => {
         vi.mocked(getMerchantInformation).mockResolvedValue({
             id: "merchant-1",

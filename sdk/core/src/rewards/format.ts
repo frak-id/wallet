@@ -2,6 +2,7 @@ import type { Currency, EstimatedReward } from "../types";
 import { formatAmount } from "../utils/format/formatAmount";
 import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
+import { getRewardRank } from "./value";
 
 /**
  * Format an {@link EstimatedReward} into a human-readable string.
@@ -52,6 +53,26 @@ export function formatEstimatedReward(
             return formatAmount(0, supportedCurrency);
         }
     }
+}
+
+/**
+ * Format a reward for display, or return `undefined` when it is not worth
+ * advertising. Callers rely on `undefined` to hide a badge / fall back to
+ * other copy.
+ *
+ * A reward is hidden only when it carries no displayable value — a `fixed` or
+ * `tiered` reward whose money value is `0` (e.g. an unknown token price). An
+ * uncapped percentage always renders as `"X %"`, since the percent itself is
+ * meaningful even without a money value.
+ */
+export function formatRewardOrHide(
+    reward: EstimatedReward | undefined,
+    currency?: Currency
+): string | undefined {
+    if (!reward) return undefined;
+    const key = getCurrencyAmountKey(getSupportedCurrency(currency));
+    if (getRewardRank(reward, key) <= 0) return undefined;
+    return formatEstimatedReward(reward, currency);
 }
 
 /**

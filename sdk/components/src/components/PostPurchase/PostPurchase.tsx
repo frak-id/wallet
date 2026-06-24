@@ -1,4 +1,5 @@
 import type {
+    Currency,
     EstimatedReward,
     GetMerchantInformationReturnType,
     SharingPageProduct,
@@ -10,6 +11,10 @@ import {
     getUserReferralStatus,
     trackPurchaseStatus,
 } from "@frak-labs/core-sdk/actions";
+import {
+    type RewardAudience,
+    selectDisplayCampaign,
+} from "@frak-labs/core-sdk/rewards";
 import { LogoFrakWithName } from "@frak-labs/design-system/icons";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
@@ -27,7 +32,7 @@ import { usePlacement } from "@/hooks/usePlacement";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import {
     applyRewardPlaceholder,
-    formatEstimatedReward,
+    formatRewardOrHide,
 } from "@/utils/format/formatReward";
 import { sanitizeProductList } from "@/utils/sharingPageProducts";
 import { GiftIcon } from "../icons/GiftIcon";
@@ -63,24 +68,27 @@ type ResolvedPostPurchaseContext = {
  */
 function resolvePostPurchaseContext(
     referralStatus: UserReferralStatusType | null,
-    merchantInfo: GetMerchantInformationReturnType
+    merchantInfo: GetMerchantInformationReturnType,
+    currency: Currency | undefined
 ): ResolvedPostPurchaseContext | null {
-    // Find the first purchase reward that has at least one side (referrer or referee)
-    const purchaseReward = merchantInfo.rewards.find(
-        (r) => r.interactionTypeKey === "purchase" && (r.referrer || r.referee)
-    );
+    const audience: RewardAudience = referralStatus?.isReferred
+        ? "referee"
+        : "referrer";
+    // Shared selector: the best live "purchase" campaign for the viewer's side,
+    // time-gated so an expired campaign is never advertised.
+    const selected = selectDisplayCampaign(merchantInfo.rewards, {
+        targetInteraction: "purchase",
+        currency,
+        audience,
+    });
+    if (!selected) return null;
 
-    if (!purchaseReward) return null;
-
+    const { campaign } = selected;
+    // A referred user sees the referee side only when the campaign defines one;
+    // otherwise fall back to the referrer reward (and the sharer prompt).
     const variant =
-        referralStatus?.isReferred && purchaseReward.referee
-            ? "referee"
-            : "referrer";
-
-    const reward =
-        variant === "referee"
-            ? purchaseReward.referee
-            : purchaseReward.referrer;
+        referralStatus?.isReferred && campaign.referee ? "referee" : "referrer";
+    const reward = variant === "referee" ? campaign.referee : campaign.referrer;
 
     return {
         variant,
@@ -180,7 +188,11 @@ export function PostPurchase({
             .then(([referralStatus, merchantInfo]) => {
                 setHasFetched(true);
                 setContext(
-                    resolvePostPurchaseContext(referralStatus, merchantInfo)
+                    resolvePostPurchaseContext(
+                        referralStatus,
+                        merchantInfo,
+                        client.config.metadata?.currency
+                    )
                 );
             })
             .catch((e: unknown) => {
@@ -216,7 +228,7 @@ export function PostPurchase({
     const rewardText = useMemo(() => {
         if (!context?.reward) return undefined;
         const currency = window.FrakSetup?.client?.config?.metadata?.currency;
-        return formatEstimatedReward(context.reward, currency);
+        return formatRewardOrHide(context.reward, currency);
     }, [context?.reward]);
 
     const globalComponents = useGlobalComponents();

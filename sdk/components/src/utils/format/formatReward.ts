@@ -3,5 +3,5 @@
 // so the existing `@/utils/format/formatReward` import path stays stable.
 export {
     applyRewardPlaceholder,
-    formatEstimatedReward,
+    formatRewardOrHide,
 } from "@frak-labs/core-sdk/rewards";

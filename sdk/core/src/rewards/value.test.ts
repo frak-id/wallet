@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EstimatedReward } from "../types";
-import { getRewardEurValue, getRewardValue, selectBestReward } from "./value";
+import { getRewardRank, getRewardValue } from "./value";
 
 const amount = (eur: number) => ({
     amount: eur,
@@ -14,36 +14,30 @@ const fixed = (eur: number): EstimatedReward => ({
     amount: amount(eur),
 });
 
+const cappedPercentage = (percent: number, cap: number): EstimatedReward => ({
+    payoutType: "percentage",
+    percent,
+    percentOf: "purchase_amount",
+    maxAmount: amount(cap),
+});
+
+const uncappedPercentage = (percent: number): EstimatedReward => ({
+    payoutType: "percentage",
+    percent,
+    percentOf: "purchase_amount",
+});
+
 describe("getRewardValue", () => {
     it("returns the fixed amount in the requested currency", () => {
         expect(getRewardValue(fixed(5), "eurAmount")).toBe(5);
     });
 
     it("uses the capped maxAmount for a percentage reward", () => {
-        expect(
-            getRewardValue(
-                {
-                    payoutType: "percentage",
-                    percent: 8,
-                    percentOf: "purchase_amount",
-                    maxAmount: amount(4.8),
-                },
-                "eurAmount"
-            )
-        ).toBe(4.8);
+        expect(getRewardValue(cappedPercentage(8, 4.8), "eurAmount")).toBe(4.8);
     });
 
     it("returns 0 for an uncapped percentage reward", () => {
-        expect(
-            getRewardValue(
-                {
-                    payoutType: "percentage",
-                    percent: 8,
-                    percentOf: "purchase_amount",
-                },
-                "eurAmount"
-            )
-        ).toBe(0);
+        expect(getRewardValue(uncappedPercentage(8), "eurAmount")).toBe(0);
     });
 
     it("returns the richest token tier for a tiered reward", () => {
@@ -63,51 +57,33 @@ describe("getRewardValue", () => {
     });
 });
 
-describe("getRewardEurValue", () => {
-    it("is the euro-keyed reward value", () => {
-        expect(getRewardEurValue(fixed(7))).toBe(7);
-    });
-});
-
-describe("selectBestReward", () => {
-    const campaign = (
-        id: string,
-        referrer?: EstimatedReward,
-        referee?: EstimatedReward
-    ) => ({
-        interactionTypeKey: "purchase" as const,
-        campaignId: id,
-        referrer,
-        referee,
+describe("getRewardRank", () => {
+    it("ranks a reward with real money by its money value", () => {
+        expect(getRewardRank(fixed(5), "eurAmount")).toBe(5);
+        expect(getRewardRank(cappedPercentage(8, 4.8), "eurAmount")).toBe(4.8);
     });
 
-    it("returns undefined when no candidate has a referrer reward", () => {
-        expect(selectBestReward([campaign("a")])).toBeUndefined();
+    it("gives an uncapped percentage a positive weight (never buried at 0)", () => {
+        expect(
+            getRewardRank(uncappedPercentage(8), "eurAmount")
+        ).toBeGreaterThan(0);
     });
 
-    it("picks the highest-value referrer reward", () => {
-        const best = selectBestReward([
-            campaign("low", fixed(2)),
-            campaign("high", fixed(9)),
-        ]);
-        expect(best).toEqual(fixed(9));
-    });
-
-    it("picks the referee reward when context is 'referred'", () => {
-        const best = selectBestReward([campaign("a", fixed(9), fixed(3))], {
-            context: "referred",
-        });
-        expect(best).toEqual(fixed(3));
-    });
-
-    it("filters by interaction type before ranking", () => {
-        const best = selectBestReward(
-            [
-                { interactionTypeKey: "referral", referrer: fixed(50) },
-                { interactionTypeKey: "purchase", referrer: fixed(4) },
-            ],
-            { targetInteraction: "purchase" }
+    it("keeps real money ranked above any uncapped percentage", () => {
+        expect(getRewardRank(fixed(1), "eurAmount")).toBeGreaterThan(
+            getRewardRank(uncappedPercentage(50), "eurAmount")
         );
-        expect(best).toEqual(fixed(4));
+    });
+
+    it("keeps an uncapped percentage ranked above a zero-value reward", () => {
+        expect(
+            getRewardRank(uncappedPercentage(8), "eurAmount")
+        ).toBeGreaterThan(getRewardRank(fixed(0), "eurAmount"));
+    });
+
+    it("ranks a higher uncapped percentage above a lower one", () => {
+        expect(
+            getRewardRank(uncappedPercentage(20), "eurAmount")
+        ).toBeGreaterThan(getRewardRank(uncappedPercentage(5), "eurAmount"));
     });
 });

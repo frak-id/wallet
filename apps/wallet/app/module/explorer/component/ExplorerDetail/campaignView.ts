@@ -2,7 +2,7 @@ import type { EstimatedReward, MerchantReward } from "@frak-labs/core-sdk";
 import { formatAmount } from "@frak-labs/core-sdk";
 import {
     extractMinPurchaseAmount,
-    formatEstimatedReward,
+    formatRewardOrHide,
     selectDisplayCampaign,
 } from "@frak-labs/core-sdk/rewards";
 
@@ -46,7 +46,7 @@ export function buildCampaignView(
     locale: string,
     now: Date = new Date()
 ): CampaignView | null {
-    const selected = selectDisplayCampaign(rewards, now);
+    const selected = selectDisplayCampaign(rewards, { now });
     if (!selected) return null;
 
     const { campaign, status, startsAt } = selected;
@@ -60,9 +60,7 @@ export function buildCampaignView(
         status,
         referrer: campaign.referrer,
         referee: campaign.referee,
-        headlineReferrerReward: campaign.referrer
-            ? formatEstimatedReward(campaign.referrer)
-            : undefined,
+        headlineReferrerReward: formatRewardOrHide(campaign.referrer),
         formattedStartDate: startsAt ? formatDate(startsAt, locale) : undefined,
         formattedEndDate: endDate ? formatDate(endDate, locale) : undefined,
         daysRemaining: endDate ? getDaysRemaining(endDate, now) : undefined,

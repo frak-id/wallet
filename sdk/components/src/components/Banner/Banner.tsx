@@ -122,10 +122,13 @@ export function Banner({
         }
     }, [isPreview, resolvedPreviewMode]);
 
-    // Fetch reward text the same way ButtonShare does
+    // Fetch reward text the same way ButtonShare does — but for the *referee*
+    // side: the referral banner is shown to a freshly-referred user, so it must
+    // advertise what they earn on their purchases, not the sharer's reward.
     const { reward } = useReward(
         mode === "referral" && isClientReady,
-        interaction
+        interaction,
+        "referee"
     );
 
     // Pre-fetch merge token when in inapp mode so the click is instant

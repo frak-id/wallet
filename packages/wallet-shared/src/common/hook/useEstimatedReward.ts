@@ -4,21 +4,12 @@ import type {
     MerchantReward,
 } from "@frak-labs/core-sdk";
 import {
-    getCurrencyAmountKey,
-    getSupportedCurrency,
-} from "@frak-labs/core-sdk";
-import {
-    formatEstimatedReward,
-    getRewardValue,
-    selectBestReward,
+    formatBestReward,
+    type RewardAudience,
 } from "@frak-labs/core-sdk/rewards";
 import { authenticatedBackendApi } from "../api/backendClient";
 import { merchantKey } from "../queryKeys/merchant";
 import { queryOptions } from "../utils/queryOptions";
-
-// Re-exported so the wallet-shared barrel stays the stable entry point for
-// reward formatting (listener / install / sharing consumers import it here).
-export { formatEstimatedReward };
 
 export function estimatedRewardsQueryOptions(merchantId?: string) {
     return queryOptions({
@@ -43,8 +34,11 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
 }
 
 /**
- * Select function factory: extracts the best reward for a given context.
- * Handles referrer vs referee selection, interaction filtering, and picks the highest-value candidate.
+ * Select-function factory: picks the best reward for the given context and
+ * formats it, returning `undefined` when nothing is worth advertising.
+ *
+ * The `"referred"` context marks the viewer as the referee, so their reward
+ * side is shown instead of the referrer's.
  */
 export function selectFormattedReward({
     currency,
@@ -55,20 +49,8 @@ export function selectFormattedReward({
     targetInteraction?: InteractionTypeKey;
     context?: string;
 }) {
-    return (rewards: MerchantReward[]): string | undefined => {
-        const best = selectBestReward(rewards, {
-            currency,
-            targetInteraction,
-            context,
-        });
-        if (!best) return undefined;
-
-        // A reward of 0 is not worth advertising — callers rely on `undefined`
-        // to hide badges / copy (e.g. explorer card falls back to the description,
-        // listener modal falls back to a locally-formatted "0 €" string).
-        const key = getCurrencyAmountKey(getSupportedCurrency(currency));
-        if (getRewardValue(best, key) <= 0) return undefined;
-
-        return formatEstimatedReward(best, currency);
-    };
+    const audience: RewardAudience =
+        context === "referred" ? "referee" : "referrer";
+    return (rewards: MerchantReward[]): string | undefined =>
+        formatBestReward(rewards, { currency, targetInteraction, audience });
 }
