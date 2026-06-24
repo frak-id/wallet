@@ -2,7 +2,7 @@ import type { Currency, EstimatedReward } from "../types";
 import { formatAmount } from "../utils/format/formatAmount";
 import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
-import { getRewardRank } from "./value";
+import { getRewardRank, getRewardValue, maxRewardPercent } from "./value";
 
 /**
  * Format an {@link EstimatedReward} into a human-readable string.
@@ -34,19 +34,11 @@ export function formatEstimatedReward(
             return `${reward.percent} %`;
 
         case "tiered": {
-            const maxAmount = reward.tiers.reduce(
-                (max, tier) =>
-                    "amount" in tier ? Math.max(max, tier.amount[key]) : max,
-                0
-            );
+            const maxAmount = getRewardValue(reward, key);
             if (maxAmount > 0) {
                 return formatAmount(Math.round(maxAmount), supportedCurrency);
             }
-            const maxPercent = reward.tiers.reduce(
-                (max, tier) =>
-                    "percent" in tier ? Math.max(max, tier.percent) : max,
-                0
-            );
+            const maxPercent = maxRewardPercent(reward);
             if (maxPercent > 0) {
                 return `${maxPercent} %`;
             }

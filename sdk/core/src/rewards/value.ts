@@ -27,10 +27,15 @@ export function getRewardValue(
     }
 }
 
-// Highest percent a reward exposes (flat percentage, or the richest percent
-// tier), or 0 when it carries none. Mirrors what `formatEstimatedReward`
-// renders as "X %" when a reward has no money value.
-function maxRewardPercent(reward: EstimatedReward): number {
+/**
+ * Highest percent a reward exposes: the flat `percentage` percent, or the
+ * richest percent across `tiered` tiers, or `0` when it carries none.
+ *
+ * Shared by {@link getRewardRank} (to weight a percentage-only reward) and
+ * `formatEstimatedReward` (to render it as `"X %"`), so the value the UI ranks
+ * by and the value it prints stay derived from one tier traversal.
+ */
+export function maxRewardPercent(reward: EstimatedReward): number {
     if (reward.payoutType === "percentage") return reward.percent;
     if (reward.payoutType === "tiered") {
         return reward.tiers.reduce(
