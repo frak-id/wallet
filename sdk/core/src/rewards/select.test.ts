@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { InteractionTypeKey } from "../constants/interactionTypes";
 import type { EstimatedReward, MerchantReward, RuleConditions } from "../types";
-import { formatBestReward, selectDisplayCampaign } from "./select";
+import {
+    formatBestReward,
+    selectBestReward,
+    selectDisplayCampaign,
+} from "./select";
 
 const NOW = new Date("2025-01-15T00:00:00Z");
 const unix = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
@@ -208,5 +212,70 @@ describe("formatBestReward", () => {
                 { now: NOW }
             )
         ).toBe("10 %");
+    });
+});
+
+describe("selectBestReward", () => {
+    it("returns undefined for an empty set", () => {
+        expect(selectBestReward([], { now: NOW })).toBeUndefined();
+    });
+
+    it("exposes the formatted reward and its payout type", () => {
+        const best = selectBestReward(
+            [campaign({ id: "c", referrer: fixedReward(50) })],
+            { now: NOW }
+        );
+        expect(best?.formatted).toContain("50");
+        expect(best?.payoutType).toBe("fixed");
+        expect(best?.minPurchaseAmount).toBeUndefined();
+        expect(best?.lockupDurationDays).toBeUndefined();
+    });
+
+    it("surfaces the minimum purchase amount when the campaign gates on one", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: fixedReward(50),
+                    conditions: [
+                        {
+                            field: "purchase.amount",
+                            operator: "gte",
+                            value: 25,
+                        },
+                    ],
+                }),
+            ],
+            { now: NOW }
+        );
+        expect(best?.minPurchaseAmount).toContain("25");
+    });
+
+    it("surfaces the lockup duration in whole days", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: fixedReward(50),
+                    defaultLockupSeconds: 7 * 86_400,
+                }),
+            ],
+            { now: NOW }
+        );
+        expect(best?.lockupDurationDays).toBe(7);
+    });
+
+    it("omits a zero lockup", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: fixedReward(50),
+                    defaultLockupSeconds: 0,
+                }),
+            ],
+            { now: NOW }
+        );
+        expect(best?.lockupDurationDays).toBeUndefined();
     });
 });

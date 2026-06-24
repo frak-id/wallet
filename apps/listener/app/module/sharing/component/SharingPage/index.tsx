@@ -222,6 +222,8 @@ export function ListenerSharingPage() {
             isSharing={isSharing}
             isRewardLoading={isRewardLoading}
             rewardType={reward?.payoutType}
+            minPurchaseAmount={reward?.minPurchaseAmount}
+            lockupDurationDays={reward?.lockupDurationDays}
             showConfirmation={showConfirmation}
             onShare={handleShare}
             onCopy={handleCopy}

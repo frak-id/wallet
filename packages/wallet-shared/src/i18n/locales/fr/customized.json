@@ -72,7 +72,9 @@
                 "title": "",
                 "1": "Partagez en 1 clic. Un lien personnel est généré automatiquement à chaque partage.",
                 "2": "Gagnez à chaque achat. Chaque commande réalisée grâce à vous est récompensée en cash.",
-                "3": "Encaissez vos gains dans l'app. Installez FRAK pour récupérer vos gains."
+                "2_min": "Gagnez à chaque achat. Chaque commande de {{ minAmount }} minimum réalisée grâce à vous est récompensée en cash.",
+                "3": "Encaissez vos gains dans l'app. Installez FRAK pour récupérer vos gains.",
+                "3_lockup": "Vos gains seront disponibles {{ lockupInDay }} jours après la validation de l'achat."
             },
             "faq": {
                 "title": "Questions fréquentes",

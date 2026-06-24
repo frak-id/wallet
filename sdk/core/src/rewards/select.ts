@@ -5,9 +5,10 @@ import type {
     MerchantReward,
     TokenAmountType,
 } from "../types";
+import { formatAmount } from "../utils/format/formatAmount";
 import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
-import { extractStartDate } from "./conditions";
+import { extractMinPurchaseAmount, extractStartDate } from "./conditions";
 import { formatRewardOrHide } from "./format";
 import { getRewardRank } from "./value";
 
@@ -124,6 +125,17 @@ export type BestReward = {
     formatted: string;
     /** Payout type of the selected reward. */
     payoutType: EstimatedReward["payoutType"];
+    /**
+     * Minimum purchase amount gating the reward, formatted with the requested
+     * currency (e.g. `"10 €"`), or `undefined` when the campaign sets no
+     * minimum.
+     */
+    minPurchaseAmount?: string;
+    /**
+     * Whole-day lockup applied before the reward settles, or `undefined` when
+     * the campaign has no lockup.
+     */
+    lockupDurationDays?: number;
 };
 
 /**
@@ -148,7 +160,25 @@ export function selectBestReward(
     if (!reward) return undefined;
     const formatted = formatRewardOrHide(reward, options.currency);
     if (!formatted) return undefined;
-    return { formatted, payoutType: reward.payoutType };
+
+    const minPurchase = extractMinPurchaseAmount(selected.campaign.conditions);
+    const minPurchaseAmount =
+        minPurchase != null
+            ? formatAmount(minPurchase, options.currency)
+            : undefined;
+
+    const lockupSeconds = selected.campaign.defaultLockupSeconds;
+    const lockupDurationDays =
+        lockupSeconds && lockupSeconds > 0
+            ? Math.round(lockupSeconds / 86_400)
+            : undefined;
+
+    return {
+        formatted,
+        payoutType: reward.payoutType,
+        minPurchaseAmount,
+        lockupDurationDays,
+    };
 }
 
 /**

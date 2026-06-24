@@ -97,7 +97,9 @@ export default interface Resources {
         "steps": {
           "1": "Share in 1 click. A personal link is automatically generated with each share.",
           "2": "Earn on every purchase. Every order placed through your link earns you cash.",
+          "2_min": "Earn on every purchase. Every order of at least {{minAmount}} placed through your link earns you cash.",
           "3": "Collect your earnings in the app. Install FRAK to collect your earnings.",
+          "3_lockup": "Your earnings will be available {{lockupInDay}} days after the purchase is confirmed.",
           "title": ""
         }
       },

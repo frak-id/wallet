@@ -315,6 +315,8 @@ function WalletSharingPage() {
             isSharing={isSharing}
             isRewardLoading={isRewardLoading}
             rewardType={reward?.payoutType}
+            minPurchaseAmount={reward?.minPurchaseAmount}
+            lockupDurationDays={reward?.lockupDurationDays}
             canShare={canShare}
             showConfirmation={showConfirmation}
             onShare={handleShare}
