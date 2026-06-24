@@ -75,38 +75,19 @@ export type ConditionOperator =
 /**
  * Dot-path of the rule-evaluation context field a {@link RuleCondition} targets.
  *
- * The listed literals mirror the backend campaign `RuleContext` and exist for
- * editor autocompletion; the trailing `string` member keeps the type open to
- * any other (future or custom) path the backend may emit, so it never lies at
- * runtime. Custom interaction data is addressed through `custom.${string}`.
+ * Only the paths the SDK actually reads are listed (for editor autocompletion);
+ * the trailing `string` member keeps the type open to any other path the backend
+ * may emit, so it never lies at runtime. Custom interaction data is addressed
+ * through `custom.${string}`.
  * @group RPC Schema
  */
 export type RuleField =
-    // Purchase context
-    | "purchase.orderId"
+    // Minimum-purchase gating (read by `extractMinPurchaseAmount`)
     | "purchase.amount"
-    | "purchase.currency"
-    | "purchase.isFirstPurchase"
-    | "purchase.shippingCost"
-    | "purchase.taxAmount"
-    // Attribution context
-    | "attribution.referrerIdentityGroupId"
-    // User context
-    | "user.identityGroupId"
-    | "user.walletAddress"
-    | "user.countryCode"
-    | "user.isNew"
-    | "user.totalPurchases"
-    | "user.totalSpend"
-    | "user.rewards.campaignRewardCount"
-    | "user.rewards.campaignRewardAmount"
-    | "user.rewards.merchantRewardCount"
-    | "user.rewards.merchantRewardAmount"
-    // Time context
-    | "time.dayOfWeek"
-    | "time.hourOfDay"
-    | "time.date"
+    // Campaign start gating (read by `extractStartDate`)
     | "time.timestamp"
+    // Referrer attribution
+    | "attribution.referrerIdentityGroupId"
     // Custom interaction context
     | `custom.${string}`
     // Escape hatch — any other context path (kept assignable to/from `string`)

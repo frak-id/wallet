@@ -8,7 +8,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { buildCampaignView } from "../ExplorerDetail/campaignView";
+import { buildCampaignView } from "../../campaignView";
 import * as styles from "./index.css";
 import { LogoCutout } from "./LogoCutout";
 

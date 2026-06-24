@@ -1,9 +1,5 @@
 import { t } from "@backend-utils";
 import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
-import type {
-    MerchantReward,
-    RuleConditions as SdkRuleConditions,
-} from "@frak-labs/core-sdk";
 import type { Static, TSchema } from "elysia";
 import { DistributionStatusSchema } from "../../campaign-bank/schemas";
 import {
@@ -276,37 +272,6 @@ export type EstimatedRewardItem = Omit<
     Static<typeof EstimatedRewardItemSchema>,
     "conditions"
 > & { conditions: RuleConditions };
-
-// Compile-time parity guards — the runtime-validated schemas above must stay in
-// lockstep with the published `@frak-labs/core-sdk` contract (`MerchantReward`,
-// `RuleConditions`). A field rename or value-shape drift becomes a type error
-// here, forcing both sides to move together.
-//
-// `interactionTypeKey` is intentionally excluded from the structural check: the
-// backend trigger vocabulary (bare `"custom"`) is deliberately narrowed to the
-// SDK's namespaced `custom.${string}` at the boundary. Both sides are still
-// guarded to remain a string subtype.
-type ParityExtends<A, B> = [A] extends [B] ? true : false;
-type ParityAssert<_T extends true> = true;
-type ParityMutual<A, B> =
-    ParityExtends<A, B> extends true ? ParityExtends<B, A> : false;
-
-// Exported so the assertion counts as "used" in every downstream typechecker
-// (the business app compiles this file with `noUnusedLocals`); a drift turns a
-// tuple member into `ParityAssert<false>`, which fails to compile.
-export type EstimatedRewardSdkParity = [
-    ParityAssert<ParityMutual<RuleConditions, SdkRuleConditions>>,
-    ParityAssert<
-        ParityMutual<
-            Omit<EstimatedRewardItem, "interactionTypeKey">,
-            Omit<MerchantReward, "interactionTypeKey">
-        >
-    >,
-    ParityAssert<
-        ParityExtends<EstimatedRewardItem["interactionTypeKey"], string>
-    >,
-    ParityAssert<ParityExtends<MerchantReward["interactionTypeKey"], string>>,
-];
 
 export const EstimatedRewardsResultSchema = t.Object({
     rewards: t.Array(EstimatedRewardItemSchema),

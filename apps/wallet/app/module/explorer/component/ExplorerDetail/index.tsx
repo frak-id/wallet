@@ -39,7 +39,7 @@ import { useStore } from "zustand";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import { CampaignInfoSection } from "./CampaignInfoSection";
-import { buildCampaignView } from "./campaignView";
+import { buildCampaignView } from "../../campaignView";
 import * as styles from "./index.css";
 
 type ExplorerDetailProps = {
