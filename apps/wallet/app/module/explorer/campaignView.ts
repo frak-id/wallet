@@ -5,6 +5,10 @@ import {
     formatRewardOrHide,
     selectDisplayCampaign,
 } from "@frak-labs/core-sdk/rewards";
+import { estimatedRewardsQueryOptions } from "@frak-labs/wallet-shared";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 const SECONDS_PER_DAY = 86400;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -72,4 +76,20 @@ export function buildCampaignView(
                 ? formatAmount(minPurchaseAmount)
                 : undefined,
     };
+}
+
+/**
+ * Fetches the merchant's estimated rewards and derives the display campaign
+ * view, memoized on the rewards + active language. Shared by the explorer card
+ * and detail surfaces.
+ */
+export function useCampaignView(merchantId: string): CampaignView | null {
+    const { i18n } = useTranslation();
+    const { data: rewards } = useQuery(
+        estimatedRewardsQueryOptions(merchantId)
+    );
+    return useMemo(
+        () => buildCampaignView(rewards ?? [], i18n.language),
+        [rewards, i18n.language]
+    );
 }

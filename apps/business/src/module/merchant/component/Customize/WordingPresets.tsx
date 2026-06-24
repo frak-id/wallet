@@ -59,6 +59,8 @@ function ButtonSharePresets({
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
 }) {
+    const defaultField =
+        "buttonShare.text.default" as FieldPath<ComponentSettingsFormValues>;
     const enField =
         "buttonShare.text.en" as FieldPath<ComponentSettingsFormValues>;
     const frField =
@@ -73,6 +75,9 @@ function ButtonSharePresets({
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
                 const preset = BUTTON_SHARE_PRESETS[Number(value)];
+                // Clear the language-agnostic `default` tier so the en/fr
+                // preset copy actually surfaces (default wins in the cascade).
+                form.setValue(defaultField, "", { shouldDirty: true });
                 form.setValue(enField, preset.en, { shouldDirty: true });
                 form.setValue(frField, preset.fr, { shouldDirty: true });
             }}
@@ -95,10 +100,14 @@ function PostPurchasePresets({
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
 }) {
+    const refereeDefaultField =
+        "postPurchase.refereeText.default" as FieldPath<ComponentSettingsFormValues>;
     const refereeEnField =
         "postPurchase.refereeText.en" as FieldPath<ComponentSettingsFormValues>;
     const refereeFrField =
         "postPurchase.refereeText.fr" as FieldPath<ComponentSettingsFormValues>;
+    const referrerDefaultField =
+        "postPurchase.referrerText.default" as FieldPath<ComponentSettingsFormValues>;
     const referrerEnField =
         "postPurchase.referrerText.en" as FieldPath<ComponentSettingsFormValues>;
     const referrerFrField =
@@ -113,6 +122,9 @@ function PostPurchasePresets({
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
                 const preset = POST_PURCHASE_PRESETS[Number(value)];
+                // Clear the `default` tiers so the en/fr preset copy surfaces.
+                form.setValue(refereeDefaultField, "", { shouldDirty: true });
+                form.setValue(referrerDefaultField, "", { shouldDirty: true });
                 form.setValue(refereeEnField, preset.referee.en, {
                     shouldDirty: true,
                 });
@@ -152,10 +164,14 @@ function BannerPresets({
     currency: Currency;
     shopName: string;
 }) {
+    const titleDefaultField =
+        "banner.referralTitle.default" as FieldPath<ComponentSettingsFormValues>;
     const titleEnField =
         "banner.referralTitle.en" as FieldPath<ComponentSettingsFormValues>;
     const titleFrField =
         "banner.referralTitle.fr" as FieldPath<ComponentSettingsFormValues>;
+    const descDefaultField =
+        "banner.referralDescription.default" as FieldPath<ComponentSettingsFormValues>;
     const descEnField =
         "banner.referralDescription.en" as FieldPath<ComponentSettingsFormValues>;
     const descFrField =
@@ -171,6 +187,9 @@ function BannerPresets({
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
                 const preset = BANNER_PRESETS[Number(value)];
+                // Clear the `default` tiers so the en/fr preset copy surfaces.
+                form.setValue(titleDefaultField, "", { shouldDirty: true });
+                form.setValue(descDefaultField, "", { shouldDirty: true });
                 form.setValue(
                     titleEnField,
                     applyBrand(preset.en.title, shopName),

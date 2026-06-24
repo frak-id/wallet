@@ -19,8 +19,11 @@ import {
     WordingLangTabs,
 } from "./ComponentEditor";
 import { CssEditor } from "./CssEditor";
+import {
+    componentsToFormValues,
+    formValuesToComponents,
+} from "./fields/fieldDefaults";
 import { CUSTOM_CSS_ENABLED } from "./flags";
-import { fromLocalizedText, toLocalizedText } from "./localizable";
 import type {
     ComponentSettingsFormValues,
     ComponentType,
@@ -51,39 +54,10 @@ export function DefaultCustomization({
 }
 
 const getGlobalComponentsValues = ({
-    components: c,
+    components,
 }: SdkConfig): ComponentSettingsFormValues => ({
     targetInteraction: "",
-    buttonShare: {
-        text: toLocalizedText(c?.buttonShare?.text),
-        noRewardText: toLocalizedText(c?.buttonShare?.noRewardText),
-        css: c?.buttonShare?.rawCss ?? "",
-    },
-    postPurchase: {
-        badgeText: toLocalizedText(c?.postPurchase?.badgeText),
-        refereeText: toLocalizedText(c?.postPurchase?.refereeText),
-        refereeNoRewardText: toLocalizedText(
-            c?.postPurchase?.refereeNoRewardText
-        ),
-        referrerText: toLocalizedText(c?.postPurchase?.referrerText),
-        referrerNoRewardText: toLocalizedText(
-            c?.postPurchase?.referrerNoRewardText
-        ),
-        ctaText: toLocalizedText(c?.postPurchase?.ctaText),
-        ctaNoRewardText: toLocalizedText(c?.postPurchase?.ctaNoRewardText),
-        imageUrl: c?.postPurchase?.imageUrl ?? "",
-        css: c?.postPurchase?.rawCss ?? "",
-    },
-    banner: {
-        referralTitle: toLocalizedText(c?.banner?.referralTitle),
-        referralDescription: toLocalizedText(c?.banner?.referralDescription),
-        referralCta: toLocalizedText(c?.banner?.referralCta),
-        inappTitle: toLocalizedText(c?.banner?.inappTitle),
-        inappDescription: toLocalizedText(c?.banner?.inappDescription),
-        inappCta: toLocalizedText(c?.banner?.inappCta),
-        imageUrl: c?.banner?.imageUrl ?? "",
-        css: c?.banner?.rawCss ?? "",
-    },
+    ...componentsToFormValues(components),
 });
 
 function GlobalComponentsPanel({
@@ -119,58 +93,8 @@ function GlobalComponentsPanel({
     }, [isSuccess, form.reset, form.getValues, form]);
 
     const onSubmit = useCallback(
-        (v: ComponentSettingsFormValues) => {
-            const val = (s: string) => s.trim() || undefined;
-            return editSdkConfig({
-                components: {
-                    buttonShare: {
-                        text: fromLocalizedText(v.buttonShare.text),
-                        noRewardText: fromLocalizedText(
-                            v.buttonShare.noRewardText
-                        ),
-                        clickAction: "sharing-page",
-                        rawCss: val(v.buttonShare.css),
-                    },
-                    postPurchase: {
-                        badgeText: fromLocalizedText(v.postPurchase.badgeText),
-                        refereeText: fromLocalizedText(
-                            v.postPurchase.refereeText
-                        ),
-                        refereeNoRewardText: fromLocalizedText(
-                            v.postPurchase.refereeNoRewardText
-                        ),
-                        referrerText: fromLocalizedText(
-                            v.postPurchase.referrerText
-                        ),
-                        referrerNoRewardText: fromLocalizedText(
-                            v.postPurchase.referrerNoRewardText
-                        ),
-                        ctaText: fromLocalizedText(v.postPurchase.ctaText),
-                        ctaNoRewardText: fromLocalizedText(
-                            v.postPurchase.ctaNoRewardText
-                        ),
-                        imageUrl: val(v.postPurchase.imageUrl),
-                        rawCss: val(v.postPurchase.css),
-                    },
-                    banner: {
-                        referralTitle: fromLocalizedText(
-                            v.banner.referralTitle
-                        ),
-                        referralDescription: fromLocalizedText(
-                            v.banner.referralDescription
-                        ),
-                        referralCta: fromLocalizedText(v.banner.referralCta),
-                        inappTitle: fromLocalizedText(v.banner.inappTitle),
-                        inappDescription: fromLocalizedText(
-                            v.banner.inappDescription
-                        ),
-                        inappCta: fromLocalizedText(v.banner.inappCta),
-                        imageUrl: val(v.banner.imageUrl),
-                        rawCss: val(v.banner.css),
-                    },
-                },
-            });
-        },
+        (v: ComponentSettingsFormValues) =>
+            editSdkConfig({ components: formValuesToComponents(v) }),
         [editSdkConfig]
     );
 

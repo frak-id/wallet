@@ -21,11 +21,10 @@ import {
     WordingLangTabs,
 } from "./ComponentEditor";
 import {
-    getBannerDefaults,
-    getPostPurchaseDefaults,
+    componentsToFormValues,
+    formValuesToComponents,
 } from "./fields/fieldDefaults";
 import { CUSTOM_CSS_ENABLED } from "./flags";
-import { fromLocalizedText, toLocalizedText } from "./localizable";
 import { DeletePlacementPanel, PlacementCssPanel } from "./PlacementPanels";
 import type {
     ComponentSettingsFormValues,
@@ -79,17 +78,9 @@ function getPlacementFormValues(
     placementId: string
 ): ComponentSettingsFormValues {
     const placement = sdkConfig.placements?.[placementId];
-    const components = placement?.components;
-    const bs = components?.buttonShare;
     return {
         targetInteraction: placement?.targetInteraction ?? "",
-        buttonShare: {
-            text: toLocalizedText(bs?.text),
-            noRewardText: toLocalizedText(bs?.noRewardText),
-            css: bs?.rawCss ?? "",
-        },
-        postPurchase: getPostPurchaseDefaults(components),
-        banner: getBannerDefaults(components),
+        ...componentsToFormValues(placement?.components),
     };
 }
 
@@ -120,35 +111,6 @@ function PlacementSettingsPanel({
 
     const form = useForm<ComponentSettingsFormValues>({
         values,
-        defaultValues: {
-            targetInteraction: "",
-            buttonShare: {
-                text: toLocalizedText(undefined),
-                noRewardText: toLocalizedText(undefined),
-                css: "",
-            },
-            postPurchase: {
-                badgeText: toLocalizedText(undefined),
-                refereeText: toLocalizedText(undefined),
-                refereeNoRewardText: toLocalizedText(undefined),
-                referrerText: toLocalizedText(undefined),
-                referrerNoRewardText: toLocalizedText(undefined),
-                ctaText: toLocalizedText(undefined),
-                ctaNoRewardText: toLocalizedText(undefined),
-                imageUrl: "",
-                css: "",
-            },
-            banner: {
-                referralTitle: toLocalizedText(undefined),
-                referralDescription: toLocalizedText(undefined),
-                referralCta: toLocalizedText(undefined),
-                inappTitle: toLocalizedText(undefined),
-                inappDescription: toLocalizedText(undefined),
-                inappCta: toLocalizedText(undefined),
-                imageUrl: "",
-                css: "",
-            },
-        },
     });
 
     useEffect(() => {
@@ -157,58 +119,8 @@ function PlacementSettingsPanel({
     }, [isSuccess, form.reset, form.getValues, form]);
 
     const onSubmit = useCallback(
-        (currentValues: ComponentSettingsFormValues) => {
-            const buttonShare = {
-                text: fromLocalizedText(currentValues.buttonShare.text),
-                noRewardText: fromLocalizedText(
-                    currentValues.buttonShare.noRewardText
-                ),
-                clickAction: "sharing-page" as const,
-                rawCss: valueOrUndefined(currentValues.buttonShare.css),
-            };
-            const postPurchase = {
-                badgeText: fromLocalizedText(
-                    currentValues.postPurchase.badgeText
-                ),
-                refereeText: fromLocalizedText(
-                    currentValues.postPurchase.refereeText
-                ),
-                refereeNoRewardText: fromLocalizedText(
-                    currentValues.postPurchase.refereeNoRewardText
-                ),
-                referrerText: fromLocalizedText(
-                    currentValues.postPurchase.referrerText
-                ),
-                referrerNoRewardText: fromLocalizedText(
-                    currentValues.postPurchase.referrerNoRewardText
-                ),
-                ctaText: fromLocalizedText(currentValues.postPurchase.ctaText),
-                ctaNoRewardText: fromLocalizedText(
-                    currentValues.postPurchase.ctaNoRewardText
-                ),
-                imageUrl: valueOrUndefined(currentValues.postPurchase.imageUrl),
-                rawCss: valueOrUndefined(currentValues.postPurchase.css),
-            };
-            const banner = {
-                referralTitle: fromLocalizedText(
-                    currentValues.banner.referralTitle
-                ),
-                referralDescription: fromLocalizedText(
-                    currentValues.banner.referralDescription
-                ),
-                referralCta: fromLocalizedText(
-                    currentValues.banner.referralCta
-                ),
-                inappTitle: fromLocalizedText(currentValues.banner.inappTitle),
-                inappDescription: fromLocalizedText(
-                    currentValues.banner.inappDescription
-                ),
-                inappCta: fromLocalizedText(currentValues.banner.inappCta),
-                imageUrl: valueOrUndefined(currentValues.banner.imageUrl),
-                rawCss: valueOrUndefined(currentValues.banner.css),
-            };
-
-            return editSdkConfig({
+        (currentValues: ComponentSettingsFormValues) =>
+            editSdkConfig({
                 placements: updatePlacement(
                     sdkConfig,
                     placementId,
@@ -216,17 +128,14 @@ function PlacementSettingsPanel({
                         ...placement,
                         components: {
                             ...placement?.components,
-                            buttonShare,
-                            postPurchase,
-                            banner,
+                            ...formValuesToComponents(currentValues),
                         },
                         targetInteraction: valueOrUndefined(
                             currentValues.targetInteraction
                         ),
                     })
                 ),
-            });
-        },
+            }),
         [editSdkConfig, sdkConfig, placementId]
     );
 

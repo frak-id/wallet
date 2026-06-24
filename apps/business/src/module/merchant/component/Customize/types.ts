@@ -31,7 +31,7 @@ export type PresetLang = (typeof PRESET_LANGS)[number];
 // Empty string means "not set" for that tier; empties are dropped at save.
 export type LocalizedText = Record<WordingLang, string>;
 
-type ButtonShareFormValues = {
+export type ButtonShareFormValues = {
     text: LocalizedText;
     noRewardText: LocalizedText;
     css: string;
