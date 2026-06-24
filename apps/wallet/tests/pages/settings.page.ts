@@ -8,7 +8,7 @@ export class SettingsPage {
 
     async navigateToSettings() {
         await this.page.goto("/profile");
-        await this.page.waitForLoadState("networkidle");
+        await this.page.waitForURL("/profile");
     }
 
     // Profil tab. "Profil" is a hardcoded FR label in AppShell (not i18n).
@@ -55,7 +55,6 @@ export class SettingsPage {
     // setup flow via /profile/recovery (redirects to /profile/recovery/setup).
     async navigateToRecovery() {
         await this.page.goto("/profile/recovery");
-        await this.page.waitForLoadState("networkidle");
     }
 
     async verifyRecoverySetupPage() {

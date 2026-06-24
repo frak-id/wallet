@@ -4,7 +4,7 @@ import type {
     FrakClient,
     ModalStepTypes,
 } from "@frak-labs/core-sdk";
-import type { JSHandle, Page } from "@playwright/test";
+import { expect, type JSHandle, type Page } from "@playwright/test";
 
 type ModalSteps = DisplayModalParamsType<ModalStepTypes[]>["steps"];
 type ModalMetadata = DisplayModalParamsType<ModalStepTypes[]>["metadata"];
@@ -18,6 +18,15 @@ type ModalMetadata = DisplayModalParamsType<ModalStepTypes[]>["metadata"];
  */
 const DEFAULT_HOST_URL =
     process.env.FRAK_E2E_HOST_URL ?? "https://vanilla.frak-labs.com/";
+
+// Modal-open retry budget: the SDK occasionally drops the first open request,
+// so we re-fire up to N times, with a longer wait on the final attempt.
+const MODAL_OPEN_ATTEMPTS = 3;
+const MODAL_OPEN_TIMEOUT_MS = 6_000;
+const MODAL_OPEN_FINAL_TIMEOUT_MS = 15_000;
+// Bound the connection/setup gate so a failed handshake fails fast (with a
+// clear error) instead of hanging to the test timeout.
+const SDK_SETUP_TIMEOUT_MS = 20_000;
 
 /**
  * Helper to test the listener through the SDK.
@@ -60,17 +69,60 @@ export class SdkHelper {
             undefined,
             { timeout: 15_000 }
         );
+        // A request fired before the handshake + post-connection setup is
+        // dropped (modal never opens), so gate on both — bounded so a failed
+        // handshake fails fast rather than hanging to the test timeout.
+        const client = await this.walletClient;
+        await client.evaluate(async (c, timeoutMs) => {
+            const timeout = new Promise((_, reject) =>
+                setTimeout(
+                    () => reject(new Error("SDK connection/setup timed out")),
+                    timeoutMs
+                )
+            );
+            await Promise.race([
+                Promise.all([c.waitForConnection, c.waitForSetup]),
+                timeout,
+            ]);
+        }, SDK_SETUP_TIMEOUT_MS);
+    }
+
+    // The open request is occasionally dropped; re-fire until the modal mounts.
+    // The isVisible() guard avoids re-firing a slow-but-successful open (which
+    // would dispatch a duplicate request and overwrite __frakModalResult).
+    private async fireUntilModalOpen(fire: () => Promise<void>) {
+        const body = this.page.frameLocator("#frak-wallet").locator("body");
+        for (let attempt = 0; attempt < MODAL_OPEN_ATTEMPTS; attempt++) {
+            if (await body.isVisible()) return;
+            await fire();
+            try {
+                await expect(body).toBeVisible({
+                    timeout:
+                        attempt === MODAL_OPEN_ATTEMPTS - 1
+                            ? MODAL_OPEN_FINAL_TIMEOUT_MS
+                            : MODAL_OPEN_TIMEOUT_MS,
+                });
+                return;
+            } catch {
+                // Not visible within the budget — re-fire on the next attempt.
+            }
+        }
+        throw new Error("Modal did not open");
     }
 
     async openWalletModal(params?: DisplayEmbeddedWalletParamsType) {
         const walletClient = await this.walletClient;
-        await walletClient.evaluate((client, params) => {
-            // Do not wait for the return here
-            client.request({
-                method: "frak_displayEmbeddedWallet",
-                params: [params ?? {}, { name: "e2e test" }],
-            });
-        }, params);
+        await this.fireUntilModalOpen(() =>
+            walletClient.evaluate((client, params) => {
+                // Fire-and-forget: the embedded wallet request stays open.
+                client
+                    .request({
+                        method: "frak_displayEmbeddedWallet",
+                        params: [params ?? {}, { name: "e2e test" }],
+                    })
+                    .catch(() => {});
+            }, params)
+        );
     }
 
     /**
@@ -80,20 +132,21 @@ export class SdkHelper {
      */
     async displayModal(steps: ModalSteps, metadata?: ModalMetadata) {
         const walletClient = await this.walletClient;
-        await walletClient.evaluate(
-            (client, { steps, metadata }) => {
-                const w = window as unknown as {
-                    __frakModalResult?: Promise<unknown>;
-                };
-                w.__frakModalResult = client.request({
-                    method: "frak_displayModal",
-                    params: [steps, metadata, { name: "e2e test" }],
-                });
-                // Swallow rejection here to avoid an unhandled rejection; the
-                // spec reads success/failure through getModalResult().
-                w.__frakModalResult.catch(() => {});
-            },
-            { steps, metadata }
+        await this.fireUntilModalOpen(() =>
+            walletClient.evaluate(
+                (client, { steps, metadata }) => {
+                    const w = window as unknown as {
+                        __frakModalResult?: Promise<unknown>;
+                    };
+                    w.__frakModalResult = client.request({
+                        method: "frak_displayModal",
+                        params: [steps, metadata, { name: "e2e test" }],
+                    });
+                    // Spec reads success/failure via getModalResult().
+                    w.__frakModalResult.catch(() => {});
+                },
+                { steps, metadata }
+            )
         );
     }
 

@@ -19,7 +19,7 @@ bun run dev   # SST multiplexer: wallet + listener + backend + example sites
 
 The **vanilla partner harness** (needed by the SDK / modal specs) is part of the
 multiplexer but has `autostart: false` — **start it manually in the multiplexer**
-(`infra/example.ts`). It then serves on http://localhost:3013.
+(`infra/example.ts`). It then serves on <http://localhost:3013>.
 
 The backend must be reachable and migrated (`bun -F @frak-labs/bootstrap start`
 once if it's a fresh DB).
@@ -40,7 +40,7 @@ bun run test:e2e:dev        # wallet-dev.frak.id
 bun run test:e2e:prod       # wallet.frak.id  (careful)
 
 # a single project / file / title
-bunx playwright test --project=chromium-fresh
+bunx playwright test --project=sdk-fresh
 bunx playwright test --project=setup
 bunx playwright test specs/home/all.spec.ts
 bunx playwright test -g "should log in via passkey"
@@ -62,9 +62,10 @@ deployed vanilla demo; set it to `http://localhost:3013/` for a local run).
 |---|---|---|---|
 | `setup` | – | writes `ON_DEVICE_STORAGE_STATE` | Register/login a mocked on-device wallet |
 | `setup-paired` | – | writes `PAIRED_STORAGE_STATE` | Cross-device (distant-webauthn) pairing |
-| `chromium-on-device` | `setup` | on-device state | Authenticated wallet specs (home, history, settings, sdk) |
-| `chromium-paired` | `setup-paired` | paired state | Same specs under a paired session |
-| `chromium-fresh` | – | none | Logged-out, **self-contained** modal/login specs |
+| `chromium-on-device` | `setup` | on-device state | Authenticated wallet specs (home, history, settings) — **mobile** (Pixel 7), excludes sdk |
+| `chromium-paired` | `setup-paired` | paired state | Wallet specs under a paired session — desktop |
+| `sdk-embedded` | `setup` | on-device state | Authenticated SDK/modal specs (sdk/all, sdk/balance-all) — desktop partner page |
+| `sdk-fresh` | – | none | Logged-out, **self-contained** SDK modal/login specs — desktop |
 
 The setup projects run first and persist a Playwright storage state under
 `playwright/.storage/`; the authenticated projects load it via `storageState`.
@@ -91,7 +92,8 @@ Two mechanisms exist — know which a spec uses:
 
 ### SDK / listener modal specs (`specs/sdk/*-fresh.spec.ts`)
 
-Run in `chromium-fresh` and are **self-contained** — no `setup` dependency:
+Run in `sdk-fresh` and are **self-contained** — no `setup` dependency:
+
 - WebAuthn is mocked client-side (`mockedWebAuthN`).
 - `/auth/login` is stubbed with a canned session (`backendApi.mockLoginSuccess`).
 - They load the partner page (`FRAK_E2E_HOST_URL`), boot the real SDK, and drive
@@ -135,10 +137,10 @@ tests/
 
 ## Adding a spec
 
-1. Pick the project by auth need: `chromium-fresh` (logged-out / self-contained),
-   `chromium-on-device` (authenticated), `chromium-paired` (distant-webauthn).
+1. Pick the project by auth need: `sdk-fresh` (logged-out / self-contained),
+   `chromium-on-device` (authenticated wallet, mobile), `chromium-paired`
+   (distant-webauthn), `sdk-embedded` (authenticated SDK).
 2. Reuse page objects + helpers; add new ones to `fixtures.ts`.
 3. Name on-device files `*on-device*.spec.ts` or `*all*.spec.ts`, pairing
    `*pairing*.spec.ts`, and self-contained modal files `*fresh*.spec.ts` so they
    land in the right project (`testMatch`).
-```

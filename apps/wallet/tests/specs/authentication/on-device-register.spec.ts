@@ -23,15 +23,8 @@ test("should register new wallet with biometrics successfully", async ({
     // Register wallet with biometrics (navigates onboarding slides + Keypass)
     await authPage.clickRegister();
 
-    // Post-registration onboarding steps (each skipped if auto-advanced):
-    // referral code step → notification opt-in → Welcome screen.
-    await authPage.skipReferralIfPresent();
-    await authPage.skipNotificationIfPresent();
-    await authPage.verifyWelcomeScreen();
-    await authPage.clickContinueOnWelcome();
-
-    // Ensure the user got redirected to the wallet page
-    await authPage.verifyWalletPage();
+    // Dismiss onboarding and land on the wallet.
+    await authPage.completeOnboarding();
 
     // Verify credentials were created in virtual authenticator
     const credentials = await webAuthN.getCredentials();

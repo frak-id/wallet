@@ -56,14 +56,19 @@ export default defineConfig({
         screenshot: "only-on-failure",
     },
     projects: [
+        // On-device wallet specs run on a mobile Chromium device (the app is
+        // mobile-first). Pairing (desktop-initiated cross-device) and SDK
+        // (desktop partner page) specs run on Desktop Chrome. testIgnore keeps
+        // sdk off the mobile project.
         {
             name: "setup",
-            use: { ...devices["Desktop Chrome"] },
+            use: { ...devices["Pixel 7"] },
             testMatch: /global\.setup\.ts/,
         },
         {
             // Separate setup for the cross-device pairing state so its more
-            // fragile flow only gates the paired suite.
+            // fragile flow only gates the paired suite. Desktop: pairing is a
+            // desktop-initiated cross-device flow.
             name: "setup-paired",
             use: { ...devices["Desktop Chrome"] },
             testMatch: /global-paired\.setup\.ts/,
@@ -71,12 +76,13 @@ export default defineConfig({
         {
             name: "chromium-on-device",
             use: {
-                ...devices["Desktop Chrome"],
+                ...devices["Pixel 7"],
                 storageState: ON_DEVICE_STORAGE_STATE,
                 permissions: ["clipboard-read", "clipboard-write"],
             },
             dependencies: ["setup"],
             testMatch: ["**/*on-device*.spec.ts", "**/*all*.spec.ts"],
+            testIgnore: ["**/sdk/**"],
         },
         {
             name: "chromium-paired",
@@ -87,17 +93,28 @@ export default defineConfig({
             },
             dependencies: ["setup-paired"],
             testMatch: ["**/*pairing*.spec.ts", "**/*all*.spec.ts"],
+            testIgnore: ["**/sdk/**"],
         },
         {
-            // Logged-out context (no storageState) for flows that must start
-            // unauthenticated — e.g. the modal login step. Self-contained: the
-            // specs mock WebAuthn + `/auth/login`, so no `setup` dependency.
-            name: "chromium-fresh",
+            // Authenticated SDK/modal specs — desktop partner page.
+            name: "sdk-embedded",
+            use: {
+                ...devices["Desktop Chrome"],
+                storageState: ON_DEVICE_STORAGE_STATE,
+                permissions: ["clipboard-read", "clipboard-write"],
+            },
+            dependencies: ["setup"],
+            testMatch: ["**/sdk/all.spec.ts", "**/sdk/balance-all.spec.ts"],
+        },
+        {
+            // Logged-out SDK specs (self-contained: mock WebAuthn + /auth/login,
+            // so no `setup` dependency) — desktop partner page.
+            name: "sdk-fresh",
             use: {
                 ...devices["Desktop Chrome"],
                 permissions: ["clipboard-read", "clipboard-write"],
             },
-            testMatch: ["**/*fresh*.spec.ts"],
+            testMatch: ["**/sdk/*fresh*.spec.ts"],
         },
     ],
     // We don't use the `webserver` since we rely on the sst multiplexer here

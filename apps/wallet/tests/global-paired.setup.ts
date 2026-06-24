@@ -31,15 +31,8 @@ test("Log with paired wallet", async ({ page, pairingTab, authPage }) => {
     // Confirm pairing in the pairing tab
     await pairingTab.confirmPairing(pairingId, pairingCode);
 
-    // After pairing, the origin continues onboarding (referral → notification
-    // → welcome) before landing on the wallet — same as the on-device flow.
-    await authPage.skipReferralIfPresent();
-    await authPage.skipNotificationIfPresent();
-    await authPage.verifyWelcomeScreen();
-    await authPage.clickContinueOnWelcome();
-
-    // Ensure that the wallet is authenticated
-    await authPage.verifyWalletPage();
+    // After pairing, finish onboarding and land on the wallet.
+    await authPage.completeOnboarding();
 
     // Save the state in storage
     await page.context().storageState({ path: PAIRED_STORAGE_STATE });

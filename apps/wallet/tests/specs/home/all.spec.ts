@@ -39,7 +39,13 @@ test("should display wallet page when wallet button clicked", async ({
 test("should display the correct total balance on the home page", async ({
     homePage,
     backendApi,
-}) => {
+}, testInfo) => {
+    // The distant-webauthn paired session has no connected address, so the
+    // balance query (and this mock) never runs there.
+    test.skip(
+        testInfo.project.name === "chromium-paired",
+        "balance fetch needs a connected on-device wallet"
+    );
     // Mock the  balance information
     await backendApi.interceptBalanceRoute((route) =>
         route.fulfill({
@@ -59,4 +65,49 @@ test("should display the correct total balance on the home page", async ({
     await homePage.navigateToHome();
     await homePage.verifyBasicsInformations();
     await homePage.verifyBalanceInformations(420);
+});
+
+// Rewards-card stat triggers open their empty-state modals (zero wallet).
+// Transfer/Lifetime open the empty modals only when the balance is <= 0, so
+// mock a zero balance rather than relying on the live wallet staying empty.
+const zeroBalance = {
+    status: 200,
+    body: JSON.stringify({
+        total: { amount: 0, eurAmount: 0, usdAmount: 0, gbpAmount: 0 },
+        balances: [],
+    }),
+};
+
+test("Transfer to my bank opens the empty-transfer modal", async ({
+    homePage,
+    backendApi,
+}) => {
+    await backendApi.interceptBalanceRoute((route) =>
+        route.fulfill(zeroBalance)
+    );
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.clickTransferToBank();
+    await homePage.verifyModalText("You don't have any money to transfer yet");
+});
+
+// Pending reads claimable rewards on-chain (naturally zero on a fresh wallet).
+test("Pending stat opens the empty-earnings modal", async ({ homePage }) => {
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.clickPendingStat();
+    await homePage.verifyModalText("You don't have any earnings yet");
+});
+
+test("Lifetime stat opens the empty-transferred modal", async ({
+    homePage,
+    backendApi,
+}) => {
+    await backendApi.interceptBalanceRoute((route) =>
+        route.fulfill(zeroBalance)
+    );
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.clickLifetimeStat();
+    await homePage.verifyModalText("You haven't transferred any earnings yet");
 });

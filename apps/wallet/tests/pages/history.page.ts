@@ -5,7 +5,7 @@ export class HistoryPage {
 
     async navigateToHistory() {
         await this.page.goto("/history");
-        await this.page.waitForLoadState("networkidle");
+        await this.page.waitForURL("/history");
     }
 
     // Redesigned history: "Earnings history" title + summary card (no tabs).
@@ -20,7 +20,6 @@ export class HistoryPage {
     async navigateToNotifications() {
         await this.page.goto("/notifications");
         await this.page.waitForURL("/notifications");
-        await this.page.waitForLoadState("networkidle");
     }
 
     // A fresh wallet renders the empty-state title.

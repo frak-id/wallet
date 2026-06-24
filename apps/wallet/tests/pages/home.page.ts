@@ -8,7 +8,7 @@ export class HomePage {
 
     async navigateToHome() {
         await this.page.goto("/wallet");
-        await this.page.waitForLoadState("networkidle");
+        await this.page.waitForURL("/wallet");
     }
 
     // Redesigned home: "Wallet" title + the Rewards card.
@@ -23,7 +23,6 @@ export class HomePage {
     async navigateToSend() {
         await this.page.goto("/tokens/send");
         await this.page.waitForURL("/tokens/send");
-        await this.page.waitForLoadState("networkidle");
     }
 
     async verifyDisplaySendPage() {
@@ -44,7 +43,6 @@ export class HomePage {
             .getByRole("link", { name: "Back", exact: true })
             .click();
         await this.page.waitForURL("/wallet");
-        await this.page.waitForLoadState("networkidle");
     }
 
     // Wallet tab. "Porte-monnaie" is a hardcoded FR label in AppShell (not i18n).
@@ -63,5 +61,30 @@ export class HomePage {
         await expect(
             this.page.getByText(amount.toString(), { exact: true }).first()
         ).toBeVisible({ timeout: 15_000 });
+    }
+
+    // Rewards-card triggers (open empty-state modals for a fresh/zero wallet).
+    async clickTransferToBank() {
+        await this.page
+            .getByRole("button", { name: "Transfer to my bank" })
+            .click();
+    }
+
+    async clickPendingStat() {
+        // Stat buttons are named like "€0 Pending" — anchor to avoid matching
+        // other Pending-* buttons.
+        await this.page.getByRole("button", { name: /Pending$/ }).click();
+    }
+
+    async clickLifetimeStat() {
+        await this.page.getByRole("button", { name: /Lifetime$/ }).click();
+    }
+
+    // Assert an open modal containing the given text. Scope to the dialog so we
+    // confirm a real visible modal (not just the sr-only Radix title).
+    async verifyModalText(text: string) {
+        const dialog = this.page.getByRole("dialog").last();
+        await expect(dialog).toBeVisible({ timeout: 10_000 });
+        await expect(dialog.getByText(text).first()).toBeVisible();
     }
 }

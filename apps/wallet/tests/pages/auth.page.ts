@@ -144,14 +144,16 @@ export class AuthPage {
     }
 
     async verifyRegistrationError() {
-        // No reliable error UI here, so assert the negative outcome. Settle
-        // first so a mid-transition state can't pass before registration fails,
-        // then confirm we stayed in /register and never reached the wallet.
-        await this.page.waitForTimeout(2_000);
-        await expect(this.page).toHaveURL(/\/register/);
+        // No reliable error UI; assert registration didn't advance. The keypass
+        // ("Secure your account") stays open and we never reach the wallet —
+        // waiting on the keypass heading is deterministic (no fixed delay).
         await expect(
-            this.page.getByRole("heading", { name: "Wallet", level: 1 })
-        ).not.toBeVisible();
+            this.page.getByRole("heading", {
+                name: "Secure your account",
+                level: 1,
+            })
+        ).toBeVisible({ timeout: 15_000 });
+        await expect(this.page).toHaveURL(/\/register/);
     }
 
     async verifyWelcomeScreen() {
@@ -164,6 +166,16 @@ export class AuthPage {
 
     async clickContinueOnWelcome() {
         await this.page.locator("button", { hasText: "Get started" }).click();
+    }
+
+    // Dismiss post-registration onboarding (referral -> notification ->
+    // welcome) and land on the wallet home.
+    async completeOnboarding() {
+        await this.skipReferralIfPresent();
+        await this.skipNotificationIfPresent();
+        await this.verifyWelcomeScreen();
+        await this.clickContinueOnWelcome();
+        await this.verifyWalletPage();
     }
 
     async verifyDuplicateWalletError() {

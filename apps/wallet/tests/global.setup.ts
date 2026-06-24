@@ -35,16 +35,8 @@ test("Log with mocked webauthn", async ({ page, mockedWebAuthN, authPage }) => {
     await authPage.verifyRegistrationReady();
     await authPage.clickRegister();
 
-    // Post-registration onboarding steps (each skipped if auto-advanced)
-    await authPage.skipReferralIfPresent();
-    await authPage.skipNotificationIfPresent();
-
-    // Welcome screen
-    await authPage.verifyWelcomeScreen();
-    await authPage.clickContinueOnWelcome();
-
-    // Ensure we land on the wallet page
-    await authPage.verifyWalletPage();
+    // Dismiss onboarding and land on the wallet.
+    await authPage.completeOnboarding();
 
     // Save the state in storage
     await page.context().storageState({ path: ON_DEVICE_STORAGE_STATE });

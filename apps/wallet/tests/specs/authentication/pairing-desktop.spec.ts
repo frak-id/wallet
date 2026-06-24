@@ -23,12 +23,6 @@ test("Should be able to pair from desktop to mobile", async ({
     // Confirm pairing in the pairing tab
     await pairingTab.confirmPairing(pairingId, pairingCode);
 
-    // After pairing, finish onboarding (referral → notification → welcome).
-    await authPage.skipReferralIfPresent();
-    await authPage.skipNotificationIfPresent();
-    await authPage.verifyWelcomeScreen();
-    await authPage.clickContinueOnWelcome();
-
-    // Ensure that the wallet is authenticated
-    await authPage.verifyWalletPage();
+    // After pairing, finish onboarding and land on the wallet.
+    await authPage.completeOnboarding();
 });
