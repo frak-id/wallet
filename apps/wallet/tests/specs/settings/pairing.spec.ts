@@ -4,8 +4,8 @@ test.beforeEach(async ({ mockedWebAuthN }) => {
     await mockedWebAuthN.setup();
 });
 
-// Verify display the settings page
+// Logout was removed; assert the identity card instead.
 test("should display settings page", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
-    await settingsPage.verifyLogoutButton();
+    await settingsPage.verifyProfileIdentity();
 });

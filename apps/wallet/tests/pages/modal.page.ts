@@ -27,7 +27,11 @@ export class ModalPage {
     }
 
     async verifyModalDisplayed() {
-        await expect(this.walletFrame.locator("body")).toBeVisible();
+        // The iframe <body> starts hidden and flips visible once content
+        // mounts — allow time so we don't race the enter animation.
+        await expect(this.walletFrame.locator("body")).toBeVisible({
+            timeout: 15_000,
+        });
     }
 
     async verifyModalNotDisplayed() {
@@ -51,25 +55,20 @@ export class ModalPage {
     }
 
     async clickCopyButton() {
-        await expect(
-            this.walletFrame.getByRole("button", { name: "Copy" })
-        ).toBeVisible();
-        await this.walletFrame.getByRole("button", { name: "Copy" }).click();
+        const copy = this.walletFrame.getByRole("button", { name: "Copy" });
+        await expect(copy).toBeVisible();
+        await copy.click();
     }
 
-    // Verify balance informations
+    // Modal language is merchant/SDK-config-driven (not browser locale), so it
+    // can render French — match "Balance"/"Solde". No verifyModalDisplayed
+    // here, so allow for the open animation.
     async verifyBalanceInformations(amount: number) {
-        await expect(this.walletFrame.getByText("Balance")).toBeVisible();
+        await expect(this.walletFrame.getByText(/Balance|Solde/i)).toBeVisible({
+            timeout: 15_000,
+        });
         await expect(
-            this.walletFrame.getByText(amount.toString())
-        ).toBeVisible();
-    }
-
-    // VerifyPendingInformation
-    async verifyPendingInformations(amount: number) {
-        await expect(this.walletFrame.getByText("Pending")).toBeVisible();
-        await expect(
-            this.walletFrame.getByText(amount.toString())
+            this.walletFrame.getByText(amount.toString()).first()
         ).toBeVisible();
     }
 

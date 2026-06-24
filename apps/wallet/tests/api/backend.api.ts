@@ -60,6 +60,12 @@ export class BackendApi {
         await this.page.route("**/*/wallet/auth/*", handler);
     }
 
+    // Register endpoint only (unlike interceptAuthRoute, doesn't stub
+    // emailStatus), so the onboarding email step can still complete.
+    async interceptRegisterRoute(handler: (route: Route) => void) {
+        await this.page.route("**/*/wallet/auth/register", handler);
+    }
+
     async interceptNotificationsRoute(handler: (route: Route) => void) {
         await this.page.route("**/*/wallet/notifications/tokens/*", handler);
     }

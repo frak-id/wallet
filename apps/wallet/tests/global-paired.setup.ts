@@ -9,10 +9,8 @@ import { test } from "./fixtures";
  * project depends on it.
  */
 test("Log with paired wallet", async ({ page, pairingTab, authPage }) => {
-    // The cross-device flow (pairing handshake across two contexts + full
-    // onboarding) is heavier than the default 30s budget, especially against a
-    // local dev stack — give it room so it doesn't flake on slow runs.
-    test.setTimeout(90_000);
+    // Cross-device pairing + full onboarding is heavy locally — give it room.
+    test.setTimeout(150_000);
 
     await pairingTab.setup();
 

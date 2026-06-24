@@ -3,14 +3,18 @@ import { expect, type Page } from "@playwright/test";
 export class ClipboardHelper {
     constructor(private readonly page: Page) {}
 
-    // Verify that some stuff are in the clipboard content
+    // Copy handlers write async after the click resolves, so poll the read.
     async verifyClipboardNotEmpty() {
-        // It's best to pass the expected value
-        const clipboardText: string = await this.page.evaluate(() =>
-            navigator.clipboard.readText()
-        );
-        //verify the clipboard is not empty
-        expect(clipboardText).toBeDefined();
-        expect(clipboardText).not.toHaveLength(0);
+        await expect
+            .poll(
+                async () =>
+                    (
+                        await this.page.evaluate(() =>
+                            navigator.clipboard.readText()
+                        )
+                    ).length,
+                { timeout: 5_000 }
+            )
+            .toBeGreaterThan(0);
     }
 }
