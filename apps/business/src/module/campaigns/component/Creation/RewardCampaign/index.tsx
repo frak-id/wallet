@@ -994,9 +994,6 @@ function TieredReveal({
         <Stack space="m">
             <RevealHeader />
 
-            {/* The reco surfaces only once a Target CPA exists. */}
-            {hasCpa && <RecoBar onApply={applyReco} />}
-
             {globalArray.fields.map((row, index) => {
                 const tier = tiers[index];
                 const isLast = index === globalArray.fields.length - 1;
@@ -1033,6 +1030,10 @@ function TieredReveal({
                     </Fragment>
                 );
             })}
+
+            {/* The reco sits below the tiers and surfaces only once a Target
+                CPA exists; applying it fills every tier's 80/20 split. */}
+            {hasCpa && <RecoBar onApply={applyReco} />}
 
             <Inline space="none">
                 <Button
