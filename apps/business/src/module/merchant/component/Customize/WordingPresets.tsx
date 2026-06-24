@@ -21,13 +21,6 @@ import {
 import type { ComponentSettingsFormValues, ComponentType } from "./types";
 
 /**
- * Presets are bilingual and language-independent in the UI: one picker (not
- * tied to the active language tab) writes both `en` + `fr` at once. Kept hidden
- * behind this flag until the feature is wired up end to end.
- */
-const WORDING_PRESETS_ENABLED = false;
-
-/**
  * 2×2 grid of curated wording choices for the selected component. The radio
  * reflects the current stored text (none selected for custom wording) and
  * picking one writes the preset's en + fr copy into the form, updating the
@@ -44,7 +37,6 @@ export function WordingPresets({
     currency: Currency;
     shopName: string;
 }) {
-    if (!WORDING_PRESETS_ENABLED) return null;
     if (componentType === "banner") {
         return (
             <BannerPresets
@@ -54,55 +46,97 @@ export function WordingPresets({
             />
         );
     }
-    return (
-        <TextPresets
-            componentType={componentType}
-            form={form}
-            currency={currency}
-        />
-    );
+    if (componentType === "postPurchase") {
+        return <PostPurchasePresets form={form} currency={currency} />;
+    }
+    return <ButtonSharePresets form={form} currency={currency} />;
 }
 
-function TextPresets({
-    componentType,
+function ButtonSharePresets({
     form,
     currency,
 }: {
-    componentType: "buttonShare" | "postPurchase";
     form: UseFormReturn<ComponentSettingsFormValues>;
     currency: Currency;
 }) {
-    const isButtonShare = componentType === "buttonShare";
-    const presets = isButtonShare
-        ? BUTTON_SHARE_PRESETS
-        : POST_PURCHASE_PRESETS;
-    const enField = (
-        isButtonShare ? "buttonShare.text.en" : "postPurchase.refereeText.en"
-    ) as FieldPath<ComponentSettingsFormValues>;
-    const frField = (
-        isButtonShare ? "buttonShare.text.fr" : "postPurchase.refereeText.fr"
-    ) as FieldPath<ComponentSettingsFormValues>;
+    const enField =
+        "buttonShare.text.en" as FieldPath<ComponentSettingsFormValues>;
+    const frField =
+        "buttonShare.text.fr" as FieldPath<ComponentSettingsFormValues>;
 
     const currentEn = String(form.watch(enField) ?? "");
-    const selected = isButtonShare
-        ? matchButtonSharePreset(currentEn)
-        : matchPostPurchasePreset(currentEn);
+    const selected = matchButtonSharePreset(currentEn);
 
     return (
         <RadioGroup
             className={styles.presetGrid}
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
-                const preset = presets[Number(value)];
+                const preset = BUTTON_SHARE_PRESETS[Number(value)];
                 form.setValue(enField, preset.en, { shouldDirty: true });
                 form.setValue(frField, preset.fr, { shouldDirty: true });
             }}
         >
-            {presets.map((preset, index) => (
+            {BUTTON_SHARE_PRESETS.map((preset, index) => (
                 <PresetRow key={preset.en} value={String(index)}>
                     <Text variant="body" weight="medium" as="span">
                         {formatPresetLabel(preset.en, currency)}
                     </Text>
+                </PresetRow>
+            ))}
+        </RadioGroup>
+    );
+}
+
+function PostPurchasePresets({
+    form,
+    currency,
+}: {
+    form: UseFormReturn<ComponentSettingsFormValues>;
+    currency: Currency;
+}) {
+    const refereeEnField =
+        "postPurchase.refereeText.en" as FieldPath<ComponentSettingsFormValues>;
+    const refereeFrField =
+        "postPurchase.refereeText.fr" as FieldPath<ComponentSettingsFormValues>;
+    const referrerEnField =
+        "postPurchase.referrerText.en" as FieldPath<ComponentSettingsFormValues>;
+    const referrerFrField =
+        "postPurchase.referrerText.fr" as FieldPath<ComponentSettingsFormValues>;
+
+    const currentRefereeEn = String(form.watch(refereeEnField) ?? "");
+    const selected = matchPostPurchasePreset(currentRefereeEn);
+
+    return (
+        <RadioGroup
+            className={styles.presetGrid}
+            value={selected !== null ? String(selected) : ""}
+            onValueChange={(value) => {
+                const preset = POST_PURCHASE_PRESETS[Number(value)];
+                form.setValue(refereeEnField, preset.referee.en, {
+                    shouldDirty: true,
+                });
+                form.setValue(refereeFrField, preset.referee.fr, {
+                    shouldDirty: true,
+                });
+                form.setValue(referrerEnField, preset.referrer.en, {
+                    shouldDirty: true,
+                });
+                form.setValue(referrerFrField, preset.referrer.fr, {
+                    shouldDirty: true,
+                });
+            }}
+        >
+            {POST_PURCHASE_PRESETS.map((preset, index) => (
+                <PresetRow key={preset.referee.en} value={String(index)}>
+                    <Stack space="none" as="span">
+                        <Text variant="body" weight="medium" as="span">
+                            {formatPresetLabel(preset.referee.en, currency)}
+                        </Text>
+                        <Text variant="bodySmall" color="tertiary" as="span">
+                            {formatPresetLabel(preset.referrer.en, currency)}
+                        </Text>
+                    </Stack>
                 </PresetRow>
             ))}
         </RadioGroup>

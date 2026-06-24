@@ -1,5 +1,3 @@
-import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-
 export type SdkIdentityFormValues = {
     name: string;
     logoUrl: string;
@@ -33,13 +31,9 @@ export type PresetLang = (typeof PRESET_LANGS)[number];
 // Empty string means "not set" for that tier; empties are dropped at save.
 export type LocalizedText = Record<WordingLang, string>;
 
-type Components = NonNullable<SdkConfig["components"]>;
-type ComponentOf<K extends keyof Components> = NonNullable<Components[K]>;
-
 type ButtonShareFormValues = {
     text: LocalizedText;
     noRewardText: LocalizedText;
-    clickAction: NonNullable<ComponentOf<"buttonShare">["clickAction"]>;
     css: string;
 };
 

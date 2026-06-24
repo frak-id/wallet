@@ -13,6 +13,7 @@ import { Form, FormControl, FormField } from "@/module/forms/Form";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useCustomizeSection } from "../saveRegistry";
 import {
+    AdvancedDisclosure,
     ComponentFields,
     ComponentPreview,
     ComponentTypeTabs,
@@ -22,6 +23,7 @@ import {
     getBannerDefaults,
     getPostPurchaseDefaults,
 } from "./fields/fieldDefaults";
+import { CUSTOM_CSS_ENABLED } from "./flags";
 import { fromLocalizedText, toLocalizedText } from "./localizable";
 import { DeletePlacementPanel, PlacementCssPanel } from "./PlacementPanels";
 import type {
@@ -54,11 +56,13 @@ export function PlacementCustomization({
                 placementId={placementId}
                 sdkConfig={sdkConfig}
             />
-            <PlacementCssPanel
-                merchantId={merchantId}
-                placementId={placementId}
-                sdkConfig={sdkConfig}
-            />
+            {CUSTOM_CSS_ENABLED && (
+                <PlacementCssPanel
+                    merchantId={merchantId}
+                    placementId={placementId}
+                    sdkConfig={sdkConfig}
+                />
+            )}
             <DeletePlacementPanel
                 merchantId={merchantId}
                 placementId={placementId}
@@ -81,7 +85,6 @@ function getPlacementFormValues(
         buttonShare: {
             text: toLocalizedText(bs?.text),
             noRewardText: toLocalizedText(bs?.noRewardText),
-            clickAction: bs?.clickAction ?? "sharing-page",
             css: bs?.rawCss ?? "",
         },
         postPurchase: getPostPurchaseDefaults(components),
@@ -107,6 +110,7 @@ function PlacementSettingsPanel({
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
     const [activeLang, setActiveLang] = useState<WordingLang>("default");
+    const [advancedOpen, setAdvancedOpen] = useState(false);
 
     const values = useMemo(
         () => getPlacementFormValues(sdkConfig, placementId),
@@ -120,7 +124,6 @@ function PlacementSettingsPanel({
             buttonShare: {
                 text: toLocalizedText(undefined),
                 noRewardText: toLocalizedText(undefined),
-                clickAction: "sharing-page",
                 css: "",
             },
             postPurchase: {
@@ -157,7 +160,7 @@ function PlacementSettingsPanel({
                 noRewardText: fromLocalizedText(
                     currentValues.buttonShare.noRewardText
                 ),
-                clickAction: currentValues.buttonShare.clickAction,
+                clickAction: "sharing-page" as const,
                 rawCss: valueOrUndefined(currentValues.buttonShare.css),
             };
             const postPurchase = {
@@ -304,11 +307,17 @@ function PlacementSettingsPanel({
                         shopName={sdkConfig.name ?? "My Store"}
                     />
 
-                    <ComponentFields
-                        selectedComponent={selectedComponent}
-                        form={form}
-                        lang={activeLang}
-                    />
+                    <AdvancedDisclosure
+                        label={t("customize.components.advanced")}
+                        isOpen={advancedOpen}
+                        onToggle={() => setAdvancedOpen(!advancedOpen)}
+                    >
+                        <ComponentFields
+                            selectedComponent={selectedComponent}
+                            form={form}
+                            lang={activeLang}
+                        />
+                    </AdvancedDisclosure>
                 </Stack>
             </Card>
         </Form>

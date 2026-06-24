@@ -1,9 +1,31 @@
 import { Input } from "@frak-labs/design-system/components/Input";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import type { ReactNode } from "react";
 import type { FieldPath, UseFormReturn } from "react-hook-form";
 import { EditField } from "@/module/forms/EditField";
 import { FormControl, FormField } from "@/module/forms/Form";
 import * as styles from "../customize.css";
+import { CUSTOM_CSS_ENABLED } from "../flags";
 import type { ComponentSettingsFormValues, WordingLang } from "../types";
+
+/** Titled group of wording inputs, used to split the advanced fields by audience. */
+export function FieldGroup({
+    title,
+    children,
+}: {
+    title: string;
+    children: ReactNode;
+}) {
+    return (
+        <Stack space="s">
+            <Text variant="bodySmall" weight="medium" color="secondary">
+                {title}
+            </Text>
+            <div className={styles.settingsGrid}>{children}</div>
+        </Stack>
+    );
+}
 
 /** Localizable form paths (each resolves to a `LocalizedText`). */
 export type WordingFieldName = Extract<
@@ -70,6 +92,7 @@ export function ComponentCssField({
     label: string;
     placeholder: string;
 }) {
+    if (!CUSTOM_CSS_ENABLED) return null;
     return (
         <FormField
             control={form.control}

@@ -1309,12 +1309,18 @@
             "banner": "Bannière",
             "preview": "Aperçu",
             "advanced": "Réglages avancés",
-            "clickAction": {
-                "label": "Action au clic",
-                "hint": "Ce qui se passe quand un visiteur clique sur le bouton de partage",
-                "embeddedWallet": "Wallet intégré",
-                "shareModal": "Fenêtre de partage",
-                "sharingPage": "Page de partage"
+            "postPurchasePreview": {
+                "referee": "Vue filleul",
+                "referrer": "Vue parrain"
+            },
+            "postPurchaseGroups": {
+                "shared": "Badge et CTA",
+                "referee": "Message filleul",
+                "referrer": "Message parrain"
+            },
+            "bannerGroups": {
+                "referral": "Parrainage",
+                "inapp": "In-app"
             },
             "targetInteraction": {
                 "label": "Interaction cible",

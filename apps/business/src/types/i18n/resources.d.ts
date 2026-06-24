@@ -667,14 +667,11 @@ export default interface Resources {
       "components": {
         "advanced": "Advanced settings",
         "banner": "Banner",
-        "buttonShare": "Share button",
-        "clickAction": {
-          "embeddedWallet": "Embedded wallet",
-          "hint": "What happens when a visitor clicks the share button",
-          "label": "Click action",
-          "shareModal": "Share modal",
-          "sharingPage": "Sharing page"
+        "bannerGroups": {
+          "inapp": "In-app",
+          "referral": "Referral"
         },
+        "buttonShare": "Share button",
         "description": "Choose the wording that best matches your brand for each component.",
         "fields": {
           "badgeText": "Badge text",
@@ -695,6 +692,15 @@ export default interface Resources {
           "text": "Button text"
         },
         "postPurchase": "Post Purchase",
+        "postPurchaseGroups": {
+          "referee": "Referee message",
+          "referrer": "Referrer message",
+          "shared": "Badge & CTA"
+        },
+        "postPurchasePreview": {
+          "referee": "Referee view",
+          "referrer": "Referrer view"
+        },
         "preview": "Preview",
         "targetInteraction": {
           "error": "Maximum length is 200 characters",

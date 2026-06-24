@@ -1309,12 +1309,18 @@
             "banner": "Banner",
             "preview": "Preview",
             "advanced": "Advanced settings",
-            "clickAction": {
-                "label": "Click action",
-                "hint": "What happens when a visitor clicks the share button",
-                "embeddedWallet": "Embedded wallet",
-                "shareModal": "Share modal",
-                "sharingPage": "Sharing page"
+            "postPurchasePreview": {
+                "referee": "Referee view",
+                "referrer": "Referrer view"
+            },
+            "postPurchaseGroups": {
+                "shared": "Badge & CTA",
+                "referee": "Referee message",
+                "referrer": "Referrer message"
+            },
+            "bannerGroups": {
+                "referral": "Referral",
+                "inapp": "In-app"
             },
             "targetInteraction": {
                 "label": "Target interaction",

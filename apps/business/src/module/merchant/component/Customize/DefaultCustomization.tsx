@@ -18,6 +18,7 @@ import {
     WordingLangTabs,
 } from "./ComponentEditor";
 import { CssEditor } from "./CssEditor";
+import { CUSTOM_CSS_ENABLED } from "./flags";
 import { fromLocalizedText, toLocalizedText } from "./localizable";
 import type {
     ComponentSettingsFormValues,
@@ -41,7 +42,9 @@ export function DefaultCustomization({
                 merchantId={merchantId}
                 sdkConfig={sdkConfig}
             />
-            <GlobalCssPanel merchantId={merchantId} sdkConfig={sdkConfig} />
+            {CUSTOM_CSS_ENABLED && (
+                <GlobalCssPanel merchantId={merchantId} sdkConfig={sdkConfig} />
+            )}
         </>
     );
 }
@@ -53,7 +56,6 @@ const getGlobalComponentsValues = ({
     buttonShare: {
         text: toLocalizedText(c?.buttonShare?.text),
         noRewardText: toLocalizedText(c?.buttonShare?.noRewardText),
-        clickAction: c?.buttonShare?.clickAction ?? "sharing-page",
         css: c?.buttonShare?.rawCss ?? "",
     },
     postPurchase: {
@@ -97,6 +99,7 @@ function GlobalComponentsPanel({
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
     const [activeLang, setActiveLang] = useState<WordingLang>("default");
+    const [advancedOpen, setAdvancedOpen] = useState(false);
 
     const values = useMemo(
         () => getGlobalComponentsValues(sdkConfig),
@@ -122,7 +125,7 @@ function GlobalComponentsPanel({
                         noRewardText: fromLocalizedText(
                             v.buttonShare.noRewardText
                         ),
-                        clickAction: v.buttonShare.clickAction,
+                        clickAction: "sharing-page",
                         rawCss: val(v.buttonShare.css),
                     },
                     postPurchase: {
@@ -213,11 +216,17 @@ function GlobalComponentsPanel({
                         shopName={sdkConfig.name ?? "My Store"}
                     />
 
-                    <ComponentFields
-                        selectedComponent={selectedComponent}
-                        form={form}
-                        lang={activeLang}
-                    />
+                    <AdvancedDisclosure
+                        label={t("customize.components.advanced")}
+                        isOpen={advancedOpen}
+                        onToggle={() => setAdvancedOpen(!advancedOpen)}
+                    >
+                        <ComponentFields
+                            selectedComponent={selectedComponent}
+                            form={form}
+                            lang={activeLang}
+                        />
+                    </AdvancedDisclosure>
                 </Stack>
             </Card>
         </Form>

@@ -23,22 +23,56 @@ export const BUTTON_SHARE_PRESETS: readonly LocalizedPreset[] = [
     { en: "Recommend & earn {REWARD}", fr: "Recommandez et gagnez {REWARD}" },
 ];
 
-export const POST_PURCHASE_PRESETS: readonly LocalizedPreset[] = [
+/**
+ * Post-purchase presets ship both the referee message (shown to the buyer who
+ * just earned a reward) and the referrer message (shown to the sharer), each in
+ * en + fr. Picking one fills all four fields at once.
+ */
+export type PostPurchasePreset = {
+    referee: LocalizedPreset;
+    referrer: LocalizedPreset;
+};
+
+export const POST_PURCHASE_PRESETS: readonly PostPurchasePreset[] = [
     {
-        en: "You just earned {REWARD}! Share with friends to earn even more.",
-        fr: "Vous venez de gagner {REWARD} ! Partagez avec vos amis pour gagner encore plus.",
+        referee: {
+            en: "You just earned {REWARD}! Share with friends to earn even more.",
+            fr: "Vous venez de gagner {REWARD} ! Partagez avec vos amis pour gagner encore plus.",
+        },
+        referrer: {
+            en: "Earn {REWARD} by sharing this with your friends!",
+            fr: "Gagnez {REWARD} en partageant avec vos amis !",
+        },
     },
     {
-        en: "{REWARD} earned so far. Keep sharing to grow your rewards.",
-        fr: "{REWARD} gagnés jusqu'ici. Continuez à partager pour augmenter vos récompenses.",
+        referee: {
+            en: "{REWARD} earned so far. Keep sharing to grow your rewards.",
+            fr: "{REWARD} gagnés jusqu'ici. Continuez à partager pour augmenter vos récompenses.",
+        },
+        referrer: {
+            en: "Share with friends to grow your rewards — earn {REWARD} each time.",
+            fr: "Partagez avec vos amis pour augmenter vos récompenses — gagnez {REWARD} à chaque fois.",
+        },
     },
     {
-        en: "{REWARD} earned so far. Your next reward could be just one share away.",
-        fr: "{REWARD} gagnés jusqu'ici. Votre prochaine récompense n'est qu'à un partage.",
+        referee: {
+            en: "{REWARD} earned so far. Your next reward could be just one share away.",
+            fr: "{REWARD} gagnés jusqu'ici. Votre prochaine récompense n'est qu'à un partage.",
+        },
+        referrer: {
+            en: "Your next {REWARD} is just one share away.",
+            fr: "Votre prochaine récompense de {REWARD} n'est qu'à un partage.",
+        },
     },
     {
-        en: "Earned {REWARD} already. Keep sharing to grow your rewards.",
-        fr: "Déjà {REWARD} gagnés. Continuez à partager pour augmenter vos récompenses.",
+        referee: {
+            en: "Earned {REWARD} already. Keep sharing to grow your rewards.",
+            fr: "Déjà {REWARD} gagnés. Continuez à partager pour augmenter vos récompenses.",
+        },
+        referrer: {
+            en: "Keep sharing and earn {REWARD} for every friend.",
+            fr: "Continuez à partager et gagnez {REWARD} pour chaque ami.",
+        },
     },
 ];
 
@@ -116,8 +150,15 @@ export function matchButtonSharePreset(enText: string): number | null {
     return matchPreset(BUTTON_SHARE_PRESETS, enText);
 }
 
+// Matched on the canonical referee `en` copy: selecting a preset writes both
+// audiences in both languages, so the referee `en` value alone identifies it.
 export function matchPostPurchasePreset(enText: string): number | null {
-    return matchPreset(POST_PURCHASE_PRESETS, enText);
+    const trimmed = enText.trim();
+    if (!trimmed) return null;
+    const index = POST_PURCHASE_PRESETS.findIndex(
+        (preset) => preset.referee.en === trimmed
+    );
+    return index === -1 ? null : index;
 }
 
 export function matchBannerPreset(

@@ -1,5 +1,6 @@
 import { componentDefaults } from "@frak-labs/components/i18n/defaults";
 import type { Currency, Language } from "@frak-labs/core-sdk";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
     Tabs,
     TabsList,
@@ -12,6 +13,7 @@ import {
     ShareButtonPreview,
 } from "@frak-labs/ui-preview";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import * as styles from "./customize.css";
@@ -148,6 +150,82 @@ export function ComponentFields({
     }
 }
 
+type PostPurchasePreviewMode = "referee" | "referrer";
+
+/**
+ * Post-purchase modal preview with a referee/referrer toggle: both audiences
+ * share the badge + CTA but get a different message, so merchants can check
+ * each modal without leaving the editor.
+ */
+function PostPurchasePreviewModes({
+    values,
+    lang,
+    defaults,
+    currency,
+    shopName,
+}: {
+    values: ComponentSettingsFormValues;
+    lang: WordingLang;
+    defaults: (typeof componentDefaults)[Language];
+    currency: Currency;
+    shopName: string;
+}) {
+    const { t } = useTranslation();
+    const [mode, setMode] = useState<PostPurchasePreviewMode>("referee");
+
+    const messageText =
+        mode === "referee"
+            ? resolvePreviewWording(
+                  values.postPurchase.refereeText,
+                  lang,
+                  defaults.postPurchase.refereeText
+              )
+            : resolvePreviewWording(
+                  values.postPurchase.referrerText,
+                  lang,
+                  defaults.postPurchase.referrerText
+              );
+
+    return (
+        <Stack space="s">
+            <Tabs
+                value={mode}
+                onValueChange={(value) =>
+                    setMode(value as PostPurchasePreviewMode)
+                }
+            >
+                <TabsList
+                    variant="segmented"
+                    fullWidth
+                    className={styles.segmentedTrack}
+                >
+                    <TabsTrigger value="referee" variant="segmented" fullWidth>
+                        {t("customize.components.postPurchasePreview.referee")}
+                    </TabsTrigger>
+                    <TabsTrigger value="referrer" variant="segmented" fullWidth>
+                        {t("customize.components.postPurchasePreview.referrer")}
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
+            <PostPurchasePreview
+                badgeText={resolvePreviewWording(
+                    values.postPurchase.badgeText,
+                    lang,
+                    ""
+                )}
+                messageText={messageText}
+                ctaText={resolvePreviewWording(
+                    values.postPurchase.ctaText,
+                    lang,
+                    defaults.postPurchase.ctaText
+                )}
+                currency={currency}
+                shopName={shopName}
+            />
+        </Stack>
+    );
+}
+
 export function ComponentPreview({
     selectedComponent,
     form,
@@ -181,22 +259,10 @@ export function ComponentPreview({
             );
         case "postPurchase":
             return (
-                <PostPurchasePreview
-                    badgeText={resolvePreviewWording(
-                        values.postPurchase.badgeText,
-                        lang,
-                        ""
-                    )}
-                    messageText={resolvePreviewWording(
-                        values.postPurchase.refereeText,
-                        lang,
-                        defaults.postPurchase.refereeText
-                    )}
-                    ctaText={resolvePreviewWording(
-                        values.postPurchase.ctaText,
-                        lang,
-                        defaults.postPurchase.ctaText
-                    )}
+                <PostPurchasePreviewModes
+                    values={values}
+                    lang={lang}
+                    defaults={defaults}
                     currency={currency}
                     shopName={shopName}
                 />

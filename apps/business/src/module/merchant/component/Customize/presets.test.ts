@@ -24,12 +24,15 @@ describe("applyBrand", () => {
 
 describe("preset catalogue", () => {
     it("ships non-empty en + fr copy for every preset", () => {
-        for (const preset of [
-            ...BUTTON_SHARE_PRESETS,
-            ...POST_PURCHASE_PRESETS,
-        ]) {
+        for (const preset of BUTTON_SHARE_PRESETS) {
             expect(preset.en.trim().length).toBeGreaterThan(0);
             expect(preset.fr.trim().length).toBeGreaterThan(0);
+        }
+        for (const preset of POST_PURCHASE_PRESETS) {
+            for (const audience of [preset.referee, preset.referrer]) {
+                expect(audience.en.trim().length).toBeGreaterThan(0);
+                expect(audience.fr.trim().length).toBeGreaterThan(0);
+            }
         }
         for (const preset of BANNER_PRESETS) {
             expect(preset.en.title.trim().length).toBeGreaterThan(0);
@@ -61,14 +64,24 @@ describe("matchButtonSharePreset", () => {
 });
 
 describe("matchPostPurchasePreset", () => {
-    it("matches each preset on its en copy", () => {
+    it("matches each preset on its referee en copy", () => {
         for (const [index, preset] of POST_PURCHASE_PRESETS.entries()) {
-            expect(matchPostPurchasePreset(preset.en)).toBe(index);
+            expect(matchPostPurchasePreset(preset.referee.en)).toBe(index);
         }
     });
 
-    it("returns null for custom text", () => {
+    it("matches with surrounding whitespace", () => {
+        expect(
+            matchPostPurchasePreset(
+                `  ${POST_PURCHASE_PRESETS[1].referee.en}  `
+            )
+        ).toBe(1);
+    });
+
+    it("returns null for custom text and empty values", () => {
         expect(matchPostPurchasePreset("Thanks for your purchase")).toBeNull();
+        expect(matchPostPurchasePreset("")).toBeNull();
+        expect(matchPostPurchasePreset("   ")).toBeNull();
     });
 });
 
