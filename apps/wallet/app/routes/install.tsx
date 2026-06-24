@@ -178,9 +178,10 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
         merchantInfoQueryOptions(merchantId)
     );
 
-    const { data: estimatedReward } = useFormattedEstimatedReward({
+    const { data: reward } = useFormattedEstimatedReward({
         merchantId,
     });
+    const estimatedReward = reward?.formatted;
 
     // Wrap t to inject estimatedReward into i18n interpolation
     const t = useCallback(

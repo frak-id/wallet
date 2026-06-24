@@ -148,6 +148,35 @@ describe.sequential("useReward", () => {
         expect(result.current.reward).toBeUndefined();
     });
 
+    it("should treat a percentage reward as no reward", async () => {
+        vi.mocked(getMerchantInformation).mockResolvedValue({
+            id: "merchant-1",
+            onChainMetadata: { name: "Test", domain: "test.com" },
+            rewards: [
+                {
+                    campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
+                    interactionTypeKey: "purchase",
+                    referrer: {
+                        payoutType: "percentage",
+                        percent: 10,
+                        percentOf: "purchase_amount",
+                    },
+                },
+            ],
+        });
+
+        const { result } = renderHook(() => useReward(true, undefined));
+
+        await waitFor(() => {
+            expect(getMerchantInformation).toHaveBeenCalled();
+        });
+
+        // Percentage rewards carry no concrete amount → reward stays undefined
+        expect(result.current.reward).toBeUndefined();
+    });
+
     it("should format the referee reward when audience is 'referee'", async () => {
         vi.mocked(getMerchantInformation).mockResolvedValue({
             id: "merchant-1",

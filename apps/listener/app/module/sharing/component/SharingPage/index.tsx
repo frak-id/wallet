@@ -4,6 +4,7 @@ import {
     trackEvent,
     useCopyToClipboardWithState,
 } from "@frak-labs/wallet-shared/common";
+import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
 import {
     buildSharingLink,
     clearConfirmation,
@@ -31,14 +32,29 @@ import {
 export { handleDisplaySharingPage } from "@/module/hooks/useDisplaySharingPageListener.impl";
 
 export function ListenerSharingPage() {
-    const { currentRequest, clearRequest, isRewardLoading } =
-        useSharingListenerUI();
+    const { currentRequest, clearRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();
     const { sourceUrl, merchantId } = useSafeResolvingContext();
     const defaultAttribution = useStore(
         resolvingContextStore,
         (s) => s.backendSdkConfig?.attribution
     );
+    const backendCurrency = useStore(
+        resolvingContextStore,
+        (s) => s.backendSdkConfig?.currency
+    );
+
+    // Fetch the reward here (rather than reading it from the UI context) so the
+    // sharing page owns its own reward presentation. React-query dedupes this
+    // against the provider's fetch — same query key, no extra request.
+    const { data: reward, isLoading: isRewardLoading } =
+        useFormattedEstimatedReward({
+            merchantId,
+            currency:
+                currentRequest.configMetadata?.currency ?? backendCurrency,
+            targetInteraction: currentRequest.targetInteraction,
+            context: currentRequest.i18n?.context,
+        });
     const clientId = useStore(clientIdStore, (s) => s.clientId);
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
@@ -205,6 +221,7 @@ export function ListenerSharingPage() {
             t={t}
             isSharing={isSharing}
             isRewardLoading={isRewardLoading}
+            rewardType={reward?.payoutType}
             showConfirmation={showConfirmation}
             onShare={handleShare}
             onCopy={handleCopy}

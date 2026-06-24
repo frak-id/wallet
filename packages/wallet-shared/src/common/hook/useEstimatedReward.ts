@@ -4,8 +4,9 @@ import type {
     MerchantReward,
 } from "@frak-labs/core-sdk";
 import {
-    formatBestReward,
+    type BestReward,
     type RewardAudience,
+    selectBestReward,
 } from "@frak-labs/core-sdk/rewards";
 import { authenticatedBackendApi } from "../api/backendClient";
 import { merchantKey } from "../queryKeys/merchant";
@@ -35,7 +36,11 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
 
 /**
  * Select-function factory: picks the best reward for the given context and
- * formats it, returning `undefined` when nothing is worth advertising.
+ * resolves it to its formatted string plus `payoutType`, returning `undefined`
+ * when nothing is worth advertising.
+ *
+ * Exposing the `payoutType` lets surfaces adapt their display (e.g. prefix a
+ * tiered reward with "Up to").
  *
  * The `"referred"` context marks the viewer as the referee, so their reward
  * side is shown instead of the referrer's.
@@ -51,6 +56,6 @@ export function selectFormattedReward({
 }) {
     const audience: RewardAudience =
         context === "referred" ? "referee" : "referrer";
-    return (rewards: MerchantReward[]): string | undefined =>
-        formatBestReward(rewards, { currency, targetInteraction, audience });
+    return (rewards: MerchantReward[]): BestReward | undefined =>
+        selectBestReward(rewards, { currency, targetInteraction, audience });
 }

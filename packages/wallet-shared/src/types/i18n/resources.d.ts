@@ -45,7 +45,9 @@ export default interface Resources {
           "amount": "{{estimatedReward}}",
           "label": "Credited to your account",
           "tagline1": "Earn {{estimatedReward}},",
-          "tagline2": "on every purchase!"
+          "tagline1_tiered": "Earn up to {{estimatedReward}},",
+          "tagline2": "on every purchase!",
+          "upTo": "Up to"
         },
         "confirmation": {
           "benefits": {

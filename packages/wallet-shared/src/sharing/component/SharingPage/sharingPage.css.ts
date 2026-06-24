@@ -88,6 +88,24 @@ export const creditCardTop = style({
     marginRight: "42px",
 });
 
+export const creditCardAmountColumn = style({
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+});
+
+export const creditCardUpTo = style({
+    // Float above the amount without taking layout space, so the number keeps
+    // its position instead of being pushed down when the "Up to" label shows.
+    position: "absolute",
+    bottom: "100%",
+    left: 0,
+    fontSize: fontSize.xs,
+    fontWeight: 400,
+    lineHeight: "20px",
+});
+
 export const creditCardAmount = style({
     display: "inline-flex",
     alignItems: "flex-start",

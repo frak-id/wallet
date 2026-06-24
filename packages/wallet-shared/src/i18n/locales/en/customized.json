@@ -62,7 +62,9 @@
             "card": {
                 "amount": "{{ estimatedReward }}",
                 "label": "Credited to your account",
+                "upTo": "Up to",
                 "tagline1": "Earn {{ estimatedReward }},",
+                "tagline1_tiered": "Earn up to {{ estimatedReward }},",
                 "tagline2": "on every purchase!"
             },
             "steps": {

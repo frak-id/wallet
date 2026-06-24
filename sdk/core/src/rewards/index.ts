@@ -18,10 +18,12 @@ export {
     formatRewardOrHide,
 } from "./format";
 export {
+    type BestReward,
     type DisplayCampaign,
     formatBestReward,
     type RewardAudience,
     type SelectDisplayCampaignOptions,
+    selectBestReward,
     selectDisplayCampaign,
 } from "./select";
 export { getRewardValue } from "./value";

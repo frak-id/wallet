@@ -1,4 +1,4 @@
-import type { SharingPageProduct } from "@frak-labs/core-sdk";
+import type { EstimatedReward, SharingPageProduct } from "@frak-labs/core-sdk";
 import {
     Accordion,
     AccordionContent,
@@ -66,6 +66,12 @@ export type SharingPageProps = {
      */
     isRewardLoading?: boolean;
     /**
+     * Payout type of the displayed reward. Drives reward-specific presentation
+     * on the credit card: tiered rewards get an "Up to" prefix and a matching
+     * tagline variant.
+     */
+    rewardType?: EstimatedReward["payoutType"];
+    /**
      * Whether the Web Share API is available in the current browser.
      * When false, the share button is hidden and copy is the only option.
      */
@@ -122,6 +128,7 @@ export function SharingPage({
     t,
     isSharing,
     isRewardLoading = false,
+    rewardType,
     canShare = true,
     showConfirmation,
     onShare,
@@ -133,6 +140,7 @@ export function SharingPage({
 }: SharingPageProps) {
     const effectiveSelectedIndex =
         products.length > 0 ? (selectedProductIndex ?? 0) : undefined;
+    const isTiered = rewardType === "tiered";
     if (showConfirmation) {
         return (
             <PostShareConfirmation
@@ -197,41 +205,70 @@ export function SharingPage({
                         <CardBackground className={styles.creditCardBg} />
                         <div className={styles.creditCardContent}>
                             <div className={styles.creditCardTop}>
-                                <span className={styles.creditCardAmount}>
-                                    {isRewardLoading ? (
-                                        <Skeleton
-                                            variant="rect"
-                                            width={90}
-                                            height={36}
-                                        />
-                                    ) : (
-                                        (() => {
-                                            const amount = t(
-                                                "sdk.sharingPage.card.amount"
-                                            );
-                                            const match = amount.match(
-                                                /^([\d\s]+)([.,]\d+)?\s*(.*)$/
-                                            );
-                                            if (!match) return amount;
-                                            const integer = match[1].trim();
-                                            const decimals = match[2] ?? ",00";
-                                            const currency = match[3] ?? "";
-                                            return (
-                                                <>
-                                                    {integer}
-                                                    <span
-                                                        className={
-                                                            styles.creditCardCurrency
-                                                        }
-                                                    >
-                                                        {decimals}
-                                                        {currency}
-                                                    </span>
-                                                </>
-                                            );
-                                        })()
+                                <div className={styles.creditCardAmountColumn}>
+                                    {isTiered && !isRewardLoading && (
+                                        <span className={styles.creditCardUpTo}>
+                                            {t("sdk.sharingPage.card.upTo")}
+                                        </span>
                                     )}
-                                </span>
+                                    <span className={styles.creditCardAmount}>
+                                        {isRewardLoading ? (
+                                            <Skeleton
+                                                variant="rect"
+                                                width={90}
+                                                height={36}
+                                            />
+                                        ) : (
+                                            (() => {
+                                                const amount = t(
+                                                    "sdk.sharingPage.card.amount"
+                                                );
+                                                // Percentage rewards (e.g. "10 %"):
+                                                // render the "%" like a currency
+                                                // symbol, with no forced decimals.
+                                                const percentMatch =
+                                                    amount.match(
+                                                        /^([\d\s]+)\s*%$/
+                                                    );
+                                                if (percentMatch) {
+                                                    return (
+                                                        <>
+                                                            {percentMatch[1].trim()}
+                                                            <span
+                                                                className={
+                                                                    styles.creditCardCurrency
+                                                                }
+                                                            >
+                                                                %
+                                                            </span>
+                                                        </>
+                                                    );
+                                                }
+                                                const match = amount.match(
+                                                    /^([\d\s]+)([.,]\d+)?\s*(.*)$/
+                                                );
+                                                if (!match) return amount;
+                                                const integer = match[1].trim();
+                                                const decimals =
+                                                    match[2] ?? ",00";
+                                                const currency = match[3] ?? "";
+                                                return (
+                                                    <>
+                                                        {integer}
+                                                        <span
+                                                            className={
+                                                                styles.creditCardCurrency
+                                                            }
+                                                        >
+                                                            {decimals}
+                                                            {currency}
+                                                        </span>
+                                                    </>
+                                                );
+                                            })()
+                                        )}
+                                    </span>
+                                </div>
                                 <span className={styles.creditCardLabel}>
                                     {t("sdk.sharingPage.card.label")}
                                 </span>
@@ -245,7 +282,12 @@ export function SharingPage({
                                             height={14}
                                         />
                                     ) : (
-                                        t("sdk.sharingPage.card.tagline1")
+                                        t(
+                                            "sdk.sharingPage.card.tagline1",
+                                            isTiered
+                                                ? { context: "tiered" }
+                                                : undefined
+                                        )
                                     )}
                                     <br />
                                     {t("sdk.sharingPage.card.tagline2")}

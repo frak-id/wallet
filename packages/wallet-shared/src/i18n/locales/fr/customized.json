@@ -63,7 +63,9 @@
             "card": {
                 "amount": "{{ estimatedReward }}",
                 "label": "Crédité sur votre compte",
+                "upTo": "Jusqu'à",
                 "tagline1": "Gagnez {{ estimatedReward }},",
+                "tagline1_tiered": "Gagnez jusqu'à {{ estimatedReward }},",
                 "tagline2": "à chaque achat réalisé !"
             },
             "steps": {

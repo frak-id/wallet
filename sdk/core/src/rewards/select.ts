@@ -1,5 +1,10 @@
 import type { InteractionTypeKey } from "../constants/interactionTypes";
-import type { Currency, MerchantReward, TokenAmountType } from "../types";
+import type {
+    Currency,
+    EstimatedReward,
+    MerchantReward,
+    TokenAmountType,
+} from "../types";
 import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 import { extractStartDate } from "./conditions";
@@ -110,23 +115,53 @@ export function selectDisplayCampaign(
 }
 
 /**
- * Headline reward string for a merchant: picks the best campaign for `options`
- * and formats its `audience`-side reward, or returns `undefined` when there is
+ * The single reward a merchant surface should display: its formatted string
+ * plus the `payoutType` of the underlying reward, so surfaces can adapt their
+ * presentation (e.g. hide percentage rewards, prefix tiered ones with "Up to").
+ */
+export type BestReward = {
+    /** Display-ready reward string (e.g. `"5 €"`, `"10 %"`). */
+    formatted: string;
+    /** Payout type of the selected reward. */
+    payoutType: EstimatedReward["payoutType"];
+};
+
+/**
+ * Pick the best campaign for `options` and resolve its `audience`-side reward
+ * to a formatted string plus its `payoutType`, or `undefined` when there is
  * nothing worth showing.
  *
  * Single entry point shared by every "headline reward" surface (share button,
  * wallet modal, sharing/install screens) so they all show the same number for
- * a given merchant.
+ * a given merchant and can branch on the payout type.
  */
-export function formatBestReward(
+export function selectBestReward(
     rewards: readonly MerchantReward[],
     options: SelectDisplayCampaignOptions = {}
-): string | undefined {
+): BestReward | undefined {
     const selected = selectDisplayCampaign(rewards, options);
     if (!selected) return undefined;
     const reward = audienceReward(
         selected.campaign,
         options.audience ?? "referrer"
     );
-    return formatRewardOrHide(reward, options.currency);
+    if (!reward) return undefined;
+    const formatted = formatRewardOrHide(reward, options.currency);
+    if (!formatted) return undefined;
+    return { formatted, payoutType: reward.payoutType };
+}
+
+/**
+ * Headline reward string for a merchant: picks the best campaign for `options`
+ * and formats its `audience`-side reward, or returns `undefined` when there is
+ * nothing worth showing.
+ *
+ * Thin wrapper over {@link selectBestReward} for callers that only need the
+ * formatted string.
+ */
+export function formatBestReward(
+    rewards: readonly MerchantReward[],
+    options: SelectDisplayCampaignOptions = {}
+): string | undefined {
+    return selectBestReward(rewards, options)?.formatted;
 }

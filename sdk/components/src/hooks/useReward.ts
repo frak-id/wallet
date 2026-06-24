@@ -1,8 +1,8 @@
 import type { InteractionTypeKey } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 import {
-    formatBestReward,
     type RewardAudience,
+    selectBestReward,
 } from "@frak-labs/core-sdk/rewards";
 import { useEffect, useState } from "preact/hooks";
 
@@ -33,13 +33,16 @@ export function useReward(
 
         getMerchantInformation(client)
             .then((merchantInfo) => {
-                const formatted = formatBestReward(merchantInfo.rewards, {
+                const best = selectBestReward(merchantInfo.rewards, {
                     currency: client.config.metadata?.currency,
                     targetInteraction,
                     audience,
                 });
-                if (formatted) {
-                    setReward(formatted);
+                // Percentage rewards carry no concrete amount to advertise
+                // on this surface, so we treat them as "no reward" — callers
+                // fall back to their no-reward copy.
+                if (best && best.payoutType !== "percentage") {
+                    setReward(best.formatted);
                 }
             })
             .catch(() => {
