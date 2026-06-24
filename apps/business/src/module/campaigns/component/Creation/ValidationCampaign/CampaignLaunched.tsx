@@ -6,6 +6,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import {
     BellIcon,
     CheckIcon,
+    DownloadIcon,
     NumberBadgeIcon,
 } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
@@ -16,8 +17,7 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { campaignStore } from "@/stores/campaignStore";
 import * as styles from "./campaign-launched.css";
 
-// No in-app best-practices page yet — points at the docs (TBD with content).
-const BEST_PRACTICES_URL = "https://docs.frak.id";
+const COMMUNICATION_GUIDE_URL = "https://canva.link/xc8o83kj0pcidee";
 
 const TIPS = [
     {
@@ -177,16 +177,22 @@ export function CampaignLaunched() {
                                             type="button"
                                             variant="secondary"
                                             size="small"
+                                            rightIcon={
+                                                <DownloadIcon
+                                                    width={16}
+                                                    height={17}
+                                                />
+                                            }
                                             onClick={() =>
                                                 window.open(
-                                                    BEST_PRACTICES_URL,
+                                                    COMMUNICATION_GUIDE_URL,
                                                     "_blank",
                                                     "noopener,noreferrer"
                                                 )
                                             }
                                         >
                                             {t(
-                                                "campaigns.create.success.bestPractices"
+                                                "campaigns.create.success.communicationGuide"
                                             )}
                                         </Button>
                                     </Inline>

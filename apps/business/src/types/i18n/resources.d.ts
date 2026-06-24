@@ -291,7 +291,7 @@ export default interface Resources {
           }
         },
         "success": {
-          "bestPractices": "View all the best practices",
+          "communicationGuide": "Communication guide",
           "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign — they can start sharing immediately.",
           "notifyTitle": "Frak ambassadors will be notified",
           "subtitle": "‘{{name}}’ is now live.",

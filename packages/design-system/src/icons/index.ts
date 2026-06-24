@@ -30,6 +30,7 @@ export { CopyIcon } from "./CopyIcon";
 export { DeleteIcon } from "./DeleteIcon";
 export { DocumentIcon } from "./DocumentIcon";
 export { DoubleChevronIcon } from "./DoubleChevronIcon";
+export { DownloadIcon } from "./DownloadIcon";
 export { EarningsIcon } from "./EarningsIcon";
 export { ErrorFilledIcon } from "./ErrorFilledIcon";
 export { EurCodeIcon } from "./EurCodeIcon";
