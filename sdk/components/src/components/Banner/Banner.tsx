@@ -82,7 +82,7 @@ export function Banner({
     inappTitle: propInappTitle,
     inappDescription: propInappDescription,
     inappCta: propInappCta,
-    imageUrl,
+    imageUrl: propImageUrl,
     preview,
     previewMode,
     allowInappRedirect,
@@ -217,6 +217,10 @@ export function Banner({
     const globalComponents = useGlobalComponents();
     const bannerConfig =
         placement?.components?.banner ?? globalComponents?.banner;
+
+    // Custom illustration: prop wins over placement config; falls back to the
+    // built-in gift icon when neither provides one.
+    const imageUrl = propImageUrl ?? bannerConfig?.imageUrl;
 
     // Resolve texts from placement config with hardcoded defaults.
     // Configured wording may carry the `{REWARD}` token — interpolate it the

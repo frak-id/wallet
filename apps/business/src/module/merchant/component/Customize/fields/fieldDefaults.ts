@@ -17,6 +17,7 @@ export function getBannerDefaults(
         inappTitle: toLocalizedText(b?.inappTitle),
         inappDescription: toLocalizedText(b?.inappDescription),
         inappCta: toLocalizedText(b?.inappCta),
+        imageUrl: b?.imageUrl ?? "",
         css: b?.rawCss ?? "",
     };
 }
@@ -33,6 +34,7 @@ export function getPostPurchaseDefaults(
         referrerNoRewardText: toLocalizedText(pp?.referrerNoRewardText),
         ctaText: toLocalizedText(pp?.ctaText),
         ctaNoRewardText: toLocalizedText(pp?.ctaNoRewardText),
+        imageUrl: pp?.imageUrl ?? "",
         css: pp?.rawCss ?? "",
     };
 }

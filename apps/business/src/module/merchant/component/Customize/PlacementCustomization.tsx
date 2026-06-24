@@ -15,6 +15,7 @@ import { useCustomizeSection } from "../saveRegistry";
 import {
     AdvancedDisclosure,
     ComponentFields,
+    ComponentImagePicker,
     ComponentPreview,
     ComponentTypeTabs,
     WordingLangTabs,
@@ -134,6 +135,7 @@ function PlacementSettingsPanel({
                 referrerNoRewardText: toLocalizedText(undefined),
                 ctaText: toLocalizedText(undefined),
                 ctaNoRewardText: toLocalizedText(undefined),
+                imageUrl: "",
                 css: "",
             },
             banner: {
@@ -143,6 +145,7 @@ function PlacementSettingsPanel({
                 inappTitle: toLocalizedText(undefined),
                 inappDescription: toLocalizedText(undefined),
                 inappCta: toLocalizedText(undefined),
+                imageUrl: "",
                 css: "",
             },
         },
@@ -183,6 +186,7 @@ function PlacementSettingsPanel({
                 ctaNoRewardText: fromLocalizedText(
                     currentValues.postPurchase.ctaNoRewardText
                 ),
+                imageUrl: valueOrUndefined(currentValues.postPurchase.imageUrl),
                 rawCss: valueOrUndefined(currentValues.postPurchase.css),
             };
             const banner = {
@@ -200,6 +204,7 @@ function PlacementSettingsPanel({
                     currentValues.banner.inappDescription
                 ),
                 inappCta: fromLocalizedText(currentValues.banner.inappCta),
+                imageUrl: valueOrUndefined(currentValues.banner.imageUrl),
                 rawCss: valueOrUndefined(currentValues.banner.css),
             };
 
@@ -305,6 +310,12 @@ function PlacementSettingsPanel({
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
                         shopName={sdkConfig.name ?? "My Store"}
+                    />
+
+                    <ComponentImagePicker
+                        selectedComponent={selectedComponent}
+                        form={form}
+                        merchantId={merchantId}
                     />
 
                     <AdvancedDisclosure

@@ -18,7 +18,7 @@ import * as styles from "../edit-fields.css";
 
 type ImageUploadFieldProps = {
     merchantId: string;
-    type: "logo" | "hero";
+    type: "logo" | "hero" | "icon";
     value: string;
     onChange: (value: string) => void;
     onUploadSuccess: (url: string) => void;
@@ -185,7 +185,7 @@ function ExistingFilePicker({
     onPick,
 }: {
     merchantId: string;
-    type: "logo" | "hero";
+    type: "logo" | "hero" | "icon";
     currentValue: string;
     onPick: (url: string) => void;
 }) {
@@ -199,6 +199,8 @@ function ExistingFilePicker({
         return files.filter((f) => {
             if (f.url === currentValue) return false;
             if (type === "logo") return f.type === "logo";
+            if (type === "icon")
+                return f.type === "icon" || f.type.startsWith("icon-");
             return f.type === "hero" || f.type.startsWith("hero-");
         });
     }, [files, type, currentValue]);

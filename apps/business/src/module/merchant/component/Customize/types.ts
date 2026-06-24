@@ -45,6 +45,7 @@ export type PostPurchaseFormValues = {
     referrerNoRewardText: LocalizedText;
     ctaText: LocalizedText;
     ctaNoRewardText: LocalizedText;
+    imageUrl: string;
     css: string;
 };
 
@@ -55,6 +56,7 @@ export type BannerFormValues = {
     inappTitle: LocalizedText;
     inappDescription: LocalizedText;
     inappCta: LocalizedText;
+    imageUrl: string;
     css: string;
 };
 

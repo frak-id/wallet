@@ -1141,7 +1141,8 @@
             "invalidUrl": "Saisissez une URL d'image valide (https://…)",
             "restrictions": {
                 "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 à 2:1 (Max 10 Mo)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)"
+                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 à 2:1 (Max 10 Mo)"
             },
             "descriptionPlaceholder": "Description du marchand..."
         },
@@ -1325,6 +1326,11 @@
             "rewardToken": {
                 "hint": "Astuce : insérez <token>{REWARD}</token> dans un texte pour afficher la récompense de la campagne en cours.",
                 "copy": "Copier {REWARD}"
+            },
+            "image": {
+                "label": "Illustration",
+                "description": "Remplacez l'icône cadeau par défaut par votre propre image.",
+                "hint": "Collez l'URL d'une image ou importez-en une ci-dessous."
             },
             "targetInteraction": {
                 "label": "Interaction cible",

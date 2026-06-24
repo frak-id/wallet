@@ -372,6 +372,9 @@ export class MerchantResolveService {
                         ] as const,
                         lang
                     ),
+                    ...(postPurchase.imageUrl && {
+                        imageUrl: postPurchase.imageUrl,
+                    }),
                     ...(postPurchase.css && { css: postPurchase.css }),
                 },
             }),
@@ -389,6 +392,7 @@ export class MerchantResolveService {
                         ] as const,
                         lang
                     ),
+                    ...(banner.imageUrl && { imageUrl: banner.imageUrl }),
                     ...(banner.css && { css: banner.css }),
                 },
             }),

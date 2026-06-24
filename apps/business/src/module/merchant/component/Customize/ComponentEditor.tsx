@@ -6,6 +6,7 @@ import {
     TabsList,
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { ChevronDownIcon, ChevronUpIcon } from "@frak-labs/design-system/icons";
 import {
     BannerPreview,
@@ -14,8 +15,9 @@ import {
 } from "@frak-labs/ui-preview";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type { UseFormReturn } from "react-hook-form";
+import type { FieldPath, UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import * as styles from "./customize.css";
 import { BannerFields } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
@@ -172,6 +174,55 @@ function ComponentFieldsBody({
     }
 }
 
+/**
+ * Custom illustration picker (URL input + drag-n-drop) shown under the wording
+ * suggestions. Only the post-purchase card and the banner display an icon, so
+ * the picker hides itself for the share button.
+ */
+export function ComponentImagePicker({
+    selectedComponent,
+    form,
+    merchantId,
+}: {
+    selectedComponent: ComponentType;
+    form: UseFormReturn<ComponentSettingsFormValues>;
+    merchantId: string;
+}) {
+    const { t } = useTranslation();
+
+    if (
+        selectedComponent !== "postPurchase" &&
+        selectedComponent !== "banner"
+    ) {
+        return null;
+    }
+
+    const name =
+        `${selectedComponent}.imageUrl` as FieldPath<ComponentSettingsFormValues>;
+    const value = form.watch(name) as string;
+
+    return (
+        <Stack space="xxs">
+            <Text variant="bodySmall" weight="medium" color="secondary">
+                {t("customize.components.image.label")}
+            </Text>
+            <Text variant="caption" color="tertiary">
+                {t("customize.components.image.description")}
+            </Text>
+            <ImageUploadField
+                merchantId={merchantId}
+                type="icon"
+                value={value}
+                onChange={(v) => form.setValue(name, v, { shouldDirty: true })}
+                onUploadSuccess={(url) =>
+                    form.setValue(name, url, { shouldDirty: true })
+                }
+                hint={t("customize.components.image.hint")}
+            />
+        </Stack>
+    );
+}
+
 type PostPurchasePreviewMode = "referee" | "referrer";
 
 /**
@@ -194,6 +245,7 @@ function PostPurchasePreviewModes({
 }) {
     const { t } = useTranslation();
     const [mode, setMode] = useState<PostPurchasePreviewMode>("referee");
+    const imageUrl = values.postPurchase.imageUrl || undefined;
 
     const messageText =
         mode === "referee"
@@ -241,6 +293,7 @@ function PostPurchasePreviewModes({
                     lang,
                     defaults.postPurchase.ctaText
                 )}
+                imageUrl={imageUrl}
                 currency={currency}
                 shopName={shopName}
             />
@@ -307,6 +360,7 @@ export function ComponentPreview({
                         lang,
                         defaults.banner.referralCta
                     )}
+                    imageUrl={values.banner.imageUrl || undefined}
                     currency={currency}
                     shopName={shopName}
                 />

@@ -11,6 +11,8 @@ export type BannerPreviewProps = {
     ctaText: string;
     currency: Currency;
     shopName: string;
+    /** Custom illustration URL replacing the built-in gift icon. */
+    imageUrl?: string;
 };
 
 /**
@@ -23,11 +25,20 @@ export function BannerPreview({
     ctaText,
     currency,
     shopName,
+    imageUrl,
 }: BannerPreviewProps) {
     return (
         <div className={styles.bannerContainer}>
             <div className={styles.bannerIconWrapper}>
-                <GiftIcon width={40} height={40} />
+                {imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt=""
+                        className={styles.bannerCustomImage}
+                    />
+                ) : (
+                    <GiftIcon width={40} height={40} />
+                )}
             </div>
             <div className={styles.bannerBody}>
                 <p className={styles.bannerTitle}>
@@ -52,6 +63,8 @@ export type PostPurchasePreviewProps = {
     badgeText?: string;
     currency: Currency;
     shopName: string;
+    /** Custom illustration URL replacing the built-in gift icon. */
+    imageUrl?: string;
 };
 
 /**
@@ -64,6 +77,7 @@ export function PostPurchasePreview({
     badgeText,
     currency,
     shopName,
+    imageUrl,
 }: PostPurchasePreviewProps) {
     return (
         <div className={styles.postPurchaseCard}>
@@ -92,11 +106,19 @@ export function PostPurchasePreview({
                     </svg>
                 </span>
             </div>
-            <GiftIcon
-                className={styles.postPurchaseGiftIcon}
-                width={80}
-                height={80}
-            />
+            {imageUrl ? (
+                <img
+                    src={imageUrl}
+                    alt=""
+                    className={styles.postPurchaseCustomImage}
+                />
+            ) : (
+                <GiftIcon
+                    className={styles.postPurchaseGiftIcon}
+                    width={80}
+                    height={80}
+                />
+            )}
         </div>
     );
 }

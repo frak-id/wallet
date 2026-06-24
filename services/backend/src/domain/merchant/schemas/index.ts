@@ -69,6 +69,8 @@ const PostPurchaseComponentSchema = t.Object({
     referrerNoRewardText: t.Optional(LocalizableStringSchema),
     ctaText: t.Optional(LocalizableStringSchema),
     ctaNoRewardText: t.Optional(LocalizableStringSchema),
+    // Custom illustration replacing the built-in gift icon (icon media URL).
+    imageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
@@ -80,6 +82,8 @@ const BannerComponentSchema = t.Object({
     inappTitle: t.Optional(LocalizableStringSchema),
     inappDescription: t.Optional(LocalizableStringSchema),
     inappCta: t.Optional(LocalizableStringSchema),
+    // Custom illustration replacing the built-in gift icon (icon media URL).
+    imageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
@@ -149,6 +153,7 @@ const ResolvedComponentsSchema = t.Object({
             referrerNoRewardText: t.Optional(t.String()),
             ctaText: t.Optional(t.String()),
             ctaNoRewardText: t.Optional(t.String()),
+            imageUrl: t.Optional(t.String()),
             css: t.Optional(t.String()),
         })
     ),
@@ -160,6 +165,7 @@ const ResolvedComponentsSchema = t.Object({
             inappTitle: t.Optional(t.String()),
             inappDescription: t.Optional(t.String()),
             inappCta: t.Optional(t.String()),
+            imageUrl: t.Optional(t.String()),
             css: t.Optional(t.String()),
         })
     ),

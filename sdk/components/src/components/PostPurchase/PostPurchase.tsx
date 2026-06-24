@@ -143,7 +143,7 @@ export function PostPurchase({
     preview,
     previewVariant,
     products,
-    imageUrl,
+    imageUrl: propImageUrl,
 }: PostPurchaseProps) {
     const isPreview = !!preview;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
@@ -240,6 +240,10 @@ export function PostPurchase({
 
     // Badge renders only when text is provided via prop or placement config.
     const resolvedBadgeText = propBadgeText ?? postPurchaseConfig?.badgeText;
+
+    // Custom illustration: prop wins over placement config; falls back to the
+    // built-in gift icon when neither provides one.
+    const imageUrl = propImageUrl ?? postPurchaseConfig?.imageUrl;
 
     const texts = useMemo(() => {
         const defaults = componentDefaults[lang].postPurchase;

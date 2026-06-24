@@ -13,6 +13,7 @@ import { useCustomizeSection } from "../saveRegistry";
 import {
     AdvancedDisclosure,
     ComponentFields,
+    ComponentImagePicker,
     ComponentPreview,
     ComponentTypeTabs,
     WordingLangTabs,
@@ -70,6 +71,7 @@ const getGlobalComponentsValues = ({
         ),
         ctaText: toLocalizedText(c?.postPurchase?.ctaText),
         ctaNoRewardText: toLocalizedText(c?.postPurchase?.ctaNoRewardText),
+        imageUrl: c?.postPurchase?.imageUrl ?? "",
         css: c?.postPurchase?.rawCss ?? "",
     },
     banner: {
@@ -79,6 +81,7 @@ const getGlobalComponentsValues = ({
         inappTitle: toLocalizedText(c?.banner?.inappTitle),
         inappDescription: toLocalizedText(c?.banner?.inappDescription),
         inappCta: toLocalizedText(c?.banner?.inappCta),
+        imageUrl: c?.banner?.imageUrl ?? "",
         css: c?.banner?.rawCss ?? "",
     },
 });
@@ -146,6 +149,7 @@ function GlobalComponentsPanel({
                         ctaNoRewardText: fromLocalizedText(
                             v.postPurchase.ctaNoRewardText
                         ),
+                        imageUrl: val(v.postPurchase.imageUrl),
                         rawCss: val(v.postPurchase.css),
                     },
                     banner: {
@@ -161,6 +165,7 @@ function GlobalComponentsPanel({
                             v.banner.inappDescription
                         ),
                         inappCta: fromLocalizedText(v.banner.inappCta),
+                        imageUrl: val(v.banner.imageUrl),
                         rawCss: val(v.banner.css),
                     },
                 },
@@ -214,6 +219,12 @@ function GlobalComponentsPanel({
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
                         shopName={sdkConfig.name ?? "My Store"}
+                    />
+
+                    <ComponentImagePicker
+                        selectedComponent={selectedComponent}
+                        form={form}
+                        merchantId={merchantId}
                     />
 
                     <AdvancedDisclosure
