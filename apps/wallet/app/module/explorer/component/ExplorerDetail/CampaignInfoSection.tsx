@@ -1,5 +1,10 @@
 import type { EstimatedReward } from "@frak-labs/core-sdk";
 import { formatAmount } from "@frak-labs/core-sdk";
+import {
+    buildPercentageExample,
+    buildTierExample,
+    type RewardExample,
+} from "@frak-labs/core-sdk/rewards";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -9,11 +14,6 @@ import {
     ClockIcon,
     CoinsIcon,
 } from "@frak-labs/design-system/icons";
-import {
-    buildPercentageExample,
-    buildTierExample,
-    type RewardExample,
-} from "@frak-labs/core-sdk/rewards";
 import { useTranslation } from "react-i18next";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
