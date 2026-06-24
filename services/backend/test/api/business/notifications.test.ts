@@ -504,7 +504,7 @@ describe("Business Notifications Route API", () => {
             expect(response.status).toBe(422);
         });
 
-        it("should map broadcasts to push-history rows", async () => {
+        it("should return broadcasts in DB-shaped wire format", async () => {
             setMockBusinessSession({
                 wallet: "0x1111111111111111111111111111111111111111",
             });
@@ -560,33 +560,29 @@ describe("Business Notifications Route API", () => {
             expect(data).toEqual([
                 {
                     id: "00000000-0000-0000-0000-0000000000aa",
-                    title: "Scheduled",
-                    status: "scheduled",
-                    scheduledAt: new Date("2030-01-01T00:00:00.000Z").getTime(),
-                    audienceLabel: "1 members",
-                    sent: null,
-                    opened: null,
                     payload: {
                         title: "Scheduled",
                         body: "Body",
-                        url: "https://x.example",
+                        data: { url: "https://x.example" },
                     },
-                    target: {
+                    targets: {
                         wallets: ["0x1111111111111111111111111111111111111111"],
                     },
-                    targetCount: 1,
+                    scheduledAt: new Date("2030-01-01T00:00:00.000Z").getTime(),
+                    claimedAt: null,
+                    createdAt: new Date("2025-01-01T00:00:00.000Z").getTime(),
+                    sentCount: 0,
+                    openedCount: 0,
                 },
                 {
                     id: "00000000-0000-0000-0000-0000000000bb",
-                    title: "Delivered",
-                    status: "sent",
-                    scheduledAt: new Date("2025-02-01T00:00:00.000Z").getTime(),
-                    audienceLabel: "All members",
-                    sent: 10,
-                    opened: 4,
                     payload: { title: "Delivered", body: "Body" },
-                    target: { filter: {} },
-                    targetCount: 10,
+                    targets: { filter: {} },
+                    scheduledAt: null,
+                    claimedAt: null,
+                    createdAt: new Date("2025-02-01T00:00:00.000Z").getTime(),
+                    sentCount: 10,
+                    openedCount: 4,
                 },
             ]);
         });

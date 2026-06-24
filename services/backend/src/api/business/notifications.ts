@@ -2,8 +2,8 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import {
     NotificationContext,
-    type PushHistoryItem,
-    PushHistoryItemSchema,
+    type PushBroadcast,
+    PushBroadcastSchema,
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
 } from "../../domain/notifications";
@@ -12,35 +12,20 @@ import { OrchestrationContext } from "../../orchestration";
 import { businessSessionContext } from "./middleware/session";
 
 /**
- * Shape a stored broadcast (+ delivery stats) into the row the dashboard
- * push-history table consumes. A broadcast is still `scheduled` while it has a
- * future `scheduledAt` the cron hasn't claimed yet; everything else is `sent`.
+ * Project a stored broadcast (+ delivery stats) onto the wire shape: DB row
+ * with timestamps as unix-millis. All presentation (status, audience label,
+ * stats formatting) is derived on the dashboard.
  */
-function toPushHistoryItem(broadcast: BroadcastWithStats): PushHistoryItem {
-    const { payload, targets } = broadcast;
-    const isScheduled =
-        broadcast.scheduledAt !== null && broadcast.claimedAt === null;
-    const walletCount =
-        targets && "wallets" in targets ? targets.wallets.length : null;
-    const audienceLabel =
-        walletCount !== null ? `${walletCount} members` : "All members";
-
+function toPushBroadcast(broadcast: BroadcastWithStats): PushBroadcast {
     return {
         id: broadcast.id,
-        title: payload.title,
-        status: isScheduled ? "scheduled" : "sent",
-        scheduledAt: (broadcast.scheduledAt ?? broadcast.createdAt).getTime(),
-        audienceLabel,
-        sent: isScheduled ? null : broadcast.sentCount,
-        opened: isScheduled ? null : broadcast.openedCount,
-        payload: {
-            title: payload.title,
-            body: payload.body,
-            icon: payload.icon,
-            url: payload.data?.url,
-        },
-        target: targets ?? undefined,
-        targetCount: walletCount ?? broadcast.sentCount,
+        payload: broadcast.payload,
+        targets: broadcast.targets ?? null,
+        scheduledAt: broadcast.scheduledAt?.getTime() ?? null,
+        claimedAt: broadcast.claimedAt?.getTime() ?? null,
+        createdAt: broadcast.createdAt.getTime(),
+        sentCount: broadcast.sentCount,
+        openedCount: broadcast.openedCount,
     };
 }
 
@@ -212,14 +197,14 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
                     merchantId
                 );
 
-            return broadcasts.map(toPushHistoryItem);
+            return broadcasts.map(toPushBroadcast);
         },
         {
             query: t.Object({
                 merchantId: t.String({ format: "uuid" }),
             }),
             response: {
-                200: t.Array(PushHistoryItemSchema),
+                200: t.Array(PushBroadcastSchema),
                 401: t.String(),
                 403: t.String(),
             },

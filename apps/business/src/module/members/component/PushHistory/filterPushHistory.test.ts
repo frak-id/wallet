@@ -8,7 +8,7 @@ function item(overrides: Partial<PushHistoryItem>): PushHistoryItem {
         title: "Title",
         status: "scheduled",
         scheduledAt: new Date("2026-06-15T10:00:00Z").getTime(),
-        audienceLabel: "All members",
+        walletCount: null,
         sent: null,
         opened: null,
         payload: { title: "Title", body: "Body" },

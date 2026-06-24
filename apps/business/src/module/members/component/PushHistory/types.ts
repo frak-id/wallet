@@ -1,18 +1,29 @@
-import type {
-    PushHistoryItem as ApiPushHistoryItem,
-    PushHistoryPayload as ApiPushHistoryPayload,
-    PushHistoryStatus as ApiPushHistoryStatus,
-} from "@frak-labs/backend-elysia/domain/notifications";
+import type { SendNotificationTargets } from "@frak-labs/backend-elysia/domain/notifications";
+
+/** Lifecycle of a broadcast as surfaced in the history table. */
+export type PushHistoryStatus = "scheduled" | "sent";
 
 /**
- * Push-history table types. These are re-exported straight from the backend's
- * typebox schema (`GET /business/notifications/broadcasts` response) so the UI
- * and the API stay on a single source of truth — see
- * `domain/notifications/dto/PushHistoryDto` on the backend.
+ * A push broadcast projected into the row the history table renders. Derived
+ * on the client from the DB-shaped `PushBroadcast` wire type (see
+ * `toPushHistoryItem` in `usePushHistory`) so the backend stays presentation-free.
  */
-export type PushHistoryStatus = ApiPushHistoryStatus;
-export type PushHistoryPayload = ApiPushHistoryPayload;
-export type PushHistoryItem = ApiPushHistoryItem;
-
-/** The composer's audience target ({ wallets } | { filter }). */
-export type PushTarget = PushHistoryItem["target"];
+export type PushHistoryItem = {
+    id: string;
+    /** Campaign name shown in the first column (the payload title). */
+    title: string;
+    status: PushHistoryStatus;
+    /** Delivery time — scheduled time, or createdAt for immediate sends (unix-ms). */
+    scheduledAt: number;
+    /** Count of explicitly targeted wallets, or null for a filter audience. */
+    walletCount: number | null;
+    /** Delivered count, null while still scheduled. */
+    sent: number | null;
+    /** Opened count, null while still scheduled. */
+    opened: number | null;
+    payload: { title: string; body: string; icon?: string; url?: string };
+    /** Audience the broadcast targets (for edit prefill). */
+    target?: SendNotificationTargets;
+    /** Resolved size of `target` (for edit prefill). */
+    targetCount: number;
+};

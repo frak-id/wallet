@@ -275,6 +275,10 @@
                 "scheduled": "Programmée",
                 "sent": "Envoyée"
             },
+            "audience": {
+                "all": "Tous les membres",
+                "members": "{{count}} membres"
+            },
             "columns": {
                 "notification": "Notification",
                 "status": "Statut",

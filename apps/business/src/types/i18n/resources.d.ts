@@ -1296,6 +1296,10 @@ export default interface Resources {
         "update": "Update notification"
       },
       "history": {
+        "audience": {
+          "all": "All members",
+          "members": "{{count}} members"
+        },
         "columns": {
           "audience": "Audience",
           "notification": "Notification",

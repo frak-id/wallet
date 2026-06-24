@@ -24,6 +24,9 @@ export function SchedulePanel() {
     const { control, watch, getValues } =
         useFormContext<FormCreatePushNotification>();
     const scheduleType = watch("schedule.type");
+    // Editing a scheduled notification keeps it scheduled: the only choice is
+    // when to deliver it, so the "send immediately" option is hidden.
+    const isEditing = Boolean(watch("editingId"));
 
     const requireWhenLater = (value: string) =>
         getValues("schedule.type") !== "later" ||
@@ -50,13 +53,15 @@ export function SchedulePanel() {
                         value={field.value}
                         onValueChange={field.onChange}
                     >
-                        <ScheduleOption
-                            value={"now"}
-                            label={t("push.create.schedule.now.label")}
-                            description={t(
-                                "push.create.schedule.now.description"
-                            )}
-                        />
+                        {!isEditing && (
+                            <ScheduleOption
+                                value={"now"}
+                                label={t("push.create.schedule.now.label")}
+                                description={t(
+                                    "push.create.schedule.now.description"
+                                )}
+                            />
+                        )}
                         <ScheduleOption
                             value={"later"}
                             label={t("push.create.schedule.later.label")}

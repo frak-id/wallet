@@ -92,18 +92,28 @@ export class NotificationOrchestrator {
                 new Date()
             );
 
+        // Isolate each broadcast: a failure resolving one audience (a DB query
+        // that can throw) must not abort the batch and strand the remaining
+        // already-claimed rows unsent.
         for (const broadcast of due) {
-            const wallets = broadcast.targets
-                ? await this.resolveWalletsFromTargets(
-                      broadcast.targets,
-                      broadcast.merchantId
-                  )
-                : [];
-            await this.sendPromotionalNotification({
-                wallets,
-                payload: broadcast.payload,
-                broadcastId: broadcast.id,
-            });
+            try {
+                const wallets = broadcast.targets
+                    ? await this.resolveWalletsFromTargets(
+                          broadcast.targets,
+                          broadcast.merchantId
+                      )
+                    : [];
+                await this.sendPromotionalNotification({
+                    wallets,
+                    payload: broadcast.payload,
+                    broadcastId: broadcast.id,
+                });
+            } catch (error) {
+                log.warn(
+                    { error, broadcastId: broadcast.id },
+                    "[NotificationOrchestrator] Failed to process scheduled broadcast"
+                );
+            }
         }
     }
 

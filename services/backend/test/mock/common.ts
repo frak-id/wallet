@@ -637,22 +637,15 @@ const SendNotificationPayloadDto = t.Object({
     ),
 });
 
-const PushHistoryItemSchema = t.Object({
+const PushBroadcastSchema = t.Object({
     id: t.String(),
-    title: t.String(),
-    status: t.Union([t.Literal("scheduled"), t.Literal("sent")]),
-    scheduledAt: t.Number(),
-    audienceLabel: t.String(),
-    sent: t.Union([t.Number(), t.Null()]),
-    opened: t.Union([t.Number(), t.Null()]),
-    payload: t.Object({
-        title: t.String(),
-        body: t.String(),
-        icon: t.Optional(t.String()),
-        url: t.Optional(t.String()),
-    }),
-    target: t.Optional(SendNotificationTargetsDto),
-    targetCount: t.Number(),
+    payload: SendNotificationPayloadDto,
+    targets: t.Union([SendNotificationTargetsDto, t.Null()]),
+    scheduledAt: t.Union([t.Number(), t.Null()]),
+    claimedAt: t.Union([t.Number(), t.Null()]),
+    createdAt: t.Number(),
+    sentCount: t.Number(),
+    openedCount: t.Number(),
 });
 
 vi.mock("../../src/domain/notifications", () => ({
@@ -671,7 +664,7 @@ vi.mock("../../src/domain/notifications", () => ({
     FcmSender: vi.fn(() => fcmSenderMocks),
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
-    PushHistoryItemSchema,
+    PushBroadcastSchema,
 }));
 
 vi.mock("../../src/domain/notifications/context", () => ({

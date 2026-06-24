@@ -1,4 +1,5 @@
 import type { Language } from "@frak-labs/core-sdk";
+import { sql } from "drizzle-orm";
 import {
     index,
     jsonb,
@@ -80,7 +81,14 @@ export const notificationBroadcastsTable = pgTable(
     (table) => [
         index("notification_broadcasts_merchant_idx").on(table.merchantId),
         index("notification_broadcasts_created_at_idx").on(table.createdAt),
-        index("notification_broadcasts_scheduled_at_idx").on(table.scheduledAt),
+        // Partial: the cron only ever scans pending rows, so excluding
+        // immediate (scheduled_at null) and already-claimed rows keeps the
+        // index small and self-emptying.
+        index("notification_broadcasts_scheduled_at_idx")
+            .on(table.scheduledAt)
+            .where(
+                sql`${table.scheduledAt} is not null and ${table.claimedAt} is null`
+            ),
     ]
 );
 
@@ -111,6 +119,8 @@ export const notificationSentTable = pgTable(
             table.wallet,
             table.sentAt
         ),
+        // Supports the broadcast-stats join in listBroadcasts.
+        index("notification_sent_broadcast_idx").on(table.broadcastId),
     ]
 );
 

@@ -16,8 +16,3 @@ export function deriveScheduledAt(schedule: PushSchedule): number | undefined {
     day.setHours(hours, minutes, 0, 0);
     return day.getTime();
 }
-
-/** "Schedule for later" is only valid once both date and time resolve. */
-export function isScheduleValid(schedule: PushSchedule): boolean {
-    return schedule.type === "now" || deriveScheduledAt(schedule) !== undefined;
-}

@@ -70,9 +70,16 @@ export function PushHistory() {
                         locale: getDateFnsLocale(i18n.language),
                     }),
             }),
-            columnHelper.accessor("audienceLabel", {
+            columnHelper.accessor("walletCount", {
                 header: () => t("push.history.columns.audience"),
-                cell: ({ getValue }) => getValue(),
+                cell: ({ getValue }) => {
+                    const walletCount = getValue();
+                    return walletCount === null
+                        ? t("push.history.audience.all")
+                        : t("push.history.audience.members", {
+                              count: walletCount,
+                          });
+                },
             }),
             columnHelper.display({
                 id: "sentOpened",

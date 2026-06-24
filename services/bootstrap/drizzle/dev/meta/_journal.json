@@ -253,6 +253,13 @@
             "when": 1782314966137,
             "tag": "0035_low_corsair",
             "breakpoints": true
+        },
+        {
+            "idx": 36,
+            "version": "7",
+            "when": 1782318395941,
+            "tag": "0036_majestic_slapstick",
+            "breakpoints": true
         }
     ]
 }
