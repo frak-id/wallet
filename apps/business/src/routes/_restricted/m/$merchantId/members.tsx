@@ -3,6 +3,7 @@ import * as footerStyles from "@/module/common/component/FloatingFooter/floating
 import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
+import { MembersSectionTabs } from "@/module/members/component/MembersSectionTabs";
 import { TableMembers } from "@/module/members/component/TableMembers";
 import { MembersListFooter } from "@/module/members/component/TableMembers/MembersListFooter";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
@@ -42,9 +43,11 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/members")({
 });
 
 function MembersListPage() {
+    const { merchantId } = Route.useParams();
     return (
         <div className={footerStyles.pageBottomSpacer}>
-            <PageShell page="members">
+            <PageShell page="members" space="l">
+                <MembersSectionTabs active="members" merchantId={merchantId} />
                 <TableMembers />
             </PageShell>
             <MembersListFooter />

@@ -24,6 +24,7 @@ import {
     tableButtonEnd,
     tableFilterIcon,
     tableFilterIconDesc,
+    tableFixedLayout,
     table as tableStyle,
     tableWrapper,
 } from "./table.css";
@@ -68,6 +69,13 @@ export type ReactTableProps<TData> = {
      * dimmed via CSS.
      */
     anySelected?: boolean;
+    /**
+     * Use `table-layout: fixed` so column widths come from `size` (not
+     * content). Columns without a `size` split the remaining width, and a
+     * cell with `overflow: hidden` truncates to its computed width — the only
+     * reliable way to flex-fill a column and ellipsis only on real overflow.
+     */
+    fixedLayout?: boolean;
 } & Omit<
     TableOptions<TData>,
     "state" | "getCoreRowModel" | "getSortedRowModel" | "getFilteredRowModel"
@@ -90,6 +98,7 @@ export function Table<TData extends object>({
     pagination,
     rowDataAttributes,
     anySelected,
+    fixedLayout,
     ...additionalProps
 }: ReactTableProps<TData>) {
     const { t } = useTranslation();
@@ -136,7 +145,11 @@ export function Table<TData extends object>({
             {preTable && <div className={preTableStyle}>{preTable}</div>}
 
             <table
-                className={clsx(tableStyle, className)}
+                className={clsx(
+                    tableStyle,
+                    fixedLayout && tableFixedLayout,
+                    className
+                )}
                 data-any-selected={anySelected ? "true" : undefined}
             >
                 <thead>

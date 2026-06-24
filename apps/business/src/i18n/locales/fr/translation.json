@@ -177,6 +177,10 @@
             "required": "L'audience du push est requise",
             "reach": "Vous toucherez {{count}} membres",
             "minMember": "Il faut au moins 1 membre pour continuer"
+        },
+        "tabs": {
+            "members": "Membres",
+            "push": "Notifications push"
         }
     },
     "push": {
@@ -264,6 +268,34 @@
                 "description": "Vous avez commencé à créer une notification push. Si vous quittez, toutes les informations saisies seront perdues.",
                 "continueEditing": "Modifier",
                 "confirm": "Oui, quitter"
+            }
+        },
+        "history": {
+            "status": {
+                "scheduled": "Programmée",
+                "sent": "Envoyée"
+            },
+            "columns": {
+                "notification": "Notification",
+                "status": "Statut",
+                "scheduledFor": "Programmée pour",
+                "audience": "Audience",
+                "sentOpened": "Envoyées / Ouvertes"
+            },
+            "filters": {
+                "button": "Filtres",
+                "reset": "Réinitialiser"
+            },
+            "rowMenu": {
+                "edit": "Modifier la notification push",
+                "delete": "Supprimer",
+                "aria": "Actions pour {{title}}"
+            },
+            "delete": {
+                "title": "Supprimer la notification push",
+                "description": "Êtes-vous sûr de vouloir supprimer « {{title}} » ? Cette action est irréversible.",
+                "cancel": "Annuler",
+                "confirm": "Supprimer"
             }
         }
     },

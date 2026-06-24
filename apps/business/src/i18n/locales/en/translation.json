@@ -177,6 +177,10 @@
             "required": "Push audience is required",
             "reach": "You will reach {{count}} members",
             "minMember": "You need at least 1 member to continue"
+        },
+        "tabs": {
+            "members": "Members",
+            "push": "Push notifications"
         }
     },
     "push": {
@@ -264,6 +268,34 @@
                 "description": "You've started creating a push notification. If you leave, any information you've entered will be lost.",
                 "continueEditing": "Continue editing",
                 "confirm": "Yes, leave"
+            }
+        },
+        "history": {
+            "status": {
+                "scheduled": "Scheduled",
+                "sent": "Sent"
+            },
+            "columns": {
+                "notification": "Notification",
+                "status": "Status",
+                "scheduledFor": "Scheduled for",
+                "audience": "Audience",
+                "sentOpened": "Sent / Opened"
+            },
+            "filters": {
+                "button": "Filters",
+                "reset": "Reset"
+            },
+            "rowMenu": {
+                "edit": "Edit push notification",
+                "delete": "Delete",
+                "aria": "Actions for {{title}}"
+            },
+            "delete": {
+                "title": "Delete push notification",
+                "description": "Are you sure you want to delete “{{title}}”? This action can't be undone.",
+                "cancel": "Cancel",
+                "confirm": "Delete"
             }
         }
     },

@@ -943,7 +943,11 @@ export default interface Resources {
         "segment": "Segment",
         "to": "To"
       },
-      "sendPushNotification": "Send Push Notification"
+      "sendPushNotification": "Send Push Notification",
+      "tabs": {
+        "members": "Members",
+        "push": "Push notifications"
+      }
     },
     "merchant": {
       "create": {
@@ -1273,6 +1277,34 @@ export default interface Resources {
           "title": "Schedule"
         },
         "title": "Send Push Notification"
+      },
+      "history": {
+        "columns": {
+          "audience": "Audience",
+          "notification": "Notification",
+          "scheduledFor": "Scheduled for",
+          "sentOpened": "Sent / Opened",
+          "status": "Status"
+        },
+        "delete": {
+          "cancel": "Cancel",
+          "confirm": "Delete",
+          "description": "Are you sure you want to delete “{{title}}”? This action can't be undone.",
+          "title": "Delete push notification"
+        },
+        "filters": {
+          "button": "Filters",
+          "reset": "Reset"
+        },
+        "rowMenu": {
+          "aria": "Actions for {{title}}",
+          "delete": "Delete",
+          "edit": "Edit push notification"
+        },
+        "status": {
+          "scheduled": "Scheduled",
+          "sent": "Sent"
+        }
       }
     },
     "settings": {
