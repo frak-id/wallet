@@ -175,8 +175,7 @@ export function getCampaignDetailsMockSync({
  * Look up a demo campaign by id, but only return it when the merchantId
  * matches the active URL — mirrors the backend's per-merchant scoping so
  * `/m/A/campaigns/<id-of-B>` doesn't leak merchant B's campaign into
- * merchant A's view, and the `campaignQueryOptions` redirect-on-null
- * still fires.
+ * merchant A's view, and the loader's redirect-on-null still fires.
  */
 function findScopedCampaign({
     campaignId,

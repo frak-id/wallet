@@ -5,7 +5,6 @@ import type {
 } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { Currency } from "@frak-labs/core-sdk";
 import { queryOptions } from "@tanstack/react-query";
-import { redirect } from "@tanstack/react-router";
 import campaignDetailsMock from "@/mock/campaignDetails.json";
 import {
     getCampaignDetail,
@@ -22,17 +21,9 @@ import {
     getOverviewSummary,
     getOverviewSummaryMock,
 } from "@/module/campaigns/api/overviewApi";
-import type { Campaign, CampaignListResponse } from "@/types/Campaign";
+import type { CampaignListResponse } from "@/types/Campaign";
 
 export type CampaignDetailsStats = CampaignDetailsResponse;
-
-type CampaignStateValidator = (campaign: Campaign) => {
-    shouldRedirect: boolean;
-    redirectTo?: {
-        to: string;
-        params: { merchantId: string; campaignId: string };
-    };
-};
 
 export const campaignsListQueryOptions = ({
     merchantId,
@@ -173,12 +164,10 @@ export const campaignQueryOptions = ({
     merchantId,
     campaignId,
     isDemoMode,
-    validateState,
 }: {
     merchantId: string;
     campaignId: string;
     isDemoMode: boolean;
-    validateState?: CampaignStateValidator;
 }) =>
     queryOptions({
         queryKey: [
@@ -187,53 +176,15 @@ export const campaignQueryOptions = ({
             campaignId,
             isDemoMode ? "demo" : "live",
         ],
-        queryFn: async () => {
-            const campaign = await getCampaignDetail({
-                merchantId,
-                campaignId,
-                isDemoMode,
-            });
-
-            if (!campaign) {
-                throw redirect({
-                    to: "/m/$merchantId/campaigns/list",
-                    params: { merchantId },
-                });
-            }
-
-            if (validateState) {
-                const validation = validateState(campaign);
-                if (validation.shouldRedirect && validation.redirectTo) {
-                    throw redirect(validation.redirectTo);
-                }
-            }
-
-            return campaign;
-        },
+        queryFn: () =>
+            getCampaignDetail({ merchantId, campaignId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         // initialData must be merchant-scoped: with a merchant-keyed
         // cache entry and `staleTime: Infinity`, seeding the wrong
-        // merchant's campaign here would short-circuit the queryFn's
-        // redirect-on-null and show stale content.
+        // merchant's campaign here would short-circuit the queryFn and
+        // show stale content.
         initialData: isDemoMode
             ? (getCampaignDetailsMockSync({ campaignId, merchantId }) ??
               undefined)
             : undefined,
     });
-
-export function validateDraftCampaign(merchantId: string, campaignId: string) {
-    return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
-        const isPublished = campaign.status !== "draft";
-        if (isPublished) {
-            // Published campaigns aren't editable; send them back to the list.
-            return {
-                shouldRedirect: true,
-                redirectTo: {
-                    to: "/m/$merchantId/campaigns/list",
-                    params: { merchantId, campaignId },
-                },
-            };
-        }
-        return { shouldRedirect: false };
-    };
-}
