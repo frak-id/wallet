@@ -15,7 +15,7 @@ export const row = style({
     minHeight: "49px",
 });
 
-/** Stacked-value row (budget amount, rewards): grows with 16px top/bottom. */
+/** Stacked-value row (multi-line address, budget, rewards): grows with 16px top/bottom. */
 export const rowTall = style({
     ...rowBase,
     paddingBlock: alias.spacing.m,

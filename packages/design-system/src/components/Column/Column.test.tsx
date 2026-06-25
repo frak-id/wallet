@@ -9,17 +9,40 @@ describe("Column", () => {
         expect(screen.getByText("cell")).toBeInTheDocument();
     });
 
-    it("should apply explicit flex shorthand for fractional widths", () => {
+    it("should apply a gap-aware grow share for fractional widths", () => {
         render(<Column width="1/2">half</Column>);
-        expect(screen.getByText("half")).toHaveStyle({ flex: "0 0 50%" });
+        expect(screen.getByText("half")).toHaveStyle({ flex: "1 1 0%" });
     });
 
-    it("should map every fraction to a 0-grow / 0-shrink basis", () => {
+    it("should set min-width: 0 so a column can shrink below its content (overflow fix)", () => {
+        const { rerender } = render(<Column width="1/2">half</Column>);
+        expect(screen.getByText("half")).toHaveStyle({ minWidth: "0px" });
+
+        rerender(<Column>fill</Column>);
+        expect(screen.getByText("fill")).toHaveStyle({ minWidth: "0px" });
+    });
+
+    it("should split a composed row by grow share (1/3 + 2/3 → 1 vs 2)", () => {
+        render(
+            <>
+                <Column width="1/3">third</Column>
+                <Column width="2/3">twoThirds</Column>
+            </>
+        );
+        // basis 0 + grow 1 vs 2 → the row divides 1:2, gap-aware
+        expect(screen.getByText("third")).toHaveStyle({ flex: "1 1 0%" });
+        expect(screen.getByText("twoThirds")).toHaveStyle({ flex: "2 1 0%" });
+    });
+
+    it("should map each fraction to its numerator grow share with a zero basis", () => {
         const { rerender } = render(<Column width="1/3">frac</Column>);
-        expect(screen.getByText("frac")).toHaveStyle({ flex: "0 0 33.333%" });
+        expect(screen.getByText("frac")).toHaveStyle({ flex: "1 1 0%" });
+
+        rerender(<Column width="2/3">frac</Column>);
+        expect(screen.getByText("frac")).toHaveStyle({ flex: "2 1 0%" });
 
         rerender(<Column width="3/4">frac</Column>);
-        expect(screen.getByText("frac")).toHaveStyle({ flex: "0 0 75%" });
+        expect(screen.getByText("frac")).toHaveStyle({ flex: "3 1 0%" });
     });
 
     it("should not set an explicit flex for content width", () => {
@@ -27,8 +50,8 @@ describe("Column", () => {
         expect(screen.getByText("natural").style.flex).toBe("");
     });
 
-    it("should not set an explicit flex when no width is provided", () => {
+    it("should fill with a single grow share when no width is provided", () => {
         render(<Column>fill</Column>);
-        expect(screen.getByText("fill").style.flex).toBe("");
+        expect(screen.getByText("fill")).toHaveStyle({ flex: "1 1 0%" });
     });
 });
