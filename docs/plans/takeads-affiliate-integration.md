@@ -455,7 +455,16 @@ existing platform-admin surfaces later; v1 can drive `POST /merchant/register/ad
 4. **Seed/sync**: deploy + fund the Frak EURe bank **once** (then hardcode its address);
    onboard synthetic `merchants` via the §10 admin path + upsert `campaign_rules` from the
    catalog for the hand-picked brand IDs (manual list for v1).
-5. **Link service + endpoint** (§8): subId mint/lookup + `/v2/resolve` + cache.
+5. **[DONE] Link service + endpoint** (§8): provider-agnostic `affiliate` domain.
+   `AffiliateAttributionRepository` (race-safe `mint` = `INSERT … ON CONFLICT DO NOTHING`
+   on the `(provider, identityGroupId, merchantId)` unique idx + re-select) + token gen
+   (`token.ts`, URL-safe nanoid). `AffiliateLinkService.getOrCreateShareLink` resolves the
+   merchant's `affiliate_brand`, reuses-or-mints the token, and builds the share URL by
+   setting the provider's sub-id query param (`PROVIDER_SUBID_PARAM`, TakeAds = `s`) on the
+   brand `trackingLink` — **no `/v2/resolve` call** for brand-level sharing (deferred for
+   deep/product URLs). Endpoint `POST /user/affiliate/:merchantId/link` (auth via
+   `identityContext` + `withAuthedIdentity`; the consumer of the explorer
+   `integration: "affiliate"` discriminator). 5 service tests.
 6. **Ingestion cron + orchestrator** (§9 + §7): poll, map subId→identity, upsert interactions,
    handle declines, advance watermark.
 7. **Tests**: admin register-without-verification + shared-bank attach (admin-gated, public
