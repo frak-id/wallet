@@ -40,6 +40,11 @@ module (catalog sync + link generation + conversion ingestion) plus seed data.
   (nothing enforces `merchants.bank_address` uniqueness).
 - **Ingestion = poll the Stats API** (`GET /v3/api/stats/action`) on a cron for the PoC;
   postbacks can be added later for latency. No public inbound endpoint to secure for v1.
+- **Synthetic-brand onboarding rides the new platform-admin capability** — rather than a
+  one-off seed script, a Frak **platform admin** registers each synthetic brand through an
+  admin-authenticated registration path that (a) **skips SIWE + DNS verification**, (b) sets
+  `owner_wallet` = Frak admin, and (c) **attaches the one hardcoded shared Frak EURe
+  `CampaignBank`** instead of deploying a fresh per-merchant bank. See §10.
 
 ---
 
@@ -172,12 +177,17 @@ polling **watermark** (last `updatedAt` processed).
 
 ### 6b. Seed data (per brand) — reuses existing tables
 
-- **One Frak EURe `CampaignBank`**, deployed + funded (reuse `CampaignBankRepository.deployBank`
-  / `enableDistribution` with the EURe token).
+Created via the **platform-admin registration path** (§10), not a raw SQL seed:
+
+- **One Frak EURe `CampaignBank`**, deployed + funded **once** (reuse
+  `CampaignBankRepository.deployBank` / `enableDistribution` with the EURe token), then its
+  address **hardcoded/env-configured** so every synthetic merchant attaches to it.
 - **`merchants` row per brand**: `name`, `domain` = brand `defaultDomain`, `owner_wallet` =
-  Frak admin, `default_reward_token` = **EURe**, `bank_address` = shared Frak bank,
+  Frak admin (the registering platform-admin wallet), `default_reward_token` = **EURe**,
+  `bank_address` = shared Frak bank (attached, **not** freshly deployed),
   `explorer_enabled_at` = now, `explorer_config` = `{ logoUrl, description }` from the catalog.
-  `product_id` stays **null** (off-chain brand).
+  `product_id` stays **null** (off-chain brand). `verified_at` is still set (admin-trusted),
+  but **DNS-TXT + SIWE verification are skipped** — a synthetic brand has no domain we control.
 - **`campaign_rules` row per brand** (also what makes it visible in the explorer, which
   requires ≥1 active campaign):
 
@@ -271,23 +281,99 @@ the Frak bank once `availableAt` passes, and it shows in reward history.
 
 ---
 
-## 10. PoC implementation steps
+## 10. Platform-admin setup path (leverage the new capability)
+
+A **platform-admin** role was recently added to the business app + backend specifically to
+ease this integration. Today it is a **read-only foundation**; for TakeAds we extend it with
+two narrow **write** capabilities (register-without-verification + shared-bank attach).
+
+### 10a. What platform admin already unlocks (read-only)
+
+- **Allow-list service** `PlatformAdminService.isPlatformAdmin(wallet)` backed by the
+  `PLATFORM_ADMIN_WALLETS` env secret (comma-separated, lowercased, memoized)
+  (`src/domain/auth/services/PlatformAdminService.ts`; wired in `auth/context.ts`).
+- **Read bypass** in `hasMerchantAccess` for **GET/HEAD only** on any merchant
+  (`src/api/business/middleware/session.ts`). Writes (`POST/PUT/DELETE`) still 403.
+- **`GET /merchant/my`** returns `isPlatformAdmin: true` + `allMerchants` (full DB list);
+  **`GET /merchant/:id`** derives `role: "platform_admin"`
+  (`src/api/business/merchant/index.ts`).
+- **Business UI**: read-only banners/badges, deep-link to any merchant, funding/members/edit
+  surfaces hidden for the read-only view (`apps/business` — `useReadOnlyMerchant`,
+  `useMyMerchants`, `$merchantId.tsx`, `MerchantDetails`, etc.).
+
+> Net: platform admin gives us **identity + cross-merchant visibility**, but **no write
+> path**. Synthetic-brand onboarding needs writes, so we add them below — scoped to admins.
+
+### 10b. Gap to close — admin registration without verification
+
+Today `POST /merchant/register` (`src/api/business/merchant/registration.ts`) is
+**unauthenticated** and always: verifies SIWE (`MerchantRegistrationService.verifySiweMessage`),
+verifies DNS-TXT (`DnsCheckRepository.isValidDomain`), sets `owner_wallet` = SIWE signer, and
+**fire-and-forget deploys a fresh per-merchant bank** (`deployAndSetupBank`). None of that
+fits a synthetic brand (no domain we own, owner should be Frak, bank should be shared).
+
+**Proposed admin path** (smallest change that stays off the public flow):
+
+- Add an **admin-guarded** registration entry — either a new
+  `POST /merchant/register/admin` route or an `admin: true` branch — gated by a
+  business session whose wallet passes `isPlatformAdmin` (reuse the same check the read
+  bypass uses; **do not** widen the public route).
+- The admin branch **skips** `verifySiweMessage` + `isValidDomain`, sets `owner_wallet` =
+  the admin’s session wallet (or a configured Frak admin wallet), still sets `verified_at`,
+  and accepts the extra synthetic-brand fields: `explorer_config`, `explorer_enabled_at`,
+  `default_reward_token` = EURe, optional `bank_address` (see 10c).
+- Factor the synthetic-merchant create out of `MerchantRegistrationService.register` (or add
+  a sibling `registerSynthetic`) so the verification steps are bypassed by construction, not
+  by a boolean threaded through the verified flow.
+
+### 10c. Gap to close — hardcoded shared Frak bank
+
+There is **no shared-bank concept today**: `deployAndSetupBank` deploys a CREATE2 bank per
+merchant and is the only writer of `merchants.bank_address`
+(`src/domain/campaign-bank/services/CampaignBankService.ts`). For TakeAds we want every
+synthetic merchant to point at **one** pre-funded Frak EURe bank.
+
+- Introduce a configured constant/secret, e.g. `FRAK_SHARED_CAMPAIGN_BANK` (env), holding the
+  one-time-deployed shared EURe bank address.
+- When the admin registration opts into the shared bank, the backend **does not call
+  `deployAndSetupBank`**. Instead it: (1) **double-checks on-chain** that the address is a
+  real `CampaignBank` that is **open** (`isOpen`), owned by the `bank-manager` KMS key, and
+  has EURe allowance set for the `RewarderHub` (extend `CampaignBankRepository` with a
+  read-only `assertSharedBank(address)` using existing ABI calls); (2) writes
+  `merchants.bank_address` = the shared address via `updateBankAddress`.
+- **No external manager role is granted** for synthetic merchants (per §5) — the bank stays
+  fully Frak-controlled. `merchants.bank_address` is intentionally non-unique, so sharing one
+  bank across many synthetic merchants needs no schema change.
+
+### 10d. Frontend (optional for v1)
+
+The backend admin path is enough to script onboarding. A thin admin-only UI affordance
+(“Register synthetic brand → skip verification + use Frak bank”) can be layered on the
+existing platform-admin surfaces later; v1 can drive `POST /merchant/register/admin` directly.
+
+---
+
+## 11. PoC implementation steps
 
 1. **Schema** (`takeads_subid_map` + optional `takeads_sync_state`) — Drizzle defs only;
    flag the migration for the db team.
 2. **TakeAds API client** (`infrastructure/integrations`, `ky`-based, mirroring Airtable/
    Resend style): `listMerchants`, `resolveLink`, `getActions`. Secret: `TAKEADS_API_KEY`.
-3. **Seed/sync**: deploy + fund the Frak EURe bank; upsert synthetic `merchants` +
-   `campaign_rules` from the catalog for the hand-picked brand IDs (manual list for v1).
-4. **Link service + endpoint** (§8): subId mint/lookup + `/v2/resolve` + cache.
-5. **Ingestion cron + orchestrator** (§9 + §7): poll, map subId→identity, upsert interactions,
+3. **Platform-admin write extension** (§10): admin-guarded register-without-verification
+   branch + shared-bank attach (`FRAK_SHARED_CAMPAIGN_BANK` + `assertSharedBank`).
+4. **Seed/sync**: deploy + fund the Frak EURe bank **once** (then hardcode its address);
+   onboard synthetic `merchants` via the §10 admin path + upsert `campaign_rules` from the
+   catalog for the hand-picked brand IDs (manual list for v1).
+5. **Link service + endpoint** (§8): subId mint/lookup + `/v2/resolve` + cache.
+6. **Ingestion cron + orchestrator** (§9 + §7): poll, map subId→identity, upsert interactions,
    handle declines, advance watermark.
-6. **Tests**: subId idempotency/race; ingestion idempotency; PENDING→reward; DECLINED→cancel
-   + budget restore; percentage pricing of `revenue` in EUR→EURe.
+7. **Tests**: admin register-without-verification + shared-bank attach (admin-gated, public
+   route unchanged); subId idempotency/race; ingestion idempotency; PENDING→reward;
+   DECLINED→cancel + budget restore; percentage pricing of `revenue` in EUR→EURe.
 
 ---
 
-## 11. Open decisions / risks
+## 12. Open decisions / risks
 
 - **Lockup length per brand** (UX latency vs decline exposure) — §7.
 - **Treasury/float**: EURe fronted now, EUR collected from TakeAds later (≥€20). Net boost
@@ -296,10 +382,14 @@ the Frak bank once `availableAt` passes, and it shows in reward history.
 - **Polling vs postback**: start polling; add postback for latency once stable.
 - **Sandbox + rate limits**: confirm with TakeAds before load.
 - **Catalog refresh cadence** and brand de-listing (campaign `paused`/`archived`).
+- **Admin write surface**: register-without-verification + shared-bank attach must stay
+  strictly `isPlatformAdmin`-gated; the public `POST /merchant/register` flow (SIWE + DNS)
+  must remain unchanged. Guard against an admin attaching a non-Frak bank (the on-chain
+  `assertSharedBank` check is the safeguard).
 
 ---
 
-## 12. Appendix — key references
+## 13. Appendix — key references
 
 **Backend touchpoints (existing, reused):**
 - `src/domain/rewards/db/schema.ts` — `asset_logs`, `interaction_logs`.
@@ -310,6 +400,15 @@ the Frak bank once `availableAt` passes, and it shows in reward history.
 - `src/domain/campaign-bank/repositories/CampaignBankRepository.ts` — bank deploy/fund.
 - `src/orchestration/ExplorerOrchestrator.ts` — explorer listing (needs `explorer_enabled_at` + ≥1 active campaign).
 - `src/orchestration/RewardLifecycleOrchestrator.ts` + `AssetLogRepository.cancelPendingByInteractionLogs` — decline/cancel + budget restore.
+
+**Platform-admin touchpoints (new capability, extended for §10):**
+- `src/domain/auth/services/PlatformAdminService.ts` (+ `auth/context.ts`) — `isPlatformAdmin` allow-list (`PLATFORM_ADMIN_WALLETS`).
+- `src/api/business/middleware/session.ts` — `hasMerchantAccess` read-only bypass (GET/HEAD); pattern to reuse for the admin register gate.
+- `src/api/business/merchant/registration.ts` + `src/domain/merchant/services/MerchantRegistrationService.ts` — public register flow to branch/factor for the admin path.
+- `src/domain/campaign-bank/services/CampaignBankService.ts` + `repositories/CampaignBankRepository.ts` — `deployAndSetupBank` (skip for shared bank) + add `assertSharedBank`.
+- `src/domain/merchant/repositories/MerchantRepository.ts` — `updateBankAddress` (attach shared bank), `create`.
+- `infra/config.ts` + `infra/gcp/secrets.ts` — secret wiring (`PLATFORM_ADMIN_WALLETS`; add `FRAK_SHARED_CAMPAIGN_BANK`).
+- `apps/business` — `useReadOnlyMerchant`, `useMyMerchants`, `$merchantId.tsx` (read-only UI; optional admin register affordance).
 
 **TakeAds endpoints:**
 - Catalog: `GET /v1/product/monetize-api/v2/merchant`
