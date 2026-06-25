@@ -1,16 +1,13 @@
 import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { isPlatformAdmin } from "../../auth/services/PlatformAdminService";
 import { MerchantAuthorizationService } from "./MerchantAuthorizationService";
 
-// MerchantAuthorizationService is domain-clean and does not call isPlatformAdmin.
-// The platform-admin bypass lives in session.ts (hasMerchantAccess closure).
-// We mock PlatformAdminService here to keep the simulateHasMerchantAccess
-// helper deterministic without depending on env vars or module-level cache state.
-vi.mock("../../auth/services/PlatformAdminService", () => ({
-    isPlatformAdmin: (wallet: Address) =>
-        wallet.toLowerCase() === PLATFORM_ADMIN.toLowerCase(),
-}));
+// MerchantAuthorizationService is domain-clean and does not know about platform
+// admins. The platform-admin bypass lives in session.ts (hasMerchantAccess
+// closure), which the simulateHasMerchantAccess helper below mirrors using a
+// local predicate so the test stays independent of PlatformAdminService.
+const isSimulatedPlatformAdmin = (wallet: Address) =>
+    wallet.toLowerCase() === PLATFORM_ADMIN.toLowerCase();
 
 const OWNER = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
 const ADMIN_WALLET = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" as Address;
@@ -143,7 +140,8 @@ describe("platform admin read bypass (hasMerchantAccess closure logic)", () => {
         svc: MerchantAuthorizationService
     ): Promise<boolean> {
         if (await svc.hasAccess(merchantId, wallet)) return true;
-        if (isPlatformAdmin(wallet) && SAFE_METHODS.has(method)) return true;
+        if (isSimulatedPlatformAdmin(wallet) && SAFE_METHODS.has(method))
+            return true;
         return false;
     }
 

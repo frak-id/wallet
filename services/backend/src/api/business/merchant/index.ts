@@ -1,6 +1,6 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { isPlatformAdmin } from "../../../domain/auth/services/PlatformAdminService";
+import { AuthContext } from "../../../domain/auth";
 import { MerchantContext } from "../../../domain/merchant";
 import {
     MerchantDetailResponseSchema,
@@ -65,7 +65,9 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 // the auth-domain concern out of MerchantAuthorizationService.
                 if (
                     role === "none" &&
-                    isPlatformAdmin(businessSession.wallet)
+                    AuthContext.services.platformAdmin.isPlatformAdmin(
+                        businessSession.wallet
+                    )
                 ) {
                     role = "platform_admin";
                 }
@@ -104,7 +106,10 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(401, "Authentication required");
             }
 
-            const isPlatAdmin = isPlatformAdmin(businessSession.wallet);
+            const isPlatAdmin =
+                AuthContext.services.platformAdmin.isPlatformAdmin(
+                    businessSession.wallet
+                );
 
             const owned =
                 await MerchantContext.repositories.merchant.findByOwnerWallet(

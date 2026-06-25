@@ -1,4 +1,5 @@
 import { AuthenticatorRepository } from "./repositories/AuthenticatorRepository";
+import { PlatformAdminService } from "./services/PlatformAdminService";
 import { WalletJwtService } from "./services/WalletJwtService";
 import { WalletSdkSessionService } from "./services/WalletSdkSessionService";
 import { WebAuthNService } from "./services/WebAuthNService";
@@ -16,5 +17,6 @@ export namespace AuthContext {
         walletSdkSession: walletSdkSessionService,
         walletJwt: walletJwtService,
         webAuthN: new WebAuthNService(authenticatorRepository),
+        platformAdmin: new PlatformAdminService(),
     };
 }

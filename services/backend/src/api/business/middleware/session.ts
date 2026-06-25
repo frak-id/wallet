@@ -6,8 +6,8 @@ import {
 } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { AuthContext } from "../../../domain/auth";
 import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
-import { isPlatformAdmin } from "../../../domain/auth/services/PlatformAdminService";
 import { MerchantContext } from "../../../domain/merchant";
 
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
@@ -38,7 +38,9 @@ export const businessSessionContext = new Elysia({
                         )
                             return true;
                         if (
-                            isPlatformAdmin(session.wallet) &&
+                            AuthContext.services.platformAdmin.isPlatformAdmin(
+                                session.wallet
+                            ) &&
                             SAFE_METHODS.has(request.method)
                         ) {
                             log.info(
