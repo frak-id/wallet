@@ -10,8 +10,8 @@ export function useReadOnlyMerchant({
 }: {
     merchantId: string | undefined;
 }): boolean {
-    // useMerchant's queryOptions already has enabled:!!merchantId, so passing
-    // an empty string is safe and avoids a conditional hook call.
+    // Accept an undefined merchantId so callers don't need a sentinel; passing
+    // "" through is safe because merchantQueryOptions sets enabled:!!merchantId.
     const { data } = useMerchant({ merchantId: merchantId ?? "" });
     return data?.role === "platform_admin";
 }
