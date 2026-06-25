@@ -1,5 +1,6 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { isPlatformAdmin } from "../../../domain/auth/services/PlatformAdminService";
 import { MerchantContext } from "../../../domain/merchant";
 import {
     MerchantDetailResponseSchema,
@@ -51,7 +52,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
 
             // Determine role: check wallet-based access for business sessions,
             // default to "admin" for Shopify sessions (shop owner)
-            let role: "owner" | "admin" | "none" = "admin";
+            let role: "owner" | "admin" | "platform_admin" | "none" = "admin";
             if (businessSession) {
                 const access =
                     await MerchantContext.services.authorization.checkAccess(
@@ -94,6 +95,8 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(401, "Authentication required");
             }
 
+            const isPlatAdmin = isPlatformAdmin(businessSession.wallet);
+
             const owned =
                 await MerchantContext.repositories.merchant.findByOwnerWallet(
                     businessSession.wallet
@@ -111,6 +114,12 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 )
             );
 
+            const allMerchants = isPlatAdmin
+                ? (await MerchantContext.repositories.merchant.findAll()).map(
+                      (m) => ({ id: m.id, domain: m.domain, name: m.name })
+                  )
+                : undefined;
+
             return {
                 owned: owned.map((m) => ({
                     id: m.id,
@@ -124,6 +133,8 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                         domain: m.domain,
                         name: m.name,
                     })),
+                isPlatformAdmin: isPlatAdmin,
+                allMerchants,
             };
         },
         {

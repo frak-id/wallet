@@ -41,6 +41,7 @@ describe("MyMerchants", () => {
             owned: [],
             adminOf: [],
             isEmpty: true,
+            isPlatformAdmin: false,
         });
 
         render(<MyMerchants />);
@@ -65,6 +66,7 @@ describe("MyMerchants", () => {
             owned: [],
             adminOf: [],
             isEmpty: false,
+            isPlatformAdmin: false,
         });
 
         render(<MyMerchants />);

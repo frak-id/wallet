@@ -190,6 +190,15 @@ export class MerchantRepository {
         });
     }
 
+    /**
+     * Returns every merchant row — used only by the platform-admin /my
+     * endpoint. No pagination; add a limit here if the merchant count grows
+     * large enough to affect latency.
+     */
+    async findAll(): Promise<MerchantSelect[]> {
+        return db.query.merchantsTable.findMany({});
+    }
+
     private invalidateCache(merchant: MerchantSelect): void {
         this.idCache.delete(merchant.id);
         this.domainCache.delete(merchant.domain);

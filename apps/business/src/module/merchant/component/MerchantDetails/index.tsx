@@ -17,6 +17,7 @@ import {
 import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
+import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import { AllowedDomainsSheet } from "../AllowedDomainsSheet";
 import { SaveFooter } from "../Customize/SaveFooter";
 import { MerchantEditSheet } from "../MerchantEditSheet";
@@ -31,6 +32,7 @@ const DOMAIN_PREVIEW_COUNT = 3;
 export function MerchantDetails({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
     const { data: merchant } = useMerchant({ merchantId });
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
 
     const [dirtySections, setDirtySections] = useState<Record<string, boolean>>(
         {}
@@ -129,12 +131,14 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                                     value={currency ? currency.label : "—"}
                                 />
                             </DetailCells>
-                            <Inline space="s">
-                                <MerchantEditSheet
-                                    merchant={merchant}
-                                    merchantId={merchantId}
-                                />
-                            </Inline>
+                            {!isReadOnly && (
+                                <Inline space="s">
+                                    <MerchantEditSheet
+                                        merchant={merchant}
+                                        merchantId={merchantId}
+                                    />
+                                </Inline>
+                            )}
                         </EditCard>
                     )}
                     {merchant && (
@@ -171,12 +175,14 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                                     {t("merchantEdit.domains.empty")}
                                 </p>
                             )}
-                            <Inline space="s">
-                                <AllowedDomainsSheet
-                                    merchantId={merchantId}
-                                    allowedDomains={merchant.allowedDomains}
-                                />
-                            </Inline>
+                            {!isReadOnly && (
+                                <Inline space="s">
+                                    <AllowedDomainsSheet
+                                        merchantId={merchantId}
+                                        allowedDomains={merchant.allowedDomains}
+                                    />
+                                </Inline>
+                            )}
                         </EditCard>
                     )}
                     <NewsletterShareLink merchantId={merchantId} />
@@ -189,12 +195,14 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                     )}
                 </EditPageLayout>
             </div>
-            <SaveFooter
-                disabled={!hasUnsavedChanges}
-                isSaving={isSaving}
-                onSave={saveAll}
-                label={t("merchantEdit.saveAll")}
-            />
+            {!isReadOnly && (
+                <SaveFooter
+                    disabled={!hasUnsavedChanges}
+                    isSaving={isSaving}
+                    onSave={saveAll}
+                    label={t("merchantEdit.saveAll")}
+                />
+            )}
             <DiscardChangesDialog {...discardDialogProps} />
         </CustomizeSaveProvider>
     );

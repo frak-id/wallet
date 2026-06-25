@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { CallOut } from "@/module/common/component/CallOut";
+import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import type { DistributionStatus } from "@/types/Campaign";
 import * as styles from "./bank-status-banner.css";
 
@@ -43,6 +44,7 @@ const banner = {
  */
 export function BankStatusBanner({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
     const { data: status } = useQuery({
         ...campaignsListQueryOptions({ merchantId, isDemoMode: isDemoMode() }),
         select: (data) => data.bankDistributionStatus,
@@ -57,13 +59,15 @@ export function BankStatusBanner({ merchantId }: { merchantId: string }) {
     return (
         <CallOut variant={variant} className={styles.banner}>
             {t(messageKey)}
-            <Link
-                to="/m/$merchantId/merchant/funding"
-                params={{ merchantId }}
-                className={styles.link}
-            >
-                {t(ctaKey)}
-            </Link>
+            {!isReadOnly && (
+                <Link
+                    to="/m/$merchantId/merchant/funding"
+                    params={{ merchantId }}
+                    className={styles.link}
+                >
+                    {t(ctaKey)}
+                </Link>
+            )}
         </CallOut>
     );
 }

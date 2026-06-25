@@ -1,8 +1,9 @@
 import { type Address, isAddressEqual } from "viem";
+import { isPlatformAdmin } from "../../auth/services/PlatformAdminService";
 import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 
-type MerchantRole = "owner" | "admin" | "none";
+type MerchantRole = "owner" | "admin" | "platform_admin" | "none";
 
 type MerchantAccess = {
     hasAccess: boolean;
@@ -51,6 +52,15 @@ export class MerchantAuthorizationService {
                 isOwner: false,
                 isAdmin: true,
                 role: "admin",
+            };
+        }
+
+        if (isPlatformAdmin(wallet)) {
+            return {
+                hasAccess: false,
+                isOwner: false,
+                isAdmin: false,
+                role: "platform_admin",
             };
         }
 
