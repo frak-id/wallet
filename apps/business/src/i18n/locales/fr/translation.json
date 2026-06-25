@@ -1180,6 +1180,18 @@
                 "continue": "Continuer",
                 "completeRegistration": "Finaliser l'enregistrement"
             },
+            "platformAdmin": {
+                "label": "Options administrateur",
+                "description": "Options avancées réservées aux administrateurs de la plateforme Frak.",
+                "skipDomain": {
+                    "title": "Ignorer la vérification du domaine",
+                    "description": "Enregistrer sans la vérification DNS de propriété. La signature reste requise."
+                },
+                "useFrakBank": {
+                    "title": "Utiliser la banque de campagne Frak",
+                    "description": "Associer ce marchand à la banque Frak partagée au lieu d'en déployer une dédiée."
+                }
+            },
             "fields": {
                 "name": {
                     "label": "Saisissez un nom de marchand",

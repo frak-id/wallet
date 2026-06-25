@@ -1,6 +1,7 @@
 import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { AuthContext } from "../../../domain/auth";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
 import { businessSessionContext } from "../middleware/session";
@@ -76,7 +77,13 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
         async ({ body, request }) => {
             const origin = request.headers.get("origin") ?? "";
 
-            const { merchantId } =
+            // The registration service honors the platform-admin options
+            // (skipDomainValidation / useFrakBank) and co-admins the team only
+            // when the SIWE signer is one of these wallets.
+            const platformAdminWallets =
+                AuthContext.services.platformAdmin.getAdminWallets();
+
+            const { merchantId, frakBankLinked } =
                 await MerchantContext.services.registration.register({
                     message: body.message,
                     signature: body.signature,
@@ -86,22 +93,29 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     setupCode: body.setupCode,
                     defaultRewardToken: body.defaultRewardToken,
                     allowedDomains: body.allowedDomains,
+                    skipDomainValidation: body.skipDomainValidation,
+                    useFrakBank: body.useFrakBank,
+                    platformAdminWallets,
                 });
 
-            CampaignBankContext.services.campaignBank
-                .deployAndSetupBank(merchantId)
-                .catch((error) => {
-                    log.error(
-                        {
-                            merchantId,
-                            error:
-                                error instanceof Error
-                                    ? error.message
-                                    : String(error),
-                        },
-                        "Failed to deploy campaign bank during registration"
-                    );
-                });
+            // Frak-bank merchants reuse the shared bank; everyone else gets a
+            // dedicated per-merchant bank.
+            if (!frakBankLinked) {
+                CampaignBankContext.services.campaignBank
+                    .deployAndSetupBank(merchantId)
+                    .catch((error) => {
+                        log.error(
+                            {
+                                merchantId,
+                                error:
+                                    error instanceof Error
+                                        ? error.message
+                                        : String(error),
+                            },
+                            "Failed to deploy campaign bank during registration"
+                        );
+                    });
+            }
 
             return { merchantId };
         },
@@ -114,6 +128,11 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 setupCode: t.Optional(t.String()),
                 defaultRewardToken: t.Hex(),
                 allowedDomains: t.Optional(t.Array(t.String())),
+                // Platform-admin only (ignored otherwise): skip the DNS
+                // ownership check, and/or link the brand to the shared Frak
+                // campaign bank instead of deploying a dedicated one.
+                skipDomainValidation: t.Optional(t.Boolean()),
+                useFrakBank: t.Optional(t.Boolean()),
             }),
             response: {
                 200: t.Object({

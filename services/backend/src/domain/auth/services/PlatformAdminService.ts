@@ -39,4 +39,13 @@ export class PlatformAdminService {
     isPlatformAdmin(wallet: Address): boolean {
         return this.getAdminSet().has(wallet.toLowerCase());
     }
+
+    /**
+     * Returns the configured platform-admin wallets (lowercased). Used during
+     * merchant registration to co-admin the whole Frak team onto a merchant a
+     * platform admin registers.
+     */
+    getAdminWallets(): Address[] {
+        return [...this.getAdminSet()] as Address[];
+    }
 }

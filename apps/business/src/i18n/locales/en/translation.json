@@ -1180,6 +1180,18 @@
                 "continue": "Continue",
                 "completeRegistration": "Complete Registration"
             },
+            "platformAdmin": {
+                "label": "Platform admin options",
+                "description": "Advanced options available to Frak platform admins.",
+                "skipDomain": {
+                    "title": "Skip domain verification",
+                    "description": "Register without the DNS ownership check. The signature is still required."
+                },
+                "useFrakBank": {
+                    "title": "Use Frak campaign bank",
+                    "description": "Link this merchant to the shared Frak bank instead of deploying a dedicated one."
+                }
+            },
             "fields": {
                 "name": {
                     "label": "Enter a Merchant Name",

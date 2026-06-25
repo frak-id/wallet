@@ -1065,6 +1065,18 @@ export default interface Resources {
           "duration": "Registration usually takes less than a minute",
           "onChain": "Your merchant will be registered on-chain."
         },
+        "platformAdmin": {
+          "description": "Advanced options available to Frak platform admins.",
+          "label": "Platform admin options",
+          "skipDomain": {
+            "description": "Register without the DNS ownership check. The signature is still required.",
+            "title": "Skip domain verification"
+          },
+          "useFrakBank": {
+            "description": "Link this merchant to the shared Frak bank instead of deploying a dedicated one.",
+            "title": "Use Frak campaign bank"
+          }
+        },
         "registration": {
           "description": "To complete registration:",
           "label": "Complete registration"

@@ -41,10 +41,11 @@ module (catalog sync + link generation + conversion ingestion) plus seed data.
 - **Ingestion = poll the Stats API** (`GET /v3/api/stats/action`) on a cron for the PoC;
   postbacks can be added later for latency. No public inbound endpoint to secure for v1.
 - **Synthetic-brand onboarding rides the new platform-admin capability** — rather than a
-  one-off seed script, a Frak **platform admin** registers each synthetic brand through an
-  admin-authenticated registration path that (a) **skips SIWE + DNS verification**, (b) sets
-  `owner_wallet` = Frak admin, and (c) **attaches the one hardcoded shared Frak EURe
-  `CampaignBank`** instead of deploying a fresh per-merchant bank. See §10.
+  one-off seed script, a Frak **platform admin** registers each synthetic brand through the
+  existing SIWE registration flow with two opt-in flags: (a) `skipDomainValidation` to
+  **skip the DNS-TXT check** (SIWE signature still required), and (b) `useFrakBank` to
+  **attach the one hardcoded shared Frak EURe `CampaignBank`** instead of deploying a fresh
+  per-merchant bank. Any admin registration also co-admins the rest of the Frak team. See §10.
 
 ---
 
@@ -177,17 +178,17 @@ polling **watermark** (last `updatedAt` processed).
 
 ### 6b. Seed data (per brand) — reuses existing tables
 
-Created via the **platform-admin registration path** (§10), not a raw SQL seed:
+Created via the **platform-admin registration options** (§10), not a raw SQL seed:
 
 - **One Frak EURe `CampaignBank`**, deployed + funded **once** (reuse
   `CampaignBankRepository.deployBank` / `enableDistribution` with the EURe token), then its
   address **hardcoded/env-configured** so every synthetic merchant attaches to it.
 - **`merchants` row per brand**: `name`, `domain` = brand `defaultDomain`, `owner_wallet` =
-  Frak admin (the registering platform-admin wallet), `default_reward_token` = **EURe**,
-  `bank_address` = shared Frak bank (attached, **not** freshly deployed),
+  the registering platform-admin's SIWE wallet, `default_reward_token` = **EURe**,
+  `bank_address` = shared Frak bank (via `useFrakBank`, **not** freshly deployed),
   `explorer_enabled_at` = now, `explorer_config` = `{ logoUrl, description }` from the catalog.
-  `product_id` stays **null** (off-chain brand). `verified_at` is still set (admin-trusted),
-  but **DNS-TXT + SIWE verification are skipped** — a synthetic brand has no domain we control.
+  `verified_at` and `product_id` are set as in the normal flow; **DNS-TXT verification is
+  skipped** (via `skipDomainValidation`) while the **SIWE signature is still required**.
 - **`campaign_rules` row per brand** (also what makes it visible in the explorer, which
   requires ≥1 active campaign):
 
@@ -302,29 +303,27 @@ two narrow **write** capabilities (register-without-verification + shared-bank a
   `useMyMerchants`, `$merchantId.tsx`, `MerchantDetails`, etc.).
 
 > Net: platform admin gives us **identity + cross-merchant visibility**, but **no write
-> path**. Synthetic-brand onboarding needs writes, so we add them below — scoped to admins.
+> path**. Synthetic-brand onboarding needs two small write affordances, added below.
 
-### 10b. Gap to close — admin registration without verification
+### 10b. Implemented — admin options on the existing registration flow
 
-Today `POST /merchant/register` (`src/api/business/merchant/registration.ts`) is
-**unauthenticated** and always: verifies SIWE (`MerchantRegistrationService.verifySiweMessage`),
-verifies DNS-TXT (`DnsCheckRepository.isValidDomain`), sets `owner_wallet` = SIWE signer, and
-**fire-and-forget deploys a fresh per-merchant bank** (`deployAndSetupBank`). None of that
-fits a synthetic brand (no domain we own, owner should be Frak, bank should be shared).
+`POST /merchant/register` (`src/api/business/merchant/registration.ts`) keeps its **single
+SIWE-verified flow** for everyone. Rather than duplicating logic, two **opt-in body flags**
+were added and are **only honored when the SIWE signer is a platform admin** (membership
+tested in-service against the configured admin wallets):
 
-**Proposed admin path** (smallest change that stays off the public flow):
+- `skipDomainValidation` — bypasses the `DnsCheckRepository.isValidDomain` TXT check (a
+  synthetic brand has no domain Frak controls). SIWE signature + statement are still required.
+- `useFrakBank` — links the brand to the shared Frak bank (see 10c) and makes the route
+  **skip** the per-merchant `deployAndSetupBank` (returned via `{ frakBankLinked }`).
 
-- Add an **admin-guarded** registration entry — either a new
-  `POST /merchant/register/admin` route or an `admin: true` branch — gated by a
-  business session whose wallet passes `isPlatformAdmin` (reuse the same check the read
-  bypass uses; **do not** widen the public route).
-- The admin branch **skips** `verifySiweMessage` + `isValidDomain`, sets `owner_wallet` =
-  the admin’s session wallet (or a configured Frak admin wallet), still sets `verified_at`,
-  and accepts the extra synthetic-brand fields: `explorer_config`, `explorer_enabled_at`,
-  `default_reward_token` = EURe, optional `bank_address` (see 10c).
-- Factor the synthetic-merchant create out of `MerchantRegistrationService.register` (or add
-  a sibling `registerSynthetic`) so the verification steps are bypassed by construction, not
-  by a boolean threaded through the verified flow.
+The route passes `AuthContext.services.platformAdmin.getAdminWallets()` into
+`MerchantRegistrationService.register`; the service computes `isPlatformAdmin` from the
+recovered SIWE wallet, gates both flags on it, and — for any platform-admin registration —
+**co-admins every other platform-admin wallet onto the new merchant**
+(`MerchantAdminRepository.add`, idempotent) so the whole Frak team can manage it. Non-admins
+passing the flags are ignored (still DNS-verified, no shared bank). `owner_wallet`,
+`verified_at`, and `product_id` behave exactly as the normal flow (no special-casing).
 
 ### 10c. Gap to close — hardcoded shared Frak bank
 
@@ -334,7 +333,17 @@ merchant and is the only writer of `merchants.bank_address`
 synthetic merchant to point at **one** pre-funded Frak EURe bank.
 
 - Introduce a configured constant/secret, e.g. `FRAK_SHARED_CAMPAIGN_BANK` (env), holding the
-  one-time-deployed shared EURe bank address.
+  one-time-deployed shared EURe bank address. **Implemented today as a `zeroAddress`
+  placeholder** in `MerchantRegistrationService` (exported `FRAK_SHARED_CAMPAIGN_BANK`);
+  `register()` writes it to `merchants.bank_address` when an admin passes `useFrakBank` and
+  the route skips per-merchant bank deploy (`frakBankLinked`).
+  > **Residual risk (must-track before real settlement):** `zeroAddress` is a *truthy*
+  > string, so `CampaignBankService.deployAndSetupBank` treats frak-bank merchants as
+  > “already deployed” (the desired no-op for registration), but `syncBankRoles` /
+  > `transferBankRoles` / `getBankStatus` would issue on-chain calls against `address(0)`.
+  > Before these brands settle real on-chain rewards: (a) replace the placeholder with the
+  > deployed+funded bank, and (b) add `bankAddress && bankAddress !== zeroAddress` guards in
+  > those `CampaignBankService` methods.
 - When the admin registration opts into the shared bank, the backend **does not call
   `deployAndSetupBank`**. Instead it: (1) **double-checks on-chain** that the address is a
   real `CampaignBank` that is **open** (`isOpen`), owned by the `bank-manager` KMS key, and

@@ -10,6 +10,7 @@ import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import { useFormContext } from "react-hook-form";
@@ -27,10 +28,17 @@ import * as styles from "./merchantWizard.css";
 
 const DOCS_URL = "https://docs.frak.id/business/product/verify";
 
-export function MerchantDetailsStep({ domainError }: { domainError?: string }) {
+export function MerchantDetailsStep({
+    domainError,
+    isPlatformAdmin = false,
+}: {
+    domainError?: string;
+    isPlatformAdmin?: boolean;
+}) {
     const { t } = useTranslation();
     const { control, watch } = useFormContext<MerchantNew>();
     const domain = watch("domain");
+    const skipDomainValidation = watch("skipDomainValidation");
     const { copied, copy } = useCopyToClipboardWithState();
 
     const { data: dnsRecord, isLoading: isDnsLoading } = useDnsTxtRecordToSet({
@@ -117,6 +125,94 @@ export function MerchantDetailsStep({ domainError }: { domainError?: string }) {
                 </Stack>
             </div>
 
+            {isPlatformAdmin && (
+                <WizardFieldCard
+                    label={t("merchant.create.platformAdmin.label")}
+                    description={t("merchant.create.platformAdmin.description")}
+                >
+                    <Stack space="m">
+                        <FormField
+                            control={control}
+                            name="skipDomainValidation"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Inline
+                                        space="m"
+                                        align="space-between"
+                                        alignY="center"
+                                        wrap={false}
+                                    >
+                                        <Stack space="xxs">
+                                            <Text
+                                                variant="body"
+                                                weight="medium"
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.skipDomain.title"
+                                                )}
+                                            </Text>
+                                            <Text
+                                                variant="bodySmall"
+                                                color="secondary"
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.skipDomain.description"
+                                                )}
+                                            </Text>
+                                        </Stack>
+                                        <FormControl>
+                                            <Switch
+                                                checked={!!field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </Inline>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name="useFrakBank"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Inline
+                                        space="m"
+                                        align="space-between"
+                                        alignY="center"
+                                        wrap={false}
+                                    >
+                                        <Stack space="xxs">
+                                            <Text
+                                                variant="body"
+                                                weight="medium"
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.useFrakBank.title"
+                                                )}
+                                            </Text>
+                                            <Text
+                                                variant="bodySmall"
+                                                color="secondary"
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.useFrakBank.description"
+                                                )}
+                                            </Text>
+                                        </Stack>
+                                        <FormControl>
+                                            <Switch
+                                                checked={!!field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </Inline>
+                                </FormItem>
+                            )}
+                        />
+                    </Stack>
+                </WizardFieldCard>
+            )}
+
             <WizardFieldCard label={t("merchant.create.fields.domain.label")}>
                 <Stack space="m">
                     <FormField
@@ -198,7 +294,7 @@ export function MerchantDetailsStep({ domainError }: { domainError?: string }) {
 
                     {domainError && <FieldError>{domainError}</FieldError>}
 
-                    {(dnsRecord || isDnsLoading) && (
+                    {!skipDomainValidation && (dnsRecord || isDnsLoading) && (
                         <Stack space="m" className={styles.dnsBlock}>
                             <Text
                                 variant="bodySmall"

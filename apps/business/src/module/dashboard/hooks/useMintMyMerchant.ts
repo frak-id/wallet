@@ -40,6 +40,9 @@ export function useRegisterMerchant(
             setupCode?: string;
             currency: Stablecoin;
             allowedDomains?: string[];
+            // Platform-admin only (ignored by the backend otherwise).
+            skipDomainValidation?: boolean;
+            useFrakBank?: boolean;
         }
     >
 ) {
@@ -64,6 +67,8 @@ export function useRegisterMerchant(
             setupCode,
             currency,
             allowedDomains,
+            skipDomainValidation,
+            useFrakBank,
         }) {
             const wallet = walletStatus?.wallet;
             if (!wallet) {
@@ -94,6 +99,8 @@ export function useRegisterMerchant(
                     setupCode,
                     defaultRewardToken,
                     allowedDomains,
+                    skipDomainValidation,
+                    useFrakBank,
                 });
             if (error) {
                 throw new Error(extractErrorMessage(error));

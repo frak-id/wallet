@@ -1,15 +1,27 @@
 import { viemClient } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { Address, Hex } from "viem";
-import { keccak256, toHex } from "viem";
+import { keccak256, toHex, zeroAddress } from "viem";
 import { verifyMessage } from "viem/actions";
 import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
 import type { DnsCheckRepository } from "../../../infrastructure/dns/DnsCheckRepository";
+import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
+
+/**
+ * Shared Frak-controlled campaign bank that platform admins can opt brands
+ * into (via `useFrakBank`) instead of deploying a dedicated per-merchant bank.
+ *
+ * Placeholder until the shared EURe bank is deployed + funded; see
+ * docs/plans/takeads-affiliate-integration.md §10c.
+ */
+export const FRAK_SHARED_CAMPAIGN_BANK: Address = zeroAddress;
+
 export class MerchantRegistrationService {
     constructor(
         private readonly merchantRepository: MerchantRepository,
-        private readonly dnsCheckRepository: DnsCheckRepository
+        private readonly dnsCheckRepository: DnsCheckRepository,
+        private readonly merchantAdminRepository: MerchantAdminRepository
     ) {}
 
     async register(params: {
@@ -21,7 +33,13 @@ export class MerchantRegistrationService {
         setupCode?: string;
         defaultRewardToken: Address;
         allowedDomains?: string[];
-    }): Promise<{ merchantId: string }> {
+        // Platform-admin options, only honored when the SIWE signer is a
+        // platform admin (membership tested against `platformAdminWallets`):
+        // skip the DNS ownership check and/or link the shared Frak bank.
+        skipDomainValidation?: boolean;
+        useFrakBank?: boolean;
+        platformAdminWallets?: Address[];
+    }): Promise<{ merchantId: string; frakBankLinked: boolean }> {
         const siweResult = await this.verifySiweMessage({
             message: params.message,
             signature: params.signature,
@@ -37,6 +55,11 @@ export class MerchantRegistrationService {
             params.domain
         );
 
+        const platformAdminWallets = params.platformAdminWallets ?? [];
+        const isPlatformAdmin = platformAdminWallets.some(
+            (admin) => admin.toLowerCase() === wallet.toLowerCase()
+        );
+
         const existingMerchant =
             await this.merchantRepository.findByDomain(normalizedDomain);
         if (existingMerchant) {
@@ -46,19 +69,25 @@ export class MerchantRegistrationService {
             );
         }
 
-        const isDnsValid = await this.dnsCheckRepository.isValidDomain({
-            domain: normalizedDomain,
-            owner: wallet,
-            setupCode: params.setupCode,
-        });
-        if (!isDnsValid) {
-            throw HttpError.badRequest(
-                "DNS_VERIFICATION_FAILED",
-                "DNS verification failed - TXT record not found or invalid"
-            );
+        // Domain ownership check — platform admins may opt to skip it.
+        const skipDomainValidation =
+            isPlatformAdmin && params.skipDomainValidation === true;
+        if (!skipDomainValidation) {
+            const isDnsValid = await this.dnsCheckRepository.isValidDomain({
+                domain: normalizedDomain,
+                owner: wallet,
+                setupCode: params.setupCode,
+            });
+            if (!isDnsValid) {
+                throw HttpError.badRequest(
+                    "DNS_VERIFICATION_FAILED",
+                    "DNS verification failed - TXT record not found or invalid"
+                );
+            }
         }
 
         const productId = this.computeProductId(normalizedDomain);
+        const frakBankLinked = isPlatformAdmin && params.useFrakBank === true;
 
         const merchant = await this.merchantRepository.create({
             domain: normalizedDomain,
@@ -67,12 +96,30 @@ export class MerchantRegistrationService {
             productId,
             defaultRewardToken: params.defaultRewardToken,
             verifiedAt: new Date(),
+            ...(frakBankLinked && { bankAddress: FRAK_SHARED_CAMPAIGN_BANK }),
             ...(params.allowedDomains?.length && {
                 allowedDomains: params.allowedDomains,
             }),
         });
 
-        return { merchantId: merchant.id };
+        // When a platform admin onboards a merchant, co-admin every other
+        // platform admin onto it so the whole Frak team can manage it.
+        if (isPlatformAdmin) {
+            const otherAdmins = platformAdminWallets.filter(
+                (admin) => admin.toLowerCase() !== wallet.toLowerCase()
+            );
+            await Promise.all(
+                otherAdmins.map((admin) =>
+                    this.merchantAdminRepository.add({
+                        merchantId: merchant.id,
+                        wallet: admin,
+                        addedBy: wallet,
+                    })
+                )
+            );
+        }
+
+        return { merchantId: merchant.id, frakBankLinked };
     }
 
     async verifySiweMessage(params: {
