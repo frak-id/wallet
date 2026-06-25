@@ -1031,6 +1031,84 @@
         "demo": {
             "label": "Enable Demo Mode",
             "description": "When enabled, all data will be replaced with mock data for demonstration purposes. This is useful for presentations and testing without affecting real data."
+        },
+        "billing": {
+            "info": {
+                "label": "Invoice information",
+                "missing": "Missing information",
+                "title": "Invoice information",
+                "subtitle": "Billing details used across all campaign invoices and statements."
+            },
+            "summary": {
+                "companyName": "Company name",
+                "vatNumber": "VAT number",
+                "address": "Address",
+                "country": "Country",
+                "billingEmail": "Billing email"
+            },
+            "actions": {
+                "add": "Add invoice information",
+                "edit": "Edit",
+                "save": "Save information",
+                "saveChanges": "Save changes",
+                "cancel": "Cancel",
+                "close": "Close"
+            },
+            "sheet": {
+                "addTitle": "Add invoice information",
+                "editTitle": "Edit invoice information",
+                "description": "These details will be used to generate all invoices and billing documents."
+            },
+            "fields": {
+                "companyName": {
+                    "label": "Company name",
+                    "placeholder": "Enter company name"
+                },
+                "vatNumber": {
+                    "label": "VAT number",
+                    "placeholder": "Enter VAT number"
+                },
+                "streetAddress": {
+                    "label": "Street address",
+                    "placeholder": "Enter street address"
+                },
+                "city": {
+                    "label": "City",
+                    "placeholder": "Enter city"
+                },
+                "postalCode": {
+                    "label": "Postal code",
+                    "placeholder": "Enter postal code"
+                },
+                "country": {
+                    "label": "Country",
+                    "placeholder": "Select country"
+                },
+                "billingEmail": {
+                    "label": "Billing email",
+                    "placeholder": "youremail@company.com"
+                }
+            },
+            "segments": {
+                "invoices": "Invoices",
+                "deposit": "Deposit"
+            },
+            "table": {
+                "date": "Date",
+                "amount": "Amount",
+                "type": "Type",
+                "description": "Description",
+                "pdf": "PDF",
+                "download": "Download PDF"
+            },
+            "tag": {
+                "paid": "Paid",
+                "deposit": "Deposit"
+            },
+            "validation": {
+                "required": "This field is required",
+                "email": "Enter a valid email address"
+            }
         }
     },
     "merchant": {

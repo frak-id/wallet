@@ -1031,6 +1031,84 @@
         "demo": {
             "label": "Activer le mode démo",
             "description": "Une fois activé, toutes les données sont remplacées par des données fictives à des fins de démonstration. Utile pour des présentations ou des tests sans toucher aux données réelles."
+        },
+        "billing": {
+            "info": {
+                "label": "Informations de facturation",
+                "missing": "Infos manquantes",
+                "title": "Informations de facturation",
+                "subtitle": "Coordonnées de facturation utilisées sur toutes les factures et relevés de campagne."
+            },
+            "summary": {
+                "companyName": "Nom de l'entreprise",
+                "vatNumber": "Numéro de TVA",
+                "address": "Adresse",
+                "country": "Pays",
+                "billingEmail": "E-mail de facturation"
+            },
+            "actions": {
+                "add": "Ajouter des informations de facturation",
+                "edit": "Modifier",
+                "save": "Enregistrer les informations",
+                "saveChanges": "Enregistrer les modifications",
+                "cancel": "Annuler",
+                "close": "Fermer"
+            },
+            "sheet": {
+                "addTitle": "Ajouter des informations de facturation",
+                "editTitle": "Modifier les informations de facturation",
+                "description": "Ces informations seront utilisées pour générer toutes les factures et documents de facturation."
+            },
+            "fields": {
+                "companyName": {
+                    "label": "Nom de l'entreprise",
+                    "placeholder": "Saisir le nom de l'entreprise"
+                },
+                "vatNumber": {
+                    "label": "Numéro de TVA",
+                    "placeholder": "Saisir le numéro de TVA"
+                },
+                "streetAddress": {
+                    "label": "Adresse",
+                    "placeholder": "Saisir l'adresse"
+                },
+                "city": {
+                    "label": "Ville",
+                    "placeholder": "Saisir la ville"
+                },
+                "postalCode": {
+                    "label": "Code postal",
+                    "placeholder": "Saisir le code postal"
+                },
+                "country": {
+                    "label": "Pays",
+                    "placeholder": "Sélectionner un pays"
+                },
+                "billingEmail": {
+                    "label": "E-mail de facturation",
+                    "placeholder": "votreemail@entreprise.com"
+                }
+            },
+            "segments": {
+                "invoices": "Factures",
+                "deposit": "Dépôts"
+            },
+            "table": {
+                "date": "Date",
+                "amount": "Montant",
+                "type": "Type",
+                "description": "Description",
+                "pdf": "PDF",
+                "download": "Télécharger le PDF"
+            },
+            "tag": {
+                "paid": "Payée",
+                "deposit": "Dépôt"
+            },
+            "validation": {
+                "required": "Ce champ est requis",
+                "email": "Saisir une adresse e-mail valide"
+            }
         }
     },
     "merchant": {

@@ -1333,6 +1333,84 @@ export default interface Resources {
       }
     },
     "settings": {
+      "billing": {
+        "actions": {
+          "add": "Add invoice information",
+          "cancel": "Cancel",
+          "close": "Close",
+          "edit": "Edit",
+          "save": "Save information",
+          "saveChanges": "Save changes"
+        },
+        "fields": {
+          "billingEmail": {
+            "label": "Billing email",
+            "placeholder": "youremail@company.com"
+          },
+          "city": {
+            "label": "City",
+            "placeholder": "Enter city"
+          },
+          "companyName": {
+            "label": "Company name",
+            "placeholder": "Enter company name"
+          },
+          "country": {
+            "label": "Country",
+            "placeholder": "Select country"
+          },
+          "postalCode": {
+            "label": "Postal code",
+            "placeholder": "Enter postal code"
+          },
+          "streetAddress": {
+            "label": "Street address",
+            "placeholder": "Enter street address"
+          },
+          "vatNumber": {
+            "label": "VAT number",
+            "placeholder": "Enter VAT number"
+          }
+        },
+        "info": {
+          "label": "Invoice information",
+          "missing": "Missing information",
+          "subtitle": "Billing details used across all campaign invoices and statements.",
+          "title": "Invoice information"
+        },
+        "segments": {
+          "deposit": "Deposit",
+          "invoices": "Invoices"
+        },
+        "sheet": {
+          "addTitle": "Add invoice information",
+          "description": "These details will be used to generate all invoices and billing documents.",
+          "editTitle": "Edit invoice information"
+        },
+        "summary": {
+          "address": "Address",
+          "billingEmail": "Billing email",
+          "companyName": "Company name",
+          "country": "Country",
+          "vatNumber": "VAT number"
+        },
+        "table": {
+          "amount": "Amount",
+          "date": "Date",
+          "description": "Description",
+          "download": "Download PDF",
+          "pdf": "PDF",
+          "type": "Type"
+        },
+        "tag": {
+          "deposit": "Deposit",
+          "paid": "Paid"
+        },
+        "validation": {
+          "email": "Enter a valid email address",
+          "required": "This field is required"
+        }
+      },
       "currency": {
         "label": "Choose your preferred currency",
         "title": "Currency"
