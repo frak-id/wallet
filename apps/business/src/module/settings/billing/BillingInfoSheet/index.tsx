@@ -1,3 +1,4 @@
+import { isValidEmail } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Column } from "@frak-labs/design-system/components/Column";
@@ -28,7 +29,6 @@ import { COUNTRIES } from "@/module/common/utils/countries";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField } from "@/module/forms/Form";
 import type { BillingInfo } from "../types";
-import { EMAIL_PATTERN } from "../validation";
 import * as styles from "./billing-info-sheet.css";
 
 const EMPTY_INFO: BillingInfo = {
@@ -357,12 +357,11 @@ export function BillingInfoSheet({
                                                 required: t(
                                                     "settings.billing.validation.required"
                                                 ),
-                                                pattern: {
-                                                    value: EMAIL_PATTERN,
-                                                    message: t(
+                                                validate: (value) =>
+                                                    isValidEmail(value) ||
+                                                    t(
                                                         "settings.billing.validation.email"
                                                     ),
-                                                },
                                             }}
                                             render={({ field }) => (
                                                 <EditField

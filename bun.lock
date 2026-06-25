@@ -330,7 +330,10 @@
         "viem": "catalog:",
       },
       "devDependencies": {
+        "@frak-labs/test-foundation": "workspace:*",
+        "@vitest/ui": "^4.1.0",
         "typescript": "catalog:",
+        "vitest": "^4.1.4",
       },
     },
     "packages/client": {

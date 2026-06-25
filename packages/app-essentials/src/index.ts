@@ -21,9 +21,11 @@ export {
 } from "./blockchain";
 
 export {
+    EMAIL_REGEX,
     getTokenAddressForStablecoin,
     isRunningInProd,
     isRunningLocally,
+    isValidEmail,
 } from "./utils";
 export {
     buildMergeConsentChallenge,
