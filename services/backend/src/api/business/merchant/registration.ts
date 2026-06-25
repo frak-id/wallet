@@ -4,6 +4,7 @@ import { Elysia, status } from "elysia";
 import { AuthContext } from "../../../domain/auth";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
+import { TakeadsContext } from "../../../domain/takeads";
 import { businessSessionContext } from "../middleware/session";
 
 export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
@@ -83,7 +84,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             const platformAdminWallets =
                 AuthContext.services.platformAdmin.getAdminWallets();
 
-            const { merchantId, frakBankLinked } =
+            const { merchantId, frakBankLinked, isPlatformAdmin } =
                 await MerchantContext.services.registration.register({
                     message: body.message,
                     signature: body.signature,
@@ -97,6 +98,44 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     useFrakBank: body.useFrakBank,
                     platformAdminWallets,
                 });
+
+            // Link the merchant to its TakeAds brand (platform admin only) so
+            // share-link generation + conversion ingestion can resolve it.
+            // Non-fatal: the merchant is already created, so a link failure
+            // must not strand it behind a 409-on-retry — we log and move on.
+            if (isPlatformAdmin && body.takeads) {
+                const { takeadsMerchantId, trackingLink } = body.takeads;
+                try {
+                    const existing =
+                        await TakeadsContext.repositories.takeadsMerchant.findByTakeadsMerchantId(
+                            takeadsMerchantId
+                        );
+                    if (existing && existing.merchantId !== merchantId) {
+                        log.warn(
+                            { merchantId, takeadsMerchantId },
+                            "TakeAds brand already linked to another merchant; skipping link"
+                        );
+                    } else {
+                        await TakeadsContext.repositories.takeadsMerchant.link({
+                            merchantId,
+                            takeadsMerchantId,
+                            trackingLink,
+                        });
+                    }
+                } catch (error) {
+                    log.error(
+                        {
+                            merchantId,
+                            takeadsMerchantId,
+                            error:
+                                error instanceof Error
+                                    ? error.message
+                                    : String(error),
+                        },
+                        "Failed to link TakeAds brand during registration"
+                    );
+                }
+            }
 
             // Frak-bank merchants reuse the shared bank; everyone else gets a
             // dedicated per-merchant bank.
@@ -133,6 +172,15 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 // campaign bank instead of deploying a dedicated one.
                 skipDomainValidation: t.Optional(t.Boolean()),
                 useFrakBank: t.Optional(t.Boolean()),
+                // Platform-admin only (ignored otherwise): link this merchant
+                // to a TakeAds catalog brand so per-user share links and
+                // conversion ingestion can resolve it.
+                takeads: t.Optional(
+                    t.Object({
+                        takeadsMerchantId: t.Integer(),
+                        trackingLink: t.String(),
+                    })
+                ),
             }),
             response: {
                 200: t.Object({

@@ -37,6 +37,7 @@ import {
     interactionLogsTable,
 } from "../../domain/rewards/db/schema";
 import {
+    takeadsMerchantTable,
     takeadsSubIdMapTable,
     takeadsSyncStateTable,
 } from "../../domain/takeads/db/schema";
@@ -85,6 +86,7 @@ export const db = drizzle({
         assetLogsTable,
         takeadsSubIdMapTable,
         takeadsSyncStateTable,
+        takeadsMerchantTable,
     },
 });
 

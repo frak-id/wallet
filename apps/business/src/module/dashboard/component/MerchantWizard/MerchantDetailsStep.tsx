@@ -22,6 +22,7 @@ import { validateUrl } from "@/module/common/utils/validateUrl";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { FormControl, FormField, FormItem } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
+import { InputNumber } from "@/module/forms/InputNumber";
 import type { MerchantNew } from "@/types/Merchant";
 import { MerchantCurrencyField } from "./MerchantCurrencyField";
 import * as styles from "./merchantWizard.css";
@@ -206,6 +207,68 @@ export function MerchantDetailsStep({
                                             />
                                         </FormControl>
                                     </Inline>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name="takeadsMerchantId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Stack space="xxs">
+                                        <Text
+                                            variant="bodySmall"
+                                            weight="medium"
+                                            color="secondary"
+                                            className={styles.inputLabel}
+                                        >
+                                            {t(
+                                                "merchant.create.platformAdmin.takeadsMerchantId.label"
+                                            )}
+                                        </Text>
+                                        <FormControl>
+                                            <InputNumber
+                                                variant="bare"
+                                                tone="muted"
+                                                inputMode="numeric"
+                                                placeholder={t(
+                                                    "merchant.create.platformAdmin.takeadsMerchantId.placeholder"
+                                                )}
+                                                {...field}
+                                                value={field.value ?? ""}
+                                            />
+                                        </FormControl>
+                                    </Stack>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name="takeadsTrackingLink"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Stack space="xxs">
+                                        <Text
+                                            variant="bodySmall"
+                                            weight="medium"
+                                            color="secondary"
+                                            className={styles.inputLabel}
+                                        >
+                                            {t(
+                                                "merchant.create.platformAdmin.takeadsTrackingLink.label"
+                                            )}
+                                        </Text>
+                                        <FormControl>
+                                            <Input
+                                                variant="bare"
+                                                tone="muted"
+                                                placeholder={t(
+                                                    "merchant.create.platformAdmin.takeadsTrackingLink.placeholder"
+                                                )}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                    </Stack>
                                 </FormItem>
                             )}
                         />

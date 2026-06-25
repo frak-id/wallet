@@ -1190,6 +1190,14 @@
                 "useFrakBank": {
                     "title": "Utiliser la banque de campagne Frak",
                     "description": "Associer ce marchand à la banque Frak partagée au lieu d'en déployer une dédiée."
+                },
+                "takeadsMerchantId": {
+                    "label": "Identifiant de marque TakeAds",
+                    "placeholder": "ex. 12345"
+                },
+                "takeadsTrackingLink": {
+                    "label": "Lien de suivi TakeAds",
+                    "placeholder": "https://tatrck.com/h/..."
                 }
             },
             "fields": {

@@ -138,6 +138,7 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         });
 
         expect(result.frakBankLinked).toBe(true);
+        expect(result.isPlatformAdmin).toBe(true);
         const created = merchantRepo.create.mock.calls[0][0];
         expect(created.bankAddress).toBe(FRAK_SHARED_CAMPAIGN_BANK);
         expect(FRAK_SHARED_CAMPAIGN_BANK).toBe(zeroAddress);
@@ -155,6 +156,7 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         });
 
         expect(result.frakBankLinked).toBe(false);
+        expect(result.isPlatformAdmin).toBe(false);
         const created = merchantRepo.create.mock.calls[0][0];
         expect(created.bankAddress).toBeUndefined();
     });

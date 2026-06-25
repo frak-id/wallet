@@ -1,5 +1,6 @@
 import {
     index,
+    integer,
     pgTable,
     text,
     timestamp,
@@ -60,3 +61,33 @@ export const takeadsSyncStateTable = pgTable("takeads_sync_state", {
     watermark: timestamp("watermark"),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+/**
+ * Links an internal merchant (one synthetic brand) to its TakeAds catalog
+ * brand. Captured by a platform admin during merchant registration.
+ *
+ * `takeadsMerchantId` is the matching key: TakeAds Stats actions report this
+ * integer id, so ingestion + catalog re-sync resolve back to the internal
+ * merchant through here. `trackingLink` is the brand's base affiliate link
+ * from the catalog; per-user share links are built by setting the `s` (subId)
+ * query param on it — no `/resolve` call needed for brand-level sharing.
+ */
+export const takeadsMerchantTable = pgTable(
+    "takeads_merchant",
+    {
+        // Internal merchant id (one row per synthetic brand).
+        merchantId: uuid("merchant_id").primaryKey(),
+        // TakeAds catalog brand id (matches Stats `merchantId`).
+        takeadsMerchantId: integer("takeads_merchant_id").notNull(),
+        // Base affiliate tracking link; share links set `?s=<subId>` on it.
+        trackingLink: text("tracking_link").notNull(),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    },
+    (table) => [
+        // A TakeAds brand maps to exactly one internal merchant.
+        uniqueIndex("takeads_merchant_takeads_id_unique").on(
+            table.takeadsMerchantId
+        ),
+    ]
+);

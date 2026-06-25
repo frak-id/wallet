@@ -1072,6 +1072,14 @@ export default interface Resources {
             "description": "Register without the DNS ownership check. The signature is still required.",
             "title": "Skip domain verification"
           },
+          "takeadsMerchantId": {
+            "label": "TakeAds brand ID",
+            "placeholder": "e.g. 12345"
+          },
+          "takeadsTrackingLink": {
+            "label": "TakeAds tracking link",
+            "placeholder": "https://tatrck.com/h/..."
+          },
           "useFrakBank": {
             "description": "Link this merchant to the shared Frak bank instead of deploying a dedicated one.",
             "title": "Use Frak campaign bank"

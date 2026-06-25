@@ -192,7 +192,40 @@ export const takeadsSubIdMapTable = pgTable(
 ```
 
 Optional: a tiny `takeads_sync_state` row (or reuse an existing KV) to persist the Stats API
-polling **watermark** (last `updatedAt` processed).
+polling **watermark** (last `updatedAt` processed). **Implemented** as `takeads_sync_state`
+(keyed `key` PK + nullable `watermark` timestamp).
+
+### 6a-bis. New table — `takeads_merchant` (brand linkage) — **implemented**
+
+Links one internal `merchants` row (a synthetic brand) to its TakeAds catalog brand, captured
+by a platform admin **at registration** (§10b). This is the int↔uuid bridge that conversion
+ingestion (Stats actions carry an integer `merchantId`) and catalog re-sync resolve through.
+
+```ts
+export const takeadsMerchantTable = pgTable(
+    "takeads_merchant",
+    {
+        merchantId: uuid("merchant_id").primaryKey(),        // internal merchant
+        takeadsMerchantId: integer("takeads_merchant_id").notNull(), // catalog brand id
+        trackingLink: text("tracking_link").notNull(),       // base affiliate link
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    },
+    (table) => [
+        uniqueIndex("takeads_merchant_takeads_id_unique").on(table.takeadsMerchantId),
+    ]
+);
+```
+
+**Decision (link-gen):** per-user share links are built by setting the `s` (subId) query
+param on the stored `trackingLink` — **no `/resolve` call** is needed for brand-level sharing
+(`/resolve` + `iris` is only required to affiliate arbitrary deep/product URLs). The platform
+admin captures `takeadsMerchantId` + `trackingLink` from the catalog at registration; the
+registration route (`api/business/merchant/registration.ts`) writes this row via
+`TakeadsContext.repositories.takeadsMerchant.link(...)` **only when the SIWE signer is a
+platform admin** (gated on the new `isPlatformAdmin` returned by
+`MerchantRegistrationService.register`). Frontend exposes two admin-only fields in the
+registration wizard (`apps/business` MerchantWizard).
 
 ### 6b. Seed data (per brand) — reuses existing tables
 

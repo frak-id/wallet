@@ -39,7 +39,11 @@ export class MerchantRegistrationService {
         skipDomainValidation?: boolean;
         useFrakBank?: boolean;
         platformAdminWallets?: Address[];
-    }): Promise<{ merchantId: string; frakBankLinked: boolean }> {
+    }): Promise<{
+        merchantId: string;
+        frakBankLinked: boolean;
+        isPlatformAdmin: boolean;
+    }> {
         const siweResult = await this.verifySiweMessage({
             message: params.message,
             signature: params.signature,
@@ -119,7 +123,7 @@ export class MerchantRegistrationService {
             );
         }
 
-        return { merchantId: merchant.id, frakBankLinked };
+        return { merchantId: merchant.id, frakBankLinked, isPlatformAdmin };
     }
 
     async verifySiweMessage(params: {

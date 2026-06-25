@@ -1190,6 +1190,14 @@
                 "useFrakBank": {
                     "title": "Use Frak campaign bank",
                     "description": "Link this merchant to the shared Frak bank instead of deploying a dedicated one."
+                },
+                "takeadsMerchantId": {
+                    "label": "TakeAds brand ID",
+                    "placeholder": "e.g. 12345"
+                },
+                "takeadsTrackingLink": {
+                    "label": "TakeAds tracking link",
+                    "placeholder": "https://tatrck.com/h/..."
                 }
             },
             "fields": {

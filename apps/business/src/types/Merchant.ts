@@ -9,4 +9,8 @@ export type MerchantNew = {
     // shared Frak campaign bank. Ignored by the backend for non-admins.
     skipDomainValidation?: boolean;
     useFrakBank?: boolean;
+    // Platform-admin only: link this merchant to a TakeAds catalog brand
+    // (brand id + base tracking link) so per-user share links can be built.
+    takeadsMerchantId?: number;
+    takeadsTrackingLink?: string;
 };

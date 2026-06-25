@@ -43,6 +43,7 @@ export function useRegisterMerchant(
             // Platform-admin only (ignored by the backend otherwise).
             skipDomainValidation?: boolean;
             useFrakBank?: boolean;
+            takeads?: { takeadsMerchantId: number; trackingLink: string };
         }
     >
 ) {
@@ -69,6 +70,7 @@ export function useRegisterMerchant(
             allowedDomains,
             skipDomainValidation,
             useFrakBank,
+            takeads,
         }) {
             const wallet = walletStatus?.wallet;
             if (!wallet) {
@@ -101,6 +103,7 @@ export function useRegisterMerchant(
                     allowedDomains,
                     skipDomainValidation,
                     useFrakBank,
+                    takeads,
                 });
             if (error) {
                 throw new Error(extractErrorMessage(error));

@@ -39,6 +39,8 @@ export function MerchantWizard() {
             currency: "eure",
             skipDomainValidation: false,
             useFrakBank: false,
+            takeadsMerchantId: undefined,
+            takeadsTrackingLink: "",
         },
         mode: "onChange",
     });
@@ -111,6 +113,14 @@ export function MerchantWizard() {
             currency: values.currency,
             skipDomainValidation: values.skipDomainValidation,
             useFrakBank: values.useFrakBank,
+            // Only link a TakeAds brand when both values are provided.
+            takeads:
+                values.takeadsMerchantId && values.takeadsTrackingLink
+                    ? {
+                          takeadsMerchantId: values.takeadsMerchantId,
+                          trackingLink: values.takeadsTrackingLink,
+                      }
+                    : undefined,
         });
     };
 
