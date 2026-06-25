@@ -1,12 +1,16 @@
 import {
     extractShopDomain,
     JwtContext,
+    log,
     verifyShopifySessionToken,
 } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { AuthContext } from "../../../domain/auth";
 import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
 import { MerchantContext } from "../../../domain/merchant";
+
+const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 export const businessSessionContext = new Elysia({
     name: "Context.businessSession",
@@ -17,7 +21,7 @@ export const businessSessionContext = new Elysia({
             "x-shopify-session-token": t.Optional(t.String()),
         }),
     })
-    .resolve(async ({ headers }) => {
+    .resolve(async ({ headers, request }) => {
         const businessAuth = headers["x-business-auth"];
         if (businessAuth) {
             const session = await JwtContext.business.verify(businessAuth);
@@ -25,11 +29,33 @@ export const businessSessionContext = new Elysia({
                 return {
                     businessSession: session,
                     shopifySession: null as ShopifySessionToken | null,
-                    hasMerchantAccess: (merchantId: string) =>
-                        MerchantContext.services.authorization.hasAccess(
-                            merchantId,
-                            session.wallet
-                        ),
+                    hasMerchantAccess: async (merchantId: string) => {
+                        if (
+                            await MerchantContext.services.authorization.hasAccess(
+                                merchantId,
+                                session.wallet
+                            )
+                        )
+                            return true;
+                        if (
+                            AuthContext.services.platformAdmin.isPlatformAdmin(
+                                session.wallet
+                            ) &&
+                            SAFE_METHODS.has(request.method)
+                        ) {
+                            log.info(
+                                {
+                                    wallet: session.wallet,
+                                    merchantId,
+                                    method: request.method,
+                                    path: request.url,
+                                },
+                                "platform-admin read-only access"
+                            );
+                            return true;
+                        }
+                        return false;
+                    },
                 };
             }
         }

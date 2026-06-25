@@ -24,6 +24,7 @@ import {
     RowMenuSection,
 } from "@/module/common/component/RowMenu";
 import * as rowMenu from "@/module/common/component/RowMenu/row-menu.css";
+import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import { campaignStore } from "@/stores/campaignStore";
 import type { CampaignListItemWithActions } from "@/types/Campaign";
 
@@ -37,7 +38,20 @@ type SectionId = "nav" | "lifecycle" | "destructive";
 export function CellRowMenu({ row, merchantId }: Props) {
     const { t } = useTranslation();
     const reset = campaignStore((state) => state.reset);
-    const { actions, status, id, name } = row.original;
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
+    const rawActions = row.original.actions;
+    // Platform admins see campaigns in read-only mode: no mutations.
+    const actions = isReadOnly
+        ? {
+              canEdit: false,
+              canDelete: false,
+              canPublish: false,
+              canPause: false,
+              canResume: false,
+              canArchive: false,
+          }
+        : rawActions;
+    const { status, id, name } = row.original;
     const isDraft = status === "draft";
 
     const navSection = (

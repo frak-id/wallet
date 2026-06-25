@@ -190,6 +190,15 @@ export class MerchantRepository {
         });
     }
 
+    /**
+     * Returns merchant rows — used only by the platform-admin /my endpoint.
+     * Capped at 500 rows; revisit with cursor pagination if merchant count
+     * grows beyond that.
+     */
+    async findAll(): Promise<MerchantSelect[]> {
+        return db.query.merchantsTable.findMany({ limit: 500 });
+    }
+
     private invalidateCache(merchant: MerchantSelect): void {
         this.idCache.delete(merchant.id);
         this.domainCache.delete(merchant.domain);

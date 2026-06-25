@@ -959,6 +959,7 @@ export default interface Resources {
         "segment": "Segment",
         "to": "To"
       },
+      "platformAdminNotice": "Member data is not available in platform-admin read-only mode.",
       "sendPushNotification": "Send Push Notification",
       "tabs": {
         "members": "Members",
@@ -1207,6 +1208,9 @@ export default interface Resources {
         "undoRemove": "Undo remove"
       },
       "title": "Edit"
+    },
+    "platformAdmin": {
+      "readOnlyTag": "Read-only"
     },
     "push": {
       "create": {
