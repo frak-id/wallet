@@ -1180,7 +1180,7 @@ export function RewardCampaign() {
     async function onSubmit(values: RewardFormValues) {
         const saved = await persist(values);
         navigate({
-            to: "/m/$merchantId/campaigns/draft/$campaignId/validation",
+            to: "/m/$merchantId/campaigns/draft/$campaignId/referral-chain",
             params: { merchantId, campaignId: saved.id },
         });
     }

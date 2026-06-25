@@ -167,6 +167,43 @@ export default interface Resources {
           },
           "required": "Select a goal"
         },
+        "referralChain": {
+          "cac": {
+            "label": "CAC"
+          },
+          "decrease": {
+            "hint": "Each level receives this percentage less than the previous level.",
+            "label": "Reward decrease per level (%)",
+            "placeholder": "Enter level"
+          },
+          "enable": {
+            "description": "Distribute referrer rewards across multiple levels of the referral chain",
+            "title": "Enable chain rewards"
+          },
+          "maxLevels": {
+            "hint": "Maximum number of referrer levels eligible for rewards.",
+            "label": "Maximum rewarded levels",
+            "placeholder": "Enter level"
+          },
+          "model": {
+            "description": "When a purchase is made, rewards are shared across the referral chain.",
+            "label": "How rewards are distributed"
+          },
+          "noReferrer": "Configure a referrer (ambassador) reward in the Reward setup step before enabling chain rewards.",
+          "preview": {
+            "caption": "Each level receives {{percent}}% less than the previous level.",
+            "chainReward": "Referral chain reward",
+            "direct": "Direct ambassador",
+            "directReward": "Direct reward",
+            "level": "Level {{n}} ambassador",
+            "purchase": "1st Purchase",
+            "rowDirect": "Direct",
+            "rowLevel": "Level {{n}}",
+            "tableAmount": "Amount",
+            "tableLevel": "Level",
+            "title": "Reward distribution chain"
+          }
+        },
         "reward": {
           "campaignType": {
             "description": "Who qualifies for a reward",
@@ -273,6 +310,11 @@ export default interface Resources {
             "hint": "What action triggers rewards",
             "label": "Goals",
             "subtitle": "The choice of your goal defines the event that generates the distribution of rewards."
+          },
+          "referralChain": {
+            "hint": "Multi-level ambassador",
+            "label": "Referral chain",
+            "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
           },
           "reward": {
             "hint": "Model, value & distribution",

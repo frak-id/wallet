@@ -6,6 +6,7 @@ import type {
     CampaignMetadata,
     CampaignRuleDefinition,
     ConditionGroup,
+    RewardChaining,
     RuleCondition,
     RuleConditions,
 } from "@/types/Campaign";
@@ -177,6 +178,33 @@ export function setMinPurchaseAmount(
             ? { field: MIN_PURCHASE_FIELD, operator: "gte", value: amount }
             : null
     );
+}
+
+/**
+ * Chained-referral config lives on each `referrer` reward (the backend reads
+ * it there). These helpers keep all referrer rewards in sync.
+ */
+export function getChaining(
+    rule: CampaignRuleDefinition
+): RewardChaining | undefined {
+    return rule.rewards.find((r) => r.recipient === "referrer")?.chaining;
+}
+
+export function setChaining(
+    rule: CampaignRuleDefinition,
+    chaining: RewardChaining | undefined
+): CampaignRuleDefinition {
+    return {
+        ...rule,
+        rewards: rule.rewards.map((reward) => {
+            if (reward.recipient !== "referrer") return reward;
+            if (!chaining) {
+                const { chaining: _dropped, ...rest } = reward;
+                return rest;
+            }
+            return { ...reward, chaining };
+        }),
+    };
 }
 
 export function getStartDate(rule: CampaignRuleDefinition): string | undefined {

@@ -335,6 +335,11 @@
                     "hint": "Model, value & distribution",
                     "subtitle": "Choose how rewards are calculated and who qualifies."
                 },
+                "referralChain": {
+                    "label": "Referral chain",
+                    "hint": "Multi-level ambassador",
+                    "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
+                },
                 "validation": {
                     "label": "Campaign validation",
                     "hint": "Review & publish",
@@ -517,6 +522,43 @@
                     "endDateRequired": "Select an end date",
                     "endDateInvalid": "End date must be on or after the start date",
                     "invalidDate": "Enter a valid date"
+                }
+            },
+            "referralChain": {
+                "enable": {
+                    "title": "Enable chain rewards",
+                    "description": "Distribute referrer rewards across multiple levels of the referral chain"
+                },
+                "noReferrer": "Configure a referrer (ambassador) reward in the Reward setup step before enabling chain rewards.",
+                "model": {
+                    "label": "How rewards are distributed",
+                    "description": "When a purchase is made, rewards are shared across the referral chain."
+                },
+                "decrease": {
+                    "label": "Reward decrease per level (%)",
+                    "hint": "Each level receives this percentage less than the previous level.",
+                    "placeholder": "Enter level"
+                },
+                "maxLevels": {
+                    "label": "Maximum rewarded levels",
+                    "hint": "Maximum number of referrer levels eligible for rewards.",
+                    "placeholder": "Enter level"
+                },
+                "cac": {
+                    "label": "CAC"
+                },
+                "preview": {
+                    "title": "Reward distribution chain",
+                    "purchase": "1st Purchase",
+                    "direct": "Direct ambassador",
+                    "level": "Level {{n}} ambassador",
+                    "caption": "Each level receives {{percent}}% less than the previous level.",
+                    "directReward": "Direct reward",
+                    "chainReward": "Referral chain reward",
+                    "rowDirect": "Direct",
+                    "rowLevel": "Level {{n}}",
+                    "tableLevel": "Level",
+                    "tableAmount": "Amount"
                 }
             },
             "reward": {

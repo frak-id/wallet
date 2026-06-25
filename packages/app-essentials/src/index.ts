@@ -26,6 +26,7 @@ export {
     isRunningInProd,
     isRunningLocally,
     isValidEmail,
+    roundTo,
 } from "./utils";
 export {
     buildMergeConsentChallenge,

@@ -75,7 +75,6 @@ export const inputWrapper = recipe({
         disabled: {
             true: {
                 cursor: "not-allowed",
-                opacity: 0.6,
             },
         },
     },
@@ -99,12 +98,6 @@ export const inputWrapper = recipe({
                 },
             },
         },
-        {
-            variants: { variant: "default", disabled: true },
-            style: {
-                backgroundColor: vars.surface.disabled,
-            },
-        },
         // Error tone for the borderless variants — fill the field with the
         // error surface (the `default` variant only recolours its border).
         // Declared after the `tone` compounds so the error bg wins.
@@ -119,6 +112,20 @@ export const inputWrapper = recipe({
             style: {
                 backgroundColor: vars.surface.error,
             },
+        },
+        // Disabled: solid `surface.disabled` for every variant, no opacity
+        // wash. Declared last so it outranks the tone/error backgrounds.
+        {
+            variants: { variant: "default", disabled: true },
+            style: { backgroundColor: vars.surface.disabled },
+        },
+        {
+            variants: { variant: "bare", disabled: true },
+            style: { backgroundColor: vars.surface.disabled },
+        },
+        {
+            variants: { variant: "soft", disabled: true },
+            style: { backgroundColor: vars.surface.disabled },
         },
     ],
     defaultVariants: {
@@ -135,6 +142,7 @@ export const inputField = recipe({
         selectors: {
             "&:disabled": {
                 cursor: "not-allowed",
+                color: vars.text.disabled,
             },
         },
     },

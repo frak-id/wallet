@@ -335,6 +335,11 @@
                     "hint": "Modèle, valeur & distribution",
                     "subtitle": "Choisissez comment les récompenses sont calculées et qui peut en bénéficier."
                 },
+                "referralChain": {
+                    "label": "Chaîne de parrainage",
+                    "hint": "Ambassadeur multi-niveaux",
+                    "subtitle": "Activez les récompenses en chaîne pour récompenser les ambassadeurs sur plusieurs niveaux de parrainage — pas seulement le parrain direct."
+                },
                 "validation": {
                     "label": "Validation de la campagne",
                     "hint": "Vérifier & publier",
@@ -517,6 +522,43 @@
                     "endDateRequired": "Sélectionnez une date de fin",
                     "endDateInvalid": "La date de fin doit être égale ou postérieure à la date de début",
                     "invalidDate": "Saisissez une date valide"
+                }
+            },
+            "referralChain": {
+                "enable": {
+                    "title": "Activer les récompenses en chaîne",
+                    "description": "Répartir les récompenses du parrain sur plusieurs niveaux de la chaîne de parrainage"
+                },
+                "noReferrer": "Configurez une récompense de parrain (ambassadeur) à l'étape Configuration des récompenses avant d'activer les récompenses en chaîne.",
+                "model": {
+                    "label": "Comment les récompenses sont distribuées",
+                    "description": "Lorsqu'un achat est effectué, les récompenses sont partagées sur la chaîne de parrainage."
+                },
+                "decrease": {
+                    "label": "Diminution de récompense par niveau (%)",
+                    "hint": "Chaque niveau reçoit ce pourcentage de moins que le niveau précédent.",
+                    "placeholder": "Saisir le niveau"
+                },
+                "maxLevels": {
+                    "label": "Nombre maximum de niveaux récompensés",
+                    "hint": "Nombre maximum de niveaux de parrains éligibles aux récompenses.",
+                    "placeholder": "Saisir le niveau"
+                },
+                "cac": {
+                    "label": "CAC"
+                },
+                "preview": {
+                    "title": "Chaîne de distribution des récompenses",
+                    "purchase": "1er achat",
+                    "direct": "Ambassadeur direct",
+                    "level": "Ambassadeur niveau {{n}}",
+                    "caption": "Chaque niveau reçoit {{percent}}% de moins que le précédent.",
+                    "directReward": "Récompense directe",
+                    "chainReward": "Récompense de chaîne de parrainage",
+                    "rowDirect": "Direct",
+                    "rowLevel": "Niveau {{n}}",
+                    "tableLevel": "Niveau",
+                    "tableAmount": "Montant"
                 }
             },
             "reward": {
