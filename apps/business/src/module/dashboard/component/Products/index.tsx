@@ -5,7 +5,7 @@ import { ManageBudgetSheet } from "@/module/merchant/component/ManageBudgetSheet
 import * as styles from "./products.css";
 
 export function MyMerchants() {
-    const { merchants } = useMyMerchants();
+    const { merchants, isReadOnly } = useMyMerchants();
     const [budgetMerchantId, setBudgetMerchantId] = useState<string | null>(
         null
     );
@@ -19,6 +19,7 @@ export function MyMerchants() {
                         merchantId={merchant.id}
                         name={merchant.name}
                         domain={merchant.domain}
+                        isReadOnly={isReadOnly(merchant.id)}
                         onManageBudget={() => setBudgetMerchantId(merchant.id)}
                     />
                 ))}

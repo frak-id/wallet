@@ -37,6 +37,7 @@ describe("Navigation", () => {
         mockMatchRoute.mockReturnValue(false);
         mockUseMyMerchants.mockReturnValue({
             isEmpty: false,
+            isReadOnly: () => false,
             merchants: [{ id: "m1" }],
             owned: [{ id: "m1" }],
             adminOf: [],
@@ -89,6 +90,7 @@ describe("Navigation", () => {
     it("disables merchant-scoped items when there are no merchants", () => {
         mockUseMyMerchants.mockReturnValue({
             isEmpty: true,
+            isReadOnly: () => false,
             merchants: [],
             owned: [],
             adminOf: [],

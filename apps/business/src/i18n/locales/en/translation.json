@@ -184,6 +184,9 @@
         },
         "platformAdminNotice": "Member data is not available in platform-admin read-only mode."
     },
+    "platformAdmin": {
+        "readOnlyTag": "Read-only"
+    },
     "push": {
         "create": {
             "title": "Send Push Notification",

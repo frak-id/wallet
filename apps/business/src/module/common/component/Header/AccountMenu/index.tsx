@@ -1,3 +1,4 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import {
     Popover,
     PopoverContent,
@@ -25,7 +26,7 @@ export function AccountMenu() {
     const { t } = useTranslation();
     const { pathname } = useLocation();
     const [open, setOpen] = useState(false);
-    const { merchants } = useMyMerchants();
+    const { merchants, isReadOnly } = useMyMerchants();
     const { merchantId: activeId } = useParams({ strict: false }) as {
         merchantId?: string;
     };
@@ -86,14 +87,26 @@ export function AccountMenu() {
                             const body = (
                                 <>
                                     <span className={styles.merchantBody}>
-                                        <Text
-                                            as="span"
-                                            variant="body"
-                                            weight="medium"
-                                            className={styles.merchantName}
-                                        >
-                                            {merchant.name}
-                                        </Text>
+                                        <span className={styles.merchantTitle}>
+                                            <Text
+                                                as="span"
+                                                variant="body"
+                                                weight="medium"
+                                                className={styles.merchantName}
+                                            >
+                                                {merchant.name}
+                                            </Text>
+                                            {isReadOnly(merchant.id) && (
+                                                <Badge
+                                                    variant="warning"
+                                                    size="small"
+                                                >
+                                                    {t(
+                                                        "platformAdmin.readOnlyTag"
+                                                    )}
+                                                </Badge>
+                                            )}
+                                        </span>
                                         {merchant.domain && (
                                             <Text
                                                 as="span"

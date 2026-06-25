@@ -1209,6 +1209,9 @@ export default interface Resources {
       },
       "title": "Edit"
     },
+    "platformAdmin": {
+      "readOnlyTag": "Read-only"
+    },
     "push": {
       "create": {
         "audience": {

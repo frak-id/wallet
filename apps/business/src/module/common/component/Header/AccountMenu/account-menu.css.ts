@@ -168,6 +168,13 @@ export const merchantBody = style({
     flex: 1,
 });
 
+export const merchantTitle = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.xs,
+    minWidth: 0,
+});
+
 export const merchantName = style({
     whiteSpace: "nowrap",
     overflow: "hidden",

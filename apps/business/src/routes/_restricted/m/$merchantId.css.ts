@@ -11,5 +11,4 @@ export const platformAdminBanner = style({
     borderBottom: `2px solid ${brand.colors.primary[500]}`,
     position: "sticky",
     top: 0,
-    zIndex: 9999,
 });

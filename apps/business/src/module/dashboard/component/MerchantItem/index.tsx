@@ -1,4 +1,5 @@
 import { Avatar } from "@frak-labs/design-system/components/Avatar";
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -12,6 +13,7 @@ type MerchantItemProps = {
     merchantId: string;
     name: string;
     domain: string;
+    isReadOnly?: boolean;
     onManageBudget: () => void;
 };
 
@@ -19,6 +21,7 @@ export function MerchantItem({
     merchantId,
     name,
     domain,
+    isReadOnly = false,
     onManageBudget,
 }: MerchantItemProps) {
     const { t } = useTranslation();
@@ -30,14 +33,21 @@ export function MerchantItem({
             </div>
             <Stack space="xs" className={styles.body}>
                 <Stack space="xxs">
-                    <Text
-                        variant="body"
-                        weight="medium"
-                        title={name}
-                        className={styles.name}
-                    >
-                        {name}
-                    </Text>
+                    <Inline space="xs">
+                        <Text
+                            variant="body"
+                            weight="medium"
+                            title={name}
+                            className={styles.name}
+                        >
+                            {name}
+                        </Text>
+                        {isReadOnly && (
+                            <Badge variant="warning" size="small">
+                                {t("platformAdmin.readOnlyTag")}
+                            </Badge>
+                        )}
+                    </Inline>
                     <Text variant="bodySmall" color="secondary">
                         {domain}
                     </Text>

@@ -36,6 +36,7 @@ vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
         owned: [{ id: "merchant-1", name: "Acme", domain: "acme.example" }],
         adminOf: [],
         isEmpty: false,
+        isReadOnly: () => false,
     }),
 }));
 

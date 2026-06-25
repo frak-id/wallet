@@ -50,6 +50,7 @@ describe("AccountMenu", () => {
             owned: [],
             adminOf: [],
             isEmpty: true,
+            isReadOnly: () => false,
         });
         render(<AccountMenu />);
         expect(
@@ -72,6 +73,7 @@ describe("AccountMenu", () => {
                 { id: "merchant-2", name: "Globex", domain: "globex.example" },
             ],
             isEmpty: false,
+            isReadOnly: () => false,
         });
         render(<AccountMenu />);
         // Acme is the active merchant: once in the trigger label, once in the list
@@ -86,6 +88,25 @@ describe("AccountMenu", () => {
         ]);
     });
 
+    it("tags read-only merchants with a badge in the list", () => {
+        mockUseMyMerchants.mockReturnValue({
+            merchants: [
+                { id: "merchant-1", name: "Acme", domain: "acme.example" },
+                { id: "merchant-2", name: "Globex", domain: "globex.example" },
+            ],
+            owned: [{ id: "merchant-1", name: "Acme", domain: "acme.example" }],
+            adminOf: [],
+            isEmpty: false,
+            // merchant-2 is a platform-admin read-only view
+            isReadOnly: (id: string) => id === "merchant-2",
+        });
+        render(<AccountMenu />);
+        // Exactly one badge, for the read-only merchant only
+        expect(screen.getAllByText("platformAdmin.readOnlyTag")).toHaveLength(
+            1
+        );
+    });
+
     it("shows the active merchant name in the trigger", () => {
         mockUseMyMerchants.mockReturnValue({
             merchants: [
@@ -95,6 +116,7 @@ describe("AccountMenu", () => {
             owned: [],
             adminOf: [],
             isEmpty: false,
+            isReadOnly: () => false,
         });
         render(<AccountMenu />);
         expect(
@@ -113,6 +135,7 @@ describe("AccountMenu", () => {
             owned: [],
             adminOf: [],
             isEmpty: false,
+            isReadOnly: () => false,
         });
         render(<AccountMenu />);
         expect(
@@ -131,6 +154,7 @@ describe("AccountMenu", () => {
             owned: [],
             adminOf: [],
             isEmpty: false,
+            isReadOnly: () => false,
         });
         render(<AccountMenu />);
         // No /m/ navigation links on a param-less route
@@ -151,6 +175,7 @@ describe("AccountMenu", () => {
             owned: [],
             adminOf: [],
             isEmpty: true,
+            isReadOnly: () => false,
         });
         render(<AccountMenu />);
         expect(
@@ -164,6 +189,7 @@ describe("AccountMenu", () => {
             owned: [],
             adminOf: [],
             isEmpty: true,
+            isReadOnly: () => false,
         });
         render(<AccountMenu />);
         screen.getByText("shell.header.account.logout").click();
