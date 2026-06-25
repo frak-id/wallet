@@ -60,6 +60,15 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                         businessSession.wallet
                     );
                 role = access.role;
+                // Platform admins have no real merchant relationship so
+                // checkAccess returns "none". Derive the role here, keeping
+                // the auth-domain concern out of MerchantAuthorizationService.
+                if (
+                    role === "none" &&
+                    isPlatformAdmin(businessSession.wallet)
+                ) {
+                    role = "platform_admin";
+                }
             }
 
             return {

@@ -12,7 +12,7 @@ function checkDemoMode(isDemoModeParam: boolean): boolean {
     return useAuthStore.getState().token === "demo-token";
 }
 
-type MerchantRole = "owner" | "admin" | "platform_admin" | "none";
+export type MerchantRole = "owner" | "admin" | "platform_admin" | "none";
 
 export type MerchantData = {
     id: string;

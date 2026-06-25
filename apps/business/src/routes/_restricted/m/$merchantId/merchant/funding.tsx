@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { isDemoMode } from "@/config/auth";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { MerchantsPage } from "@/module/dashboard/component/MerchantsPage";
@@ -32,12 +31,11 @@ function MerchantFundingPage() {
         });
     const isReadOnly = useReadOnlyMerchant({ merchantId });
 
-    // Platform admins cannot fund — redirect to the merchant dashboard.
-    useEffect(() => {
-        if (isReadOnly) close();
-    }, [isReadOnly]);
-
-    if (isReadOnly) return <MerchantsPage />;
+    // Platform admins cannot fund — navigate away immediately.
+    if (isReadOnly) {
+        close();
+        return null;
+    }
 
     return (
         <>

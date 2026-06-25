@@ -1,12 +1,11 @@
 import { log } from "@backend-infrastructure";
-import { isAddress } from "viem";
 import type { Address } from "viem";
+import { isAddress } from "viem";
 
 /**
  * Lazily-parsed, memoized Set of lowercased wallet addresses that are
  * granted platform-admin read-only access to all merchants.
  * Populated from process.env.PLATFORM_ADMIN_WALLETS (comma-separated).
- * Re-set to null on module reset / test teardown via resetForTesting().
  */
 let _cache: Set<string> | null = null;
 
@@ -24,6 +23,9 @@ function getAdminSet(): Set<string> {
     for (const entry of raw.split(",")) {
         const addr = entry.trim();
         if (!addr) continue;
+        // { strict: false } skips EIP-55 checksum validation intentionally:
+        // all entries are normalised to lowercase before Set insertion and
+        // all lookups are lowercased too, so checksum correctness is irrelevant.
         if (!isAddress(addr, { strict: false })) {
             log.warn(
                 { entry: addr },
@@ -40,9 +42,4 @@ function getAdminSet(): Set<string> {
 
 export function isPlatformAdmin(wallet: Address): boolean {
     return getAdminSet().has(wallet.toLowerCase());
-}
-
-/** Reset memoized cache — for use in unit tests only. */
-export function _resetPlatformAdminCache(): void {
-    _cache = null;
 }

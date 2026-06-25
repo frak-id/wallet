@@ -14,7 +14,7 @@ export function ButtonNewCampaign({ size }: Props = {}) {
     const { t } = useTranslation();
     const reset = campaignStore((state) => state.reset);
     const merchantId = useOptionalActiveMerchantId();
-    const isReadOnly = useReadOnlyMerchant({ merchantId: merchantId ?? "" });
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
 
     // The button only makes sense inside a `/m/$merchantId/...` context.
     if (!merchantId) return null;

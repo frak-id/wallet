@@ -37,8 +37,10 @@ export const Route = createFileRoute("/_restricted/m/$merchantId")({
                 all.find((m) => m.id === params.merchantId) ??
                 allMerchants.find((m) => m.id === params.merchantId);
             if (found) return { merchant: found };
-            // merchantId not in allMerchants either — still allow through;
-            // the merchant query will surface a 404 if truly invalid.
+            // Intentional stub: platform admins can deep-link to any merchantId
+            // (e.g. from a support ticket). The stub lets the route render;
+            // the downstream merchant query resolves the real data or 404s if
+            // the id is truly invalid.
             return {
                 merchant: { id: params.merchantId, name: "", domain: "" },
             };

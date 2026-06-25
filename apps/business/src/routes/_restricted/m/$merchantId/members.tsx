@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
+import { CallOut } from "@/module/common/component/CallOut";
 import * as footerStyles from "@/module/common/component/FloatingFooter/floating-footer.css";
 import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
@@ -7,6 +9,7 @@ import { MembersSectionTabs } from "@/module/members/component/MembersSectionTab
 import { TableMembers } from "@/module/members/component/TableMembers";
 import { MembersListFooter } from "@/module/members/component/TableMembers/MembersListFooter";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
+import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import { useAuthStore } from "@/stores/authStore";
 import { currencyStore } from "@/stores/currencyStore";
 import { membersStore } from "@/stores/membersStore";
@@ -44,11 +47,19 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/members")({
 
 function MembersListPage() {
     const { merchantId } = Route.useParams();
+    const { t } = useTranslation();
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
     return (
         <div className={footerStyles.pageBottomSpacer}>
             <PageShell page="members" space="l">
                 <MembersSectionTabs active="members" merchantId={merchantId} />
-                <TableMembers />
+                {isReadOnly ? (
+                    <CallOut variant="warning">
+                        {t("members.platformAdminNotice")}
+                    </CallOut>
+                ) : (
+                    <TableMembers />
+                )}
             </PageShell>
             <MembersListFooter />
         </div>

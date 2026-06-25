@@ -191,12 +191,12 @@ export class MerchantRepository {
     }
 
     /**
-     * Returns every merchant row — used only by the platform-admin /my
-     * endpoint. No pagination; add a limit here if the merchant count grows
-     * large enough to affect latency.
+     * Returns merchant rows — used only by the platform-admin /my endpoint.
+     * Capped at 500 rows; revisit with cursor pagination if merchant count
+     * grows beyond that.
      */
     async findAll(): Promise<MerchantSelect[]> {
-        return db.query.merchantsTable.findMany({});
+        return db.query.merchantsTable.findMany({ limit: 500 });
     }
 
     private invalidateCache(merchant: MerchantSelect): void {

@@ -7,7 +7,11 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
  */
 export function useReadOnlyMerchant({
     merchantId,
-}: { merchantId: string }): boolean {
-    const { data } = useMerchant({ merchantId });
+}: {
+    merchantId: string | undefined;
+}): boolean {
+    // useMerchant's queryOptions already has enabled:!!merchantId, so passing
+    // an empty string is safe and avoids a conditional hook call.
+    const { data } = useMerchant({ merchantId: merchantId ?? "" });
     return data?.role === "platform_admin";
 }

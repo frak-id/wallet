@@ -17,7 +17,6 @@ import {
 import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
-import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import { AllowedDomainsSheet } from "../AllowedDomainsSheet";
 import { SaveFooter } from "../Customize/SaveFooter";
 import { MerchantEditSheet } from "../MerchantEditSheet";
@@ -32,7 +31,7 @@ const DOMAIN_PREVIEW_COUNT = 3;
 export function MerchantDetails({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
     const { data: merchant } = useMerchant({ merchantId });
-    const isReadOnly = useReadOnlyMerchant({ merchantId });
+    const isReadOnly = merchant?.role === "platform_admin";
 
     const [dirtySections, setDirtySections] = useState<Record<string, boolean>>(
         {}

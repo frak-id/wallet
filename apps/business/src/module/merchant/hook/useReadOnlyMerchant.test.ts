@@ -17,7 +17,11 @@ function wrapper({ children }: { children: ReactNode }) {
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },
     });
-    return React.createElement(QueryClientProvider, { client: queryClient }, children);
+    return React.createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        children
+    );
 }
 
 function mockMerchantRole(role: "owner" | "admin" | "platform_admin" | "none") {
@@ -27,7 +31,8 @@ function mockMerchantRole(role: "owner" | "admin" | "platform_admin" | "none") {
         name: "Example",
         ownerWallet: "0x0000000000000000000000000000000000000001" as const,
         bankAddress: null,
-        defaultRewardToken: "0x0000000000000000000000000000000000000002" as const,
+        defaultRewardToken:
+            "0x0000000000000000000000000000000000000002" as const,
         explorerConfig: null,
         explorerEnabledAt: null,
         verifiedAt: null,

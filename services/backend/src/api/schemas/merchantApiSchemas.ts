@@ -21,7 +21,12 @@ export const MerchantDetailResponseSchema = t.Object({
     explorerEnabledAt: t.Union([t.String(), t.Null()]),
     verifiedAt: t.Union([t.String(), t.Null()]),
     createdAt: t.Union([t.String(), t.Null()]),
-    role: t.Union([t.Literal("owner"), t.Literal("admin"), t.Literal("platform_admin"), t.Literal("none")]),
+    role: t.Union([
+        t.Literal("owner"),
+        t.Literal("admin"),
+        t.Literal("platform_admin"),
+        t.Literal("none"),
+    ]),
 });
 export type MerchantDetailResponse = Static<
     typeof MerchantDetailResponseSchema

@@ -181,7 +181,8 @@
         "tabs": {
             "members": "Members",
             "push": "Push notifications"
-        }
+        },
+        "platformAdminNotice": "Member data is not available in platform-admin read-only mode."
     },
     "push": {
         "create": {

@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-
-type MerchantRole = "owner" | "admin" | "platform_admin" | "none";
+import type { MerchantRole } from "@/module/merchant/queries/queryOptions";
 
 const defaultAccess = {
     role: "none" as MerchantRole,

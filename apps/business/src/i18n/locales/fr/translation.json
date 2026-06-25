@@ -181,7 +181,8 @@
         "tabs": {
             "members": "Membres",
             "push": "Notifications push"
-        }
+        },
+        "platformAdminNotice": "Les données membres ne sont pas disponibles en mode lecture seule administrateur plateforme."
     },
     "push": {
         "create": {

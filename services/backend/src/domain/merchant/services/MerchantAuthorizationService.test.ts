@@ -1,25 +1,25 @@
 import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-    _resetPlatformAdminCache,
-    isPlatformAdmin,
-} from "../../auth/services/PlatformAdminService";
+import { isPlatformAdmin } from "../../auth/services/PlatformAdminService";
 import { MerchantAuthorizationService } from "./MerchantAuthorizationService";
+
+// MerchantAuthorizationService is domain-clean and does not call isPlatformAdmin.
+// The platform-admin bypass lives in session.ts (hasMerchantAccess closure).
+// We mock PlatformAdminService here to keep the simulateHasMerchantAccess
+// helper deterministic without depending on env vars or module-level cache state.
+vi.mock("../../auth/services/PlatformAdminService", () => ({
+    isPlatformAdmin: (wallet: Address) =>
+        wallet.toLowerCase() === PLATFORM_ADMIN.toLowerCase(),
+}));
 
 const OWNER = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
 const ADMIN_WALLET = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" as Address;
-const PLATFORM_ADMIN =
-    "0xcccccccccccccccccccccccccccccccccccccccc" as Address;
+const PLATFORM_ADMIN = "0xcccccccccccccccccccccccccccccccccccccccc" as Address;
 const STRANGER = "0xdddddddddddddddddddddddddddddddddddddddd" as Address;
 
 const MERCHANT_ID = "merchant-123";
 
-function makeService(
-    opts: {
-        ownerWallet?: Address;
-        isAdmin?: boolean;
-    } = {}
-) {
+function makeService(opts: { ownerWallet?: Address; isAdmin?: boolean } = {}) {
     const ownerWallet = opts.ownerWallet ?? OWNER;
 
     const merchantRepo = {
@@ -48,13 +48,10 @@ function makeService(
 }
 
 beforeEach(() => {
-    _resetPlatformAdminCache();
-    process.env.PLATFORM_ADMIN_WALLETS = PLATFORM_ADMIN;
+    vi.clearAllMocks();
 });
 
 afterEach(() => {
-    _resetPlatformAdminCache();
-    delete process.env.PLATFORM_ADMIN_WALLETS;
     vi.restoreAllMocks();
 });
 
@@ -80,14 +77,18 @@ describe("MerchantAuthorizationService.checkAccess", () => {
         });
     });
 
-    it("returns platform_admin role with hasAccess:false for a platform admin on a foreign merchant", async () => {
+    it("returns none role with hasAccess:false for a platform admin — role is derived upstream in merchant/index.ts", async () => {
+        // checkAccess is now auth-domain-free. A platform admin has no real
+        // merchant relationship so it falls through to role:"none".
+        // The "platform_admin" role is derived in the GET /:merchantId handler
+        // after checkAccess returns, keeping MerchantAuthorizationService clean.
         const svc = makeService();
         const result = await svc.checkAccess(MERCHANT_ID, PLATFORM_ADMIN);
         expect(result).toMatchObject({
             hasAccess: false,
             isOwner: false,
             isAdmin: false,
-            role: "platform_admin",
+            role: "none",
         });
     });
 
@@ -127,6 +128,14 @@ describe("MerchantAuthorizationService.hasAccess (write gate)", () => {
 describe("platform admin read bypass (hasMerchantAccess closure logic)", () => {
     const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
+    /**
+     * Mirrors the `hasMerchantAccess` closure in
+     * `services/backend/src/api/business/middleware/session.ts`.
+     *
+     * KEEP IN SYNC with that closure: if the bypass logic in session.ts changes
+     * (e.g. new safe methods, additional conditions), update this helper and
+     * the test cases below to match, or add a session.test.ts integration test.
+     */
     async function simulateHasMerchantAccess(
         wallet: Address,
         merchantId: string,
@@ -202,8 +211,6 @@ describe("platform admin read bypass (hasMerchantAccess closure logic)", () => {
 
     it("denies GET for a stranger (neither owner/admin nor platform admin)", async () => {
         const svc = makeService();
-        delete process.env.PLATFORM_ADMIN_WALLETS;
-        _resetPlatformAdminCache();
         expect(
             await simulateHasMerchantAccess(STRANGER, MERCHANT_ID, "GET", svc)
         ).toBe(false);
