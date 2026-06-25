@@ -163,69 +163,90 @@ a `purchase` interaction with `{ amount: revenue }` and percentage/tiered reward
 
 ## 6. Data model
 
-### 6a. New table — `takeads_subid_map` (attribution source of truth)
+> **Provider-agnostic by construction.** The persistence layer is **not** TakeAds-specific:
+> it lives in the `affiliate` domain (`services/backend/src/domain/affiliate/`) and every
+> table carries a `provider text` column typed against `AffiliateProvider` (a TS string
+> union, currently `"takeads"`). `externalId` is **text** (TakeAds uses integer brand ids;
+> other networks use strings/GUIDs) and a `metadata jsonb` escape hatch absorbs
+> provider-specific extras without a migration. Adding a second network = extend the union +
+> add its API client adapter; **no schema change**. A merchant can be offered by several
+> providers (link keyed per `(merchantId, provider)`). The provider-specific HTTP client
+> stays in `infrastructure/integrations/<provider>/` (correctly provider-shaped). We have
+> **not** added a provider port/adapter abstraction yet — that logic migration comes when the
+> second provider lands. The registration **wire contract + frontend remain TakeAds-shaped**
+> for now and are mapped onto the generic store server-side (`provider = "takeads"`,
+> `externalId = String(takeadsMerchantId)`).
 
-`services/backend/src/domain/takeads/db/schema.ts` (**implemented** — see §11 step 1):
+### 6a. Table — `affiliate_attribution` (attribution source of truth) — **implemented**
+
+`services/backend/src/domain/affiliate/db/schema.ts`:
 
 ```ts
-export const takeadsSubIdMapTable = pgTable(
-    "takeads_subid_map",
+export const affiliateAttributionTable = pgTable(
+    "affiliate_attribution",
     {
-        // The opaque value handed to TakeAds as `subId` (uuid/nanoid). Never an internal id.
-        subId: varchar("sub_id", { length: 40 }).primaryKey(),
+        // Opaque value handed to the provider as its sub-id. Never an internal id.
+        token: varchar("token", { length: 64 }).primaryKey(),
+        provider: text("provider").$type<AffiliateProvider>().notNull(),
         identityGroupId: uuid("identity_group_id").notNull(),
         merchantId: uuid("merchant_id").notNull(),
-        // Cache of the resolved TakeAds deeplink + coupon (re-derivable; not source of truth).
-        trackingLink: text("tracking_link"),
-        couponCode: varchar("coupon_code"),
+        trackingLink: text("tracking_link"),       // re-derivable cache
+        couponCode: varchar("coupon_code", { length: 128 }),
+        metadata: jsonb("metadata"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [
-        // ONE stable subId per (user, brand) → idempotent links, lean table, merge-safe.
-        uniqueIndex("takeads_subid_user_merchant_unique").on(
-            table.identityGroupId,
-            table.merchantId
+        // ONE stable token per (provider, user, brand) → idempotent links, merge-safe.
+        uniqueIndex("affiliate_attribution_user_brand_unique").on(
+            table.provider, table.identityGroupId, table.merchantId
         ),
-        index("takeads_subid_merchant_idx").on(table.merchantId),
+        index("affiliate_attribution_merchant_idx").on(table.merchantId),
     ]
 );
 ```
 
-Optional: a tiny `takeads_sync_state` row (or reuse an existing KV) to persist the Stats API
-polling **watermark** (last `updatedAt` processed). **Implemented** as `takeads_sync_state`
-(keyed `key` PK + nullable `watermark` timestamp).
+### 6a-bis. Table — `affiliate_sync_state` (poll cursor) — **implemented**
 
-### 6a-bis. New table — `takeads_merchant` (brand linkage) — **implemented**
+Keyed per `(provider, stream)` (e.g. `("takeads", "conversions")`) → nullable `watermark`
+timestamp = max `updatedAt` ingested. Pollers serialise it to a UTC ISO 8601 string.
 
-Links one internal `merchants` row (a synthetic brand) to its TakeAds catalog brand, captured
-by a platform admin **at registration** (§10b). This is the int↔uuid bridge that conversion
-ingestion (Stats actions carry an integer `merchantId`) and catalog re-sync resolve through.
+### 6a-ter. Table — `affiliate_brand` (merchant↔provider brand linkage) — **implemented**
+
+Links an internal `merchants` row to a brand offered by a `provider`, captured by a platform
+admin **at registration** (§10b). This is the `externalId`↔internal-uuid bridge that
+conversion ingestion (provider actions carry the provider's brand id) and catalog re-sync
+resolve through.
 
 ```ts
-export const takeadsMerchantTable = pgTable(
-    "takeads_merchant",
+export const affiliateBrandTable = pgTable(
+    "affiliate_brand",
     {
-        merchantId: uuid("merchant_id").primaryKey(),        // internal merchant
-        takeadsMerchantId: integer("takeads_merchant_id").notNull(), // catalog brand id
-        trackingLink: text("tracking_link").notNull(),       // base affiliate link
+        id: uuid("id").primaryKey().defaultRandom(),
+        merchantId: uuid("merchant_id").notNull(),
+        provider: text("provider").$type<AffiliateProvider>().notNull(),
+        externalId: text("external_id").notNull(),   // provider brand id (TakeAds = int as text)
+        trackingLink: text("tracking_link").notNull(), // base affiliate link
+        metadata: jsonb("metadata"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at").defaultNow().notNull(),
     },
     (table) => [
-        uniqueIndex("takeads_merchant_takeads_id_unique").on(table.takeadsMerchantId),
+        uniqueIndex("affiliate_brand_merchant_provider_unique").on(table.merchantId, table.provider),
+        uniqueIndex("affiliate_brand_provider_external_unique").on(table.provider, table.externalId),
+        index("affiliate_brand_merchant_idx").on(table.merchantId),
     ]
 );
 ```
 
-**Decision (link-gen):** per-user share links are built by setting the `s` (subId) query
-param on the stored `trackingLink` — **no `/resolve` call** is needed for brand-level sharing
-(`/resolve` + `iris` is only required to affiliate arbitrary deep/product URLs). The platform
-admin captures `takeadsMerchantId` + `trackingLink` from the catalog at registration; the
-registration route (`api/business/merchant/registration.ts`) writes this row via
-`TakeadsContext.repositories.takeadsMerchant.link(...)` **only when the SIWE signer is a
-platform admin** (gated on the new `isPlatformAdmin` returned by
-`MerchantRegistrationService.register`). Frontend exposes two admin-only fields in the
-registration wizard (`apps/business` MerchantWizard).
+**Decision (link-gen):** per-user share links are built by setting the provider's sub-id query
+param (TakeAds `s`) on the stored `trackingLink` — **no `/resolve` call** is needed for
+brand-level sharing (`/resolve` + `iris` is only required to affiliate arbitrary deep/product
+URLs). The registration route (`api/business/merchant/registration.ts`) writes the link via
+`AffiliateContext.repositories.affiliateBrand.link(...)` **only when the SIWE signer is a
+platform admin** (gated on `isPlatformAdmin` returned by `MerchantRegistrationService.register`),
+**non-fatally** (the merchant is already created) and skipping on a duplicate
+`(provider, externalId)`. Frontend exposes two admin-only fields in the registration wizard
+(`apps/business` MerchantWizard) — still TakeAds-labelled.
 
 ### 6b. Seed data (per brand) — reuses existing tables
 
@@ -319,7 +340,7 @@ POST /user/.../takeads/:merchantId/link
 Cron (e.g. hourly): `GET /v3/api/stats/action?updatedAtFrom={watermark}&limit=500` (paginate).
 For each action:
 
-1. Resolve `subId → { identityGroupId, merchantId }` via `takeads_subid_map`; skip+log unknown.
+1. Resolve `token → { identityGroupId, merchantId }` via `affiliate_attribution`; skip+log unknown.
 2. `PENDING`/`CONFIRMED`: build `PurchasePayload` (`{ orderId: actionId, amount: orderAmount,
    currency: currencyCode, items: [], purchaseId: "takeads:{actionId}" }`) and
    `InteractionLogRepository.createIdempotent({ type:"purchase", identityGroupId, merchantId,
@@ -415,11 +436,13 @@ existing platform-admin surfaces later; v1 can drive `POST /merchant/register/ad
 
 ## 11. PoC implementation steps
 
-1. **[DONE] Schema** (`takeads_subid_map` + `takeads_sync_state`) — Drizzle defs only, in
-   `src/domain/takeads/db/schema.ts`, registered in `infrastructure/persistence/postgres.ts`.
-   **Migration is db-team owned** (per `services/backend/AGENTS.md`) — tables stay inert
-   until the db team generates + runs it. `takeads_sync_state` is a keyed watermark row
-   (`key` PK + `watermark` timestamp) for the §9 poll cursor.
+1. **[DONE] Schema** — **provider-agnostic** `affiliate` domain
+   (`src/domain/affiliate/db/schema.ts`, registered in `infrastructure/persistence/postgres.ts`):
+   `affiliate_attribution` (token map), `affiliate_sync_state` (`(provider, stream)` poll
+   cursor), `affiliate_brand` (merchant↔provider brand link). Every table carries a
+   `provider text` ($type `AffiliateProvider`), `externalId` is text, `metadata jsonb` is the
+   forward-compat escape hatch. **Migration is db-team owned** (per
+   `services/backend/AGENTS.md`) — tables stay inert until generated + run. See §6.
 2. **[DONE] TakeAds API client** (`infrastructure/integrations/takeads/`, `ky`-based,
    mirroring OpenPanel/Airtable): `listMerchants`, `resolveLinks`, `getActions`; types in
    `config.ts` modelled verbatim from the docs (§2a). Secret `TAKEADS_API_KEY` wired in

@@ -1,10 +1,10 @@
 import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { AffiliateContext } from "../../../domain/affiliate";
 import { AuthContext } from "../../../domain/auth";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
-import { TakeadsContext } from "../../../domain/takeads";
 import { businessSessionContext } from "../middleware/session";
 
 export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
@@ -99,40 +99,49 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     platformAdminWallets,
                 });
 
-            // Link the merchant to its TakeAds brand (platform admin only) so
+            // Link the merchant to its affiliate brand (platform admin only) so
             // share-link generation + conversion ingestion can resolve it.
             // Non-fatal: the merchant is already created, so a link failure
             // must not strand it behind a 409-on-retry — we log and move on.
+            // (Single provider for now; the wire contract stays TakeAds-shaped
+            // and is mapped onto the provider-agnostic affiliate store.)
             if (isPlatformAdmin && body.takeads) {
-                const { takeadsMerchantId, trackingLink } = body.takeads;
+                const provider = "takeads" as const;
+                const externalId = String(body.takeads.takeadsMerchantId);
+                const { trackingLink } = body.takeads;
                 try {
                     const existing =
-                        await TakeadsContext.repositories.takeadsMerchant.findByTakeadsMerchantId(
-                            takeadsMerchantId
+                        await AffiliateContext.repositories.affiliateBrand.findByProviderAndExternalId(
+                            provider,
+                            externalId
                         );
                     if (existing && existing.merchantId !== merchantId) {
                         log.warn(
-                            { merchantId, takeadsMerchantId },
-                            "TakeAds brand already linked to another merchant; skipping link"
+                            { merchantId, provider, externalId },
+                            "Affiliate brand already linked to another merchant; skipping link"
                         );
                     } else {
-                        await TakeadsContext.repositories.takeadsMerchant.link({
-                            merchantId,
-                            takeadsMerchantId,
-                            trackingLink,
-                        });
+                        await AffiliateContext.repositories.affiliateBrand.link(
+                            {
+                                merchantId,
+                                provider,
+                                externalId,
+                                trackingLink,
+                            }
+                        );
                     }
                 } catch (error) {
                     log.error(
                         {
                             merchantId,
-                            takeadsMerchantId,
+                            provider,
+                            externalId,
                             error:
                                 error instanceof Error
                                     ? error.message
                                     : String(error),
                         },
-                        "Failed to link TakeAds brand during registration"
+                        "Failed to link affiliate brand during registration"
                     );
                 }
             }

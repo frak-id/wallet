@@ -1,5 +1,10 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import {
+    affiliateAttributionTable,
+    affiliateBrandTable,
+    affiliateSyncStateTable,
+} from "../../domain/affiliate/db/schema";
 // Import schemas directly from db/schema.ts files to avoid pulling in
 // domain contexts (which eagerly instantiate services and repositories)
 import { referralLinksTable } from "../../domain/attribution/db/schema";
@@ -36,11 +41,6 @@ import {
     assetLogsTable,
     interactionLogsTable,
 } from "../../domain/rewards/db/schema";
-import {
-    takeadsMerchantTable,
-    takeadsSubIdMapTable,
-    takeadsSyncStateTable,
-} from "../../domain/takeads/db/schema";
 
 const schemaName = process.env.POSTGRES_SCHEMA || "public";
 
@@ -84,9 +84,9 @@ export const db = drizzle({
         pairingSignatureRequestTable,
         interactionLogsTable,
         assetLogsTable,
-        takeadsSubIdMapTable,
-        takeadsSyncStateTable,
-        takeadsMerchantTable,
+        affiliateBrandTable,
+        affiliateAttributionTable,
+        affiliateSyncStateTable,
     },
 });
 
