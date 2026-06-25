@@ -54,14 +54,32 @@ module (catalog sync + link generation + conversion ingestion) plus seed data.
 | Need | Endpoint / mechanism | Notes |
 |---|---|---|
 | Brand catalog + commission rates | `GET /v1/product/monetize-api/v2/merchant` | `name`, `domains`, logo, `commissionRates[{fixedCommission, percentageCommission}]`. **No** server-side brand filter — pull all, filter client-side. |
-| Per-user tracking link / deeplink | `PUT /v2/resolve` (`iris[]`, `subId`) | Or append `&s=<subId>&url=<deeplink>` to the catalog's `trackingLink`. **Single** `subId` slot (~50 char safe). |
+| Per-user tracking link / deeplink | `PUT /v1/product/monetize-api/v2/resolve` (`iris[]`, `subId`) | Or append `&s=<subId>&url=<deeplink>` to the catalog's `trackingLink`. **Single** `subId` slot (≤6144 chars; `[1-9A-Za-z_-]`). |
 | Coupons | coupon endpoints (per-coupon `trackingLink`) | Codes are **shared/public**, not unique-per-user. Attribution rides the `subId` on the click-through link. |
-| Conversion feedback | `GET /v3/api/stats/action` (pull) + Postback (push, ≤10 URLs) | Both expose `subId`, `revenue`, `commission`, `status`, `currencyCode`. |
+| Conversion feedback | `GET /v3/api/stats/action` (pull) + Postback (push, ≤10 URLs) | Both expose `subId`, `orderAmount`, `publisherRevenue`, `status`, `currencyCode`. |
 
-**Stats API exposes amounts even while `PENDING`** — see §6. Both `revenue` (the buyer's
-purchase amount) and `commission` (our publisher payout) are present from first sighting,
-alongside `currencyCode`, `subId`, and `status`. Amounts may adjust (e.g. partial refund)
-before confirmation.
+**Stats API exposes amounts even while `PENDING`** — see §6. Both `orderAmount` (the buyer's
+purchase amount) and `publisherRevenue` (our publisher payout) are present from first
+sighting, alongside `currencyCode`, `subId`, and `status`. Amounts may adjust (e.g. partial
+refund) before confirmation.
+
+> **§2a — Verified API contract (confirmed against developers.mitgo.com / docs.takeads.com,
+> and modelled verbatim in `infrastructure/integrations/takeads/config.ts`).** The plan
+> historically used the conceptual names `revenue`/`commission`/`DECLINED`; the real wire
+> shapes are:
+> - **Base URL** `https://api.takeads.com`; auth `Authorization: Bearer <key>` (platform key
+>   for resolve, account key for stats — same header, possibly two secrets later).
+> - **Catalog** `GET /v1/product/monetize-api/v2/merchant` → `{ meta:{ next:int|null }, data:[…] }`;
+>   merchant logo is `imageUri`; pagination `next` is an **integer**, `limit` ≤ 500.
+> - **Resolve** `PUT /v1/product/monetize-api/v2/resolve`, body `{ iris[], subId?, withImages? }`
+>   → `{ data:[{ iri, trackingLink, imageUrl }] }` (empty `data` when no offer matched).
+> - **Stats** `GET /v3/api/stats/action` → `{ meta:{ limit, next:string|null }, data:[…] }`;
+>   `next` is an **opaque string** cursor, `limit` ≤ 500. Per action: `actionId` (string uuid,
+>   our idempotency key), `merchantId` (int), `subId`, `orderAmount` (buyer total = "revenue"),
+>   `publisherRevenue` (our payout = "commission"), `currencyCode`, `status`, `updatedAt`.
+> - **Status enum is `PENDING | CONFIRMED | CANCELED | SETTLED`** — there is **no `DECLINED`**
+>   (the decline terminal is **`CANCELED`**), and `CONFIRMED` auto-rolls to `SETTLED` after
+>   ~45–50 days with no further change. Read every `DECLINED` below as `CANCELED`.
 
 **Caveats to design around:** confirmation lag of ~1–3 months (`PENDING → CONFIRMED |
 DECLINED`); coupon ≠ per-user code; single `subId` slot; EUR commission vs EURe token
@@ -147,7 +165,7 @@ a `purchase` interaction with `{ amount: revenue }` and percentage/tiered reward
 
 ### 6a. New table — `takeads_subid_map` (attribution source of truth)
 
-`services/backend/src/domain/<takeads>/db/schema.ts` (new domain module, name TBD):
+`services/backend/src/domain/takeads/db/schema.ts` (**implemented** — see §11 step 1):
 
 ```ts
 export const takeadsSubIdMapTable = pgTable(
@@ -222,7 +240,7 @@ derived from the catalog `commissionRates` plus a configured boost.
 |---|---|---|
 | `PENDING` | create `purchase` interaction → `asset_logs` (`pending`, `availableAt = now + Nd`) | ignore amount drift for PoC (first reading authoritative) |
 | `CONFIRMED` | same as PENDING (idempotent) | no-op |
-| `DECLINED` | n/a | cancel still-`pending` rewards for that interaction → `cancelled`, restore budget |
+| `CANCELED` | n/a | cancel still-`pending` rewards for that interaction → `cancelled`, restore budget |
 
 - **Idempotency** is free: `interaction_logs` unique `(merchant_id, type, external_event_id)`
   with `external_event_id = "takeads:{actionId}"`; `createIdempotent` returns null on dupes.
@@ -269,11 +287,11 @@ Cron (e.g. hourly): `GET /v3/api/stats/action?updatedAtFrom={watermark}&limit=50
 For each action:
 
 1. Resolve `subId → { identityGroupId, merchantId }` via `takeads_subid_map`; skip+log unknown.
-2. `PENDING`/`CONFIRMED`: build `PurchasePayload` (`{ orderId: actionId, amount: revenue,
+2. `PENDING`/`CONFIRMED`: build `PurchasePayload` (`{ orderId: actionId, amount: orderAmount,
    currency: currencyCode, items: [], purchaseId: "takeads:{actionId}" }`) and
    `InteractionLogRepository.createIdempotent({ type:"purchase", identityGroupId, merchantId,
    externalEventId:"takeads:{actionId}", payload })`; on insert emit `newInteraction`.
-3. `DECLINED`: run the §7 cancel path.
+3. `CANCELED`: run the §7 cancel path.
 4. Advance the watermark to the max `updatedAt` processed.
 
 From there **everything is existing code**: `BatchRewardOrchestrator` prices the reward,
@@ -364,12 +382,20 @@ existing platform-admin surfaces later; v1 can drive `POST /merchant/register/ad
 
 ## 11. PoC implementation steps
 
-1. **Schema** (`takeads_subid_map` + optional `takeads_sync_state`) — Drizzle defs only;
-   flag the migration for the db team.
-2. **TakeAds API client** (`infrastructure/integrations`, `ky`-based, mirroring Airtable/
-   Resend style): `listMerchants`, `resolveLink`, `getActions`. Secret: `TAKEADS_API_KEY`.
+1. **[DONE] Schema** (`takeads_subid_map` + `takeads_sync_state`) — Drizzle defs only, in
+   `src/domain/takeads/db/schema.ts`, registered in `infrastructure/persistence/postgres.ts`.
+   **Migration is db-team owned** (per `services/backend/AGENTS.md`) — tables stay inert
+   until the db team generates + runs it. `takeads_sync_state` is a keyed watermark row
+   (`key` PK + `watermark` timestamp) for the §9 poll cursor.
+2. **[DONE] TakeAds API client** (`infrastructure/integrations/takeads/`, `ky`-based,
+   mirroring OpenPanel/Airtable): `listMerchants`, `resolveLinks`, `getActions`; types in
+   `config.ts` modelled verbatim from the docs (§2a). Secret `TAKEADS_API_KEY` wired in
+   `infra/config.ts` + `infra/gcp/secrets.ts`. Lazy `getTakeAdsClient()` accessor (throws if
+   the key is unset, so envs without it stay inert until the integration is exercised).
 3. **Platform-admin write extension** (§10): admin-guarded register-without-verification
    branch + shared-bank attach (`FRAK_SHARED_CAMPAIGN_BANK` + `assertSharedBank`).
+   **[DONE in §10b]** register flags + co-admin propagation; **gap** = `assertSharedBank`
+   on-chain check + real funded shared bank (placeholder `zeroAddress` today, see §10c).
 4. **Seed/sync**: deploy + fund the Frak EURe bank **once** (then hardcode its address);
    onboard synthetic `merchants` via the §10 admin path + upsert `campaign_rules` from the
    catalog for the hand-picked brand IDs (manual list for v1).
@@ -421,7 +447,10 @@ existing platform-admin surfaces later; v1 can drive `POST /merchant/register/ad
 
 **TakeAds endpoints:**
 - Catalog: `GET /v1/product/monetize-api/v2/merchant`
-- Link: `PUT /v2/resolve` (`iris[]`, `subId`)
+- Link: `PUT /v1/product/monetize-api/v2/resolve` (`iris[]`, `subId`) → `data[{ iri, trackingLink, imageUrl }]`
 - Coupons: `/v1/product/monetize-api/v1/coupon*`
-- Stats: `GET /v3/api/stats/action` (`subId`, `revenue`, `commission`, `status`, `currencyCode`)
+- Stats: `GET /v3/api/stats/action` (`subId`, `orderAmount`, `publisherRevenue`, `status`, `currencyCode`, `actionId`, `updatedAt`)
 - Auth: `Authorization: Bearer <key>`; docs at developers.mitgo.com / docs.takeads.com
+- **Implemented client + types:** `services/backend/src/infrastructure/integrations/takeads/`
+  (`config.ts` shapes, `TakeAdsClient.ts` → `listMerchants` / `resolveLinks` / `getActions`;
+  secret `TAKEADS_API_KEY`). See §2a for the verified contract.

@@ -36,6 +36,10 @@ import {
     assetLogsTable,
     interactionLogsTable,
 } from "../../domain/rewards/db/schema";
+import {
+    takeadsSubIdMapTable,
+    takeadsSyncStateTable,
+} from "../../domain/takeads/db/schema";
 
 const schemaName = process.env.POSTGRES_SCHEMA || "public";
 
@@ -79,6 +83,8 @@ export const db = drizzle({
         pairingSignatureRequestTable,
         interactionLogsTable,
         assetLogsTable,
+        takeadsSubIdMapTable,
+        takeadsSyncStateTable,
     },
 });
 
