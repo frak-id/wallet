@@ -17,7 +17,7 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { campaignStore } from "@/stores/campaignStore";
 import * as styles from "./campaign-launched.css";
 
-const COMMUNICATION_GUIDE_URL = "https://canva.link/xc8o83kj0pcidee";
+const COMMUNICATION_GUIDE_URL = "https://canva.link/9w9o1ld8415iywl";
 
 const TIPS = [
     {
