@@ -49,6 +49,11 @@ const EmailNotFoundModal = lazy(() =>
         })
     )
 );
+const ReauthModal = lazy(() =>
+    import("@/module/authentication/component/ReauthModal").then((m) => ({
+        default: m.ReauthModal,
+    }))
+);
 const WelcomeDetail = lazy(() =>
     import("@/module/wallet/component/WelcomeCard/WelcomeDetail").then((m) => ({
         default: m.WelcomeDetail,
@@ -172,6 +177,14 @@ function renderModal(
         case "emailNotFound":
             return (
                 <EmailNotFoundModal onClose={closeModal} email={modal.email} />
+            );
+        case "reauth":
+            return (
+                <ReauthModal
+                    expired={modal.expired}
+                    onAuthSuccess={modal.onAuthSuccess}
+                    onClose={closeModal}
+                />
             );
     }
 }

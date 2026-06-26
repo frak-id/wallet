@@ -10,6 +10,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { lazy, type PropsWithChildren, useEffect } from "react";
 import { useConnection } from "wagmi";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
+import { useWalletSessionGuard } from "@/module/common/hook/useWalletSessionGuard";
 
 const ReactQueryDevtools = lazy(() =>
     import("@tanstack/react-query-devtools").then((m) => ({
@@ -84,6 +85,7 @@ export function RootProvider({ children }: PropsWithChildren) {
 function SessionStateManager() {
     useEnforceWagmiConnection();
     usePersistentPairingClient();
+    useWalletSessionGuard();
 
     // Set the open panel profile id with the wagmi address
     const { address } = useConnection();

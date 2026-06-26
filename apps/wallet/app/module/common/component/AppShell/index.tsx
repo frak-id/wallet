@@ -17,6 +17,7 @@ import {
     BottomTabBar,
     type TabItem,
 } from "@/module/common/component/BottomTabBar";
+import { SessionExpiringBanner } from "@/module/common/component/SessionExpiringBanner";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import {
     bottomBar,
@@ -98,6 +99,7 @@ export function AppShell({
                 <InAppBrowserToast />
                 <BannerStack>
                     <OfflineBanner />
+                    <SessionExpiringBanner />
                     <PairingInProgress />
                     <WebauthnErrorToast />
                 </BannerStack>
