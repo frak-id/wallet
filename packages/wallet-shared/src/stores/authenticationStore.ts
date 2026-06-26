@@ -9,7 +9,7 @@ import { createStore } from "zustand/vanilla";
 import { authenticatorStorage } from "../common/storage/authenticators";
 import { recoveryHintStorage } from "../common/storage/recoveryHint";
 import type { Session } from "../types/Session";
-import type { AuthenticationStore } from "./types";
+import type { AuthenticationStore, RemoteLastAuthentication } from "./types";
 
 export type { PendingRegistration } from "./types";
 
@@ -22,12 +22,15 @@ export const authenticationStore = createStore<AuthenticationStore>()(
     persist(
         (set) => ({
             lastAuthenticator: null,
+            lastRemoteAuthenticator: null,
             pendingRegistration: null,
             lastAuthenticationAt: null,
             ssoContext: null,
 
             setLastAuthenticator: (lastAuthenticator) =>
                 set({ lastAuthenticator }),
+            setLastRemoteAuthenticator: (lastRemoteAuthenticator) =>
+                set({ lastRemoteAuthenticator }),
             setPendingRegistration: (pendingRegistration) =>
                 set({ pendingRegistration }),
             setLastAuthenticationAt: (lastAuthenticationAt) =>
@@ -38,6 +41,7 @@ export const authenticationStore = createStore<AuthenticationStore>()(
             name: "frak_authentication_store",
             partialize: (state) => ({
                 lastAuthenticator: state.lastAuthenticator,
+                lastRemoteAuthenticator: state.lastRemoteAuthenticator,
                 pendingRegistration: state.pendingRegistration,
                 lastAuthenticationAt: state.lastAuthenticationAt,
             }),
@@ -52,6 +56,14 @@ export const authenticationStore = createStore<AuthenticationStore>()(
 // Get the last authentication timestamp
 export const selectLastAuthenticationAt = (state: AuthenticationStore) =>
     state.lastAuthenticationAt;
+
+// Get the last LOCAL webauthn authenticator (durable across session clears)
+export const selectLastAuthenticator = (state: AuthenticationStore) =>
+    state.lastAuthenticator;
+
+// Get the last REMOTE (paired) authenticator
+export const selectLastRemoteAuthenticator = (state: AuthenticationStore) =>
+    state.lastRemoteAuthenticator;
 
 /**
  * Helper function to add last authentication
@@ -90,6 +102,23 @@ export async function addLastAuthentication(authentication: Session) {
         authenticatorId: authentication.authenticatorId,
         transports: authentication.transports,
     });
+}
+
+/**
+ * Record a freshly-paired (distant-webauthn) authenticator.
+ *
+ * `addLastAuthentication` deliberately ignores non-local sessions (their
+ * credential isn't on this device), which left the auth store blind to
+ * pairings — neither `lastAuthenticationAt` nor any authenticator record was
+ * updated when a phone paired. This persists the remote authenticator so the
+ * store has a durable record of the paired credential ({ pairingId,
+ * authenticatorId }) instead of it living only in the volatile session store.
+ */
+export function recordDistantAuthenticator(
+    authenticator: RemoteLastAuthentication
+) {
+    authenticationStore.getState().setLastAuthenticationAt(Date.now());
+    authenticationStore.getState().setLastRemoteAuthenticator(authenticator);
 }
 
 /**

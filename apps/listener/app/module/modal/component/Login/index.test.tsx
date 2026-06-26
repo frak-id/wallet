@@ -60,6 +60,27 @@ vi.mock("@frak-labs/wallet-shared/stores/sessionStore", async () => {
     };
 });
 
+// Durable last-authenticator store — the passkey button scopes to this, not
+// the volatile session.
+type MockAuthState = {
+    lastAuthenticator: { address: string; authenticatorId?: string } | null;
+};
+const mockAuthStore = vi.hoisted(() => ({
+    store: null as UseBoundStore<StoreApi<MockAuthState>> | null,
+}));
+
+vi.mock("@frak-labs/wallet-shared/stores/authenticationStore", async () => {
+    const { create } = await import("zustand");
+    const authenticationStore = create<MockAuthState>(() => ({
+        lastAuthenticator: null,
+    }));
+    mockAuthStore.store = authenticationStore;
+    return {
+        authenticationStore,
+        selectLastAuthenticator: (s: MockAuthState) => s.lastAuthenticator,
+    };
+});
+
 vi.mock("@/module/stores/resolvingContextStore", async () => {
     const { createStore } = await import("zustand/vanilla");
     const resolvingContextStore = createStore(() => ({
@@ -101,6 +122,13 @@ function getSessionStore() {
     return mockSessionStore.store;
 }
 
+function getAuthStore() {
+    if (!mockAuthStore.store) {
+        throw new Error("mock authenticationStore not initialised");
+    }
+    return mockAuthStore.store;
+}
+
 function renderLogin(
     params: Partial<LoginModalStepType["params"]> = {},
     onFinish = vi.fn()
@@ -122,9 +150,10 @@ describe("LoginModalStep", () => {
         loginState.isSuccess = false;
         loginState.isLoading = false;
         loginState.error = null;
-        // Reset session to null before each test.
+        // Reset session + last-authenticator to null before each test.
         act(() => {
             getSessionStore().setState({ session: null });
+            getAuthStore().setState({ lastAuthenticator: null });
         });
     });
 
@@ -154,11 +183,15 @@ describe("LoginModalStep", () => {
         expect(loginMock).toHaveBeenCalledWith({});
     });
 
-    test("scopes passkey login to the current authenticator on re-login (dead token)", () => {
-        // Seed a stale session so the store looks like a dead-token re-login.
+    test("scopes passkey login to the last (durable) authenticator, independent of the session", () => {
+        // The durable last-authenticator survives session clears; seed it and
+        // leave the session null to prove scoping no longer depends on session.
         act(() => {
-            getSessionStore().setState({
-                session: { address: "0xdead", authenticatorId: "cred-abc" },
+            getAuthStore().setState({
+                lastAuthenticator: {
+                    address: "0xdead",
+                    authenticatorId: "cred-abc",
+                },
             });
         });
 
@@ -169,7 +202,7 @@ describe("LoginModalStep", () => {
         });
         fireEvent.click(passkeyButton);
 
-        // Re-login → scoped to the stale session's authenticatorId.
+        // Scoped to the durable last authenticator.
         expect(loginMock).toHaveBeenCalledWith({
             allowedCredentialIds: ["cred-abc"],
         });

@@ -39,6 +39,7 @@ describe("authenticationStore", () => {
         // Reset store to initial state before each test
         authenticationStore.setState({
             lastAuthenticator: null,
+            lastRemoteAuthenticator: null,
             pendingRegistration: null,
             lastAuthenticationAt: null,
             ssoContext: null,
@@ -51,8 +52,31 @@ describe("authenticationStore", () => {
             const state = authenticationStore.getState();
 
             expect(state.lastAuthenticator).toBeNull();
+            expect(state.lastRemoteAuthenticator).toBeNull();
             expect(state.ssoContext).toBeNull();
             expect(state.pendingRegistration).toBeNull();
+        });
+    });
+
+    describe("recordDistantAuthenticator", () => {
+        test("persists the paired authenticator + bumps lastAuthenticationAt", async () => {
+            const { recordDistantAuthenticator } = await import(
+                "./authenticationStore"
+            );
+            const remote = {
+                type: "distant-webauthn" as const,
+                address: "0x1234567890123456789012345678901234567890" as const,
+                authenticatorId: "remote-cred-1",
+                pairingId: "pairing-1",
+            };
+
+            recordDistantAuthenticator(remote);
+
+            const state = authenticationStore.getState();
+            expect(state.lastRemoteAuthenticator).toEqual(remote);
+            expect(state.lastAuthenticationAt).toBeTypeOf("number");
+            // Local authenticator must NOT be clobbered by a pairing.
+            expect(state.lastAuthenticator).toBeNull();
         });
     });
 

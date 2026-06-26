@@ -237,6 +237,7 @@ export const test = baseTest.extend<BaseTestFixtures>({
         await use(authenticationStore);
         authenticationStore.setState({
             lastAuthenticator: null,
+            lastRemoteAuthenticator: null,
             pendingRegistration: null,
             lastAuthenticationAt: null,
             ssoContext: null,

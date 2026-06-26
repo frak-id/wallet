@@ -11,6 +11,10 @@ import {
     prefixModalCss,
 } from "@frak-labs/wallet-shared/common";
 import {
+    authenticationStore,
+    selectLastAuthenticator,
+} from "@frak-labs/wallet-shared/stores/authenticationStore";
+import {
     selectSession,
     sessionStore,
 } from "@frak-labs/wallet-shared/stores/sessionStore";
@@ -60,14 +64,6 @@ export function LoginModalStep({
 
     const session = useStore(sessionStore, selectSession);
 
-    // TODO(last-authenticator-store): recovering the credential from
-    // sessionStore.session is fragile — that object is cleared/replaced by many
-    // flows (logout, backup restore, SSO). Introduce a dedicated "last
-    // authenticator" store, generified to either a local webauthn
-    // `authenticatorId` or a remote `{ pairingId, authenticatorId }`, mirroring
-    // the wallet app's useLastAuthenticatorHint, so the listener can reliably
-    // resume / re-auth a session regardless of sessionStore state.
-
     // Capture the session present at mount time. The `useEffect` below must
     // NOT auto-finish for that session — it may be a stale (dead-token) object
     // that triggered this very login step. We only auto-finish when a NEW
@@ -75,23 +71,23 @@ export function LoginModalStep({
     // pairing delivered a fresh session from another device).
     const initialSessionRef = useRef(session);
 
-    // Build the WebAuthn allowCredentials hint for the passkey button.
-    // When a dead-token session is in the store we scope to its authenticatorId
-    // so the browser presents the correct credential — matching the wallet
-    // app's ReauthModal behaviour. First-login (session === null) stays global.
-    // Distant (paired) sessions are NOT scoped: their authenticatorId lives on
-    // the remote device, so a local WebAuthn assertion against it can't succeed
-    // — those re-login via SSO / phone pairing, not the local passkey button.
+    // Scope the passkey button to the last LOCAL authenticator. We read it from
+    // the durable authenticationStore rather than sessionStore.session, which
+    // is cleared/replaced by logout, backup restore and SSO. A remote (paired)
+    // authenticator is intentionally NOT used here: its credential lives on
+    // another device, so a local WebAuthn assertion against it can't succeed
+    // — those re-login via SSO / phone pairing, not this passkey button.
+    const lastAuthenticator = useStore(
+        authenticationStore,
+        selectLastAuthenticator
+    );
     const scopedLoginArgs = useMemo(() => {
-        const cred =
-            session?.type === "distant-webauthn"
-                ? undefined
-                : session?.authenticatorId;
+        const cred = lastAuthenticator?.authenticatorId;
         if (cred) {
             return { allowedCredentialIds: [cred] };
         }
         return {};
-    }, [session]);
+    }, [lastAuthenticator]);
 
     const { login, isSuccess, isLoading, error } = useLogin({
         // On success, transmit the wallet address up a level.
