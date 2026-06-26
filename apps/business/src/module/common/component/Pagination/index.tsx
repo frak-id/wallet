@@ -1,3 +1,4 @@
+import { HiddenVisually } from "@frak-labs/design-system/components/HiddenVisually";
 import clsx from "clsx";
 import type {
     ButtonHTMLAttributes,
@@ -123,7 +124,7 @@ const PaginationEllipsis = ({
             {...props}
         >
             <MoreHorizontal size={20} />
-            <span className="sr-only">{t("common.pagination.morePages")}</span>
+            <HiddenVisually>{t("common.pagination.morePages")}</HiddenVisually>
         </span>
     );
 };
