@@ -28,11 +28,18 @@ const mocks = vi.hoisted(() => {
         WALLET_REAUTH_BEFORE_MS: 7 * 24 * 60 * 60 * 1000,
 
         // safeSession
-        getSafeSession: vi.fn<() => { token: string; type?: string } | null>(
-            () => ({
-                token: "wallet-token",
-            })
-        ),
+        getSafeSession: vi.fn<
+            () => {
+                token: string;
+                type?: string;
+                authenticatorId?: string;
+            } | null
+        >(() => ({
+            token: "wallet-token",
+        })),
+
+        // authenticationStore — used by guard for fallback authenticatorId
+        lastRemoteAuthenticator: null as { authenticatorId: string } | null,
 
         // logout (used for sessions that can't re-auth locally)
         logout: vi.fn(),
@@ -124,6 +131,18 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     },
 }));
 
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+    const actual = await importOriginal<object>();
+    return {
+        ...actual,
+        authenticationStore: {
+            getState: () => ({
+                lastRemoteAuthenticator: mocks.lastRemoteAuthenticator,
+            }),
+        },
+    };
+});
+
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
@@ -134,6 +153,7 @@ beforeEach(() => {
     mocks.expiresWithinMs.mockReturnValue(false);
     mocks.getSafeSession.mockReturnValue({ token: "wallet-token" });
     mocks.modalRef.current = null;
+    mocks.lastRemoteAuthenticator = null;
     vi.useFakeTimers();
     vi.resetModules();
 });
@@ -228,10 +248,11 @@ describe("useWalletSessionGuard", () => {
         expect(mocks.logout).not.toHaveBeenCalled();
     });
 
-    test("logs out (no modal) on server-confirmed 401 for a distant session", async () => {
+    test("opens distant-reauth modal (not logout) on 401 for distant session with authenticatorId", async () => {
         mocks.getSafeSession.mockReturnValue({
             token: "wallet-token",
             type: "distant-webauthn",
+            authenticatorId: "cred-abc",
         });
 
         const { useWalletSessionGuard } = await import(
@@ -244,8 +265,85 @@ describe("useWalletSessionGuard", () => {
             mocks.triggerAuthExpired();
         });
 
-        // Distant session: dead token → logout (redirect to re-pair), never the
-        // unsatisfiable biometric modal.
+        expect(mocks.openModal).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: "distant-reauth",
+                authenticatorHints: ["cred-abc"],
+            })
+        );
+        expect(mocks.logout).not.toHaveBeenCalled();
+    });
+
+    test("opens distant-reauth modal seeded from lastRemoteAuthenticator when session has no authenticatorId", async () => {
+        // Session without an authenticatorId (shouldn't happen for distant-webauthn
+        // in practice, but the durable-store fallback must be exercised).
+        mocks.getSafeSession.mockReturnValue({
+            token: "wallet-token",
+            type: "distant-webauthn",
+        });
+        mocks.lastRemoteAuthenticator = { authenticatorId: "cred-fallback" };
+
+        const { useWalletSessionGuard } = await import(
+            "@/module/common/hook/useWalletSessionGuard"
+        );
+
+        renderHook(() => useWalletSessionGuard());
+
+        act(() => {
+            mocks.triggerAuthExpired();
+        });
+
+        expect(mocks.openModal).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: "distant-reauth",
+                authenticatorHints: ["cred-fallback"],
+            })
+        );
+        expect(mocks.logout).not.toHaveBeenCalled();
+    });
+
+    test("logs out on 401 for ecdsa session (no re-pair path)", async () => {
+        mocks.getSafeSession.mockReturnValue({
+            token: "wallet-token",
+            type: "ecdsa",
+            authenticatorId: "ecdsa-demo",
+        });
+
+        const { useWalletSessionGuard } = await import(
+            "@/module/common/hook/useWalletSessionGuard"
+        );
+
+        renderHook(() => useWalletSessionGuard());
+
+        act(() => {
+            mocks.triggerAuthExpired();
+        });
+
+        // ecdsa session: no re-pair path → logout only, never the re-pair modal.
+        expect(mocks.logout).toHaveBeenCalledTimes(1);
+        expect(mocks.openModal).not.toHaveBeenCalled();
+    });
+
+    test("logs out on 401 for distant session with no credential in session nor store", async () => {
+        // Defensive: types guarantee distant-webauthn carries an authenticatorId,
+        // but a legacy/corrupt persisted session could lack it. With no durable
+        // lastRemoteAuthenticator fallback either, there is no re-pair hint → logout.
+        mocks.getSafeSession.mockReturnValue({
+            token: "wallet-token",
+            type: "distant-webauthn",
+        });
+        mocks.lastRemoteAuthenticator = null;
+
+        const { useWalletSessionGuard } = await import(
+            "@/module/common/hook/useWalletSessionGuard"
+        );
+
+        renderHook(() => useWalletSessionGuard());
+
+        act(() => {
+            mocks.triggerAuthExpired();
+        });
+
         expect(mocks.logout).toHaveBeenCalledTimes(1);
         expect(mocks.openModal).not.toHaveBeenCalled();
     });

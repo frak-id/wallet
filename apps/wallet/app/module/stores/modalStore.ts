@@ -48,6 +48,16 @@ type ModalState =
           id: "reauth";
           expired: boolean;
           onAuthSuccess?: () => void;
+      }
+    | {
+          /**
+           * Re-pair prompt for a dead PAIRED (distant-webauthn) session. Seeded
+           * with the dead session's authenticatorId so the backend-enforced
+           * allow-list restricts re-pairing to the same wallet. Dismissal logs
+           * out (token is server-confirmed dead with no local recovery path).
+           */
+          id: "distant-reauth";
+          authenticatorHints: string[];
       };
 
 const maxStackDepth = 5;

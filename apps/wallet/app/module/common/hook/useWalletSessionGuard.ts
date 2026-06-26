@@ -1,4 +1,5 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { authenticationStore } from "@frak-labs/wallet-shared";
 import { subscribeToWalletAuthExpired } from "@frak-labs/wallet-shared/common/auth/authRecovery";
 import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
 import {
@@ -34,9 +35,45 @@ const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
  * dismiss-not-expired→close). A leaked flag would silently stop the guard from
  * ever prompting again for the rest of the page session.
  */
+const REAUTH_MODAL_IDS = new Set<string>(["reauth", "distant-reauth"]);
+
 function isReauthOpen(): boolean {
     const { modal, stack } = modalStore.getState();
-    return modal?.id === "reauth" || stack.some((m) => m.id === "reauth");
+    return (
+        (modal !== null && REAUTH_MODAL_IDS.has(modal.id)) ||
+        stack.some((m) => REAUTH_MODAL_IDS.has(m.id))
+    );
+}
+
+/**
+ * For non-local sessions (distant-webauthn / ecdsa), attempt to route to the
+ * re-pair modal (distant-webauthn with a known credential) or fall back to a
+ * hard logout (ecdsa, or distant session with no credential record).
+ *
+ * Extracted from `handleServerConfirmed401` to keep its cognitive complexity
+ * within the linter's limit.
+ */
+function routeNonLocalSession(
+    session: ReturnType<typeof getSafeSession>,
+    logout: () => void
+): void {
+    if (session?.type === "distant-webauthn") {
+        // The type guard is load-bearing: ecdsa sessions also carry an
+        // `authenticatorId` (`ecdsa-...`) and must NOT open re-pair. Source:
+        // live session first, durable store fallback if session was cleared.
+        const authenticatorId =
+            session.authenticatorId ??
+            authenticationStore.getState().lastRemoteAuthenticator
+                ?.authenticatorId;
+        if (authenticatorId) {
+            modalStore.getState().openModal({
+                id: "distant-reauth",
+                authenticatorHints: [authenticatorId],
+            });
+            return;
+        }
+    }
+    void logout();
 }
 
 /**
@@ -120,13 +157,7 @@ export function useWalletSessionGuard() {
         if (!session?.token) return; // Already cleared; route guard redirects.
 
         if (!canReauthLocally(session)) {
-            // TODO(distant-reauth): a forced logout is a blunt recovery for a
-            // paired (distant-webauthn) session. Instead, surface a pairing
-            // prompt seeded with the dead session's target authenticatorId /
-            // pairingId (e.g. encoded in the pairing QR) so the origin device
-            // can re-pair the SAME wallet in one step — a much smoother re-auth
-            // than dropping the user back to /register.
-            void logout();
+            routeNonLocalSession(session, logout);
             return;
         }
 

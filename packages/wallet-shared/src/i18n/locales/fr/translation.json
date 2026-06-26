@@ -863,6 +863,12 @@
             "description": "Veuillez vérifier votre identité pour continuer.",
             "action": "Vérifier l'identité"
         },
+        "distantReauth": {
+            "title": "Reconnectez votre portefeuille",
+            "description": "Votre session appairée a expiré. Scannez avec votre téléphone pour reconnecter le même portefeuille.",
+            "action": "Reconnecter",
+            "pairing": "Scannez avec le téléphone détenant votre passkey pour reconnecter le même portefeuille."
+        },
         "toastLoading": {
             "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",
             "dismiss": "Masquer le message"

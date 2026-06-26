@@ -54,6 +54,13 @@ const ReauthModal = lazy(() =>
         default: m.ReauthModal,
     }))
 );
+const DistantReauthModal = lazy(() =>
+    import("@/module/authentication/component/DistantReauthModal").then(
+        (m) => ({
+            default: m.DistantReauthModal,
+        })
+    )
+);
 const WelcomeDetail = lazy(() =>
     import("@/module/wallet/component/WelcomeCard/WelcomeDetail").then((m) => ({
         default: m.WelcomeDetail,
@@ -183,6 +190,13 @@ function renderModal(
                 <ReauthModal
                     expired={modal.expired}
                     onAuthSuccess={modal.onAuthSuccess}
+                    onClose={closeModal}
+                />
+            );
+        case "distant-reauth":
+            return (
+                <DistantReauthModal
+                    authenticatorHints={modal.authenticatorHints}
                     onClose={closeModal}
                 />
             );
