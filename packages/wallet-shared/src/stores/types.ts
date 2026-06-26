@@ -5,7 +5,7 @@
 import type { SsoMetadata } from "@frak-labs/core-sdk";
 import type { Signature } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
-import type { Address, Hex } from "viem";
+import type { Hex } from "viem";
 import type { SdkSession, Session } from "../types/Session";
 
 /**
@@ -64,12 +64,6 @@ export type SessionStore = {
 /**
  * Authentication Store Types
  */
-export type LastWebAuthNAction = {
-    wallet: Address;
-    signature: AuthenticationResponseJSON;
-    challenge: Hex;
-};
-
 export type LastAuthentication = Session & { type: "webauthn" };
 
 /**
@@ -105,14 +99,12 @@ export type AuthenticationStore = {
     lastAuthenticator: LastAuthentication | null;
     pendingRegistration: PendingRegistration | null;
     lastAuthenticationAt: number | null;
-    lastWebAuthNAction: LastWebAuthNAction | null;
     ssoContext: SsoContext | null;
 
     // Actions
     setLastAuthenticator: (auth: LastAuthentication | null) => void;
     setPendingRegistration: (pending: PendingRegistration | null) => void;
     setLastAuthenticationAt: (timestamp: number | null) => void;
-    setLastWebAuthNAction: (action: LastWebAuthNAction | null) => void;
     setSsoContext: (context: SsoContext | null) => void;
 };
 /**

@@ -14,8 +14,8 @@ import type { AuthenticationStore } from "./types";
 export type { PendingRegistration } from "./types";
 
 /**
- * Authentication store managing last authenticator, webauthn actions, and SSO context
- * Persists lastAuthenticator, lastAuthenticationAt, lastWebAuthNAction, and pendingRegistration
+ * Authentication store managing last authenticator and SSO context
+ * Persists lastAuthenticator, lastAuthenticationAt, and pendingRegistration
  * ssoContext is in-memory only (not persisted)
  */
 export const authenticationStore = createStore<AuthenticationStore>()(
@@ -24,7 +24,6 @@ export const authenticationStore = createStore<AuthenticationStore>()(
             lastAuthenticator: null,
             pendingRegistration: null,
             lastAuthenticationAt: null,
-            lastWebAuthNAction: null,
             ssoContext: null,
 
             setLastAuthenticator: (lastAuthenticator) =>
@@ -33,8 +32,6 @@ export const authenticationStore = createStore<AuthenticationStore>()(
                 set({ pendingRegistration }),
             setLastAuthenticationAt: (lastAuthenticationAt) =>
                 set({ lastAuthenticationAt }),
-            setLastWebAuthNAction: (lastWebAuthNAction) =>
-                set({ lastWebAuthNAction }),
             setSsoContext: (ssoContext) => set({ ssoContext }),
         }),
         {
@@ -43,7 +40,6 @@ export const authenticationStore = createStore<AuthenticationStore>()(
                 lastAuthenticator: state.lastAuthenticator,
                 pendingRegistration: state.pendingRegistration,
                 lastAuthenticationAt: state.lastAuthenticationAt,
-                lastWebAuthNAction: state.lastWebAuthNAction,
             }),
         }
     )
@@ -56,10 +52,6 @@ export const authenticationStore = createStore<AuthenticationStore>()(
 // Get the last authentication timestamp
 export const selectLastAuthenticationAt = (state: AuthenticationStore) =>
     state.lastAuthenticationAt;
-
-// Get the last WebAuthN action
-export const selectLastWebAuthNAction = (state: AuthenticationStore) =>
-    state.lastWebAuthNAction;
 
 /**
  * Helper function to add last authentication

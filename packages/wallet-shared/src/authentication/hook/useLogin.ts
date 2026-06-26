@@ -13,10 +13,7 @@ import {
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
 import { recoveryHintStorage } from "../../common/storage/recoveryHint";
-import {
-    addLastAuthentication,
-    authenticationStore,
-} from "../../stores/authenticationStore";
+import { addLastAuthentication } from "../../stores/authenticationStore";
 import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
@@ -125,12 +122,6 @@ export function useLogin(
             if (error) {
                 throw error;
             }
-
-            authenticationStore.getState().setLastWebAuthNAction({
-                wallet: data.address,
-                signature: authenticationResponse,
-                challenge: challenge,
-            });
 
             const { token, sdkJwt, ...authentication } = data;
             const session = { ...authentication, token } as Session;

@@ -1,8 +1,9 @@
 import { treaty } from "@elysiajs/eden";
 import type { App } from "@frak-labs/backend-elysia";
 import { clientIdStore } from "../../stores/clientIdStore";
-import { sessionStore } from "../../stores/sessionStore";
+import { notifyWalletAuthExpired } from "../auth/authRecovery";
 import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
+import { isExpired } from "../utils/tokenExpiry";
 
 const backendUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
 
@@ -10,6 +11,10 @@ const backendUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
  * Treaty client with authentication tokens if present
  */
 export const authenticatedBackendApi = treaty<App>(backendUrl, {
+    // credentials:"include" is kept because the backend sets response cookies
+    // (e.g. logout) via the session context. Auth itself uses x-wallet-auth /
+    // x-wallet-sdk-auth headers, so cookie-blocking in third-party iframes
+    // does not affect authentication.
     fetch: { credentials: "include" },
     // Auto add the authentication related header if present
     headers(_path, options) {
@@ -34,18 +39,21 @@ export const authenticatedBackendApi = treaty<App>(backendUrl, {
         // Return the new headers
         return headers;
     },
-    // Auto cleanup session on a hard 401 — except the SDK-session validation
-    // probe (`/wallet/auth/sdk/isValid`), whose 401s are recoverable and owned
-    // by `useGetSafeSdkSession` (renew-then-drop). Wiping the whole session on
-    // that probe was logging users out right after login. Every other 401 —
-    // including `/wallet/auth/sdk/generate`, which authenticates with the wallet
-    // token — still means a dead session and must clear.
+    // On HTTP 401: notify the auth-recovery subscribers when the wallet token
+    // is absent or expired, so the app layer can surface a re-auth modal.
+    // We do NOT call clearSession() here — the guard layer owns that decision.
+    // Network / 5xx errors do not reach onResponse (Eden returns status 503
+    // from the catch block without calling this hook), so transient errors
+    // never produce a notification.
     onResponse(response) {
-        if (
-            response.status === 401 &&
-            !response.url.includes("/wallet/auth/sdk/isValid")
-        ) {
-            sessionStore.getState().clearSession();
+        if (response.status !== 401) return;
+
+        // Only signal when the wallet token is actually absent or expired.
+        // This future-proofs against SDK-only endpoints that return 401 with
+        // a valid wallet token (ensureFreshSdkSession owns SDK-token recovery).
+        const walletToken = getSafeSession()?.token;
+        if (!walletToken || isExpired(walletToken)) {
+            notifyWalletAuthExpired();
         }
     },
 });

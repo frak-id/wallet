@@ -23,27 +23,8 @@ export const handlers = [
     }),
 
     // SDK auth endpoints
-    http.post(
-        `${BACKEND_URL}/user/wallet/auth/sdk/fromWebAuthNSignature`,
-        () => {
-            return HttpResponse.json({
-                token: "sdk-session-token",
-                expires: Date.now() + 3600000,
-            });
-        }
-    ),
-
-    http.get(`${BACKEND_URL}/user/wallet/auth/sdk/isValid`, ({ request }) => {
-        const url = new URL(request.url);
-        const token = url.searchParams.get("token");
-
-        if (!token || token === "invalid-token") {
-            return HttpResponse.json({ valid: false });
-        }
-
-        return HttpResponse.json({ valid: true });
-    }),
-
+    // NOTE: /fromWebAuthNSignature and /isValid are kept on the backend this
+    // cycle but the client no longer calls them. MSW handlers removed.
     http.get(`${BACKEND_URL}/user/wallet/auth/sdk/generate`, () => {
         return HttpResponse.json({
             token: "new-sdk-token",

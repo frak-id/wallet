@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-    clearSession: vi.fn(),
+    notifyWalletAuthExpired: vi.fn(),
+    getSafeSession: vi.fn<() => { token: string } | null>(),
+    isExpired: vi.fn<(token: string) => boolean>(),
     onResponseHolder: {
         current: undefined as ((response: Response) => void) | undefined,
     },
@@ -26,39 +28,40 @@ vi.mock("@elysiajs/eden", () => ({
     ),
 }));
 
-vi.mock("../../stores/sessionStore", () => ({
-    sessionStore: {
-        getState: vi.fn(() => ({
-            clearSession: mocks.clearSession,
-        })),
-    },
+vi.mock("../auth/authRecovery", () => ({
+    notifyWalletAuthExpired: mocks.notifyWalletAuthExpired,
 }));
 
 vi.mock("../utils/safeSession", () => ({
-    getSafeSession: vi.fn(),
+    getSafeSession: mocks.getSafeSession,
     getSafeSdkSession: vi.fn(),
+}));
+
+vi.mock("../utils/tokenExpiry", () => ({
+    isExpired: mocks.isExpired,
+}));
+
+vi.mock("../../stores/clientIdStore", () => ({
+    clientIdStore: {
+        getState: vi.fn(() => ({ clientId: null })),
+    },
 }));
 
 describe("backendClient", () => {
     it("should export authenticated backend API", async () => {
         const { authenticatedBackendApi } = await import("./backendClient");
-
         expect(authenticatedBackendApi).toBeDefined();
     });
 
     it("should export authenticated wallet API", async () => {
         const { authenticatedWalletApi } = await import("./backendClient");
-
         expect(authenticatedWalletApi).toBeDefined();
         expect(authenticatedWalletApi).toHaveProperty("balance");
     });
 
     it("should use correct backend URL from env", async () => {
         const { treaty } = await import("@elysiajs/eden");
-
-        // Import to trigger treaty call
         await import("./backendClient");
-
         expect(treaty).toHaveBeenCalled();
     });
 });
@@ -81,38 +84,59 @@ describe("backendClient onResponse 401 handling", () => {
     }
 
     beforeEach(() => {
-        mocks.clearSession.mockClear();
+        mocks.notifyWalletAuthExpired.mockClear();
+        mocks.getSafeSession.mockReset();
+        mocks.isExpired.mockReset();
     });
 
-    it("does NOT clear the session on a 401 from the isValid probe", async () => {
-        const onResponse = await getOnResponse();
-
-        onResponse(fakeResponse(401, "/user/wallet/auth/sdk/isValid"));
-
-        expect(mocks.clearSession).not.toHaveBeenCalled();
-    });
-
-    it("clears the session on a 401 from sdk generate (dead wallet token)", async () => {
-        const onResponse = await getOnResponse();
-
-        onResponse(fakeResponse(401, "/user/wallet/auth/sdk/generate"));
-
-        expect(mocks.clearSession).toHaveBeenCalledTimes(1);
-    });
-
-    it("clears the session on a 401 from a non-sdk endpoint", async () => {
+    it("notifies when 401 and wallet token is absent", async () => {
+        mocks.getSafeSession.mockReturnValue(null); // no wallet token
         const onResponse = await getOnResponse();
 
         onResponse(fakeResponse(401, "/user/wallet/balance"));
 
-        expect(mocks.clearSession).toHaveBeenCalledTimes(1);
+        expect(mocks.notifyWalletAuthExpired).toHaveBeenCalledTimes(1);
     });
 
-    it("ignores non-401 responses", async () => {
+    it("notifies when 401 and wallet token is expired", async () => {
+        mocks.getSafeSession.mockReturnValue({ token: "expired-token" });
+        mocks.isExpired.mockReturnValue(true);
+        const onResponse = await getOnResponse();
+
+        onResponse(fakeResponse(401, "/user/wallet/balance"));
+
+        expect(mocks.notifyWalletAuthExpired).toHaveBeenCalledTimes(1);
+    });
+
+    it("does NOT notify when 401 but wallet token is still valid (SDK-only 401)", async () => {
+        mocks.getSafeSession.mockReturnValue({ token: "valid-wallet-token" });
+        mocks.isExpired.mockReturnValue(false);
+        const onResponse = await getOnResponse();
+
+        // e.g. an SDK-only endpoint returning 401 while wallet token is valid
+        onResponse(fakeResponse(401, "/user/wallet/auth/sdk/generate"));
+
+        expect(mocks.notifyWalletAuthExpired).not.toHaveBeenCalled();
+    });
+
+    it("does not notify on non-401 responses", async () => {
         const onResponse = await getOnResponse();
 
         onResponse(fakeResponse(200, "/user/wallet/balance"));
+        onResponse(fakeResponse(500, "/user/wallet/balance"));
 
-        expect(mocks.clearSession).not.toHaveBeenCalled();
+        expect(mocks.notifyWalletAuthExpired).not.toHaveBeenCalled();
+    });
+
+    it("does NOT call clearSession — session clearing is owned by the guard layer", async () => {
+        // clearSession must never be called from the transport layer
+        mocks.getSafeSession.mockReturnValue(null);
+        const onResponse = await getOnResponse();
+
+        onResponse(fakeResponse(401, "/user/wallet/balance"));
+
+        // Verify clearSession was never imported or called
+        // (no sessionStore mock needed — it should not be used here)
+        expect(mocks.notifyWalletAuthExpired).toHaveBeenCalledTimes(1);
     });
 });
