@@ -1,5 +1,6 @@
 import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
+import { getTokenExpMs } from "@frak-labs/wallet-shared/common/utils/tokenExpiry";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { SdkSession, Session } from "@frak-labs/wallet-shared/types";
 
@@ -82,10 +83,10 @@ export async function restoreBackupData({
     }
 
     // `restore-backup` and the live SSO/pairing flow write this store out of
-    // order, so a late backup must never clobber a fresher session — that
-    // overwrite is the root cause of post-login `/isValid` 401s. Restore the
+    // order, so a late backup must never clobber a fresher session. Restore the
     // wallet session only when absent, and the SDK session only when absent or
-    // genuinely newer (`expires` is the mint-ordered freshness signal).
+    // genuinely newer. Freshness is read from the JWT `exp` (the single source
+    // of truth) rather than the backend-supplied `expires` field.
     const store = sessionStore.getState();
 
     if (data.session?.token && !store.session?.token) {
@@ -95,7 +96,8 @@ export async function restoreBackupData({
     if (
         data.sdkSession?.token &&
         (!store.sdkSession ||
-            data.sdkSession.expires > store.sdkSession.expires)
+            (getTokenExpMs(data.sdkSession.token) ?? 0) >
+                (getTokenExpMs(store.sdkSession.token) ?? 0))
     ) {
         store.setSdkSession(data.sdkSession);
     }

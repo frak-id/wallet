@@ -34,6 +34,18 @@ vi.mock("@frak-labs/wallet-shared/stores/sessionStore", () => ({
     },
 }));
 
+/**
+ * Build a minimal JWT-shaped token carrying an `exp` claim (seconds), so the
+ * backup freshness comparison (which decodes the JWT) can order tokens.
+ */
+function jwtWithExp(expSeconds: number): string {
+    const payload = btoa(JSON.stringify({ exp: expSeconds }))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    return `h.${payload}.s`;
+}
+
 describe("backup", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -163,7 +175,7 @@ describe("backup", () => {
             const backupData = {
                 domain: "example.com",
                 session: { address: "0x123", token: "stale-session-token" },
-                sdkSession: { token: "stale-sdk-token", expires: 1000 },
+                sdkSession: { token: jwtWithExp(1_000), expires: 1000 },
                 expireAtTimestamp: Date.now() + 1000 * 60 * 60,
             };
 
@@ -175,7 +187,7 @@ describe("backup", () => {
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: { address: "0x123", token: "fresh-session-token" },
                 sdkSession: {
-                    token: "fresh-sdk-token",
+                    token: jwtWithExp(9_999_999_999),
                     expires: 9_999_999_999,
                 },
                 setSession,
@@ -193,7 +205,7 @@ describe("backup", () => {
 
         test("should restore a fresher sdkSession over an older in-store one", async () => {
             const fresherSdk = {
-                token: "fresher-sdk-token",
+                token: jwtWithExp(9_999_999_999),
                 expires: 9_999_999_999,
             };
             const backupData = {
@@ -209,7 +221,7 @@ describe("backup", () => {
             const setSdkSession = vi.fn();
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: null,
-                sdkSession: { token: "older-sdk-token", expires: 1000 },
+                sdkSession: { token: jwtWithExp(1_000), expires: 1000 },
                 setSession,
                 setSdkSession,
             } as never);
