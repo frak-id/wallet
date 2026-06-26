@@ -36,28 +36,19 @@ CronRegistry.register(
             }
 
             const { result } = outcome;
-            const summary = {
-                pages: result.pages,
-                processed: result.processed,
-                created: result.created,
-                custom: result.custom,
-                cancelled: result.cancelled,
-                skipped: result.skipped,
-                errors: result.errors,
-                newWatermark: result.newWatermark,
-            };
             if (result.errors > 0) {
                 logger.warn(
-                    // watermark held back (not advanced past the failures) so
-                    // the next tick retries them; surface at warn for on-call.
+                    // The cursor is checkpointed per page and held at the last
+                    // safe point; failed actions are retried next tick. Surface
+                    // at warn for on-call.
                     {
-                        ...summary,
-                        watermarkConserved: result.newWatermark === null,
+                        ...result,
+                        watermarkAdvanced: result.newWatermark !== null,
                     },
                     "Affiliate ingestion job completed with errors"
                 );
             } else {
-                logger.info(summary, "Affiliate ingestion job completed");
+                logger.info(result, "Affiliate ingestion job completed");
             }
         },
     })

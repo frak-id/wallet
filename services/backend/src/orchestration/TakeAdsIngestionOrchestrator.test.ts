@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AffiliateAttributionSelect } from "../domain/affiliate/db/schema";
 import type { AffiliateAttributionRepository } from "../domain/affiliate/repositories/AffiliateAttributionRepository";
 import type { AffiliateSyncStateRepository } from "../domain/affiliate/repositories/AffiliateSyncStateRepository";
@@ -11,6 +11,10 @@ import type { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import type { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 import { TakeAdsIngestionOrchestrator } from "./TakeAdsIngestionOrchestrator";
 
+// Hoisted so individual tests can assert on the `newInteraction` signal that
+// wakes the reward cron after a fresh custom interaction.
+const { emitMock } = vi.hoisted(() => ({ emitMock: vi.fn() }));
+
 vi.mock("@backend-infrastructure", () => ({
     log: {
         debug: vi.fn(),
@@ -18,7 +22,7 @@ vi.mock("@backend-infrastructure", () => ({
         warn: vi.fn(),
         error: vi.fn(),
     },
-    eventEmitter: { emit: vi.fn() },
+    eventEmitter: { emit: emitMock },
 }));
 
 const attribution: AffiliateAttributionSelect = {
@@ -106,6 +110,10 @@ const buildOrchestrator = () => {
 
 describe("TakeAdsIngestionOrchestrator", () => {
     describe("ingestActions", () => {
+        beforeEach(() => {
+            emitMock.mockClear();
+        });
+
         it("1. unknown subId → skipped; neither create nor cancel called", async () => {
             const {
                 orchestrator,
@@ -113,6 +121,7 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 getActions,
                 purchaseInteractionCreator,
                 rewardLifecycleOrchestrator,
+                syncStateRepo,
             } = buildOrchestrator();
 
             vi.mocked(attributionRepo.findByToken).mockResolvedValue(null);
@@ -126,6 +135,14 @@ describe("TakeAdsIngestionOrchestrator", () => {
             expect(
                 rewardLifecycleOrchestrator.cancelForRefund
             ).not.toHaveBeenCalled();
+            // H-2: a skipped (foreign subId) action must still advance the cursor
+            // so it cannot pin the watermark and force endless re-scans.
+            expect(syncStateRepo.advanceWatermark).toHaveBeenCalledWith(
+                "takeads",
+                "conversions",
+                new Date("2024-06-01T12:00:00Z")
+            );
+            expect(emitMock).not.toHaveBeenCalled();
         });
 
         it("2. PENDING/CONFIRMED/SETTLED → purchaseInteractionCreator.create called with mapped params", async () => {
@@ -195,6 +212,7 @@ describe("TakeAdsIngestionOrchestrator", () => {
             const summary = await orchestrator.ingestActions();
 
             expect(summary.cancelled).toBe(1);
+            expect(summary.processed).toBe(1);
             expect(
                 rewardLifecycleOrchestrator.cancelForRefund
             ).toHaveBeenCalledOnce();
@@ -208,7 +226,7 @@ describe("TakeAdsIngestionOrchestrator", () => {
         });
 
         it("4. pagination: two pages — all actions processed; getActions called twice", async () => {
-            const { orchestrator, attributionRepo, getActions } =
+            const { orchestrator, attributionRepo, getActions, syncStateRepo } =
                 buildOrchestrator();
 
             vi.mocked(attributionRepo.findByToken).mockResolvedValue(
@@ -232,6 +250,8 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 expect.objectContaining({ next: "cursor-page-2" })
             );
             expect(summary.pages).toBe(2);
+            // M-1: each page is checkpointed independently.
+            expect(syncStateRepo.advanceWatermark).toHaveBeenCalledTimes(2);
             expect(summary.processed).toBe(2);
         });
 
@@ -327,6 +347,23 @@ describe("TakeAdsIngestionOrchestrator", () => {
             expect(summary.processed).toBe(2);
         });
 
+        it("7. first run (watermark null) → getActions called with updatedAtFrom: undefined", async () => {
+            const { orchestrator, attributionRepo, getActions, syncStateRepo } =
+                buildOrchestrator();
+
+            vi.mocked(syncStateRepo.getWatermark).mockResolvedValue(null);
+            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
+                attribution
+            );
+            getActions.mockResolvedValue(singlePage([]));
+
+            await orchestrator.ingestActions();
+
+            expect(getActions).toHaveBeenCalledWith(
+                expect.objectContaining({ updatedAtFrom: undefined })
+            );
+        });
+
         it("8. duplicate create (null) counts as processed but not created", async () => {
             const {
                 orchestrator,
@@ -383,6 +420,9 @@ describe("TakeAdsIngestionOrchestrator", () => {
             expect(summary.custom).toBe(3);
             expect(summary.created).toBe(0);
             expect(summary.processed).toBe(3);
+            // M-4: each fresh custom interaction wakes the reward cron.
+            expect(emitMock).toHaveBeenCalledTimes(3);
+            expect(emitMock).toHaveBeenCalledWith("newInteraction");
             // custom payload carries the action metadata for an attributed user.
             expect(interactionLogRepo.createIdempotent).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -447,6 +487,7 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 attributionRepo,
                 getActions,
                 interactionLogRepo,
+                syncStateRepo,
             } = buildOrchestrator();
 
             vi.mocked(attributionRepo.findByToken).mockResolvedValue(null);
@@ -459,22 +500,43 @@ describe("TakeAdsIngestionOrchestrator", () => {
             expect(interactionLogRepo.createIdempotent).not.toHaveBeenCalled();
             expect(summary.custom).toBe(0);
             expect(summary.skipped).toBe(1);
+            // H-2: even an unmatched non-purchase advances the cursor past itself.
+            expect(syncStateRepo.advanceWatermark).toHaveBeenCalledWith(
+                "takeads",
+                "conversions",
+                new Date("2024-06-01T12:00:00Z")
+            );
+            expect(emitMock).not.toHaveBeenCalled();
         });
 
-        it("7. first run (watermark null) → getActions called with updatedAtFrom: undefined", async () => {
+        it("12. M-1: a thrown getActions on page 2 keeps page 1's checkpoint", async () => {
             const { orchestrator, attributionRepo, getActions, syncStateRepo } =
                 buildOrchestrator();
 
-            vi.mocked(syncStateRepo.getWatermark).mockResolvedValue(null);
             vi.mocked(attributionRepo.findByToken).mockResolvedValue(
                 attribution
             );
-            getActions.mockResolvedValue(singlePage([]));
+            getActions
+                .mockResolvedValueOnce({
+                    meta: { limit: 500, next: "cursor-page-2" },
+                    data: [
+                        makeAction({
+                            actionId: "p1",
+                            updatedAt: "2024-06-01T10:00:00Z",
+                        }),
+                    ],
+                })
+                .mockRejectedValueOnce(new Error("network down"));
 
-            await orchestrator.ingestActions();
-
-            expect(getActions).toHaveBeenCalledWith(
-                expect.objectContaining({ updatedAtFrom: undefined })
+            await expect(orchestrator.ingestActions()).rejects.toThrow(
+                "network down"
+            );
+            // Page 1 was checkpointed before page 2 was ever fetched, so a
+            // mid-run API failure never discards already-drained progress.
+            expect(syncStateRepo.advanceWatermark).toHaveBeenCalledWith(
+                "takeads",
+                "conversions",
+                new Date("2024-06-01T10:00:00Z")
             );
         });
     });
