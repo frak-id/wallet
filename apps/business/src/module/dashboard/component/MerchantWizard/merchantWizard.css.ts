@@ -11,18 +11,6 @@ export const inputLabel = style({
 
 /* ---- currency ---- */
 
-/** 2×2 grid of currency cells. `&&` beats the DS RadioGroup base flex-column. */
-export const currencyGrid = style({
-    width: "100%",
-    selectors: {
-        "&&": {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: alias.spacing.m,
-        },
-    },
-});
-
 export const currencyCell = style([
     interactive,
     focusRing,

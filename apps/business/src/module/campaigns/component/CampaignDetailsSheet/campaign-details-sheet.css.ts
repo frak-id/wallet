@@ -10,18 +10,6 @@ export const tabsContent = style({
     marginTop: alias.spacing.l,
 });
 
-export const twoCol = style({
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: alias.spacing.m,
-});
-
-export const threeCol = style({
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: alias.spacing.m,
-});
-
 // Big metric value — tabular figures so amounts line up across cards.
 export const amount = style({
     fontSize: "32px",

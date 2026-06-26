@@ -1,6 +1,6 @@
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { useTranslation } from "react-i18next";
 import type { CampaignDetailsStats } from "@/module/campaigns/queries/queryOptions";
-import * as styles from "./campaign-details-sheet.css";
 import { BigNumber, MetricCard, TrendLine, useDetailFormatters } from "./parts";
 
 export function EconomicValueCards({
@@ -13,7 +13,7 @@ export function EconomicValueCards({
     const conversions = fmt.integer.format(economicValue.conversions);
 
     return (
-        <div className={styles.twoCol}>
+        <Tiles columns={2} space="m">
             <MetricCard
                 label={t("campaigns.details.economic.yourSpend")}
                 descriptor={t("campaigns.details.economic.frakTag")}
@@ -75,6 +75,6 @@ export function EconomicValueCards({
                     value={economicValue.avgBasketValue}
                 />
             </MetricCard>
-        </div>
+        </Tiles>
     );
 }

@@ -14,12 +14,6 @@ export const fieldCard = style({
     borderRadius: alias.cornerRadius.m,
 });
 
-export const currencyGrid = style({
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: `0 ${alias.spacing.m}`,
-});
-
 export const currencyCell = style({
     display: "flex",
     alignItems: "center",

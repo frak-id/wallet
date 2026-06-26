@@ -24,26 +24,6 @@ export const radioRowLabel = style({
     cursor: "pointer",
 });
 
-export const presetGrid = style({
-    gap: alias.spacing.m,
-    selectors: {
-        // "&&" outranks the RadioGroup base (display: flex, column).
-        "&&": {
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        },
-    },
-    "@media": {
-        "screen and (max-width: 640px)": {
-            selectors: {
-                "&&": {
-                    gridTemplateColumns: "1fr",
-                },
-            },
-        },
-    },
-});
-
 export const presetRow = style({
     display: "flex",
     alignItems: "center",

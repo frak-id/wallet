@@ -11,17 +11,3 @@ export const readOnlySection = style({
 export const readOnlyTitle = style({
     margin: 0,
 });
-
-export const merchantGrid = style({
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: alias.spacing.m,
-    "@media": {
-        "screen and (max-width: 1080px)": {
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        },
-        "screen and (max-width: 720px)": {
-            gridTemplateColumns: "minmax(0, 1fr)",
-        },
-    },
-});

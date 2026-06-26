@@ -16,6 +16,7 @@ import {
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import {
     EurIcon,
     GbpIcon,
@@ -68,50 +69,60 @@ function CurrencyRadioGroup({
     const groupId = useId();
     return (
         <RadioGroup
-            className={styles.currencyGrid}
             value={value}
             onValueChange={(next) => next && onChange(next as Stablecoin)}
         >
-            {CURRENCIES.map((currency) => {
-                const meta = currencyMetadata[currency];
-                const itemId = `${groupId}-${currency}`;
-                return (
-                    <label
-                        key={currency}
-                        htmlFor={itemId}
-                        className={styles.currencyCell}
-                    >
-                        <RadioGroupItem id={itemId} value={currency} size="l" />
-                        <Inline
-                            as="span"
-                            space="xs"
-                            alignY="center"
-                            wrap={false}
-                            className={styles.currencyMain}
+            {/* Note: original gap was `0 m` (row=0, col=m); Tiles applies uniform m gap — accepted delta */}
+            <Tiles columns={2} space="m">
+                {CURRENCIES.map((currency) => {
+                    const meta = currencyMetadata[currency];
+                    const itemId = `${groupId}-${currency}`;
+                    return (
+                        <label
+                            key={currency}
+                            htmlFor={itemId}
+                            className={styles.currencyCell}
                         >
-                            <span className={styles.currencyIcon}>
-                                {CURRENCY_ICONS[currency]}
-                            </span>
-                            <Stack
+                            <RadioGroupItem
+                                id={itemId}
+                                value={currency}
+                                size="l"
+                            />
+                            <Inline
                                 as="span"
-                                space="xxs"
-                                className={styles.currencyText}
+                                space="xs"
+                                alignY="center"
+                                wrap={false}
+                                className={styles.currencyMain}
                             >
-                                <Text as="span" variant="body" weight="medium">
-                                    {meta.label}
-                                </Text>
-                                <Text
+                                <span className={styles.currencyIcon}>
+                                    {CURRENCY_ICONS[currency]}
+                                </span>
+                                <Stack
                                     as="span"
-                                    variant="bodySmall"
-                                    color="secondary"
+                                    space="xxs"
+                                    className={styles.currencyText}
                                 >
-                                    {meta.provider}
-                                </Text>
-                            </Stack>
-                        </Inline>
-                    </label>
-                );
-            })}
+                                    <Text
+                                        as="span"
+                                        variant="body"
+                                        weight="medium"
+                                    >
+                                        {meta.label}
+                                    </Text>
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        color="secondary"
+                                    >
+                                        {meta.provider}
+                                    </Text>
+                                </Stack>
+                            </Inline>
+                        </label>
+                    );
+                })}
+            </Tiles>
         </RadioGroup>
     );
 }

@@ -1,4 +1,5 @@
 import type { OverviewKpis } from "@frak-labs/backend-elysia/orchestration/schemas";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -7,7 +8,6 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { currencyStore } from "@/stores/currencyStore";
 import { OverviewKpiCard } from "./OverviewKpiCard";
-import * as styles from "./overview.css";
 
 const DEFAULT_REVENUE_CURRENCY = "EUR";
 
@@ -96,7 +96,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
     );
 
     return (
-        <div className={styles.kpiRow}>
+        <Tiles columns={{ mobile: 2, tablet: 3, desktop: 5 }} space="m">
             <OverviewKpiCard
                 label={t("campaigns.overview.kpi.ambassadors")}
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
@@ -141,7 +141,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 amount={formatters.cpa.format(avgCpa)}
                 empty={avgCpa === 0}
             />
-        </div>
+        </Tiles>
     );
 }
 

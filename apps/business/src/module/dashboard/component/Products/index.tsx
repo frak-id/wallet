@@ -1,4 +1,5 @@
 import { Text } from "@frak-labs/design-system/components/Text";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
@@ -15,7 +16,11 @@ export function MyMerchants() {
 
     return (
         <>
-            <section className={styles.merchantGrid}>
+            <Tiles
+                as="section"
+                columns={{ mobile: 1, tablet: 2, desktop: 3 }}
+                space="m"
+            >
                 {accessibleMerchants.map((merchant) => (
                     <MerchantItem
                         key={merchant.id}
@@ -27,7 +32,7 @@ export function MyMerchants() {
                         onManageBudget={() => setBudgetMerchantId(merchant.id)}
                     />
                 ))}
-            </section>
+            </Tiles>
             {readOnlyMerchants.length > 0 && (
                 <section className={styles.readOnlySection}>
                     <Text
@@ -39,7 +44,10 @@ export function MyMerchants() {
                     >
                         {t("platformAdmin.readOnlySectionTitle")}
                     </Text>
-                    <div className={styles.merchantGrid}>
+                    <Tiles
+                        columns={{ mobile: 1, tablet: 2, desktop: 3 }}
+                        space="m"
+                    >
                         {readOnlyMerchants.map((merchant) => (
                             <MerchantItem
                                 key={merchant.id}
@@ -53,7 +61,7 @@ export function MyMerchants() {
                                 }
                             />
                         ))}
-                    </div>
+                    </Tiles>
                 </section>
             )}
             {budgetMerchantId && (

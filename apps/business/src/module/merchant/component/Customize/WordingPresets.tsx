@@ -5,6 +5,7 @@ import {
 } from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { useId } from "react";
 import type { FieldPath, UseFormReturn } from "react-hook-form";
 import * as styles from "./customize.css";
@@ -71,7 +72,6 @@ function ButtonSharePresets({
 
     return (
         <RadioGroup
-            className={styles.presetGrid}
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
                 const preset = BUTTON_SHARE_PRESETS[Number(value)];
@@ -82,13 +82,15 @@ function ButtonSharePresets({
                 form.setValue(frField, preset.fr, { shouldDirty: true });
             }}
         >
-            {BUTTON_SHARE_PRESETS.map((preset, index) => (
-                <PresetRow key={preset.en} value={String(index)}>
-                    <Text variant="body" weight="medium" as="span">
-                        {formatPresetLabel(preset.en, currency)}
-                    </Text>
-                </PresetRow>
-            ))}
+            <Tiles columns={{ mobile: 1, tablet: 2 }} space="m">
+                {BUTTON_SHARE_PRESETS.map((preset, index) => (
+                    <PresetRow key={preset.en} value={String(index)}>
+                        <Text variant="body" weight="medium" as="span">
+                            {formatPresetLabel(preset.en, currency)}
+                        </Text>
+                    </PresetRow>
+                ))}
+            </Tiles>
         </RadioGroup>
     );
 }
@@ -118,7 +120,6 @@ function PostPurchasePresets({
 
     return (
         <RadioGroup
-            className={styles.presetGrid}
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
                 const preset = POST_PURCHASE_PRESETS[Number(value)];
@@ -139,18 +140,27 @@ function PostPurchasePresets({
                 });
             }}
         >
-            {POST_PURCHASE_PRESETS.map((preset, index) => (
-                <PresetRow key={preset.referee.en} value={String(index)}>
-                    <Stack space="none" as="span">
-                        <Text variant="body" weight="medium" as="span">
-                            {formatPresetLabel(preset.referee.en, currency)}
-                        </Text>
-                        <Text variant="bodySmall" color="tertiary" as="span">
-                            {formatPresetLabel(preset.referrer.en, currency)}
-                        </Text>
-                    </Stack>
-                </PresetRow>
-            ))}
+            <Tiles columns={{ mobile: 1, tablet: 2 }} space="m">
+                {POST_PURCHASE_PRESETS.map((preset, index) => (
+                    <PresetRow key={preset.referee.en} value={String(index)}>
+                        <Stack space="none" as="span">
+                            <Text variant="body" weight="medium" as="span">
+                                {formatPresetLabel(preset.referee.en, currency)}
+                            </Text>
+                            <Text
+                                variant="bodySmall"
+                                color="tertiary"
+                                as="span"
+                            >
+                                {formatPresetLabel(
+                                    preset.referrer.en,
+                                    currency
+                                )}
+                            </Text>
+                        </Stack>
+                    </PresetRow>
+                ))}
+            </Tiles>
         </RadioGroup>
     );
 }
@@ -183,7 +193,6 @@ function BannerPresets({
 
     return (
         <RadioGroup
-            className={styles.presetGrid}
             value={selected !== null ? String(selected) : ""}
             onValueChange={(value) => {
                 const preset = BANNER_PRESETS[Number(value)];
@@ -212,21 +221,27 @@ function BannerPresets({
                 );
             }}
         >
-            {BANNER_PRESETS.map((preset, index) => (
-                <PresetRow key={preset.en.title} value={String(index)}>
-                    <Stack space="none" as="span">
-                        <Text variant="body" weight="medium" as="span">
-                            {formatPresetLabel(preset.en.title, currency)}
-                        </Text>
-                        <Text variant="bodySmall" color="tertiary" as="span">
-                            {formatPresetLabel(
-                                applyBrand(preset.en.description, shopName),
-                                currency
-                            )}
-                        </Text>
-                    </Stack>
-                </PresetRow>
-            ))}
+            <Tiles columns={{ mobile: 1, tablet: 2 }} space="m">
+                {BANNER_PRESETS.map((preset, index) => (
+                    <PresetRow key={preset.en.title} value={String(index)}>
+                        <Stack space="none" as="span">
+                            <Text variant="body" weight="medium" as="span">
+                                {formatPresetLabel(preset.en.title, currency)}
+                            </Text>
+                            <Text
+                                variant="bodySmall"
+                                color="tertiary"
+                                as="span"
+                            >
+                                {formatPresetLabel(
+                                    applyBrand(preset.en.description, shopName),
+                                    currency
+                                )}
+                            </Text>
+                        </Stack>
+                    </PresetRow>
+                ))}
+            </Tiles>
         </RadioGroup>
     );
 }

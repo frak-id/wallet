@@ -6,20 +6,6 @@ export const page = style({
     paddingBottom: "112px",
 });
 
-export const kpiRow = style({
-    display: "grid",
-    gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-    gap: alias.spacing.m,
-    "@media": {
-        "screen and (max-width: 1080px)": {
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-        },
-        "screen and (max-width: 720px)": {
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        },
-    },
-});
-
 export const twoColumns = style({
     display: "grid",
     // Funnel = 451 / Top campaigns = 685 (Figma "mid stats" frame).
@@ -27,20 +13,6 @@ export const twoColumns = style({
     gap: alias.spacing.m,
     "@media": {
         "screen and (max-width: 960px)": {
-            gridTemplateColumns: "minmax(0, 1fr)",
-        },
-    },
-});
-
-export const threeColumns = style({
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: alias.spacing.m,
-    "@media": {
-        "screen and (max-width: 1080px)": {
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        },
-        "screen and (max-width: 720px)": {
             gridTemplateColumns: "minmax(0, 1fr)",
         },
     },
