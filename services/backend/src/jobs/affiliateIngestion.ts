@@ -40,6 +40,7 @@ CronRegistry.register(
                 pages: result.pages,
                 processed: result.processed,
                 created: result.created,
+                custom: result.custom,
                 cancelled: result.cancelled,
                 skipped: result.skipped,
                 errors: result.errors,

@@ -1,6 +1,7 @@
-import { log } from "@backend-infrastructure";
+import { eventEmitter, log } from "@backend-infrastructure";
 import type { AffiliateAttributionRepository } from "../domain/affiliate/repositories/AffiliateAttributionRepository";
 import type { AffiliateSyncStateRepository } from "../domain/affiliate/repositories/AffiliateSyncStateRepository";
+import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type {
     TakeAdsAction,
     TakeAdsActionListResponse,
@@ -11,8 +12,12 @@ import type { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator"
 export type IngestionSummary = {
     pages: number;
     processed: number;
+    /** Fresh purchase interactions (rewardable SALEs). */
     created: number;
+    /** Fresh custom interactions (attributed non-purchase / un-priceable events). */
+    custom: number;
     cancelled: number;
+    /** Actions with no matching attribution (foreign/unknown subId). */
     skipped: number;
     errors: number;
     newWatermark: Date | null;
@@ -21,6 +26,7 @@ export type IngestionSummary = {
 type ActionCounts = {
     processed: number;
     created: number;
+    custom: number;
     cancelled: number;
     skipped: number;
     errors: number;
@@ -42,6 +48,20 @@ const PAGE_CAP = 1000;
 // incrementally across ticks rather than blocking all replicas for hours.
 const RUN_BUDGET_MS = 10 * 60_000;
 
+// A TakeAds action only earns a *purchase* reward when it is a SALE carrying a
+// usable, positively-priced order. Everything else attributed to a user (leads,
+// clicks, bonuses, or a malformed/zero SALE) is still recorded — as a `custom`
+// interaction with the raw event metadata — so no attributed event is lost and
+// nothing un-priceable is forced through purchase pricing.
+function isRewardablePurchase(action: TakeAdsAction): boolean {
+    return (
+        action.type === "SALE" &&
+        Number.isFinite(action.orderAmount) &&
+        action.orderAmount > 0 &&
+        !!action.currencyCode
+    );
+}
+
 function computeWatermark(
     successTimestamps: Date[],
     failedTimestamps: Date[]
@@ -60,6 +80,7 @@ export class TakeAdsIngestionOrchestrator {
     constructor(
         private readonly affiliateAttributionRepository: AffiliateAttributionRepository,
         private readonly affiliateSyncStateRepository: AffiliateSyncStateRepository,
+        private readonly interactionLogRepository: InteractionLogRepository,
         private readonly purchaseInteractionCreator: PurchaseInteractionCreator,
         private readonly rewardLifecycleOrchestrator: RewardLifecycleOrchestrator,
         private readonly actionsClientFactory: () => ActionsClient
@@ -78,6 +99,7 @@ export class TakeAdsIngestionOrchestrator {
         const counts: ActionCounts = {
             processed: 0,
             created: 0,
+            custom: 0,
             cancelled: 0,
             skipped: 0,
             errors: 0,
@@ -174,7 +196,7 @@ export class TakeAdsIngestionOrchestrator {
                     externalId,
                 });
                 counts.cancelled++;
-            } else {
+            } else if (isRewardablePurchase(action)) {
                 const interactionLogId =
                     await this.purchaseInteractionCreator.create({
                         purchaseId: externalId,
@@ -190,6 +212,12 @@ export class TakeAdsIngestionOrchestrator {
                 // null = idempotent no-op (already ingested); only count fresh
                 // interactions so the summary reflects real new work.
                 if (interactionLogId !== null) counts.created++;
+            } else {
+                // Attributed non-purchase / un-priceable event: record it as a
+                // custom interaction carrying the raw action metadata so the
+                // event is never lost. It only earns a reward if a campaign rule
+                // targets this custom event.
+                await this.recordCustomInteraction(action, attribution, counts);
             }
             counts.processed++;
             successTimestamps.push(actionTs);
@@ -206,6 +234,41 @@ export class TakeAdsIngestionOrchestrator {
             );
             counts.errors++;
             failedTimestamps.push(actionTs);
+        }
+    }
+
+    private async recordCustomInteraction(
+        action: TakeAdsAction,
+        attribution: { identityGroupId: string; merchantId: string },
+        counts: ActionCounts
+    ): Promise<void> {
+        const interactionLog =
+            await this.interactionLogRepository.createIdempotent({
+                type: "custom",
+                identityGroupId: attribution.identityGroupId,
+                merchantId: attribution.merchantId,
+                externalEventId: `takeads:${action.actionId}`,
+                payload: {
+                    customType: "affiliate_action",
+                    data: {
+                        provider: PROVIDER,
+                        actionId: action.actionId,
+                        actionType: action.type,
+                        status: action.status,
+                        orderAmount: action.orderAmount,
+                        currencyCode: action.currencyCode,
+                        publisherRevenue: action.publisherRevenue,
+                        countryCode: action.countryCode,
+                        orderDate: action.orderDate,
+                        updatedAt: action.updatedAt,
+                    },
+                },
+            });
+        // null = idempotent no-op (already ingested). On a fresh row, wake the
+        // reward cron so a custom-targeting campaign can act on it.
+        if (interactionLog) {
+            eventEmitter.emit("newInteraction");
+            counts.custom++;
         }
     }
 }

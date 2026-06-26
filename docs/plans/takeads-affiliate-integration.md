@@ -469,7 +469,12 @@ existing platform-admin surfaces later; v1 can drive `POST /merchant/register/ad
    deps, lazy client factory) polls `getActions` with watermark cursor, maps `subId→attribution` via
    `AffiliateAttributionRepository.findByToken`, calls `PurchaseInteractionCreator` for
    PENDING/CONFIRMED/SETTLED and `RewardLifecycleOrchestrator.cancelForRefund` for CANCELED, isolates
-   per-action errors so the watermark never advances past a failed action. `AffiliateSyncStateRepository`
+   per-action errors so the watermark never advances past a failed action. **Event-typing:** only a
+   `SALE` with a usable positive `orderAmount` + currency takes the purchase path; every other
+   *attributed* action (LEAD/CLICK/BONUS, or a malformed/zero SALE) is still recorded as a `custom`
+   interaction (`customType: "affiliate_action"` + raw action metadata) so no matched event is lost and
+   nothing un-priceable is forced through purchase pricing — a custom event only rewards if a campaign
+   rule targets it. Unmatched `subId`s (no end user) are skipped. `AffiliateSyncStateRepository`
    persists the monotonic `(provider, stream)` watermark via drizzle `GREATEST`. Hourly cron
    `ingestAffiliateActions` (`src/jobs/affiliateIngestion.ts`) wraps the call in `tryWithAdvisoryLock`
    (key `0xaff111`) to serialize across replicas, with a top-of-run guard on `TAKEADS_API_KEY` so

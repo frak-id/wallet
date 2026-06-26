@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { AffiliateAttributionSelect } from "../domain/affiliate/db/schema";
 import type { AffiliateAttributionRepository } from "../domain/affiliate/repositories/AffiliateAttributionRepository";
 import type { AffiliateSyncStateRepository } from "../domain/affiliate/repositories/AffiliateSyncStateRepository";
+import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type {
     TakeAdsAction,
     TakeAdsActionListResponse,
@@ -65,6 +66,10 @@ const buildOrchestrator = () => {
         advanceWatermark: vi.fn().mockResolvedValue(undefined),
     } as unknown as AffiliateSyncStateRepository;
 
+    const interactionLogRepo = {
+        createIdempotent: vi.fn().mockResolvedValue({ id: "custom-il-1" }),
+    } as unknown as InteractionLogRepository;
+
     const purchaseInteractionCreator = {
         create: vi.fn().mockResolvedValue("interaction-1"),
     } as unknown as PurchaseInteractionCreator;
@@ -82,6 +87,7 @@ const buildOrchestrator = () => {
     const orchestrator = new TakeAdsIngestionOrchestrator(
         attributionRepo,
         syncStateRepo,
+        interactionLogRepo,
         purchaseInteractionCreator,
         rewardLifecycleOrchestrator,
         actionsClientFactory
@@ -91,6 +97,7 @@ const buildOrchestrator = () => {
         orchestrator,
         attributionRepo,
         syncStateRepo,
+        interactionLogRepo,
         purchaseInteractionCreator,
         rewardLifecycleOrchestrator,
         getActions,
@@ -341,6 +348,117 @@ describe("TakeAdsIngestionOrchestrator", () => {
 
             expect(summary.processed).toBe(1);
             expect(summary.created).toBe(0);
+        });
+
+        it("9. non-purchase types (CLICK/BONUS/LEAD) → recorded as custom interaction, not purchase", async () => {
+            const {
+                orchestrator,
+                attributionRepo,
+                getActions,
+                interactionLogRepo,
+                purchaseInteractionCreator,
+            } = buildOrchestrator();
+
+            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
+                attribution
+            );
+            getActions.mockResolvedValue(
+                singlePage([
+                    makeAction({
+                        actionId: "clk",
+                        type: "CLICK",
+                        orderAmount: 0,
+                    }),
+                    makeAction({ actionId: "bns", type: "BONUS" }),
+                    makeAction({ actionId: "led", type: "LEAD" }),
+                ])
+            );
+
+            const summary = await orchestrator.ingestActions();
+
+            expect(purchaseInteractionCreator.create).not.toHaveBeenCalled();
+            expect(interactionLogRepo.createIdempotent).toHaveBeenCalledTimes(
+                3
+            );
+            expect(summary.custom).toBe(3);
+            expect(summary.created).toBe(0);
+            expect(summary.processed).toBe(3);
+            // custom payload carries the action metadata for an attributed user.
+            expect(interactionLogRepo.createIdempotent).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: "custom",
+                    identityGroupId: attribution.identityGroupId,
+                    merchantId: attribution.merchantId,
+                    externalEventId: "takeads:clk",
+                    payload: expect.objectContaining({
+                        customType: "affiliate_action",
+                        data: expect.objectContaining({
+                            provider: "takeads",
+                            actionId: "clk",
+                            actionType: "CLICK",
+                            status: "PENDING",
+                        }),
+                    }),
+                })
+            );
+        });
+
+        it("10. a SALE with missing/zero order info → custom, not a NaN-priced purchase", async () => {
+            const {
+                orchestrator,
+                attributionRepo,
+                getActions,
+                interactionLogRepo,
+                purchaseInteractionCreator,
+            } = buildOrchestrator();
+
+            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
+                attribution
+            );
+            getActions.mockResolvedValue(
+                singlePage([
+                    makeAction({
+                        actionId: "zero",
+                        type: "SALE",
+                        orderAmount: 0,
+                    }),
+                    makeAction({
+                        actionId: "nocur",
+                        type: "SALE",
+                        orderAmount: 50,
+                        currencyCode: "",
+                    }),
+                ])
+            );
+
+            const summary = await orchestrator.ingestActions();
+
+            expect(purchaseInteractionCreator.create).not.toHaveBeenCalled();
+            expect(interactionLogRepo.createIdempotent).toHaveBeenCalledTimes(
+                2
+            );
+            expect(summary.custom).toBe(2);
+            expect(summary.created).toBe(0);
+        });
+
+        it("11. unknown subId is NOT recorded as custom (no end user to attach)", async () => {
+            const {
+                orchestrator,
+                attributionRepo,
+                getActions,
+                interactionLogRepo,
+            } = buildOrchestrator();
+
+            vi.mocked(attributionRepo.findByToken).mockResolvedValue(null);
+            getActions.mockResolvedValue(
+                singlePage([makeAction({ type: "CLICK" })])
+            );
+
+            const summary = await orchestrator.ingestActions();
+
+            expect(interactionLogRepo.createIdempotent).not.toHaveBeenCalled();
+            expect(summary.custom).toBe(0);
+            expect(summary.skipped).toBe(1);
         });
 
         it("7. first run (watermark null) → getActions called with updatedAtFrom: undefined", async () => {

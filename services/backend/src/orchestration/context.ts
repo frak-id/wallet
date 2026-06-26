@@ -119,6 +119,7 @@ const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
 const takeAdsIngestionOrchestrator = new TakeAdsIngestionOrchestrator(
     AffiliateContext.repositories.affiliateAttribution,
     AffiliateContext.repositories.affiliateSyncState,
+    RewardsContext.repositories.interactionLog,
     purchaseInteractionCreator,
     rewardLifecycleOrchestrator,
     () => getTakeAdsClient()
