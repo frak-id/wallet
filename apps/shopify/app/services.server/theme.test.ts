@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { AuthenticatedContext } from "../types/context";
 import {
     detectAppBlockSupport,
     detectFrakActivated,
     detectFrakBannerInSections,
     detectFrakButton,
+    doesThemeSupportBlock,
     extractThemeId,
     type ThemeBlockInfo,
 } from "./theme";
@@ -185,6 +187,11 @@ describe("detectFrakButton", () => {
         expect(detectFrakButton({})).toBe(false);
     });
 
+    it("returns false (no throw) when sections is undefined", () => {
+        // Vintage themes / empty product.json bodies yield undefined sections.
+        expect(detectFrakButton(undefined)).toBe(false);
+    });
+
     it("ignores string sections", () => {
         const sections = {
             main: "some-string-value" as unknown as {
@@ -355,5 +362,103 @@ describe("detectAppBlockSupport", () => {
             {% endschema %}
         `;
         expect(detectAppBlockSupport(liquid)).toBe(false);
+    });
+});
+
+/* ------------------------------------------------------------------ */
+/*  doesThemeSupportBlock — resilience on custom / vintage themes       */
+/*                                                                     */
+/*  Regression coverage for the "Application Error" on fresh install:   */
+/*  a fully custom / non-OS-2.0 theme has no usable templates/          */
+/*  product.json, which used to throw on unguarded dereferences.       */
+/* ------------------------------------------------------------------ */
+
+let shopCounter = 0;
+
+/**
+ * Build a minimal AuthenticatedContext whose GraphQL client returns canned
+ * responses. `getFilesResponse` is what every `getFiles` query resolves to,
+ * letting each test simulate a differently-shaped (or malformed) theme.
+ * Each context uses a unique shop so the module-level main-theme-id LRU cache
+ * never bleeds between tests.
+ */
+function mockContext(getFilesResponse: unknown): AuthenticatedContext {
+    const graphql = (query: string) => {
+        const json = query.includes("getMainThemeId")
+            ? {
+                  data: {
+                      themes: {
+                          nodes: [{ id: "gid://shopify/OnlineStoreTheme/123" }],
+                      },
+                  },
+              }
+            : getFilesResponse;
+        return Promise.resolve({ json: () => Promise.resolve(json) });
+    };
+
+    shopCounter += 1;
+    return {
+        session: { shop: `test-shop-${shopCounter}.myshopify.com` },
+        admin: { graphql },
+    } as unknown as AuthenticatedContext;
+}
+
+describe("doesThemeSupportBlock", () => {
+    it("returns false (no throw) when theme has no product.json", async () => {
+        const context = mockContext({
+            data: { theme: { files: { nodes: [] } } },
+        });
+        await expect(doesThemeSupportBlock(context)).resolves.toBe(false);
+    });
+
+    it("returns false (no throw) when files.nodes is missing", async () => {
+        const context = mockContext({ data: { theme: { files: {} } } });
+        await expect(doesThemeSupportBlock(context)).resolves.toBe(false);
+    });
+
+    it("returns false (no throw) when product.json has no sections", async () => {
+        const context = mockContext({
+            data: {
+                theme: {
+                    files: {
+                        nodes: [
+                            {
+                                filename: "templates/product.json",
+                                body: { content: "{}" },
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+        await expect(doesThemeSupportBlock(context)).resolves.toBe(false);
+    });
+
+    it("returns false (no throw) when a file body is null", async () => {
+        const context = mockContext({
+            data: {
+                theme: {
+                    files: {
+                        nodes: [
+                            {
+                                filename: "templates/product.json",
+                                body: null,
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+        await expect(doesThemeSupportBlock(context)).resolves.toBe(false);
+    });
+
+    it("returns false (no throw) when the GraphQL call rejects", async () => {
+        const context = {
+            session: { shop: `test-shop-throw-${Date.now()}.myshopify.com` },
+            admin: {
+                graphql: () => Promise.reject(new Error("network down")),
+            },
+        } as unknown as AuthenticatedContext;
+        await expect(doesThemeSupportBlock(context)).resolves.toBe(false);
     });
 });

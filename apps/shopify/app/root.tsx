@@ -1,13 +1,17 @@
+import { boundary } from "@shopify/shopify-app-react-router/server";
+import { AppError } from "app/components/AppError";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import {
+    isRouteErrorResponse,
     Links,
     Meta,
     Outlet,
     Scripts,
     ScrollRestoration,
     useLoaderData,
+    useRouteError,
 } from "react-router";
 import i18next from "./i18n/i18next.server";
 
@@ -47,6 +51,38 @@ export default function App() {
             <body>
                 <Outlet />
                 <ScrollRestoration />
+                <Scripts />
+            </body>
+        </html>
+    );
+}
+
+// Catch-all boundary for anything that escapes a child route's own
+// ErrorBoundary (or errors in the root loader itself). Renders its own HTML
+// document because the root component — which normally provides the shell — is
+// replaced when this boundary is active.
+export function ErrorBoundary() {
+    const error = useRouteError();
+    // Thrown Responses (OAuth / session-token redirects with App Bridge
+    // headers) must keep flowing through Shopify's boundary so the redirect
+    // and required headers are emitted — never paint them as an error page.
+    if (isRouteErrorResponse(error)) {
+        return boundary.error(error);
+    }
+    return (
+        <html lang="en">
+            <head>
+                <meta charSet="utf-8" />
+                <meta
+                    name="viewport"
+                    content="width=device-width,initial-scale=1"
+                />
+                <title>Frak</title>
+                <Meta />
+                <Links />
+            </head>
+            <body>
+                <AppError error={error} />
                 <Scripts />
             </body>
         </html>

@@ -1,5 +1,6 @@
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { AppError } from "app/components/AppError";
 import { Skeleton } from "app/components/Skeleton";
 import {
     ensureComponentsUrlMetafield,
@@ -21,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import {
     Await,
+    isRouteErrorResponse,
     Link,
     Outlet,
     useLoaderData,
@@ -55,7 +57,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         businessUrl: process.env.BUSINESS_URL || "https://business.frak.id",
         walletUrl: process.env.FRAK_WALLET_URL || "https://wallet.frak.id",
         shopifyLogoUrl: `${process.env.SHOPIFY_APP_URL ?? ""}/shopify-logo.svg`,
-        isThemeSupportedPromise: doesThemeSupportBlock(context),
+        // Defensive: a custom/unsupported theme should degrade to
+        // "not supported", never reject the streamed promise and crash the
+        // whole admin route.
+        isThemeSupportedPromise: doesThemeSupportBlock(context).catch(
+            () => false
+        ),
         shop,
         merchantId,
         onboardingDataPromise: fetchAllOnboardingData(context, request),
@@ -111,9 +118,17 @@ function AppContent({
     );
 }
 
-// Shopify needs React Router to catch some thrown responses, so that their headers are included in the response.
+// Shopify needs React Router to catch some thrown responses (auth
+// re-authorization redirects, etc.) so that their headers are included in the
+// response — those MUST keep going through `boundary.error`. Any other runtime
+// error is rendered as a friendly fallback instead of the bare red
+// "Application Error" page.
 export function ErrorBoundary() {
-    return boundary.error(useRouteError());
+    const error = useRouteError();
+    if (isRouteErrorResponse(error)) {
+        return boundary.error(error);
+    }
+    return <AppError error={error} />;
 }
 
 export const headers: HeadersFunction = (headersArgs) => {
@@ -137,7 +152,7 @@ function Navigation({
         <NavigationRoot>
             {isThemeSupported && (
                 <Suspense>
-                    <Await resolve={onboardingDataPromise}>
+                    <Await resolve={onboardingDataPromise} errorElement={null}>
                         {(onboardingData) => {
                             const validationResult =
                                 validateCompleteOnboarding(onboardingData);

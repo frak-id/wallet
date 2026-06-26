@@ -422,5 +422,11 @@
     },
     "settings": {
         "title": "Paramètres"
+    },
+    "error": {
+        "title": "Une erreur est survenue",
+        "description": "Une erreur inattendue s'est produite lors du chargement de cette page. Rafraîchissez la page dans quelques secondes. Si le problème persiste, contactez le support Frak avec les détails ci-dessous.",
+        "refresh": "Rafraîchir",
+        "detailsLabel": "Détails techniques"
     }
 }
