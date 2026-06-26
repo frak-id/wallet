@@ -1,3 +1,4 @@
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import {
     Tabs,
     TabsList,
@@ -11,7 +12,7 @@ import {
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PageShell } from "@/module/common/component/PageShell";
-import { content, tabContent } from "./settings.css";
+import { tabContent } from "./settings.css";
 
 export const Route = createFileRoute("/_restricted/settings")({
     component: SettingsLayout,
@@ -32,7 +33,7 @@ function SettingsLayout() {
 
     return (
         <PageShell page="settings" space="l">
-            <div className={content}>
+            <ContentBlock maxWidth="685px" align="left">
                 <Tabs value={active}>
                     <TabsList variant="navigation">
                         <TabsTrigger value="usage" variant="navigation" asChild>
@@ -52,7 +53,7 @@ function SettingsLayout() {
                 <div className={tabContent}>
                     <Outlet />
                 </div>
-            </div>
+            </ContentBlock>
         </PageShell>
     );
 }

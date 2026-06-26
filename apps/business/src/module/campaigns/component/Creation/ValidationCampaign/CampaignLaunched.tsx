@@ -1,5 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -74,7 +75,7 @@ export function CampaignLaunched() {
     return (
         <div className={styles.root}>
             <div className={styles.main}>
-                <div className={styles.inner}>
+                <ContentBlock maxWidth="684px" align="left">
                     <Stack space="l">
                         <Stack space="m" align="center">
                             <div className={styles.checkCircle}>
@@ -218,7 +219,7 @@ export function CampaignLaunched() {
                             </Box>
                         </Card>
                     </Stack>
-                </div>
+                </ContentBlock>
             </div>
 
             <div className={styles.bottomBar}>

@@ -1,3 +1,4 @@
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
@@ -24,7 +25,7 @@ export const Route = createRootRoute({
 function ErrorComponent({ error }: { error: Error }) {
     const { t } = useTranslation();
     return (
-        <div className={errorContainer}>
+        <ContentBlock maxWidth="600px" className={errorContainer}>
             <Text as="h1" variant="display" className={errorContainerTitle}>
                 {t("errors.generic.title")}
             </Text>
@@ -38,7 +39,7 @@ function ErrorComponent({ error }: { error: Error }) {
             {import.meta.env.DEV && (
                 <pre className={errorContainerStack}>{error.stack}</pre>
             )}
-        </div>
+        </ContentBlock>
     );
 }
 
@@ -62,3 +63,4 @@ function RootComponent() {
         </RootProvider>
     );
 }
+

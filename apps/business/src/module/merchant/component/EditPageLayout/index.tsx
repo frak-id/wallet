@@ -1,3 +1,4 @@
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
@@ -75,44 +76,49 @@ export function EditPageLayout({
                 <Text as="h1">{t("merchantEdit.title")}</Text>
             </Stack>
             <div className={styles.gutter}>
-                <Stack space="l" className={styles.content}>
-                    <Tabs
-                        value={page}
-                        onValueChange={(value) =>
-                            guarded(() =>
-                                navigate({
-                                    to: PAGE_ROUTES[value as EditPage],
-                                    params: { merchantId },
-                                })
-                            )
-                        }
-                    >
-                        <TabsList variant="navigation">
-                            {isAffiliate ? (
+                <ContentBlock maxWidth="720px" align="left">
+                    <Stack space="l" className={styles.content}>
+                        <Tabs
+                            value={page}
+                            onValueChange={(value) =>
+                                guarded(() =>
+                                    navigate({
+                                        to: PAGE_ROUTES[value as EditPage],
+                                        params: { merchantId },
+                                    })
+                                )
+                            }
+                        >
+                            <TabsList variant="navigation">
+                                {isAffiliate ? (
+                                    <TabsTrigger
+                                        variant="navigation"
+                                        value="affiliate"
+                                    >
+                                        {t("merchantEdit.tabs.affiliate")}
+                                    </TabsTrigger>
+                                ) : (
+                                    <TabsTrigger
+                                        variant="navigation"
+                                        value="customize"
+                                    >
+                                        {t("merchantEdit.tabs.identity")}
+                                    </TabsTrigger>
+                                )}
                                 <TabsTrigger
                                     variant="navigation"
-                                    value="affiliate"
+                                    value="details"
                                 >
-                                    {t("merchantEdit.tabs.affiliate")}
+                                    {t("merchantEdit.tabs.explorer")}
                                 </TabsTrigger>
-                            ) : (
-                                <TabsTrigger
-                                    variant="navigation"
-                                    value="customize"
-                                >
-                                    {t("merchantEdit.tabs.identity")}
+                                <TabsTrigger variant="navigation" value="team">
+                                    {t("merchantEdit.tabs.team")}
                                 </TabsTrigger>
-                            )}
-                            <TabsTrigger variant="navigation" value="details">
-                                {t("merchantEdit.tabs.explorer")}
-                            </TabsTrigger>
-                            <TabsTrigger variant="navigation" value="team">
-                                {t("merchantEdit.tabs.team")}
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                    {children}
-                </Stack>
+                            </TabsList>
+                        </Tabs>
+                        {children}
+                    </Stack>
+                </ContentBlock>
             </div>
         </div>
     );

@@ -5,8 +5,8 @@ import { style } from "@vanilla-extract/css";
 export const errorContainer = style({
     padding: "2rem",
     textAlign: "center",
-    maxWidth: "600px",
-    margin: "4rem auto",
+    marginTop: "4rem",
+    marginBottom: "4rem",
 });
 
 export const errorContainerTitle = style({

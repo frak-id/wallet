@@ -1,4 +1,6 @@
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import type { RecipeVariants } from "@vanilla-extract/recipes";
@@ -8,13 +10,7 @@ import { createContext, use, useId, useMemo } from "react";
 import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
 import { Controller, FormProvider, useFormContext } from "react-hook-form";
 import { Label } from "@/module/forms/Label";
-import {
-    formDescription,
-    formItem,
-    formLabel,
-    formLayout,
-    formTitle,
-} from "./form.css";
+import { formDescription, formItem, formLabel, formTitle } from "./form.css";
 
 const Form = FormProvider;
 
@@ -25,7 +21,11 @@ function FormLayout({
     children: ReactNode;
     className?: string;
 }) {
-    return <div className={clsx(formLayout, className)}>{children}</div>;
+    return (
+        <ContentBlock maxWidth="850px" align="left" className={className}>
+            <Stack space="l">{children}</Stack>
+        </ContentBlock>
+    );
 }
 
 type FormFieldContextValue<
