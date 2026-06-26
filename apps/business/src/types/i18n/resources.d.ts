@@ -172,8 +172,9 @@ export default interface Resources {
             "label": "CAC"
           },
           "decrease": {
-            "hint": "Each level receives this percentage less than the previous level.",
+            "hint": "Each level receives this percentage less than the previous level. Minimum 50%.",
             "label": "Reward decrease per level (%)",
+            "outOfRange": "Decrease must be between 50% and 99%: below 50% deeper levels receive more than the direct ambassador; at 100% they receive nothing.",
             "placeholder": "Enter level"
           },
           "enable": {

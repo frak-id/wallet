@@ -536,8 +536,9 @@
                 },
                 "decrease": {
                     "label": "Diminution de récompense par niveau (%)",
-                    "hint": "Chaque niveau reçoit ce pourcentage de moins que le niveau précédent.",
-                    "placeholder": "Saisir le niveau"
+                    "hint": "Chaque niveau reçoit ce pourcentage de moins que le niveau précédent. Minimum 50%.",
+                    "placeholder": "Saisir le niveau",
+                    "outOfRange": "La diminution doit être comprise entre 50% et 99% : en dessous de 50%, les niveaux profonds reçoivent plus que l’ambassadeur direct ; à 100%, ils ne reçoivent rien."
                 },
                 "maxLevels": {
                     "label": "Nombre maximum de niveaux récompensés",

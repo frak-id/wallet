@@ -39,6 +39,7 @@ import {
     hasReferrerReward,
     isReferralChainFormValid,
     MAX_REWARDED_LEVELS,
+    MIN_DEPERDITION_PER_LEVEL,
     type ReferralChainFormValues,
     referralChainFormToDraft,
 } from "./utils";
@@ -55,6 +56,7 @@ function LabeledNumberField({
     hint,
     placeholder,
     rightSection,
+    min,
     max,
 }: {
     control: Control<ReferralChainFormValues>;
@@ -63,6 +65,7 @@ function LabeledNumberField({
     hint: string;
     placeholder: string;
     rightSection?: React.ReactNode;
+    min?: number;
     max?: number;
 }) {
     return (
@@ -83,6 +86,7 @@ function LabeledNumberField({
                         classNameWrapper={styles.inputWrapper}
                         placeholder={placeholder}
                         rightSection={rightSection}
+                        min={min}
                         max={max}
                         {...field}
                         value={field.value ?? ""}
@@ -144,8 +148,18 @@ function ChainPreview({
     const decrease = Number(useWatch({ control, name: "deperditionPerLevel" }));
     const maxDepthRaw = useWatch({ control, name: "maxDepth" });
 
-    // Nothing meaningful to show until a positive decrease is entered.
-    if (!(decrease > 0 && decrease < 100)) return null;
+    const inRange = decrease >= MIN_DEPERDITION_PER_LEVEL && decrease < 100;
+    // Outside [50,100) the distribution is broken (below 50% deeper levels
+    // out-earn the direct referrer; at 100% they get nothing), so warn instead
+    // of rendering a misleading preview.
+    if (decrease > 0 && !inRange) {
+        return (
+            <InfoBanner>
+                {t("campaigns.create.referralChain.decrease.outOfRange")}
+            </InfoBanner>
+        );
+    }
+    if (!inRange) return null;
 
     const depth = Math.min(
         Number(maxDepthRaw) || DEFAULT_PREVIEW_DEPTH,
@@ -433,6 +447,7 @@ export function ReferralChainCampaign() {
                                             placeholder={t(
                                                 "campaigns.create.referralChain.decrease.placeholder"
                                             )}
+                                            min={MIN_DEPERDITION_PER_LEVEL}
                                             rightSection={
                                                 <PercentIcon
                                                     width={24}

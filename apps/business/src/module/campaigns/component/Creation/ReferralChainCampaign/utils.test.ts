@@ -121,10 +121,10 @@ describe("isReferralChainFormValid", () => {
         ).toBe(true);
     });
 
-    it("is valid when enabled with a decrease in (0,100) and a referrer reward", () => {
+    it("is valid when enabled with a decrease in [50,100) and a referrer reward", () => {
         expect(
             isReferralChainFormValid(
-                { enabled: true, deperditionPerLevel: 20, maxDepth: 3 },
+                { enabled: true, deperditionPerLevel: 80, maxDepth: 3 },
                 draftWithReferrer
             )
         ).toBe(true);
@@ -133,7 +133,7 @@ describe("isReferralChainFormValid", () => {
     it("accepts an empty (unlimited) max level", () => {
         expect(
             isReferralChainFormValid(
-                { enabled: true, deperditionPerLevel: 20, maxDepth: "" },
+                { enabled: true, deperditionPerLevel: 80, maxDepth: "" },
                 draftWithReferrer
             )
         ).toBe(true);
@@ -154,16 +154,31 @@ describe("isReferralChainFormValid", () => {
         ).toBe(false);
     });
 
-    it("rejects a non-integer or sub-1 max level", () => {
+    it("rejects a decrease below the 50% floor", () => {
         expect(
             isReferralChainFormValid(
-                { enabled: true, deperditionPerLevel: 20, maxDepth: 1.5 },
+                { enabled: true, deperditionPerLevel: 49, maxDepth: 3 },
                 draftWithReferrer
             )
         ).toBe(false);
         expect(
             isReferralChainFormValid(
-                { enabled: true, deperditionPerLevel: 20, maxDepth: 0 },
+                { enabled: true, deperditionPerLevel: 50, maxDepth: 3 },
+                draftWithReferrer
+            )
+        ).toBe(true);
+    });
+
+    it("rejects a non-integer or sub-1 max level", () => {
+        expect(
+            isReferralChainFormValid(
+                { enabled: true, deperditionPerLevel: 80, maxDepth: 1.5 },
+                draftWithReferrer
+            )
+        ).toBe(false);
+        expect(
+            isReferralChainFormValid(
+                { enabled: true, deperditionPerLevel: 80, maxDepth: 0 },
                 draftWithReferrer
             )
         ).toBe(false);
@@ -172,7 +187,7 @@ describe("isReferralChainFormValid", () => {
     it("rejects enabling without a referrer reward to attach to", () => {
         expect(
             isReferralChainFormValid(
-                { enabled: true, deperditionPerLevel: 20, maxDepth: 3 },
+                { enabled: true, deperditionPerLevel: 80, maxDepth: 3 },
                 draftNoReferrer
             )
         ).toBe(false);
@@ -181,7 +196,7 @@ describe("isReferralChainFormValid", () => {
     it("accepts a max level of 1", () => {
         expect(
             isReferralChainFormValid(
-                { enabled: true, deperditionPerLevel: 20, maxDepth: 1 },
+                { enabled: true, deperditionPerLevel: 80, maxDepth: 1 },
                 draftWithReferrer
             )
         ).toBe(true);
@@ -190,13 +205,13 @@ describe("isReferralChainFormValid", () => {
     it("caps max levels at 20", () => {
         expect(
             isReferralChainFormValid(
-                { enabled: true, deperditionPerLevel: 20, maxDepth: 20 },
+                { enabled: true, deperditionPerLevel: 80, maxDepth: 20 },
                 draftWithReferrer
             )
         ).toBe(true);
         expect(
             isReferralChainFormValid(
-                { enabled: true, deperditionPerLevel: 20, maxDepth: 21 },
+                { enabled: true, deperditionPerLevel: 80, maxDepth: 21 },
                 draftWithReferrer
             )
         ).toBe(false);

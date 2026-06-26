@@ -15,14 +15,24 @@ export type ReferralChainFormValues = {
     maxDepth: number | "";
 };
 
+/** Default decrease per level; below `MIN_DEPERDITION_PER_LEVEL` the model breaks. */
+export const DEFAULT_DEPERDITION_PER_LEVEL = 80;
+
+/** Default number of rewarded levels. */
+export const DEFAULT_MAX_DEPTH = 5;
+
+/** Floor on the per-level decrease: below 50% deeper levels collectively
+ * out-earn the direct referrer and the distribution model no longer holds. */
+export const MIN_DEPERDITION_PER_LEVEL = 50;
+
 export const DEFAULT_REFERRAL_CHAIN_FORM: ReferralChainFormValues = {
     enabled: false,
-    deperditionPerLevel: "",
-    maxDepth: "",
+    deperditionPerLevel: DEFAULT_DEPERDITION_PER_LEVEL,
+    maxDepth: DEFAULT_MAX_DEPTH,
 };
 
 /** Backend fallback depth when `maxDepth` is unset; preview assumes it. */
-export const DEFAULT_PREVIEW_DEPTH = 5;
+export const DEFAULT_PREVIEW_DEPTH = DEFAULT_MAX_DEPTH;
 
 /** Frontend cap on rewarded levels (the backend imposes none). */
 export const MAX_REWARDED_LEVELS = 20;
@@ -61,7 +71,7 @@ export function referralChainFormToDraft(
     return { ...draft, rule: setChaining(draft.rule, chaining) };
 }
 
-/** Continue gating: OFF always valid; ON needs decrease in (0,100), a valid
+/** Continue gating: OFF always valid; ON needs decrease in [50,100), a valid
  * max level, and a referrer reward. */
 export function isReferralChainFormValid(
     values: ReferralChainFormValues,
@@ -69,7 +79,7 @@ export function isReferralChainFormValid(
 ): boolean {
     if (!values.enabled) return true;
     const decrease = Number(values.deperditionPerLevel);
-    const decreaseOk = decrease > 0 && decrease < 100;
+    const decreaseOk = decrease >= MIN_DEPERDITION_PER_LEVEL && decrease < 100;
     const depth = Number(values.maxDepth);
     const depthOk =
         values.maxDepth === "" ||
