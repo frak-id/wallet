@@ -16,9 +16,24 @@ import {
     supportedLngs,
 } from "./i18n/config";
 import i18next from "./i18n/i18next.server";
+import { getRequestId } from "./services.server/requestId";
 import { addDocumentResponseHeaders } from "./shopify.server";
 
 const ABORT_DELAY = 5000;
+
+// Readable placeholder when no AWS header was present (getRequestId → undefined).
+const UNKNOWN_REQ_ID = "n/a";
+
+/**
+ * Called by React Router for loader/action errors and for document-render
+ * errors that reject the request (including shell render errors, via
+ * onShellError below). Logs the request-derived id so support can grep
+ * CloudWatch for `reqId=<value>`. Skips aborted requests to avoid noise.
+ */
+export function handleError(error: unknown, { request }: { request: Request }) {
+    if (request.signal.aborted) return;
+    console.error(`[reqId=${getRequestId(request) ?? UNKNOWN_REQ_ID}]`, error);
+}
 
 export default async function handleRequest(
     request: Request,
@@ -74,7 +89,14 @@ export default async function handleRequest(
                 },
                 onError(error) {
                     responseStatusCode = 500;
-                    console.error(error);
+                    // Shell render errors also reach handleError (harmless
+                    // dup); not suppressed here so bot/onAllReady errors that
+                    // never reach handleError still get logged.
+                    if (request.signal.aborted) return;
+                    console.error(
+                        `[reqId=${getRequestId(request) ?? UNKNOWN_REQ_ID}]`,
+                        error
+                    );
                 },
             }
         );

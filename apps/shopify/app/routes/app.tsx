@@ -2,6 +2,7 @@ import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppError } from "app/components/AppError";
 import { Skeleton } from "app/components/Skeleton";
+import type { loader as rootLoader } from "app/root";
 import {
     ensureComponentsUrlMetafield,
     ensureKlaviyoShareMetafields,
@@ -29,6 +30,7 @@ import {
     useLocation,
     useNavigation,
     useRouteError,
+    useRouteLoaderData,
 } from "react-router";
 import { RootProvider } from "../providers/RootProvider";
 import { authenticate } from "../shopify.server";
@@ -125,10 +127,12 @@ function AppContent({
 // "Application Error" page.
 export function ErrorBoundary() {
     const error = useRouteError();
+    // Hooks must run unconditionally, before the isRouteErrorResponse return.
+    const requestId = useRouteLoaderData<typeof rootLoader>("root")?.requestId;
     if (isRouteErrorResponse(error)) {
         return boundary.error(error);
     }
-    return <AppError error={error} />;
+    return <AppError error={error} requestId={requestId} />;
 }
 
 export const headers: HeadersFunction = (headersArgs) => {

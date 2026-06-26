@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import styles from "./AppError.module.css";
 
 /**
  * Extract a short, safe message plus an optional verbose detail (stack) from an
@@ -27,15 +28,23 @@ function describeError(
 }
 
 /**
- * Friendly, dependency-light error fallback.
+ * Friendly error fallback.
  *
  * Rendered from route `ErrorBoundary`s, which run *outside* the
- * `AppProvider`/App Bridge context — so this intentionally uses plain HTML and
- * inline styles instead of Polaris `s-*` web components, which would not render
- * reliably here. It surfaces a reassuring message plus collapsible technical
- * details so a fatal error never shows up as a bare red "Application Error".
+ * `AppProvider`/App Bridge context — so this uses plain HTML + a CSS Module
+ * instead of Polaris `s-*` web components, which would not render reliably
+ * here. It surfaces a reassuring message plus collapsible technical details so
+ * a fatal error never shows up as a bare red "Application Error".
  */
-export function AppError({ error }: { error: unknown }) {
+export function AppError({
+    error,
+    requestId,
+}: {
+    error: unknown;
+    // From the root loader via each ErrorBoundary's `useRouteLoaderData`. Same
+    // value on server + client (no hydration mismatch); falsy → line omitted.
+    requestId?: string | null;
+}) {
     const { t } = useTranslation();
     // i18next may not be initialized when the root catch-all boundary is active
     // (its providers are unmounted), so every label carries a hardcoded
@@ -44,78 +53,50 @@ export function AppError({ error }: { error: unknown }) {
     const { message, detail } = describeError(error, includeStack);
 
     return (
-        <div
-            style={{
-                fontFamily:
-                    "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
-                maxWidth: "640px",
-                margin: "48px auto",
-                padding: "0 16px",
-                color: "#202223",
-            }}
-        >
-            <div
-                style={{
-                    border: "1px solid #e1e3e5",
-                    borderRadius: "12px",
-                    padding: "20px 24px",
-                    background: "#fff",
-                }}
-            >
-                <h1 style={{ fontSize: "18px", margin: "0 0 8px" }}>
+        <div className={styles.container}>
+            <div className={styles.card}>
+                <h1 className={styles.title}>
                     {t("error.title", {
                         defaultValue: "Something went wrong",
                     })}
                 </h1>
-                <p style={{ margin: "0 0 16px", color: "#6d7175" }}>
+                <p className={styles.description}>
                     {t("error.description", {
                         defaultValue:
                             "An unexpected error occurred while loading this page. Please refresh in a few seconds. If the problem persists, contact Frak support with the details below.",
                     })}
                 </p>
+                {requestId && (
+                    <p className={styles.reference}>
+                        {t("error.reference", { defaultValue: "Reference" })}:{" "}
+                        <code className={styles.referenceId}>{requestId}</code>{" "}
+                        <span className={styles.referenceHint}>
+                            (
+                            {t("error.referenceHint", {
+                                defaultValue: "share this with Frak support",
+                            })}
+                            )
+                        </span>
+                    </p>
+                )}
                 <button
                     type="button"
+                    className={styles.refresh}
                     onClick={() => {
                         if (typeof window !== "undefined") {
                             window.location.reload();
                         }
                     }}
-                    style={{
-                        border: "1px solid #8a8a8a",
-                        borderRadius: "8px",
-                        padding: "6px 14px",
-                        background: "#f6f6f7",
-                        cursor: "pointer",
-                        fontSize: "14px",
-                    }}
                 >
                     {t("error.refresh", { defaultValue: "Refresh" })}
                 </button>
-                <details style={{ marginTop: "16px" }}>
-                    <summary
-                        style={{
-                            cursor: "pointer",
-                            color: "#6d7175",
-                            fontSize: "13px",
-                        }}
-                    >
+                <details className={styles.details}>
+                    <summary className={styles.detailsSummary}>
                         {t("error.detailsLabel", {
                             defaultValue: "Technical details",
                         })}
                     </summary>
-                    <pre
-                        style={{
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                            background: "#f6f6f7",
-                            borderRadius: "8px",
-                            padding: "12px",
-                            marginTop: "8px",
-                            fontSize: "12px",
-                            color: "#454545",
-                            overflowX: "auto",
-                        }}
-                    >
+                    <pre className={styles.stack}>
                         {message}
                         {detail ? `\n\n${detail}` : ""}
                     </pre>

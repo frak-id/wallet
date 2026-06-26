@@ -12,12 +12,16 @@ import {
     ScrollRestoration,
     useLoaderData,
     useRouteError,
+    useRouteLoaderData,
 } from "react-router";
 import i18next from "./i18n/i18next.server";
+import { getRequestId } from "./services.server/requestId";
 
 export async function loader({ request }: LoaderFunctionArgs) {
     const locale = await i18next.getLocale(request);
-    return { locale };
+    // Boundaries read this via `useRouteLoaderData("root")` (root never throws).
+    // `?? null`: keeps the payload serializable; absent → AppError omits it.
+    return { locale, requestId: getRequestId(request) ?? null };
 }
 
 export const handle = {
@@ -63,6 +67,10 @@ export default function App() {
 // replaced when this boundary is active.
 export function ErrorBoundary() {
     const error = useRouteError();
+    // Read the failing request's id from root's loader data. Present when a
+    // child route threw (root loaded fine); undefined when the root loader
+    // itself threw — AppError then omits the reference line.
+    const requestId = useRouteLoaderData<typeof loader>("root")?.requestId;
     // Thrown Responses (OAuth / session-token redirects with App Bridge
     // headers) must keep flowing through Shopify's boundary so the redirect
     // and required headers are emitted — never paint them as an error page.
@@ -82,7 +90,7 @@ export function ErrorBoundary() {
                 <Links />
             </head>
             <body>
-                <AppError error={error} />
+                <AppError error={error} requestId={requestId} />
                 <Scripts />
             </body>
         </html>

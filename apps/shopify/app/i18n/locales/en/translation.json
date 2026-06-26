@@ -426,6 +426,8 @@
         "title": "Something went wrong",
         "description": "An unexpected error occurred while loading this page. Please refresh in a few seconds. If the problem persists, contact Frak support with the details below.",
         "refresh": "Refresh",
-        "detailsLabel": "Technical details"
+        "detailsLabel": "Technical details",
+        "reference": "Reference",
+        "referenceHint": "share this with Frak support"
     }
 }

@@ -1,0 +1,73 @@
+.container {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    max-width: 640px;
+    margin: 48px auto;
+    padding: 0 16px;
+    color: #202223;
+}
+
+.card {
+    border: 1px solid #e1e3e5;
+    border-radius: 12px;
+    padding: 20px 24px;
+    background: #fff;
+}
+
+.title {
+    font-size: 18px;
+    margin: 0 0 8px;
+}
+
+.description {
+    margin: 0 0 16px;
+    color: #6d7175;
+}
+
+.reference {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: #6d7175;
+}
+
+.referenceId {
+    background: #f6f6f7;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 12px;
+    color: #202223;
+}
+
+.referenceHint {
+    color: #8c9196;
+}
+
+.refresh {
+    border: 1px solid #8a8a8a;
+    border-radius: 8px;
+    padding: 6px 14px;
+    background: #f6f6f7;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.detailsSummary {
+    cursor: pointer;
+    color: #6d7175;
+    font-size: 13px;
+}
+
+.details {
+    margin-top: 16px;
+}
+
+.stack {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #f6f6f7;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #454545;
+    overflow-x: auto;
+}
