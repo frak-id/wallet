@@ -465,8 +465,15 @@ existing platform-admin surfaces later; v1 can drive `POST /merchant/register/ad
    deep/product URLs). Endpoint `POST /user/affiliate/:merchantId/link` (auth via
    `identityContext` + `withAuthedIdentity`; the consumer of the explorer
    `integration: "affiliate"` discriminator). 5 service tests.
-6. **Ingestion cron + orchestrator** (§9 + §7): poll, map subId→identity, upsert interactions,
-   handle declines, advance watermark.
+6. **[DONE] Ingestion cron + orchestrator** (§9 + §7): `TakeAdsIngestionOrchestrator` (constructor-injected
+   deps, lazy client factory) polls `getActions` with watermark cursor, maps `subId→attribution` via
+   `AffiliateAttributionRepository.findByToken`, calls `PurchaseInteractionCreator` for
+   PENDING/CONFIRMED/SETTLED and `RewardLifecycleOrchestrator.cancelForRefund` for CANCELED, isolates
+   per-action errors so the watermark never advances past a failed action. `AffiliateSyncStateRepository`
+   persists the monotonic `(provider, stream)` watermark via drizzle `GREATEST`. Hourly cron
+   `ingestAffiliateActions` (`src/jobs/affiliateIngestion.ts`) wraps the call in `tryWithAdvisoryLock`
+   (key `0xaff111`) to serialize across replicas, with a top-of-run guard on `TAKEADS_API_KEY` so
+   envs without the secret stay inert.
 7. **Tests**: admin register-without-verification + shared-bank attach (admin-gated, public
    route unchanged); subId idempotency/race; ingestion idempotency; PENDING→reward;
    DECLINED→cancel + budget restore; percentage pricing of `revenue` in EUR→EURe.

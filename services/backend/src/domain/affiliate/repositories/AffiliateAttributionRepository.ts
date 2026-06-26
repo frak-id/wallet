@@ -8,6 +8,15 @@ import {
 import type { AffiliateProvider } from "../provider";
 
 export class AffiliateAttributionRepository {
+    async findByToken(
+        token: string
+    ): Promise<AffiliateAttributionSelect | null> {
+        const result = await db.query.affiliateAttributionTable.findFirst({
+            where: eq(affiliateAttributionTable.token, token),
+        });
+        return result ?? null;
+    }
+
     async findByUserAndBrand(params: {
         provider: AffiliateProvider;
         identityGroupId: string;

@@ -11,4 +11,8 @@ export {
     type TypeSpecificContextResult,
 } from "./reward";
 export { SettlementOrchestrator } from "./SettlementOrchestrator";
+export {
+    type IngestionSummary,
+    TakeAdsIngestionOrchestrator,
+} from "./TakeAdsIngestionOrchestrator";
 export { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";

@@ -1,3 +1,4 @@
+import { AffiliateContext } from "../domain/affiliate/context";
 import { AttributionContext } from "../domain/attribution/context";
 import { AuthContext } from "../domain/auth";
 import { CampaignContext } from "../domain/campaign/context";
@@ -12,6 +13,7 @@ import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { tokenMetadataRepository } from "../infrastructure/blockchain/TokenMetadataRepository";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
+import { getTakeAdsClient } from "../infrastructure/integrations/takeads";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import {
@@ -41,6 +43,7 @@ import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
 import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
+import { TakeAdsIngestionOrchestrator } from "./TakeAdsIngestionOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
 
 const webhookResolverOrchestrator = new WebhookResolverOrchestrator(
@@ -111,6 +114,14 @@ const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     purchaseInteractionCreator,
     identityOrchestrator,
     rewardLifecycleOrchestrator
+);
+
+const takeAdsIngestionOrchestrator = new TakeAdsIngestionOrchestrator(
+    AffiliateContext.repositories.affiliateAttribution,
+    AffiliateContext.repositories.affiliateSyncState,
+    purchaseInteractionCreator,
+    rewardLifecycleOrchestrator,
+    () => getTakeAdsClient()
 );
 
 const settlementOrchestrator = new SettlementOrchestrator(
@@ -232,5 +243,6 @@ export namespace OrchestrationContext {
         authenticatorLookup: authenticatorLookupOrchestrator,
         pairing: pairingOrchestrator,
         pairingRouter: pairingRouterOrchestrator,
+        takeAdsIngestion: takeAdsIngestionOrchestrator,
     };
 }

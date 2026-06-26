@@ -13,6 +13,7 @@ export {
 export { type AffiliateProvider, PROVIDER_SUBID_PARAM } from "./provider";
 export { AffiliateAttributionRepository } from "./repositories/AffiliateAttributionRepository";
 export { AffiliateBrandRepository } from "./repositories/AffiliateBrandRepository";
+export { AffiliateSyncStateRepository } from "./repositories/AffiliateSyncStateRepository";
 export {
     AffiliateLinkService,
     type AffiliateShareLink,
