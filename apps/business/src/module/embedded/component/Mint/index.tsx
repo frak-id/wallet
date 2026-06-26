@@ -57,7 +57,7 @@ export function EmbeddedMint() {
             <Title className={styles.title}>{t("embedded.mint.title")}</Title>
             <Card>
                 <CardHeader>
-                    <CardTitle>
+                    <CardTitle color="primary">
                         {t("embedded.mint.registering", { domain })}
                     </CardTitle>
                 </CardHeader>

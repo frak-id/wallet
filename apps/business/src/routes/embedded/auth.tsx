@@ -79,7 +79,9 @@ function EmbeddedAuthPage() {
             <Title className={title}>{t("auth.embedded.title")}</Title>
             <Card>
                 <CardHeader>
-                    <CardTitle>{t("auth.embedded.panelTitle")}</CardTitle>
+                    <CardTitle color="primary">
+                        {t("auth.embedded.panelTitle")}
+                    </CardTitle>
                 </CardHeader>
                 <Button
                     variant="secondary"

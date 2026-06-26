@@ -17,4 +17,5 @@ export const button = style({
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
+    marginInline: "auto",
 });
