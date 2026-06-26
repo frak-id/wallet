@@ -18,8 +18,6 @@ export const link = style({
 
 export const button = style({
     marginTop: "10px",
-    backgroundColor: brand.colors.neutral.grey700,
-    color: brand.colors.neutral.white,
 });
 
 export const title = style({
