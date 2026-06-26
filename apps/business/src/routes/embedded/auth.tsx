@@ -1,18 +1,18 @@
 import {
     Card,
+    CardDescription,
     CardHeader,
     CardTitle,
 } from "@frak-labs/design-system/components/Card";
-import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { Button } from "@/module/common/component/Button";
-import { Title } from "@/module/common/component/Title";
+import { EmbeddedShell } from "@/module/embedded/component/EmbeddedShell";
 import { useAuthStore } from "@/stores/authStore";
-import { button, container, title } from "./auth.css";
 
 export const Route = createFileRoute("/embedded/auth")({
     component: EmbeddedAuthPage,
@@ -66,27 +66,21 @@ function EmbeddedAuthPage() {
         return null;
     }
 
-    if (isPending) {
-        return (
-            <div className={container}>
-                <Spinner />
-            </div>
-        );
-    }
-
     return (
-        <div className={container}>
-            <Title className={title}>{t("auth.embedded.title")}</Title>
+        <EmbeddedShell>
             <Card>
                 <CardHeader>
-                    <CardTitle color="primary">
-                        {t("auth.embedded.panelTitle")}
-                    </CardTitle>
+                    <Text variant="overline" color="tertiary">
+                        {t("auth.embedded.title")}
+                    </Text>
+                    <CardTitle>{t("auth.embedded.panelTitle")}</CardTitle>
+                    <CardDescription>
+                        {t("auth.embedded.subtitle")}
+                    </CardDescription>
                 </CardHeader>
                 <Button
-                    variant="secondary"
-                    size="small"
-                    className={button}
+                    variant="primary"
+                    width="full"
                     onClick={() =>
                         authenticate({
                             siwe: {
@@ -98,9 +92,9 @@ function EmbeddedAuthPage() {
                     loading={isPending}
                     disabled={isPending}
                 >
-                    {isPending && <Spinner />} {t("auth.embedded.action")}
+                    {t("auth.embedded.action")}
                 </Button>
             </Card>
-        </div>
+        </EmbeddedShell>
     );
 }

@@ -14,6 +14,7 @@
         "embedded": {
             "title": "Authentification requise",
             "panelTitle": "Veuillez connecter votre porte-monnaie pour continuer",
+            "subtitle": "Connectez-vous avec Frak pour lier votre boutique et commencer à récompenser vos clients.",
             "action": "S'authentifier"
         }
     },
@@ -1526,7 +1527,8 @@
     "embedded": {
         "mint": {
             "title": "Enregistrez votre boutique sur Frak",
-            "registering": "Enregistrement de {{domain}}",
+            "subtitle": "Nous allons vérifier votre domaine et configurer votre espace marchand.",
+            "registering": "Enregistrement de <text>{{domain}}</text>",
             "error": "Impossible d'enregistrer votre produit. Vérifiez que tout est correct.",
             "alreadyRegistered": "Le domaine est peut-être déjà enregistré.",
             "close": "Fermer",

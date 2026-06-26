@@ -14,6 +14,7 @@
         "embedded": {
             "title": "Authentication required",
             "panelTitle": "Please connect your wallet to continue",
+            "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
             "action": "Authenticate"
         }
     },
@@ -1526,7 +1527,8 @@
     "embedded": {
         "mint": {
             "title": "Register your shop on Frak",
-            "registering": "Registering {{domain}}",
+            "subtitle": "We'll verify your domain and set up your merchant space.",
+            "registering": "Registering <text>{{domain}}</text>",
             "error": "Can't register your product. Double check that everything is right.",
             "alreadyRegistered": "Maybe the domain is already registered.",
             "close": "Close",

@@ -4,6 +4,7 @@ export default interface Resources {
       "embedded": {
         "action": "Authenticate",
         "panelTitle": "Please connect your wallet to continue",
+        "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
         "title": "Authentication required"
       },
       "login": {
@@ -848,7 +849,8 @@ export default interface Resources {
         "close": "Close",
         "error": "Can't register your product. Double check that everything is right.",
         "register": "Register your shop",
-        "registering": "Registering {{domain}}",
+        "registering": "Registering <text>{{domain}}</text>",
+        "subtitle": "We'll verify your domain and set up your merchant space.",
         "title": "Register your shop on Frak"
       }
     },

@@ -141,11 +141,16 @@ export function Step1({
         setAwaitingMerchant(false);
         retryCountRef.current = 0;
 
-        // Open popup synchronously — no async gap, no popup blocker
+        // Open popup synchronously — no async gap, no popup blocker.
+        // Centered over the opener window (multi-monitor safe).
+        const width = 500;
+        const height = 500;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
         const popup = window.open(
             mintUrl,
             "frak-business",
-            "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500,height=800"
+            `menubar=no,status=no,scrollbars=no,fullscreen=no,width=${width},height=${height},left=${left},top=${top}`
         );
         popupRef.current = popup;
 
