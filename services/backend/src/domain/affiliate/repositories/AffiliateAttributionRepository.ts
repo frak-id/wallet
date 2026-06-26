@@ -1,9 +1,11 @@
 import { db } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import { and, eq } from "drizzle-orm";
-import { affiliateAttributionTable } from "../db/schema";
+import {
+    type AffiliateAttributionSelect,
+    affiliateAttributionTable,
+} from "../db/schema";
 import type { AffiliateProvider } from "../provider";
-
-type AffiliateAttributionSelect = typeof affiliateAttributionTable.$inferSelect;
 
 export class AffiliateAttributionRepository {
     async findByUserAndBrand(params: {
@@ -37,7 +39,6 @@ export class AffiliateAttributionRepository {
         identityGroupId: string;
         merchantId: string;
         trackingLink?: string;
-        couponCode?: string;
     }): Promise<AffiliateAttributionSelect> {
         const [inserted] = await db
             .insert(affiliateAttributionTable)
@@ -47,7 +48,6 @@ export class AffiliateAttributionRepository {
                 identityGroupId: params.identityGroupId,
                 merchantId: params.merchantId,
                 trackingLink: params.trackingLink,
-                couponCode: params.couponCode,
             })
             .onConflictDoNothing({
                 target: [
@@ -70,8 +70,9 @@ export class AffiliateAttributionRepository {
             merchantId: params.merchantId,
         });
         if (!existing) {
-            throw new Error(
-                "affiliate attribution mint failed: row missing after conflict"
+            throw HttpError.internal(
+                "ATTRIBUTION_MINT_INVARIANT",
+                "Affiliate attribution row missing after insert conflict"
             );
         }
         return existing;

@@ -1,9 +1,7 @@
 import { db } from "@backend-infrastructure";
 import { and, eq } from "drizzle-orm";
-import { affiliateBrandTable } from "../db/schema";
+import { type AffiliateBrandSelect, affiliateBrandTable } from "../db/schema";
 import type { AffiliateProvider } from "../provider";
-
-type AffiliateBrandSelect = typeof affiliateBrandTable.$inferSelect;
 
 export class AffiliateBrandRepository {
     /**
@@ -16,16 +14,14 @@ export class AffiliateBrandRepository {
         provider: AffiliateProvider;
         externalId: string;
         trackingLink: string;
-        metadata?: Record<string, unknown>;
-    }): Promise<AffiliateBrandSelect> {
-        const [result] = await db
+    }): Promise<void> {
+        await db
             .insert(affiliateBrandTable)
             .values({
                 merchantId: params.merchantId,
                 provider: params.provider,
                 externalId: params.externalId,
                 trackingLink: params.trackingLink,
-                metadata: params.metadata,
             })
             .onConflictDoUpdate({
                 target: [
@@ -35,12 +31,9 @@ export class AffiliateBrandRepository {
                 set: {
                     externalId: params.externalId,
                     trackingLink: params.trackingLink,
-                    metadata: params.metadata,
                     updatedAt: new Date(),
                 },
-            })
-            .returning();
-        return result;
+            });
     }
 
     async findByMerchantAndProvider(

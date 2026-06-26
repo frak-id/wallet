@@ -6,21 +6,17 @@ import {
     type TakeAdsActionListResponse,
     type TakeAdsMerchantListParams,
     type TakeAdsMerchantListResponse,
-    type TakeAdsResolveBody,
-    type TakeAdsResolveResponse,
 } from "./config";
 
 /**
  * Typed wrapper for the TakeAds (Mitgo) Take/Monetize API.
  *
- * Three endpoints back the affiliate integration:
+ * Two endpoints back the affiliate integration:
  *  - {@link listMerchants}  catalog sync (synthetic merchants + commission rates)
- *  - {@link resolveLinks}   per-user affiliate link minting (subId-tagged)
  *  - {@link getActions}     conversion ingestion (polled on a watermark)
  *
- * Auth is a single Bearer key. Both platform-scoped (resolve) and
- * account-scoped (stats) calls share the same `Authorization` header here; if
- * TakeAds requires distinct keys per scope we can split this later.
+ * Auth is a single Bearer key shared across calls; if TakeAds requires distinct
+ * keys per scope we can split this later.
  *
  * No documented rate limits, so we keep a small retry on the transient 429/503
  * statuses and surface everything else to the caller (sync/ingestion crons
@@ -65,18 +61,6 @@ export class TakeAdsClient {
                 searchParams: toSearchParams(params),
             })
             .json<TakeAdsMerchantListResponse>();
-    }
-
-    /**
-     * Resolve direct links into affiliate tracking links, tagging each with our
-     * `subId`. Returns an empty `data` array for IRIs with no matching offer.
-     */
-    async resolveLinks(
-        body: TakeAdsResolveBody
-    ): Promise<TakeAdsResolveResponse> {
-        return this.api
-            .put(TAKEADS_PATHS.resolve, { json: body })
-            .json<TakeAdsResolveResponse>();
     }
 
     /**

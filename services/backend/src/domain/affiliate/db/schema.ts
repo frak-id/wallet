@@ -88,17 +88,29 @@ export const affiliateAttributionTable = pgTable(
  * Persisted polling cursor per `(provider, stream)` — e.g. TakeAds
  * `("takeads", "conversions")` holds the max `updatedAt` ingested so far.
  *
- * Stored as `timestamp` (no tz) — pollers MUST serialise it to a UTC ISO 8601
- * string when passing it as the provider's "updated from" filter, or boundary
- * events can be missed/double-read by the local-offset difference.
+ * `watermark` is `timestamptz` (`withTimezone`): it tracks an instant compared
+ * against a remote provider's clock, so it must be timezone-anchored rather
+ * than rely on the server's local offset — otherwise boundary events can be
+ * missed/double-read. Pollers serialise it to a UTC ISO 8601 string.
  */
 export const affiliateSyncStateTable = pgTable(
     "affiliate_sync_state",
     {
         provider: text("provider").$type<AffiliateProvider>().notNull(),
         stream: varchar("stream", { length: 64 }).notNull(),
-        watermark: timestamp("watermark"),
+        watermark: timestamp("watermark", { withTimezone: true }),
         updatedAt: timestamp("updated_at").defaultNow().notNull(),
     },
     (table) => [primaryKey({ columns: [table.provider, table.stream] })]
 );
+
+export type AffiliateBrandSelect = typeof affiliateBrandTable.$inferSelect;
+export type AffiliateBrandInsert = typeof affiliateBrandTable.$inferInsert;
+export type AffiliateAttributionSelect =
+    typeof affiliateAttributionTable.$inferSelect;
+export type AffiliateAttributionInsert =
+    typeof affiliateAttributionTable.$inferInsert;
+export type AffiliateSyncStateSelect =
+    typeof affiliateSyncStateTable.$inferSelect;
+export type AffiliateSyncStateInsert =
+    typeof affiliateSyncStateTable.$inferInsert;

@@ -7,18 +7,25 @@ const IDENTITY_GROUP_ID = "22222222-2222-2222-2222-222222222222";
 
 function makeService(
     opts: {
-        brand?: { trackingLink: string } | null;
+        brand?: { merchantId: string; trackingLink: string } | null;
+        existingBrandForExternalId?: { merchantId: string } | null;
         existingToken?: string;
-        couponCode?: string | null;
     } = {}
 ) {
     const brand =
         opts.brand === undefined
-            ? { trackingLink: "https://go.takeads.com/brand" }
+            ? {
+                  merchantId: MERCHANT_ID,
+                  trackingLink: "https://go.takeads.com/brand",
+              }
             : opts.brand;
 
     const affiliateBrandRepository = {
         findByMerchantAndProvider: vi.fn(() => Promise.resolve(brand as never)),
+        findByProviderAndExternalId: vi.fn(() =>
+            Promise.resolve((opts.existingBrandForExternalId ?? null) as never)
+        ),
+        link: vi.fn(() => Promise.resolve()),
     };
 
     // `mint` echoes back the token it was handed unless a pre-existing token is
@@ -27,7 +34,6 @@ function makeService(
         mint: vi.fn((params: { token: string }) =>
             Promise.resolve({
                 token: opts.existingToken ?? params.token,
-                couponCode: opts.couponCode ?? null,
             } as never)
         ),
     };
@@ -49,7 +55,7 @@ const baseParams = {
     identityGroupId: IDENTITY_GROUP_ID,
 };
 
-describe("AffiliateLinkService", () => {
+describe("AffiliateLinkService.getOrCreateShareLink", () => {
     it("throws 404 when the merchant is not linked to the provider", async () => {
         const { service, affiliateAttributionRepository } = makeService({
             brand: null,
@@ -70,6 +76,7 @@ describe("AffiliateLinkService", () => {
         const url = new URL(result.url);
         expect(url.searchParams.get("s")).toBe(result.token);
         expect(url.origin + url.pathname).toBe("https://go.takeads.com/brand");
+        expect(result.provider).toBe("takeads");
 
         // Token is server-minted and bound to the identity group.
         expect(affiliateAttributionRepository.mint).toHaveBeenCalledWith(
@@ -96,7 +103,10 @@ describe("AffiliateLinkService", () => {
 
     it("preserves existing query params on the tracking link", async () => {
         const { service } = makeService({
-            brand: { trackingLink: "https://go.takeads.com/b?utm=x" },
+            brand: {
+                merchantId: MERCHANT_ID,
+                trackingLink: "https://go.takeads.com/b?utm=x",
+            },
         });
 
         const url = new URL(
@@ -105,12 +115,72 @@ describe("AffiliateLinkService", () => {
         expect(url.searchParams.get("utm")).toBe("x");
         expect(url.searchParams.get("s")).toBeTruthy();
     });
+});
 
-    it("surfaces the coupon code when present", async () => {
-        const { service } = makeService({ couponCode: "SAVE10" });
+describe("AffiliateLinkService.registerBrand", () => {
+    const registerParams = {
+        merchantId: MERCHANT_ID,
+        externalId: "12345",
+        trackingLink: "https://go.takeads.com/brand",
+    };
 
-        const result = await service.getOrCreateShareLink(baseParams);
+    it("links the brand when the tracking link is a valid https URL", async () => {
+        const { service, affiliateBrandRepository } = makeService();
 
-        expect(result.couponCode).toBe("SAVE10");
+        await service.registerBrand(registerParams);
+
+        expect(affiliateBrandRepository.link).toHaveBeenCalledWith(
+            expect.objectContaining({
+                merchantId: MERCHANT_ID,
+                provider: "takeads",
+                externalId: "12345",
+                trackingLink: "https://go.takeads.com/brand",
+            })
+        );
+    });
+
+    it("rejects a malformed tracking link", async () => {
+        const { service, affiliateBrandRepository } = makeService();
+
+        await expect(
+            service.registerBrand({
+                ...registerParams,
+                trackingLink: "not-a-url",
+            })
+        ).rejects.toThrow(HttpError);
+        expect(affiliateBrandRepository.link).not.toHaveBeenCalled();
+    });
+
+    it("rejects a non-https tracking link", async () => {
+        const { service, affiliateBrandRepository } = makeService();
+
+        await expect(
+            service.registerBrand({
+                ...registerParams,
+                trackingLink: "http://go.takeads.com/brand",
+            })
+        ).rejects.toThrow(HttpError);
+        expect(affiliateBrandRepository.link).not.toHaveBeenCalled();
+    });
+
+    it("refuses to steal a brand already linked to another merchant", async () => {
+        const { service, affiliateBrandRepository } = makeService({
+            existingBrandForExternalId: { merchantId: "other-merchant" },
+        });
+
+        await expect(service.registerBrand(registerParams)).rejects.toThrow(
+            HttpError
+        );
+        expect(affiliateBrandRepository.link).not.toHaveBeenCalled();
+    });
+
+    it("re-links idempotently for the same merchant", async () => {
+        const { service, affiliateBrandRepository } = makeService({
+            existingBrandForExternalId: { merchantId: MERCHANT_ID },
+        });
+
+        await service.registerBrand(registerParams);
+
+        expect(affiliateBrandRepository.link).toHaveBeenCalled();
     });
 });

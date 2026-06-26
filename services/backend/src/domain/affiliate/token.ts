@@ -10,7 +10,7 @@ import { customAlphabet } from "nanoid";
  */
 const TOKEN_ALPHABET =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-export const TOKEN_LENGTH = 24;
+const TOKEN_LENGTH = 24;
 
 export const generateAffiliateToken = customAlphabet(
     TOKEN_ALPHABET,

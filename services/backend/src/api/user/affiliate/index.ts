@@ -33,10 +33,9 @@ export const userAffiliateApi = new Elysia({ prefix: "/affiliate" })
             }),
             response: {
                 200: t.Object({
-                    provider: t.String(),
+                    provider: t.Literal("takeads"),
                     token: t.String(),
                     url: t.String(),
-                    couponCode: t.Union([t.String(), t.Null()]),
                 }),
                 401: t.String(),
                 404: t.ErrorResponse,

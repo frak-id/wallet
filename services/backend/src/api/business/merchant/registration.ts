@@ -106,35 +106,19 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             // (Single provider for now; the wire contract stays TakeAds-shaped
             // and is mapped onto the provider-agnostic affiliate store.)
             if (isPlatformAdmin && body.takeads) {
-                const provider = "takeads" as const;
                 const externalId = String(body.takeads.takeadsMerchantId);
-                const { trackingLink } = body.takeads;
                 try {
-                    const existing =
-                        await AffiliateContext.repositories.affiliateBrand.findByProviderAndExternalId(
-                            provider,
-                            externalId
-                        );
-                    if (existing && existing.merchantId !== merchantId) {
-                        log.warn(
-                            { merchantId, provider, externalId },
-                            "Affiliate brand already linked to another merchant; skipping link"
-                        );
-                    } else {
-                        await AffiliateContext.repositories.affiliateBrand.link(
-                            {
-                                merchantId,
-                                provider,
-                                externalId,
-                                trackingLink,
-                            }
-                        );
-                    }
+                    await AffiliateContext.services.affiliateLink.registerBrand(
+                        {
+                            merchantId,
+                            externalId,
+                            trackingLink: body.takeads.trackingLink,
+                        }
+                    );
                 } catch (error) {
                     log.error(
                         {
                             merchantId,
-                            provider,
                             externalId,
                             error:
                                 error instanceof Error

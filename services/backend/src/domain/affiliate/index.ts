@@ -1,5 +1,11 @@
 export { AffiliateContext } from "./context";
 export {
+    type AffiliateAttributionInsert,
+    type AffiliateAttributionSelect,
+    type AffiliateBrandInsert,
+    type AffiliateBrandSelect,
+    type AffiliateSyncStateInsert,
+    type AffiliateSyncStateSelect,
     affiliateAttributionTable,
     affiliateBrandTable,
     affiliateSyncStateTable,

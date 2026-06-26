@@ -14,7 +14,6 @@ export const TAKEADS_BASE_URL = "https://api.takeads.com";
 /** Path segments (the API mixes version prefixes, so each call is absolute). */
 export const TAKEADS_PATHS = {
     merchants: "v1/product/monetize-api/v2/merchant",
-    resolve: "v1/product/monetize-api/v2/resolve",
     statsAction: "v3/api/stats/action",
 } as const;
 
@@ -67,34 +66,6 @@ export type TakeAdsMerchantListParams = {
 export type TakeAdsMerchantListResponse = {
     meta: { next: number | null };
     data: TakeAdsMerchant[];
-};
-
-// --- Link resolution: PUT /v1/product/monetize-api/v2/resolve ----------------
-
-export type TakeAdsResolveBody = {
-    /** Links to affiliate (IRI, RFC 3987). */
-    iris: string[];
-    /**
-     * SubID added to every returned tracking link. One per request.
-     * Allowed: digits, Latin letters, `_` and `-`; up to 6144 chars.
-     */
-    subId?: string;
-    /** Include the advertiser logo URL in the response. */
-    withImages?: boolean;
-};
-
-export type TakeAdsResolveItem = {
-    /** The IRI sent in the request. */
-    iri: string;
-    /** Affiliate link; `s` (subId) and `url` (deeplink) are tweakable after. */
-    trackingLink: string;
-    /** Advertiser logo (only when `withImages` was set), else null. */
-    imageUrl: string | null;
-};
-
-export type TakeAdsResolveResponse = {
-    /** Empty when no advertiser offer matched the IRI. */
-    data: TakeAdsResolveItem[];
 };
 
 // --- Stats: GET /v3/api/stats/action -----------------------------------------
