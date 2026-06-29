@@ -13,7 +13,10 @@ import {
     type RpcResponse,
 } from "@frak-labs/frame-connector";
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { ensureFreshSdkSession } from "@frak-labs/wallet-shared/common/auth/ensureFreshSdkSession";
+import {
+    ensureFreshSdkSession,
+    type FreshSdkResult,
+} from "@frak-labs/wallet-shared/common/auth/ensureFreshSdkSession";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
@@ -245,7 +248,13 @@ export async function filterStepsToDo({
     // live session. Transient failures ("stale") still skip — we never block
     // the user on a network blip; only a confirmed-dead token re-shows login.
     if (stepsPrepared.find((step) => step.key === "login") && session) {
-        const sdk = await ensureFreshSdkSession();
+        // Bound the renewal: an unresponsive /generate must not hang the modal
+        // open indefinitely. On timeout we treat the session as "stale" (skip
+        // login, proceed) — only a server-confirmed "dead" re-shows login.
+        const timeout = new Promise<FreshSdkResult>((resolve) => {
+            setTimeout(() => resolve({ status: "stale", sdk: null }), 5_000);
+        });
+        const sdk = await Promise.race([ensureFreshSdkSession(), timeout]);
         if (sdk.status !== "dead") {
             currentResult = {
                 ...currentResult,

@@ -215,8 +215,13 @@ function Sso() {
                 // (but not yet expired) token would otherwise strand this popup
                 // silently. The guard routes local sessions to the re-auth modal
                 // and distant / ecdsa sessions to logout.
+                //
+                // Throw (don't return) so TanStack records this as an error,
+                // not a success: returning undefined leaves the mutation
+                // "successful", re-enabling the "Continue" CTA behind the
+                // re-auth overlay and letting the user re-fire a dead handoff.
                 notifyWalletAuthExpired();
-                return;
+                throw new Error("sso:wallet-auth-dead");
             }
 
             const session = sessionStore.getState().session;

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
     setSdkSession: vi.fn(),
     sessionStoreGetState: vi.fn(),
     expiresWithinMs: vi.fn<(token: string, windowMs: number) => boolean>(),
+    getTokenExpMs: vi.fn<(token: string) => number | null>(),
     generateGet: vi.fn(),
 }));
 
@@ -25,6 +26,7 @@ vi.mock("../utils/safeSession", () => ({
 }));
 vi.mock("../utils/tokenExpiry", () => ({
     expiresWithinMs: mocks.expiresWithinMs,
+    getTokenExpMs: mocks.getTokenExpMs,
     SDK_RENEW_BEFORE_MS: 7_200_000, // 2h
 }));
 vi.mock("../api/backendClient", () => ({
@@ -51,6 +53,9 @@ const CURRENT_SDK: SdkSession = {
 describe("ensureFreshSdkSession", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // Default: tokens are decodable (non-null expiry). Individual tests
+        // override this to exercise the corrupt-token path.
+        mocks.getTokenExpMs.mockReturnValue(Date.now() + 86_400_000);
         mocks.sessionStoreGetState.mockReturnValue({
             sdkSession: null,
             setSdkSession: mocks.setSdkSession,
@@ -68,6 +73,25 @@ describe("ensureFreshSdkSession", () => {
 
         expect(result).toEqual({ status: "fresh", sdk: CURRENT_SDK });
         expect(mocks.generateGet).not.toHaveBeenCalled();
+    });
+
+    it("does NOT early-return a corrupt/undecodable token as fresh; attempts remint", async () => {
+        // Garbage token: expiresWithinMs fails open (false), but the expiry is
+        // undecodable (null). Must NOT be cached as "fresh" — fall through to
+        // the server remint path (authority principle).
+        mocks.getSafeSdkSession.mockReturnValue(CURRENT_SDK);
+        mocks.getTokenExpMs.mockReturnValue(null); // undecodable
+        mocks.expiresWithinMs.mockReturnValue(false); // fails open
+        mocks.getSafeSession.mockReturnValue({ token: "wallet-token" });
+        mocks.generateGet.mockResolvedValue({ data: FRESH_SDK, error: null });
+
+        const { ensureFreshSdkSession } = await import(
+            "./ensureFreshSdkSession"
+        );
+        const result = await ensureFreshSdkSession();
+
+        expect(result).toEqual({ status: "fresh", sdk: FRESH_SDK });
+        expect(mocks.generateGet).toHaveBeenCalledTimes(1);
     });
 
     it("returns dead when no wallet session exists", async () => {

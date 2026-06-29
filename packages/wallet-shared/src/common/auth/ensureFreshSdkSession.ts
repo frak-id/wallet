@@ -11,7 +11,11 @@ import { sessionStore } from "../../stores/sessionStore";
 import type { SdkSession } from "../../types/Session";
 import { authenticatedWalletApi } from "../api/backendClient";
 import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
-import { expiresWithinMs, SDK_RENEW_BEFORE_MS } from "../utils/tokenExpiry";
+import {
+    expiresWithinMs,
+    getTokenExpMs,
+    SDK_RENEW_BEFORE_MS,
+} from "../utils/tokenExpiry";
 
 export type FreshSdkResult =
     /** Token is healthy or was successfully reminted. */
@@ -36,8 +40,15 @@ let inFlight: Promise<FreshSdkResult> | null = null;
 async function _run(): Promise<FreshSdkResult> {
     const current = getSafeSdkSession();
 
-    // Token is healthy (not near expiry) — return immediately without a network call.
-    if (current && !expiresWithinMs(current.token, SDK_RENEW_BEFORE_MS)) {
+    // Token is healthy (decodable AND not near expiry) — return immediately
+    // without a network call. An undecodable/corrupt token fails through to the
+    // remint path: expiresWithinMs fails open, so we must explicitly require a
+    // decodable expiry here, otherwise a garbage token is cached as "fresh".
+    if (
+        current &&
+        getTokenExpMs(current.token) !== null &&
+        !expiresWithinMs(current.token, SDK_RENEW_BEFORE_MS)
+    ) {
         return { status: "fresh", sdk: current };
     }
 
