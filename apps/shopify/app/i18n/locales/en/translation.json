@@ -126,7 +126,24 @@
         "connected": "Frak application is activated",
         "notConnected": "Frak application is not activated",
         "link": "Configuring Frak application in your theme",
-        "todo": "Please activate the Frak application in your theme by following the instructions below"
+        "todo": "Please activate the Frak application in your theme by following the instructions below",
+        "legacy": {
+            "upgradeWarning": "Your theme does not support Online Store 2.0",
+            "upgradeDescription": "Upgrade to an OS 2.0 theme for the best experience and one-click app block setup.",
+            "snippetTitle": "Manual installation",
+            "snippetDescription": "Paste this snippet before </head> in your theme.liquid file to enable Frak on your store.",
+            "copySnippet": "Copy snippet",
+            "copied": "Copied!",
+            "copyError": "Couldn't copy automatically — select the snippet above and copy it manually.",
+            "noMerchantId": "Your merchant ID is not yet set up. Please complete the onboarding steps first.",
+            "steps": "Next steps:",
+            "step1": "Paste the snippet before </head> in theme.liquid.",
+            "step1Link": "Edit theme.liquid",
+            "step2": "Add <frak-button-share> in your product template where you want the share button.",
+            "step2Link": "Edit product template",
+            "step3": "Personalise logo, wording and rewards in the Frak editor:",
+            "step3Link": "Open Frak editor"
+        }
     },
     "login": {
         "withFrak": "Login with Frak"
@@ -413,6 +430,10 @@
             "save": "Save",
             "previewTitle": "Preview",
             "previewDescription": "This is how your store will appear to users in the Frak Explorer."
+        },
+        "legacy": {
+            "customizationsNote": "Your theme does not support Shopify app blocks. Logo, wording and reward settings are managed in the Frak editor on the business dashboard.",
+            "openEditor": "Open Frak editor"
         }
     },
     "funding": {

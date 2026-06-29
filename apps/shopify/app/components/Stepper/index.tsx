@@ -2,7 +2,7 @@ import { ProgressBar } from "app/components/ui/ProgressBar";
 import { useVisibilityChange } from "app/hooks/useVisibilityChange";
 import type { loader as appLoader } from "app/routes/app";
 import {
-    MAX_STEP,
+    applicableStepCount,
     type OnboardingStepData,
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
@@ -25,6 +25,7 @@ export function Stepper({ redirectToApp }: { redirectToApp: boolean }) {
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const onboardingDataPromise = rootData?.onboardingDataPromise;
+    const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
 
     useVisibilityChange(
         useCallback(() => {
@@ -44,13 +45,36 @@ export function Stepper({ redirectToApp }: { redirectToApp: boolean }) {
                         {(onboardingData) => {
                             if (!onboardingData) return null;
                             return (
-                                <>
-                                    <StepsIntroduction
-                                        onboardingData={onboardingData}
-                                        redirectToApp={redirectToApp}
-                                    />
-                                    <Steps onboardingData={onboardingData} />
-                                </>
+                                <Suspense>
+                                    <Await
+                                        resolve={isThemeSupportedPromise}
+                                        errorElement={null}
+                                    >
+                                        {(isThemeSupported) => (
+                                            <>
+                                                <StepsIntroduction
+                                                    onboardingData={
+                                                        onboardingData
+                                                    }
+                                                    redirectToApp={
+                                                        redirectToApp
+                                                    }
+                                                    isThemeSupported={
+                                                        isThemeSupported ?? true
+                                                    }
+                                                />
+                                                <Steps
+                                                    onboardingData={
+                                                        onboardingData
+                                                    }
+                                                    isThemeSupported={
+                                                        isThemeSupported ?? true
+                                                    }
+                                                />
+                                            </>
+                                        )}
+                                    </Await>
+                                </Suspense>
                             );
                         }}
                     </Await>
@@ -64,16 +88,24 @@ export function Stepper({ redirectToApp }: { redirectToApp: boolean }) {
 function StepsIntroduction({
     onboardingData,
     redirectToApp,
+    isThemeSupported,
 }: {
     onboardingData: OnboardingStepData;
     redirectToApp: boolean;
+    isThemeSupported: boolean;
 }) {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { completedSteps, hasMissedCriticalSteps } =
-        validateCompleteOnboarding(onboardingData);
-    const completedStep = completedSteps.length;
-    const progress = (completedStep / MAX_STEP) * 100;
+        validateCompleteOnboarding(onboardingData, isThemeSupported);
+    // Legacy themes only show steps 1–4. Count only completed steps within the
+    // applicable set (the contiguous prefix 1..totalSteps) so a stale step 5–7
+    // completion lingering after a theme downgrade can't push progress > 100%.
+    const totalSteps = applicableStepCount(isThemeSupported);
+    const completedStep = completedSteps.filter(
+        (step) => step <= totalSteps
+    ).length;
+    const progress = (completedStep / totalSteps) * 100;
 
     useEffect(() => {
         if (!hasMissedCriticalSteps && redirectToApp) {
@@ -95,7 +127,7 @@ function StepsIntroduction({
                     <s-text color="subdued">
                         {t("stepper.completedStep", {
                             completedStep,
-                            totalSteps: MAX_STEP,
+                            totalSteps,
                         })}
                     </s-text>
                 </span>
@@ -107,7 +139,13 @@ function StepsIntroduction({
     );
 }
 
-function Steps({ onboardingData }: { onboardingData: OnboardingStepData }) {
+function Steps({
+    onboardingData,
+    isThemeSupported,
+}: {
+    onboardingData: OnboardingStepData;
+    isThemeSupported: boolean;
+}) {
     return (
         <s-box paddingInlineStart="base">
             <s-stack gap="small-100">
@@ -115,9 +153,14 @@ function Steps({ onboardingData }: { onboardingData: OnboardingStepData }) {
                 <Step2 onboardingData={onboardingData} />
                 <Step3 onboardingData={onboardingData} />
                 <Step4 onboardingData={onboardingData} />
-                <Step5 onboardingData={onboardingData} />
-                <Step6 onboardingData={onboardingData} />
-                <Step7 onboardingData={onboardingData} />
+                {/* Steps 5–7 need theme app blocks — N/A on legacy themes. */}
+                {isThemeSupported && (
+                    <>
+                        <Step5 onboardingData={onboardingData} />
+                        <Step6 onboardingData={onboardingData} />
+                        <Step7 onboardingData={onboardingData} />
+                    </>
+                )}
             </s-stack>
         </s-box>
     );

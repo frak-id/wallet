@@ -58,6 +58,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         apiKey: process.env.SHOPIFY_API_KEY || "",
         businessUrl: process.env.BUSINESS_URL || "https://business.frak.id",
         walletUrl: process.env.FRAK_WALLET_URL || "https://wallet.frak.id",
+        componentsUrl:
+            process.env.FRAK_COMPONENTS_URL ||
+            "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest",
         shopifyLogoUrl: `${process.env.SHOPIFY_APP_URL ?? ""}/shopify-logo.svg`,
         // Defensive: a custom/unsupported theme should degrade to
         // "not supported", never reject the streamed promise and crash the
@@ -154,19 +157,21 @@ function Navigation({
 }) {
     return (
         <NavigationRoot>
-            {isThemeSupported && (
-                <Suspense>
-                    <Await resolve={onboardingDataPromise} errorElement={null}>
-                        {(onboardingData) => {
-                            const validationResult =
-                                validateCompleteOnboarding(onboardingData);
-                            if (validationResult.hasMissedCriticalSteps)
-                                return null;
-                            return <NavigationContent />;
-                        }}
-                    </Await>
-                </Suspense>
-            )}
+            {/* Legacy merchants also get nav — gated only on onboarding steps
+                1-4; the theme-activation step is non-critical for them. */}
+            <Suspense>
+                <Await resolve={onboardingDataPromise} errorElement={null}>
+                    {(onboardingData) => {
+                        const validationResult = validateCompleteOnboarding(
+                            onboardingData,
+                            isThemeSupported
+                        );
+                        if (validationResult.hasMissedCriticalSteps)
+                            return null;
+                        return <NavigationContent />;
+                    }}
+                </Await>
+            </Suspense>
         </NavigationRoot>
     );
 }

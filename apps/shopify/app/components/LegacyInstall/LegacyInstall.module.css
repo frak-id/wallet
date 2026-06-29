@@ -1,0 +1,23 @@
+.snippetWrapper {
+    position: relative;
+}
+
+.snippet {
+    background: #f6f6f7;
+    border: 1px solid #e1e3e5;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    white-space: pre;
+    overflow-x: auto;
+    color: #202223;
+    margin: 0;
+}
+
+.copyButton {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
