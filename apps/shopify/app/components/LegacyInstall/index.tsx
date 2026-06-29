@@ -2,7 +2,7 @@ import { ExternalLink } from "app/components/ui/ExternalLink";
 import type { loader as appLoader } from "app/routes/app";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { useRouteLoaderData } from "react-router";
+import { useFetcher, useRouteLoaderData } from "react-router";
 import { buildFrakSnippet } from "./buildFrakSnippet";
 import styles from "./LegacyInstall.module.css";
 
@@ -20,13 +20,18 @@ export function LegacyInstall({
     walletUrl,
     componentsUrl,
     businessUrl,
+    dismissed = false,
 }: {
     merchantId: string | null;
     walletUrl: string;
     componentsUrl: string;
     businessUrl: string;
+    // True once the merchant confirmed the manual install (shown as a done
+    // state instead of the confirm button — e.g. on the Settings → Theme page).
+    dismissed?: boolean;
 }) {
     const { t } = useTranslation();
+    const confirmFetcher = useFetcher();
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     // Deep-link the code editor to the relevant file: theme.liquid for the SDK
     // snippet (step 1) and the product template for the share button (step 2).
@@ -172,6 +177,34 @@ export function LegacyInstall({
                             </ExternalLink>
                         </s-stack>
                     </s-stack>
+
+                    {/* Only offer the confirm once a snippet exists — a
+                        merchant mid-onboarding (no merchantId, no snippet)
+                        must not be able to dismiss the block. */}
+                    {snippet &&
+                        (dismissed ? (
+                            <s-text color="subdued">
+                                {t("theme.legacy.installed")}
+                            </s-text>
+                        ) : (
+                            <div>
+                                <s-button
+                                    variant="primary"
+                                    loading={confirmFetcher.state !== "idle"}
+                                    onClick={() =>
+                                        confirmFetcher.submit(
+                                            { intent: "confirmLegacyInstall" },
+                                            {
+                                                method: "POST",
+                                                action: "/app/onboarding",
+                                            }
+                                        )
+                                    }
+                                >
+                                    {t("theme.legacy.markInstalled")}
+                                </s-button>
+                            </div>
+                        ))}
                 </s-stack>
             </s-section>
         </s-stack>

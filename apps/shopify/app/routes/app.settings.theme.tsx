@@ -7,6 +7,7 @@ import { ExternalLink } from "app/components/ui/ExternalLink";
 import { useRefreshData } from "app/hooks/useRefreshData";
 import { useVisibilityChange } from "app/hooks/useVisibilityChange";
 import type { loader as rootLoader } from "app/routes/app";
+import { getLegacyInstallDismissed } from "app/services.server/metafields";
 import {
     doesThemeHasFrakActivated,
     getMainThemeId,
@@ -19,9 +20,13 @@ import { Await, useLoaderData, useRouteLoaderData } from "react-router";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
-    const isThemeHasFrakActivated = await doesThemeHasFrakActivated(context);
-    const theme = await getMainThemeId(context);
-    return { isThemeHasFrakActivated, theme };
+    const [isThemeHasFrakActivated, theme, legacyInstallDismissed] =
+        await Promise.all([
+            doesThemeHasFrakActivated(context),
+            getMainThemeId(context),
+            getLegacyInstallDismissed(context),
+        ]);
+    return { isThemeHasFrakActivated, theme, legacyInstallDismissed };
 };
 
 export default function SettingsThemePage() {
@@ -77,6 +82,7 @@ export default function SettingsThemePage() {
                                 walletUrl={walletUrl}
                                 componentsUrl={componentsUrl}
                                 businessUrl={businessUrl}
+                                dismissed={data?.legacyInstallDismissed}
                             />
                         )
                     }

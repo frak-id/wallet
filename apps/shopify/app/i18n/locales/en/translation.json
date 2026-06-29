@@ -145,7 +145,9 @@
             "step2SectionHint": "If your product template only contains a <code>{% section %}</code> tag, open that section file instead (e.g. <code>sections/product-template.liquid</code>).",
             "step2Link": "Edit product template",
             "step3": "Personalise logo, wording and rewards in the Frak editor:",
-            "step3Link": "Open Frak editor"
+            "step3Link": "Open Frak editor",
+            "markInstalled": "I've added the snippet",
+            "installed": "Manual install confirmed"
         }
     },
     "login": {

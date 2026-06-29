@@ -5,6 +5,7 @@ import { Stepper } from "app/components/Stepper";
 import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
 import type { loader as appLoader } from "app/routes/app";
+import { getLegacyInstallDismissed } from "app/services.server/metafields";
 import {
     type OnboardingStepData,
     validateCompleteOnboarding,
@@ -25,11 +26,12 @@ import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
-    const [campaigns, bankStatus] = await Promise.all([
+    const [campaigns, bankStatus, legacyInstallDismissed] = await Promise.all([
         getMerchantCampaigns(context, request),
         getMerchantBankStatus(context, request),
+        getLegacyInstallDismissed(context),
     ]);
-    return data({ campaigns, bankStatus });
+    return data({ campaigns, bankStatus, legacyInstallDismissed });
 };
 
 export default function Index() {
@@ -110,20 +112,27 @@ function Dashboard({
     businessUrl: string;
 }) {
     const { t } = useTranslation();
-    const { campaigns: list, bankStatus } = useLoaderData<typeof loader>();
+    const {
+        campaigns: list,
+        bankStatus,
+        legacyInstallDismissed,
+    } = useLoaderData<typeof loader>();
     const { hasMissedCriticalSteps } = validateCompleteOnboarding(
         onboardingData,
         isThemeSupported
     );
 
-    const legacyInstall = !isThemeSupported ? (
-        <LegacyInstall
-            merchantId={merchantId}
-            walletUrl={walletUrl}
-            componentsUrl={componentsUrl}
-            businessUrl={businessUrl}
-        />
-    ) : null;
+    // Once the merchant confirms the manual install, hide the block from the
+    // dashboard (the full instructions stay on Settings → Theme).
+    const legacyInstall =
+        !isThemeSupported && !legacyInstallDismissed ? (
+            <LegacyInstall
+                merchantId={merchantId}
+                walletUrl={walletUrl}
+                componentsUrl={componentsUrl}
+                businessUrl={businessUrl}
+            />
+        ) : null;
 
     const content = hasMissedCriticalSteps ? (
         <Stepper redirectToApp={false} />
