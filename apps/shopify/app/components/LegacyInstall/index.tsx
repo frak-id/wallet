@@ -6,6 +6,9 @@ import { useRouteLoaderData } from "react-router";
 import { buildFrakSnippet } from "./buildFrakSnippet";
 import styles from "./LegacyInstall.module.css";
 
+/** The share-button web component merchants paste into their product template. */
+const BUTTON_TAG = "<frak-button-share></frak-button-share>";
+
 export function LegacyInstall({
     merchantId,
     walletUrl,
@@ -32,15 +35,16 @@ export function LegacyInstall({
     const customizeUrl = merchantId
         ? `${businessUrl}/m/${merchantId}/merchant/customize`
         : businessUrl;
-    const [copied, setCopied] = useState(false);
+    // `copiedKey` tracks which button last copied, so each shows its own
+    // "Copied!" confirmation; `copyError` is shared.
+    const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const [copyError, setCopyError] = useState(false);
 
     const snippet = merchantId
         ? buildFrakSnippet({ merchantId, walletUrl, componentsUrl })
         : null;
 
-    function handleCopy() {
-        if (!snippet) return;
+    function copy(text: string, key: string) {
         // The embedded admin iframe frequently blocks clipboard-write; show a
         // "select it manually" hint instead of failing silently. The snippet
         // <pre> is selectable, so manual copy always works.
@@ -48,11 +52,11 @@ export function LegacyInstall({
             setCopyError(true);
             return;
         }
-        navigator.clipboard.writeText(snippet).then(
+        navigator.clipboard.writeText(text).then(
             () => {
                 setCopyError(false);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
+                setCopiedKey(key);
+                setTimeout(() => setCopiedKey(null), 2000);
             },
             () => setCopyError(true)
         );
@@ -82,9 +86,9 @@ export function LegacyInstall({
                             <div className={styles.copyButton}>
                                 <s-button
                                     variant="primary"
-                                    onClick={handleCopy}
+                                    onClick={() => copy(snippet, "snippet")}
                                 >
-                                    {copied
+                                    {copiedKey === "snippet"
                                         ? t("theme.legacy.copied")
                                         : t("theme.legacy.copySnippet")}
                                 </s-button>
@@ -101,35 +105,37 @@ export function LegacyInstall({
                         </s-banner>
                     )}
 
-                    <s-stack gap="small">
+                    <s-stack gap="base">
                         <s-text>
                             <strong>{t("theme.legacy.steps")}</strong>
                         </s-text>
-                        <s-stack
-                            direction="inline"
-                            gap="small"
-                            alignItems="center"
-                        >
+                        <s-stack gap="small-100" alignItems="start">
                             <s-text>1. {t("theme.legacy.step1")}</s-text>
                             <ExternalLink href={themeLiquidUrl}>
                                 {t("theme.legacy.step1Link")}
                             </ExternalLink>
                         </s-stack>
-                        <s-stack
-                            direction="inline"
-                            gap="small"
-                            alignItems="center"
-                        >
-                            <s-text>2. {t("theme.legacy.step2")}</s-text>
+                        <s-stack gap="small-100" alignItems="start">
+                            <s-stack
+                                direction="inline"
+                                gap="small"
+                                alignItems="center"
+                            >
+                                <s-text>2. {t("theme.legacy.step2")}</s-text>
+                                <s-button
+                                    variant="primary"
+                                    onClick={() => copy(BUTTON_TAG, "button")}
+                                >
+                                    {copiedKey === "button"
+                                        ? t("theme.legacy.copied")
+                                        : t("theme.legacy.copyButton")}
+                                </s-button>
+                            </s-stack>
                             <ExternalLink href={productTemplateUrl}>
                                 {t("theme.legacy.step2Link")}
                             </ExternalLink>
                         </s-stack>
-                        <s-stack
-                            direction="inline"
-                            gap="small"
-                            alignItems="center"
-                        >
+                        <s-stack gap="small-100" alignItems="start">
                             <s-text>3. {t("theme.legacy.step3")}</s-text>
                             <ExternalLink href={customizeUrl}>
                                 {t("theme.legacy.step3Link")}
