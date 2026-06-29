@@ -116,36 +116,52 @@ function Dashboard({
         isThemeSupported
     );
 
+    const legacyInstall = !isThemeSupported ? (
+        <LegacyInstall
+            merchantId={merchantId}
+            walletUrl={walletUrl}
+            componentsUrl={componentsUrl}
+            businessUrl={businessUrl}
+        />
+    ) : null;
+
+    const content = hasMissedCriticalSteps ? (
+        <Stepper redirectToApp={false} />
+    ) : !list || !bankStatus ? (
+        <s-section>
+            <s-banner tone="warning">
+                <s-text>{t("common.dashboardDataUnavailableTitle")}</s-text>
+                <s-text>
+                    {t("common.dashboardDataUnavailableDescription")}
+                </s-text>
+            </s-banner>
+        </s-section>
+    ) : (
+        <OnBoardingComplete
+            campaigns={list}
+            bankStatus={bankStatus}
+            onboardingData={onboardingData}
+            isThemeSupported={isThemeSupported}
+        />
+    );
+
+    // While onboarding is incomplete the manual-install snippet can't be used
+    // yet (it needs the merchantId from step 1), so lead with the guide and
+    // place LegacyInstall after it — this also makes its "complete onboarding
+    // first" notice point to the steps directly above. Once complete, the
+    // snippet is the key remaining action, so it leads.
     return (
         <s-stack gap="large">
-            {!isThemeSupported && (
-                <LegacyInstall
-                    merchantId={merchantId}
-                    walletUrl={walletUrl}
-                    componentsUrl={componentsUrl}
-                    businessUrl={businessUrl}
-                />
-            )}
             {hasMissedCriticalSteps ? (
-                <Stepper redirectToApp={false} />
-            ) : !list || !bankStatus ? (
-                <s-section>
-                    <s-banner tone="warning">
-                        <s-text>
-                            {t("common.dashboardDataUnavailableTitle")}
-                        </s-text>
-                        <s-text>
-                            {t("common.dashboardDataUnavailableDescription")}
-                        </s-text>
-                    </s-banner>
-                </s-section>
+                <>
+                    {content}
+                    {legacyInstall}
+                </>
             ) : (
-                <OnBoardingComplete
-                    campaigns={list}
-                    bankStatus={bankStatus}
-                    onboardingData={onboardingData}
-                    isThemeSupported={isThemeSupported}
-                />
+                <>
+                    {legacyInstall}
+                    {content}
+                </>
             )}
         </s-stack>
     );
