@@ -118,7 +118,7 @@ function evaluate() {
     if (isExpired(session.token, EXPIRED_SKEW_MS)) {
         modalStore.getState().openModal({
             id: "reauth",
-            expired: true,
+            reason: "dead",
         });
         return;
     }
@@ -162,10 +162,13 @@ export function useWalletSessionGuard() {
         }
 
         modalStore.getState().openModal({
-            // expired = false: server-confirmed 401 but maybe still in grace
-            // window locally. Dismissing should NOT force logout.
+            // Server-confirmed 401 = the wallet token is authoritatively dead
+            // (it may even still be unexpired client-side, e.g. JWT-secret
+            // rotation). `reason: "dead"` makes re-auth the primary action and
+            // dismissing log out, so the user is never stranded in a session
+            // that looks alive but 401s on every request.
             id: "reauth",
-            expired: false,
+            reason: "dead",
         });
     }, [logout]);
 

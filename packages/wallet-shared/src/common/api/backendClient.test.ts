@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
     notifyWalletAuthExpired: vi.fn(),
     getSafeSession: vi.fn<() => { token: string } | null>(),
-    isExpired: vi.fn<(token: string) => boolean>(),
+    getTokenExpMs: vi.fn<(token: string) => number | null>(),
     onResponseHolder: {
         current: undefined as ((response: Response) => void) | undefined,
     },
@@ -38,7 +38,7 @@ vi.mock("../utils/safeSession", () => ({
 }));
 
 vi.mock("../utils/tokenExpiry", () => ({
-    isExpired: mocks.isExpired,
+    getTokenExpMs: mocks.getTokenExpMs,
 }));
 
 vi.mock("../../stores/clientIdStore", () => ({
@@ -67,10 +67,20 @@ describe("backendClient", () => {
 });
 
 describe("backendClient onResponse 401 handling", () => {
-    function fakeResponse(status: number, path: string): Response {
+    function fakeResponse(
+        status: number,
+        path: string,
+        authError?: string
+    ): Response {
         return {
             status,
             url: `https://localhost:3030${path}`,
+            headers: {
+                get: (name: string) =>
+                    name.toLowerCase() === "x-frak-auth-error"
+                        ? (authError ?? null)
+                        : null,
+            },
         } as unknown as Response;
     }
 
@@ -83,10 +93,13 @@ describe("backendClient onResponse 401 handling", () => {
         return onResponse;
     }
 
+    const FUTURE = () => Date.now() + 60 * 60 * 1000; // +1h
+    const PAST = () => Date.now() - 60 * 1000; // -1min
+
     beforeEach(() => {
         mocks.notifyWalletAuthExpired.mockClear();
         mocks.getSafeSession.mockReset();
-        mocks.isExpired.mockReset();
+        mocks.getTokenExpMs.mockReset();
     });
 
     it("notifies when 401 and wallet token is absent", async () => {
@@ -100,7 +113,7 @@ describe("backendClient onResponse 401 handling", () => {
 
     it("notifies when 401 and wallet token is expired", async () => {
         mocks.getSafeSession.mockReturnValue({ token: "expired-token" });
-        mocks.isExpired.mockReturnValue(true);
+        mocks.getTokenExpMs.mockReturnValue(PAST());
         const onResponse = await getOnResponse();
 
         onResponse(fakeResponse(401, "/user/wallet/balance"));
@@ -108,13 +121,61 @@ describe("backendClient onResponse 401 handling", () => {
         expect(mocks.notifyWalletAuthExpired).toHaveBeenCalledTimes(1);
     });
 
-    it("does NOT notify when 401 but wallet token is still valid (SDK-only 401)", async () => {
-        mocks.getSafeSession.mockReturnValue({ token: "valid-wallet-token" });
-        mocks.isExpired.mockReturnValue(false);
+    it("notifies when 401 and wallet token is corrupt/undecodable (fail closed)", async () => {
+        mocks.getSafeSession.mockReturnValue({ token: "garbage" });
+        mocks.getTokenExpMs.mockReturnValue(null); // undecodable
         const onResponse = await getOnResponse();
 
-        // e.g. an SDK-only endpoint returning 401 while wallet token is valid
+        onResponse(fakeResponse(401, "/user/wallet/balance"));
+
+        expect(mocks.notifyWalletAuthExpired).toHaveBeenCalledTimes(1);
+    });
+
+    it("notifies when /generate 401s even though the wallet token looks valid client-side (secret rotation / revocation)", async () => {
+        // exp still in the future, but the server (authority route) rejected it.
+        mocks.getSafeSession.mockReturnValue({ token: "rotated-but-fresh" });
+        mocks.getTokenExpMs.mockReturnValue(FUTURE());
+        const onResponse = await getOnResponse();
+
         onResponse(fakeResponse(401, "/user/wallet/auth/sdk/generate"));
+
+        expect(mocks.notifyWalletAuthExpired).toHaveBeenCalledTimes(1);
+    });
+
+    it("does NOT notify on a non-/generate 401 while the wallet token is healthy (SDK-token-scoped 401)", async () => {
+        mocks.getSafeSession.mockReturnValue({ token: "valid-wallet-token" });
+        mocks.getTokenExpMs.mockReturnValue(FUTURE());
+        const onResponse = await getOnResponse();
+
+        // e.g. a withWalletSdkAuthent endpoint rejecting only the SDK token.
+        onResponse(fakeResponse(401, "/user/wallet/interaction"));
+
+        expect(mocks.notifyWalletAuthExpired).not.toHaveBeenCalled();
+    });
+
+    it("notifies on `wallet-token-invalid` header from ANY wallet route, even with a client-fresh token (rotation)", async () => {
+        mocks.getSafeSession.mockReturnValue({ token: "rotated-but-fresh" });
+        mocks.getTokenExpMs.mockReturnValue(FUTURE());
+        const onResponse = await getOnResponse();
+
+        // A non-/generate wallet route 401s with the backend discriminator.
+        onResponse(
+            fakeResponse(401, "/user/wallet/balance", "wallet-token-invalid")
+        );
+
+        expect(mocks.notifyWalletAuthExpired).toHaveBeenCalledTimes(1);
+    });
+
+    it("does NOT notify on `sdk-token-invalid` header even if it cannot decode the wallet token", async () => {
+        // Header is authoritative: SDK-token-scoped 401 must never force re-auth,
+        // regardless of what the local heuristic would have concluded.
+        mocks.getSafeSession.mockReturnValue({ token: "whatever" });
+        mocks.getTokenExpMs.mockReturnValue(null);
+        const onResponse = await getOnResponse();
+
+        onResponse(
+            fakeResponse(401, "/user/wallet/interaction", "sdk-token-invalid")
+        );
 
         expect(mocks.notifyWalletAuthExpired).not.toHaveBeenCalled();
     });

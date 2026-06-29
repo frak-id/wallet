@@ -863,13 +863,15 @@
         "reauth": {
             "title": "Session expiring",
             "description": "Please verify your identity to continue.",
-            "action": "Verify identity"
+            "action": "Verify identity",
+            "logout": "Log out"
         },
         "distantReauth": {
             "title": "Reconnect your wallet",
             "description": "Your paired session expired. Scan with your phone to reconnect the same wallet.",
             "action": "Reconnect",
-            "pairing": "Scan with the phone holding your passkey to reconnect the same wallet."
+            "pairing": "Scan with the phone holding your passkey to reconnect the same wallet.",
+            "logout": "Log out"
         },
         "toastLoading": {
             "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)",

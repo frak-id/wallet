@@ -4,14 +4,13 @@ import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveM
 import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import { useLogin } from "@frak-labs/wallet-shared";
 import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
-import { isExpired } from "@frak-labs/wallet-shared/common/utils/tokenExpiry";
 import { useTranslation } from "react-i18next";
 import { useLastAuthenticatorHint } from "@/module/authentication/hook/useLastAuthenticatorHint";
 import { useLogout } from "@/module/authentication/hook/useLogout";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 
 type ReauthModalProps = {
-    expired: boolean;
+    reason: "grace" | "dead";
     onAuthSuccess?: () => void;
     onClose: () => void;
 };
@@ -20,26 +19,35 @@ type ReauthModalProps = {
  * Quick biometric re-authentication modal.
  *
  * Shown when:
- * - The wallet token is approaching expiry (grace window) and the user clicked
- *   the passive banner, or
- * - The server returned a 401 confirming the token is dead.
+ * - `reason: "grace"` — the wallet token still works server-side but is nearing
+ *   expiry and the user clicked the passive banner, or
+ * - `reason: "dead"` — the token is confirmed unusable: its client `exp` has
+ *   passed, OR the server returned a 401 (incl. JWT-secret rotation / revocation
+ *   where `exp` is still in the future, so a clock check would wrongly say it's
+ *   alive).
  *
  * On success: `useLogin` writes a fresh 30-day wallet token + 1-day SDK token,
  * and every TanStack query is invalidated so data fetched under the dead token
  * is refetched with the new one.
- * On dismiss:
- *   - `expired = true` → call `useLogout()` (token past its expiry date).
- *   - `expired = false` → just close (pre-expiry server 401; keep stale state
- *     and let the user continue until the next hard failure).
+ *
+ * Dismiss policy:
+ *   - `reason: "grace"` → the session still works, so the modal is dismissable
+ *     (backdrop / ESC) and dismissing just closes it.
+ *   - `reason: "dead"`  → the session is unusable, so the modal is LOCKED (a
+ *     backdrop / ESC tap does nothing). The user makes an explicit choice:
+ *     "Verify identity" (re-auth) or "Log out". This avoids stranding the user
+ *     in a zombie session AND avoids a destructive silent logout from an
+ *     accidental dismiss gesture.
  */
 export function ReauthModal({
-    expired,
+    reason,
     onAuthSuccess,
     onClose,
 }: ReauthModalProps) {
     const { t } = useTranslation();
     const { logout } = useLogout();
     const hint = useLastAuthenticatorHint();
+    const isDead = reason === "dead";
 
     const { login, isLoading } = useLogin({
         // The 4th callback arg is TanStack's MutationFunctionContext, which
@@ -73,24 +81,21 @@ export function ReauthModal({
         }
     };
 
-    const handleDismiss = async () => {
+    // Explicit, deliberate logout (the "dead" modal's secondary action).
+    const handleLogout = async () => {
         onClose();
-        if (!expired) return;
-        // Re-check freshness at dismiss time: another tab (or a background
-        // refresh) may have restored a valid session since this modal opened.
-        // Only logout if the token is STILL expired — never clobber a session
-        // that was just renewed elsewhere.
-        const token = getSafeSession()?.token;
-        if (!token || isExpired(token, 60_000)) {
-            await logout();
-        }
+        await logout();
     };
 
     return (
         <ResponsiveModal
             open={true}
             onOpenChange={(open) => {
-                if (!open) void handleDismiss();
+                if (open) return;
+                // Grace: dismissable — a backdrop/ESC tap just closes it.
+                // Dead: locked — ignore close so the user must pick Verify
+                // identity or Log out (no destructive silent logout).
+                if (!isDead) onClose();
             }}
             title={t("wallet.reauth.title", "Session expiring")}
             description={t(
@@ -115,9 +120,20 @@ export function ReauthModal({
                         "Please verify your identity to continue."
                     )}
                     footer={
-                        <Button onClick={handleReauth} loading={isLoading}>
-                            {t("wallet.reauth.action", "Verify identity")}
-                        </Button>
+                        <>
+                            <Button onClick={handleReauth} loading={isLoading}>
+                                {t("wallet.reauth.action", "Verify identity")}
+                            </Button>
+                            {isDead && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleLogout}
+                                    disabled={isLoading}
+                                >
+                                    {t("wallet.reauth.logout", "Log out")}
+                                </Button>
+                            )}
+                        </>
                     }
                 />
             </Box>

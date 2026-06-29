@@ -5,6 +5,7 @@ import type {
     StaticWalletTokenDto,
 } from "../../domain/auth/models/WalletSessionDto";
 import { JwtContext } from "../external/jwt";
+import { AUTH_ERROR_HEADER, AuthErrorCode } from "./authError";
 
 type OptionalWalletSession =
     | StaticWalletTokenDto
@@ -33,13 +34,17 @@ export const sessionContext = new Elysia({
     })
     .macro({
         withWalletAuthent: {
-            async resolve({ headers }) {
+            async resolve({ headers, set }) {
                 const walletAuth = headers["x-wallet-auth"];
                 if (!walletAuth) {
+                    set.headers[AUTH_ERROR_HEADER] =
+                        AuthErrorCode.walletTokenInvalid;
                     return status(401, "Unauthorized");
                 }
                 const auth = await JwtContext.wallet.verify(walletAuth);
                 if (!auth) {
+                    set.headers[AUTH_ERROR_HEADER] =
+                        AuthErrorCode.walletTokenInvalid;
                     return status(401, "Unauthorized");
                 }
                 // Return the auth
@@ -47,7 +52,7 @@ export const sessionContext = new Elysia({
             },
         },
         withWalletOrSdkAuthent: {
-            async resolve({ headers }) {
+            async resolve({ headers, set }) {
                 const walletAuth = headers["x-wallet-auth"];
                 if (walletAuth) {
                     const walletAuthSession =
@@ -66,6 +71,14 @@ export const sessionContext = new Elysia({
                     }
                 }
 
+                // Neither credential resolved (wallet token absent/invalid AND
+                // sdk token absent/invalid). Tagged `wallet-token-invalid`
+                // because re-establishing the wallet session is the required
+                // recovery here regardless of which header was sent: the client
+                // only ever omits the wallet token when no session exists, so a
+                // re-auth prompt is always the correct response.
+                set.headers[AUTH_ERROR_HEADER] =
+                    AuthErrorCode.walletTokenInvalid;
                 return status(401, "Unauthorized");
             },
         },
@@ -97,13 +110,17 @@ export const sessionContext = new Elysia({
             },
         },
         withWalletSdkAuthent: {
-            async resolve({ headers }) {
+            async resolve({ headers, set }) {
                 const walletSdkAuth = headers["x-wallet-sdk-auth"];
                 if (!walletSdkAuth) {
+                    set.headers[AUTH_ERROR_HEADER] =
+                        AuthErrorCode.sdkTokenInvalid;
                     return status(401, "Unauthorized");
                 }
                 const auth = await JwtContext.walletSdk.verify(walletSdkAuth);
                 if (!auth) {
+                    set.headers[AUTH_ERROR_HEADER] =
+                        AuthErrorCode.sdkTokenInvalid;
                     return status(401, "Unauthorized");
                 }
                 // Return the auth

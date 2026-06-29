@@ -30,7 +30,7 @@ export class WalletSdkSessionService {
         return {
             token: jwtToken,
             // Tell when the token expires (1 day)
-            expires: Date.now() + 60_000 * 60 * 24 * 1,
+            expires: Date.now() + 60_000 * 60 * 24,
         };
     }
 }

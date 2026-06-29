@@ -3,8 +3,6 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { QrCodeIcon } from "@frak-labs/design-system/icons";
 import { getOriginPairingClient, PairingView } from "@frak-labs/wallet-shared";
-import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
-import { isExpired } from "@frak-labs/wallet-shared/common/utils/tokenExpiry";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,11 +50,12 @@ type DistantReauthModalProps = {
  *     would also `clearSession()`, destroying a re-pair completed in ANOTHER
  *     tab before the freshness check runs — `softReset()` preserves cross-tab
  *     session state and is the correct call.
- *   - Freshness re-check: if the token is still dead, log out. This is not
- *     "airtight" — if the user pressed dismiss before the `authenticated` WS
- *     message arrived, their explicit cancel is treated as a cancel (correct
- *     semantics). No realistic spurious logout occurs because `settledRef`
- *     ensures only the first of {success, dismiss} runs to completion.
+ *   - Log out (the paired token is server-confirmed dead with no local
+ *     recovery), UNLESS the wallet token changed since open — a re-pair that
+ *     completed in another tab. This is keyed on the token CHANGING, not on
+ *     client `exp`, because a server-side key rotation leaves the dead token's
+ *     `exp` in the future. `settledRef` ensures only the first of
+ *     {success, dismiss} runs, so a re-pair here can't also trigger logout.
  *
  * Known limitation: if the hinted passkey was deleted server-side, every join
  * attempt returns FORBIDDEN and `PairingView` shows the generic error+Retry
@@ -84,23 +83,19 @@ export function DistantReauthModal({
         onClose();
     }, [queryClient, onClose]);
 
-    const handleDismiss = useCallback(async () => {
+    // Explicit, deliberate logout (the modal's secondary action). The modal is
+    // locked (see onOpenChange) so this is the ONLY exit besides a successful
+    // re-pair — no destructive silent logout from an accidental dismiss.
+    const handleLogout = useCallback(async () => {
         if (settledRef.current) return;
         settledRef.current = true;
         onClose();
         if (started) {
             // Close the orphaned initiate-WS so a late phone scan can't write
-            // a session over whatever state the user lands in after logout.
-            // softReset (not reset) preserves sessionStore so the freshness
-            // check below sees any re-pair completed in another tab.
+            // a session after the user has logged out.
             getOriginPairingClient().softReset();
         }
-        // Re-check freshness: a re-pair in another tab (or this modal before
-        // dismiss) may have restored a valid session. Only logout if still dead.
-        const token = getSafeSession()?.token;
-        if (!token || isExpired(token, 60_000)) {
-            await logout();
-        }
+        await logout();
     }, [started, onClose, logout]);
 
     const title = t("wallet.distantReauth.title", "Reconnect your wallet");
@@ -113,7 +108,10 @@ export function DistantReauthModal({
         <ResponsiveModal
             open={true}
             onOpenChange={(open) => {
-                if (!open) void handleDismiss();
+                // Locked: a dead paired session can't be dismissed into a
+                // working state, so ignore backdrop/ESC. The only exits are a
+                // successful re-pair or the explicit Log out button.
+                if (open) return;
             }}
             title={title}
             description={description}
@@ -127,15 +125,20 @@ export function DistantReauthModal({
                 }}
             >
                 {started ? (
-                    <PairingView
-                        title={title}
-                        description={t(
-                            "wallet.distantReauth.pairing",
-                            "Scan with the phone holding your passkey to reconnect the same wallet."
-                        )}
-                        authenticatorHints={authenticatorHints}
-                        onSuccess={handleSuccess}
-                    />
+                    <>
+                        <PairingView
+                            title={title}
+                            description={t(
+                                "wallet.distantReauth.pairing",
+                                "Scan with the phone holding your passkey to reconnect the same wallet."
+                            )}
+                            authenticatorHints={authenticatorHints}
+                            onSuccess={handleSuccess}
+                        />
+                        <Button variant="ghost" onClick={handleLogout}>
+                            {t("wallet.distantReauth.logout", "Log out")}
+                        </Button>
+                    </>
                 ) : (
                     <ContentBlock
                         icon={<QrCodeIcon />}
@@ -143,9 +146,20 @@ export function DistantReauthModal({
                         title={title}
                         description={description}
                         footer={
-                            <Button onClick={() => setStarted(true)}>
-                                {t("wallet.distantReauth.action", "Reconnect")}
-                            </Button>
+                            <>
+                                <Button onClick={() => setStarted(true)}>
+                                    {t(
+                                        "wallet.distantReauth.action",
+                                        "Reconnect"
+                                    )}
+                                </Button>
+                                <Button variant="ghost" onClick={handleLogout}>
+                                    {t(
+                                        "wallet.distantReauth.logout",
+                                        "Log out"
+                                    )}
+                                </Button>
+                            </>
                         }
                     />
                 )}

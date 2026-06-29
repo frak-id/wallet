@@ -188,7 +188,7 @@ function renderModal(
         case "reauth":
             return (
                 <ReauthModal
-                    expired={modal.expired}
+                    reason={modal.reason}
                     onAuthSuccess={modal.onAuthSuccess}
                     onClose={closeModal}
                 />

@@ -41,12 +41,19 @@ type ModalState =
     | { id: "editReferralCode"; onSaved: () => void }
     | { id: "emailNotFound"; email: string }
     | {
-          /** Biometric re-auth prompt. `expired = true` means the wallet token
-           *  is past its expiry — dismissing this modal must trigger a full
-           *  logout. `expired = false` (server-confirmed 401) is pre-expiry
-           *  and dismissal just closes the prompt. */
+          /**
+           * Biometric re-auth prompt.
+           * - `reason: "grace"` → the wallet token still works server-side but
+           *   is nearing expiry (proactive nudge). Dismissing just closes; the
+           *   session keeps working.
+           * - `reason: "dead"` → the wallet token is confirmed unusable: either
+           *   its client `exp` has passed OR the server returned a 401 (incl.
+           *   key rotation / revocation, where `exp` is still in the future).
+           *   Re-auth is the primary action and dismissing logs out — unless a
+           *   fresh session was minted meanwhile (e.g. re-auth in another tab).
+           */
           id: "reauth";
-          expired: boolean;
+          reason: "grace" | "dead";
           onAuthSuccess?: () => void;
       }
     | {

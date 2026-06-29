@@ -178,22 +178,34 @@ describe("DistantReauthModal", () => {
         expect(mocks.softReset).not.toHaveBeenCalled();
     });
 
-    test("(c) dismiss before starting → logout called, softReset NOT called", async () => {
+    test("dismiss is LOCKED: a backdrop/ESC close does nothing (no logout, no onClose)", () => {
         const onClose = vi.fn();
         render(
             <DistantReauthModal authenticatorHints={HINTS} onClose={onClose} />
         );
 
-        // Dismiss via onOpenChange(false) without ever clicking Reconnect
-        const cb = mocks.capturedOnOpenChange();
-        cb?.(false);
+        // Backdrop / ESC would fire onOpenChange(false); the modal ignores it.
+        mocks.capturedOnOpenChange()?.(false);
+
+        expect(onClose).not.toHaveBeenCalled();
+        expect(mocks.logout).not.toHaveBeenCalled();
+    });
+
+    test("(c) Log out before starting → logout called, softReset NOT called", async () => {
+        const onClose = vi.fn();
+        render(
+            <DistantReauthModal authenticatorHints={HINTS} onClose={onClose} />
+        );
+
+        // Explicit Log out from phase 1 (never clicked Reconnect).
+        fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 
         await waitFor(() => expect(mocks.logout).toHaveBeenCalledTimes(1));
         expect(mocks.softReset).not.toHaveBeenCalled();
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    test("(d) dismiss after starting → softReset called then logout", async () => {
+    test("(d) Log out after starting → softReset called then logout", async () => {
         const onClose = vi.fn();
         render(
             <DistantReauthModal authenticatorHints={HINTS} onClose={onClose} />
@@ -205,40 +217,16 @@ describe("DistantReauthModal", () => {
             expect(mocks.pairingViewRendered).toHaveBeenCalled()
         );
 
-        // Dismiss via onOpenChange(false)
-        const cb = mocks.capturedOnOpenChange();
-        cb?.(false);
+        // Explicit Log out from phase 2 (PairingView is mounted).
+        fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 
         await waitFor(() => expect(mocks.logout).toHaveBeenCalledTimes(1));
-        // softReset fires once — on dismiss only (start never touches it).
+        // softReset fires once — closes the orphaned initiate-WS on logout.
         expect(mocks.softReset).toHaveBeenCalledTimes(1);
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    test("(d) dismiss after starting → no logout when freshness check passes", async () => {
-        // Session re-paired in another tab: token is fresh
-        mocks.isExpired.mockReturnValue(false);
-        mocks.getSafeSession.mockReturnValue({ token: "fresh-token" });
-
-        const onClose = vi.fn();
-        render(
-            <DistantReauthModal authenticatorHints={HINTS} onClose={onClose} />
-        );
-
-        fireEvent.click(screen.getByRole("button", { name: "Reconnect" }));
-        await waitFor(() =>
-            expect(mocks.pairingViewRendered).toHaveBeenCalled()
-        );
-
-        const cb = mocks.capturedOnOpenChange();
-        cb?.(false);
-
-        await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
-        // Fresh session → no logout
-        expect(mocks.logout).not.toHaveBeenCalled();
-    });
-
-    test("(e) success → invalidate + onClose; subsequent dismiss is no-op (settledRef)", async () => {
+    test("(e) success → invalidate + onClose; a subsequent Log out click is a no-op (settledRef)", async () => {
         const onClose = vi.fn();
         render(
             <DistantReauthModal authenticatorHints={HINTS} onClose={onClose} />
@@ -256,9 +244,8 @@ describe("DistantReauthModal", () => {
         await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
         expect(mocks.invalidateQueries).toHaveBeenCalledTimes(1);
 
-        // Now trigger dismiss — settledRef prevents a second onClose + logout
-        const cb = mocks.capturedOnOpenChange();
-        cb?.(false);
+        // A late Log out click must be a no-op — settledRef already latched.
+        fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 
         await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1)); // still 1
         expect(mocks.logout).not.toHaveBeenCalled();

@@ -55,7 +55,7 @@ export function SessionExpiringBanner() {
 
     const openReauthModal = () => {
         hide();
-        modalStore.getState().openModal({ id: "reauth", expired: false });
+        modalStore.getState().openModal({ id: "reauth", reason: "grace" });
     };
 
     return (

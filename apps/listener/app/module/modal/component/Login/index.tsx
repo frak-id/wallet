@@ -93,7 +93,7 @@ export function LoginModalStep({
         // On success, transmit the wallet address up a level.
         // webauthnProof is optional in the SDK type; we no longer cache the
         // raw WebAuthn signature (lastWebAuthnAction was removed in the token
-        // refactor — see packages/wallet-shared IMPLEMENTATION_PLAN.md).
+        // refactor).
         onSuccess: (session) => {
             onFinish({ wallet: session.address, webauthnProof: undefined });
         },

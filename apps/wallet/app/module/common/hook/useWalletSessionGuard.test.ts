@@ -200,12 +200,12 @@ describe("useWalletSessionGuard", () => {
         renderHook(() => useWalletSessionGuard());
 
         expect(mocks.openModal).toHaveBeenCalledWith(
-            expect.objectContaining({ id: "reauth", expired: true })
+            expect.objectContaining({ id: "reauth", reason: "dead" })
         );
         expect(mocks.bannerShow).not.toHaveBeenCalled();
     });
 
-    test("opens re-auth modal on server-confirmed 401 (expired: false)", async () => {
+    test("opens re-auth modal as 'dead' on server-confirmed 401 (so dismiss logs out)", async () => {
         // Token is healthy locally — only the server 401 triggers the modal.
         mocks.isExpired.mockReturnValue(false);
         mocks.expiresWithinMs.mockReturnValue(false);
@@ -223,7 +223,7 @@ describe("useWalletSessionGuard", () => {
         });
 
         expect(mocks.openModal).toHaveBeenCalledWith(
-            expect.objectContaining({ id: "reauth", expired: false })
+            expect.objectContaining({ id: "reauth", reason: "dead" })
         );
     });
 
@@ -399,7 +399,7 @@ describe("useWalletSessionGuard", () => {
         });
 
         expect(mocks.openModal).toHaveBeenCalledWith(
-            expect.objectContaining({ id: "reauth", expired: true })
+            expect.objectContaining({ id: "reauth", reason: "dead" })
         );
     });
 

@@ -42,7 +42,7 @@ describe("WalletSdkSessionService", () => {
 
             expect(result).toEqual({
                 token: "mock-jwt-token",
-                expires: mockCurrentTime + 60_000 * 60 * 24 * 1, // 1 day from now
+                expires: mockCurrentTime + 60_000 * 60 * 24, // 1 day from now
             });
 
             // Restore Date.now
@@ -74,7 +74,7 @@ describe("WalletSdkSessionService", () => {
 
             expect(result).toEqual({
                 token: "mock-jwt-token",
-                expires: mockCurrentTime + 60_000 * 60 * 24 * 1,
+                expires: mockCurrentTime + 60_000 * 60 * 24,
             });
 
             // Restore Date.now
@@ -100,7 +100,7 @@ describe("WalletSdkSessionService", () => {
 
             expect(result).toEqual({
                 token: "mock-jwt-token",
-                expires: mockCurrentTime + 60_000 * 60 * 24 * 1,
+                expires: mockCurrentTime + 60_000 * 60 * 24,
             });
 
             // Restore Date.now
@@ -155,7 +155,7 @@ describe("WalletSdkSessionService", () => {
                 wallet: mockWallet,
             });
 
-            const expectedExpiration = mockCurrentTime + 60_000 * 60 * 24 * 1; // 1 day in milliseconds
+            const expectedExpiration = mockCurrentTime + 60_000 * 60 * 24; // 1 day in milliseconds
             expect(result.expires).toBe(expectedExpiration);
 
             // Restore Date.now
