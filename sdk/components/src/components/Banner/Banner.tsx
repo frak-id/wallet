@@ -253,16 +253,21 @@ export function Banner({
         }
 
         // In-app mode never resolves a reward (only referral mode fetches one),
-        // so the copy is rendered verbatim — no `{REWARD}` interpolation.
+        // so strip any `{REWARD}` token from the copy rather than rendering it
+        // literally.
         return {
-            title:
+            title: applyRewardPlaceholder(
                 propInappTitle ??
-                bannerConfig?.inappTitle ??
-                defaults.inappTitle,
-            description:
+                    bannerConfig?.inappTitle ??
+                    defaults.inappTitle,
+                undefined
+            ),
+            description: applyRewardPlaceholder(
                 propInappDescription ??
-                bannerConfig?.inappDescription ??
-                defaults.inappDescription,
+                    bannerConfig?.inappDescription ??
+                    defaults.inappDescription,
+                undefined
+            ),
             cta: propInappCta ?? bannerConfig?.inappCta ?? defaults.inappCta,
         };
     }, [

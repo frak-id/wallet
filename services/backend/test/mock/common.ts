@@ -1,6 +1,9 @@
 import { Elysia, t } from "elysia";
 import type { Address, LocalAccount } from "viem";
 import { vi } from "vitest";
+// Import the real broadcast schema rather than redefining it in the mock, so
+// the mocked notifications module stays in sync with the production DTO.
+import { PushBroadcastSchema } from "../../src/domain/notifications/dto/PushBroadcastDto";
 import { viemMocks } from "./viem";
 
 /* -------------------------------------------------------------------------- */
@@ -635,17 +638,6 @@ const SendNotificationPayloadDto = t.Object({
             })
         )
     ),
-});
-
-const PushBroadcastSchema = t.Object({
-    id: t.String(),
-    payload: SendNotificationPayloadDto,
-    targets: t.Union([SendNotificationTargetsDto, t.Null()]),
-    scheduledAt: t.Union([t.Number(), t.Null()]),
-    claimedAt: t.Union([t.Number(), t.Null()]),
-    createdAt: t.Number(),
-    sentCount: t.Number(),
-    openedCount: t.Number(),
 });
 
 vi.mock("../../src/domain/notifications", () => ({

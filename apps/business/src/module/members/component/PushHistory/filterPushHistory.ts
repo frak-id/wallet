@@ -14,20 +14,20 @@ export function filterPushHistory(
     filters: PushHistoryFilters
 ): PushHistoryItem[] {
     const { dateRange, status } = filters;
+    // Hoisted out of the filter callback so the day boundaries are computed
+    // once, not per item.
+    const fromTime = dateRange?.from
+        ? startOfDay(dateRange.from).getTime()
+        : undefined;
+    const toTime = dateRange?.to ? endOfDay(dateRange.to).getTime() : undefined;
     return items.filter((item) => {
         if (status && status.length > 0 && !status.includes(item.status)) {
             return false;
         }
-        if (
-            dateRange?.from &&
-            item.scheduledAt < startOfDay(dateRange.from).getTime()
-        ) {
+        if (fromTime !== undefined && item.scheduledAt < fromTime) {
             return false;
         }
-        if (
-            dateRange?.to &&
-            item.scheduledAt > endOfDay(dateRange.to).getTime()
-        ) {
+        if (toTime !== undefined && item.scheduledAt > toTime) {
             return false;
         }
         return true;

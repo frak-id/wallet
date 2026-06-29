@@ -52,9 +52,10 @@ export function resolvePreviewWording(
     lang: WordingLang,
     builtInDefault: string
 ): string {
-    return (
-        value[lang] || value.default || value.en || value.fr || builtInDefault
-    );
+    // Priority: the selected tier, then default, then the remaining languages.
+    // Deduped so the selected tier isn't listed twice (e.g. en ... en).
+    const tiers = [...new Set<WordingLang>([lang, "default", "en", "fr"])];
+    return tiers.map((tier) => value[tier]).find(Boolean) || builtInDefault;
 }
 
 /**

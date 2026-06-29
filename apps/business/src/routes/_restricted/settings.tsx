@@ -7,7 +7,7 @@ import {
     createFileRoute,
     Link,
     Outlet,
-    useLocation,
+    useMatch,
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PageShell } from "@/module/common/component/PageShell";
@@ -24,8 +24,11 @@ export const Route = createFileRoute("/_restricted/settings")({
  */
 function SettingsLayout() {
     const { t } = useTranslation();
-    const { pathname } = useLocation();
-    const active = pathname.endsWith("/billing") ? "billing" : "usage";
+    const billingMatch = useMatch({
+        from: "/_restricted/settings/billing",
+        shouldThrow: false,
+    });
+    const active = billingMatch ? "billing" : "usage";
 
     return (
         <PageShell page="settings" space="l">

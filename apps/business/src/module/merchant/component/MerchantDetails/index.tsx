@@ -17,6 +17,7 @@ import {
 import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
+import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import { AllowedDomainsSheet } from "../AllowedDomainsSheet";
 import { SaveFooter } from "../Customize/SaveFooter";
 import { MerchantEditSheet } from "../MerchantEditSheet";
@@ -31,7 +32,7 @@ const DOMAIN_PREVIEW_COUNT = 3;
 export function MerchantDetails({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
     const { data: merchant } = useMerchant({ merchantId });
-    const isReadOnly = merchant?.role === "platform_admin";
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
 
     const [dirtySections, setDirtySections] = useState<Record<string, boolean>>(
         {}
@@ -185,8 +186,13 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                         </EditCard>
                     )}
                     <NewsletterShareLink merchantId={merchantId} />
-                    <ExplorerSettings merchantId={merchantId} />
-                    <PurchaseTrackerSummary merchantId={merchantId} />
+                    {!isReadOnly && (
+                        <ExplorerSettings merchantId={merchantId} />
+                    )}
+                    <PurchaseTrackerSummary
+                        merchantId={merchantId}
+                        isReadOnly={isReadOnly}
+                    />
                     {saveError && (
                         <Text variant="caption" color="error">
                             {t("merchantEdit.saveError")}
@@ -207,7 +213,13 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
     );
 }
 
-function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
+function PurchaseTrackerSummary({
+    merchantId,
+    isReadOnly,
+}: {
+    merchantId: string;
+    isReadOnly: boolean;
+}) {
     const { t } = useTranslation();
     const { data: webhookStatus, isLoading } = usePurchaseWebhookStatus({
         merchantId,
@@ -261,9 +273,11 @@ function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
                     )}
                 </DetailCells>
             )}
-            <Inline space="s">
-                <PurchaseTrackerSheet merchantId={merchantId} />
-            </Inline>
+            {!isReadOnly && (
+                <Inline space="s">
+                    <PurchaseTrackerSheet merchantId={merchantId} />
+                </Inline>
+            )}
         </EditCard>
     );
 }

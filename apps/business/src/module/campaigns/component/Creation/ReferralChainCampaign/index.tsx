@@ -102,7 +102,18 @@ function LabeledNumberField({
 
 /* ---- Live preview (backend-aligned conserved split) ---- */
 
-function rowLabel(t: TFunction, level: number) {
+/**
+ * Chain row label: `Direct` / `Level N`. `short` selects the table copy
+ * (no "ambassador").
+ */
+function rowLabel(t: TFunction, level: number, short = false) {
+    if (short) {
+        return level === 0
+            ? t("campaigns.create.referralChain.preview.rowDirect")
+            : t("campaigns.create.referralChain.preview.rowLevel", {
+                  n: level,
+              });
+    }
     return level === 0
         ? t("campaigns.create.referralChain.preview.direct")
         : t("campaigns.create.referralChain.preview.level", { n: level });
@@ -125,13 +136,6 @@ function ChainArrow({ className }: { className?: string }) {
             />
         </svg>
     );
-}
-
-/** Short table labels (no "ambassador"): `Direct` / `Level N`. */
-function tableRowLabel(t: TFunction, level: number) {
-    return level === 0
-        ? t("campaigns.create.referralChain.preview.rowDirect")
-        : t("campaigns.create.referralChain.preview.rowLevel", { n: level });
 }
 
 function ChainPreview({
@@ -297,7 +301,9 @@ function ChainPreview({
                 <TableBody>
                     {rows.map((row) => (
                         <TableRow key={row.level}>
-                            <TableCell>{tableRowLabel(t, row.level)}</TableCell>
+                            <TableCell>
+                                {rowLabel(t, row.level, true)}
+                            </TableCell>
                             <TableCell align="right">
                                 <span
                                     className={
@@ -354,10 +360,7 @@ export function ReferralChainCampaign() {
     const cac = isFixed ? rewardForm.targetCpa || undefined : undefined;
 
     async function persist(values: ReferralChainFormValues) {
-        const updated = referralChainFormToDraft(values, {
-            ...draft,
-            merchantId,
-        });
+        const updated = referralChainFormToDraft(values, draft);
         updateDraft(() => updated);
         return saveCampaign.mutateAsync(updated);
     }

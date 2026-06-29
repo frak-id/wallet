@@ -304,7 +304,8 @@
                 "title": "Supprimer la notification push",
                 "description": "Êtes-vous sûr de vouloir supprimer « {{title}} » ? Cette action est irréversible.",
                 "cancel": "Annuler",
-                "confirm": "Supprimer"
+                "confirm": "Supprimer",
+                "error": "Impossible de supprimer la notification. Réessayez."
             }
         }
     },

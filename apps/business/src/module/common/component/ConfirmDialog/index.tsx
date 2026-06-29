@@ -28,6 +28,14 @@ type ConfirmDialogProps = {
     /** Visual weight of the confirm button. */
     confirmTone?: "primary" | "destructive";
     onConfirm: () => void;
+    /**
+     * When provided, the confirm action runs asynchronously: the button shows
+     * a loading state and the dialog does NOT auto-close on click, so the
+     * caller can close it once the work resolves (see `onConfirm`).
+     */
+    isConfirming?: boolean;
+    /** Inline error surfaced under the description when the action fails. */
+    error?: ReactNode;
 };
 
 /**
@@ -45,7 +53,25 @@ export function ConfirmDialog({
     confirmLabel,
     confirmTone = "primary",
     onConfirm,
+    isConfirming,
+    error,
 }: ConfirmDialogProps) {
+    const isAsync = isConfirming !== undefined;
+    const confirmButton = (
+        <Button
+            variant={confirmTone === "primary" ? "primary" : "secondary"}
+            size="large"
+            loading={isConfirming}
+            disabled={isConfirming}
+            className={clsx(
+                styles.button,
+                confirmTone === "destructive" && styles.destructiveButton
+            )}
+            onClick={onConfirm}
+        >
+            {confirmLabel}
+        </Button>
+    );
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             {trigger && (
@@ -62,6 +88,7 @@ export function ConfirmDialog({
                     <AlertDialogDescription className={styles.description}>
                         {description}
                     </AlertDialogDescription>
+                    {error}
                 </Stack>
                 <Box display="flex" gap="m" paddingTop="l">
                     <AlertDialogCancel asChild>
@@ -73,24 +100,16 @@ export function ConfirmDialog({
                             {cancelLabel}
                         </Button>
                     </AlertDialogCancel>
-                    <AlertDialogAction asChild>
-                        <Button
-                            variant={
-                                confirmTone === "primary"
-                                    ? "primary"
-                                    : "secondary"
-                            }
-                            size="large"
-                            className={clsx(
-                                styles.button,
-                                confirmTone === "destructive" &&
-                                    styles.destructiveButton
-                            )}
-                            onClick={onConfirm}
-                        >
-                            {confirmLabel}
-                        </Button>
-                    </AlertDialogAction>
+                    {/* Async actions render a plain button so radix doesn't
+                        auto-close the dialog before the work resolves; the
+                        caller closes it on success. */}
+                    {isAsync ? (
+                        confirmButton
+                    ) : (
+                        <AlertDialogAction asChild>
+                            {confirmButton}
+                        </AlertDialogAction>
+                    )}
                 </Box>
             </AlertDialogContent>
         </AlertDialog>

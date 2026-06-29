@@ -1360,6 +1360,7 @@ export default interface Resources {
           "cancel": "Cancel",
           "confirm": "Delete",
           "description": "Are you sure you want to delete “{{title}}”? This action can't be undone.",
+          "error": "Couldn't delete the notification. Try again.",
           "title": "Delete push notification"
         },
         "filters": {

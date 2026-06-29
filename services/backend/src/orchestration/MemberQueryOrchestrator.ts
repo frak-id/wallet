@@ -4,6 +4,7 @@ import {
     eq,
     gte,
     inArray,
+    isNull,
     lte,
     min,
     type SQL,
@@ -125,8 +126,8 @@ export class MemberQueryOrchestrator {
                 .where(
                     and(
                         eq(identityNodesTable.identityType, "wallet"),
-                        sql`${identityNodesTable.merchantId} IS NULL`,
-                        sql`${identityNodesTable.unlinkedAt} IS NULL`
+                        isNull(identityNodesTable.merchantId),
+                        isNull(identityNodesTable.unlinkedAt)
                     )
                 )
                 .groupBy(identityNodesTable.groupId)
@@ -188,8 +189,8 @@ export class MemberQueryOrchestrator {
             .where(
                 and(
                     eq(identityNodesTable.identityType, "wallet"),
-                    sql`${identityNodesTable.merchantId} IS NULL`,
-                    sql`${identityNodesTable.unlinkedAt} IS NULL`
+                    isNull(identityNodesTable.merchantId),
+                    isNull(identityNodesTable.unlinkedAt)
                 )
             )
             .groupBy(
@@ -282,8 +283,8 @@ export class MemberQueryOrchestrator {
                 .where(
                     and(
                         eq(identityNodesTable.identityType, "wallet"),
-                        sql`${identityNodesTable.merchantId} IS NULL`,
-                        sql`${identityNodesTable.unlinkedAt} IS NULL`
+                        isNull(identityNodesTable.merchantId),
+                        isNull(identityNodesTable.unlinkedAt)
                     )
                 )
                 .groupBy(identityNodesTable.groupId)
@@ -329,8 +330,8 @@ export class MemberQueryOrchestrator {
             .where(
                 and(
                     eq(identityNodesTable.identityType, "wallet"),
-                    sql`${identityNodesTable.merchantId} IS NULL`,
-                    sql`${identityNodesTable.unlinkedAt} IS NULL`
+                    isNull(identityNodesTable.merchantId),
+                    isNull(identityNodesTable.unlinkedAt)
                 )
             )
             .groupBy(

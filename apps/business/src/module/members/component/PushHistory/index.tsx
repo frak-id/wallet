@@ -96,7 +96,7 @@ export function PushHistory() {
         [t, i18n.language]
     );
 
-    if (!history || isPending) {
+    if (isPending) {
         return <Skeleton variant="rect" height={250} />;
     }
 

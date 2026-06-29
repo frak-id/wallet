@@ -92,8 +92,11 @@ export function DistantReauthModal({
         onClose();
         if (started) {
             // Close the orphaned initiate-WS so a late phone scan can't write
-            // a session after the user has logged out.
-            getOriginPairingClient().softReset();
+            // a session after the user has logged out. A softReset() throw
+            // must not swallow the logout below.
+            try {
+                getOriginPairingClient().softReset();
+            } catch {}
         }
         await logout();
     }, [started, onClose, logout]);

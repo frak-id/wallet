@@ -1,3 +1,4 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import { BinIcon, PencilIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { startOfDay } from "date-fns";
@@ -109,7 +110,11 @@ export function CellRowMenu({ item }: { item: PushHistoryItem }) {
             </RowMenu>
             <ConfirmDialog
                 open={deleteOpen}
-                onOpenChange={setDeleteOpen}
+                onOpenChange={(open) => {
+                    setDeleteOpen(open);
+                    // Drop a stale failure so reopening starts clean.
+                    if (!open) deleteMutation.reset();
+                }}
                 title={t("push.history.delete.title")}
                 description={t("push.history.delete.description", {
                     title: item.title,
@@ -117,9 +122,21 @@ export function CellRowMenu({ item }: { item: PushHistoryItem }) {
                 cancelLabel={t("push.history.delete.cancel")}
                 confirmLabel={t("push.history.delete.confirm")}
                 confirmTone={"destructive"}
+                isConfirming={deleteMutation.isPending}
+                error={
+                    deleteMutation.isError ? (
+                        <Text variant="caption" color="error">
+                            {t("push.history.delete.error")}
+                        </Text>
+                    ) : undefined
+                }
                 onConfirm={() => {
-                    deleteMutation.mutate(item.id);
-                    setDeleteOpen(false);
+                    deleteMutation.mutate(item.id, {
+                        // Keep the dialog open on failure so the error surfaces
+                        // and the user can retry; only close once the delete
+                        // actually resolves.
+                        onSuccess: () => setDeleteOpen(false),
+                    });
                 }}
             />
         </>

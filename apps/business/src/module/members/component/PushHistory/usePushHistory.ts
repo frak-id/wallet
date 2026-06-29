@@ -17,6 +17,8 @@ function toPushHistoryItem(broadcast: PushBroadcast): PushHistoryItem {
         broadcast.targets && "wallets" in broadcast.targets
             ? broadcast.targets.wallets.length
             : null;
+    // A segment audience is a non-null filter target (no explicit wallet list).
+    const isSegment = !!broadcast.targets && walletCount === null;
     return {
         id: broadcast.id,
         title: broadcast.payload.title,
@@ -32,7 +34,14 @@ function toPushHistoryItem(broadcast: PushBroadcast): PushHistoryItem {
             url: broadcast.payload.data?.url,
         },
         target: broadcast.targets ?? undefined,
-        targetCount: walletCount ?? broadcast.sentCount,
+        // Wallet audiences carry their exact size. Segment audiences are
+        // re-resolved live by the composer's audience panel on edit, so a
+        // scheduled segment (no delivered count yet) seeds a non-zero
+        // placeholder the panel overwrites with the live count — rather than
+        // 0, which would fail the edit form's `canPublish` and leave the
+        // broadcast un-editable.
+        targetCount:
+            walletCount ?? (broadcast.sentCount || (isSegment ? 1 : 0)),
     };
 }
 
