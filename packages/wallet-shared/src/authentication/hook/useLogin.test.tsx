@@ -111,7 +111,6 @@ describe("useLogin", () => {
             "../../stores/authenticationStore"
         );
 
-        const setLastWebAuthNAction = vi.fn();
         const setSession = vi.fn();
         const setSdkSession = vi.fn();
 
@@ -147,9 +146,7 @@ describe("useLogin", () => {
             data: mockSessionData,
             error: null,
         } as any);
-        vi.mocked(authenticationStore.getState).mockReturnValue({
-            setLastWebAuthNAction,
-        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession,
             setSdkSession,
@@ -171,19 +168,6 @@ describe("useLogin", () => {
                 credentialId: undefined,
                 rpId: "test.frak.id",
                 userVerification: "required",
-                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
-            })
-        );
-        expect(setLastWebAuthNAction).toHaveBeenCalledWith(
-            expect.objectContaining({
-                wallet: mockAddress,
-                signature: expect.objectContaining({
-                    id: mockAuthResponse.id,
-                    response: expect.objectContaining({
-                        metadata: expect.any(Object),
-                        signature: expect.any(Object),
-                    }),
-                }),
                 challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
             })
         );
@@ -253,9 +237,7 @@ describe("useLogin", () => {
             data: mockSessionData,
             error: null,
         } as any);
-        vi.mocked(authenticationStore.getState).mockReturnValue({
-            setLastWebAuthNAction: vi.fn(),
-        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
@@ -332,9 +314,7 @@ describe("useLogin", () => {
             data: mockSessionData,
             error: null,
         } as any);
-        vi.mocked(authenticationStore.getState).mockReturnValue({
-            setLastWebAuthNAction: vi.fn(),
-        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
@@ -478,9 +458,7 @@ describe("useLogin", () => {
             data: mockSessionData,
             error: null,
         } as any);
-        vi.mocked(authenticationStore.getState).mockReturnValue({
-            setLastWebAuthNAction: vi.fn(),
-        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
@@ -577,9 +555,7 @@ describe("useLogin", () => {
             data: mockSessionData,
             error: null,
         } as any);
-        vi.mocked(authenticationStore.getState).mockReturnValue({
-            setLastWebAuthNAction: vi.fn(),
-        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
@@ -654,9 +630,7 @@ describe("useLogin", () => {
             data: mockSessionData,
             error: null,
         } as any);
-        vi.mocked(authenticationStore.getState).mockReturnValue({
-            setLastWebAuthNAction: vi.fn(),
-        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
@@ -713,7 +687,6 @@ describe("useLogin", () => {
             "../../common/analytics"
         );
 
-        const setLastWebAuthNAction = vi.fn();
         const setSession = vi.fn();
         const setSdkSession = vi.fn();
         const setDetachedSession = vi.fn();
@@ -740,9 +713,7 @@ describe("useLogin", () => {
             data: mockSessionData,
             error: null,
         } as any);
-        vi.mocked(authenticationStore.getState).mockReturnValue({
-            setLastWebAuthNAction,
-        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession,
             setSdkSession,

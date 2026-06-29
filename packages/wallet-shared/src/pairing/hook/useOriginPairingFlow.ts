@@ -8,6 +8,13 @@ import type { OriginIdentityNode, OriginPairingState } from "../types";
 export type UseOriginPairingFlowOptions = {
     onSuccess?: OnPairingSuccessCallback;
     originNode?: OriginIdentityNode;
+    /**
+     * Optional backend-enforced allow-list. The backend rejects any joiner
+     * whose `authenticatorId` isn't in this set, restricting re-pairing to
+     * the exact wallet(s) listed. A caller can only RESTRICT completions,
+     * never widen them. Omit for an unrestricted pairing (default behaviour).
+     */
+    authenticatorHints?: string[];
 };
 
 export type UseOriginPairingFlowReturn = {
@@ -31,6 +38,7 @@ export type UseOriginPairingFlowReturn = {
 export function useOriginPairingFlow({
     onSuccess,
     originNode,
+    authenticatorHints,
 }: UseOriginPairingFlowOptions): UseOriginPairingFlowReturn {
     const client = getOriginPairingClient();
     const clientState = useStore(client.store);
@@ -38,9 +46,9 @@ export function useOriginPairingFlow({
         clientState.status === "error" || clientState.status === "retry-error";
 
     useEffect(() => {
-        client.initiatePairing({ onSuccess, originNode });
+        client.initiatePairing({ onSuccess, originNode, authenticatorHints });
         trackEvent("pairing_initiated");
-    }, [client, onSuccess, originNode]);
+    }, [client, onSuccess, originNode, authenticatorHints]);
 
     /**
      * Recover from a fatal/transient error surfaced by the origin client.
@@ -54,8 +62,8 @@ export function useOriginPairingFlow({
             return;
         }
         client.reset();
-        client.initiatePairing({ onSuccess, originNode });
-    }, [client, onSuccess, originNode]);
+        client.initiatePairing({ onSuccess, originNode, authenticatorHints });
+    }, [client, onSuccess, originNode, authenticatorHints]);
 
     return {
         clientState,

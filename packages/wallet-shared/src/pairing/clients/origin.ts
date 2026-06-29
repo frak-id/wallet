@@ -9,6 +9,7 @@ import {
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { identifyAuthenticatedUser, trackEvent } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
+import { recordDistantAuthenticator } from "../../stores/authenticationStore";
 import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
@@ -654,6 +655,16 @@ export class OriginPairingClient extends BasePairingClient<
 
         sessionStore.getState().setSession(session);
         sessionStore.getState().setSdkSession(payload.sdkJwt);
+
+        // Record the paired authenticator durably. `addLastAuthentication`
+        // (used by local logins) ignores distant sessions, so without this the
+        // auth store stays blind to pairings.
+        recordDistantAuthenticator({
+            type: "distant-webauthn",
+            address: payload.wallet.address,
+            authenticatorId: payload.wallet.authenticatorId,
+            pairingId: payload.wallet.pairingId,
+        });
     }
 
     /**

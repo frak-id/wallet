@@ -29,6 +29,14 @@ type PairingViewProps = {
      * specific Back implementation (which lives in `apps/wallet`).
      */
     back?: ReactNode;
+    /**
+     * Optional backend-enforced allow-list forwarded to `useOriginPairingFlow`.
+     * The backend rejects any joiner whose `authenticatorId` is not in this
+     * set — a caller can only RESTRICT completions, never widen them.
+     * Pass the array from a stable source (e.g. Zustand store state) to
+     * avoid re-firing the initiate effect on every render.
+     */
+    authenticatorHints?: string[];
 };
 
 /**
@@ -43,10 +51,11 @@ export function PairingView({
     onSuccess,
     originNode,
     back,
+    authenticatorHints,
 }: PairingViewProps) {
     const { t } = useTranslation();
     const { clientState, pairingInfo, isError, handleRetry } =
-        useOriginPairingFlow({ onSuccess, originNode });
+        useOriginPairingFlow({ onSuccess, originNode, authenticatorHints });
 
     return (
         <div className={styles.pairingView}>

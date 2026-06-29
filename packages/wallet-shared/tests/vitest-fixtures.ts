@@ -69,7 +69,6 @@ export type BaseTestFixtures = {
             clearSession: ReturnType<typeof import("vitest").vi.fn>;
         };
         authentication: {
-            setLastWebAuthNAction: ReturnType<typeof import("vitest").vi.fn>;
             setLastAuthenticator: ReturnType<typeof import("vitest").vi.fn>;
         };
     };
@@ -238,9 +237,9 @@ export const test = baseTest.extend<BaseTestFixtures>({
         await use(authenticationStore);
         authenticationStore.setState({
             lastAuthenticator: null,
+            lastRemoteAuthenticator: null,
             pendingRegistration: null,
             lastAuthenticationAt: null,
-            lastWebAuthNAction: null,
             ssoContext: null,
         });
     },
@@ -258,7 +257,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
                 clearSession: vi.fn(),
             },
             authentication: {
-                setLastWebAuthNAction: vi.fn(),
                 setLastAuthenticator: vi.fn(),
             },
         };

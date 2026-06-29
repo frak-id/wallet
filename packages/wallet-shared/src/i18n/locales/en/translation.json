@@ -854,6 +854,23 @@
             "title": "You're offline",
             "description": "Some features may be unavailable until your connection is restored."
         },
+        "sessionExpiring": {
+            "title": "Session expiring soon",
+            "banner": "Refresh now to stay signed in.",
+            "bannerAction": "Refresh session",
+            "bannerDismiss": "Dismiss session expiry notice"
+        },
+        "reauth": {
+            "title": "Session expiring",
+            "description": "Please verify your identity to continue.",
+            "action": "Verify identity"
+        },
+        "distantReauth": {
+            "title": "Reconnect your wallet",
+            "description": "Your paired session expired. Scan with your phone to reconnect the same wallet.",
+            "action": "Reconnect",
+            "pairing": "Scan with the phone holding your passkey to reconnect the same wallet."
+        },
         "toastLoading": {
             "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)",
             "dismiss": "Dismiss inapp browser warning"

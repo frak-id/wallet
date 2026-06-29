@@ -23,4 +23,9 @@ export namespace ssoKey {
     export const demo = {
         login: [base, demoBase, "login"] as const,
     };
+
+    /**
+     * Mutation key for the SSO completion handoff to the merchant.
+     */
+    export const complete = [base, "complete"] as const;
 }

@@ -39,7 +39,26 @@ type ModalState =
     | { id: "moneriumOrderDetail"; order: MoneriumOrder }
     | { id: "rewardDetail"; item: RewardHistoryItem }
     | { id: "editReferralCode"; onSaved: () => void }
-    | { id: "emailNotFound"; email: string };
+    | { id: "emailNotFound"; email: string }
+    | {
+          /** Biometric re-auth prompt. `expired = true` means the wallet token
+           *  is past its expiry — dismissing this modal must trigger a full
+           *  logout. `expired = false` (server-confirmed 401) is pre-expiry
+           *  and dismissal just closes the prompt. */
+          id: "reauth";
+          expired: boolean;
+          onAuthSuccess?: () => void;
+      }
+    | {
+          /**
+           * Re-pair prompt for a dead PAIRED (distant-webauthn) session. Seeded
+           * with the dead session's authenticatorId so the backend-enforced
+           * allow-list restricts re-pairing to the same wallet. Dismissal logs
+           * out (token is server-confirmed dead with no local recovery path).
+           */
+          id: "distant-reauth";
+          authenticatorHints: string[];
+      };
 
 const maxStackDepth = 5;
 
