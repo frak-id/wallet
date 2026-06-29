@@ -140,7 +140,9 @@
             "steps": "Next steps:",
             "step1": "Paste the snippet before </head> in theme.liquid.",
             "step1Link": "Edit theme.liquid",
-            "step2": "Add <frak-button-share> where you want the share button, usually near the Add to cart button. If your product template only contains a {% section %} tag, open that section file (e.g. sections/product-template.liquid) and add it there.",
+            "step2": "Add the tag where you want the share button (usually near the Add to cart button).",
+            "step2ClassHint": "Replace <code>btn</code> with your theme's button class so it matches your store — inspect one of your existing buttons to find it (e.g. <code>btn</code> on most vintage themes, <code>button</code> on Dawn).",
+            "step2SectionHint": "If your product template only contains a <code>{% section %}</code> tag, open that section file instead (e.g. <code>sections/product-template.liquid</code>).",
             "step2Link": "Edit product template",
             "step3": "Personalise logo, wording and rewards in the Frak editor:",
             "step3Link": "Open Frak editor"

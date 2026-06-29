@@ -21,3 +21,13 @@
     top: 8px;
     right: 8px;
 }
+
+.inlineCode {
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9em;
+    background: #f1f2f3;
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: #202223;
+}

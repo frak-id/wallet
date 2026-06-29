@@ -1,13 +1,19 @@
 import { ExternalLink } from "app/components/ui/ExternalLink";
 import type { loader as appLoader } from "app/routes/app";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import { buildFrakSnippet } from "./buildFrakSnippet";
 import styles from "./LegacyInstall.module.css";
 
-/** The share-button web component merchants paste into their product template. */
-const BUTTON_TAG = "<frak-button-share></frak-button-share>";
+/**
+ * The share-button web component merchants paste into their product template.
+ * `classname` reuses the theme's own button class so the (light-DOM) button
+ * inherits the store's native button styling. Defaults to `btn` (common on
+ * vintage/Slate-based themes — the manual-install audience); merchants swap it
+ * for their theme's button class.
+ */
+const BUTTON_TAG = '<frak-button-share classname="btn"></frak-button-share>';
 
 export function LegacyInstall({
     merchantId,
@@ -131,6 +137,30 @@ export function LegacyInstall({
                                         : t("theme.legacy.copyButton")}
                                 </s-button>
                             </s-stack>
+                            <s-text color="subdued">
+                                <Trans
+                                    i18nKey="theme.legacy.step2ClassHint"
+                                    components={{
+                                        code: (
+                                            <code
+                                                className={styles.inlineCode}
+                                            />
+                                        ),
+                                    }}
+                                />
+                            </s-text>
+                            <s-text color="subdued">
+                                <Trans
+                                    i18nKey="theme.legacy.step2SectionHint"
+                                    components={{
+                                        code: (
+                                            <code
+                                                className={styles.inlineCode}
+                                            />
+                                        ),
+                                    }}
+                                />
+                            </s-text>
                             <ExternalLink href={productTemplateUrl}>
                                 {t("theme.legacy.step2Link")}
                             </ExternalLink>

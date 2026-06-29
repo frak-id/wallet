@@ -140,7 +140,9 @@
             "steps": "Prochaines étapes\u00a0:",
             "step1": "Collez le code avant </head> dans theme.liquid.",
             "step1Link": "Modifier theme.liquid",
-            "step2": "Ajoutez <frak-button-share> là où vous souhaitez le bouton de partage, généralement près du bouton Ajouter au panier. Si votre modèle de produit ne contient qu'une balise {% section %}, ouvrez ce fichier de section (ex. sections/product-template.liquid) et ajoutez-le à cet endroit.",
+            "step2": "Ajoutez la balise là où vous souhaitez le bouton de partage (généralement près du bouton Ajouter au panier).",
+            "step2ClassHint": "Remplacez <code>btn</code> par la classe de bouton de votre thème pour qu'il s'harmonise — inspectez un de vos boutons existants pour la trouver (ex. <code>btn</code> sur la plupart des thèmes vintage, <code>button</code> sur Dawn).",
+            "step2SectionHint": "Si votre modèle de produit ne contient qu'une balise <code>{% section %}</code>, ouvrez plutôt ce fichier de section (ex. <code>sections/product-template.liquid</code>).",
             "step2Link": "Modifier le modèle produit",
             "step3": "Personnalisez logo, textes et récompenses dans l'éditeur Frak\u00a0:",
             "step3Link": "Ouvrir l'éditeur Frak"
