@@ -90,7 +90,7 @@ function BankView({
 
             {allTokensEmpty && isOpen && (
                 <s-banner tone="warning">
-                    <p>{t("status.bank.emptyWarning")}</p>
+                    <s-text>{t("status.bank.emptyWarning")}</s-text>
                 </s-banner>
             )}
 
