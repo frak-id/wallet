@@ -165,7 +165,7 @@
             "resendIn": "Resend in {{seconds}}s",
             "pasteCode": "Paste code",
             "pasteError": "Couldn't read the clipboard. Paste or type the code manually.",
-            "digitLabel": "Digit {{index}}",
+            "codeLabel": "Verification code",
             "verify": "Verify",
             "changeEmailLink": "Use a different email",
             "verifying": {
@@ -948,7 +948,7 @@
         "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
         "paste": "Paste the code",
         "validate": "Validate the code",
-        "digitLabel": "Character",
+        "codeLabel": "Recovery code",
         "error": {
             "invalid": "Incorrect or expired code, check the code copied from wallet.frak.id",
             "alreadyLinked": "This code has already been used.",

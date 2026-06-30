@@ -163,7 +163,7 @@
             "resendIn": "Renvoyer dans {{seconds}}s",
             "pasteCode": "Coller le code",
             "pasteError": "Impossible de lire le presse-papiers. Colle ou saisis le code manuellement.",
-            "digitLabel": "Chiffre {{index}}",
+            "codeLabel": "Code de vérification",
             "verify": "Vérifier",
             "changeEmailLink": "Utiliser un autre e-mail",
             "verifying": {
@@ -946,7 +946,7 @@
         "description": "Colle le code copié depuis wallet.frak.id pour récupérer tes gains.",
         "paste": "Coller le code",
         "validate": "Valider le code",
-        "digitLabel": "Caractère",
+        "codeLabel": "Code de récupération",
         "error": {
             "invalid": "Code incorrect ou expiré, vérifie le code copié depuis wallet.frak.id",
             "alreadyLinked": "Ce code a déjà été utilisé.",

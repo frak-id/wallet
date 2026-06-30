@@ -543,8 +543,8 @@ export default interface Resources {
       }
     },
     "recoveryCode": {
+      "codeLabel": "Recovery code",
       "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
-      "digitLabel": "Character",
       "error": {
         "alreadyLinked": "This code has already been used.",
         "generic": "Something went wrong, please try again.",
@@ -661,6 +661,13 @@ export default interface Resources {
         "placeholder": "your.email@gmail.com",
         "submitError": "Unable to save this email right now. Please try again.",
         "title": "Add your email"
+      },
+      "distantReauth": {
+        "action": "Reconnect",
+        "description": "Your paired session expired. Scan with your phone to reconnect the same wallet.",
+        "logout": "Log out",
+        "pairing": "Scan with the phone holding your passkey to reconnect the same wallet.",
+        "title": "Reconnect your wallet"
       },
       "inAppBrowser": {
         "clickToOpen": "Tap to open in your browser.",
@@ -1013,6 +1020,12 @@ export default interface Resources {
           }
         }
       },
+      "reauth": {
+        "action": "Verify identity",
+        "description": "Please verify your identity to continue.",
+        "logout": "Log out",
+        "title": "Session expiring"
+      },
       "recoverySetup": {
         "backup": {
           "continue": "Done",
@@ -1303,6 +1316,12 @@ export default interface Resources {
         "description": "Spin up a temporary wallet to explore Frak. No biometrics, no recovery, just a sandbox.",
         "title": "Try Frak in demo mode"
       },
+      "sessionExpiring": {
+        "banner": "Refresh now to stay signed in.",
+        "bannerAction": "Refresh session",
+        "bannerDismiss": "Dismiss session expiry notice",
+        "title": "Session expiring soon"
+      },
       "settings": {
         "biometryInfo": "Biometry informations",
         "deleteAccount": "Delete my account",
@@ -1358,8 +1377,8 @@ export default interface Resources {
           "title": "Change your email"
         },
         "changeEmailLink": "Use a different email",
+        "codeLabel": "Verification code",
         "description": "Enter the 6-digit code we email you to confirm your address. You can paste it or tap the button in the email.",
-        "digitLabel": "Digit {{index}}",
         "error": {
           "expired": "This code has expired. Send a new one.",
           "invalid": "Incorrect code. Please try again.",

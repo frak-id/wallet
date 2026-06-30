@@ -73,7 +73,7 @@ export function RecoveryCodePage() {
                 length={CODE_LENGTH}
                 mode="alphanumeric"
                 onChange={handleCodeChange}
-                digitLabel={(i) => `${t("recoveryCode.digitLabel")} ${i}`}
+                label={t("recoveryCode.codeLabel")}
                 pasteLabel={t("recoveryCode.paste")}
                 error={errorMessage}
             />

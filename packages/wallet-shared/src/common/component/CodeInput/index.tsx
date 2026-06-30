@@ -1,9 +1,8 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { visuallyHidden } from "@frak-labs/design-system/utils";
 import {
     type ChangeEvent,
-    type ClipboardEvent,
-    type KeyboardEvent,
     useCallback,
     useEffect,
     useRef,
@@ -13,22 +12,18 @@ import * as styles from "./index.css";
 
 type CodeInputMode = "numeric" | "alphanumeric";
 
-type CodeInputProps = {
+type CodeInputCommonProps = {
     /** Number of characters (default: 6) */
     length?: number;
     /** Input mode: "numeric" for digits only, "alphanumeric" for letters + digits (default: "numeric") */
     mode?: CodeInputMode;
-    /** Pre-filled value — when set the inputs become read-only display boxes */
-    value?: string;
     /**
-     * Seeds the editable inputs with an initial code (e.g. a magic-link code)
-     * while keeping them editable. Ignored when `value` is set.
+     * Seeds the editable input with an initial code (e.g. a magic-link code)
+     * while keeping it editable. Ignored in read-only mode.
      */
     defaultValue?: string;
     /** Called whenever the code value changes */
     onChange?: (code: string) => void;
-    /** Accessible label for each input cell (receives 1-based index) */
-    digitLabel?: (index: number) => string;
     /** If provided, renders a clipboard paste button with this label */
     pasteLabel?: string;
     /**
@@ -43,10 +38,31 @@ type CodeInputProps = {
 };
 
 /**
- * Code input with individual character boxes.
+ * `value` (read-only display) and the editable input are mutually exclusive:
+ * editable mode requires `label` for an accessible name, read-only mode takes
+ * none (its value is exposed to AT separately).
+ */
+type CodeInputProps = CodeInputCommonProps &
+    (
+        | {
+              /** Pre-filled value — renders read-only display cells */
+              value: string;
+              label?: never;
+          }
+        | {
+              value?: undefined;
+              /** Accessible label for the editable code field (required) */
+              label: string;
+          }
+    );
+
+/**
+ * Code input rendered as individual character boxes.
  *
- * Supports numeric-only and alphanumeric modes.
- * Handles auto-advance, backspace navigation, and paste (both via keyboard and clipboard API).
+ * In editable mode a single transparent `<input autocomplete="one-time-code">`
+ * is overlaid on the boxes so the browser/OS can autofill verification codes
+ * (iOS 17+ surfaces email-delivered codes) and handle caret/paste natively.
+ * The boxes themselves are presentational and mirror the input's value.
  */
 export function CodeInput({
     length = 6,
@@ -54,111 +70,49 @@ export function CodeInput({
     value,
     defaultValue,
     onChange,
-    digitLabel,
+    label,
     pasteLabel,
     pasteErrorLabel,
     error,
     fill,
 }: CodeInputProps) {
     const readOnly = value !== undefined;
-    const [digits, setDigits] = useState<string[]>(() =>
-        readOnly
-            ? Array.from({ length }, (_, i) => value[i] ?? "")
-            : Array.from({ length }, (_, i) => defaultValue?.[i] ?? "")
+    const sanitize = useCallback(
+        (raw: string) =>
+            (mode === "numeric"
+                ? raw.replace(/\D/g, "")
+                : raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase()
+            ).slice(0, length),
+        [mode, length]
+    );
+
+    const [code, setCode] = useState<string>(() =>
+        sanitize(readOnly ? value : (defaultValue ?? ""))
     );
     const [clipboardFailed, setClipboardFailed] = useState(false);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [focused, setFocused] = useState(false);
+    const inputRef = useRef<HTMLInputElement | null>(null);
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
 
     // Notify parent on change — ref avoids re-firing when callback identity changes
     useEffect(() => {
-        onChangeRef.current?.(digits.join(""));
-    }, [digits]);
+        onChangeRef.current?.(code);
+    }, [code]);
 
-    // Sync digits when external value changes
+    // Sync when external value changes
     useEffect(() => {
         if (value !== undefined) {
-            setDigits(Array.from({ length }, (_, i) => value[i] ?? ""));
+            setCode(sanitize(value));
         }
-    }, [value, length]);
-
-    const sanitize = useCallback(
-        (raw: string) =>
-            mode === "numeric"
-                ? raw.replace(/\D/g, "")
-                : raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase(),
-        [mode]
-    );
-
-    const setDigit = useCallback((index: number, value: string) => {
-        setDigits((prev) => {
-            const next = [...prev];
-            next[index] = value;
-            return next;
-        });
-    }, []);
-
-    const fillDigits = useCallback(
-        (raw: string) => {
-            const cleaned = sanitize(raw).slice(0, length);
-            if (!cleaned) return;
-
-            const newDigits = Array.from(
-                { length },
-                (_, i) => cleaned[i] ?? ""
-            );
-            setDigits(newDigits);
-
-            const nextEmpty = newDigits.findIndex((d) => !d);
-            const focusIndex = nextEmpty === -1 ? length - 1 : nextEmpty;
-            inputRefs.current[focusIndex]?.focus();
-        },
-        [length, sanitize]
-    );
+    }, [value, sanitize]);
 
     const handleChange = useCallback(
-        (index: number, e: ChangeEvent<HTMLInputElement>) => {
-            const value = sanitize(e.target.value);
-            if (!value) return;
+        (e: ChangeEvent<HTMLInputElement>) => {
             setClipboardFailed(false);
-
-            // Multi-character input (paste, autofill) → distribute across inputs
-            if (value.length > 1) {
-                fillDigits(value);
-                return;
-            }
-
-            setDigit(index, value);
-
-            if (index < length - 1) {
-                inputRefs.current[index + 1]?.focus();
-            }
+            setCode(sanitize(e.target.value));
         },
-        [length, setDigit, sanitize, fillDigits]
-    );
-
-    const handleKeyDown = useCallback(
-        (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === "Backspace") {
-                if (digits[index]) {
-                    setDigit(index, "");
-                } else if (index > 0) {
-                    setDigit(index - 1, "");
-                    inputRefs.current[index - 1]?.focus();
-                }
-            }
-        },
-        [digits, setDigit]
-    );
-
-    const handlePaste = useCallback(
-        (e: ClipboardEvent<HTMLInputElement>) => {
-            e.preventDefault();
-            setClipboardFailed(false);
-            fillDigits(e.clipboardData.getData("text"));
-        },
-        [fillDigits]
+        [sanitize]
     );
 
     const handlePasteFromClipboard = useCallback(async () => {
@@ -173,62 +127,77 @@ export function CodeInput({
                 text = await navigator.clipboard.readText();
             }
             setClipboardFailed(false);
-            fillDigits(text);
+            setCode(sanitize(text));
+            inputRef.current?.focus();
         } catch {
             // Clipboard API unavailable or denied — surface a hint and focus
-            // the first input so the user can paste/type manually.
+            // the field so the user can paste/type manually.
             setClipboardFailed(true);
-            inputRefs.current[0]?.focus();
+            inputRef.current?.focus();
         }
-    }, [fillDigits]);
+    }, [sanitize]);
 
-    const inputMode = readOnly
-        ? undefined
-        : mode === "numeric"
-          ? "numeric"
-          : "text";
-    const placeholder = readOnly ? undefined : mode === "numeric" ? "0" : "A";
-    const digitClassName = `${styles.digitInput}${error ? ` ${styles.digitInputError}` : ""}${readOnly ? ` ${styles.digitInputReadOnly}` : ""}${fill ? ` ${styles.digitInputFill}` : ""}`;
+    const placeholder = mode === "numeric" ? "0" : "A";
+    // The cell awaiting input — null once the code is complete (no empty cell).
+    const activeIndex = code.length < length ? code.length : null;
+    const boxClassName = `${styles.digitBox}${error ? ` ${styles.digitBoxError}` : ""}${fill ? ` ${styles.digitBoxFill}` : ""}`;
     const containerClassName = `${styles.container}${fill ? ` ${styles.containerFill}` : ""}`;
 
     return (
         <>
             <div className={containerClassName}>
-                {digits.map((digit, index) => (
+                {readOnly && code && (
+                    // The display boxes are aria-hidden; expose the code to
+                    // screen readers as spaced characters (read out one by one).
+                    <span className={visuallyHidden}>
+                        {code.split("").join(" ")}
+                    </span>
+                )}
+                {!readOnly && (
                     <input
-                        key={index}
-                        ref={(el) => {
-                            inputRefs.current[index] = el;
-                        }}
+                        ref={inputRef}
                         type="text"
-                        inputMode={inputMode}
+                        inputMode={mode === "numeric" ? "numeric" : "text"}
                         pattern={mode === "numeric" ? "[0-9]*" : undefined}
+                        autoComplete="one-time-code"
                         autoCapitalize={
                             mode === "alphanumeric" ? "characters" : undefined
                         }
+                        // Suppress iOS autocorrect / QuickType suggestion bubble
+                        // ("AS ✕") — a code is not a word to be corrected.
+                        autoCorrect="off"
+                        spellCheck={false}
                         maxLength={length}
-                        value={digit}
-                        readOnly={readOnly}
-                        tabIndex={readOnly ? -1 : undefined}
-                        placeholder={placeholder}
-                        className={digitClassName}
-                        onChange={
-                            readOnly ? undefined : (e) => handleChange(index, e)
-                        }
-                        onKeyDown={
-                            readOnly
-                                ? undefined
-                                : (e) => handleKeyDown(index, e)
-                        }
-                        onPaste={readOnly ? undefined : handlePaste}
-                        onFocus={
-                            readOnly ? undefined : (e) => e.target.select()
-                        }
-                        aria-label={
-                            digitLabel?.(index + 1) ?? `Digit ${index + 1}`
-                        }
+                        value={code}
+                        onChange={handleChange}
+                        onFocus={() => setFocused(true)}
+                        onBlur={() => setFocused(false)}
+                        aria-label={label}
+                        aria-invalid={error ? true : undefined}
+                        className={styles.hiddenInput}
                     />
-                ))}
+                )}
+                {Array.from({ length }, (_, index) => {
+                    const char = code[index] ?? "";
+                    const isActive =
+                        !readOnly && focused && index === activeIndex;
+                    return (
+                        <div
+                            key={index}
+                            aria-hidden="true"
+                            className={`${boxClassName}${isActive ? ` ${styles.digitBoxActive}` : ""}`}
+                        >
+                            {char ||
+                                (!readOnly ? (
+                                    <span className={styles.placeholder}>
+                                        {placeholder}
+                                    </span>
+                                ) : (
+                                    ""
+                                ))}
+                        </div>
+                    );
+                })}
             </div>
             {error && <p className={styles.errorMessage}>{error}</p>}
             {!readOnly && pasteLabel && (

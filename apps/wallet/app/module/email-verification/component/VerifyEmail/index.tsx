@@ -442,9 +442,7 @@ export function VerifyEmail({
                     }
                     pasteLabel={t("wallet.verifyEmail.pasteCode")}
                     pasteErrorLabel={t("wallet.verifyEmail.pasteError")}
-                    digitLabel={(index) =>
-                        t("wallet.verifyEmail.digitLabel", { index })
-                    }
+                    label={t("wallet.verifyEmail.codeLabel")}
                 />
 
                 {sendError && (
