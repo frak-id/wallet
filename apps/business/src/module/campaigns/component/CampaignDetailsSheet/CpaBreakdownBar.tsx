@@ -66,7 +66,7 @@ export function CpaBreakdownBar({
                             style={{
                                 width: `${segment.pct * 100}%`,
                                 backgroundColor: isNeutral
-                                    ? vars.icon.disabled
+                                    ? vars.surface.disabled
                                     : segmentColor[segment.key],
                             }}
                         />
