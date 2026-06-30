@@ -71,9 +71,11 @@ function NavigationCampaigns({
     const isCampaignsRoute =
         location.pathname.startsWith("/campaigns") ||
         /^\/m\/[^/]+\/campaigns/.test(location.pathname);
-    const [isOpen, setIsOpen] = useState(isCampaignsRoute);
+    // Default expanded so campaign sub-items are always one click away,
+    // regardless of the current route. Users can still collapse manually.
+    const [isOpen, setIsOpen] = useState(true);
 
-    // Keep menu open when navigating to any campaigns route
+    // Never leave the menu collapsed while on a campaigns route.
     useEffect(() => {
         if (isCampaignsRoute) {
             setIsOpen(true);
@@ -84,7 +86,7 @@ function NavigationCampaigns({
         <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
             <Collapsible.Trigger asChild>
                 <NavigationItem
-                    isActive={isOpen}
+                    isActive={isCampaignsRoute}
                     icon={<ChecklistIcon width={20} height={20} />}
                     rightSection={
                         isOpen ? (
