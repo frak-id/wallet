@@ -43,8 +43,11 @@ export default function SettingsIndex() {
     useEffect(() => {
         setSelected(selectedTab === -1 ? 0 : selectedTab);
 
-        // Redirect to the default tab if no tab is selected
-        selectedTab === -1 && navigate(tabs[0].url);
+        // Redirect to the default tab if no tab is selected. Use `replace` so
+        // the bare `/app/settings` entry (the nav target) doesn't linger in
+        // history — otherwise Back from a sub-tab lands here and re-redirects
+        // forward, trapping the back button.
+        selectedTab === -1 && navigate(tabs[0].url, { replace: true });
     }, [selectedTab, navigate, tabs[0].url]);
 
     const handleTabChange = (selectedIndex: number) => {
