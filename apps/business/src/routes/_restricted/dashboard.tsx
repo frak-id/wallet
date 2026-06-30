@@ -1,4 +1,5 @@
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -39,13 +40,16 @@ function OnboardingDashboard() {
                 title={t("dashboard.empty.title")}
                 description={t("dashboard.empty.description")}
             />
-            <LinkButton
-                to="/merchant/new"
-                variant="primary"
-                icon={<Plus size={16} />}
-            >
-                {t("shell.header.addMerchant")}
-            </LinkButton>
+            <Inline space="none" align="center">
+                <LinkButton
+                    to="/merchant/new"
+                    variant="primary"
+                    size="large"
+                    icon={<Plus size={16} />}
+                >
+                    {t("shell.header.addMerchant")}
+                </LinkButton>
+            </Inline>
         </PageShell>
     );
 }
