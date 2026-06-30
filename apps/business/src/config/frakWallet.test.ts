@@ -29,12 +29,26 @@ describe("frakWalletSdkConfig", () => {
         });
     });
 
-    test("should have customizations with css", async () => {
+    test("should have customizations with i18n", async () => {
         const { frakWalletSdkConfig } = await import("./frakWallet");
 
         expect(frakWalletSdkConfig).toHaveProperty("customizations");
-        expect(frakWalletSdkConfig.customizations).toHaveProperty("css");
-        expect(typeof frakWalletSdkConfig.customizations?.css).toBe("string");
+        expect(frakWalletSdkConfig.customizations).toHaveProperty("i18n");
+        expect(typeof frakWalletSdkConfig.customizations?.i18n).toBe("object");
+    });
+
+    test("should set the dashboard modal i18n copy", async () => {
+        const { frakWalletSdkConfig } = await import("./frakWallet");
+
+        const i18n = frakWalletSdkConfig.customizations?.i18n as {
+            fr: Record<string, string>;
+        };
+        expect(i18n.fr["sdk.modal.login.title"]).toBe(
+            "Connectez-vous à votre compte Frak"
+        );
+        expect(i18n.fr["sdk.modal.siweAuthenticate.title"]).toBe(
+            "Connectez-vous à votre compte Frak"
+        );
     });
 
     test("should use production wallet URL when not running locally", async () => {
@@ -42,13 +56,5 @@ describe("frakWalletSdkConfig", () => {
 
         // When not running locally and no env var, should use production URL
         expect(frakWalletSdkConfig.walletUrl).toMatch(/https:\/\//);
-    });
-
-    test("should use production CSS URL when not running locally", async () => {
-        const { frakWalletSdkConfig } = await import("./frakWallet");
-
-        expect(frakWalletSdkConfig.customizations?.css).toContain(
-            "business-dev.frak.id"
-        );
     });
 });

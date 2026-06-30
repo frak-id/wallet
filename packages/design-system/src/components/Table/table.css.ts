@@ -56,6 +56,7 @@ export const cell = recipe({
         backgroundColor: vars.surface.background,
         fontSize: fontSize.s,
         lineHeight: "22px",
+        fontWeight: brand.typography.fontWeight.regular,
         color: vars.text.primary,
         paddingLeft: alias.spacing.s,
         paddingRight: alias.spacing.s,

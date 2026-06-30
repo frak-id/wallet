@@ -4,6 +4,7 @@ import {
     draftCampaignLoader,
     useCampaignDraftSync,
 } from "@/module/campaigns/hook/useCampaignDraftSync";
+import { CampaignError } from "@/module/common/component/RouteError";
 
 export const Route = createFileRoute(
     "/_restricted/m/$merchantId/campaigns/draft/$campaignId/validation"
@@ -11,6 +12,7 @@ export const Route = createFileRoute(
     staticData: { shell: "bare" },
     loader: draftCampaignLoader,
     component: CampaignsDraftValidationPage,
+    errorComponent: CampaignError,
 });
 
 function CampaignsDraftValidationPage() {

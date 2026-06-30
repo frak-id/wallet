@@ -1,3 +1,4 @@
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";
 import { log } from "../external/logger";
 import { getClientIp } from "./ipExtraction";
@@ -28,6 +29,10 @@ export class InMemoryRateLimitStore {
     private readonly windows = new Map<string, RateLimitWindow>();
 
     consume(key: string, config: RateLimitConfig): boolean {
+        // Skip locally: all requests are loopback, so E2E/dev tooling trips
+        // the buckets instantly. Tree-shaken out of real builds.
+        if (isRunningLocally) return true;
+
         const now = Date.now();
         const existing = this.windows.get(key);
 

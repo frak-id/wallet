@@ -61,8 +61,8 @@ describe("Columns", () => {
             </Columns>
         );
         const half = screen.getByText("half");
-        // Column with width="1/2" has style.flex set
-        expect(half.parentElement?.style.flex).toBe("0 0 50%");
+        // Column with width="1/2" grows as one gap-aware share (basis 0)
+        expect(half.parentElement?.style.flex).toBe("1 1 0%");
     });
 
     it("should render Column without width as flexGrow fill", () => {

@@ -1,4 +1,8 @@
 import { JwtContext, sessionContext } from "@backend-infrastructure";
+import {
+    AUTH_ERROR_HEADER,
+    AuthErrorCode,
+} from "@backend-infrastructure/macro/authError";
 import { Elysia, status } from "elysia";
 import { IdentityContext } from "../../../../domain/identity/context";
 
@@ -18,14 +22,18 @@ export const walletGroupContext = new Elysia({ name: "Macro.walletGroup" })
     .use(sessionContext)
     .macro({
         withWalletGroup: {
-            async resolve({ headers }) {
+            async resolve({ headers, set }) {
                 const walletAuth = headers["x-wallet-auth"];
                 if (!walletAuth) {
+                    set.headers[AUTH_ERROR_HEADER] =
+                        AuthErrorCode.walletTokenInvalid;
                     return status(401, "Unauthorized");
                 }
                 const walletSession =
                     await JwtContext.wallet.verify(walletAuth);
                 if (!walletSession) {
+                    set.headers[AUTH_ERROR_HEADER] =
+                        AuthErrorCode.walletTokenInvalid;
                     return status(401, "Unauthorized");
                 }
                 if (walletSession.type === "ecdsa") {

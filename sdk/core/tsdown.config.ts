@@ -49,6 +49,10 @@ export default defineConfig([
             index: "./src/index.ts",
             actions: "./src/actions/index.ts",
             bundle: "./src/bundle.ts",
+            // Reward display logic — published as the tree-shakeable
+            // `@frak-labs/core-sdk/rewards` subpath, kept out of the CDN IIFE
+            // entry below so it never bloats the self-contained browser bundle.
+            rewards: "./src/rewards/index.ts",
         },
         format: ["esm", "cjs"],
         platform: "browser",

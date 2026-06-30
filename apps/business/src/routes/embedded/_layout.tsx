@@ -7,8 +7,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { requireEmbeddedAuth } from "@/middleware/embeddedAuth";
+import { EmbeddedShell } from "@/module/embedded/component/EmbeddedShell";
 import { useAuthStore } from "@/stores/authStore";
-import { main } from "./_layout.css";
 
 const sdkInitTimeout = 3000;
 
@@ -51,8 +51,8 @@ function EmbeddedLayout() {
     ]);
 
     return (
-        <main className={main} data-embedded-layout>
+        <EmbeddedShell>
             <Outlet />
-        </main>
+        </EmbeddedShell>
     );
 }

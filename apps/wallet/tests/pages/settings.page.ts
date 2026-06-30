@@ -8,60 +8,36 @@ export class SettingsPage {
 
     async navigateToSettings() {
         await this.page.goto("/profile");
-        await this.page.waitForLoadState("networkidle");
+        await this.page.waitForURL("/profile");
     }
 
-    //verify the settings button and click it
+    // Profil tab. "Profil" is a hardcoded FR label in AppShell (not i18n).
     async clickSettingsButton() {
-        const settingsLinkLocator = this.page.getByRole("button", {
-            name: /profil/i,
+        const settingsLinkLocator = this.page.getByRole("link", {
+            name: "Profil",
         });
         await expect(settingsLinkLocator).toBeVisible();
         await settingsLinkLocator.click();
         await this.page.waitForURL("/profile");
     }
 
-    async verifyBiometryInformation() {
+    // Asserts the profile rendered. (No biometry check: the authenticator row
+    // is webauthn-only, hence the generic name.)
+    async verifyProfileIdentity() {
         await expect(
             this.page.getByRole("heading", { name: "Profil" })
         ).toBeVisible();
+        // Wallet row is always present (Authenticator row is webauthn-only).
+        await expect(this.page.getByText("Wallet:").first()).toBeVisible();
+    }
+
+    // Notifications are now a labelled row + toggle (no "unsubscribe" block).
+    async verifyNotificationsSetting() {
         await expect(
-            this.page.getByText(/Authenticator:|Authentificateur :/i)
+            this.page.getByText("Notifications").first()
         ).toBeVisible();
-        await expect(
-            this.page.getByText(/Wallet:|Porte-monnaie :|Account ID:/i)
-        ).toBeVisible();
+        await expect(this.page.getByRole("switch").first()).toBeVisible();
     }
-
-    async verifyRecoverySetup() {
-        // Verify the recovery setup section is visible
-        await expect(this.page.getByText("Recovery setup")).toBeVisible();
-        await expect(
-            this.page.getByRole("link", { name: "Setup new recovery" })
-        ).toBeVisible();
-    }
-
-    async verifyRecoverySetupPage() {
-        // Verify the recovery setup page  is visible
-        await this.page.waitForURL("/profile/recovery");
-        await expect(this.page.getByText("Warning")).toBeVisible();
-    }
-
-    async verifyLogoutButton() {
-        // Verify the logout button is visible
-        await expect(this.page.getByText("Logout")).toBeVisible();
-    }
-
-    //new test with false
-    async verifyUnsubscribeNotifications() {
-        await expect(this.page.getByText("unsubscribe")).toBeVisible();
-    }
-
-    async verifyUnsubscribeNotificationsNotVisible() {
-        await expect(this.page.getByText("unsubscribe")).not.toBeVisible();
-    }
-
-    async verifyPairedWallets() {}
 
     // copy the authenticator button text
     async clickCopyAuthenticatorInformations() {
@@ -75,22 +51,17 @@ export class SettingsPage {
         await authenticatorButton.click();
     }
 
-    /**
-     * Click on the recovery button
-     */
-    async clickRecoveryButton() {
-        const recoveryButton = this.page.getByRole("link", {
-            name: /setup new recovery|configurer une nouvelle récupération/i,
-        });
-        await expect(recoveryButton).toBeVisible();
-        await recoveryButton.click();
-        await this.page.waitForURL("/profile/recovery");
+    // "Recovery options" only shows once configured; a fresh wallet reaches the
+    // setup flow via /profile/recovery (redirects to /profile/recovery/setup).
+    async navigateToRecovery() {
+        await this.page.goto("/profile/recovery");
     }
 
-    //verify logout button click
-    async clickLogoutButton() {
-        // Verify the logout button is visible
-        await expect(this.page.getByText("Logout")).toBeVisible();
-        await this.page.getByText("Logout").click();
+    async verifyRecoverySetupPage() {
+        await this.page.waitForURL(/\/profile\/recovery(\/setup)?/);
+        // The setup flow opens on the password step.
+        await expect(this.page.getByText("Protect your recovery")).toBeVisible({
+            timeout: 10_000,
+        });
     }
 }

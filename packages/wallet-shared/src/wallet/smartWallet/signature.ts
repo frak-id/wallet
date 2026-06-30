@@ -12,7 +12,6 @@ import {
 } from "viem";
 import { readContract } from "viem/actions";
 import { getTauriGetFn } from "../../authentication";
-import { authenticationStore } from "../../stores/authenticationStore";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import { formatSignature } from "./webAuthN";
 
@@ -122,25 +121,12 @@ export async function signHashViaWebAuthN({
     // Sign with WebAuthn using ox
     // Only pass getFn if defined (Android), omit for iOS/web to use browser default
     const tauriGetFn = getTauriGetFn();
-    const { metadata, signature, raw } = await WebAuthnP256.sign({
+    const { metadata, signature } = await WebAuthnP256.sign({
         challenge: hash,
         credentialId: wallet.authenticatorId,
         rpId: WebAuthN.rpId,
         userVerification: "required",
         ...(tauriGetFn && { getFn: tauriGetFn }),
-    });
-
-    // Store the authentication action
-    authenticationStore.getState().setLastWebAuthNAction({
-        wallet: wallet.address,
-        signature: {
-            id: raw.id,
-            response: {
-                metadata,
-                signature,
-            },
-        },
-        challenge: hash,
     });
 
     // Format the signature for blockchain

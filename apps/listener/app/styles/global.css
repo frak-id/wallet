@@ -1,6 +1,7 @@
 /**
- * Listener-specific global styles
- * Base styles are in @frak-labs/wallet-shared/styles/global-base.css
+ * Listener-specific global styles — overrides on top of
+ * @frak-labs/design-system/global. Keep the iframe surface transparent
+ * (design-system defaults body to a solid surface) and centre on tablet+.
  */
 
 html {

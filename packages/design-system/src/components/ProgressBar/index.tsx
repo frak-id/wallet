@@ -9,6 +9,8 @@ type ProgressBarProps = {
     value: number;
     /** Fill color — `success` (green) signals a fully completed bar. */
     tone?: ProgressBarTone;
+    /** Track/fill thickness in px. Defaults to the token height (6px). */
+    height?: number;
     /** Accessible label describing what the bar measures. */
     label?: string;
     className?: string;
@@ -22,6 +24,7 @@ type ProgressBarProps = {
 export function ProgressBar({
     value,
     tone = "primary",
+    height,
     label,
     className,
 }: ProgressBarProps) {
@@ -34,6 +37,7 @@ export function ProgressBar({
             aria-valuenow={clamped}
             aria-valuemin={0}
             aria-valuemax={100}
+            style={height !== undefined ? { height } : undefined}
         >
             <Box
                 className={clsx(fill, fillTones[tone])}

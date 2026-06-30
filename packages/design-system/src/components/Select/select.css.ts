@@ -30,6 +30,11 @@ const triggerBase = style({
             cursor: "not-allowed",
             opacity: 0.6,
         },
+        // Radix sets data-placeholder on the trigger while the placeholder
+        // is shown — render it in the tertiary/placeholder tone like inputs.
+        "&[data-placeholder]": {
+            color: vars.text.tertiary,
+        },
     },
 });
 

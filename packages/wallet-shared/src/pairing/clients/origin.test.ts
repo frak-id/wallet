@@ -605,4 +605,62 @@ describe("OriginPairingClient", () => {
         expect(client.state.status).toBe("error");
         expect(client.state.pairing).toBeUndefined();
     });
+
+    // --- connection epoch guard (stale-socket defence-in-depth) -------------
+
+    test("a stale socket's close event does not tear down the current connection", () => {
+        // Socket A becomes live.
+        client.reconnect();
+        const a = fakeWsRegistry[0];
+        expect(client.state.status).toBe("connecting");
+
+        // Supersede A with B via the unsafe close-then-immediately-reconnect
+        // path (what reset()/softReset() + reconnect does).
+        client.softReset();
+        client.reconnect();
+        const b = fakeWsRegistry[1];
+        expect(b).not.toBe(a);
+        expect(client.state.status).toBe("connecting");
+
+        // A's delayed close arrives AFTER B is live. Without the epoch guard,
+        // handleClose would null B and regress status to "idle".
+        a.fire("close", { code: 1000, reason: "normal" } as CloseEvent);
+        expect(client.state.status).toBe("connecting");
+
+        // B is untouched and still drives the flow to completion.
+        b.fire("message", {
+            data: {
+                type: "partner-connected",
+                payload: { pairingId: "pairing-1", deviceName: "iPhone" },
+            },
+        });
+        expect(client.state.status).toBe("paired");
+    });
+
+    test("the current socket's close is still handled (guard targets only stale sockets)", () => {
+        client.reconnect();
+        const a = getLastWs();
+        expect(client.state.status).toBe("connecting");
+
+        // A is the live socket → its close must still be processed.
+        a.fire("close", { code: 1000, reason: "normal" } as CloseEvent);
+        expect(client.state.status).toBe("idle");
+    });
+
+    test("softReset cancels a pending onCloseHook reconnect (no stale reconnection)", async () => {
+        await client.initiatePairing({});
+        const a = fakeWsRegistry[0];
+        // A second initiate while A is open arms forceConnect's deferred
+        // reconnect (onCloseHook) — no new socket until A closes.
+        await client.initiatePairing({});
+        expect(fakeWsRegistry.length).toBe(1);
+
+        // Abandon everything before A's close arrives.
+        client.softReset();
+
+        // A's delayed close must NOT fire the armed reconnect.
+        a.fire("close", { code: 1000, reason: "normal" } as CloseEvent);
+        expect(fakeWsRegistry.length).toBe(1);
+        expect(client.state.status).toBe("idle");
+    });
 });

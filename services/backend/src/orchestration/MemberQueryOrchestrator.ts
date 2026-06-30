@@ -4,6 +4,7 @@ import {
     eq,
     gte,
     inArray,
+    isNull,
     lte,
     min,
     type SQL,
@@ -125,8 +126,8 @@ export class MemberQueryOrchestrator {
                 .where(
                     and(
                         eq(identityNodesTable.identityType, "wallet"),
-                        sql`${identityNodesTable.merchantId} IS NULL`,
-                        sql`${identityNodesTable.unlinkedAt} IS NULL`
+                        isNull(identityNodesTable.merchantId),
+                        isNull(identityNodesTable.unlinkedAt)
                     )
                 )
                 .groupBy(identityNodesTable.groupId)
@@ -188,8 +189,8 @@ export class MemberQueryOrchestrator {
             .where(
                 and(
                     eq(identityNodesTable.identityType, "wallet"),
-                    sql`${identityNodesTable.merchantId} IS NULL`,
-                    sql`${identityNodesTable.unlinkedAt} IS NULL`
+                    isNull(identityNodesTable.merchantId),
+                    isNull(identityNodesTable.unlinkedAt)
                 )
             )
             .groupBy(
@@ -282,8 +283,8 @@ export class MemberQueryOrchestrator {
                 .where(
                     and(
                         eq(identityNodesTable.identityType, "wallet"),
-                        sql`${identityNodesTable.merchantId} IS NULL`,
-                        sql`${identityNodesTable.unlinkedAt} IS NULL`
+                        isNull(identityNodesTable.merchantId),
+                        isNull(identityNodesTable.unlinkedAt)
                     )
                 )
                 .groupBy(identityNodesTable.groupId)
@@ -292,6 +293,54 @@ export class MemberQueryOrchestrator {
         );
 
         return result?.total ?? 0;
+    }
+
+    // No asset_logs join / pricing here (unlike queryMembers): the supported
+    // filters never touch rewards, so the audience needs only the
+    // identity_nodes x interaction_logs aggregate.
+    async resolveWallets(
+        accessibleMerchantIds: string[],
+        filter?: MemberQueryFilter
+    ): Promise<Address[]> {
+        if (accessibleMerchantIds.length === 0) return [];
+
+        const merchantIds = this.scopeMerchantIds(
+            accessibleMerchantIds,
+            filter?.merchantIds
+        );
+        if (merchantIds.length === 0) return [];
+
+        const rows = await db
+            .select({
+                wallet: sql<Address>`${identityNodesTable.identityValue}`.as(
+                    "wallet_address"
+                ),
+            })
+            .from(identityNodesTable)
+            .innerJoin(
+                interactionLogsTable,
+                and(
+                    eq(
+                        interactionLogsTable.identityGroupId,
+                        identityNodesTable.groupId
+                    ),
+                    inArray(interactionLogsTable.merchantId, merchantIds)
+                )
+            )
+            .where(
+                and(
+                    eq(identityNodesTable.identityType, "wallet"),
+                    isNull(identityNodesTable.merchantId),
+                    isNull(identityNodesTable.unlinkedAt)
+                )
+            )
+            .groupBy(
+                identityNodesTable.groupId,
+                identityNodesTable.identityValue
+            )
+            .having(this.buildHavingConditions(filter));
+
+        return rows.map((row) => getAddress(row.wallet));
     }
 
     private buildHavingConditions(

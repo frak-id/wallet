@@ -26,6 +26,7 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
             },
         }
     )
+    // TODO(delete-next-cycle): client no longer calls this; remove after next release
     // Generate a new token from a previous webauthn signature
     .post(
         "/fromWebAuthNSignature",
@@ -74,6 +75,7 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
             },
         }
     )
+    // TODO(delete-next-cycle): client no longer calls this; remove after next release
     .get(
         "/isValid",
         async ({ walletSdkSession }) => {

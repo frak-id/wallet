@@ -103,9 +103,9 @@ export class MediaStorageRepository {
 
         const files: { type: string; url: string }[] = [];
         for (const obj of result.contents) {
-            // Match logo, hero, or hero-{variant} (e.g. hero-home, hero-cta)
+            // Match logo, icon-{hash}, hero, or hero-{variant} (e.g. hero-home)
             const match = obj.key.match(
-                /^[^/]+\/(logo|hero(?:-[a-zA-Z0-9_-]+)?)\.(webp|svg)$/
+                /^[^/]+\/(logo|icon(?:-[a-zA-Z0-9_-]+)?|hero(?:-[a-zA-Z0-9_-]+)?)\.(webp|svg)$/
             );
             if (!match) continue;
             const type = match[1];

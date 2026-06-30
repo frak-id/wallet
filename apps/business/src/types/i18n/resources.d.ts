@@ -4,6 +4,7 @@ export default interface Resources {
       "embedded": {
         "action": "Authenticate",
         "panelTitle": "Please connect your wallet to continue",
+        "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
         "title": "Authentication required"
       },
       "login": {
@@ -167,6 +168,46 @@ export default interface Resources {
           },
           "required": "Select a goal"
         },
+        "referralChain": {
+          "cac": {
+            "label": "CAC",
+            "placeholder": "Not available",
+            "placeholderTiered": "Varies by tier"
+          },
+          "decrease": {
+            "hint": "Each level receives this percentage less than the previous level. Minimum 50%.",
+            "label": "Reward decrease per level (%)",
+            "outOfRange": "Decrease must be between 50% and 99%: below 50% deeper levels receive more than the direct ambassador; at 100% they receive nothing.",
+            "placeholder": "Enter level"
+          },
+          "enable": {
+            "description": "Distribute referrer rewards across multiple levels of the referral chain",
+            "title": "Enable chain rewards"
+          },
+          "maxLevels": {
+            "hint": "Maximum number of referrer levels eligible for rewards.",
+            "label": "Maximum rewarded levels",
+            "placeholder": "Enter level"
+          },
+          "model": {
+            "description": "When a purchase is made, rewards are shared across the referral chain.",
+            "label": "How rewards are distributed"
+          },
+          "noReferrer": "Configure a referrer (ambassador) reward in the Reward setup step before enabling chain rewards.",
+          "preview": {
+            "caption": "Each level receives {{percent}}% less than the previous level.",
+            "chainReward": "Referral chain reward",
+            "direct": "Direct ambassador",
+            "directReward": "Direct reward",
+            "level": "Level {{n}} ambassador",
+            "purchase": "1st Purchase",
+            "rowDirect": "Direct",
+            "rowLevel": "Level {{n}}",
+            "tableAmount": "Amount",
+            "tableLevel": "Level",
+            "title": "Reward distribution chain"
+          }
+        },
         "reward": {
           "campaignType": {
             "description": "Who qualifies for a reward",
@@ -274,6 +315,11 @@ export default interface Resources {
             "label": "Goals",
             "subtitle": "The choice of your goal defines the event that generates the distribution of rewards."
           },
+          "referralChain": {
+            "hint": "Multi-level ambassador",
+            "label": "Referral chain",
+            "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
+          },
           "reward": {
             "hint": "Model, value & distribution",
             "label": "Reward setup",
@@ -291,7 +337,7 @@ export default interface Resources {
           }
         },
         "success": {
-          "bestPractices": "View all the best practices",
+          "communicationGuide": "Communication guide",
           "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign — they can start sharing immediately.",
           "notifyTitle": "Frak ambassadors will be notified",
           "subtitle": "‘{{name}}’ is now live.",
@@ -667,16 +713,14 @@ export default interface Resources {
       "components": {
         "advanced": "Advanced settings",
         "banner": "Banner",
-        "buttonShare": "Share button",
-        "clickAction": {
-          "embeddedWallet": "Embedded wallet",
-          "hint": "What happens when a visitor clicks the share button",
-          "label": "Click action",
-          "shareModal": "Share modal",
-          "sharingPage": "Sharing page"
+        "bannerGroups": {
+          "inapp": "In-app",
+          "referral": "Referral"
         },
+        "buttonShare": "Share button",
         "description": "Choose the wording that best matches your brand for each component.",
         "fields": {
+          "badgeText": "Badge text",
           "css": "Component CSS",
           "ctaNoRewardText": "CTA text (no reward)",
           "ctaText": "CTA text",
@@ -693,8 +737,26 @@ export default interface Resources {
           "referrerText": "Referrer message",
           "text": "Button text"
         },
+        "image": {
+          "description": "Replace the default gift icon with your own image.",
+          "hint": "Paste an image URL or upload one below.",
+          "label": "Illustration"
+        },
         "postPurchase": "Post Purchase",
+        "postPurchaseGroups": {
+          "referee": "Referee message",
+          "referrer": "Referrer message",
+          "shared": "Badge & CTA"
+        },
+        "postPurchasePreview": {
+          "referee": "Referee view",
+          "referrer": "Referrer view"
+        },
         "preview": "Preview",
+        "rewardToken": {
+          "copy": "Copy {REWARD}",
+          "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward."
+        },
         "targetInteraction": {
           "error": "Maximum length is 200 characters",
           "hint": "Event name that triggers reward calculation for this placement (e.g. purchase_completed, signup)",
@@ -789,7 +851,8 @@ export default interface Resources {
         "close": "Close",
         "error": "Can't register your product. Double check that everything is right.",
         "register": "Register your shop",
-        "registering": "Registering {{domain}}",
+        "registering": "Registering <text>{{domain}}</text>",
+        "subtitle": "We'll verify your domain and set up your merchant space.",
         "title": "Register your shop on Frak"
       }
     },
@@ -943,7 +1006,12 @@ export default interface Resources {
         "segment": "Segment",
         "to": "To"
       },
-      "sendPushNotification": "Send Push Notification"
+      "platformAdminNotice": "Member data is not available in platform-admin read-only mode.",
+      "sendPushNotification": "Send Push Notification",
+      "tabs": {
+        "members": "Members",
+        "push": "Push notifications"
+      }
     },
     "merchant": {
       "create": {
@@ -1091,6 +1159,7 @@ export default interface Resources {
         "removeImage": "Remove image",
         "restrictions": {
           "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
+          "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 to 2:1 (Max 10MB)",
           "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)"
         },
         "title": "Explorer",
@@ -1187,6 +1256,9 @@ export default interface Resources {
       },
       "title": "Edit"
     },
+    "platformAdmin": {
+      "readOnlyTag": "Read-only"
+    },
     "push": {
       "create": {
         "audience": {
@@ -1258,7 +1330,6 @@ export default interface Resources {
           },
           "description": "Choose when this notification should be sent.",
           "later": {
-            "comingSoon": "Coming soon",
             "description": "Choose a date and time for delivery.",
             "label": "Schedule for later"
           },
@@ -1272,10 +1343,122 @@ export default interface Resources {
           },
           "title": "Schedule"
         },
-        "title": "Send Push Notification"
+        "title": "Send Push Notification",
+        "update": "Update notification"
+      },
+      "history": {
+        "audience": {
+          "all": "All members",
+          "members": "{{count}} members"
+        },
+        "columns": {
+          "audience": "Audience",
+          "notification": "Notification",
+          "scheduledFor": "Scheduled for",
+          "sentOpened": "Sent / Opened",
+          "status": "Status"
+        },
+        "delete": {
+          "cancel": "Cancel",
+          "confirm": "Delete",
+          "description": "Are you sure you want to delete “{{title}}”? This action can't be undone.",
+          "error": "Couldn't delete the notification. Try again.",
+          "title": "Delete push notification"
+        },
+        "filters": {
+          "button": "Filters",
+          "reset": "Reset"
+        },
+        "rowMenu": {
+          "aria": "Actions for {{title}}",
+          "delete": "Delete",
+          "edit": "Edit push notification"
+        },
+        "status": {
+          "scheduled": "Scheduled",
+          "sent": "Sent"
+        }
       }
     },
     "settings": {
+      "billing": {
+        "actions": {
+          "add": "Add invoice information",
+          "cancel": "Cancel",
+          "close": "Close",
+          "edit": "Edit",
+          "save": "Save information",
+          "saveChanges": "Save changes"
+        },
+        "fields": {
+          "billingEmail": {
+            "label": "Billing email",
+            "placeholder": "youremail@company.com"
+          },
+          "city": {
+            "label": "City",
+            "placeholder": "Enter city"
+          },
+          "companyName": {
+            "label": "Company name",
+            "placeholder": "Enter company name"
+          },
+          "country": {
+            "label": "Country",
+            "placeholder": "Select country"
+          },
+          "postalCode": {
+            "label": "Postal code",
+            "placeholder": "Enter postal code"
+          },
+          "streetAddress": {
+            "label": "Street address",
+            "placeholder": "Enter street address"
+          },
+          "vatNumber": {
+            "label": "VAT number",
+            "placeholder": "Enter VAT number"
+          }
+        },
+        "info": {
+          "label": "Invoice information",
+          "missing": "Missing information",
+          "subtitle": "Billing details used across all campaign invoices and statements.",
+          "title": "Invoice information"
+        },
+        "segments": {
+          "deposit": "Deposit",
+          "invoices": "Invoices"
+        },
+        "sheet": {
+          "addTitle": "Add invoice information",
+          "description": "These details will be used to generate all invoices and billing documents.",
+          "editTitle": "Edit invoice information"
+        },
+        "summary": {
+          "address": "Address",
+          "billingEmail": "Billing email",
+          "companyName": "Company name",
+          "country": "Country",
+          "vatNumber": "VAT number"
+        },
+        "table": {
+          "amount": "Amount",
+          "date": "Date",
+          "description": "Description",
+          "download": "Download PDF",
+          "pdf": "PDF",
+          "type": "Type"
+        },
+        "tag": {
+          "deposit": "Deposit",
+          "paid": "Paid"
+        },
+        "validation": {
+          "email": "Enter a valid email address",
+          "required": "This field is required"
+        }
+      },
       "currency": {
         "label": "Choose your preferred currency",
         "title": "Currency"

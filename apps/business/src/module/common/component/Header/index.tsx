@@ -23,6 +23,7 @@ const CAMPAIGNS_PATH = /^\/m\/[^/]+\/campaigns(\/|$)/;
 const DASHBOARD_PATH = /^\/m\/[^/]+\/dashboard$/;
 const MERCHANT_PATH = /^\/m\/[^/]+\/merchant(\/|$)/;
 const MEMBERS_PATH = /^\/m\/[^/]+\/members$/;
+const PUSH_PATH = /^\/m\/[^/]+\/push$/;
 
 // TODO: drop the legacy `/campaigns`, `/dashboard`, `/merchant/` branches
 // once all entry points are merchant-scoped and the legacy redirect
@@ -40,7 +41,8 @@ export function Header() {
         pathname.startsWith("/merchant/");
     const showExport =
         CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
-    const showSendPush = MEMBERS_PATH.test(pathname);
+    const showSendPush =
+        MEMBERS_PATH.test(pathname) || PUSH_PATH.test(pathname);
 
     return (
         <header className={header}>
@@ -65,6 +67,7 @@ export function Header() {
                             <Button
                                 variant="secondary"
                                 size="small"
+                                disabled
                                 rightIcon={<Download size={16} />}
                             >
                                 {t("shell.header.export")}

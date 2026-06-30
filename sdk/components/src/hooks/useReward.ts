@@ -1,96 +1,27 @@
-import {
-    type Currency,
-    type EstimatedReward,
-    type GetMerchantInformationReturnType,
-    getCurrencyAmountKey,
-    getSupportedCurrency,
-    type InteractionTypeKey,
-    type TokenAmountType,
-} from "@frak-labs/core-sdk";
+import type { InteractionTypeKey } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
+import {
+    type RewardAudience,
+    selectBestReward,
+} from "@frak-labs/core-sdk/rewards";
 import { useEffect, useState } from "preact/hooks";
-import { formatEstimatedReward } from "@/utils/format/formatReward";
 
 /**
- * Get the comparable fiat value of a reward for ranking purposes.
- */
-function getRewardValue(
-    reward: EstimatedReward,
-    key: keyof TokenAmountType
-): number {
-    switch (reward.payoutType) {
-        case "fixed":
-            return reward.amount[key];
-        case "tiered":
-            return reward.tiers.reduce(
-                (acc, tier) =>
-                    "amount" in tier ? Math.max(acc, tier.amount[key]) : acc,
-                0
-            );
-        case "percentage":
-            return 0;
-    }
-}
-
-/**
- * Pick the best referrer reward from merchant info and format it.
- * Returns `undefined` when no displayable reward is found.
- */
-function resolveBestReward(
-    { rewards }: GetMerchantInformationReturnType,
-    currency: Currency | undefined,
-    targetInteraction?: InteractionTypeKey
-): string | undefined {
-    const filteredRewards = targetInteraction
-        ? rewards.filter((r) => r.interactionTypeKey === targetInteraction)
-        : rewards;
-
-    const referrerRewards = filteredRewards
-        .map((r) => r.referrer)
-        .filter((r): r is EstimatedReward => r !== undefined);
-
-    if (referrerRewards.length === 0) return undefined;
-
-    const supportedCurrency = getSupportedCurrency(currency);
-    const key = getCurrencyAmountKey(supportedCurrency);
-
-    // Find the best reward by comparable value
-    let bestReward = referrerRewards[0];
-    let bestValue = getRewardValue(bestReward, key);
-
-    for (let i = 1; i < referrerRewards.length; i++) {
-        const value = getRewardValue(referrerRewards[i], key);
-        if (value > bestValue) {
-            bestReward = referrerRewards[i];
-            bestValue = value;
-        }
-    }
-
-    // If best value is 0, fall back to a percentage reward (displays as "X %")
-    if (bestValue <= 0) {
-        const percentageReward = referrerRewards.find(
-            (r) => r.payoutType === "percentage"
-        );
-        if (!percentageReward) return undefined;
-        bestReward = percentageReward;
-    }
-
-    return formatEstimatedReward(bestReward, currency);
-}
-
-/**
- * Hook to fetch and format the best referrer reward for a given interaction type.
+ * Hook to fetch and format the best reward for a given interaction type.
  *
- * Calls `getMerchantInformation`, picks the highest-value referrer reward
- * across all matching campaigns, and returns it as a formatted string.
+ * Calls `getMerchantInformation`, picks the highest-value reward across all
+ * matching live campaigns for the requested `audience` side, and returns it as
+ * a formatted string.
  *
  * @param shouldUseReward - Whether to fetch the reward at all
  * @param targetInteraction - Optional filter by interaction type (e.g. "purchase")
+ * @param audience - Reward side to display: `"referrer"` (default) or `"referee"`
  * @returns Object containing the formatted reward string, or undefined if unavailable
  */
 export function useReward(
     shouldUseReward: boolean,
-    targetInteraction?: InteractionTypeKey
+    targetInteraction?: InteractionTypeKey,
+    audience?: RewardAudience
 ) {
     const [reward, setReward] = useState<string | undefined>(undefined);
 
@@ -102,20 +33,22 @@ export function useReward(
 
         getMerchantInformation(client)
             .then((merchantInfo) => {
-                const currency = client.config.metadata?.currency;
-                const formatted = resolveBestReward(
-                    merchantInfo,
-                    currency,
-                    targetInteraction
-                );
-                if (formatted) {
-                    setReward(formatted);
+                const best = selectBestReward(merchantInfo.rewards, {
+                    currency: client.config.metadata?.currency,
+                    targetInteraction,
+                    audience,
+                });
+                // Percentage rewards carry no concrete amount to advertise
+                // on this surface, so we treat them as "no reward" — callers
+                // fall back to their no-reward copy.
+                if (best && best.payoutType !== "percentage") {
+                    setReward(best.formatted);
                 }
             })
             .catch(() => {
                 // Silently swallow — reward text is non-critical
             });
-    }, [shouldUseReward, targetInteraction]);
+    }, [shouldUseReward, targetInteraction, audience]);
 
     return { reward };
 }

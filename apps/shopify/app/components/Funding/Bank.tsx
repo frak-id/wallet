@@ -82,7 +82,7 @@ function BankView({
             {isManager && !isLoggedIn && (
                 <s-banner tone="info">
                     <s-stack gap="small">
-                        <p>{t("status.bank.connectWallet")}</p>
+                        <s-text>{t("status.bank.connectWallet")}</s-text>
                         <LoginWithFrak />
                     </s-stack>
                 </s-banner>
@@ -90,7 +90,7 @@ function BankView({
 
             {allTokensEmpty && isOpen && (
                 <s-banner tone="warning">
-                    <p>{t("status.bank.emptyWarning")}</p>
+                    <s-text>{t("status.bank.emptyWarning")}</s-text>
                 </s-banner>
             )}
 

@@ -1,0 +1,3 @@
+DROP INDEX "notification_broadcasts_scheduled_at_idx";--> statement-breakpoint
+CREATE INDEX "notification_sent_broadcast_idx" ON "notification_sent" USING btree ("broadcast_id");--> statement-breakpoint
+CREATE INDEX "notification_broadcasts_scheduled_at_idx" ON "notification_broadcasts" USING btree ("scheduled_at") WHERE "notification_broadcasts"."scheduled_at" is not null and "notification_broadcasts"."claimed_at" is null;

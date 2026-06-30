@@ -10,6 +10,7 @@ const WALLET_URL_KEY = "wallet_url";
 const COMPONENTS_URL_KEY = "components_url";
 const SHARE_URL_KEY = "share_url";
 const SHARE_BUTTON_HTML_KEY = "share_button_html";
+const LEGACY_INSTALL_DISMISSED_KEY = "legacy_install_dismissed";
 
 /* -------------------------------------------------------------------------- */
 /*                Translatable text metaobject (Frak i18n)                    */
@@ -900,6 +901,43 @@ export async function writeComponentsUrlMetafield(
     userErrors: Array<{ field: string; message: string }>;
 }> {
     return writeMetafield(context, COMPONENTS_URL_KEY, componentsUrl);
+}
+
+/**
+ * Whether the merchant confirmed they completed the manual (legacy-theme)
+ * install. Used to hide the install block on the dashboard once done.
+ */
+export async function getLegacyInstallDismissed({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<boolean> {
+    try {
+        const value = await readMetafield<boolean>(
+            graphql,
+            LEGACY_INSTALL_DISMISSED_KEY
+        );
+        return value === true;
+    } catch (error) {
+        console.error("[legacyInstall] dismissed read failed:", error);
+        return false;
+    }
+}
+
+/**
+ * Persist the merchant's confirmation of the manual install.
+ */
+export async function setLegacyInstallDismissed(
+    context: AuthenticatedContext,
+    dismissed: boolean
+): Promise<{
+    success: boolean;
+    userErrors: Array<{ field: string; message: string }>;
+}> {
+    // Store a real boolean (metafield type is json); writing null deletes it.
+    return writeMetafield(
+        context,
+        LEGACY_INSTALL_DISMISSED_KEY,
+        dismissed ? true : null
+    );
 }
 
 /* -------------------------------------------------------------------------- */

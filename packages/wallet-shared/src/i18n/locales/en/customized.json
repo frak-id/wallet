@@ -21,8 +21,8 @@
                 "description": "Login to your Frak account to get the best experience on **{{ productName }}**",
                 "description_sharing": "{{ productName }} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
                 "description_reward": "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
-                "primaryAction": "I create my wallet under 30sec",
-                "secondaryAction": "Use a QR code to connect",
+                "primaryAction": "Create my account in 30 sec",
+                "secondaryAction": "Use a QR code",
                 "title": "Connection",
                 "success": "Connection successful"
             },
@@ -34,6 +34,7 @@
             },
             "siweAuthenticate": {
                 "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
+                "connectingTo": "Secure connection to {{productName}} ({{domain}})",
                 "primaryAction": "Authenticate",
                 "title": "Authentication"
             }
@@ -61,14 +62,18 @@
             "card": {
                 "amount": "{{ estimatedReward }}",
                 "label": "Credited to your account",
+                "upTo": "Up to",
                 "tagline1": "Earn {{ estimatedReward }},",
+                "tagline1_tiered": "Earn up to {{ estimatedReward }},",
                 "tagline2": "on every purchase!"
             },
             "steps": {
                 "title": "",
                 "1": "Share in 1 click. A personal link is automatically generated with each share.",
                 "2": "Earn on every purchase. Every order placed through your link earns you cash.",
-                "3": "Collect your earnings in the app. Install FRAK to collect your earnings."
+                "2_min": "Earn on every purchase. Every order of at least {{ minAmount }} placed through your link earns you cash.",
+                "3": "Collect your earnings in the app. Install FRAK to collect your earnings.",
+                "3_lockup": "Your earnings will be available {{ lockupInDay }} days after the purchase is confirmed."
             },
             "faq": {
                 "title": "Frequently asked questions",

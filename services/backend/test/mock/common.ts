@@ -1,6 +1,9 @@
 import { Elysia, t } from "elysia";
 import type { Address, LocalAccount } from "viem";
 import { vi } from "vitest";
+// Import the real broadcast schema rather than redefining it in the mock, so
+// the mocked notifications module stays in sync with the production DTO.
+import { PushBroadcastSchema } from "../../src/domain/notifications/dto/PushBroadcastDto";
 import { viemMocks } from "./viem";
 
 /* -------------------------------------------------------------------------- */
@@ -564,6 +567,15 @@ export const notificationServiceMocks = {
     sendNotification: vi.fn(() => Promise.resolve()),
 };
 
+export const notificationBroadcastRepositoryMocks = {
+    create: vi.fn(() =>
+        Promise.resolve({ id: "00000000-0000-0000-0000-000000000001" })
+    ),
+    updateScheduled: vi.fn(() => Promise.resolve(true)),
+    listBroadcasts: vi.fn(() => Promise.resolve([] as unknown[])),
+    deleteBroadcast: vi.fn(() => Promise.resolve(true)),
+};
+
 const notificationMacroMock = new Elysia({ name: "Macro.notification" }).macro({
     cleanupTokens(_isEnabled?: boolean) {
         return {};
@@ -590,12 +602,6 @@ const SendNotificationTargetsDto = t.Union([
                     t.Object({
                         min: t.Number(),
                         max: t.Number(),
-                    })
-                ),
-                rewards: t.Partial(
-                    t.Object({
-                        min: t.String(),
-                        max: t.String(),
                     })
                 ),
                 firstInteractionTimestamp: t.Partial(
@@ -638,13 +644,7 @@ vi.mock("../../src/domain/notifications", () => ({
     NotificationContext: {
         services: { notifications: notificationServiceMocks },
         repositories: {
-            notificationBroadcast: {
-                create: vi.fn(() =>
-                    Promise.resolve({
-                        id: "00000000-0000-0000-0000-000000000001",
-                    })
-                ),
-            },
+            notificationBroadcast: notificationBroadcastRepositoryMocks,
             notificationSent: {
                 findByWallet: vi.fn(() => Promise.resolve([])),
                 markOpened: vi.fn(() => Promise.resolve(true)),
@@ -656,19 +656,14 @@ vi.mock("../../src/domain/notifications", () => ({
     FcmSender: vi.fn(() => fcmSenderMocks),
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
+    PushBroadcastSchema,
 }));
 
 vi.mock("../../src/domain/notifications/context", () => ({
     NotificationContext: {
         services: { notifications: notificationServiceMocks },
         repositories: {
-            notificationBroadcast: {
-                create: vi.fn(() =>
-                    Promise.resolve({
-                        id: "00000000-0000-0000-0000-000000000001",
-                    })
-                ),
-            },
+            notificationBroadcast: notificationBroadcastRepositoryMocks,
             notificationSent: {
                 findByWallet: vi.fn(() => Promise.resolve([])),
                 markOpened: vi.fn(() => Promise.resolve(true)),
@@ -715,6 +710,11 @@ vi.mock("../../src/domain/business/context", () => ({
 export const notificationOrchestratorMocks = {
     sendNotifications: vi.fn(() => Promise.resolve()),
     sendPromotionalNotification: vi.fn(() => Promise.resolve()),
+    resolveWalletsFromTargets: vi.fn(
+        (targets: { wallets?: `0x${string}`[] }, _merchantId: string) =>
+            Promise.resolve("wallets" in targets ? (targets.wallets ?? []) : [])
+    ),
+    processDueScheduledNotifications: vi.fn(() => Promise.resolve()),
 };
 
 export const rewardHistoryOrchestratorMocks = {

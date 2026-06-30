@@ -203,12 +203,7 @@ export default function CampaignsPage() {
                 }}
             >
                 <PageHeading>{t("campaigns.title")}</PageHeading>
-                <div
-                    style={{
-                        display: "flex",
-                        gap: "var(--s-space-200)",
-                    }}
-                >
+                <s-stack direction="inline" gap="base">
                     <ExternalButton href={`${merchantPrefix}/list`}>
                         {t("campaigns.viewAll")}
                     </ExternalButton>
@@ -218,7 +213,7 @@ export default function CampaignsPage() {
                     >
                         {t("campaigns.createNew")}
                     </ExternalButton>
-                </div>
+                </s-stack>
             </div>
             {campaigns && bankStatus ? (
                 <s-stack gap="large">

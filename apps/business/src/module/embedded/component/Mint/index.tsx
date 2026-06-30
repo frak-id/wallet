@@ -1,19 +1,21 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
+import { AlertMessage } from "@frak-labs/design-system/components/AlertMessage";
 import {
     Card,
+    CardDescription,
     CardHeader,
     CardTitle,
 } from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { ExclamationTriangleIcon } from "@frak-labs/design-system/icons";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
-import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
-import * as styles from "./mint.css";
 
 export function EmbeddedMint() {
     const { t } = useTranslation();
@@ -53,50 +55,44 @@ export function EmbeddedMint() {
     }, []);
 
     return (
-        <>
-            <Title className={styles.title}>{t("embedded.mint.title")}</Title>
-            <Card>
-                <CardHeader>
-                    <CardTitle color="primary">
-                        {t("embedded.mint.registering", { domain })}
-                    </CardTitle>
-                </CardHeader>
-                {/* Domain validation info */}
-                {isDomainValidLoading ? (
-                    <Spinner />
-                ) : isDomainValid ? (
-                    <DoMintComponent
-                        name={name}
-                        domain={domain}
-                        setupCode={setupCode}
-                        currency={currency}
-                        shopDomain={shopDomain}
+        <Card>
+            <CardHeader>
+                <CardTitle>{t("embedded.mint.title")}</CardTitle>
+                <CardDescription>{t("embedded.mint.subtitle")}</CardDescription>
+            </CardHeader>
+            {/* Domain validation info */}
+            {isDomainValidLoading ? (
+                <Spinner />
+            ) : isDomainValid ? (
+                <DoMintComponent
+                    name={name}
+                    domain={domain}
+                    setupCode={setupCode}
+                    currency={currency}
+                    shopDomain={shopDomain}
+                />
+            ) : (
+                <Stack space="s">
+                    <AlertMessage
+                        tone="danger"
+                        icon={<ExclamationTriangleIcon />}
+                        title={t("embedded.mint.error")}
+                        action={{
+                            label: t("embedded.mint.alreadyRegistered"),
+                            onClick: () =>
+                                window.open(
+                                    "/dashboard",
+                                    "_blank",
+                                    "noopener,noreferrer"
+                                ),
+                        }}
                     />
-                ) : (
-                    <>
-                        <p className={styles.error}>
-                            {t("embedded.mint.error")}
-                            <a
-                                href="/dashboard"
-                                target="_blank"
-                                rel="noreferrer"
-                                className={styles.link}
-                            >
-                                {t("embedded.mint.alreadyRegistered")}
-                            </a>
-                        </p>
-                        <Button
-                            variant="secondary"
-                            size="small"
-                            className={styles.button}
-                            onClick={close}
-                        >
-                            {t("embedded.mint.close")}
-                        </Button>
-                    </>
-                )}
-            </Card>
-        </>
+                    <Button variant="secondary" width="full" onClick={close}>
+                        {t("embedded.mint.close")}
+                    </Button>
+                </Stack>
+            )}
+        </Card>
     );
 }
 
@@ -129,11 +125,25 @@ function DoMintComponent({
     });
 
     return (
-        <>
+        <Stack space="s">
+            <Text variant="bodySmall" color="secondary">
+                <Trans
+                    i18nKey="embedded.mint.registering"
+                    values={{ domain }}
+                    components={{
+                        text: (
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                weight="medium"
+                            />
+                        ),
+                    }}
+                />
+            </Text>
             <Button
-                variant="secondary"
-                size="small"
-                className={styles.button}
+                variant="primary"
+                width="full"
                 onClick={() =>
                     triggerMintMyContent({
                         name: name ?? domain,
@@ -149,6 +159,6 @@ function DoMintComponent({
                 {isPending ? infoTxt : t("embedded.mint.register")}
             </Button>
             {error && <Text color="error">{error.message}</Text>}
-        </>
+        </Stack>
     );
 }

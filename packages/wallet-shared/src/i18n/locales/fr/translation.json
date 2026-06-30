@@ -163,7 +163,7 @@
             "resendIn": "Renvoyer dans {{seconds}}s",
             "pasteCode": "Coller le code",
             "pasteError": "Impossible de lire le presse-papiers. Colle ou saisis le code manuellement.",
-            "digitLabel": "Chiffre {{index}}",
+            "codeLabel": "Code de vérification",
             "verify": "Vérifier",
             "changeEmailLink": "Utiliser un autre e-mail",
             "verifying": {
@@ -749,6 +749,7 @@
                 "device": "Appareil"
             },
             "code": "Vérifie que le code est correct",
+            "scanDescription": "Scanne ce QR code pour te connecter depuis ton mobile.",
             "noCodeNotice": "Confirme cette demande d'appairage pour continuer.",
             "error": {
                 "title": "Requête de connexion invalide",
@@ -851,6 +852,25 @@
             "title": "Vous êtes hors ligne",
             "description": "Certaines fonctionnalités peuvent être indisponibles jusqu'à la restauration de la connexion."
         },
+        "sessionExpiring": {
+            "title": "Session bientôt expirée",
+            "banner": "Actualisez maintenant pour rester connecté.",
+            "bannerAction": "Actualiser la session",
+            "bannerDismiss": "Ignorer l'avis d'expiration de session"
+        },
+        "reauth": {
+            "title": "Session expirée",
+            "description": "Veuillez vérifier votre identité pour continuer.",
+            "action": "Vérifier l'identité",
+            "logout": "Se déconnecter"
+        },
+        "distantReauth": {
+            "title": "Reconnectez votre portefeuille",
+            "description": "Votre session appairée a expiré. Scannez avec votre téléphone pour reconnecter le même portefeuille.",
+            "action": "Reconnecter",
+            "pairing": "Scannez avec le téléphone détenant votre passkey pour reconnecter le même portefeuille.",
+            "logout": "Se déconnecter"
+        },
         "toastLoading": {
             "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",
             "dismiss": "Masquer le message"
@@ -926,7 +946,7 @@
         "description": "Colle le code copié depuis wallet.frak.id pour récupérer tes gains.",
         "paste": "Coller le code",
         "validate": "Valider le code",
-        "digitLabel": "Caractère",
+        "codeLabel": "Code de récupération",
         "error": {
             "invalid": "Code incorrect ou expiré, vérifie le code copié depuis wallet.frak.id",
             "alreadyLinked": "Ce code a déjà été utilisé.",
@@ -1252,6 +1272,11 @@
             "immediate": "Immédiate",
             "pendingDays": "{{count}} jour",
             "pendingDays_other": "{{count}} jours",
+            "minPurchase": "Achat minimum",
+            "percentOfBasket": "{{percent}}% du panier",
+            "percentExample": "Ex. {{reward}} pour {{basket}} d'achat",
+            "tierAndAbove": "{{min}} et plus",
+            "startingOn": "Débute le {{date}}",
             "instructions": "Instructions",
             "step1Title": "Partage un article à tes ami·e·s",
             "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",

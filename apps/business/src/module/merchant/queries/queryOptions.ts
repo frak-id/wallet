@@ -12,7 +12,7 @@ function checkDemoMode(isDemoModeParam: boolean): boolean {
     return useAuthStore.getState().token === "demo-token";
 }
 
-type MerchantRole = "owner" | "admin" | "none";
+export type MerchantRole = "owner" | "admin" | "platform_admin" | "none";
 
 export type MerchantData = {
     id: string;
@@ -93,10 +93,13 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
 function getMyMerchantsMockData(): {
     owned: MerchantData[];
     adminOf: MerchantData[];
+    isPlatformAdmin: boolean;
+    allMerchants?: MerchantData[];
 } {
     return {
         owned: merchantsMockData.owned as MerchantData[],
         adminOf: merchantsMockData.adminOf as MerchantData[],
+        isPlatformAdmin: false,
     };
 }
 
@@ -124,6 +127,8 @@ export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
             return {
                 owned: data.owned,
                 adminOf: data.adminOf,
+                isPlatformAdmin: data.isPlatformAdmin,
+                allMerchants: data.allMerchants,
             };
         },
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 2 * 60 * 1000,

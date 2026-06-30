@@ -126,7 +126,29 @@
         "connected": "L'application Frak est activée",
         "notConnected": "L'application Frak n'est pas activée",
         "link": "Configuration de l'application dans votre thème",
-        "todo": "Veuillez activer l'application Frak dans votre thème en suivant les instructions ci-dessous"
+        "todo": "Veuillez activer l'application Frak dans votre thème en suivant les instructions ci-dessous",
+        "legacy": {
+            "upgradeWarning": "Votre thème ne prend pas en charge Online Store 2.0",
+            "upgradeDescription": "Passez à un thème OS 2.0 pour la meilleure expérience et une configuration en un clic des blocs d'application.",
+            "snippetTitle": "Installation manuelle",
+            "snippetDescription": "Collez cet extrait de code avant </head> dans votre fichier theme.liquid pour activer Frak sur votre boutique.",
+            "copySnippet": "Copier le code",
+            "copyButton": "Copier la balise",
+            "copied": "Copié\u00a0!",
+            "copyError": "Copie automatique impossible - sélectionnez le code ci-dessus et copiez-le manuellement.",
+            "noMerchantId": "Votre identifiant marchand n'est pas encore configuré. Veuillez d'abord compléter les étapes d'intégration.",
+            "steps": "Prochaines étapes\u00a0:",
+            "step1": "Collez le code avant </head> dans theme.liquid.",
+            "step1Link": "Modifier theme.liquid",
+            "step2": "Ajoutez la balise là où vous souhaitez le bouton de partage (généralement près du bouton Ajouter au panier).",
+            "step2ClassHint": "Remplacez <code>btn</code> par la classe de bouton de votre thème pour qu'il s'harmonise — inspectez un de vos boutons existants pour la trouver (ex. <code>btn</code> sur la plupart des thèmes vintage, <code>button</code> sur Dawn).",
+            "step2SectionHint": "Si votre modèle de produit ne contient qu'une balise <code>{% section %}</code>, ouvrez plutôt ce fichier de section (ex. <code>sections/product-template.liquid</code>).",
+            "step2Link": "Modifier le modèle produit",
+            "step3": "Personnalisez logo, textes et récompenses dans l'éditeur Frak\u00a0:",
+            "step3Link": "Ouvrir l'éditeur Frak",
+            "markInstalled": "J'ai ajouté le code",
+            "installed": "Installation manuelle confirmée"
+        }
     },
 
     "login": {
@@ -414,6 +436,10 @@
             "save": "Enregistrer",
             "previewTitle": "Aperçu",
             "previewDescription": "Voici comment votre boutique apparaîtra aux utilisateurs dans le Frak Explorer."
+        },
+        "legacy": {
+            "customizationsNote": "Votre thème ne prend pas en charge les blocs d'application Shopify. Le logo, les textes et les récompenses sont gérés depuis l'éditeur Frak sur le tableau de bord business.",
+            "openEditor": "Ouvrir l'éditeur Frak"
         }
     },
     "funding": {
@@ -422,5 +448,13 @@
     },
     "settings": {
         "title": "Paramètres"
+    },
+    "error": {
+        "title": "Une erreur est survenue",
+        "description": "Une erreur inattendue s'est produite lors du chargement de cette page. Rafraîchissez la page dans quelques secondes. Si le problème persiste, contactez le support Frak avec les détails ci-dessous.",
+        "refresh": "Rafraîchir",
+        "detailsLabel": "Détails techniques",
+        "reference": "Référence",
+        "referenceHint": "à communiquer au support Frak"
     }
 }

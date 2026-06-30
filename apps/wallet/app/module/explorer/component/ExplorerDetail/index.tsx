@@ -1,6 +1,4 @@
-import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
-import type { EstimatedReward } from "@frak-labs/core-sdk";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -14,7 +12,6 @@ import {
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
-    CalendarIcon,
     CheckIcon,
     ClockIcon,
     CoinsIcon,
@@ -27,8 +24,6 @@ import {
     buildSharingLink,
     clientIdStore,
     ExternalLink,
-    estimatedRewardsQueryOptions,
-    formatEstimatedReward,
     mergeTokenQueryOptions,
     sessionStore,
     trackEvent,
@@ -41,9 +36,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
-import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
-import { InstructionList } from "@/module/common/component/InstructionList";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
+import { useCampaignView } from "../../campaignView";
+import { CampaignInfoSection } from "./CampaignInfoSection";
 import * as styles from "./index.css";
 
 type ExplorerDetailProps = {
@@ -57,12 +52,9 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
-    const { data: rewards } = useQuery(
-        estimatedRewardsQueryOptions(merchant.id)
-    );
-    const rewardSummary = useRewardSummary(rewards, i18n.language);
+    const view = useCampaignView(merchant.id);
 
     const images = useMemo(() => {
         const main = merchant.explorerConfig?.heroImageUrl;
@@ -190,8 +182,9 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     )}
                 </DetailSheetActions>
 
-                {rewardSummary.daysRemaining != null &&
-                    rewardSummary.formattedEndDate && (
+                {view &&
+                    view.daysRemaining != null &&
+                    view.formattedEndDate && (
                         <Text
                             variant="bodySmall"
                             weight="medium"
@@ -199,8 +192,8 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                         >
                             <ClockIcon width={16} height={16} />
                             {t("explorer.detail.endDateBadge", {
-                                date: rewardSummary.formattedEndDate,
-                                days: rewardSummary.daysRemaining,
+                                date: view.formattedEndDate,
+                                days: view.daysRemaining,
                             })}
                         </Text>
                     )}
@@ -227,10 +220,10 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                                 </span>
                             </ExternalLink>
                         </Text>
-                        {rewardSummary.maxReferrerReward && (
+                        {view?.headlineReferrerReward && (
                             <Text variant="body" weight="medium">
                                 {t("explorer.detail.rewardPerReferral", {
-                                    amount: rewardSummary.maxReferrerReward,
+                                    amount: view.headlineReferrerReward,
                                 })}
                             </Text>
                         )}
@@ -271,10 +264,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     </Card>
                 )}
 
-                <CampaignInfoSection
-                    rewardSummary={rewardSummary}
-                    merchantName={merchant.name}
-                />
+                <CampaignInfoSection view={view} merchantName={merchant.name} />
                 <Box paddingX="m">
                     <Text as="p" variant="caption" align="center">
                         <Trans
@@ -325,239 +315,5 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 )}
             </DetailSheetFooter>
         </DetailSheet>
-    );
-}
-
-type RewardSummary = {
-    maxReferrerReward?: string;
-    maxRefereeReward?: string;
-    formattedEndDate?: string;
-    daysRemaining?: number | null;
-    isImmediate: boolean;
-    pendingDays?: number;
-};
-
-type RewardAccumulator = {
-    bestReferrer?: EstimatedReward;
-    bestReferrerValue: number;
-    bestReferee?: EstimatedReward;
-    bestRefereeValue: number;
-    earliestExpiry?: string;
-    minPendingDays?: number;
-};
-
-function accumulateReward(
-    acc: RewardAccumulator,
-    reward: EstimatedRewardItem
-): RewardAccumulator {
-    const referrerValue = reward.referrer
-        ? getRewardEurValue(reward.referrer)
-        : 0;
-    const refereeValue = reward.referee ? getRewardEurValue(reward.referee) : 0;
-
-    return {
-        bestReferrer:
-            referrerValue > acc.bestReferrerValue
-                ? reward.referrer
-                : acc.bestReferrer,
-        bestReferrerValue: Math.max(acc.bestReferrerValue, referrerValue),
-        bestReferee:
-            refereeValue > acc.bestRefereeValue
-                ? reward.referee
-                : acc.bestReferee,
-        bestRefereeValue: Math.max(acc.bestRefereeValue, refereeValue),
-        earliestExpiry:
-            reward.expiresAt &&
-            (!acc.earliestExpiry || reward.expiresAt < acc.earliestExpiry)
-                ? reward.expiresAt
-                : acc.earliestExpiry,
-        minPendingDays:
-            reward.pendingRewardExpirationDays != null
-                ? Math.min(
-                      acc.minPendingDays ?? Number.POSITIVE_INFINITY,
-                      reward.pendingRewardExpirationDays
-                  )
-                : acc.minPendingDays,
-    };
-}
-
-function buildRewardSummary(
-    rewards: EstimatedRewardItem[],
-    locale: string
-): RewardSummary {
-    const initial: RewardAccumulator = {
-        bestReferrerValue: 0,
-        bestRefereeValue: 0,
-    };
-    const acc = rewards.reduce(accumulateReward, initial);
-
-    return {
-        maxReferrerReward: acc.bestReferrer
-            ? formatEstimatedReward(acc.bestReferrer)
-            : undefined,
-        maxRefereeReward: acc.bestReferee
-            ? formatEstimatedReward(acc.bestReferee)
-            : undefined,
-        formattedEndDate: acc.earliestExpiry
-            ? formatDate(acc.earliestExpiry, locale)
-            : undefined,
-        daysRemaining: acc.earliestExpiry
-            ? getDaysRemaining(acc.earliestExpiry)
-            : undefined,
-        isImmediate: acc.minPendingDays == null || acc.minPendingDays === 0,
-        pendingDays: acc.minPendingDays,
-    };
-}
-
-function useRewardSummary(
-    rewards: EstimatedRewardItem[] | undefined,
-    locale: string
-): RewardSummary {
-    return useMemo(
-        () =>
-            rewards && rewards.length > 0
-                ? buildRewardSummary(rewards, locale)
-                : { isImmediate: true },
-        [rewards, locale]
-    );
-}
-
-function getRewardEurValue(reward: EstimatedReward): number {
-    switch (reward.payoutType) {
-        case "fixed":
-            return reward.amount.eurAmount;
-        case "percentage":
-            return reward.maxAmount?.eurAmount ?? 0;
-        case "tiered":
-            return reward.tiers.reduce(
-                (max, tier) =>
-                    "amount" in tier
-                        ? Math.max(max, tier.amount.eurAmount)
-                        : max,
-                0
-            );
-    }
-}
-
-function formatDate(isoDate: string, locale: string): string {
-    const date = new Date(isoDate);
-    return date.toLocaleDateString(locale, {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-    });
-}
-
-function getDaysRemaining(isoDate: string): number | null {
-    const now = new Date();
-    const end = new Date(isoDate);
-    const diffMs = end.getTime() - now.getTime();
-    if (diffMs <= 0) return null;
-    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-}
-
-function CampaignInfoSection({
-    rewardSummary,
-    merchantName,
-}: {
-    rewardSummary: RewardSummary;
-    merchantName: string;
-}) {
-    const { t } = useTranslation();
-    return (
-        <>
-            <InfoCard>
-                {rewardSummary.daysRemaining != null &&
-                    rewardSummary.formattedEndDate && (
-                        <InfoRow
-                            labelVariant="bodySmall"
-                            labelColor="secondary"
-                            label={t("explorer.detail.endsIn", {
-                                count: rewardSummary.daysRemaining,
-                            })}
-                            action={
-                                <Text
-                                    variant="bodySmall"
-                                    weight="medium"
-                                    className={styles.infoValue}
-                                >
-                                    <CalendarIcon width={14} height={14} />{" "}
-                                    {rewardSummary.formattedEndDate}
-                                </Text>
-                            }
-                        />
-                    )}
-                {rewardSummary.maxReferrerReward && (
-                    <InfoRow
-                        labelVariant="bodySmall"
-                        labelColor="secondary"
-                        label={t("explorer.detail.referrerReward")}
-                        action={
-                            <Text
-                                variant="bodySmall"
-                                weight="medium"
-                                className={styles.infoValue}
-                            >
-                                <CoinsIcon width={16} height={16} />{" "}
-                                {rewardSummary.maxReferrerReward}
-                            </Text>
-                        }
-                    />
-                )}
-                {rewardSummary.maxRefereeReward && (
-                    <InfoRow
-                        labelVariant="bodySmall"
-                        labelColor="secondary"
-                        label={t("explorer.detail.refereeReward")}
-                        action={
-                            <Text
-                                variant="bodySmall"
-                                weight="medium"
-                                className={styles.infoValue}
-                            >
-                                <CoinsIcon width={16} height={16} />{" "}
-                                {rewardSummary.maxRefereeReward}
-                            </Text>
-                        }
-                    />
-                )}
-                <InfoRow
-                    labelVariant="bodySmall"
-                    labelColor="secondary"
-                    label={t("explorer.detail.earningsAvailability")}
-                    action={
-                        <Text variant="bodySmall" weight="medium">
-                            {rewardSummary.isImmediate
-                                ? t("explorer.detail.immediate")
-                                : t("explorer.detail.pendingDays", {
-                                      count: rewardSummary.pendingDays,
-                                  })}
-                        </Text>
-                    }
-                />
-            </InfoCard>
-
-            <InstructionList
-                title={t("explorer.detail.instructions")}
-                steps={[
-                    {
-                        title: t("explorer.detail.step1Title"),
-                        description: t("explorer.detail.step1Description"),
-                    },
-                    {
-                        title: t("explorer.detail.step2Title", {
-                            amount: rewardSummary.maxReferrerReward ?? "",
-                        }),
-                        description: t("explorer.detail.step2Description", {
-                            name: merchantName,
-                        }),
-                    },
-                    {
-                        title: t("explorer.detail.step3Title"),
-                        description: t("explorer.detail.step3Description"),
-                    },
-                ]}
-            />
-        </>
     );
 }

@@ -5,7 +5,6 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { BankIcon, CalendarIcon } from "@frak-labs/design-system/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,6 +17,8 @@ import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
 import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { DetailRow, DetailValue } from "@/module/common/component/DetailRow";
+import { getCountryName } from "@/module/common/utils/countries";
 import { formatDate } from "@/module/common/utils/formatDate";
 import {
     type CampaignDraft,
@@ -25,9 +26,7 @@ import {
     getStartDate,
 } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
-import { getCountryName } from "../TerritoryCampaign/countries";
 import { CampaignLaunched } from "./CampaignLaunched";
-import * as styles from "./validation-campaign.css";
 
 const FORM_ID = "campaign-validation-form";
 const EMPTY = "—";
@@ -98,7 +97,7 @@ export function ValidationCampaign() {
                     )}
                     <Card radius="m" variant="elevated" padding="none">
                         <Box paddingX="m">
-                            <SummaryRows draft={draft} />
+                            <DetailRows draft={draft} />
                         </Box>
                     </Card>
                 </Stack>
@@ -107,40 +106,7 @@ export function ValidationCampaign() {
     );
 }
 
-function SummaryRow({
-    label,
-    children,
-    tall,
-}: {
-    label: string;
-    children: ReactNode;
-    tall?: boolean;
-}) {
-    return (
-        <div className={tall ? styles.rowTall : styles.row}>
-            <Text variant="bodySmall" weight="medium" color="secondary">
-                {label}
-            </Text>
-            {children}
-        </div>
-    );
-}
-
-/** Single right-aligned value. `muted` renders the disabled "—" placeholder. */
-function Value({ children, muted }: { children: ReactNode; muted?: boolean }) {
-    return (
-        <Text
-            variant="bodySmall"
-            weight="medium"
-            color={muted ? "disabled" : undefined}
-            align="right"
-        >
-            {children}
-        </Text>
-    );
-}
-
-function SummaryRows({ draft }: { draft: CampaignDraft }) {
+function DetailRows({ draft }: { draft: CampaignDraft }) {
     const { t } = useTranslation();
     const currencyGlyph = useCampaignCurrencyGlyph();
     const reward = useMemo(() => draftToRewardForm(draft), [draft]);
@@ -163,35 +129,37 @@ function SummaryRows({ draft }: { draft: CampaignDraft }) {
 
     return (
         <>
-            <SummaryRow label={t("campaigns.create.validation.campaignTitle")}>
-                <Value>{draft.name}</Value>
-            </SummaryRow>
+            <DetailRow label={t("campaigns.create.validation.campaignTitle")}>
+                <DetailValue>{draft.name}</DetailValue>
+            </DetailRow>
 
-            <SummaryRow label={t("campaigns.create.validation.goal")}>
+            <DetailRow label={t("campaigns.create.validation.goal")}>
                 {goal ? (
-                    <Value>
+                    <DetailValue>
                         {t(
                             `campaigns.create.goals.options.${goal}.title` as "campaigns.create.goals.options.sales.title"
                         )}
-                    </Value>
+                    </DetailValue>
                 ) : (
-                    <Value muted>{EMPTY}</Value>
+                    <DetailValue muted>{EMPTY}</DetailValue>
                 )}
-            </SummaryRow>
+            </DetailRow>
 
-            <SummaryRow label={t("campaigns.create.validation.territories")}>
+            <DetailRow label={t("campaigns.create.validation.territories")}>
                 {territories.length > 0 ? (
-                    <Value>{territories.map(getCountryName).join(", ")}</Value>
+                    <DetailValue>
+                        {territories.map(getCountryName).join(", ")}
+                    </DetailValue>
                 ) : (
-                    <Value muted>{EMPTY}</Value>
+                    <DetailValue muted>{EMPTY}</DetailValue>
                 )}
-            </SummaryRow>
+            </DetailRow>
 
-            <SummaryRow
+            <DetailRow
                 label={t("campaigns.create.validation.specialCategories")}
             >
                 {specialCategories.length > 0 ? (
-                    <Value>
+                    <DetailValue>
                         {specialCategories
                             .map((category) =>
                                 t(
@@ -199,41 +167,43 @@ function SummaryRows({ draft }: { draft: CampaignDraft }) {
                                 )
                             )
                             .join(", ")}
-                    </Value>
+                    </DetailValue>
                 ) : (
-                    <Value muted>{EMPTY}</Value>
+                    <DetailValue muted>{EMPTY}</DetailValue>
                 )}
-            </SummaryRow>
+            </DetailRow>
 
-            <SummaryRow label={t("campaigns.create.validation.schedule")}>
+            <DetailRow label={t("campaigns.create.validation.schedule")}>
                 <Inline space="xxs" alignY="center">
                     <CalendarIcon width={16} height={16} />
-                    <Value>{scheduleText}</Value>
+                    <DetailValue>{scheduleText}</DetailValue>
                 </Inline>
-            </SummaryRow>
+            </DetailRow>
 
-            <SummaryRow label={t("campaigns.create.validation.trigger")}>
+            <DetailRow label={t("campaigns.create.validation.trigger")}>
                 {trigger ? (
-                    <Value>
+                    <DetailValue>
                         {t(`campaigns.create.reward.trigger.${trigger}`)}
-                    </Value>
+                    </DetailValue>
                 ) : (
-                    <Value muted>{EMPTY}</Value>
+                    <DetailValue muted>{EMPTY}</DetailValue>
                 )}
-            </SummaryRow>
+            </DetailRow>
 
-            <SummaryRow label={t("campaigns.create.validation.budgetPeriod")}>
-                <Value>{t(`campaigns.create.budget.period.${period}`)}</Value>
-            </SummaryRow>
+            <DetailRow label={t("campaigns.create.validation.budgetPeriod")}>
+                <DetailValue>
+                    {t(`campaigns.create.budget.period.${period}`)}
+                </DetailValue>
+            </DetailRow>
 
-            <SummaryRow
+            <DetailRow
                 label={t("campaigns.create.validation.budgetAmount")}
                 tall
             >
                 <Stack space="xxs" align="right">
                     <Inline space="xxs" alignY="center">
                         <BankIcon width={16} height={16} />
-                        <Value>{`${amount} ${currencyGlyph}`}</Value>
+                        <DetailValue>{`${amount} ${currencyGlyph}`}</DetailValue>
                     </Inline>
                     <Text variant="caption" weight="medium" color="tertiary">
                         {t("campaigns.create.validation.budgetBreakdown", {
@@ -243,21 +213,21 @@ function SummaryRows({ draft }: { draft: CampaignDraft }) {
                         })}
                     </Text>
                 </Stack>
-            </SummaryRow>
+            </DetailRow>
 
             <RewardRows reward={reward} currencyGlyph={currencyGlyph} />
 
-            <SummaryRow label={t("campaigns.create.validation.rewardLockup")}>
+            <DetailRow label={t("campaigns.create.validation.rewardLockup")}>
                 {reward.lockupDays ? (
-                    <Value>
+                    <DetailValue>
                         {t("campaigns.create.validation.lockupValue", {
                             count: Number(reward.lockupDays),
                         })}
-                    </Value>
+                    </DetailValue>
                 ) : (
-                    <Value muted>{EMPTY}</Value>
+                    <DetailValue muted>{EMPTY}</DetailValue>
                 )}
-            </SummaryRow>
+            </DetailRow>
         </>
     );
 }
@@ -276,14 +246,14 @@ function RewardRows({
         const tiers = reward.globalCpaTiers;
         return (
             <>
-                <SummaryRow label={t("campaigns.create.validation.targetCpa")}>
-                    <Value>
+                <DetailRow label={t("campaigns.create.validation.targetCpa")}>
+                    <DetailValue>
                         {t("campaigns.create.validation.tieredTiers", {
                             count: tiers.length,
                         })}
-                    </Value>
-                </SummaryRow>
-                <SummaryRow
+                    </DetailValue>
+                </DetailRow>
+                <DetailRow
                     label={t("campaigns.create.validation.rewards")}
                     tall
                 >
@@ -301,7 +271,7 @@ function RewardRows({
                                     space="xxs"
                                     align="right"
                                 >
-                                    <Value>{`${from} → ${upper} · ${tier.cpa}${unit}`}</Value>
+                                    <DetailValue>{`${from} → ${upper} · ${tier.cpa}${unit}`}</DetailValue>
                                     <Text
                                         variant="caption"
                                         weight="medium"
@@ -325,7 +295,7 @@ function RewardRows({
                             );
                         })}
                     </Stack>
-                </SummaryRow>
+                </DetailRow>
             </>
         );
     }
@@ -344,24 +314,24 @@ function RewardRows({
 
         return (
             <>
-                <SummaryRow label={t("campaigns.create.validation.targetCpa")}>
-                    <Value>{`${cpa}${unit}`}</Value>
-                </SummaryRow>
-                <SummaryRow
+                <DetailRow label={t("campaigns.create.validation.targetCpa")}>
+                    <DetailValue>{`${cpa}${unit}`}</DetailValue>
+                </DetailRow>
+                <DetailRow
                     label={t("campaigns.create.validation.rewards")}
                     tall
                 >
                     <Stack space="xxs" align="right">
-                        <Value>
+                        <DetailValue>
                             {t("campaigns.create.validation.ambassador", {
                                 value: `${ambassador}${unit}`,
                             })}
-                        </Value>
-                        <Value>
+                        </DetailValue>
+                        <DetailValue>
                             {t("campaigns.create.validation.referee", {
                                 value: `${referee}${unit}`,
                             })}
-                        </Value>
+                        </DetailValue>
                         <Text
                             variant="caption"
                             weight="medium"
@@ -372,19 +342,19 @@ function RewardRows({
                             })}
                         </Text>
                     </Stack>
-                </SummaryRow>
+                </DetailRow>
             </>
         );
     }
 
     return (
         <>
-            <SummaryRow label={t("campaigns.create.validation.targetCpa")}>
-                <Value muted>{EMPTY}</Value>
-            </SummaryRow>
-            <SummaryRow label={t("campaigns.create.validation.rewards")}>
-                <Value muted>{EMPTY}</Value>
-            </SummaryRow>
+            <DetailRow label={t("campaigns.create.validation.targetCpa")}>
+                <DetailValue muted>{EMPTY}</DetailValue>
+            </DetailRow>
+            <DetailRow label={t("campaigns.create.validation.rewards")}>
+                <DetailValue muted>{EMPTY}</DetailValue>
+            </DetailRow>
         </>
     );
 }

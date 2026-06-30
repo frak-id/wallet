@@ -39,7 +39,33 @@ type ModalState =
     | { id: "moneriumOrderDetail"; order: MoneriumOrder }
     | { id: "rewardDetail"; item: RewardHistoryItem }
     | { id: "editReferralCode"; onSaved: () => void }
-    | { id: "emailNotFound"; email: string };
+    | { id: "emailNotFound"; email: string }
+    | {
+          /**
+           * Biometric re-auth prompt.
+           * - `reason: "grace"` → the wallet token still works server-side but
+           *   is nearing expiry (proactive nudge). Dismissing just closes; the
+           *   session keeps working.
+           * - `reason: "dead"` → the wallet token is confirmed unusable: either
+           *   its client `exp` has passed OR the server returned a 401 (incl.
+           *   key rotation / revocation, where `exp` is still in the future).
+           *   Re-auth is the primary action and dismissing logs out — unless a
+           *   fresh session was minted meanwhile (e.g. re-auth in another tab).
+           */
+          id: "reauth";
+          reason: "grace" | "dead";
+          onAuthSuccess?: () => void;
+      }
+    | {
+          /**
+           * Re-pair prompt for a dead PAIRED (distant-webauthn) session. Seeded
+           * with the dead session's authenticatorId so the backend-enforced
+           * allow-list restricts re-pairing to the same wallet. Dismissal logs
+           * out (token is server-confirmed dead with no local recovery path).
+           */
+          id: "distant-reauth";
+          authenticatorHints: string[];
+      };
 
 const maxStackDepth = 5;
 

@@ -18,18 +18,24 @@ process.env.VAPID_PRIVATE_KEY = "test-vapid-private-key";
 
 import { afterEach, vi } from "vitest";
 
-class MockCryptoHasher {
-    constructor(
-        public algorithm: string,
-        public secret: string
-    ) {}
-    update(_data: string) {
-        return this;
-    }
-    digest() {
-        return Buffer.from("mocked-hash");
-    }
-}
+// Hoisted so the class is initialized before the (hoisted) `bun` mock factory
+// runs — a module that imports "bun" during the early setup-import phase would
+// otherwise hit a temporal-dead-zone error referencing this class.
+const MockCryptoHasher = vi.hoisted(
+    () =>
+        class MockCryptoHasher {
+            constructor(
+                public algorithm: string,
+                public secret: string
+            ) {}
+            update(_data: string) {
+                return this;
+            }
+            digest() {
+                return Buffer.from("mocked-hash");
+            }
+        }
+);
 
 vi.mock("bun", () => ({ CryptoHasher: MockCryptoHasher }));
 

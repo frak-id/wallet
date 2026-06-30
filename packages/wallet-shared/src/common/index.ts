@@ -87,6 +87,15 @@ export {
     getErrorStatus,
     resolveApiErrorKey,
 } from "./api/errors";
+export {
+    notifyWalletAuthExpired,
+    subscribeToWalletAuthExpired,
+} from "./auth/authRecovery";
+// Auth utilities
+export {
+    ensureFreshSdkSession,
+    type FreshSdkResult,
+} from "./auth/ensureFreshSdkSession";
 // Components
 export { CodeInput } from "./component/CodeInput";
 export { ExternalLink } from "./component/ExternalLink";
@@ -98,7 +107,6 @@ export { PaginationDots } from "./component/PaginationDots";
 export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
 export {
     estimatedRewardsQueryOptions,
-    formatEstimatedReward,
     selectFormattedReward,
 } from "./hook/useEstimatedReward";
 export { useFormattedEstimatedReward } from "./hook/useFormattedEstimatedReward";
@@ -140,3 +148,10 @@ export {
     PLAY_STORE_URL,
     STORE_PACKAGE_ID,
 } from "./utils/storeUrls";
+export {
+    expiresWithinMs,
+    getTokenExpMs,
+    isExpired,
+    SDK_RENEW_BEFORE_MS,
+    WALLET_REAUTH_BEFORE_MS,
+} from "./utils/tokenExpiry";

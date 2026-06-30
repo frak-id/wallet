@@ -54,6 +54,7 @@ import {
     isRewardFormValid,
     type RewardFormValues,
     type RewardModel,
+    recalcSplitOnCpaChange,
     recommendedSplit,
     rewardFormToDraft,
     splitTargetCpa,
@@ -451,17 +452,27 @@ function CpaReveal({
                         <StepperField
                             field={{
                                 ...field,
-                                // Changing the Target CPA changes the pool, so
-                                // the previous split no longer adds up — clear
-                                // it (this also re-surfaces the reco bar).
+                                // Changing the Target CPA changes the pool. If
+                                // the split is still the untouched reco, keep it
+                                // in sync by recomputing it for the new CPA. If
+                                // the user edited the amounts, leave them — the
+                                // mismatch warning + Continue gating flag it.
                                 onChange: (next) => {
                                     field.onChange(next);
-                                    setValue(ambName, 0, {
-                                        shouldValidate: true,
+                                    const reco = recalcSplitOnCpaChange({
+                                        prevCpa: cpa,
+                                        nextCpa: num(next),
+                                        ambassador,
+                                        referee,
                                     });
-                                    setValue(refName, 0, {
-                                        shouldValidate: true,
-                                    });
+                                    if (reco) {
+                                        setValue(ambName, reco.ambassador, {
+                                            shouldValidate: true,
+                                        });
+                                        setValue(refName, reco.referee, {
+                                            shouldValidate: true,
+                                        });
+                                    }
                                 },
                             }}
                             unit={unit}
@@ -668,6 +679,7 @@ function TierCell({
     tone = "muted",
     error,
     stepper = false,
+    onChangeExtra,
 }: {
     control: Control<RewardFormValues>;
     name: string;
@@ -676,36 +688,45 @@ function TierCell({
     tone?: "muted" | "elevated";
     error?: boolean;
     stepper?: boolean;
+    /** Runs after the field update (e.g. the CPA cell re-recommends the split). */
+    onChangeExtra?: (next: number | "") => void;
 }) {
     return (
         <Controller
             control={control}
             // biome-ignore lint/suspicious/noExplicitAny: dynamic field-array path
             name={name as any}
-            render={({ field }) => (
-                <InputNumber
-                    variant="bare"
-                    tone={tone}
-                    error={error}
-                    classNameWrapper={styles.inputWrapper}
-                    placeholder={placeholder}
-                    rightSection={
-                        stepper ? (
-                            <Inline as="span" space="m" alignY="center">
-                                <NumberStepper
-                                    value={field.value ?? 0}
-                                    onChange={field.onChange}
-                                />
+            render={({ field }) => {
+                const handleChange: typeof field.onChange = (next) => {
+                    field.onChange(next);
+                    onChangeExtra?.(next as number | "");
+                };
+                return (
+                    <InputNumber
+                        variant="bare"
+                        tone={tone}
+                        error={error}
+                        classNameWrapper={styles.inputWrapper}
+                        placeholder={placeholder}
+                        rightSection={
+                            stepper ? (
+                                <Inline as="span" space="m" alignY="center">
+                                    <NumberStepper
+                                        value={field.value ?? 0}
+                                        onChange={handleChange}
+                                    />
+                                    <UnitIcon unit={unit} />
+                                </Inline>
+                            ) : (
                                 <UnitIcon unit={unit} />
-                            </Inline>
-                        ) : (
-                            <UnitIcon unit={unit} />
-                        )
-                    }
-                    {...field}
-                    value={field.value ?? ""}
-                />
-            )}
+                            )
+                        }
+                        {...field}
+                        onChange={handleChange}
+                        value={field.value ?? ""}
+                    />
+                );
+            }}
         />
     );
 }
@@ -779,6 +800,7 @@ function TierCard({
     toError,
     cpaError,
     onRemove,
+    onCpaChange,
 }: {
     control: Control<RewardFormValues>;
     index: number;
@@ -788,6 +810,8 @@ function TierCard({
     toError?: boolean;
     cpaError?: boolean;
     onRemove: () => void;
+    /** Re-recommends this tier's split when its Target CPA changes. */
+    onCpaChange?: (next: number | "") => void;
 }) {
     const { t } = useTranslation();
     const glyph = useCurrencyGlyph();
@@ -856,6 +880,7 @@ function TierCard({
                         tone="elevated"
                         stepper
                         error={cpaError}
+                        onChangeExtra={onCpaChange}
                         placeholder={t(
                             "campaigns.create.reward.tiered.cpaPlaceholder"
                         )}
@@ -928,6 +953,14 @@ function TieredReveal({
 
     const tiers = (useWatch({ control, name: "globalCpaTiers" }) ??
         []) as CpaTierRow[];
+    // The per-tier reward amounts, watched so a CPA change can tell an untouched
+    // reco (track the new CPA) apart from a user-edited split (leave it).
+    const ambTiers = (useWatch({ control, name: "ambassadorTiers" }) ?? []) as {
+        reward: number | "";
+    }[];
+    const refTiers = (useWatch({ control, name: "refereeTiers" }) ?? []) as {
+        reward: number | "";
+    }[];
     // Errors are gated per-field on touch (blur): a field reds only once the user
     // has left it empty, so filling one input never reds its still-pristine
     // neighbours (and a just-added tier stays clean).
@@ -970,6 +1003,26 @@ function TieredReveal({
         ambassadorArray.remove(index);
         refereeArray.remove(index);
     }
+    // Mirror the Fixed/% reveal: when a tier's Target CPA changes and its split
+    // is still the untouched reco, recompute it for the new CPA (a user-edited
+    // split is left as-is). Shared via `recalcSplitOnCpaChange`.
+    function handleCpaChange(index: number, next: number | "") {
+        const reco = recalcSplitOnCpaChange({
+            prevCpa: Number(tiers[index]?.cpa) || 0,
+            nextCpa: Number(next) || 0,
+            ambassador: Number(ambTiers[index]?.reward) || 0,
+            referee: Number(refTiers[index]?.reward) || 0,
+        });
+        if (!reco) return;
+        setValue(`ambassadorTiers.${index}.reward`, reco.ambassador, {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
+        setValue(`refereeTiers.${index}.reward`, reco.referee, {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
+    }
     // Fill the recommended 80/20 split per tier; the distribution bar always
     // shows that ratio, but the amounts stay the user's to override. Written via
     // `setValue` (not the field array's `replace`) so it reaches the recipient
@@ -994,9 +1047,6 @@ function TieredReveal({
         <Stack space="m">
             <RevealHeader />
 
-            {/* The reco surfaces only once a Target CPA exists. */}
-            {hasCpa && <RecoBar onApply={applyReco} />}
-
             {globalArray.fields.map((row, index) => {
                 const tier = tiers[index];
                 const isLast = index === globalArray.fields.length - 1;
@@ -1016,6 +1066,7 @@ function TieredReveal({
                             toError={errors.to}
                             cpaError={errors.cpa}
                             onRemove={() => removeTier(index)}
+                            onCpaChange={(next) => handleCpaChange(index, next)}
                         />
                         <div className={styles.tierDistribution}>
                             <DistributionBar
@@ -1033,6 +1084,10 @@ function TieredReveal({
                     </Fragment>
                 );
             })}
+
+            {/* The reco sits below the tiers and surfaces only once a Target
+                CPA exists; applying it fills every tier's 80/20 split. */}
+            {hasCpa && <RecoBar onApply={applyReco} />}
 
             <Inline space="none">
                 <Button
@@ -1179,7 +1234,7 @@ export function RewardCampaign() {
     async function onSubmit(values: RewardFormValues) {
         const saved = await persist(values);
         navigate({
-            to: "/m/$merchantId/campaigns/draft/$campaignId/validation",
+            to: "/m/$merchantId/campaigns/draft/$campaignId/referral-chain",
             params: { merchantId, campaignId: saved.id },
         });
     }

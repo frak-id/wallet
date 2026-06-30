@@ -294,7 +294,7 @@ function CampaignTableRow({
                             const base = rootData?.businessUrl ?? "";
                             const merchantId = rootData?.merchantId;
                             const url = merchantId
-                                ? `${base}/m/${merchantId}/campaigns/${campaign.id}`
+                                ? `${base}/m/${merchantId}/campaigns/list?campaign=${campaign.id}`
                                 : `${base}/campaigns/${campaign.id}`;
                             window.open(url, "_blank");
                         }}

@@ -1,14 +1,10 @@
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    estimatedRewardsQueryOptions,
-    selectFormattedReward,
-    trackEvent,
-} from "@frak-labs/wallet-shared";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef } from "react";
+import { trackEvent } from "@frak-labs/wallet-shared";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useCampaignView } from "../../campaignView";
 import * as styles from "./index.css";
 import { LogoCutout } from "./LogoCutout";
 
@@ -18,7 +14,7 @@ type ExplorerCardProps = {
 };
 
 export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { name, domain, explorerConfig } = merchant;
     const heroImageUrl = explorerConfig?.heroImageUrl;
     const logoUrl = explorerConfig?.logoUrl;
@@ -54,36 +50,7 @@ export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
         return () => observer.disconnect();
     }, [merchant.id]);
 
-    const { data: rewards } = useQuery(
-        estimatedRewardsQueryOptions(merchant.id)
-    );
-
-    const cardInfo = useMemo(() => {
-        if (!rewards || rewards.length === 0) return null;
-
-        const maxReward = selectFormattedReward({})(rewards);
-        if (!maxReward) return null;
-
-        let earliestExpiry: string | undefined;
-        for (const r of rewards) {
-            if (
-                r.expiresAt &&
-                (!earliestExpiry || r.expiresAt < earliestExpiry)
-            ) {
-                earliestExpiry = r.expiresAt;
-            }
-        }
-
-        const formattedExpiry = earliestExpiry
-            ? new Date(earliestExpiry).toLocaleDateString(i18n.language, {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-              })
-            : undefined;
-
-        return { maxReward, formattedExpiry };
-    }, [rewards, i18n.language]);
+    const view = useCampaignView(merchant.id);
 
     return (
         <Box
@@ -130,16 +97,18 @@ export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
                     variant="bodySmall"
                     weight="medium"
                     className={
-                        cardInfo ? undefined : styles.descriptionFallback
+                        view?.headlineReferrerReward
+                            ? undefined
+                            : styles.descriptionFallback
                     }
                 >
-                    {cardInfo ? (
+                    {view?.headlineReferrerReward ? (
                         <>
                             {t("explorer.detail.rewardPerReferral", {
-                                amount: cardInfo.maxReward,
+                                amount: view.headlineReferrerReward,
                             })}
-                            {cardInfo.formattedExpiry &&
-                                ` - ${t("explorer.card.until", { date: cardInfo.formattedExpiry })}`}
+                            {view.formattedEndDate &&
+                                ` - ${t("explorer.card.until", { date: view.formattedEndDate })}`}
                         </>
                     ) : (
                         (description ?? domain)

@@ -122,12 +122,12 @@ async function getTemplateFiles(
     const {
         data: { theme },
     } = await response.json();
-    const jsonTemplateFiles = theme?.files?.nodes;
+    const jsonTemplateFiles: ThemeFile[] = theme?.files?.nodes ?? [];
 
     const jsonTemplateData = jsonTemplateFiles.map((file: ThemeFile) => {
         return {
             filename: file.filename,
-            body: jsonc_parse(file.body.content),
+            body: jsonc_parse(file.body?.content ?? ""),
         };
     });
 
@@ -191,61 +191,89 @@ async function getTemplateFilesMatching(
 /**
  * Check if the current shop theme support blocks
  */
-export async function doesThemeSupportBlock(context: AuthenticatedContext) {
-    // Get the main theme id
-    const mainThemeId = await getMainThemeId(context);
+export async function doesThemeSupportBlock(
+    context: AuthenticatedContext
+): Promise<boolean> {
+    try {
+        // Get the main theme id
+        const mainThemeId = await getMainThemeId(context);
 
-    // Retrieve the JSON templates that we want to integrate with
-    const jsonTemplateData = await getTemplateFiles(
-        context.admin.graphql,
-        mainThemeId.gid,
-        ["templates/product.json"]
-    );
-
-    // Retrieve the body of JSON templates and find what section is set as `main`
-    const templateMainSections = jsonTemplateData.flatMap((file: ThemeFile) => {
-        const main = Object.entries(file.body.sections).find(([id, section]) =>
-            typeof section !== "string"
-                ? id === "main" || section.type.startsWith("main-")
-                : false
+        // Retrieve the JSON templates that we want to integrate with
+        const jsonTemplateData = await getTemplateFiles(
+            context.admin.graphql,
+            mainThemeId.gid,
+            ["templates/product.json"]
         );
-        if (main && typeof main[1] !== "string" && main[1].type) {
-            return [`sections/${main[1].type}.liquid`];
+
+        // Retrieve the body of JSON templates and find what section is set as
+        // `main`. Vintage / non-OS-2.0 themes have no `templates/product.json`
+        // (or it carries no `sections`), so guard every dereference.
+        const templateMainSections = jsonTemplateData.flatMap(
+            (file: ThemeFile) => {
+                const sections = file.body?.sections;
+                if (!sections || typeof sections !== "object") {
+                    return [];
+                }
+                const main = Object.entries(sections).find(([id, section]) =>
+                    typeof section !== "string"
+                        ? id === "main" || section.type?.startsWith("main-")
+                        : false
+                );
+                if (main && typeof main[1] !== "string" && main[1].type) {
+                    return [`sections/${main[1].type}.liquid`];
+                }
+                return [];
+            }
+        );
+
+        // No main section resolved → nothing to integrate with, so the theme
+        // does not support app blocks.
+        if (templateMainSections.length === 0) {
+            return false;
         }
-        return [];
-    });
 
-    const response = await context.admin.graphql(getFilesQuery, {
-        variables: {
-            themeId: mainThemeId.gid,
-            filenames: templateMainSections,
-        },
-    });
-    const {
-        data: { theme: themeSectionFiles },
-    } = await response.json();
-    const sectionFiles = themeSectionFiles?.files?.nodes;
+        const response = await context.admin.graphql(getFilesQuery, {
+            variables: {
+                themeId: mainThemeId.gid,
+                filenames: templateMainSections,
+            },
+        });
+        const {
+            data: { theme: themeSectionFiles },
+        } = await response.json();
+        const sectionFiles: ThemeFile[] = themeSectionFiles?.files?.nodes ?? [];
 
-    const sectionsWithAppBlock = sectionFiles
-        .map((file: ThemeFile) =>
-            detectAppBlockSupport(file.body.content) ? file : null
-        )
-        .filter((section: string | null) => section);
+        const sectionsWithAppBlock = sectionFiles
+            .map((file: ThemeFile) =>
+                file.body?.content && detectAppBlockSupport(file.body.content)
+                    ? file
+                    : null
+            )
+            .filter((section: ThemeFile | null) => section);
 
-    if (
-        jsonTemplateData.length > 0 &&
-        jsonTemplateData.length === sectionsWithAppBlock.length
-    ) {
-        console.log(
-            "All desired templates have main sections that support app blocks!"
-        );
-    } else if (sectionsWithAppBlock.length) {
-        console.log("Only some of the desired templates support app blocks.");
-    } else {
-        console.log("None of the desired templates support app blocks");
+        if (
+            jsonTemplateData.length > 0 &&
+            jsonTemplateData.length === sectionsWithAppBlock.length
+        ) {
+            console.log(
+                "All desired templates have main sections that support app blocks!"
+            );
+        } else if (sectionsWithAppBlock.length) {
+            console.log(
+                "Only some of the desired templates support app blocks."
+            );
+        } else {
+            console.log("None of the desired templates support app blocks");
+        }
+
+        return sectionsWithAppBlock.length > 0;
+    } catch (error) {
+        // A custom theme can be shaped in ways we don't expect. Never let a
+        // detection failure take down the whole admin route — treat it as
+        // "blocks not supported" so the merchant can still reach the setup UI.
+        console.error("doesThemeSupportBlock failed", error);
+        return false;
     }
-
-    return true;
 }
 
 export interface ThemeBlockInfo {
@@ -290,16 +318,19 @@ const FRAK_BUTTON_BLOCK_PATTERN = "/blocks/referral_button/";
  * section.
  */
 export function detectFrakButton(
-    sections: Record<
-        string,
-        | string
-        | {
-              type: string;
-              block_order?: string[];
-              blocks?: Record<string, ThemeBlockInfo>;
-          }
-    >
+    sections:
+        | Record<
+              string,
+              | string
+              | {
+                    type: string;
+                    block_order?: string[];
+                    blocks?: Record<string, ThemeBlockInfo>;
+                }
+          >
+        | undefined
 ): boolean {
+    if (!sections) return false;
     return Object.values(sections).some(
         (section) =>
             typeof section !== "string" &&
@@ -405,7 +436,9 @@ export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
         (f: ThemeFile) => f.filename === "templates/product.json"
     );
 
-    return productFile ? detectFrakButton(productFile.body.sections) : false;
+    // `body` is undefined when jsonc_parse received an empty/missing file, and
+    // vintage themes have no `sections` — detectFrakButton guards both.
+    return detectFrakButton(productFile?.body?.sections);
 }
 
 /**

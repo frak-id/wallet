@@ -13,12 +13,6 @@ vi.mock("viem/actions", () => ({
     readContract: vi.fn(),
 }));
 
-vi.mock("../../stores/authenticationStore", () => ({
-    authenticationStore: {
-        getState: vi.fn(),
-    },
-}));
-
 vi.mock("./webAuthN", () => ({
     formatSignature: vi.fn(),
 }));
@@ -175,9 +169,6 @@ describe("signature utilities", () => {
             const { signHashViaWebAuthN } = await import("./signature");
             const { WebAuthnP256 } = await import("ox");
             const { formatSignature } = await import("./webAuthN");
-            const { authenticationStore } = await import(
-                "../../stores/authenticationStore"
-            );
             const { createMockWebAuthNWallet } = await import(
                 "../../test/factories"
             );
@@ -204,15 +195,11 @@ describe("signature utilities", () => {
 
             const mockFormattedSignature: Address =
                 "0xformattedsignature1234567890abcdef12345678";
-            const setLastWebAuthNAction = vi.fn();
 
             vi.mocked(WebAuthnP256.sign).mockResolvedValue(
                 mockOxResponse as any
             );
             vi.mocked(formatSignature).mockReturnValue(mockFormattedSignature);
-            vi.mocked(authenticationStore.getState).mockReturnValue({
-                setLastWebAuthNAction,
-            } as any);
 
             const result = await signHashViaWebAuthN({
                 hash: "0xhash" as Hex,
@@ -225,17 +212,6 @@ describe("signature utilities", () => {
                 credentialId: "auth-id",
                 rpId: "localhost",
                 userVerification: "required",
-            });
-            expect(setLastWebAuthNAction).toHaveBeenCalledWith({
-                wallet: mockWallet.address,
-                signature: {
-                    id: "cred-id",
-                    response: {
-                        metadata: mockOxResponse.metadata,
-                        signature: mockOxResponse.signature,
-                    },
-                },
-                challenge: "0xhash",
             });
         });
     });

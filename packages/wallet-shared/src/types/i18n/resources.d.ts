@@ -22,8 +22,8 @@ export default interface Resources {
           "description": "Login to your Frak account to get the best experience on **{{productName}}**",
           "description_reward": "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.",
           "description_sharing": "{{productName}} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.",
-          "primaryAction": "I create my wallet under 30sec",
-          "secondaryAction": "Use a QR code to connect",
+          "primaryAction": "Create my account in 30 sec",
+          "secondaryAction": "Use a QR code",
           "success": "Connection successful",
           "title": "Connection"
         },
@@ -34,6 +34,7 @@ export default interface Resources {
           "title": "Transaction"
         },
         "siweAuthenticate": {
+          "connectingTo": "Secure connection to {{productName}} ({{domain}})",
           "description": "Please authenticate with your wallet to proceed securely. Your signature confirms your identity.",
           "primaryAction": "Authenticate",
           "title": "Authentication"
@@ -44,7 +45,9 @@ export default interface Resources {
           "amount": "{{estimatedReward}}",
           "label": "Credited to your account",
           "tagline1": "Earn {{estimatedReward}},",
-          "tagline2": "on every purchase!"
+          "tagline1_tiered": "Earn up to {{estimatedReward}},",
+          "tagline2": "on every purchase!",
+          "upTo": "Up to"
         },
         "confirmation": {
           "benefits": {
@@ -94,7 +97,9 @@ export default interface Resources {
         "steps": {
           "1": "Share in 1 click. A personal link is automatically generated with each share.",
           "2": "Earn on every purchase. Every order placed through your link earns you cash.",
+          "2_min": "Earn on every purchase. Every order of at least {{minAmount}} placed through your link earns you cash.",
           "3": "Collect your earnings in the app. Install FRAK to collect your earnings.",
+          "3_lockup": "Your earnings will be available {{lockupInDay}} days after the purchase is confirmed.",
           "title": ""
         }
       },
@@ -266,20 +271,25 @@ export default interface Resources {
         "immediate": "Immediate",
         "instructions": "Instructions",
         "legal": "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.",
+        "minPurchase": "Minimum purchase",
         "pendingDays": "{{count}} day",
         "pendingDays_other": "{{count}} days",
+        "percentExample": "e.g. {{reward}} for a {{basket}} order",
+        "percentOfBasket": "{{percent}}% of basket",
         "readMore": "Read more",
         "refereeReward": "Reward as referee",
         "referrerReward": "Reward as referrer",
         "rewardPerReferral": "{{amount}} per referral",
         "share": "Share",
         "shareAndEarn": "Share and earn",
+        "startingOn": "Starting on {{date}}",
         "step1Description": "A personal link is automatically generated with each share.",
         "step1Title": "Share a product with your friends",
         "step2Description": "Every order made through your link on {{name}} earns you cash directly in your wallet.",
         "step2Title": "Earn {{amount}} for every purchase you help generate",
         "step3Description": "In one click, transfer your earnings to your bank account.",
-        "step3Title": "Collect your earnings in your wallet"
+        "step3Title": "Collect your earnings in your wallet",
+        "tierAndAbove": "{{min}} and above"
       },
       "empty": {
         "description": "New offers are coming soon. Check back later!",
@@ -533,8 +543,8 @@ export default interface Resources {
       }
     },
     "recoveryCode": {
+      "codeLabel": "Recovery code",
       "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
-      "digitLabel": "Character",
       "error": {
         "alreadyLinked": "This code has already been used.",
         "generic": "Something went wrong, please try again.",
@@ -651,6 +661,13 @@ export default interface Resources {
         "placeholder": "your.email@gmail.com",
         "submitError": "Unable to save this email right now. Please try again.",
         "title": "Add your email"
+      },
+      "distantReauth": {
+        "action": "Reconnect",
+        "description": "Your paired session expired. Scan with your phone to reconnect the same wallet.",
+        "logout": "Log out",
+        "pairing": "Scan with the phone holding your passkey to reconnect the same wallet.",
+        "title": "Reconnect your wallet"
       },
       "inAppBrowser": {
         "clickToOpen": "Tap to open in your browser.",
@@ -892,6 +909,7 @@ export default interface Resources {
         "refresh": "Retry",
         "refreshCode": "Code:",
         "refreshReason": "Reason:",
+        "scanDescription": "Scan this QR code to sign in from your mobile.",
         "signatureRequest": {
           "banner": {
             "cta": "Review",
@@ -1001,6 +1019,12 @@ export default interface Resources {
             }
           }
         }
+      },
+      "reauth": {
+        "action": "Verify identity",
+        "description": "Please verify your identity to continue.",
+        "logout": "Log out",
+        "title": "Session expiring"
       },
       "recoverySetup": {
         "backup": {
@@ -1292,6 +1316,12 @@ export default interface Resources {
         "description": "Spin up a temporary wallet to explore Frak. No biometrics, no recovery, just a sandbox.",
         "title": "Try Frak in demo mode"
       },
+      "sessionExpiring": {
+        "banner": "Refresh now to stay signed in.",
+        "bannerAction": "Refresh session",
+        "bannerDismiss": "Dismiss session expiry notice",
+        "title": "Session expiring soon"
+      },
       "settings": {
         "biometryInfo": "Biometry informations",
         "deleteAccount": "Delete my account",
@@ -1347,8 +1377,8 @@ export default interface Resources {
           "title": "Change your email"
         },
         "changeEmailLink": "Use a different email",
+        "codeLabel": "Verification code",
         "description": "Enter the 6-digit code we email you to confirm your address. You can paste it or tap the button in the email.",
-        "digitLabel": "Digit {{index}}",
         "error": {
           "expired": "This code has expired. Send a new one.",
           "invalid": "Incorrect code. Please try again.",

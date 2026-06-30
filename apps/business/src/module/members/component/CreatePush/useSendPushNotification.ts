@@ -1,8 +1,53 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { pushCreationStore } from "@/stores/pushCreationStore";
+import type { NotificationPayload } from "@/types/NotificationPayload";
+import { deriveScheduledAt } from "./schedule";
 import type { FormCreatePushNotification } from "./types";
+
+/**
+ * Route a composed broadcast to the right endpoint and return the Eden result.
+ *
+ * - new + immediate → `POST /send`
+ * - new + scheduled → `POST /schedule`
+ * - edit            → `PUT /broadcasts/:id` (updates the scheduled row in
+ *   place; a scheduled notification stays scheduled and can't be switched to
+ *   immediate delivery, so a delivery time is required)
+ */
+function submitBroadcast(params: {
+    merchantId: string;
+    editingId?: string;
+    scheduledAt?: number;
+    target: NonNullable<FormCreatePushNotification["target"]>;
+    payload: NotificationPayload & { body: string; silent: boolean };
+}) {
+    const { merchantId, editingId, scheduledAt, target, payload } = params;
+    const api = authenticatedBackendApi.notifications;
+
+    if (editingId) {
+        if (scheduledAt === undefined) {
+            throw new Error("A scheduled notification needs a delivery time");
+        }
+        return api.broadcasts({ id: editingId }).put({
+            merchantId,
+            targets: target,
+            payload,
+            scheduledAt: new Date(scheduledAt),
+        });
+    }
+
+    if (scheduledAt !== undefined) {
+        return api.schedule.post({
+            merchantId,
+            targets: target,
+            payload,
+            scheduledAt: new Date(scheduledAt),
+        });
+    }
+
+    return api.send.post({ merchantId, targets: target, payload });
+}
 
 /**
  * Pull a human-readable message out of an Eden Treaty error.
@@ -27,12 +72,16 @@ function extractSendError(error: unknown): string {
 }
 
 /**
- * Publish (send) the composed push notification. On success the draft is
- * cleared and the user returns to the members list.
+ * Publish the composed push notification (see `submitBroadcast` for the
+ * endpoint routing).
+ *
+ * On success the draft is cleared, the history query refreshed and the user
+ * returns to the members list.
  */
 export function useSendPushNotification(merchantId: string) {
     const clearForm = pushCreationStore((state) => state.clearForm);
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     return useMutation({
         mutationKey: ["push", "publish"],
@@ -41,30 +90,35 @@ export function useSendPushNotification(merchantId: string) {
                 throw new Error("No target specified");
             }
             const { payload, target } = data;
+            const normalizedPayload = {
+                ...payload,
+                body: payload.body ?? "",
+                silent: payload.silent ?? false,
+            };
+
             // Eden Treaty returns `{ data, error }` rather than throwing —
             // surface the error so `onError` fires and we keep the draft
             // intact for retry on a transient backend failure.
-            const { error: sendError } =
-                await authenticatedBackendApi.notifications.send.post({
-                    merchantId,
-                    targets: target,
-                    payload: {
-                        ...payload,
-                        body: payload.body ?? "",
-                        silent: payload.silent ?? false,
-                    },
-                    // scheduledAt is intentionally not sent yet — the backend
-                    // DTO doesn't accept it until delayed delivery lands
-                    // (feat/scheduled-notifications). Wire it there.
-                });
-            if (sendError) {
-                throw new Error(extractSendError(sendError));
+            const { error } = await submitBroadcast({
+                merchantId,
+                editingId: data.editingId,
+                scheduledAt: deriveScheduledAt(data.schedule),
+                target,
+                payload: normalizedPayload,
+            });
+            if (error) {
+                throw new Error(extractSendError(error));
             }
         },
         onSuccess: () => {
             // Cleanup on the success path only, so a transient failure
             // leaves the draft intact for retry.
             clearForm();
+            // Refresh the push-history table so the freshly sent/scheduled
+            // broadcast shows up without a manual reload.
+            queryClient.invalidateQueries({
+                queryKey: ["push", "history", merchantId],
+            });
             navigate({
                 to: "/m/$merchantId/members",
                 params: { merchantId },

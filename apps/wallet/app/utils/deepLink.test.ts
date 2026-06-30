@@ -286,6 +286,62 @@ describe("initDeepLinks", () => {
         });
     });
 
+    test("should handle /explorer/<merchantId> HTTPS App Link", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        // merchantId is folded from the path segment and lowercased so the
+        // explorer lookup (byte-exact id match) sees the canonical form.
+        openUrlHandler(["https://wallet.frak.id/explorer/Merchant-123"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/explorer/merchant-123",
+            replace: true,
+        });
+    });
+
+    test("should handle frakwallet://explorer/<merchantId> custom scheme", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://explorer/merchant-123"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/explorer/merchant-123",
+            replace: true,
+        });
+    });
+
+    test("should fall back to /explorer when no merchantId in path", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://explorer"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/explorer",
+            replace: true,
+        });
+    });
+
     test("should ignore unknown HTTPS hosts", async () => {
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
@@ -398,6 +454,31 @@ describe("deep link auth gate", () => {
             navAction?.type === "navigation" &&
                 navAction.search?.id === "pair-abc"
         ).toBe(true);
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            replace: true,
+        });
+    });
+
+    test("should store pending navigation action for explorer when unauthenticated", async () => {
+        getSafeSessionMock.mockReturnValue(null);
+
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://explorer/merchant-123"]);
+
+        const actions = pendingActionsStore.getState().getValidActions();
+        const navAction = actions.find(
+            (a) => a.type === "navigation" && a.to === "/explorer/merchant-123"
+        );
+        expect(navAction).toBeDefined();
         expect(navigate).toHaveBeenCalledWith({
             to: "/register",
             replace: true,

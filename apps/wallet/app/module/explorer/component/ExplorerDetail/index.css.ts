@@ -208,3 +208,40 @@ export const infoValue = style({
     gap: alias.spacing.xxs,
     flexShrink: 0,
 });
+
+/**
+ * "Starting on" badge shown above the reward card for upcoming campaigns.
+ */
+export const startingBadge = style({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: alias.spacing.xxs,
+    alignSelf: "flex-start",
+});
+
+/**
+ * Tiered reward block — recipient header stacked above the tier rows. Padding
+ * is applied via Box sprinkles to match the InfoRow rows it sits beside.
+ */
+export const tierBlock = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xs,
+});
+
+export const tierHeader = style({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: alias.spacing.s,
+});
+
+/**
+ * Single tier — basket range on the left, amount/percent on the right.
+ */
+export const tierRow = style({
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: alias.spacing.m,
+});

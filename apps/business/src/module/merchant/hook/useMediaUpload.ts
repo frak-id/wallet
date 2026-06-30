@@ -5,7 +5,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 type MediaUploadInput = {
     merchantId: string;
     image: File;
-    type: "logo" | "hero" | "hero-extra";
+    type: "logo" | "hero" | "hero-extra" | "icon";
 };
 
 export function useMediaUpload() {

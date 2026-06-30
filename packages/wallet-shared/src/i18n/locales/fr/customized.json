@@ -22,8 +22,8 @@
                 "description_other": "Connectez-vous à votre compte Frak pour obtenir la meilleure expérience sur **{{ productName }}**",
                 "description_sharing": "En partageant ce produit, je deviens ambassadeur-rice **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement dans mon porte-monnaie.",
                 "description_reward": "Pour tout achat sur le site **{{ productName }}**, je reçois jusqu'a **{{ estimatedReward }}** directement sur mon porte-monnaie, utilisable où je veux.",
-                "primaryAction": "Je crée mon porte-monnaie en moins de 30 secondes",
-                "secondaryAction": "Utiliser un QR code pour me connecter",
+                "primaryAction": "Créer mon compte en 30 sec",
+                "secondaryAction": "Utiliser un QR code",
                 "title": "Connexion",
                 "success": "Connexion réussie"
             },
@@ -35,6 +35,7 @@
             },
             "siweAuthenticate": {
                 "description": "Veuillez vous authentifier avec votre porte-monnaie pour continuer en toute sécurité. Votre signature confirme votre identité.",
+                "connectingTo": "Connexion sécurisée à {{productName}} ({{domain}})",
                 "primaryAction": "Authentifier",
                 "title": "Authentification"
             }
@@ -62,14 +63,18 @@
             "card": {
                 "amount": "{{ estimatedReward }}",
                 "label": "Crédité sur votre compte",
+                "upTo": "Jusqu'à",
                 "tagline1": "Gagnez {{ estimatedReward }},",
+                "tagline1_tiered": "Gagnez jusqu'à {{ estimatedReward }},",
                 "tagline2": "à chaque achat réalisé !"
             },
             "steps": {
                 "title": "",
                 "1": "Partagez en 1 clic. Un lien personnel est généré automatiquement à chaque partage.",
                 "2": "Gagnez à chaque achat. Chaque commande réalisée grâce à vous est récompensée en cash.",
-                "3": "Encaissez vos gains dans l'app. Installez FRAK pour récupérer vos gains."
+                "2_min": "Gagnez à chaque achat. Chaque commande de {{ minAmount }} minimum réalisée grâce à vous est récompensée en cash.",
+                "3": "Encaissez vos gains dans l'app. Installez FRAK pour récupérer vos gains.",
+                "3_lockup": "Vos gains seront disponibles {{ lockupInDay }} jours après la validation de l'achat."
             },
             "faq": {
                 "title": "Questions fréquentes",

@@ -3,6 +3,8 @@ import { ButtonTab } from "app/components/Appearance/ButtonTab";
 import { CheckoutExtensionTab } from "app/components/Appearance/CheckoutExtensionTab";
 import { CustomizationsTab } from "app/components/Appearance/CustomizationsTab";
 import { ExplorerTab } from "app/components/Appearance/ExplorerTab";
+import { Skeleton } from "app/components/Skeleton";
+import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
 import { Tabs } from "app/components/ui/Tabs";
 import {
@@ -28,10 +30,10 @@ import {
     getMainThemeId,
 } from "app/services.server/theme";
 import { authenticate } from "app/shopify.server";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { data, useLoaderData, useRouteLoaderData } from "react-router";
+import { Await, data, useLoaderData, useRouteLoaderData } from "react-router";
 import type { loader as appLoader } from "./app";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -283,10 +285,18 @@ export default function AppearancePage() {
     } = useLoaderData<typeof loader>();
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const shopName = rootData?.shop?.name ?? "My Store";
+    const businessUrl = rootData?.businessUrl ?? "";
+    const merchantId = rootData?.merchantId;
+    // Deep-link the legacy "Open editor" straight to the branding editor, same
+    // as the dashboard's manual-install step 3.
+    const customizeUrl = merchantId
+        ? `${businessUrl}/m/${merchantId}/merchant/customize`
+        : businessUrl;
+    const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
 
-    const tabs = [
+    const fullTabs = [
         {
             id: "customizations",
             content: t("appearance.tabs.customizations"),
@@ -309,17 +319,43 @@ export default function AppearancePage() {
         },
     ];
 
-    const renderTabContent = () => {
-        switch (selectedTab) {
-            case 0:
-                return (
+    // Legacy themes drop the Banner/Button tabs (they write Shopify metafields
+    // only the OS-2.0 block reads). Customizations stays but redirects to the
+    // Frak editor; Explorer + Checkout Extension are backend-driven.
+    const legacyTabs = fullTabs.filter(
+        (tab) => tab.id !== "share-button" && tab.id !== "banner"
+    );
+
+    // Single renderer keyed on the tab id (robust to the differing tab sets);
+    // only Customizations differs between modes.
+    const renderTabContent = (isThemeSupported: boolean) => {
+        const tabs = isThemeSupported ? fullTabs : legacyTabs;
+        switch (tabs[selectedTab]?.id) {
+            case "customizations":
+                return isThemeSupported ? (
                     <CustomizationsTab
                         initialCustomizations={customizations}
                         initialAppearanceMetafield={appearanceMetafield}
                         mediaFiles={mediaFiles}
                     />
+                ) : (
+                    <s-section>
+                        <s-stack gap="base">
+                            <s-banner tone="info">
+                                <s-text>
+                                    {t("appearance.legacy.customizationsNote")}
+                                </s-text>
+                            </s-banner>
+                            <ExternalButton
+                                variant="primary"
+                                href={customizeUrl}
+                            >
+                                {t("appearance.legacy.openEditor")}
+                            </ExternalButton>
+                        </s-stack>
+                    </s-section>
                 );
-            case 1:
+            case "explorer":
                 return (
                     <ExplorerTab
                         initialExplorerSettings={explorerSettings}
@@ -329,18 +365,18 @@ export default function AppearancePage() {
                         mediaFiles={mediaFiles}
                     />
                 );
-            case 2:
+            case "share-button":
                 return (
                     <ButtonTab
                         isThemeHasFrakButton={isThemeHasFrakButton}
                         firstProduct={firstProduct}
                     />
                 );
-            case 3:
+            case "banner":
                 return (
                     <BannerTab isThemeHasFrakBanner={isThemeHasFrakBanner} />
                 );
-            case 4:
+            case "checkout-extension":
                 return <CheckoutExtensionTab />;
             default:
                 return null;
@@ -350,9 +386,22 @@ export default function AppearancePage() {
     return (
         <s-page heading={t("appearance.title")}>
             <PageHeading>{t("appearance.title")}</PageHeading>
-            <Tabs tabs={tabs} selected={selectedTab} onSelect={setSelectedTab}>
-                {renderTabContent()}
-            </Tabs>
+            <Suspense fallback={<Skeleton />}>
+                <Await resolve={isThemeSupportedPromise}>
+                    {(isThemeSupported) => {
+                        const supported = isThemeSupported ?? true;
+                        return (
+                            <Tabs
+                                tabs={supported ? fullTabs : legacyTabs}
+                                selected={selectedTab}
+                                onSelect={setSelectedTab}
+                            >
+                                {renderTabContent(supported)}
+                            </Tabs>
+                        );
+                    }}
+                </Await>
+            </Suspense>
         </s-page>
     );
 }

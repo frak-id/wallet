@@ -56,6 +56,43 @@ export const segmentedTrack = style({
     backgroundColor: vars.surface.disabled,
 });
 
+export const rewardHint = style({
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: alias.spacing.xs,
+    padding: `${alias.spacing.s} ${alias.spacing.m}`,
+    borderRadius: alias.cornerRadius.m,
+    backgroundColor: vars.surface.muted,
+    fontSize: fontSize.s,
+    lineHeight: "22px",
+    color: vars.text.secondary,
+});
+
+export const rewardToken = style([
+    interactive,
+    focusRing,
+    {
+        all: "unset",
+        boxSizing: "border-box",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: alias.spacing.xs,
+        cursor: "pointer",
+        paddingInline: alias.spacing.xs,
+        paddingBlock: "2px",
+        borderRadius: alias.cornerRadius.s,
+        border: `1px solid ${vars.border.default}`,
+        backgroundColor: vars.surface.elevated,
+        fontFamily: '"SF Mono", Menlo, Consolas, monospace',
+        fontSize: fontSize.s,
+        color: vars.text.primary,
+        selectors: {
+            "&:hover": { backgroundColor: vars.surface.disabled },
+        },
+    },
+]);
+
 export const settingsGrid = style({
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",

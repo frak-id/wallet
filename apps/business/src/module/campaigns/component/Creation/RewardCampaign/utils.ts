@@ -1,9 +1,12 @@
+import { roundTo } from "@frak-labs/app-essentials";
 import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
 import type { Hex } from "viem";
 import {
     type CampaignDraft,
+    getChaining,
     getMinPurchaseAmount,
     getReferralOnly,
+    setChaining,
     setMinPurchaseAmount,
     setReferralOnly,
 } from "@/stores/campaignStore";
@@ -65,8 +68,6 @@ const AMBASSADOR_RECO_SHARE = 0.8;
 /** Tolerance for the "Ambassador + Referee = pool" validation (rounding). */
 const SPLIT_EPSILON = 0.01;
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
-
 const emptyTier = (): TierRow => ({ reward: "" });
 
 const emptyCpaTier = (unit: TierUnit): CpaTierRow => ({
@@ -94,8 +95,8 @@ export const DEFAULT_REWARD_FORM: RewardFormValues = {
 
 /** Split a Target CPA (EUR or %) into the rewards pool and Frak's commission. */
 export function splitTargetCpa(targetCpa: number) {
-    const rewardsPool = round2(targetCpa * REWARDS_SHARE);
-    return { rewardsPool, frakCommission: round2(targetCpa - rewardsPool) };
+    const rewardsPool = roundTo(targetCpa * REWARDS_SHARE);
+    return { rewardsPool, frakCommission: roundTo(targetCpa - rewardsPool) };
 }
 
 /** Frak's recommended Ambassador/Referee values for a Target CPA (80/20 of pool). */
@@ -109,9 +110,36 @@ export function recommendedSplit(targetCpa: number) {
     const ambassador =
         whole > 0 && whole < rewardsPool
             ? whole
-            : round2(rewardsPool * AMBASSADOR_RECO_SHARE);
-    const referee = round2(rewardsPool - ambassador);
+            : roundTo(rewardsPool * AMBASSADOR_RECO_SHARE);
+    const referee = roundTo(rewardsPool - ambassador);
     return { ambassador, referee };
+}
+
+/**
+ * When a Target CPA changes, decide the next Ambassador/Referee split. If the
+ * current amounts are still the untouched recommendation for the *previous* CPA
+ * they track the new CPA (re-recommended); if the user edited them, they stay
+ * put (returns `null`, leaving the split for the mismatch warning to flag).
+ * Shared by the Fixed/% and Tiered reveals so every model behaves identically.
+ */
+export function recalcSplitOnCpaChange({
+    prevCpa,
+    nextCpa,
+    ambassador,
+    referee,
+}: {
+    prevCpa: number;
+    nextCpa: number;
+    ambassador: number;
+    referee: number;
+}): { ambassador: number; referee: number } | null {
+    const prevReco = recommendedSplit(prevCpa);
+    const isUntouchedReco =
+        ambassador > 0 &&
+        referee > 0 &&
+        ambassador === prevReco.ambassador &&
+        referee === prevReco.referee;
+    return isUntouchedReco ? recommendedSplit(nextCpa) : null;
 }
 
 /**
@@ -252,7 +280,7 @@ function tieredDraftToForm(
         return {
             from: a.minValue,
             to: a.maxValue ?? "",
-            cpa: sum > 0 ? round2(sum / REWARDS_SHARE) : "",
+            cpa: sum > 0 ? roundTo(sum / REWARDS_SHARE) : "",
             unit: a.percent !== undefined ? "percent" : "amount",
         };
     });
@@ -313,11 +341,11 @@ export function draftToRewardForm(draft: CampaignDraft): RewardFormValues {
         ...DEFAULT_REWARD_FORM,
         referralOnly: getReferralOnly(rule),
         model,
-        targetCpa: amountPool > 0 ? round2(amountPool / REWARDS_SHARE) : 0,
+        targetCpa: amountPool > 0 ? roundTo(amountPool / REWARDS_SHARE) : 0,
         ambassadorAmount,
         refereeAmount,
         targetCpaPercent:
-            percentPool > 0 ? round2(percentPool / REWARDS_SHARE) : 0,
+            percentPool > 0 ? roundTo(percentPool / REWARDS_SHARE) : 0,
         ambassadorPercent,
         refereePercent,
         // 0/none ⇒ leave empty so the field shows its placeholder on arrival.
@@ -346,6 +374,9 @@ export function rewardFormToDraft(
     rule = setReferralOnly(rule, values.referralOnly);
     // Tiered defines its eligibility via basket ranges; clear the standalone min.
     rule = setMinPurchaseAmount(rule, minPurchase);
+    // Rewards were rebuilt above; re-apply preserved chaining so editing the
+    // reward step never wipes the referral-chain settings.
+    rule = setChaining(rule, getChaining(draft.rule));
     return { ...draft, rule };
 }
 

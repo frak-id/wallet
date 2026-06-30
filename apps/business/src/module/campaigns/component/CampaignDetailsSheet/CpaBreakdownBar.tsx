@@ -36,6 +36,11 @@ export function CpaBreakdownBar({
     const { t } = useTranslation();
     const fmt = useDetailFormatters(cpaBreakdown.currency);
 
+    // With no CPA spend yet there is nothing to allocate, so the bar drops its
+    // per-recipient colours and renders a single neutral grey state. The legend
+    // keeps its configured percentages.
+    const isNeutral = cpaBreakdown.total === 0;
+
     return (
         <Card radius="m">
             <Stack space="m">
@@ -60,7 +65,9 @@ export function CpaBreakdownBar({
                             className={styles.cpaSegment}
                             style={{
                                 width: `${segment.pct * 100}%`,
-                                backgroundColor: segmentColor[segment.key],
+                                backgroundColor: isNeutral
+                                    ? vars.surface.disabled
+                                    : segmentColor[segment.key],
                             }}
                         />
                     ))}

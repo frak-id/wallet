@@ -23,6 +23,8 @@ export type {
     AttributionParams,
     ClientLifecycleEvent,
     CompressedData,
+    ConditionGroup,
+    ConditionOperator,
     Currency,
     // RPC Embedded wallet
     DisplayEmbeddedWalletParamsType,
@@ -61,6 +63,7 @@ export type {
     LoggedOutEmbeddedView,
     LoginModalStepType,
     MerchantConfigResponse,
+    MerchantReward,
     ModalRpcMetadata,
     ModalRpcStepsInput,
     ModalRpcStepsResultType,
@@ -75,6 +78,9 @@ export type {
     ResolvedPlacement,
     ResolvedSdkConfig,
     RewardTier,
+    RuleCondition,
+    RuleConditions,
+    RuleField,
     SdkResolvedConfig,
     // RPC Interaction
     SendInteractionParamsType,

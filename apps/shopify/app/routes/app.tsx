@@ -1,6 +1,8 @@
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { AppError } from "app/components/AppError";
 import { Skeleton } from "app/components/Skeleton";
+import type { loader as rootLoader } from "app/root";
 import {
     ensureComponentsUrlMetafield,
     ensureKlaviyoShareMetafields,
@@ -21,12 +23,14 @@ import { useTranslation } from "react-i18next";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import {
     Await,
+    isRouteErrorResponse,
     Link,
     Outlet,
     useLoaderData,
     useLocation,
     useNavigation,
     useRouteError,
+    useRouteLoaderData,
 } from "react-router";
 import { RootProvider } from "../providers/RootProvider";
 import { authenticate } from "../shopify.server";
@@ -54,8 +58,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         apiKey: process.env.SHOPIFY_API_KEY || "",
         businessUrl: process.env.BUSINESS_URL || "https://business.frak.id",
         walletUrl: process.env.FRAK_WALLET_URL || "https://wallet.frak.id",
+        componentsUrl:
+            process.env.FRAK_COMPONENTS_URL ||
+            "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest",
         shopifyLogoUrl: `${process.env.SHOPIFY_APP_URL ?? ""}/shopify-logo.svg`,
-        isThemeSupportedPromise: doesThemeSupportBlock(context),
+        // Defensive: a custom/unsupported theme should degrade to
+        // "not supported", never reject the streamed promise and crash the
+        // whole admin route.
+        isThemeSupportedPromise: doesThemeSupportBlock(context).catch(
+            () => false
+        ),
         shop,
         merchantId,
         onboardingDataPromise: fetchAllOnboardingData(context, request),
@@ -111,9 +123,19 @@ function AppContent({
     );
 }
 
-// Shopify needs React Router to catch some thrown responses, so that their headers are included in the response.
+// Shopify needs React Router to catch some thrown responses (auth
+// re-authorization redirects, etc.) so that their headers are included in the
+// response — those MUST keep going through `boundary.error`. Any other runtime
+// error is rendered as a friendly fallback instead of the bare red
+// "Application Error" page.
 export function ErrorBoundary() {
-    return boundary.error(useRouteError());
+    const error = useRouteError();
+    // Hooks must run unconditionally, before the isRouteErrorResponse return.
+    const requestId = useRouteLoaderData<typeof rootLoader>("root")?.requestId;
+    if (isRouteErrorResponse(error)) {
+        return boundary.error(error);
+    }
+    return <AppError error={error} requestId={requestId} />;
 }
 
 export const headers: HeadersFunction = (headersArgs) => {
@@ -135,19 +157,21 @@ function Navigation({
 }) {
     return (
         <NavigationRoot>
-            {isThemeSupported && (
-                <Suspense>
-                    <Await resolve={onboardingDataPromise}>
-                        {(onboardingData) => {
-                            const validationResult =
-                                validateCompleteOnboarding(onboardingData);
-                            if (validationResult.hasMissedCriticalSteps)
-                                return null;
-                            return <NavigationContent />;
-                        }}
-                    </Await>
-                </Suspense>
-            )}
+            {/* Legacy merchants also get nav — gated only on onboarding steps
+                1-4; the theme-activation step is non-critical for them. */}
+            <Suspense>
+                <Await resolve={onboardingDataPromise} errorElement={null}>
+                    {(onboardingData) => {
+                        const validationResult = validateCompleteOnboarding(
+                            onboardingData,
+                            isThemeSupported
+                        );
+                        if (validationResult.hasMissedCriticalSteps)
+                            return null;
+                        return <NavigationContent />;
+                    }}
+                </Await>
+            </Suspense>
         </NavigationRoot>
     );
 }
@@ -171,9 +195,7 @@ function NavigationContent() {
             <Link to="/app/campaigns">{t("navigation.campaigns")}</Link>
             <Link to="/app/appearance">{t("navigation.appearance")}</Link>
             <Link to="/app/funding">{t("navigation.funding")}</Link>
-            <Link to="/app/settings/general">
-                {t("navigation.settings.title")}
-            </Link>
+            <Link to="/app/settings">{t("navigation.settings.title")}</Link>
         </>
     );
 }

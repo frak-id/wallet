@@ -13,16 +13,24 @@ import { Form, FormControl, FormField } from "@/module/forms/Form";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useCustomizeSection } from "../saveRegistry";
 import {
+    AdvancedDisclosure,
     ComponentFields,
+    ComponentImagePicker,
     ComponentPreview,
     ComponentTypeTabs,
+    WordingLangTabs,
 } from "./ComponentEditor";
 import {
-    getBannerDefaults,
-    getPostPurchaseDefaults,
+    componentsToFormValues,
+    formValuesToComponents,
 } from "./fields/fieldDefaults";
+import { CUSTOM_CSS_ENABLED } from "./flags";
 import { DeletePlacementPanel, PlacementCssPanel } from "./PlacementPanels";
-import type { ComponentSettingsFormValues, ComponentType } from "./types";
+import type {
+    ComponentSettingsFormValues,
+    ComponentType,
+    WordingLang,
+} from "./types";
 import { updatePlacement, valueOrUndefined } from "./utils";
 import { WordingPresets } from "./WordingPresets";
 
@@ -48,11 +56,13 @@ export function PlacementCustomization({
                 placementId={placementId}
                 sdkConfig={sdkConfig}
             />
-            <PlacementCssPanel
-                merchantId={merchantId}
-                placementId={placementId}
-                sdkConfig={sdkConfig}
-            />
+            {CUSTOM_CSS_ENABLED && (
+                <PlacementCssPanel
+                    merchantId={merchantId}
+                    placementId={placementId}
+                    sdkConfig={sdkConfig}
+                />
+            )}
             <DeletePlacementPanel
                 merchantId={merchantId}
                 placementId={placementId}
@@ -68,18 +78,9 @@ function getPlacementFormValues(
     placementId: string
 ): ComponentSettingsFormValues {
     const placement = sdkConfig.placements?.[placementId];
-    const components = placement?.components;
-    const bs = components?.buttonShare;
     return {
         targetInteraction: placement?.targetInteraction ?? "",
-        buttonShare: {
-            text: bs?.text ?? "",
-            noRewardText: bs?.noRewardText ?? "",
-            clickAction: bs?.clickAction ?? "sharing-page",
-            css: bs?.rawCss ?? "",
-        },
-        postPurchase: getPostPurchaseDefaults(components),
-        banner: getBannerDefaults(components),
+        ...componentsToFormValues(placement?.components),
     };
 }
 
@@ -100,6 +101,8 @@ function PlacementSettingsPanel({
 
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
+    const [activeLang, setActiveLang] = useState<WordingLang>("default");
+    const [advancedOpen, setAdvancedOpen] = useState(false);
 
     const values = useMemo(
         () => getPlacementFormValues(sdkConfig, placementId),
@@ -108,33 +111,6 @@ function PlacementSettingsPanel({
 
     const form = useForm<ComponentSettingsFormValues>({
         values,
-        defaultValues: {
-            targetInteraction: "",
-            buttonShare: {
-                text: "",
-                noRewardText: "",
-                clickAction: "sharing-page",
-                css: "",
-            },
-            postPurchase: {
-                refereeText: "",
-                refereeNoRewardText: "",
-                referrerText: "",
-                referrerNoRewardText: "",
-                ctaText: "",
-                ctaNoRewardText: "",
-                css: "",
-            },
-            banner: {
-                referralTitle: "",
-                referralDescription: "",
-                referralCta: "",
-                inappTitle: "",
-                inappDescription: "",
-                inappCta: "",
-                css: "",
-            },
-        },
     });
 
     useEffect(() => {
@@ -143,51 +119,8 @@ function PlacementSettingsPanel({
     }, [isSuccess, form.reset, form.getValues, form]);
 
     const onSubmit = useCallback(
-        (currentValues: ComponentSettingsFormValues) => {
-            const buttonShare = {
-                text: valueOrUndefined(currentValues.buttonShare.text),
-                noRewardText: valueOrUndefined(
-                    currentValues.buttonShare.noRewardText
-                ),
-                clickAction: currentValues.buttonShare.clickAction,
-                rawCss: valueOrUndefined(currentValues.buttonShare.css),
-            };
-            const postPurchase = {
-                refereeText: valueOrUndefined(
-                    currentValues.postPurchase.refereeText
-                ),
-                refereeNoRewardText: valueOrUndefined(
-                    currentValues.postPurchase.refereeNoRewardText
-                ),
-                referrerText: valueOrUndefined(
-                    currentValues.postPurchase.referrerText
-                ),
-                referrerNoRewardText: valueOrUndefined(
-                    currentValues.postPurchase.referrerNoRewardText
-                ),
-                ctaText: valueOrUndefined(currentValues.postPurchase.ctaText),
-                ctaNoRewardText: valueOrUndefined(
-                    currentValues.postPurchase.ctaNoRewardText
-                ),
-                rawCss: valueOrUndefined(currentValues.postPurchase.css),
-            };
-            const banner = {
-                referralTitle: valueOrUndefined(
-                    currentValues.banner.referralTitle
-                ),
-                referralDescription: valueOrUndefined(
-                    currentValues.banner.referralDescription
-                ),
-                referralCta: valueOrUndefined(currentValues.banner.referralCta),
-                inappTitle: valueOrUndefined(currentValues.banner.inappTitle),
-                inappDescription: valueOrUndefined(
-                    currentValues.banner.inappDescription
-                ),
-                inappCta: valueOrUndefined(currentValues.banner.inappCta),
-                rawCss: valueOrUndefined(currentValues.banner.css),
-            };
-
-            return editSdkConfig({
+        (currentValues: ComponentSettingsFormValues) =>
+            editSdkConfig({
                 placements: updatePlacement(
                     sdkConfig,
                     placementId,
@@ -195,17 +128,14 @@ function PlacementSettingsPanel({
                         ...placement,
                         components: {
                             ...placement?.components,
-                            buttonShare,
-                            postPurchase,
-                            banner,
+                            ...formValuesToComponents(currentValues),
                         },
                         targetInteraction: valueOrUndefined(
                             currentValues.targetInteraction
                         ),
                     })
                 ),
-            });
-        },
+            }),
         [editSdkConfig, sdkConfig, placementId]
     );
 
@@ -268,12 +198,19 @@ function PlacementSettingsPanel({
                         onSelect={setSelectedComponent}
                     />
 
+                    <WordingLangTabs
+                        selected={activeLang}
+                        onSelect={setActiveLang}
+                    />
+
                     <PreviewWrapper label={t("customize.components.preview")}>
                         <ComponentPreview
                             selectedComponent={selectedComponent}
                             form={form}
                             currency={(sdkConfig.currency ?? "eur") as Currency}
                             shopName={sdkConfig.name ?? "My Store"}
+                            lang={activeLang}
+                            configLang={sdkConfig.lang}
                         />
                     </PreviewWrapper>
 
@@ -284,10 +221,23 @@ function PlacementSettingsPanel({
                         shopName={sdkConfig.name ?? "My Store"}
                     />
 
-                    <ComponentFields
+                    <ComponentImagePicker
                         selectedComponent={selectedComponent}
                         form={form}
+                        merchantId={merchantId}
                     />
+
+                    <AdvancedDisclosure
+                        label={t("customize.components.advanced")}
+                        isOpen={advancedOpen}
+                        onToggle={() => setAdvancedOpen(!advancedOpen)}
+                    >
+                        <ComponentFields
+                            selectedComponent={selectedComponent}
+                            form={form}
+                            lang={activeLang}
+                        />
+                    </AdvancedDisclosure>
                 </Stack>
             </Card>
         </Form>

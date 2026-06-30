@@ -1,4 +1,5 @@
 import type {
+    Currency,
     EstimatedReward,
     GetMerchantInformationReturnType,
     SharingPageProduct,
@@ -10,6 +11,10 @@ import {
     getUserReferralStatus,
     trackPurchaseStatus,
 } from "@frak-labs/core-sdk/actions";
+import {
+    type RewardAudience,
+    selectDisplayCampaign,
+} from "@frak-labs/core-sdk/rewards";
 import { LogoFrakWithName } from "@frak-labs/design-system/icons";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
@@ -22,12 +27,14 @@ import {
 import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
+import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import {
     applyRewardPlaceholder,
-    formatEstimatedReward,
+    formatRewardOrHide,
 } from "@/utils/format/formatReward";
 import { sanitizeProductList } from "@/utils/sharingPageProducts";
 import { GiftIcon } from "../icons/GiftIcon";
@@ -63,24 +70,27 @@ type ResolvedPostPurchaseContext = {
  */
 function resolvePostPurchaseContext(
     referralStatus: UserReferralStatusType | null,
-    merchantInfo: GetMerchantInformationReturnType
+    merchantInfo: GetMerchantInformationReturnType,
+    currency: Currency | undefined
 ): ResolvedPostPurchaseContext | null {
-    // Find the first purchase reward that has at least one side (referrer or referee)
-    const purchaseReward = merchantInfo.rewards.find(
-        (r) => r.interactionTypeKey === "purchase" && (r.referrer || r.referee)
-    );
+    const audience: RewardAudience = referralStatus?.isReferred
+        ? "referee"
+        : "referrer";
+    // Shared selector: the best live "purchase" campaign for the viewer's side,
+    // time-gated so an expired campaign is never advertised.
+    const selected = selectDisplayCampaign(merchantInfo.rewards, {
+        targetInteraction: "purchase",
+        currency,
+        audience,
+    });
+    if (!selected) return null;
 
-    if (!purchaseReward) return null;
-
+    const { campaign } = selected;
+    // A referred user sees the referee side only when the campaign defines one;
+    // otherwise fall back to the referrer reward (and the sharer prompt).
     const variant =
-        referralStatus?.isReferred && purchaseReward.referee
-            ? "referee"
-            : "referrer";
-
-    const reward =
-        variant === "referee"
-            ? purchaseReward.referee
-            : purchaseReward.referrer;
+        referralStatus?.isReferred && campaign.referee ? "referee" : "referrer";
+    const reward = variant === "referee" ? campaign.referee : campaign.referrer;
 
     return {
         variant,
@@ -133,11 +143,12 @@ export function PostPurchase({
     preview,
     previewVariant,
     products,
-    imageUrl,
+    imageUrl: propImageUrl,
 }: PostPurchaseProps) {
     const isPreview = !!preview;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const placement = usePlacement(placementId);
+    const lang = useLang();
 
     useLightDomStyles(
         "frak-post-purchase",
@@ -180,7 +191,11 @@ export function PostPurchase({
             .then(([referralStatus, merchantInfo]) => {
                 setHasFetched(true);
                 setContext(
-                    resolvePostPurchaseContext(referralStatus, merchantInfo)
+                    resolvePostPurchaseContext(
+                        referralStatus,
+                        merchantInfo,
+                        client.config.metadata?.currency
+                    )
                 );
             })
             .catch((e: unknown) => {
@@ -216,7 +231,7 @@ export function PostPurchase({
     const rewardText = useMemo(() => {
         if (!context?.reward) return undefined;
         const currency = window.FrakSetup?.client?.config?.metadata?.currency;
-        return formatEstimatedReward(context.reward, currency);
+        return formatRewardOrHide(context.reward, currency);
     }, [context?.reward]);
 
     const globalComponents = useGlobalComponents();
@@ -226,43 +241,49 @@ export function PostPurchase({
     // Badge renders only when text is provided via prop or placement config.
     const resolvedBadgeText = propBadgeText ?? postPurchaseConfig?.badgeText;
 
+    // Custom illustration: prop wins over placement config; falls back to the
+    // built-in gift icon when neither provides one.
+    const imageUrl = propImageUrl ?? postPurchaseConfig?.imageUrl;
+
     const texts = useMemo(() => {
+        const defaults = componentDefaults[lang].postPurchase;
         const message =
             resolvedVariant === "referee"
                 ? rewardText
                     ? applyRewardPlaceholder(
                           propRefereeText ??
                               postPurchaseConfig?.refereeText ??
-                              "You just earned {REWARD}! Share with friends to earn even more.",
+                              defaults.refereeText,
                           rewardText
                       )
                     : (propRefereeText ??
                       postPurchaseConfig?.refereeNoRewardText ??
-                      "You just earned a reward! Share with friends to earn even more.")
+                      defaults.refereeNoRewardText)
                 : rewardText
                   ? applyRewardPlaceholder(
                         propReferrerText ??
                             postPurchaseConfig?.referrerText ??
-                            "Earn {REWARD} by sharing this with your friends!",
+                            defaults.referrerText,
                         rewardText
                     )
                   : (propReferrerText ??
                     postPurchaseConfig?.referrerNoRewardText ??
-                    "Share this with your friends and earn rewards!");
+                    defaults.referrerNoRewardText);
 
         const cta = rewardText
             ? applyRewardPlaceholder(
                   propCtaText ??
                       postPurchaseConfig?.ctaText ??
-                      "Share & earn {REWARD}",
+                      defaults.ctaText,
                   rewardText
               )
             : (propCtaText ??
               postPurchaseConfig?.ctaNoRewardText ??
-              "Share & earn");
+              defaults.ctaNoRewardText);
 
         return { message, cta };
     }, [
+        lang,
         resolvedVariant,
         rewardText,
         postPurchaseConfig,

@@ -25,6 +25,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:e2e": "TARGET_ENV=local playwright test",
+    "test:e2e:local": "FRAK_E2E_HOST_URL=http://localhost:3013/ TARGET_ENV=local playwright test",
     "test:e2e:dev": "TARGET_ENV=dev playwright test",
     "test:e2e:prod": "TARGET_ENV=prod playwright test",
     "test:e2e:ui": "TARGET_ENV=local playwright test --ui",

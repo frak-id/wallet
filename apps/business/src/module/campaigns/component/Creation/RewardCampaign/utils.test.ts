@@ -119,6 +119,47 @@ describe("isRewardFormValid (tiered)", () => {
     });
 });
 
+describe("chaining preservation across a reward re-edit", () => {
+    // The referral-chain step stores `chaining` on the referrer reward;
+    // rewardFormToDraft rebuilds rule.rewards from scratch, so it must re-apply
+    // the preserved chaining or editing the reward step would silently wipe it.
+    it("re-applies the preserved chaining onto the rebuilt referrer reward", () => {
+        const draftWithChaining: CampaignDraft = {
+            ...baseDraft,
+            rule: {
+                trigger: "purchase",
+                conditions: [],
+                rewards: [
+                    {
+                        recipient: "referrer",
+                        type: "token",
+                        amountType: "fixed",
+                        amount: 6,
+                        chaining: { deperditionPerLevel: 20, maxDepth: 3 },
+                    },
+                ],
+            },
+        };
+        const fixedValues: RewardFormValues = {
+            ...DEFAULT_REWARD_FORM,
+            model: "fixed",
+            targetCpa: 10,
+            ambassadorAmount: 6,
+            refereeAmount: 2,
+        };
+
+        const result = rewardFormToDraft(fixedValues, draftWithChaining);
+        const referrer = result.rule.rewards.find(
+            (r) => r.recipient === "referrer"
+        );
+
+        expect(referrer?.chaining).toEqual({
+            deperditionPerLevel: 20,
+            maxDepth: 3,
+        });
+    });
+});
+
 describe("tieredRangesOverlap", () => {
     it("allows touching boundaries (0–100, 100–∞)", () => {
         expect(

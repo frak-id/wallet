@@ -14,6 +14,7 @@
         "embedded": {
             "title": "Authentication required",
             "panelTitle": "Please connect your wallet to continue",
+            "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
             "action": "Authenticate"
         }
     },
@@ -177,7 +178,15 @@
             "required": "Push audience is required",
             "reach": "You will reach {{count}} members",
             "minMember": "You need at least 1 member to continue"
-        }
+        },
+        "tabs": {
+            "members": "Members",
+            "push": "Push notifications"
+        },
+        "platformAdminNotice": "Member data is not available in platform-admin read-only mode."
+    },
+    "platformAdmin": {
+        "readOnlyTag": "Read-only"
     },
     "push": {
         "create": {
@@ -233,8 +242,7 @@
                 },
                 "later": {
                     "label": "Schedule for later",
-                    "description": "Choose a date and time for delivery.",
-                    "comingSoon": "Coming soon"
+                    "description": "Choose a date and time for delivery."
                 },
                 "date": {
                     "label": "Select date"
@@ -249,6 +257,7 @@
                 "message": "Your notification message will appear here."
             },
             "publish": "Publish notification",
+            "update": "Update notification",
             "review": {
                 "title": "Review notification",
                 "audience": "Audience",
@@ -264,6 +273,39 @@
                 "description": "You've started creating a push notification. If you leave, any information you've entered will be lost.",
                 "continueEditing": "Continue editing",
                 "confirm": "Yes, leave"
+            }
+        },
+        "history": {
+            "status": {
+                "scheduled": "Scheduled",
+                "sent": "Sent"
+            },
+            "audience": {
+                "all": "All members",
+                "members": "{{count}} members"
+            },
+            "columns": {
+                "notification": "Notification",
+                "status": "Status",
+                "scheduledFor": "Scheduled for",
+                "audience": "Audience",
+                "sentOpened": "Sent / Opened"
+            },
+            "filters": {
+                "button": "Filters",
+                "reset": "Reset"
+            },
+            "rowMenu": {
+                "edit": "Edit push notification",
+                "delete": "Delete",
+                "aria": "Actions for {{title}}"
+            },
+            "delete": {
+                "title": "Delete push notification",
+                "description": "Are you sure you want to delete “{{title}}”? This action can't be undone.",
+                "cancel": "Cancel",
+                "confirm": "Delete",
+                "error": "Couldn't delete the notification. Try again."
             }
         }
     },
@@ -294,6 +336,11 @@
                     "label": "Reward setup",
                     "hint": "Model, value & distribution",
                     "subtitle": "Choose how rewards are calculated and who qualifies."
+                },
+                "referralChain": {
+                    "label": "Referral chain",
+                    "hint": "Multi-level ambassador",
+                    "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
                 },
                 "validation": {
                     "label": "Campaign validation",
@@ -342,7 +389,7 @@
                 "tip2Desc": "Add the sharing banner right after checkout.",
                 "tip3Title": "Newsletter",
                 "tip3Desc": "Announce the campaign to your existing customer base.",
-                "bestPractices": "View all the best practices",
+                "communicationGuide": "Communication guide",
                 "viewAllCampaigns": "View all campaigns",
                 "viewPerformance": "View performance"
             },
@@ -477,6 +524,46 @@
                     "endDateRequired": "Select an end date",
                     "endDateInvalid": "End date must be on or after the start date",
                     "invalidDate": "Enter a valid date"
+                }
+            },
+            "referralChain": {
+                "enable": {
+                    "title": "Enable chain rewards",
+                    "description": "Distribute referrer rewards across multiple levels of the referral chain"
+                },
+                "noReferrer": "Configure a referrer (ambassador) reward in the Reward setup step before enabling chain rewards.",
+                "model": {
+                    "label": "How rewards are distributed",
+                    "description": "When a purchase is made, rewards are shared across the referral chain."
+                },
+                "decrease": {
+                    "label": "Reward decrease per level (%)",
+                    "hint": "Each level receives this percentage less than the previous level. Minimum 50%.",
+                    "placeholder": "Enter level",
+                    "outOfRange": "Decrease must be between 50% and 99%: below 50% deeper levels receive more than the direct ambassador; at 100% they receive nothing."
+                },
+                "maxLevels": {
+                    "label": "Maximum rewarded levels",
+                    "hint": "Maximum number of referrer levels eligible for rewards.",
+                    "placeholder": "Enter level"
+                },
+                "cac": {
+                    "label": "CAC",
+                    "placeholder": "Not available",
+                    "placeholderTiered": "Varies by tier"
+                },
+                "preview": {
+                    "title": "Reward distribution chain",
+                    "purchase": "1st Purchase",
+                    "direct": "Direct ambassador",
+                    "level": "Level {{n}} ambassador",
+                    "caption": "Each level receives {{percent}}% less than the previous level.",
+                    "directReward": "Direct reward",
+                    "chainReward": "Referral chain reward",
+                    "rowDirect": "Direct",
+                    "rowLevel": "Level {{n}}",
+                    "tableLevel": "Level",
+                    "tableAmount": "Amount"
                 }
             },
             "reward": {
@@ -991,6 +1078,84 @@
         "demo": {
             "label": "Enable Demo Mode",
             "description": "When enabled, all data will be replaced with mock data for demonstration purposes. This is useful for presentations and testing without affecting real data."
+        },
+        "billing": {
+            "info": {
+                "label": "Invoice information",
+                "missing": "Missing information",
+                "title": "Invoice information",
+                "subtitle": "Billing details used across all campaign invoices and statements."
+            },
+            "summary": {
+                "companyName": "Company name",
+                "vatNumber": "VAT number",
+                "address": "Address",
+                "country": "Country",
+                "billingEmail": "Billing email"
+            },
+            "actions": {
+                "add": "Add invoice information",
+                "edit": "Edit",
+                "save": "Save information",
+                "saveChanges": "Save changes",
+                "cancel": "Cancel",
+                "close": "Close"
+            },
+            "sheet": {
+                "addTitle": "Add invoice information",
+                "editTitle": "Edit invoice information",
+                "description": "These details will be used to generate all invoices and billing documents."
+            },
+            "fields": {
+                "companyName": {
+                    "label": "Company name",
+                    "placeholder": "Enter company name"
+                },
+                "vatNumber": {
+                    "label": "VAT number",
+                    "placeholder": "Enter VAT number"
+                },
+                "streetAddress": {
+                    "label": "Street address",
+                    "placeholder": "Enter street address"
+                },
+                "city": {
+                    "label": "City",
+                    "placeholder": "Enter city"
+                },
+                "postalCode": {
+                    "label": "Postal code",
+                    "placeholder": "Enter postal code"
+                },
+                "country": {
+                    "label": "Country",
+                    "placeholder": "Select country"
+                },
+                "billingEmail": {
+                    "label": "Billing email",
+                    "placeholder": "youremail@company.com"
+                }
+            },
+            "segments": {
+                "invoices": "Invoices",
+                "deposit": "Deposit"
+            },
+            "table": {
+                "date": "Date",
+                "amount": "Amount",
+                "type": "Type",
+                "description": "Description",
+                "pdf": "PDF",
+                "download": "Download PDF"
+            },
+            "tag": {
+                "paid": "Paid",
+                "deposit": "Deposit"
+            },
+            "validation": {
+                "required": "This field is required",
+                "email": "Enter a valid email address"
+            }
         }
     },
     "merchant": {
@@ -1141,7 +1306,8 @@
             "invalidUrl": "Enter a valid image URL (https://…)",
             "restrictions": {
                 "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)"
+                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 to 2:1 (Max 10MB)"
             },
             "descriptionPlaceholder": "Merchant description..."
         },
@@ -1309,12 +1475,27 @@
             "banner": "Banner",
             "preview": "Preview",
             "advanced": "Advanced settings",
-            "clickAction": {
-                "label": "Click action",
-                "hint": "What happens when a visitor clicks the share button",
-                "embeddedWallet": "Embedded wallet",
-                "shareModal": "Share modal",
-                "sharingPage": "Sharing page"
+            "postPurchasePreview": {
+                "referee": "Referee view",
+                "referrer": "Referrer view"
+            },
+            "postPurchaseGroups": {
+                "shared": "Badge & CTA",
+                "referee": "Referee message",
+                "referrer": "Referrer message"
+            },
+            "bannerGroups": {
+                "referral": "Referral",
+                "inapp": "In-app"
+            },
+            "rewardToken": {
+                "hint": "Tip: insert <token>{REWARD}</token> in any text to show the live campaign reward.",
+                "copy": "Copy {REWARD}"
+            },
+            "image": {
+                "label": "Illustration",
+                "description": "Replace the default gift icon with your own image.",
+                "hint": "Paste an image URL or upload one below."
             },
             "targetInteraction": {
                 "label": "Target interaction",
@@ -1324,6 +1505,7 @@
             "fields": {
                 "text": "Button text",
                 "noRewardText": "Button text (no reward)",
+                "badgeText": "Badge text",
                 "refereeText": "Referee message",
                 "refereeNoRewardText": "Referee message (no reward)",
                 "referrerText": "Referrer message",
@@ -1348,7 +1530,8 @@
     "embedded": {
         "mint": {
             "title": "Register your shop on Frak",
-            "registering": "Registering {{domain}}",
+            "subtitle": "We'll verify your domain and set up your merchant space.",
+            "registering": "Registering <text>{{domain}}</text>",
             "error": "Can't register your product. Double check that everything is right.",
             "alreadyRegistered": "Maybe the domain is already registered.",
             "close": "Close",

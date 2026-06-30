@@ -23,6 +23,8 @@ import {
     clientIdStore,
     compressedSsoToParams,
     ExternalLink,
+    ensureFreshSdkSession,
+    notifyWalletAuthExpired,
     openExternalUrl,
     PairingView,
     recordError,
@@ -188,57 +190,87 @@ function Sso() {
     const useSessionShortcut = !!session && !bypassSession;
 
     /**
-     * The on success callback
-     * After successful auth, send RPC message to wallet listener iframe
+     * Completion handler — runs after a successful auth (login / register /
+     * pairing) or via the "Continue with my wallet" shortcut. Refreshes the SDK
+     * token, hands the session to the listener iframe via RPC, then
+     * redirects / closes.
+     *
+     * Wrapped in a mutation so `isCompleting` drives the CTA loading state: the
+     * primary button is disabled while the handoff is in flight, which replaces
+     * the old manual re-entrancy ref as the double-submit guard.
      */
-    const onSuccess = useCallback(async () => {
-        // Get the current SSO context
-        const session = sessionStore.getState().session;
-        const sdkSession = sessionStore.getState().sdkSession;
+    const { mutate: onSuccess, isPending: isCompleting } = useMutation({
+        mutationKey: ssoKey.complete,
+        async mutationFn() {
+            // Renew the SDK token before handing it to the merchant. Under the
+            // 1-day SDK TTL a returning or paired session can be carrying a
+            // near-expired token; ensureFreshSdkSession mints a fresh one (a
+            // no-op when still healthy) and writes it back to the store, so both
+            // the RPC and redirect handoffs below pick up the freshened value.
+            const fresh = await ensureFreshSdkSession();
+            if (fresh.status === "dead") {
+                // Wallet token is server-confirmed dead. Notify the re-auth
+                // guard directly: the backendClient 401 hook only signals when
+                // the wallet JWT is ALSO client-side expired, so a server-revoked
+                // (but not yet expired) token would otherwise strand this popup
+                // silently. The guard routes local sessions to the re-auth modal
+                // and distant / ecdsa sessions to logout.
+                //
+                // Throw (don't return) so TanStack records this as an error,
+                // not a success: returning undefined leaves the mutation
+                // "successful", re-enabling the "Continue" CTA behind the
+                // re-auth overlay and letting the user re-fire a dead handoff.
+                notifyWalletAuthExpired();
+                throw new Error("sso:wallet-auth-dead");
+            }
 
-        // Find the listener iframe and send RPC message if available
-        if (session && sdkSession) {
-            const listenerIframe = findIframeInOpener();
+            const session = sessionStore.getState().session;
+            const sdkSession = sessionStore.getState().sdkSession;
 
-            if (listenerIframe) {
-                try {
-                    // Create RPC client targeting the listener iframe
-                    const ssoClient = createRpcClient<SsoRpcSchema>({
-                        emittingTransport: listenerIframe,
-                        listeningTransport: window,
-                        targetOrigin: window.location.origin,
-                    });
+            // Find the listener iframe and send RPC message if available
+            if (session && sdkSession) {
+                const listenerIframe = findIframeInOpener();
 
-                    console.log(
-                        "[SSO] Sent completion message to listener iframe via RPC",
-                        {
-                            address: session.address,
-                        }
-                    );
+                if (listenerIframe) {
+                    try {
+                        // Create RPC client targeting the listener iframe
+                        const ssoClient = createRpcClient<SsoRpcSchema>({
+                            emittingTransport: listenerIframe,
+                            listeningTransport: window,
+                            targetOrigin: window.location.origin,
+                        });
 
-                    // Send SSO completion via RPC
-                    await ssoClient.request({
-                        method: "sso_complete",
-                        params: [session, sdkSession],
-                    });
+                        console.log(
+                            "[SSO] Sent completion message to listener iframe via RPC",
+                            {
+                                address: session.address,
+                            }
+                        );
 
-                    // Cleanup the client
-                    ssoClient.cleanup();
-                } catch (error) {
-                    recordError(error, {
-                        source: "sso",
-                        context: { stage: "rpc_complete" },
-                    });
+                        // Send SSO completion via RPC
+                        await ssoClient.request({
+                            method: "sso_complete",
+                            params: [session, sdkSession],
+                        });
+
+                        // Cleanup the client
+                        ssoClient.cleanup();
+                    } catch (error) {
+                        recordError(error, {
+                            source: "sso",
+                            context: { stage: "rpc_complete" },
+                        });
+                    }
                 }
             }
-        }
 
-        // Redirect the user in 2seconds
-        setSuccess(true);
-        setTimeout(() => {
-            redirectOrClose();
-        }, 2000);
-    }, []);
+            // Redirect the user in 2seconds
+            setSuccess(true);
+            setTimeout(() => {
+                redirectOrClose();
+            }, 2000);
+        },
+    });
 
     /**
      * Redirect or close after success
@@ -385,6 +417,7 @@ function Sso() {
                                 address={session.address}
                                 productName={currentMetadata.name}
                                 onContinue={onSuccess}
+                                loading={isCompleting}
                                 onUseAnother={() => setBypassSession(true)}
                             />
                         ) : (
@@ -606,11 +639,13 @@ function ContinueAsSession({
     address,
     productName,
     onContinue,
+    loading,
     onUseAnother,
 }: {
     address: Address;
     productName?: string;
     onContinue: () => void;
+    loading?: boolean;
     onUseAnother: () => void;
 }) {
     const { t } = useTranslation();
@@ -621,6 +656,7 @@ function ContinueAsSession({
                     variant="primary"
                     icon={<WalletIcon width={24} height={24} />}
                     onClick={onContinue}
+                    loading={loading}
                 >
                     {t("authent.sso.btn.continue")}
                 </Button>

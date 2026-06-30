@@ -47,6 +47,7 @@ const PURE_OUTLET_PARENT_ROUTES = new Set([
     "/_wallet/_protected/profile",
     "/_wallet/_protected/settings",
     "/_wallet/_protected-fullscreen/profile/referral",
+    "/_wallet/_protected-fullscreen/profile/recovery",
 ]);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

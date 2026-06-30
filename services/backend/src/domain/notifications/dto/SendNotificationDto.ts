@@ -15,12 +15,6 @@ export const SendNotificationTargetsDto = t.Union([
                         max: t.Number(),
                     })
                 ),
-                rewards: t.Partial(
-                    t.Object({
-                        min: t.Hex(),
-                        max: t.Hex(),
-                    })
-                ),
                 firstInteractionTimestamp: t.Partial(
                     t.Object({
                         min: t.Number(),
@@ -31,6 +25,8 @@ export const SendNotificationTargetsDto = t.Union([
         ),
     }),
 ]);
+
+export type SendNotificationTargets = typeof SendNotificationTargetsDto.static;
 
 export const SendNotificationPayloadDto = t.Object({
     title: t.String(),

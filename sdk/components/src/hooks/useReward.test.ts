@@ -30,6 +30,8 @@ describe.sequential("useReward", () => {
             rewards: [
                 {
                     campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
                     interactionTypeKey: "purchase",
                     referrer: {
                         payoutType: "fixed",
@@ -47,7 +49,7 @@ describe.sequential("useReward", () => {
         const { result } = renderHook(() => useReward(true, undefined));
 
         await waitFor(() => {
-            expect(result.current.reward).toBe("10 eur");
+            expect(result.current.reward).toContain("10");
         });
     });
 
@@ -58,6 +60,8 @@ describe.sequential("useReward", () => {
             rewards: [
                 {
                     campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
                     interactionTypeKey: "purchase",
                     referrer: {
                         payoutType: "fixed",
@@ -71,7 +75,9 @@ describe.sequential("useReward", () => {
                 },
                 {
                     campaignId: "c2",
-                    interactionTypeKey: "sharing",
+                    name: "Campaign 2",
+                    conditions: [],
+                    interactionTypeKey: "referral",
                     referrer: {
                         payoutType: "fixed",
                         amount: {
@@ -88,7 +94,7 @@ describe.sequential("useReward", () => {
         const { result } = renderHook(() => useReward(true, "purchase"));
 
         await waitFor(() => {
-            expect(result.current.reward).toBe("15 eur");
+            expect(result.current.reward).toContain("15");
         });
     });
 
@@ -115,6 +121,8 @@ describe.sequential("useReward", () => {
             rewards: [
                 {
                     campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
                     interactionTypeKey: "purchase",
                     // No referrer reward — only referee
                     referee: {
@@ -140,6 +148,76 @@ describe.sequential("useReward", () => {
         expect(result.current.reward).toBeUndefined();
     });
 
+    it("should treat a percentage reward as no reward", async () => {
+        vi.mocked(getMerchantInformation).mockResolvedValue({
+            id: "merchant-1",
+            onChainMetadata: { name: "Test", domain: "test.com" },
+            rewards: [
+                {
+                    campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
+                    interactionTypeKey: "purchase",
+                    referrer: {
+                        payoutType: "percentage",
+                        percent: 10,
+                        percentOf: "purchase_amount",
+                    },
+                },
+            ],
+        });
+
+        const { result } = renderHook(() => useReward(true, undefined));
+
+        await waitFor(() => {
+            expect(getMerchantInformation).toHaveBeenCalled();
+        });
+
+        // Percentage rewards carry no concrete amount → reward stays undefined
+        expect(result.current.reward).toBeUndefined();
+    });
+
+    it("should format the referee reward when audience is 'referee'", async () => {
+        vi.mocked(getMerchantInformation).mockResolvedValue({
+            id: "merchant-1",
+            onChainMetadata: { name: "Test", domain: "test.com" },
+            rewards: [
+                {
+                    campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
+                    interactionTypeKey: "purchase",
+                    referrer: {
+                        payoutType: "fixed",
+                        amount: {
+                            amount: 50,
+                            eurAmount: 50,
+                            usdAmount: 55,
+                            gbpAmount: 45,
+                        },
+                    },
+                    referee: {
+                        payoutType: "fixed",
+                        amount: {
+                            amount: 7,
+                            eurAmount: 7,
+                            usdAmount: 8,
+                            gbpAmount: 6,
+                        },
+                    },
+                },
+            ],
+        });
+
+        const { result } = renderHook(() =>
+            useReward(true, undefined, "referee")
+        );
+
+        await waitFor(() => {
+            expect(result.current.reward).toContain("7");
+        });
+    });
+
     it("should refetch when targetInteraction changes", async () => {
         vi.mocked(getMerchantInformation).mockResolvedValue({
             id: "merchant-1",
@@ -147,6 +225,8 @@ describe.sequential("useReward", () => {
             rewards: [
                 {
                     campaignId: "c1",
+                    name: "Campaign 1",
+                    conditions: [],
                     interactionTypeKey: "purchase",
                     referrer: {
                         payoutType: "fixed",

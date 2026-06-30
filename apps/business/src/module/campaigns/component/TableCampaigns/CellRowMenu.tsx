@@ -1,21 +1,16 @@
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@frak-labs/design-system/components/Popover";
-import {
     ArchiveIcon,
     BarChartIcon,
     BinIcon,
     EyeIcon,
-    MoreVerticalIcon,
     PauseIcon,
     PencilIcon,
     PlayIcon,
 } from "@frak-labs/design-system/icons";
 import { Link } from "@tanstack/react-router";
 import type { Row } from "@tanstack/react-table";
-import { Fragment, useState } from "react";
+import clsx from "clsx";
+import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ModalArchive,
@@ -23,9 +18,15 @@ import {
     ModalPause,
     ModalResume,
 } from "@/module/campaigns/component/CampaignActionModals";
+import {
+    RowMenu,
+    RowMenuDivider,
+    RowMenuSection,
+} from "@/module/common/component/RowMenu";
+import * as rowMenu from "@/module/common/component/RowMenu/row-menu.css";
+import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import { campaignStore } from "@/stores/campaignStore";
 import type { CampaignListItemWithActions } from "@/types/Campaign";
-import * as styles from "./table-campaigns.css";
 
 type Props = {
     row: Row<CampaignListItemWithActions>;
@@ -36,19 +37,31 @@ type SectionId = "nav" | "lifecycle" | "destructive";
 
 export function CellRowMenu({ row, merchantId }: Props) {
     const { t } = useTranslation();
-    const [open, setOpen] = useState(false);
     const reset = campaignStore((state) => state.reset);
-    const { actions, status, id, name } = row.original;
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
+    const rawActions = row.original.actions;
+    // Platform admins see campaigns in read-only mode: no mutations.
+    const actions = isReadOnly
+        ? {
+              canEdit: false,
+              canDelete: false,
+              canPublish: false,
+              canPause: false,
+              canResume: false,
+              canArchive: false,
+          }
+        : rawActions;
+    const { status, id, name } = row.original;
     const isDraft = status === "draft";
 
     const navSection = (
-        <div className={styles.rowMenuSection}>
+        <RowMenuSection>
             {isDraft ? (
                 <Link
                     to="/m/$merchantId/campaigns/draft/$campaignId"
                     params={{ merchantId, campaignId: id }}
                     onClick={() => reset()}
-                    className={styles.rowMenuItem}
+                    className={rowMenu.item}
                 >
                     <EyeIcon width={16} height={16} />
                     <span>{t("campaigns.rowMenu.viewParameters")}</span>
@@ -58,7 +71,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                     to="/m/$merchantId/campaigns/list"
                     params={{ merchantId }}
                     search={{ campaign: id, tab: "config" }}
-                    className={styles.rowMenuItem}
+                    className={rowMenu.item}
                 >
                     <EyeIcon width={16} height={16} />
                     <span>{t("campaigns.rowMenu.viewParameters")}</span>
@@ -69,7 +82,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                     to="/m/$merchantId/campaigns/list"
                     params={{ merchantId }}
                     search={{ campaign: id, tab: "funnel" }}
-                    className={styles.rowMenuItem}
+                    className={rowMenu.item}
                 >
                     <BarChartIcon width={16} height={16} />
                     <span>{t("campaigns.rowMenu.openPerformance")}</span>
@@ -80,13 +93,13 @@ export function CellRowMenu({ row, merchantId }: Props) {
                     to="/m/$merchantId/campaigns/draft/$campaignId"
                     params={{ merchantId, campaignId: id }}
                     onClick={() => reset()}
-                    className={styles.rowMenuItem}
+                    className={rowMenu.item}
                 >
                     <PencilIcon width={16} height={16} />
                     <span>{t("campaigns.rowMenu.edit")}</span>
                 </Link>
             )}
-        </div>
+        </RowMenuSection>
     );
 
     const lifecycleItems: React.ReactNode[] = [];
@@ -98,7 +111,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 merchantId={merchantId}
                 campaignName={name}
                 trigger={
-                    <button type="button" className={styles.rowMenuItem}>
+                    <button type="button" className={rowMenu.item}>
                         <PauseIcon width={16} height={16} />
                         <span>{t("campaigns.rowMenu.pause")}</span>
                     </button>
@@ -114,7 +127,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 merchantId={merchantId}
                 campaignName={name}
                 trigger={
-                    <button type="button" className={styles.rowMenuItem}>
+                    <button type="button" className={rowMenu.item}>
                         <PlayIcon width={16} height={16} />
                         <span>{t("campaigns.rowMenu.resume")}</span>
                     </button>
@@ -130,7 +143,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 merchantId={merchantId}
                 campaignName={name}
                 trigger={
-                    <button type="button" className={styles.rowMenuItem}>
+                    <button type="button" className={rowMenu.item}>
                         <ArchiveIcon width={16} height={16} />
                         <span>{t("campaigns.rowMenu.archive")}</span>
                     </button>
@@ -150,7 +163,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 trigger={
                     <button
                         type="button"
-                        className={`${styles.rowMenuItem} ${styles.rowMenuItemDestructive}`}
+                        className={clsx(rowMenu.item, rowMenu.itemDestructive)}
                     >
                         <BinIcon width={16} height={16} />
                         <span>{t("campaigns.rowMenu.delete")}</span>
@@ -166,45 +179,24 @@ export function CellRowMenu({ row, merchantId }: Props) {
     if (lifecycleItems.length > 0) {
         sections.push({
             id: "lifecycle",
-            node: <div className={styles.rowMenuSection}>{lifecycleItems}</div>,
+            node: <RowMenuSection>{lifecycleItems}</RowMenuSection>,
         });
     }
     if (destructiveItems.length > 0) {
         sections.push({
             id: "destructive",
-            node: (
-                <div className={styles.rowMenuSection}>{destructiveItems}</div>
-            ),
+            node: <RowMenuSection>{destructiveItems}</RowMenuSection>,
         });
     }
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <button
-                    type="button"
-                    className={styles.rowMenuButton}
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={t("campaigns.rowMenu.ariaActions", {
-                        name,
-                    })}
-                >
-                    <MoreVerticalIcon width={20} height={20} />
-                </button>
-            </PopoverTrigger>
-            <PopoverContent
-                align="end"
-                sideOffset={6}
-                onClick={(e) => e.stopPropagation()}
-                className={styles.rowMenuList}
-            >
-                {sections.map((section, idx) => (
-                    <Fragment key={section.id}>
-                        {idx > 0 && <div className={styles.rowMenuDivider} />}
-                        {section.node}
-                    </Fragment>
-                ))}
-            </PopoverContent>
-        </Popover>
+        <RowMenu ariaLabel={t("campaigns.rowMenu.ariaActions", { name })}>
+            {sections.map((section, idx) => (
+                <Fragment key={section.id}>
+                    {idx > 0 && <RowMenuDivider />}
+                    {section.node}
+                </Fragment>
+            ))}
+        </RowMenu>
     );
 }

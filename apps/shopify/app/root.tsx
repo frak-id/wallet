@@ -1,19 +1,27 @@
+import { boundary } from "@shopify/shopify-app-react-router/server";
+import { AppError } from "app/components/AppError";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import {
+    isRouteErrorResponse,
     Links,
     Meta,
     Outlet,
     Scripts,
     ScrollRestoration,
     useLoaderData,
+    useRouteError,
+    useRouteLoaderData,
 } from "react-router";
 import i18next from "./i18n/i18next.server";
+import { getRequestId } from "./services.server/requestId";
 
 export async function loader({ request }: LoaderFunctionArgs) {
     const locale = await i18next.getLocale(request);
-    return { locale };
+    // Boundaries read this via `useRouteLoaderData("root")` (root never throws).
+    // `?? null`: keeps the payload serializable; absent → AppError omits it.
+    return { locale, requestId: getRequestId(request) ?? null };
 }
 
 export const handle = {
@@ -47,6 +55,42 @@ export default function App() {
             <body>
                 <Outlet />
                 <ScrollRestoration />
+                <Scripts />
+            </body>
+        </html>
+    );
+}
+
+// Catch-all boundary for anything that escapes a child route's own
+// ErrorBoundary (or errors in the root loader itself). Renders its own HTML
+// document because the root component — which normally provides the shell — is
+// replaced when this boundary is active.
+export function ErrorBoundary() {
+    const error = useRouteError();
+    // Read the failing request's id from root's loader data. Present when a
+    // child route threw (root loaded fine); undefined when the root loader
+    // itself threw — AppError then omits the reference line.
+    const requestId = useRouteLoaderData<typeof loader>("root")?.requestId;
+    // Thrown Responses (OAuth / session-token redirects with App Bridge
+    // headers) must keep flowing through Shopify's boundary so the redirect
+    // and required headers are emitted — never paint them as an error page.
+    if (isRouteErrorResponse(error)) {
+        return boundary.error(error);
+    }
+    return (
+        <html lang="en">
+            <head>
+                <meta charSet="utf-8" />
+                <meta
+                    name="viewport"
+                    content="width=device-width,initial-scale=1"
+                />
+                <title>Frak</title>
+                <Meta />
+                <Links />
+            </head>
+            <body>
+                <AppError error={error} requestId={requestId} />
                 <Scripts />
             </body>
         </html>

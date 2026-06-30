@@ -68,9 +68,13 @@ const interactionContextBuilder = new InteractionContextBuilder(
     AttributionContext.repositories.referralLink
 );
 
+const memberQueryOrchestrator = new MemberQueryOrchestrator(pricingRepository);
+
 const notificationOrchestrator = new NotificationOrchestrator(
     NotificationContext.services.notifications,
-    MerchantContext.repositories.merchant
+    MerchantContext.repositories.merchant,
+    NotificationContext.repositories.notificationBroadcast,
+    memberQueryOrchestrator
 );
 
 const batchRewardOrchestrator = new BatchRewardOrchestrator(
@@ -128,10 +132,6 @@ const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
     AttributionContext.repositories.referralLink,
     RewardsContext.repositories.interactionLog
 );
-
-// Anonymous merge orchestrator needs identityOrchestrator to auto-create
-// identity groups on merge token generation (same pattern as /track/arrival)
-const memberQueryOrchestrator = new MemberQueryOrchestrator(pricingRepository);
 
 const campaignStatsOrchestrator = new CampaignStatsOrchestrator(
     pricingRepository

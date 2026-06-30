@@ -23,7 +23,7 @@ import {
     COUNTRIES_BY_CONTINENT,
     type ContinentCode,
     NAME_BY_CODE,
-} from "./countries";
+} from "@/module/common/utils/countries";
 import * as styles from "./countrySelect.css";
 
 /** Continents in the order the map declares them, each with its countries. */

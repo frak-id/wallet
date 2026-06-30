@@ -110,7 +110,6 @@ type UIContext = {
     currentRequest: UIRequest | undefined;
     setRequest: (request: UIRequest | undefined) => void;
     clearRequest: () => void;
-    isRewardLoading: boolean;
     translation: {
         lang?: "en" | "fr";
         t: (key: string, options?: TranslationOptions) => string;
@@ -147,20 +146,22 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
     const rewardCurrency =
         currentRequest?.configMetadata?.currency ?? backendSdkConfig?.currency;
-    const { data: formattedReward, isLoading: isRewardLoading } =
-        useFormattedEstimatedReward({
-            merchantId: resolvingContext?.merchantId,
-            currency: rewardCurrency,
-            targetInteraction: currentRequest?.targetInteraction,
-            context: currentRequest?.i18n?.context,
-        });
+    // The reward is fetched here only to feed the `{{ estimatedReward }}` i18n
+    // interpolation variable. Surfaces that need the reward's shape (loading
+    // state, payout type) fetch it themselves — react-query dedupes the call.
+    const { data: reward } = useFormattedEstimatedReward({
+        merchantId: resolvingContext?.merchantId,
+        currency: rewardCurrency,
+        targetInteraction: currentRequest?.targetInteraction,
+        context: currentRequest?.i18n?.context,
+    });
 
     // Fallback when no campaign / reward is available: display a zero amount
     // formatted with the resolved currency (e.g. "0 €") so the raw
     // `{{ estimatedReward }}` template is never shown to end users.
     const estimatedRewardValue = useMemo(
-        () => formattedReward ?? formatAmount(0, rewardCurrency),
-        [formattedReward, rewardCurrency]
+        () => reward?.formatted ?? formatAmount(0, rewardCurrency),
+        [reward?.formatted, rewardCurrency]
     );
 
     // Track pending clear timeout to prevent flashing on rapid close/open
@@ -348,7 +349,6 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 currentRequest,
                 setRequest,
                 clearRequest,
-                isRewardLoading,
                 translation,
             }}
         >

@@ -7,6 +7,7 @@ import {
     mongoNexusUri,
     nexusRpcSecret,
     pimlicoApiKey,
+    platformAdminWallets,
     productSetupCodeSalt,
     resendApiKey,
     rustfsCdnBaseUrl,
@@ -90,6 +91,7 @@ export const elysiaEnv = {
     JWT_SECRET: new sst.Secret("JWT_SECRET").value,
     JWT_SDK_SECRET: new sst.Secret("JWT_SDK_SECRET").value,
     JWT_BUSINESS_SECRET: jwtBusinessSecret.value,
+    PLATFORM_ADMIN_WALLETS: platformAdminWallets.value,
     PRODUCT_SETUP_CODE_SALT: productSetupCodeSalt.value,
 
     // Notifications

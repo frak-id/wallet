@@ -13,6 +13,10 @@ import {
     type RpcResponse,
 } from "@frak-labs/frame-connector";
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
+import {
+    ensureFreshSdkSession,
+    type FreshSdkResult,
+} from "@frak-labs/wallet-shared/common/auth/ensureFreshSdkSession";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
@@ -67,7 +71,9 @@ export const handleDisplayModal = async (
     const stepsPrepared = prepareInputStepsArray(steps);
 
     // Build our initial result array
-    const { currentResult, currentStep } = filterStepsToDo({ stepsPrepared });
+    const { currentResult, currentStep } = await filterStepsToDo({
+        stepsPrepared,
+    });
 
     // Create a new deferred for this modal request
     const deferred = new Deferred<ModalRpcStepsResultType>();
@@ -214,9 +220,19 @@ function prepareInputStepsArray(steps: ModalRpcStepsInput) {
 }
 
 /**
- * Return the steps to do in the modal
+ * Return the steps to do in the modal.
+ *
+ * The login step is auto-skipped only when the user has a LIVE session. A
+ * `session` object can linger after the wallet token has died, so we confirm
+ * with the server via `ensureFreshSdkSession` (never client-side `exp` — the
+ * server is the sole authority) and, on a server-confirmed dead token, keep the
+ * login step so the user re-authenticates in-iframe instead of proceeding with
+ * a dead session. This is the listener's "soft re-login when something is
+ * displayed" — it only runs while a modal is opening. As a bonus, a healthy
+ * token is returned without a network call and a near-expiry one is reminted
+ * here, so the modal proceeds with a fresh interaction token.
  */
-function filterStepsToDo({
+export async function filterStepsToDo({
     stepsPrepared,
 }: {
     stepsPrepared: Pick<ModalStepTypes, "key" | "params">[];
@@ -228,14 +244,24 @@ function filterStepsToDo({
     // Build our initial result array
     let currentStep = 0;
 
-    // If the steps include login, check if user got a current session
+    // If the steps include login, auto-skip it only for a server-confirmed
+    // live session. Transient failures ("stale") still skip — we never block
+    // the user on a network blip; only a confirmed-dead token re-shows login.
     if (stepsPrepared.find((step) => step.key === "login") && session) {
-        // Add the login result
-        currentResult = {
-            ...currentResult,
-            login: { wallet: session.address },
-        };
-        currentStep++;
+        // Bound the renewal: an unresponsive /generate must not hang the modal
+        // open indefinitely. On timeout we treat the session as "stale" (skip
+        // login, proceed) — only a server-confirmed "dead" re-shows login.
+        const timeout = new Promise<FreshSdkResult>((resolve) => {
+            setTimeout(() => resolve({ status: "stale", sdk: null }), 5_000);
+        });
+        const sdk = await Promise.race([ensureFreshSdkSession(), timeout]);
+        if (sdk.status !== "dead") {
+            currentResult = {
+                ...currentResult,
+                login: { wallet: session.address },
+            };
+            currentStep++;
+        }
     }
 
     return { currentStep, currentResult };

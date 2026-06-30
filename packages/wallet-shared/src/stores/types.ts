@@ -64,13 +64,23 @@ export type SessionStore = {
 /**
  * Authentication Store Types
  */
-export type LastWebAuthNAction = {
-    wallet: Address;
-    signature: AuthenticationResponseJSON;
-    challenge: Hex;
-};
 
+/** Last LOCAL webauthn authenticator — a credential present on THIS device. */
 export type LastAuthentication = Session & { type: "webauthn" };
+
+/**
+ * Last REMOTE (paired) authenticator — the credential lives on another device,
+ * reachable through its `pairingId`. Kept separately from `lastAuthentication`
+ * (rather than as a union) so a pairing never clobbers the local credential the
+ * local-login surfaces scope to, and vice-versa. No token is stored: a stale
+ * pairing token is useless, and a resume reconnects via `pairingId`.
+ */
+export type RemoteLastAuthentication = {
+    type: "distant-webauthn";
+    address: Address;
+    authenticatorId: string;
+    pairingId: string;
+};
 
 /**
  * A WebAuthn registration that succeeded on the device but is not yet
@@ -103,16 +113,16 @@ type AppSpecificSsoMetadata = SsoMetadata & {
 export type AuthenticationStore = {
     // State
     lastAuthenticator: LastAuthentication | null;
+    lastRemoteAuthenticator: RemoteLastAuthentication | null;
     pendingRegistration: PendingRegistration | null;
     lastAuthenticationAt: number | null;
-    lastWebAuthNAction: LastWebAuthNAction | null;
     ssoContext: SsoContext | null;
 
     // Actions
     setLastAuthenticator: (auth: LastAuthentication | null) => void;
+    setLastRemoteAuthenticator: (auth: RemoteLastAuthentication | null) => void;
     setPendingRegistration: (pending: PendingRegistration | null) => void;
     setLastAuthenticationAt: (timestamp: number | null) => void;
-    setLastWebAuthNAction: (action: LastWebAuthNAction | null) => void;
     setSsoContext: (context: SsoContext | null) => void;
 };
 /**

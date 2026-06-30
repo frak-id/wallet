@@ -14,6 +14,7 @@
         "embedded": {
             "title": "Authentification requise",
             "panelTitle": "Veuillez connecter votre porte-monnaie pour continuer",
+            "subtitle": "Connectez-vous avec Frak pour lier votre boutique et commencer à récompenser vos clients.",
             "action": "S'authentifier"
         }
     },
@@ -177,7 +178,15 @@
             "required": "L'audience du push est requise",
             "reach": "Vous toucherez {{count}} membres",
             "minMember": "Il faut au moins 1 membre pour continuer"
-        }
+        },
+        "tabs": {
+            "members": "Membres",
+            "push": "Notifications push"
+        },
+        "platformAdminNotice": "Les données membres ne sont pas disponibles en mode lecture seule administrateur plateforme."
+    },
+    "platformAdmin": {
+        "readOnlyTag": "Lecture seule"
     },
     "push": {
         "create": {
@@ -233,8 +242,7 @@
                 },
                 "later": {
                     "label": "Planifier pour plus tard",
-                    "description": "Choisissez une date et une heure de livraison.",
-                    "comingSoon": "Bientôt disponible"
+                    "description": "Choisissez une date et une heure de livraison."
                 },
                 "date": {
                     "label": "Sélectionner la date"
@@ -249,6 +257,7 @@
                 "message": "Le message de votre notification apparaîtra ici."
             },
             "publish": "Publier la notification",
+            "update": "Mettre à jour la notification",
             "review": {
                 "title": "Vérifier la notification",
                 "audience": "Audience",
@@ -264,6 +273,39 @@
                 "description": "Vous avez commencé à créer une notification push. Si vous quittez, toutes les informations saisies seront perdues.",
                 "continueEditing": "Modifier",
                 "confirm": "Oui, quitter"
+            }
+        },
+        "history": {
+            "status": {
+                "scheduled": "Programmée",
+                "sent": "Envoyée"
+            },
+            "audience": {
+                "all": "Tous les membres",
+                "members": "{{count}} membres"
+            },
+            "columns": {
+                "notification": "Notification",
+                "status": "Statut",
+                "scheduledFor": "Programmée pour",
+                "audience": "Audience",
+                "sentOpened": "Envoyées / Ouvertes"
+            },
+            "filters": {
+                "button": "Filtres",
+                "reset": "Réinitialiser"
+            },
+            "rowMenu": {
+                "edit": "Modifier la notification push",
+                "delete": "Supprimer",
+                "aria": "Actions pour {{title}}"
+            },
+            "delete": {
+                "title": "Supprimer la notification push",
+                "description": "Êtes-vous sûr de vouloir supprimer « {{title}} » ? Cette action est irréversible.",
+                "cancel": "Annuler",
+                "confirm": "Supprimer",
+                "error": "Impossible de supprimer la notification. Réessayez."
             }
         }
     },
@@ -294,6 +336,11 @@
                     "label": "Configuration des récompenses",
                     "hint": "Modèle, valeur & distribution",
                     "subtitle": "Choisissez comment les récompenses sont calculées et qui peut en bénéficier."
+                },
+                "referralChain": {
+                    "label": "Chaîne de parrainage",
+                    "hint": "Ambassadeur multi-niveaux",
+                    "subtitle": "Activez les récompenses en chaîne pour récompenser les ambassadeurs sur plusieurs niveaux de parrainage — pas seulement le parrain direct."
                 },
                 "validation": {
                     "label": "Validation de la campagne",
@@ -342,7 +389,7 @@
                 "tip2Desc": "Ajoutez la bannière de partage juste après le paiement.",
                 "tip3Title": "Newsletter",
                 "tip3Desc": "Annoncez la campagne à votre base de clients existante.",
-                "bestPractices": "Voir toutes les bonnes pratiques",
+                "communicationGuide": "Guide de communication",
                 "viewAllCampaigns": "Voir toutes les campagnes",
                 "viewPerformance": "Voir les performances"
             },
@@ -477,6 +524,46 @@
                     "endDateRequired": "Sélectionnez une date de fin",
                     "endDateInvalid": "La date de fin doit être égale ou postérieure à la date de début",
                     "invalidDate": "Saisissez une date valide"
+                }
+            },
+            "referralChain": {
+                "enable": {
+                    "title": "Activer les récompenses en chaîne",
+                    "description": "Répartir les récompenses du parrain sur plusieurs niveaux de la chaîne de parrainage"
+                },
+                "noReferrer": "Configurez une récompense de parrain (ambassadeur) à l'étape Configuration des récompenses avant d'activer les récompenses en chaîne.",
+                "model": {
+                    "label": "Comment les récompenses sont distribuées",
+                    "description": "Lorsqu'un achat est effectué, les récompenses sont partagées sur la chaîne de parrainage."
+                },
+                "decrease": {
+                    "label": "Diminution de récompense par niveau (%)",
+                    "hint": "Chaque niveau reçoit ce pourcentage de moins que le niveau précédent. Minimum 50%.",
+                    "placeholder": "Saisir le niveau",
+                    "outOfRange": "La diminution doit être comprise entre 50% et 99% : en dessous de 50%, les niveaux profonds reçoivent plus que l’ambassadeur direct ; à 100%, ils ne reçoivent rien."
+                },
+                "maxLevels": {
+                    "label": "Nombre maximum de niveaux récompensés",
+                    "hint": "Nombre maximum de niveaux de parrains éligibles aux récompenses.",
+                    "placeholder": "Saisir le niveau"
+                },
+                "cac": {
+                    "label": "CAC",
+                    "placeholder": "Non disponible",
+                    "placeholderTiered": "Variable selon les paliers"
+                },
+                "preview": {
+                    "title": "Chaîne de distribution des récompenses",
+                    "purchase": "1er achat",
+                    "direct": "Ambassadeur direct",
+                    "level": "Ambassadeur niveau {{n}}",
+                    "caption": "Chaque niveau reçoit {{percent}}% de moins que le précédent.",
+                    "directReward": "Récompense directe",
+                    "chainReward": "Récompense de chaîne de parrainage",
+                    "rowDirect": "Direct",
+                    "rowLevel": "Niveau {{n}}",
+                    "tableLevel": "Niveau",
+                    "tableAmount": "Montant"
                 }
             },
             "reward": {
@@ -991,6 +1078,84 @@
         "demo": {
             "label": "Activer le mode démo",
             "description": "Une fois activé, toutes les données sont remplacées par des données fictives à des fins de démonstration. Utile pour des présentations ou des tests sans toucher aux données réelles."
+        },
+        "billing": {
+            "info": {
+                "label": "Informations de facturation",
+                "missing": "Infos manquantes",
+                "title": "Informations de facturation",
+                "subtitle": "Coordonnées de facturation utilisées sur toutes les factures et relevés de campagne."
+            },
+            "summary": {
+                "companyName": "Nom de l'entreprise",
+                "vatNumber": "Numéro de TVA",
+                "address": "Adresse",
+                "country": "Pays",
+                "billingEmail": "E-mail de facturation"
+            },
+            "actions": {
+                "add": "Ajouter des informations de facturation",
+                "edit": "Modifier",
+                "save": "Enregistrer les informations",
+                "saveChanges": "Enregistrer les modifications",
+                "cancel": "Annuler",
+                "close": "Fermer"
+            },
+            "sheet": {
+                "addTitle": "Ajouter des informations de facturation",
+                "editTitle": "Modifier les informations de facturation",
+                "description": "Ces informations seront utilisées pour générer toutes les factures et documents de facturation."
+            },
+            "fields": {
+                "companyName": {
+                    "label": "Nom de l'entreprise",
+                    "placeholder": "Saisir le nom de l'entreprise"
+                },
+                "vatNumber": {
+                    "label": "Numéro de TVA",
+                    "placeholder": "Saisir le numéro de TVA"
+                },
+                "streetAddress": {
+                    "label": "Adresse",
+                    "placeholder": "Saisir l'adresse"
+                },
+                "city": {
+                    "label": "Ville",
+                    "placeholder": "Saisir la ville"
+                },
+                "postalCode": {
+                    "label": "Code postal",
+                    "placeholder": "Saisir le code postal"
+                },
+                "country": {
+                    "label": "Pays",
+                    "placeholder": "Sélectionner un pays"
+                },
+                "billingEmail": {
+                    "label": "E-mail de facturation",
+                    "placeholder": "votreemail@entreprise.com"
+                }
+            },
+            "segments": {
+                "invoices": "Factures",
+                "deposit": "Dépôts"
+            },
+            "table": {
+                "date": "Date",
+                "amount": "Montant",
+                "type": "Type",
+                "description": "Description",
+                "pdf": "PDF",
+                "download": "Télécharger le PDF"
+            },
+            "tag": {
+                "paid": "Payée",
+                "deposit": "Dépôt"
+            },
+            "validation": {
+                "required": "Ce champ est requis",
+                "email": "Saisir une adresse e-mail valide"
+            }
         }
     },
     "merchant": {
@@ -1141,7 +1306,8 @@
             "invalidUrl": "Saisissez une URL d'image valide (https://…)",
             "restrictions": {
                 "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 à 2:1 (Max 10 Mo)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)"
+                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 à 2:1 (Max 10 Mo)"
             },
             "descriptionPlaceholder": "Description du marchand..."
         },
@@ -1309,12 +1475,27 @@
             "banner": "Bannière",
             "preview": "Aperçu",
             "advanced": "Réglages avancés",
-            "clickAction": {
-                "label": "Action au clic",
-                "hint": "Ce qui se passe quand un visiteur clique sur le bouton de partage",
-                "embeddedWallet": "Wallet intégré",
-                "shareModal": "Fenêtre de partage",
-                "sharingPage": "Page de partage"
+            "postPurchasePreview": {
+                "referee": "Vue filleul",
+                "referrer": "Vue parrain"
+            },
+            "postPurchaseGroups": {
+                "shared": "Badge et CTA",
+                "referee": "Message filleul",
+                "referrer": "Message parrain"
+            },
+            "bannerGroups": {
+                "referral": "Parrainage",
+                "inapp": "In-app"
+            },
+            "rewardToken": {
+                "hint": "Astuce : insérez <token>{REWARD}</token> dans un texte pour afficher la récompense de la campagne en cours.",
+                "copy": "Copier {REWARD}"
+            },
+            "image": {
+                "label": "Illustration",
+                "description": "Remplacez l'icône cadeau par défaut par votre propre image.",
+                "hint": "Collez l'URL d'une image ou importez-en une ci-dessous."
             },
             "targetInteraction": {
                 "label": "Interaction cible",
@@ -1324,6 +1505,7 @@
             "fields": {
                 "text": "Texte du bouton",
                 "noRewardText": "Texte du bouton (sans récompense)",
+                "badgeText": "Texte du badge",
                 "refereeText": "Message du filleul",
                 "refereeNoRewardText": "Message du filleul (sans récompense)",
                 "referrerText": "Message du parrain",
@@ -1348,7 +1530,8 @@
     "embedded": {
         "mint": {
             "title": "Enregistrez votre boutique sur Frak",
-            "registering": "Enregistrement de {{domain}}",
+            "subtitle": "Nous allons vérifier votre domaine et configurer votre espace marchand.",
+            "registering": "Enregistrement de <text>{{domain}}</text>",
             "error": "Impossible d'enregistrer votre produit. Vérifiez que tout est correct.",
             "alreadyRegistered": "Le domaine est peut-être déjà enregistré.",
             "close": "Fermer",

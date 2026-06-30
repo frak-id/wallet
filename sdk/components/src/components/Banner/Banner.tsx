@@ -18,9 +18,11 @@ import {
 } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
+import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
+import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import { applyRewardPlaceholder } from "@/utils/format/formatReward";
 import { GiftIcon } from "../icons/GiftIcon";
@@ -80,12 +82,13 @@ export function Banner({
     inappTitle: propInappTitle,
     inappDescription: propInappDescription,
     inappCta: propInappCta,
-    imageUrl,
+    imageUrl: propImageUrl,
     preview,
     previewMode,
     allowInappRedirect,
 }: BannerProps) {
     const isPreview = !!preview;
+    const lang = useLang();
     const resolvedPreviewMode: BannerMode =
         previewMode === "inapp" ? "inapp" : "referral";
     // HTML attribute consumers (Shopify Liquid, WordPress PHP) pass
@@ -122,10 +125,13 @@ export function Banner({
         }
     }, [isPreview, resolvedPreviewMode]);
 
-    // Fetch reward text the same way ButtonShare does
+    // Fetch reward text the same way ButtonShare does — but for the *referee*
+    // side: the referral banner is shown to a freshly-referred user, so it must
+    // advertise what they earn on their purchases, not the sharer's reward.
     const { reward } = useReward(
         mode === "referral" && isClientReady,
-        interaction
+        interaction,
+        "referee"
     );
 
     // Pre-fetch merge token when in inapp mode so the click is instant
@@ -212,14 +218,19 @@ export function Banner({
     const bannerConfig =
         placement?.components?.banner ?? globalComponents?.banner;
 
+    // Custom illustration: prop wins over placement config; falls back to the
+    // built-in gift icon when neither provides one.
+    const imageUrl = propImageUrl ?? bannerConfig?.imageUrl;
+
     // Resolve texts from placement config with hardcoded defaults.
     // Configured wording may carry the `{REWARD}` token — interpolate it the
     // same way ButtonShare and PostPurchase do.
     const texts = useMemo(() => {
+        const defaults = componentDefaults[lang].banner;
         if (mode === "referral") {
             const defaultTitle = reward
-                ? `Earn ${reward} on purchases on this site`
-                : "You've been referred!";
+                ? defaults.referralTitleReward
+                : defaults.referralTitle;
 
             return {
                 title: applyRewardPlaceholder(
@@ -231,29 +242,36 @@ export function Banner({
                 description: applyRewardPlaceholder(
                     propReferralDescription ??
                         bannerConfig?.referralDescription ??
-                        "Earn rewards after your purchase via the Frak partner app.",
+                        defaults.referralDescription,
                     reward
                 ),
-                cta: propReferralCta ?? bannerConfig?.referralCta ?? "Got it",
+                cta:
+                    propReferralCta ??
+                    bannerConfig?.referralCta ??
+                    defaults.referralCta,
             };
         }
 
+        // In-app mode never resolves a reward (only referral mode fetches one),
+        // so strip any `{REWARD}` token from the copy rather than rendering it
+        // literally.
         return {
             title: applyRewardPlaceholder(
                 propInappTitle ??
                     bannerConfig?.inappTitle ??
-                    "Open in your browser",
-                reward
+                    defaults.inappTitle,
+                undefined
             ),
             description: applyRewardPlaceholder(
                 propInappDescription ??
                     bannerConfig?.inappDescription ??
-                    "For a better experience and to earn your rewards, open this page in your default browser.",
-                reward
+                    defaults.inappDescription,
+                undefined
             ),
-            cta: propInappCta ?? bannerConfig?.inappCta ?? "Open browser",
+            cta: propInappCta ?? bannerConfig?.inappCta ?? defaults.inappCta,
         };
     }, [
+        lang,
         mode,
         reward,
         bannerConfig,
@@ -287,7 +305,7 @@ export function Banner({
                 title={texts.title}
                 description={texts.description}
                 cta={texts.cta}
-                dismissLabel="Dismiss"
+                dismissLabel={componentDefaults[lang].banner.dismissLabel}
                 onAction={handleAction}
                 onDismiss={handleDismiss}
                 className={["frak-banner", "frak-banner--inapp", classname]

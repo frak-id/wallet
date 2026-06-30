@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { OnboardingStepData } from "./onboarding";
 import {
+    applicableStepCount,
     getOnboardingStatusMessage,
+    MAX_STEP,
     stepValidations,
     validateCompleteOnboarding,
     validateStep,
@@ -153,6 +155,61 @@ describe("validateCompleteOnboarding", () => {
         const result = validateCompleteOnboarding(withoutButton);
         expect(result.hasMissedCriticalSteps).toBe(false);
         expect(result.failedSteps).toContain(6);
+    });
+
+    describe("legacy theme (isThemeSupported = false)", () => {
+        // For non-OS-2.0 themes, step 5 (theme activation) is non-critical.
+        const stepsOneToFourComplete: OnboardingStepData = {
+            merchantId: "test-merchant-id",
+            webPixel: { id: "px", settings: "{}" },
+            webhooks: [
+                {
+                    node: {
+                        id: "1",
+                        topic: "ORDERS_UPDATED",
+                        filter: "",
+                        format: "JSON",
+                        endpoint: { __typename: "WebhookHttpEndpoint" },
+                    },
+                },
+            ],
+            frakWebhook: { setup: true },
+            // isThemeHasFrakActivated intentionally absent (legacy theme)
+        };
+
+        it("does not flag hasMissedCriticalSteps when steps 1-4 are done, even if step 5 is missing", () => {
+            const result = validateCompleteOnboarding(
+                stepsOneToFourComplete,
+                false
+            );
+            expect(result.hasMissedCriticalSteps).toBe(false);
+            // Step 5 still appears in failedSteps (non-applicable, not erased)
+            expect(result.failedSteps).toContain(5);
+        });
+
+        it("still flags hasMissedCriticalSteps when steps 1-4 are incomplete", () => {
+            const result = validateCompleteOnboarding(
+                { isThemeHasFrakButton: true },
+                false
+            );
+            expect(result.hasMissedCriticalSteps).toBe(true);
+        });
+
+        it("defaults to OS-2.0 behaviour when isThemeSupported is omitted (backward-compat)", () => {
+            // step 5 missing → should still be critical
+            const result = validateCompleteOnboarding(stepsOneToFourComplete);
+            expect(result.hasMissedCriticalSteps).toBe(true);
+        });
+    });
+});
+
+describe("applicableStepCount", () => {
+    it("counts all steps for supported themes", () => {
+        expect(applicableStepCount(true)).toBe(MAX_STEP);
+    });
+
+    it("drops the theme steps (5-7) for legacy themes", () => {
+        expect(applicableStepCount(false)).toBe(4);
     });
 });
 

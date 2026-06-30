@@ -1,3 +1,7 @@
+import {
+    AUTH_ERROR_HEADER,
+    AuthErrorCode,
+} from "@backend-infrastructure/macro/authError";
 import { Elysia, status } from "elysia";
 import type { Address } from "viem";
 import type { StaticWalletTokenDto } from "../../domain/auth/models/WalletSessionDto";
@@ -55,6 +59,8 @@ export const identityContext = new Elysia({ name: "Context.identity" })
                 // biome-ignore lint/suspicious/noExplicitAny: Elysia's macro type system does not yet carry plugin-resolved values through macro contexts.
                 beforeHandle: (ctx: any) => {
                     if (!ctx.walletSession || !ctx.identityGroupId) {
+                        ctx.set.headers[AUTH_ERROR_HEADER] =
+                            AuthErrorCode.walletTokenInvalid;
                         return status(401, "Unauthorized");
                     }
                 },

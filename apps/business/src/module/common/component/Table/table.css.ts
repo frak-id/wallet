@@ -21,6 +21,15 @@ export const table = style({
     fontSize: "14px",
 });
 
+/**
+ * Opt-in `table-layout: fixed`: column widths come from `size` (not content),
+ * so cells with `overflow: hidden` truncate to their computed width and
+ * unsized columns share the remaining space.
+ */
+export const tableFixedLayout = style({
+    tableLayout: "fixed",
+});
+
 export const preTable = style({
     display: "flex",
     justifyContent: "flex-end",

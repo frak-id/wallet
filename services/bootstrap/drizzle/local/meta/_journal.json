@@ -190,6 +190,20 @@
             "when": 1781195356489,
             "tag": "0026_natural_silhouette",
             "breakpoints": true
+        },
+        {
+            "idx": 27,
+            "version": "7",
+            "when": 1782313160092,
+            "tag": "0027_reflective_joystick",
+            "breakpoints": true
+        },
+        {
+            "idx": 28,
+            "version": "7",
+            "when": 1782318413351,
+            "tag": "0028_new_rafael_vega",
+            "breakpoints": true
         }
     ]
 }

@@ -68,6 +68,7 @@ describe("getMerchantInformation", () => {
                     {
                         token: "0x1234567890123456789012345678901234567890" as Address,
                         campaignId: "campaign-1",
+                        name: "Campaign 1",
                         interactionTypeKey: "referral",
                         referrer: {
                             payoutType: "fixed",
@@ -87,6 +88,7 @@ describe("getMerchantInformation", () => {
                                 gbpAmount: 0.45,
                             },
                         },
+                        conditions: [],
                     },
                 ],
             };

@@ -69,6 +69,11 @@ export type DashboardTestFixtures = {
     freshPushCreationStore: typeof import("@/stores/pushCreationStore").pushCreationStore;
 
     /**
+     * Fresh push history filters store that auto-resets before and after each test
+     */
+    freshPushHistoryStore: typeof import("@/stores/pushHistoryStore").pushHistoryStore;
+
+    /**
      * Query wrapper with client and provider component.
      * Combines a fresh QueryClient with a ready-to-use wrapper for renderHook.
      */
@@ -233,6 +238,28 @@ export const test = baseTest.extend<DashboardTestFixtures>({
         // Reset after use
         pushCreationStore.getState().clearForm();
         localStorage.removeItem("currentPushCampaignForm");
+    },
+
+    /**
+     * Provides a fresh push history filters store that auto-resets
+     * Store is reset before and after each test
+     */
+    freshPushHistoryStore: async (
+        // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
+        {},
+        use: (
+            value: typeof import("@/stores/pushHistoryStore").pushHistoryStore
+        ) => Promise<void>
+    ) => {
+        const { pushHistoryStore } = await import("@/stores/pushHistoryStore");
+
+        // Reset before use
+        pushHistoryStore.getState().setFilters({});
+
+        await use(pushHistoryStore);
+
+        // Reset after use
+        pushHistoryStore.getState().setFilters({});
     },
 
     /**

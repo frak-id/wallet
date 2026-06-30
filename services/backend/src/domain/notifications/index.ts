@@ -11,9 +11,14 @@ export {
     pushTokensTable,
 } from "./db/schema";
 export {
+    type PushBroadcast,
+    PushBroadcastSchema,
+} from "./dto/PushBroadcastDto";
+export {
     type LocalisedNotificationPayload,
     type SendNotificationPayload,
     SendNotificationPayloadDto,
+    type SendNotificationTargets,
     SendNotificationTargetsDto,
 } from "./dto/SendNotificationDto";
 export { notificationMacro } from "./macro";

@@ -202,16 +202,32 @@ export async function fetchAllOnboardingData(
  *  - Web pixel
  *  - Webhooks
  *  - Frak webhook
- *  - Theme activation
+ *  - Theme activation (OS-2.0 only — dropped for legacy themes)
  */
 const criticalOnboardingSteps = [1, 2, 3, 4, 5];
+/** Critical steps for legacy (non-OS-2.0) themes — step 5 is non-applicable. */
+const criticalOnboardingStepsLegacy = [1, 2, 3, 4];
 
 /**
- * Checks if the entire onboarding process is complete
+ * Number of onboarding steps that apply to a theme. Legacy (non-OS-2.0) themes
+ * can't host the app blocks behind steps 5–7, so only steps 1–4 apply.
+ */
+export function applicableStepCount(isThemeSupported: boolean): number {
+    return isThemeSupported ? MAX_STEP : criticalOnboardingStepsLegacy.length;
+}
+
+/**
+ * Checks if the entire onboarding process is complete.
+ * For legacy (non-OS-2.0) themes, pass `isThemeSupported = false` so that
+ * theme-specific steps (5–7) are non-critical and never trap the merchant.
  * @param data - The complete onboarding data
+ * @param isThemeSupported - false for legacy/non-OS-2.0 themes (default true)
  * @returns object with completion status and failed steps
  */
-export function validateCompleteOnboarding(data: OnboardingStepData): {
+export function validateCompleteOnboarding(
+    data: OnboardingStepData,
+    isThemeSupported = true
+): {
     isComplete: boolean;
     failedSteps: number[];
     completedSteps: number[];
@@ -230,8 +246,12 @@ export function validateCompleteOnboarding(data: OnboardingStepData): {
         }
     }
 
-    // Check if any critical steps are missing
-    const hasMissedCriticalSteps = criticalOnboardingSteps.some(
+    // Check if any critical steps are missing. For legacy themes, only steps
+    // 1-4 are critical; step 5 (theme activation) is non-applicable.
+    const applicableCriticalSteps = isThemeSupported
+        ? criticalOnboardingSteps
+        : criticalOnboardingStepsLegacy;
+    const hasMissedCriticalSteps = applicableCriticalSteps.some(
         (step) => !completedSteps.includes(step)
     );
 

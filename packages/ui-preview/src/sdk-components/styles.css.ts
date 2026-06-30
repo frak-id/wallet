@@ -121,6 +121,19 @@ export const postPurchaseGiftIcon = style({
     color: "#1a1a1a",
 });
 
+export const bannerCustomImage = style({
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+});
+
+export const postPurchaseCustomImage = style({
+    flexShrink: 0,
+    width: 80,
+    height: 80,
+    objectFit: "contain",
+});
+
 // ─── Share Button Preview ───────────────────────────────
 
 export const shareButton = style({

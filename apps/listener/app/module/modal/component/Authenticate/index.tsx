@@ -1,12 +1,15 @@
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { HandleErrors, prefixModalCss } from "@frak-labs/wallet-shared/common";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared/authentication";
+import { prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";
-import * as styles from "@/module/modal/component/Modal/index.css";
 import { useListenerTranslation } from "@/ui/ListenerUiProvider";
-import * as authStyles from "./index.css";
 
 /**
  * The component for the siwe authentication step of a modal
@@ -48,7 +51,6 @@ export function SiweAuthenticateModalStep({
     const {
         mutate: signMessage,
         isPending,
-        isError,
         error,
     } = useSignMessage({
         mutation: {
@@ -61,39 +63,42 @@ export function SiweAuthenticateModalStep({
         },
     });
 
+    // Surface signing errors in the top modal toast (same UX as the wallet app).
+    useWebauthnErrorToast(error, {
+        operation: "sign",
+        onRetry: () => signMessage({ message }),
+    });
+
     return (
         <>
-            <div className={authStyles.textData}>
-                <p>{siweMessage?.statement}</p>
-                <p>Domain: {siweMessage?.domain}</p>
-                <p>Uri: {siweMessage?.uri}</p>
-            </div>
-
-            <div
-                className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}
-            >
-                <div>
-                    <button
-                        type={"button"}
-                        className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}
-                        disabled={isPending}
-                        onClick={() => {
-                            signMessage({ message });
-                        }}
-                    >
-                        {isPending && <Spinner />}
-                        {t("sdk.modal.siweAuthenticate.primaryAction")}
-                    </button>
-                </div>
-            </div>
-
-            {isError && error && (
-                <HandleErrors
-                    error={error}
-                    operation="sign"
-                    onRetry={() => signMessage({ message })}
-                />
+            {siweMessage?.domain && (
+                <Card variant="secondary" radius="m" padding="default">
+                    <Text variant="bodySmall">
+                        {t("sdk.modal.siweAuthenticate.connectingTo", {
+                            domain: siweMessage.domain,
+                        })}
+                    </Text>
+                </Card>
             )}
+
+            <Stack space="m" className={prefixModalCss("buttons-wrapper")}>
+                {/* Stay visually primary while pending (spinner + click guard)
+                 * — the DS disabled state is too low-contrast on the light
+                 * modal surface. */}
+                <Button
+                    variant="primary"
+                    size="large"
+                    icon={isPending ? <Spinner size="s" /> : undefined}
+                    aria-busy={isPending}
+                    className={prefixModalCss("button-primary")}
+                    onClick={() => {
+                        if (isPending) return;
+                        signMessage({ message });
+                    }}
+                >
+                    {t("sdk.modal.siweAuthenticate.primaryAction")}
+                </Button>
+            </Stack>
         </>
     );
 }

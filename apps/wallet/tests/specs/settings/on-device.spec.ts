@@ -4,12 +4,10 @@ test.beforeEach(async ({ mockedWebAuthN }) => {
     await mockedWebAuthN.setup();
 });
 
-//verify display the settings page
+// Profile no longer has Logout or a Recovery-setup section.
 test("should display settings page", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
-    await settingsPage.verifyBiometryInformation();
-    await settingsPage.verifyLogoutButton();
-    await settingsPage.verifyRecoverySetup();
+    await settingsPage.verifyProfileIdentity();
 });
 
 // verify copy authenticator information in clipboard
@@ -25,60 +23,26 @@ test("should copy authenticator informations", async ({
     await clipboardHelper.verifyClipboardNotEmpty();
 });
 
-// Verify click recovery button
-test("should be able to click recovery button ", async ({ settingsPage }) => {
-    await settingsPage.navigateToSettings();
-    await settingsPage.clickRecoveryButton();
+// Fresh wallet reaches the setup flow via /profile/recovery (the "Recovery
+// options" row only shows once configured).
+test("should reach the recovery setup flow", async ({ settingsPage }) => {
+    await settingsPage.navigateToRecovery();
     await settingsPage.verifyRecoverySetupPage();
 });
 
-//verify the unsubscribe notifications block
-test("should display unsubscribe notifications block if notifications tokens set", async ({
-    backendApi,
-    settingsPage,
-}) => {
-    backendApi.interceptNotificationsRoute((route) =>
-        route.fulfill({
-            status: 200,
-            body: "true",
-        })
-    );
+// The old "unsubscribe" block is now a Notifications row + toggle.
+test("should display the notifications setting", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
-    await settingsPage.verifyUnsubscribeNotifications();
+    await settingsPage.verifyNotificationsSetting();
 });
 
-test.fail(
-    "should display error message on unsubscribe notifications ",
-    async ({ settingsPage, backendApi }) => {
-        await backendApi.interceptNotificationsRoute((route) =>
-            route.fulfill({
-                status: 500,
-            })
-        );
-        await settingsPage.navigateToSettings();
-        await settingsPage.verifyUnsubscribeNotifications();
-        // todo: should add error message
-    }
-);
-
-//verify the unsubscribe notifications block
-test("should not display unsubscribe notifications block if notifications tokens aren't set", async ({
-    backendApi,
+//verify navigating to the profile via the bottom tab bar
+test("should be able to click setting button", async ({
+    page,
     settingsPage,
 }) => {
-    backendApi.interceptNotificationsRoute((route) =>
-        route.fulfill({
-            status: 200,
-            body: "false",
-        })
-    );
-    await settingsPage.navigateToSettings();
-    await settingsPage.verifyUnsubscribeNotificationsNotVisible();
-});
-
-//verify settings button click
-test("should be able to click setting button", async ({ settingsPage }) => {
-    await settingsPage.navigateToSettings();
+    // Start from the wallet home so the Profil tab is the navigation target.
+    await page.goto("/wallet");
     await settingsPage.clickSettingsButton();
-    await settingsPage.verifyBiometryInformation();
+    await settingsPage.verifyProfileIdentity();
 });

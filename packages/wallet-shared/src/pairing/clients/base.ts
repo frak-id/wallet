@@ -117,6 +117,14 @@ export abstract class BasePairingClient<
     protected pingInterval: NodeJS.Timeout | null = null;
 
     private onCloseHook: (() => void) | null = null;
+    /**
+     * Monotonic "generation" id for the active socket. Bumped on every
+     * `connect()` and `closeSocket()`. Event listeners capture the epoch that
+     * was live when they were registered and ignore events once it no longer
+     * matches — defence-in-depth so a late close/message/open/error from a
+     * superseded socket can never null or mutate the current connection.
+     */
+    private connectionEpoch = 0;
     private reconnectRetryCount = 0;
     /**
      * Timestamp of the first reconnect attempt in the current retry window.
@@ -198,6 +206,10 @@ export abstract class BasePairingClient<
     private closeSocket() {
         this.connection?.close();
         this.connection = null;
+        // Drop any deferred reconnect and bump the epoch so the socket we just
+        // closed can no longer drive handleClose / reconnect from a late event.
+        this.onCloseHook = null;
+        this.connectionEpoch++;
         this.stopHeartbeat();
     }
 
@@ -342,9 +354,13 @@ export abstract class BasePairingClient<
 
         const query = serialiseConnectionParams(params);
 
-        this.connection = authenticatedWalletApi.pairings.ws.subscribe({
+        const connection = authenticatedWalletApi.pairings.ws.subscribe({
             query,
         });
+        this.connection = connection;
+        // Stamp this socket with a fresh epoch; its listeners capture it and
+        // self-disable once superseded (see `setupEventListeners`).
+        const epoch = ++this.connectionEpoch;
 
         // Only flip status to "connecting" if we're not already in a
         // connected state. Silent reconnects after a transient close keep
@@ -353,7 +369,7 @@ export abstract class BasePairingClient<
             this.setState({ status: "connecting" } as Partial<TState>);
         }
 
-        this.setupEventListeners();
+        this.setupEventListeners(connection, epoch);
     }
 
     /**
@@ -387,12 +403,17 @@ export abstract class BasePairingClient<
     /*                          Event handling                                 */
     /* ---------------------------------------------------------------------- */
 
-    protected setupEventListeners() {
-        if (!this.connection) return;
+    protected setupEventListeners(connection: PairingWs, epoch: number) {
+        // A socket's listeners act only while their epoch is the live one. Once
+        // superseded (a newer connect, or a closeSocket), any late event from
+        // this socket is ignored so it can never mutate or tear down whatever
+        // connection is current now.
+        const isStale = () => epoch !== this.connectionEpoch;
 
-        this.connection.on(
+        connection.on(
             "message",
             ({ data }: { data: unknown }) => {
+                if (isStale()) return;
                 console.log("Received message", data);
                 if (!this.isWsMessageData(data)) {
                     console.error("Invalid message received", data);
@@ -403,20 +424,23 @@ export abstract class BasePairingClient<
             {}
         );
 
-        this.connection.on("open", () => {
+        connection.on("open", () => {
+            if (isStale()) return;
             console.log("Pairing websocket opened");
             this.resetReconnectState();
             this.flushOutbound();
             this.onSocketOpen();
         });
 
-        this.connection.on("close", (event: CloseEvent) =>
-            this.handleClose(event)
-        );
+        connection.on("close", (event: CloseEvent) => {
+            if (isStale()) return;
+            this.handleClose(event);
+        });
 
-        this.connection.on("error", (error: Event) => {
+        connection.on("error", (error: Event) => {
+            if (isStale()) return;
             console.warn("Pairing websocket error", error);
-            this.connection?.close();
+            connection.close();
         });
     }
 

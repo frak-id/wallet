@@ -43,6 +43,8 @@ export type ResolvedPlacement = {
             referrerNoRewardText?: string;
             ctaText?: string;
             ctaNoRewardText?: string;
+            /** Custom illustration URL replacing the built-in gift icon. */
+            imageUrl?: string;
             css?: string;
         };
         banner?: {
@@ -52,6 +54,8 @@ export type ResolvedPlacement = {
             inappTitle?: string;
             inappDescription?: string;
             inappCta?: string;
+            /** Custom illustration URL replacing the built-in gift icon. */
+            imageUrl?: string;
             css?: string;
         };
     };

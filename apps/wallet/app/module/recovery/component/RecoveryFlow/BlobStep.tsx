@@ -1,3 +1,4 @@
+import { isValidEmail } from "@frak-labs/app-essentials";
 import {
     Accordion,
     AccordionContent,
@@ -15,7 +16,6 @@ import { type ChangeEvent, type ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { WarningCard } from "@/module/common/component/WarningCard";
-import { isValidEmail } from "@/module/common/utils/email";
 import { useRequestRecoveryEmail } from "@/module/recovery/hook/useRequestRecoveryEmail";
 import { isRecoveryBlobEnvelope } from "@/module/recovery-setup/utils/recoveryBlob";
 import * as styles from "./styles.css";

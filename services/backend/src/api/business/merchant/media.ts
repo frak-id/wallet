@@ -21,12 +21,25 @@ const acceptedMimeTypes = [
  * Image type accepted by the upload endpoint.
  *  - logo / hero: single fixed-key images.
  *  - hero-extra: triggers hash-suffixed storage (hero-{hash}) for slider variants.
+ *  - icon: hash-suffixed storage (icon-{hash}) so merchants build a reusable
+ *    library of component illustrations to pick from.
  */
-const imageTypes = ["logo", "hero"] as const;
-const uploadTypes = [...imageTypes, "hero-extra"] as const;
+const uploadTypes = ["logo", "hero", "hero-extra", "icon"] as const;
+
+// Upload types stored under a content-hash suffix (multiple variants kept).
+// Maps the requested upload type to its canonical storage prefix + the
+// constraints used to validate/resize it.
+const hashSuffixedTypes: Record<
+    string,
+    { prefix: string; processingType: ImageType }
+> = {
+    "hero-extra": { prefix: "hero", processingType: "hero" },
+    icon: { prefix: "icon", processingType: "icon" },
+};
 
 // Pattern allowed for media keys (used by delete endpoint).
-const mediaTypePattern = /^(logo|hero(-[a-zA-Z0-9_-]+)?)$/;
+const mediaTypePattern =
+    /^(logo|icon(-[a-zA-Z0-9_-]+)?|hero(-[a-zA-Z0-9_-]+)?)$/;
 
 // Derive an 8-char hex hash from image content so identical uploads collide.
 function generateContentHash(buffer: Buffer | Uint8Array): string {
@@ -77,10 +90,14 @@ export const merchantMediaRoutes = new Elysia({
             }
 
             // Determine storage key + processing constraints
-            //  - hero-extra → hero-{contentHash} on disk, validated as a hero image
+            //  - hero-extra → hero-{contentHash}, validated as a hero image
+            //  - icon → icon-{contentHash}, validated as an icon image
             //  - logo / hero → stored under their canonical key
-            const isHeroExtra = type === "hero-extra";
-            const processingType: ImageType = isHeroExtra ? "hero" : type;
+            const hashSuffixed = hashSuffixedTypes[type];
+            // Non-hash-suffixed types (logo/hero) are valid ImageType keys; the
+            // hash-suffixed ones resolve their processing type via the map above.
+            const processingType: ImageType =
+                hashSuffixed?.processingType ?? (type as ImageType);
 
             // Process image (validate dimensions + resize + compress to WebP).
             // ImageProcessingService throws HttpError directly on validation
@@ -91,12 +108,12 @@ export const merchantMediaRoutes = new Elysia({
                     processingType
                 );
 
-            const storageType = isHeroExtra
-                ? `hero-${generateContentHash(processed.buffer)}`
+            const storageType = hashSuffixed
+                ? `${hashSuffixed.prefix}-${generateContentHash(processed.buffer)}`
                 : type;
 
-            // Reject duplicate hero-extra uploads (same content → same hash)
-            if (isHeroExtra) {
+            // Reject duplicate hash-suffixed uploads (same content → same hash)
+            if (hashSuffixed) {
                 const exists =
                     await MediaContext.repositories.mediaStorage.exists({
                         merchantId,

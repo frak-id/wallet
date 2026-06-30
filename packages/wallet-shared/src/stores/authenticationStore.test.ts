@@ -10,13 +10,8 @@ import {
     addLastAuthentication,
     applyMergeSession,
     authenticationStore,
-    selectLastWebAuthNAction,
 } from "./authenticationStore";
-import type {
-    AuthenticationResponseJSON,
-    LastAuthentication,
-    LastWebAuthNAction,
-} from "./types";
+import type { LastAuthentication } from "./types";
 
 // Mock the authenticator storage
 vi.mock("../common/storage/authenticators", () => ({
@@ -44,9 +39,9 @@ describe("authenticationStore", () => {
         // Reset store to initial state before each test
         authenticationStore.setState({
             lastAuthenticator: null,
+            lastRemoteAuthenticator: null,
             pendingRegistration: null,
             lastAuthenticationAt: null,
-            lastWebAuthNAction: null,
             ssoContext: null,
         });
         vi.clearAllMocks();
@@ -57,9 +52,31 @@ describe("authenticationStore", () => {
             const state = authenticationStore.getState();
 
             expect(state.lastAuthenticator).toBeNull();
-            expect(state.lastWebAuthNAction).toBeNull();
+            expect(state.lastRemoteAuthenticator).toBeNull();
             expect(state.ssoContext).toBeNull();
             expect(state.pendingRegistration).toBeNull();
+        });
+    });
+
+    describe("recordDistantAuthenticator", () => {
+        test("persists the paired authenticator + bumps lastAuthenticationAt", async () => {
+            const { recordDistantAuthenticator } = await import(
+                "./authenticationStore"
+            );
+            const remote = {
+                type: "distant-webauthn" as const,
+                address: "0x1234567890123456789012345678901234567890" as const,
+                authenticatorId: "remote-cred-1",
+                pairingId: "pairing-1",
+            };
+
+            recordDistantAuthenticator(remote);
+
+            const state = authenticationStore.getState();
+            expect(state.lastRemoteAuthenticator).toEqual(remote);
+            expect(state.lastAuthenticationAt).toBeTypeOf("number");
+            // Local authenticator must NOT be clobbered by a pairing.
+            expect(state.lastAuthenticator).toBeNull();
         });
     });
 
@@ -101,76 +118,6 @@ describe("authenticationStore", () => {
                 .setLastAuthenticator(mockAuthenticator);
             authenticationStore.getState().setLastAuthenticator(null);
             expect(authenticationStore.getState().lastAuthenticator).toBeNull();
-        });
-    });
-
-    describe("setLastWebAuthNAction", () => {
-        test("should set last WebAuthN action", () => {
-            const mockAction: LastWebAuthNAction = {
-                wallet: "0x1234567890123456789012345678901234567890",
-                signature: {
-                    id: "cred-123",
-                    response: {
-                        metadata: {
-                            authenticatorData: "0x1234",
-                            challengeIndex: 0,
-                            clientDataJSON: "test-client-data",
-                            typeIndex: 0,
-                            userVerificationRequired: true,
-                        },
-                        signature: {
-                            r: 0n,
-                            s: 0n,
-                            yParity: 0,
-                        },
-                    },
-                } satisfies AuthenticationResponseJSON,
-                challenge: "0x746573742d6d657373616765",
-            };
-
-            authenticationStore.getState().setLastWebAuthNAction(mockAction);
-            expect(authenticationStore.getState().lastWebAuthNAction).toEqual(
-                mockAction
-            );
-        });
-
-        test("should clear last WebAuthN action when null", () => {
-            const mockAction: LastWebAuthNAction = {
-                wallet: "0x1234567890123456789012345678901234567890",
-                signature: {
-                    id: "cred-123",
-                    response: {
-                        metadata: {} as any,
-                        signature: { r: 0n, s: 0n, yParity: 0 },
-                    },
-                } as AuthenticationResponseJSON,
-                challenge: "0x746573742d6d657373616765",
-            };
-
-            authenticationStore.getState().setLastWebAuthNAction(mockAction);
-            authenticationStore.getState().setLastWebAuthNAction(null);
-            expect(
-                authenticationStore.getState().lastWebAuthNAction
-            ).toBeNull();
-        });
-
-        test("should work with selector", () => {
-            const mockAction: LastWebAuthNAction = {
-                wallet: "0x1234567890123456789012345678901234567890",
-                signature: {
-                    id: "cred-123",
-                    response: {
-                        metadata: {} as any,
-                        signature: { r: 0n, s: 0n, yParity: 0 },
-                    },
-                } as AuthenticationResponseJSON,
-                challenge: "0x746573742d6d657373616765",
-            };
-
-            authenticationStore.getState().setLastWebAuthNAction(mockAction);
-            expect(
-                selectLastWebAuthNAction(authenticationStore.getState())
-            ).toEqual(mockAction);
         });
     });
 
@@ -450,42 +397,11 @@ describe("authenticationStore", () => {
     });
 
     describe("selectors", () => {
-        test("should select correct values from state", () => {
-            const mockAuthenticator: LastAuthentication = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            };
-            const mockAction: LastWebAuthNAction = {
-                wallet: "0x1234567890123456789012345678901234567890",
-                signature: {
-                    id: "test-id",
-                    response: {
-                        metadata: {} as any,
-                        signature: { r: 0n, s: 0n, yParity: 0 },
-                    },
-                } as AuthenticationResponseJSON,
-                challenge: "0x74657374",
-            };
-            const mockSsoContext = {
-                merchantId: "product-123",
-                metadata: { name: "Example App" },
-            };
-
-            authenticationStore
-                .getState()
-                .setLastAuthenticator(mockAuthenticator);
-            authenticationStore.getState().setLastWebAuthNAction(mockAction);
-            authenticationStore.getState().setSsoContext(mockSsoContext);
-
+        test("selectLastAuthenticationAt returns the stored timestamp", () => {
+            const ts = Date.now();
+            authenticationStore.getState().setLastAuthenticationAt(ts);
             const state = authenticationStore.getState();
-
-            expect(selectLastWebAuthNAction(state)).toEqual(mockAction);
+            expect(state.lastAuthenticationAt).toBe(ts);
         });
     });
 });

@@ -29,7 +29,14 @@ export class PairingPage {
         ).toBeVisible();
 
         if (code) {
-            await expect(this.page.getByText(`${code}`)).toBeVisible();
+            // The code renders as one input per digit, not a single text node.
+            const digits = this.page.getByRole("textbox", {
+                name: /^Digit \d+$/,
+            });
+            await expect(digits).toHaveCount(code.length);
+            for (let i = 0; i < code.length; i++) {
+                await expect(digits.nth(i)).toHaveValue(code[i]);
+            }
         }
     }
 
