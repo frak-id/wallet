@@ -54,6 +54,7 @@ import {
     isRewardFormValid,
     type RewardFormValues,
     type RewardModel,
+    recalcSplitOnCpaChange,
     recommendedSplit,
     rewardFormToDraft,
     splitTargetCpa,
@@ -457,17 +458,14 @@ function CpaReveal({
                                 // the user edited the amounts, leave them — the
                                 // mismatch warning + Continue gating flag it.
                                 onChange: (next) => {
-                                    const prevReco = recommendedSplit(cpa);
-                                    const isUntouchedReco =
-                                        ambassador > 0 &&
-                                        referee > 0 &&
-                                        ambassador === prevReco.ambassador &&
-                                        referee === prevReco.referee;
                                     field.onChange(next);
-                                    if (isUntouchedReco) {
-                                        const reco = recommendedSplit(
-                                            num(next)
-                                        );
+                                    const reco = recalcSplitOnCpaChange({
+                                        prevCpa: cpa,
+                                        nextCpa: num(next),
+                                        ambassador,
+                                        referee,
+                                    });
+                                    if (reco) {
                                         setValue(ambName, reco.ambassador, {
                                             shouldValidate: true,
                                         });
@@ -681,6 +679,7 @@ function TierCell({
     tone = "muted",
     error,
     stepper = false,
+    onChangeExtra,
 }: {
     control: Control<RewardFormValues>;
     name: string;
@@ -689,36 +688,45 @@ function TierCell({
     tone?: "muted" | "elevated";
     error?: boolean;
     stepper?: boolean;
+    /** Runs after the field update (e.g. the CPA cell re-recommends the split). */
+    onChangeExtra?: (next: number | "") => void;
 }) {
     return (
         <Controller
             control={control}
             // biome-ignore lint/suspicious/noExplicitAny: dynamic field-array path
             name={name as any}
-            render={({ field }) => (
-                <InputNumber
-                    variant="bare"
-                    tone={tone}
-                    error={error}
-                    classNameWrapper={styles.inputWrapper}
-                    placeholder={placeholder}
-                    rightSection={
-                        stepper ? (
-                            <Inline as="span" space="m" alignY="center">
-                                <NumberStepper
-                                    value={field.value ?? 0}
-                                    onChange={field.onChange}
-                                />
+            render={({ field }) => {
+                const handleChange: typeof field.onChange = (next) => {
+                    field.onChange(next);
+                    onChangeExtra?.(next as number | "");
+                };
+                return (
+                    <InputNumber
+                        variant="bare"
+                        tone={tone}
+                        error={error}
+                        classNameWrapper={styles.inputWrapper}
+                        placeholder={placeholder}
+                        rightSection={
+                            stepper ? (
+                                <Inline as="span" space="m" alignY="center">
+                                    <NumberStepper
+                                        value={field.value ?? 0}
+                                        onChange={handleChange}
+                                    />
+                                    <UnitIcon unit={unit} />
+                                </Inline>
+                            ) : (
                                 <UnitIcon unit={unit} />
-                            </Inline>
-                        ) : (
-                            <UnitIcon unit={unit} />
-                        )
-                    }
-                    {...field}
-                    value={field.value ?? ""}
-                />
-            )}
+                            )
+                        }
+                        {...field}
+                        onChange={handleChange}
+                        value={field.value ?? ""}
+                    />
+                );
+            }}
         />
     );
 }
@@ -792,6 +800,7 @@ function TierCard({
     toError,
     cpaError,
     onRemove,
+    onCpaChange,
 }: {
     control: Control<RewardFormValues>;
     index: number;
@@ -801,6 +810,8 @@ function TierCard({
     toError?: boolean;
     cpaError?: boolean;
     onRemove: () => void;
+    /** Re-recommends this tier's split when its Target CPA changes. */
+    onCpaChange?: (next: number | "") => void;
 }) {
     const { t } = useTranslation();
     const glyph = useCurrencyGlyph();
@@ -869,6 +880,7 @@ function TierCard({
                         tone="elevated"
                         stepper
                         error={cpaError}
+                        onChangeExtra={onCpaChange}
                         placeholder={t(
                             "campaigns.create.reward.tiered.cpaPlaceholder"
                         )}
@@ -941,6 +953,14 @@ function TieredReveal({
 
     const tiers = (useWatch({ control, name: "globalCpaTiers" }) ??
         []) as CpaTierRow[];
+    // The per-tier reward amounts, watched so a CPA change can tell an untouched
+    // reco (track the new CPA) apart from a user-edited split (leave it).
+    const ambTiers = (useWatch({ control, name: "ambassadorTiers" }) ?? []) as {
+        reward: number | "";
+    }[];
+    const refTiers = (useWatch({ control, name: "refereeTiers" }) ?? []) as {
+        reward: number | "";
+    }[];
     // Errors are gated per-field on touch (blur): a field reds only once the user
     // has left it empty, so filling one input never reds its still-pristine
     // neighbours (and a just-added tier stays clean).
@@ -982,6 +1002,26 @@ function TieredReveal({
         globalArray.remove(index);
         ambassadorArray.remove(index);
         refereeArray.remove(index);
+    }
+    // Mirror the Fixed/% reveal: when a tier's Target CPA changes and its split
+    // is still the untouched reco, recompute it for the new CPA (a user-edited
+    // split is left as-is). Shared via `recalcSplitOnCpaChange`.
+    function handleCpaChange(index: number, next: number | "") {
+        const reco = recalcSplitOnCpaChange({
+            prevCpa: Number(tiers[index]?.cpa) || 0,
+            nextCpa: Number(next) || 0,
+            ambassador: Number(ambTiers[index]?.reward) || 0,
+            referee: Number(refTiers[index]?.reward) || 0,
+        });
+        if (!reco) return;
+        setValue(`ambassadorTiers.${index}.reward`, reco.ambassador, {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
+        setValue(`refereeTiers.${index}.reward`, reco.referee, {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
     }
     // Fill the recommended 80/20 split per tier; the distribution bar always
     // shows that ratio, but the amounts stay the user's to override. Written via
@@ -1026,6 +1066,7 @@ function TieredReveal({
                             toError={errors.to}
                             cpaError={errors.cpa}
                             onRemove={() => removeTier(index)}
+                            onCpaChange={(next) => handleCpaChange(index, next)}
                         />
                         <div className={styles.tierDistribution}>
                             <DistributionBar

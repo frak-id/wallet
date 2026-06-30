@@ -116,6 +116,33 @@ export function recommendedSplit(targetCpa: number) {
 }
 
 /**
+ * When a Target CPA changes, decide the next Ambassador/Referee split. If the
+ * current amounts are still the untouched recommendation for the *previous* CPA
+ * they track the new CPA (re-recommended); if the user edited them, they stay
+ * put (returns `null`, leaving the split for the mismatch warning to flag).
+ * Shared by the Fixed/% and Tiered reveals so every model behaves identically.
+ */
+export function recalcSplitOnCpaChange({
+    prevCpa,
+    nextCpa,
+    ambassador,
+    referee,
+}: {
+    prevCpa: number;
+    nextCpa: number;
+    ambassador: number;
+    referee: number;
+}): { ambassador: number; referee: number } | null {
+    const prevReco = recommendedSplit(prevCpa);
+    const isUntouchedReco =
+        ambassador > 0 &&
+        referee > 0 &&
+        ambassador === prevReco.ambassador &&
+        referee === prevReco.referee;
+    return isUntouchedReco ? recommendedSplit(nextCpa) : null;
+}
+
+/**
  * Build a recipient's backend tiers by zipping its per-tier reward onto the
  * Global CPA ranges/units (the single source of truth): € tiers carry `amount`,
  * % tiers carry `percent`.
