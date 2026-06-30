@@ -127,6 +127,13 @@
             "when": 1782219368292,
             "tag": "0017_unusual_rattler",
             "breakpoints": true
+        },
+        {
+            "idx": 18,
+            "version": "7",
+            "when": 1782830903115,
+            "tag": "0018_right_ben_parker",
+            "breakpoints": true
         }
     ]
 }
