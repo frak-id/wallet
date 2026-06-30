@@ -1,4 +1,5 @@
 import { createRouter } from "@tanstack/react-router";
+import { NotFound } from "@/module/common/component/NotFound";
 import { PendingLoader } from "@/module/common/component/PendingLoader";
 
 // Import the generated route tree
@@ -14,6 +15,7 @@ export const getRouter = () => {
         defaultPreloadStaleTime: 0,
         defaultPendingMinMs: 500,
         defaultPendingComponent: PendingLoader,
+        defaultNotFoundComponent: NotFound,
     });
 
     return router;
