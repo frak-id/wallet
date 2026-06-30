@@ -548,7 +548,9 @@
                     "placeholder": "Enter level"
                 },
                 "cac": {
-                    "label": "CAC"
+                    "label": "CAC",
+                    "placeholder": "Not available",
+                    "placeholderTiered": "Varies by tier"
                 },
                 "preview": {
                     "title": "Reward distribution chain",

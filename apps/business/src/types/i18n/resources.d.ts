@@ -170,7 +170,9 @@ export default interface Resources {
         },
         "referralChain": {
           "cac": {
-            "label": "CAC"
+            "label": "CAC",
+            "placeholder": "Not available",
+            "placeholderTiered": "Varies by tier"
           },
           "decrease": {
             "hint": "Each level receives this percentage less than the previous level. Minimum 50%.",

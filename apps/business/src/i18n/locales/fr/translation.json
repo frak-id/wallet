@@ -548,7 +548,9 @@
                     "placeholder": "Saisir le niveau"
                 },
                 "cac": {
-                    "label": "CAC"
+                    "label": "CAC",
+                    "placeholder": "Non disponible",
+                    "placeholderTiered": "Variable selon les paliers"
                 },
                 "preview": {
                     "title": "Chaîne de distribution des récompenses",

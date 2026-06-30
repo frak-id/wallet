@@ -356,8 +356,17 @@ export function ReferralChainCampaign() {
     // reward step's form — derive them from a single parse.
     const rewardForm = draftToRewardForm(draft);
     const isFixed = rewardForm.model === "fixed";
+    const isPercentage = rewardForm.model === "percentage";
+    const isTiered = rewardForm.model === "tiered";
     const rewardBase = isFixed ? rewardForm.ambassadorAmount : undefined;
-    const cac = isFixed ? rewardForm.targetCpa || undefined : undefined;
+    // CAC (Target CPA) is held per reward model: a currency amount for the
+    // fixed model and a basket percentage for the percentage model. The tiered
+    // model has no single CAC, so the field falls back to its placeholder.
+    const cac = isFixed
+        ? rewardForm.targetCpa || undefined
+        : isPercentage
+          ? rewardForm.targetCpaPercent || undefined
+          : undefined;
 
     async function persist(values: ReferralChainFormValues) {
         const updated = referralChainFormToDraft(values, draft);
@@ -497,13 +506,34 @@ export function ReferralChainCampaign() {
                                         aria-label={t(
                                             "campaigns.create.referralChain.cac.label"
                                         )}
+                                        placeholder={t(
+                                            isTiered
+                                                ? "campaigns.create.referralChain.cac.placeholderTiered"
+                                                : "campaigns.create.referralChain.cac.placeholder"
+                                        )}
                                         value={
                                             cac !== undefined ? String(cac) : ""
                                         }
                                         rightSection={
-                                            <span className={styles.unitGlyph}>
-                                                {glyph}
-                                            </span>
+                                            cac !== undefined ? (
+                                                isPercentage ? (
+                                                    <PercentIcon
+                                                        width={24}
+                                                        height={24}
+                                                        className={
+                                                            styles.unitIcon
+                                                        }
+                                                    />
+                                                ) : (
+                                                    <span
+                                                        className={
+                                                            styles.unitGlyph
+                                                        }
+                                                    >
+                                                        {glyph}
+                                                    </span>
+                                                )
+                                            ) : undefined
                                         }
                                     />
                                 </Stack>
