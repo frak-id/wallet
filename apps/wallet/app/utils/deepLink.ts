@@ -94,9 +94,17 @@ function parseDeepLink(url: string): DeepLinkParams | null {
 }
 
 /**
+ * Actions that carry their id as a path segment (`/<action>/<id>`) rather than
+ * a `?id=` query param: the compact `/p/<id>` pairing alias and the
+ * `/explorer/<merchantId>` deep link.
+ */
+const pathIdActions = new Set(["p", "explorer"]);
+
+/**
  * Build deep-link params, folding a path-segment id into `params.id` for
- * compact `/p/<id>` aliases. The id is lowercased so backend lookups
- * (byte-exact on a `varchar` column) always see the canonical form.
+ * path-id actions (`/p/<id>`, `/explorer/<merchantId>`). The id is lowercased
+ * so backend lookups (byte-exact on a `varchar`/`uuid` column) always see the
+ * canonical form.
  */
 function buildParams(
     action: string,
@@ -109,7 +117,7 @@ function buildParams(
     const normalizedAction = action.toLowerCase();
     const params = extractSearchParams(searchParams);
     const id =
-        normalizedAction === "p" && !params.id && pathId
+        pathIdActions.has(normalizedAction) && !params.id && pathId
             ? pathId.toLowerCase()
             : params.id;
     return { action: normalizedAction, ...params, id };
@@ -220,6 +228,13 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
         search: params.to ? { to: params.to } : undefined,
     }),
     receive: () => ({ to: "/wallet" }),
+    // Campaign-launch notification deep link: opens the explorer with the
+    // merchant's detail modal. Falls back to the explorer list when no
+    // (or a malformed) merchantId is present in the path.
+    explorer: (params) =>
+        params.id && params.id.length > 0 && params.id.length <= 128
+            ? { to: `/explorer/${params.id}` }
+            : { to: "/explorer" },
     settings: () => ({ to: "/profile" }),
     recovery: () => ({ to: "/profile/recovery" }),
     notifications: () => ({ to: "/notifications" }),
