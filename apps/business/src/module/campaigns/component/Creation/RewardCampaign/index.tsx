@@ -451,17 +451,30 @@ function CpaReveal({
                         <StepperField
                             field={{
                                 ...field,
-                                // Changing the Target CPA changes the pool, so
-                                // the previous split no longer adds up — clear
-                                // it (this also re-surfaces the reco bar).
+                                // Changing the Target CPA changes the pool. If
+                                // the split is still the untouched reco, keep it
+                                // in sync by recomputing it for the new CPA. If
+                                // the user edited the amounts, leave them — the
+                                // mismatch warning + Continue gating flag it.
                                 onChange: (next) => {
+                                    const prevReco = recommendedSplit(cpa);
+                                    const isUntouchedReco =
+                                        ambassador > 0 &&
+                                        referee > 0 &&
+                                        ambassador === prevReco.ambassador &&
+                                        referee === prevReco.referee;
                                     field.onChange(next);
-                                    setValue(ambName, 0, {
-                                        shouldValidate: true,
-                                    });
-                                    setValue(refName, 0, {
-                                        shouldValidate: true,
-                                    });
+                                    if (isUntouchedReco) {
+                                        const reco = recommendedSplit(
+                                            num(next)
+                                        );
+                                        setValue(ambName, reco.ambassador, {
+                                            shouldValidate: true,
+                                        });
+                                        setValue(refName, reco.referee, {
+                                            shouldValidate: true,
+                                        });
+                                    }
                                 },
                             }}
                             unit={unit}
