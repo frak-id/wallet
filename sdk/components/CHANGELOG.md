@@ -1,5 +1,20 @@
 # @frak-labs/components
 
+## 1.0.11
+
+### Patch Changes
+
+- [#253](https://github.com/frak-id/wallet/pull/253) [`9cda98b`](https://github.com/frak-id/wallet/commit/9cda98ba7815d4e7a29b11c5997671b25e5a1fbb) Thanks [@KONFeature](https://github.com/KONFeature)! - 🎁 Let merchants replace the built-in gift icon on the post-purchase card and the referral banner with a custom illustration. The image is now read from the resolved SDK config (`components.postPurchase.imageUrl` / `components.banner.imageUrl`), so a dashboard-configured icon applies automatically; an explicit `imageUrl` prop still takes precedence, and both fall back to the default gift icon when unset.
+
+- [#253](https://github.com/frak-id/wallet/pull/253) [`0a30663`](https://github.com/frak-id/wallet/commit/0a306634448aca97fde2f7f3f664abaee9a372c3) Thanks [@KONFeature](https://github.com/KONFeature)! - 🌐 Ship bilingual (en/fr) built-in default copy for the Web Components. Button text, post-purchase card copy, banner copy and aria-labels now follow the resolved language instead of always rendering English. The language is resolved with this precedence: the merchant's saved dashboard config language (`sdkConfig.lang`) → the integration's `metadata.lang` → the visitor's browser language → `en`. Resolution is a dependency-free object lookup keyed by language, so the CDN bundle stays light (no i18next runtime). Merchant attribute and backend-config overrides keep precedence over the built-in defaults.
+
+- [#253](https://github.com/frak-id/wallet/pull/253) [`1b323a2`](https://github.com/frak-id/wallet/commit/1b323a2f1915d0cff8e4a52722e82cd2412ee20d) Thanks [@KONFeature](https://github.com/KONFeature)! - 🎯 Add `selectBestReward()` to expose the selected reward's `payoutType`, minimum purchase amount and lockup duration alongside its formatted string, so surfaces can adapt their display per reward type. Web Components now treat percentage-based rewards as "no reward": the `{REWARD}` placeholder is stripped (or the no-reward fallback is used) since a percentage carries no concrete amount to advertise.
+
+- [#253](https://github.com/frak-id/wallet/pull/253) [`461237d`](https://github.com/frak-id/wallet/commit/461237daa253de89074cf475cbff7e415dec7ab7) Thanks [@KONFeature](https://github.com/KONFeature)! - 🐛 Fix `{REWARD}` placeholder handling in SDK copy. `applyRewardPlaceholder` now replaces every `{REWARD}` occurrence (not just the first), and the in-app banner strips the token instead of rendering it literally (in-app mode never resolves a reward).
+
+- Updated dependencies [[`9cda98b`](https://github.com/frak-id/wallet/commit/9cda98ba7815d4e7a29b11c5997671b25e5a1fbb), [`1b323a2`](https://github.com/frak-id/wallet/commit/1b323a2f1915d0cff8e4a52722e82cd2412ee20d), [`461237d`](https://github.com/frak-id/wallet/commit/461237daa253de89074cf475cbff7e415dec7ab7)]:
+  - @frak-labs/core-sdk@1.1.6
+
 ## 1.0.10
 
 ### Patch Changes
