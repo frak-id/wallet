@@ -127,6 +127,12 @@
         "notConnected": "Frak application is not activated",
         "link": "Configuring Frak application in your theme",
         "todo": "Please activate the Frak application in your theme by following the instructions below",
+        "intermediate": {
+            "banner": "Your theme supports app embeds but not in-page app blocks",
+            "bannerDescription": "The Frak Listener runs globally through an app embed — no manual code needed. Only the share button can't be dropped into your product page automatically, so add it manually below.",
+            "embedTitle": "1. Enable the Frak Listener",
+            "buttonTitle": "2. Add the share button (optional)"
+        },
         "legacy": {
             "upgradeWarning": "Your theme does not support Online Store 2.0",
             "upgradeDescription": "Upgrade to an OS 2.0 theme for the best experience and one-click app block setup.",

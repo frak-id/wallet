@@ -45,7 +45,7 @@ export type CampaignView = {
     minPurchaseDisplay?: string;
 };
 
-export function buildCampaignView(
+function buildCampaignView(
     rewards: MerchantReward[],
     locale: string,
     now: Date = new Date()

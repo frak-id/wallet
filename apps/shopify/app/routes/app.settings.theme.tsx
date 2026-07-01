@@ -1,6 +1,7 @@
 import screenFrakListener from "app/assets/frak-listener.png";
 import { Activated } from "app/components/Activated";
 import { Instructions } from "app/components/Instructions";
+import { IntermediateInstall } from "app/components/IntermediateInstall";
 import { LegacyInstall } from "app/components/LegacyInstall";
 import { Skeleton } from "app/components/Skeleton";
 import { ExternalLink } from "app/components/ui/ExternalLink";
@@ -10,6 +11,7 @@ import type { loader as rootLoader } from "app/routes/app";
 import { getLegacyInstallDismissed } from "app/services.server/metafields";
 import {
     doesThemeHasFrakActivated,
+    doesThemeSupportAppEmbed,
     getMainThemeId,
 } from "app/services.server/theme";
 import { authenticate } from "app/shopify.server";
@@ -20,28 +22,46 @@ import { Await, useLoaderData, useRouteLoaderData } from "react-router";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
-    const [isThemeHasFrakActivated, theme, legacyInstallDismissed] =
-        await Promise.all([
-            doesThemeHasFrakActivated(context),
-            getMainThemeId(context),
-            getLegacyInstallDismissed(context),
-        ]);
-    return { isThemeHasFrakActivated, theme, legacyInstallDismissed };
+    const [
+        isThemeHasFrakActivated,
+        theme,
+        legacyInstallDismissed,
+        supportsAppEmbed,
+    ] = await Promise.all([
+        doesThemeHasFrakActivated(context),
+        getMainThemeId(context),
+        getLegacyInstallDismissed(context),
+        doesThemeSupportAppEmbed(context),
+    ]);
+    return {
+        isThemeHasFrakActivated,
+        theme,
+        legacyInstallDismissed,
+        supportsAppEmbed,
+    };
 };
 
 export default function SettingsThemePage() {
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const data = useLoaderData<typeof loader>();
     const isThemeHasFrakActivated = data?.isThemeHasFrakActivated;
+    // Fail open, consistent with app.tsx / app._index.tsx / Stepper: never hide
+    // the near-universal Listener flow on a missing/undetermined value.
+    const supportsAppEmbed = data?.supportsAppEmbed ?? true;
     const { id } = data?.theme || {};
     const { t } = useTranslation();
-    const editorUrl = `https://${rootData?.shop.myshopifyDomain}/admin/themes/current/editor`;
+    const shopDomain = rootData?.shop.myshopifyDomain;
+    const editorUrl = `https://${shopDomain}/admin/themes/current/editor`;
+    const productTemplateUrl = `https://${shopDomain}/admin/themes/current?key=templates/product.liquid`;
     const refresh = useRefreshData();
     const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
     const merchantId = rootData?.merchantId ?? null;
     const walletUrl = rootData?.walletUrl ?? "";
     const componentsUrl = rootData?.componentsUrl ?? "";
     const businessUrl = rootData?.businessUrl ?? "";
+    const customizeUrl = merchantId
+        ? `${businessUrl}/m/${merchantId}/merchant/customize`
+        : businessUrl;
 
     useVisibilityChange(
         useCallback(() => {
@@ -76,6 +96,19 @@ export default function SettingsThemePage() {
                                     )}
                                 </s-box>
                             </s-section>
+                        ) : supportsAppEmbed ? (
+                            // Intermediate theme (e.g. vintage Debut): the
+                            // Listener embed works, only the in-page app block
+                            // is missing — do NOT push the full manual snippet.
+                            <IntermediateInstall
+                                isThemeHasFrakActivated={
+                                    isThemeHasFrakActivated
+                                }
+                                editorUrl={editorUrl}
+                                listenerAppEmbedId={id ?? ""}
+                                productTemplateUrl={productTemplateUrl}
+                                customizeUrl={customizeUrl}
+                            />
                         ) : (
                             <LegacyInstall
                                 merchantId={merchantId}

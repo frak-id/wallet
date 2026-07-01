@@ -26,6 +26,7 @@ export function Stepper({ redirectToApp }: { redirectToApp: boolean }) {
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const onboardingDataPromise = rootData?.onboardingDataPromise;
     const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
+    const supportsAppEmbedPromise = rootData?.supportsAppEmbedPromise;
 
     useVisibilityChange(
         useCallback(() => {
@@ -51,27 +52,46 @@ export function Stepper({ redirectToApp }: { redirectToApp: boolean }) {
                                         errorElement={null}
                                     >
                                         {(isThemeSupported) => (
-                                            <>
-                                                <StepsIntroduction
-                                                    onboardingData={
-                                                        onboardingData
-                                                    }
-                                                    redirectToApp={
-                                                        redirectToApp
-                                                    }
-                                                    isThemeSupported={
-                                                        isThemeSupported ?? true
-                                                    }
-                                                />
-                                                <Steps
-                                                    onboardingData={
-                                                        onboardingData
-                                                    }
-                                                    isThemeSupported={
-                                                        isThemeSupported ?? true
-                                                    }
-                                                />
-                                            </>
+                                            <Await
+                                                resolve={
+                                                    supportsAppEmbedPromise
+                                                }
+                                                errorElement={null}
+                                            >
+                                                {(supportsAppEmbed) => (
+                                                    <>
+                                                        <StepsIntroduction
+                                                            onboardingData={
+                                                                onboardingData
+                                                            }
+                                                            redirectToApp={
+                                                                redirectToApp
+                                                            }
+                                                            isThemeSupported={
+                                                                isThemeSupported ??
+                                                                true
+                                                            }
+                                                            supportsAppEmbed={
+                                                                supportsAppEmbed ??
+                                                                true
+                                                            }
+                                                        />
+                                                        <Steps
+                                                            onboardingData={
+                                                                onboardingData
+                                                            }
+                                                            isThemeSupported={
+                                                                isThemeSupported ??
+                                                                true
+                                                            }
+                                                            supportsAppEmbed={
+                                                                supportsAppEmbed ??
+                                                                true
+                                                            }
+                                                        />
+                                                    </>
+                                                )}
+                                            </Await>
                                         )}
                                     </Await>
                                 </Suspense>
@@ -89,19 +109,26 @@ function StepsIntroduction({
     onboardingData,
     redirectToApp,
     isThemeSupported,
+    supportsAppEmbed,
 }: {
     onboardingData: OnboardingStepData;
     redirectToApp: boolean;
     isThemeSupported: boolean;
+    supportsAppEmbed: boolean;
 }) {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { completedSteps, hasMissedCriticalSteps } =
-        validateCompleteOnboarding(onboardingData, isThemeSupported);
-    // Legacy themes only show steps 1–4. Count only completed steps within the
-    // applicable set (the contiguous prefix 1..totalSteps) so a stale step 5–7
-    // completion lingering after a theme downgrade can't push progress > 100%.
-    const totalSteps = applicableStepCount(isThemeSupported);
+        validateCompleteOnboarding(
+            onboardingData,
+            isThemeSupported,
+            supportsAppEmbed
+        );
+    // Themes show a subset of steps by capability. Count only completed steps
+    // within the applicable set (the contiguous prefix 1..totalSteps) so a
+    // stale step 5–7 completion lingering after a theme downgrade can't push
+    // progress > 100%.
+    const totalSteps = applicableStepCount(isThemeSupported, supportsAppEmbed);
     const completedStep = completedSteps.filter(
         (step) => step <= totalSteps
     ).length;
@@ -142,9 +169,11 @@ function StepsIntroduction({
 function Steps({
     onboardingData,
     isThemeSupported,
+    supportsAppEmbed,
 }: {
     onboardingData: OnboardingStepData;
     isThemeSupported: boolean;
+    supportsAppEmbed: boolean;
 }) {
     return (
         <s-box paddingInlineStart="base">
@@ -153,10 +182,12 @@ function Steps({
                 <Step2 onboardingData={onboardingData} />
                 <Step3 onboardingData={onboardingData} />
                 <Step4 onboardingData={onboardingData} />
-                {/* Steps 5–7 need theme app blocks — N/A on legacy themes. */}
+                {/* Step 5 (Listener) works via the app embed — shown on OS 2.0
+                    AND intermediate themes (e.g. Debut). */}
+                {supportsAppEmbed && <Step5 onboardingData={onboardingData} />}
+                {/* Steps 6–7 need in-page app blocks — OS 2.0 only. */}
                 {isThemeSupported && (
                     <>
-                        <Step5 onboardingData={onboardingData} />
                         <Step6 onboardingData={onboardingData} />
                         <Step7 onboardingData={onboardingData} />
                     </>

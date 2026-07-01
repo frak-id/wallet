@@ -5,7 +5,7 @@ import {
     type ReactNode,
 } from "react";
 
-export function getChartChildComponentName(child: ReactElement): string {
+function getChartChildComponentName(child: ReactElement): string {
     const childType = child.type as { displayName?: string; name?: string };
     return typeof child.type === "function"
         ? childType.displayName || childType.name || ""
@@ -36,7 +36,7 @@ export function isGradientDefComponent(child: ReactElement): boolean {
     );
 }
 
-export function isChartDefsComponent(child: ReactElement): boolean {
+function isChartDefsComponent(child: ReactElement): boolean {
     return isPatternDefComponent(child) || isGradientDefComponent(child);
 }
 
