@@ -65,7 +65,7 @@ export function Notice({
                     {resolvedIcon}
                 </span>
             ) : null}
-            {children}
+            <span className={styles.content}>{children}</span>
         </Box>
     );
 }

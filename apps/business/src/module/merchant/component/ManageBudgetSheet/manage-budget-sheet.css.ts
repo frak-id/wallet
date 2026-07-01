@@ -61,16 +61,18 @@ export const actionsRow = style({
     paddingTop: alias.spacing.s,
 });
 
-export const warningChip = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xxs,
-    color: vars.text.warning,
-    backgroundColor: vars.surface.warning,
-    borderRadius: alias.cornerRadius.s,
-    paddingInline: alias.spacing.xs,
-    paddingBlock: alias.spacing.xxs,
-    fontSize: fontSize.xs,
+// Notice's inline base is a pill (`cornerRadius.full`) with a 20px line-height;
+// this chip is `cornerRadius.s` with the browser's normal line-height (~14px at
+// 12px/xs). Both overridden here to keep the chip pixel-identical to before.
+// `&&` doubles specificity so these beat `Notice`'s inline recipe
+// (`borderRadius: full`, `lineHeight: 20px`) regardless of stylesheet order.
+export const warningChipOverride = style({
+    selectors: {
+        "&&": {
+            borderRadius: alias.cornerRadius.s,
+            lineHeight: "normal",
+        },
+    },
 });
 
 export const inlineInput = style({

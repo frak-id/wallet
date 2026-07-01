@@ -8,6 +8,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { button } from "@frak-labs/design-system/components/Button";
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Switch } from "@frak-labs/design-system/components/Switch";
@@ -109,22 +110,22 @@ export function MerchantDetailsStep({
                 />
             </WizardFieldCard>
 
-            <div className={styles.infoBar}>
+            <Notice display="block" tone="info" icon={null}>
                 <Stack space="m">
-                    <Text variant="bodySmall">
+                    <Text variant="bodySmall" color="primary">
                         <Text as="span" variant="bodySmall" weight="semiBold">
                             {t("merchant.create.currencyInfo.moneriumName")}
                         </Text>{" "}
                         {t("merchant.create.currencyInfo.moneriumDescription")}
                     </Text>
-                    <Text variant="bodySmall">
+                    <Text variant="bodySmall" color="primary">
                         <Text as="span" variant="bodySmall" weight="semiBold">
                             {t("merchant.create.currencyInfo.circleName")}
                         </Text>{" "}
                         {t("merchant.create.currencyInfo.circleDescription")}
                     </Text>
                 </Stack>
-            </div>
+            </Notice>
 
             {isPlatformAdmin && (
                 <WizardFieldCard

@@ -7,6 +7,7 @@ import {
 } from "@frak-labs/design-system/components/Dialog";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
@@ -89,12 +90,17 @@ export function ReviewDialog({
                     </Stack>
                 </Stack>
                 {error && (
-                    <div className={styles.errorBanner} role={"alert"}>
-                        <ExclamationCircleIcon className={styles.errorIcon} />
+                    <Notice
+                        display={"block"}
+                        tone={"error"}
+                        role={"alert"}
+                        icon={<ExclamationCircleIcon width={20} height={20} />}
+                        className={styles.errorBannerOverride}
+                    >
                         <Text variant={"bodySmall"} color={"error"}>
                             {error}
                         </Text>
-                    </div>
+                    </Notice>
                 )}
                 <Inline space={"m"} paddingY={"l"} wrap={false}>
                     <DialogClose asChild>

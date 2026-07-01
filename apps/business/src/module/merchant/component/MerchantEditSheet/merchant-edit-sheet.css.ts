@@ -38,13 +38,6 @@ export const currencyText = style({
     minWidth: 0,
 });
 
-export const infoBar = style({
-    backgroundColor: vars.surface.secondary,
-    borderRadius: alias.cornerRadius.m,
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.l,
-});
-
 export const footerButton = style({
     flex: 1,
 });

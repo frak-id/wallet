@@ -36,18 +36,6 @@ export const currencyLabel = style({
     minWidth: 0,
 });
 
-/* ---- info bar ---- */
-
-export const infoBar = style({
-    backgroundColor: vars.surface.secondary,
-    borderRadius: alias.cornerRadius.m,
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.l,
-    paddingTop: alias.spacing.s,
-    paddingBottom: alias.spacing.s,
-    color: vars.text.primary,
-});
-
 /* ---- DNS ---- */
 
 export const dnsBlock = style({

@@ -3,6 +3,7 @@ import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { PauseIcon } from "@frak-labs/design-system/icons";
@@ -232,10 +233,14 @@ function TokenActions({
     return (
         <div className={styles.actionsRow}>
             {needsAllowanceIncrease && (
-                <span className={styles.warningChip}>
-                    <AlertTriangle width={14} height={14} />
+                <Notice
+                    display="inline"
+                    tone="warning"
+                    icon={<AlertTriangle width={14} height={14} />}
+                    className={styles.warningChipOverride}
+                >
                     {t("funding.budget.limitTooLow")}
-                </span>
+                </Notice>
             )}
             {needsAllowanceIncrease && (
                 <Button

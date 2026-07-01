@@ -5,6 +5,7 @@ import {
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import {
     RadioGroup,
     RadioGroupItem,
@@ -300,38 +301,46 @@ export function MerchantEditSheet({
                                 </FormItem>
                             )}
                         />
-                        <Stack
-                            space="m"
-                            paddingY="s"
-                            className={styles.infoBar}
-                        >
-                            <Text as="p" variant="bodySmall" color="primary">
+                        <Notice display="block" tone="info" icon={null}>
+                            <Stack space="m">
                                 <Text
-                                    as="span"
+                                    as="p"
                                     variant="bodySmall"
-                                    weight="semiBold"
+                                    color="primary"
                                 >
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        weight="semiBold"
+                                    >
+                                        {t(
+                                            "merchantEdit.editMerchant.infoMonerium"
+                                        )}{" "}
+                                    </Text>
                                     {t(
-                                        "merchantEdit.editMerchant.infoMonerium"
-                                    )}{" "}
+                                        "forms.currencySelector.moneriumDescription"
+                                    )}
                                 </Text>
-                                {t(
-                                    "forms.currencySelector.moneriumDescription"
-                                )}
-                            </Text>
-                            <Text as="p" variant="bodySmall" color="primary">
                                 <Text
-                                    as="span"
+                                    as="p"
                                     variant="bodySmall"
-                                    weight="semiBold"
+                                    color="primary"
                                 >
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        weight="semiBold"
+                                    >
+                                        {t(
+                                            "merchantEdit.editMerchant.infoCircle"
+                                        )}{" "}
+                                    </Text>
                                     {t(
-                                        "merchantEdit.editMerchant.infoCircle"
-                                    )}{" "}
+                                        "forms.currencySelector.circleDescription"
+                                    )}
                                 </Text>
-                                {t("forms.currencySelector.circleDescription")}
-                            </Text>
-                        </Stack>
+                            </Stack>
+                        </Notice>
                     </form>
                 </Form>
                 <Inline space="s" padding="l">
