@@ -48,6 +48,15 @@ type UseLoginArgs = {
      * detached credential's owner across analytics + recovery surfaces.
      */
     detachedPairingId?: string;
+    /**
+     * When true, enables the native `preferImmediatelyAvailableCredentials`
+     * fail-fast flag for this attempt: a present passkey prompts biometrics
+     * immediately, and a device with no passkey fails instantly with a
+     * `no-credential` signal (zero UI) instead of collapsing onto an opaque
+     * `NotAllowedError`. Used by the `/login` auto quick-login. Inert on
+     * web/non-Tauri.
+     */
+    silentLogin?: boolean;
     // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
 } | void;
 
@@ -79,17 +88,16 @@ export function useLogin(
         ...options,
         mutationKey: authKey.login,
         mutationFn: async (args?: UseLoginArgs) => {
-            // Only pass getFn if defined (Android), omit for iOS/web to use browser default
+            // Only pass getFn if defined (Tauri), omit for web to use browser default.
             const challenge = generatePrivateKey();
-            // TODO(prefer-immediate): on Tauri we can't tell "user cancelled" from
-            // "no passkey on this device" — both collapse onto NotAllowedError →
-            // `cancelled`. The native `preferImmediatelyAvailableCredentials` flag
-            // fixes this (Android: GetCredentialRequest →NoCredentialException; iOS:
-            // performRequests(.preferImmediatelyAvailableCredentials) →.notInteractive
-            // 1005). It isn't exposed via ox's getFn, so adopting it means threading
-            // a flag through getTauriGetFn → the register/authenticate plugin commands,
-            // then mapping the resulting signal to the `no-credential` kind.
-            const tauriGetFn = getTauriGetFn();
+            // `silentLogin` enables the native preferImmediatelyAvailableCredentials
+            // flag so a device with no passkey fails fast onto the `no-credential`
+            // kind instead of an opaque NotAllowedError (Android: NoCredentialException;
+            // iOS: .notInteractive/1005). Threaded through getTauriGetFn → the
+            // authenticate plugin command; inert on web/non-Tauri.
+            const tauriGetFn = getTauriGetFn({
+                preferImmediatelyAvailable: args?.silentLogin === true,
+            });
             const allowedCredentialIds =
                 args?.allowedCredentialIds ??
                 args?.lastAuthentication?.authenticatorId;
