@@ -4,23 +4,24 @@ import {
     TAKEADS_PATHS,
     type TakeAdsActionListParams,
     type TakeAdsActionListResponse,
-    type TakeAdsMerchantListParams,
-    type TakeAdsMerchantListResponse,
 } from "./config";
 
 /**
  * Typed wrapper for the TakeAds (Mitgo) Take/Monetize API.
  *
- * Two endpoints back the affiliate integration:
- *  - {@link listMerchants}  catalog sync (synthetic merchants + commission rates)
+ * Conversion ingestion is the only backend-driven endpoint:
  *  - {@link getActions}     conversion ingestion (polled on a watermark)
+ *
+ * Brand onboarding rides the platform-admin merchant registration flow (the
+ * admin supplies the TakeAds merchant id + tracking link), so there is no
+ * server-side catalog sync.
  *
  * Auth is a single Bearer key shared across calls; if TakeAds requires distinct
  * keys per scope we can split this later.
  *
  * No documented rate limits, so we keep a small retry on the transient 429/503
- * statuses and surface everything else to the caller (sync/ingestion crons
- * decide how to degrade).
+ * statuses and surface everything else to the caller (the ingestion cron
+ * decides how to degrade).
  */
 export class TakeAdsClient {
     private readonly api: KyInstance;
@@ -47,20 +48,6 @@ export class TakeAdsClient {
                 backoffLimit: 10_000,
             },
         });
-    }
-
-    /**
-     * Page of the merchant catalog. Pass `meta.next` back as `next` to paginate
-     * (stop once it comes back null). `limit` caps at 500.
-     */
-    async listMerchants(
-        params: TakeAdsMerchantListParams = {}
-    ): Promise<TakeAdsMerchantListResponse> {
-        return this.api
-            .get(TAKEADS_PATHS.merchants, {
-                searchParams: toSearchParams(params),
-            })
-            .json<TakeAdsMerchantListResponse>();
     }
 
     /**

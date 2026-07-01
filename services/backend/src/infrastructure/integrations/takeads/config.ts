@@ -13,60 +13,8 @@ export const TAKEADS_BASE_URL = "https://api.takeads.com";
 
 /** Path segments (the API mixes version prefixes, so each call is absolute). */
 export const TAKEADS_PATHS = {
-    merchants: "v1/product/monetize-api/v2/merchant",
     statsAction: "v3/api/stats/action",
 } as const;
-
-// --- Catalog: GET /v1/product/monetize-api/v2/merchant -----------------------
-
-/**
- * One reward tier the publisher can earn per approved action. A merchant may
- * expose several; the actual payout depends on what the merchant approves.
- */
-export type TakeAdsCommissionRate = {
-    /** Flat amount paid per transaction/lead. */
-    fixedCommission: number;
-    /** Percent of the order total paid per transaction. */
-    percentageCommission: number;
-};
-
-export type TakeAdsMerchant = {
-    /** Unique merchant id (null for a few catalog edge cases). */
-    merchantId: number | null;
-    name: string;
-    /** URI of the merchant logo (null when absent). */
-    imageUri: string | null;
-    defaultDomain: string;
-    description: string;
-    domains: string[];
-    /** ISO 4217 alpha-3. */
-    currencyCode: string;
-    /** A merchant is active when it has at least one active program. */
-    isActive: boolean;
-    deeplinkAllowed: boolean;
-    countryCodes: string[];
-    commissionRates: TakeAdsCommissionRate[];
-    /** Base merchant tracking link (subId/deeplink appended client-side). */
-    trackingLink: string;
-    /** ISO 8601. */
-    updatedAt: string;
-};
-
-export type TakeAdsMerchantListParams = {
-    /** Pointer to the next page (integer cursor from `meta.next`). */
-    next?: number;
-    /** Max 500, default 100. */
-    limit?: number;
-    /** ISO 8601 lower bound on `updatedAt`. */
-    updatedAtFrom?: string;
-    isActive?: boolean;
-    deeplinkAllowed?: boolean;
-};
-
-export type TakeAdsMerchantListResponse = {
-    meta: { next: number | null };
-    data: TakeAdsMerchant[];
-};
 
 // --- Stats: GET /v3/api/stats/action -----------------------------------------
 
