@@ -62,21 +62,34 @@ export class AffiliateLinkService {
         });
     }
 
+    /**
+     * Read the caller's existing share link for a merchant **without minting**
+     * one. Returns null when the user has not created a link yet (drives the
+     * lazy "create then share" two-step flow in the explorer). Still throws if
+     * the merchant isn't an affiliate brand at all.
+     */
+    async getShareLink(params: {
+        merchantId: string;
+        identityGroupId: string;
+    }): Promise<AffiliateShareLink | null> {
+        const brand = await this.requireBrand(params.merchantId);
+
+        const attribution =
+            await this.affiliateAttributionRepository.findByUserAndBrand({
+                provider: PROVIDER,
+                identityGroupId: params.identityGroupId,
+                merchantId: params.merchantId,
+            });
+        if (!attribution) return null;
+
+        return this.buildShareLink(brand.trackingLink, attribution.token);
+    }
+
     async getOrCreateShareLink(params: {
         merchantId: string;
         identityGroupId: string;
     }): Promise<AffiliateShareLink> {
-        const brand =
-            await this.affiliateBrandRepository.findByMerchantAndProvider(
-                params.merchantId,
-                PROVIDER
-            );
-        if (!brand) {
-            throw HttpError.notFound(
-                "AFFILIATE_BRAND_NOT_FOUND",
-                "Merchant is not linked to this affiliate provider"
-            );
-        }
+        const brand = await this.requireBrand(params.merchantId);
 
         const attribution = await this.affiliateAttributionRepository.mint({
             token: generateAffiliateToken(),
@@ -86,14 +99,39 @@ export class AffiliateLinkService {
             trackingLink: brand.trackingLink,
         });
 
-        // trackingLink is validated as a well-formed https URL at link time, so
-        // this never throws. Setting the sub-id param overwrites any stale one.
-        const url = new URL(brand.trackingLink);
-        url.searchParams.set(PROVIDER_SUBID_PARAM[PROVIDER], attribution.token);
+        return this.buildShareLink(brand.trackingLink, attribution.token);
+    }
 
+    private async requireBrand(merchantId: string) {
+        const brand =
+            await this.affiliateBrandRepository.findByMerchantAndProvider(
+                merchantId,
+                PROVIDER
+            );
+        if (!brand) {
+            throw HttpError.notFound(
+                "AFFILIATE_BRAND_NOT_FOUND",
+                "Merchant is not linked to this affiliate provider"
+            );
+        }
+        return brand;
+    }
+
+    /**
+     * Build the per-user share link: the brand tracking link with the
+     * provider's sub-id query-param set to our attribution token. trackingLink
+     * is validated as a well-formed https URL at link time, so this never
+     * throws; setting the sub-id param overwrites any stale one.
+     */
+    private buildShareLink(
+        trackingLink: string,
+        token: string
+    ): AffiliateShareLink {
+        const url = new URL(trackingLink);
+        url.searchParams.set(PROVIDER_SUBID_PARAM[PROVIDER], token);
         return {
             provider: PROVIDER,
-            token: attribution.token,
+            token,
             url: url.toString(),
         };
     }

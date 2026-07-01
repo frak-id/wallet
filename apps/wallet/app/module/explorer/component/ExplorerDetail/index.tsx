@@ -38,6 +38,7 @@ import { useStore } from "zustand";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import { useCampaignView } from "../../campaignView";
+import { useAffiliateShareLink } from "../../hook/useAffiliateShareLink";
 import { CampaignInfoSection } from "./CampaignInfoSection";
 import * as styles from "./index.css";
 
@@ -97,8 +98,26 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
         return url.toString();
     }, [merchant.domain, merchant.id, mergeToken]);
 
+    // Affiliate merchants attribute conversions through a per-user tracking
+    // link minted server-side (the subId is bound to the wallet identity).
+    // Native merchants use the client-side fCtx sharing link instead.
+    const isAffiliate = merchant.integration === "affiliate";
+    const {
+        link: affiliateLink,
+        create: createAffiliateLink,
+        isCreating: isCreatingAffiliateLink,
+    } = useAffiliateShareLink({
+        merchantId: merchant.id,
+        enabled: isAffiliate,
+    });
+
+    // Two-step affiliate flow: the user must explicitly mint their tracking
+    // link before it can be shared/copied. `null` link + affiliate = step 1.
+    const affiliateNeedsLink = isAffiliate && !affiliateLink;
+
     const shareUrl = useMemo(() => {
         const baseUrl = `https://${merchant.domain}`;
+        if (isAffiliate) return affiliateLink?.url ?? baseUrl;
         return (
             buildSharingLink({
                 clientId: clientId ?? undefined,
@@ -107,7 +126,14 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 baseUrl,
             }) ?? baseUrl
         );
-    }, [clientId, walletAddress, merchant.domain, merchant.id]);
+    }, [
+        isAffiliate,
+        affiliateLink?.url,
+        clientId,
+        walletAddress,
+        merchant.domain,
+        merchant.id,
+    ]);
 
     const { mutate: triggerSharing, canShare } = useShareLink(
         shareUrl,
@@ -133,20 +159,21 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const handleShare = useCallback(() => {
         // `canShare` is true on Tauri (routed through the native plugin) and on
         // web browsers that expose `navigator.share`. No-op elsewhere.
-        if (!canShare) return;
+        if (!canShare || affiliateNeedsLink) return;
         triggerSharing();
-    }, [canShare, triggerSharing]);
+    }, [canShare, affiliateNeedsLink, triggerSharing]);
 
     const { copied, copy } = useCopyToClipboardWithState();
 
     const handleCopy = useCallback(() => {
+        if (affiliateNeedsLink) return;
         copy(shareUrl);
         trackEvent("sharing_link_copied", {
             source: "explorer_detail",
             merchant_id: merchant.id,
             link: shareUrl,
         });
-    }, [copy, shareUrl, merchant.id]);
+    }, [copy, affiliateNeedsLink, shareUrl, merchant.id]);
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
@@ -172,7 +199,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                         onClick={onClose}
                         label={t("explorer.detail.close")}
                     />
-                    {canShare && (
+                    {canShare && !affiliateNeedsLink && (
                         <GlassButton
                             as="button"
                             icon={<ShareIcon width={20} height={20} />}
@@ -283,17 +310,37 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
             </DetailSheetBody>
 
             <DetailSheetFooter className={styles.floatingFooter}>
-                <Button
-                    variant="primary"
-                    width="full"
-                    onClick={handleShare}
-                    size="large"
-                    fontSize="s"
-                >
-                    {t("explorer.detail.shareAndEarn")}
-                    <CoinsIcon width={16} height={16} />
-                </Button>
-                {!ua.isMobile && (
+                {affiliateNeedsLink ? (
+                    // Step 1: mint the per-user tracking link on explicit action.
+                    <Button
+                        variant="primary"
+                        width="full"
+                        onClick={() => createAffiliateLink()}
+                        disabled={isCreatingAffiliateLink}
+                        size="large"
+                        fontSize="s"
+                    >
+                        {t(
+                            isCreatingAffiliateLink
+                                ? "explorer.detail.creatingShareLink"
+                                : "explorer.detail.createShareLink"
+                        )}
+                        <CoinsIcon width={16} height={16} />
+                    </Button>
+                ) : (
+                    // Step 2: share / copy the ready link.
+                    <Button
+                        variant="primary"
+                        width="full"
+                        onClick={handleShare}
+                        size="large"
+                        fontSize="s"
+                    >
+                        {t("explorer.detail.shareAndEarn")}
+                        <CoinsIcon width={16} height={16} />
+                    </Button>
+                )}
+                {!ua.isMobile && !affiliateNeedsLink && (
                     <Button
                         variant="ghost"
                         width="full"

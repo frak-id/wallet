@@ -10,6 +10,7 @@ function makeService(
         brand?: { merchantId: string; trackingLink: string } | null;
         existingBrandForExternalId?: { merchantId: string } | null;
         existingToken?: string;
+        existingAttribution?: { token: string } | null;
     } = {}
 ) {
     const brand =
@@ -35,6 +36,9 @@ function makeService(
             Promise.resolve({
                 token: opts.existingToken ?? params.token,
             } as never)
+        ),
+        findByUserAndBrand: vi.fn(() =>
+            Promise.resolve((opts.existingAttribution ?? null) as never)
         ),
     };
 
@@ -114,6 +118,43 @@ describe("AffiliateLinkService.getOrCreateShareLink", () => {
         );
         expect(url.searchParams.get("utm")).toBe("x");
         expect(url.searchParams.get("s")).toBeTruthy();
+    });
+});
+
+describe("AffiliateLinkService.getShareLink", () => {
+    it("throws 404 when the merchant is not linked to the provider", async () => {
+        const { service } = makeService({ brand: null });
+
+        await expect(service.getShareLink(baseParams)).rejects.toThrow(
+            HttpError
+        );
+    });
+
+    it("returns null without minting when the user has no link yet", async () => {
+        const { service, affiliateAttributionRepository } = makeService({
+            existingAttribution: null,
+        });
+
+        const result = await service.getShareLink(baseParams);
+
+        expect(result).toBeNull();
+        // Read-only: never mints.
+        expect(affiliateAttributionRepository.mint).not.toHaveBeenCalled();
+    });
+
+    it("returns the existing link built from the stored token", async () => {
+        const { service, affiliateAttributionRepository } = makeService({
+            existingAttribution: { token: "EXISTING_TOKEN" },
+        });
+
+        const result = await service.getShareLink(baseParams);
+
+        expect(result).not.toBeNull();
+        expect(result?.token).toBe("EXISTING_TOKEN");
+        expect(new URL(result?.url ?? "").searchParams.get("s")).toBe(
+            "EXISTING_TOKEN"
+        );
+        expect(affiliateAttributionRepository.mint).not.toHaveBeenCalled();
     });
 });
 

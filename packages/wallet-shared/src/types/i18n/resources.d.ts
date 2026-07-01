@@ -264,6 +264,8 @@ export default interface Resources {
       },
       "detail": {
         "close": "Close",
+        "createShareLink": "Create my sharing link",
+        "creatingShareLink": "Creating your link…",
         "earningsAvailability": "Earnings availability",
         "endDateBadge": "Ends {{date}} ({{days}}d)",
         "endsIn": "Ends in {{count}} day",

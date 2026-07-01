@@ -1267,6 +1267,8 @@
             "readMore": "Read more",
             "legal": "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.",
             "shareAndEarn": "Share and earn",
+"createShareLink": "Create my sharing link",
+"creatingShareLink": "Creating your link…",
             "endsIn": "Ends in {{count}} day",
             "endsIn_other": "Ends in {{count}} days",
             "referrerReward": "Reward as referrer",

@@ -1264,6 +1264,8 @@
             "readMore": "Lire la suite",
             "legal": "Les <termsLink>conditions générales de {{merchantName}}</termsLink> et les <termsLink>conditions générales de FRAK</termsLink> s'appliquent.",
             "shareAndEarn": "Partager et gagner",
+"createShareLink": "Créer mon lien de partage",
+"creatingShareLink": "Création du lien…",
             "endsIn": "Se termine dans {{count}} jour",
             "endsIn_other": "Se termine dans {{count}} jours",
             "referrerReward": "Récompense en tant que parrain",
