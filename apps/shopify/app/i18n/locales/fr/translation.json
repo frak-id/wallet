@@ -129,9 +129,8 @@
         "todo": "Veuillez activer l'application Frak dans votre thème en suivant les instructions ci-dessous",
         "intermediate": {
             "banner": "Votre thème prend en charge les app embeds mais pas les blocs d'application dans les pages",
-            "bannerDescription": "Le Frak Listener fonctionne globalement via un app embed — aucun code manuel nécessaire. Seul le bouton de partage ne peut pas être ajouté automatiquement dans votre page produit, ajoutez-le donc manuellement ci-dessous.",
-            "embedTitle": "1. Activer le Frak Listener",
-            "buttonTitle": "2. Ajouter le bouton de partage (optionnel)"
+            "bannerDescription": "Le Frak Listener fonctionne globalement via un app embed — aucun code manuel nécessaire. Le bouton de partage et la bannière ne peuvent pas être ajoutés automatiquement dans vos pages ; ajoutez-les depuis l'onglet Apparence.",
+            "embedTitle": "Activer le Frak Listener"
         },
         "legacy": {
             "upgradeWarning": "Votre thème ne prend pas en charge Online Store 2.0",
@@ -446,6 +445,19 @@
         "legacy": {
             "customizationsNote": "Votre thème ne prend pas en charge les blocs d'application Shopify. Le logo, les textes et les récompenses sont gérés depuis l'éditeur Frak sur le tableau de bord business.",
             "openEditor": "Ouvrir l'éditeur Frak"
+        },
+        "manual": {
+            "buttonDescription": "Votre thème ne prend pas en charge les blocs d'application dans les pages. Collez cette balise là où vous souhaitez le bouton de partage (généralement près du bouton Ajouter au panier).",
+            "bannerDescription": "Votre thème ne prend pas en charge les blocs d'application dans les pages. Collez cette balise là où vous souhaitez afficher la bannière de parrainage (ex. en haut de votre theme.liquid).",
+            "classHint": "Remplacez <code>btn</code> par la classe de bouton de votre thème pour qu'il s'harmonise (ex. <code>btn</code> sur la plupart des thèmes vintage, <code>button</code> sur Dawn).",
+            "sectionHint": "Si votre modèle de produit ne contient qu'une balise <code>{% section %}</code>, ouvrez plutôt ce fichier de section (ex. <code>sections/product-template.liquid</code>).",
+            "editProductTemplate": "Modifier le modèle produit",
+            "editTheme": "Modifier theme.liquid",
+            "customizeNote": "Personnalisez les textes, couleurs et récompenses dans l'éditeur Frak :",
+            "openEditor": "Ouvrir l'éditeur Frak",
+            "copyTag": "Copier la balise",
+            "copied": "Copié !",
+            "copyError": "Copie automatique impossible — sélectionnez la balise ci-dessus et copiez-la manuellement."
         }
     },
     "funding": {

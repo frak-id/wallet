@@ -129,9 +129,8 @@
         "todo": "Please activate the Frak application in your theme by following the instructions below",
         "intermediate": {
             "banner": "Your theme supports app embeds but not in-page app blocks",
-            "bannerDescription": "The Frak Listener runs globally through an app embed — no manual code needed. Only the share button can't be dropped into your product page automatically, so add it manually below.",
-            "embedTitle": "1. Enable the Frak Listener",
-            "buttonTitle": "2. Add the share button (optional)"
+            "bannerDescription": "The Frak Listener runs globally through an app embed — no manual code needed. The share button and banner can't be dropped into your pages automatically; add them from the Appearance tab.",
+            "embedTitle": "Enable the Frak Listener"
         },
         "legacy": {
             "upgradeWarning": "Your theme does not support Online Store 2.0",
@@ -445,6 +444,19 @@
         "legacy": {
             "customizationsNote": "Your theme does not support Shopify app blocks. Logo, wording and reward settings are managed in the Frak editor on the business dashboard.",
             "openEditor": "Open Frak editor"
+        },
+        "manual": {
+            "buttonDescription": "Your theme doesn't support in-page app blocks. Paste this tag where you want the share button (usually near the Add to cart button).",
+            "bannerDescription": "Your theme doesn't support in-page app blocks. Paste this tag where you want the referral banner to appear (e.g. near the top of your theme.liquid).",
+            "classHint": "Replace <code>btn</code> with your theme's button class so it matches your store (e.g. <code>btn</code> on most vintage themes, <code>button</code> on Dawn).",
+            "sectionHint": "If your product template only contains a <code>{% section %}</code> tag, open that section file instead (e.g. <code>sections/product-template.liquid</code>).",
+            "editProductTemplate": "Edit product template",
+            "editTheme": "Edit theme.liquid",
+            "customizeNote": "Personalise wording, colors and rewards in the Frak editor:",
+            "openEditor": "Open Frak editor",
+            "copyTag": "Copy the tag",
+            "copied": "Copied!",
+            "copyError": "Couldn't copy automatically — select the tag above and copy it manually."
         }
     },
     "funding": {

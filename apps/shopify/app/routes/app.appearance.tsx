@@ -3,6 +3,8 @@ import { ButtonTab } from "app/components/Appearance/ButtonTab";
 import { CheckoutExtensionTab } from "app/components/Appearance/CheckoutExtensionTab";
 import { CustomizationsTab } from "app/components/Appearance/CustomizationsTab";
 import { ExplorerTab } from "app/components/Appearance/ExplorerTab";
+import { ManualBannerInstall } from "app/components/Appearance/ManualBannerInstall";
+import { ManualButtonInstall } from "app/components/Appearance/ManualButtonInstall";
 import { Skeleton } from "app/components/Skeleton";
 import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
@@ -287,11 +289,16 @@ export default function AppearancePage() {
     const shopName = rootData?.shop?.name ?? "My Store";
     const businessUrl = rootData?.businessUrl ?? "";
     const merchantId = rootData?.merchantId;
+    const shopDomain = rootData?.shop?.myshopifyDomain;
     // Deep-link the legacy "Open editor" straight to the branding editor, same
     // as the dashboard's manual-install step 3.
     const customizeUrl = merchantId
         ? `${businessUrl}/m/${merchantId}/merchant/customize`
         : businessUrl;
+    // Deep-links for the manual (non-app-block) button/banner install.
+    const themeBase = `https://${shopDomain}/admin/themes/current`;
+    const productTemplateUrl = `${themeBase}?key=templates/product.liquid`;
+    const themeLiquidUrl = `${themeBase}?key=layout/theme.liquid`;
     const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
@@ -319,18 +326,11 @@ export default function AppearancePage() {
         },
     ];
 
-    // Legacy themes drop the Banner/Button tabs (they write Shopify metafields
-    // only the OS-2.0 block reads). Customizations stays but redirects to the
-    // Frak editor; Explorer + Checkout Extension are backend-driven.
-    const legacyTabs = fullTabs.filter(
-        (tab) => tab.id !== "share-button" && tab.id !== "banner"
-    );
-
-    // Single renderer keyed on the tab id (robust to the differing tab sets);
-    // only Customizations differs between modes.
+    // Single renderer keyed on the tab id. Every theme sees all tabs; the
+    // Customizations / Share Button / Banner tabs swap to a manual (copy-paste
+    // + redirect) view when the theme can't host in-page app blocks.
     const renderTabContent = (isThemeSupported: boolean) => {
-        const tabs = isThemeSupported ? fullTabs : legacyTabs;
-        switch (tabs[selectedTab]?.id) {
+        switch (fullTabs[selectedTab]?.id) {
             case "customizations":
                 return isThemeSupported ? (
                     <CustomizationsTab
@@ -366,15 +366,25 @@ export default function AppearancePage() {
                     />
                 );
             case "share-button":
-                return (
+                return isThemeSupported ? (
                     <ButtonTab
                         isThemeHasFrakButton={isThemeHasFrakButton}
                         firstProduct={firstProduct}
                     />
+                ) : (
+                    <ManualButtonInstall
+                        productTemplateUrl={productTemplateUrl}
+                        customizeUrl={customizeUrl}
+                    />
                 );
             case "banner":
-                return (
+                return isThemeSupported ? (
                     <BannerTab isThemeHasFrakBanner={isThemeHasFrakBanner} />
+                ) : (
+                    <ManualBannerInstall
+                        themeLiquidUrl={themeLiquidUrl}
+                        customizeUrl={customizeUrl}
+                    />
                 );
             case "checkout-extension":
                 return <CheckoutExtensionTab />;
@@ -392,7 +402,7 @@ export default function AppearancePage() {
                         const supported = isThemeSupported ?? true;
                         return (
                             <Tabs
-                                tabs={supported ? fullTabs : legacyTabs}
+                                tabs={fullTabs}
                                 selected={selectedTab}
                                 onSelect={setSelectedTab}
                             >
