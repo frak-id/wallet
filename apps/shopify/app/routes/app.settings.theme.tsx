@@ -52,16 +52,12 @@ export default function SettingsThemePage() {
     const { t } = useTranslation();
     const shopDomain = rootData?.shop.myshopifyDomain;
     const editorUrl = `https://${shopDomain}/admin/themes/current/editor`;
-    const productTemplateUrl = `https://${shopDomain}/admin/themes/current?key=templates/product.liquid`;
     const refresh = useRefreshData();
     const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
     const merchantId = rootData?.merchantId ?? null;
     const walletUrl = rootData?.walletUrl ?? "";
     const componentsUrl = rootData?.componentsUrl ?? "";
     const businessUrl = rootData?.businessUrl ?? "";
-    const customizeUrl = merchantId
-        ? `${businessUrl}/m/${merchantId}/merchant/customize`
-        : businessUrl;
 
     useVisibilityChange(
         useCallback(() => {
@@ -106,8 +102,6 @@ export default function SettingsThemePage() {
                                 }
                                 editorUrl={editorUrl}
                                 listenerAppEmbedId={id ?? ""}
-                                productTemplateUrl={productTemplateUrl}
-                                customizeUrl={customizeUrl}
                             />
                         ) : (
                             <LegacyInstall
