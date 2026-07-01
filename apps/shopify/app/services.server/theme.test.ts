@@ -5,6 +5,7 @@ import {
     detectFrakActivated,
     detectFrakBannerInSections,
     detectFrakButton,
+    doesThemeSupportAppEmbed,
     doesThemeSupportBlock,
     extractThemeId,
     type ThemeBlockInfo,
@@ -460,5 +461,82 @@ describe("doesThemeSupportBlock", () => {
             },
         } as unknown as AuthenticatedContext;
         await expect(doesThemeSupportBlock(context)).resolves.toBe(false);
+    });
+});
+
+/* ------------------------------------------------------------------ */
+/*  doesThemeSupportAppEmbed — vintage vs truly-unsupported themes      */
+/*                                                                     */
+/*  App embeds work on ALL theme architectures (incl. vintage like     */
+/*  Debut) as long as theme.liquid renders `content_for_header`. This  */
+/*  separates the "intermediate" case from a genuinely broken theme.   */
+/* ------------------------------------------------------------------ */
+
+describe("doesThemeSupportAppEmbed", () => {
+    function fileBody(content: string) {
+        return {
+            data: {
+                theme: {
+                    files: {
+                        nodes: [
+                            {
+                                filename: "layout/theme.liquid",
+                                body: { content },
+                            },
+                        ],
+                    },
+                },
+            },
+        };
+    }
+
+    it("returns true when theme.liquid renders content_for_header", async () => {
+        const context = mockContext(
+            fileBody("<head>{{ content_for_header }}</head>")
+        );
+        await expect(doesThemeSupportAppEmbed(context)).resolves.toBe(true);
+    });
+
+    it("returns false when content_for_header is absent", async () => {
+        const context = mockContext(fileBody("<head><title>x</title></head>"));
+        await expect(doesThemeSupportAppEmbed(context)).resolves.toBe(false);
+    });
+
+    it("decodes a base64 theme.liquid body", async () => {
+        const encoded = Buffer.from(
+            "<head>{{ content_for_header }}</head>"
+        ).toString("base64");
+        const context = mockContext({
+            data: {
+                theme: {
+                    files: {
+                        nodes: [
+                            {
+                                filename: "layout/theme.liquid",
+                                body: { contentBase64: encoded },
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+        await expect(doesThemeSupportAppEmbed(context)).resolves.toBe(true);
+    });
+
+    it("fails open (true) when theme.liquid is empty/missing", async () => {
+        const context = mockContext({
+            data: { theme: { files: { nodes: [] } } },
+        });
+        await expect(doesThemeSupportAppEmbed(context)).resolves.toBe(true);
+    });
+
+    it("fails open (true) when the GraphQL call rejects", async () => {
+        const context = {
+            session: { shop: `test-shop-embed-${Date.now()}.myshopify.com` },
+            admin: {
+                graphql: () => Promise.reject(new Error("network down")),
+            },
+        } as unknown as AuthenticatedContext;
+        await expect(doesThemeSupportAppEmbed(context)).resolves.toBe(true);
     });
 });

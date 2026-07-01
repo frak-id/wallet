@@ -11,7 +11,10 @@ import {
 } from "app/services.server/merchant";
 import { ensureFrakI18nMetaobject } from "app/services.server/metafields";
 import { shopInfo } from "app/services.server/shop";
-import { doesThemeSupportBlock } from "app/services.server/theme";
+import {
+    doesThemeSupportAppEmbed,
+    doesThemeSupportBlock,
+} from "app/services.server/theme";
 import { shouldShowOutletSkeleton } from "app/utils/navigationLoading";
 import {
     fetchAllOnboardingData,
@@ -68,6 +71,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         isThemeSupportedPromise: doesThemeSupportBlock(context).catch(
             () => false
         ),
+        // App embed support (Frak Listener). True on OS 2.0 AND vintage themes
+        // like Debut; only genuinely broken/ancient themes are false. Drives
+        // whether Listener activation (onboarding step 5) is critical.
+        supportsAppEmbedPromise: doesThemeSupportAppEmbed(context).catch(
+            // Fail open: app embeds are near-universal, so never hide the
+            // Listener step on a detection hiccup.
+            () => true
+        ),
         shop,
         merchantId,
         onboardingDataPromise: fetchAllOnboardingData(context, request),
@@ -75,14 +86,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function App() {
-    const { apiKey, isThemeSupportedPromise, onboardingDataPromise } =
-        useLoaderData<typeof loader>();
+    const {
+        apiKey,
+        isThemeSupportedPromise,
+        supportsAppEmbedPromise,
+        onboardingDataPromise,
+    } = useLoaderData<typeof loader>();
     return (
         <AppProvider embedded apiKey={apiKey}>
             <RootProvider>
                 <Suspense fallback={<Skeleton />}>
                     <AppContent
                         isThemeSupportedPromise={isThemeSupportedPromise}
+                        supportsAppEmbedPromise={supportsAppEmbedPromise}
                         onboardingDataPromise={onboardingDataPromise}
                     />
                 </Suspense>
@@ -93,9 +109,11 @@ export default function App() {
 
 function AppContent({
     isThemeSupportedPromise,
+    supportsAppEmbedPromise,
     onboardingDataPromise,
 }: {
     isThemeSupportedPromise: Promise<boolean>;
+    supportsAppEmbedPromise: Promise<boolean>;
     onboardingDataPromise: Promise<OnboardingStepData>;
 }) {
     const navigation = useNavigation();
@@ -108,17 +126,20 @@ function AppContent({
 
     return (
         <Await resolve={isThemeSupportedPromise}>
-            {(isThemeSupported) => {
-                return (
-                    <>
-                        <Navigation
-                            isThemeSupported={isThemeSupported}
-                            onboardingDataPromise={onboardingDataPromise}
-                        />
-                        {isLoading ? <Skeleton /> : <Outlet />}
-                    </>
-                );
-            }}
+            {(isThemeSupported) => (
+                <Await resolve={supportsAppEmbedPromise} errorElement={null}>
+                    {(supportsAppEmbed) => (
+                        <>
+                            <Navigation
+                                isThemeSupported={isThemeSupported}
+                                supportsAppEmbed={supportsAppEmbed ?? true}
+                                onboardingDataPromise={onboardingDataPromise}
+                            />
+                            {isLoading ? <Skeleton /> : <Outlet />}
+                        </>
+                    )}
+                </Await>
+            )}
         </Await>
     );
 }
@@ -150,9 +171,11 @@ export const headers: HeadersFunction = (headersArgs) => {
  */
 function Navigation({
     isThemeSupported,
+    supportsAppEmbed,
     onboardingDataPromise,
 }: {
     isThemeSupported: boolean;
+    supportsAppEmbed: boolean;
     onboardingDataPromise: Promise<OnboardingStepData>;
 }) {
     return (
@@ -164,7 +187,8 @@ function Navigation({
                     {(onboardingData) => {
                         const validationResult = validateCompleteOnboarding(
                             onboardingData,
-                            isThemeSupported
+                            isThemeSupported,
+                            supportsAppEmbed
                         );
                         if (validationResult.hasMissedCriticalSteps)
                             return null;

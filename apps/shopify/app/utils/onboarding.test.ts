@@ -200,6 +200,29 @@ describe("validateCompleteOnboarding", () => {
             const result = validateCompleteOnboarding(stepsOneToFourComplete);
             expect(result.hasMissedCriticalSteps).toBe(true);
         });
+
+        it("flags hasMissedCriticalSteps for an intermediate theme (embed supported) when the Listener is not activated", () => {
+            // isThemeSupported=false (no app blocks) but supportsAppEmbed=true
+            // (e.g. Debut): step 5 (Listener) is critical again.
+            const result = validateCompleteOnboarding(
+                stepsOneToFourComplete,
+                false,
+                true
+            );
+            expect(result.hasMissedCriticalSteps).toBe(true);
+            expect(result.failedSteps).toContain(5);
+        });
+
+        it("clears hasMissedCriticalSteps for an intermediate theme once the Listener is activated", () => {
+            const result = validateCompleteOnboarding(
+                { ...stepsOneToFourComplete, isThemeHasFrakActivated: true },
+                false,
+                true
+            );
+            expect(result.hasMissedCriticalSteps).toBe(false);
+            // Steps 6-7 (in-page app blocks) remain non-critical here.
+            expect(result.failedSteps).toContain(6);
+        });
     });
 });
 
@@ -210,6 +233,14 @@ describe("applicableStepCount", () => {
 
     it("drops the theme steps (5-7) for legacy themes", () => {
         expect(applicableStepCount(false)).toBe(4);
+    });
+
+    it("keeps step 5 (embed) for intermediate themes without app blocks", () => {
+        expect(applicableStepCount(false, true)).toBe(5);
+    });
+
+    it("drops step 5 for non-embed themes", () => {
+        expect(applicableStepCount(false, false)).toBe(4);
     });
 });
 

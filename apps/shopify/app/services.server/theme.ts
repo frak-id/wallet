@@ -276,6 +276,55 @@ export async function doesThemeSupportBlock(
     }
 }
 
+/**
+ * Check whether the current theme can render app embed blocks (theme app
+ * extensions injected via `content_for_header`). App embeds work on *all* theme
+ * architectures — including vintage themes like Debut — as long as
+ * `layout/theme.liquid` renders `{{ content_for_header }}`, which is where
+ * Shopify injects the app embed markup.
+ *
+ * This is the signal that separates a usable "intermediate" theme (embed OK, no
+ * app block) from a genuinely unsupported theme that needs the fully-manual SDK
+ * snippet.
+ */
+export async function doesThemeSupportAppEmbed(
+    context: AuthenticatedContext
+): Promise<boolean> {
+    try {
+        const mainThemeId = await getMainThemeId(context);
+        const response = await context.admin.graphql(getFilesQuery, {
+            variables: {
+                themeId: mainThemeId.gid,
+                filenames: ["layout/theme.liquid"],
+            },
+        });
+        const {
+            data: { theme },
+        } = await response.json();
+        const body = theme?.files?.nodes?.[0]?.body;
+        // The Theme Files API may return the body as text (`content`) OR base64
+        // (`contentBase64`) — Shopify chooses per file, and .liquid layouts can
+        // come back base64. Reading only `content` was silently yielding "" on
+        // themes like Debut, hiding the Listener step.
+        const content: string =
+            body?.content ??
+            (body?.contentBase64
+                ? Buffer.from(body.contentBase64, "base64").toString("utf-8")
+                : "");
+        // Couldn't read theme.liquid at all (empty/missing) — don't hide the
+        // near-universal app embed step; assume the theme supports it.
+        if (!content) return true;
+        return content.includes("content_for_header");
+    } catch (error) {
+        // App embeds work on virtually every theme (OS 2.0 AND vintage). Fail
+        // OPEN so a transient detection error never hides the Listener
+        // onboarding step — showing a step the rare broken theme can't use is
+        // far better than silently skipping the critical Listener activation.
+        console.error("doesThemeSupportAppEmbed failed", error);
+        return true;
+    }
+}
+
 export interface ThemeBlockInfo {
     type: string;
     disabled?: boolean;

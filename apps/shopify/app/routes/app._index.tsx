@@ -37,6 +37,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function Index() {
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
+    const supportsAppEmbedPromise = rootData?.supportsAppEmbedPromise;
     const onboardingDataPromise = rootData?.onboardingDataPromise;
     const businessUrl = rootData?.businessUrl ?? "";
     const walletUrl = rootData?.walletUrl ?? "";
@@ -68,18 +69,28 @@ export default function Index() {
                 <Suspense>
                     <Await resolve={isThemeSupportedPromise}>
                         {(isThemeSupported) => (
-                            <Await resolve={onboardingDataPromise}>
-                                {(resolved) => (
-                                    <Dashboard
-                                        onboardingData={resolved ?? {}}
-                                        isThemeSupported={
-                                            isThemeSupported ?? true
-                                        }
-                                        merchantId={merchantId}
-                                        walletUrl={walletUrl}
-                                        componentsUrl={componentsUrl}
-                                        businessUrl={businessUrl}
-                                    />
+                            <Await
+                                resolve={supportsAppEmbedPromise}
+                                errorElement={null}
+                            >
+                                {(supportsAppEmbed) => (
+                                    <Await resolve={onboardingDataPromise}>
+                                        {(resolved) => (
+                                            <Dashboard
+                                                onboardingData={resolved ?? {}}
+                                                isThemeSupported={
+                                                    isThemeSupported ?? true
+                                                }
+                                                supportsAppEmbed={
+                                                    supportsAppEmbed ?? true
+                                                }
+                                                merchantId={merchantId}
+                                                walletUrl={walletUrl}
+                                                componentsUrl={componentsUrl}
+                                                businessUrl={businessUrl}
+                                            />
+                                        )}
+                                    </Await>
                                 )}
                             </Await>
                         )}
@@ -99,6 +110,7 @@ export default function Index() {
 function Dashboard({
     onboardingData,
     isThemeSupported,
+    supportsAppEmbed,
     merchantId,
     walletUrl,
     componentsUrl,
@@ -106,6 +118,7 @@ function Dashboard({
 }: {
     onboardingData: OnboardingStepData;
     isThemeSupported: boolean;
+    supportsAppEmbed: boolean;
     merchantId: string | null;
     walletUrl: string;
     componentsUrl: string;
@@ -119,13 +132,15 @@ function Dashboard({
     } = useLoaderData<typeof loader>();
     const { hasMissedCriticalSteps } = validateCompleteOnboarding(
         onboardingData,
-        isThemeSupported
+        isThemeSupported,
+        supportsAppEmbed
     );
 
-    // Once the merchant confirms the manual install, hide the block from the
-    // dashboard (the full instructions stay on Settings → Theme).
+    // The manual-snippet card is only for themes that can't host the app embed
+    // at all. Intermediate themes (embed OK, e.g. Debut) activate the Listener
+    // through onboarding step 5 instead, so they must NOT see this card.
     const legacyInstall =
-        !isThemeSupported && !legacyInstallDismissed ? (
+        !supportsAppEmbed && !legacyInstallDismissed ? (
             <LegacyInstall
                 merchantId={merchantId}
                 walletUrl={walletUrl}

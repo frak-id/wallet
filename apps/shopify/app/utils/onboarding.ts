@@ -197,23 +197,39 @@ export async function fetchAllOnboardingData(
     }
 }
 /**
- * All the critical onboarding steps
+ * Backend / registration steps that always apply, regardless of theme:
  *  - Frak registration
  *  - Web pixel
  *  - Webhooks
  *  - Frak webhook
- *  - Theme activation (OS-2.0 only — dropped for legacy themes)
  */
-const criticalOnboardingSteps = [1, 2, 3, 4, 5];
-/** Critical steps for legacy (non-OS-2.0) themes — step 5 is non-applicable. */
-const criticalOnboardingStepsLegacy = [1, 2, 3, 4];
+const baseCriticalSteps = [1, 2, 3, 4];
 
 /**
- * Number of onboarding steps that apply to a theme. Legacy (non-OS-2.0) themes
- * can't host the app blocks behind steps 5–7, so only steps 1–4 apply.
+ * The critical onboarding steps for a given theme.
+ *
+ * Step 5 (Frak Listener activation) is critical whenever the theme can host
+ * the app embed — that covers full OS 2.0 themes AND "intermediate" themes
+ * (vintage-but-embed, e.g. Debut). Only a theme that can't host the embed at
+ * all (installed via the manual snippet) drops step 5.
  */
-export function applicableStepCount(isThemeSupported: boolean): number {
-    return isThemeSupported ? MAX_STEP : criticalOnboardingStepsLegacy.length;
+function criticalStepsFor(supportsAppEmbed: boolean): number[] {
+    return supportsAppEmbed ? [...baseCriticalSteps, 5] : baseCriticalSteps;
+}
+
+/**
+ * Number of onboarding steps that apply to a theme:
+ *  - full OS 2.0 (app blocks): all steps 1–7 (embed + button + banner),
+ *  - intermediate (app embed only): steps 1–5 (embed, no in-page blocks),
+ *  - manual / non-embed themes: steps 1–4.
+ */
+export function applicableStepCount(
+    isThemeSupported: boolean,
+    supportsAppEmbed: boolean = isThemeSupported
+): number {
+    if (isThemeSupported) return MAX_STEP;
+    if (supportsAppEmbed) return 5;
+    return baseCriticalSteps.length;
 }
 
 /**
@@ -226,7 +242,8 @@ export function applicableStepCount(isThemeSupported: boolean): number {
  */
 export function validateCompleteOnboarding(
     data: OnboardingStepData,
-    isThemeSupported = true
+    isThemeSupported = true,
+    supportsAppEmbed: boolean = isThemeSupported
 ): {
     isComplete: boolean;
     failedSteps: number[];
@@ -246,11 +263,10 @@ export function validateCompleteOnboarding(
         }
     }
 
-    // Check if any critical steps are missing. For legacy themes, only steps
-    // 1-4 are critical; step 5 (theme activation) is non-applicable.
-    const applicableCriticalSteps = isThemeSupported
-        ? criticalOnboardingSteps
-        : criticalOnboardingStepsLegacy;
+    // Check if any critical steps are missing. Step 5 (Listener activation) is
+    // critical whenever the theme supports the app embed — including
+    // intermediate themes where in-page app blocks (steps 6-7) don't apply.
+    const applicableCriticalSteps = criticalStepsFor(supportsAppEmbed);
     const hasMissedCriticalSteps = applicableCriticalSteps.some(
         (step) => !completedSteps.includes(step)
     );

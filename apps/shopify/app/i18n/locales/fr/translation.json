@@ -127,6 +127,12 @@
         "notConnected": "L'application Frak n'est pas activée",
         "link": "Configuration de l'application dans votre thème",
         "todo": "Veuillez activer l'application Frak dans votre thème en suivant les instructions ci-dessous",
+        "intermediate": {
+            "banner": "Votre thème prend en charge les app embeds mais pas les blocs d'application dans les pages",
+            "bannerDescription": "Le Frak Listener fonctionne globalement via un app embed — aucun code manuel nécessaire. Seul le bouton de partage ne peut pas être ajouté automatiquement dans votre page produit, ajoutez-le donc manuellement ci-dessous.",
+            "embedTitle": "1. Activer le Frak Listener",
+            "buttonTitle": "2. Ajouter le bouton de partage (optionnel)"
+        },
         "legacy": {
             "upgradeWarning": "Votre thème ne prend pas en charge Online Store 2.0",
             "upgradeDescription": "Passez à un thème OS 2.0 pour la meilleure expérience et une configuration en un clic des blocs d'application.",
