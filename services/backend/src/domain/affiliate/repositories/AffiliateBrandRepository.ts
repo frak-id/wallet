@@ -1,6 +1,6 @@
 import { db } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { type AffiliateBrandSelect, affiliateBrandTable } from "../db/schema";
 import type { AffiliateProvider } from "../provider";
 
@@ -65,6 +65,27 @@ export class AffiliateBrandRepository {
             ),
         });
         return result ?? null;
+    }
+
+    async findByMerchantId(
+        merchantId: string
+    ): Promise<AffiliateBrandSelect | null> {
+        const result = await db.query.affiliateBrandTable.findFirst({
+            where: eq(affiliateBrandTable.merchantId, merchantId),
+        });
+        return result ?? null;
+    }
+
+    /** Merchant ids (from the given set) that are linked to an affiliate brand. */
+    async listMerchantIdsWithBrand(
+        merchantIds: string[]
+    ): Promise<Set<string>> {
+        if (merchantIds.length === 0) return new Set();
+        const rows = await db
+            .select({ merchantId: affiliateBrandTable.merchantId })
+            .from(affiliateBrandTable)
+            .where(inArray(affiliateBrandTable.merchantId, merchantIds));
+        return new Set(rows.map((r) => r.merchantId));
     }
 
     async findByProviderAndExternalId(

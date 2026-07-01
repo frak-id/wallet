@@ -1014,6 +1014,13 @@ export default interface Resources {
       }
     },
     "merchant": {
+      "affiliate": {
+        "brandId": "TakeAds brand ID",
+        "description": "This merchant earns through its affiliate (TakeAds) integration.",
+        "title": "Affiliate configuration",
+        "trackingLink": "Tracking link"
+      },
+      "affiliateTag": "TakeAds",
       "create": {
         "actions": {
           "back": "Back",
@@ -1246,6 +1253,7 @@ export default interface Resources {
       "saveAll": "Save all changes",
       "saveError": "Some changes could not be saved. Check the fields and try again.",
       "tabs": {
+        "affiliate": "Affiliate settings",
         "explorer": "Explorer App settings",
         "identity": "Customize SDK Identity",
         "team": "Manage your team"
@@ -1279,8 +1287,8 @@ export default interface Resources {
       "title": "Edit"
     },
     "platformAdmin": {
-      "readOnlyTag": "Read-only",
-      "readOnlySectionTitle": "Read-only merchants"
+      "readOnlySectionTitle": "Read-only merchants",
+      "readOnlyTag": "Read-only"
     },
     "push": {
       "create": {

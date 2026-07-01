@@ -1,11 +1,13 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { Navigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { pageBottomSpacer } from "@/module/common/component/FloatingFooter/floating-footer.css";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
+import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useSdkConfig } from "@/module/merchant/hook/useSdkConfig";
 import { CustomizeSaveProvider } from "../saveRegistry";
@@ -18,6 +20,7 @@ import { getSdkConfig } from "./utils";
 
 export function CustomizePage({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
+    const { data: merchant } = useMerchant({ merchantId });
     const { data: sdkConfigData } = useSdkConfig({ merchantId });
     const sdkConfig = useMemo(
         () => getSdkConfig(sdkConfigData?.sdkConfig),
@@ -132,6 +135,18 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
         },
         [createPlacement, sdkConfig.placements]
     );
+
+    // Affiliate (e.g. TakeAds) merchants have no SDK to customize — send them
+    // to their dedicated affiliate configuration page instead.
+    if (merchant?.affiliate) {
+        return (
+            <Navigate
+                to="/m/$merchantId/merchant/affiliate"
+                params={{ merchantId }}
+                replace
+            />
+        );
+    }
 
     if (!sdkConfigData) {
         return (

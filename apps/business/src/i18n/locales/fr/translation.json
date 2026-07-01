@@ -1160,6 +1160,13 @@
         }
     },
     "merchant": {
+        "affiliateTag": "TakeAds",
+        "affiliate": {
+            "title": "Configuration d'affiliation",
+            "description": "Ce marchand est rémunéré via son intégration d'affiliation (TakeAds).",
+            "brandId": "Identifiant de marque TakeAds",
+            "trackingLink": "Lien de suivi"
+        },
         "create": {
             "steps": {
                 "details": {
@@ -1274,6 +1281,7 @@
         "close": "Fermer",
         "tabs": {
             "identity": "Personnaliser l'identité SDK",
+            "affiliate": "Réglages d'affiliation",
             "explorer": "Réglages de l'app Explorer",
             "team": "Gérer votre équipe"
         },

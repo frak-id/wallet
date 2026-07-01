@@ -1,5 +1,6 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { AffiliateContext } from "../../../domain/affiliate";
 import { AuthContext } from "../../../domain/auth";
 import { MerchantContext } from "../../../domain/merchant";
 import {
@@ -73,6 +74,11 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 }
             }
 
+            const brand =
+                await AffiliateContext.repositories.affiliateBrand.findByMerchantId(
+                    merchantId
+                );
+
             return {
                 id: merchant.id,
                 domain: merchant.domain,
@@ -87,6 +93,13 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 verifiedAt: merchant.verifiedAt?.toISOString() ?? null,
                 createdAt: merchant.createdAt?.toISOString() ?? null,
                 role,
+                affiliate: brand
+                    ? {
+                          provider: brand.provider,
+                          externalId: brand.externalId,
+                          trackingLink: brand.trackingLink,
+                      }
+                    : null,
             };
         },
         {
@@ -128,27 +141,40 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 )
             );
 
-            const allMerchants = isPlatAdmin
-                ? (await MerchantContext.repositories.merchant.findAll()).map(
-                      (m) => ({ id: m.id, domain: m.domain, name: m.name })
-                  )
-                : undefined;
+            const allMerchantsRaw = isPlatAdmin
+                ? await MerchantContext.repositories.merchant.findAll()
+                : [];
+
+            const nonNullAdmins = adminMerchants.filter((m) => m !== null);
+
+            // One batched lookup so each card can flag affiliate (TakeAds) brands.
+            const affiliateIds =
+                await AffiliateContext.repositories.affiliateBrand.listMerchantIdsWithBrand(
+                    [
+                        ...owned.map((m) => m.id),
+                        ...nonNullAdmins.map((m) => m.id),
+                        ...allMerchantsRaw.map((m) => m.id),
+                    ]
+                );
+
+            const toSummary = (m: {
+                id: string;
+                domain: string;
+                name: string;
+            }) => ({
+                id: m.id,
+                domain: m.domain,
+                name: m.name,
+                isAffiliate: affiliateIds.has(m.id),
+            });
 
             return {
-                owned: owned.map((m) => ({
-                    id: m.id,
-                    domain: m.domain,
-                    name: m.name,
-                })),
-                adminOf: adminMerchants
-                    .filter((m) => m !== null)
-                    .map((m) => ({
-                        id: m.id,
-                        domain: m.domain,
-                        name: m.name,
-                    })),
+                owned: owned.map(toSummary),
+                adminOf: nonNullAdmins.map(toSummary),
                 isPlatformAdmin: isPlatAdmin,
-                allMerchants,
+                allMerchants: isPlatAdmin
+                    ? allMerchantsRaw.map(toSummary)
+                    : undefined,
             };
         },
         {

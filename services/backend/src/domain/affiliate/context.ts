@@ -14,6 +14,7 @@ const affiliateLinkService = new AffiliateLinkService(
 
 export namespace AffiliateContext {
     export const repositories = {
+        affiliateBrand: affiliateBrandRepository,
         affiliateAttribution: affiliateAttributionRepository,
         affiliateSyncState: affiliateSyncStateRepository,
     };

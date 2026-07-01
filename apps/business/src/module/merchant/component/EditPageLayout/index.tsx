@@ -10,12 +10,14 @@ import { useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import * as styles from "./edit-page-layout.css";
 
-export type EditPage = "customize" | "details" | "team";
+export type EditPage = "customize" | "affiliate" | "details" | "team";
 
 const PAGE_ROUTES = {
     customize: "/m/$merchantId/merchant/customize",
+    affiliate: "/m/$merchantId/merchant/affiliate",
     details: "/m/$merchantId/merchant",
     team: "/m/$merchantId/merchant/team",
 } as const;
@@ -39,6 +41,10 @@ export function EditPageLayout({
 }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { data: merchant } = useMerchant({ merchantId });
+    // Affiliate (e.g. TakeAds) merchants have no embedded SDK — swap the SDK
+    // identity tab for the read-only affiliate configuration.
+    const isAffiliate = !!merchant?.affiliate;
 
     const guarded = (action: () => void) => {
         if (guardNavigate) {
@@ -82,9 +88,21 @@ export function EditPageLayout({
                         }
                     >
                         <TabsList variant="navigation">
-                            <TabsTrigger variant="navigation" value="customize">
-                                {t("merchantEdit.tabs.identity")}
-                            </TabsTrigger>
+                            {isAffiliate ? (
+                                <TabsTrigger
+                                    variant="navigation"
+                                    value="affiliate"
+                                >
+                                    {t("merchantEdit.tabs.affiliate")}
+                                </TabsTrigger>
+                            ) : (
+                                <TabsTrigger
+                                    variant="navigation"
+                                    value="customize"
+                                >
+                                    {t("merchantEdit.tabs.identity")}
+                                </TabsTrigger>
+                            )}
                             <TabsTrigger variant="navigation" value="details">
                                 {t("merchantEdit.tabs.explorer")}
                             </TabsTrigger>

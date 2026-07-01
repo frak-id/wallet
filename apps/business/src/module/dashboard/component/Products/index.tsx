@@ -23,6 +23,7 @@ export function MyMerchants() {
                         name={merchant.name}
                         domain={merchant.domain}
                         isReadOnly={false}
+                        isAffiliate={merchant.isAffiliate}
                         onManageBudget={() => setBudgetMerchantId(merchant.id)}
                     />
                 ))}
@@ -46,6 +47,7 @@ export function MyMerchants() {
                                 name={merchant.name}
                                 domain={merchant.domain}
                                 isReadOnly={true}
+                                isAffiliate={merchant.isAffiliate}
                                 onManageBudget={() =>
                                     setBudgetMerchantId(merchant.id)
                                 }
