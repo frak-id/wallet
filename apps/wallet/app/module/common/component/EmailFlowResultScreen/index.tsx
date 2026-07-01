@@ -12,6 +12,13 @@ export type EmailFlowResultScreenProps = {
     description: ReactNode;
     onBack?: () => void;
     /**
+     * Optional hero rendered centered above the title (typically an
+     * `IconCircle`). When set, the title + description are centered too, so
+     * a terminal success screen reads as a proper confirmation instead of a
+     * bare paragraph.
+     */
+    icon?: ReactNode;
+    /**
      * Optional content rendered centered on the header row next to the back
      * button. Used by the merge flow to drop a "Step N/M" indicator without
      * each result screen having to know about the stepper.
@@ -37,6 +44,7 @@ export function EmailFlowResultScreen({
     title,
     description,
     onBack,
+    icon,
     headerCenter,
     children,
 }: EmailFlowResultScreenProps) {
@@ -52,7 +60,8 @@ export function EmailFlowResultScreen({
             }
         >
             <Stack space="l" className={styles.body}>
-                <Stack space="s">
+                <Stack space="s" align={icon ? "center" : undefined}>
+                    {icon}
                     <Title size="page">{title}</Title>
                     <Text variant="body" color="secondary">
                         {description}

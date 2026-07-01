@@ -1040,7 +1040,6 @@ export default interface Resources {
           "warning": "Anyone who has both this backup code and your password can take full control of your wallet. Store them in separate places."
         },
         "config": {
-          "active": "Active",
           "activeTitle": "Recovery is active",
           "deleteAction": "Turn off recovery",
           "deleteDescription": "Turn recovery off completely. Your recovery key is disabled on-chain and your encrypted backup is deleted.",
@@ -1049,7 +1048,6 @@ export default interface Resources {
           "endLabel": "Expires",
           "never": "Never",
           "refreshDescription": "Keep your current recovery key and move its validity window, or replace it with a brand new one.",
-          "refreshTitle": "Manage recovery",
           "replaceKeyAction": "Replace recovery key",
           "startLabel": "Usable from",
           "statusLabel": "Status",

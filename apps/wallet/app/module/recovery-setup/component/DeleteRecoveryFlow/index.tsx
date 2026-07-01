@@ -1,4 +1,6 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
+import { CheckIcon } from "@frak-labs/design-system/icons";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
@@ -77,6 +79,11 @@ export function DeleteRecoveryFlow({
 
     return (
         <EmailFlowResultScreen
+            icon={
+                <IconCircle size="lg" tone="action">
+                    <CheckIcon width={28} height={28} />
+                </IconCircle>
+            }
             title={t("wallet.recoverySetup.delete.success.title")}
             description={t("wallet.recoverySetup.delete.success.description")}
         >
