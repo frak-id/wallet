@@ -1,7 +1,7 @@
 import { viemClient } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { Address, Hex } from "viem";
-import { keccak256, toHex, zeroAddress } from "viem";
+import { keccak256, toHex } from "viem";
 import { verifyMessage } from "viem/actions";
 import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
 import type { DnsCheckRepository } from "../../../infrastructure/dns/DnsCheckRepository";
@@ -12,10 +12,12 @@ import type { MerchantRepository } from "../repositories/MerchantRepository";
  * Shared Frak-controlled campaign bank that platform admins can opt brands
  * into (via `useFrakBank`) instead of deploying a dedicated per-merchant bank.
  *
- * Placeholder until the shared EURe bank is deployed + funded; see
+ * Deployed at a deterministic CREATE2 address (same on dev and prod) via
+ * `scripts/deployFrakCampaignBank.ts`; see
  * docs/plans/takeads-affiliate-integration.md §10c.
  */
-export const FRAK_SHARED_CAMPAIGN_BANK: Address = zeroAddress;
+export const FRAK_SHARED_CAMPAIGN_BANK: Address =
+    "0xd9e65b88B7ABA7c1312FED0CefF2098EB43a9B81";
 
 export class MerchantRegistrationService {
     constructor(

@@ -1279,7 +1279,8 @@ export default interface Resources {
       "title": "Edit"
     },
     "platformAdmin": {
-      "readOnlyTag": "Read-only"
+      "readOnlyTag": "Read-only",
+      "readOnlySectionTitle": "Read-only merchants"
     },
     "push": {
       "create": {

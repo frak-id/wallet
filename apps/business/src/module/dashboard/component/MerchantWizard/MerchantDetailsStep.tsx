@@ -18,7 +18,7 @@ import { useTranslation } from "react-i18next";
 import { shouldShowError } from "@/module/campaigns/component/Creation/fieldError";
 import { WizardFieldCard } from "@/module/campaigns/component/Creation/WizardFieldCard";
 import { useCopyToClipboardWithState } from "@/module/common/hook/useCopyToClipboardWithState";
-import { validateUrl } from "@/module/common/utils/validateUrl";
+import { isValidUrl, validateUrl } from "@/module/common/utils/validateUrl";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { FormControl, FormField, FormItem } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
@@ -279,7 +279,7 @@ export function MerchantDetailsStep({
                                 validate: (value) => {
                                     if (!value) return true;
                                     return (
-                                        validateUrl(value) ||
+                                        isValidUrl(value) ||
                                         t(
                                             "merchant.create.platformAdmin.takeadsTrackingLink.invalidUrl"
                                         )
