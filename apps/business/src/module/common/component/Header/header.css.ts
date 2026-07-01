@@ -25,11 +25,7 @@ export const header = style({
 });
 
 export const headerInner = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
     height: "100%",
-    gap: alias.spacing.m,
 });
 
 export const headerLeft = style({

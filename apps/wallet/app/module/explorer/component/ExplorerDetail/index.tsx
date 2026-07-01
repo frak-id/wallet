@@ -10,6 +10,7 @@ import {
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CheckIcon,
@@ -276,7 +277,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
             </DetailSheetHero>
 
             <DetailSheetBody className={styles.bodyContent}>
-                <div className={styles.brandHeader}>
+                <Spread align="top" space="m">
                     <div className={styles.brandInfo}>
                         <Text as="h1" variant="heading1">
                             <ExternalLink
@@ -304,7 +305,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                             className={styles.brandLogo}
                         />
                     )}
-                </div>
+                </Spread>
 
                 {description && (
                     <Card className={styles.description}>

@@ -1,4 +1,5 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Download, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -46,7 +47,7 @@ export function Header() {
 
     return (
         <header className={header}>
-            <div className={headerInner}>
+            <Spread space="m" className={headerInner}>
                 <div className={headerLeft}>
                     <HeaderBreadcrumb />
                 </div>
@@ -90,7 +91,7 @@ export function Header() {
                     </div>
                     <AccountMenu />
                 </div>
-            </div>
+            </Spread>
         </header>
     );
 }

@@ -131,10 +131,6 @@ export const linkButton = style({
 });
 
 export const recapRow = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: alias.spacing.m,
     paddingBlock: alias.spacing.s,
     paddingInline: alias.spacing.m,
     width: "100%",

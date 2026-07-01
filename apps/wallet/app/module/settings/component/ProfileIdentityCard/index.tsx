@@ -1,6 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CheckCircleFilledIcon,
@@ -105,7 +106,7 @@ function IdentityRow({
                 <Text as="span" variant="label" color={"secondary"}>
                     {label}
                 </Text>
-                <Box className={styles.valueRow}>
+                <Spread>
                     <Text
                         as="span"
                         variant="label"
@@ -127,7 +128,7 @@ function IdentityRow({
                             className={styles.copyIcon}
                         />
                     )}
-                </Box>
+                </Spread>
             </Box>
         </Box>
     );

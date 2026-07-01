@@ -1,9 +1,8 @@
-import { Box } from "@frak-labs/design-system/components/Box";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { LoserAssetSummaryEntry } from "../../hook/useLoserAssetSummary";
 import { formatAmount } from "../../utils/formatAmount";
-import * as styles from "./index.css";
 
 type FundsListProps = {
     /** Already-filtered entries with non-zero (balance + claimable). */
@@ -21,7 +20,7 @@ export function FundsList({ entries }: FundsListProps) {
     return (
         <Stack space="xs">
             {entries.map((entry) => (
-                <Box key={entry.token} className={styles.balanceRow}>
+                <Spread key={entry.token} space="s">
                     <Text variant="bodySmall" weight="medium">
                         {entry.symbol}
                     </Text>
@@ -31,7 +30,7 @@ export function FundsList({ entries }: FundsListProps) {
                             entry.decimals
                         )}
                     </Text>
-                </Box>
+                </Spread>
             ))}
         </Stack>
     );

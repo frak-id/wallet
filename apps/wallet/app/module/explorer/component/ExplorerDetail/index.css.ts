@@ -128,16 +128,6 @@ export const floatingFooter = style({
 });
 
 /**
- * Brand header row — name + logo side by side.
- */
-export const brandHeader = style({
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: alias.spacing.m,
-});
-
-/**
  * Brand text group (name + reward summary).
  */
 export const brandInfo = style({
@@ -227,21 +217,4 @@ export const tierBlock = style({
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.xs,
-});
-
-export const tierHeader = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: alias.spacing.s,
-});
-
-/**
- * Single tier — basket range on the left, amount/percent on the right.
- */
-export const tierRow = style({
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: alias.spacing.m,
 });
