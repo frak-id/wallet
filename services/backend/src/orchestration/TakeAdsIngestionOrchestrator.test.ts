@@ -31,8 +31,6 @@ const attribution: AffiliateAttributionSelect = {
     identityGroupId: "identity-group-1",
     merchantId: "merchant-1",
     trackingLink: null,
-    couponCode: null,
-    metadata: null,
     createdAt: new Date("2024-01-01"),
 };
 
@@ -60,9 +58,17 @@ function singlePage(actions: TakeAdsAction[]): TakeAdsActionListResponse {
     return { meta: { limit: 500, next: null }, data: actions };
 }
 
+// findByTokens (P1 batch pre-fetch) returns a Map keyed by token; build one
+// from the attribution fixture(s) a test expects to be found.
+function attributionMap(
+    ...records: AffiliateAttributionSelect[]
+): Map<string, AffiliateAttributionSelect> {
+    return new Map(records.map((r) => [r.token, r]));
+}
+
 const buildOrchestrator = () => {
     const attributionRepo = {
-        findByToken: vi.fn(),
+        findByTokens: vi.fn(),
     } as unknown as AffiliateAttributionRepository;
 
     const syncStateRepo = {
@@ -124,7 +130,9 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 syncStateRepo,
             } = buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(null);
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                new Map()
+            );
             getActions.mockResolvedValue(singlePage([makeAction()]));
 
             const summary = await orchestrator.ingestActions();
@@ -154,8 +162,8 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 rewardLifecycleOrchestrator,
             } = buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
             getActions.mockResolvedValue(
                 singlePage([
@@ -200,9 +208,15 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 rewardLifecycleOrchestrator,
             } = buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
+            vi.mocked(
+                rewardLifecycleOrchestrator.cancelForRefund
+            ).mockResolvedValue({
+                affectedCount: 1,
+                budgetRestoredByCampaign: {},
+            });
             getActions.mockResolvedValue(
                 singlePage([
                     makeAction({ status: "CANCELED", actionId: "act-cancel" }),
@@ -225,12 +239,49 @@ describe("TakeAdsIngestionOrchestrator", () => {
             expect(purchaseInteractionCreator.create).not.toHaveBeenCalled();
         });
 
+        it("3b. C1: CANCELED with no matching purchase (affectedCount 0) → not counted as cancelled", async () => {
+            const {
+                orchestrator,
+                attributionRepo,
+                getActions,
+                rewardLifecycleOrchestrator,
+                syncStateRepo,
+            } = buildOrchestrator();
+
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
+            );
+            // Default mock already resolves { affectedCount: 0 } — no matching
+            // purchase interaction to void.
+            getActions.mockResolvedValue(
+                singlePage([
+                    makeAction({ status: "CANCELED", actionId: "act-noop" }),
+                ])
+            );
+
+            const summary = await orchestrator.ingestActions();
+
+            expect(
+                rewardLifecycleOrchestrator.cancelForRefund
+            ).toHaveBeenCalledOnce();
+            expect(summary.cancelled).toBe(0);
+            // Still fully processed and the cursor still advances — the action
+            // was handled, it just had nothing to cancel.
+            expect(summary.processed).toBe(1);
+            expect(summary.errors).toBe(0);
+            expect(syncStateRepo.advanceWatermark).toHaveBeenCalledWith(
+                "takeads",
+                "conversions",
+                new Date("2024-06-01T12:00:00Z")
+            );
+        });
+
         it("4. pagination: two pages — all actions processed; getActions called twice", async () => {
             const { orchestrator, attributionRepo, getActions, syncStateRepo } =
                 buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
             getActions
                 .mockResolvedValueOnce({
@@ -259,8 +310,8 @@ describe("TakeAdsIngestionOrchestrator", () => {
             const { orchestrator, attributionRepo, getActions, syncStateRepo } =
                 buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
             getActions.mockResolvedValue(
                 singlePage([
@@ -300,8 +351,8 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 syncStateRepo,
             } = buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
 
             // act-a succeeds at T1, act-b fails at T2 (>T1), act-c succeeds at T3 (>T2)
@@ -352,8 +403,8 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 buildOrchestrator();
 
             vi.mocked(syncStateRepo.getWatermark).mockResolvedValue(null);
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
             getActions.mockResolvedValue(singlePage([]));
 
@@ -372,8 +423,8 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 purchaseInteractionCreator,
             } = buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
             // create returns null → interaction already existed (idempotent no-op)
             vi.mocked(purchaseInteractionCreator.create).mockResolvedValue(
@@ -396,8 +447,8 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 purchaseInteractionCreator,
             } = buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
             getActions.mockResolvedValue(
                 singlePage([
@@ -452,8 +503,8 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 purchaseInteractionCreator,
             } = buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
             getActions.mockResolvedValue(
                 singlePage([
@@ -490,7 +541,9 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 syncStateRepo,
             } = buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(null);
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                new Map()
+            );
             getActions.mockResolvedValue(
                 singlePage([makeAction({ type: "CLICK" })])
             );
@@ -509,12 +562,12 @@ describe("TakeAdsIngestionOrchestrator", () => {
             expect(emitMock).not.toHaveBeenCalled();
         });
 
-        it("12. M-1: a thrown getActions on page 2 keeps page 1's checkpoint", async () => {
+        it("12. R3: a thrown getActions on page 2 keeps page 1's checkpoint and resolves a partial summary (never throws)", async () => {
             const { orchestrator, attributionRepo, getActions, syncStateRepo } =
                 buildOrchestrator();
 
-            vi.mocked(attributionRepo.findByToken).mockResolvedValue(
-                attribution
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
             );
             getActions
                 .mockResolvedValueOnce({
@@ -528,8 +581,15 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 })
                 .mockRejectedValueOnce(new Error("network down"));
 
-            await expect(orchestrator.ingestActions()).rejects.toThrow(
-                "network down"
+            const summary = await orchestrator.ingestActions();
+
+            // R3: ingestActions must always resolve, never throw, for a
+            // transient getActions failure — the caller must still get the
+            // partial summary.
+            expect(summary.pages).toBe(1);
+            expect(summary.errors).toBe(1);
+            expect(summary.newWatermark).toEqual(
+                new Date("2024-06-01T10:00:00Z")
             );
             // Page 1 was checkpointed before page 2 was ever fetched, so a
             // mid-run API failure never discards already-drained progress.
@@ -537,6 +597,141 @@ describe("TakeAdsIngestionOrchestrator", () => {
                 "takeads",
                 "conversions",
                 new Date("2024-06-01T10:00:00Z")
+            );
+        });
+
+        it("13. B3: NaN updatedAt holds the cursor (does not advance past a lost action)", async () => {
+            const {
+                orchestrator,
+                attributionRepo,
+                getActions,
+                syncStateRepo,
+                purchaseInteractionCreator,
+            } = buildOrchestrator();
+
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
+            );
+            getActions.mockResolvedValue(
+                singlePage([
+                    makeAction({
+                        actionId: "good",
+                        updatedAt: "2024-06-01T10:00:00Z",
+                    }),
+                    makeAction({ actionId: "bad", updatedAt: "not-a-date" }),
+                ])
+            );
+
+            const summary = await orchestrator.ingestActions();
+
+            expect(summary.errors).toBe(1);
+            // The bad action's sentinel epoch failure forces computeWatermark
+            // to reject every success on this page — the cursor must not
+            // advance even though a valid action on the same page succeeded.
+            expect(summary.newWatermark).toBeNull();
+            expect(syncStateRepo.advanceWatermark).not.toHaveBeenCalled();
+            // The good action was still processed this run (no data loss) —
+            // only the cursor is held.
+            expect(purchaseInteractionCreator.create).toHaveBeenCalledOnce();
+        });
+
+        it("14. B4: a poison action is retried MAX_ACTION_RETRIES times across runs, then permanently skipped so the cursor advances", async () => {
+            const {
+                orchestrator,
+                attributionRepo,
+                getActions,
+                purchaseInteractionCreator,
+                syncStateRepo,
+            } = buildOrchestrator();
+
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
+            );
+            vi.mocked(purchaseInteractionCreator.create).mockRejectedValue(
+                new Error("poison")
+            );
+            getActions.mockResolvedValue(
+                singlePage([
+                    makeAction({
+                        actionId: "poison",
+                        updatedAt: "2024-06-01T10:00:00Z",
+                    }),
+                ])
+            );
+
+            const MAX_ACTION_RETRIES = 5;
+            for (let attempt = 1; attempt < MAX_ACTION_RETRIES; attempt++) {
+                const summary = await orchestrator.ingestActions();
+                expect(summary.errors).toBe(1);
+                expect(summary.skipped).toBe(0);
+                // Cursor held at every failed attempt — not yet at the retry cap.
+                expect(summary.newWatermark).toBeNull();
+            }
+
+            // The 5th failure hits the retry budget: permanently skip and let
+            // the cursor advance past the poison action.
+            const finalSummary = await orchestrator.ingestActions();
+            expect(finalSummary.errors).toBe(1);
+            expect(finalSummary.skipped).toBe(1);
+            expect(finalSummary.newWatermark).toEqual(
+                new Date("2024-06-01T10:00:00Z")
+            );
+            expect(syncStateRepo.advanceWatermark).toHaveBeenCalledWith(
+                "takeads",
+                "conversions",
+                new Date("2024-06-01T10:00:00Z")
+            );
+        });
+
+        it("15. P1: attributions are batch pre-fetched once per page and resolved per action", async () => {
+            const {
+                orchestrator,
+                attributionRepo,
+                getActions,
+                purchaseInteractionCreator,
+            } = buildOrchestrator();
+
+            const attribution2: AffiliateAttributionSelect = {
+                ...attribution,
+                token: "tok-def",
+                identityGroupId: "identity-group-2",
+                merchantId: "merchant-2",
+            };
+
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution, attribution2)
+            );
+            getActions.mockResolvedValue(
+                singlePage([
+                    makeAction({ actionId: "a1", subId: "tok-abc" }),
+                    makeAction({ actionId: "a2", subId: "tok-def" }),
+                    makeAction({ actionId: "a3", subId: "tok-abc" }),
+                ])
+            );
+
+            const summary = await orchestrator.ingestActions();
+
+            // One batched call for the whole page, not one per action (N+1 fix).
+            expect(attributionRepo.findByTokens).toHaveBeenCalledOnce();
+            expect(attributionRepo.findByTokens).toHaveBeenCalledWith([
+                "tok-abc",
+                "tok-def",
+                "tok-abc",
+            ]);
+            expect(summary.created).toBe(3);
+            expect(purchaseInteractionCreator.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    externalId: "takeads:a1",
+                    identityGroupId: "identity-group-1",
+                    merchantId: "merchant-1",
+                })
+            );
+            expect(purchaseInteractionCreator.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    externalId: "takeads:a2",
+                    identityGroupId: "identity-group-2",
+                    merchantId: "merchant-2",
+                })
             );
         });
     });

@@ -1,6 +1,6 @@
 import { db } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
     type AffiliateAttributionSelect,
     affiliateAttributionTable,
@@ -8,13 +8,24 @@ import {
 import type { AffiliateProvider } from "../provider";
 
 export class AffiliateAttributionRepository {
-    async findByToken(
-        token: string
-    ): Promise<AffiliateAttributionSelect | null> {
-        const result = await db.query.affiliateAttributionTable.findFirst({
-            where: eq(affiliateAttributionTable.token, token),
-        });
-        return result ?? null;
+    /**
+     * Batch lookup for a page of TakeAds actions: one round-trip for the whole
+     * page. Dedupes the input and returns a Map keyed
+     * by token so callers can look up a miss (foreign/unknown subId) as an
+     * absent key.
+     */
+    async findByTokens(
+        tokens: string[]
+    ): Promise<Map<string, AffiliateAttributionSelect>> {
+        const deduped = [...new Set(tokens)];
+        if (deduped.length === 0) return new Map();
+
+        const rows = await db
+            .select()
+            .from(affiliateAttributionTable)
+            .where(inArray(affiliateAttributionTable.token, deduped));
+
+        return new Map(rows.map((row) => [row.token, row]));
     }
 
     async findByUserAndBrand(params: {
@@ -37,10 +48,11 @@ export class AffiliateAttributionRepository {
 
     /**
      * Mint a stable attribution token for a (provider, user, brand) triple, or
-     * return the existing one. Race-safe: the insert is a no-op on the
-     * `(provider, identityGroupId, merchantId)` unique index, so two concurrent
-     * mints converge on one token (we re-read on conflict instead of trusting
-     * the empty `returning()`).
+     * return the existing one. Race-safe: on conflict on the
+     * `(provider, identityGroupId, merchantId)` unique index, the update is a
+     * no-op SET (identityGroupId set to itself) so two concurrent mints
+     * converge on one token — in a single round-trip instead of an
+     * insert-then-re-read.
      */
     async mint(params: {
         token: string;
@@ -49,7 +61,7 @@ export class AffiliateAttributionRepository {
         merchantId: string;
         trackingLink?: string;
     }): Promise<AffiliateAttributionSelect> {
-        const [inserted] = await db
+        const [row] = await db
             .insert(affiliateAttributionTable)
             .values({
                 token: params.token,
@@ -58,32 +70,26 @@ export class AffiliateAttributionRepository {
                 merchantId: params.merchantId,
                 trackingLink: params.trackingLink,
             })
-            .onConflictDoNothing({
+            .onConflictDoUpdate({
                 target: [
                     affiliateAttributionTable.provider,
                     affiliateAttributionTable.identityGroupId,
                     affiliateAttributionTable.merchantId,
                 ],
+                set: {
+                    identityGroupId: sql`${affiliateAttributionTable.identityGroupId}`,
+                },
             })
             .returning();
 
-        if (inserted) {
-            return inserted;
-        }
-
-        // Lost the insert race (or token already existed): the row is
-        // guaranteed present by the unique index, so re-read it.
-        const existing = await this.findByUserAndBrand({
-            provider: params.provider,
-            identityGroupId: params.identityGroupId,
-            merchantId: params.merchantId,
-        });
-        if (!existing) {
+        if (!row) {
+            // The unique index guarantees a row exists on conflict, so an empty
+            // returning() here means something is structurally broken.
             throw HttpError.internal(
                 "ATTRIBUTION_MINT_INVARIANT",
                 "Affiliate attribution row missing after insert conflict"
             );
         }
-        return existing;
+        return row;
     }
 }

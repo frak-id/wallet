@@ -1,4 +1,5 @@
 import { eventEmitter, log } from "@backend-infrastructure";
+import type { AffiliateAttributionSelect } from "../domain/affiliate/db/schema";
 import type { AffiliateAttributionRepository } from "../domain/affiliate/repositories/AffiliateAttributionRepository";
 import type { AffiliateSyncStateRepository } from "../domain/affiliate/repositories/AffiliateSyncStateRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
@@ -25,6 +26,19 @@ export type IngestionSummary = {
 
 type ActionCounts = Omit<IngestionSummary, "pages" | "newWatermark">;
 
+// Outcome of processing a single page. `fetched: false` = the API call failed
+// (stop the run, no page counted). `stop` = halt after this page (action
+// failure, deadline, or checkpoint-write error) while still surfacing any
+// committed `watermark`.
+type PageOutcome =
+    | { fetched: false }
+    | {
+          fetched: true;
+          stop: boolean;
+          next: string | undefined;
+          watermark: Date | null;
+      };
+
 type ActionsClient = {
     getActions(params: {
         updatedAtFrom?: string;
@@ -35,6 +49,10 @@ type ActionsClient = {
 
 const PROVIDER = "takeads" as const;
 const STREAM = "conversions";
+// Per-action retry budget before a permanently-failing ("poison") action is
+// skipped rather than pinning the cursor forever. See the in-memory counter
+// on the orchestrator instance for the caveats of this budget.
+const MAX_ACTION_RETRIES = 5;
 // Pages fetched per run. Kept low on purpose: every page is checkpointed (see
 // ingestActions), so anything beyond the cap simply resumes on the next tick.
 // If a backlog ever outpaces the hourly cadence, raise this or shorten the cron
@@ -82,6 +100,16 @@ function computeWatermark(
 }
 
 export class TakeAdsIngestionOrchestrator {
+    // Process-local, in-memory count of consecutive failures per action
+    // (`takeads:${actionId}`). Bounds a poison action to MAX_ACTION_RETRIES
+    // attempts before it's skipped so it can't wedge the watermark forever
+    // (see B4). Deliberately not persisted: it only ever holds currently-
+    // failing ids (successes prune their entry), so it cannot grow unbounded,
+    // and resetting it on a process restart is an acceptable degradation — a
+    // restarted poison action simply gets another MAX_ACTION_RETRIES attempts
+    // rather than needing a schema change to track it durably.
+    private readonly actionFailureCounts = new Map<string, number>();
+
     constructor(
         private readonly affiliateAttributionRepository: AffiliateAttributionRepository,
         private readonly affiliateSyncStateRepository: AffiliateSyncStateRepository,
@@ -130,89 +158,194 @@ export class TakeAdsIngestionOrchestrator {
                 );
                 break;
             }
-            // Per-page checkpointing assumes TakeAds returns actions in
-            // non-decreasing updatedAt order across pages (the standard contract
-            // for a timestamp-cursor report). The guard below surfaces any
-            // violation loudly rather than silently dropping a retry.
-            const committedBefore = newWatermark;
-            const resp = await client.getActions({
-                updatedAtFrom,
-                limit: 500,
-                next,
-            });
+
+            const outcome = await this.processPage(
+                client,
+                { updatedAtFrom, next },
+                { deadline, pages, committedBefore: newWatermark, counts }
+            );
+            if (!outcome.fetched) break;
             pages++;
-
-            // Per-page timestamp buffers, bounded by the page limit — keeps memory
-            // flat and keeps computeWatermark off any unbounded array.
-            const pageSuccess: Date[] = [];
-            const pageFailed: Date[] = [];
-            let deadlineHit = false;
-            for (const action of resp.data) {
-                if (Date.now() > deadline) {
-                    deadlineHit = true;
-                    break;
-                }
-                await this.processAction(
-                    action,
-                    counts,
-                    pageSuccess,
-                    pageFailed
-                );
-            }
-
-            // Checkpoint this page's safe progress before moving on.
-            const pageWatermark = computeWatermark(pageSuccess, pageFailed);
-            if (pageWatermark) {
-                await this.affiliateSyncStateRepository.advanceWatermark(
-                    PROVIDER,
-                    STREAM,
-                    pageWatermark
-                );
-                newWatermark = pageWatermark;
-            }
-
-            // If a failed action is older than a checkpoint already committed by
-            // an earlier page this run, the next tick will start past it and it
-            // won't be retried — only possible if TakeAds broke updatedAt
-            // ordering. Surface it for on-call instead of losing it silently.
-            if (
-                committedBefore &&
-                pageFailed.some((d) => d.getTime() < committedBefore.getTime())
-            ) {
-                log.warn(
-                    { pages, committedBefore },
-                    "TakeAdsIngestionOrchestrator: out-of-order failed action below committed watermark — may not be retried (check TakeAds ordering)"
-                );
-            }
-
-            if (pageFailed.length > 0) {
-                // Hold the cursor at the checkpoint; the failed action(s) are
-                // re-fetched and retried on the next tick. Stop here so a later
-                // page can't advance the watermark past the failure.
-                log.warn(
-                    { pages, failed: pageFailed.length },
-                    "TakeAdsIngestionOrchestrator: action failure — checkpointed, retries next tick"
-                );
-                break;
-            }
-            if (deadlineHit) {
-                log.warn(
-                    { pages },
-                    "TakeAdsIngestionOrchestrator: run budget exceeded mid-page, checkpointed, resumes next tick"
-                );
-                break;
-            }
-            next = resp.meta.next ?? undefined;
+            if (outcome.watermark) newWatermark = outcome.watermark;
+            if (outcome.stop) break;
+            next = outcome.next;
         } while (next !== undefined);
 
         return { pages, ...counts, newWatermark };
+    }
+
+    /**
+     * Fetch + process a single page and checkpoint its safe watermark. Returns
+     * a discriminated outcome so the pagination loop in {@link ingestActions}
+     * stays flat: `fetched: false` means the API call failed (stop, no page
+     * counted); `stop` means the run should halt after this page (failure,
+     * deadline, or a checkpoint write error) while still surfacing any
+     * committed `watermark`.
+     */
+    private async processPage(
+        client: ActionsClient,
+        params: { updatedAtFrom?: string; next?: string },
+        ctx: {
+            deadline: number;
+            pages: number;
+            committedBefore: Date | null;
+            counts: ActionCounts;
+        }
+    ): Promise<PageOutcome> {
+        const { deadline, committedBefore, counts } = ctx;
+        const resp = await this.fetchPage(client, params, ctx.pages, counts);
+        if (resp === null) return { fetched: false };
+
+        // This page's 1-based number, for logging/ordering guards.
+        const pages = ctx.pages + 1;
+
+        // Pre-fetch this page's attributions in one round-trip (P1) instead of
+        // one lookup per action.
+        const attributionsByToken =
+            await this.affiliateAttributionRepository.findByTokens(
+                resp.data.map((action) => action.subId)
+            );
+
+        // Per-page timestamp buffers, bounded by the page limit — keeps memory
+        // flat and keeps computeWatermark off any unbounded array.
+        const pageSuccess: Date[] = [];
+        const pageFailed: Date[] = [];
+        let deadlineHit = false;
+        for (const action of resp.data) {
+            if (Date.now() > deadline) {
+                deadlineHit = true;
+                break;
+            }
+            await this.processAction(
+                action,
+                counts,
+                pageSuccess,
+                pageFailed,
+                attributionsByToken
+            );
+        }
+
+        // Checkpoint this page's safe progress before moving on.
+        const pageWatermark = computeWatermark(pageSuccess, pageFailed);
+        let watermark: Date | null = null;
+        if (pageWatermark) {
+            const committed = await this.checkpointWatermark(
+                pageWatermark,
+                pages,
+                counts
+            );
+            if (!committed) {
+                return {
+                    fetched: true,
+                    stop: true,
+                    next: undefined,
+                    watermark: null,
+                };
+            }
+            watermark = pageWatermark;
+        }
+
+        this.warnOnOutOfOrderFailure(committedBefore, pageFailed, pages);
+
+        if (pageFailed.length > 0) {
+            // Hold the cursor at the checkpoint; the failed action(s) are
+            // re-fetched and retried on the next tick. Stop here so a later page
+            // can't advance the watermark past the failure.
+            log.warn(
+                { pages, failed: pageFailed.length },
+                "TakeAdsIngestionOrchestrator: action failure — checkpointed, retries next tick"
+            );
+            return { fetched: true, stop: true, next: undefined, watermark };
+        }
+        if (deadlineHit) {
+            log.warn(
+                { pages },
+                "TakeAdsIngestionOrchestrator: run budget exceeded mid-page, checkpointed, resumes next tick"
+            );
+            return { fetched: true, stop: true, next: undefined, watermark };
+        }
+        return {
+            fetched: true,
+            stop: false,
+            next: resp.meta.next ?? undefined,
+            watermark,
+        };
+    }
+
+    // Per-page checkpointing assumes TakeAds returns actions in non-decreasing
+    // updatedAt order across pages (the standard contract for a timestamp-cursor
+    // report). If a failed action is older than a checkpoint already committed
+    // by an earlier page this run, the next tick starts past it and it won't be
+    // retried — only possible if TakeAds broke updatedAt ordering. Surface it
+    // for on-call instead of losing it silently.
+    private warnOnOutOfOrderFailure(
+        committedBefore: Date | null,
+        pageFailed: Date[],
+        pages: number
+    ): void {
+        if (
+            committedBefore &&
+            pageFailed.some((d) => d.getTime() < committedBefore.getTime())
+        ) {
+            log.warn(
+                { pages, committedBefore },
+                "TakeAdsIngestionOrchestrator: out-of-order failed action below committed watermark — may not be retried (check TakeAds ordering)"
+            );
+        }
+    }
+
+    // R3: a thrown getActions must not lose the partial progress already
+    // committed by earlier pages this run — log and return null (instead of
+    // propagating) so the caller can break and return the partial summary.
+    private async fetchPage(
+        client: ActionsClient,
+        params: { updatedAtFrom?: string; next?: string },
+        pages: number,
+        counts: ActionCounts
+    ): Promise<TakeAdsActionListResponse | null> {
+        try {
+            return await client.getActions({ ...params, limit: 500 });
+        } catch (err) {
+            log.error(
+                { err, pages, ...counts },
+                "TakeAdsIngestionOrchestrator: getActions failed — returning partial summary"
+            );
+            counts.errors++;
+            return null;
+        }
+    }
+
+    // Same rationale as fetchPage: a thrown advanceWatermark must not lose
+    // already-committed pages — log and return false so the caller can break
+    // and return the partial summary.
+    private async checkpointWatermark(
+        watermark: Date,
+        pages: number,
+        counts: ActionCounts
+    ): Promise<boolean> {
+        try {
+            await this.affiliateSyncStateRepository.advanceWatermark(
+                PROVIDER,
+                STREAM,
+                watermark
+            );
+            return true;
+        } catch (err) {
+            log.error(
+                { err, pages, ...counts },
+                "TakeAdsIngestionOrchestrator: advanceWatermark failed — returning partial summary"
+            );
+            counts.errors++;
+            return false;
+        }
     }
 
     private async processAction(
         action: TakeAdsAction,
         counts: ActionCounts,
         successTimestamps: Date[],
-        failedTimestamps: Date[]
+        failedTimestamps: Date[],
+        attributionsByToken: Map<string, AffiliateAttributionSelect>
     ): Promise<void> {
         // NOTE (audit M-2): TakeAds response fields are currently trusted as-is.
         // If we add boundary validation later (bounding orderAmount, allow-listing
@@ -221,24 +354,25 @@ export class TakeAdsIngestionOrchestrator {
         const externalId = `takeads:${action.actionId}`;
         const actionTs = new Date(action.updatedAt);
         if (Number.isNaN(actionTs.getTime())) {
-            // A malformed updatedAt can't be placed on the watermark timeline,
-            // so we drop it loudly rather than poison the cursor with NaN.
+            // A malformed updatedAt can't be placed on the watermark timeline at
+            // all, so we can't retry it on a future tick either — push a
+            // sentinel epoch failure. This forces the page-level break below,
+            // holding the cursor at the prior checkpoint instead of letting a
+            // later success on this page advance past a permanently-lost action.
             log.error(
                 {
                     actionId: action.actionId,
                     subId: action.subId,
                     updatedAt: action.updatedAt,
                 },
-                "TakeAdsIngestionOrchestrator: action has invalid updatedAt — skipping"
+                "TakeAdsIngestionOrchestrator: action has invalid updatedAt — cursor held"
             );
             counts.errors++;
+            failedTimestamps.push(new Date(0));
             return;
         }
         try {
-            const attribution =
-                await this.affiliateAttributionRepository.findByToken(
-                    action.subId
-                );
+            const attribution = attributionsByToken.get(action.subId) ?? null;
             if (!attribution) {
                 log.debug(
                     { subId: action.subId, actionId: action.actionId },
@@ -249,14 +383,23 @@ export class TakeAdsIngestionOrchestrator {
                 // advance past it so a single unattributable action can't pin the
                 // watermark and force every later run to re-scan from here.
                 successTimestamps.push(actionTs);
+                this.actionFailureCounts.delete(externalId);
                 return;
             }
             if (action.status === "CANCELED") {
-                await this.rewardLifecycleOrchestrator.cancelForRefund({
-                    merchantId: attribution.merchantId,
-                    externalId,
-                });
-                counts.cancelled++;
+                const { affectedCount } =
+                    await this.rewardLifecycleOrchestrator.cancelForRefund({
+                        merchantId: attribution.merchantId,
+                        externalId,
+                    });
+                if (affectedCount > 0) {
+                    counts.cancelled++;
+                } else {
+                    log.warn(
+                        { actionId: action.actionId, externalId },
+                        "CANCELED action had no matching purchase to cancel"
+                    );
+                }
             } else if (isRewardablePurchase(action)) {
                 const interactionLogId =
                     await this.purchaseInteractionCreator.create({
@@ -290,6 +433,9 @@ export class TakeAdsIngestionOrchestrator {
             }
             counts.processed++;
             successTimestamps.push(actionTs);
+            // Prune: this action is no longer failing, so it must not keep
+            // counting towards its retry budget.
+            this.actionFailureCounts.delete(externalId);
         } catch (err) {
             log.error(
                 {
@@ -302,6 +448,28 @@ export class TakeAdsIngestionOrchestrator {
                 "TakeAdsIngestionOrchestrator: error processing action"
             );
             counts.errors++;
+
+            const failures =
+                (this.actionFailureCounts.get(externalId) ?? 0) + 1;
+            if (failures >= MAX_ACTION_RETRIES) {
+                // Retry budget exhausted (B4): this action would otherwise be
+                // re-fetched and re-thrown every tick, pinning the cursor
+                // forever. Log loudly and treat it as a skip — push its
+                // timestamp as a success so the cursor can advance past it.
+                log.error(
+                    {
+                        actionId: action.actionId,
+                        subId: action.subId,
+                        failures,
+                    },
+                    `TakeAdsIngestionOrchestrator: permanently skipping poison action after ${failures} failures`
+                );
+                this.actionFailureCounts.delete(externalId);
+                counts.skipped++;
+                successTimestamps.push(actionTs);
+                return;
+            }
+            this.actionFailureCounts.set(externalId, failures);
             failedTimestamps.push(actionTs);
         }
     }

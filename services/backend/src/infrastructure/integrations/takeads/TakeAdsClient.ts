@@ -19,9 +19,9 @@ import {
  * Auth is a single Bearer key shared across calls; if TakeAds requires distinct
  * keys per scope we can split this later.
  *
- * No documented rate limits, so we keep a small retry on the transient 429/503
- * statuses and surface everything else to the caller (the ingestion cron
- * decides how to degrade).
+ * No documented rate limits, so we keep a small retry on the transient
+ * 429/500/503 statuses and surface everything else to the caller (the
+ * ingestion cron decides how to degrade).
  */
 export class TakeAdsClient {
     private readonly api: KyInstance;
@@ -44,7 +44,7 @@ export class TakeAdsClient {
             retry: {
                 limit: 2,
                 methods: ["get", "put"],
-                statusCodes: [429, 503],
+                statusCodes: [429, 500, 503],
                 backoffLimit: 10_000,
             },
         });
