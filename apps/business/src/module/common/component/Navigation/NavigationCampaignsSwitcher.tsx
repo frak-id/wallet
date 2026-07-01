@@ -1,4 +1,4 @@
-import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
+import { useResponsiveValue } from "@frak-labs/design-system/hooks/useResponsiveValue";
 import {
     ChecklistIcon,
     ChevronDownIcon,
@@ -21,7 +21,7 @@ export function NavigationCampaignsSwitcher({
     tooltip?: string;
 }) {
     const { t } = useTranslation();
-    const isMobile = useMediaQuery("(max-width : 768px)");
+    const isMobile = useResponsiveValue({ mobile: true, tablet: false });
     const merchantId = useOptionalActiveMerchantId();
 
     // TODO: remove the legacy fallback once all entry points land users

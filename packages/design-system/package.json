@@ -8,6 +8,7 @@
     "./components/charts": "./src/components/charts/index.ts",
     "./components/*": "./src/components/*/index.tsx",
     "./hooks/useMediaQuery": "./src/hooks/useMediaQuery.ts",
+    "./hooks/useResponsiveValue": "./src/hooks/useResponsiveValue.ts",
     "./icons": "./src/icons/index.ts",
     "./breakpoints": "./src/breakpoints.ts",
     "./global": "./src/global.ts",
