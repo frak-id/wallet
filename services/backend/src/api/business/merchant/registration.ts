@@ -103,8 +103,6 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             // share-link generation + conversion ingestion can resolve it.
             // Non-fatal: the merchant is already created, so a link failure
             // must not strand it behind a 409-on-retry — we log and move on.
-            // (Single provider for now; the wire contract stays TakeAds-shaped
-            // and is mapped onto the provider-agnostic affiliate store.)
             if (isPlatformAdmin && body.takeads) {
                 const externalId = String(body.takeads.takeadsMerchantId);
                 try {

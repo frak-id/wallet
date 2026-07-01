@@ -1,6 +1,5 @@
 import {
     index,
-    jsonb,
     pgTable,
     primaryKey,
     text,
@@ -20,8 +19,7 @@ import type { AffiliateProvider } from "../provider";
  * `externalId` is the provider's own brand identifier as **text** (TakeAds uses
  * integers, other networks use strings/GUIDs). `trackingLink` is the brand's
  * base affiliate link; per-user share links are built by setting the provider's
- * sub-id query param on it. `metadata` carries any provider-specific extras so
- * new providers don't need a schema change.
+ * sub-id query param on it.
  */
 export const affiliateBrandTable = pgTable(
     "affiliate_brand",
@@ -31,7 +29,6 @@ export const affiliateBrandTable = pgTable(
         provider: text("provider").$type<AffiliateProvider>().notNull(),
         externalId: text("external_id").notNull(),
         trackingLink: text("tracking_link").notNull(),
-        metadata: jsonb("metadata").$type<Record<string, unknown>>(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at").defaultNow().notNull(),
     },
@@ -57,8 +54,8 @@ export const affiliateBrandTable = pgTable(
  * reward. Conversions reported by the provider echo this token back.
  *
  * One stable token per `(provider, identityGroupId, merchantId)` keeps link
- * generation idempotent and merge-safe. `trackingLink` / `couponCode` are a
- * re-derivable cache; `metadata` holds provider-specific extras.
+ * generation idempotent and merge-safe. `trackingLink` is a re-derivable
+ * cache.
  */
 export const affiliateAttributionTable = pgTable(
     "affiliate_attribution",
@@ -69,8 +66,6 @@ export const affiliateAttributionTable = pgTable(
         identityGroupId: uuid("identity_group_id").notNull(),
         merchantId: uuid("merchant_id").notNull(),
         trackingLink: text("tracking_link"),
-        couponCode: varchar("coupon_code", { length: 128 }),
-        metadata: jsonb("metadata").$type<Record<string, unknown>>(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [

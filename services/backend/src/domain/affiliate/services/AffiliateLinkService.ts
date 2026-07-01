@@ -1,5 +1,5 @@
 import { HttpError } from "@backend-utils";
-import { type AffiliateProvider, PROVIDER_SUBID_PARAM } from "../provider";
+import type { AffiliateProvider } from "../provider";
 import type { AffiliateAttributionRepository } from "../repositories/AffiliateAttributionRepository";
 import type { AffiliateBrandRepository } from "../repositories/AffiliateBrandRepository";
 import { generateAffiliateToken } from "../token";
@@ -7,6 +7,8 @@ import { generateAffiliateToken } from "../token";
 // Single affiliate provider for now. When a second network is added, thread the
 // provider through from the caller instead of hardcoding it here.
 const PROVIDER: AffiliateProvider = "takeads";
+// TakeAds sub-id query-param name.
+const SUBID_PARAM = "s";
 
 export type AffiliateShareLink = {
     provider: AffiliateProvider;
@@ -128,7 +130,7 @@ export class AffiliateLinkService {
         token: string
     ): AffiliateShareLink {
         const url = new URL(trackingLink);
-        url.searchParams.set(PROVIDER_SUBID_PARAM[PROVIDER], token);
+        url.searchParams.set(SUBID_PARAM, token);
         return {
             provider: PROVIDER,
             token,

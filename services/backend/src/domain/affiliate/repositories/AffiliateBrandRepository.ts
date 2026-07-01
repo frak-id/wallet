@@ -1,7 +1,11 @@
 import { db } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import { and, eq } from "drizzle-orm";
 import { type AffiliateBrandSelect, affiliateBrandTable } from "../db/schema";
 import type { AffiliateProvider } from "../provider";
+
+/** Postgres unique-violation error code. */
+const UNIQUE_VIOLATION = "23505";
 
 export class AffiliateBrandRepository {
     /**
@@ -15,25 +19,39 @@ export class AffiliateBrandRepository {
         externalId: string;
         trackingLink: string;
     }): Promise<void> {
-        await db
-            .insert(affiliateBrandTable)
-            .values({
-                merchantId: params.merchantId,
-                provider: params.provider,
-                externalId: params.externalId,
-                trackingLink: params.trackingLink,
-            })
-            .onConflictDoUpdate({
-                target: [
-                    affiliateBrandTable.merchantId,
-                    affiliateBrandTable.provider,
-                ],
-                set: {
+        try {
+            await db
+                .insert(affiliateBrandTable)
+                .values({
+                    merchantId: params.merchantId,
+                    provider: params.provider,
                     externalId: params.externalId,
                     trackingLink: params.trackingLink,
-                    updatedAt: new Date(),
-                },
-            });
+                })
+                .onConflictDoUpdate({
+                    target: [
+                        affiliateBrandTable.merchantId,
+                        affiliateBrandTable.provider,
+                    ],
+                    set: {
+                        externalId: params.externalId,
+                        trackingLink: params.trackingLink,
+                        updatedAt: new Date(),
+                    },
+                });
+        } catch (error) {
+            // The onConflictDoUpdate target above only covers
+            // (merchantId, provider); a concurrent registration of the same
+            // externalId under a different merchant instead hits the
+            // (provider, externalId) unique index and surfaces here.
+            if (isProviderExternalUniqueViolation(error)) {
+                throw HttpError.conflict(
+                    "AFFILIATE_BRAND_TAKEN",
+                    `Affiliate brand ${params.externalId} is already linked to another merchant`
+                );
+            }
+            throw error;
+        }
     }
 
     async findByMerchantAndProvider(
@@ -61,4 +79,13 @@ export class AffiliateBrandRepository {
         });
         return result ?? null;
     }
+}
+
+/** Detects a unique-violation on `affiliate_brand_provider_external_unique`. */
+function isProviderExternalUniqueViolation(error: unknown): boolean {
+    const pgError = error as { code?: string; constraint_name?: string };
+    return (
+        pgError?.code === UNIQUE_VIOLATION &&
+        (pgError?.constraint_name?.includes("provider_external") ?? false)
+    );
 }
