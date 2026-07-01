@@ -47,6 +47,36 @@ type ExplorerDetailProps = {
     onClose: () => void;
 };
 
+// Step-2 primary CTA must never no-op: `handleShare` silently returns when
+// `canShare` is false (no native share surface), so fall back to copying
+// the link instead of leaving the button dead on desktop.
+function resolvePrimaryShareAction(
+    canShare: boolean,
+    handleShare: () => void,
+    handleCopy: () => void
+) {
+    return canShare ? handleShare : handleCopy;
+}
+
+function isCreateStepDisabled(isCreating: boolean, isLoading: boolean) {
+    return isCreating || isLoading;
+}
+
+function AffiliateLinkCreateError({
+    show,
+    message,
+}: {
+    show: boolean;
+    message: string;
+}) {
+    if (!show) return null;
+    return (
+        <Text variant="bodySmall" color="error" align="center">
+            {message}
+        </Text>
+    );
+}
+
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const clientId = useStore(clientIdStore, (s) => s.clientId);
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
@@ -104,8 +134,10 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const isAffiliate = merchant.integration === "affiliate";
     const {
         link: affiliateLink,
+        isLoading: isAffiliateLinkLoading,
         create: createAffiliateLink,
         isCreating: isCreatingAffiliateLink,
+        isCreateError: isAffiliateLinkCreateError,
     } = useAffiliateShareLink({
         merchantId: merchant.id,
         enabled: isAffiliate,
@@ -174,6 +206,16 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
             link: shareUrl,
         });
     }, [copy, affiliateNeedsLink, shareUrl, merchant.id]);
+
+    const handlePrimaryAction = resolvePrimaryShareAction(
+        canShare,
+        handleShare,
+        handleCopy
+    );
+    const isCreateButtonDisabled = isCreateStepDisabled(
+        isCreatingAffiliateLink,
+        isAffiliateLinkLoading
+    );
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
@@ -316,7 +358,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                         variant="primary"
                         width="full"
                         onClick={() => createAffiliateLink()}
-                        disabled={isCreatingAffiliateLink}
+                        disabled={isCreateButtonDisabled}
                         size="large"
                         fontSize="s"
                     >
@@ -332,7 +374,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     <Button
                         variant="primary"
                         width="full"
-                        onClick={handleShare}
+                        onClick={handlePrimaryAction}
                         size="large"
                         fontSize="s"
                     >
@@ -340,6 +382,10 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                         <CoinsIcon width={16} height={16} />
                     </Button>
                 )}
+                <AffiliateLinkCreateError
+                    show={isAffiliateLinkCreateError}
+                    message={t("explorer.detail.createShareLinkError")}
+                />
                 {!ua.isMobile && !affiliateNeedsLink && (
                     <Button
                         variant="ghost"

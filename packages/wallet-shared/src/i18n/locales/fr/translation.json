@@ -1266,6 +1266,7 @@
             "shareAndEarn": "Partager et gagner",
 "createShareLink": "Créer mon lien de partage",
 "creatingShareLink": "Création du lien…",
+"createShareLinkError": "Une erreur est survenue lors de la création de votre lien. Veuillez réessayer.",
             "endsIn": "Se termine dans {{count}} jour",
             "endsIn_other": "Se termine dans {{count}} jours",
             "referrerReward": "Récompense en tant que parrain",

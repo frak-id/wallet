@@ -213,64 +213,114 @@ export function MerchantDetailsStep({
                         <FormField
                             control={control}
                             name="takeadsMerchantId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <Stack space="xxs">
-                                        <Text
-                                            variant="bodySmall"
-                                            weight="medium"
-                                            color="secondary"
-                                            className={styles.inputLabel}
-                                        >
-                                            {t(
-                                                "merchant.create.platformAdmin.takeadsMerchantId.label"
-                                            )}
-                                        </Text>
-                                        <FormControl>
-                                            <InputNumber
-                                                variant="bare"
-                                                tone="muted"
-                                                inputMode="numeric"
-                                                placeholder={t(
-                                                    "merchant.create.platformAdmin.takeadsMerchantId.placeholder"
+                            rules={{
+                                validate: (value) => {
+                                    // `InputNumber` can hand back `""` (untyped
+                                    // at the RHF level as `number`) while the
+                                    // user is clearing/editing the field.
+                                    if (value === undefined || value === null)
+                                        return true;
+                                    const isEmptyString =
+                                        typeof value === "string" &&
+                                        value === "";
+                                    if (isEmptyString) return true;
+                                    return (
+                                        (Number.isInteger(value) &&
+                                            value > 0) ||
+                                        t(
+                                            "merchant.create.platformAdmin.takeadsMerchantId.mustBeInteger"
+                                        )
+                                    );
+                                },
+                            }}
+                            render={({ field, fieldState }) => {
+                                const showError = shouldShowError(fieldState);
+                                return (
+                                    <FormItem>
+                                        <Stack space="xxs">
+                                            <Text
+                                                variant="bodySmall"
+                                                weight="medium"
+                                                color="secondary"
+                                                className={styles.inputLabel}
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.takeadsMerchantId.label"
                                                 )}
-                                                {...field}
-                                                value={field.value ?? ""}
-                                            />
-                                        </FormControl>
-                                    </Stack>
-                                </FormItem>
-                            )}
+                                            </Text>
+                                            <FormControl>
+                                                <InputNumber
+                                                    variant="bare"
+                                                    tone="muted"
+                                                    inputMode="numeric"
+                                                    step="1"
+                                                    error={showError}
+                                                    placeholder={t(
+                                                        "merchant.create.platformAdmin.takeadsMerchantId.placeholder"
+                                                    )}
+                                                    {...field}
+                                                    value={field.value ?? ""}
+                                                />
+                                            </FormControl>
+                                            <FieldError>
+                                                {showError
+                                                    ? fieldState.error?.message
+                                                    : null}
+                                            </FieldError>
+                                        </Stack>
+                                    </FormItem>
+                                );
+                            }}
                         />
                         <FormField
                             control={control}
                             name="takeadsTrackingLink"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <Stack space="xxs">
-                                        <Text
-                                            variant="bodySmall"
-                                            weight="medium"
-                                            color="secondary"
-                                            className={styles.inputLabel}
-                                        >
-                                            {t(
-                                                "merchant.create.platformAdmin.takeadsTrackingLink.label"
-                                            )}
-                                        </Text>
-                                        <FormControl>
-                                            <Input
-                                                variant="bare"
-                                                tone="muted"
-                                                placeholder={t(
-                                                    "merchant.create.platformAdmin.takeadsTrackingLink.placeholder"
+                            rules={{
+                                validate: (value) => {
+                                    if (!value) return true;
+                                    return (
+                                        validateUrl(value) ||
+                                        t(
+                                            "merchant.create.platformAdmin.takeadsTrackingLink.invalidUrl"
+                                        )
+                                    );
+                                },
+                            }}
+                            render={({ field, fieldState }) => {
+                                const showError = shouldShowError(fieldState);
+                                return (
+                                    <FormItem>
+                                        <Stack space="xxs">
+                                            <Text
+                                                variant="bodySmall"
+                                                weight="medium"
+                                                color="secondary"
+                                                className={styles.inputLabel}
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.takeadsTrackingLink.label"
                                                 )}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                    </Stack>
-                                </FormItem>
-                            )}
+                                            </Text>
+                                            <FormControl>
+                                                <Input
+                                                    variant="bare"
+                                                    tone="muted"
+                                                    error={showError}
+                                                    placeholder={t(
+                                                        "merchant.create.platformAdmin.takeadsTrackingLink.placeholder"
+                                                    )}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FieldError>
+                                                {showError
+                                                    ? fieldState.error?.message
+                                                    : null}
+                                            </FieldError>
+                                        </Stack>
+                                    </FormItem>
+                                );
+                            }}
                         />
                     </Stack>
                 </WizardFieldCard>

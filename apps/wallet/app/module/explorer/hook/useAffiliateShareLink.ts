@@ -59,7 +59,10 @@ export function useAffiliateShareLink({
     return {
         link: query.data ?? undefined,
         isLoading: query.isLoading,
+        isFetching: query.isFetching,
         create: mutation.mutate,
         isCreating: mutation.isPending,
+        isCreateError: mutation.isError,
+        createError: mutation.error,
     };
 }

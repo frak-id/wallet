@@ -265,6 +265,7 @@ export default interface Resources {
       "detail": {
         "close": "Close",
         "createShareLink": "Create my sharing link",
+        "createShareLinkError": "Something went wrong creating your link. Please try again.",
         "creatingShareLink": "Creating your link…",
         "earningsAvailability": "Earnings availability",
         "endDateBadge": "Ends {{date}} ({{days}}d)",

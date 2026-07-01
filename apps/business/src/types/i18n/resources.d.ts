@@ -1074,9 +1074,11 @@ export default interface Resources {
           },
           "takeadsMerchantId": {
             "label": "TakeAds brand ID",
+            "mustBeInteger": "Please enter a positive whole number",
             "placeholder": "e.g. 12345"
           },
           "takeadsTrackingLink": {
+            "invalidUrl": "Please enter a valid URL",
             "label": "TakeAds tracking link",
             "placeholder": "https://tatrck.com/h/..."
           },

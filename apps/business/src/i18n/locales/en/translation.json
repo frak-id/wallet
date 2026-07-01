@@ -1193,11 +1193,13 @@
                 },
                 "takeadsMerchantId": {
                     "label": "TakeAds brand ID",
-                    "placeholder": "e.g. 12345"
+                    "placeholder": "e.g. 12345",
+                    "mustBeInteger": "Please enter a positive whole number"
                 },
                 "takeadsTrackingLink": {
                     "label": "TakeAds tracking link",
-                    "placeholder": "https://tatrck.com/h/..."
+                    "placeholder": "https://tatrck.com/h/...",
+                    "invalidUrl": "Please enter a valid URL"
                 }
             },
             "fields": {

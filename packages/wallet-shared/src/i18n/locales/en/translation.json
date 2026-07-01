@@ -1269,6 +1269,7 @@
             "shareAndEarn": "Share and earn",
 "createShareLink": "Create my sharing link",
 "creatingShareLink": "Creating your link…",
+"createShareLinkError": "Something went wrong creating your link. Please try again.",
             "endsIn": "Ends in {{count}} day",
             "endsIn_other": "Ends in {{count}} days",
             "referrerReward": "Reward as referrer",
