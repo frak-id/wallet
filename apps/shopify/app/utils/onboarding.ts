@@ -61,7 +61,7 @@ export const MAX_STEP = Object.keys(stepValidations).length;
 /**
  * Data fetchers for each onboarding step
  */
-export const stepDataFetchers = {
+const stepDataFetchers = {
     1: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
         try {
             const merchantId = await resolveMerchantId(context);

@@ -25,7 +25,7 @@ export const SUPPORTED_WORDING_LANGS = ["default", "en", "fr"] as const;
 export type WordingLang = (typeof SUPPORTED_WORDING_LANGS)[number];
 
 // Languages a preset ships copy for (the `default` tier is never preset-authored).
-export const PRESET_LANGS = ["en", "fr"] as const;
+const PRESET_LANGS = ["en", "fr"] as const;
 export type PresetLang = (typeof PRESET_LANGS)[number];
 
 // Empty string means "not set" for that tier; empties are dropped at save.

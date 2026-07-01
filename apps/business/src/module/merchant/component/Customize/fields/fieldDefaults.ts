@@ -12,7 +12,7 @@ type PlacementComponents =
     | NonNullable<NonNullable<SdkConfig["placements"]>[string]>["components"]
     | SdkConfig["components"];
 
-export function getButtonShareDefaults(
+function getButtonShareDefaults(
     components: PlacementComponents
 ): ButtonShareFormValues {
     const bs = components?.buttonShare;
@@ -23,9 +23,7 @@ export function getButtonShareDefaults(
     };
 }
 
-export function getBannerDefaults(
-    components: PlacementComponents
-): BannerFormValues {
+function getBannerDefaults(components: PlacementComponents): BannerFormValues {
     const b = components?.banner;
     return {
         referralTitle: toLocalizedText(b?.referralTitle),
@@ -39,7 +37,7 @@ export function getBannerDefaults(
     };
 }
 
-export function getPostPurchaseDefaults(
+function getPostPurchaseDefaults(
     components: PlacementComponents
 ): PostPurchaseFormValues {
     const pp = components?.postPurchase;

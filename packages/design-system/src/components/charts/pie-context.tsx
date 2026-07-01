@@ -2,7 +2,7 @@ import type { Transition } from "motion/react";
 import { createContext, type RefObject, useContext } from "react";
 
 // CSS variable references for pie chart theming
-export const pieCssVars = {
+const pieCssVars = {
     background: "var(--chart-background)",
     foreground: "var(--chart-foreground)",
     foregroundMuted: "var(--chart-foreground-muted)",
