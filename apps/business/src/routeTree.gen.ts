@@ -44,6 +44,7 @@ import { Route as RestrictedMMerchantIdMerchantTeamRouteImport } from './routes/
 import { Route as RestrictedMMerchantIdMerchantSetupStatusRouteImport } from './routes/_restricted/m/$merchantId/merchant/setup-status'
 import { Route as RestrictedMMerchantIdMerchantFundingRouteImport } from './routes/_restricted/m/$merchantId/merchant/funding'
 import { Route as RestrictedMMerchantIdMerchantCustomizeRouteImport } from './routes/_restricted/m/$merchantId/merchant/customize'
+import { Route as RestrictedMMerchantIdMerchantAffiliateRouteImport } from './routes/_restricted/m/$merchantId/merchant/affiliate'
 import { Route as RestrictedMMerchantIdCampaignsListRouteImport } from './routes/_restricted/m/$merchantId/campaigns/list'
 import { Route as RestrictedCampaignsDraftCampaignIdValidationRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/validation'
 import { Route as RestrictedMMerchantIdCampaignsDraftNewRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/new'
@@ -249,6 +250,12 @@ const RestrictedMMerchantIdMerchantCustomizeRoute =
     path: '/merchant/customize',
     getParentRoute: () => RestrictedMMerchantIdRoute,
   } as any)
+const RestrictedMMerchantIdMerchantAffiliateRoute =
+  RestrictedMMerchantIdMerchantAffiliateRouteImport.update({
+    id: '/merchant/affiliate',
+    path: '/merchant/affiliate',
+    getParentRoute: () => RestrictedMMerchantIdRoute,
+  } as any)
 const RestrictedMMerchantIdCampaignsListRoute =
   RestrictedMMerchantIdCampaignsListRouteImport.update({
     id: '/campaigns/list',
@@ -338,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/merchant/$id/': typeof RestrictedMerchantIdIndexRoute
   '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
   '/m/$merchantId/campaigns/list': typeof RestrictedMMerchantIdCampaignsListRoute
+  '/m/$merchantId/merchant/affiliate': typeof RestrictedMMerchantIdMerchantAffiliateRoute
   '/m/$merchantId/merchant/customize': typeof RestrictedMMerchantIdMerchantCustomizeRoute
   '/m/$merchantId/merchant/funding': typeof RestrictedMMerchantIdMerchantFundingRoute
   '/m/$merchantId/merchant/setup-status': typeof RestrictedMMerchantIdMerchantSetupStatusRoute
@@ -383,6 +391,7 @@ export interface FileRoutesByTo {
   '/merchant/$id': typeof RestrictedMerchantIdIndexRoute
   '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
   '/m/$merchantId/campaigns/list': typeof RestrictedMMerchantIdCampaignsListRoute
+  '/m/$merchantId/merchant/affiliate': typeof RestrictedMMerchantIdMerchantAffiliateRoute
   '/m/$merchantId/merchant/customize': typeof RestrictedMMerchantIdMerchantCustomizeRoute
   '/m/$merchantId/merchant/funding': typeof RestrictedMMerchantIdMerchantFundingRoute
   '/m/$merchantId/merchant/setup-status': typeof RestrictedMMerchantIdMerchantSetupStatusRoute
@@ -431,6 +440,7 @@ export interface FileRoutesById {
   '/_restricted/merchant/$id/': typeof RestrictedMerchantIdIndexRoute
   '/_restricted/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
   '/_restricted/m/$merchantId/campaigns/list': typeof RestrictedMMerchantIdCampaignsListRoute
+  '/_restricted/m/$merchantId/merchant/affiliate': typeof RestrictedMMerchantIdMerchantAffiliateRoute
   '/_restricted/m/$merchantId/merchant/customize': typeof RestrictedMMerchantIdMerchantCustomizeRoute
   '/_restricted/m/$merchantId/merchant/funding': typeof RestrictedMMerchantIdMerchantFundingRoute
   '/_restricted/m/$merchantId/merchant/setup-status': typeof RestrictedMMerchantIdMerchantSetupStatusRoute
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
     | '/merchant/$id/'
     | '/campaigns/draft/$campaignId/validation'
     | '/m/$merchantId/campaigns/list'
+    | '/m/$merchantId/merchant/affiliate'
     | '/m/$merchantId/merchant/customize'
     | '/m/$merchantId/merchant/funding'
     | '/m/$merchantId/merchant/setup-status'
@@ -524,6 +535,7 @@ export interface FileRouteTypes {
     | '/merchant/$id'
     | '/campaigns/draft/$campaignId/validation'
     | '/m/$merchantId/campaigns/list'
+    | '/m/$merchantId/merchant/affiliate'
     | '/m/$merchantId/merchant/customize'
     | '/m/$merchantId/merchant/funding'
     | '/m/$merchantId/merchant/setup-status'
@@ -571,6 +583,7 @@ export interface FileRouteTypes {
     | '/_restricted/merchant/$id/'
     | '/_restricted/campaigns/draft/$campaignId/validation'
     | '/_restricted/m/$merchantId/campaigns/list'
+    | '/_restricted/m/$merchantId/merchant/affiliate'
     | '/_restricted/m/$merchantId/merchant/customize'
     | '/_restricted/m/$merchantId/merchant/funding'
     | '/_restricted/m/$merchantId/merchant/setup-status'
@@ -846,6 +859,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestrictedMMerchantIdMerchantCustomizeRouteImport
       parentRoute: typeof RestrictedMMerchantIdRoute
     }
+    '/_restricted/m/$merchantId/merchant/affiliate': {
+      id: '/_restricted/m/$merchantId/merchant/affiliate'
+      path: '/merchant/affiliate'
+      fullPath: '/m/$merchantId/merchant/affiliate'
+      preLoaderRoute: typeof RestrictedMMerchantIdMerchantAffiliateRouteImport
+      parentRoute: typeof RestrictedMMerchantIdRoute
+    }
     '/_restricted/m/$merchantId/campaigns/list': {
       id: '/_restricted/m/$merchantId/campaigns/list'
       path: '/campaigns/list'
@@ -936,6 +956,7 @@ interface RestrictedMMerchantIdRouteChildren {
   RestrictedMMerchantIdDashboardRoute: typeof RestrictedMMerchantIdDashboardRoute
   RestrictedMMerchantIdMembersRoute: typeof RestrictedMMerchantIdMembersRoute
   RestrictedMMerchantIdCampaignsListRoute: typeof RestrictedMMerchantIdCampaignsListRoute
+  RestrictedMMerchantIdMerchantAffiliateRoute: typeof RestrictedMMerchantIdMerchantAffiliateRoute
   RestrictedMMerchantIdMerchantCustomizeRoute: typeof RestrictedMMerchantIdMerchantCustomizeRoute
   RestrictedMMerchantIdMerchantFundingRoute: typeof RestrictedMMerchantIdMerchantFundingRoute
   RestrictedMMerchantIdMerchantSetupStatusRoute: typeof RestrictedMMerchantIdMerchantSetupStatusRoute
@@ -959,6 +980,8 @@ const RestrictedMMerchantIdRouteChildren: RestrictedMMerchantIdRouteChildren = {
   RestrictedMMerchantIdMembersRoute: RestrictedMMerchantIdMembersRoute,
   RestrictedMMerchantIdCampaignsListRoute:
     RestrictedMMerchantIdCampaignsListRoute,
+  RestrictedMMerchantIdMerchantAffiliateRoute:
+    RestrictedMMerchantIdMerchantAffiliateRoute,
   RestrictedMMerchantIdMerchantCustomizeRoute:
     RestrictedMMerchantIdMerchantCustomizeRoute,
   RestrictedMMerchantIdMerchantFundingRoute:

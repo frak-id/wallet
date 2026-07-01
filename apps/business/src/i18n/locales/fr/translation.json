@@ -186,7 +186,8 @@
         "platformAdminNotice": "Les données membres ne sont pas disponibles en mode lecture seule administrateur plateforme."
     },
     "platformAdmin": {
-        "readOnlyTag": "Lecture seule"
+        "readOnlyTag": "Lecture seule",
+        "readOnlySectionTitle": "Marchands en lecture seule"
     },
     "push": {
         "create": {
@@ -1159,6 +1160,13 @@
         }
     },
     "merchant": {
+        "affiliateTag": "TakeAds",
+        "affiliate": {
+            "title": "Configuration d'affiliation",
+            "description": "Ce marchand est rémunéré via son intégration d'affiliation (TakeAds).",
+            "brandId": "Identifiant de marque TakeAds",
+            "trackingLink": "Lien de suivi"
+        },
         "create": {
             "steps": {
                 "details": {
@@ -1179,6 +1187,28 @@
                 "back": "Retour",
                 "continue": "Continuer",
                 "completeRegistration": "Finaliser l'enregistrement"
+            },
+            "platformAdmin": {
+                "label": "Options administrateur",
+                "description": "Options avancées réservées aux administrateurs de la plateforme Frak.",
+                "skipDomain": {
+                    "title": "Ignorer la vérification du domaine",
+                    "description": "Enregistrer sans la vérification DNS de propriété. La signature reste requise."
+                },
+                "useFrakBank": {
+                    "title": "Utiliser la banque de campagne Frak",
+                    "description": "Associer ce marchand à la banque Frak partagée au lieu d'en déployer une dédiée."
+                },
+                "takeadsMerchantId": {
+                    "label": "Identifiant de marque TakeAds",
+                    "placeholder": "ex. 12345",
+                    "mustBeInteger": "Veuillez saisir un nombre entier positif"
+                },
+                "takeadsTrackingLink": {
+                    "label": "Lien de suivi TakeAds",
+                    "placeholder": "https://tatrck.com/h/...",
+                    "invalidUrl": "Veuillez saisir une URL valide"
+                }
             },
             "fields": {
                 "name": {
@@ -1251,6 +1281,7 @@
         "close": "Fermer",
         "tabs": {
             "identity": "Personnaliser l'identité SDK",
+            "affiliate": "Réglages d'affiliation",
             "explorer": "Réglages de l'app Explorer",
             "team": "Gérer votre équipe"
         },

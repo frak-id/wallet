@@ -13,12 +13,18 @@
         "lint": "biome lint .",
         "format:check": "biome check .",
         "format": "biome check --write .",
-        "db:studio": "drizzle-kit studio",
-        "db:generate": "drizzle-kit generate",
-        "db:migrate": "drizzle-kit migrate",
-        "db:studio:libsql": "drizzle-kit studio --config drizzle-libsql.config.ts",
+        "db:generate:local": "bun --env-file=.env.local drizzle-kit generate",
+        "db:generate:dev": "bun --env-file=.env.dev drizzle-kit generate",
+        "db:generate:prod": "bun --env-file=.env.prod drizzle-kit generate",
         "db:generate:libsql": "drizzle-kit generate --config drizzle-libsql.config.ts",
-        "db:migrate:libsql": "drizzle-kit migrate --config drizzle-libsql.config.ts"
+        "db:migrate:local": "bun --env-file=.env.local drizzle-kit migrate",
+        "db:migrate:dev": "bun --env-file=.env.dev drizzle-kit migrate",
+        "db:migrate:prod": "bun --env-file=.env.prod drizzle-kit migrate",
+        "db:migrate:libsql": "drizzle-kit migrate --config drizzle-libsql.config.ts",
+        "db:studio:local": "bun --env-file=.env.local drizzle-kit studio",
+        "db:studio:dev": "bun --env-file=.env.dev drizzle-kit studio",
+        "db:studio:prod": "bun --env-file=.env.prod drizzle-kit studio",
+        "db:studio:libsql": "drizzle-kit studio --config drizzle-libsql.config.ts"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1030.0",

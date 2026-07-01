@@ -186,7 +186,8 @@
         "platformAdminNotice": "Member data is not available in platform-admin read-only mode."
     },
     "platformAdmin": {
-        "readOnlyTag": "Read-only"
+        "readOnlyTag": "Read-only",
+        "readOnlySectionTitle": "Read-only merchants"
     },
     "push": {
         "create": {
@@ -1159,6 +1160,13 @@
         }
     },
     "merchant": {
+        "affiliateTag": "TakeAds",
+        "affiliate": {
+            "title": "Affiliate configuration",
+            "description": "This merchant earns through its affiliate (TakeAds) integration.",
+            "brandId": "TakeAds brand ID",
+            "trackingLink": "Tracking link"
+        },
         "create": {
             "steps": {
                 "details": {
@@ -1179,6 +1187,28 @@
                 "back": "Back",
                 "continue": "Continue",
                 "completeRegistration": "Complete Registration"
+            },
+            "platformAdmin": {
+                "label": "Platform admin options",
+                "description": "Advanced options available to Frak platform admins.",
+                "skipDomain": {
+                    "title": "Skip domain verification",
+                    "description": "Register without the DNS ownership check. The signature is still required."
+                },
+                "useFrakBank": {
+                    "title": "Use Frak campaign bank",
+                    "description": "Link this merchant to the shared Frak bank instead of deploying a dedicated one."
+                },
+                "takeadsMerchantId": {
+                    "label": "TakeAds brand ID",
+                    "placeholder": "e.g. 12345",
+                    "mustBeInteger": "Please enter a positive whole number"
+                },
+                "takeadsTrackingLink": {
+                    "label": "TakeAds tracking link",
+                    "placeholder": "https://tatrck.com/h/...",
+                    "invalidUrl": "Please enter a valid URL"
+                }
             },
             "fields": {
                 "name": {
@@ -1251,6 +1281,7 @@
         "close": "Close",
         "tabs": {
             "identity": "Customize SDK Identity",
+            "affiliate": "Affiliate settings",
             "explorer": "Explorer App settings",
             "team": "Manage your team"
         },

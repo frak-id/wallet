@@ -1014,6 +1014,13 @@ export default interface Resources {
       }
     },
     "merchant": {
+      "affiliate": {
+        "brandId": "TakeAds brand ID",
+        "description": "This merchant earns through its affiliate (TakeAds) integration.",
+        "title": "Affiliate configuration",
+        "trackingLink": "Tracking link"
+      },
+      "affiliateTag": "TakeAds",
       "create": {
         "actions": {
           "back": "Back",
@@ -1064,6 +1071,28 @@ export default interface Resources {
           "approve": "You'll be asked to approve the transaction using your wallet.",
           "duration": "Registration usually takes less than a minute",
           "onChain": "Your merchant will be registered on-chain."
+        },
+        "platformAdmin": {
+          "description": "Advanced options available to Frak platform admins.",
+          "label": "Platform admin options",
+          "skipDomain": {
+            "description": "Register without the DNS ownership check. The signature is still required.",
+            "title": "Skip domain verification"
+          },
+          "takeadsMerchantId": {
+            "label": "TakeAds brand ID",
+            "mustBeInteger": "Please enter a positive whole number",
+            "placeholder": "e.g. 12345"
+          },
+          "takeadsTrackingLink": {
+            "invalidUrl": "Please enter a valid URL",
+            "label": "TakeAds tracking link",
+            "placeholder": "https://tatrck.com/h/..."
+          },
+          "useFrakBank": {
+            "description": "Link this merchant to the shared Frak bank instead of deploying a dedicated one.",
+            "title": "Use Frak campaign bank"
+          }
         },
         "registration": {
           "description": "To complete registration:",
@@ -1224,6 +1253,7 @@ export default interface Resources {
       "saveAll": "Save all changes",
       "saveError": "Some changes could not be saved. Check the fields and try again.",
       "tabs": {
+        "affiliate": "Affiliate settings",
         "explorer": "Explorer App settings",
         "identity": "Customize SDK Identity",
         "team": "Manage your team"
@@ -1257,6 +1287,7 @@ export default interface Resources {
       "title": "Edit"
     },
     "platformAdmin": {
+      "readOnlySectionTitle": "Read-only merchants",
       "readOnlyTag": "Read-only"
     },
     "push": {

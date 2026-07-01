@@ -33,6 +33,12 @@ export type MerchantData = {
     role: MerchantRole;
     allowedDomains: string[];
     productId?: Hex;
+    isAffiliate?: boolean;
+    affiliate?: {
+        provider: "takeads";
+        externalId: string;
+        trackingLink: string;
+    } | null;
 };
 
 function getMerchantMockData(merchantId: string): MerchantData {
@@ -84,6 +90,7 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
                 createdAt: data.createdAt,
                 role: data.role,
                 allowedDomains: data.allowedDomains ?? [],
+                affiliate: data.affiliate ?? null,
             };
         },
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,

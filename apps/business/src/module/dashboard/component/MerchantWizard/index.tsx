@@ -14,6 +14,7 @@ import { Button } from "@/module/common/component/Button";
 import { WizardLayout } from "@/module/common/component/WizardLayout";
 import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { Form } from "@/module/forms/Form";
 import type { MerchantNew } from "@/types/Merchant";
 import { MerchantDetailsStep } from "./MerchantDetailsStep";
@@ -28,6 +29,7 @@ export function MerchantWizard() {
     const queryClient = useQueryClient();
     const [step, setStep] = useState<1 | 2>(1);
     const [domainError, setDomainError] = useState<string | undefined>();
+    const { isPlatformAdmin } = useMyMerchants();
 
     const form = useForm<MerchantNew>({
         defaultValues: {
@@ -35,6 +37,10 @@ export function MerchantWizard() {
             domain: "",
             setupCode: "",
             currency: "eure",
+            skipDomainValidation: false,
+            useFrakBank: false,
+            takeadsMerchantId: undefined,
+            takeadsTrackingLink: "",
         },
         mode: "onChange",
     });
@@ -86,7 +92,8 @@ export function MerchantWizard() {
                 );
                 return;
             }
-            if (!isDomainValid) {
+            // Platform admins may skip the DNS ownership check entirely.
+            if (!values.skipDomainValidation && !isDomainValid) {
                 setDomainError(t("merchant.create.fields.domain.dnsNotSet"));
                 return;
             }
@@ -104,6 +111,16 @@ export function MerchantWizard() {
             domain: values.domain,
             setupCode: values.setupCode,
             currency: values.currency,
+            skipDomainValidation: values.skipDomainValidation,
+            useFrakBank: values.useFrakBank,
+            // Only link a TakeAds brand when both values are provided.
+            takeads:
+                values.takeadsMerchantId && values.takeadsTrackingLink
+                    ? {
+                          takeadsMerchantId: values.takeadsMerchantId,
+                          trackingLink: values.takeadsTrackingLink,
+                      }
+                    : undefined,
         });
     };
 
@@ -137,7 +154,10 @@ export function MerchantWizard() {
             >
                 <Form {...form}>
                     <form id={FORM_ID} onSubmit={onContinue}>
-                        <MerchantDetailsStep domainError={domainError} />
+                        <MerchantDetailsStep
+                            domainError={domainError}
+                            isPlatformAdmin={isPlatformAdmin}
+                        />
                     </form>
                 </Form>
             </WizardLayout>

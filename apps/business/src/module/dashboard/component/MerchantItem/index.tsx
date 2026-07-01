@@ -14,6 +14,7 @@ type MerchantItemProps = {
     name: string;
     domain: string;
     isReadOnly?: boolean;
+    isAffiliate?: boolean;
     onManageBudget: () => void;
 };
 
@@ -22,6 +23,7 @@ export function MerchantItem({
     name,
     domain,
     isReadOnly = false,
+    isAffiliate = false,
     onManageBudget,
 }: MerchantItemProps) {
     const { t } = useTranslation();
@@ -42,6 +44,11 @@ export function MerchantItem({
                         >
                             {name}
                         </Text>
+                        {isAffiliate && (
+                            <Badge variant="info" size="small">
+                                {t("merchant.affiliateTag")}
+                            </Badge>
+                        )}
                         {isReadOnly && (
                             <Badge variant="warning" size="small">
                                 {t("platformAdmin.readOnlyTag")}
@@ -62,7 +69,11 @@ export function MerchantItem({
                         {t("dashboard.actions.manageBudget")}
                     </Button>
                     <LinkButton
-                        to="/m/$merchantId/merchant/customize"
+                        to={
+                            isAffiliate
+                                ? "/m/$merchantId/merchant/affiliate"
+                                : "/m/$merchantId/merchant/customize"
+                        }
                         params={{ merchantId }}
                         variant="secondary"
                         size="small"

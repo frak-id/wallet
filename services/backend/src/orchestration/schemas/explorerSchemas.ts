@@ -8,6 +8,11 @@ export const ExplorerMerchantItemSchema = t.Object({
     domain: t.String(),
     explorerConfig: t.Union([ExplorerConfigSchema, t.Null()]),
     activeCampaignCount: t.Number(),
+    // How the wallet must build a share link: "native" appends `fCtx` to the
+    // merchant domain; "affiliate" goes through the provider share flow (the
+    // backend mints the sub-id). Derived from the presence of an affiliate
+    // brand link — the frontend stays agnostic of which provider.
+    integration: t.Union([t.Literal("native"), t.Literal("affiliate")]),
 });
 
 export type ExplorerMerchantItem = Static<typeof ExplorerMerchantItemSchema>;

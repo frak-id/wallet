@@ -128,6 +128,7 @@ export const moneriumClientId = new sst.Secret("MONERIUM_CLIENT_ID");
 
 // Resend secrets
 export const resendApiKey = new sst.Secret("RESEND_API_KEY");
+export const takeadsApiKey = new sst.Secret("TAKEADS_API_KEY");
 
 /**
  * Expose stage-dependent computed env vars as SST Linkable resources.

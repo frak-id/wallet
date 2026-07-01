@@ -1,5 +1,10 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import {
+    affiliateAttributionTable,
+    affiliateBrandTable,
+    affiliateSyncStateTable,
+} from "../../domain/affiliate/db/schema";
 // Import schemas directly from db/schema.ts files to avoid pulling in
 // domain contexts (which eagerly instantiate services and repositories)
 import { referralLinksTable } from "../../domain/attribution/db/schema";
@@ -79,6 +84,9 @@ export const db = drizzle({
         pairingSignatureRequestTable,
         interactionLogsTable,
         assetLogsTable,
+        affiliateBrandTable,
+        affiliateAttributionTable,
+        affiliateSyncStateTable,
     },
 });
 

@@ -19,7 +19,8 @@ const merchantAuthorizationService = new MerchantAuthorizationService(
 );
 const merchantRegistrationService = new MerchantRegistrationService(
     merchantRepository,
-    dnsCheckRepository
+    dnsCheckRepository,
+    merchantAdminRepository
 );
 const ownershipTransferService = new OwnershipTransferService(
     merchantRepository,

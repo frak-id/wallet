@@ -1,5 +1,6 @@
 import { and, count, eq, gt, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
+import { affiliateBrandTable } from "../domain/affiliate/db/schema";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
 import {
     merchantExplorerRankingTable,
@@ -69,6 +70,12 @@ export class ExplorerOrchestrator {
                 activeCampaignCount: count(campaignRulesTable.id).as(
                     "active_campaign_count"
                 ),
+                // Correlated EXISTS (not a join) so multiple affiliate brand
+                // links per merchant never fan out the campaign-count grouping.
+                integration: sql<"native" | "affiliate">`CASE WHEN EXISTS (
+                    SELECT 1 FROM ${affiliateBrandTable}
+                    WHERE ${affiliateBrandTable.merchantId} = ${merchantsTable.id}
+                ) THEN 'affiliate' ELSE 'native' END`.as("integration"),
                 totalResult: sql<number>`COUNT(*) OVER()`
                     .mapWith(Number)
                     .as("total_result"),
@@ -109,6 +116,7 @@ export class ExplorerOrchestrator {
             domain: row.domain,
             explorerConfig: row.explorerConfig ?? null,
             activeCampaignCount: Number(row.activeCampaignCount),
+            integration: row.integration,
         }));
 
         return { totalResult, merchants };

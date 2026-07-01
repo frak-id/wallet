@@ -10,6 +10,7 @@ import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import { useFormContext } from "react-hook-form";
@@ -17,20 +18,28 @@ import { useTranslation } from "react-i18next";
 import { shouldShowError } from "@/module/campaigns/component/Creation/fieldError";
 import { WizardFieldCard } from "@/module/campaigns/component/Creation/WizardFieldCard";
 import { useCopyToClipboardWithState } from "@/module/common/hook/useCopyToClipboardWithState";
-import { validateUrl } from "@/module/common/utils/validateUrl";
+import { isValidUrl, validateUrl } from "@/module/common/utils/validateUrl";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { FormControl, FormField, FormItem } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
+import { InputNumber } from "@/module/forms/InputNumber";
 import type { MerchantNew } from "@/types/Merchant";
 import { MerchantCurrencyField } from "./MerchantCurrencyField";
 import * as styles from "./merchantWizard.css";
 
 const DOCS_URL = "https://docs.frak.id/business/product/verify";
 
-export function MerchantDetailsStep({ domainError }: { domainError?: string }) {
+export function MerchantDetailsStep({
+    domainError,
+    isPlatformAdmin = false,
+}: {
+    domainError?: string;
+    isPlatformAdmin?: boolean;
+}) {
     const { t } = useTranslation();
     const { control, watch } = useFormContext<MerchantNew>();
     const domain = watch("domain");
+    const skipDomainValidation = watch("skipDomainValidation");
     const { copied, copy } = useCopyToClipboardWithState();
 
     const { data: dnsRecord, isLoading: isDnsLoading } = useDnsTxtRecordToSet({
@@ -117,6 +126,206 @@ export function MerchantDetailsStep({ domainError }: { domainError?: string }) {
                 </Stack>
             </div>
 
+            {isPlatformAdmin && (
+                <WizardFieldCard
+                    label={t("merchant.create.platformAdmin.label")}
+                    description={t("merchant.create.platformAdmin.description")}
+                >
+                    <Stack space="m">
+                        <FormField
+                            control={control}
+                            name="skipDomainValidation"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Inline
+                                        space="m"
+                                        align="space-between"
+                                        alignY="center"
+                                        wrap={false}
+                                    >
+                                        <Stack space="xxs">
+                                            <Text
+                                                variant="body"
+                                                weight="medium"
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.skipDomain.title"
+                                                )}
+                                            </Text>
+                                            <Text
+                                                variant="bodySmall"
+                                                color="secondary"
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.skipDomain.description"
+                                                )}
+                                            </Text>
+                                        </Stack>
+                                        <FormControl>
+                                            <Switch
+                                                checked={!!field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </Inline>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name="useFrakBank"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Inline
+                                        space="m"
+                                        align="space-between"
+                                        alignY="center"
+                                        wrap={false}
+                                    >
+                                        <Stack space="xxs">
+                                            <Text
+                                                variant="body"
+                                                weight="medium"
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.useFrakBank.title"
+                                                )}
+                                            </Text>
+                                            <Text
+                                                variant="bodySmall"
+                                                color="secondary"
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.useFrakBank.description"
+                                                )}
+                                            </Text>
+                                        </Stack>
+                                        <FormControl>
+                                            <Switch
+                                                checked={!!field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                    </Inline>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name="takeadsMerchantId"
+                            rules={{
+                                validate: (value) => {
+                                    // `InputNumber` can hand back `""` (untyped
+                                    // at the RHF level as `number`) while the
+                                    // user is clearing/editing the field.
+                                    if (value === undefined || value === null)
+                                        return true;
+                                    const isEmptyString =
+                                        typeof value === "string" &&
+                                        value === "";
+                                    if (isEmptyString) return true;
+                                    return (
+                                        (Number.isInteger(value) &&
+                                            value > 0) ||
+                                        t(
+                                            "merchant.create.platformAdmin.takeadsMerchantId.mustBeInteger"
+                                        )
+                                    );
+                                },
+                            }}
+                            render={({ field, fieldState }) => {
+                                const showError = shouldShowError(fieldState);
+                                return (
+                                    <FormItem>
+                                        <Stack space="xxs">
+                                            <Text
+                                                variant="bodySmall"
+                                                weight="medium"
+                                                color="secondary"
+                                                className={styles.inputLabel}
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.takeadsMerchantId.label"
+                                                )}
+                                            </Text>
+                                            <FormControl>
+                                                <InputNumber
+                                                    variant="bare"
+                                                    tone="muted"
+                                                    inputMode="numeric"
+                                                    step="1"
+                                                    error={showError}
+                                                    placeholder={t(
+                                                        "merchant.create.platformAdmin.takeadsMerchantId.placeholder"
+                                                    )}
+                                                    {...field}
+                                                    value={field.value ?? ""}
+                                                />
+                                            </FormControl>
+                                            <FieldError>
+                                                {showError
+                                                    ? fieldState.error?.message
+                                                    : null}
+                                            </FieldError>
+                                        </Stack>
+                                    </FormItem>
+                                );
+                            }}
+                        />
+                        <FormField
+                            control={control}
+                            name="takeadsTrackingLink"
+                            rules={{
+                                validate: (value) => {
+                                    if (!value) return true;
+                                    return (
+                                        isValidUrl(value) ||
+                                        t(
+                                            "merchant.create.platformAdmin.takeadsTrackingLink.invalidUrl"
+                                        )
+                                    );
+                                },
+                            }}
+                            render={({ field, fieldState }) => {
+                                const showError = shouldShowError(fieldState);
+                                return (
+                                    <FormItem>
+                                        <Stack space="xxs">
+                                            <Text
+                                                variant="bodySmall"
+                                                weight="medium"
+                                                color="secondary"
+                                                className={styles.inputLabel}
+                                            >
+                                                {t(
+                                                    "merchant.create.platformAdmin.takeadsTrackingLink.label"
+                                                )}
+                                            </Text>
+                                            <FormControl>
+                                                <Input
+                                                    variant="bare"
+                                                    tone="muted"
+                                                    error={showError}
+                                                    placeholder={t(
+                                                        "merchant.create.platformAdmin.takeadsTrackingLink.placeholder"
+                                                    )}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FieldError>
+                                                {showError
+                                                    ? fieldState.error?.message
+                                                    : null}
+                                            </FieldError>
+                                        </Stack>
+                                    </FormItem>
+                                );
+                            }}
+                        />
+                    </Stack>
+                </WizardFieldCard>
+            )}
+
             <WizardFieldCard label={t("merchant.create.fields.domain.label")}>
                 <Stack space="m">
                     <FormField
@@ -198,7 +407,7 @@ export function MerchantDetailsStep({ domainError }: { domainError?: string }) {
 
                     {domainError && <FieldError>{domainError}</FieldError>}
 
-                    {(dnsRecord || isDnsLoading) && (
+                    {!skipDomainValidation && (dnsRecord || isDnsLoading) && (
                         <Stack space="m" className={styles.dnsBlock}>
                             <Text
                                 variant="bodySmall"
