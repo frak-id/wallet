@@ -1,9 +1,9 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { X } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
-import { Warning } from "@/module/common/component/Warning";
 import * as styles from "./index.css";
 
 type ToastProps = {
@@ -37,7 +37,16 @@ export function Toast({
     return (
         <Box className={styles.toast}>
             <ClickableComponent onClick={onClick} ariaLabel={ariaLabel}>
-                <Warning text={text} className={styles.toastWarning} />
+                <Notice
+                    display="inline"
+                    tone="warning"
+                    icon={null}
+                    className={styles.toastNotice}
+                >
+                    <Text as="span" className={styles.toastNoticeText}>
+                        &#9888; {text}
+                    </Text>
+                </Notice>
             </ClickableComponent>
             <Box className={styles.toastActions}>
                 <Box
