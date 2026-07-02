@@ -275,6 +275,9 @@ Module: `src/infrastructure/telemetry/` — `registry.ts` (shared `Registry` + d
 - **Affiliate ingestion**: `affiliate_ingestion_watermark_lag_seconds` gauge.
 - Tests: `src/infrastructure/telemetry/telemetry.test.ts` (helpers + cron). Test mock `test/mock/common.ts` extended with telemetry stubs.
 
+### Known blind spot
+`http_requests_in_flight` is tracked via lifecycle hooks: if a handler hangs forever (never settles, client disconnects) neither `onAfterResponse` nor `onError` fires, so the gauge is not decremented for that request. This is inherent to hook-based tracking and is acceptable — it would require request-level timeouts to fully close, and a stuck gauge is itself a useful signal.
+
 ### Deferred (documented above, not yet wired)
 Fine-grained per-call instrumentation deliberately skipped to keep overhead minimal: per-query DB timing, per-call blockchain RPC/tx gas histograms, per-cache hit/miss counters, admin-wallet mutex wait/hold histograms, external-API (`ky`) per-call metrics, DNS lookups, WebSocket gauges, pricing sanity-band rejections, WebAuthn outcome granularity, pairing/media metrics, `campaign_bank_balance_wei` gauges. These require touching hotter/among-many call sites; add incrementally if a dashboard gap appears.
 
