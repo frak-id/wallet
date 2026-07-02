@@ -7,6 +7,13 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
     private var pendingInvoke: Invoke?
     private var isRegistration = false
 
+    /// Whether the in-flight request was started with
+    /// `.preferImmediatelyAvailableCredentials`. Needed in the error delegate:
+    /// under that flag, Apple reports "no local passkey" as a plain `.canceled`
+    /// (1001) fired instantly with zero UI — the same code as a user cancel —
+    /// so the flag is the only way to tell the two apart.
+    private var preferImmediateInFlight = false
+
     /// Strong reference to the in-flight `ASAuthorizationController`.
     /// `ASAuthorizationController` holds its delegate + presentation provider
     /// weakly. If we keep the controller as a local `let` in
@@ -85,7 +92,9 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
         pendingInvoke = invoke
         isRegistration = true
 
-        startAuthorization(with: request, invoke: invoke)
+        // Registration never uses the immediately-available flag — it must be
+        // able to present the full create sheet.
+        startAuthorization(with: request, invoke: invoke, preferImmediate: false)
     }
 
     @objc public func authenticate(_ invoke: Invoke) {
@@ -128,10 +137,15 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
             }
         }
 
+        // When set, the JS bridge asks for a fail-fast assertion: a present
+        // passkey prompts biometrics immediately; no passkey yields
+        // .notInteractive (1005) with zero UI (mapped to no-credential below).
+        let preferImmediate = options.getBool("preferImmediatelyAvailable") ?? false
+
         pendingInvoke = invoke
         isRegistration = false
 
-        startAuthorization(with: request, invoke: invoke)
+        startAuthorization(with: request, invoke: invoke, preferImmediate: preferImmediate)
     }
 
     /// Build the `ASAuthorizationController`, retain it as a property, and
@@ -139,7 +153,7 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
     /// load-bearing: Tauri dispatches `@objc` plugin commands on a background
     /// IPC queue, and `performRequests()` MUST run on the main thread —
     /// calling it off-main raises an uncatchable `NSInternalInconsistencyException`.
-    private func startAuthorization(with request: ASAuthorizationRequest, invoke: Invoke) {
+    private func startAuthorization(with request: ASAuthorizationRequest, invoke: Invoke, preferImmediate: Bool) {
         let runAuth = { [weak self] in
             guard let self = self else { return }
             guard self.activeKeyWindow() != nil else {
@@ -152,7 +166,14 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
             controller.delegate = self
             controller.presentationContextProvider = self
             self.authController = controller
-            controller.performRequests()
+            self.preferImmediateInFlight = preferImmediate
+            // `preferImmediatelyAvailableCredentials` is iOS 16+; the request
+            // itself already requires iOS 16 (guarded in register/authenticate).
+            if #available(iOS 16.0, *), preferImmediate {
+                controller.performRequests(options: .preferImmediatelyAvailableCredentials)
+            } else {
+                controller.performRequests()
+            }
         }
         if Thread.isMainThread {
             runAuth()
@@ -167,6 +188,7 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
         let invoke = pendingInvoke
         pendingInvoke = nil
         authController = nil
+        preferImmediateInFlight = false
 
         guard let invoke = invoke else { return }
 
@@ -191,6 +213,8 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
         let invoke = pendingInvoke
         pendingInvoke = nil
         authController = nil
+        let wasPreferImmediate = preferImmediateInFlight
+        preferImmediateInFlight = false
 
         guard let invoke = invoke else { return }
 
@@ -205,14 +229,27 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
         // regex can never mistake it) for analytics + debugging.
         let type: String
         switch code {
-        case 1001: // .canceled — user dismissed (or, on the interactive path, no credential)
+        case 1001 where wasPreferImmediate:
+            // .canceled under preferImmediatelyAvailableCredentials — Apple's
+            // "no local passkey" signal on the fail-fast path: fired instantly
+            // with zero UI (device-verified; the theorized .notInteractive/1005
+            // never fires for assertions). Emit the same locale-stable
+            // TYPE_NO_CREDENTIAL token Android sends so the JS classifier
+            // buckets it as no-credential. Trade-off: a user cancelling the
+            // flag-initiated biometric prompt (passkey present) lands here too
+            // and clears the hint — acceptable; the hint is rewritten on the
+            // next successful login.
+            invoke.reject(webauthnError("NotAllowedError", "[\(code)] TYPE_NO_CREDENTIAL preferImmediatelyAvailable"))
+            return
+        case 1001: // .canceled — user dismissed the interactive sheet
             type = "NotAllowedError"
         case 1006: // .matchedExcludedCredential (iOS 18+) — passkey already registered
             type = "InvalidStateError"
-        // TODO(prefer-immediate): once we adopt preferImmediatelyAvailableCredentials,
-        // .notInteractive (1005) becomes a clean "no credential on this device"
-        // signal — surface it as a no-credential token rather than UnknownError.
-        default: // .failed / .unknown / .invalidResponse / .notHandled / .notInteractive / …
+        case 1005: // .notInteractive — kept mapped to the no-credential token in
+                   // case some iOS version emits it for the flagged path.
+            invoke.reject(webauthnError("NotAllowedError", "[\(code)] TYPE_NO_CREDENTIAL notInteractive"))
+            return
+        default: // .failed / .unknown / .invalidResponse / .notHandled / …
             type = "UnknownError"
         }
 
