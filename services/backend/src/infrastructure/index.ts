@@ -40,3 +40,13 @@ export {
     createRateLimitStore,
     rateLimitMiddleware,
 } from "./rateLimit/rateLimiter";
+// Telemetry (Prometheus metrics)
+export {
+    businessMetrics,
+    cronMetrics,
+    httpMetrics,
+    infraMetrics,
+    metricsContentType,
+    registry,
+    renderMetrics,
+} from "./telemetry";

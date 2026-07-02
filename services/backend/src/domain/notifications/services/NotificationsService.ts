@@ -1,4 +1,4 @@
-import { db, log } from "@backend-infrastructure";
+import { businessMetrics, db, log } from "@backend-infrastructure";
 import type { Language } from "@frak-labs/core-sdk";
 import { inArray, lt } from "drizzle-orm";
 import type { Address } from "viem";
@@ -229,6 +229,16 @@ export class NotificationsService {
             await Promise.allSettled(worker);
         }
 
+        businessMetrics.notificationsSent(
+            "webpush",
+            "invalid_token",
+            staleTokenIds.length
+        );
+        businessMetrics.notificationsSent(
+            "webpush",
+            "success",
+            tokens.length - staleTokenIds.length
+        );
         if (staleTokenIds.length > 0) {
             log.info(
                 { count: staleTokenIds.length },
@@ -272,6 +282,16 @@ export class NotificationsService {
             allInvalidEndpoints.push(...invalid);
         }
 
+        businessMetrics.notificationsSent(
+            "fcm",
+            "invalid_token",
+            allInvalidEndpoints.length
+        );
+        businessMetrics.notificationsSent(
+            "fcm",
+            "success",
+            tokens.length - allInvalidEndpoints.length
+        );
         if (allInvalidEndpoints.length > 0) {
             const idsToDelete = allInvalidEndpoints
                 .map((ep) => endpointToId.get(ep))

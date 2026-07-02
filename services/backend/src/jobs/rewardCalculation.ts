@@ -1,4 +1,4 @@
-import { eventEmitter } from "@backend-infrastructure";
+import { businessMetrics, eventEmitter } from "@backend-infrastructure";
 import { RewardConfig } from "../domain/rewards/config";
 import { OrchestrationContext } from "../orchestration";
 import { MutexCron } from "../utils/mutexCron";
@@ -20,6 +20,15 @@ CronRegistry.register(
                     }
                 );
 
+            businessMetrics.rewardInteractions(
+                "success",
+                result.processedCount
+            );
+            businessMetrics.rewardInteractions(
+                "deferred",
+                result.deferredCount
+            );
+            businessMetrics.rewardInteractions("error", result.errors.length);
             logger.info(
                 {
                     processedCount: result.processedCount,

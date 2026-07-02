@@ -1,5 +1,4 @@
-import { log } from "@backend-infrastructure";
-import { businessMetrics } from "@backend-infrastructure/telemetry";
+import { businessMetrics, log } from "@backend-infrastructure";
 import { Elysia } from "elysia";
 import { customWebhook } from "./customWebhook";
 import { magentoWebhook } from "./magentoWebhook";

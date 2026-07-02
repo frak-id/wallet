@@ -1,3 +1,4 @@
+import { businessMetrics } from "@backend-infrastructure";
 import { RewardConfig } from "../domain/rewards/config";
 import { OrchestrationContext } from "../orchestration";
 import { MutexCron } from "../utils/mutexCron";
@@ -13,6 +14,7 @@ CronRegistry.register(
             const { requeuedCount } =
                 await OrchestrationContext.orchestrators.settlement.requeueDepletedRewards();
 
+            businessMetrics.settlementRequeued(requeuedCount);
             if (requeuedCount > 0) {
                 logger.info(
                     { requeuedCount },

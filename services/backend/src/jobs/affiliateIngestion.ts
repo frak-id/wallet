@@ -1,3 +1,4 @@
+import { businessMetrics } from "@backend-infrastructure";
 import { tryWithAdvisoryLock } from "../infrastructure/persistence/postgres";
 import { OrchestrationContext } from "../orchestration";
 import { MutexCron } from "../utils/mutexCron";
@@ -47,6 +48,11 @@ CronRegistry.register(
             }
 
             const { result } = outcome;
+            if (result.newWatermark !== null) {
+                businessMetrics.affiliateWatermarkLagSeconds(
+                    (Date.now() - result.newWatermark.getTime()) / 1000
+                );
+            }
             // A run counts as stalled when it errored and made no real progress.
             // `newWatermark === null` alone is blind to poison-skips: a skipped
             // poison action advances the cursor even though zero legitimate

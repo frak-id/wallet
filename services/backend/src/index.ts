@@ -1,16 +1,16 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { log } from "@backend-infrastructure";
+import {
+    httpMetrics,
+    log,
+    metricsContentType,
+    renderMetrics,
+} from "@backend-infrastructure";
 // Leaf sub-path import (NOT the barrel) on purpose: importing this value
 // through `@backend-infrastructure` creates a runtime cycle that degrades
 // JwtContext typing. See authError.ts.
 import { AUTH_ERROR_HEADER } from "@backend-infrastructure/macro/authError";
-import {
-    httpMetrics,
-    metricsContentType,
-    renderMetrics,
-} from "@backend-infrastructure/telemetry";
 import { noContentPatch } from "@backend-utils";
 import { cors } from "@elysiajs/cors";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";

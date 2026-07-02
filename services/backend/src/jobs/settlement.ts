@@ -1,6 +1,6 @@
+import { businessMetrics } from "@backend-infrastructure";
 import { RewardConfig } from "../domain/rewards/config";
 import { tryWithAdvisoryLock } from "../infrastructure/persistence/postgres";
-import { businessMetrics } from "../infrastructure/telemetry";
 import { OrchestrationContext } from "../orchestration";
 import { MutexCron } from "../utils/mutexCron";
 import { CronRegistry } from "./registry";
