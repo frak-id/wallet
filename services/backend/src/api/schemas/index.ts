@@ -114,6 +114,8 @@ export {
     validateArrivalReferrer,
 } from "./interactionSchemas";
 export {
+    type AffiliateBrandInfo,
+    AffiliateBrandInfoSchema,
     type MerchantDetailResponse,
     MerchantDetailResponseSchema,
     type MerchantResolveResponse,

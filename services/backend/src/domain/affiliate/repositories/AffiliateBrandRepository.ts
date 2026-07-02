@@ -87,19 +87,6 @@ export class AffiliateBrandRepository {
             .where(inArray(affiliateBrandTable.merchantId, merchantIds));
         return new Set(rows.map((r) => r.merchantId));
     }
-
-    async findByProviderAndExternalId(
-        provider: AffiliateProvider,
-        externalId: string
-    ): Promise<AffiliateBrandSelect | null> {
-        const result = await db.query.affiliateBrandTable.findFirst({
-            where: and(
-                eq(affiliateBrandTable.provider, provider),
-                eq(affiliateBrandTable.externalId, externalId)
-            ),
-        });
-        return result ?? null;
-    }
 }
 
 /** Detects a unique-violation on `affiliate_brand_provider_external_unique`. */

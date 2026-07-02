@@ -1,14 +1,9 @@
+import type { AffiliateBrandInfo } from "@frak-labs/backend-elysia/api/schemas";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
-
-type AffiliateBrand = {
-    provider: "takeads";
-    externalId: string;
-    trackingLink: string;
-};
 
 /**
  * Read-only summary of a merchant's affiliate (e.g. TakeAds) brand link,
@@ -18,7 +13,7 @@ type AffiliateBrand = {
 export function AffiliateConfigPanel({
     affiliate,
 }: {
-    affiliate: AffiliateBrand;
+    affiliate: AffiliateBrandInfo;
 }) {
     const { t } = useTranslation();
 

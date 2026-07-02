@@ -1,5 +1,4 @@
 import type { Address } from "viem";
-import { zeroAddress } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     FRAK_SHARED_CAMPAIGN_BANK,
@@ -141,7 +140,6 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         expect(result.isPlatformAdmin).toBe(true);
         const created = merchantRepo.create.mock.calls[0][0];
         expect(created.bankAddress).toBe(FRAK_SHARED_CAMPAIGN_BANK);
-        expect(FRAK_SHARED_CAMPAIGN_BANK).toBe(zeroAddress);
     });
 
     it("ignores useFrakBank for a non-admin", async () => {

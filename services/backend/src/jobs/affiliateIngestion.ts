@@ -46,7 +46,14 @@ CronRegistry.register(
             }
 
             const { result } = outcome;
-            const stalled = result.errors > 0 && result.newWatermark === null;
+            // A run counts as stalled when it errored and made no real progress.
+            // `newWatermark === null` alone is blind to poison-skips: a skipped
+            // poison action advances the cursor even though zero legitimate
+            // actions were processed — so also require some processed work
+            // before treating an advancing watermark as healthy.
+            const stalled =
+                result.errors > 0 &&
+                (result.newWatermark === null || result.processed === 0);
             consecutiveStalledRuns = stalled ? consecutiveStalledRuns + 1 : 0;
 
             if (result.errors > 0) {

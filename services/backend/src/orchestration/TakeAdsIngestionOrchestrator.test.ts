@@ -37,10 +37,7 @@ const attribution: AffiliateAttributionSelect = {
 function makeAction(overrides: Partial<TakeAdsAction> = {}): TakeAdsAction {
     return {
         actionId: "act-1",
-        actionNumericId: 1,
-        merchantId: 42,
         status: "PENDING",
-        advertiserPaid: false,
         subId: "tok-abc",
         orderAmount: 100,
         publisherRevenue: 5,
@@ -632,6 +629,43 @@ describe("TakeAdsIngestionOrchestrator", () => {
             expect(syncStateRepo.advanceWatermark).not.toHaveBeenCalled();
             // The good action was still processed this run (no data loss) —
             // only the cursor is held.
+            expect(purchaseInteractionCreator.create).toHaveBeenCalledOnce();
+        });
+
+        it("13b. far-future updatedAt holds the cursor (would otherwise starve ingestion)", async () => {
+            const {
+                orchestrator,
+                attributionRepo,
+                getActions,
+                syncStateRepo,
+                purchaseInteractionCreator,
+            } = buildOrchestrator();
+
+            vi.mocked(attributionRepo.findByTokens).mockResolvedValue(
+                attributionMap(attribution)
+            );
+            getActions.mockResolvedValue(
+                singlePage([
+                    makeAction({
+                        actionId: "good",
+                        updatedAt: "2024-06-01T10:00:00Z",
+                    }),
+                    makeAction({
+                        actionId: "future",
+                        updatedAt: "2099-01-01T00:00:00Z",
+                    }),
+                ])
+            );
+
+            const summary = await orchestrator.ingestActions();
+
+            expect(summary.errors).toBe(1);
+            // A far-future timestamp on the watermark would make every later
+            // run fetch 0 actions until real time catches up — the cursor
+            // must be held instead.
+            expect(summary.newWatermark).toBeNull();
+            expect(syncStateRepo.advanceWatermark).not.toHaveBeenCalled();
+            // The good action was still processed this run.
             expect(purchaseInteractionCreator.create).toHaveBeenCalledOnce();
         });
 

@@ -1,3 +1,4 @@
+import type { AffiliateBrandInfo } from "@frak-labs/backend-elysia/api/schemas";
 import { queryOptions } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
@@ -34,11 +35,7 @@ export type MerchantData = {
     allowedDomains: string[];
     productId?: Hex;
     isAffiliate?: boolean;
-    affiliate?: {
-        provider: "takeads";
-        externalId: string;
-        trackingLink: string;
-    } | null;
+    affiliate?: AffiliateBrandInfo | null;
 };
 
 function getMerchantMockData(merchantId: string): MerchantData {

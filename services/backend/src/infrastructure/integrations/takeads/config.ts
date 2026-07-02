@@ -34,10 +34,7 @@ export type TakeAdsActionType = "LEAD" | "SALE" | "CLICK" | "BONUS";
 export type TakeAdsAction = {
     /** Stable unique id assigned by TakeAds (use for idempotency). */
     actionId: string;
-    actionNumericId: number;
-    merchantId: number;
     status: TakeAdsActionStatus;
-    advertiserPaid: boolean;
     /** Echo of the subId we minted at link generation. */
     subId: string;
     /** Buyer's order total (the purchase amount). */
@@ -57,12 +54,6 @@ export type TakeAdsAction = {
 export type TakeAdsActionListParams = {
     /** ISO 8601 lower bound on `updatedAt` (the polling watermark). */
     updatedAtFrom?: string;
-    updatedAtTo?: string;
-    createdAtFrom?: string;
-    createdAtTo?: string;
-    status?: TakeAdsActionStatus;
-    subId?: string;
-    merchantId?: number;
     /** Opaque string cursor from `meta.next`. */
     next?: string;
     /** Max 500. */

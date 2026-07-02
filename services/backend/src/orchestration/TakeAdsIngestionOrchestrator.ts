@@ -53,11 +53,20 @@ const STREAM = "conversions";
 // skipped rather than pinning the cursor forever. See the in-memory counter
 // on the orchestrator instance for the caveats of this budget.
 const MAX_ACTION_RETRIES = 5;
+// Tolerance for clock skew between TakeAds and us. An action whose updatedAt
+// is further in the future than this is treated as corrupt: letting it onto
+// the watermark would persist a future cursor and silently starve ingestion
+// (updatedAtFrom > now returns 0 actions) until real time catches up.
+const MAX_FUTURE_SKEW_MS = 60_000;
 // Pages fetched per run. Kept low on purpose: every page is checkpointed (see
 // ingestActions), so anything beyond the cap simply resumes on the next tick.
 // If a backlog ever outpaces the hourly cadence, raise this or shorten the cron
 // period rather than letting one run hold the advisory lock for long.
 const PAGE_CAP = 50;
+// How many actions from a single page are dispatched concurrently to the DB.
+// Processing a 500-action page sequentially serialises ~500 round-trips; batching
+// reduces that to ceil(500/20)=25 parallel waves. Keep below the DB pool size.
+const ACTION_BATCH_SIZE = 20;
 // Wall-clock budget per run. The job is hourly and holds an advisory lock for
 // its whole duration, so a large backlog (first run / post-outage) is drained
 // incrementally across ticks rather than blocking all replicas for hours.
@@ -211,17 +220,25 @@ export class TakeAdsIngestionOrchestrator {
         const pageSuccess: Date[] = [];
         const pageFailed: Date[] = [];
         let deadlineHit = false;
-        for (const action of resp.data) {
+        // Process actions in concurrent batches (ACTION_BATCH_SIZE at a time)
+        // instead of sequentially, so a 500-action page doesn't serialise 500
+        // DB write round-trips. Deadline is checked between batches.
+        for (let i = 0; i < resp.data.length; i += ACTION_BATCH_SIZE) {
             if (Date.now() > deadline) {
                 deadlineHit = true;
                 break;
             }
-            await this.processAction(
-                action,
-                counts,
-                pageSuccess,
-                pageFailed,
-                attributionsByToken
+            const batch = resp.data.slice(i, i + ACTION_BATCH_SIZE);
+            await Promise.all(
+                batch.map((action) =>
+                    this.processAction(
+                        action,
+                        counts,
+                        pageSuccess,
+                        pageFailed,
+                        attributionsByToken
+                    )
+                )
             );
         }
 
@@ -366,6 +383,23 @@ export class TakeAdsIngestionOrchestrator {
                     updatedAt: action.updatedAt,
                 },
                 "TakeAdsIngestionOrchestrator: action has invalid updatedAt — cursor held"
+            );
+            counts.errors++;
+            failedTimestamps.push(new Date(0));
+            return;
+        }
+        if (actionTs.getTime() > Date.now() + MAX_FUTURE_SKEW_MS) {
+            // A far-future updatedAt (TakeAds bug / clock skew) must never reach
+            // the watermark: it would be persisted as the cursor and every
+            // subsequent run would fetch 0 actions until real time catches up.
+            // Same sentinel pattern as the NaN guard above — hold the cursor.
+            log.error(
+                {
+                    actionId: action.actionId,
+                    subId: action.subId,
+                    updatedAt: action.updatedAt,
+                },
+                "TakeAdsIngestionOrchestrator: action has far-future updatedAt — cursor held"
             );
             counts.errors++;
             failedTimestamps.push(new Date(0));

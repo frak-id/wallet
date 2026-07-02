@@ -1,5 +1,11 @@
 import { HttpError } from "@backend-utils";
 import { describe, expect, it, vi } from "vitest";
+import type {
+    AffiliateAttributionSelect,
+    AffiliateBrandSelect,
+} from "../db/schema";
+import type { AffiliateAttributionRepository } from "../repositories/AffiliateAttributionRepository";
+import type { AffiliateBrandRepository } from "../repositories/AffiliateBrandRepository";
 import { AffiliateLinkService } from "./AffiliateLinkService";
 
 const MERCHANT_ID = "11111111-1111-1111-1111-111111111111";
@@ -8,7 +14,7 @@ const IDENTITY_GROUP_ID = "22222222-2222-2222-2222-222222222222";
 function makeService(
     opts: {
         brand?: { merchantId: string; trackingLink: string } | null;
-        existingBrandForExternalId?: { merchantId: string } | null;
+        linkRejects?: Error;
         existingToken?: string;
         existingAttribution?: { token: string } | null;
     } = {}
@@ -22,11 +28,12 @@ function makeService(
             : opts.brand;
 
     const affiliateBrandRepository = {
-        findByMerchantAndProvider: vi.fn(() => Promise.resolve(brand as never)),
-        findByProviderAndExternalId: vi.fn(() =>
-            Promise.resolve((opts.existingBrandForExternalId ?? null) as never)
+        findByMerchantAndProvider: vi.fn(() =>
+            Promise.resolve(brand as unknown as AffiliateBrandSelect)
         ),
-        link: vi.fn(() => Promise.resolve()),
+        link: opts.linkRejects
+            ? vi.fn(() => Promise.reject(opts.linkRejects))
+            : vi.fn(() => Promise.resolve()),
     };
 
     // `mint` echoes back the token it was handed unless a pre-existing token is
@@ -35,16 +42,19 @@ function makeService(
         mint: vi.fn((params: { token: string }) =>
             Promise.resolve({
                 token: opts.existingToken ?? params.token,
-            } as never)
+            } as unknown as AffiliateAttributionSelect)
         ),
         findByUserAndBrand: vi.fn(() =>
-            Promise.resolve((opts.existingAttribution ?? null) as never)
+            Promise.resolve(
+                (opts.existingAttribution ??
+                    null) as unknown as AffiliateAttributionSelect | null
+            )
         ),
     };
 
     const service = new AffiliateLinkService(
-        affiliateBrandRepository as never,
-        affiliateAttributionRepository as never
+        affiliateBrandRepository as unknown as AffiliateBrandRepository,
+        affiliateAttributionRepository as unknown as AffiliateAttributionRepository
     );
 
     return {
@@ -206,22 +216,16 @@ describe("AffiliateLinkService.registerBrand", () => {
 
     it("refuses to steal a brand already linked to another merchant", async () => {
         const { service, affiliateBrandRepository } = makeService({
-            existingBrandForExternalId: { merchantId: "other-merchant" },
+            linkRejects: HttpError.conflict(
+                "AFFILIATE_BRAND_TAKEN",
+                "Affiliate brand 12345 is already linked to another merchant"
+            ),
         });
 
         await expect(service.registerBrand(registerParams)).rejects.toThrow(
             HttpError
         );
-        expect(affiliateBrandRepository.link).not.toHaveBeenCalled();
-    });
-
-    it("re-links idempotently for the same merchant", async () => {
-        const { service, affiliateBrandRepository } = makeService({
-            existingBrandForExternalId: { merchantId: MERCHANT_ID },
-        });
-
-        await service.registerBrand(registerParams);
-
+        // link() IS called; the repository raises the conflict on the unique index.
         expect(affiliateBrandRepository.link).toHaveBeenCalled();
     });
 });

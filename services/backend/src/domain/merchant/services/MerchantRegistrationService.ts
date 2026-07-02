@@ -141,7 +141,14 @@ export class MerchantRegistrationService {
             return { valid: false, error: "Invalid SIWE message format" };
         }
 
-        const originHost = new URL(params.requestOrigin).host;
+        // An absent/malformed Origin header must be a clean validation
+        // failure, not an unhandled `new URL("")` TypeError (500).
+        let originHost: string;
+        try {
+            originHost = new URL(params.requestOrigin).host;
+        } catch {
+            return { valid: false, error: "Missing or invalid Origin header" };
+        }
         const isValid = validateSiweMessage({
             message: siweMessage,
             domain: originHost,

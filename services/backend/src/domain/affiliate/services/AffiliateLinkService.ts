@@ -43,19 +43,6 @@ export class AffiliateLinkService {
         trackingLink: string;
     }): Promise<void> {
         assertHttpsUrl(params.trackingLink);
-
-        const existing =
-            await this.affiliateBrandRepository.findByProviderAndExternalId(
-                PROVIDER,
-                params.externalId
-            );
-        if (existing && existing.merchantId !== params.merchantId) {
-            throw HttpError.conflict(
-                "AFFILIATE_BRAND_TAKEN",
-                `Affiliate brand ${params.externalId} is already linked to another merchant`
-            );
-        }
-
         await this.affiliateBrandRepository.link({
             merchantId: params.merchantId,
             provider: PROVIDER,
@@ -74,14 +61,16 @@ export class AffiliateLinkService {
         merchantId: string;
         identityGroupId: string;
     }): Promise<AffiliateShareLink | null> {
-        const brand = await this.requireBrand(params.merchantId);
-
-        const attribution =
-            await this.affiliateAttributionRepository.findByUserAndBrand({
+        // The two reads are independent: fire them in parallel to save one
+        // DB round-trip on every user link-read request.
+        const [brand, attribution] = await Promise.all([
+            this.requireBrand(params.merchantId),
+            this.affiliateAttributionRepository.findByUserAndBrand({
                 provider: PROVIDER,
                 identityGroupId: params.identityGroupId,
                 merchantId: params.merchantId,
-            });
+            }),
+        ]);
         if (!attribution) return null;
 
         return this.buildShareLink(brand.trackingLink, attribution.token);

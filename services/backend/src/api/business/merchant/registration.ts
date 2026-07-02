@@ -103,6 +103,9 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             // share-link generation + conversion ingestion can resolve it.
             // Non-fatal: the merchant is already created, so a link failure
             // must not strand it behind a 409-on-retry — we log and move on.
+            const msgOf = (e: unknown) =>
+                e instanceof Error ? e.message : String(e);
+
             if (isPlatformAdmin && body.takeads) {
                 const externalId = String(body.takeads.takeadsMerchantId);
                 try {
@@ -115,14 +118,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     );
                 } catch (error) {
                     log.error(
-                        {
-                            merchantId,
-                            externalId,
-                            error:
-                                error instanceof Error
-                                    ? error.message
-                                    : String(error),
-                        },
+                        { merchantId, externalId, error: msgOf(error) },
                         "Failed to link affiliate brand during registration"
                     );
                 }
@@ -135,13 +131,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     .deployAndSetupBank(merchantId)
                     .catch((error) => {
                         log.error(
-                            {
-                                merchantId,
-                                error:
-                                    error instanceof Error
-                                        ? error.message
-                                        : String(error),
-                            },
+                            { merchantId, error: msgOf(error) },
                             "Failed to deploy campaign bank during registration"
                         );
                     });
