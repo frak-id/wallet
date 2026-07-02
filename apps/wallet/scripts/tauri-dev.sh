@@ -64,6 +64,20 @@ start_dev_server() {
     echo "[tauri-dev] Dev server ready"
 }
 
+# Best-effort LAN IP of this Mac, empty if none. Prefer the interface that
+# carries the default route (handles docked Macs where ethernet lands on
+# en5/en6 instead of en0), then fall back to the common en0/en1 names.
+detect_lan_ip() {
+    local ip iface
+    iface="$(route -n get default 2>/dev/null | awk '/interface:/{print $2; exit}')"
+    for candidate in "$iface" en0 en1; do
+        [ -n "$candidate" ] || continue
+        ip="$(ipconfig getifaddr "$candidate" 2>/dev/null || true)"
+        [ -n "$ip" ] && break
+    done
+    echo "$ip"
+}
+
 setup_adb_reverse() {
     echo "[tauri-dev] Setting up ADB reverse port forwarding..."
 
@@ -156,6 +170,10 @@ run_android() {
     # nav-bar inset never reaches CSS. Export both before `start_dev_server`.
     export TAURI_CLI_RUNNING=1
     export TAURI_ENV_PLATFORM=android
+    # Match the sst pane environment for one-off `sst dev` runs: mobile
+    # webviews need the backend's plain-HTTP mirror (the https://localhost:3030
+    # mkcert cert is untrusted there). The device reaches it via adb reverse.
+    export BACKEND_URL="${BACKEND_URL:-http://localhost:3031}"
     setup_android_signing
     setup_firebase_config
     start_dev_server
@@ -175,20 +193,51 @@ run_android() {
 }
 
 run_ios() {
-    local device="${1:-iPhone 17}"
+    # Device selection, in priority order:
+    #   1. positional arg        — ./scripts/tauri-dev.sh ios "Rodolphe's iPad"
+    #   2. TAURI_IOS_DEVICE env  — TAURI_IOS_DEVICE="iPad" bun run tauri:ios:dev
+    #   3. "iPhone 17" simulator default.
+    # Always pass an explicit device: with none, the Tauri CLI auto-selects
+    # detected hardware before ever prompting — a Wi-Fi-paired iPad silently
+    # hijacks every simulator run (its interactive picker is unreachable in
+    # practice, and sst panes have no TTY anyway).
+    local device="${1:-${TAURI_IOS_DEVICE:-iPhone 17}}"
+    echo "[tauri-dev] iOS target: \"$device\" (override: TAURI_IOS_DEVICE=... or ./scripts/tauri-dev.sh ios \"<name>\")"
     # See run_android: vite bakes platform flags from env. Set TAURI_ENV_PLATFORM
     # so the dev-server bundle gets IS_IOS=true (env() handles iOS insets, but the
     # flag still gates other native init). Export before `start_dev_server`.
     export TAURI_CLI_RUNNING=1
     export TAURI_ENV_PLATFORM=ios
+    # Match the sst pane environment for one-off `sst dev` runs (see run_android).
+    export BACKEND_URL="${BACKEND_URL:-http://localhost:3031}"
+
+    # SST's DevCommand pins BACKEND_URL=http://localhost:3031 (the backend's
+    # plain-HTTP mirror for mobile webviews). Android reaches it via
+    # `adb reverse`, but iOS has no equivalent — on a physical device,
+    # localhost is the device itself. Rewrite the localhost default to this
+    # Mac's LAN IP so the device can reach the local backend over Wi-Fi
+    # (the mirror binds 0.0.0.0). Any other BACKEND_URL (e.g. a deliberate
+    # gcp-dev override exported before `sst dev`) is left untouched. This must
+    # run before `start_dev_server`: vite bakes BACKEND_URL at build time.
+    # Simulators keep working either way — the Mac can reach its own LAN IP.
+    if [ "${BACKEND_URL:-}" = "http://localhost:3031" ]; then
+        local lan_ip
+        lan_ip="$(detect_lan_ip)"
+        if [ -n "$lan_ip" ]; then
+            export BACKEND_URL="http://$lan_ip:3031"
+            echo "[tauri-dev] iOS: rewrote BACKEND_URL to $BACKEND_URL (device-reachable LAN address)"
+        else
+            echo "[tauri-dev] WARNING: no LAN IP detected; BACKEND_URL stays on localhost:3031 (works on simulator only)"
+        fi
+    fi
+
     setup_firebase_config
     start_dev_server
     cd "$WALLET_DIR"
     # Match release: dev variant config (id.frak.wallet.dev / Frak Wallet Dev) +
     # FRAK_VARIANT=dev so build.rs rewrites entitlements for wallet-dev.frak.id.
-    FRAK_VARIANT=dev bun run tauri ios dev --config src-tauri/tauri.conf.dev.json --no-dev-server -c '{"build":{"beforeDevCommand":""}}' "$device" &
-    TAURI_PID=$!
-    wait $TAURI_PID
+    # Foreground; the EXIT trap cleans up the vite dev server.
+    FRAK_VARIANT=dev bun run tauri ios dev --config src-tauri/tauri.conf.dev.json --no-dev-server -c '{"build":{"beforeDevCommand":""}}' "$device"
 }
 
 run_dev_only() {
@@ -214,7 +263,7 @@ case "${1:-}" in
         echo "Commands:"
         echo "  dev      - Start Tauri dev server only"
         echo "  android  - Start dev server + launch Android emulator"
-        echo "  ios      - Start dev server + launch iOS simulator"
+        echo "  ios      - Start dev server + iOS (default: iPhone 17 sim; select: ios \"<name>\" or TAURI_IOS_DEVICE)"
         exit 1
         ;;
 esac
