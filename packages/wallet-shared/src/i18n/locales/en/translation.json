@@ -45,10 +45,8 @@
         "at": "at",
         "accountId": "Wallet",
         "authenticator": "Authenticator",
-        "balance": "Balance",
         "claim": "Claim",
         "claimed": "claimed",
-        "copied": "Copied!",
         "copyAddress": "Copy address",
         "enterAddress": "Enter address",
         "interactions": "Interactions",
@@ -75,16 +73,6 @@
         "close": "Close",
         "or": "or",
         "share": "Share"
-    },
-    "sharing": {
-        "btn": {
-            "copy": "Copy link",
-            "copySuccess": "Link copied!",
-            "share": "Share",
-            "shareSuccess": "Link shared!"
-        },
-        "text": "Discover this amazing product!",
-        "title": "{{productName}} invite link"
     },
     "wallet": {
         "pageTitle": "Wallet",
@@ -740,114 +728,6 @@
             "pending": "Pending",
             "lifetime": "Lifetime"
         },
-        "pairing": {
-            "title": "Confirm device pairing",
-            "text": "You're about to connect a device to your account.",
-            "info": {
-                "title": "Pairing information",
-                "status": "Status",
-                "device": "Device"
-            },
-            "code": "Check that the code is correct",
-            "scanDescription": "Scan this QR code to sign in from your mobile.",
-            "noCodeNotice": "Confirm this pairing request to continue.",
-            "error": {
-                "title": "Invalid pairing request",
-                "noCode": "No pairing code provided",
-                "notFound": "Pairing request not found or expired"
-            },
-            "loading": {
-                "title": "Please wait"
-            },
-            "cancel": "Cancel",
-            "confirm": "Confirm the code",
-            "switchPasskey": {
-                "title": "Different passkey required",
-                "description": "This pairing was started with another passkey from your wallet. Switch to it on this device to continue.",
-                "confirm": "Switch passkey"
-            },
-            "pendingPairing": {
-                "title": "Pairing in progress",
-                "description": "Please authenticate to continue.",
-                "dismissLabel": "Dismiss notification"
-            },
-            "origin": {
-                "state": {
-                    "idle": "Pairing logic initialisation",
-                    "connecting": "Paired device not online",
-                    "paired": "Connected with partner",
-                    "retryError": "Error when connecting to the paired device",
-                    "error": "Connection rejected by the server",
-                    "requests": {
-                        "connecting": "Open your paired device to proceed to the transaction",
-                        "paired": "Wait for partner to process signature"
-                    }
-                }
-            },
-            "status": {
-                "idle": "Idle",
-                "connecting": "Pairing in progress",
-                "paired": "Paired",
-                "retryError": "Reconnecting…",
-                "error": "Connection lost"
-            },
-            "launch": {
-                "error": {
-                    "title": "Couldn’t connect",
-                    "description": "Something interrupted the pairing. Please try again.",
-                    "retry": "Try again"
-                }
-            },
-            "signatureRequest": {
-                "title": "Signature request",
-                "description": "A device <strongFrom>{{from}}</strongFrom> is requesting your signature",
-                "stateTitle": "Signing state",
-                "state": {
-                    "idle": "Idle",
-                    "pending": "Pending",
-                    "success": "Success",
-                    "error": "Error",
-                    "declined": "Declined",
-                    "unknown": "Unknown"
-                },
-                "buttons": {
-                    "sign": "Sign",
-                    "reject": "Reject"
-                },
-                "modal": {
-                    "counter": "{{current}} / {{total}}"
-                },
-                "banner": {
-                    "title": "Another device is waiting for your signature",
-                    "summary": "{{count}} pending request",
-                    "summary_other": "{{count}} pending requests",
-                    "cta": "Review"
-                }
-            },
-            "refresh": "Retry",
-            "refreshCode": "Code:",
-            "refreshReason": "Reason:",
-            "reconnect": "Reconnect",
-            "list": {
-                "title": "Connected devices",
-                "origin": "Origin",
-                "target": "Target",
-                "createdAt": "Created at",
-                "lastActive": "Last active",
-                "delete": "Delete device",
-                "empty": "No connected devices"
-            }
-        },
-        "inAppBrowser": {
-            "title": "Open in your browser",
-            "description": "For a better experience, open this page in your default browser.",
-            "cta": "Open browser",
-            "warning": "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.",
-            "clickToOpen": "Tap to open in your browser.",
-            "dismiss": "Dismiss inapp browser warning",
-            "clipboardAlert": "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go",
-            "clipboardManualAlert": "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go"
-        },
         "offline": {
             "title": "You're offline",
             "description": "Some features may be unavailable until your connection is restored."
@@ -870,10 +750,6 @@
             "action": "Reconnect",
             "pairing": "Scan with the phone holding your passkey to reconnect the same wallet.",
             "logout": "Log out"
-        },
-        "toastLoading": {
-            "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)",
-            "dismiss": "Dismiss inapp browser warning"
         },
         "openLogin": {
             "login": "Connect with biometrics",
@@ -898,48 +774,6 @@
             "notAvailable": "Biometrics not available on this device"
         },
         "confirmAction": "Confirm with {{type}}"
-    },
-    "error": {
-        "webauthn": {
-            "retry": "Try again",
-            "login": "Log in",
-            "dismiss": "Dismiss",
-            "notAllowed": {
-                "title": "Authentication cancelled",
-                "message": "The passkey prompt was closed or timed out before the operation completed."
-            },
-            "userOperationExecution": {
-                "title": "Transaction failed",
-                "message": "An error occurred while executing the transaction. Please try again."
-            },
-            "generic": {
-                "title": "Something went wrong",
-                "message": "An error occurred. Please try again."
-            },
-            "alreadyRegistered": {
-                "title": "Already have a passkey",
-                "message": "This device already has a passkey for your account. Try logging in instead."
-            },
-            "noCredential": {
-                "title": "No passkey found",
-                "message": "No passkey was found on this device. Create one, or sign in on the device where you registered."
-            },
-            "noScreenLock": {
-                "title": "Screen lock required",
-                "message": "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again."
-            },
-            "unsupported": {
-                "title": "Passkeys unavailable",
-                "message": "Passkeys can't be used on this device right now. Make sure your passkey provider is set up, or try another device."
-            },
-            "syncFailed": {
-                "title": "Passkey sync issue",
-                "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.",
-                "step1": "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.",
-                "step2": "Update Google Play Services, then restart your phone and try again.",
-                "step3": "Still stuck? Sign in on another device, or recover your wallet from the settings."
-            }
-        }
     },
     "recoveryCode": {
         "title": "Recover your code",
@@ -1088,25 +922,6 @@
             "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand."
         }
     },
-    "mobile-sso": {
-        "connecting": "Connecting...",
-        "openWallet": "Open in Frak Wallet",
-        "waiting": "Waiting for wallet app...",
-        "retry": "Connection timed out. Retry?",
-        "appNotFound": "Frak Wallet app not found",
-        "continueInBrowser": "Continue in browser"
-    },
-    "mobile-tx": {
-        "sendTransaction": "Send transaction",
-        "explanation": "Approve this transaction in your wallet app",
-        "waiting": "Waiting for approval...",
-        "openWallet": "Open wallet to approve",
-        "reopenWallet": "Re-open wallet",
-        "timeout": "Approval timed out. Try again?",
-        "retry": "Retry",
-        "appNotFound": "Frak Wallet app not found",
-        "appNotFoundHint": "Please reinstall the app or try again"
-    },
     "monerium": {
         "account": "Monerium Account",
         "connect": "Connect",
@@ -1180,7 +995,7 @@
                 "cta": "Link my account"
             },
             "success": {
-                "title": "You can now transfer your earnings \uD83C\uDF89",
+                "title": "You can now transfer your earnings 🎉",
                 "description": "Your account is ready. You can now transfer your earnings to your bank account with ease.",
                 "cta": "Transfer my earnings"
             },

@@ -1,8 +1,12 @@
 /**
  * Shared i18n locale loader.
  *
- * The translation bundles live in `@frak-labs/wallet-shared/i18n/locales/<lang>`
- * and are dynamic-imported on demand. Multiple code paths can race to load
+ * The listener only needs the `common` (shared with the wallet app) and
+ * `customized` (SDK/backend overrides) namespaces — never the wallet-only
+ * `translation` bundle. These are loaded from the lite locale barrels at
+ * `@frak-labs/wallet-shared/i18n/locales/<lang>/listener`, which re-export
+ * only `{ common, customized }` and keep `translation.json` out of this
+ * app's module graph entirely. Multiple code paths can race to load
  * the same locale:
  *
  *  - `bootstrap.ts` — `?preload=...` hint warms the JSON before the first
@@ -26,7 +30,7 @@ type Locale = "en" | "fr";
 
 type Bundle = {
     // biome-ignore lint/suspicious/noExplicitAny: i18next resource bundle shape
-    translation: any;
+    common: any;
     // biome-ignore lint/suspicious/noExplicitAny: i18next resource bundle shape
     customized: any;
 };
@@ -39,8 +43,8 @@ function loadBundle(lang: Locale): Promise<Bundle> {
     if (cached) return cached;
     const promise =
         lang === "en"
-            ? import("@frak-labs/wallet-shared/i18n/locales/en")
-            : import("@frak-labs/wallet-shared/i18n/locales/fr");
+            ? import("@frak-labs/wallet-shared/i18n/locales/en/listener")
+            : import("@frak-labs/wallet-shared/i18n/locales/fr/listener");
     bundlePromises.set(lang, promise);
     return promise;
 }
@@ -77,8 +81,8 @@ export function ensureI18nBundle(lang: string, i18n: I18nType): Promise<void> {
     const existing = registrationPromises.get(lang);
     if (existing) return existing;
     const promise = loadBundle(lang).then((bundle) => {
-        if (!i18n.hasResourceBundle(lang, "translation")) {
-            i18n.addResourceBundle(lang, "translation", bundle.translation);
+        if (!i18n.hasResourceBundle(lang, "common")) {
+            i18n.addResourceBundle(lang, "common", bundle.common);
         }
         if (!i18n.hasResourceBundle(lang, "customized")) {
             i18n.addResourceBundle(lang, "customized", bundle.customized);

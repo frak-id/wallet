@@ -23,6 +23,8 @@
     "./i18n": "./src/i18n/index.ts",
     "./i18n/locales/en": "./src/i18n/locales/en/index.ts",
     "./i18n/locales/fr": "./src/i18n/locales/fr/index.ts",
+    "./i18n/locales/en/listener": "./src/i18n/locales/en/listener.ts",
+    "./i18n/locales/fr/listener": "./src/i18n/locales/fr/listener.ts",
     "./polyfills/bigint-serialization": "./src/polyfills/bigint-serialization.ts",
     "./stores/sessionStore": "./src/stores/sessionStore.ts",
     "./stores/clientIdStore": "./src/stores/clientIdStore.ts",

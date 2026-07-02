@@ -11,7 +11,7 @@ import {
     toHex,
 } from "viem";
 import { readContract } from "viem/actions";
-import { getTauriGetFn } from "../../authentication";
+import { getTauriGetFn } from "../../authentication/webauthn/tauriBridge";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import { formatSignature } from "./webAuthN";
 

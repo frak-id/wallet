@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { WebAuthnP256 } from "ox";
 import { useCallback } from "react";
 import { useStore } from "zustand";
-import { getTauriGetFn } from "../../authentication";
+import { getTauriGetFn } from "../../authentication/webauthn/tauriBridge";
 import { selectWebauthnSession, sessionStore } from "../../stores/sessionStore";
 import { signHashViaWebAuthN } from "../../wallet/smartWallet/signature";
 import type { TargetPairingClient } from "../clients/target";

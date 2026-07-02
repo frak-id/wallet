@@ -103,7 +103,6 @@ export const elysiaEnv = {
     PIMLICO_API_KEY: pimlicoApiKey.value,
     DRPC_API_KEY: drpcApiKey.value,
     COIN_GECKO_API_KEY: new sst.Secret("COIN_GECKO_API_KEY").value,
-    WORLD_NEWS_API_KEY: new sst.Secret("WORLD_NEWS_API_KEY").value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
     AIRTABLE_API_KEY: new sst.Secret("AIRTABLE_API_KEY").value,
     SLACK_BOT_TOKEN: new sst.Secret("SLACK_BOT_TOKEN").value,

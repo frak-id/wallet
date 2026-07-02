@@ -301,11 +301,11 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 },
             },
             // Load both the default and the potentially customized i18n
-            ns: ["translation", "customized"],
+            ns: ["customized", "common"],
             // Default ns is the user provided ns
             defaultNS: "customized",
-            // Use the translation fallback if not found in the custom ns
-            fallbackNS: "translation",
+            // Use the common (wallet-shared) fallback if not found in the custom ns
+            fallbackNS: "common",
             // Force synchronous init so the clone is fully ready
             // (isInitialized=true, languages populated, namespaces marked
             // loaded) before this useMemo continues into populateI18nResources

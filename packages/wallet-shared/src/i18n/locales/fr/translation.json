@@ -22,7 +22,9 @@
             },
             "continueDescription": "Vous vous connecterez à <strong>{{productName}}</strong> en tant que <strong>{{address}}</strong>.",
             "description": "Frak ne stocke aucune donnée personnelle ou biométrique. En continuant vous acceptez nos <conditionsLink>conditions</conditionsLink> et notre <privacyLink>politique de confidentialité</privacyLink>.",
-            "header": { "title": "Connectez-vous avec Frak Wallet" },
+            "header": {
+                "title": "Connectez-vous avec Frak Wallet"
+            },
             "pairing": {
                 "title": "Se connecter avec mon mobile",
                 "description": "Scanne ce QR code pour te connecter depuis ton mobile."
@@ -43,10 +45,8 @@
         "at": "à",
         "accountId": "Porte-monnaie",
         "authenticator": "Authentificateur",
-        "balance": "Solde",
         "claim": "Réclamer",
         "claimed": "réclamé",
-        "copied": "Copié !",
         "copyAddress": "Copier l'adresse",
         "enterAddress": "Entrez l'adresse",
         "interactions": "Interactions",
@@ -73,16 +73,6 @@
         "close": "Fermer",
         "or": "ou",
         "share": "Partager"
-    },
-    "sharing": {
-        "btn": {
-            "copy": "Copier le lien",
-            "copySuccess": "Lien copié !",
-            "share": "Partager",
-            "shareSuccess": "Lien partagé !"
-        },
-        "text": "Découvrez ce produit incroyable !",
-        "title": "Lien d'invitation {{productName}}"
     },
     "wallet": {
         "pageTitle": "Porte-monnaie",
@@ -738,114 +728,6 @@
             "pending": "En attente",
             "lifetime": "Depuis le début"
         },
-        "pairing": {
-            "title": "Confirmation de l'appairage",
-            "text": "Tu es sur le point de connecter un appareil à ton compte.",
-            "info": {
-                "title": "Informations sur l'appairage",
-                "status": "Statut",
-                "device": "Appareil"
-            },
-            "code": "Vérifie que le code est correct",
-            "scanDescription": "Scanne ce QR code pour te connecter depuis ton mobile.",
-            "noCodeNotice": "Confirme cette demande d'appairage pour continuer.",
-            "error": {
-                "title": "Requête de connexion invalide",
-                "noCode": "Aucun code de connexion fourni",
-                "notFound": "Demande d'appairage introuvable ou expirée"
-            },
-            "loading": {
-                "title": "Veuillez patienter"
-            },
-            "cancel": "Annuler",
-            "confirm": "Confirmer le code",
-            "switchPasskey": {
-                "title": "Autre passkey requise",
-                "description": "Cet appairage a été lancé avec une autre passkey de ton portefeuille. Change-en pour continuer sur cet appareil.",
-                "confirm": "Changer de passkey"
-            },
-            "pendingPairing": {
-                "title": "Jumelage en cours",
-                "description": "Veuillez vous authentifier pour continuer.",
-                "dismissLabel": "Masquer la notification"
-            },
-            "origin": {
-                "state": {
-                    "idle": "Initialisation du pairage",
-                    "connecting": "Appareil partenaire pas en ligne",
-                    "paired": "Connecté avec le partenaire",
-                    "retryError": "Erreur de connexion à l'appareil pairé",
-                    "error": "Connexion refusée par le serveur",
-                    "requests": {
-                        "connecting": "Ouvrez votre appareil pairé pour procéder à la transaction",
-                        "paired": "Attendez que le partenaire signe la transaction"
-                    }
-                }
-            },
-            "status": {
-                "idle": "Inactif",
-                "connecting": "Appairage en cours",
-                "paired": "Appairé",
-                "retryError": "Reconnexion…",
-                "error": "Connexion perdue"
-            },
-            "launch": {
-                "error": {
-                    "title": "Connexion impossible",
-                    "description": "Quelque chose a interrompu l’appairage. Veuillez réessayer.",
-                    "retry": "Réessayer"
-                }
-            },
-            "signatureRequest": {
-                "title": "Demande de signature",
-                "description": "Un appareil <strongFrom>{{from}}</strongFrom> demande votre signature",
-                "stateTitle": "État de signature",
-                "state": {
-                    "idle": "En attente",
-                    "pending": "En cours",
-                    "success": "Réussie",
-                    "error": "Échoué",
-                    "declined": "Rejeté",
-                    "unknown": "Inconnu"
-                },
-                "buttons": {
-                    "sign": "Signer",
-                    "reject": "Rejeter"
-                },
-                "modal": {
-                    "counter": "{{current}} / {{total}}"
-                },
-                "banner": {
-                    "title": "Un autre appareil attend votre signature",
-                    "summary": "{{count}} demande en attente",
-                    "summary_other": "{{count}} demandes en attente",
-                    "cta": "Voir"
-                }
-            },
-            "refresh": "Réessayer",
-            "refreshCode": "Code :",
-            "refreshReason": "Raison :",
-            "reconnect": "Se reconnecter",
-            "list": {
-                "title": "Appareils connectés",
-                "origin": "Origine",
-                "target": "Cible",
-                "createdAt": "Créé le",
-                "lastActive": "Dernière activité",
-                "delete": "Supprimer l'appareil",
-                "empty": "Aucun appareil connecté"
-            }
-        },
-        "inAppBrowser": {
-            "title": "Ouvrir dans votre navigateur",
-            "description": "Pour une meilleure expérience, ouvrez cette page dans votre navigateur par défaut.",
-            "cta": "Ouvrir le navigateur",
-            "warning": "Vous utilisez un navigateur intégré. Votre expérience pourrait être dégradée. Appuyez pour ouvrir dans votre navigateur.",
-            "clickToOpen": "Appuyez pour ouvrir dans votre navigateur",
-            "dismiss": "Masquer le message",
-            "clipboardAlert": "Ce navigateur ne prend pas en charge toutes les fonctionnalités.\n\nLe lien a été copié dans votre presse-papiers.\n\nPour continuer :\n1. Ouvrez Safari\n2. Appuyez sur la barre d'adresse\n3. Collez et validez",
-            "clipboardManualAlert": "Ce navigateur ne prend pas en charge toutes les fonctionnalités.\n\nLa copie automatique a échoué.\n\nCopiez ce lien manuellement :\n{{url}}\n\nPuis :\n1. Ouvrez Safari\n2. Appuyez sur la barre d'adresse\n3. Collez et validez"
-        },
         "offline": {
             "title": "Vous êtes hors ligne",
             "description": "Certaines fonctionnalités peuvent être indisponibles jusqu'à la restauration de la connexion."
@@ -868,10 +750,6 @@
             "action": "Reconnecter",
             "pairing": "Scannez avec le téléphone détenant votre passkey pour reconnecter le même portefeuille.",
             "logout": "Se déconnecter"
-        },
-        "toastLoading": {
-            "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",
-            "dismiss": "Masquer le message"
         },
         "openLogin": {
             "login": "Se connecter avec la biométrie",
@@ -896,48 +774,6 @@
             "notAvailable": "Biométrie non disponible sur cet appareil"
         },
         "confirmAction": "Confirmer avec {{type}}"
-    },
-    "error": {
-        "webauthn": {
-            "retry": "Réessayer",
-            "login": "Se connecter",
-            "dismiss": "Fermer",
-            "notAllowed": {
-                "title": "Authentification annulée",
-                "message": "La fenêtre de passkey a été fermée ou a expiré avant la fin de l'opération."
-            },
-            "userOperationExecution": {
-                "title": "Échec de la transaction",
-                "message": "Une erreur est survenue lors de l'exécution de la transaction. Veuillez réessayer."
-            },
-            "generic": {
-                "title": "Une erreur est survenue",
-                "message": "Une erreur est survenue. Veuillez réessayer."
-            },
-            "alreadyRegistered": {
-                "title": "Passkey déjà présente",
-                "message": "Cet appareil possède déjà une passkey pour votre compte. Essayez plutôt de vous connecter."
-            },
-            "noCredential": {
-                "title": "Aucune passkey trouvée",
-                "message": "Aucune passkey trouvée sur cet appareil. Créez-en une, ou connectez-vous depuis l'appareil sur lequel vous l'avez enregistrée."
-            },
-            "noScreenLock": {
-                "title": "Verrouillage d'écran requis",
-                "message": "Votre appareil a besoin d'un verrouillage d'écran (code, schéma ou biométrie) pour utiliser les passkeys. Ajoutez-en un dans vos réglages, puis réessayez."
-            },
-            "unsupported": {
-                "title": "Passkeys indisponibles",
-                "message": "Les passkeys ne peuvent pas être utilisées sur cet appareil pour le moment. Vérifiez que votre gestionnaire de passkeys est configuré, ou essayez un autre appareil."
-            },
-            "syncFailed": {
-                "title": "Problème de synchronisation",
-                "message": "Votre téléphone n'a pas pu finaliser l'étape passkey. C'est généralement un problème de synchronisation de Google Password Manager sur cet appareil — pas un problème de votre compte.",
-                "step1": "Ouvrez les Réglages de votre téléphone, vérifiez que Google Password Manager est le gestionnaire de passkeys actif et que la synchronisation des passkeys est activée.",
-                "step2": "Mettez à jour les services Google Play, puis redémarrez votre téléphone et réessayez.",
-                "step3": "Toujours bloqué ? Connectez-vous sur un autre appareil, ou récupérez votre portefeuille depuis les réglages."
-            }
-        }
     },
     "recoveryCode": {
         "title": "Récupération de ton code",
@@ -1085,25 +921,6 @@
             "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque."
         }
     },
-    "mobile-sso": {
-        "connecting": "Connexion...",
-        "openWallet": "Ouvrir dans Frak Wallet",
-        "waiting": "En attente du wallet...",
-        "retry": "Connexion expirée. Réessayer ?",
-        "appNotFound": "Application Frak Wallet introuvable",
-        "continueInBrowser": "Continuer dans le navigateur"
-    },
-    "mobile-tx": {
-        "sendTransaction": "Envoyer la transaction",
-        "explanation": "Approuvez cette transaction dans votre porte-monnaie",
-        "waiting": "En attente d'approbation...",
-        "openWallet": "Ouvrir le porte-monnaie pour approuver",
-        "reopenWallet": "Ré-ouvrir le porte-monnaie",
-        "timeout": "Délai d'approbation dépassé. Réessayer ?",
-        "retry": "Réessayer",
-        "appNotFound": "Application Frak Wallet introuvable",
-        "appNotFoundHint": "Veuillez réinstaller l'application ou réessayer"
-    },
     "monerium": {
         "account": "Compte Monerium",
         "connect": "Se connecter",
@@ -1177,7 +994,7 @@
                 "cta": "Associer mon compte"
             },
             "success": {
-                "title": "Tu peux maintenant transférer tes gains \uD83C\uDF89",
+                "title": "Tu peux maintenant transférer tes gains 🎉",
                 "description": "Ton compte est prêt. Tu peux maintenant transférer tes gains sur ton compte bancaire en toute simplicité.",
                 "cta": "Transférer mes gains"
             },
