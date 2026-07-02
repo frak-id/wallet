@@ -6,6 +6,11 @@ import { log } from "@backend-infrastructure";
 // through `@backend-infrastructure` creates a runtime cycle that degrades
 // JwtContext typing. See authError.ts.
 import { AUTH_ERROR_HEADER } from "@backend-infrastructure/macro/authError";
+import {
+    httpMetrics,
+    metricsContentType,
+    renderMetrics,
+} from "@backend-infrastructure/telemetry";
 import { noContentPatch } from "@backend-utils";
 import { cors } from "@elysiajs/cors";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
@@ -34,6 +39,11 @@ const app = new Elysia({
     },
 })
     .use(noContentPatch)
+    .use(httpMetrics)
+    .get("/metrics", async ({ set }) => {
+        set.headers["content-type"] = metricsContentType;
+        return await renderMetrics();
+    })
     .onStart(async () => {
         OrchestrationContext.orchestrators.notification.registerListeners();
         CronRegistry.start();
