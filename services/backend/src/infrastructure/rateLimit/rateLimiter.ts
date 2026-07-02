@@ -1,6 +1,7 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";
 import { log } from "../external/logger";
+import { infraMetrics } from "../telemetry/infraMetrics";
 import { getClientIp } from "./ipExtraction";
 
 interface RateLimitWindow {
@@ -142,6 +143,9 @@ export function rateLimitMiddleware(config?: RateLimitOptions) {
             const allowed = store.consume(key, finalConfig);
             if (!allowed) {
                 log.warn({ key }, "Rate limit exceeded");
+                infraMetrics.rateLimitRejected(
+                    (ctx as { route?: string }).route ?? "unknown"
+                );
                 return status(429, "Too Many Requests");
             }
         })

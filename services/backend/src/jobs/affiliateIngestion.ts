@@ -35,7 +35,8 @@ CronRegistry.register(
             const outcome = await tryWithAdvisoryLock(
                 AFFILIATE_INGESTION_ADVISORY_LOCK_KEY,
                 () =>
-                    OrchestrationContext.orchestrators.takeAdsIngestion.ingestActions()
+                    OrchestrationContext.orchestrators.takeAdsIngestion.ingestActions(),
+                "affiliate_ingestion"
             );
 
             if (!outcome.ran) {
