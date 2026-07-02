@@ -26,7 +26,9 @@ import kotlinx.coroutines.launch
  * preserving all fields including `publicKey` in registration responses.
  */
 @TauriPlugin
-class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
+class FrakWebauthnPlugin(
+    activity: Activity,
+) : Plugin(activity) {
     private val scope = CoroutineScope(Dispatchers.Main)
     private val credentialManager = CredentialManager.create(activity)
     private val pluginActivity = activity
@@ -46,9 +48,13 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
                 val result = credentialManager.createCredential(pluginActivity, request)
 
                 when (result) {
-                    is CreatePublicKeyCredentialResponse ->
+                    is CreatePublicKeyCredentialResponse -> {
                         invoke.resolve(JSObject(result.registrationResponseJson))
-                    else -> invoke.reject("Unexpected credential type")
+                    }
+
+                    else -> {
+                        invoke.reject("Unexpected credential type")
+                    }
                 }
             } catch (e: CreatePublicKeyCredentialDomException) {
                 invoke.reject(webauthnError(e.domError.type, e.message))
@@ -71,17 +77,34 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
             return
         }
 
+        // Fail-fast flag from the JS bridge. Strip it from `options` before
+        // serializing so it never leaks into the WebAuthn `requestJson` (it is a
+        // Credential Manager option, not part of the assertion request).
+        val preferImmediate = options.optBoolean("preferImmediatelyAvailable", false)
+        options.remove("preferImmediatelyAvailable")
+
         val getOption = GetPublicKeyCredentialOption(requestJson = options.toString())
-        val getRequest = GetCredentialRequest(listOf(getOption))
+        // The fail-fast flag lives on the request, not the option: with it set,
+        // Credential Manager throws NoCredentialException (TYPE_NO_CREDENTIAL)
+        // immediately instead of showing account-picker UI when no passkey exists.
+        val getRequest =
+            GetCredentialRequest(
+                credentialOptions = listOf(getOption),
+                preferImmediatelyAvailableCredentials = preferImmediate,
+            )
 
         scope.launch {
             try {
                 val result = credentialManager.getCredential(pluginActivity, getRequest).credential
 
                 when (result) {
-                    is PublicKeyCredential ->
+                    is PublicKeyCredential -> {
                         invoke.resolve(JSObject(result.authenticationResponseJson))
-                    else -> invoke.reject("Unexpected credential type")
+                    }
+
+                    else -> {
+                        invoke.reject("Unexpected credential type")
+                    }
                 }
             } catch (e: GetPublicKeyCredentialDomException) {
                 invoke.reject(webauthnError(e.domError.type, e.message))
@@ -101,7 +124,10 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
     // `[50xxx]` code on the legacy FIDO2 path (e.g. 50162 folsom). On the
     // Credential Manager path GPS strips that prefix, so the JS side also matches
     // the (non-localized) folsom/decrypt message text — keep `message` verbatim.
-    private fun webauthnError(type: String?, message: String?): String {
+    private fun webauthnError(
+        type: String?,
+        message: String?,
+    ): String {
         val payload = JSObject()
         if (type != null) {
             payload.put("type", type)
