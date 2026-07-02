@@ -155,13 +155,13 @@ export const backendInstance = new KubernetesService(
             },
         },
 
-        // ServiceMonitor config
-        // todo: expose some prom metrics
-        // serviceMonitor: {
-        //     port: "metrics",
-        //     path: "/metrics",
-        //     interval: "15s",
-        // },
+        // ServiceMonitor config — scrapes the Prometheus metrics exposed at
+        // GET /metrics (served on the same 3030 container port as the API).
+        serviceMonitor: {
+            port: "http",
+            path: "/metrics",
+            interval: "15s",
+        },
     },
     {
         dependsOn: [elysiaImage, elysiaSecrets, bootstrapJob],
