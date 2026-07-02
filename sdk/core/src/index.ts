@@ -13,6 +13,7 @@ export { DEEP_LINK_SCHEME } from "./constants";
 export type { InteractionTypeKey } from "./constants/interactionTypes";
 // Context (FrakContext URL codec + attribution merge)
 export {
+    areAddressesEqual,
     FrakContextManager,
     type MergeAttributionInput,
     mergeAttribution,

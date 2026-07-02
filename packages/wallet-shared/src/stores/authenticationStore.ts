@@ -2,8 +2,8 @@
  * Zustand store for authentication management
  */
 
+import { areAddressesEqual } from "@frak-labs/core-sdk";
 import type { Address } from "viem";
-import { isAddressEqual } from "viem/utils";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import { authenticatorStorage } from "../common/storage/authenticators";
@@ -148,7 +148,7 @@ export async function applyMergeSession({
     previousAddress?: Address;
     session: Session;
 }) {
-    if (previousAddress && !isAddressEqual(previousAddress, session.address)) {
+    if (previousAddress && !areAddressesEqual(previousAddress, session.address)) {
         await authenticatorStorage.remove(previousAddress);
     }
 
