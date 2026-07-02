@@ -85,32 +85,73 @@ export const httpMetrics = new Elysia({ name: "telemetry.http" })
         const entry = pending.get(request);
         if (entry === undefined) return;
         pending.delete(request);
-        record(request, route, entry.bff, entry.start, set.status);
+        record(
+            request.method,
+            route,
+            entry.bff,
+            entry.start,
+            set.status ?? 200
+        );
     })
-    .onError({ as: "global" }, ({ request, route, set, error }) => {
+    .onError({ as: "global" }, ({ request, route, set, code, error }) => {
         const entry = pending.get(request);
         if (entry === undefined) return;
         pending.delete(request);
-        const status =
-            (typeof set.status === "number" ? set.status : undefined) ??
-            (typeof (error as { status?: number }).status === "number"
-                ? (error as { status: number }).status
-                : 500);
-        record(request, route, entry.bff, entry.start, status);
+        record(
+            request.method,
+            route,
+            entry.bff,
+            entry.start,
+            errorStatus(code, error, set)
+        );
     })
     .as("global");
 
+/** Map Elysia's error `code` to an HTTP status. */
+function codeToStatus(code: string): number {
+    switch (code) {
+        case "NOT_FOUND":
+            return 404;
+        case "VALIDATION":
+            return 422;
+        case "PARSE":
+        case "INVALID_COOKIE_SIGNATURE":
+            return 400;
+        default:
+            return 500;
+    }
+}
+
+/**
+ * Resolve the status at error time. `set.status` is unreliable here (Elysia
+ * writes framework statuses like 404 only AFTER onError runs), so prefer an
+ * explicit `error.status`, then the error `code`, then any already-set status.
+ */
+function errorStatus(
+    code: string | number,
+    error: unknown,
+    set: { status?: number | string }
+): number {
+    const errStatus = (error as { status?: unknown }).status;
+    if (typeof errStatus === "number") return errStatus;
+    if (typeof code === "string" && code !== "UNKNOWN")
+        return codeToStatus(code);
+    if (typeof set.status === "number" && set.status >= 400) return set.status;
+    return 500;
+}
+
 function record(
-    request: Request,
+    method: string,
     route: string | undefined,
     bff: string,
     start: number,
-    status: number | string | undefined
+    status: number | string
 ) {
     httpRequestsInFlight.dec({ bff });
-    const r = route ?? pathnameOf(request.url);
-    const method = request.method;
-    const status_code = String(status ?? 200);
+    // Never fall back to the raw pathname — an unmatched request would turn
+    // bot/scanner paths into unbounded label values.
+    const r = route ?? "unmatched";
+    const status_code = String(status);
     httpRequestsTotal.inc({ method, route: r, status_code, bff });
     httpRequestDuration.observe(
         { method, route: r, bff },

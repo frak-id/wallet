@@ -39,6 +39,10 @@ CronRegistry.register(
             const { result } = outcome;
             businessMetrics.settlementRewards("settled", result.settledCount);
             businessMetrics.settlementRewards("failed", result.failedCount);
+            businessMetrics.settlementRewards(
+                "depleted",
+                result.depletedCount ?? 0
+            );
             businessMetrics.settlementTx(result.txHashes.length);
             businessMetrics.settlementErrors(result.errors.length);
             logger.info(

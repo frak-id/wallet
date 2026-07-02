@@ -115,6 +115,12 @@ export type InteractionPayload =
 export type SettlementResult = {
     settledCount: number;
     failedCount: number;
+    /**
+     * Rewards skipped this run because their bank had insufficient
+     * balance/allowance (moved to `bank_depleted`). Distinct from
+     * `failedCount`, which is genuine on-chain push failures.
+     */
+    depletedCount?: number;
     txHashes: Hex[];
     banks: Set<Address>;
     /**

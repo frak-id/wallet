@@ -148,11 +148,7 @@ export class SettlementOrchestrator {
             log.debug("No distributable rewards after bank pre-flight check");
             return {
                 ...defaultSettlementResult,
-                failedCount: depletedRewards.length,
-                errors: depletedRewards.map((reward) => ({
-                    assetLogId: reward.id,
-                    error: "Bank depleted or closed",
-                })),
+                depletedCount: depletedRewards.length,
             };
         }
 
@@ -181,7 +177,7 @@ export class SettlementOrchestrator {
             this.campaignBankRepository.clearOnChainCache(bank);
         }
 
-        return results;
+        return { ...results, depletedCount: depletedRewards.length };
     }
 
     /**

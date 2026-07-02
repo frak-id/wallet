@@ -256,6 +256,28 @@ Jobs covered: `processRewards` (5min), `settleRewards` (hourly, advisory-locked)
 3. **Phase 3 — reliability**: external API metrics, webhook `ko:` errors, notifications/FCM, affiliate watermark lag, advisory locks, rate limiting.
 4. **Phase 4 — fine-grained**: caches, pricing integrity, WebAuthn outcomes, pairing, media, DB query timing.
 
+## Implementation status
+
+Implemented on branch `feat/backend-prometheus-metrics`. Design principle: instrument **centralized choke points only** (one HTTP plugin, one cron wrapper, the advisory-lock helper, the rate limiter, the event bus, per-run job summaries) so hot-path overhead stays negligible and no per-request/per-item allocation of metric objects occurs. Metric instances are module singletons created once at import.
+
+Module: `src/infrastructure/telemetry/` — `registry.ts` (shared `Registry` + default collectors), `httpMetrics.ts`, `cronMetrics.ts`, `infraMetrics.ts`, `businessMetrics.ts`. Re-exported from the `@backend-infrastructure` barrel. `GET /metrics` mounted in `src/index.ts`.
+
+### Done
+- **Foundations**: `prom-client` (Bun-verified), shared registry, `collectDefaultMetrics` (event loop lag, RSS, heap — covers the Bun RSS-leak watch), `/metrics` endpoint.
+- **HTTP** (single global plugin, `httpMetrics.ts`): `http_requests_total{method,route,status_code,bff}`, `http_request_duration_seconds` (tight buckets), `http_requests_in_flight{bff}`. Route = matched template; per-request timing via a `WeakMap<Request>` (concurrency-safe, GC-friendly); `/metrics` and `/health` excluded.
+- **Cron** (`cronMetrics`, wired once in `MutexCron`): `cron_runs_total{cron,outcome}`, `cron_run_duration_seconds{cron}`, `cron_last_success_timestamp_seconds{cron}`.
+- **Advisory locks** (`tryWithAdvisoryLock`): `advisory_lock_total{lock,outcome}`, `advisory_lock_hold_duration_seconds{lock}` (lock names: `settlement`, `affiliate_ingestion`).
+- **Rate limiter**: `rate_limit_rejected_total{route}`.
+- **Event bus** (single `emit` override): `domain_events_emitted_total{event}`.
+- **Settlement / rewards** (per-run at job level): `settlement_rewards_total{outcome}`, `settlement_tx_total`, `settlement_errors_total`, `settlement_requeued_rewards_total`, `reward_interactions_processed_total{outcome}`.
+- **Webhooks**: `webhook_errors_total` (incremented inside the forced-200 `ko:` handler — otherwise invisible).
+- **Notifications**: `notifications_sent_total{channel,outcome}` (webpush/fcm; success/invalid_token).
+- **Affiliate ingestion**: `affiliate_ingestion_watermark_lag_seconds` gauge.
+- Tests: `src/infrastructure/telemetry/telemetry.test.ts` (helpers + cron). Test mock `test/mock/common.ts` extended with telemetry stubs.
+
+### Deferred (documented above, not yet wired)
+Fine-grained per-call instrumentation deliberately skipped to keep overhead minimal: per-query DB timing, per-call blockchain RPC/tx gas histograms, per-cache hit/miss counters, admin-wallet mutex wait/hold histograms, external-API (`ky`) per-call metrics, DNS lookups, WebSocket gauges, pricing sanity-band rejections, WebAuthn outcome granularity, pairing/media metrics, `campaign_bank_balance_wei` gauges. These require touching hotter/among-many call sites; add incrementally if a dashboard gap appears.
+
 ## 6. Alerting starters
 
 | Alert | Expression sketch |

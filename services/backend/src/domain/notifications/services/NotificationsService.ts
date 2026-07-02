@@ -191,6 +191,7 @@ export class NotificationsService {
         );
 
         const staleTokenIds: number[] = [];
+        let errorCount = 0;
 
         const chunks = this.chunk(tokens, 30);
         for (const chunk of chunks) {
@@ -219,6 +220,7 @@ export class NotificationsService {
                     if (statusCode && isGoneStatus(statusCode)) {
                         staleTokenIds.push(token.id);
                     } else {
+                        errorCount++;
                         log.warn(
                             { error },
                             "[NotificationsService] Web push send error"
@@ -234,10 +236,11 @@ export class NotificationsService {
             "invalid_token",
             staleTokenIds.length
         );
+        businessMetrics.notificationsSent("webpush", "error", errorCount);
         businessMetrics.notificationsSent(
             "webpush",
             "success",
-            tokens.length - staleTokenIds.length
+            tokens.length - staleTokenIds.length - errorCount
         );
         if (staleTokenIds.length > 0) {
             log.info(
