@@ -72,6 +72,11 @@ export function isExcluded(path: string): boolean {
 
 export const httpMetrics = new Elysia({ name: "telemetry.http" })
     .onRequest(({ request }) => {
+        // Skip WebSocket upgrades: they never emit `onAfterResponse` (the
+        // connection is long-lived, not a request/response), so tracking them
+        // here would leak the in-flight gauge by +1 per connection forever.
+        // WS gets its own metrics separately.
+        if (request.headers.get("upgrade")) return;
         // Runs before routing: the matched template isn't known yet, so derive
         // the (static-prefix) bff from the pathname here and capture the route
         // template later in onAfterResponse/onError.
