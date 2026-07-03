@@ -52,6 +52,11 @@ vi.mock("@/module/settings/component/PrivateKey", () => ({
     PrivateKey: () => null,
 }));
 
+// Dev-only row; uses useLogout → useQueryClient, which needs a provider.
+vi.mock("@/module/authentication/component/Logout", () => ({
+    Logout: () => null,
+}));
+
 vi.mock("@/module/settings/component/SecurityProgressCard", () => ({
     SecurityProgressCard: () => <div>security-card</div>,
 }));
