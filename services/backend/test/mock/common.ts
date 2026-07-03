@@ -415,6 +415,31 @@ vi.mock("@backend-infrastructure", () => ({
         on: vi.fn(),
         off: vi.fn(),
     },
+    businessMetrics: {
+        settlementRewards: vi.fn(),
+        settlementTx: vi.fn(),
+        settlementErrors: vi.fn(),
+        settlementRequeued: vi.fn(),
+        rewardInteractions: vi.fn(),
+        webhookError: vi.fn(),
+        notificationsSent: vi.fn(),
+        affiliateWatermarkLagSeconds: vi.fn(),
+    },
+    infraMetrics: {
+        advisoryLockAcquired: vi.fn(),
+        advisoryLockContended: vi.fn(),
+        advisoryLockHoldTimer: vi.fn(() => vi.fn()),
+        rateLimitRejected: vi.fn(),
+        domainEventEmitted: vi.fn(),
+    },
+    cronMetrics: {
+        skipped: vi.fn(),
+        observe: vi.fn((_name: string, run: () => unknown) => run()),
+    },
+    httpMetrics: new Elysia({ name: "Mock.httpMetrics" }),
+    renderMetrics: vi.fn(async () => ""),
+    metricsContentType: "text/plain",
+    registry: { metrics: vi.fn(async () => "") },
 }));
 
 /* -------------------------------------------------------------------------- */

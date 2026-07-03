@@ -1,7 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { log } from "@backend-infrastructure";
+import {
+    httpMetrics,
+    log,
+    metricsContentType,
+    renderMetrics,
+} from "@backend-infrastructure";
 // Leaf sub-path import (NOT the barrel) on purpose: importing this value
 // through `@backend-infrastructure` creates a runtime cycle that degrades
 // JwtContext typing. See authError.ts.
@@ -34,6 +39,7 @@ const app = new Elysia({
     },
 })
     .use(noContentPatch)
+    .use(httpMetrics)
     .onStart(async () => {
         OrchestrationContext.orchestrators.notification.registerListeners();
         CronRegistry.start();
@@ -114,6 +120,29 @@ log.info(
 );
 
 /**
+ * Prometheus metrics on a dedicated, cluster-internal port — deliberately kept
+ * OFF the public app so `/metrics` is never routed by the ingress and never
+ * world-readable. Prometheus scrapes it pod-to-pod via the `metrics` Service
+ * port (see infra/gcp/backend.ts ServiceMonitor). Plain HTTP: in-cluster only.
+ */
+const metricsPort = Number.parseInt(process.env.METRICS_PORT ?? "9464", 10);
+const metricsServer = Bun.serve({
+    port: metricsPort,
+    async fetch(request) {
+        const { pathname } = new URL(request.url);
+        if (pathname === "/metrics") {
+            return new Response(await renderMetrics(), {
+                headers: { "content-type": metricsContentType },
+            });
+        }
+        return new Response("Not Found", { status: 404 });
+    },
+});
+log.info(
+    `Metrics exposed at http://${metricsServer.hostname}:${metricsPort}/metrics`
+);
+
+/**
  * When running locally with TLS, also start a plain HTTP mirror for mobile development.
  * Mobile WebViews (Android/iOS) can't trust self-signed mkcert certificates,
  * so Tauri dev connects to this HTTP endpoint instead of the HTTPS one.
@@ -137,6 +166,7 @@ if (isRunningLocally && tls) {
 function handleShutdown(signal: string) {
     log.info(`${signal} received, starting graceful shutdown`);
     CronRegistry.stop();
+    metricsServer.stop(true);
     app.server?.stop(false);
     setTimeout(() => {
         log.warn("Shutdown timeout exceeded, forcing exit");
