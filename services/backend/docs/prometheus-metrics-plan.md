@@ -11,7 +11,7 @@ Goal: expose a `/metrics` endpoint (Prometheus text format) and instrument the b
 | Item | Recommendation |
 |---|---|
 | Library | `prom-client` (works on Bun) with a single shared `Registry` in `src/infrastructure/telemetry/` |
-| Endpoint | `GET /metrics` mounted in `src/index.ts` (protect via network policy / internal-only ingress, not app auth) |
+| Endpoint | `GET /metrics` on a **dedicated internal port** (`METRICS_PORT`, default `9464`) via a separate `Bun.serve` in `src/index.ts` — deliberately OFF the public Elysia app so the ingress never routes to it. Scraped pod-to-pod by the Prometheus Operator; never world-readable. |
 | Default collectors | Enable `collectDefaultMetrics()` (event loop lag, RSS, heap) — especially valuable given the known Bun RSS-leak workaround (`src/index.ts:56-67` forces `/health` 500 after 24h uptime) |
 | HTTP plugin | One Elysia plugin using `onRequest` / `onAfterResponse` / `onError`, mounted next to `log.into(...)` in `src/index.ts:41` |
 
@@ -260,7 +260,10 @@ Jobs covered: `processRewards` (5min), `settleRewards` (hourly, advisory-locked)
 
 Implemented on branch `feat/backend-prometheus-metrics`. Design principle: instrument **centralized choke points only** (one HTTP plugin, one cron wrapper, the advisory-lock helper, the rate limiter, the event bus, per-run job summaries) so hot-path overhead stays negligible and no per-request/per-item allocation of metric objects occurs. Metric instances are module singletons created once at import.
 
-Module: `src/infrastructure/telemetry/` — `registry.ts` (shared `Registry` + default collectors), `httpMetrics.ts`, `cronMetrics.ts`, `infraMetrics.ts`, `businessMetrics.ts`. Re-exported from the `@backend-infrastructure` barrel. `GET /metrics` mounted in `src/index.ts`.
+Module: `src/infrastructure/telemetry/` — `registry.ts` (shared `Registry` + default collectors), `httpMetrics.ts`, `cronMetrics.ts`, `infraMetrics.ts`, `businessMetrics.ts`. Re-exported from the `@backend-infrastructure` barrel.
+
+### Exposure (Prometheus wiring)
+`/metrics` is served by a **separate `Bun.serve` on a dedicated port** (`METRICS_PORT`, default `9464`), not on the public Elysia app. Rationale: the app's port `3030` is behind the public nginx ingress, so mounting `/metrics` there would expose all internal metrics to the world. The metrics port is added to the pod + the `ClusterIP` Service (`name: metrics`) but is **not referenced by any ingress rule**, so it stays cluster-internal. The Prometheus Operator scrapes it via the `ServiceMonitor` in `infra/gcp/backend.ts` (`port: metrics`, `path: /metrics`, `interval: 15s`), discovered by the kube-prometheus-stack through the `release: prometheus` label.
 
 ### Done
 - **Foundations**: `prom-client` (Bun-verified), shared registry, `collectDefaultMetrics` (event loop lag, RSS, heap — covers the Bun RSS-leak watch), `/metrics` endpoint.

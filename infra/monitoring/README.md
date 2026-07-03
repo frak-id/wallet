@@ -6,14 +6,27 @@ Grafana dashboards + monitoring assets for Frak services.
 
 `dashboards/backend-overview.json` — a ready-to-import Grafana dashboard for the
 Elysia backend (`services/backend`), built on the Prometheus metrics it exposes
-at `GET /metrics` (see `services/backend/docs/prometheus-metrics-plan.md`).
+(see `services/backend/docs/prometheus-metrics-plan.md`).
+
+### How metrics reach Prometheus
+
+- The backend serves `/metrics` on a **dedicated internal port** (`9464`), via a
+  separate `Bun.serve` — **not** on the public app port (`3030`). The metrics
+  port is on the `ClusterIP` Service (`name: metrics`) but no ingress rule
+  references it, so `/metrics` is **never reachable from the public internet**,
+  only pod-to-pod inside the cluster.
+- The `ServiceMonitor` in `infra/gcp/backend.ts` (`port: metrics`,
+  `path: /metrics`, `interval: 15s`) tells the Prometheus Operator to scrape it.
+  It's discovered by the kube-prometheus-stack via the `release: prometheus`
+  label (same mechanism as every other ServiceMonitor here).
 
 ### Prerequisites
 
-- A Prometheus scraping the backend. In GKE this is wired by the `ServiceMonitor`
-  in `infra/gcp/backend.ts` (`port: http`, `path: /metrics`, `interval: 15s`),
-  discovered by the kube-prometheus-stack (`release: prometheus`).
+- kube-prometheus-stack running in the cluster (Prometheus Operator + Grafana).
 - A Grafana with that Prometheus configured as a data source.
+
+> The dashboard JSON is imported manually (below). Auto-provisioning it as a
+> Grafana-sidecar ConfigMap was intentionally left out for now.
 
 ### Import
 
