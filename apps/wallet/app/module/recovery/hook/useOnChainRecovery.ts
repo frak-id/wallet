@@ -12,7 +12,9 @@ import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 export function useOnChainRecovery(walletAddress?: Address) {
     return useQuery({
         queryKey: recoveryKey.currentOption.full({ walletAddress }),
-        gcTime: 0,
+        // Cache across navigations so the profile security card doesn't flash
+        // "not configured" on revisit. Writes invalidate this key.
+        staleTime: 60 * 1000,
         enabled: !!walletAddress,
         queryFn: () =>
             walletAddress

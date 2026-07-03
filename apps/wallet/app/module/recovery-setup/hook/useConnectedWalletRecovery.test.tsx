@@ -133,7 +133,7 @@ describe("useConnectedWalletRecovery", () => {
         expect(result.current.error).toBe(mockError);
     });
 
-    test("should have gcTime of 0 for fresh data", async ({
+    test("should keep data cached across remount to avoid a status flash", async ({
         queryWrapper,
         mockWagmiHooks,
     }) => {
@@ -143,20 +143,36 @@ describe("useConnectedWalletRecovery", () => {
             mockWagmiHooks.useConnection as any
         );
 
-        vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockResolvedValue(
-            null
-        );
+        const mockRecoveryOptions = {
+            executor:
+                "0x9876543210987654321098765432109876543210" as `0x${string}`,
+            guardianAddress:
+                "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as `0x${string}`,
+            validAfter: 1000,
+            validUntil: 2000,
+        };
+        const getOption = vi
+            .spyOn(recoveryActions, "getCurrentRecoveryOption")
+            .mockResolvedValue(mockRecoveryOptions);
 
-        const { result } = renderHook(() => useConnectedWalletRecovery(), {
+        const first = renderHook(() => useConnectedWalletRecovery(), {
             wrapper: queryWrapper.wrapper,
         });
-
         await waitFor(() => {
-            expect(result.current.isSuccess).toBe(true);
+            expect(first.result.current.isSuccess).toBe(true);
         });
+        expect(getOption).toHaveBeenCalledTimes(1);
 
-        // gcTime: 0 means the cache is immediately garbage collected
-        // This ensures we always fetch fresh data
-        expect(result.current.isSuccess).toBe(true);
+        // With gcTime: 0 the cache would be dropped on unmount and the revisit
+        // would refetch, flashing "not configured". It must stay cached instead.
+        first.unmount();
+
+        const second = renderHook(() => useConnectedWalletRecovery(), {
+            wrapper: queryWrapper.wrapper,
+        });
+        expect(second.result.current.onChainRecovery).toEqual(
+            mockRecoveryOptions
+        );
+        expect(getOption).toHaveBeenCalledTimes(1);
     });
 });
