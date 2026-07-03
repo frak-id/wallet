@@ -4,11 +4,10 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import {
-    authenticationStore,
     authKey,
     classifyWebauthnError,
+    clearLastAuthenticator,
     isWebAuthNSupported,
-    recoveryHintStorage,
     trackEvent,
     useLogin,
 } from "@frak-labs/wallet-shared";
@@ -54,24 +53,25 @@ export function AuthActions({
 
     // A `no-credential` outcome from the silent quick-login means the hint is
     // stale (passkey deleted, or the cloud hint synced to a device that never
-    // had the credential). Clear both hint sources and refresh the query so the
-    // UI settles on the no-hint manual layout — no error toast. Any other
-    // failure (e.g. user cancelled) routes through the normal `onError` toast.
+    // had the credential). Clear all three "last authenticator" surfaces
+    // (zustand, cloud hint, and this wallet's IndexedDB row — the `register`
+    // route's primary gate signal) and refresh the query so the UI settles on
+    // the no-hint manual layout — no error toast. Any other failure (e.g. user
+    // cancelled) routes through the normal `onError` toast.
     //
     // Deliberately NOT async: TanStack Query awaits `onError` before moving the
-    // mutation out of `pending`, so awaiting the native hint wipe / query
-    // refetch here would pin `isSilentLoading` (and the button spinners) on any
-    // stalled invoke. The zustand clear below flips the UI synchronously; the
-    // cloud wipe + invalidation are best-effort background cleanup.
+    // mutation out of `pending`, so awaiting the native hint wipe / IDB clear /
+    // query refetch here would pin `isSilentLoading` (and the button spinners)
+    // on any stalled invoke. `clearLastAuthenticator` flips the zustand state
+    // synchronously before its first `await`; the cloud + IDB wipes and query
+    // invalidation are best-effort background cleanup.
     const handleSilentError = useCallback(
         (error: Error) => {
             if (classifyWebauthnError(error).kind !== "no-credential") {
                 onError(error);
                 return;
             }
-            authenticationStore.getState().setLastAuthenticator(null);
-            void recoveryHintStorage
-                .clear()
+            void clearLastAuthenticator(hint?.wallet)
                 .then(() =>
                     queryClient.invalidateQueries({
                         queryKey: authKey.recoveryHint,
@@ -84,7 +84,7 @@ export function AuthActions({
                     );
                 });
         },
-        [onError, queryClient]
+        [onError, queryClient, hint]
     );
 
     // The silent attempt's pending state is tracked locally from the mutation

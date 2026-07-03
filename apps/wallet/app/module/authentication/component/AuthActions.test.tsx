@@ -16,8 +16,7 @@ const mocks = vi.hoisted(() => ({
         onError?: (error: Error | null) => void;
     }>,
     hint: null as unknown,
-    clear: vi.fn(async () => {}),
-    setLastAuthenticator: vi.fn(),
+    clearLastAuthenticator: vi.fn(async () => {}),
     invalidateQueries: vi.fn(async () => {}),
     trackEvent: vi.fn(),
     navigate: vi.fn(),
@@ -50,16 +49,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
             mocks.loginOptions.push(opts);
             return { login: mocks.login, isLoading: false };
         },
-        recoveryHintStorage: {
-            ...actual.recoveryHintStorage,
-            clear: mocks.clear,
-        },
-        authenticationStore: {
-            ...actual.authenticationStore,
-            getState: () => ({
-                setLastAuthenticator: mocks.setLastAuthenticator,
-            }),
-        },
+        clearLastAuthenticator: mocks.clearLastAuthenticator,
         // classifyWebauthnError + authKey use the real implementations.
     };
 });
@@ -165,7 +155,7 @@ describe("AuthActions silent quick-login", () => {
         expect(mocks.login).toHaveBeenCalledWith({});
     });
 
-    test("no-credential outcome clears both hint sources and suppresses the toast", async () => {
+    test("no-credential outcome clears all three authenticator surfaces and suppresses the toast", async () => {
         mocks.hint = HINT;
         const onError = vi.fn();
         render(<AuthActions onSuccess={vi.fn()} onError={onError} />);
@@ -179,8 +169,10 @@ describe("AuthActions silent quick-login", () => {
 
         await silentOnError?.(new Error("no credential available"));
 
-        expect(mocks.setLastAuthenticator).toHaveBeenCalledWith(null);
-        expect(mocks.clear).toHaveBeenCalledTimes(1);
+        // clearLastAuthenticator is the single call that clears zustand, the
+        // cloud hint, AND (via the passed wallet) the IDB row.
+        expect(mocks.clearLastAuthenticator).toHaveBeenCalledTimes(1);
+        expect(mocks.clearLastAuthenticator).toHaveBeenCalledWith(HINT.wallet);
         expect(mocks.invalidateQueries).toHaveBeenCalledWith({
             queryKey: authKey.recoveryHint,
         });
@@ -188,7 +180,7 @@ describe("AuthActions silent quick-login", () => {
         expect(onError).not.toHaveBeenCalledWith(expect.any(Error));
     });
 
-    test("a non-no-credential error routes through the page onError and keeps the hint", async () => {
+    test("a non-no-credential error routes through the page onError and keeps the hint (IDB untouched)", async () => {
         mocks.hint = HINT;
         const onError = vi.fn();
         render(<AuthActions onSuccess={vi.fn()} onError={onError} />);
@@ -202,8 +194,7 @@ describe("AuthActions silent quick-login", () => {
         await silentOnError?.(cancelled);
 
         expect(onError).toHaveBeenCalledWith(cancelled);
-        expect(mocks.clear).not.toHaveBeenCalled();
-        expect(mocks.setLastAuthenticator).not.toHaveBeenCalled();
+        expect(mocks.clearLastAuthenticator).not.toHaveBeenCalled();
     });
 
     test("does not auto-fire on web (non-Tauri) even with a hint", async () => {
