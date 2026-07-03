@@ -1,6 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fromBase64Url, toBase64Url } from "./tauriBridge";
 
+const { mockInvoke } = vi.hoisted(() => ({ mockInvoke: vi.fn() }));
+vi.mock("../../common/tauri", () => ({
+    getInvoke: () => Promise.resolve(mockInvoke),
+}));
+
+// Minimal plugin assertion response accepted by `fromPluginAuthentication`.
+const STUB_ASSERTION = {
+    id: "cred-id",
+    rawId: "SGVsbG8",
+    type: "public-key" as const,
+    response: {
+        clientDataJSON: "SGVsbG8",
+        authenticatorData: "SGVsbG8",
+        signature: "SGVsbG8",
+    },
+};
+
+// Minimal request options the getFn will translate + forward. Cast to the
+// ox `getFn` parameter type at each call site (ox uses its own
+// `CredentialRequestOptions<false>` generic, not the DOM lib type).
+const REQUEST_OPTIONS = {
+    publicKey: {
+        challenge: new Uint8Array([1, 2, 3]),
+        rpId: "example.com",
+    },
+};
+type GetFnArg = Parameters<
+    NonNullable<ReturnType<typeof import("./tauriBridge")["getTauriGetFn"]>>
+>[0];
+
 describe("tauriBridge", () => {
     describe("base64url conversion utilities", () => {
         describe("toBase64Url", () => {
@@ -218,6 +248,56 @@ describe("tauriBridge", () => {
             const getFn = getTauriGetFn();
             expect(getFn).toBeDefined();
             expect(typeof getFn).toBe("function");
+        });
+
+        it("forwards preferImmediatelyAvailable:true in the authenticate payload", async () => {
+            Object.defineProperty(globalThis, "window", {
+                value: {
+                    location: {
+                        hostname: "tauri.localhost",
+                        protocol: "https:",
+                    },
+                },
+                writable: true,
+                configurable: true,
+            });
+            mockInvoke.mockResolvedValue(STUB_ASSERTION);
+
+            const { getTauriGetFn } = await import("./tauriBridge");
+            const getFn = getTauriGetFn({ preferImmediatelyAvailable: true });
+            await getFn?.(REQUEST_OPTIONS as GetFnArg);
+
+            expect(mockInvoke).toHaveBeenCalledTimes(1);
+            const [command, args] = mockInvoke.mock.calls[0];
+            expect(command).toBe("plugin:frak-webauthn|authenticate");
+            expect(
+                (args as { options: Record<string, unknown> }).options
+                    .preferImmediatelyAvailable
+            ).toBe(true);
+        });
+
+        it("omits preferImmediatelyAvailable when the flag is not set", async () => {
+            Object.defineProperty(globalThis, "window", {
+                value: {
+                    location: {
+                        hostname: "tauri.localhost",
+                        protocol: "https:",
+                    },
+                },
+                writable: true,
+                configurable: true,
+            });
+            mockInvoke.mockResolvedValue(STUB_ASSERTION);
+
+            const { getTauriGetFn } = await import("./tauriBridge");
+            const getFn = getTauriGetFn();
+            await getFn?.(REQUEST_OPTIONS as GetFnArg);
+
+            expect(mockInvoke).toHaveBeenCalledTimes(1);
+            const [, args] = mockInvoke.mock.calls[0];
+            expect(
+                (args as { options: Record<string, unknown> }).options
+            ).not.toHaveProperty("preferImmediatelyAvailable");
         });
     });
 });

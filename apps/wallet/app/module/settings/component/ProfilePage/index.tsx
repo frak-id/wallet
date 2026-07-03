@@ -12,9 +12,9 @@ import { Mail, ShieldCheck } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
+import { Logout } from "@/module/authentication/component/Logout";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
-// import { Logout } from "@/module/authentication/component/Logout";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
 import { CrashlyticsDebug } from "@/module/settings/component/CrashlyticsDebug";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
@@ -104,7 +104,7 @@ export function ProfilePage() {
             <PrivateKey />
             <CrashlyticsDebug />
             {!isRunningInProd ? <MoneriumConnect /> : null}
-            {/*<Logout />*/}
+            <Logout />
             <Box className={styles.footer}>
                 {displayVersion ? (
                     <Text

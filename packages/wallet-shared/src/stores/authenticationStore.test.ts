@@ -10,6 +10,7 @@ import {
     addLastAuthentication,
     applyMergeSession,
     authenticationStore,
+    clearLastAuthenticator,
 } from "./authenticationStore";
 import type { LastAuthentication } from "./types";
 
@@ -393,6 +394,103 @@ describe("authenticationStore", () => {
             expect(authenticatorStorage.remove).not.toHaveBeenCalled();
             expect(authenticatorStorage.put).toHaveBeenCalled();
             expect(recoveryHintStorage.set).toHaveBeenCalled();
+        });
+    });
+
+    describe("clearLastAuthenticator", () => {
+        test("clears zustand, the cloud hint, and the wallet's IDB row", async () => {
+            const { authenticatorStorage } = await import(
+                "../common/storage/authenticators"
+            );
+            const { recoveryHintStorage } = await import(
+                "../common/storage/recoveryHint"
+            );
+
+            const mockAuthenticator: LastAuthentication = {
+                token: "test-token",
+                address: "0x1234567890123456789012345678901234567890",
+                type: "webauthn",
+                authenticatorId: "auth-123",
+                publicKey: {
+                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
+                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
+                },
+            };
+            authenticationStore
+                .getState()
+                .setLastAuthenticator(mockAuthenticator);
+
+            const wallet =
+                "0x1234567890123456789012345678901234567890" as const;
+
+            const pending = clearLastAuthenticator(wallet);
+
+            // The zustand clear is synchronous — asserted BEFORE awaiting, as
+            // callers rely on it flipping UI state without waiting on the
+            // native/IDB clears.
+            expect(authenticationStore.getState().lastAuthenticator).toBeNull();
+
+            await pending;
+
+            expect(recoveryHintStorage.clear).toHaveBeenCalledTimes(1);
+            expect(authenticatorStorage.remove).toHaveBeenCalledTimes(1);
+            expect(authenticatorStorage.remove).toHaveBeenCalledWith(wallet);
+        });
+
+        test("skips the IDB removal when no wallet is passed", async () => {
+            const { authenticatorStorage } = await import(
+                "../common/storage/authenticators"
+            );
+            const { recoveryHintStorage } = await import(
+                "../common/storage/recoveryHint"
+            );
+
+            authenticationStore.getState().setLastAuthenticator({
+                token: "test-token",
+                address: "0x1234567890123456789012345678901234567890",
+                type: "webauthn",
+                authenticatorId: "auth-123",
+                publicKey: {
+                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
+                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
+                },
+            } as LastAuthentication);
+
+            await clearLastAuthenticator();
+
+            expect(authenticationStore.getState().lastAuthenticator).toBeNull();
+            expect(recoveryHintStorage.clear).toHaveBeenCalledTimes(1);
+            expect(authenticatorStorage.remove).not.toHaveBeenCalled();
+        });
+
+        // NOTE: the real `recoveryHintStorage.clear()` swallows its own
+        // errors and never rejects — this rejection is only reachable via the
+        // mock. The test pins the CONCURRENT-dispatch contract: the IDB
+        // eviction must be started independently of (not sequenced after) the
+        // cloud clear, so a stalled/failed cloud invoke can't block it.
+        test("still evicts the IDB row when the cloud clear rejects", async () => {
+            const { authenticatorStorage } = await import(
+                "../common/storage/authenticators"
+            );
+            const { recoveryHintStorage } = await import(
+                "../common/storage/recoveryHint"
+            );
+
+            const cloudError = new Error("cloud KV unavailable");
+            vi.mocked(recoveryHintStorage.clear).mockRejectedValueOnce(
+                cloudError
+            );
+
+            const wallet =
+                "0x1234567890123456789012345678901234567890" as const;
+
+            await expect(clearLastAuthenticator(wallet)).rejects.toThrow(
+                cloudError
+            );
+
+            // The IDB eviction (register gate's primary signal) must not be
+            // gated on the cloud clear succeeding.
+            expect(authenticatorStorage.remove).toHaveBeenCalledWith(wallet);
         });
     });
 

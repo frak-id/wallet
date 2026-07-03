@@ -1,3 +1,4 @@
+import { areAddressesEqual } from "@frak-labs/core-sdk";
 import { createStore, get, set } from "idb-keyval";
 import type { Address } from "viem";
 import type { PreviousAuthenticatorModel } from "./PreviousAuthenticatorModel";
@@ -21,9 +22,13 @@ export const authenticatorStorage = {
                 AUTHENTICATORS_KEY,
                 authenticatorStore
             )) || [];
-        // Remove existing entry for this wallet (primary key behavior)
+        // Remove existing entry for this wallet (primary key behavior).
+        // Address comparison must be case-insensitive: different write paths
+        // persist different casings (checksummed vs lowercase) of the same
+        // address, and a raw string compare duplicated the row instead of
+        // replacing it.
         const filtered = existing.filter(
-            (a) => a.wallet !== authenticator.wallet
+            (a) => !areAddressesEqual(a.wallet, authenticator.wallet)
         );
         filtered.push(authenticator);
         await set(AUTHENTICATORS_KEY, filtered, authenticatorStore);
@@ -43,7 +48,11 @@ export const authenticatorStorage = {
                 authenticatorStore
             );
             if (!existing) return;
-            const filtered = existing.filter((a) => a.wallet !== wallet);
+            // Case-insensitive: must also evict rows persisted with a
+            // different casing of the same address (see `put`).
+            const filtered = existing.filter(
+                (a) => !areAddressesEqual(a.wallet, wallet)
+            );
             if (filtered.length === existing.length) return;
             await set(AUTHENTICATORS_KEY, filtered, authenticatorStore);
         } catch (err) {
