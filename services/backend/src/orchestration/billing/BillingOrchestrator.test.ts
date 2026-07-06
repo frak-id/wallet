@@ -212,4 +212,91 @@ describe("BillingOrchestrator", () => {
             ).rejects.toBeInstanceOf(WithdrawValidationError);
         });
     });
+
+    describe("reissueDeposit (void + re-emit)", () => {
+        const input = {
+            grossAmount: "1200",
+            currency: "eure" as const,
+            documentDate: new Date("2026-03-01T00:00:00.000Z"),
+            country: "FR",
+        };
+        const createdBy = "0x0000000000000000000000000000000000000003" as const;
+
+        it("returns null and does not create when the original can't be voided", async () => {
+            const findById = vi.fn().mockResolvedValue(null); // not found
+            const create = vi.fn();
+            const orchestrator = makeOrchestrator({
+                billingDocuments: { findById, void: vi.fn(), create },
+            });
+
+            const result = await orchestrator.reissueDeposit(
+                "merchant-1",
+                "deposit-1",
+                input,
+                createdBy
+            );
+
+            expect(result).toBeNull();
+            expect(create).not.toHaveBeenCalled();
+        });
+
+        it("voids the original then emits a fresh deposit", async () => {
+            const original = makeDeposit();
+            const reissued = makeDeposit({
+                id: "deposit-2",
+                reference: "DEP-2026-0002",
+            });
+            const findById = vi
+                .fn()
+                .mockResolvedValueOnce(original) // voidDocument lookup
+                .mockResolvedValueOnce(reissued); // createDeposit final read-back
+            const voidFn = vi
+                .fn()
+                .mockResolvedValue({ ...original, voidedAt: new Date() });
+            const create = vi.fn().mockResolvedValue(reissued);
+            const setPdf = vi.fn().mockResolvedValue(reissued);
+            const orchestrator = makeOrchestrator({
+                billingDocuments: { findById, void: voidFn, create, setPdf },
+            });
+
+            const result = await orchestrator.reissueDeposit(
+                "merchant-1",
+                "deposit-1",
+                input,
+                createdBy
+            );
+
+            expect(voidFn).toHaveBeenCalledWith("merchant-1", "deposit-1");
+            expect(create).toHaveBeenCalledTimes(1);
+            expect(result?.id).toBe("deposit-2");
+        });
+    });
+
+    describe("reissueWithdraw (void + re-emit)", () => {
+        it("returns null and does not create when the original can't be voided", async () => {
+            const findById = vi
+                .fn()
+                .mockResolvedValue(makeDeposit({ kind: "deposit" })); // wrong kind for a withdraw void
+            const create = vi.fn();
+            const orchestrator = makeOrchestrator({
+                billingDocuments: { findById, void: vi.fn(), create },
+            });
+
+            const result = await orchestrator.reissueWithdraw(
+                "merchant-1",
+                "withdraw-1",
+                {
+                    remainingBankAmount: "400",
+                    currency: "eure",
+                    documentDate: new Date("2026-03-01T00:00:00.000Z"),
+                    linkedDepositId: "deposit-1",
+                    rawIban: "FR7630006000011234567890189",
+                },
+                "0x0000000000000000000000000000000000000004"
+            );
+
+            expect(result).toBeNull();
+            expect(create).not.toHaveBeenCalled();
+        });
+    });
 });

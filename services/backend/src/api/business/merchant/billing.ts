@@ -169,6 +169,97 @@ export const merchantBillingAdminRoutes = new Elysia({
             },
         }
     )
+    .put(
+        "/deposits/:id",
+        async ({ params: { merchantId, id }, body, businessSession }) => {
+            if (!businessSession) {
+                return status(401, "Authentication required");
+            }
+
+            const document =
+                await OrchestrationContext.orchestrators.billing.reissueDeposit(
+                    merchantId,
+                    id,
+                    {
+                        grossAmount: body.grossAmount,
+                        currency: body.currency,
+                        documentDate: new Date(body.documentDate),
+                        country: body.country,
+                        paymentPlatform: body.paymentPlatform,
+                        note: body.note,
+                        txHash: body.txHash,
+                    },
+                    businessSession.wallet
+                );
+            if (!document) {
+                return status(404, "Document not found or already voided");
+            }
+
+            return toResponse(document);
+        },
+        {
+            platformAdminAuthenticated: true,
+            params: t.Object({ merchantId: t.String(), id: t.String() }),
+            body: CreateDepositBodySchema,
+            response: {
+                200: BillingDocumentResponseSchema,
+                401: t.String(),
+                403: t.String(),
+                404: t.String(),
+            },
+        }
+    )
+    .put(
+        "/withdrawals/:id",
+        async ({ params: { merchantId, id }, body, businessSession }) => {
+            if (!businessSession) {
+                return status(401, "Authentication required");
+            }
+
+            try {
+                const document =
+                    await OrchestrationContext.orchestrators.billing.reissueWithdraw(
+                        merchantId,
+                        id,
+                        {
+                            remainingBankAmount: body.remainingBankAmount,
+                            currency: body.currency,
+                            documentDate: new Date(body.documentDate),
+                            linkedDepositId: body.linkedDepositId,
+                            rawIban: body.rawIban,
+                            note: body.note,
+                            txHash: body.txHash,
+                        },
+                        businessSession.wallet
+                    );
+                if (!document) {
+                    return status(404, "Document not found or already voided");
+                }
+
+                return toResponse(document);
+            } catch (err) {
+                if (err instanceof DepositNotFoundError) {
+                    return status(404, err.message);
+                }
+                if (err instanceof WithdrawValidationError) {
+                    return status(400, err.message);
+                }
+                throw err;
+            }
+        },
+        {
+            platformAdminAuthenticated: true,
+            params: t.Object({ merchantId: t.String(), id: t.String() }),
+            body: CreateWithdrawBodySchema,
+            response: {
+                200: BillingDocumentResponseSchema,
+                400: t.String(),
+                401: t.String(),
+                403: t.String(),
+                404: t.String(),
+            },
+        }
+    )
     .delete(
         "/deposits/:id",
         async ({ params: { merchantId, id } }) => {

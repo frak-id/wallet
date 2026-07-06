@@ -210,6 +210,49 @@ export class BillingOrchestrator {
     }
 
     /**
+     * Corrects an existing deposit by "void + re-emit": issued documents are
+     * immutable (a PDF may already be sealed, §3.6), so instead of mutating
+     * in place we void the original and emit a fresh deposit (new reference,
+     * new PDF) from the corrected input. Returns the new document, or null if
+     * the original doesn't exist / isn't a deposit / was already voided (the
+     * void step is the existence+kind gate). Not atomic with the subsequent
+     * create: on the rare create failure the original stays voided and the
+     * admin re-submits — an acceptable correction-in-progress state for an
+     * admin-only, low-frequency flow.
+     */
+    async reissueDeposit(
+        merchantId: string,
+        id: string,
+        input: CreateDepositInput,
+        createdBy: Address
+    ): Promise<BillingDocumentSelect | null> {
+        const voided = await this.voidDocument(merchantId, id, "deposit");
+        if (!voided) {
+            return null;
+        }
+        return this.createDeposit(merchantId, input, createdBy);
+    }
+
+    /**
+     * Corrects an existing withdraw by "void + re-emit" (see `reissueDeposit`).
+     * The re-emit runs the full withdraw assembly, so the linked-deposit
+     * guards still apply and may throw `DepositNotFoundError` /
+     * `WithdrawValidationError` on bad corrected input.
+     */
+    async reissueWithdraw(
+        merchantId: string,
+        id: string,
+        input: CreateWithdrawInput,
+        createdBy: Address
+    ): Promise<BillingDocumentSelect | null> {
+        const voided = await this.voidDocument(merchantId, id, "withdraw");
+        if (!voided) {
+            return null;
+        }
+        return this.createWithdraw(merchantId, input, createdBy);
+    }
+
+    /**
      * Re-renders and stores the PDF for a document that doesn't have one yet
      * (e.g. a prior create's render/upload step failed). No-op (returns the
      * document unchanged) if a PDF was already issued — `setPdf` is
