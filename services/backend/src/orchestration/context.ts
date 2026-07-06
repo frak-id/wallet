@@ -18,6 +18,7 @@ import { getTakeAdsClient } from "../infrastructure/integrations/takeads";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { BillingOrchestrator } from "./billing/BillingOrchestrator";
+import { MonthlyBillOrchestrator } from "./billing/MonthlyBillOrchestrator";
 import {
     CampaignOverviewOrchestrator,
     CampaignStatsOrchestrator,
@@ -60,6 +61,18 @@ const billingOrchestrator = new BillingOrchestrator(
     RewardsContext.repositories.assetLog,
     BillingContext.services.computation,
     BillingContext.services.pdf
+);
+
+const monthlyBillOrchestrator = new MonthlyBillOrchestrator(
+    BillingContext.repositories.billingDocument,
+    BillingContext.repositories.billingStorage,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.assetLog,
+    CampaignBankContext.repositories.campaignBank,
+    BillingContext.services.computation,
+    BillingContext.services.pdf,
+    pricingRepository,
+    WalletContext.repositories.balances
 );
 
 const identityWeightService = new IdentityWeightService(
@@ -257,5 +270,6 @@ export namespace OrchestrationContext {
         pairingRouter: pairingRouterOrchestrator,
         takeAdsIngestion: takeAdsIngestionOrchestrator,
         billing: billingOrchestrator,
+        monthlyBill: monthlyBillOrchestrator,
     };
 }

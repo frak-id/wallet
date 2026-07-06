@@ -60,6 +60,28 @@ const MonthlyBillDetailsSchema = t.Object({
         usd: t.String(),
         gbp: t.String(),
     }),
+    // On-chain divergence check, frozen at generation time (never recomputed
+    // on re-download — §6.3). Optional: absent on documents generated before
+    // this field existed, or when never checked. `skipped` covers a null
+    // `bankAddress` or a failed on-chain read — the bill still publishes
+    // (best-effort mitigation, §6.2), it's just not verified.
+    review: t.Optional(
+        t.Object({
+            flagged: t.Boolean(),
+            checkedAt: t.String(),
+            perCurrency: t.Array(
+                t.Object({
+                    currency: StablecoinSchema,
+                    derivedClosing: t.String(),
+                    onChainBalance: t.String(),
+                    deltaAbs: t.String(),
+                    withinThreshold: t.Boolean(),
+                })
+            ),
+            skipped: t.Optional(t.Boolean()),
+            skipReason: t.Optional(t.String()),
+        })
+    ),
 });
 
 export const BillingDocumentDetailsSchema = t.Union([
@@ -70,3 +92,5 @@ export const BillingDocumentDetailsSchema = t.Union([
 export type BillingDocumentDetails = Static<
     typeof BillingDocumentDetailsSchema
 >;
+export type MonthlyBillDetails = Static<typeof MonthlyBillDetailsSchema>;
+export type MonthlyBillReview = NonNullable<MonthlyBillDetails["review"]>;

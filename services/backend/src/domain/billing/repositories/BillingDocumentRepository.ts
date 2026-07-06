@@ -1,5 +1,6 @@
 import { db } from "@backend-infrastructure";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import type { Stablecoin } from "@frak-labs/app-essentials";
+import { and, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import {
     type BillingDocumentInsert,
     type BillingDocumentSelect,
@@ -214,6 +215,98 @@ export class BillingDocumentRepository {
                 )
             )
             .returning();
+        return result ?? null;
+    }
+
+    /**
+     * Distinct non-voided deposit/withdraw currencies for a merchant — one
+     * half of the monthly-bill ledger currency set (the other half is
+     * stablecoins seen in settled rewards; see `MonthlyBillOrchestrator`,
+     * billing-feature-plan.md §6.2).
+     */
+    async distinctCurrencies(merchantId: string): Promise<Stablecoin[]> {
+        const rows = await db
+            .selectDistinct({ currency: billingDocumentsTable.currency })
+            .from(billingDocumentsTable)
+            .where(
+                and(
+                    eq(billingDocumentsTable.merchantId, merchantId),
+                    isNull(billingDocumentsTable.voidedAt),
+                    sql`${billingDocumentsTable.kind} IN ('deposit', 'withdraw')`
+                )
+            );
+        return rows.map((row) => row.currency);
+    }
+
+    /**
+     * Deposit/withdraw totals grouped by currency, either "before" a single
+     * instant (ledger opening/closing balance) or within a half-open
+     * `[start, end)` window (in-period movement) — monthly-bill fiat ledger
+     * (billing-feature-plan.md §6.2). `deposited` sums the `net_amount`
+     * column (deposit rows only); `withdrawn` sums `details->>'bankSent'`
+     * (withdraw rows only) — these live in different places (column vs
+     * jsonb) so they cannot be a single column sum. Voided documents are
+     * excluded. Returns decimal strings; callers must use decimal.js, never
+     * parseFloat.
+     */
+    async aggregateDepositWithdrawByCurrency(
+        merchantId: string,
+        opts: { before: Date } | { start: Date; end: Date }
+    ): Promise<
+        Array<{ currency: Stablecoin; deposited: string; withdrawn: string }>
+    > {
+        const dateCondition =
+            "before" in opts
+                ? lt(billingDocumentsTable.documentDate, opts.before)
+                : and(
+                      gte(billingDocumentsTable.documentDate, opts.start),
+                      lt(billingDocumentsTable.documentDate, opts.end)
+                  );
+
+        const rows = await db
+            .select({
+                currency: billingDocumentsTable.currency,
+                deposited:
+                    sql<string>`COALESCE(SUM(${billingDocumentsTable.netAmount}) FILTER (WHERE ${billingDocumentsTable.kind} = 'deposit'), 0)`.mapWith(
+                        String
+                    ),
+                withdrawn:
+                    sql<string>`COALESCE(SUM((${billingDocumentsTable.details}->>'bankSent')::numeric) FILTER (WHERE ${billingDocumentsTable.kind} = 'withdraw'), 0)`.mapWith(
+                        String
+                    ),
+            })
+            .from(billingDocumentsTable)
+            .where(
+                and(
+                    eq(billingDocumentsTable.merchantId, merchantId),
+                    isNull(billingDocumentsTable.voidedAt),
+                    sql`${billingDocumentsTable.kind} IN ('deposit', 'withdraw')`,
+                    dateCondition
+                )
+            )
+            .groupBy(billingDocumentsTable.currency);
+
+        return rows;
+    }
+
+    /**
+     * Looks up an existing (non-voided) monthly bill for a merchant+period —
+     * used to return the existing document on a duplicate-generation attempt
+     * (409, idempotency guarded by the DB team's partial-unique
+     * `(merchant_id, period_start) WHERE kind='monthly_bill'`, §6.4).
+     */
+    async findMonthlyBillByPeriod(
+        merchantId: string,
+        periodStart: Date
+    ): Promise<BillingDocumentSelect | null> {
+        const result = await db.query.billingDocumentsTable.findFirst({
+            where: and(
+                eq(billingDocumentsTable.merchantId, merchantId),
+                eq(billingDocumentsTable.kind, "monthly_bill"),
+                eq(billingDocumentsTable.periodStart, periodStart),
+                isNull(billingDocumentsTable.voidedAt)
+            ),
+        });
         return result ?? null;
     }
 }

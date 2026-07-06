@@ -27,6 +27,37 @@ export class DepositNotFoundError extends Error {
  */
 export class WithdrawValidationError extends Error {}
 
+/**
+ * Builds the PDF `buyer` block from a merchant's `accountingInfo` (shared by
+ * every billing document kind — deposit/withdraw/monthly_bill — so both
+ * `BillingOrchestrator` and `MonthlyBillOrchestrator` assemble it the same
+ * way). `accountingInfo` is a `Partial<MerchantAccountingInfo>`, so every
+ * field is optional — an unfilled-in merchant still gets a (mostly blank)
+ * buyer block rather than a crash (§3.1).
+ */
+export function buildPdfBuyer(accountingInfo: {
+    companyName?: string;
+    vatNumber?: string;
+    streetAddress?: string;
+    postalCode?: string;
+    city?: string;
+}): {
+    companyName?: string;
+    vatNumber?: string;
+    addressLines: string[];
+} {
+    return {
+        companyName: accountingInfo.companyName,
+        vatNumber: accountingInfo.vatNumber,
+        addressLines: [
+            accountingInfo.streetAddress,
+            [accountingInfo.postalCode, accountingInfo.city]
+                .filter(Boolean)
+                .join(" "),
+        ].filter((line): line is string => Boolean(line)),
+    };
+}
+
 type CreateDepositInput = {
     grossAmount: string;
     currency: Stablecoin;
@@ -306,17 +337,7 @@ export class BillingOrchestrator {
         }
 
         const merchant = await this.merchant.findById(document.merchantId);
-        const accountingInfo = merchant?.accountingInfo ?? {};
-        const buyer = {
-            companyName: accountingInfo.companyName,
-            vatNumber: accountingInfo.vatNumber,
-            addressLines: [
-                accountingInfo.streetAddress,
-                [accountingInfo.postalCode, accountingInfo.city]
-                    .filter(Boolean)
-                    .join(" "),
-            ].filter((line): line is string => Boolean(line)),
-        };
+        const buyer = buildPdfBuyer(merchant?.accountingInfo ?? {});
 
         const bytes = await this.pdf.render({
             kind: document.kind,

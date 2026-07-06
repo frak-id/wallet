@@ -1,5 +1,9 @@
+import { currentStablecoins } from "@frak-labs/app-essentials";
 import { describe, expect, it } from "vitest";
-import { BillingComputationService } from "./BillingComputationService";
+import {
+    BillingComputationService,
+    stablecoinForTokenAddress,
+} from "./BillingComputationService";
 
 const service = new BillingComputationService();
 
@@ -214,6 +218,112 @@ describe("BillingComputationService", () => {
             const masked = service.maskIban(input);
             expect(masked).not.toBe(input.toUpperCase());
             expect(masked).toContain("****");
+        });
+    });
+
+    describe("computeMonthlyLedger", () => {
+        it("folds opening + in-period movement into a closing balance", () => {
+            const result = service.computeMonthlyLedger({
+                depositedBefore: "1000",
+                withdrawnBefore: "200",
+                rewardedBefore: "100",
+                depositedInPeriod: "500",
+                withdrawnInPeriod: "50",
+                rewardedInPeriod: "150",
+            });
+            // opening = 1000 - 200 - 100 = 700
+            expect(result.openingBalance).toBe("700.000000000000000000");
+            // closing = 700 + 500 - 50 - 150 = 1000
+            expect(result.closingBalance).toBe("1000.000000000000000000");
+            expect(result.totalDeposited).toBe("500.000000000000000000");
+            expect(result.totalWithdrawn).toBe("50.000000000000000000");
+            expect(result.totalRewarded).toBe("150.000000000000000000");
+        });
+
+        it("allows a negative balance (admin-entry-incomplete ledger, not clamped)", () => {
+            const result = service.computeMonthlyLedger({
+                depositedBefore: "0",
+                withdrawnBefore: "0",
+                rewardedBefore: "500",
+                depositedInPeriod: "0",
+                withdrawnInPeriod: "0",
+                rewardedInPeriod: "0",
+            });
+            expect(result.openingBalance).toBe("-500.000000000000000000");
+            expect(result.closingBalance).toBe("-500.000000000000000000");
+        });
+    });
+
+    describe("assessDivergence", () => {
+        it("flags when the delta exceeds both the floor and the relative threshold", () => {
+            const result = service.assessDivergence("1000", "800");
+            expect(result.deltaAbs).toBe("200.000000000000000000");
+            expect(result.withinThreshold).toBe(false);
+        });
+
+        it("does not flag dust below the absolute floor", () => {
+            const result = service.assessDivergence("1000", "999.5");
+            expect(result.withinThreshold).toBe(true);
+        });
+
+        it("does not flag when within the relative percentage", () => {
+            // 1% of 1000 = 10
+            const result = service.assessDivergence("1000", "992");
+            expect(result.withinThreshold).toBe(true);
+        });
+
+        it("is symmetric (order of derived/onChain doesn't matter)", () => {
+            const a = service.assessDivergence("1000", "800");
+            const b = service.assessDivergence("800", "1000");
+            expect(a.deltaAbs).toBe(b.deltaAbs);
+            expect(a.withinThreshold).toBe(b.withinThreshold);
+        });
+    });
+
+    describe("annexRowFiat", () => {
+        it("multiplies the token-scaled amount by each spot price", () => {
+            const result = service.annexRowFiat({
+                amount: "100",
+                price: { eur: 0.9, usd: 1.0, gbp: 0.8 },
+            });
+            expect(result.eur).toBe("90.000000000000000000");
+            expect(result.usd).toBe("100.000000000000000000");
+            expect(result.gbp).toBe("80.000000000000000000");
+        });
+
+        it("handles a zero amount", () => {
+            const result = service.annexRowFiat({
+                amount: "0",
+                price: { eur: 0.9, usd: 1.0, gbp: 0.8 },
+            });
+            expect(result.eur).toBe("0.000000000000000000");
+        });
+    });
+
+    describe("stablecoinForTokenAddress", () => {
+        it("maps a known stablecoin address back to its currency", () => {
+            expect(stablecoinForTokenAddress(currentStablecoins.eure)).toBe(
+                "eure"
+            );
+            expect(stablecoinForTokenAddress(currentStablecoins.usdc)).toBe(
+                "usdc"
+            );
+        });
+
+        it("is case-insensitive (checksum-safe address comparison)", () => {
+            expect(
+                stablecoinForTokenAddress(
+                    currentStablecoins.eure.toLowerCase() as `0x${string}`
+                )
+            ).toBe("eure");
+        });
+
+        it("returns undefined for a non-stablecoin token address", () => {
+            expect(
+                stablecoinForTokenAddress(
+                    "0x0000000000000000000000000000000000000099"
+                )
+            ).toBeUndefined();
         });
     });
 });

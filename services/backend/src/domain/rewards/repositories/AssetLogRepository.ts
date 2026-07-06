@@ -671,4 +671,80 @@ export class AssetLogRepository {
             );
         return result?.total ?? "0";
     }
+
+    /**
+     * Settled rewards for a merchant in a half-open window
+     * `[start, end)` (monthly-bill reward annex — billing-feature-plan.md
+     * §6.1). Plain rows, no joins — the annex only needs token/amount/status,
+     * not the merchant/interaction enrichment `findDetailedByIdentityGroup`
+     * carries. `opts.statuses` defaults to `['settled']` (only actually-paid
+     * rewards are annex-worthy); `tokenAddress IS NOT NULL` excludes
+     * non-token asset logs.
+     */
+    async findByMerchantAndDateRange(
+        merchantId: string,
+        start: Date,
+        end: Date,
+        opts?: { statuses?: AssetStatus[] }
+    ): Promise<AssetLogSelect[]> {
+        return db
+            .select()
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    gte(assetLogsTable.settledAt, start),
+                    lt(assetLogsTable.settledAt, end),
+                    inArray(
+                        assetLogsTable.status,
+                        opts?.statuses ?? ["settled"]
+                    ),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            )
+            .orderBy(assetLogsTable.settledAt);
+    }
+
+    /**
+     * Settled reward totals grouped by token, either "before" a single
+     * instant (ledger opening/closing balance) or within a half-open
+     * `[start, end)` window (in-period movement) — monthly-bill fiat ledger
+     * (billing-feature-plan.md §6.2). Settled-only, same rationale as
+     * `sumSettledAmountSince`. Callers map `tokenAddress` back to a
+     * `Stablecoin` currency themselves (rewards store the token address, not
+     * a currency code) and must use decimal.js on the returned strings,
+     * never parseFloat.
+     */
+    async sumSettledByToken(
+        merchantId: string,
+        opts: { before: Date } | { start: Date; end: Date }
+    ): Promise<Array<{ tokenAddress: Address; total: string }>> {
+        const dateCondition =
+            "before" in opts
+                ? lt(assetLogsTable.settledAt, opts.before)
+                : and(
+                      gte(assetLogsTable.settledAt, opts.start),
+                      lt(assetLogsTable.settledAt, opts.end)
+                  );
+
+        return db
+            .select({
+                tokenAddress: assetLogsTable.tokenAddress,
+                total: sql<string>`COALESCE(SUM(${assetLogsTable.amount}), 0)`.mapWith(
+                    String
+                ),
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    eq(assetLogsTable.status, "settled"),
+                    isNotNull(assetLogsTable.tokenAddress),
+                    dateCondition
+                )
+            )
+            .groupBy(assetLogsTable.tokenAddress) as Promise<
+            Array<{ tokenAddress: Address; total: string }>
+        >;
+    }
 }

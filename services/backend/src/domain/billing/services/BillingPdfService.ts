@@ -26,11 +26,13 @@ const FRAK_SELLER = {
  * service only formats them for display, it never recomputes.
  */
 export type BillingPdfDocumentDto = {
-    kind: "deposit" | "withdraw";
+    kind: "deposit" | "withdraw" | "monthly_bill";
     reference: string;
     documentDate: Date;
     currency: string;
+    /** Not meaningful for `monthly_bill` (multi-currency; use `monthlyBill.ledgers`). */
     grossAmount: string;
+    /** Not meaningful for `monthly_bill` (multi-currency; use `monthlyBill.ledgers`). */
     netAmount: string;
     /** The merchant being billed. May be partial/empty if accounting info was never filled in. */
     buyer: {
@@ -54,6 +56,34 @@ export type BillingPdfDocumentDto = {
         bankSent: string;
         maskedIban: string;
         note?: string;
+    };
+    /** Present when `kind === "monthly_bill"`. */
+    monthlyBill?: {
+        periodStart: Date;
+        periodEnd: Date;
+        ledgers: Array<{
+            currency: string;
+            openingBalance: string;
+            closingBalance: string;
+            totalDeposited: string;
+            totalWithdrawn: string;
+            totalRewarded: string;
+        }>;
+        fiatTotals: { eur: string; usd: string; gbp: string };
+        /** Per-line settled rewards in the period — re-queried at render time (§3.2), not stored in `details`. */
+        annexRows: Array<{
+            settledAt: Date;
+            amount: string;
+            currency: string;
+            fiatValue: string;
+            txHash?: string;
+        }>;
+        /** Present when the on-chain divergence check ran (§6.2). */
+        review?: {
+            flagged: boolean;
+            skipped?: boolean;
+            skipReason?: string;
+        };
     };
 };
 
@@ -110,11 +140,14 @@ type DrawOptions = {
  */
 class PageCursor {
     y: number;
+    private page: PDFPage;
 
     constructor(
-        private readonly page: PDFPage,
-        private readonly font: PDFFont
+        page: PDFPage,
+        private readonly font: PDFFont,
+        private readonly newPage: () => PDFPage
     ) {
+        this.page = page;
         this.y = PAGE_HEIGHT - MARGIN;
     }
 
@@ -137,6 +170,18 @@ class PageCursor {
     newLine(height = 16): void {
         this.y -= height;
     }
+
+    /**
+     * Starts a fresh page if fewer than `minRemaining` points are left below
+     * the bottom margin — used before drawing a table row so a row is never
+     * split across pages (monthly-bill annex can be arbitrarily long).
+     */
+    ensureSpace(minRemaining: number): void {
+        if (this.y - minRemaining < MARGIN) {
+            this.page = this.newPage();
+            this.y = PAGE_HEIGHT - MARGIN;
+        }
+    }
 }
 
 /**
@@ -151,7 +196,17 @@ export class BillingPdfService {
         const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-        const cursor = new PageCursor(page, font);
+        const cursor = new PageCursor(page, font, () =>
+            pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+        );
+
+        if (dto.kind === "monthly_bill" && dto.monthlyBill) {
+            this.drawMonthlyBillHeader(cursor, dto, bold);
+            this.drawPartyBlocks(cursor, dto, bold);
+            this.drawMonthlyBillLedgers(cursor, dto.monthlyBill, bold);
+            this.drawMonthlyBillAnnex(cursor, dto.monthlyBill, bold);
+            return pdfDoc.save();
+        }
 
         this.drawHeader(cursor, dto, bold);
         this.drawPartyBlocks(cursor, dto, bold);
@@ -165,6 +220,114 @@ export class BillingPdfService {
         }
 
         return pdfDoc.save();
+    }
+
+    private drawMonthlyBillHeader(
+        cursor: PageCursor,
+        dto: BillingPdfDocumentDto,
+        bold: PDFFont
+    ): void {
+        const monthlyBill = dto.monthlyBill;
+        if (!monthlyBill) return;
+
+        cursor.text("Monthly bill", { size: 20, useFont: bold });
+        cursor.newLine(28);
+
+        cursor.text(`Reference: ${dto.reference}`, { size: 11 });
+        cursor.newLine(14);
+        const start = monthlyBill.periodStart.toISOString().slice(0, 10);
+        const end = monthlyBill.periodEnd.toISOString().slice(0, 10);
+        cursor.text(`Period: ${start} to ${end}`, { size: 11 });
+        cursor.newLine(14);
+        cursor.text(
+            `Fiat totals: ${monthlyBill.fiatTotals.eur} EUR / ${monthlyBill.fiatTotals.usd} USD / ${monthlyBill.fiatTotals.gbp} GBP`,
+            { size: 11 }
+        );
+        cursor.newLine(20);
+
+        if (monthlyBill.review?.flagged) {
+            cursor.text(
+                "REVIEW: derived balance diverges from the on-chain balance beyond threshold — admin review required.",
+                { size: 9, color: DARK }
+            );
+            cursor.newLine(16);
+        } else if (monthlyBill.review?.skipped) {
+            cursor.text(
+                `On-chain divergence check skipped (${monthlyBill.review.skipReason ?? "unknown reason"}).`,
+                { size: 9, color: GRAY }
+            );
+            cursor.newLine(16);
+        }
+        cursor.newLine(8);
+    }
+
+    private drawMonthlyBillLedgers(
+        cursor: PageCursor,
+        monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
+        bold: PDFFont
+    ): void {
+        cursor.text("Per-currency ledger", { size: 13, useFont: bold });
+        cursor.newLine(20);
+
+        for (const ledger of monthlyBill.ledgers) {
+            cursor.ensureSpace(90);
+            cursor.text(ledger.currency.toUpperCase(), {
+                size: 11,
+                useFont: bold,
+            });
+            cursor.newLine(15);
+            cursor.text(
+                `Opening: ${formatMoney(ledger.openingBalance, ledger.currency)}   Closing: ${formatMoney(ledger.closingBalance, ledger.currency)}`,
+                { size: 9 }
+            );
+            cursor.newLine(13);
+            cursor.text(
+                `Deposited: ${formatMoney(ledger.totalDeposited, ledger.currency)}   Withdrawn: ${formatMoney(ledger.totalWithdrawn, ledger.currency)}   Rewarded: ${formatMoney(ledger.totalRewarded, ledger.currency)}`,
+                { size: 9, color: GRAY }
+            );
+            cursor.newLine(20);
+        }
+        cursor.newLine(6);
+    }
+
+    private drawMonthlyBillAnnex(
+        cursor: PageCursor,
+        monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
+        bold: PDFFont
+    ): void {
+        cursor.ensureSpace(60);
+        cursor.text(`Reward annex (${monthlyBill.annexRows.length} rows)`, {
+            size: 13,
+            useFont: bold,
+        });
+        cursor.newLine(18);
+
+        if (monthlyBill.annexRows.length === 0) {
+            cursor.text("No settled rewards in this period.", {
+                size: 9,
+                color: GRAY,
+            });
+            cursor.newLine(14);
+            return;
+        }
+
+        cursor.text("Date", { size: 8, color: GRAY });
+        cursor.text("Amount", { x: MARGIN + 110, size: 8, color: GRAY });
+        cursor.text("Fiat value", { x: MARGIN + 230, size: 8, color: GRAY });
+        cursor.text("Tx hash", { x: MARGIN + 340, size: 8, color: GRAY });
+        cursor.newLine(13);
+
+        for (const row of monthlyBill.annexRows) {
+            cursor.ensureSpace(13);
+            cursor.text(row.settledAt.toISOString().slice(0, 10), { size: 8 });
+            cursor.text(formatMoney(row.amount, row.currency), {
+                x: MARGIN + 110,
+                size: 8,
+            });
+            cursor.text(row.fiatValue, { x: MARGIN + 230, size: 8 });
+            cursor.text(row.txHash ?? "—", { x: MARGIN + 340, size: 7 });
+            cursor.newLine(13);
+        }
     }
 
     private drawHeader(
