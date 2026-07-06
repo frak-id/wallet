@@ -9,6 +9,35 @@ date: 2026-07-01
 
 # feat: WebAuthn preferImmediatelyAvailableCredentials fail-fast quick-login
 
+> **Status (2026-07-06): SHIPPED & TestFlight-verified on both platforms.**
+> Core feature landed on `dev` (rolled into release 1.0.78); a follow-up feat
+> commit ("auto-reconnect quick-login toast on /login") completes it.
+>
+> **Authoritative correction — iOS is NOT silent.** The silent
+> `preferImmediatelyAvailableCredentials` auto-login described throughout this
+> plan works in the **dev** build but **fails on prod TestFlight**: the request
+> rejects even for a usable iCloud passkey (generic error) — so it never prompts
+> Face ID and instead surfaced an error toast. Dev ≠ prod for this API. Shipped
+> behavior instead:
+>
+> - **iOS** auto-fires a **non-silent full-sheet** `login({ lastAuthentication })`
+>   on `/login` mount — reliably prompts Face ID (device-confirmed; same call as
+>   the manual "Use my account" button). The silent flag is **not** used on iOS.
+> - **Android** keeps the silent `preferImmediatelyAvailable` fast-path
+>   (reliable, zero-UI when no passkey).
+> - The auto-fire **never toasts** — any failure falls through to the manual
+>   buttons silently; only Android's reliable `no-credential` self-heals.
+> - An 800ms "Reconnexion automatique" toast precedes the prompt as a heads-up.
+>
+> **Also fixed post-merge (outside the original plan):** logout no longer wipes
+> the recovery hint; the register gate reads the zustand hint first (async-IDB
+> cold-start race); a StrictMode auto-fire stuck-spinner bug; the toast
+> safe-area offset.
+>
+> **Definition of Done: MET** — both `TODO(prefer-immediate)` markers removed,
+> device-verified on TestFlight. Deferred follow-ups are tracked in Linear
+> (Android `has_passkey` register gate; `beforeLoad` OS check; analytics).
+
 ## Summary
 
 Adopt the native WebAuthn `preferImmediatelyAvailableCredentials` flag (iOS 16+ /

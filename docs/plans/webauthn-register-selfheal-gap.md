@@ -5,11 +5,19 @@ quick-login self-heals a stale hint on `no-credential`, but only clears **2 of
 the 3** "last authenticator" surfaces — leaving the `register` route's primary
 gate signal stale. This plan closes that gap.
 
-> **Decisions (locked):** Scope = **Phase 1 only** (no native changes; Phase 2
-> deferred to a separate ticket). iOS-cancel trade-off = **accept the amplified
-> wipe** (a cancel-with-passkey-present also drops the IndexedDB row +
-> excludeCredentials entry; recoverable on next login).
-> Status: **approved, not yet implemented.**
+> **Status (2026-07-06): IMPLEMENTED & shipped** (TestFlight-verified).
+> `clearLastAuthenticator(wallet)` clears all three surfaces and is wired into
+> `AuthActions.handleSilentError` — Phase 1 is done.
+>
+> **Correction:** the self-heal is now **Android-only** (`if (!IS_ANDROID)
+> return`). iOS auto-fires a **non-silent full-sheet** login (see parent plan),
+> which surfaces a real credential rather than a false `no-credential`, so the
+> **"iOS-cancel amplification" trade-off below no longer applies** — iOS never
+> wipes on a failed/cancelled auto-fire. Phase 2 (Android `has_passkey` register
+> gate) remains deferred and is tracked in Linear.
+>
+> **Original decisions (locked):** Scope = **Phase 1 only** (no native changes;
+> Phase 2 deferred to a separate ticket).
 
 ## Background — the three authenticator surfaces
 
@@ -156,4 +164,7 @@ Android-only enhancement ticket.
 - **Scope:** Phase 1 only — approved. Phase 2 deferred to a separate ticket.
 - **iOS-cancel amplification:** accept the amplified wipe (all three surfaces
   cleared together) — approved.
-- **Implementation:** not started (awaiting go-ahead to execute).
+- **Implementation:** DONE (2026-07-06) — `clearLastAuthenticator` clears all
+  three surfaces, wired into the self-heal; the self-heal is gated to Android
+  (`IS_ANDROID`), so the iOS-cancel amplification no longer occurs. Phase 2
+  deferred → Linear.
