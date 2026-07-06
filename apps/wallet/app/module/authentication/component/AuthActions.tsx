@@ -1,7 +1,9 @@
 import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { ConfirmationTooltip } from "@frak-labs/design-system/components/ConfirmationTooltip";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import {
     authKey,
@@ -16,6 +18,12 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useLastAuthenticatorHint } from "@/module/authentication/hook/useLastAuthenticatorHint";
+import * as styles from "./AuthActions.css";
+
+// Beat before the auto-reconnect login fires, so the "Reconnecting…" toast is
+// readable before the OS biometric sheet appears instead of it popping
+// unannounced on mount.
+const AUTO_RECONNECT_DELAY_MS = 800;
 
 type AuthActionsProps = {
     onSuccess: () => void;
@@ -47,14 +55,12 @@ export function AuthActions({
         onError: (error: Error) => onError(error),
     });
 
-    // Self-heal a stale hint (passkey deleted, or cloud hint synced to a device
-    // that never had the credential) by clearing all three "last authenticator"
-    // surfaces — but ONLY on Android, where `TYPE_NO_CREDENTIAL` reliably means
-    // "no passkey here". On iOS the silent `preferImmediatelyAvailable` attempt
-    // reports `no-credential` even for a usable iCloud passkey (device-verified:
-    // the full-sheet login works), so wiping there would nuke a valid hint on
-    // every `/login` visit — keep it and stay quiet instead. Other errors (e.g.
-    // user cancelled) route through the normal `onError` toast.
+    // A failed auto-reconnect NEVER toasts: the user didn't initiate it, so any
+    // failure just falls through to the manual buttons. The one action we take
+    // is self-healing a genuinely stale hint — but ONLY on Android, where
+    // `TYPE_NO_CREDENTIAL` reliably means "no passkey here". iOS can't tell that
+    // apart from a cancel / not-immediately-available passkey, so we never wipe
+    // there.
     //
     // Not async: TanStack Query awaits `onError` before leaving `pending`, so
     // awaiting the cleanup would pin the button spinners on a stalled invoke.
@@ -62,11 +68,11 @@ export function AuthActions({
     // wipes are best-effort background cleanup.
     const handleSilentError = useCallback(
         (error: Error) => {
-            if (classifyWebauthnError(error).kind !== "no-credential") {
-                onError(error);
+            if (
+                !IS_ANDROID ||
+                classifyWebauthnError(error).kind !== "no-credential"
+            )
                 return;
-            }
-            if (!IS_ANDROID) return;
             void clearLastAuthenticator(hint?.wallet)
                 .then(() =>
                     queryClient.invalidateQueries({
@@ -80,7 +86,7 @@ export function AuthActions({
                     );
                 });
         },
-        [onError, queryClient, hint]
+        [queryClient, hint]
     );
 
     // Track pending from the promise, not `useLogin`'s `isLoading`: under React
@@ -93,9 +99,8 @@ export function AuthActions({
     });
 
     // Fire once per mount, only when a hint exists (so fresh installs never see
-    // an unexpected prompt) and only on Tauri (web's `preferImmediatelyAvailable`
-    // is inert — a stale hint would open a full passkey modal instead of failing
-    // fast onto `no-credential`).
+    // an unexpected prompt) and only on Tauri (web has no native quick-login).
+    const [showReconnectToast, setShowReconnectToast] = useState(false);
     const silentAttempted = useRef(false);
     useEffect(() => {
         if (
@@ -105,18 +110,39 @@ export function AuthActions({
             !IS_TAURI
         )
             return;
-        silentAttempted.current = true;
         onError(null);
-        // No `auth_login_method_selected`: that signals an explicit user choice,
-        // not an auto-fire. `handleSilentError` owns the outcome, so swallow the
-        // `mutateAsync` rejection to avoid unhandled rejections on every mount.
+        // Announce the auto-reconnect, then fire after a short beat.
+        setShowReconnectToast(true);
         setIsSilentPending(true);
-        void silentLogin({
-            lastAuthentication: hint,
-            silentLogin: true,
-        })
-            .catch(() => {})
-            .finally(() => setIsSilentPending(false));
+        const timer = setTimeout(() => {
+            // Mark fired only here (not at schedule time): under StrictMode the
+            // first mount's timer is cancelled by cleanup, and guarding at
+            // schedule time would then block the second mount from ever
+            // rescheduling — leaving the toast/spinner stuck and login unfired.
+            silentAttempted.current = true;
+            // Android's silent `preferImmediatelyAvailable` path is reliable
+            // (fast, zero-UI when no passkey). On iOS it is not — on prod it
+            // rejects even for a usable passkey — so iOS auto-fires a NON-silent
+            // full-sheet login, which prompts Face ID reliably (the same call as
+            // the manual "Use my account" button). Either way failures route to
+            // `handleSilentError`, which never toasts.
+            //
+            // No `auth_login_method_selected`: that signals an explicit user
+            // choice, not an auto-fire. Swallow the `mutateAsync` rejection to
+            // avoid unhandled rejections.
+            void silentLogin({
+                lastAuthentication: hint,
+                silentLogin: IS_ANDROID,
+            })
+                .catch(() => {})
+                .finally(() => {
+                    setIsSilentPending(false);
+                    setShowReconnectToast(false);
+                });
+        }, AUTO_RECONNECT_DELAY_MS);
+        // Unmount before firing (e.g. success navigated away): cancel so the
+        // login never runs and no state update lands on an unmounted component.
+        return () => clearTimeout(timer);
     }, [hint, silentLogin, onError]);
 
     const loading = isLoading || isLoginLoading || isSilentPending;
@@ -156,6 +182,15 @@ export function AuthActions({
 
     return (
         <>
+            {showReconnectToast && (
+                <ToastSurface className={styles.reconnectToastOffset}>
+                    <ConfirmationTooltip
+                        icon={<FaceIdIcon width={20} height={20} />}
+                    >
+                        {t("wallet.login.autoReconnect")}
+                    </ConfirmationTooltip>
+                </ToastSurface>
+            )}
             {hint && (
                 <Box>
                     <Button

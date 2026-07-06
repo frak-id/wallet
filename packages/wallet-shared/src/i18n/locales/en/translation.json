@@ -442,6 +442,7 @@
         "login": {
             "accountCreation": "Account creation",
             "button": "Use biometrics",
+            "autoReconnect": "Reconnecting automatically…",
             "title": "Log in to your wallet",
             "recover": "Recover wallet from file",
             "privy": "Connect via Privy",

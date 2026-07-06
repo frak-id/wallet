@@ -115,6 +115,7 @@ vi.mock("@frak-labs/design-system/icons", async (importOriginal) => {
 import { authKey } from "@frak-labs/wallet-shared";
 import { fireEvent } from "@testing-library/react";
 import type React from "react";
+import { StrictMode } from "react";
 import { AuthActions } from "./AuthActions";
 
 const HINT = {
@@ -136,8 +137,23 @@ afterEach(() => {
 });
 
 describe("AuthActions silent quick-login", () => {
-    test("fires silent login once on mount when a hint exists", async () => {
+    test("iOS auto-fires a non-silent full-sheet login on mount", async () => {
+        // iOS's silent `preferImmediatelyAvailable` path rejects even for a
+        // usable passkey on prod, so iOS uses the reliable full-sheet call.
         mocks.hint = HINT;
+        mocks.isAndroid = false;
+        render(<AuthActions onSuccess={vi.fn()} onError={vi.fn()} />);
+
+        await waitFor(() => expect(mocks.login).toHaveBeenCalledTimes(1));
+        expect(mocks.login).toHaveBeenCalledWith({
+            lastAuthentication: HINT,
+            silentLogin: false,
+        });
+    });
+
+    test("Android auto-fires the silent fast-path login on mount", async () => {
+        mocks.hint = HINT;
+        mocks.isAndroid = true;
         render(<AuthActions onSuccess={vi.fn()} onError={vi.fn()} />);
 
         await waitFor(() => expect(mocks.login).toHaveBeenCalledTimes(1));
@@ -147,13 +163,28 @@ describe("AuthActions silent quick-login", () => {
         });
     });
 
-    test("does not fire silent login when there is no hint", async () => {
+    test("shows the auto-reconnect toast on mount, then hides it once the attempt settles", async () => {
+        mocks.hint = HINT;
+        render(<AuthActions onSuccess={vi.fn()} onError={vi.fn()} />);
+
+        // Visible during the pre-fire beat.
+        expect(screen.getByText("wallet.login.autoReconnect")).toBeTruthy();
+
+        // Fires after the delay, then the toast clears on settle.
+        await waitFor(() => expect(mocks.login).toHaveBeenCalledTimes(1));
+        await waitFor(() =>
+            expect(screen.queryByText("wallet.login.autoReconnect")).toBeNull()
+        );
+    });
+
+    test("does not show the toast or fire silent login when there is no hint", async () => {
         mocks.hint = null;
         render(<AuthActions onSuccess={vi.fn()} onError={vi.fn()} />);
 
         // Give the effect a chance to (not) run.
         await new Promise((r) => setTimeout(r, 0));
         expect(mocks.login).not.toHaveBeenCalled();
+        expect(screen.queryByText("wallet.login.autoReconnect")).toBeNull();
 
         // The no-hint primary button performs a plain login with no flag.
         fireEvent.click(
@@ -188,7 +219,10 @@ describe("AuthActions silent quick-login", () => {
         expect(onError).not.toHaveBeenCalledWith(expect.any(Error));
     });
 
-    test("a non-no-credential error routes through the page onError and keeps the hint (IDB untouched)", async () => {
+    test("a failed auto-fire is swallowed: no toast, hint kept", async () => {
+        // The auto-fire is not user-initiated, so a failure must never surface
+        // an error toast (the prod-iOS generic error was doing exactly that) —
+        // it just falls through to the manual buttons.
         mocks.hint = HINT;
         const onError = vi.fn();
         render(<AuthActions onSuccess={vi.fn()} onError={onError} />);
@@ -198,10 +232,9 @@ describe("AuthActions silent quick-login", () => {
         );
         const silentOnError = mocks.loginOptions[1]?.onError;
 
-        const cancelled = new Error("user cancelled");
-        await silentOnError?.(cancelled);
+        await silentOnError?.(new Error("Une erreur est survenue"));
 
-        expect(onError).toHaveBeenCalledWith(cancelled);
+        expect(onError).not.toHaveBeenCalledWith(expect.any(Error));
         expect(mocks.clearLastAuthenticator).not.toHaveBeenCalled();
     });
 
@@ -241,6 +274,23 @@ describe("AuthActions silent quick-login", () => {
             screen.getByRole("button", { name: "wallet.login.useMyAccount" })
         );
         expect(mocks.login).toHaveBeenCalledWith({ lastAuthentication: HINT });
+    });
+
+    test("still fires the silent login under StrictMode (double-mount)", async () => {
+        // Regression guard: the fire-time guard must let StrictMode's second
+        // mount reschedule after the first mount's timer is cancelled by
+        // cleanup. A schedule-time guard leaves the login unfired and the
+        // spinner/toast stuck.
+        mocks.hint = HINT;
+        render(
+            <StrictMode>
+                <AuthActions onSuccess={vi.fn()} onError={vi.fn()} />
+            </StrictMode>
+        );
+        await waitFor(() => expect(mocks.login).toHaveBeenCalledTimes(1));
+        await waitFor(() =>
+            expect(screen.queryByText("wallet.login.autoReconnect")).toBeNull()
+        );
     });
 
     test("does not re-fire the silent login on re-render", async () => {

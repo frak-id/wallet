@@ -798,6 +798,7 @@ export default interface Resources {
       "login": {
         "accountCreation": "Account creation",
         "anotherAccount": "Connect another account",
+        "autoReconnect": "Reconnecting automatically…",
         "button": "Use biometrics",
         "email": {
           "checkError": "Unable to verify this email right now. Please try again.",
