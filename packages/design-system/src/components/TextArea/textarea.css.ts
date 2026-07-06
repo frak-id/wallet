@@ -1,6 +1,6 @@
 import { style, styleVariants } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import { alias, transition } from "../../tokens.css";
+import { alias, brand, fontSize, transition } from "../../tokens.css";
 
 const wrapperBase = style({
     display: "flex",
@@ -75,10 +75,31 @@ const fieldNoResize = style({
     resize: "none",
 });
 
+/**
+ * Composed labeled-field label + hint. Internal to the component — no
+ * consumer-facing className. The column layout is a `Stack`. See FRA-245.
+ */
+const fieldLabel = style({
+    fontSize: fontSize.s,
+    lineHeight: "22px",
+    fontWeight: brand.typography.fontWeight.medium,
+    color: vars.text.secondary,
+    paddingInline: alias.spacing.m,
+});
+
+const fieldHint = style({
+    fontSize: fontSize.xs,
+    lineHeight: "20px",
+    color: vars.text.tertiary,
+    paddingInline: alias.spacing.m,
+});
+
 export const textareaStyles = {
     wrapper: wrapperBase,
     wrapperError,
     wrapperDisabled,
     field: fieldBase,
     fieldNoResize,
+    fieldLabel,
+    fieldHint,
 };
