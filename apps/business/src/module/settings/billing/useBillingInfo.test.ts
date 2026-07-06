@@ -152,4 +152,89 @@ describe("useBillingInfo", () => {
 
         await waitFor(() => expect(accountingPut).toHaveBeenCalledWith(INFO));
     });
+
+    test("accounting.get() error: hasInfo/info fall back and isLoading settles", async ({
+        queryWrapper,
+    }: TestContext) => {
+        mockMerchant({
+            accounting: { data: null, error: { message: "boom" } },
+            documents: { data: { documents: DOCS }, error: null },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.info).toBeNull();
+        expect(result.current.hasInfo).toBe(false);
+        // Documents query is independent and still resolves.
+        expect(result.current.invoices).toHaveLength(1);
+    });
+
+    test("documents.get() error: invoices and deposits fall back to []", async ({
+        queryWrapper,
+    }: TestContext) => {
+        mockMerchant({
+            accounting: { data: { accountingInfo: INFO }, error: null },
+            documents: { data: null, error: { message: "boom" } },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.invoices).toEqual([]);
+        expect(result.current.deposits).toEqual([]);
+        // Accounting query is independent and still resolves.
+        expect(result.current.hasInfo).toBe(true);
+    });
+
+    test("saveInfo PUT error: mutation surfaces the error and isSaving settles back to false", async ({
+        queryWrapper,
+    }: TestContext) => {
+        const { accountingPut } = mockMerchant({
+            accounting: { data: { accountingInfo: null }, error: null },
+            documents: { data: { documents: [] }, error: null },
+        });
+        accountingPut.mockResolvedValue({
+            data: null,
+            error: { message: "boom" },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        result.current.saveInfo(INFO);
+
+        await waitFor(() => expect(accountingPut).toHaveBeenCalledWith(INFO));
+        await waitFor(() => expect(result.current.isSaving).toBe(false));
+
+        const mutations = queryWrapper.client.getMutationCache().getAll();
+        expect(mutations).toHaveLength(1);
+        expect(mutations[0]?.state.status).toBe("error");
+    });
+
+    test("a monthly_bill document with grossAmount: null maps to amount: null (not NaN)", async ({
+        queryWrapper,
+    }: TestContext) => {
+        mockMerchant({
+            accounting: { data: { accountingInfo: null }, error: null },
+            documents: { data: { documents: DOCS }, error: null },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.invoices[0]?.amount).toBeNull();
+    });
 });

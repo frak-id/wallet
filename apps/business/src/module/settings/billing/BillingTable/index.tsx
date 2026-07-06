@@ -160,8 +160,13 @@ function DownloadPdfButton({ entry }: { entry: BillingEntry }) {
             const link = document.createElement("a");
             link.href = url;
             link.download = `${entry.reference}.pdf`;
+            // Firefox/Safari don't trigger a download from a detached anchor's
+            // .click() — it must be in the DOM. Revoke asynchronously so the
+            // browser has finished reading the blob before the URL dies.
+            document.body.appendChild(link);
             link.click();
-            URL.revokeObjectURL(url);
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 0);
         } finally {
             setIsDownloading(false);
         }
