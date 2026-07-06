@@ -1,3 +1,4 @@
+import { currentStablecoins } from "@frak-labs/app-essentials";
 import { describe, expect, it, vi } from "vitest";
 import type { BillingDocumentSelect } from "../../domain/billing/db/schema";
 import type { BillingDocumentRepository } from "../../domain/billing/repositories/BillingDocumentRepository";
@@ -6,6 +7,7 @@ import { BillingComputationService } from "../../domain/billing/services/Billing
 import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
+import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
 import {
     BillingOrchestrator,
     DepositNotFoundError,
@@ -49,6 +51,7 @@ function makeOrchestrator(
         billingStorage: Partial<BillingStorageRepository>;
         merchant: Partial<MerchantRepository>;
         assetLogs: Partial<AssetLogRepository>;
+        pricing: Partial<PricingRepository>;
         pdf: Partial<BillingPdfService>;
     }> = {}
 ) {
@@ -57,11 +60,15 @@ function makeOrchestrator(
         create: vi.fn(),
         void: vi.fn(),
         setPdf: vi.fn(),
+        clearPdf: vi.fn(),
+        findWithdrawsByLinkedDeposit: vi.fn().mockResolvedValue([]),
+        findMonthlyBillsCovering: vi.fn().mockResolvedValue([]),
         ...overrides.billingDocuments,
     } as unknown as BillingDocumentRepository;
 
     const billingStorage = {
         upload: vi.fn().mockResolvedValue("merchant-1/deposit/doc-1.pdf"),
+        delete: vi.fn().mockResolvedValue(undefined),
         ...overrides.billingStorage,
     } as unknown as BillingStorageRepository;
 
@@ -71,11 +78,17 @@ function makeOrchestrator(
     } as unknown as MerchantRepository;
 
     const assetLogs = {
-        sumSettledAmountSince: vi.fn().mockResolvedValue("0"),
+        distinctSettledTokensSince: vi.fn().mockResolvedValue([]),
+        sumSettledConvertedSince: vi.fn().mockResolvedValue("0"),
         ...overrides.assetLogs,
     } as unknown as AssetLogRepository;
 
     const computation = new BillingComputationService();
+
+    const pricing = {
+        getTokenPrice: vi.fn().mockResolvedValue({ eur: 1, usd: 1, gbp: 1 }),
+        ...overrides.pricing,
+    } as unknown as PricingRepository;
 
     const pdf = {
         render: vi.fn().mockResolvedValue(new Uint8Array([37, 80, 68, 70])),
@@ -88,7 +101,8 @@ function makeOrchestrator(
         merchant,
         assetLogs,
         computation,
-        pdf
+        pdf,
+        pricing
     );
 }
 
@@ -150,6 +164,81 @@ describe("BillingOrchestrator", () => {
             expect(voidFn).toHaveBeenCalledWith("merchant-1", "doc-1");
             expect(result?.voidedAt).not.toBeNull();
         });
+
+        it("cascades: voids linked withdraws and clears dependent monthly-bill PDFs", async () => {
+            const deposit = makeDeposit();
+            const linkedWithdraw = makeDeposit({
+                id: "withdraw-1",
+                kind: "withdraw",
+                linkedDepositId: "deposit-1",
+            });
+            const affectedBill = makeDeposit({
+                id: "bill-1",
+                kind: "monthly_bill",
+                pdfStorageKey: "merchant-1/monthly_bill/bill-1.pdf",
+            });
+            const findById = vi.fn().mockResolvedValue(deposit);
+            const voidFn = vi
+                .fn()
+                .mockResolvedValue({ ...deposit, voidedAt: new Date() });
+            const findWithdrawsByLinkedDeposit = vi
+                .fn()
+                .mockResolvedValue([linkedWithdraw]);
+            const findMonthlyBillsCovering = vi
+                .fn()
+                .mockResolvedValue([affectedBill]);
+            const clearPdf = vi.fn().mockResolvedValue(affectedBill);
+            const storageDelete = vi.fn().mockResolvedValue(undefined);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById,
+                    void: voidFn,
+                    findWithdrawsByLinkedDeposit,
+                    findMonthlyBillsCovering,
+                    clearPdf,
+                },
+                billingStorage: { delete: storageDelete },
+            });
+
+            await orchestrator.voidDocument(
+                "merchant-1",
+                "deposit-1",
+                "deposit"
+            );
+
+            // deposit itself + the linked withdraw both voided
+            expect(voidFn).toHaveBeenCalledWith("merchant-1", "deposit-1");
+            expect(voidFn).toHaveBeenCalledWith("merchant-1", "withdraw-1");
+            // dependent monthly bill's cached PDF deleted + detached
+            expect(storageDelete).toHaveBeenCalledWith(
+                "merchant-1/monthly_bill/bill-1.pdf"
+            );
+            expect(clearPdf).toHaveBeenCalledWith("merchant-1", "bill-1");
+        });
+
+        it("does not cascade when voiding a withdraw", async () => {
+            const withdraw = makeDeposit({ kind: "withdraw" });
+            const findWithdrawsByLinkedDeposit = vi.fn();
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById: vi.fn().mockResolvedValue(withdraw),
+                    void: vi.fn().mockResolvedValue({
+                        ...withdraw,
+                        voidedAt: new Date(),
+                    }),
+                    findWithdrawsByLinkedDeposit,
+                },
+            });
+
+            await orchestrator.voidDocument(
+                "merchant-1",
+                "withdraw-1",
+                "withdraw"
+            );
+
+            expect(findWithdrawsByLinkedDeposit).not.toHaveBeenCalled();
+        });
     });
 
     describe("createWithdraw guards", () => {
@@ -210,6 +299,102 @@ describe("BillingOrchestrator", () => {
             await expect(
                 orchestrator.createWithdraw("merchant-1", baseInput, createdBy)
             ).rejects.toBeInstanceOf(WithdrawValidationError);
+        });
+    });
+
+    describe("createWithdraw cross-currency reward conversion", () => {
+        const createdBy = "0x0000000000000000000000000000000000000005" as const;
+        const baseInput = {
+            remainingBankAmount: "400",
+            currency: "eure" as const,
+            documentDate: new Date("2026-02-01T00:00:00.000Z"),
+            linkedDepositId: "deposit-1",
+            rawIban: "FR7630006000011234567890189",
+        };
+
+        it("converts rewards to the deposit currency (deposit token counts 1:1, other tokens scaled by price ratio)", async () => {
+            const deposit = makeDeposit({ currency: "eure" });
+            const findById = vi
+                .fn()
+                .mockResolvedValueOnce(deposit) // linked deposit lookup
+                .mockResolvedValueOnce(deposit); // final read-back
+            const create = vi.fn().mockResolvedValue(deposit);
+
+            // Merchant rewards in both EURe (deposit token) and USDC.
+            const distinctSettledTokensSince = vi
+                .fn()
+                .mockResolvedValue([
+                    currentStablecoins.eure,
+                    currentStablecoins.usdc,
+                ]);
+            const sumSettledConvertedSince = vi.fn().mockResolvedValue("0");
+
+            // EURe priced in EUR at 1; USDC priced in EUR at 0.9 -> factor 0.9
+            // for USDC, 1.0 for the EURe deposit token.
+            const getTokenPrice = vi.fn().mockImplementation(({ token }) => {
+                if (token === currentStablecoins.usdc) {
+                    return Promise.resolve({ eur: 0.9, usd: 1, gbp: 0.8 });
+                }
+                return Promise.resolve({ eur: 1, usd: 1.1, gbp: 0.85 });
+            });
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById,
+                    create,
+                    setPdf: vi.fn(),
+                },
+                assetLogs: {
+                    distinctSettledTokensSince,
+                    sumSettledConvertedSince,
+                },
+                pricing: { getTokenPrice },
+            });
+
+            await orchestrator.createWithdraw(
+                "merchant-1",
+                baseInput,
+                createdBy
+            );
+
+            // The converted-sum query is used (never the naive all-token sum).
+            expect(sumSettledConvertedSince).toHaveBeenCalledTimes(1);
+            const [, , factors] = sumSettledConvertedSince.mock.calls[0];
+            const factorMap = factors as Map<string, number>;
+            // Deposit token (EURe) is exactly 1:1.
+            expect(factorMap.get(currentStablecoins.eure)).toBeCloseTo(1, 12);
+            // USDC converted at eur ratio 0.9 / 1 = 0.9.
+            expect(factorMap.get(currentStablecoins.usdc)).toBeCloseTo(0.9, 12);
+        });
+
+        it("returns a 0 ratio (no conversion) when no settled reward tokens exist", async () => {
+            const deposit = makeDeposit({ currency: "eure" });
+            const findById = vi
+                .fn()
+                .mockResolvedValueOnce(deposit)
+                .mockResolvedValueOnce(deposit);
+            const create = vi.fn().mockResolvedValue(deposit);
+            const distinctSettledTokensSince = vi.fn().mockResolvedValue([]);
+            const sumSettledConvertedSince = vi.fn();
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: { findById, create, setPdf: vi.fn() },
+                assetLogs: {
+                    distinctSettledTokensSince,
+                    sumSettledConvertedSince,
+                },
+            });
+
+            await orchestrator.createWithdraw(
+                "merchant-1",
+                baseInput,
+                createdBy
+            );
+
+            // No tokens -> no converted-sum query, ratio numerator is "0".
+            expect(sumSettledConvertedSince).not.toHaveBeenCalled();
+            const details = create.mock.calls[0][0].details;
+            expect(details.distributedRatio).toBe("0.000000000000000000");
         });
     });
 

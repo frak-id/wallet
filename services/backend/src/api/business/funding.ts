@@ -13,6 +13,7 @@ import { mintAbi } from "@frak-labs/app-essentials/blockchain";
 import { Elysia } from "elysia";
 import { erc20Abi, parseEther, parseUnits } from "viem";
 import { readContract, writeContract } from "viem/actions";
+import { StablecoinSchema } from "../../domain/billing/schemas";
 
 /**
  * Funding related routes
@@ -103,14 +104,7 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" }).post(
     {
         body: t.Object({
             bank: t.Address(),
-            stablecoin: t.Optional(
-                t.Union([
-                    t.Literal("eure"),
-                    t.Literal("gbpe"),
-                    t.Literal("usde"),
-                    t.Literal("usdc"),
-                ])
-            ),
+            stablecoin: t.Optional(StablecoinSchema),
         }),
     }
 );

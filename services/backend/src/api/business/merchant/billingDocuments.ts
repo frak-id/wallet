@@ -6,8 +6,14 @@ import {
     BillingDocumentResponseSchema,
     toBillingDocumentResponse,
 } from "../../../domain/billing/schemas";
+import { OrchestrationContext } from "../../../orchestration/context";
 import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
+
+const DocumentIdParamSchema = t.Object({
+    merchantId: t.String(),
+    id: t.String({ format: "uuid" }),
+});
 
 const ListDocumentsQuerySchema = t.Object({
     kind: t.Optional(BillingDocumentKindSchema),
@@ -89,13 +95,35 @@ export const merchantBillingDocumentRoutes = new Elysia({
                 return status(403, "Access denied");
             }
 
-            const document =
+            let document =
                 await BillingContext.repositories.billingDocument.findById(
                     merchantId,
                     id
                 );
             if (!document) {
                 return status(404, "Document not found");
+            }
+
+            // Lazy regeneration: a document whose first render/upload failed
+            // (or a monthly bill whose cached PDF was cleared by a deposit
+            // void) has no `pdfStorageKey`. Retry once here so the PDF becomes
+            // downloadable without an explicit admin action — PDF failure is
+            // never a hard blocker (§3.6/§6.3). Best-effort: if it still
+            // fails, fall through to the 404 below.
+            if (!document.pdfStorageKey) {
+                const regenerated =
+                    document.kind === "monthly_bill"
+                        ? await OrchestrationContext.orchestrators.monthlyBill.regeneratePdf(
+                              merchantId,
+                              id
+                          )
+                        : await OrchestrationContext.orchestrators.billing.regeneratePdf(
+                              merchantId,
+                              id
+                          );
+                if (regenerated) {
+                    document = regenerated;
+                }
             }
             if (!document.pdfStorageKey) {
                 return status(404, "PDF not generated");
@@ -113,7 +141,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
             });
         },
         {
-            params: t.Object({ merchantId: t.String(), id: t.String() }),
+            params: DocumentIdParamSchema,
             response: {
                 401: t.String(),
                 403: t.String(),

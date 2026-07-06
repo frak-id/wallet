@@ -2,6 +2,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import {
     BillingDocumentResponseSchema,
+    StablecoinSchema,
     toBillingDocumentResponse as toResponse,
 } from "../../../domain/billing/schemas";
 import {
@@ -12,13 +13,6 @@ import { MonthlyBillAlreadyExistsError } from "../../../orchestration/billing/Mo
 import { OrchestrationContext } from "../../../orchestration/context";
 import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
-
-const StablecoinSchema = t.Union([
-    t.Literal("eure"),
-    t.Literal("gbpe"),
-    t.Literal("usde"),
-    t.Literal("usdc"),
-]);
 
 const DecimalStringSchema = t.String({ pattern: "^\\d+(\\.\\d+)?$" });
 
@@ -51,9 +45,65 @@ const GenerateMonthlyBillBodySchema = t.Object({
     month: t.String({ pattern: "^\\d{4}-(0[1-9]|1[0-2])$" }),
 });
 
+// Document-scoped routes carry both the merchant and the document uuid. Both
+// map to `uuid` columns, so the id is validated as a uuid here (a malformed
+// id 404s at the schema boundary instead of reaching Postgres as a 500).
+const BillingDocumentParamSchema = t.Object({
+    merchantId: t.String(),
+    id: t.String({ format: "uuid" }),
+});
+
 function parsePeriodStart(month: string): Date {
     const [year, monthNum] = month.split("-").map(Number);
     return new Date(Date.UTC(year as number, (monthNum as number) - 1, 1));
+}
+
+/**
+ * Maps a validated deposit request body to the orchestrator's create/reissue
+ * input DTO (shared by POST and PUT deposit routes, which take the same body).
+ */
+function toDepositInput(body: typeof CreateDepositBodySchema.static) {
+    return {
+        grossAmount: body.grossAmount,
+        currency: body.currency,
+        documentDate: new Date(body.documentDate),
+        country: body.country,
+        paymentPlatform: body.paymentPlatform,
+        note: body.note,
+        txHash: body.txHash,
+    };
+}
+
+/**
+ * Maps a validated withdraw request body to the orchestrator's create/reissue
+ * input DTO (shared by POST and PUT withdraw routes, which take the same body).
+ */
+function toWithdrawInput(body: typeof CreateWithdrawBodySchema.static) {
+    return {
+        remainingBankAmount: body.remainingBankAmount,
+        currency: body.currency,
+        documentDate: new Date(body.documentDate),
+        linkedDepositId: body.linkedDepositId,
+        rawIban: body.rawIban,
+        note: body.note,
+        txHash: body.txHash,
+    };
+}
+
+/**
+ * Maps a withdraw-assembly error to its HTTP response. Returns the matching
+ * `status(...)` for the known validation errors, or `undefined` when the
+ * error is none of them — the caller must then rethrow so it surfaces as a
+ * 500 rather than being swallowed.
+ */
+function mapWithdrawError(err: unknown) {
+    if (err instanceof DepositNotFoundError) {
+        return status(404, err.message);
+    }
+    if (err instanceof WithdrawValidationError) {
+        return status(400, err.message);
+    }
+    return undefined;
 }
 
 /**
@@ -76,15 +126,7 @@ export const merchantBillingAdminRoutes = new Elysia({
             const document =
                 await OrchestrationContext.orchestrators.billing.createDeposit(
                     merchantId,
-                    {
-                        grossAmount: body.grossAmount,
-                        currency: body.currency,
-                        documentDate: new Date(body.documentDate),
-                        country: body.country,
-                        paymentPlatform: body.paymentPlatform,
-                        note: body.note,
-                        txHash: body.txHash,
-                    },
+                    toDepositInput(body),
                     businessSession.wallet
                 );
 
@@ -112,27 +154,15 @@ export const merchantBillingAdminRoutes = new Elysia({
                 const document =
                     await OrchestrationContext.orchestrators.billing.createWithdraw(
                         merchantId,
-                        {
-                            remainingBankAmount: body.remainingBankAmount,
-                            currency: body.currency,
-                            documentDate: new Date(body.documentDate),
-                            linkedDepositId: body.linkedDepositId,
-                            rawIban: body.rawIban,
-                            note: body.note,
-                            txHash: body.txHash,
-                        },
+                        toWithdrawInput(body),
                         businessSession.wallet
                     );
 
                 return toResponse(document);
             } catch (err) {
-                if (err instanceof DepositNotFoundError) {
-                    return status(404, err.message);
-                }
-                if (err instanceof WithdrawValidationError) {
-                    return status(400, err.message);
-                }
-                throw err;
+                const mapped = mapWithdrawError(err);
+                if (!mapped) throw err;
+                return mapped;
             }
         },
         {
@@ -159,15 +189,7 @@ export const merchantBillingAdminRoutes = new Elysia({
                 await OrchestrationContext.orchestrators.billing.reissueDeposit(
                     merchantId,
                     id,
-                    {
-                        grossAmount: body.grossAmount,
-                        currency: body.currency,
-                        documentDate: new Date(body.documentDate),
-                        country: body.country,
-                        paymentPlatform: body.paymentPlatform,
-                        note: body.note,
-                        txHash: body.txHash,
-                    },
+                    toDepositInput(body),
                     businessSession.wallet
                 );
             if (!document) {
@@ -178,7 +200,7 @@ export const merchantBillingAdminRoutes = new Elysia({
         },
         {
             platformAdminAuthenticated: true,
-            params: t.Object({ merchantId: t.String(), id: t.String() }),
+            params: BillingDocumentParamSchema,
             body: CreateDepositBodySchema,
             response: {
                 200: BillingDocumentResponseSchema,
@@ -200,15 +222,7 @@ export const merchantBillingAdminRoutes = new Elysia({
                     await OrchestrationContext.orchestrators.billing.reissueWithdraw(
                         merchantId,
                         id,
-                        {
-                            remainingBankAmount: body.remainingBankAmount,
-                            currency: body.currency,
-                            documentDate: new Date(body.documentDate),
-                            linkedDepositId: body.linkedDepositId,
-                            rawIban: body.rawIban,
-                            note: body.note,
-                            txHash: body.txHash,
-                        },
+                        toWithdrawInput(body),
                         businessSession.wallet
                     );
                 if (!document) {
@@ -217,18 +231,14 @@ export const merchantBillingAdminRoutes = new Elysia({
 
                 return toResponse(document);
             } catch (err) {
-                if (err instanceof DepositNotFoundError) {
-                    return status(404, err.message);
-                }
-                if (err instanceof WithdrawValidationError) {
-                    return status(400, err.message);
-                }
-                throw err;
+                const mapped = mapWithdrawError(err);
+                if (!mapped) throw err;
+                return mapped;
             }
         },
         {
             platformAdminAuthenticated: true,
-            params: t.Object({ merchantId: t.String(), id: t.String() }),
+            params: BillingDocumentParamSchema,
             body: CreateWithdrawBodySchema,
             response: {
                 200: BillingDocumentResponseSchema,
@@ -290,7 +300,7 @@ export const merchantBillingAdminRoutes = new Elysia({
         },
         {
             platformAdminAuthenticated: true,
-            params: t.Object({ merchantId: t.String(), id: t.String() }),
+            params: BillingDocumentParamSchema,
             response: {
                 204: t.Void(),
                 401: t.String(),
@@ -315,7 +325,7 @@ export const merchantBillingAdminRoutes = new Elysia({
         },
         {
             platformAdminAuthenticated: true,
-            params: t.Object({ merchantId: t.String(), id: t.String() }),
+            params: BillingDocumentParamSchema,
             response: {
                 204: t.Void(),
                 401: t.String(),

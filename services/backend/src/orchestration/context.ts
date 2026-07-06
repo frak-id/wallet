@@ -60,7 +60,8 @@ const billingOrchestrator = new BillingOrchestrator(
     MerchantContext.repositories.merchant,
     RewardsContext.repositories.assetLog,
     BillingContext.services.computation,
-    BillingContext.services.pdf
+    BillingContext.services.pdf,
+    pricingRepository
 );
 
 const monthlyBillOrchestrator = new MonthlyBillOrchestrator(

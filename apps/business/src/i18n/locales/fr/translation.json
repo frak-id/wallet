@@ -1156,7 +1156,8 @@
             "validation": {
                 "required": "Ce champ est requis",
                 "email": "Saisir une adresse e-mail valide",
-                "decimal": "Saisissez un montant décimal valide"
+                "decimal": "Saisissez un montant décimal valide",
+                "txHash": "Saisissez un hash de transaction valide (0x…)"
             },
             "admin": {
                 "panel": {

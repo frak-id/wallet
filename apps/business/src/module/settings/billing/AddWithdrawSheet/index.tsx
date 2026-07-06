@@ -31,12 +31,15 @@ import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField } from "@/module/forms/Form";
 import * as sheetStyles from "../BillingInfoSheet/billing-info-sheet.css";
 import {
+    DECIMAL_PATTERN,
+    documentsByKindQueryKey,
+    TX_HASH_PATTERN,
+} from "../queryKeys";
+import {
     type CreateWithdrawInput,
     maskIban,
     useCreateWithdraw,
 } from "../useBillingAdmin";
-
-const DECIMAL_PATTERN = /^\d+(\.\d+)?$/;
 
 type WithdrawFormValues = {
     remainingBankAmount: string;
@@ -64,7 +67,7 @@ const EMPTY_VALUES: WithdrawFormValues = {
  */
 function useLinkableDeposits(merchantId: string, enabled: boolean) {
     return useQuery({
-        queryKey: ["billing", "documents", merchantId, "deposit"],
+        queryKey: documentsByKindQueryKey(merchantId, "deposit"),
         queryFn: async () => {
             const { data, error } = await authenticatedBackendApi
                 .merchant({ merchantId })
@@ -347,6 +350,14 @@ export function AddWithdrawSheet({ merchantId }: { merchantId: string }) {
                                 <FormField
                                     control={form.control}
                                     name="txHash"
+                                    rules={{
+                                        pattern: {
+                                            value: TX_HASH_PATTERN,
+                                            message: t(
+                                                "settings.billing.validation.txHash"
+                                            ),
+                                        },
+                                    }}
                                     render={({ field }) => (
                                         <EditField
                                             label={t(

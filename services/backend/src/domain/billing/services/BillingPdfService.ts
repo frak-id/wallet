@@ -94,16 +94,72 @@ const DARK = rgb(0.13, 0.13, 0.13);
 const GRAY = rgb(0.45, 0.45, 0.45);
 
 /**
- * WinAnsi (Latin-1-ish) code-point range pdf-lib's StandardFonts can encode.
- * Anything outside it (emoji, CJK, exotic symbols...) is replaced with "?"
- * rather than throwing at draw time. Covers accented FR characters (é, à, ç,
- * €, …) which all sit within WinAnsi-1252.
+ * The WinAnsi (CP-1252) "extra" glyphs that live in the 0x80–0x9F byte range,
+ * which Unicode maps to code points OUTSIDE the Latin-1 (<= 0xFF) block. These
+ * are encodable by pdf-lib's StandardFonts even though their code points are
+ * > 0xFF, so they must be whitelisted explicitly. Notably includes € (U+20AC)
+ * and … (U+2026), which appear on money documents.
  */
-function sanitizeForWinAnsi(input: string): string {
+const WIN_ANSI_HIGH_CODE_POINTS = new Set<number>([
+    0x20ac, // € EURO SIGN
+    0x201a, // ‚ SINGLE LOW-9 QUOTATION MARK
+    0x0192, // ƒ LATIN SMALL LETTER F WITH HOOK
+    0x201e, // „ DOUBLE LOW-9 QUOTATION MARK
+    0x2026, // … HORIZONTAL ELLIPSIS
+    0x2020, // † DAGGER
+    0x2021, // ‡ DOUBLE DAGGER
+    0x02c6, // ˆ MODIFIER LETTER CIRCUMFLEX ACCENT
+    0x2030, // ‰ PER MILLE SIGN
+    0x0160, // Š LATIN CAPITAL LETTER S WITH CARON
+    0x2039, // ‹ SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+    0x0152, // Œ LATIN CAPITAL LIGATURE OE
+    0x017d, // Ž LATIN CAPITAL LETTER Z WITH CARON
+    0x2018, // ' LEFT SINGLE QUOTATION MARK
+    0x2019, // ' RIGHT SINGLE QUOTATION MARK
+    0x201c, // " LEFT DOUBLE QUOTATION MARK
+    0x201d, // " RIGHT DOUBLE QUOTATION MARK
+    0x2022, // • BULLET
+    0x2013, // – EN DASH
+    0x2014, // — EM DASH
+    0x02dc, // ˜ SMALL TILDE
+    0x2122, // ™ TRADE MARK SIGN
+    0x0161, // š LATIN SMALL LETTER S WITH CARON
+    0x203a, // › SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+    0x0153, // œ LATIN SMALL LIGATURE OE
+    0x017e, // ž LATIN SMALL LETTER Z WITH CARON
+    0x0178, // Ÿ LATIN CAPITAL LETTER Y WITH DIAERESIS
+]);
+
+/**
+ * The five bytes in the 0x80–0x9F range that CP-1252 leaves UNDEFINED — they
+ * have no glyph and pdf-lib's StandardFonts cannot encode them, so despite
+ * being <= 0xFF they must be replaced with "?" like any other unmappable char.
+ */
+const WIN_ANSI_UNDEFINED_LOW_CODE_POINTS = new Set<number>([
+    0x81, 0x8d, 0x8f, 0x90, 0x9d,
+]);
+
+/**
+ * Sanitizes text to the glyph set pdf-lib's StandardFonts (WinAnsi / CP-1252)
+ * can encode, replacing anything else with "?" rather than throwing at draw
+ * time. Kept characters:
+ *   - Latin-1 (<= 0xFF), EXCEPT the five CP-1252-undefined bytes
+ *     (0x81, 0x8D, 0x8F, 0x90, 0x9D);
+ *   - the CP-1252 "extra" glyphs whose Unicode code points sit above 0xFF
+ *     (€, …, curly quotes, dashes, …) — see `WIN_ANSI_HIGH_CODE_POINTS`.
+ * Everything else (emoji, CJK, exotic symbols…) becomes "?".
+ *
+ * Exported for unit testing.
+ */
+export function sanitizeForWinAnsi(input: string): string {
     let out = "";
     for (const ch of input) {
         const code = ch.codePointAt(0) ?? 0;
-        out += code <= 0xff ? ch : "?";
+        if (code <= 0xff) {
+            out += WIN_ANSI_UNDEFINED_LOW_CODE_POINTS.has(code) ? "?" : ch;
+        } else {
+            out += WIN_ANSI_HIGH_CODE_POINTS.has(code) ? ch : "?";
+        }
     }
     return out;
 }
@@ -370,6 +426,8 @@ export class BillingPdfService {
             cursor.text(line, { size: 9 });
             cursor.newLine(12);
         }
+        // Bottom of the left (seller) column.
+        const leftEndY = cursor.y;
 
         // Reset y to draw the buyer block in the right column.
         cursor.y = blockTopY;
@@ -391,9 +449,12 @@ export class BillingPdfService {
             cursor.text(line, { x: rightX, size: 9 });
             cursor.newLine(12);
         }
+        // Bottom of the right (buyer) column.
+        const rightEndY = cursor.y;
 
-        // Continue below whichever block is taller.
-        cursor.y -= 20;
+        // Continue below whichever column is taller (lower on the page), so a
+        // taller seller block can't be overwritten by the next section.
+        cursor.y = Math.min(leftEndY, rightEndY) - 20;
     }
 
     private drawAmounts(

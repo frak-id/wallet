@@ -15,15 +15,22 @@ const AccountingInfoResponseSchema = t.Object({
     accountingInfo: t.Union([PartialAccountingInfoSchema, t.Null()]),
 });
 
-// Contact fields a merchant owner/admin may edit (billing-feature-plan.md §3.1).
+// Billing-identity fields a merchant owner/admin may edit
+// (billing-feature-plan.md §3.1). These are exactly the fields the
+// merchant-facing `BillingInfoSheet` form captures — `vatNumber` and
+// `country` are required there, and `country` drives VAT applicability, so
+// they must round-trip or the merchant silently loses data.
+//
 // Allowlist (not a denylist) so any NEW field added to MerchantAccountingInfo
 // defaults to platform-admin-writable only, closing the door on accidental
 // exposure of future tax-relevant fields.
 const MERCHANT_EDITABLE_FIELDS = new Set<keyof MerchantAccountingInfo>([
     "companyName",
+    "vatNumber",
     "streetAddress",
     "city",
     "postalCode",
+    "country",
     "billingEmail",
 ]);
 

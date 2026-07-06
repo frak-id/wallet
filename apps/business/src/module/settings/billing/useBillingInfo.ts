@@ -1,15 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { accountingQueryKey, documentsQueryKey } from "./queryKeys";
 import type { BillingEntry, BillingInfo } from "./types";
-
-function accountingQueryKey(merchantId: string) {
-    return ["billing", "accounting", merchantId];
-}
-
-function documentsQueryKey(merchantId: string) {
-    return ["billing", "documents", merchantId];
-}
 
 function toBillingEntry(doc: {
     id: string;

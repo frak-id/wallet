@@ -66,6 +66,7 @@ function makeOrchestrator(
         create: vi.fn(),
         findById: vi.fn(),
         setPdf: vi.fn(),
+        updateMonthlyBillDetails: vi.fn(),
         ...overrides.billingDocuments,
     } as unknown as BillingDocumentRepository;
 
@@ -639,6 +640,98 @@ describe("MonthlyBillOrchestrator", () => {
 
             expect(result.id).toBe(created.id);
             expect(setPdf).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("documentDate reference-year", () => {
+        it("dates a December bill in the billed year (last instant of the period, not periodEnd)", async () => {
+            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    create,
+                },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-12-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            const createArg = create.mock.calls[0][0];
+            // periodEnd is 2027-01-01T00:00:00Z; documentDate must be 1ms
+            // before that (still in 2026) so the reference bucket stays 2026.
+            expect(createArg.periodEnd).toEqual(
+                new Date("2027-01-01T00:00:00.000Z")
+            );
+            expect(createArg.documentDate).toEqual(
+                new Date("2026-12-31T23:59:59.999Z")
+            );
+            expect(createArg.documentDate.getUTCFullYear()).toBe(2026);
+        });
+    });
+
+    describe("regeneratePdf", () => {
+        it("recomputes details and re-renders a monthly bill missing its PDF", async () => {
+            const stale = makeMonthlyBillDoc({ pdfGeneratedAt: null });
+            const refreshed = makeMonthlyBillDoc({ pdfGeneratedAt: null });
+            const findById = vi
+                .fn()
+                .mockResolvedValueOnce(stale) // initial lookup
+                .mockResolvedValueOnce(refreshed); // final read-back
+            const updateMonthlyBillDetails = vi
+                .fn()
+                .mockResolvedValue(refreshed);
+            const setPdf = vi.fn().mockResolvedValue(refreshed);
+            const render = vi
+                .fn()
+                .mockResolvedValue(new Uint8Array([37, 80, 68, 70]));
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById,
+                    updateMonthlyBillDetails,
+                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
+                    aggregateDepositWithdrawByCurrency: vi
+                        .fn()
+                        .mockResolvedValue([]),
+                    setPdf,
+                },
+                pdf: { render },
+            });
+
+            await orchestrator.regeneratePdf("merchant-1", "bill-1");
+
+            expect(updateMonthlyBillDetails).toHaveBeenCalledTimes(1);
+            expect(render).toHaveBeenCalledTimes(1);
+            expect(setPdf).toHaveBeenCalledTimes(1);
+        });
+
+        it("is a no-op for a bill that already has a PDF (write-once)", async () => {
+            const withPdf = makeMonthlyBillDoc({
+                pdfGeneratedAt: new Date(),
+                pdfStorageKey: "merchant-1/monthly_bill/bill-1.pdf",
+            });
+            const updateMonthlyBillDetails = vi.fn();
+            const render = vi.fn();
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById: vi.fn().mockResolvedValue(withPdf),
+                    updateMonthlyBillDetails,
+                },
+                pdf: { render },
+            });
+
+            const result = await orchestrator.regeneratePdf(
+                "merchant-1",
+                "bill-1"
+            );
+
+            expect(updateMonthlyBillDetails).not.toHaveBeenCalled();
+            expect(render).not.toHaveBeenCalled();
+            expect(result?.id).toBe(withPdf.id);
         });
     });
 });

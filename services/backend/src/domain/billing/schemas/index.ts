@@ -9,7 +9,7 @@ export const BillingDocumentKindSchema = t.Union([
 ]);
 export type BillingDocumentKind = Static<typeof BillingDocumentKindSchema>;
 
-const StablecoinSchema = t.Union([
+export const StablecoinSchema = t.Union([
     t.Literal("eure"),
     t.Literal("gbpe"),
     t.Literal("usde"),
@@ -38,7 +38,8 @@ const WithdrawDetailsSchema = t.Object({
     restitutedVat: t.String(),
     restitutedFrakFee: t.String(),
     bankSent: t.String(),
-    // e.g. "FR76 **** **** **** 123" — never a full IBAN (§3.5).
+    // e.g. "FR76 **** **** **** 123" (country + IBAN check digits kept,
+    // middle masked) — never a full IBAN (§3.5).
     maskedIban: t.String({ maxLength: 64 }),
     note: t.Optional(t.String({ maxLength: 2000 })),
 });

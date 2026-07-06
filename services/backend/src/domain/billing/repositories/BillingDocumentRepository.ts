@@ -1,12 +1,12 @@
 import { db } from "@backend-infrastructure";
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { and, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import {
     type BillingDocumentInsert,
     type BillingDocumentSelect,
     billingDocumentsTable,
 } from "../db/schema";
-import type { BillingDocumentKind } from "../schemas";
+import type { BillingDocumentDetails, BillingDocumentKind } from "../schemas";
 
 /** Postgres transaction handle as passed to `db.transaction(async (tx) => …)`. */
 type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -215,6 +215,67 @@ export class BillingDocumentRepository {
     }
 
     /**
+     * Clears a monthly bill's cached PDF so the next access regenerates it
+     * (used when a voided deposit invalidates a bill that folded it in —
+     * §3.6). Resets `pdfStorageKey`/`pdfGeneratedAt` to null, re-opening the
+     * write-once `setPdf` guard for a fresh render. Scoped by `merchantId`
+     * (IDOR-safe) and to `kind='monthly_bill'` — deposit/withdraw PDFs are
+     * immutable and never cleared (their correction path is void + re-emit,
+     * not regeneration). The caller deletes the stored object first; this
+     * only detaches the row's reference to it.
+     */
+    async clearPdf(
+        merchantId: string,
+        id: string
+    ): Promise<BillingDocumentSelect | null> {
+        const [result] = await db
+            .update(billingDocumentsTable)
+            .set({
+                pdfStorageKey: null,
+                pdfGeneratedAt: null,
+                updatedAt: new Date(),
+            })
+            .where(
+                and(
+                    eq(billingDocumentsTable.merchantId, merchantId),
+                    eq(billingDocumentsTable.id, id),
+                    eq(billingDocumentsTable.kind, "monthly_bill")
+                )
+            )
+            .returning();
+        return result ?? null;
+    }
+
+    /**
+     * Overwrites a monthly bill's `details` (recomputed ledger/annex/review)
+     * during PDF regeneration — the row exists but its stored breakdown must
+     * be refreshed from current data before re-rendering (§6.3). Guarded to
+     * non-voided `monthly_bill` rows without a PDF: an already-issued PDF is
+     * write-once (`isNull(pdfGeneratedAt)`), so this can't mutate a sealed
+     * bill's frozen totals — only a bill awaiting (re)generation.
+     */
+    async updateMonthlyBillDetails(
+        merchantId: string,
+        id: string,
+        details: BillingDocumentDetails
+    ): Promise<BillingDocumentSelect | null> {
+        const [result] = await db
+            .update(billingDocumentsTable)
+            .set({ details, updatedAt: new Date() })
+            .where(
+                and(
+                    eq(billingDocumentsTable.merchantId, merchantId),
+                    eq(billingDocumentsTable.id, id),
+                    eq(billingDocumentsTable.kind, "monthly_bill"),
+                    isNull(billingDocumentsTable.voidedAt),
+                    isNull(billingDocumentsTable.pdfGeneratedAt)
+                )
+            )
+            .returning();
+        return result ?? null;
+    }
+
+    /**
      * Soft-delete (void) a document. Guarded by `isNull(voidedAt)` so a second
      * void on an already-voided row matches 0 rows and returns null rather than
      * overwriting the original retention timestamp (write-once — §3.6).
@@ -235,6 +296,48 @@ export class BillingDocumentRepository {
             )
             .returning();
         return result ?? null;
+    }
+
+    /**
+     * Non-voided withdraws that link a given deposit — the deposit's
+     * dependents, voided alongside it (§3.6, see
+     * `BillingOrchestrator.cascadeDepositVoid`). Scoped by `merchantId`
+     * (IDOR-safe).
+     */
+    async findWithdrawsByLinkedDeposit(
+        merchantId: string,
+        depositId: string
+    ): Promise<BillingDocumentSelect[]> {
+        return db.query.billingDocumentsTable.findMany({
+            where: and(
+                eq(billingDocumentsTable.merchantId, merchantId),
+                eq(billingDocumentsTable.kind, "withdraw"),
+                eq(billingDocumentsTable.linkedDepositId, depositId),
+                isNull(billingDocumentsTable.voidedAt)
+            ),
+        });
+    }
+
+    /**
+     * Non-voided monthly bills whose period covers or postdates `documentDate`
+     * — i.e. bills whose derived ledger folded in (or would have folded in) a
+     * deposit dated `documentDate`, and are therefore stale once that deposit
+     * is voided (§6.2/§3.6). A bill's ledger sums all deposits/withdraws with
+     * `documentDate < periodEnd`, so any bill with `periodEnd > documentDate`
+     * is affected. Scoped by `merchantId` (IDOR-safe).
+     */
+    async findMonthlyBillsCovering(
+        merchantId: string,
+        documentDate: Date
+    ): Promise<BillingDocumentSelect[]> {
+        return db.query.billingDocumentsTable.findMany({
+            where: and(
+                eq(billingDocumentsTable.merchantId, merchantId),
+                eq(billingDocumentsTable.kind, "monthly_bill"),
+                gt(billingDocumentsTable.periodEnd, documentDate),
+                isNull(billingDocumentsTable.voidedAt)
+            ),
+        });
     }
 
     /**
@@ -261,12 +364,12 @@ export class BillingDocumentRepository {
      * Deposit/withdraw totals grouped by currency, either "before" a single
      * instant (ledger opening/closing balance) or within a half-open
      * `[start, end)` window (in-period movement) — monthly-bill fiat ledger
-     * (billing-feature-plan.md §6.2). `deposited` sums the `net_amount`
-     * column (deposit rows only); `withdrawn` sums `details->>'bankSent'`
-     * (withdraw rows only) — these live in different places (column vs
-     * jsonb) so they cannot be a single column sum. Voided documents are
-     * excluded. Returns decimal strings; callers must use decimal.js, never
-     * parseFloat.
+     * (billing-feature-plan.md §6.2). Both legs sum the `net_amount` column:
+     * for deposits it is the net-to-bank amount, and `createWithdraw` stores
+     * `net_amount = bankSent` for withdraws (the total sent to the
+     * destination account), so no jsonb extraction is needed. Voided
+     * documents are excluded. Returns decimal strings; callers must use
+     * decimal.js, never parseFloat.
      */
     async aggregateDepositWithdrawByCurrency(
         merchantId: string,
@@ -290,7 +393,7 @@ export class BillingDocumentRepository {
                         String
                     ),
                 withdrawn:
-                    sql<string>`COALESCE(SUM((${billingDocumentsTable.details}->>'bankSent')::numeric) FILTER (WHERE ${billingDocumentsTable.kind} = 'withdraw'), 0)`.mapWith(
+                    sql<string>`COALESCE(SUM(${billingDocumentsTable.netAmount}) FILTER (WHERE ${billingDocumentsTable.kind} = 'withdraw'), 0)`.mapWith(
                         String
                     ),
             })

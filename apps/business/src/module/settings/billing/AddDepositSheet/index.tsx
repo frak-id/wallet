@@ -29,10 +29,10 @@ import { COUNTRIES } from "@/module/common/utils/countries";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField } from "@/module/forms/Form";
 import * as sheetStyles from "../BillingInfoSheet/billing-info-sheet.css";
+import { DECIMAL_PATTERN, TX_HASH_PATTERN } from "../queryKeys";
 import { type CreateDepositInput, useCreateDeposit } from "../useBillingAdmin";
 
 const STABLECOINS = ["eure", "gbpe", "usde", "usdc"] as const;
-const DECIMAL_PATTERN = /^\d+(\.\d+)?$/;
 
 type DepositFormValues = {
     grossAmount: string;
@@ -378,6 +378,14 @@ export function AddDepositSheet({
                                         <FormField
                                             control={form.control}
                                             name="txHash"
+                                            rules={{
+                                                pattern: {
+                                                    value: TX_HASH_PATTERN,
+                                                    message: t(
+                                                        "settings.billing.validation.txHash"
+                                                    ),
+                                                },
+                                            }}
                                             render={({ field }) => (
                                                 <EditField
                                                     label={t(

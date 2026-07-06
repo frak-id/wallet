@@ -19,7 +19,7 @@ export class BillingStorageRepository {
 
         this.client = new S3Client({
             endpoint: process.env.RUSTFS_ENDPOINT ?? "",
-            region: "europe-west1",
+            region: process.env.RUSTFS_REGION ?? "europe-west1",
             bucket: this.bucketName,
             accessKeyId: process.env.RUSTFS_ACCESS_KEY ?? "",
             secretAccessKey: process.env.RUSTFS_SECRET_KEY ?? "",

@@ -1,5 +1,8 @@
 import { log } from "@backend-infrastructure";
-import type { Stablecoin } from "@frak-labs/app-essentials";
+import {
+    getTokenAddressForStablecoin,
+    type Stablecoin,
+} from "@frak-labs/app-essentials";
 import type { Address, Hex } from "viem";
 import type {
     BillingDocumentInsert,
@@ -12,11 +15,30 @@ import type { BillingComputationService } from "../../domain/billing/services/Bi
 import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
+import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
 
 export class DepositNotFoundError extends Error {
     constructor(depositId: string) {
         super(`Linked deposit ${depositId} not found for this merchant`);
     }
+}
+
+/**
+ * The fiat leg each stablecoin is pegged to — the common unit reward tokens
+ * are converted through when the withdraw's linked deposit is in this
+ * currency (§4). Kept local to this orchestrator: it's the only place that
+ * needs to pick a single `TokenPrice` leg for the withdraw-restitution
+ * conversion.
+ */
+const STABLECOIN_FIAT_LEG: Record<Stablecoin, "eur" | "usd" | "gbp"> = {
+    eure: "eur",
+    gbpe: "gbp",
+    usde: "usd",
+    usdc: "usd",
+};
+
+function fiatKeyForStablecoin(currency: Stablecoin): "eur" | "usd" | "gbp" {
+    return STABLECOIN_FIAT_LEG[currency];
 }
 
 /**
@@ -41,6 +63,7 @@ export function buildPdfBuyer(accountingInfo: {
     streetAddress?: string;
     postalCode?: string;
     city?: string;
+    country?: string;
 }): {
     companyName?: string;
     vatNumber?: string;
@@ -54,6 +77,10 @@ export function buildPdfBuyer(accountingInfo: {
             [accountingInfo.postalCode, accountingInfo.city]
                 .filter(Boolean)
                 .join(" "),
+            // ISO-3166 alpha-2 code as its own trailing line — the merchant's
+            // country is now merchant-editable (§3.1) and belongs on the
+            // buyer block of the legal document.
+            accountingInfo.country,
         ].filter((line): line is string => Boolean(line)),
     };
 }
@@ -99,7 +126,8 @@ export class BillingOrchestrator {
         private readonly merchant: MerchantRepository,
         private readonly assetLogs: AssetLogRepository,
         private readonly computation: BillingComputationService,
-        private readonly pdf: BillingPdfService
+        private readonly pdf: BillingPdfService,
+        private readonly pricing: PricingRepository
     ) {}
 
     async createDeposit(
@@ -175,9 +203,10 @@ export class BillingOrchestrator {
         }
 
         const rewardsDistributedSinceDeposit =
-            await this.assetLogs.sumSettledAmountSince(
+            await this.sumRewardsInDepositCurrency(
                 merchantId,
-                linkedDeposit.documentDate
+                linkedDeposit.documentDate,
+                input.currency
             );
 
         const { distributedRatio, restitutedVat, restitutedFrakFee, bankSent } =
@@ -224,9 +253,69 @@ export class BillingOrchestrator {
     }
 
     /**
+     * Sum of settled rewards since `since`, converted into `depositCurrency`'s
+     * unit — the numerator of the withdraw distributed ratio (§4). A merchant
+     * can reward in multiple stablecoins; summing raw token amounts across
+     * currencies would inflate the ratio of a single-currency withdraw and
+     * under-restitute VAT/fee. Prices are looked up here (orchestrator owns
+     * pricing); the per-token factor is `otherPrice / depositPrice` in the
+     * deposit currency's fiat leg, so the deposit's own token resolves to a
+     * factor of exactly `1` (1:1). Unpriced tokens are left out of the map and
+     * contribute 0 in the repository's `CASE ... ELSE 0`.
+     */
+    private async sumRewardsInDepositCurrency(
+        merchantId: string,
+        since: Date,
+        depositCurrency: Stablecoin
+    ): Promise<string> {
+        const tokens = await this.assetLogs.distinctSettledTokensSince(
+            merchantId,
+            since
+        );
+        if (tokens.length === 0) return "0";
+
+        // Fiat leg the deposit currency is pegged to — the common unit every
+        // reward token is converted into before the 1:1 division.
+        const fiatKey = fiatKeyForStablecoin(depositCurrency);
+        const depositToken = getTokenAddressForStablecoin(depositCurrency);
+        const depositPrice = await this.pricing.getTokenPrice({
+            token: depositToken,
+        });
+        const depositUnitPrice = depositPrice?.[fiatKey];
+        // No usable deposit-token price (unpriced peg / FX gap) — can't build
+        // a 1:1-preserving factor, so fall back to no conversion (ratio 0,
+        // maximal restitution) rather than a wrong non-1:1 number.
+        if (!depositUnitPrice || depositUnitPrice <= 0) return "0";
+
+        const conversionFactors = new Map<Address, number>();
+        await Promise.all(
+            tokens.map(async (token) => {
+                const price = await this.pricing.getTokenPrice({ token });
+                const unitPrice = price?.[fiatKey];
+                if (!unitPrice || unitPrice <= 0) return; // → ELSE 0
+                conversionFactors.set(token, unitPrice / depositUnitPrice);
+            })
+        );
+
+        return this.assetLogs.sumSettledConvertedSince(
+            merchantId,
+            since,
+            conversionFactors
+        );
+    }
+
+    /**
      * Voids a document, asserting it matches the expected `kind` (the
      * deposit/withdraw void routes are separate endpoints, and neither should
      * be able to void the other's documents by guessing an id).
+     *
+     * Voiding a *deposit* cascades to the documents derived from it (§3.6):
+     * every non-voided withdraw linking this deposit is voided too (its
+     * restitution source is gone, and the ledger would otherwise still count
+     * its `bankSent`), and every non-voided monthly bill whose period covers
+     * or postdates the deposit has its cached PDF cleared so it regenerates
+     * from current data on next access. The withdraw void routes never take
+     * this path (a withdraw has no dependents).
      */
     async voidDocument(
         merchantId: string,
@@ -237,7 +326,51 @@ export class BillingOrchestrator {
         if (!document || document.kind !== expectedKind) {
             return null;
         }
-        return this.billingDocuments.void(merchantId, id);
+        const voided = await this.billingDocuments.void(merchantId, id);
+        if (voided && expectedKind === "deposit") {
+            await this.cascadeDepositVoid(merchantId, voided);
+        }
+        return voided;
+    }
+
+    /**
+     * Void the dependents of a just-voided deposit and invalidate the monthly
+     * bills that folded it in. Best-effort per dependent — a failure to clear
+     * one bill's cached PDF must not roll back the deposit void (the deposit
+     * is already voided and the bill will simply keep a stale PDF until the
+     * next successful regeneration); failures are logged.
+     */
+    private async cascadeDepositVoid(
+        merchantId: string,
+        deposit: BillingDocumentSelect
+    ): Promise<void> {
+        const linkedWithdraws =
+            await this.billingDocuments.findWithdrawsByLinkedDeposit(
+                merchantId,
+                deposit.id
+            );
+        for (const withdraw of linkedWithdraws) {
+            await this.billingDocuments.void(merchantId, withdraw.id);
+        }
+
+        const affectedBills =
+            await this.billingDocuments.findMonthlyBillsCovering(
+                merchantId,
+                deposit.documentDate
+            );
+        for (const bill of affectedBills) {
+            try {
+                if (bill.pdfStorageKey) {
+                    await this.billingStorage.delete(bill.pdfStorageKey);
+                }
+                await this.billingDocuments.clearPdf(merchantId, bill.id);
+            } catch (err) {
+                log.error(
+                    { err, documentId: bill.id },
+                    "failed to clear cached monthly-bill PDF after deposit void; bill keeps stale PDF until next regeneration"
+                );
+            }
+        }
     }
 
     /**
@@ -284,14 +417,14 @@ export class BillingOrchestrator {
     }
 
     /**
-     * Re-renders and stores the PDF for a document that doesn't have one yet
-     * (e.g. a prior create's render/upload step failed). No-op (returns the
-     * document unchanged) if a PDF was already issued — `setPdf` is
-     * write-once (§3.6).
-     *
-     * Intentionally kept unrouted in Phase 2 — this is the recovery entry
-     * point Phase 4 will expose via an admin route once PDF-regeneration
-     * needs a UI trigger; calling it today requires direct code access.
+     * Re-renders and stores the PDF for a deposit/withdraw document that
+     * doesn't have one yet (e.g. a prior create's render/upload step failed,
+     * or a monthly-bill void cleared it — though clearing only targets
+     * monthly bills). No-op (returns the document unchanged) if a PDF was
+     * already issued — `setPdf` is write-once until `clearPdf` resets it
+     * (§3.6). The PDF-download route calls this lazily so a document whose
+     * first render failed still becomes downloadable on a later request
+     * without an explicit admin action.
      */
     async regeneratePdf(
         merchantId: string,

@@ -28,8 +28,26 @@ import type { MerchantRepository } from "../../domain/merchant/repositories/Merc
 import type { AssetLogSelect } from "../../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
 import type { BalancesRepository } from "../../domain/wallet/repositories/BalancesRepository";
-import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
+import type {
+    PricingRepository,
+    TokenPrice,
+} from "../../infrastructure/pricing/PricingRepository";
 import { buildPdfBuyer } from "./BillingOrchestrator";
+
+/** The merchant row shape this orchestrator reads (bank address + accounting). */
+type MerchantSelectForBill = Awaited<
+    ReturnType<MerchantRepository["findById"]>
+>;
+
+/**
+ * First instant of the month AFTER `periodStart` (UTC) — the exclusive upper
+ * bound of the billed period's half-open `[periodStart, periodEnd)` window.
+ */
+function periodEndOf(periodStart: Date): Date {
+    return new Date(
+        Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 1, 1)
+    );
+}
 
 export class MonthlyBillAlreadyExistsError extends Error {
     constructor(
@@ -83,13 +101,7 @@ export class MonthlyBillOrchestrator {
         { periodStart }: GenerateMonthlyBillInput,
         createdBy: Address
     ): Promise<BillingDocumentSelect> {
-        const periodEnd = new Date(
-            Date.UTC(
-                periodStart.getUTCFullYear(),
-                periodStart.getUTCMonth() + 1,
-                1
-            )
-        );
+        const periodEnd = periodEndOf(periodStart);
 
         const existing = await this.billingDocuments.findMonthlyBillByPeriod(
             merchantId,
@@ -102,12 +114,108 @@ export class MonthlyBillOrchestrator {
             );
         }
 
+        const computed = await this.computeBillData(
+            merchantId,
+            periodStart,
+            periodEnd
+        );
+
+        const document = await this.insertMonthlyBillDocument(
+            merchantId,
+            periodStart,
+            periodEnd,
+            computed.currencies,
+            computed.details,
+            createdBy
+        );
+
+        await this.tryGenerateAndStorePdf(document, {
+            annexAssetLogs: computed.annexAssetLogs,
+            priceByToken: computed.priceByToken,
+            merchant: computed.merchant,
+        });
+
+        return (
+            (await this.billingDocuments.findById(merchantId, document.id)) ??
+            document
+        );
+    }
+
+    /**
+     * Re-renders and stores the PDF for a monthly bill that doesn't have one
+     * yet (its first render/upload failed, or a voided deposit cleared the
+     * cached PDF). Recomputes the details (ledgers/annex/review) from CURRENT
+     * data for the stored period — a cleared bill's numbers may have moved
+     * since the failed render — updates the row's frozen `details`, then
+     * re-renders. No-op (returns the document unchanged) for a bill that
+     * already has a PDF (write-once) or a non-monthly/voided/period-less row.
+     * PDF-render failure stays non-blocking (logged); the bill keeps
+     * `pdfGeneratedAt IS NULL` and can be regenerated again on the next call.
+     */
+    async regeneratePdf(
+        merchantId: string,
+        id: string
+    ): Promise<BillingDocumentSelect | null> {
+        const document = await this.billingDocuments.findById(merchantId, id);
+        if (
+            !document ||
+            document.kind !== "monthly_bill" ||
+            document.pdfGeneratedAt ||
+            !document.periodStart ||
+            !document.periodEnd
+        ) {
+            return document;
+        }
+
+        const computed = await this.computeBillData(
+            merchantId,
+            document.periodStart,
+            document.periodEnd
+        );
+
+        const refreshed = await this.billingDocuments.updateMonthlyBillDetails(
+            merchantId,
+            id,
+            computed.details
+        );
+        if (!refreshed) return document;
+
+        await this.tryGenerateAndStorePdf(refreshed, {
+            annexAssetLogs: computed.annexAssetLogs,
+            priceByToken: computed.priceByToken,
+            merchant: computed.merchant,
+        });
+
+        return this.billingDocuments.findById(merchantId, id);
+    }
+
+    /**
+     * Shared assembly for `generateMonthlyBill` and `regeneratePdf`: pulls the
+     * grouped sums for the period once, folds them into per-currency ledgers,
+     * builds the reward annex (with its priced fiat totals), runs the on-chain
+     * divergence check, and returns the frozen `details` plus the annex rows,
+     * the price map (threaded into PDF rendering so annex fiat rows agree with
+     * `fiatTotals`, §6.3), and the merchant (fetched once, reused for the
+     * divergence check and the PDF buyer block).
+     */
+    private async computeBillData(
+        merchantId: string,
+        periodStart: Date,
+        periodEnd: Date
+    ): Promise<{
+        currencies: Stablecoin[];
+        details: BillingDocumentDetails;
+        annexAssetLogs: AssetLogSelect[];
+        priceByToken: Map<Address, TokenPrice | undefined>;
+        merchant: MerchantSelectForBill | null;
+    }> {
         const [
             billingCurrencies,
             depositWithdrawBefore,
             depositWithdrawInPeriod,
             rewardedBeforeRows,
             rewardedInPeriodRows,
+            merchant,
         ] = await Promise.all([
             this.billingDocuments.distinctCurrencies(merchantId),
             this.billingDocuments.aggregateDepositWithdrawByCurrency(
@@ -125,6 +233,7 @@ export class MonthlyBillOrchestrator {
                 start: periodStart,
                 end: periodEnd,
             }),
+            this.merchant.findById(merchantId),
         ]);
 
         const currencies = this.resolveLedgerCurrencies(
@@ -149,7 +258,7 @@ export class MonthlyBillOrchestrator {
         );
 
         const review = await this.assessOnChainDivergence(
-            merchantId,
+            merchant,
             currencies,
             ledgers
         );
@@ -165,21 +274,13 @@ export class MonthlyBillOrchestrator {
             review,
         };
 
-        const document = await this.insertMonthlyBillDocument(
-            merchantId,
-            periodStart,
-            periodEnd,
+        return {
             currencies,
             details,
-            createdBy
-        );
-
-        await this.tryGenerateAndStorePdf(document, annexData.assetLogs);
-
-        return (
-            (await this.billingDocuments.findById(merchantId, document.id)) ??
-            document
-        );
+            annexAssetLogs: annexData.assetLogs,
+            priceByToken: annexData.priceByToken,
+            merchant,
+        };
     }
 
     /**
@@ -206,7 +307,13 @@ export class MonthlyBillOrchestrator {
             return await this.billingDocuments.create({
                 merchantId,
                 kind: "monthly_bill",
-                documentDate: periodEnd,
+                // Last instant of the billed period, not `periodEnd` (the
+                // first instant of the *next* month): `create` buckets the
+                // reference counter by `documentDate.getUTCFullYear()`, so a
+                // `periodEnd`-dated December bill would take a next-year
+                // reference (`BILL-2027-…`) and sort into the wrong year in
+                // date-range filters (§3.2/§6.4).
+                documentDate: new Date(periodEnd.getTime() - 1),
                 periodStart,
                 periodEnd,
                 // No single currency/gross/net for a multi-currency monthly
@@ -331,11 +438,14 @@ export class MonthlyBillOrchestrator {
      * frozen legal total, §B3). The only float input anywhere in this path
      * is the spot `TokenPrice` (disclosed limitation, §6.3).
      *
-     * Fetches the settled-reward rows for the period exactly once; the
-     * per-row PDF annex rows are derived from the same `assetLogs` array
-     * returned here (see `generateAndStorePdf`) instead of re-querying —
-     * avoids a duplicate DB round-trip/price-map rebuild and the TOCTOU
-     * where a second fetch could disagree with `rowCount` on the row count.
+     * Fetches the settled-reward rows for the period exactly once and returns
+     * both the rows and the `priceByToken` map used to compute `totals`. The
+     * per-row PDF annex rows are derived from the same `assetLogs` array AND
+     * the same price map (threaded through `computeBillData` into
+     * `generateAndStorePdf`) instead of re-querying/re-pricing — avoids a
+     * duplicate DB round-trip and, critically, the price-cache-expiry window
+     * where a second price fetch could make the PDF's per-row fiat values
+     * disagree with the frozen `fiatTotals` (§6.3).
      */
     private async buildAnnexData(
         merchantId: string,
@@ -345,6 +455,7 @@ export class MonthlyBillOrchestrator {
         assetLogs: AssetLogSelect[];
         rowCount: number;
         totals: { eur: string; usd: string; gbp: string };
+        priceByToken: Map<Address, TokenPrice | undefined>;
     }> {
         const assetLogs = await this.assetLogs.findByMerchantAndDateRange(
             merchantId,
@@ -357,6 +468,7 @@ export class MonthlyBillOrchestrator {
                 assetLogs,
                 rowCount: 0,
                 totals: { eur: "0", usd: "0", gbp: "0" },
+                priceByToken: new Map(),
             };
         }
 
@@ -374,7 +486,9 @@ export class MonthlyBillOrchestrator {
                 price: await this.pricing.getTokenPrice({ token }),
             }))
         );
-        const priceByToken = new Map(prices.map((p) => [p.token, p.price]));
+        const priceByToken = new Map<Address, TokenPrice | undefined>(
+            prices.map((p) => [p.token, p.price])
+        );
 
         let eur = new Decimal(0);
         let usd = new Decimal(0);
@@ -401,16 +515,19 @@ export class MonthlyBillOrchestrator {
                 usd: usd.toFixed(18),
                 gbp: gbp.toFixed(18),
             },
+            priceByToken,
         };
     }
 
     /**
      * Compares each currency's derived closing balance against a live
      * on-chain read (best-effort — §6.2). Skips (never blocks generation) if
-     * the merchant has no `bankAddress` or the on-chain read fails.
+     * the merchant has no `bankAddress` or the on-chain read fails. Takes the
+     * already-fetched `merchant` (loaded once in `computeBillData`) rather
+     * than re-reading it.
      */
     private async assessOnChainDivergence(
-        merchantId: string,
+        merchant: MerchantSelectForBill | null,
         currencies: Stablecoin[],
         ledgers: Array<{
             currency: Stablecoin;
@@ -420,7 +537,6 @@ export class MonthlyBillOrchestrator {
         }>
     ): Promise<MonthlyBillReview> {
         const checkedAt = new Date().toISOString();
-        const merchant = await this.merchant.findById(merchantId);
 
         if (!merchant?.bankAddress) {
             return {
@@ -474,7 +590,7 @@ export class MonthlyBillOrchestrator {
             const flagged = perCurrency.some((c) => !c.withinThreshold);
             if (flagged) {
                 log.warn(
-                    { merchantId, perCurrency },
+                    { merchantId: merchant.id, perCurrency },
                     "monthly bill: derived balance diverges from on-chain balance beyond threshold"
                 );
             }
@@ -482,7 +598,7 @@ export class MonthlyBillOrchestrator {
             return { flagged, checkedAt, perCurrency };
         } catch (err) {
             log.error(
-                { err, merchantId },
+                { err, merchantId: merchant.id },
                 "monthly bill: on-chain divergence check failed; publishing without it"
             );
             return {
@@ -497,10 +613,14 @@ export class MonthlyBillOrchestrator {
 
     private async tryGenerateAndStorePdf(
         document: BillingDocumentSelect,
-        annexAssetLogs: AssetLogSelect[]
+        pdfData: {
+            annexAssetLogs: AssetLogSelect[];
+            priceByToken: Map<Address, TokenPrice | undefined>;
+            merchant: MerchantSelectForBill | null;
+        }
     ): Promise<void> {
         try {
-            await this.generateAndStorePdf(document, annexAssetLogs);
+            await this.generateAndStorePdf(document, pdfData);
         } catch (err) {
             log.error(
                 { err, documentId: document.id, kind: document.kind },
@@ -509,9 +629,19 @@ export class MonthlyBillOrchestrator {
         }
     }
 
+    /**
+     * Renders and stores the monthly-bill PDF from the pre-computed `pdfData`
+     * (annex rows, the SAME price map that produced `details.fiatTotals`, and
+     * the already-loaded merchant) — no re-query, no re-price, so the PDF's
+     * per-row fiat values always reconcile with the frozen totals (§6.3).
+     */
     private async generateAndStorePdf(
         document: BillingDocumentSelect,
-        annexAssetLogs: AssetLogSelect[]
+        pdfData: {
+            annexAssetLogs: AssetLogSelect[];
+            priceByToken: Map<Address, TokenPrice | undefined>;
+            merchant: MerchantSelectForBill | null;
+        }
     ): Promise<void> {
         if (
             document.kind !== "monthly_bill" ||
@@ -522,24 +652,9 @@ export class MonthlyBillOrchestrator {
             return;
         }
         const details = document.details;
+        const { annexAssetLogs, priceByToken, merchant } = pdfData;
 
-        const merchant = await this.merchant.findById(document.merchantId);
         const buyer = buildPdfBuyer(merchant?.accountingInfo ?? {});
-
-        const uniqueTokens = [
-            ...new Set(
-                annexAssetLogs
-                    .map((log) => log.tokenAddress)
-                    .filter((addr): addr is Address => addr !== null)
-            ),
-        ];
-        const prices = await Promise.all(
-            uniqueTokens.map(async (token) => ({
-                token,
-                price: await this.pricing.getTokenPrice({ token }),
-            }))
-        );
-        const priceByToken = new Map(prices.map((p) => [p.token, p.price]));
 
         const annexRows = annexAssetLogs
             .filter((log) => log.tokenAddress && log.settledAt)

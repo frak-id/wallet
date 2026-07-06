@@ -188,18 +188,26 @@ describe("BillingComputationService", () => {
     });
 
     describe("maskIban", () => {
-        it("masks the middle, keeps country code and last 3 digits", () => {
+        it("masks the middle, keeps the 4-char prefix and last 3 digits", () => {
             const masked = service.maskIban("FR7630006000011234567890189");
-            expect(masked.startsWith("FR")).toBe(true);
+            // Country code + IBAN check digits (non-sensitive) preserved.
+            expect(masked.startsWith("FR76 ")).toBe(true);
             expect(masked.endsWith("189")).toBe(true);
             expect(masked).not.toContain("30006000011234567890");
+        });
+
+        it("is idempotent: re-masking a frontend-masked value keeps it intact", () => {
+            // The frontend already emits `FR76 **** **** **** 189`; the
+            // defensive backend re-mask must not degrade it further.
+            const frontendMasked = "FR76 **** **** **** 189";
+            expect(service.maskIban(frontendMasked)).toBe(frontendMasked);
         });
 
         it("strips spaces and uppercases before masking", () => {
             const masked = service.maskIban(
                 "fr76 3000 6000 0112 3456 7890 189"
             );
-            expect(masked.startsWith("FR")).toBe(true);
+            expect(masked.startsWith("FR76 ")).toBe(true);
             expect(masked.endsWith("189")).toBe(true);
         });
 

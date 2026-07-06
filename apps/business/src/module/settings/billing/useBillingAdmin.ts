@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { documentsQueryKey } from "./queryKeys";
 
 /**
  * Keeps only the country code and last 3 characters of an IBAN-shaped
@@ -20,10 +21,6 @@ export function maskIban(raw: string): string {
     const prefix = normalized.slice(0, 4);
     const last = normalized.slice(-3);
     return `${prefix} **** **** **** ${last}`;
-}
-
-function documentsQueryKey(merchantId: string) {
-    return ["billing", "documents", merchantId];
 }
 
 export type CreateDepositInput = {

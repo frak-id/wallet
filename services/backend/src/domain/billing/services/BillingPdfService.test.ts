@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     type BillingPdfDocumentDto,
     BillingPdfService,
+    sanitizeForWinAnsi,
 } from "./BillingPdfService";
 
 const depositDto: BillingPdfDocumentDto = {
@@ -135,5 +136,66 @@ describe("BillingPdfService", () => {
             } as NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
         });
         expect(bytes.length).toBeGreaterThan(0);
+    });
+
+    it("renders a deposit PDF containing a € amount without throwing", async () => {
+        // The € sign (U+20AC) is a WinAnsi-1252 glyph above 0xFF; a naive
+        // <= 0xFF filter would strip it and pdf-lib would still encode fine,
+        // but this exercises the full render path with the sign present.
+        const bytes = await service.render({
+            ...depositDto,
+            deposit: {
+                ...depositDto.deposit,
+                note: "Refill of 1 200 € — see quote…",
+            } as NonNullable<BillingPdfDocumentDto["deposit"]>,
+        });
+        expect(bytes.length).toBeGreaterThan(0);
+    });
+
+    it("renders when the seller block is taller than the buyer block", async () => {
+        // Buyer has no VAT and no address lines -> the left (seller) column is
+        // taller. Regression for drawPartyBlocks resuming at the shorter
+        // column's baseline and overwriting the seller block.
+        const bytes = await service.render({
+            ...depositDto,
+            buyer: {
+                companyName: "Short Buyer",
+                addressLines: [],
+            },
+        });
+        expect(bytes.length).toBeGreaterThan(0);
+    });
+});
+
+describe("sanitizeForWinAnsi", () => {
+    it("keeps plain ASCII unchanged", () => {
+        expect(sanitizeForWinAnsi("Deposit note DEP-2026-0001")).toBe(
+            "Deposit note DEP-2026-0001"
+        );
+    });
+
+    it("keeps Latin-1 accented characters", () => {
+        expect(sanitizeForWinAnsi("Acme Café à Paris, ça va")).toBe(
+            "Acme Café à Paris, ça va"
+        );
+    });
+
+    it("keeps the € sign (WinAnsi-1252 glyph above 0xFF)", () => {
+        expect(sanitizeForWinAnsi("1200 €")).toBe("1200 €");
+    });
+
+    it("keeps the horizontal ellipsis and typographic dashes/quotes", () => {
+        expect(sanitizeForWinAnsi("a…b—c–d‘e’f“g”")).toBe("a…b—c–d‘e’f“g”");
+    });
+
+    it("replaces non-WinAnsi code points above 0xFF with '?'", () => {
+        // 😀 emoji, 你好 CJK — none are WinAnsi-encodable.
+        expect(sanitizeForWinAnsi("a😀b你c")).toBe("a?b?c");
+    });
+
+    it("replaces CP-1252-undefined bytes in the 0x80-0x9F range with '?'", () => {
+        // 0x81, 0x8D, 0x8F, 0x90, 0x9D have no CP-1252 glyph.
+        const undefinedBytes = "\u0081\u008d\u008f\u0090\u009d";
+        expect(sanitizeForWinAnsi(`a${undefinedBytes}b`)).toBe("a?????b");
     });
 });

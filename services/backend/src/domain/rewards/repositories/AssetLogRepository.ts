@@ -11,6 +11,7 @@ import {
     lt,
     lte,
     or,
+    type SQL,
     sql,
 } from "drizzle-orm";
 import type { Address, Hex } from "viem";
@@ -642,22 +643,47 @@ export class AssetLogRepository {
     }
 
     /**
-     * Sum of settled reward amounts for a merchant since a given instant.
-     * Settled-only — only actually-paid rewards reduce the campaign bank
-     * (billing-feature-plan.md §6.2). Returns a decimal string ("0" when no
-     * rows match) to preserve numeric(36,18) precision; callers must use
+     * Sum of settled reward amounts for a merchant since a given instant,
+     * each token's amount converted into a single target currency's unit via
+     * the per-token `conversionFactors` map (target-currency-units per 1 token
+     * unit). Settled-only — only actually-paid rewards reduce the campaign
+     * bank (billing-feature-plan.md §6.2). Returns a decimal string ("0" when
+     * no rows match) to preserve numeric(36,18) precision; callers must use
      * decimal.js, never parseFloat.
      *
-     * This is the narrow Phase-2 subset (withdraw restitution) of the
-     * Phase-3 `findByMerchantAndDateRange` (monthly-bill annex + range).
+     * This is the withdraw-restitution sum (§4): the distributed ratio divides
+     * this by the linked deposit's single-currency `netAmount`, so rewards in
+     * *other* stablecoins must be converted into the deposit's currency first
+     * — summing raw token amounts across currencies (as a naive `SUM(amount)`
+     * would) inflates the ratio and under-restitutes VAT/fee. The conversion
+     * is a SQL `CASE` over token addresses × factors (same pattern as
+     * `orchestration/campaigns/rewards.ts` → `buildRewardsExpression`); the
+     * deposit's own token carries factor `1` (exact 1:1), and tokens absent
+     * from the map fall through to the `ELSE 0` branch (unpriced → contribute
+     * nothing), never counted at their raw amount.
+     *
+     * `eq()` binds each key as bytea (carrying the column's `customHex`
+     * encoder), so lowercase DB addresses and checksummed map keys compare
+     * equal at the buffer level.
      */
-    async sumSettledAmountSince(
+    async sumSettledConvertedSince(
         merchantId: string,
-        since: Date
+        since: Date,
+        conversionFactors: Map<Address, number>
     ): Promise<string> {
+        if (conversionFactors.size === 0) return "0";
+
+        const whenClauses: SQL[] = [];
+        for (const [token, factor] of conversionFactors) {
+            whenClauses.push(
+                sql`WHEN ${eq(assetLogsTable.tokenAddress, token)} THEN ${assetLogsTable.amount}::NUMERIC * ${factor}`
+            );
+        }
+        const convertedAmount = sql`CASE ${sql.join(whenClauses, sql` `)} ELSE 0 END`;
+
         const [result] = await db
             .select({
-                total: sql<string>`COALESCE(SUM(${assetLogsTable.amount}), 0)`.mapWith(
+                total: sql<string>`COALESCE(SUM(${convertedAmount}), 0)`.mapWith(
                     String
                 ),
             })
@@ -666,10 +692,38 @@ export class AssetLogRepository {
                 and(
                     eq(assetLogsTable.merchantId, merchantId),
                     eq(assetLogsTable.status, "settled"),
+                    isNotNull(assetLogsTable.tokenAddress),
                     gte(assetLogsTable.settledAt, since)
                 )
             );
         return result?.total ?? "0";
+    }
+
+    /**
+     * Distinct settled reward token addresses for a merchant since a given
+     * instant — the token set the withdraw-restitution conversion
+     * (`sumSettledConvertedSince`) must price. Kept separate so the
+     * orchestrator can build the conversion-factor map (it owns pricing)
+     * before running the converted sum.
+     */
+    async distinctSettledTokensSince(
+        merchantId: string,
+        since: Date
+    ): Promise<Address[]> {
+        const rows = await db
+            .selectDistinct({ tokenAddress: assetLogsTable.tokenAddress })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    eq(assetLogsTable.status, "settled"),
+                    isNotNull(assetLogsTable.tokenAddress),
+                    gte(assetLogsTable.settledAt, since)
+                )
+            );
+        return rows
+            .map((row) => row.tokenAddress)
+            .filter((addr): addr is Address => addr !== null);
     }
 
     /**
@@ -710,7 +764,7 @@ export class AssetLogRepository {
      * instant (ledger opening/closing balance) or within a half-open
      * `[start, end)` window (in-period movement) — monthly-bill fiat ledger
      * (billing-feature-plan.md §6.2). Settled-only, same rationale as
-     * `sumSettledAmountSince`. Callers map `tokenAddress` back to a
+     * `sumSettledConvertedSince`. Callers map `tokenAddress` back to a
      * `Stablecoin` currency themselves (rewards store the token address, not
      * a currency code) and must use decimal.js on the returned strings,
      * never parseFloat.

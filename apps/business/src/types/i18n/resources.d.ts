@@ -1556,7 +1556,8 @@ export default interface Resources {
         "validation": {
           "decimal": "Enter a valid decimal amount",
           "email": "Enter a valid email address",
-          "required": "This field is required"
+          "required": "This field is required",
+          "txHash": "Enter a valid transaction hash (0x…)"
         }
       },
       "currency": {

@@ -257,22 +257,26 @@ export class BillingComputationService {
     /**
      * Defensive backend re-mask (§3.5). The frontend already obfuscates the
      * IBAN before sending it, but this normalizes any inbound IBAN-shaped
-     * string to keep only the country code + last 3 digits, so a client that
-     * sends more than it should never gets persisted verbatim. Never throws —
-     * odd/short input is fully redacted rather than leaked.
+     * string to keep only the first 4 chars (country code + the two IBAN
+     * check digits — standard, non-sensitive) and the last 3 digits, so a
+     * client that sends more than it should never gets persisted verbatim.
+     *
+     * Matches the frontend `maskIban` output (`FR76 **** **** **** 123`), so
+     * re-masking an already-masked value is idempotent rather than degrading
+     * it. Never throws — odd/short input is fully redacted rather than leaked.
      */
     maskIban(raw: string): string {
         const normalized = raw.replace(/\s+/g, "").toUpperCase();
 
-        // Too short to safely carry a country code + last digits without
+        // Too short to safely carry a prefix + last digits without
         // risking exposing most of the value — redact entirely.
         if (normalized.length < 8) {
             return "**** **** **** ****";
         }
 
-        const countryCode = normalized.slice(0, 2);
+        const prefix = normalized.slice(0, 4);
         const lastDigits = normalized.slice(-3);
-        return `${countryCode} **** **** **** ${lastDigits}`;
+        return `${prefix} **** **** **** ${lastDigits}`;
     }
 
     /**
