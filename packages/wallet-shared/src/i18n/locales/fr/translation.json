@@ -1072,6 +1072,16 @@
         "card": {
             "until": "Jusqu'au {{date}}"
         },
+        "sort": {
+            "title": "Trier par",
+            "open": "Trier",
+            "openActive": "Trier ({{sort}})",
+            "apply": "Appliquer",
+            "popular": "Les plus populaires",
+            "reward": "Récompense la plus élevée",
+            "expiring": "Expiration la plus proche",
+            "recent": "Les plus récentes"
+        },
         "detail": {
             "close": "Fermer",
             "share": "Partager",

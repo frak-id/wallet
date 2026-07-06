@@ -445,7 +445,17 @@ export default interface Resources {
         "description": "New offers are coming soon. Check back later!",
         "title": "No offers available"
       },
-      "pageTitle": "Explorer"
+      "pageTitle": "Explorer",
+      "sort": {
+        "apply": "Apply",
+        "expiring": "Ending soonest",
+        "open": "Sort",
+        "openActive": "Sort ({{sort}})",
+        "popular": "Most popular",
+        "recent": "Most recent",
+        "reward": "Highest reward",
+        "title": "Sort by"
+      }
     },
     "installCode": {
       "codeCopied": "Code copied!",

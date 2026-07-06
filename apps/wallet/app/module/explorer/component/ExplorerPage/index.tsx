@@ -1,7 +1,9 @@
-import { Box } from "@frak-labs/design-system/components/Box";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useTranslation } from "react-i18next";
 import { Title } from "@/module/common/component/Title";
 import { ExplorerList } from "@/module/explorer/component/ExplorerList";
+import { ExplorerSortButton } from "@/module/explorer/component/ExplorerSortButton";
 
 /**
  * Explorer page body (title + merchant list). Shared by the `/explorer` route
@@ -11,9 +13,12 @@ import { ExplorerList } from "@/module/explorer/component/ExplorerList";
 export function ExplorerPage() {
     const { t } = useTranslation();
     return (
-        <Box display="flex" flexDirection="column" gap="m">
+        <Stack space="m">
+            <Inline space="none" align="right">
+                <ExplorerSortButton />
+            </Inline>
             <Title size="page">{t("explorer.pageTitle")}</Title>
             <ExplorerList />
-        </Box>
+        </Stack>
     );
 }

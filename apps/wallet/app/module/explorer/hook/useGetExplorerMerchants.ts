@@ -1,5 +1,9 @@
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useStore } from "zustand";
+import { sortMerchants } from "@/module/explorer/sortMerchants";
+import { explorerSortStore } from "@/module/explorer/stores/explorerSortStore";
 
 const explorerKeys = {
     all: ["explorer"] as const,
@@ -14,6 +18,7 @@ export function useGetExplorerMerchants({
     limit?: number;
     offset?: number;
 } = {}) {
+    const sort = useStore(explorerSortStore, (s) => s.sort);
     const { data, error, isLoading, refetch } = useQuery({
         queryKey: explorerKeys.list({ limit, offset }),
         queryFn: async () => {
@@ -26,8 +31,13 @@ export function useGetExplorerMerchants({
         },
     });
 
+    const merchants = useMemo(
+        () => sortMerchants(data?.merchants ?? [], sort),
+        [data?.merchants, sort]
+    );
+
     return {
-        merchants: data?.merchants ?? [],
+        merchants,
         totalResult: data?.totalResult ?? 0,
         error,
         isLoading,

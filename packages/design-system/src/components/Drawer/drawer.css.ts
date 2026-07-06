@@ -1,6 +1,6 @@
 import { keyframes, style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import { alias, zIndex } from "../../tokens.css";
+import { alias, safeArea, zIndex } from "../../tokens.css";
 
 const fadeIn = keyframes({
     from: { opacity: 0 },
@@ -41,6 +41,32 @@ export const drawerContentStyle = style({
     maxHeight: "91dvh",
     backgroundColor: vars.surface.elevated,
     borderRadius: alias.cornerRadius.xl,
+});
+
+/**
+ * `edgeToEdge` overrides: zero the wrapper's side + bottom margins so the sheet
+ * spans the full width and sits flush against the bottom edge. Declared after
+ * the base styles so they win by source order (no `!important` needed).
+ */
+export const drawerContentWrapperEdgeStyle = style({
+    marginLeft: 0,
+    marginRight: 0,
+    marginBottom: 0,
+});
+
+export const drawerContentEdgeStyle = style({
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    paddingBottom: `max(${alias.spacing.l}, ${safeArea.bottom})`,
+});
+
+/**
+ * `surface="muted"` override: a grey sheet surface (instead of the default
+ * elevated white) so nested white cards read with contrast. Declared after the
+ * base style so it wins by source order.
+ */
+export const drawerContentMutedStyle = style({
+    backgroundColor: vars.surface.background2,
 });
 
 export const drawerHandleStyle = style({

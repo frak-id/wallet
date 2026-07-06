@@ -1073,6 +1073,16 @@
         "card": {
             "until": "Until {{date}}"
         },
+        "sort": {
+            "title": "Sort by",
+            "open": "Sort",
+            "openActive": "Sort ({{sort}})",
+            "apply": "Apply",
+            "popular": "Most popular",
+            "reward": "Highest reward",
+            "expiring": "Ending soonest",
+            "recent": "Most recent"
+        },
         "detail": {
             "close": "Close",
             "share": "Share",

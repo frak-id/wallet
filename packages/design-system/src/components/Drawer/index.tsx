@@ -2,7 +2,10 @@ import clsx from "clsx";
 import type { ComponentProps, ComponentPropsWithRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import {
+    drawerContentEdgeStyle,
+    drawerContentMutedStyle,
     drawerContentStyle,
+    drawerContentWrapperEdgeStyle,
     drawerContentWrapperStyle,
     drawerFooterStyle,
     drawerHandleStyle,
@@ -52,6 +55,12 @@ export function DrawerOverlay({
  *
  * When `hideHandle` is true the consumer **must** provide their own
  * `<DrawerTitle>` for a11y.
+ *
+ * `edgeToEdge` drops the default side + bottom margins so the sheet sits flush
+ * against the screen edges (square bottom corners, safe-area bottom padding).
+ *
+ * `surface="muted"` swaps the elevated white content bg for a grey surface so
+ * nested white cards read with contrast.
  */
 export function DrawerContent({
     ref,
@@ -59,37 +68,42 @@ export function DrawerContent({
     contentClassName,
     children,
     hideHandle,
+    edgeToEdge,
+    surface = "default",
     ...props
 }: ComponentPropsWithRef<typeof DrawerPrimitive.Content> & {
     hideHandle?: boolean;
     contentClassName?: string;
+    edgeToEdge?: boolean;
+    surface?: "default" | "muted";
 }) {
+    const contentClass = clsx(
+        drawerContentStyle,
+        edgeToEdge && drawerContentEdgeStyle,
+        surface === "muted" && drawerContentMutedStyle,
+        contentClassName
+    );
     return (
         <DrawerPrimitive.Portal>
             <DrawerOverlay />
             <DrawerPrimitive.Content
                 ref={ref}
-                className={clsx(drawerContentWrapperStyle, className)}
+                className={clsx(
+                    drawerContentWrapperStyle,
+                    edgeToEdge && drawerContentWrapperEdgeStyle,
+                    className
+                )}
                 {...props}
             >
                 {hideHandle ? (
-                    <div className={clsx(drawerContentStyle, contentClassName)}>
-                        {children}
-                    </div>
+                    <div className={contentClass}>{children}</div>
                 ) : (
                     <>
                         <DrawerPrimitive.Title asChild>
                             <div className={drawerHandleStyle} />
                         </DrawerPrimitive.Title>
                         <DrawerPrimitive.Description asChild>
-                            <div
-                                className={clsx(
-                                    drawerContentStyle,
-                                    contentClassName
-                                )}
-                            >
-                                {children}
-                            </div>
+                            <div className={contentClass}>{children}</div>
                         </DrawerPrimitive.Description>
                     </>
                 )}
