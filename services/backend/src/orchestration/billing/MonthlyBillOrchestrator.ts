@@ -4,14 +4,14 @@ import {
     type Stablecoin,
 } from "@frak-labs/app-essentials";
 import Decimal from "decimal.js";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import type {
     BillingDocumentInsert,
     BillingDocumentSelect,
 } from "../../domain/billing/db/schema";
 import {
     type BillingDocumentRepository,
-    isUniqueReferenceViolation,
+    isUniqueViolation,
 } from "../../domain/billing/repositories/BillingDocumentRepository";
 import type { BillingStorageRepository } from "../../domain/billing/repositories/BillingStorageRepository";
 import type {
@@ -25,6 +25,7 @@ import {
 import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
 import type { CampaignBankRepository } from "../../domain/campaign-bank/repositories/CampaignBankRepository";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
+import type { AssetLogSelect } from "../../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
 import type { BalancesRepository } from "../../domain/wallet/repositories/BalancesRepository";
 import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
@@ -141,7 +142,7 @@ export class MonthlyBillOrchestrator {
             })
         );
 
-        const fiatTotals = await this.buildAnnexFiatTotals(
+        const annexData = await this.buildAnnexData(
             merchantId,
             periodStart,
             periodEnd
@@ -159,8 +160,8 @@ export class MonthlyBillOrchestrator {
                 currency,
                 ...ledger,
             })),
-            annexRowCount: fiatTotals.rowCount,
-            fiatTotals: fiatTotals.totals,
+            annexRowCount: annexData.rowCount,
+            fiatTotals: annexData.totals,
             review,
         };
 
@@ -173,7 +174,7 @@ export class MonthlyBillOrchestrator {
             createdBy
         );
 
-        await this.tryGenerateAndStorePdf(document);
+        await this.tryGenerateAndStorePdf(document, annexData.assetLogs);
 
         return (
             (await this.billingDocuments.findById(merchantId, document.id)) ??
@@ -216,7 +217,7 @@ export class MonthlyBillOrchestrator {
                 createdBy,
             } satisfies Omit<BillingDocumentInsert, "reference">);
         } catch (err) {
-            if (!isUniqueReferenceViolation(err)) {
+            if (!isUniqueViolation(err)) {
                 throw err;
             }
             const existing =
@@ -297,13 +298,18 @@ export class MonthlyBillOrchestrator {
         const inPeriodRow = sums.depositWithdrawInPeriod.find(
             (row) => row.currency === currency
         );
+        // Address comparison via `isAddressEqual` (checksum-safe), never
+        // `===`: DB-sourced `row.tokenAddress` comes back lowercase
+        // (customHex.fromDriver -> viem's bytesToHex), while `tokenAddress`
+        // here is the EIP-55 checksummed constant -- a raw `===` always
+        // fails and silently zeroes every reward deduction.
         const rewardedBefore =
-            sums.rewardedBeforeRows.find(
-                (row) => row.tokenAddress === tokenAddress
+            sums.rewardedBeforeRows.find((row) =>
+                isAddressEqual(row.tokenAddress, tokenAddress)
             )?.total ?? "0";
         const rewardedInPeriod =
-            sums.rewardedInPeriodRows.find(
-                (row) => row.tokenAddress === tokenAddress
+            sums.rewardedInPeriodRows.find((row) =>
+                isAddressEqual(row.tokenAddress, tokenAddress)
             )?.total ?? "0";
 
         const ledger = this.computation.computeMonthlyLedger({
@@ -324,12 +330,19 @@ export class MonthlyBillOrchestrator {
      * (which uses `parseFloat` + float accumulation — unacceptable for a
      * frozen legal total, §B3). The only float input anywhere in this path
      * is the spot `TokenPrice` (disclosed limitation, §6.3).
+     *
+     * Fetches the settled-reward rows for the period exactly once; the
+     * per-row PDF annex rows are derived from the same `assetLogs` array
+     * returned here (see `generateAndStorePdf`) instead of re-querying —
+     * avoids a duplicate DB round-trip/price-map rebuild and the TOCTOU
+     * where a second fetch could disagree with `rowCount` on the row count.
      */
-    private async buildAnnexFiatTotals(
+    private async buildAnnexData(
         merchantId: string,
         periodStart: Date,
         periodEnd: Date
     ): Promise<{
+        assetLogs: AssetLogSelect[];
         rowCount: number;
         totals: { eur: string; usd: string; gbp: string };
     }> {
@@ -340,7 +353,11 @@ export class MonthlyBillOrchestrator {
         );
 
         if (assetLogs.length === 0) {
-            return { rowCount: 0, totals: { eur: "0", usd: "0", gbp: "0" } };
+            return {
+                assetLogs,
+                rowCount: 0,
+                totals: { eur: "0", usd: "0", gbp: "0" },
+            };
         }
 
         const uniqueTokens = [
@@ -377,6 +394,7 @@ export class MonthlyBillOrchestrator {
         }
 
         return {
+            assetLogs,
             rowCount: assetLogs.length,
             totals: {
                 eur: eur.toFixed(18),
@@ -478,10 +496,11 @@ export class MonthlyBillOrchestrator {
     }
 
     private async tryGenerateAndStorePdf(
-        document: BillingDocumentSelect
+        document: BillingDocumentSelect,
+        annexAssetLogs: AssetLogSelect[]
     ): Promise<void> {
         try {
-            await this.generateAndStorePdf(document);
+            await this.generateAndStorePdf(document, annexAssetLogs);
         } catch (err) {
             log.error(
                 { err, documentId: document.id, kind: document.kind },
@@ -491,7 +510,8 @@ export class MonthlyBillOrchestrator {
     }
 
     private async generateAndStorePdf(
-        document: BillingDocumentSelect
+        document: BillingDocumentSelect,
+        annexAssetLogs: AssetLogSelect[]
     ): Promise<void> {
         if (
             document.kind !== "monthly_bill" ||
@@ -506,11 +526,6 @@ export class MonthlyBillOrchestrator {
         const merchant = await this.merchant.findById(document.merchantId);
         const buyer = buildPdfBuyer(merchant?.accountingInfo ?? {});
 
-        const annexAssetLogs = await this.assetLogs.findByMerchantAndDateRange(
-            document.merchantId,
-            document.periodStart,
-            document.periodEnd
-        );
         const uniqueTokens = [
             ...new Set(
                 annexAssetLogs

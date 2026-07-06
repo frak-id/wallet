@@ -446,5 +446,199 @@ describe("MonthlyBillOrchestrator", () => {
             expect(createArg.details.review.flagged).toBe(true);
             expect(createArg.details.review.perCurrency).toHaveLength(1);
         });
+
+        it("scales a 6-decimal token (USDC) to human units before comparing (regression: no hardcoded 10^18)", async () => {
+            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    distinctCurrencies: vi.fn().mockResolvedValue(["usdc"]),
+                    create,
+                },
+                merchant: {
+                    findById: vi.fn().mockResolvedValue({
+                        id: "merchant-1",
+                        bankAddress:
+                            "0x0000000000000000000000000000000000000003",
+                    }),
+                },
+                campaignBank: {
+                    getBankOnChainState: vi.fn().mockResolvedValue({
+                        isOpen: true,
+                        balances: new Map([
+                            [currentStablecoins.usdc, 1_000_000n],
+                        ]),
+                        allowances: new Map(),
+                    }),
+                },
+                balances: {
+                    getTokenMetadataBatch: vi.fn().mockResolvedValue(
+                        new Map([
+                            [
+                                currentStablecoins.usdc,
+                                {
+                                    symbol: "USDC",
+                                    decimals: 6,
+                                    name: "USD Coin",
+                                },
+                            ],
+                        ])
+                    ),
+                },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            const createArg = create.mock.calls[0][0];
+            expect(createArg.details.review.perCurrency[0].onChainBalance).toBe(
+                "1.000000000000000000"
+            );
+        });
+    });
+
+    describe("reward deduction (address comparison regression)", () => {
+        it("subtracts settled rewards from the ledger even though the DB returns lowercase token addresses", async () => {
+            // Regression for the address-comparison blocker: `row.tokenAddress`
+            // as returned by the repository is lowercase (customHex.fromDriver
+            // -> viem's bytesToHex), while the ledger builder derives its
+            // comparison address via `getTokenAddressForStablecoin`, which is
+            // the EIP-55 checksummed constant. A raw `===` between the two
+            // never matches, silently zeroing the reward deduction. This test
+            // fails against that buggy code (it would assert `"1000"` instead
+            // of `"800"` below) and passes only with `isAddressEqual`.
+            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
+            const lowercaseEure = currentStablecoins.eure.toLowerCase();
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
+                    aggregateDepositWithdrawByCurrency: vi
+                        .fn()
+                        .mockResolvedValueOnce([
+                            {
+                                currency: "eure",
+                                deposited: "1000",
+                                withdrawn: "0",
+                            },
+                        ]) // before
+                        .mockResolvedValueOnce([
+                            {
+                                currency: "eure",
+                                deposited: "0",
+                                withdrawn: "0",
+                            },
+                        ]), // in-period
+                    create,
+                },
+                assetLogs: {
+                    sumSettledByToken: vi
+                        .fn()
+                        .mockResolvedValueOnce([
+                            { tokenAddress: lowercaseEure, total: "200" },
+                        ]) // before
+                        .mockResolvedValueOnce([
+                            { tokenAddress: lowercaseEure, total: "50" },
+                        ]), // in-period
+                },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            const createArg = create.mock.calls[0][0];
+            const eureLedger = createArg.details.ledgers.find(
+                (l: { currency: string }) => l.currency === "eure"
+            );
+            // openingBalance = depositedBefore(1000) - withdrawnBefore(0) -
+            // rewardedBefore(200) = 800; closingBalance = 800 + 0 - 0 - 50 =
+            // 750. Against the pre-fix `===` code both rewardedBefore/
+            // InPeriod resolve to "0" and this would read 1000 / 1000
+            // instead (the reward deductions silently dropped).
+            expect(eureLedger.openingBalance).toBe("800.000000000000000000");
+            expect(eureLedger.closingBalance).toBe("750.000000000000000000");
+        });
+    });
+
+    describe("query boundary wiring", () => {
+        it("passes half-open [periodStart, periodEnd) boundaries to the grouped sum queries", async () => {
+            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
+            const aggregateDepositWithdrawByCurrency = vi
+                .fn()
+                .mockResolvedValue([]);
+            const sumSettledByToken = vi.fn().mockResolvedValue([]);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    aggregateDepositWithdrawByCurrency,
+                    create,
+                },
+                assetLogs: { sumSettledByToken },
+            });
+
+            const periodStart = new Date("2026-02-01T00:00:00.000Z");
+            const periodEnd = new Date("2026-03-01T00:00:00.000Z");
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            expect(aggregateDepositWithdrawByCurrency).toHaveBeenCalledWith(
+                "merchant-1",
+                { before: periodStart }
+            );
+            expect(aggregateDepositWithdrawByCurrency).toHaveBeenCalledWith(
+                "merchant-1",
+                { start: periodStart, end: periodEnd }
+            );
+            expect(sumSettledByToken).toHaveBeenCalledWith("merchant-1", {
+                before: periodStart,
+            });
+            expect(sumSettledByToken).toHaveBeenCalledWith("merchant-1", {
+                start: periodStart,
+                end: periodEnd,
+            });
+        });
+    });
+
+    describe("PDF generation is best-effort", () => {
+        it("still returns the created document when PDF rendering rejects", async () => {
+            const created = makeMonthlyBillDoc();
+            const create = vi.fn().mockResolvedValue(created);
+            const findById = vi.fn().mockResolvedValue(created);
+            const render = vi
+                .fn()
+                .mockRejectedValue(new Error("render failed"));
+            const setPdf = vi.fn();
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    create,
+                    findById,
+                    setPdf,
+                },
+                pdf: { render },
+            });
+
+            const result = await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            expect(result.id).toBe(created.id);
+            expect(setPdf).not.toHaveBeenCalled();
+        });
     });
 });

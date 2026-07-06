@@ -278,6 +278,33 @@ describe("BillingComputationService", () => {
             expect(a.deltaAbs).toBe(b.deltaAbs);
             expect(a.withinThreshold).toBe(b.withinThreshold);
         });
+
+        it("flags against the absolute floor when derivedClosing is zero (threshold = max(1, 0) = 1)", () => {
+            const result = service.assessDivergence("0", "1.5");
+            expect(result.deltaAbs).toBe("1.500000000000000000");
+            expect(result.withinThreshold).toBe(false);
+        });
+
+        it("uses the absolute value of a negative derivedClosing for the relative threshold", () => {
+            // threshold = max(1, |-500| * 0.01) = max(1, 5) = 5; delta = 20
+            const result = service.assessDivergence("-500", "-480");
+            expect(result.deltaAbs).toBe("20.000000000000000000");
+            expect(result.withinThreshold).toBe(false);
+        });
+
+        it("the absolute floor dominates when the relative percentage is smaller than the floor", () => {
+            // threshold = max(1, |0.05| * 0.01 = 0.0005) = 1; delta = 0.505
+            const result = service.assessDivergence("0.05", "0.555");
+            expect(result.deltaAbs).toBe("0.505000000000000000");
+            expect(result.withinThreshold).toBe(true);
+        });
+
+        it("does not flag when the delta exactly equals the threshold (lessThanOrEqualTo)", () => {
+            // threshold = max(1, 1000 * 0.01) = 10; delta = 10
+            const result = service.assessDivergence("1000", "990");
+            expect(result.deltaAbs).toBe("10.000000000000000000");
+            expect(result.withinThreshold).toBe(true);
+        });
     });
 
     describe("annexRowFiat", () => {

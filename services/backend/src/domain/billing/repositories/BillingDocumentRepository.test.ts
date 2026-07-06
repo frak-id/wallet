@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     formatReference,
-    isUniqueReferenceViolation,
+    isUniqueViolation,
 } from "./BillingDocumentRepository";
 
 describe("BillingDocumentRepository pure helpers", () => {
@@ -31,21 +31,21 @@ describe("BillingDocumentRepository pure helpers", () => {
         });
     });
 
-    describe("isUniqueReferenceViolation", () => {
+    describe("isUniqueViolation", () => {
         it("returns true for a Postgres unique_violation (23505)", () => {
-            expect(isUniqueReferenceViolation({ code: "23505" })).toBe(true);
+            expect(isUniqueViolation({ code: "23505" })).toBe(true);
         });
 
         it("returns false for a different SQLSTATE code", () => {
-            expect(isUniqueReferenceViolation({ code: "23504" })).toBe(false);
+            expect(isUniqueViolation({ code: "23504" })).toBe(false);
         });
 
         it("returns false for null", () => {
-            expect(isUniqueReferenceViolation(null)).toBe(false);
+            expect(isUniqueViolation(null)).toBe(false);
         });
 
         it("returns false for an error object without a code", () => {
-            expect(isUniqueReferenceViolation({ message: "x" })).toBe(false);
+            expect(isUniqueViolation({ message: "x" })).toBe(false);
         });
     });
 });

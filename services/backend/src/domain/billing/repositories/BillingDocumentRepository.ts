@@ -21,10 +21,17 @@ const REFERENCE_PREFIX: Record<BillingDocumentKind, string> = {
 
 const MAX_REFERENCE_ALLOC_ATTEMPTS = 2;
 
-// Postgres unique_violation (23505). postgres-js surfaces the SQLSTATE code
-// on the thrown error; duck-typed since the driver doesn't export a class.
-// Exported for unit testing (pure predicate, no DB needed).
-export function isUniqueReferenceViolation(err: unknown): boolean {
+/**
+ * True for any Postgres unique_violation (SQLSTATE 23505) — not specific to
+ * the reference index. Used both for `create`'s reference-collision retry
+ * and (by `MonthlyBillOrchestrator`) for the `(merchant_id, period_start)`
+ * partial-unique collision on monthly bills; callers that need to know
+ * *which* index fired must disambiguate separately (e.g. by re-querying).
+ * postgres-js surfaces the SQLSTATE code on the thrown error; duck-typed
+ * since the driver doesn't export a class. Exported for unit testing (pure
+ * predicate, no DB needed).
+ */
+export function isUniqueViolation(err: unknown): boolean {
     return (
         typeof err === "object" &&
         err !== null &&
@@ -157,7 +164,7 @@ export class BillingDocumentRepository {
                 });
             } catch (err) {
                 const isLastAttempt = attempt === MAX_REFERENCE_ALLOC_ATTEMPTS;
-                if (isLastAttempt || !isUniqueReferenceViolation(err)) {
+                if (isLastAttempt || !isUniqueViolation(err)) {
                     throw err;
                 }
             }
