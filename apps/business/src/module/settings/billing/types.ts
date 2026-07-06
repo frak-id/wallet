@@ -1,7 +1,6 @@
 /**
- * Billing domain shapes. UI-first: the values are currently served by the
- * `useBillingInfo` stub. TODO: replace with the Eden Treaty (`@frak-labs/client`)
- * billing contract once the backend exists.
+ * Billing domain shapes. Backed by the `/:merchantId/billing/accounting` and
+ * `/:merchantId/billing/documents` endpoints (see `useBillingInfo.ts`).
  */
 
 /** Invoice address / company details used on generated billing documents. */
@@ -16,13 +15,29 @@ export type BillingInfo = {
     billingEmail: string;
 };
 
-/** A billing-history line. `kind` drives the table tag (Paid vs Deposit). */
+/**
+ * A billing-history line, derived from a `BillingDocumentResponse`.
+ * `kind` drives the table tag (Paid vs Deposit) and which tab it's listed
+ * under; `monthly_bill` documents become "invoice" rows, `deposit`/`withdraw`
+ * documents become "deposit" rows.
+ */
 export type BillingEntry = {
+    /** Underlying billing document id — used to fetch the PDF. */
     id: string;
-    /** ISO date string, formatted for display in the table. */
+    /** ISO date string (the document's `documentDate`), formatted for display. */
     date: string;
-    /** Amount in euros (formatted as currency at render time). */
-    amount: number;
+    /**
+     * Gross amount, for DISPLAY only (parsed from the backend's decimal
+     * string). `null` when the document has no gross amount (shouldn't
+     * happen for deposit/withdraw/monthly_bill, but the column is nullable).
+     */
+    amount: number | null;
+    /** Stablecoin currency code (not an ISO-4217 code — never format as Intl currency). */
+    currency: string;
     kind: "invoice" | "deposit";
+    /** Human-facing reference, e.g. "DEP-2026-0001". */
+    reference: string;
     description: string;
+    /** Whether the PDF has been generated and is downloadable. */
+    hasPdf: boolean;
 };

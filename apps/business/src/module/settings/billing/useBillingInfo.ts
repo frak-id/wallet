@@ -1,120 +1,110 @@
-import { create } from "zustand";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authenticatedBackendApi } from "@/api/backendClient";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import type { BillingEntry, BillingInfo } from "./types";
 
-/**
- * STUB billing store — in-memory only, seeded with the Figma sample history.
- * Starts with no invoice info so the empty ("Missing infos") state renders first.
- *
- * TODO: replace this whole hook with the Eden Treaty (`@frak-labs/client`)
- * billing endpoints once the backend contract exists.
- */
+function accountingQueryKey(merchantId: string) {
+    return ["billing", "accounting", merchantId];
+}
 
-const STUB_INVOICES: BillingEntry[] = [
-    {
-        id: "inv-2026-08",
-        date: "2026-08-31",
-        amount: 423,
-        kind: "invoice",
-        description: "Monthly statement",
-    },
-    {
-        id: "inv-2026-07",
-        date: "2026-07-31",
-        amount: 734,
-        kind: "invoice",
-        description: "Monthly statement",
-    },
-    {
-        id: "inv-2026-06",
-        date: "2026-06-30",
-        amount: 34,
-        kind: "invoice",
-        description: "Monthly statement",
-    },
-    {
-        id: "inv-2026-05",
-        date: "2026-05-31",
-        amount: 424,
-        kind: "invoice",
-        description: "Monthly statement",
-    },
-    {
-        id: "inv-2026-04",
-        date: "2026-04-30",
-        amount: 1042,
-        kind: "invoice",
-        description: "Monthly statement",
-    },
-    {
-        id: "inv-2026-02",
-        date: "2026-02-28",
-        amount: 528,
-        kind: "invoice",
-        description: "Monthly statement",
-    },
-    {
-        id: "inv-2026-01",
-        date: "2026-01-31",
-        amount: 472,
-        kind: "invoice",
-        description: "Monthly statement",
-    },
-];
+function documentsQueryKey(merchantId: string) {
+    return ["billing", "documents", merchantId];
+}
 
-const STUB_DEPOSITS: BillingEntry[] = [
-    {
-        id: "dep-2026-0038",
-        date: "2026-08-31",
-        amount: 1000,
-        kind: "deposit",
-        description: "Campaign refill · ref. DEP-2026-0038",
-    },
-    {
-        id: "dep-2026-0037",
-        date: "2026-07-31",
-        amount: 500,
-        kind: "deposit",
-        description: "Campaign 2 · ref. DEP-2026-0037",
-    },
-    {
-        id: "dep-2026-0036",
-        date: "2026-06-30",
-        amount: 5000,
-        kind: "deposit",
-        description: "Campaign summer · ref. DEP-2026-0036",
-    },
-    {
-        id: "dep-2026-0035",
-        date: "2026-05-31",
-        amount: 500,
-        kind: "deposit",
-        description: "Campaign sales · ref. DEP-2026-0035",
-    },
-];
-
-type BillingStore = {
-    info: BillingInfo | null;
-    setInfo: (info: BillingInfo) => void;
-};
+function toBillingEntry(doc: {
+    id: string;
+    kind: "deposit" | "withdraw" | "monthly_bill";
+    reference: string;
+    documentDate: string;
+    currency: string;
+    grossAmount: string | null;
+    pdfGeneratedAt: string | null;
+}): BillingEntry {
+    return {
+        id: doc.id,
+        date: doc.documentDate,
+        amount: doc.grossAmount ? Number.parseFloat(doc.grossAmount) : null,
+        currency: doc.currency,
+        kind: doc.kind === "monthly_bill" ? "invoice" : "deposit",
+        reference: doc.reference,
+        description: doc.reference,
+        hasPdf: doc.pdfGeneratedAt !== null,
+    };
+}
 
 /**
- * Exported for tests so they can reset the module-level singleton between cases
- * (`useBillingStore.setState({ info: null })`). Not part of the public API.
+ * Billing info (merchant accounting details) + document history for the
+ * active merchant, backed by `/:merchantId/billing/accounting` and
+ * `/:merchantId/billing/documents`.
  */
-export const useBillingStore = create<BillingStore>((set) => ({
-    info: null,
-    setInfo: (info) => set({ info }),
-}));
-
 export function useBillingInfo() {
-    const info = useBillingStore((s) => s.info);
-    const saveInfo = useBillingStore((s) => s.setInfo);
+    const merchantId = useActiveMerchantId();
+    const queryClient = useQueryClient();
+
+    const accountingQuery = useQuery({
+        queryKey: accountingQueryKey(merchantId),
+        queryFn: async () => {
+            const { data, error } = await authenticatedBackendApi
+                .merchant({ merchantId })
+                .billing.accounting.get();
+            if (error) throw error;
+            return data.accountingInfo;
+        },
+    });
+
+    const documentsQuery = useQuery({
+        queryKey: documentsQueryKey(merchantId),
+        queryFn: async () => {
+            const { data, error } = await authenticatedBackendApi
+                .merchant({ merchantId })
+                .billing.documents.get({ query: {} });
+            if (error) throw error;
+            return data.documents;
+        },
+    });
+
+    const saveMutation = useMutation({
+        mutationFn: async (next: BillingInfo) => {
+            const { error } = await authenticatedBackendApi
+                .merchant({ merchantId })
+                .billing.accounting.put(next);
+            if (error) throw error;
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: accountingQueryKey(merchantId),
+            });
+        },
+    });
+
+    const rawInfo = accountingQuery.data;
+    const info: BillingInfo | null = rawInfo
+        ? {
+              companyName: rawInfo.companyName ?? "",
+              vatNumber: rawInfo.vatNumber ?? "",
+              streetAddress: rawInfo.streetAddress ?? "",
+              city: rawInfo.city ?? "",
+              postalCode: rawInfo.postalCode ?? "",
+              country: rawInfo.country ?? "",
+              billingEmail: rawInfo.billingEmail ?? "",
+          }
+        : null;
+
+    const documents = documentsQuery.data ?? [];
+    const invoices = documents
+        .filter((doc) => doc.kind === "monthly_bill")
+        .map(toBillingEntry);
+    const deposits = documents
+        .filter((doc) => doc.kind === "deposit" || doc.kind === "withdraw")
+        .map(toBillingEntry);
 
     return {
         info,
         hasInfo: info !== null,
-        invoices: STUB_INVOICES,
-        deposits: STUB_DEPOSITS,
-        saveInfo,
+        invoices,
+        deposits,
+        saveInfo: (next: BillingInfo) => saveMutation.mutate(next),
+        isLoading: accountingQuery.isLoading || documentsQuery.isLoading,
+        isSaving: saveMutation.isPending,
     };
 }

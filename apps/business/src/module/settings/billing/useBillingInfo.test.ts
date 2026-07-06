@@ -1,7 +1,24 @@
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
+import { authenticatedBackendApi } from "@/api/backendClient";
+import {
+    describe,
+    expect,
+    type TestContext,
+    test,
+} from "@/tests/vitest-fixtures";
 import type { BillingInfo } from "./types";
-import { useBillingInfo, useBillingStore } from "./useBillingInfo";
+import { useBillingInfo } from "./useBillingInfo";
+
+vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
+    useActiveMerchantId: () => "merchant-1",
+}));
+
+vi.mock("@/api/backendClient", () => ({
+    authenticatedBackendApi: {
+        merchant: vi.fn(),
+    },
+}));
 
 const INFO: BillingInfo = {
     companyName: "Nowa",
@@ -13,33 +30,126 @@ const INFO: BillingInfo = {
     billingEmail: "nowa@nowa-water.com",
 };
 
+const DOCS = [
+    {
+        id: "bill-1",
+        kind: "monthly_bill" as const,
+        reference: "BILL-2026-0001",
+        documentDate: "2026-08-31T00:00:00.000Z",
+        currency: "eure",
+        grossAmount: null,
+        netAmount: null,
+        txHash: null,
+        linkedDepositId: null,
+        periodStart: "2026-08-01T00:00:00.000Z",
+        periodEnd: "2026-09-01T00:00:00.000Z",
+        pdfGeneratedAt: "2026-09-01T00:00:00.000Z",
+        voidedAt: null,
+        createdAt: "2026-09-01T00:00:00.000Z",
+    },
+    {
+        id: "dep-1",
+        kind: "deposit" as const,
+        reference: "DEP-2026-0001",
+        documentDate: "2026-07-31T00:00:00.000Z",
+        currency: "eure",
+        grossAmount: "1200",
+        netAmount: "800",
+        txHash: null,
+        linkedDepositId: null,
+        periodStart: null,
+        periodEnd: null,
+        pdfGeneratedAt: null,
+        voidedAt: null,
+        createdAt: "2026-07-31T00:00:00.000Z",
+    },
+];
+
+function mockMerchant({
+    accounting,
+    documents,
+}: {
+    accounting: { data: unknown; error: unknown };
+    documents: { data: unknown; error: unknown };
+}) {
+    const accountingGet = vi.fn().mockResolvedValue(accounting);
+    const accountingPut = vi
+        .fn()
+        .mockResolvedValue({ data: null, error: null });
+    const documentsGet = vi.fn().mockResolvedValue(documents);
+
+    vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+        billing: {
+            accounting: { get: accountingGet, put: accountingPut },
+            documents: { get: documentsGet },
+        },
+    } as any);
+
+    return { accountingGet, accountingPut, documentsGet };
+}
+
 describe("useBillingInfo", () => {
-    beforeEach(() => {
-        useBillingStore.setState({ info: null });
+    test("maps accounting info and splits documents into invoices/deposits", async ({
+        queryWrapper,
+    }: TestContext) => {
+        mockMerchant({
+            accounting: { data: { accountingInfo: INFO }, error: null },
+            documents: { data: { documents: DOCS }, error: null },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.hasInfo).toBe(true);
+        expect(result.current.info).toEqual(INFO);
+        expect(result.current.invoices).toHaveLength(1);
+        expect(result.current.invoices[0]?.kind).toBe("invoice");
+        expect(result.current.deposits).toHaveLength(1);
+        expect(result.current.deposits[0]?.kind).toBe("deposit");
+        expect(result.current.deposits[0]?.amount).toBe(1200);
+        expect(result.current.deposits[0]?.hasPdf).toBe(false);
+        expect(result.current.invoices[0]?.hasPdf).toBe(true);
     });
 
-    it("starts empty so the 'missing infos' state renders first", () => {
-        const { result } = renderHook(() => useBillingInfo());
+    test("hasInfo is false and info is null when accountingInfo is null", async ({
+        queryWrapper,
+    }: TestContext) => {
+        mockMerchant({
+            accounting: { data: { accountingInfo: null }, error: null },
+            documents: { data: { documents: [] }, error: null },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
         expect(result.current.info).toBeNull();
         expect(result.current.hasInfo).toBe(false);
+        expect(result.current.invoices).toEqual([]);
+        expect(result.current.deposits).toEqual([]);
     });
 
-    it("always exposes the stub invoices and deposits", () => {
-        const { result } = renderHook(() => useBillingInfo());
-        expect(result.current.invoices.length).toBe(7);
-        expect(result.current.deposits.length).toBe(4);
-        expect(result.current.invoices.every((e) => e.kind === "invoice")).toBe(
-            true
-        );
-        expect(result.current.deposits.every((e) => e.kind === "deposit")).toBe(
-            true
-        );
-    });
+    test("saveInfo calls PUT accounting with the new info", async ({
+        queryWrapper,
+    }: TestContext) => {
+        const { accountingPut } = mockMerchant({
+            accounting: { data: { accountingInfo: null }, error: null },
+            documents: { data: { documents: [] }, error: null },
+        });
 
-    it("saveInfo persists the info and flips hasInfo", () => {
-        const { result } = renderHook(() => useBillingInfo());
-        act(() => result.current.saveInfo(INFO));
-        expect(result.current.info).toEqual(INFO);
-        expect(result.current.hasInfo).toBe(true);
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        result.current.saveInfo(INFO);
+
+        await waitFor(() => expect(accountingPut).toHaveBeenCalledWith(INFO));
     });
 });

@@ -1,5 +1,6 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
+import type { BillingDocumentSelect } from "../db/schema";
 
 export const BillingDocumentKindSchema = t.Union([
     t.Literal("deposit"),
@@ -94,3 +95,53 @@ export type BillingDocumentDetails = Static<
 >;
 export type MonthlyBillDetails = Static<typeof MonthlyBillDetailsSchema>;
 export type MonthlyBillReview = NonNullable<MonthlyBillDetails["review"]>;
+
+/**
+ * Shared API response contract for a `billing_documents` row — used by both
+ * the admin CRUD routes and the merchant-facing read routes so the two
+ * surfaces never drift. Deliberately excludes `details` (VAT/fee/ledger
+ * breakdown, masked IBAN) — that's frozen into the PDF; the API only
+ * exposes the column-level summary.
+ */
+export const BillingDocumentResponseSchema = t.Object({
+    id: t.String(),
+    merchantId: t.String(),
+    kind: BillingDocumentKindSchema,
+    reference: t.String(),
+    documentDate: t.String(),
+    periodStart: t.Union([t.String(), t.Null()]),
+    periodEnd: t.Union([t.String(), t.Null()]),
+    currency: StablecoinSchema,
+    grossAmount: t.Union([t.String(), t.Null()]),
+    netAmount: t.Union([t.String(), t.Null()]),
+    txHash: t.Union([t.Hex(), t.Null()]),
+    linkedDepositId: t.Union([t.String(), t.Null()]),
+    pdfGeneratedAt: t.Union([t.String(), t.Null()]),
+    voidedAt: t.Union([t.String(), t.Null()]),
+    createdAt: t.Union([t.String(), t.Null()]),
+});
+export type BillingDocumentResponse = Static<
+    typeof BillingDocumentResponseSchema
+>;
+
+export function toBillingDocumentResponse(
+    doc: BillingDocumentSelect
+): BillingDocumentResponse {
+    return {
+        id: doc.id,
+        merchantId: doc.merchantId,
+        kind: doc.kind,
+        reference: doc.reference,
+        documentDate: doc.documentDate.toISOString(),
+        periodStart: doc.periodStart?.toISOString() ?? null,
+        periodEnd: doc.periodEnd?.toISOString() ?? null,
+        currency: doc.currency,
+        grossAmount: doc.grossAmount,
+        netAmount: doc.netAmount,
+        txHash: doc.txHash,
+        linkedDepositId: doc.linkedDepositId,
+        pdfGeneratedAt: doc.pdfGeneratedAt?.toISOString() ?? null,
+        voidedAt: doc.voidedAt?.toISOString() ?? null,
+        createdAt: doc.createdAt?.toISOString() ?? null,
+    };
+}

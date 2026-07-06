@@ -16,8 +16,10 @@ import {
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
 import { DownloadIcon } from "@frak-labs/design-system/icons";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { authenticatedBackendApi } from "@/api/backendClient";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import type { BillingEntry } from "../types";
 import { useBillingInfo } from "../useBillingInfo";
 import * as styles from "./billing-table.css";
@@ -74,14 +76,17 @@ function EntriesTable({ entries }: { entries: BillingEntry[] }) {
             // negative-offset timezone doesn't render the previous day.
             timeZone: "UTC",
         });
-        const amountFmt = new Intl.NumberFormat(i18n.language, {
-            style: "currency",
-            currency: "EUR",
-            maximumFractionDigits: 0,
+        const numberFmt = new Intl.NumberFormat(i18n.language, {
+            maximumFractionDigits: 2,
         });
         return {
             formatDate: (iso: string) => dateFmt.format(new Date(iso)),
-            formatAmount: (amount: number) => amountFmt.format(amount),
+            // Stablecoin currencies (eure/gbpe/usde/usdc) aren't ISO-4217 codes,
+            // so `Intl.NumberFormat({ style: "currency" })` can't be used here.
+            formatAmount: (amount: number | null, currency: string) =>
+                amount === null
+                    ? "—"
+                    : `${numberFmt.format(amount)} ${currency.toUpperCase()}`,
         };
     }, [i18n.language]);
 
@@ -109,7 +114,7 @@ function EntriesTable({ entries }: { entries: BillingEntry[] }) {
                     <TableRow key={entry.id}>
                         <TableCell>{formatDate(entry.date)}</TableCell>
                         <TableCell align="right" className={styles.amount}>
-                            {formatAmount(entry.amount)}
+                            {formatAmount(entry.amount, entry.currency)}
                         </TableCell>
                         <TableCell hug>
                             <Badge
@@ -127,23 +132,50 @@ function EntriesTable({ entries }: { entries: BillingEntry[] }) {
                         </TableCell>
                         <TableCell muted>{entry.description}</TableCell>
                         <TableCell align="right" hug>
-                            <button
-                                type="button"
-                                className={styles.pdfButton}
-                                aria-label={t(
-                                    "settings.billing.table.download"
-                                )}
-                                // Non-functional until the backend serves PDF
-                                // URLs — disabled per the app convention for
-                                // not-yet-wired actions.
-                                disabled
-                            >
-                                <DownloadIcon />
-                            </button>
+                            <DownloadPdfButton entry={entry} />
                         </TableCell>
                     </TableRow>
                 ))}
             </TableBody>
         </Table>
+    );
+}
+
+function DownloadPdfButton({ entry }: { entry: BillingEntry }) {
+    const { t } = useTranslation();
+    const merchantId = useActiveMerchantId();
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    async function handleDownload() {
+        setIsDownloading(true);
+        try {
+            const { data, error } = await authenticatedBackendApi
+                .merchant({ merchantId })
+                .billing.documents({ id: entry.id })
+                .pdf.get();
+            if (error || !data) return;
+
+            const blob = await data.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${entry.reference}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } finally {
+            setIsDownloading(false);
+        }
+    }
+
+    return (
+        <button
+            type="button"
+            className={styles.pdfButton}
+            aria-label={t("settings.billing.table.download")}
+            disabled={!entry.hasPdf || isDownloading}
+            onClick={handleDownload}
+        >
+            <DownloadIcon />
+        </button>
     );
 }

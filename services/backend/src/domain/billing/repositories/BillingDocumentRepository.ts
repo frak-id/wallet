@@ -1,6 +1,6 @@
 import { db } from "@backend-infrastructure";
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { and, eq, gte, isNull, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import {
     type BillingDocumentInsert,
     type BillingDocumentSelect,
@@ -114,17 +114,29 @@ export class BillingDocumentRepository {
         merchantId: string,
         {
             kind,
+            from,
+            to,
             includeVoided = false,
-        }: { kind?: BillingDocumentKind; includeVoided?: boolean } = {}
+        }: {
+            kind?: BillingDocumentKind;
+            from?: Date;
+            to?: Date;
+            includeVoided?: boolean;
+        } = {}
     ): Promise<BillingDocumentSelect[]> {
         return db.query.billingDocumentsTable.findMany({
             where: and(
                 eq(billingDocumentsTable.merchantId, merchantId),
                 kind ? eq(billingDocumentsTable.kind, kind) : undefined,
+                from
+                    ? gte(billingDocumentsTable.documentDate, from)
+                    : undefined,
+                to ? lte(billingDocumentsTable.documentDate, to) : undefined,
                 includeVoided
                     ? undefined
                     : isNull(billingDocumentsTable.voidedAt)
             ),
+            orderBy: desc(billingDocumentsTable.documentDate),
         });
     }
 

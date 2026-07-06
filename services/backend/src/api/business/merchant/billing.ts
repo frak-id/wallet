@@ -1,7 +1,9 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import type { BillingDocumentSelect } from "../../../domain/billing/db/schema";
-import { BillingDocumentKindSchema } from "../../../domain/billing/schemas";
+import {
+    BillingDocumentResponseSchema,
+    toBillingDocumentResponse as toResponse,
+} from "../../../domain/billing/schemas";
 import {
     DepositNotFoundError,
     WithdrawValidationError,
@@ -17,40 +19,6 @@ const StablecoinSchema = t.Union([
     t.Literal("usde"),
     t.Literal("usdc"),
 ]);
-
-const BillingDocumentResponseSchema = t.Object({
-    id: t.String(),
-    merchantId: t.String(),
-    kind: BillingDocumentKindSchema,
-    reference: t.String(),
-    documentDate: t.String(),
-    currency: StablecoinSchema,
-    grossAmount: t.Union([t.String(), t.Null()]),
-    netAmount: t.Union([t.String(), t.Null()]),
-    txHash: t.Union([t.Hex(), t.Null()]),
-    linkedDepositId: t.Union([t.String(), t.Null()]),
-    pdfGeneratedAt: t.Union([t.String(), t.Null()]),
-    voidedAt: t.Union([t.String(), t.Null()]),
-    createdAt: t.Union([t.String(), t.Null()]),
-});
-
-function toResponse(doc: BillingDocumentSelect) {
-    return {
-        id: doc.id,
-        merchantId: doc.merchantId,
-        kind: doc.kind,
-        reference: doc.reference,
-        documentDate: doc.documentDate.toISOString(),
-        currency: doc.currency,
-        grossAmount: doc.grossAmount,
-        netAmount: doc.netAmount,
-        txHash: doc.txHash,
-        linkedDepositId: doc.linkedDepositId,
-        pdfGeneratedAt: doc.pdfGeneratedAt?.toISOString() ?? null,
-        voidedAt: doc.voidedAt?.toISOString() ?? null,
-        createdAt: doc.createdAt?.toISOString() ?? null,
-    };
-}
 
 const DecimalStringSchema = t.String({ pattern: "^\\d+(\\.\\d+)?$" });
 
