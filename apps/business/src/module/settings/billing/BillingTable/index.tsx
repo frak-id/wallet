@@ -15,22 +15,29 @@ import {
     TabsList,
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
-import { DownloadIcon } from "@frak-labs/design-system/icons";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { BinIcon, DownloadIcon } from "@frak-labs/design-system/icons";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import type { BillingEntry } from "../types";
+import { useVoidDocument } from "../useBillingAdmin";
 import { useBillingInfo } from "../useBillingInfo";
 import * as styles from "./billing-table.css";
 
 /**
  * Billing history card: segmented Invoices / Deposit control over a read-only
- * data table (Date / Amount / Type / Description / PDF).
+ * data table (Date / Amount / Type / Description / PDF). Platform admins
+ * additionally get a per-row void action (deposit/withdraw only — monthly
+ * bills have no void route).
  */
 export function BillingTable() {
     const { t } = useTranslation();
     const { invoices, deposits } = useBillingInfo();
+    const { isPlatformAdmin } = useMyMerchants();
 
     return (
         <Card variant="elevated" radius="m">
@@ -53,10 +60,16 @@ export function BillingTable() {
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="invoices">
-                        <EntriesTable entries={invoices} />
+                        <EntriesTable
+                            entries={invoices}
+                            canVoid={isPlatformAdmin}
+                        />
                     </TabsContent>
                     <TabsContent value="deposit">
-                        <EntriesTable entries={deposits} />
+                        <EntriesTable
+                            entries={deposits}
+                            canVoid={isPlatformAdmin}
+                        />
                     </TabsContent>
                 </Stack>
             </Tabs>
@@ -64,7 +77,13 @@ export function BillingTable() {
     );
 }
 
-function EntriesTable({ entries }: { entries: BillingEntry[] }) {
+function EntriesTable({
+    entries,
+    canVoid,
+}: {
+    entries: BillingEntry[];
+    canVoid: boolean;
+}) {
     const { t, i18n } = useTranslation();
 
     const { formatDate, formatAmount } = useMemo(() => {
@@ -107,6 +126,11 @@ function EntriesTable({ entries }: { entries: BillingEntry[] }) {
                     <TableHead align="right" hug>
                         {t("settings.billing.table.pdf")}
                     </TableHead>
+                    {canVoid && (
+                        <TableHead align="right" hug>
+                            {t("settings.billing.admin.table.void")}
+                        </TableHead>
+                    )}
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -134,6 +158,13 @@ function EntriesTable({ entries }: { entries: BillingEntry[] }) {
                         <TableCell align="right" hug>
                             <DownloadPdfButton entry={entry} />
                         </TableCell>
+                        {canVoid && (
+                            <TableCell align="right" hug>
+                                {entry.rawKind !== "monthly_bill" && (
+                                    <VoidDocumentButton entry={entry} />
+                                )}
+                            </TableCell>
+                        )}
                     </TableRow>
                 ))}
             </TableBody>
@@ -182,5 +213,61 @@ function DownloadPdfButton({ entry }: { entry: BillingEntry }) {
         >
             <DownloadIcon />
         </button>
+    );
+}
+
+function VoidDocumentButton({ entry }: { entry: BillingEntry }) {
+    const { t } = useTranslation();
+    const merchantId = useActiveMerchantId();
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const voidDocument = useVoidDocument(merchantId);
+
+    // Narrowed by the caller (`rawKind !== "monthly_bill"`), but the mutation
+    // input type only accepts "deposit" | "withdraw" — re-assert here so this
+    // component has no reachable path to call it with "monthly_bill".
+    if (entry.rawKind === "monthly_bill") return null;
+    const kind = entry.rawKind;
+
+    return (
+        <>
+            <button
+                type="button"
+                className={styles.pdfButton}
+                aria-label={t("settings.billing.admin.table.voidAria", {
+                    reference: entry.reference,
+                })}
+                onClick={() => setConfirmOpen(true)}
+            >
+                <BinIcon />
+            </button>
+            <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={(next) => {
+                    setConfirmOpen(next);
+                    if (!next) voidDocument.reset();
+                }}
+                title={t("settings.billing.admin.void.title")}
+                description={t("settings.billing.admin.void.description", {
+                    reference: entry.reference,
+                })}
+                cancelLabel={t("settings.billing.actions.cancel")}
+                confirmLabel={t("settings.billing.admin.void.confirm")}
+                confirmTone="destructive"
+                isConfirming={voidDocument.isPending}
+                error={
+                    voidDocument.isError ? (
+                        <Text variant="caption" color="error">
+                            {t("settings.billing.admin.errors.void")}
+                        </Text>
+                    ) : undefined
+                }
+                onConfirm={() => {
+                    voidDocument.mutate(
+                        { id: entry.id, kind },
+                        { onSuccess: () => setConfirmOpen(false) }
+                    );
+                }}
+            />
+        </>
     );
 }

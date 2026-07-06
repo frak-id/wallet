@@ -40,4 +40,10 @@ export type BillingEntry = {
     description: string;
     /** Whether the PDF has been generated and is downloadable. */
     hasPdf: boolean;
+    /**
+     * The underlying document kind, unmapped — needed to route a void
+     * action to the right admin endpoint (`deposits/:id` vs
+     * `withdrawals/:id`). Monthly bills have no void route.
+     */
+    rawKind: "deposit" | "withdraw" | "monthly_bill";
 };

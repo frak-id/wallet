@@ -1155,7 +1155,76 @@
             },
             "validation": {
                 "required": "Ce champ est requis",
-                "email": "Saisir une adresse e-mail valide"
+                "email": "Saisir une adresse e-mail valide",
+                "decimal": "Saisissez un montant décimal valide"
+            },
+            "admin": {
+                "panel": {
+                    "title": "Administration — Facturation",
+                    "description": "Créez des notes de dépôt et des factures de retrait pour ce marchand. Visible uniquement par les administrateurs de la plateforme."
+                },
+                "deposit": {
+                    "trigger": "Ajouter un dépôt",
+                    "title": "Ajouter une note de dépôt",
+                    "description": "Enregistre un dépôt et calcule automatiquement la TVA et les frais Frak.",
+                    "submit": "Créer le dépôt"
+                },
+                "withdraw": {
+                    "trigger": "Ajouter un retrait",
+                    "title": "Ajouter une facture de retrait",
+                    "description": "Enregistre un retrait lié à un dépôt et calcule automatiquement la restitution au prorata.",
+                    "submit": "Créer le retrait"
+                },
+                "fields": {
+                    "grossAmount": {
+                        "label": "Montant brut",
+                        "placeholder": "ex. 1200"
+                    },
+                    "remainingBankAmount": {
+                        "label": "Montant restant en banque",
+                        "placeholder": "ex. 400"
+                    },
+                    "currency": {
+                        "label": "Devise",
+                        "autoPlaceholder": "Sélectionnez d'abord un dépôt lié"
+                    },
+                    "documentDate": {
+                        "label": "Date du document"
+                    },
+                    "paymentPlatform": {
+                        "label": "Plateforme de paiement",
+                        "none": "Aucune"
+                    },
+                    "linkedDeposit": {
+                        "label": "Dépôt lié",
+                        "placeholder": "Sélectionnez le dépôt que ce retrait annule"
+                    },
+                    "rawIban": {
+                        "label": "IBAN",
+                        "placeholder": "Saisissez l'IBAN de destination",
+                        "hint": "Seule une référence masquée (code pays + derniers chiffres) est stockée ou envoyée."
+                    },
+                    "txHash": {
+                        "label": "Hash de transaction (optionnel)"
+                    },
+                    "note": {
+                        "label": "Note (optionnelle)",
+                        "placeholder": "Note interne"
+                    }
+                },
+                "table": {
+                    "void": "Annuler",
+                    "voidAria": "Annuler {{reference}}"
+                },
+                "void": {
+                    "title": "Annuler ce document ?",
+                    "description": "Ceci annulera {{reference}}. Les documents annulés sont conservés pour les registres mais exclus de l'historique de facturation du marchand.",
+                    "confirm": "Annuler le document"
+                },
+                "errors": {
+                    "create": "Une erreur est survenue lors de la création du document. Veuillez réessayer.",
+                    "void": "Une erreur est survenue lors de l'annulation du document. Veuillez réessayer."
+                }
             }
         }
     },

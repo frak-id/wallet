@@ -29,6 +29,7 @@ function toBillingEntry(doc: {
         reference: doc.reference,
         description: doc.reference,
         hasPdf: doc.pdfGeneratedAt !== null,
+        rawKind: doc.kind,
     };
 }
 
