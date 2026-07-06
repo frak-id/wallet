@@ -150,12 +150,14 @@ export class BillingComputationService {
             "rewardsDistributedSinceDeposit"
         );
 
-        // Guard divide-by-zero: an empty/zero linked deposit net amount
-        // means nothing to prorate against — treat as fully distributed
-        // (no restitution), not as an error.
+        // Guard divide-by-zero: net 0 => treat as fully distributed, no
+        // restitution (a zero-net deposit had zero VAT/fee to begin with, so
+        // this is also the value-preserving choice, not just a fallback).
         const rawRatio = linkedNet.isZero()
-            ? new Decimal(0)
+            ? new Decimal(1)
             : distributed.div(linkedNet);
+        // Defensive belt-and-suspenders bound: inputs are already validated
+        // non-negative, so rawRatio can't be < 0 in practice.
         const distributedRatio = Decimal.min(
             Decimal.max(rawRatio, new Decimal(0)),
             new Decimal(1)

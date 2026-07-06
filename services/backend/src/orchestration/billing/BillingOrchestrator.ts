@@ -1,3 +1,4 @@
+import { log } from "@backend-infrastructure";
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import type { Address, Hex } from "viem";
 import type {
@@ -18,25 +19,13 @@ export class DepositNotFoundError extends Error {
     }
 }
 
-export class DepositAlreadyVoidedError extends Error {
-    constructor(depositId: string) {
-        super(`Linked deposit ${depositId} is voided`);
-    }
-}
-
-export class NotADepositError extends Error {
-    constructor(depositId: string) {
-        super(`Document ${depositId} is not a deposit`);
-    }
-}
-
-export class CurrencyMismatchError extends Error {
-    constructor(depositId: string) {
-        super(
-            `Withdraw currency does not match linked deposit ${depositId}'s currency`
-        );
-    }
-}
+/**
+ * Any withdraw-input validation failure (wrong/voided linked deposit, kind
+ * mismatch, currency mismatch). Collapsed into one class since all three
+ * map to the same 400 response and callers never need to distinguish them
+ * individually — only the message differs.
+ */
+export class WithdrawValidationError extends Error {}
 
 type CreateDepositInput = {
     grossAmount: string;
@@ -113,7 +102,7 @@ export class BillingOrchestrator {
             createdBy,
         } satisfies Omit<BillingDocumentInsert, "reference">);
 
-        await this.generateAndStorePdf(document);
+        await this.tryGenerateAndStorePdf(document);
 
         return (
             (await this.billingDocuments.findById(merchantId, document.id)) ??
@@ -134,16 +123,24 @@ export class BillingOrchestrator {
             throw new DepositNotFoundError(input.linkedDepositId);
         }
         if (linkedDeposit.kind !== "deposit") {
-            throw new NotADepositError(input.linkedDepositId);
+            throw new WithdrawValidationError(
+                `Document ${input.linkedDepositId} is not a deposit`
+            );
         }
         if (linkedDeposit.voidedAt) {
-            throw new DepositAlreadyVoidedError(input.linkedDepositId);
+            throw new WithdrawValidationError(
+                `Linked deposit ${input.linkedDepositId} is voided`
+            );
         }
         if (linkedDeposit.details?.kind !== "deposit") {
-            throw new NotADepositError(input.linkedDepositId);
+            throw new WithdrawValidationError(
+                `Document ${input.linkedDepositId} is not a deposit`
+            );
         }
         if (linkedDeposit.currency !== input.currency) {
-            throw new CurrencyMismatchError(input.linkedDepositId);
+            throw new WithdrawValidationError(
+                `Withdraw currency does not match linked deposit ${input.linkedDepositId}'s currency`
+            );
         }
 
         const rewardsDistributedSinceDeposit =
@@ -187,7 +184,7 @@ export class BillingOrchestrator {
             createdBy,
         } satisfies Omit<BillingDocumentInsert, "reference">);
 
-        await this.generateAndStorePdf(document);
+        await this.tryGenerateAndStorePdf(document);
 
         return (
             (await this.billingDocuments.findById(merchantId, document.id)) ??
@@ -217,6 +214,10 @@ export class BillingOrchestrator {
      * (e.g. a prior create's render/upload step failed). No-op (returns the
      * document unchanged) if a PDF was already issued — `setPdf` is
      * write-once (§3.6).
+     *
+     * Intentionally kept unrouted in Phase 2 — this is the recovery entry
+     * point Phase 4 will expose via an admin route once PDF-regeneration
+     * needs a UI trigger; calling it today requires direct code access.
      */
     async regeneratePdf(
         merchantId: string,
@@ -228,6 +229,27 @@ export class BillingOrchestrator {
         }
         await this.generateAndStorePdf(document);
         return this.billingDocuments.findById(merchantId, id);
+    }
+
+    /**
+     * Best-effort wrapper around `generateAndStorePdf` for the create paths:
+     * a render/upload failure must not fail document creation, since the
+     * document row (with its reference and frozen `details`) is already
+     * committed and financially meaningful on its own. Failures are logged;
+     * the document keeps `pdfGeneratedAt IS NULL` and can be recovered later
+     * via `regeneratePdf`.
+     */
+    private async tryGenerateAndStorePdf(
+        document: BillingDocumentSelect
+    ): Promise<void> {
+        try {
+            await this.generateAndStorePdf(document);
+        } catch (err) {
+            log.error(
+                { err, documentId: document.id, kind: document.kind },
+                "billing PDF generation failed; document persisted without PDF"
+            );
+        }
     }
 
     private async generateAndStorePdf(

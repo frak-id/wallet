@@ -3,10 +3,8 @@ import { Elysia, status } from "elysia";
 import type { BillingDocumentSelect } from "../../../domain/billing/db/schema";
 import { BillingDocumentKindSchema } from "../../../domain/billing/schemas";
 import {
-    CurrencyMismatchError,
-    DepositAlreadyVoidedError,
     DepositNotFoundError,
-    NotADepositError,
+    WithdrawValidationError,
 } from "../../../orchestration/billing/BillingOrchestrator";
 import { OrchestrationContext } from "../../../orchestration/context";
 import { MerchantIdParamSchema } from "../../schemas";
@@ -53,8 +51,10 @@ function toResponse(doc: BillingDocumentSelect) {
     };
 }
 
+const DecimalStringSchema = t.String({ pattern: "^\\d+(\\.\\d+)?$" });
+
 const CreateDepositBodySchema = t.Object({
-    grossAmount: t.String(),
+    grossAmount: DecimalStringSchema,
     currency: StablecoinSchema,
     documentDate: t.String({ format: "date-time" }),
     country: t.String({ pattern: "^[A-Z]{2}$" }),
@@ -66,7 +66,7 @@ const CreateDepositBodySchema = t.Object({
 });
 
 const CreateWithdrawBodySchema = t.Object({
-    remainingBankAmount: t.String(),
+    remainingBankAmount: DecimalStringSchema,
     currency: StablecoinSchema,
     documentDate: t.String({ format: "date-time" }),
     linkedDepositId: t.String(),
@@ -150,11 +150,7 @@ export const merchantBillingAdminRoutes = new Elysia({
                 if (err instanceof DepositNotFoundError) {
                     return status(404, err.message);
                 }
-                if (
-                    err instanceof DepositAlreadyVoidedError ||
-                    err instanceof NotADepositError ||
-                    err instanceof CurrencyMismatchError
-                ) {
+                if (err instanceof WithdrawValidationError) {
                     return status(400, err.message);
                 }
                 throw err;

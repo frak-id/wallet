@@ -32,12 +32,6 @@ export type BillingPdfDocumentDto = {
     currency: string;
     grossAmount: string;
     netAmount: string;
-    /** Frak, the document issuer. Defaults to `FRAK_SELLER` when omitted. */
-    seller?: {
-        companyName: string;
-        vatNumber?: string;
-        addressLines: string[];
-    };
     /** The merchant being billed. May be partial/empty if accounting info was never filled in. */
     buyer: {
         companyName?: string;
@@ -197,7 +191,7 @@ export class BillingPdfService {
         dto: BillingPdfDocumentDto,
         bold: PDFFont
     ): void {
-        const seller = dto.seller ?? FRAK_SELLER;
+        const seller = FRAK_SELLER;
         const blockTopY = cursor.y;
         const rightX = PAGE_WIDTH / 2 + 10;
 

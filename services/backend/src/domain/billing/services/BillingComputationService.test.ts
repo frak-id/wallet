@@ -108,7 +108,7 @@ describe("BillingComputationService", () => {
             expect(result.bankSent).toBe("1200.000000000000000000");
         });
 
-        it("guards divide-by-zero when linked deposit net amount is 0", () => {
+        it("guards divide-by-zero when linked deposit net amount is 0: treated as fully distributed, no restitution", () => {
             const result = service.computeWithdraw({
                 remainingBankAmount: "50",
                 linkedDepositNetAmount: "0",
@@ -116,7 +116,9 @@ describe("BillingComputationService", () => {
                 linkedDepositFrakFeeAmount: "0",
                 rewardsDistributedSinceDeposit: "0",
             });
-            expect(result.distributedRatio).toBe("0.000000000000000000");
+            expect(result.distributedRatio).toBe("1.000000000000000000");
+            expect(result.restitutedVat).toBe("0.000000000000000000");
+            expect(result.restitutedFrakFee).toBe("0.000000000000000000");
             expect(result.bankSent).toBe("50.000000000000000000");
         });
 
@@ -128,6 +130,54 @@ describe("BillingComputationService", () => {
                     linkedDepositVatAmount: "200",
                     linkedDepositFrakFeeAmount: "200",
                     rewardsDistributedSinceDeposit: "0",
+                })
+            ).toThrow();
+        });
+
+        it("throws on negative linkedDepositNetAmount", () => {
+            expect(() =>
+                service.computeWithdraw({
+                    remainingBankAmount: "50",
+                    linkedDepositNetAmount: "-800",
+                    linkedDepositVatAmount: "200",
+                    linkedDepositFrakFeeAmount: "200",
+                    rewardsDistributedSinceDeposit: "0",
+                })
+            ).toThrow();
+        });
+
+        it("throws on negative linkedDepositVatAmount", () => {
+            expect(() =>
+                service.computeWithdraw({
+                    remainingBankAmount: "50",
+                    linkedDepositNetAmount: "800",
+                    linkedDepositVatAmount: "-200",
+                    linkedDepositFrakFeeAmount: "200",
+                    rewardsDistributedSinceDeposit: "0",
+                })
+            ).toThrow();
+        });
+
+        it("throws on negative linkedDepositFrakFeeAmount", () => {
+            expect(() =>
+                service.computeWithdraw({
+                    remainingBankAmount: "50",
+                    linkedDepositNetAmount: "800",
+                    linkedDepositVatAmount: "200",
+                    linkedDepositFrakFeeAmount: "-200",
+                    rewardsDistributedSinceDeposit: "0",
+                })
+            ).toThrow();
+        });
+
+        it("throws on non-finite rewardsDistributedSinceDeposit", () => {
+            expect(() =>
+                service.computeWithdraw({
+                    remainingBankAmount: "50",
+                    linkedDepositNetAmount: "800",
+                    linkedDepositVatAmount: "200",
+                    linkedDepositFrakFeeAmount: "200",
+                    rewardsDistributedSinceDeposit: "Infinity",
                 })
             ).toThrow();
         });

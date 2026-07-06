@@ -22,13 +22,27 @@ const MAX_REFERENCE_ALLOC_ATTEMPTS = 2;
 
 // Postgres unique_violation (23505). postgres-js surfaces the SQLSTATE code
 // on the thrown error; duck-typed since the driver doesn't export a class.
-function isUniqueReferenceViolation(err: unknown): boolean {
+// Exported for unit testing (pure predicate, no DB needed).
+export function isUniqueReferenceViolation(err: unknown): boolean {
     return (
         typeof err === "object" &&
         err !== null &&
         "code" in err &&
         (err as { code?: string }).code === "23505"
     );
+}
+
+/**
+ * Formats the human-facing `{PREFIX}-{year}-{NNNN}` reference string (e.g.
+ * `DEP-2026-0001`). Pure formatting, split out from `nextReference` so it's
+ * unit-testable without a DB.
+ */
+export function formatReference(
+    kind: BillingDocumentKind,
+    year: number,
+    counter: number
+): string {
+    return `${REFERENCE_PREFIX[kind]}-${year}-${String(counter).padStart(4, "0")}`;
 }
 
 /**
@@ -69,8 +83,7 @@ export class BillingDocumentRepository {
                 `Failed to allocate billing reference for merchant=${merchantId} kind=${kind} year=${year}`
             );
         }
-        const counter = String(row.last_value).padStart(4, "0");
-        return `${REFERENCE_PREFIX[kind]}-${year}-${counter}`;
+        return formatReference(kind, year, row.last_value);
     }
     async findById(
         merchantId: string,
