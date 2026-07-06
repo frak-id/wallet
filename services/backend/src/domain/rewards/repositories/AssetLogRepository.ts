@@ -4,6 +4,7 @@ import {
     eq,
     exists,
     gt,
+    gte,
     inArray,
     isNotNull,
     isNull,
@@ -638,5 +639,36 @@ export class AssetLogRepository {
                 )
             );
         return result?.count ?? 0;
+    }
+
+    /**
+     * Sum of settled reward amounts for a merchant since a given instant.
+     * Settled-only — only actually-paid rewards reduce the campaign bank
+     * (billing-feature-plan.md §6.2). Returns a decimal string ("0" when no
+     * rows match) to preserve numeric(36,18) precision; callers must use
+     * decimal.js, never parseFloat.
+     *
+     * This is the narrow Phase-2 subset (withdraw restitution) of the
+     * Phase-3 `findByMerchantAndDateRange` (monthly-bill annex + range).
+     */
+    async sumSettledAmountSince(
+        merchantId: string,
+        since: Date
+    ): Promise<string> {
+        const [result] = await db
+            .select({
+                total: sql<string>`COALESCE(SUM(${assetLogsTable.amount}), 0)`.mapWith(
+                    String
+                ),
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    eq(assetLogsTable.status, "settled"),
+                    gte(assetLogsTable.settledAt, since)
+                )
+            );
+        return result?.total ?? "0";
     }
 }

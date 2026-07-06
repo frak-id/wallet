@@ -1,9 +1,11 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import {
     index,
+    integer,
     jsonb,
     numeric,
     pgTable,
+    primaryKey,
     text,
     timestamp,
     unique,
@@ -96,3 +98,42 @@ export const billingDocumentsTable = pgTable(
 
 export type BillingDocumentInsert = typeof billingDocumentsTable.$inferInsert;
 export type BillingDocumentSelect = typeof billingDocumentsTable.$inferSelect;
+
+/**
+ * Backs per-merchant, per-kind, per-year reference counters (e.g.
+ * `DEP-2026-0001`). A dedicated table — not a Postgres `SEQUENCE` — because
+ * sequences can't reset per `(merchant, kind, year)` without runtime DDL
+ * (rejected: agents/app never own migrations, see AGENTS.md). Allocation is
+ * a single atomic `INSERT ... ON CONFLICT DO UPDATE ... RETURNING` against
+ * this table (see `BillingDocumentRepository.nextReference`), which
+ * serializes concurrent creates via the row lock — no `SELECT MAX` race.
+ *
+ * DB-team migration must add:
+ *   CREATE TABLE billing_document_counters (
+ *       merchant_id  uuid    NOT NULL,
+ *       kind         text    NOT NULL,
+ *       year         integer NOT NULL,
+ *       last_value   integer NOT NULL DEFAULT 0,
+ *       PRIMARY KEY (merchant_id, kind, year)
+ *   );
+ *   -- FK merchant_id -> merchants.id
+ */
+export const billingDocumentCountersTable = pgTable(
+    "billing_document_counters",
+    {
+        merchantId: uuid("merchant_id").notNull(),
+        kind: text("kind").$type<BillingDocumentKind>().notNull(),
+        year: integer("year").notNull(),
+        lastValue: integer("last_value").notNull().default(0),
+    },
+    (table) => [
+        primaryKey({
+            columns: [table.merchantId, table.kind, table.year],
+        }),
+    ]
+);
+
+export type BillingDocumentCounterInsert =
+    typeof billingDocumentCountersTable.$inferInsert;
+export type BillingDocumentCounterSelect =
+    typeof billingDocumentCountersTable.$inferSelect;
