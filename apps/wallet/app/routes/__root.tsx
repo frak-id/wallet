@@ -10,6 +10,7 @@ import { FullScreenGate } from "@/module/common/component/FullScreenGate";
 import { ModalOutlet } from "@/module/common/component/ModalOutlet";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { TargetSignatureModal } from "@/module/pairing/component/TargetSignatureModal";
+import { useSignatureRequestHaptics } from "@/module/pairing/hook/useSignatureRequestHaptics";
 import { VersionGate } from "@/module/version";
 // Import open panel to ensure it's initialized
 import "@frak-labs/wallet-shared";
@@ -32,6 +33,7 @@ export const Route = createRootRoute({
  */
 function RootComponent() {
     useHardwareBack();
+    useSignatureRequestHaptics();
 
     // Pre-warm modal-only lazy chunks during browser idle so the first open
     // of Keypass / MoneriumBankFlow / ExplorerDetail / etc. resolves from a

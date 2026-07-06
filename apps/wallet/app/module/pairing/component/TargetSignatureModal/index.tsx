@@ -20,7 +20,6 @@ import { Check, Shield, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { notifyHaptic } from "@/utils/haptics";
 import * as styles from "./index.css";
 
 /**
@@ -59,9 +58,6 @@ function InnerTargetSignatureModal() {
 
     const [isDismissed, setIsDismissed] = useState(false);
     const knownIdsRef = useRef<Set<string>>(new Set());
-    // Distinguishes the first effect run (requests already pending at mount)
-    // from genuinely new arrivals — only the latter should buzz.
-    const hasMountedRef = useRef(false);
 
     // Re-open the modal when a NEW signature ID appears. Removals (sign/decline)
     // must NOT reset the dismissed state — otherwise the modal would jump back
@@ -76,14 +72,7 @@ function InnerTargetSignatureModal() {
             }
         }
         knownIdsRef.current = ids;
-        if (hasNew) {
-            setIsDismissed(false);
-            // Small haptic buzz to surface the incoming request (native on
-            // mobile, navigator.vibrate fallback on web). Skipped on mount so
-            // pre-existing pending requests don't buzz on every remount.
-            if (hasMountedRef.current) void notifyHaptic();
-        }
-        hasMountedRef.current = true;
+        if (hasNew) setIsDismissed(false);
     }, [requests]);
 
     if (total === 0 || !currentRequest) return null;
