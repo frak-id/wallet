@@ -62,6 +62,7 @@ export async function ensureBuckets(): Promise<void> {
     const stage = process.env.STAGE ?? "dev";
     const buckets: BucketSpec[] = [
         { name: `images-${stage}`, publicRead: true },
+        { name: `billing-${stage}`, publicRead: false },
     ];
 
     console.log(

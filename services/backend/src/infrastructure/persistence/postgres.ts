@@ -8,6 +8,7 @@ import {
 // Import schemas directly from db/schema.ts files to avoid pulling in
 // domain contexts (which eagerly instantiate services and repositories)
 import { referralLinksTable } from "../../domain/attribution/db/schema";
+import { billingDocumentsTable } from "../../domain/billing/db/schema";
 import { campaignRulesTable } from "../../domain/campaign/db/schema";
 import {
     emailVerificationCodesTable,
@@ -88,6 +89,7 @@ export const db = drizzle({
         affiliateBrandTable,
         affiliateAttributionTable,
         affiliateSyncStateTable,
+        billingDocumentsTable,
     },
 });
 

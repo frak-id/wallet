@@ -311,10 +311,10 @@ No library exists — introduce one, **backend-side** (generation must be reprod
 
 ## 9. Phased implementation
 
-**Phase 0 — spike (de-risk, mandatory before Phase 1):**
-- Confirm `pdf-lib` renders a one-page PDF **and survives `bun build --compile`** (native-module/font check). Decide library before any template work.
-- Confirm the `billing-${stage}` private bucket provisions and is **not** publicly readable.
-- Confirm the VAT/fee assumptions (§8.1) and ledger-accuracy expectation (§8.9) with finance.
+**Phase 0 — spike (de-risk, mandatory before Phase 1): ✅ COMPLETE.**
+- ✅ `pdf-lib` confirmed. Hands-on spike (`pdf-lib@1.17.1` + `@pdf-lib/fontkit@1.1.1`): renders a 1-page A4 PDF and survives `bun build --compile` for both `--target=bun` (`build:binary`) **and** `--target=bun-linux-arm64` (`build:binary-linux-arm64`, the prod target). Standalone binary runs from any dir; custom TTF fonts embed via `import font with { type: "file" }` + `Bun.file()` (`Bun.embeddedFiles`) and render even when the `.ttf` is absent at runtime; **no native `.node` modules** in the dependency tree. `@react-pdf/renderer` correctly avoided.
+- ✅ Private bucket confirmed in code: `ensure-buckets.ts` gates the public-read policy behind `if (spec.publicRead)` with no `else`, so `{ name: \`billing-${stage}\`, publicRead: false }` provisions with **no** policy attached. Presign correctly ruled out (`RUSTFS_ENDPOINT` is cluster-internal; no `RUSTFS_PUBLIC_ENDPOINT`; zero `presign` usage in backend). Elysia binary-stream pattern already exists (`common/social.ts`). **Residual runtime gate (unprovable by static analysis — RustFS default ACL is external):** after provisioning, do an anonymous (no-cred) `GET`/`HEAD` on a `billing-${stage}` object and confirm 403/404, not 200.
+- ✅ Finance sign-off received: gross is VAT-inclusive (VAT = `gross × 0.20/1.20`); non-FR merchants carry no VAT line (reverse-charge); Frak fee = 20% of `(gross − VAT)`; admin-entry-derived fiat ledger with live on-chain divergence check (§6.2) is acceptable for launch.
 
 **Phase 1 — data + storage:**
 - Migration (DB team): `merchants.accountingInfo` jsonb; `billing_documents` table + composite/partial-unique constraints + FK + `SEQUENCE`s.
