@@ -40,10 +40,7 @@ export const clientLifecycleHandler: LifecycleHandler<
 
     switch (event) {
         case "modal-css": {
-            const style = document.createElement("link");
-            style.rel = "stylesheet";
-            style.href = data.cssLink;
-            document.head.appendChild(style);
+            applyModalCss(data.cssLink);
             return;
         }
 
@@ -111,6 +108,50 @@ async function handleRestoreBackup(
 }
 
 const BACKEND_CSS_STYLE_ID = "frak-backend-css";
+const MODAL_CSS_LINK_ID = "frak-modal-css";
+
+/**
+ * Validate a merchant-supplied stylesheet URL before injecting it as a
+ * `<link rel="stylesheet">`. The link is attacker-influenceable (it rides in
+ * on an unauthenticated `modal-css` lifecycle message), so we constrain it to
+ * an absolute `https:` URL whose path ends in `.css` — matching the SDK
+ * `customizations.css` contract (`${string}.css`). This rejects `javascript:`,
+ * `data:`, `http:`, and protocol-relative (`//host`) vectors while still
+ * letting merchants host their own CSS on any https origin.
+ */
+function isSafeCssLink(cssLink: unknown): cssLink is string {
+    if (typeof cssLink !== "string") return false;
+    try {
+        const url = new URL(cssLink);
+        if (url.protocol !== "https:") return false;
+        return url.pathname.toLowerCase().endsWith(".css");
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Inject the merchant's modal stylesheet, once validated. Replaces any
+ * previously-injected modal CSS link so repeated `modal-css` messages don't
+ * stack up `<link>` nodes in `<head>`.
+ */
+function applyModalCss(cssLink: unknown): void {
+    if (!isSafeCssLink(cssLink)) {
+        console.warn(
+            "[Frak] Ignoring modal-css: cssLink is not a valid https .css URL"
+        );
+        return;
+    }
+
+    const existing = document.getElementById(MODAL_CSS_LINK_ID);
+    if (existing) existing.remove();
+
+    const style = document.createElement("link");
+    style.id = MODAL_CSS_LINK_ID;
+    style.rel = "stylesheet";
+    style.href = cssLink;
+    document.head.appendChild(style);
+}
 
 function extractDomain(origin: string): string {
     try {
