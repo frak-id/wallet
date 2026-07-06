@@ -22,6 +22,9 @@ const mocks = vi.hoisted(() => ({
     navigate: vi.fn(),
     // Mutable so individual tests can simulate the web (non-Tauri) build.
     isTauri: true,
+    // Mutable so tests can simulate Android (reliable `no-credential`) vs
+    // iOS/web (where a silent `no-credential` is a false negative).
+    isAndroid: false,
 }));
 
 vi.mock("@frak-labs/app-essentials/utils/platform", async (importOriginal) => {
@@ -33,6 +36,9 @@ vi.mock("@frak-labs/app-essentials/utils/platform", async (importOriginal) => {
         ...actual,
         get IS_TAURI() {
             return mocks.isTauri;
+        },
+        get IS_ANDROID() {
+            return mocks.isAndroid;
         },
     };
 });
@@ -122,6 +128,7 @@ beforeEach(() => {
     mocks.hint = null;
     mocks.loginOptions = [];
     mocks.isTauri = true;
+    mocks.isAndroid = false;
 });
 
 afterEach(() => {
@@ -155,8 +162,9 @@ describe("AuthActions silent quick-login", () => {
         expect(mocks.login).toHaveBeenCalledWith({});
     });
 
-    test("no-credential outcome clears all three authenticator surfaces and suppresses the toast", async () => {
+    test("Android no-credential outcome clears all three authenticator surfaces and suppresses the toast", async () => {
         mocks.hint = HINT;
+        mocks.isAndroid = true;
         const onError = vi.fn();
         render(<AuthActions onSuccess={vi.fn()} onError={onError} />);
 
@@ -195,6 +203,28 @@ describe("AuthActions silent quick-login", () => {
 
         expect(onError).toHaveBeenCalledWith(cancelled);
         expect(mocks.clearLastAuthenticator).not.toHaveBeenCalled();
+    });
+
+    test("iOS no-credential is a false negative: keeps the hint and suppresses the toast", async () => {
+        // On iOS the silent `preferImmediatelyAvailableCredentials` attempt
+        // reports `no-credential` even when a usable iCloud passkey exists, so
+        // the destructive self-heal must NOT run — otherwise every `/login`
+        // visit wipes the hint and drops the user onto `/register`.
+        mocks.hint = HINT;
+        mocks.isAndroid = false;
+        const onError = vi.fn();
+        render(<AuthActions onSuccess={vi.fn()} onError={onError} />);
+
+        await waitFor(() =>
+            expect(mocks.loginOptions.length).toBeGreaterThan(1)
+        );
+        const silentOnError = mocks.loginOptions[1]?.onError;
+
+        await silentOnError?.(new Error("no credential available"));
+
+        // The durable surfaces stay intact (no wipe) and no toast is shown.
+        expect(mocks.clearLastAuthenticator).not.toHaveBeenCalled();
+        expect(onError).not.toHaveBeenCalledWith(expect.any(Error));
     });
 
     test("does not auto-fire on web (non-Tauri) even with a hint", async () => {

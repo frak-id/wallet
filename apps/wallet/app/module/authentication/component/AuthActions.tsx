@@ -1,4 +1,4 @@
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -27,14 +27,10 @@ type AuthActionsProps = {
 /**
  * Login actions rendered on the `/login` page.
  *
- * Layout:
- *  - When a recovery hint exists (Zustand store, or uninstall-resilient
- *    cloud KV hint): primary "Use my account 0x…" + secondary "Connect
- *    another account" (`wallet.login.anotherAccount`).
- *  - When no hint: primary biometric button labeled `wallet.login.button`
- *    ("Use biometrics") — same text as the legacy login flow.
- *  - The "Create a new wallet" action lives on the page header (see the
- *    `<Back>` button on `/login`) which routes to `/register?new=1`.
+ *  - Hint present (zustand or cloud KV): "Use my account 0x…" + "Connect
+ *    another account".
+ *  - No hint: single "Use biometrics" button.
+ *  - "Create a new wallet" lives on the page header `<Back>` (→ `/register?new=1`).
  */
 export function AuthActions({
     onSuccess,
@@ -51,26 +47,26 @@ export function AuthActions({
         onError: (error: Error) => onError(error),
     });
 
-    // A `no-credential` outcome from the silent quick-login means the hint is
-    // stale (passkey deleted, or the cloud hint synced to a device that never
-    // had the credential). Clear all three "last authenticator" surfaces
-    // (zustand, cloud hint, and this wallet's IndexedDB row — the `register`
-    // route's primary gate signal) and refresh the query so the UI settles on
-    // the no-hint manual layout — no error toast. Any other failure (e.g. user
-    // cancelled) routes through the normal `onError` toast.
+    // Self-heal a stale hint (passkey deleted, or cloud hint synced to a device
+    // that never had the credential) by clearing all three "last authenticator"
+    // surfaces — but ONLY on Android, where `TYPE_NO_CREDENTIAL` reliably means
+    // "no passkey here". On iOS the silent `preferImmediatelyAvailable` attempt
+    // reports `no-credential` even for a usable iCloud passkey (device-verified:
+    // the full-sheet login works), so wiping there would nuke a valid hint on
+    // every `/login` visit — keep it and stay quiet instead. Other errors (e.g.
+    // user cancelled) route through the normal `onError` toast.
     //
-    // Deliberately NOT async: TanStack Query awaits `onError` before moving the
-    // mutation out of `pending`, so awaiting the native hint wipe / IDB clear /
-    // query refetch here would pin `isSilentLoading` (and the button spinners)
-    // on any stalled invoke. `clearLastAuthenticator` flips the zustand state
-    // synchronously before its first `await`; the cloud + IDB wipes and query
-    // invalidation are best-effort background cleanup.
+    // Not async: TanStack Query awaits `onError` before leaving `pending`, so
+    // awaiting the cleanup would pin the button spinners on a stalled invoke.
+    // `clearLastAuthenticator` nulls zustand synchronously; the cloud + IDB
+    // wipes are best-effort background cleanup.
     const handleSilentError = useCallback(
         (error: Error) => {
             if (classifyWebauthnError(error).kind !== "no-credential") {
                 onError(error);
                 return;
             }
+            if (!IS_ANDROID) return;
             void clearLastAuthenticator(hint?.wallet)
                 .then(() =>
                     queryClient.invalidateQueries({
@@ -87,25 +83,19 @@ export function AuthActions({
         [onError, queryClient, hint]
     );
 
-    // The silent attempt's pending state is tracked locally from the mutation
-    // promise instead of `useLogin`'s `isLoading`: that flag comes from the
-    // mutation OBSERVER, and an auto-fired mutation is in flight during React
-    // StrictMode's simulated unmount — the teardown detaches the observer from
-    // the running mutation and resubscription never re-attaches it, freezing
-    // `isPending` at `true` (perma-spinner). The promise we already hold always
-    // settles, observer or not.
+    // Track pending from the promise, not `useLogin`'s `isLoading`: under React
+    // StrictMode the auto-fired mutation's observer detaches on the simulated
+    // unmount and never re-attaches, freezing `isPending` true (perma-spinner).
     const [isSilentPending, setIsSilentPending] = useState(false);
     const { login: silentLogin } = useLogin({
         onSuccess: () => onSuccess(),
         onError: handleSilentError,
     });
 
-    // Fire the silent quick-login at most once per mount, and only once a hint
-    // has resolved. Gating on hint-existence keeps fresh installs (no hint)
-    // from ever seeing an unexpected biometric prompt. Tauri-only: on web the
-    // preferImmediatelyAvailable flag is inert, so a stale hint would open a
-    // full browser passkey modal and fail as `cancelled` (toast, no self-heal)
-    // instead of failing fast onto `no-credential`.
+    // Fire once per mount, only when a hint exists (so fresh installs never see
+    // an unexpected prompt) and only on Tauri (web's `preferImmediatelyAvailable`
+    // is inert — a stale hint would open a full passkey modal instead of failing
+    // fast onto `no-credential`).
     const silentAttempted = useRef(false);
     useEffect(() => {
         if (
@@ -117,13 +107,9 @@ export function AuthActions({
             return;
         silentAttempted.current = true;
         onError(null);
-        // No `auth_login_method_selected` here: that event signals a user's
-        // explicit method choice, which the auto-fire is not. The attempt and
-        // its outcome are still tracked via useLogin's `auth_login` flow.
-        // `silentLogin` is `mutateAsync` — it rejects on failure even though
-        // `handleSilentError` already handles the outcome. Swallow the returned
-        // rejection so the routine no-credential / cancelled paths don't surface
-        // as unhandled promise rejections on every mount.
+        // No `auth_login_method_selected`: that signals an explicit user choice,
+        // not an auto-fire. `handleSilentError` owns the outcome, so swallow the
+        // `mutateAsync` rejection to avoid unhandled rejections on every mount.
         setIsSilentPending(true);
         void silentLogin({
             lastAuthentication: hint,
