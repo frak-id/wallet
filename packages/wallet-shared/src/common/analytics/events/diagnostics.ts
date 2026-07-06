@@ -14,6 +14,7 @@ export type AppErrorSource =
     | "react_router"
     | "deep_link"
     | "biometrics"
+    | "haptics"
     | "service_worker"
     | "tokens_send"
     | "monerium_callback"
