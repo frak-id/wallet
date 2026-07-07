@@ -69,11 +69,9 @@ const monthlyBillOrchestrator = new MonthlyBillOrchestrator(
     BillingContext.repositories.billingStorage,
     MerchantContext.repositories.merchant,
     RewardsContext.repositories.assetLog,
-    CampaignBankContext.repositories.campaignBank,
     BillingContext.services.computation,
     BillingContext.services.pdf,
-    pricingRepository,
-    WalletContext.repositories.balances
+    pricingRepository
 );
 
 const identityWeightService = new IdentityWeightService(

@@ -4,7 +4,7 @@ import {
     type Stablecoin,
 } from "@frak-labs/app-essentials";
 import Decimal from "decimal.js";
-import { type Address, isAddressEqual } from "viem";
+import { type Address, isAddressEqual, zeroAddress } from "viem";
 import type {
     BillingDocumentInsert,
     BillingDocumentSelect,
@@ -14,20 +14,16 @@ import {
     isUniqueViolation,
 } from "../../domain/billing/repositories/BillingDocumentRepository";
 import type { BillingStorageRepository } from "../../domain/billing/repositories/BillingStorageRepository";
-import type {
-    BillingDocumentDetails,
-    MonthlyBillReview,
-} from "../../domain/billing/schemas";
+import type { BillingDocumentDetails } from "../../domain/billing/schemas";
 import {
     type BillingComputationService,
     stablecoinForTokenAddress,
 } from "../../domain/billing/services/BillingComputationService";
 import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
-import type { CampaignBankRepository } from "../../domain/campaign-bank/repositories/CampaignBankRepository";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
+import type { MerchantAccountingInfo } from "../../domain/merchant/schemas";
 import type { AssetLogSelect } from "../../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
-import type { BalancesRepository } from "../../domain/wallet/repositories/BalancesRepository";
 import type {
     PricingRepository,
     TokenPrice,
@@ -49,6 +45,46 @@ function periodEndOf(periodStart: Date): Date {
     );
 }
 
+/** First instant (UTC) of the calendar month containing `date`. */
+function monthStartOf(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+/** The earlier of two dates. */
+function earliest(a: Date, b: Date): Date {
+    return a.getTime() <= b.getTime() ? a : b;
+}
+
+/**
+ * A merchant can only be billed once its buyer identity is on file — the
+ * monthly bill's "billed to" block needs the full accounting info. Every field
+ * is required by the admin form, so a saved profile has them all; a partial or
+ * absent one skips the merchant until it is completed.
+ */
+function isAccountingInfoComplete(
+    info: Partial<MerchantAccountingInfo> | null | undefined
+): boolean {
+    return Boolean(
+        info?.companyName &&
+            info.vatNumber &&
+            info.streetAddress &&
+            info.city &&
+            info.postalCode &&
+            info.country &&
+            info.billingEmail
+    );
+}
+
+/** Runaway-date guard: max months a single merchant backfill walks. */
+const MAX_BACKFILL_MONTHS = 600;
+
+/**
+ * `created_by` sentinel for cron-generated (unattended) monthly bills — no
+ * human admin issued them. The column is nullable, but a stable non-null
+ * sentinel keeps the audit column uniformly typed and greppable.
+ */
+const SYSTEM_ACTOR: Address = zeroAddress;
+
 export class MonthlyBillAlreadyExistsError extends Error {
     constructor(
         readonly existing: BillingDocumentSelect,
@@ -65,11 +101,10 @@ type GenerateMonthlyBillInput = {
 
 /**
  * Generates the monthly bill: a per-currency fiat ledger (opening/closing
- * balance derived from admin-entered deposits/withdraws + settled rewards),
- * a reward annex, and a live on-chain divergence check
- * (billing-feature-plan.md §6). Kept separate from `BillingOrchestrator`
- * (deposit/withdraw) — this use case pulls in campaign-bank, pricing, and
- * token-metadata collaborators that deposit/withdraw assembly never needs;
+ * balance derived from admin-entered deposits/withdraws + settled rewards)
+ * and a reward annex (billing-feature-plan.md §6). Kept separate from
+ * `BillingOrchestrator` (deposit/withdraw) — this use case pulls in pricing
+ * and token-metadata collaborators that deposit/withdraw assembly never needs;
  * merging would turn `BillingOrchestrator` into an unrelated god-orchestrator
  * over two lifecycles. Both share the billing repositories/services by
  * constructor DI; neither calls the other (orchestrator → orchestrator is
@@ -89,17 +124,16 @@ export class MonthlyBillOrchestrator {
         private readonly billingStorage: BillingStorageRepository,
         private readonly merchant: MerchantRepository,
         private readonly assetLogs: AssetLogRepository,
-        private readonly campaignBank: CampaignBankRepository,
         private readonly computation: BillingComputationService,
         private readonly pdf: BillingPdfService,
-        private readonly pricing: PricingRepository,
-        private readonly balances: BalancesRepository
+        private readonly pricing: PricingRepository
     ) {}
 
     async generateMonthlyBill(
         merchantId: string,
         { periodStart }: GenerateMonthlyBillInput,
-        createdBy: Address
+        createdBy: Address,
+        { renderPdf = true }: { renderPdf?: boolean } = {}
     ): Promise<BillingDocumentSelect> {
         const periodEnd = periodEndOf(periodStart);
 
@@ -129,16 +163,153 @@ export class MonthlyBillOrchestrator {
             createdBy
         );
 
-        await this.tryGenerateAndStorePdf(document, {
-            annexAssetLogs: computed.annexAssetLogs,
-            priceByToken: computed.priceByToken,
-            merchant: computed.merchant,
-        });
+        // The cron generates bills data-only (`renderPdf: false`); the PDF
+        // renders lazily on the merchant's first download (see the download
+        // route + `regeneratePdf`), so an unopened bill never stores an object.
+        if (renderPdf) {
+            await this.tryGenerateAndStorePdf(document, {
+                annexAssetLogs: computed.annexAssetLogs,
+                priceByToken: computed.priceByToken,
+                merchant: computed.merchant,
+            });
+        }
 
         return (
             (await this.billingDocuments.findById(merchantId, document.id)) ??
             document
         );
+    }
+
+    /**
+     * Idempotent monthly-bill sweep across all merchants, run by the daily
+     * cron (there is no admin trigger). For each merchant that (a) has its
+     * accounting info on file and (b) has at least one deposit, generates the
+     * missing monthly bills from the oldest of (merchant creation, first
+     * deposit) up to — but excluding — the current month. The current month is
+     * skipped because it is still accumulating deposits/rewards; it is billed
+     * once it has fully elapsed. Bills are stored data-only (no PDF); the PDF
+     * renders lazily on first download. Best-effort per merchant/month: one
+     * failure is logged and never aborts the sweep.
+     */
+    async backfillAllMerchantBills(): Promise<{
+        merchantsConsidered: number;
+        merchantsBilled: number;
+        billsCreated: number;
+    }> {
+        const merchants = await this.merchant.findAll();
+        // `findAll` is hard-capped (currently 500 rows). Once merchant count
+        // reaches it, the tail is silently unbilled — surface it loudly until
+        // the repository grows cursor pagination.
+        if (merchants.length >= 500) {
+            log.warn(
+                { merchantCount: merchants.length },
+                "monthly-bill backfill: merchant list hit the findAll cap; some merchants may be skipped — add pagination"
+            );
+        }
+        const currentMonthStart = monthStartOf(new Date());
+
+        let merchantsBilled = 0;
+        let billsCreated = 0;
+        for (const merchant of merchants) {
+            try {
+                const created = await this.backfillMerchant(
+                    merchant,
+                    currentMonthStart
+                );
+                if (created > 0) merchantsBilled++;
+                billsCreated += created;
+            } catch (err) {
+                log.error(
+                    { err, merchantId: merchant.id },
+                    "monthly-bill backfill failed for merchant; skipping"
+                );
+            }
+        }
+
+        return {
+            merchantsConsidered: merchants.length,
+            merchantsBilled,
+            billsCreated,
+        };
+    }
+
+    /**
+     * Generates the missing monthly bills for one merchant, returning how many
+     * were created (0 if skipped or already up to date). Skips merchants
+     * without complete accounting info or without any deposit — nothing to
+     * bill. Existing periods are loaded once and skipped so re-running the
+     * sweep is cheap.
+     */
+    private async backfillMerchant(
+        merchant: NonNullable<MerchantSelectForBill>,
+        currentMonthStart: Date
+    ): Promise<number> {
+        if (!isAccountingInfoComplete(merchant.accountingInfo)) {
+            return 0;
+        }
+
+        const oldestDeposit =
+            await this.billingDocuments.findOldestDepositDate(merchant.id);
+        if (!oldestDeposit) return 0;
+
+        const rangeStart = monthStartOf(
+            merchant.createdAt
+                ? earliest(merchant.createdAt, oldestDeposit)
+                : oldestDeposit
+        );
+
+        const existing = new Set(
+            (
+                await this.billingDocuments.listMonthlyBillPeriodStarts(
+                    merchant.id
+                )
+            ).map((d) => d.getTime())
+        );
+
+        let created = 0;
+        let periodStart = rangeStart;
+        for (
+            let i = 0;
+            i < MAX_BACKFILL_MONTHS &&
+            periodStart.getTime() < currentMonthStart.getTime();
+            i++
+        ) {
+            // A period's end is the next month's start.
+            const periodEnd = periodEndOf(periodStart);
+            if (!existing.has(periodStart.getTime())) {
+                created += await this.backfillMonth(merchant.id, periodStart);
+            }
+            periodStart = periodEnd;
+        }
+        return created;
+    }
+
+    /**
+     * Generates a single month's data-only bill, returning 1 on success and 0
+     * when the period already exists (idempotency race) or the render-less
+     * generation fails — both are non-fatal to the surrounding sweep.
+     */
+    private async backfillMonth(
+        merchantId: string,
+        periodStart: Date
+    ): Promise<number> {
+        try {
+            await this.generateMonthlyBill(
+                merchantId,
+                { periodStart },
+                SYSTEM_ACTOR,
+                { renderPdf: false }
+            );
+            return 1;
+        } catch (err) {
+            if (!(err instanceof MonthlyBillAlreadyExistsError)) {
+                log.error(
+                    { err, merchantId, periodStart },
+                    "monthly-bill backfill: failed to generate a month"
+                );
+            }
+            return 0;
+        }
     }
 
     /**
@@ -192,11 +363,10 @@ export class MonthlyBillOrchestrator {
     /**
      * Shared assembly for `generateMonthlyBill` and `regeneratePdf`: pulls the
      * grouped sums for the period once, folds them into per-currency ledgers,
-     * builds the reward annex (with its priced fiat totals), runs the on-chain
-     * divergence check, and returns the frozen `details` plus the annex rows,
-     * the price map (threaded into PDF rendering so annex fiat rows agree with
-     * `fiatTotals`, §6.3), and the merchant (fetched once, reused for the
-     * divergence check and the PDF buyer block).
+     * builds the reward annex (with its priced fiat totals), and returns the
+     * frozen `details` plus the annex rows, the price map (threaded into PDF
+     * rendering so annex fiat rows agree with `fiatTotals`, §6.3), and the
+     * merchant (fetched once for the PDF buyer block).
      */
     private async computeBillData(
         merchantId: string,
@@ -257,12 +427,6 @@ export class MonthlyBillOrchestrator {
             periodEnd
         );
 
-        const review = await this.assessOnChainDivergence(
-            merchant,
-            currencies,
-            ledgers
-        );
-
         const details: BillingDocumentDetails = {
             kind: "monthly_bill",
             ledgers: ledgers.map(({ currency, ledger }) => ({
@@ -271,7 +435,6 @@ export class MonthlyBillOrchestrator {
             })),
             annexRowCount: annexData.rowCount,
             fiatTotals: annexData.totals,
-            review,
         };
 
         return {
@@ -519,98 +682,6 @@ export class MonthlyBillOrchestrator {
         };
     }
 
-    /**
-     * Compares each currency's derived closing balance against a live
-     * on-chain read (best-effort — §6.2). Skips (never blocks generation) if
-     * the merchant has no `bankAddress` or the on-chain read fails. Takes the
-     * already-fetched `merchant` (loaded once in `computeBillData`) rather
-     * than re-reading it.
-     */
-    private async assessOnChainDivergence(
-        merchant: MerchantSelectForBill | null,
-        currencies: Stablecoin[],
-        ledgers: Array<{
-            currency: Stablecoin;
-            ledger: ReturnType<
-                BillingComputationService["computeMonthlyLedger"]
-            >;
-        }>
-    ): Promise<MonthlyBillReview> {
-        const checkedAt = new Date().toISOString();
-
-        if (!merchant?.bankAddress) {
-            return {
-                flagged: false,
-                checkedAt,
-                perCurrency: [],
-                skipped: true,
-                skipReason: "merchant has no bank address",
-            };
-        }
-
-        try {
-            const tokenAddresses = currencies.map(getTokenAddressForStablecoin);
-            const [{ balances }, tokenMetadata] = await Promise.all([
-                this.campaignBank.getBankOnChainState(
-                    merchant.bankAddress,
-                    tokenAddresses
-                ),
-                this.balances.getTokenMetadataBatch(tokenAddresses),
-            ]);
-
-            const perCurrency = currencies.map((currency) => {
-                const tokenAddress = getTokenAddressForStablecoin(currency);
-                const decimals =
-                    tokenMetadata.get(tokenAddress)?.decimals ?? 18;
-                const rawBalance = balances.get(tokenAddress) ?? 0n;
-                // Scale the raw on-chain bigint to the same human-decimal
-                // unit as the derived balance — comparing bigint-to-human
-                // directly would "diverge" by ~10^decimals every time.
-                const onChainBalance = new Decimal(rawBalance.toString())
-                    .div(new Decimal(10).pow(decimals))
-                    .toFixed(18);
-                const derivedClosing =
-                    ledgers.find((l) => l.currency === currency)?.ledger
-                        .closingBalance ?? "0";
-                const { deltaAbs, withinThreshold } =
-                    this.computation.assessDivergence(
-                        derivedClosing,
-                        onChainBalance
-                    );
-
-                return {
-                    currency,
-                    derivedClosing,
-                    onChainBalance,
-                    deltaAbs,
-                    withinThreshold,
-                };
-            });
-
-            const flagged = perCurrency.some((c) => !c.withinThreshold);
-            if (flagged) {
-                log.warn(
-                    { merchantId: merchant.id, perCurrency },
-                    "monthly bill: derived balance diverges from on-chain balance beyond threshold"
-                );
-            }
-
-            return { flagged, checkedAt, perCurrency };
-        } catch (err) {
-            log.error(
-                { err, merchantId: merchant.id },
-                "monthly bill: on-chain divergence check failed; publishing without it"
-            );
-            return {
-                flagged: false,
-                checkedAt,
-                perCurrency: [],
-                skipped: true,
-                skipReason: "on-chain read failed",
-            };
-        }
-    }
-
     private async tryGenerateAndStorePdf(
         document: BillingDocumentSelect,
         pdfData: {
@@ -699,13 +770,6 @@ export class MonthlyBillOrchestrator {
                 ledgers: details.ledgers,
                 fiatTotals: details.fiatTotals,
                 annexRows,
-                review: details.review
-                    ? {
-                          flagged: details.review.flagged,
-                          skipped: details.review.skipped,
-                          skipReason: details.review.skipReason,
-                      }
-                    : undefined,
             },
         });
 

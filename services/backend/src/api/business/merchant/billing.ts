@@ -9,7 +9,6 @@ import {
     DepositNotFoundError,
     WithdrawValidationError,
 } from "../../../orchestration/billing/BillingOrchestrator";
-import { MonthlyBillAlreadyExistsError } from "../../../orchestration/billing/MonthlyBillOrchestrator";
 import { OrchestrationContext } from "../../../orchestration/context";
 import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
@@ -40,11 +39,6 @@ const CreateWithdrawBodySchema = t.Object({
     txHash: t.Optional(t.Hex()),
 });
 
-const GenerateMonthlyBillBodySchema = t.Object({
-    // "YYYY-MM", e.g. "2026-02" — the calendar month to generate (§6.4).
-    month: t.String({ pattern: "^\\d{4}-(0[1-9]|1[0-2])$" }),
-});
-
 // Document-scoped routes carry both the merchant and the document uuid. Both
 // map to `uuid` columns, so the id is validated as a uuid here (a malformed
 // id 404s at the schema boundary instead of reaching Postgres as a 500).
@@ -52,11 +46,6 @@ const BillingDocumentParamSchema = t.Object({
     merchantId: t.String(),
     id: t.String({ format: "uuid" }),
 });
-
-function parsePeriodStart(month: string): Date {
-    const [year, monthNum] = month.split("-").map(Number);
-    return new Date(Date.UTC(year as number, (monthNum as number) - 1, 1));
-}
 
 /**
  * Maps a validated deposit request body to the orchestrator's create/reissue
@@ -246,41 +235,6 @@ export const merchantBillingAdminRoutes = new Elysia({
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
-            },
-        }
-    )
-    .post(
-        "/monthly-bills",
-        async ({ params: { merchantId }, body, businessSession }) => {
-            if (!businessSession) {
-                return status(401, "Authentication required");
-            }
-
-            try {
-                const document =
-                    await OrchestrationContext.orchestrators.monthlyBill.generateMonthlyBill(
-                        merchantId,
-                        { periodStart: parsePeriodStart(body.month) },
-                        businessSession.wallet
-                    );
-
-                return toResponse(document);
-            } catch (err) {
-                if (err instanceof MonthlyBillAlreadyExistsError) {
-                    return status(409, toResponse(err.existing));
-                }
-                throw err;
-            }
-        },
-        {
-            platformAdminAuthenticated: true,
-            params: MerchantIdParamSchema,
-            body: GenerateMonthlyBillBodySchema,
-            response: {
-                200: BillingDocumentResponseSchema,
-                401: t.String(),
-                403: t.String(),
-                409: BillingDocumentResponseSchema,
             },
         }
     )

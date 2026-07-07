@@ -1,6 +1,6 @@
 import { db } from "@backend-infrastructure";
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { and, desc, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import {
     type BillingDocumentInsert,
     type BillingDocumentSelect,
@@ -247,7 +247,7 @@ export class BillingDocumentRepository {
     }
 
     /**
-     * Overwrites a monthly bill's `details` (recomputed ledger/annex/review)
+     * Overwrites a monthly bill's `details` (recomputed ledger/annex)
      * during PDF regeneration — the row exists but its stored breakdown must
      * be refreshed from current data before re-rendering (§6.3). Guarded to
      * non-voided `monthly_bill` rows without a PDF: an already-issued PDF is
@@ -409,6 +409,45 @@ export class BillingDocumentRepository {
             .groupBy(billingDocumentsTable.currency);
 
         return rows;
+    }
+
+    /**
+     * The `documentDate` of a merchant's oldest non-voided deposit, or null if
+     * the merchant has never had one. Drives the monthly-bill backfill's lower
+     * bound (the cron generates bills from the oldest of merchant-creation /
+     * first-deposit up to the current month) and doubles as the
+     * "has any deposit" gate that skips merchants with nothing to bill.
+     */
+    async findOldestDepositDate(merchantId: string): Promise<Date | null> {
+        const row = await db.query.billingDocumentsTable.findFirst({
+            where: and(
+                eq(billingDocumentsTable.merchantId, merchantId),
+                eq(billingDocumentsTable.kind, "deposit"),
+                isNull(billingDocumentsTable.voidedAt)
+            ),
+            orderBy: asc(billingDocumentsTable.documentDate),
+            columns: { documentDate: true },
+        });
+        return row?.documentDate ?? null;
+    }
+
+    /**
+     * `periodStart`s of all non-voided monthly bills for a merchant — the
+     * backfill loads these once and skips months already covered, avoiding a
+     * per-month existence probe on every cron run.
+     */
+    async listMonthlyBillPeriodStarts(merchantId: string): Promise<Date[]> {
+        const rows = await db.query.billingDocumentsTable.findMany({
+            where: and(
+                eq(billingDocumentsTable.merchantId, merchantId),
+                eq(billingDocumentsTable.kind, "monthly_bill"),
+                isNull(billingDocumentsTable.voidedAt)
+            ),
+            columns: { periodStart: true },
+        });
+        return rows
+            .map((row) => row.periodStart)
+            .filter((d): d is Date => d !== null);
     }
 
     /**

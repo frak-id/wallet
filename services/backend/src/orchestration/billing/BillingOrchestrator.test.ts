@@ -457,6 +457,73 @@ describe("BillingOrchestrator", () => {
         });
     });
 
+    describe("createDeposit lazy PDF + bill invalidation", () => {
+        const createdBy =
+            "0x0000000000000000000000000000000000000007" as const;
+        const input = {
+            grossAmount: "1200",
+            currency: "eure" as const,
+            documentDate: new Date("2026-02-15T00:00:00.000Z"),
+            country: "FR",
+        };
+
+        it("does not render/store a PDF at create time (lazy on first download)", async () => {
+            const deposit = makeDeposit();
+            const render = vi.fn();
+            const upload = vi.fn();
+            const setPdf = vi.fn();
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    create: vi.fn().mockResolvedValue(deposit),
+                    findById: vi.fn().mockResolvedValue(deposit),
+                    setPdf,
+                },
+                billingStorage: { upload },
+                pdf: { render },
+            });
+
+            await orchestrator.createDeposit("merchant-1", input, createdBy);
+
+            expect(render).not.toHaveBeenCalled();
+            expect(upload).not.toHaveBeenCalled();
+            expect(setPdf).not.toHaveBeenCalled();
+        });
+
+        it("clears the cached PDF of monthly bills covering the deposit date", async () => {
+            const deposit = makeDeposit({ documentDate: input.documentDate });
+            const coveringBill = makeDeposit({
+                id: "bill-9",
+                kind: "monthly_bill",
+                pdfStorageKey: "merchant-1/monthly_bill/bill-9.pdf",
+            });
+            const findMonthlyBillsCovering = vi
+                .fn()
+                .mockResolvedValue([coveringBill]);
+            const clearPdf = vi.fn().mockResolvedValue(coveringBill);
+            const storageDelete = vi.fn().mockResolvedValue(undefined);
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    create: vi.fn().mockResolvedValue(deposit),
+                    findById: vi.fn().mockResolvedValue(deposit),
+                    findMonthlyBillsCovering,
+                    clearPdf,
+                },
+                billingStorage: { delete: storageDelete },
+            });
+
+            await orchestrator.createDeposit("merchant-1", input, createdBy);
+
+            expect(findMonthlyBillsCovering).toHaveBeenCalledWith(
+                "merchant-1",
+                input.documentDate
+            );
+            expect(storageDelete).toHaveBeenCalledWith(
+                "merchant-1/monthly_bill/bill-9.pdf"
+            );
+            expect(clearPdf).toHaveBeenCalledWith("merchant-1", "bill-9");
+        });
+    });
+
     describe("reissueWithdraw (void + re-emit)", () => {
         it("returns null and does not create when the original can't be voided", async () => {
             const findById = vi

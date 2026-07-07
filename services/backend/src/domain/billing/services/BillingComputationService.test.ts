@@ -262,59 +262,6 @@ describe("BillingComputationService", () => {
         });
     });
 
-    describe("assessDivergence", () => {
-        it("flags when the delta exceeds both the floor and the relative threshold", () => {
-            const result = service.assessDivergence("1000", "800");
-            expect(result.deltaAbs).toBe("200.000000000000000000");
-            expect(result.withinThreshold).toBe(false);
-        });
-
-        it("does not flag dust below the absolute floor", () => {
-            const result = service.assessDivergence("1000", "999.5");
-            expect(result.withinThreshold).toBe(true);
-        });
-
-        it("does not flag when within the relative percentage", () => {
-            // 1% of 1000 = 10
-            const result = service.assessDivergence("1000", "992");
-            expect(result.withinThreshold).toBe(true);
-        });
-
-        it("is symmetric (order of derived/onChain doesn't matter)", () => {
-            const a = service.assessDivergence("1000", "800");
-            const b = service.assessDivergence("800", "1000");
-            expect(a.deltaAbs).toBe(b.deltaAbs);
-            expect(a.withinThreshold).toBe(b.withinThreshold);
-        });
-
-        it("flags against the absolute floor when derivedClosing is zero (threshold = max(1, 0) = 1)", () => {
-            const result = service.assessDivergence("0", "1.5");
-            expect(result.deltaAbs).toBe("1.500000000000000000");
-            expect(result.withinThreshold).toBe(false);
-        });
-
-        it("uses the absolute value of a negative derivedClosing for the relative threshold", () => {
-            // threshold = max(1, |-500| * 0.01) = max(1, 5) = 5; delta = 20
-            const result = service.assessDivergence("-500", "-480");
-            expect(result.deltaAbs).toBe("20.000000000000000000");
-            expect(result.withinThreshold).toBe(false);
-        });
-
-        it("the absolute floor dominates when the relative percentage is smaller than the floor", () => {
-            // threshold = max(1, |0.05| * 0.01 = 0.0005) = 1; delta = 0.505
-            const result = service.assessDivergence("0.05", "0.555");
-            expect(result.deltaAbs).toBe("0.505000000000000000");
-            expect(result.withinThreshold).toBe(true);
-        });
-
-        it("does not flag when the delta exactly equals the threshold (lessThanOrEqualTo)", () => {
-            // threshold = max(1, 1000 * 0.01) = 10; delta = 10
-            const result = service.assessDivergence("1000", "990");
-            expect(result.deltaAbs).toBe("10.000000000000000000");
-            expect(result.withinThreshold).toBe(true);
-        });
-    });
-
     describe("annexRowFiat", () => {
         it("multiplies the token-scaled amount by each spot price", () => {
             const result = service.annexRowFiat({

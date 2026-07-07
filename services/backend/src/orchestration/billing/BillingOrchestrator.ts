@@ -161,7 +161,16 @@ export class BillingOrchestrator {
             createdBy,
         } satisfies Omit<BillingDocumentInsert, "reference">);
 
-        await this.tryGenerateAndStorePdf(document);
+        // PDF is generated lazily on first download (see `regeneratePdf` +
+        // the download route), not here — a merchant who never downloads a
+        // deposit note never triggers a render or a stored object.
+        // A new deposit (possibly back-dated) shifts the derived ledger of
+        // every monthly bill covering its date, so invalidate their cached
+        // PDFs to force a fresh render on next access.
+        await this.invalidateMonthlyBillsCovering(
+            merchantId,
+            document.documentDate
+        );
 
         return (
             (await this.billingDocuments.findById(merchantId, document.id)) ??
@@ -244,7 +253,13 @@ export class BillingOrchestrator {
             createdBy,
         } satisfies Omit<BillingDocumentInsert, "reference">);
 
-        await this.tryGenerateAndStorePdf(document);
+        // PDF generated lazily on first download (see `createDeposit`). A
+        // withdraw's `bankSent` also enters the ledger, so invalidate the
+        // covering monthly bills the same way.
+        await this.invalidateMonthlyBillsCovering(
+            merchantId,
+            document.documentDate
+        );
 
         return (
             (await this.billingDocuments.findById(merchantId, document.id)) ??
@@ -353,11 +368,49 @@ export class BillingOrchestrator {
             await this.billingDocuments.void(merchantId, withdraw.id);
         }
 
-        const affectedBills =
-            await this.billingDocuments.findMonthlyBillsCovering(
-                merchantId,
-                deposit.documentDate
+        await this.invalidateMonthlyBillsCovering(
+            merchantId,
+            deposit.documentDate
+        );
+    }
+
+    /**
+     * Clears the cached PDF of every non-voided monthly bill whose period
+     * covers or postdates `fromDate`, so each regenerates from current data on
+     * next access. Invoked whenever a deposit/withdraw enters or leaves the
+     * ledger — a new (possibly back-dated) create or a void both shift the
+     * derived opening/closing balances of that month's bill and every later
+     * one (`findMonthlyBillsCovering` = `periodEnd > fromDate`). Best-effort
+     * per bill: a storage/clear failure must not fail the triggering
+     * create/void; the bill simply keeps its stale PDF until the next
+     * successful regeneration.
+     */
+    private async invalidateMonthlyBillsCovering(
+        merchantId: string,
+        fromDate: Date
+    ): Promise<void> {
+        // Fully best-effort: this runs *after* the triggering deposit/withdraw
+        // create (or void) has already committed, so nothing here — not even
+        // the lookup query — may throw back to the caller. A failure would
+        // otherwise turn a committed create into an HTTP 500, driving the admin
+        // to retry and double-enter the document. Affected bills simply keep a
+        // stale PDF until the next successful regeneration.
+        let affectedBills: BillingDocumentSelect[];
+        try {
+            affectedBills =
+                await this.billingDocuments.findMonthlyBillsCovering(
+                    merchantId,
+                    fromDate
+                );
+        } catch (err) {
+            log.error(
+                { err, merchantId, fromDate },
+                "failed to look up covering monthly bills; bills keep stale PDFs until next regeneration"
             );
+            return;
+        }
+        // Per-bill isolation: one bill's storage/clear failure must not skip
+        // the others.
         for (const bill of affectedBills) {
             try {
                 if (bill.pdfStorageKey) {
@@ -367,7 +420,7 @@ export class BillingOrchestrator {
             } catch (err) {
                 log.error(
                     { err, documentId: bill.id },
-                    "failed to clear cached monthly-bill PDF after deposit void; bill keeps stale PDF until next regeneration"
+                    "failed to clear cached monthly-bill PDF; bill keeps stale PDF until next regeneration"
                 );
             }
         }
@@ -436,27 +489,6 @@ export class BillingOrchestrator {
         }
         await this.generateAndStorePdf(document);
         return this.billingDocuments.findById(merchantId, id);
-    }
-
-    /**
-     * Best-effort wrapper around `generateAndStorePdf` for the create paths:
-     * a render/upload failure must not fail document creation, since the
-     * document row (with its reference and frozen `details`) is already
-     * committed and financially meaningful on its own. Failures are logged;
-     * the document keeps `pdfGeneratedAt IS NULL` and can be recovered later
-     * via `regeneratePdf`.
-     */
-    private async tryGenerateAndStorePdf(
-        document: BillingDocumentSelect
-    ): Promise<void> {
-        try {
-            await this.generateAndStorePdf(document);
-        } catch (err) {
-            log.error(
-                { err, documentId: document.id, kind: document.kind },
-                "billing PDF generation failed; document persisted without PDF"
-            );
-        }
     }
 
     private async generateAndStorePdf(

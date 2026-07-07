@@ -91,12 +91,6 @@ export type BillingPdfDocumentDto = {
             fiatValue: string;
             txHash?: string;
         }>;
-        /** Present when the on-chain divergence check ran (§6.2). */
-        review?: {
-            flagged: boolean;
-            skipped?: boolean;
-            skipReason?: string;
-        };
     };
 };
 
@@ -353,20 +347,6 @@ export class BillingPdfService {
             { size: 11 }
         );
         cursor.newLine(20);
-
-        if (monthlyBill.review?.flagged) {
-            cursor.text(
-                "REVIEW: derived balance diverges from the on-chain balance beyond threshold — admin review required.",
-                { size: 9, color: DARK }
-            );
-            cursor.newLine(16);
-        } else if (monthlyBill.review?.skipped) {
-            cursor.text(
-                `On-chain divergence check skipped (${monthlyBill.review.skipReason ?? "unknown reason"}).`,
-                { size: 9, color: GRAY }
-            );
-            cursor.newLine(16);
-        }
         cursor.newLine(8);
     }
 

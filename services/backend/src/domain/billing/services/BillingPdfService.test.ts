@@ -80,7 +80,6 @@ const monthlyBillDto: BillingPdfDocumentDto = {
                 txHash: "0xabc123",
             },
         ],
-        review: { flagged: false },
     },
 };
 
@@ -108,13 +107,12 @@ describe("BillingPdfService", () => {
         expect(header).toBe("%PDF-");
     });
 
-    it("renders a monthly bill with a flagged review banner and no annex rows", async () => {
+    it("renders a monthly bill with no annex rows", async () => {
         const bytes = await service.render({
             ...monthlyBillDto,
             monthlyBill: {
                 ...monthlyBillDto.monthlyBill,
                 annexRows: [],
-                review: { flagged: true },
             } as NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
         });
         expect(bytes.length).toBeGreaterThan(0);

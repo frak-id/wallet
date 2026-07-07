@@ -5,10 +5,8 @@ import type { BillingDocumentRepository } from "../../domain/billing/repositorie
 import type { BillingStorageRepository } from "../../domain/billing/repositories/BillingStorageRepository";
 import { BillingComputationService } from "../../domain/billing/services/BillingComputationService";
 import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
-import type { CampaignBankRepository } from "../../domain/campaign-bank/repositories/CampaignBankRepository";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
-import type { BalancesRepository } from "../../domain/wallet/repositories/BalancesRepository";
 import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
 import {
     MonthlyBillAlreadyExistsError,
@@ -53,9 +51,7 @@ function makeOrchestrator(
         billingStorage: Partial<BillingStorageRepository>;
         merchant: Partial<MerchantRepository>;
         assetLogs: Partial<AssetLogRepository>;
-        campaignBank: Partial<CampaignBankRepository>;
         pricing: Partial<PricingRepository>;
-        balances: Partial<BalancesRepository>;
         pdf: Partial<BillingPdfService>;
     }> = {}
 ) {
@@ -86,11 +82,6 @@ function makeOrchestrator(
         ...overrides.assetLogs,
     } as unknown as AssetLogRepository;
 
-    const campaignBank = {
-        getBankOnChainState: vi.fn(),
-        ...overrides.campaignBank,
-    } as unknown as CampaignBankRepository;
-
     const computation = new BillingComputationService();
 
     const pdf = {
@@ -103,21 +94,14 @@ function makeOrchestrator(
         ...overrides.pricing,
     } as unknown as PricingRepository;
 
-    const balances = {
-        getTokenMetadataBatch: vi.fn().mockResolvedValue(new Map()),
-        ...overrides.balances,
-    } as unknown as BalancesRepository;
-
     return new MonthlyBillOrchestrator(
         billingDocuments,
         billingStorage,
         merchant,
         assetLogs,
-        campaignBank,
         computation,
         pdf,
-        pricing,
-        balances
+        pricing
     );
 }
 
@@ -318,186 +302,6 @@ describe("MonthlyBillOrchestrator", () => {
 
             const createArg = create.mock.calls[0][0];
             expect(createArg.details.ledgers).toHaveLength(0);
-        });
-    });
-
-    describe("on-chain divergence check", () => {
-        it("skips (does not block generation) when the merchant has no bankAddress", async () => {
-            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
-            const orchestrator = makeOrchestrator({
-                billingDocuments: {
-                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
-                    create,
-                },
-                merchant: {
-                    findById: vi.fn().mockResolvedValue({
-                        id: "merchant-1",
-                        bankAddress: null,
-                    }),
-                },
-            });
-
-            await orchestrator.generateMonthlyBill(
-                "merchant-1",
-                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
-                "0x0000000000000000000000000000000000000002"
-            );
-
-            const createArg = create.mock.calls[0][0];
-            expect(createArg.details.review.skipped).toBe(true);
-            expect(createArg.details.review.flagged).toBe(false);
-        });
-
-        it("skips (best-effort) when the on-chain read throws", async () => {
-            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
-            const orchestrator = makeOrchestrator({
-                billingDocuments: {
-                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
-                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
-                    create,
-                },
-                merchant: {
-                    findById: vi.fn().mockResolvedValue({
-                        id: "merchant-1",
-                        bankAddress:
-                            "0x0000000000000000000000000000000000000003",
-                    }),
-                },
-                campaignBank: {
-                    getBankOnChainState: vi
-                        .fn()
-                        .mockRejectedValue(new Error("rpc down")),
-                },
-            });
-
-            const result = await orchestrator.generateMonthlyBill(
-                "merchant-1",
-                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
-                "0x0000000000000000000000000000000000000002"
-            );
-
-            const createArg = create.mock.calls[0][0];
-            expect(createArg.details.review.skipped).toBe(true);
-            expect(createArg.details.review.skipReason).toBe(
-                "on-chain read failed"
-            );
-            expect(result).toBeDefined();
-        });
-
-        it("flags when the derived balance diverges from the on-chain balance beyond threshold", async () => {
-            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
-            const orchestrator = makeOrchestrator({
-                billingDocuments: {
-                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
-                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
-                    aggregateDepositWithdrawByCurrency: vi
-                        .fn()
-                        .mockResolvedValue([
-                            {
-                                currency: "eure",
-                                deposited: "1000",
-                                withdrawn: "0",
-                            },
-                        ]),
-                    create,
-                },
-                merchant: {
-                    findById: vi.fn().mockResolvedValue({
-                        id: "merchant-1",
-                        bankAddress:
-                            "0x0000000000000000000000000000000000000003",
-                    }),
-                },
-                campaignBank: {
-                    getBankOnChainState: vi.fn().mockResolvedValue({
-                        isOpen: true,
-                        balances: new Map([
-                            [
-                                currentStablecoins.eure,
-                                // 1000 derived vs 1 on-chain (scaled) -> large divergence
-                                1n * 10n ** 18n,
-                            ],
-                        ]),
-                        allowances: new Map(),
-                    }),
-                },
-                balances: {
-                    getTokenMetadataBatch: vi.fn().mockResolvedValue(
-                        new Map([
-                            [
-                                currentStablecoins.eure,
-                                {
-                                    symbol: "EURe",
-                                    decimals: 18,
-                                    name: "EURe",
-                                },
-                            ],
-                        ])
-                    ),
-                },
-            });
-
-            await orchestrator.generateMonthlyBill(
-                "merchant-1",
-                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
-                "0x0000000000000000000000000000000000000002"
-            );
-
-            const createArg = create.mock.calls[0][0];
-            expect(createArg.details.review.flagged).toBe(true);
-            expect(createArg.details.review.perCurrency).toHaveLength(1);
-        });
-
-        it("scales a 6-decimal token (USDC) to human units before comparing (regression: no hardcoded 10^18)", async () => {
-            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
-            const orchestrator = makeOrchestrator({
-                billingDocuments: {
-                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
-                    distinctCurrencies: vi.fn().mockResolvedValue(["usdc"]),
-                    create,
-                },
-                merchant: {
-                    findById: vi.fn().mockResolvedValue({
-                        id: "merchant-1",
-                        bankAddress:
-                            "0x0000000000000000000000000000000000000003",
-                    }),
-                },
-                campaignBank: {
-                    getBankOnChainState: vi.fn().mockResolvedValue({
-                        isOpen: true,
-                        balances: new Map([
-                            [currentStablecoins.usdc, 1_000_000n],
-                        ]),
-                        allowances: new Map(),
-                    }),
-                },
-                balances: {
-                    getTokenMetadataBatch: vi.fn().mockResolvedValue(
-                        new Map([
-                            [
-                                currentStablecoins.usdc,
-                                {
-                                    symbol: "USDC",
-                                    decimals: 6,
-                                    name: "USD Coin",
-                                },
-                            ],
-                        ])
-                    ),
-                },
-            });
-
-            await orchestrator.generateMonthlyBill(
-                "merchant-1",
-                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
-                "0x0000000000000000000000000000000000000002"
-            );
-
-            const createArg = create.mock.calls[0][0];
-            expect(createArg.details.review.perCurrency[0].onChainBalance).toBe(
-                "1.000000000000000000"
-            );
         });
     });
 
@@ -732,6 +536,165 @@ describe("MonthlyBillOrchestrator", () => {
             expect(updateMonthlyBillDetails).not.toHaveBeenCalled();
             expect(render).not.toHaveBeenCalled();
             expect(result?.id).toBe(withPdf.id);
+        });
+    });
+
+    describe("backfillAllMerchantBills", () => {
+        const fullAccountingInfo = {
+            companyName: "Acme",
+            vatNumber: "FR123",
+            streetAddress: "1 rue",
+            city: "Paris",
+            postalCode: "75001",
+            country: "FR",
+            billingEmail: "a@b.co",
+        };
+
+        it("skips merchants without accounting info or without any deposit", async () => {
+            const noInfo = {
+                id: "m-noinfo",
+                createdAt: new Date("2026-01-01T00:00:00.000Z"),
+                accountingInfo: null,
+            };
+            const noDeposit = {
+                id: "m-nodep",
+                createdAt: new Date("2026-01-01T00:00:00.000Z"),
+                accountingInfo: fullAccountingInfo,
+            };
+            const findAll = vi
+                .fn()
+                .mockResolvedValue([noInfo, noDeposit]);
+            const findOldestDepositDate = vi.fn().mockResolvedValue(null);
+            const listMonthlyBillPeriodStarts = vi.fn().mockResolvedValue([]);
+            const create = vi.fn();
+
+            const orchestrator = makeOrchestrator({
+                merchant: { findAll },
+                billingDocuments: {
+                    findOldestDepositDate,
+                    listMonthlyBillPeriodStarts,
+                    create,
+                },
+            });
+
+            const result = await orchestrator.backfillAllMerchantBills();
+
+            expect(create).not.toHaveBeenCalled();
+            // Only the info-complete merchant reaches the deposit gate.
+            expect(findOldestDepositDate).toHaveBeenCalledTimes(1);
+            expect(findOldestDepositDate).toHaveBeenCalledWith("m-nodep");
+            expect(result).toEqual({
+                merchantsConsidered: 2,
+                merchantsBilled: 0,
+                billsCreated: 0,
+            });
+        });
+
+        it("backfills missing data-only bills from the oldest deposit up to (excluding) the current month", async () => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date("2026-04-15T00:00:00.000Z"));
+            try {
+                const merchant = {
+                    id: "merchant-1",
+                    createdAt: new Date("2026-02-01T00:00:00.000Z"),
+                    accountingInfo: fullAccountingInfo,
+                };
+                const findAll = vi.fn().mockResolvedValue([merchant]);
+                const findOldestDepositDate = vi
+                    .fn()
+                    .mockResolvedValue(new Date("2026-02-10T00:00:00.000Z"));
+                const listMonthlyBillPeriodStarts = vi
+                    .fn()
+                    .mockResolvedValue([]);
+                const create = vi
+                    .fn()
+                    .mockImplementation((doc) =>
+                        Promise.resolve(makeMonthlyBillDoc(doc))
+                    );
+                const findById = vi
+                    .fn()
+                    .mockResolvedValue(makeMonthlyBillDoc());
+                const render = vi.fn();
+
+                const orchestrator = makeOrchestrator({
+                    merchant: { findAll },
+                    billingDocuments: {
+                        findOldestDepositDate,
+                        listMonthlyBillPeriodStarts,
+                        create,
+                        findById,
+                    },
+                    pdf: { render },
+                });
+
+                const result = await orchestrator.backfillAllMerchantBills();
+
+                // Feb + Mar 2026 (Apr is the current, still-open month).
+                const periodStarts = create.mock.calls.map(([doc]) =>
+                    (doc.periodStart as Date).toISOString()
+                );
+                expect(periodStarts).toEqual([
+                    "2026-02-01T00:00:00.000Z",
+                    "2026-03-01T00:00:00.000Z",
+                ]);
+                // Data-only: no PDF rendered at generation time.
+                expect(render).not.toHaveBeenCalled();
+                expect(result).toEqual({
+                    merchantsConsidered: 1,
+                    merchantsBilled: 1,
+                    billsCreated: 2,
+                });
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it("skips months that already have a bill", async () => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date("2026-04-15T00:00:00.000Z"));
+            try {
+                const merchant = {
+                    id: "merchant-1",
+                    createdAt: new Date("2026-02-01T00:00:00.000Z"),
+                    accountingInfo: fullAccountingInfo,
+                };
+                const findAll = vi.fn().mockResolvedValue([merchant]);
+                const findOldestDepositDate = vi
+                    .fn()
+                    .mockResolvedValue(new Date("2026-02-10T00:00:00.000Z"));
+                // February already billed — only March should be generated.
+                const listMonthlyBillPeriodStarts = vi
+                    .fn()
+                    .mockResolvedValue([new Date("2026-02-01T00:00:00.000Z")]);
+                const create = vi
+                    .fn()
+                    .mockImplementation((doc) =>
+                        Promise.resolve(makeMonthlyBillDoc(doc))
+                    );
+                const findById = vi
+                    .fn()
+                    .mockResolvedValue(makeMonthlyBillDoc());
+
+                const orchestrator = makeOrchestrator({
+                    merchant: { findAll },
+                    billingDocuments: {
+                        findOldestDepositDate,
+                        listMonthlyBillPeriodStarts,
+                        create,
+                        findById,
+                    },
+                });
+
+                const result = await orchestrator.backfillAllMerchantBills();
+
+                expect(create).toHaveBeenCalledTimes(1);
+                expect(
+                    (create.mock.calls[0][0].periodStart as Date).toISOString()
+                ).toBe("2026-03-01T00:00:00.000Z");
+                expect(result.billsCreated).toBe(1);
+            } finally {
+                vi.useRealTimers();
+            }
         });
     });
 });

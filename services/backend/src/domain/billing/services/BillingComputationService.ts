@@ -126,11 +126,6 @@ export type MonthlyLedgerResult = {
     totalRewarded: string;
 };
 
-export type DivergenceAssessment = {
-    deltaAbs: string;
-    withinThreshold: boolean;
-};
-
 export type AnnexRowFiatInput = {
     /** Decimal string, already token-scaled (not wei). */
     amount: string;
@@ -143,12 +138,6 @@ export type AnnexRowFiatResult = {
     usd: string;
     gbp: string;
 };
-
-// Divergence threshold: flag when the absolute delta exceeds both a fixed
-// floor (dust from spot-price/precision noise never flags) AND a relative
-// percentage of the derived balance (billing-feature-plan.md §6.2).
-const DIVERGENCE_ABS_FLOOR = "1";
-const DIVERGENCE_REL_PCT = "0.01";
 
 export class BillingComputationService {
     /**
@@ -325,37 +314,6 @@ export class BillingComputationService {
             totalDeposited: toMoneyString(totalDeposited),
             totalWithdrawn: toMoneyString(totalWithdrawn),
             totalRewarded: toMoneyString(totalRewarded),
-        };
-    }
-
-    /**
-     * Compares the derived closing balance (from admin-entered deposits/
-     * withdraws + settled rewards) against a live on-chain balance snapshot
-     * (§6.2). Both inputs must already be in the SAME human-decimal unit —
-     * callers reading an on-chain `bigint` balance MUST scale it by the
-     * token's decimals (`bigint / 10^decimals`) before calling this; comparing
-     * a raw bigint to a human decimal would "diverge" by ~10^decimals every
-     * time and is the single most likely bug in this flow.
-     *
-     * Flags when the absolute delta exceeds both a fixed floor (dust never
-     * flags) AND a relative percentage of the derived balance.
-     */
-    assessDivergence(
-        derivedClosing: string,
-        onChainBalance: string
-    ): DivergenceAssessment {
-        const derived = new Decimal(derivedClosing);
-        const onChain = new Decimal(onChainBalance);
-        const deltaAbs = derived.minus(onChain).abs();
-
-        const threshold = Decimal.max(
-            new Decimal(DIVERGENCE_ABS_FLOOR),
-            derived.abs().mul(DIVERGENCE_REL_PCT)
-        );
-
-        return {
-            deltaAbs: toMoneyString(deltaAbs),
-            withinThreshold: deltaAbs.lessThanOrEqualTo(threshold),
         };
     }
 
