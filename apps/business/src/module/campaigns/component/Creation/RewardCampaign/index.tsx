@@ -392,7 +392,8 @@ function RecipientBox({
 // Cleared inputs become "" (not 0); coerce so the empty checks hold.
 const num = (v: number | string | undefined) => (typeof v === "number" ? v : 0);
 
-function CpaReveal({
+// Exported for FRA-246 test coverage.
+export function CpaReveal({
     control,
     setValue,
     unit,
@@ -451,59 +452,43 @@ function CpaReveal({
         <Stack space="m">
             <RevealHeader />
 
-            <Stack space="xs">
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={styles.insetX}
-                >
-                    {cpaLabel}
-                </Text>
-                <Controller
-                    control={control}
-                    name={cpaName}
-                    render={({ field }) => (
-                        <StepperField
-                            field={{
-                                ...field,
-                                // Changing the Target CPA changes the pool. If
-                                // the split is still the untouched reco, keep it
-                                // in sync by recomputing it for the new CPA. If
-                                // the user edited the amounts, leave them — the
-                                // mismatch warning + Continue gating flag it.
-                                onChange: (next) => {
-                                    field.onChange(next);
-                                    const reco = recalcSplitOnCpaChange({
-                                        prevCpa: cpa,
-                                        nextCpa: num(next),
-                                        ambassador,
-                                        referee,
+            <Controller
+                control={control}
+                name={cpaName}
+                render={({ field }) => (
+                    <StepperField
+                        field={{
+                            ...field,
+                            // Changing the Target CPA changes the pool. If
+                            // the split is still the untouched reco, keep it
+                            // in sync by recomputing it for the new CPA. If
+                            // the user edited the amounts, leave them — the
+                            // mismatch warning + Continue gating flag it.
+                            onChange: (next) => {
+                                field.onChange(next);
+                                const reco = recalcSplitOnCpaChange({
+                                    prevCpa: cpa,
+                                    nextCpa: num(next),
+                                    ambassador,
+                                    referee,
+                                });
+                                if (reco) {
+                                    setValue(ambName, reco.ambassador, {
+                                        shouldValidate: true,
                                     });
-                                    if (reco) {
-                                        setValue(ambName, reco.ambassador, {
-                                            shouldValidate: true,
-                                        });
-                                        setValue(refName, reco.referee, {
-                                            shouldValidate: true,
-                                        });
-                                    }
-                                },
-                            }}
-                            unit={unit}
-                            placeholder={cpaPlaceholder}
-                            ariaLabel={cpaLabel}
-                        />
-                    )}
-                />
-                <Text
-                    variant="caption"
-                    color="tertiary"
-                    className={styles.insetX}
-                >
-                    {t("campaigns.create.reward.cpa.hint")}
-                </Text>
-            </Stack>
+                                    setValue(refName, reco.referee, {
+                                        shouldValidate: true,
+                                    });
+                                }
+                            },
+                        }}
+                        unit={unit}
+                        placeholder={cpaPlaceholder}
+                        label={cpaLabel}
+                        hint={t("campaigns.create.reward.cpa.hint")}
+                    />
+                )}
+            />
 
             <div className={styles.distributionGap}>
                 <DistributionBar
