@@ -27,7 +27,7 @@ describe("sortMerchants", () => {
         ]);
     });
 
-    test("recent reverses the backend order (placeholder)", () => {
+    test("recent reverses the fetched order (placeholder)", () => {
         expect(sortMerchants(list, "recent").map((m) => m.id)).toEqual([
             "c",
             "b",
@@ -35,10 +35,8 @@ describe("sortMerchants", () => {
         ]);
     });
 
-    // Characterization test, not a desired contract: reward/expiring cannot be
-    // sorted client-side (data lives behind per-merchant queries), so they no-op
-    // until the backend `sort` param lands. See sortMerchants.ts TODO(backend).
-    test("characterizes reward/expiring as interim no-ops (backend-blocked)", () => {
+    // reward/expiring aren't on the list payload, so they keep the input order.
+    test("characterizes reward/expiring as no-ops", () => {
         expect(sortMerchants(list, "reward").map((m) => m.id)).toEqual([
             "a",
             "b",

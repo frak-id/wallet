@@ -7,9 +7,8 @@ import { create } from "zustand";
 export type ExplorerSort = "popular" | "reward" | "expiring" | "recent";
 
 /**
- * Default order shown when the user hasn't picked a sort yet. Kept in sync
- * with the backend's implicit ordering so the red-dot indicator only lights
- * up once the user actively diverges from it.
+ * Default order shown when the user hasn't picked a sort yet, so the red-dot
+ * indicator only lights up once the user actively diverges from it.
  */
 export const DEFAULT_EXPLORER_SORT: ExplorerSort = "popular";
 
