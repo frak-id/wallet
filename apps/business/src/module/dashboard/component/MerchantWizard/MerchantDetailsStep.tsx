@@ -50,11 +50,7 @@ export function MerchantDetailsStep({
 
     return (
         <Stack space="l">
-            <WizardFieldCard
-                insetLabel
-                space="xs"
-                label={t("merchant.create.fields.name.label")}
-            >
+            <WizardFieldCard>
                 <FormField
                     control={control}
                     name="name"
@@ -75,6 +71,9 @@ export function MerchantDetailsStep({
                                             variant="bare"
                                             tone="muted"
                                             error={showError}
+                                            label={t(
+                                                "merchant.create.fields.name.label"
+                                            )}
                                             placeholder={t(
                                                 "merchant.create.fields.name.placeholder"
                                             )}

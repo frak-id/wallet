@@ -2,14 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-/* ---- shared field chrome ---- */
-
-/** Input hint inset by 16px to line up with the field text. */
-export const fieldHint = style({
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
 /* ---- reward currency ---- */
 
 /** Vertical list of currency option rows (flush, like the goal list). */
