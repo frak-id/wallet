@@ -38,7 +38,12 @@ new sst.x.DevCommand("backend", {
     dev: {
         title: "Backend",
         autostart: true,
-        command: "bun run dev",
+        // Run the watcher directly instead of "bun run dev" (which nests
+        // another `sst dev` inside this already sst-managed pane). Env vars
+        // are already injected below via `environment`, so the extra hop
+        // just adds another Setsid'd process to the shutdown chain, making
+        // it more likely to leak an orphaned process holding port 3031.
+        command: "bun dev:watch",
         directory: "services/backend",
     },
     environment: {
