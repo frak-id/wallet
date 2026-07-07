@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, fontSize } from "@frak-labs/design-system/tokens";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
@@ -8,19 +8,6 @@ import { focusRing, interactive } from "@/module/common/styles/interaction.css";
  * and Explorer App settings). Labeled-field layout lives in
  * `@/module/forms/EditField`.
  */
-
-/** Label/hint inset aligns with the input text (16px padding). */
-export const fieldLabel = style({
-    paddingInline: alias.spacing.m,
-});
-
-export const fieldHint = style({
-    paddingInline: alias.spacing.m,
-    margin: 0,
-    fontSize: fontSize.xs,
-    lineHeight: "20px",
-    color: vars.text.tertiary,
-});
 
 export const dropzone = style([
     focusRing,

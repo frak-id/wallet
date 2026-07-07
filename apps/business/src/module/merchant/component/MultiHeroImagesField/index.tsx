@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -231,16 +232,7 @@ function ExistingFilePicker({
     if (!pickableFiles.length) return null;
 
     return (
-        <Stack space="xs">
-            <Text
-                as="span"
-                variant="bodySmall"
-                weight="medium"
-                color="secondary"
-                className={fieldStyles.fieldLabel}
-            >
-                {t("merchantEdit.explorer.useExisting")}
-            </Text>
+        <FieldLabel label={t("merchantEdit.explorer.useExisting")}>
             <Inline space="xs">
                 {pickableFiles.map((file) => (
                     <button
@@ -259,6 +251,6 @@ function ExistingFilePicker({
                     </button>
                 ))}
             </Inline>
-        </Stack>
+        </FieldLabel>
     );
 }
