@@ -33,15 +33,6 @@ export const insetX = style({
 
 export const field = style({ width: "100%", minWidth: 0 });
 
-/** Two-line label slot, bottom-anchored, so inputs align across locales. */
-export const fieldLabel = style({
-    display: "flex",
-    alignItems: "flex-end",
-    minHeight: "44px",
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
 /** Trailing percent glyph icon. */
 export const unitIcon = style({ color: vars.icon.tertiary, flexShrink: 0 });
 

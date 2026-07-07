@@ -1,5 +1,6 @@
 import { Column } from "@frak-labs/design-system/components/Column";
 import { Columns } from "@frak-labs/design-system/components/Columns";
+import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -17,7 +18,7 @@ import { CheckIcon, PercentIcon } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
 import { useNavigate } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
-import { Fragment, useMemo } from "react";
+import { Fragment, useId, useMemo } from "react";
 import { type Control, Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
@@ -68,13 +69,15 @@ function LabeledNumberField({
     min?: number;
     max?: number;
 }) {
+    const fieldId = useId();
     return (
-        <Stack space="xs" className={styles.field}>
-            <span className={styles.fieldLabel}>
-                <Text variant="bodySmall" weight="medium" color="secondary">
-                    {label}
-                </Text>
-            </span>
+        <FieldLabel
+            label={label}
+            hint={hint}
+            htmlFor={fieldId}
+            reserveLabelLines={2}
+            className={styles.field}
+        >
             <Controller
                 control={control}
                 name={name}
@@ -82,7 +85,8 @@ function LabeledNumberField({
                     <InputNumber
                         variant="bare"
                         tone="muted"
-                        aria-label={label}
+                        id={fieldId}
+                        aria-describedby={`${fieldId}-hint`}
                         classNameWrapper={styles.inputWrapper}
                         placeholder={placeholder}
                         rightSection={rightSection}
@@ -93,10 +97,7 @@ function LabeledNumberField({
                     />
                 )}
             />
-            <Text variant="caption" color="tertiary" className={styles.insetX}>
-                {hint}
-            </Text>
-        </Stack>
+        </FieldLabel>
     );
 }
 
