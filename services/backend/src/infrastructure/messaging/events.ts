@@ -5,6 +5,7 @@ import { infraMetrics } from "../telemetry/infraMetrics";
 export type FrakEvents = {
     newInteraction: [];
     newPendingRewards: [{ count: number }];
+    newDeposit: [];
     notification: [NotificationEvent];
 };
 

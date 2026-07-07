@@ -13,6 +13,7 @@ import type { BillingStorageRepository } from "../../domain/billing/repositories
 import type { BillingDocumentDetails } from "../../domain/billing/schemas";
 import type { BillingComputationService } from "../../domain/billing/services/BillingComputationService";
 import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
+import { eventEmitter } from "../../infrastructure/messaging/events";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
 import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
@@ -171,6 +172,11 @@ export class BillingOrchestrator {
             merchantId,
             document.documentDate
         );
+
+        // Wake the monthly-bill sweep so a new (possibly back-dated) deposit
+        // gets its missing bills generated on demand rather than waiting for
+        // the daily cron. Not merchant-scoped — the sweep walks every merchant.
+        eventEmitter.emit("newDeposit");
 
         return (
             (await this.billingDocuments.findById(merchantId, document.id)) ??
