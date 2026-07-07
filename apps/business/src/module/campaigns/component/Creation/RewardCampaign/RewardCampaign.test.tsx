@@ -11,7 +11,9 @@ import {
     EligibilityField,
     LockupField,
     RecipientBox,
+    TierField,
 } from "./index";
+import * as styles from "./reward.css";
 import { DEFAULT_REWARD_FORM, type RewardFormValues } from "./utils";
 
 /**
@@ -223,6 +225,50 @@ describe("RecipientBox (StepperField label/hint passthrough)", () => {
             )
         ).toHaveAccessibleDescription(
             "campaigns.create.reward.fixed.percentOfPool"
+        );
+    });
+});
+
+describe("TierField (visual label column)", () => {
+    it("renders the label text above the children when label is set", () => {
+        render(
+            <TierField label="Basket range">
+                <input aria-label="from" />
+            </TierField>
+        );
+
+        expect(screen.getByText("Basket range")).toBeInTheDocument();
+        expect(screen.getByLabelText("from")).toBeInTheDocument();
+    });
+
+    it("renders children with no label element when label is omitted", () => {
+        const { container } = render(
+            <TierField>
+                <input aria-label="to" />
+            </TierField>
+        );
+
+        expect(container.querySelector("label")).toBeNull();
+        expect(screen.getByLabelText("to")).toBeInTheDocument();
+    });
+
+    it("applies the padded class when padding is 'm'", () => {
+        const { container: padded } = render(
+            <TierField label="Ambassador reward" padding="m">
+                <input aria-label="amount" />
+            </TierField>
+        );
+        const { container: unpadded } = render(
+            <TierField label="Ambassador reward">
+                <input aria-label="amount" />
+            </TierField>
+        );
+
+        expect(padded.firstElementChild?.className.split(" ")).toContain(
+            styles.tierPadded
+        );
+        expect(unpadded.firstElementChild?.className.split(" ")).not.toContain(
+            styles.tierPadded
         );
     });
 });

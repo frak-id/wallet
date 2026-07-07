@@ -1,4 +1,5 @@
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import {
     RadioGroup,
@@ -736,8 +737,9 @@ function TierDelete({
     );
 }
 
+// Exported for unit testing.
 /** A labelled field column (label above the input). */
-function TierField({
+export function TierField({
     label,
     className,
     padding,
@@ -750,23 +752,12 @@ function TierField({
     children: ReactNode;
 }) {
     return (
-        <Stack
-            space="xs"
-            padding={padding}
-            className={className ?? styles.tierField}
+        <FieldLabel
+            label={label}
+            className={`${className ?? styles.tierField}${padding === "m" ? ` ${styles.tierPadded}` : ""}`}
         >
-            {label ? (
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={styles.insetX}
-                >
-                    {label}
-                </Text>
-            ) : null}
             {children}
-        </Stack>
+        </FieldLabel>
     );
 }
 
