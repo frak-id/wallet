@@ -3,12 +3,6 @@ import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
-/** Sub-field label inset 16px to line up with the text inside a bare input. */
-export const inputLabel = style({
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
 /* ---- currency ---- */
 
 export const currencyCell = style([

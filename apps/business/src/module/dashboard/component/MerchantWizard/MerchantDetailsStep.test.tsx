@@ -24,7 +24,7 @@ const DEFAULT_VALUES: MerchantNew = {
  * DNS-lookup query (`useDnsTxtRecordToSet`, gated by `enabled: !!domain`)
  * never fires; a `QueryClientProvider` is still required for the hook call.
  */
-function Harness() {
+function Harness({ isPlatformAdmin }: { isPlatformAdmin?: boolean } = {}) {
     const form = useForm({ defaultValues: DEFAULT_VALUES, mode: "onSubmit" });
     const queryClient = new QueryClient();
 
@@ -32,7 +32,7 @@ function Harness() {
         <QueryClientProvider client={queryClient}>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(() => {})}>
-                    <MerchantDetailsStep />
+                    <MerchantDetailsStep isPlatformAdmin={isPlatformAdmin} />
                     <button type="submit">submit</button>
                 </form>
             </Form>
@@ -66,6 +66,101 @@ describe("MerchantDetailsStep name field (FRA-246/U6 — WizardFieldCard label d
 
         expect(
             await screen.findByText("merchant.create.fields.name.required")
+        ).toBeInTheDocument();
+    });
+});
+
+describe("MerchantDetailsStep domain fields (FRA-246/U6 Tier 2 — inputLabel delegated to DS Input)", () => {
+    it("associates the domain field's own label to the control", () => {
+        render(<Harness />);
+
+        const input = screen.getByLabelText(
+            "merchant.create.fields.domain.nameLabel"
+        );
+        expect(input).toBeInTheDocument();
+        const label = screen.getByText(
+            "merchant.create.fields.domain.nameLabel"
+        );
+        expect(label.tagName).toBe("LABEL");
+        expect(label).toHaveAttribute("for", input.id);
+    });
+
+    it("shows the domain FieldError once required is violated on submit", async () => {
+        render(<Harness />);
+
+        const input = screen.getByLabelText(
+            "merchant.create.fields.domain.nameLabel"
+        );
+        fireEvent.change(input, { target: { value: "a" } });
+        fireEvent.change(input, { target: { value: "" } });
+        fireEvent.blur(input);
+        fireEvent.click(screen.getByRole("button", { name: "submit" }));
+
+        expect(
+            await screen.findByText("merchant.create.fields.domain.required")
+        ).toBeInTheDocument();
+    });
+
+    it("associates the setupCode field's own label to the control (no FieldError for this field)", () => {
+        render(<Harness />);
+
+        const input = screen.getByLabelText(
+            "merchant.create.fields.setupCode.label"
+        );
+        expect(input).toBeInTheDocument();
+        const label = screen.getByText(
+            "merchant.create.fields.setupCode.label"
+        );
+        expect(label.tagName).toBe("LABEL");
+        expect(label).toHaveAttribute("for", input.id);
+    });
+});
+
+describe("MerchantDetailsStep platform-admin fields (FRA-246/U6 Tier 2 — inputLabel delegated to DS Input/InputNumber)", () => {
+    it("associates the takeadsMerchantId field's own label to the control", () => {
+        render(<Harness isPlatformAdmin />);
+
+        const input = screen.getByLabelText(
+            "merchant.create.platformAdmin.takeadsMerchantId.label"
+        );
+        expect(input).toBeInTheDocument();
+        const label = screen.getByText(
+            "merchant.create.platformAdmin.takeadsMerchantId.label"
+        );
+        expect(label.tagName).toBe("LABEL");
+        expect(label).toHaveAttribute("for", input.id);
+    });
+
+    it("associates the takeadsTrackingLink field's own label to the control", () => {
+        render(<Harness isPlatformAdmin />);
+
+        const input = screen.getByLabelText(
+            "merchant.create.platformAdmin.takeadsTrackingLink.label"
+        );
+        expect(input).toBeInTheDocument();
+        const label = screen.getByText(
+            "merchant.create.platformAdmin.takeadsTrackingLink.label"
+        );
+        expect(label.tagName).toBe("LABEL");
+        expect(label).toHaveAttribute("for", input.id);
+    });
+
+    it("shows the takeadsTrackingLink FieldError on an invalid url", async () => {
+        render(<Harness isPlatformAdmin />);
+
+        const input = screen.getByLabelText(
+            "merchant.create.platformAdmin.takeadsTrackingLink.label"
+        );
+        fireEvent.change(input, {
+            target: { value: "not a url with spaces" },
+        });
+        fireEvent.blur(input);
+        fireEvent.click(screen.getByRole("button", { name: "submit" }));
+
+        expect(
+            await screen.findByText(
+                "merchant.create.platformAdmin.takeadsTrackingLink.invalidUrl"
+            )
         ).toBeInTheDocument();
     });
 });
