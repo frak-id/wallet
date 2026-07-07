@@ -159,7 +159,18 @@ type StepperFieldProps = {
     /** A localised text unit (e.g. "DAYS"/"JOURS"); a word can't be a glyph. */
     unitLabel?: string;
     placeholder: string;
-    ariaLabel: string;
+    /**
+     * Accessible name when there's no visible composed `label`. Required
+     * unless `label` is set (see below).
+     */
+    ariaLabel?: string;
+    /**
+     * Composed label rendered above the control (see FRA-246). When set, it
+     * owns the accessible name via `htmlFor`↔`id` — `ariaLabel` is dropped.
+     */
+    label?: ReactNode;
+    /** Composed hint rendered below the control, linked via `aria-describedby`. */
+    hint?: ReactNode;
     /** "muted" = grey filled (default), "elevated" = white. */
     tone?: "muted" | "elevated";
     /** Keep a literal `0` visible (e.g. min-purchase/lockup, where 0 is valid). */
@@ -175,6 +186,8 @@ function StepperField({
     unitLabel,
     placeholder,
     ariaLabel,
+    label,
+    hint,
     tone = "muted",
     allowZero = false,
     error,
@@ -184,7 +197,9 @@ function StepperField({
             variant="bare"
             tone={tone}
             error={error}
-            aria-label={ariaLabel}
+            aria-label={label ? undefined : ariaLabel}
+            label={label}
+            hint={hint}
             classNameWrapper={styles.inputWrapper}
             placeholder={placeholder}
             rightSection={
@@ -1120,81 +1135,65 @@ function TieredReveal({
 /*  Eligibility + lockup                                               */
 /* ------------------------------------------------------------------ */
 
-function EligibilityField({ control }: { control: Control<RewardFormValues> }) {
+// Exported for FRA-246 test coverage.
+export function EligibilityField({
+    control,
+}: {
+    control: Control<RewardFormValues>;
+}) {
     const { t } = useTranslation();
     return (
-        <Stack space="xs">
-            <Text
-                variant="bodySmall"
-                weight="medium"
-                color="secondary"
-                className={styles.insetX}
-            >
-                {t("campaigns.create.reward.eligibility.minPurchaseLabel")}
-            </Text>
-            <Controller
-                control={control}
-                name="minPurchaseAmount"
-                render={({ field }) => (
-                    <StepperField
-                        field={field}
-                        unit="amount"
-                        allowZero
-                        placeholder={t(
-                            "campaigns.create.reward.eligibility.minPurchasePlaceholder"
-                        )}
-                        ariaLabel={t(
-                            "campaigns.create.reward.eligibility.minPurchaseLabel"
-                        )}
-                    />
-                )}
-            />
-            <Text variant="caption" color="tertiary" className={styles.insetX}>
-                {t("campaigns.create.reward.eligibility.minPurchaseHint")}
-            </Text>
-        </Stack>
+        <Controller
+            control={control}
+            name="minPurchaseAmount"
+            render={({ field }) => (
+                <StepperField
+                    field={field}
+                    unit="amount"
+                    allowZero
+                    placeholder={t(
+                        "campaigns.create.reward.eligibility.minPurchasePlaceholder"
+                    )}
+                    label={t(
+                        "campaigns.create.reward.eligibility.minPurchaseLabel"
+                    )}
+                    hint={t(
+                        "campaigns.create.reward.eligibility.minPurchaseHint"
+                    )}
+                />
+            )}
+        />
     );
 }
 
-function LockupField({ control }: { control: Control<RewardFormValues> }) {
+// Exported for FRA-246 test coverage.
+export function LockupField({
+    control,
+}: {
+    control: Control<RewardFormValues>;
+}) {
     const { t } = useTranslation();
     return (
         <Stack space="m">
             <InfoBanner>{t("campaigns.create.reward.lockup.info")}</InfoBanner>
-            <Stack space="xs">
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={styles.insetX}
-                >
-                    {t("campaigns.create.reward.lockup.durationLabel")}
-                </Text>
-                <Controller
-                    control={control}
-                    name="lockupDays"
-                    render={({ field }) => (
-                        <StepperField
-                            field={field}
-                            unitLabel={t("campaigns.create.reward.lockup.unit")}
-                            allowZero
-                            placeholder={t(
-                                "campaigns.create.reward.lockup.durationPlaceholder"
-                            )}
-                            ariaLabel={t(
-                                "campaigns.create.reward.lockup.durationLabel"
-                            )}
-                        />
-                    )}
-                />
-                <Text
-                    variant="caption"
-                    color="tertiary"
-                    className={styles.insetX}
-                >
-                    {t("campaigns.create.reward.lockup.durationHint")}
-                </Text>
-            </Stack>
+            <Controller
+                control={control}
+                name="lockupDays"
+                render={({ field }) => (
+                    <StepperField
+                        field={field}
+                        unitLabel={t("campaigns.create.reward.lockup.unit")}
+                        allowZero
+                        placeholder={t(
+                            "campaigns.create.reward.lockup.durationPlaceholder"
+                        )}
+                        label={t(
+                            "campaigns.create.reward.lockup.durationLabel"
+                        )}
+                        hint={t("campaigns.create.reward.lockup.durationHint")}
+                    />
+                )}
+            />
         </Stack>
     );
 }
