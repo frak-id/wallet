@@ -211,6 +211,7 @@ export const fieldLabel = style({
 export const fieldHint = style({
     fontSize: fontSize.xs,
     lineHeight: "20px",
+    fontWeight: brand.typography.fontWeight.regular,
     color: vars.text.tertiary,
     paddingInline: alias.spacing.m,
 });
