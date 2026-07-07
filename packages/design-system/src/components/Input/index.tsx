@@ -106,18 +106,25 @@ export function Input({
     }
 
     return (
-        <Stack space="xxs">
+        // Field spec: 8px (spacing.xs) label→control, 4px (spacing.xxs)
+        // control→hint. The hint nests with the control so the label keeps its
+        // 8px offset while the hint sits 4px under the field.
+        <Stack space="xs">
             {label ? (
                 <Box as="label" htmlFor={fieldId} className={fieldLabel}>
                     {label}
                 </Box>
             ) : null}
-            {control}
             {hint ? (
-                <Box as="span" id={hintId} className={fieldHint}>
-                    {hint}
-                </Box>
-            ) : null}
+                <Stack space="xxs">
+                    {control}
+                    <Box as="span" id={hintId} className={fieldHint}>
+                        {hint}
+                    </Box>
+                </Stack>
+            ) : (
+                control
+            )}
         </Stack>
     );
 }
