@@ -31,7 +31,7 @@ export function WizardFieldCard({
     insetLabel = false,
     children,
 }: WizardFieldCardProps) {
-    if (!label) {
+    if (!label && !description) {
         return (
             <Card radius="m">
                 <Stack space={space}>{children}</Stack>
@@ -43,14 +43,16 @@ export function WizardFieldCard({
         <Card radius="m">
             <Stack space={space}>
                 <Stack space="xxs">
-                    <Text
-                        variant="bodySmall"
-                        weight="medium"
-                        color="secondary"
-                        className={headerClass}
-                    >
-                        {label}
-                    </Text>
+                    {label ? (
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                            className={headerClass}
+                        >
+                            {label}
+                        </Text>
+                    ) : null}
                     {description ? (
                         <Text
                             variant="caption"
