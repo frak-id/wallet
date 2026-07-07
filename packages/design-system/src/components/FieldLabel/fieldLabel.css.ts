@@ -1,6 +1,10 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
 import { alias, brand, fontSize } from "../../tokens.css";
+import {
+    FIELD_HINT_LINE_HEIGHT,
+    FIELD_LABEL_LINE_HEIGHT,
+} from "../fieldMetrics";
 
 /**
  * Field label — matches the DS `Input`/`TextArea` composed label exactly
@@ -8,7 +12,7 @@ import { alias, brand, fontSize } from "../../tokens.css";
  */
 export const label = style({
     fontSize: fontSize.s,
-    lineHeight: "22px",
+    lineHeight: `${FIELD_LABEL_LINE_HEIGHT}px`,
     fontWeight: brand.typography.fontWeight.medium,
     color: vars.text.secondary,
     paddingInline: alias.spacing.m,
@@ -27,7 +31,7 @@ export const labelReserve = style({
 /** Field hint — matches the DS composed hint (12/20, tertiary, 16px inset). */
 export const hint = style({
     fontSize: fontSize.xs,
-    lineHeight: "20px",
+    lineHeight: `${FIELD_HINT_LINE_HEIGHT}px`,
     fontWeight: brand.typography.fontWeight.regular,
     color: vars.text.tertiary,
     paddingInline: alias.spacing.m,

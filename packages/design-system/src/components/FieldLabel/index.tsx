@@ -1,11 +1,9 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { Box } from "../Box";
+import { FIELD_LABEL_LINE_HEIGHT } from "../fieldMetrics";
 import { Stack } from "../Stack";
 import * as styles from "./fieldLabel.css";
-
-/** Label line-height (px); `reserveLabelLines` multiplies this for the slot. */
-const LABEL_LINE_HEIGHT = 22;
 
 type FieldLabelProps = {
     /** Label rendered above the control (14/22 medium secondary, 16px inset). */
@@ -52,7 +50,7 @@ export function FieldLabel({
     const resolvedHintId =
         hint && htmlFor ? (hintId ?? `${htmlFor}-hint`) : hintId;
     const reserveStyle = reserveLabelLines
-        ? { minHeight: `${reserveLabelLines * LABEL_LINE_HEIGHT}px` }
+        ? { minHeight: `${reserveLabelLines * FIELD_LABEL_LINE_HEIGHT}px` }
         : undefined;
 
     return (

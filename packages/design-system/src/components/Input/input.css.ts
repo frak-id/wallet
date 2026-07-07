@@ -2,6 +2,10 @@ import { style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, brand, fontSize, transition } from "../../tokens.css";
+import {
+    FIELD_HINT_LINE_HEIGHT,
+    FIELD_LABEL_LINE_HEIGHT,
+} from "../fieldMetrics";
 
 export const inputWrapper = recipe({
     base: {
@@ -202,7 +206,7 @@ export const inputField = recipe({
  */
 export const fieldLabel = style({
     fontSize: fontSize.s,
-    lineHeight: "22px",
+    lineHeight: `${FIELD_LABEL_LINE_HEIGHT}px`,
     fontWeight: brand.typography.fontWeight.medium,
     color: vars.text.secondary,
     paddingInline: alias.spacing.m,
@@ -210,7 +214,7 @@ export const fieldLabel = style({
 
 export const fieldHint = style({
     fontSize: fontSize.xs,
-    lineHeight: "20px",
+    lineHeight: `${FIELD_HINT_LINE_HEIGHT}px`,
     fontWeight: brand.typography.fontWeight.regular,
     color: vars.text.tertiary,
     paddingInline: alias.spacing.m,
