@@ -10,9 +10,9 @@ describe("explorerSortStore", () => {
         explorerSortStore.getState().setSort(DEFAULT_EXPLORER_SORT);
     });
 
-    test("defaults to the popular sort", () => {
-        expect(explorerSortStore.getState().sort).toBe("popular");
-        expect(DEFAULT_EXPLORER_SORT).toBe("popular");
+    test("defaults to the recommended sort", () => {
+        expect(explorerSortStore.getState().sort).toBe("recommended");
+        expect(DEFAULT_EXPLORER_SORT).toBe("recommended");
     });
 
     test("setSort updates the applied sort", () => {
@@ -22,10 +22,11 @@ describe("explorerSortStore", () => {
 
     describe("isCustomExplorerSort", () => {
         test("is false for the default sort", () => {
-            expect(isCustomExplorerSort("popular")).toBe(false);
+            expect(isCustomExplorerSort("recommended")).toBe(false);
         });
 
         test("is true for every non-default sort", () => {
+            expect(isCustomExplorerSort("popular")).toBe(true);
             expect(isCustomExplorerSort("reward")).toBe(true);
             expect(isCustomExplorerSort("expiring")).toBe(true);
             expect(isCustomExplorerSort("recent")).toBe(true);

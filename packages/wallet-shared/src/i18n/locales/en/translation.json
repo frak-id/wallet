@@ -1078,6 +1078,7 @@
             "open": "Sort",
             "openActive": "Sort ({{sort}})",
             "apply": "Apply",
+            "recommended": "Recommended",
             "popular": "Most popular",
             "reward": "Highest reward",
             "expiring": "Ending soonest",

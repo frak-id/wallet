@@ -4,13 +4,21 @@ import { create } from "zustand";
  * Sort options for the Explorer merchant list, ordered as they appear in the
  * "Sort by" bottom sheet.
  */
-export type ExplorerSort = "popular" | "reward" | "expiring" | "recent";
+export type ExplorerSort =
+    | "recommended"
+    | "popular"
+    | "reward"
+    | "expiring"
+    | "recent";
 
 /**
  * Default order shown when the user hasn't picked a sort yet, so the red-dot
  * indicator only lights up once the user actively diverges from it.
+ *
+ * "recommended" preserves the backend's own ranking (manual boost + active
+ * campaign count), i.e. the order `/explore` already returns.
  */
-export const DEFAULT_EXPLORER_SORT: ExplorerSort = "popular";
+export const DEFAULT_EXPLORER_SORT: ExplorerSort = "recommended";
 
 /**
  * The sort options in display order, paired with their i18n label keys. Single
@@ -21,6 +29,7 @@ export const EXPLORER_SORT_OPTIONS: {
     value: ExplorerSort;
     labelKey: string;
 }[] = [
+    { value: "recommended", labelKey: "explorer.sort.recommended" },
     { value: "popular", labelKey: "explorer.sort.popular" },
     { value: "reward", labelKey: "explorer.sort.reward" },
     { value: "expiring", labelKey: "explorer.sort.expiring" },

@@ -41,7 +41,7 @@ describe("ExplorerSortSheet", () => {
         );
 
         // No Apply tap → the store keeps its previous value.
-        expect(explorerSortStore.getState().sort).toBe("popular");
+        expect(explorerSortStore.getState().sort).toBe("recommended");
     });
 
     it("re-syncs the pending selection to the applied sort on reopen", () => {
@@ -61,7 +61,7 @@ describe("ExplorerSortSheet", () => {
         // Reopening resets the pending choice back to the applied default.
         rerender(<ExplorerSortSheet open={true} onOpenChange={vi.fn()} />);
         expect(
-            screen.getByRole("radio", { name: "explorer.sort.popular" })
+            screen.getByRole("radio", { name: "explorer.sort.recommended" })
         ).toBeChecked();
     });
 });

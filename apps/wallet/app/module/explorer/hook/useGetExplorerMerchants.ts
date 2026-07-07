@@ -1,14 +1,7 @@
-import {
-    authenticatedBackendApi,
-    estimatedRewardsQueryOptions,
-} from "@frak-labs/wallet-shared";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useStore } from "zustand";
-import {
-    computeRewardSortValue,
-    type MerchantRewardSortValue,
-} from "@/module/explorer/explorerRewardSort";
 import { sortMerchants } from "@/module/explorer/sortMerchants";
 import { explorerSortStore } from "@/module/explorer/stores/explorerSortStore";
 
@@ -38,45 +31,18 @@ export function useGetExplorerMerchants({
         },
     });
 
-    const merchantList = useMemo(
-        () => data?.merchants ?? [],
-        [data?.merchants]
+    // `/explore` carries every sort signal (popularity, recent, expiring,
+    // reward) per merchant, so sorting is a pure client-side reorder.
+    const merchants = useMemo(
+        () => sortMerchants(data?.merchants ?? [], sort),
+        [data?.merchants, sort]
     );
-
-    // `reward`/`expiring` need per-merchant `estimated-rewards`, fetched only
-    // while one of those sorts is active. Interim until `/explore` carries them.
-    const needsRewardData = sort === "reward" || sort === "expiring";
-    const { rewardValues, isSortLoading } = useQueries({
-        queries: merchantList.map((merchant) => ({
-            ...estimatedRewardsQueryOptions(merchant.id),
-            enabled: needsRewardData,
-        })),
-        combine: (results) => {
-            if (!needsRewardData) {
-                return { rewardValues: undefined, isSortLoading: false };
-            }
-            const rewardValues = new Map<string, MerchantRewardSortValue>();
-            merchantList.forEach((merchant, index) => {
-                rewardValues.set(
-                    merchant.id,
-                    computeRewardSortValue(results[index]?.data ?? [])
-                );
-            });
-            // isSortLoading keeps the skeleton up instead of a visible reorder.
-            return {
-                rewardValues,
-                isSortLoading: results.some((result) => result.isLoading),
-            };
-        },
-    });
-
-    const merchants = sortMerchants(merchantList, sort, rewardValues);
 
     return {
         merchants,
         totalResult: data?.totalResult ?? 0,
         error,
-        isLoading: isLoading || isSortLoading,
+        isLoading,
         refetch,
     };
 }

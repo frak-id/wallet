@@ -1077,6 +1077,7 @@
             "open": "Trier",
             "openActive": "Trier ({{sort}})",
             "apply": "Appliquer",
+            "recommended": "Recommandés",
             "popular": "Les plus populaires",
             "reward": "Récompense la plus élevée",
             "expiring": "Expiration la plus proche",

@@ -453,6 +453,7 @@ export default interface Resources {
         "openActive": "Sort ({{sort}})",
         "popular": "Most popular",
         "recent": "Most recent",
+        "recommended": "Recommended",
         "reward": "Highest reward",
         "title": "Sort by"
       }
