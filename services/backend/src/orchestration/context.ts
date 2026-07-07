@@ -153,7 +153,7 @@ const campaignOverviewOrchestrator = new CampaignOverviewOrchestrator(
     pricingRepository
 );
 
-const explorerOrchestrator = new ExplorerOrchestrator();
+const explorerOrchestrator = new ExplorerOrchestrator(pricingRepository);
 
 const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
     RewardsContext.repositories.interactionLog,
