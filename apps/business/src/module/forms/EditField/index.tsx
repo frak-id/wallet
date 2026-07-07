@@ -3,7 +3,12 @@ import { FormItem, FormLabel, FormMessage } from "@/module/forms/Form";
 import * as styles from "./edit-field.css";
 
 type EditFieldProps = {
-    label: ReactNode;
+    /**
+     * Omit when the control (e.g. a DS `Input`/`TextArea`) renders its own
+     * composed `label` — Phase-B fields pass `label`/`hint` to the control
+     * instead. See FRA-246/U5.
+     */
+    label?: ReactNode;
     /** Hint rendered under the control. */
     hint?: ReactNode;
     /** `card` wraps the label + control in a white card (sheet styling). */
@@ -25,9 +30,11 @@ export function EditField({
 }: EditFieldProps) {
     const body = (
         <>
-            <FormLabel variant="field" className={styles.label}>
-                {label}
-            </FormLabel>
+            {label ? (
+                <FormLabel variant="field" className={styles.label}>
+                    {label}
+                </FormLabel>
+            ) : null}
             {children}
         </>
     );

@@ -112,9 +112,14 @@ export function WordingTextField({
             control={form.control}
             name={fieldName}
             render={({ field }) => (
-                <EditField label={label}>
+                <EditField>
                     <FormControl>
-                        <Input variant="bare" tone="muted" {...field} />
+                        <Input
+                            variant="bare"
+                            tone="muted"
+                            label={label}
+                            {...field}
+                        />
                     </FormControl>
                 </EditField>
             )}

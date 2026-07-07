@@ -30,10 +30,7 @@ export function PushTitlePanel() {
                     },
                 }}
                 render={({ field }) => (
-                    <EditField
-                        label={t("push.create.campaign.label")}
-                        hint={t("push.create.campaign.hint")}
-                    >
+                    <EditField>
                         <FormControl>
                             <Input
                                 variant={"bare"}
@@ -41,6 +38,8 @@ export function PushTitlePanel() {
                                 placeholder={t(
                                     "push.create.campaign.placeholder"
                                 )}
+                                label={t("push.create.campaign.label")}
+                                hint={t("push.create.campaign.hint")}
                                 {...field}
                             />
                         </FormControl>

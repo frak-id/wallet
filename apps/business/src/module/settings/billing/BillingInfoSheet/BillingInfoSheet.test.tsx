@@ -56,3 +56,33 @@ describe("BillingInfoSheet save gating", () => {
         await waitFor(() => expect(save).toBeDisabled());
     });
 });
+
+// FRA-246/U5 — company name is a migrated Phase-B field: label/hint now come
+// from the DS Input, not EditField. Confirms the delegated label still
+// associates with the control and the FormMessage still fires on invalid
+// submit through FormControl's forwarded id/aria-invalid.
+describe("BillingInfoSheet migrated field (FRA-246/U5)", () => {
+    it("associates the companyName label to its control", async () => {
+        render(<BillingInfoSheet mode="add" onSave={() => {}} />);
+        fireEvent.click(screen.getByRole("button", { name: ADD }));
+
+        await screen.findByPlaceholderText(COMPANY_PLACEHOLDER);
+        const input = screen.getByLabelText(
+            "settings.billing.fields.companyName.label"
+        );
+        expect(input).toHaveAttribute("placeholder", COMPANY_PLACEHOLDER);
+    });
+
+    it("shows the required-field message on invalid submit", async () => {
+        render(<BillingInfoSheet mode="add" onSave={() => {}} />);
+        fireEvent.click(screen.getByRole("button", { name: ADD }));
+
+        const input = await screen.findByPlaceholderText(COMPANY_PLACEHOLDER);
+        const form = input.closest("form") as HTMLFormElement;
+        fireEvent.submit(form);
+
+        expect(
+            await screen.findAllByText("settings.billing.validation.required")
+        ).not.toHaveLength(0);
+    });
+});

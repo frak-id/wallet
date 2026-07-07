@@ -147,11 +147,7 @@ export function BillingInfoSheet({
                                                 ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.companyName.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             variant="bare"
@@ -159,6 +155,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.companyName.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.companyName.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -177,11 +176,7 @@ export function BillingInfoSheet({
                                                 ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.vatNumber.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             variant="bare"
@@ -189,6 +184,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.vatNumber.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.vatNumber.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -207,11 +205,7 @@ export function BillingInfoSheet({
                                         ),
                                     }}
                                     render={({ field }) => (
-                                        <EditField
-                                            label={t(
-                                                "settings.billing.fields.streetAddress.label"
-                                            )}
-                                        >
+                                        <EditField>
                                             <FormControl>
                                                 <Input
                                                     variant="bare"
@@ -219,6 +213,9 @@ export function BillingInfoSheet({
                                                     length="big"
                                                     placeholder={t(
                                                         "settings.billing.fields.streetAddress.placeholder"
+                                                    )}
+                                                    label={t(
+                                                        "settings.billing.fields.streetAddress.label"
                                                     )}
                                                     {...field}
                                                 />
@@ -237,11 +234,7 @@ export function BillingInfoSheet({
                                                 ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.city.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             variant="bare"
@@ -249,6 +242,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.city.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.city.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -267,11 +263,7 @@ export function BillingInfoSheet({
                                                 ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.postalCode.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             variant="bare"
@@ -279,6 +271,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.postalCode.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.postalCode.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -364,11 +359,7 @@ export function BillingInfoSheet({
                                                     ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.billingEmail.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             type="email"
@@ -377,6 +368,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.billingEmail.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.billingEmail.label"
                                                             )}
                                                             {...field}
                                                         />
