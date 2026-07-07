@@ -37,7 +37,7 @@ const FRAK_COMMISSION = 0.2;
 
 type ScheduleMode = "immediate" | "startOnly" | "range";
 
-type BudgetFormValues = {
+export type BudgetFormValues = {
     period: BudgetType;
     amount: number;
     scheduleMode?: ScheduleMode;
@@ -233,7 +233,12 @@ function NumberStepper({
     );
 }
 
-function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
+/** Exported for FRA-246/U6 test coverage (see BudgetCampaign.test.tsx). */
+export function BudgetCapField({
+    control,
+}: {
+    control: Control<BudgetFormValues>;
+}) {
     const { t } = useTranslation();
     const amount = useWatch({ control, name: "amount" });
     const currencyGlyph = useCampaignCurrencyGlyph();
@@ -258,6 +263,8 @@ function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
                                 tone="muted"
                                 error={showError}
                                 classNameWrapper={styles.capInputWrapper}
+                                label={t("campaigns.create.budget.cap.label")}
+                                hint={t("campaigns.create.budget.cap.hint")}
                                 rightSection={
                                     <span className={styles.capRight}>
                                         <NumberStepper
@@ -282,9 +289,6 @@ function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
                     );
                 }}
             />
-            <Text variant="caption" color="tertiary" className={styles.capHint}>
-                {t("campaigns.create.budget.cap.hint")}
-            </Text>
             <BudgetBreakdown
                 amount={amount ?? 0}
                 currencyGlyph={currencyGlyph}
@@ -544,11 +548,7 @@ export function BudgetCampaign() {
                         <BudgetPeriodField control={form.control} />
                     </WizardFieldCard>
 
-                    <WizardFieldCard
-                        space="xs"
-                        insetLabel
-                        label={t("campaigns.create.budget.cap.label")}
-                    >
+                    <WizardFieldCard>
                         <BudgetCapField control={form.control} />
                     </WizardFieldCard>
 

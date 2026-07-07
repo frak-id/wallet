@@ -94,13 +94,6 @@ export const capGlyph = style({
     whiteSpace: "nowrap",
 });
 
-/** Cap hint, 4px under the field, inset 16px to line up with the field text. */
-export const capHint = style({
-    marginTop: alias.spacing.xxs,
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
 /** Wrapper around the shared DistributionBar: 8px under the hint, 16px padTop. */
 export const breakdown = style({
     marginTop: alias.spacing.xs,
