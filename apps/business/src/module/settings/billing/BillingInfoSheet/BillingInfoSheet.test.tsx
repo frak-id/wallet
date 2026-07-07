@@ -57,11 +57,11 @@ describe("BillingInfoSheet save gating", () => {
     });
 });
 
-// FRA-246/U5 — company name is a migrated Phase-B field: label/hint now come
+// Company name is a migrated Phase-B field: label/hint now come
 // from the DS Input, not EditField. Confirms the delegated label still
 // associates with the control and the FormMessage still fires on invalid
 // submit through FormControl's forwarded id/aria-invalid.
-describe("BillingInfoSheet migrated field (FRA-246/U5)", () => {
+describe("BillingInfoSheet migrated field", () => {
     it("associates the companyName label to its control", async () => {
         render(<BillingInfoSheet mode="add" onSave={() => {}} />);
         fireEvent.click(screen.getByRole("button", { name: ADD }));

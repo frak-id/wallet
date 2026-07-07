@@ -233,7 +233,7 @@ function NumberStepper({
     );
 }
 
-/** Exported for FRA-246/U6 test coverage (see BudgetCampaign.test.tsx). */
+/** Exported for unit testing (see BudgetCampaign.test.tsx). */
 export function BudgetCapField({
     control,
 }: {

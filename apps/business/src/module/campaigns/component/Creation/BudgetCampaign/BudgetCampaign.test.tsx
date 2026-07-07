@@ -15,7 +15,7 @@ import { BudgetCapField, type BudgetFormValues } from "./index";
 /**
  * `BudgetCapField` only needs a `Control<BudgetFormValues>` — no
  * `useFormContext`, no store/router/save-campaign plumbing — so a minimal
- * `useForm` harness (mirroring `FormTitle.test.tsx`, FRA-246/U6) is enough to
+ * `useForm` harness (mirroring `FormTitle.test.tsx`) is enough to
  * exercise the migrated label/hint/error contract without mocking the rest
  * of the wizard page.
  */
@@ -33,7 +33,7 @@ function Harness() {
     );
 }
 
-describe("BudgetCapField (FRA-246/U6 Tier 2 — WizardFieldCard label + hint delegated to DS InputNumber)", () => {
+describe("BudgetCapField (WizardFieldCard label + hint delegated to DS InputNumber)", () => {
     it("associates the DS control's own label to the control (accessible name)", () => {
         render(<Harness />);
 

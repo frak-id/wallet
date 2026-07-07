@@ -8,7 +8,7 @@ type WizardFieldCardProps = {
     /**
      * Field label (Body-Secondary / Medium, secondary colour). Omit when the
      * control inside (e.g. a DS `Input`/`TextArea`) renders its own composed
-     * `label` — the card then wraps the field with no header. See FRA-246/U6.
+     * `label` — the card then wraps the field with no header.
      */
     label?: string;
     /** Optional hint under the label (Footnote, tertiary colour). */

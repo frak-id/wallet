@@ -77,7 +77,7 @@ const fieldNoResize = style({
 
 /**
  * Composed labeled-field label + hint. Internal to the component — no
- * consumer-facing className. The column layout is a `Stack`. See FRA-245.
+ * consumer-facing className. The column layout is a `Stack`.
  */
 const fieldLabel = style({
     fontSize: fontSize.s,

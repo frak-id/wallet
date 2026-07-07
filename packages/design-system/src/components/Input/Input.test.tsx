@@ -169,7 +169,7 @@ describe("Input", () => {
         expect(input).toHaveAccessibleDescription("External note Hint text");
     });
 
-    // FRA-246/U4 — simulate what react-hook-form's Radix `FormControl` Slot
+    // Simulate what react-hook-form's Radix `FormControl` Slot
     // injects onto its child: id, aria-invalid, aria-describedby.
     it("should forward FormControl-style id/aria-invalid/aria-describedby to the control", () => {
         const { container } = render(

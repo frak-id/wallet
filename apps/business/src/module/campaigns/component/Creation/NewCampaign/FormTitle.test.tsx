@@ -13,7 +13,7 @@ import { FormTitle } from "./FormTitle";
  * `FormTitle` reads its form via `useFormContext<CampaignDraft>()`, but
  * react-hook-form's context is untyped at runtime — a minimal `{ name }`
  * form wired through the same `Form`/`FormProvider` satisfies it exactly like
- * `EditField.test.tsx`'s harness (FRA-246/U5/U6).
+ * `EditField.test.tsx`'s harness.
  */
 function Harness() {
     const form = useForm({ defaultValues: { name: "" }, mode: "onSubmit" });
@@ -28,7 +28,7 @@ function Harness() {
     );
 }
 
-describe("FormTitle (FRA-246/U6 — WizardFieldCard label delegated to DS Input)", () => {
+describe("FormTitle (WizardFieldCard label delegated to DS Input)", () => {
     it("associates the DS control's own label to the control (accessible name)", () => {
         render(<Harness />);
 

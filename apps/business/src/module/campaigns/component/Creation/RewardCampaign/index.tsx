@@ -165,7 +165,7 @@ type StepperFieldProps = {
      */
     ariaLabel?: string;
     /**
-     * Composed label rendered above the control (see FRA-246). When set, it
+     * Composed label rendered above the control. When set, it
      * owns the accessible name via `htmlFor`↔`id` — `ariaLabel` is dropped.
      */
     label?: ReactNode;
@@ -392,7 +392,7 @@ function RecipientBox({
 // Cleared inputs become "" (not 0); coerce so the empty checks hold.
 const num = (v: number | string | undefined) => (typeof v === "number" ? v : 0);
 
-// Exported for FRA-246 test coverage.
+// Exported for unit testing.
 export function CpaReveal({
     control,
     setValue,
@@ -1120,7 +1120,7 @@ function TieredReveal({
 /*  Eligibility + lockup                                               */
 /* ------------------------------------------------------------------ */
 
-// Exported for FRA-246 test coverage.
+// Exported for unit testing.
 export function EligibilityField({
     control,
 }: {
@@ -1151,7 +1151,7 @@ export function EligibilityField({
     );
 }
 
-// Exported for FRA-246 test coverage.
+// Exported for unit testing.
 export function LockupField({
     control,
 }: {

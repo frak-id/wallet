@@ -12,7 +12,7 @@ import { DEFAULT_REWARD_FORM, type RewardFormValues } from "./utils";
 /**
  * `EligibilityField`/`LockupField` only need a `Control<RewardFormValues>` —
  * no `useFormContext`, no store/router/save-campaign plumbing — so a minimal
- * `useForm` harness (mirroring `BudgetCapField.test.tsx`, FRA-246) is enough
+ * `useForm` harness (mirroring `BudgetCapField.test.tsx`) is enough
  * to exercise the migrated label/hint contract without mocking the rest of
  * the wizard page.
  */
@@ -61,7 +61,7 @@ function CpaRevealHarness() {
     );
 }
 
-describe("CpaReveal Target-CPA field (FRA-246 — StepperField label/hint passthrough)", () => {
+describe("CpaReveal Target-CPA field (StepperField label/hint passthrough)", () => {
     it("associates the DS control's own label to the control (accessible name)", () => {
         render(<CpaRevealHarness />);
 
@@ -88,7 +88,7 @@ describe("CpaReveal Target-CPA field (FRA-246 — StepperField label/hint passth
     });
 });
 
-describe("EligibilityField (FRA-246 — StepperField label/hint passthrough)", () => {
+describe("EligibilityField (StepperField label/hint passthrough)", () => {
     it("associates the DS control's own label to the control (accessible name)", () => {
         render(<Harness />);
 
@@ -121,7 +121,7 @@ describe("EligibilityField (FRA-246 — StepperField label/hint passthrough)", (
     });
 });
 
-describe("LockupField (FRA-246 — StepperField label/hint passthrough)", () => {
+describe("LockupField (StepperField label/hint passthrough)", () => {
     it("associates the DS control's own label to the control (accessible name)", () => {
         render(<Harness />);
 

@@ -9,7 +9,7 @@ import { EditField } from "./index";
 type Values = { name: string };
 
 /**
- * Minimal FRA-246/U5 harness: a real `useForm` + `Form` + `FormField` +
+ * Minimal harness: a real `useForm` + `Form` + `FormField` +
  * `FormControl`, wired exactly as a migrated Phase-B consumer — `label`/`hint`
  * go to the DS control, `EditField` only keeps `tone`.
  */
@@ -57,7 +57,7 @@ function Harness({
     );
 }
 
-describe("EditField (FRA-246/U5 — Phase-B DS label/hint delegation)", () => {
+describe("EditField (Phase-B DS label/hint delegation)", () => {
     it("associates the DS control's own label to the control (accessible name)", () => {
         render(<Harness defaultValues={{ name: "" }} label="Company name" />);
 

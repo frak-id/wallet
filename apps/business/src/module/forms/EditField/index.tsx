@@ -6,7 +6,7 @@ type EditFieldProps = {
     /**
      * Omit when the control (e.g. a DS `Input`/`TextArea`) renders its own
      * composed `label` — Phase-B fields pass `label`/`hint` to the control
-     * instead. See FRA-246/U5.
+     * instead.
      */
     label?: ReactNode;
     /** Hint rendered under the control. */

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { WizardFieldCard } from "./index";
 
-describe("WizardFieldCard (FRA-246/U6 — optional label)", () => {
+describe("WizardFieldCard (optional label)", () => {
     it("renders no header when label is omitted, but still renders the card + children", () => {
         const { container } = render(
             <WizardFieldCard>

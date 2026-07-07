@@ -4,7 +4,7 @@ import { alias, brand, fontSize } from "../../tokens.css";
 
 /**
  * Field label — matches the DS `Input`/`TextArea` composed label exactly
- * (14/22, medium, secondary colour, 16px inset). See FRA-246/U7.
+ * (14/22, medium, secondary colour, 16px inset).
  */
 export const label = style({
     fontSize: fontSize.s,

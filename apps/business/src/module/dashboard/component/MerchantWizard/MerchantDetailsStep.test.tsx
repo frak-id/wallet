@@ -40,7 +40,7 @@ function Harness({ isPlatformAdmin }: { isPlatformAdmin?: boolean } = {}) {
     );
 }
 
-describe("MerchantDetailsStep name field (FRA-246/U6 — WizardFieldCard label delegated to DS Input)", () => {
+describe("MerchantDetailsStep name field (WizardFieldCard label delegated to DS Input)", () => {
     it("associates the DS control's own label to the control (accessible name)", () => {
         render(<Harness />);
 
@@ -70,7 +70,7 @@ describe("MerchantDetailsStep name field (FRA-246/U6 — WizardFieldCard label d
     });
 });
 
-describe("MerchantDetailsStep domain fields (FRA-246/U6 Tier 2 — inputLabel delegated to DS Input)", () => {
+describe("MerchantDetailsStep domain fields (inputLabel delegated to DS Input)", () => {
     it("associates the domain field's own label to the control", () => {
         render(<Harness />);
 
@@ -116,7 +116,7 @@ describe("MerchantDetailsStep domain fields (FRA-246/U6 Tier 2 — inputLabel de
     });
 });
 
-describe("MerchantDetailsStep platform-admin fields (FRA-246/U6 Tier 2 — inputLabel delegated to DS Input/InputNumber)", () => {
+describe("MerchantDetailsStep platform-admin fields (inputLabel delegated to DS Input/InputNumber)", () => {
     it("associates the takeadsMerchantId field's own label to the control", () => {
         render(<Harness isPlatformAdmin />);
 
