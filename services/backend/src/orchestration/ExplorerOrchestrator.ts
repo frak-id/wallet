@@ -79,7 +79,13 @@ export class ExplorerOrchestrator {
         offset: number
     ): Promise<ExplorerQueryResult> {
         const now = new Date();
-        const popularitySince = new Date(now.getTime() - POPULARITY_WINDOW_MS);
+        // ISO string (not a raw Date): inside a raw `sql` template drizzle skips
+        // the timestamp column encoder, so a Date object reaches the driver
+        // unconverted and Postgres can't parse it. Matches how drizzle sends
+        // timestamp comparisons elsewhere in this query.
+        const popularitySince = new Date(
+            now.getTime() - POPULARITY_WINDOW_MS
+        ).toISOString();
 
         const activeCampaignFilter = and(
             eq(campaignRulesTable.status, "active"),
