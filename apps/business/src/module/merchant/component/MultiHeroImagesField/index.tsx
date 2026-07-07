@@ -61,7 +61,9 @@ export function MultiHeroImagesField({
                         image: file,
                         type: "hero-extra",
                     });
-                    if (data?.url) {
+                    // The backend dedupes files and can return a URL already
+                    // in the slider — don't append it twice.
+                    if (data?.url && !next.includes(data.url)) {
                         next.push(data.url);
                         onChange([...next]);
                     }
@@ -100,7 +102,7 @@ export function MultiHeroImagesField({
         <Stack space="m">
             {values.length > 0 && (
                 <Stack as="ul" space="xs" className={styles.list}>
-                    {values.map((url) => (
+                    {[...new Set(values)].map((url) => (
                         <li
                             key={url}
                             className={styles.item}
