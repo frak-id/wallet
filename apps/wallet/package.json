@@ -66,6 +66,7 @@
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
     "@tauri-apps/plugin-deep-link": "^2.4.9",
     "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-haptics": "^2.3.2",
     "@tauri-apps/plugin-opener": "^2.5.4",
     "i18next": "^26.0.3",
     "i18next-browser-languagedetector": "^8.2.1",

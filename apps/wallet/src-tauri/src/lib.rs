@@ -21,6 +21,7 @@ pub fn run() {
     {
         builder = builder
             .plugin(tauri_plugin_biometric::init())
+            .plugin(tauri_plugin_haptics::init())
             // tauri_plugin_frak_firebase moved above — registered before any
             // other mobile plugin so it can capture their setup crashes.
             .plugin(tauri_plugin_app_settings::init())
