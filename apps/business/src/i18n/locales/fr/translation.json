@@ -1171,6 +1171,15 @@
                     "description": "Enregistre un dépôt et calcule automatiquement la TVA et les frais Frak.",
                     "submit": "Créer le dépôt"
                 },
+                "breakdown": {
+                    "title": "Estimation détaillée",
+                    "gross": "Montant brut",
+                    "vat": "TVA (20 %)",
+                    "vatExempt": "TVA (exonérée hors FR)",
+                    "frakFee": "Frais Frak (20 %)",
+                    "net": "Montant net",
+                    "hint": "Estimation — la TVA et les frais définitifs sont calculés à la création du dépôt."
+                },
                 "withdraw": {
                     "trigger": "Ajouter un retrait",
                     "title": "Ajouter une facture de retrait",

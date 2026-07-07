@@ -1171,6 +1171,15 @@
                     "description": "Records a deposit and computes VAT and the Frak fee automatically.",
                     "submit": "Create deposit"
                 },
+                "breakdown": {
+                    "title": "Estimated breakdown",
+                    "gross": "Gross amount",
+                    "vat": "VAT (20%)",
+                    "vatExempt": "VAT (exempt outside FR)",
+                    "frakFee": "Frak fee (20%)",
+                    "net": "Net amount",
+                    "hint": "Estimate — final VAT and fee are computed when the deposit is created."
+                },
                 "withdraw": {
                     "trigger": "Add withdrawal",
                     "title": "Add withdraw bill",

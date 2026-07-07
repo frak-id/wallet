@@ -1422,6 +1422,15 @@ export default interface Resources {
           "saveChanges": "Save changes"
         },
         "admin": {
+          "breakdown": {
+            "frakFee": "Frak fee (20%)",
+            "gross": "Gross amount",
+            "hint": "Estimate — final VAT and fee are computed when the deposit is created.",
+            "net": "Net amount",
+            "title": "Estimated breakdown",
+            "vat": "VAT (20%)",
+            "vatExempt": "VAT (exempt outside FR)"
+          },
           "deposit": {
             "description": "Records a deposit and computes VAT and the Frak fee automatically.",
             "submit": "Create deposit",

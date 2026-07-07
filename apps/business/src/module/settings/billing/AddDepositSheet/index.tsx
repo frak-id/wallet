@@ -18,7 +18,7 @@ import {
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button as BusinessButton } from "@/module/common/component/Button";
@@ -26,9 +26,11 @@ import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDi
 import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { COUNTRIES } from "@/module/common/utils/countries";
+import { getNumberFormat } from "@/module/common/utils/intlCache";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField } from "@/module/forms/Form";
 import * as sheetStyles from "../BillingInfoSheet/billing-info-sheet.css";
+import { computeDepositBreakdown } from "../computeDepositBreakdown";
 import { DECIMAL_PATTERN, TX_HASH_PATTERN } from "../queryKeys";
 import { type CreateDepositInput, useCreateDeposit } from "../useBillingAdmin";
 
@@ -68,7 +70,7 @@ export function AddDepositSheet({
     merchantId: string;
     defaultCountry?: string;
 }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [open, setOpen] = useState(false);
     const createDeposit = useCreateDeposit(merchantId);
 
@@ -86,6 +88,29 @@ export function AddDepositSheet({
     function requestClose() {
         guard(() => setOpen(false));
     }
+
+    // Live, display-only VAT/fee/net preview mirroring the server math
+    // (computeDepositBreakdown) — the backend recomputes authoritatively on
+    // submit; this only guides the operator as they type gross + country.
+    const [grossAmount, country, currency] = form.watch([
+        "grossAmount",
+        "country",
+        "currency",
+    ]);
+    const breakdown = useMemo(
+        () => computeDepositBreakdown(grossAmount, country),
+        [grossAmount, country]
+    );
+    const formatAmount = useMemo(() => {
+        const fmt = getNumberFormat(i18n.language, {
+            maximumFractionDigits: 2,
+        });
+        // Stablecoin codes (eure/usdc…) aren't ISO-4217, so append the code
+        // rather than using Intl currency style (same convention as
+        // BillingTable).
+        return (value: number) =>
+            `${fmt.format(value)} ${currency.toUpperCase()}`;
+    }, [i18n.language, currency]);
 
     function onSubmit(values: DepositFormValues) {
         const input: CreateDepositInput = {
@@ -438,6 +463,95 @@ export function AddDepositSheet({
                                 )}
                             </Stack>
                         </Card>
+                        {breakdown && (
+                            <Card variant="muted" radius="m">
+                                <Stack space="s">
+                                    <Text variant="label" color="secondary">
+                                        {t(
+                                            "settings.billing.admin.breakdown.title"
+                                        )}
+                                    </Text>
+                                    <Inline
+                                        space="s"
+                                        align="space-between"
+                                        alignY="center"
+                                    >
+                                        <Text
+                                            variant="bodySmall"
+                                            color="secondary"
+                                        >
+                                            {t(
+                                                "settings.billing.admin.breakdown.gross"
+                                            )}
+                                        </Text>
+                                        <Text variant="bodySmall">
+                                            {formatAmount(breakdown.gross)}
+                                        </Text>
+                                    </Inline>
+                                    <Inline
+                                        space="s"
+                                        align="space-between"
+                                        alignY="center"
+                                    >
+                                        <Text
+                                            variant="bodySmall"
+                                            color="secondary"
+                                        >
+                                            {t(
+                                                breakdown.vatApplies
+                                                    ? "settings.billing.admin.breakdown.vat"
+                                                    : "settings.billing.admin.breakdown.vatExempt"
+                                            )}
+                                        </Text>
+                                        <Text variant="bodySmall">
+                                            {formatAmount(breakdown.vat)}
+                                        </Text>
+                                    </Inline>
+                                    <Inline
+                                        space="s"
+                                        align="space-between"
+                                        alignY="center"
+                                    >
+                                        <Text
+                                            variant="bodySmall"
+                                            color="secondary"
+                                        >
+                                            {t(
+                                                "settings.billing.admin.breakdown.frakFee"
+                                            )}
+                                        </Text>
+                                        <Text variant="bodySmall">
+                                            {formatAmount(breakdown.frakFee)}
+                                        </Text>
+                                    </Inline>
+                                    <Inline
+                                        space="s"
+                                        align="space-between"
+                                        alignY="center"
+                                    >
+                                        <Text
+                                            variant="bodySmall"
+                                            weight="semiBold"
+                                        >
+                                            {t(
+                                                "settings.billing.admin.breakdown.net"
+                                            )}
+                                        </Text>
+                                        <Text
+                                            variant="bodySmall"
+                                            weight="semiBold"
+                                        >
+                                            {formatAmount(breakdown.net)}
+                                        </Text>
+                                    </Inline>
+                                    <Text variant="caption" color="tertiary">
+                                        {t(
+                                            "settings.billing.admin.breakdown.hint"
+                                        )}
+                                    </Text>
+                                </Stack>
+                            </Card>
+                        )}
                     </form>
                 </Form>
                 <Inline space="s" padding="l" align="left">
