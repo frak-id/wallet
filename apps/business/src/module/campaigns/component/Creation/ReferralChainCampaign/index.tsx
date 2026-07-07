@@ -49,8 +49,12 @@ const FORM_ID = "campaign-referral-chain-form";
 
 /* ---- Fields ---- */
 
-/** Numeric field: label above, hint below. */
-function LabeledNumberField({
+/**
+ * Numeric field: label above, hint below.
+ *
+ * Exported for unit testing.
+ */
+export function LabeledNumberField({
     control,
     name,
     label,
