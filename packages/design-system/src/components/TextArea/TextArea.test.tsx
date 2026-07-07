@@ -1,5 +1,5 @@
 /// <reference types="@testing-library/jest-dom" />
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { TextArea } from ".";
@@ -132,5 +132,91 @@ describe("TextArea", () => {
         const textarea = screen.getByLabelText("Message");
         expect(textarea.getAttribute("aria-describedby")).toContain("external");
         expect(textarea).toHaveAccessibleDescription("External note Hint text");
+    });
+
+    // FRA-246/U4 — simulate what react-hook-form's Radix `FormControl` Slot
+    // injects onto its child: id, aria-invalid, aria-describedby.
+    it("should forward FormControl-style id/aria-invalid/aria-describedby to the control", () => {
+        const { container } = render(
+            <TextArea
+                label="Message"
+                id="x-form-item"
+                aria-invalid="true"
+                aria-describedby="x-msg"
+            />
+        );
+        const textarea = container.querySelector("textarea");
+        const label = container.querySelector("label");
+        expect(textarea?.id).toBe("x-form-item");
+        expect(textarea?.getAttribute("aria-invalid")).toBe("true");
+        expect(textarea?.getAttribute("aria-describedby")).toContain("x-msg");
+        expect(label?.getAttribute("for")).toBe("x-form-item");
+    });
+
+    it("should merge a FormControl aria-describedby with the hint id (caller value first)", () => {
+        render(
+            <TextArea
+                label="Message"
+                hint="Max 500 characters"
+                id="x-form-item"
+                aria-invalid="true"
+                aria-describedby="x-msg"
+            />
+        );
+        const textarea = screen.getByLabelText("Message");
+        expect(textarea.getAttribute("aria-describedby")).toBe(
+            "x-msg x-form-item-hint"
+        );
+        expect(textarea).toHaveAccessibleDescription("Max 500 characters");
+    });
+
+    it("should apply field-box error styling in labeled mode (differs from neutral)", () => {
+        const { container: withError } = render(
+            <TextArea label="Message" error aria-label="with-error" />
+        );
+        const { container: withoutError } = render(
+            <TextArea label="Message" aria-label="without-error" />
+        );
+        const errorWrapperClass = withError.querySelector("span")?.className;
+        const plainWrapperClass = withoutError.querySelector("span")?.className;
+        expect(errorWrapperClass).toBeTruthy();
+        expect(errorWrapperClass).not.toBe(plainWrapperClass);
+    });
+
+    it("should keep label/hint classes identical under error (no tint)", () => {
+        const errored = render(
+            <TextArea label="Message" hint="Max 500 characters" error />
+        );
+        const neutral = render(
+            <TextArea label="Message" hint="Max 500 characters" />
+        );
+        // The label + hint must be byte-identical with and without `error` —
+        // this fails the moment any error tint class is added to them.
+        expect(errored.container.querySelector("label")?.className).toBe(
+            neutral.container.querySelector("label")?.className
+        );
+        expect(
+            within(errored.container).getByText("Max 500 characters").className
+        ).toBe(
+            within(neutral.container).getByText("Max 500 characters").className
+        );
+    });
+
+    // Field spec: 8px label→control, 4px control→hint. Encoded by nesting
+    // the control + hint in an inner Stack that is a sibling of the label, so
+    // the label keeps the wider outer gap. Locks the structure against a
+    // regression back to a single flat 4px stack.
+    it("nests control+hint under the label (8/4 spacing structure)", () => {
+        const { container } = render(
+            <TextArea label="Message" hint="Max 500 characters" />
+        );
+        const labelEl = container.querySelector("label");
+        const textarea = container.querySelector("textarea");
+        const hint = screen.getByText("Max 500 characters");
+        const outer = labelEl?.parentElement;
+        const inner = hint.parentElement;
+        expect(outer).not.toBe(inner);
+        expect(outer).toContainElement(inner);
+        expect(inner).toContainElement(textarea);
     });
 });

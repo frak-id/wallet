@@ -1,5 +1,5 @@
 /// <reference types="@testing-library/jest-dom" />
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { Input } from ".";
@@ -167,5 +167,93 @@ describe("Input", () => {
         const input = screen.getByLabelText("Email");
         expect(input.getAttribute("aria-describedby")).toContain("external");
         expect(input).toHaveAccessibleDescription("External note Hint text");
+    });
+
+    // FRA-246/U4 — simulate what react-hook-form's Radix `FormControl` Slot
+    // injects onto its child: id, aria-invalid, aria-describedby.
+    it("should forward FormControl-style id/aria-invalid/aria-describedby to the control", () => {
+        const { container } = render(
+            <Input
+                label="Email"
+                id="x-form-item"
+                aria-invalid="true"
+                aria-describedby="x-msg"
+            />
+        );
+        const input = container.querySelector("input");
+        const label = container.querySelector("label");
+        expect(input?.id).toBe("x-form-item");
+        expect(input?.getAttribute("aria-invalid")).toBe("true");
+        expect(input?.getAttribute("aria-describedby")).toContain("x-msg");
+        expect(label?.getAttribute("for")).toBe("x-form-item");
+    });
+
+    it("should merge a FormControl aria-describedby with the hint id (caller value first)", () => {
+        render(
+            <Input
+                label="Email"
+                hint="We never share your email"
+                id="x-form-item"
+                aria-invalid="true"
+                aria-describedby="x-msg"
+            />
+        );
+        const input = screen.getByLabelText("Email");
+        expect(input.getAttribute("aria-describedby")).toBe(
+            "x-msg x-form-item-hint"
+        );
+        expect(input).toHaveAccessibleDescription("We never share your email");
+    });
+
+    it("should apply field-box error styling in labeled mode (differs from neutral)", () => {
+        const { container: withError } = render(
+            <Input label="Email" error aria-label="with-error" />
+        );
+        const { container: withoutError } = render(
+            <Input label="Email" aria-label="without-error" />
+        );
+        const errorWrapperClass = withError.querySelector("span")?.className;
+        const plainWrapperClass = withoutError.querySelector("span")?.className;
+        expect(errorWrapperClass).toBeTruthy();
+        expect(errorWrapperClass).not.toBe(plainWrapperClass);
+    });
+
+    it("should keep label/hint classes identical under error (no tint)", () => {
+        const errored = render(
+            <Input label="Email" hint="We never share your email" error />
+        );
+        const neutral = render(
+            <Input label="Email" hint="We never share your email" />
+        );
+        // The label + hint must be byte-identical with and without `error` —
+        // this fails the moment any error tint class is added to them.
+        expect(errored.container.querySelector("label")?.className).toBe(
+            neutral.container.querySelector("label")?.className
+        );
+        expect(
+            within(errored.container).getByText("We never share your email")
+                .className
+        ).toBe(
+            within(neutral.container).getByText("We never share your email")
+                .className
+        );
+    });
+
+    // Field spec: 8px label→control, 4px control→hint. Encoded by nesting
+    // the control + hint in an inner Stack that is a sibling of the label, so
+    // the label keeps the wider outer gap. Locks the structure against a
+    // regression back to a single flat 4px stack.
+    it("nests control+hint under the label (8/4 spacing structure)", () => {
+        const { container } = render(
+            <Input label="Email" hint="We never share your email" />
+        );
+        const label = container.querySelector("label");
+        const input = container.querySelector("input");
+        const hint = screen.getByText("We never share your email");
+        const outer = label?.parentElement;
+        const inner = hint.parentElement;
+        expect(outer).not.toBe(inner);
+        expect(outer).toContainElement(inner);
+        expect(inner).toContainElement(input);
     });
 });
