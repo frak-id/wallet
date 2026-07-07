@@ -28,28 +28,20 @@ export function AffiliateConfigPanel({
                         {t("merchant.affiliate.description")}
                     </Text>
                 </Stack>
-                <Stack space="xxs">
-                    <Text variant="bodySmall" weight="medium" color="secondary">
-                        {t("merchant.affiliate.brandId")}
-                    </Text>
-                    <Input
-                        variant="bare"
-                        tone="muted"
-                        value={affiliate.externalId}
-                        readOnly
-                    />
-                </Stack>
-                <Stack space="xxs">
-                    <Text variant="bodySmall" weight="medium" color="secondary">
-                        {t("merchant.affiliate.trackingLink")}
-                    </Text>
-                    <Input
-                        variant="bare"
-                        tone="muted"
-                        value={affiliate.trackingLink}
-                        readOnly
-                    />
-                </Stack>
+                <Input
+                    variant="bare"
+                    tone="muted"
+                    label={t("merchant.affiliate.brandId")}
+                    value={affiliate.externalId}
+                    readOnly
+                />
+                <Input
+                    variant="bare"
+                    tone="muted"
+                    label={t("merchant.affiliate.trackingLink")}
+                    value={affiliate.trackingLink}
+                    readOnly
+                />
             </Stack>
         </Card>
     );
