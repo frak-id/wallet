@@ -9,6 +9,10 @@ export type InputProps = ComponentPropsWithRef<"input"> & {
     classNameWrapper?: string;
     leftSection?: ReactNode;
     rightSection?: ReactNode;
+    /** Composed field label rendered above the control by the DS `Input`. */
+    label?: ReactNode;
+    /** Composed field hint rendered below the control by the DS `Input`. */
+    hint?: ReactNode;
 };
 
 export const Input = ({
