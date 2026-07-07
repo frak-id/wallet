@@ -6,8 +6,8 @@ vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
     useMyMerchants: vi.fn(),
 }));
 
-vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
-    useActiveMerchantId: () => "merchant-1",
+vi.mock("@/module/common/hook/useSettingsMerchantId", () => ({
+    useSettingsMerchantId: () => "merchant-1",
 }));
 
 vi.mock("../useBillingInfo", () => ({

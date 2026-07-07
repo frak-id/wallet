@@ -19,9 +19,9 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { BinIcon, DownloadIcon } from "@frak-labs/design-system/icons";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { authenticatedBackendApi } from "@/api/backendClient";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
-import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
+import { getSafeAuthToken } from "@/stores/authStore";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import type { BillingEntry } from "../types";
 import { useVoidDocument } from "../useBillingAdmin";
@@ -174,19 +174,35 @@ function EntriesTable({
 
 function DownloadPdfButton({ entry }: { entry: BillingEntry }) {
     const { t } = useTranslation();
-    const merchantId = useActiveMerchantId();
+    const merchantId = useSettingsMerchantId();
     const [isDownloading, setIsDownloading] = useState(false);
+    const [hasError, setHasError] = useState(false);
 
     async function handleDownload() {
+        if (!merchantId) return;
         setIsDownloading(true);
+        setHasError(false);
         try {
-            const { data, error } = await authenticatedBackendApi
-                .merchant({ merchantId })
-                .billing.documents({ id: entry.id })
-                .pdf.get();
-            if (error || !data) return;
+            // The PDF is served as `application/pdf`, which eden-treaty parses
+            // as text (corrupting the bytes) — so fetch the binary directly.
+            // Hitting this endpoint also lazily generates the PDF if a prior
+            // render failed, so it works even when `entry.hasPdf` is false.
+            const baseUrl =
+                process.env.BACKEND_URL ?? "https://localhost:3030";
+            const token = getSafeAuthToken();
+            const response = await fetch(
+                `${baseUrl}/business/merchant/${merchantId}/billing/documents/${entry.id}/pdf`,
+                {
+                    credentials: "include",
+                    headers: token ? { "x-business-auth": token } : undefined,
+                }
+            );
+            if (!response.ok) {
+                setHasError(true);
+                return;
+            }
 
-            const blob = await data.blob();
+            const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
@@ -198,29 +214,38 @@ function DownloadPdfButton({ entry }: { entry: BillingEntry }) {
             link.click();
             document.body.removeChild(link);
             setTimeout(() => URL.revokeObjectURL(url), 0);
+        } catch {
+            setHasError(true);
         } finally {
             setIsDownloading(false);
         }
     }
 
     return (
-        <button
-            type="button"
-            className={styles.pdfButton}
-            aria-label={t("settings.billing.table.download")}
-            disabled={!entry.hasPdf || isDownloading}
-            onClick={handleDownload}
-        >
-            <DownloadIcon />
-        </button>
+        <span className={styles.pdfCell}>
+            <button
+                type="button"
+                className={styles.pdfButton}
+                aria-label={t("settings.billing.table.download")}
+                disabled={isDownloading}
+                onClick={handleDownload}
+            >
+                <DownloadIcon />
+            </button>
+            {hasError && (
+                <Text variant="caption" color="error">
+                    {t("settings.billing.table.downloadError")}
+                </Text>
+            )}
+        </span>
     );
 }
 
 function VoidDocumentButton({ entry }: { entry: BillingEntry }) {
     const { t } = useTranslation();
-    const merchantId = useActiveMerchantId();
+    const merchantId = useSettingsMerchantId();
     const [confirmOpen, setConfirmOpen] = useState(false);
-    const voidDocument = useVoidDocument(merchantId);
+    const voidDocument = useVoidDocument(merchantId ?? "");
 
     // Narrowed by the caller (`rawKind !== "monthly_bill"`), but the mutation
     // input type only accepts "deposit" | "withdraw" — re-assert here so this

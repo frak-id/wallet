@@ -1546,6 +1546,7 @@ export default interface Resources {
           "date": "Date",
           "description": "Description",
           "download": "Download PDF",
+          "downloadError": "Couldn't generate the PDF. Please try again.",
           "pdf": "PDF",
           "type": "Type"
         },

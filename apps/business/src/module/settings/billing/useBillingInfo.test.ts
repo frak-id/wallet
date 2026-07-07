@@ -10,8 +10,8 @@ import {
 import type { BillingInfo } from "./types";
 import { useBillingInfo } from "./useBillingInfo";
 
-vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
-    useActiveMerchantId: () => "merchant-1",
+vi.mock("@/module/common/hook/useSettingsMerchantId", () => ({
+    useSettingsMerchantId: () => "merchant-1",
 }));
 
 vi.mock("@/api/backendClient", () => ({

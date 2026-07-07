@@ -1147,7 +1147,8 @@
                 "type": "Type",
                 "description": "Description",
                 "pdf": "PDF",
-                "download": "Download PDF"
+                "download": "Download PDF",
+                "downloadError": "Couldn't generate the PDF. Please try again."
             },
             "tag": {
                 "paid": "Paid",

@@ -1,6 +1,6 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { useTranslation } from "react-i18next";
-import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
 import { SettingsCard } from "../../SettingsCard";
 import { AddDepositSheet } from "../AddDepositSheet";
 import { AddWithdrawSheet } from "../AddWithdrawSheet";
@@ -15,8 +15,10 @@ import { useBillingInfo } from "../useBillingInfo";
  */
 export function BillingAdminPanel() {
     const { t } = useTranslation();
-    const merchantId = useActiveMerchantId();
+    const merchantId = useSettingsMerchantId();
     const { info } = useBillingInfo();
+
+    if (!merchantId) return null;
 
     return (
         <SettingsCard

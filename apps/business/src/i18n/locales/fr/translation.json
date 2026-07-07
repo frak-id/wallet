@@ -1147,7 +1147,8 @@
                 "type": "Type",
                 "description": "Description",
                 "pdf": "PDF",
-                "download": "Télécharger le PDF"
+                "download": "Télécharger le PDF",
+                "downloadError": "Échec de la génération du PDF. Veuillez réessayer."
             },
             "tag": {
                 "paid": "Payée",

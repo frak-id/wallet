@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
 import { accountingQueryKey, documentsQueryKey } from "./queryKeys";
 import type { BillingEntry, BillingInfo } from "./types";
 
@@ -32,14 +32,15 @@ function toBillingEntry(doc: {
  * `/:merchantId/billing/documents`.
  */
 export function useBillingInfo() {
-    const merchantId = useActiveMerchantId();
+    const merchantId = useSettingsMerchantId();
     const queryClient = useQueryClient();
 
     const accountingQuery = useQuery({
-        queryKey: accountingQueryKey(merchantId),
+        queryKey: accountingQueryKey(merchantId ?? ""),
+        enabled: !!merchantId,
         queryFn: async () => {
             const { data, error } = await authenticatedBackendApi
-                .merchant({ merchantId })
+                .merchant({ merchantId: merchantId as string })
                 .billing.accounting.get();
             if (error) throw error;
             return data.accountingInfo;
@@ -47,10 +48,11 @@ export function useBillingInfo() {
     });
 
     const documentsQuery = useQuery({
-        queryKey: documentsQueryKey(merchantId),
+        queryKey: documentsQueryKey(merchantId ?? ""),
+        enabled: !!merchantId,
         queryFn: async () => {
             const { data, error } = await authenticatedBackendApi
-                .merchant({ merchantId })
+                .merchant({ merchantId: merchantId as string })
                 .billing.documents.get({ query: {} });
             if (error) throw error;
             return data.documents;
@@ -59,6 +61,7 @@ export function useBillingInfo() {
 
     const saveMutation = useMutation({
         mutationFn: async (next: BillingInfo) => {
+            if (!merchantId) throw new Error("No active merchant");
             const { error } = await authenticatedBackendApi
                 .merchant({ merchantId })
                 .billing.accounting.put(next);
@@ -66,7 +69,7 @@ export function useBillingInfo() {
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey: accountingQueryKey(merchantId),
+                queryKey: accountingQueryKey(merchantId ?? ""),
             });
         },
     });
