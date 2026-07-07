@@ -488,56 +488,38 @@ export function ReferralChainCampaign() {
                                     </Column>
                                 </Columns>
 
-                                <Stack space="xs">
-                                    <Text
-                                        variant="bodySmall"
-                                        weight="medium"
-                                        color="secondary"
-                                        className={styles.insetX}
-                                    >
-                                        {t(
-                                            "campaigns.create.referralChain.cac.label"
-                                        )}
-                                    </Text>
-                                    <Input
-                                        variant="bare"
-                                        tone="muted"
-                                        readOnly
-                                        disabled
-                                        aria-label={t(
-                                            "campaigns.create.referralChain.cac.label"
-                                        )}
-                                        placeholder={t(
-                                            isTiered
-                                                ? "campaigns.create.referralChain.cac.placeholderTiered"
-                                                : "campaigns.create.referralChain.cac.placeholder"
-                                        )}
-                                        value={
-                                            cac !== undefined ? String(cac) : ""
-                                        }
-                                        rightSection={
-                                            cac !== undefined ? (
-                                                isPercentage ? (
-                                                    <PercentIcon
-                                                        width={24}
-                                                        height={24}
-                                                        className={
-                                                            styles.unitIcon
-                                                        }
-                                                    />
-                                                ) : (
-                                                    <span
-                                                        className={
-                                                            styles.unitGlyph
-                                                        }
-                                                    >
-                                                        {glyph}
-                                                    </span>
-                                                )
-                                            ) : undefined
-                                        }
-                                    />
-                                </Stack>
+                                <Input
+                                    variant="bare"
+                                    tone="muted"
+                                    readOnly
+                                    disabled
+                                    label={t(
+                                        "campaigns.create.referralChain.cac.label"
+                                    )}
+                                    placeholder={t(
+                                        isTiered
+                                            ? "campaigns.create.referralChain.cac.placeholderTiered"
+                                            : "campaigns.create.referralChain.cac.placeholder"
+                                    )}
+                                    value={cac !== undefined ? String(cac) : ""}
+                                    rightSection={
+                                        cac !== undefined ? (
+                                            isPercentage ? (
+                                                <PercentIcon
+                                                    width={24}
+                                                    height={24}
+                                                    className={styles.unitIcon}
+                                                />
+                                            ) : (
+                                                <span
+                                                    className={styles.unitGlyph}
+                                                >
+                                                    {glyph}
+                                                </span>
+                                            )
+                                        ) : undefined
+                                    }
+                                />
 
                                 <ChainPreview
                                     control={form.control}

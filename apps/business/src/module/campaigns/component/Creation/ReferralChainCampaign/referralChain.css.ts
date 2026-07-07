@@ -25,12 +25,6 @@ globalStyle(`${inputWrapper} input[type="number"]`, {
     MozAppearance: "textfield",
 });
 
-/** 16px horizontal inset to align label/hint with the field text. */
-export const insetX = style({
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
 export const field = style({ width: "100%", minWidth: 0 });
 
 /** Trailing percent glyph icon. */
