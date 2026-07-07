@@ -6,7 +6,12 @@ vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import { CpaReveal, EligibilityField, LockupField } from "./index";
+import {
+    CpaReveal,
+    EligibilityField,
+    LockupField,
+    RecipientBox,
+} from "./index";
 import { DEFAULT_REWARD_FORM, type RewardFormValues } from "./utils";
 
 /**
@@ -157,5 +162,67 @@ describe("LockupField (StepperField label/hint passthrough)", () => {
         expect(
             screen.getByText("campaigns.create.reward.lockup.info")
         ).toBeInTheDocument();
+    });
+});
+
+/**
+ * `RecipientBox` (the ambassador/referee split inputs inside `CpaReveal`) only
+ * needs `control` — same minimal harness shape as the other reveal fields.
+ */
+function RecipientBoxHarness({ hint }: { hint?: string }) {
+    const form = useForm<RewardFormValues>({
+        defaultValues: DEFAULT_REWARD_FORM,
+    });
+
+    return (
+        <form>
+            <RecipientBox
+                control={form.control}
+                name="ambassadorAmount"
+                label="campaigns.create.reward.recipient.ambassadorReward"
+                unit="amount"
+                placeholder="campaigns.create.reward.recipient.ambassadorPlaceholder"
+                hint={hint}
+            />
+        </form>
+    );
+}
+
+describe("RecipientBox (StepperField label/hint passthrough)", () => {
+    it("associates the DS control's own label to the control (accessible name)", () => {
+        render(<RecipientBoxHarness />);
+
+        const input = screen.getByLabelText(
+            "campaigns.create.reward.recipient.ambassadorReward"
+        );
+        expect(input).toBeInTheDocument();
+        const label = screen.getByText(
+            "campaigns.create.reward.recipient.ambassadorReward"
+        );
+        expect(label.tagName).toBe("LABEL");
+        expect(label).toHaveAttribute("for", input.id);
+    });
+
+    it("renders the hint, associated via aria-describedby, only when given", () => {
+        const { rerender } = render(<RecipientBoxHarness />);
+
+        expect(
+            screen.queryByText("campaigns.create.reward.fixed.percentOfPool")
+        ).not.toBeInTheDocument();
+
+        rerender(
+            <RecipientBoxHarness hint="campaigns.create.reward.fixed.percentOfPool" />
+        );
+
+        expect(
+            screen.getByText("campaigns.create.reward.fixed.percentOfPool")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByLabelText(
+                "campaigns.create.reward.recipient.ambassadorReward"
+            )
+        ).toHaveAccessibleDescription(
+            "campaigns.create.reward.fixed.percentOfPool"
+        );
     });
 });

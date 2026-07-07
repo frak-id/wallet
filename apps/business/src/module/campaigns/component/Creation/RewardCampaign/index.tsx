@@ -324,7 +324,8 @@ function RevealHeader() {
     );
 }
 
-function RecipientBox({
+// Exported for unit testing.
+export function RecipientBox({
     control,
     name,
     label,
@@ -349,14 +350,6 @@ function RecipientBox({
 }) {
     return (
         <div className={styles.recipientBox}>
-            <Text
-                variant="bodySmall"
-                weight="medium"
-                color="secondary"
-                className={styles.insetX}
-            >
-                {label}
-            </Text>
             <Controller
                 control={control}
                 name={name}
@@ -367,19 +360,11 @@ function RecipientBox({
                         tone="elevated"
                         error={error}
                         placeholder={placeholder}
-                        ariaLabel={label}
+                        label={label}
+                        hint={hint}
                     />
                 )}
             />
-            {hint ? (
-                <Text
-                    variant="caption"
-                    color="tertiary"
-                    className={styles.insetX}
-                >
-                    {hint}
-                </Text>
-            ) : null}
         </div>
     );
 }
