@@ -257,11 +257,12 @@ export class BillingDocumentRepository {
     async updateMonthlyBillDetails(
         merchantId: string,
         id: string,
-        details: BillingDocumentDetails
+        details: BillingDocumentDetails,
+        amounts?: { grossAmount: string; netAmount: string }
     ): Promise<BillingDocumentSelect | null> {
         const [result] = await db
             .update(billingDocumentsTable)
-            .set({ details, updatedAt: new Date() })
+            .set({ details, ...amounts, updatedAt: new Date() })
             .where(
                 and(
                     eq(billingDocumentsTable.merchantId, merchantId),

@@ -60,6 +60,7 @@ const monthlyBillDto: BillingPdfDocumentDto = {
     monthlyBill: {
         periodStart: new Date("2026-02-01T00:00:00Z"),
         periodEnd: new Date("2026-03-01T00:00:00Z"),
+        vatApplicable: true,
         ledgers: [
             {
                 currency: "eure",
@@ -102,6 +103,19 @@ describe("BillingPdfService", () => {
 
     it("renders a valid monthly bill PDF", async () => {
         const bytes = await service.render(monthlyBillDto);
+        expect(bytes.length).toBeGreaterThan(0);
+        const header = Buffer.from(bytes.slice(0, 5)).toString("latin1");
+        expect(header).toBe("%PDF-");
+    });
+
+    it("renders a non-FR monthly bill (0% VAT / reverse-charge)", async () => {
+        const bytes = await service.render({
+            ...monthlyBillDto,
+            monthlyBill: {
+                ...monthlyBillDto.monthlyBill,
+                vatApplicable: false,
+            } as NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
+        });
         expect(bytes.length).toBeGreaterThan(0);
         const header = Buffer.from(bytes.slice(0, 5)).toString("latin1");
         expect(header).toBe("%PDF-");

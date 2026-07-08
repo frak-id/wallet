@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import {
     PDFDocument,
     type PDFFont,
@@ -17,7 +18,36 @@ const FRAK_SELLER = {
     siren: "953585783",
     vatNumber: "FR90953585783",
     addressLines: ["40 rue Bezout", "75014 Paris, France"],
+    email: "hello@frak-labs.com",
+    /** Legal-form mention printed in the footer of every issued document. */
+    legalForm: "Société par actions simplifiée au capital social de 4 296,00 €",
 } as const;
+
+/**
+ * Stablecoin → fiat presentation. Documents are merchant-facing legal papers:
+ * they show the fiat equivalent of every amount (EUR/€, GBP/£, USD/$), never
+ * the crypto token symbol or on-chain address. All stablecoins are pegged 1:1
+ * to their fiat leg, so a token amount is already its fiat equivalent.
+ */
+const FIAT_BY_STABLECOIN: Record<string, { code: string; symbol: string }> = {
+    eure: { code: "EUR", symbol: "€" },
+    gbpe: { code: "GBP", symbol: "£" },
+    usde: { code: "USD", symbol: "$" },
+    usdc: { code: "USD", symbol: "$" },
+};
+
+function fiatFor(currency: string): { code: string; symbol: string } {
+    return (
+        FIAT_BY_STABLECOIN[currency.toLowerCase()] ?? {
+            code: currency.toUpperCase(),
+            symbol: currency.toUpperCase(),
+        }
+    );
+}
+
+/** VAT + Frak-fee rates used for the reward-table display math (§4). */
+const VAT_RATE = new Decimal("0.20");
+const FRAK_FEE_RATE = new Decimal("0.20");
 
 /**
  * Frak brand badge, printed top-right on every generated document. The two
@@ -76,6 +106,13 @@ export type BillingPdfDocumentDto = {
     monthlyBill?: {
         periodStart: Date;
         periodEnd: Date;
+        /**
+         * Whether French VAT applies to this merchant (country === "FR").
+         * When false, the reward table shows a 0% rate and the recap's TVA is
+         * 0 (TTC === HT) — reverse-charge / autoliquidation, same rule as the
+         * deposit/withdraw VAT lines.
+         */
+        vatApplicable: boolean;
         ledgers: Array<{
             currency: string;
             openingBalance: string;
@@ -178,16 +215,25 @@ export function sanitizeForWinAnsi(input: string): string {
     return out;
 }
 
-/** Formats a frozen decimal string for display only (thousands + 2dp). Never used for math. */
+/**
+ * Formats a frozen decimal string for display only (fr-FR thousands + 2dp,
+ * fiat symbol). Never used for math. Shows the fiat equivalent of the
+ * stablecoin amount — the crypto token symbol/address is never printed.
+ */
 function formatMoney(value: string, currency: string): string {
+    const fiat = fiatFor(currency);
     const n = Number.parseFloat(value);
     const formatted = Number.isFinite(n)
-        ? n.toLocaleString("en-US", {
+        ? n.toLocaleString("fr-FR", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
           })
         : value;
-    return `${formatted} ${currency.toUpperCase()}`;
+    // Intl may group fr-FR digits with a narrow no-break space (U+202F) that
+    // isn't WinAnsi-encodable; normalize it (and NBSP) to a plain space before
+    // the glyph-sanitize step would otherwise turn it into "?".
+    const normalized = formatted.replace(/[\u00a0\u202f]/g, " ");
+    return `${normalized} ${fiat.symbol}`;
 }
 
 function isVatApplicable(vatAmount: string | undefined): boolean {
@@ -299,8 +345,10 @@ export class BillingPdfService {
         if (dto.kind === "monthly_bill" && dto.monthlyBill) {
             this.drawMonthlyBillHeader(cursor, dto, bold);
             this.drawPartyBlocks(cursor, dto, bold);
-            this.drawMonthlyBillLedgers(cursor, dto.monthlyBill, bold);
-            this.drawMonthlyBillAnnex(cursor, dto.monthlyBill, bold);
+            this.drawRewardTable(cursor, dto.monthlyBill, bold);
+            this.drawTvaAndRecap(cursor, dto.monthlyBill, bold);
+            this.drawLedgerStatus(cursor, dto.monthlyBill, bold);
+            this.drawFooters(pdfDoc, font);
             return pdfDoc.save();
         }
 
@@ -315,7 +363,36 @@ export class BillingPdfService {
             this.drawWithdrawDetails(cursor, dto.withdraw, dto.currency, bold);
         }
 
+        this.drawFooters(pdfDoc, font);
         return pdfDoc.save();
+    }
+
+    /**
+     * Stamps the legal footer on every page: Frak's SIREN + intra-community
+     * VAT number on the top line, the SAS capital-social mention below it.
+     * Drawn at page-fixed coordinates below the content bottom margin, after
+     * all content is laid out, so it lands on every page including any the
+     * annex/table pagination added.
+     */
+    private drawFooters(pdfDoc: PDFDocument, font: PDFFont): void {
+        const line1 = `${FRAK_SELLER.companyName} — SIREN : ${FRAK_SELLER.siren} — TVA : ${FRAK_SELLER.vatNumber}`;
+        const line2 = FRAK_SELLER.legalForm;
+        for (const page of pdfDoc.getPages()) {
+            page.drawText(sanitizeForWinAnsi(line1), {
+                x: MARGIN,
+                y: 34,
+                size: 8,
+                font,
+                color: GRAY,
+            });
+            page.drawText(sanitizeForWinAnsi(line2), {
+                x: MARGIN,
+                y: 22,
+                size: 8,
+                font,
+                color: GRAY,
+            });
+        }
     }
 
     /**
@@ -341,89 +418,223 @@ export class BillingPdfService {
         const monthlyBill = dto.monthlyBill;
         if (!monthlyBill) return;
 
-        cursor.text("Monthly bill", { size: 20, useFont: bold });
+        cursor.text("Facture mensuelle", { size: 20, useFont: bold });
         cursor.newLine(28);
 
-        cursor.text(`Reference: ${dto.reference}`, { size: 11 });
+        cursor.text(`Référence : ${dto.reference}`, { size: 11 });
         cursor.newLine(14);
         const start = monthlyBill.periodStart.toISOString().slice(0, 10);
         const end = monthlyBill.periodEnd.toISOString().slice(0, 10);
-        cursor.text(`Period: ${start} to ${end}`, { size: 11 });
+        cursor.text(`Période : du ${start} au ${end}`, { size: 11 });
         cursor.newLine(14);
-        cursor.text(
-            `Fiat totals: ${monthlyBill.fiatTotals.eur} EUR / ${monthlyBill.fiatTotals.usd} USD / ${monthlyBill.fiatTotals.gbp} GBP`,
-            { size: 11 }
-        );
-        cursor.newLine(20);
-        cursor.newLine(8);
+        cursor.text("Type de vente : Prestations de services", { size: 11 });
+        cursor.newLine(24);
     }
 
-    private drawMonthlyBillLedgers(
+    /**
+     * The distributed rewards, as a fiat invoice table (never crypto
+     * amounts/addresses). Rows are grouped by identical reward amount — every
+     * reward worth the same is one line whose `Qté` is the count. Columns:
+     * `Produits | Qté | Prix u. HT | TVA (%) | Total HT`. `Prix u. HT` is the
+     * distributed amount plus the 20% Frak fee (§4); `Total HT = Prix u. HT × Qté`.
+     */
+    private drawRewardTable(
         cursor: PageCursor,
         monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
         bold: PDFFont
     ): void {
-        cursor.text("Per-currency ledger", { size: 13, useFont: bold });
+        cursor.text("Récompenses distribuées", { size: 13, useFont: bold });
         cursor.newLine(20);
 
-        for (const ledger of monthlyBill.ledgers) {
-            cursor.ensureSpace(90);
-            cursor.text(ledger.currency.toUpperCase(), {
-                size: 11,
-                useFont: bold,
+        const col = {
+            produit: MARGIN,
+            qte: 285,
+            prix: 330,
+            tva: 430,
+            total: 485,
+        };
+        cursor.text("Produits", { x: col.produit, size: 8, color: GRAY });
+        cursor.text("Qté", { x: col.qte, size: 8, color: GRAY });
+        cursor.text("Prix u. HT", { x: col.prix, size: 8, color: GRAY });
+        cursor.text("TVA (%)", { x: col.tva, size: 8, color: GRAY });
+        cursor.text("Total HT", { x: col.total, size: 8, color: GRAY });
+        cursor.newLine(15);
+
+        const groups = this.groupRewards(monthlyBill.annexRows);
+        if (groups.length === 0) {
+            cursor.text("Aucune récompense distribuée sur cette période.", {
+                size: 9,
+                color: GRAY,
+            });
+            cursor.newLine(18);
+            return;
+        }
+
+        // 20% French VAT, or 0% for a non-FR merchant (reverse-charge).
+        const tvaPct = monthlyBill.vatApplicable ? "20" : "0";
+        for (const group of groups) {
+            cursor.ensureSpace(15);
+            cursor.text(group.label, { x: col.produit, size: 9 });
+            cursor.text(String(group.qty), { x: col.qte, size: 9 });
+            cursor.text(formatMoney(group.unitHt.toFixed(2), group.currency), {
+                x: col.prix,
+                size: 9,
+            });
+            cursor.text(tvaPct, { x: col.tva, size: 9 });
+            cursor.text(formatMoney(group.totalHt.toFixed(2), group.currency), {
+                x: col.total,
+                size: 9,
             });
             cursor.newLine(15);
-            cursor.text(
-                `Opening: ${formatMoney(ledger.openingBalance, ledger.currency)}   Closing: ${formatMoney(ledger.closingBalance, ledger.currency)}`,
-                { size: 9 }
-            );
-            cursor.newLine(13);
-            cursor.text(
-                `Deposited: ${formatMoney(ledger.totalDeposited, ledger.currency)}   Withdrawn: ${formatMoney(ledger.totalWithdrawn, ledger.currency)}   Rewarded: ${formatMoney(ledger.totalRewarded, ledger.currency)}`,
-                { size: 9, color: GRAY }
-            );
-            cursor.newLine(20);
         }
-        cursor.newLine(6);
+        cursor.newLine(8);
     }
 
-    private drawMonthlyBillAnnex(
+    /**
+     * Folds the per-line settled rewards into invoice rows grouped by identical
+     * reward amount (same currency + same amount → one line, `qty` accumulated).
+     * `unitHt = amount × (1 + Frak fee)`, `totalHt = unitHt × qty`. Sorted by
+     * `totalHt` descending so the biggest lines lead. Pure display math on the
+     * frozen amounts — decimal.js, never native float.
+     */
+    private groupRewards(
+        rows: NonNullable<BillingPdfDocumentDto["monthlyBill"]>["annexRows"]
+    ): Array<{
+        currency: string;
+        qty: number;
+        unitHt: Decimal;
+        totalHt: Decimal;
+        label: string;
+    }> {
+        const map = new Map<
+            string,
+            { currency: string; base: Decimal; qty: number }
+        >();
+        for (const row of rows) {
+            const base = new Decimal(row.amount);
+            const key = `${row.currency}:${base.toFixed(18)}`;
+            const existing = map.get(key);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                map.set(key, { currency: row.currency, base, qty: 1 });
+            }
+        }
+        return [...map.values()]
+            .map(({ currency, base, qty }) => {
+                const unitHt = base.mul(new Decimal(1).plus(FRAK_FEE_RATE));
+                return {
+                    currency,
+                    qty,
+                    unitHt,
+                    totalHt: unitHt.mul(qty),
+                    label: `Récompense ${formatMoney(base.toFixed(2), currency)}`,
+                };
+            })
+            .sort((a, b) => b.totalHt.comparedTo(a.totalHt));
+    }
+
+    /**
+     * Two side-by-side blocks under the reward table: `Détails TVA` (the applied
+     * rate + its amount) on the left, `Récapitulatif` (Total HT / Total TVA /
+     * Total TTC) on the right. Totals are the sum of the table's `Total HT`
+     * lines; TVA is the applied rate of that, TTC is HT + TVA. A non-FR merchant
+     * has a 0% rate (reverse-charge), so Total TVA is 0 and TTC === HT.
+     */
+    private drawTvaAndRecap(
+        cursor: PageCursor,
+        monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
+        bold: PDFFont
+    ): void {
+        const groups = this.groupRewards(monthlyBill.annexRows);
+        // Bills are single-currency in practice (one merchant bank/token); the
+        // recap is shown in the reward rows' currency, falling back to the
+        // ledger's currency when there are no rewards.
+        const currency =
+            monthlyBill.annexRows[0]?.currency ??
+            monthlyBill.ledgers[0]?.currency ??
+            "eure";
+
+        const vatRate = monthlyBill.vatApplicable ? VAT_RATE : new Decimal(0);
+        let totalHt = new Decimal(0);
+        for (const group of groups) totalHt = totalHt.plus(group.totalHt);
+        const totalTva = totalHt.mul(vatRate);
+        const totalTtc = totalHt.plus(totalTva);
+
+        cursor.ensureSpace(70);
+        const topY = cursor.y;
+        const rightX = PAGE_WIDTH / 2 + 10;
+
+        cursor.text("Détails TVA", { size: 12, useFont: bold });
+        cursor.newLine(16);
+        cursor.text(
+            monthlyBill.vatApplicable
+                ? "Taux : 20 %"
+                : "Taux : 0 % (autoliquidation)",
+            { size: 9 }
+        );
+        cursor.newLine(13);
+        cursor.text(`Montant : ${formatMoney(totalTva.toFixed(2), currency)}`, {
+            size: 9,
+        });
+        const leftEndY = cursor.y;
+
+        cursor.y = topY;
+        cursor.text("Récapitulatif", { x: rightX, size: 12, useFont: bold });
+        cursor.newLine(16);
+        cursor.text(`Total HT : ${formatMoney(totalHt.toFixed(2), currency)}`, {
+            x: rightX,
+            size: 9,
+        });
+        cursor.newLine(13);
+        cursor.text(
+            `Total TVA : ${formatMoney(totalTva.toFixed(2), currency)}`,
+            {
+                x: rightX,
+                size: 9,
+            }
+        );
+        cursor.newLine(13);
+        cursor.text(
+            `Total TTC : ${formatMoney(totalTtc.toFixed(2), currency)}`,
+            {
+                x: rightX,
+                size: 9,
+                useFont: bold,
+            }
+        );
+        const rightEndY = cursor.y;
+
+        cursor.y = Math.min(leftEndY, rightEndY) - 26;
+    }
+
+    /**
+     * The campaign-bank ledger status, below the recap: the amount initially
+     * credited (opening balance) and the balance remaining after this bill
+     * (closing balance), one pair per currency ledger, shown in that ledger's
+     * fiat currency (never hardcoded EUR).
+     */
+    private drawLedgerStatus(
         cursor: PageCursor,
         monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
         bold: PDFFont
     ): void {
         cursor.ensureSpace(60);
-        cursor.text(`Reward annex (${monthlyBill.annexRows.length} rows)`, {
-            size: 13,
-            useFont: bold,
-        });
-        cursor.newLine(18);
+        cursor.text("État du compte", { size: 13, useFont: bold });
+        cursor.newLine(20);
 
-        if (monthlyBill.annexRows.length === 0) {
-            cursor.text("No settled rewards in this period.", {
-                size: 9,
-                color: GRAY,
-            });
-            cursor.newLine(14);
-            return;
-        }
-
-        cursor.text("Date", { size: 8, color: GRAY });
-        cursor.text("Amount", { x: MARGIN + 110, size: 8, color: GRAY });
-        cursor.text("Fiat value", { x: MARGIN + 230, size: 8, color: GRAY });
-        cursor.text("Tx hash", { x: MARGIN + 340, size: 8, color: GRAY });
-        cursor.newLine(13);
-
-        for (const row of monthlyBill.annexRows) {
-            cursor.ensureSpace(13);
-            cursor.text(row.settledAt.toISOString().slice(0, 10), { size: 8 });
-            cursor.text(formatMoney(row.amount, row.currency), {
-                x: MARGIN + 110,
-                size: 8,
-            });
-            cursor.text(row.fiatValue, { x: MARGIN + 230, size: 8 });
-            cursor.text(row.txHash ?? "—", { x: MARGIN + 340, size: 7 });
-            cursor.newLine(13);
+        for (const ledger of monthlyBill.ledgers) {
+            cursor.ensureSpace(36);
+            cursor.text(
+                `Montant initial crédité : ${formatMoney(ledger.openingBalance, ledger.currency)}`,
+                { size: 10 }
+            );
+            cursor.newLine(15);
+            cursor.text(
+                `Solde restant sur le compte après cette facture : ${formatMoney(ledger.closingBalance, ledger.currency)}`,
+                { size: 10 }
+            );
+            cursor.newLine(18);
         }
     }
 
@@ -432,17 +643,18 @@ export class BillingPdfService {
         dto: BillingPdfDocumentDto,
         bold: PDFFont
     ): void {
-        const title = dto.kind === "deposit" ? "Deposit note" : "Withdraw bill";
+        const title =
+            dto.kind === "deposit" ? "Note de dépôt" : "Facture de retrait";
         cursor.text(title, { size: 20, useFont: bold });
         cursor.newLine(28);
 
-        cursor.text(`Reference: ${dto.reference}`, { size: 11 });
+        cursor.text(`Référence : ${dto.reference}`, { size: 11 });
         cursor.newLine(14);
-        cursor.text(`Date: ${dto.documentDate.toISOString().slice(0, 10)}`, {
+        cursor.text(`Date : ${dto.documentDate.toISOString().slice(0, 10)}`, {
             size: 11,
         });
         cursor.newLine(14);
-        cursor.text(`Currency: ${dto.currency.toUpperCase()}`, { size: 11 });
+        cursor.text(`Devise : ${fiatFor(dto.currency).code}`, { size: 11 });
         cursor.newLine(28);
     }
 
@@ -455,34 +667,34 @@ export class BillingPdfService {
         const blockTopY = cursor.y;
         const rightX = PAGE_WIDTH / 2 + 10;
 
-        cursor.text("Issued by", { size: 9, color: GRAY });
+        // SIREN + VAT live in the page footer now (legal mentions), not here.
+        cursor.text("Émis par", { size: 9, color: GRAY });
         cursor.newLine(14);
         cursor.text(seller.companyName, { useFont: bold });
         cursor.newLine(13);
-        cursor.text(`SIREN: ${seller.siren}`, { size: 9 });
-        cursor.newLine(13);
-        if (seller.vatNumber) {
-            cursor.text(`VAT: ${seller.vatNumber}`, { size: 9 });
-            cursor.newLine(13);
-        }
         for (const line of seller.addressLines) {
             cursor.text(line, { size: 9 });
             cursor.newLine(12);
         }
+        cursor.text(seller.email, { size: 9 });
+        cursor.newLine(12);
         // Bottom of the left (seller) column.
         const leftEndY = cursor.y;
 
         // Reset y to draw the buyer block in the right column.
         cursor.y = blockTopY;
-        cursor.text("Billed to", { x: rightX, size: 9, color: GRAY });
+        cursor.text("Facturé à", { x: rightX, size: 9, color: GRAY });
         cursor.newLine(14);
-        cursor.text(dto.buyer.companyName ?? "(no company name on file)", {
-            x: rightX,
-            useFont: bold,
-        });
+        cursor.text(
+            dto.buyer.companyName ?? "(aucune raison sociale renseignée)",
+            {
+                x: rightX,
+                useFont: bold,
+            }
+        );
         cursor.newLine(13);
         if (dto.buyer.vatNumber) {
-            cursor.text(`VAT: ${dto.buyer.vatNumber}`, {
+            cursor.text(`TVA : ${dto.buyer.vatNumber}`, {
                 x: rightX,
                 size: 9,
             });
@@ -505,14 +717,16 @@ export class BillingPdfService {
         dto: BillingPdfDocumentDto,
         bold: PDFFont
     ): void {
-        cursor.text("Amounts", { size: 13, useFont: bold });
+        cursor.text("Montants", { size: 13, useFont: bold });
         cursor.newLine(20);
 
         cursor.text(
-            `Gross amount: ${formatMoney(dto.grossAmount, dto.currency)}`
+            `Montant brut : ${formatMoney(dto.grossAmount, dto.currency)}`
         );
         cursor.newLine(15);
-        cursor.text(`Net amount: ${formatMoney(dto.netAmount, dto.currency)}`);
+        cursor.text(
+            `Montant net : ${formatMoney(dto.netAmount, dto.currency)}`
+        );
         cursor.newLine(20);
     }
 
@@ -523,26 +737,26 @@ export class BillingPdfService {
     ): void {
         if (isVatApplicable(deposit.vatAmount)) {
             cursor.text(
-                `VAT (20%): ${formatMoney(deposit.vatAmount, currency)}`
+                `TVA (20 %) : ${formatMoney(deposit.vatAmount, currency)}`
             );
         } else {
-            cursor.text("VAT: reverse-charged / not applicable", {
+            cursor.text("TVA : autoliquidation / non applicable", {
                 color: GRAY,
             });
         }
         cursor.newLine(15);
         cursor.text(
-            `Frak fee: ${formatMoney(deposit.frakFeeAmount, currency)}`
+            `Frais Frak : ${formatMoney(deposit.frakFeeAmount, currency)}`
         );
         cursor.newLine(15);
         if (isPositiveAmount(deposit.giftedAmount)) {
             cursor.text(
-                `Gifted amount: ${formatMoney(deposit.giftedAmount, currency)}`
+                `Montant offert : ${formatMoney(deposit.giftedAmount, currency)}`
             );
             cursor.newLine(15);
         }
         if (deposit.paymentPlatform) {
-            cursor.text(`Payment platform: ${deposit.paymentPlatform}`, {
+            cursor.text(`Plateforme de paiement : ${deposit.paymentPlatform}`, {
                 size: 9,
                 color: GRAY,
             });
@@ -550,7 +764,7 @@ export class BillingPdfService {
         }
         if (deposit.note) {
             cursor.newLine(6);
-            cursor.text(`Note: ${deposit.note}`, { size: 9 });
+            cursor.text(`Note : ${deposit.note}`, { size: 9 });
             cursor.newLine(14);
         }
     }
@@ -561,45 +775,45 @@ export class BillingPdfService {
         currency: string,
         bold: PDFFont
     ): void {
-        cursor.text("Restitution breakdown", { size: 12, useFont: bold });
+        cursor.text("Détail de la restitution", { size: 12, useFont: bold });
         cursor.newLine(18);
         cursor.text(
-            `Remaining bank amount: ${formatMoney(withdraw.remainingBankAmount, currency)}`
+            `Montant restant sur le compte : ${formatMoney(withdraw.remainingBankAmount, currency)}`
         );
         cursor.newLine(15);
 
         const ratioPct = (
             Number.parseFloat(withdraw.distributedRatio) * 100
         ).toFixed(2);
-        cursor.text(`Distributed ratio: ${ratioPct}%`);
+        cursor.text(`Ratio distribué : ${ratioPct} %`);
         cursor.newLine(15);
 
         if (isVatApplicable(withdraw.restitutedVat)) {
             cursor.text(
-                `Restituted VAT: ${formatMoney(withdraw.restitutedVat, currency)}`
+                `TVA restituée : ${formatMoney(withdraw.restitutedVat, currency)}`
             );
         } else {
-            cursor.text("Restituted VAT: reverse-charged / not applicable", {
+            cursor.text("TVA restituée : autoliquidation / non applicable", {
                 color: GRAY,
             });
         }
         cursor.newLine(15);
         cursor.text(
-            `Restituted Frak fee: ${formatMoney(withdraw.restitutedFrakFee, currency)}`
+            `Frais Frak restitués : ${formatMoney(withdraw.restitutedFrakFee, currency)}`
         );
         cursor.newLine(15);
         cursor.text(
-            `Total sent to destination account: ${formatMoney(withdraw.bankSent, currency)}`,
+            `Total envoyé sur le compte de destination : ${formatMoney(withdraw.bankSent, currency)}`,
             { useFont: bold }
         );
         cursor.newLine(18);
-        cursor.text(`Destination account: ${withdraw.maskedIban}`, {
+        cursor.text(`Compte de destination : ${withdraw.maskedIban}`, {
             size: 10,
         });
         cursor.newLine(16);
         if (withdraw.note) {
             cursor.newLine(6);
-            cursor.text(`Note: ${withdraw.note}`, { size: 9 });
+            cursor.text(`Note : ${withdraw.note}`, { size: 9 });
             cursor.newLine(14);
         }
     }

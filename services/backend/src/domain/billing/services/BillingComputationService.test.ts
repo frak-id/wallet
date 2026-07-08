@@ -307,6 +307,36 @@ describe("BillingComputationService", () => {
         });
     });
 
+    describe("computeBillTotals", () => {
+        it("adds the 20% Frak fee (HT) and 20% VAT (TTC) for an FR merchant", () => {
+            const result = service.computeBillTotals({
+                rewardBaseAmount: "100",
+                vatApplicable: true,
+            });
+            expect(result.totalHt).toBe("120.000000000000000000");
+            expect(result.totalTva).toBe("24.000000000000000000");
+            expect(result.totalTtc).toBe("144.000000000000000000");
+        });
+
+        it("reverse-charges VAT (0%) for a non-FR merchant: TTC === HT", () => {
+            const result = service.computeBillTotals({
+                rewardBaseAmount: "100",
+                vatApplicable: false,
+            });
+            expect(result.totalHt).toBe("120.000000000000000000");
+            expect(result.totalTva).toBe("0.000000000000000000");
+            expect(result.totalTtc).toBe("120.000000000000000000");
+        });
+
+        it("handles a zero reward base", () => {
+            const result = service.computeBillTotals({
+                rewardBaseAmount: "0",
+                vatApplicable: true,
+            });
+            expect(result.totalTtc).toBe("0.000000000000000000");
+        });
+    });
+
     describe("stablecoinForTokenAddress", () => {
         it("maps a known stablecoin address back to its currency", () => {
             expect(stablecoinForTokenAddress(currentStablecoins.eure)).toBe(

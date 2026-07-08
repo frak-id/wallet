@@ -160,6 +160,10 @@ export class MonthlyBillOrchestrator {
             periodEnd,
             computed.currencies,
             computed.details,
+            {
+                grossAmount: computed.grossAmount,
+                netAmount: computed.netAmount,
+            },
             createdBy
         );
 
@@ -348,7 +352,11 @@ export class MonthlyBillOrchestrator {
         const refreshed = await this.billingDocuments.updateMonthlyBillDetails(
             merchantId,
             id,
-            computed.details
+            computed.details,
+            {
+                grossAmount: computed.grossAmount,
+                netAmount: computed.netAmount,
+            }
         );
         if (!refreshed) return document;
 
@@ -376,6 +384,10 @@ export class MonthlyBillOrchestrator {
     ): Promise<{
         currencies: Stablecoin[];
         details: BillingDocumentDetails;
+        /** Invoice Total TTC — the amount surfaced on the dashboard/PDF recap. */
+        grossAmount: string;
+        /** Invoice Total HT (reward base + Frak fee, before VAT). */
+        netAmount: string;
         annexAssetLogs: AssetLogSelect[];
         priceByToken: Map<Address, TokenPrice | undefined>;
         merchant: MerchantSelectForBill | null;
@@ -438,9 +450,27 @@ export class MonthlyBillOrchestrator {
             fiatTotals: annexData.totals,
         };
 
+        // Invoice total = the same reward set the PDF's reward table bills:
+        // settled rewards in the period (each = distributed amount + Frak fee,
+        // + VAT for FR merchants). Persisted as gross/net so the dashboard's
+        // amount column (which reads `grossAmount`) isn't empty for bills.
+        const rewardBaseAmount = annexData.assetLogs
+            .filter((log) => log.tokenAddress && log.settledAt)
+            .reduce(
+                (acc, log) => acc.plus(new Decimal(log.amount)),
+                new Decimal(0)
+            )
+            .toFixed(18);
+        const { totalHt, totalTtc } = this.computation.computeBillTotals({
+            rewardBaseAmount,
+            vatApplicable: merchant?.accountingInfo?.country === "FR",
+        });
+
         return {
             currencies,
             details,
+            grossAmount: totalTtc,
+            netAmount: totalHt,
             annexAssetLogs: annexData.assetLogs,
             priceByToken: annexData.priceByToken,
             merchant,
@@ -465,6 +495,7 @@ export class MonthlyBillOrchestrator {
         periodEnd: Date,
         currencies: Stablecoin[],
         details: BillingDocumentDetails,
+        amounts: { grossAmount: string; netAmount: string },
         createdBy: Address
     ): Promise<BillingDocumentSelect> {
         try {
@@ -480,10 +511,13 @@ export class MonthlyBillOrchestrator {
                 documentDate: new Date(periodEnd.getTime() - 1),
                 periodStart,
                 periodEnd,
-                // No single currency/gross/net for a multi-currency monthly
-                // bill — the CHECK constraint only requires amounts for
-                // deposit/withdraw.
+                // The bill's primary currency is the first ledger currency
+                // (bills are single-currency in practice — one merchant
+                // bank/token). Gross = invoice Total TTC, net = Total HT, so
+                // the dashboard amount column isn't empty for bills.
                 currency: currencies[0] ?? "eure",
+                grossAmount: amounts.grossAmount,
+                netAmount: amounts.netAmount,
                 details,
                 createdBy,
             } satisfies Omit<BillingDocumentInsert, "reference">);
@@ -768,6 +802,10 @@ export class MonthlyBillOrchestrator {
             monthlyBill: {
                 periodStart: document.periodStart,
                 periodEnd: document.periodEnd,
+                // French VAT only applies to FR-domiciled merchants; a non-FR
+                // merchant's rewards are reverse-charged (0% on the bill), same
+                // rule as the deposit/withdraw VAT lines.
+                vatApplicable: merchant?.accountingInfo?.country === "FR",
                 ledgers: details.ledgers,
                 fiatTotals: details.fiatTotals,
                 annexRows,

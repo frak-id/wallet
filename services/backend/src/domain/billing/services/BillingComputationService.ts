@@ -141,6 +141,22 @@ export type AnnexRowFiatInput = {
     price: { eur: number; usd: number; gbp: number };
 };
 
+export type BillTotalsInput = {
+    /**
+     * Sum of the period's settled reward amounts (decimal string). Stablecoins
+     * are pegged 1:1 to their fiat leg, so the token sum is its own fiat base.
+     */
+    rewardBaseAmount: string;
+    /** Whether French VAT applies (merchant country === "FR"). */
+    vatApplicable: boolean;
+};
+
+export type BillTotalsResult = {
+    totalHt: string;
+    totalTva: string;
+    totalTtc: string;
+};
+
 export type AnnexRowFiatResult = {
     eur: string;
     usd: string;
@@ -353,6 +369,43 @@ export class BillingComputationService {
             eur: toMoneyString(decimalAmount.mul(price.eur)),
             usd: toMoneyString(decimalAmount.mul(price.usd)),
             gbp: toMoneyString(decimalAmount.mul(price.gbp)),
+        };
+    }
+
+    /**
+     * Monthly-bill invoice totals from the period's settled-reward base sum
+     * (§4/§6). The billed product is reward distribution: each reward's HT unit
+     * price is the distributed amount plus the 20% Frak fee, so
+     * `totalHt = rewardBaseAmount * (1 + fee)`. French VAT (20%) applies only
+     * to FR-domiciled merchants; others are reverse-charged (0%).
+     *
+     * ```
+     * totalHt  = rewardBaseAmount * 1.20
+     * totalTva = totalHt * (vatApplicable ? 0.20 : 0)
+     * totalTtc = totalHt + totalTva
+     * ```
+     *
+     * Mirrors the PDF reward-table recap so the amount stored on the document
+     * (surfaced on the dashboard) equals the document's Total TTC.
+     */
+    computeBillTotals({
+        rewardBaseAmount,
+        vatApplicable,
+    }: BillTotalsInput): BillTotalsResult {
+        const base = assertNonNegativeFiniteDecimal(
+            rewardBaseAmount,
+            "rewardBaseAmount"
+        );
+        const totalHt = base.mul(new Decimal(1).plus(FRAK_FEE_RATE));
+        const vatRate = vatApplicable
+            ? new Decimal(FR_VAT_RATE)
+            : new Decimal(0);
+        const totalTva = totalHt.mul(vatRate);
+        const totalTtc = totalHt.plus(totalTva);
+        return {
+            totalHt: toMoneyString(totalHt),
+            totalTva: toMoneyString(totalTva),
+            totalTtc: toMoneyString(totalTtc),
         };
     }
 }
