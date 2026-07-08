@@ -136,6 +136,18 @@ export type BestReward = {
      * the campaign has no lockup.
      */
     lockupDurationDays?: number;
+    /**
+     * Raw referrer/referee rewards of the selected campaign, surfaced so
+     * consumers can render the full per-audience breakdown (tier rows,
+     * percentage examples) rather than only the headline number.
+     */
+    referrerReward?: EstimatedReward;
+    refereeReward?: EstimatedReward;
+    /**
+     * Raw minimum purchase value (unformatted), used to build percentage
+     * worked-examples consistent with the campaign's gating.
+     */
+    minPurchaseValue?: number;
 };
 
 /**
@@ -178,6 +190,9 @@ export function selectBestReward(
         payoutType: reward.payoutType,
         minPurchaseAmount,
         lockupDurationDays,
+        referrerReward: selected.campaign.referrer,
+        refereeReward: selected.campaign.referee,
+        minPurchaseValue: minPurchase ?? undefined,
     };
 }
 
