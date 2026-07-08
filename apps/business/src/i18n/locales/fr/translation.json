@@ -1177,6 +1177,7 @@
                     "vat": "TVA (20 %)",
                     "vatExempt": "TVA (exonérée hors FR)",
                     "frakFee": "Frais Frak (20 %)",
+                    "gifted": "Montant offert",
                     "net": "Montant net",
                     "hint": "Estimation — la TVA et les frais définitifs sont calculés à la création du dépôt."
                 },
@@ -1190,6 +1191,11 @@
                     "grossAmount": {
                         "label": "Montant brut",
                         "placeholder": "ex. 1200"
+                    },
+                    "giftedAmount": {
+                        "label": "Montant offert (optionnel)",
+                        "placeholder": "ex. 200",
+                        "hint": "Complément offert rajouté au net, pour rendre cohérent un onramp mal calculé."
                     },
                     "remainingBankAmount": {
                         "label": "Montant restant en banque",

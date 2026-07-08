@@ -17,7 +17,31 @@ describe("BillingComputationService", () => {
             });
             expect(result.vatAmount).toBe("200.000000000000000000");
             expect(result.frakFeeAmount).toBe("200.000000000000000000");
+            expect(result.giftedAmount).toBe("0.000000000000000000");
             expect(result.netAmount).toBe("800.000000000000000000");
+        });
+
+        it("gifted amount is added back to the net", () => {
+            // gross 1200 (FR) -> vat 200, frakFee 200, net 800; +150 gift -> 950
+            const result = service.computeDeposit({
+                grossAmount: "1200",
+                country: "FR",
+                giftedAmount: "150",
+            });
+            expect(result.vatAmount).toBe("200.000000000000000000");
+            expect(result.frakFeeAmount).toBe("200.000000000000000000");
+            expect(result.giftedAmount).toBe("150.000000000000000000");
+            expect(result.netAmount).toBe("950.000000000000000000");
+        });
+
+        it("throws on negative giftedAmount", () => {
+            expect(() =>
+                service.computeDeposit({
+                    grossAmount: "1200",
+                    country: "FR",
+                    giftedAmount: "-1",
+                })
+            ).toThrow();
         });
 
         it("non-FR merchant: no VAT, fee is 20% of gross", () => {
@@ -28,6 +52,7 @@ describe("BillingComputationService", () => {
             });
             expect(result.vatAmount).toBe("0.000000000000000000");
             expect(result.frakFeeAmount).toBe("200.000000000000000000");
+            expect(result.giftedAmount).toBe("0.000000000000000000");
             expect(result.netAmount).toBe("800.000000000000000000");
         });
 

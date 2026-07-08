@@ -1424,6 +1424,7 @@ export default interface Resources {
         "admin": {
           "breakdown": {
             "frakFee": "Frak fee (20%)",
+            "gifted": "Gifted amount",
             "gross": "Gross amount",
             "hint": "Estimate — final VAT and fee are computed when the deposit is created.",
             "net": "Net amount",
@@ -1448,6 +1449,11 @@ export default interface Resources {
             },
             "documentDate": {
               "label": "Document date"
+            },
+            "giftedAmount": {
+              "hint": "Offered top-up added back to the net, to make a miscomputed onramp coherent.",
+              "label": "Gifted amount (optional)",
+              "placeholder": "e.g. 200"
             },
             "grossAmount": {
               "label": "Gross amount",

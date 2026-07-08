@@ -28,6 +28,7 @@ export type CreateDepositInput = {
     currency: "eure" | "gbpe" | "usde" | "usdc";
     documentDate: string;
     country: string;
+    giftedAmount?: string;
     paymentPlatform?: "shopify" | "stripe";
     note?: string;
     txHash?: Hex;

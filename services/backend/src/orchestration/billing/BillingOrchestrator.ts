@@ -13,9 +13,9 @@ import type { BillingStorageRepository } from "../../domain/billing/repositories
 import type { BillingDocumentDetails } from "../../domain/billing/schemas";
 import type { BillingComputationService } from "../../domain/billing/services/BillingComputationService";
 import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
-import { eventEmitter } from "../../infrastructure/messaging/events";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
+import { eventEmitter } from "../../infrastructure/messaging/events";
 import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
 
 export class DepositNotFoundError extends Error {
@@ -91,6 +91,8 @@ type CreateDepositInput = {
     currency: Stablecoin;
     documentDate: Date;
     country: string;
+    /** Offered top-up added back to the net (§4). Defaults to "0". */
+    giftedAmount?: string;
     paymentPlatform?: "shopify" | "stripe";
     note?: string;
     txHash?: Hex;
@@ -136,16 +138,18 @@ export class BillingOrchestrator {
         input: CreateDepositInput,
         createdBy: Address
     ): Promise<BillingDocumentSelect> {
-        const { vatAmount, frakFeeAmount, netAmount } =
+        const { vatAmount, frakFeeAmount, giftedAmount, netAmount } =
             this.computation.computeDeposit({
                 grossAmount: input.grossAmount,
                 country: input.country,
+                giftedAmount: input.giftedAmount,
             });
 
         const details: BillingDocumentDetails = {
             kind: "deposit",
             vatAmount,
             frakFeeAmount,
+            giftedAmount,
             paymentPlatform: input.paymentPlatform,
             note: input.note,
         };
@@ -524,6 +528,7 @@ export class BillingOrchestrator {
                     ? {
                           vatAmount: document.details.vatAmount,
                           frakFeeAmount: document.details.frakFeeAmount,
+                          giftedAmount: document.details.giftedAmount,
                           note: document.details.note,
                           paymentPlatform: document.details.paymentPlatform,
                       }

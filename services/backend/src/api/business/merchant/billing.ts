@@ -20,6 +20,8 @@ const CreateDepositBodySchema = t.Object({
     currency: StablecoinSchema,
     documentDate: t.String({ format: "date-time" }),
     country: t.String({ pattern: "^[A-Z]{2}$" }),
+    // Offered top-up added back to the net (§4); defaults to "0" server-side.
+    giftedAmount: t.Optional(DecimalStringSchema),
     paymentPlatform: t.Optional(
         t.Union([t.Literal("shopify"), t.Literal("stripe")])
     ),
@@ -57,6 +59,7 @@ function toDepositInput(body: typeof CreateDepositBodySchema.static) {
         currency: body.currency,
         documentDate: new Date(body.documentDate),
         country: body.country,
+        giftedAmount: body.giftedAmount,
         paymentPlatform: body.paymentPlatform,
         note: body.note,
         txHash: body.txHash,

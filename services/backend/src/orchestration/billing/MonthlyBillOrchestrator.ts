@@ -248,8 +248,9 @@ export class MonthlyBillOrchestrator {
             return 0;
         }
 
-        const oldestDeposit =
-            await this.billingDocuments.findOldestDepositDate(merchant.id);
+        const oldestDeposit = await this.billingDocuments.findOldestDepositDate(
+            merchant.id
+        );
         if (!oldestDeposit) return 0;
 
         const rangeStart = monthStartOf(

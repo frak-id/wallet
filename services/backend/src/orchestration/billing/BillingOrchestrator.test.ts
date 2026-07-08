@@ -458,8 +458,7 @@ describe("BillingOrchestrator", () => {
     });
 
     describe("createDeposit lazy PDF + bill invalidation", () => {
-        const createdBy =
-            "0x0000000000000000000000000000000000000007" as const;
+        const createdBy = "0x0000000000000000000000000000000000000007" as const;
         const input = {
             grossAmount: "1200",
             currency: "eure" as const,

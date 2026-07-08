@@ -561,9 +561,7 @@ describe("MonthlyBillOrchestrator", () => {
                 createdAt: new Date("2026-01-01T00:00:00.000Z"),
                 accountingInfo: fullAccountingInfo,
             };
-            const findAll = vi
-                .fn()
-                .mockResolvedValue([noInfo, noDeposit]);
+            const findAll = vi.fn().mockResolvedValue([noInfo, noDeposit]);
             const findOldestDepositDate = vi.fn().mockResolvedValue(null);
             const listMonthlyBillPeriodStarts = vi.fn().mockResolvedValue([]);
             const create = vi.fn();

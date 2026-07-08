@@ -36,7 +36,10 @@ CronRegistry.register(
                 return;
             }
 
-            logger.info(outcome.result, "Monthly-bill generation job completed");
+            logger.info(
+                outcome.result,
+                "Monthly-bill generation job completed"
+            );
         },
     })
 );

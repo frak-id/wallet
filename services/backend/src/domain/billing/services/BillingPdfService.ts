@@ -57,6 +57,8 @@ export type BillingPdfDocumentDto = {
     deposit?: {
         vatAmount: string;
         frakFeeAmount: string;
+        /** Offered top-up added back to the net (§4); absent/"0" when none. */
+        giftedAmount?: string;
         note?: string;
         paymentPlatform?: string;
     };
@@ -191,6 +193,12 @@ function formatMoney(value: string, currency: string): string {
 function isVatApplicable(vatAmount: string | undefined): boolean {
     if (!vatAmount) return false;
     const n = Number.parseFloat(vatAmount);
+    return Number.isFinite(n) && n > 0;
+}
+
+function isPositiveAmount(value: string | undefined): value is string {
+    if (!value) return false;
+    const n = Number.parseFloat(value);
     return Number.isFinite(n) && n > 0;
 }
 
@@ -527,6 +535,12 @@ export class BillingPdfService {
             `Frak fee: ${formatMoney(deposit.frakFeeAmount, currency)}`
         );
         cursor.newLine(15);
+        if (isPositiveAmount(deposit.giftedAmount)) {
+            cursor.text(
+                `Gifted amount: ${formatMoney(deposit.giftedAmount, currency)}`
+            );
+            cursor.newLine(15);
+        }
         if (deposit.paymentPlatform) {
             cursor.text(`Payment platform: ${deposit.paymentPlatform}`, {
                 size: 9,

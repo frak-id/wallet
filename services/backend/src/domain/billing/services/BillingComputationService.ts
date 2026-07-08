@@ -74,11 +74,19 @@ export type DepositComputationInput = {
     grossAmount: string;
     /** ISO-3166 alpha-2. Only "FR" triggers VAT (§4). */
     country: string;
+    /**
+     * Optional decimal string, an offered/gifted amount added on top of the
+     * net so the campaign bank reflects what was actually onramped. Used to
+     * correct historical onramps where VAT/fees weren't billed coherently.
+     * Defaults to "0" (no gift).
+     */
+    giftedAmount?: string;
 };
 
 export type DepositComputationResult = {
     vatAmount: string;
     frakFeeAmount: string;
+    giftedAmount: string;
     netAmount: string;
 };
 
@@ -148,16 +156,26 @@ export class BillingComputationService {
      * vatRate       = country === "FR" ? 0.20 : 0
      * vatAmount     = grossAmount * vatRate / (1 + vatRate)
      * frakFeeAmount = (grossAmount - vatAmount) * 0.20
-     * netAmount     = grossAmount - vatAmount - frakFeeAmount
+     * netAmount     = grossAmount - vatAmount - frakFeeAmount + giftedAmount
      * ```
+     *
+     * `giftedAmount` (default 0) is an offered top-up added back to the net so
+     * the campaign bank matches the amount actually onramped — for correcting
+     * historical onramps that weren't billed with coherent VAT/fees. It has no
+     * VAT/fee of its own; it simply lifts the net.
      */
     computeDeposit({
         grossAmount,
         country,
+        giftedAmount = "0",
     }: DepositComputationInput): DepositComputationResult {
         const gross = assertNonNegativeFiniteDecimal(
             grossAmount,
             "grossAmount"
+        );
+        const gifted = assertNonNegativeFiniteDecimal(
+            giftedAmount,
+            "giftedAmount"
         );
 
         const vatRate =
@@ -168,11 +186,15 @@ export class BillingComputationService {
 
         const feeBase = gross.minus(vatAmount);
         const frakFeeAmount = feeBase.mul(FRAK_FEE_RATE);
-        const netAmount = gross.minus(vatAmount).minus(frakFeeAmount);
+        const netAmount = gross
+            .minus(vatAmount)
+            .minus(frakFeeAmount)
+            .plus(gifted);
 
         return {
             vatAmount: toMoneyString(vatAmount),
             frakFeeAmount: toMoneyString(frakFeeAmount),
+            giftedAmount: toMoneyString(gifted),
             netAmount: toMoneyString(netAmount),
         };
     }

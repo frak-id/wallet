@@ -1177,6 +1177,7 @@
                     "vat": "VAT (20%)",
                     "vatExempt": "VAT (exempt outside FR)",
                     "frakFee": "Frak fee (20%)",
+                    "gifted": "Gifted amount",
                     "net": "Net amount",
                     "hint": "Estimate — final VAT and fee are computed when the deposit is created."
                 },
@@ -1190,6 +1191,11 @@
                     "grossAmount": {
                         "label": "Gross amount",
                         "placeholder": "e.g. 1200"
+                    },
+                    "giftedAmount": {
+                        "label": "Gifted amount (optional)",
+                        "placeholder": "e.g. 200",
+                        "hint": "Offered top-up added back to the net, to make a miscomputed onramp coherent."
                     },
                     "remainingBankAmount": {
                         "label": "Remaining bank amount",

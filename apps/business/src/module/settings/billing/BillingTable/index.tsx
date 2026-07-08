@@ -21,8 +21,8 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
-import { getSafeAuthToken } from "@/stores/authStore";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
+import { getSafeAuthToken } from "@/stores/authStore";
 import type { BillingEntry } from "../types";
 import { useVoidDocument } from "../useBillingAdmin";
 import { useBillingInfo } from "../useBillingInfo";
@@ -187,8 +187,7 @@ function DownloadPdfButton({ entry }: { entry: BillingEntry }) {
             // as text (corrupting the bytes) — so fetch the binary directly.
             // Hitting this endpoint also lazily generates the PDF if a prior
             // render failed, so it works even when `entry.hasPdf` is false.
-            const baseUrl =
-                process.env.BACKEND_URL ?? "https://localhost:3030";
+            const baseUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
             const token = getSafeAuthToken();
             const response = await fetch(
                 `${baseUrl}/business/merchant/${merchantId}/billing/documents/${entry.id}/pdf`,

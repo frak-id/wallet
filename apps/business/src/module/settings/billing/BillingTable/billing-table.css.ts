@@ -1,5 +1,5 @@
-import { alias } from "@frak-labs/design-system/tokens";
 import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 /** Amount column reads with medium weight per Figma. */

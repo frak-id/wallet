@@ -25,6 +25,9 @@ const DepositDetailsSchema = t.Object({
     kind: t.Literal("deposit"),
     vatAmount: t.String(), // decimal string; "0" when country !== FR
     frakFeeAmount: t.String(),
+    // Offered/gifted top-up added back to the net (§4). Optional: absent on
+    // pre-existing deposit rows, treated as "0" by readers.
+    giftedAmount: t.Optional(t.String()),
     paymentPlatform: t.Optional(
         t.Union([t.Literal("shopify"), t.Literal("stripe")])
     ),

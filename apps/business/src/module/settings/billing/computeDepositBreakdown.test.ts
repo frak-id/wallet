@@ -21,12 +21,29 @@ describe("computeDepositBreakdown", () => {
         expect(result?.net).toBeCloseTo(800, 6);
     });
 
+    test("gifted amount is added back to the net", () => {
+        // gross 1200 (FR) -> net 800; +150 gift -> 950
+        const result = computeDepositBreakdown("1200", "FR", "150");
+        expect(result?.gifted).toBeCloseTo(150, 6);
+        expect(result?.net).toBeCloseTo(950, 6);
+    });
+
+    test("treats an invalid/negative gift as 0", () => {
+        expect(computeDepositBreakdown("1200", "FR", "-5")?.gifted).toBe(0);
+        expect(computeDepositBreakdown("1200", "FR", "abc")?.gifted).toBe(0);
+        expect(computeDepositBreakdown("1200", "FR", "")?.net).toBeCloseTo(
+            800,
+            6
+        );
+    });
+
     test("mirrors the server for a zero gross", () => {
         const result = computeDepositBreakdown("0", "FR");
         expect(result).toEqual({
             gross: 0,
             vat: 0,
             frakFee: 0,
+            gifted: 0,
             net: 0,
             vatApplies: true,
         });

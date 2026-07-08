@@ -14,8 +14,6 @@ export function useSettingsMerchantId(): string | undefined {
     const lastMerchantId = activeMerchantStore((s) => s.lastMerchantId);
     const { accessibleMerchants } = useMyMerchants();
 
-    const remembered = accessibleMerchants.find(
-        (m) => m.id === lastMerchantId
-    );
+    const remembered = accessibleMerchants.find((m) => m.id === lastMerchantId);
     return (remembered ?? accessibleMerchants[0])?.id;
 }

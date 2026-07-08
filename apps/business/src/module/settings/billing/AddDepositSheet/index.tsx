@@ -41,6 +41,7 @@ type DepositFormValues = {
     currency: (typeof STABLECOINS)[number];
     documentDate: string;
     country: string;
+    giftedAmount: string;
     paymentPlatform: "" | "shopify" | "stripe";
     note: string;
     txHash: string;
@@ -52,6 +53,7 @@ function emptyValues(defaultCountry?: string): DepositFormValues {
         currency: "eure",
         documentDate: "",
         country: defaultCountry ?? "",
+        giftedAmount: "",
         paymentPlatform: "",
         note: "",
         txHash: "",
@@ -92,14 +94,15 @@ export function AddDepositSheet({
     // Live, display-only VAT/fee/net preview mirroring the server math
     // (computeDepositBreakdown) — the backend recomputes authoritatively on
     // submit; this only guides the operator as they type gross + country.
-    const [grossAmount, country, currency] = form.watch([
+    const [grossAmount, country, currency, giftedAmount] = form.watch([
         "grossAmount",
         "country",
         "currency",
+        "giftedAmount",
     ]);
     const breakdown = useMemo(
-        () => computeDepositBreakdown(grossAmount, country),
-        [grossAmount, country]
+        () => computeDepositBreakdown(grossAmount, country, giftedAmount),
+        [grossAmount, country, giftedAmount]
     );
     const formatAmount = useMemo(() => {
         const fmt = getNumberFormat(i18n.language, {
@@ -118,6 +121,7 @@ export function AddDepositSheet({
             currency: values.currency,
             documentDate: new Date(values.documentDate).toISOString(),
             country: values.country,
+            giftedAmount: values.giftedAmount || undefined,
             paymentPlatform: values.paymentPlatform || undefined,
             note: values.note || undefined,
             txHash: (values.txHash || undefined) as `0x${string}` | undefined,
@@ -433,6 +437,41 @@ export function AddDepositSheet({
                                 </Columns>
                                 <FormField
                                     control={form.control}
+                                    name="giftedAmount"
+                                    rules={{
+                                        pattern: {
+                                            value: DECIMAL_PATTERN,
+                                            message: t(
+                                                "settings.billing.validation.decimal"
+                                            ),
+                                        },
+                                    }}
+                                    render={({ field }) => (
+                                        <EditField
+                                            label={t(
+                                                "settings.billing.admin.fields.giftedAmount.label"
+                                            )}
+                                            hint={t(
+                                                "settings.billing.admin.fields.giftedAmount.hint"
+                                            )}
+                                        >
+                                            <FormControl>
+                                                <Input
+                                                    variant="bare"
+                                                    tone="muted"
+                                                    length="big"
+                                                    inputMode="decimal"
+                                                    placeholder={t(
+                                                        "settings.billing.admin.fields.giftedAmount.placeholder"
+                                                    )}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                        </EditField>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
                                     name="note"
                                     render={({ field }) => (
                                         <EditField
@@ -524,6 +563,25 @@ export function AddDepositSheet({
                                             {formatAmount(breakdown.frakFee)}
                                         </Text>
                                     </Inline>
+                                    {breakdown.gifted > 0 && (
+                                        <Inline
+                                            space="s"
+                                            align="space-between"
+                                            alignY="center"
+                                        >
+                                            <Text
+                                                variant="bodySmall"
+                                                color="secondary"
+                                            >
+                                                {t(
+                                                    "settings.billing.admin.breakdown.gifted"
+                                                )}
+                                            </Text>
+                                            <Text variant="bodySmall">
+                                                {formatAmount(breakdown.gifted)}
+                                            </Text>
+                                        </Inline>
+                                    )}
                                     <Inline
                                         space="s"
                                         align="space-between"
