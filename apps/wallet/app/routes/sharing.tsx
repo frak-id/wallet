@@ -303,6 +303,11 @@ function WalletSharingPage() {
             rewardType={reward?.payoutType}
             minPurchaseAmount={reward?.minPurchaseAmount}
             lockupDurationDays={reward?.lockupDurationDays}
+            rewardBreakdown={{
+                referrer: reward?.referrerReward,
+                referee: reward?.refereeReward,
+                minPurchaseValue: reward?.minPurchaseValue,
+            }}
             canShare={canShare}
             showConfirmation={showConfirmation}
             onShare={handleShare}

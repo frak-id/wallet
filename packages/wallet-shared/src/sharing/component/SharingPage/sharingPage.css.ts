@@ -393,3 +393,46 @@ export const copyButton = style({
         },
     },
 });
+
+export const rewardBreakdown = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.m,
+    marginTop: alias.spacing.s,
+    paddingTop: alias.spacing.m,
+    borderTop: `1px solid ${vars.border.subtle}`,
+});
+
+export const rewardBlock = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xs,
+});
+
+export const rewardBlockLabel = style({
+    fontSize: fontSize.s,
+    fontWeight: 700,
+    color: vars.text.primary,
+});
+
+export const rewardRow = style({
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: alias.spacing.m,
+    color: vars.text.secondary,
+});
+
+export const rewardRowValue = style({
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    flexShrink: 0,
+    fontWeight: 500,
+    color: vars.text.primary,
+});
+
+export const rewardExample = style({
+    fontSize: fontSize.xs,
+    color: vars.text.tertiary,
+});

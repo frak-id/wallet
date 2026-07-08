@@ -87,7 +87,16 @@
                 "q4": "Est-ce que mes proches peuvent eux aussi devenir \"ambassadeur\" ?",
                 "a4": "Oui, chaque personne peut créer son propre lien de partage et devenir ambassadeur à son tour.",
                 "q5": "Pourquoi les marques utilisent-elles Frak ?",
-                "a5": "Frak permet aux marques de récompenser leur communauté pour le bouche-à-oreille, de manière transparente et décentralisée."
+                "a5": "Frak permet aux marques de récompenser leur communauté pour le bouche-à-oreille, de manière transparente et décentralisée.",
+                "q6": "Comment est calculée ma récompense ?",
+                "a6": "Le montant affiché correspond à la récompense maximale possible. Selon la marque, votre récompense peut être un montant fixe, un pourcentage de l'achat, ou varier selon des paliers en fonction du montant de la commande.",
+                "reward": {
+                    "referrerLabel": "Récompense en tant que parrain",
+                    "refereeLabel": "Récompense en tant que filleul",
+                    "percentOfBasket": "{{percent}}% du panier",
+                    "percentExample": "Ex. {{reward}} pour {{basket}} d'achat",
+                    "tierAndAbove": "{{min}} et plus"
+                }
             },
             "legal": {
                 "help": "Aide",

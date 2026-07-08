@@ -278,4 +278,52 @@ describe("selectBestReward", () => {
         );
         expect(best?.lockupDurationDays).toBeUndefined();
     });
+
+    it("surfaces the raw referrer and referee rewards for the breakdown", () => {
+        const referrer = uncappedPercentage(10);
+        const referee = fixedReward(3);
+        const best = selectBestReward(
+            [campaign({ id: "c", referrer, referee })],
+            { now: NOW }
+        );
+        expect(best?.referrerReward).toEqual(referrer);
+        expect(best?.refereeReward).toEqual(referee);
+    });
+
+    it("leaves the referee reward undefined when the campaign has none", () => {
+        const best = selectBestReward(
+            [campaign({ id: "c", referrer: fixedReward(50) })],
+            { now: NOW }
+        );
+        expect(best?.refereeReward).toBeUndefined();
+    });
+
+    it("surfaces the raw minimum purchase value alongside the formatted string", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: fixedReward(50),
+                    conditions: [
+                        {
+                            field: "purchase.amount",
+                            operator: "gte",
+                            value: 25,
+                        },
+                    ],
+                }),
+            ],
+            { now: NOW }
+        );
+        expect(best?.minPurchaseValue).toBe(25);
+        expect(best?.minPurchaseAmount).toContain("25");
+    });
+
+    it("leaves minPurchaseValue undefined when the campaign has no minimum", () => {
+        const best = selectBestReward(
+            [campaign({ id: "c", referrer: fixedReward(50) })],
+            { now: NOW }
+        );
+        expect(best?.minPurchaseValue).toBeUndefined();
+    });
 });

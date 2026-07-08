@@ -269,11 +269,20 @@ export default interface Resources {
           "a3": "Your earnings are credited as soon as a purchase is confirmed through your sharing link.",
           "a4": "Yes, everyone can create their own sharing link and become an ambassador too.",
           "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.",
+          "a6": "The amount shown is the maximum reward you can earn. Depending on the brand, your reward may be a fixed amount, a percentage of the purchase, or vary by tier based on the order amount.",
           "q1": "Who can become an \"ambassador\"?",
           "q2": "How much can I earn?",
           "q3": "When do I get paid?",
           "q4": "Can my friends also become \"ambassadors\"?",
           "q5": "Why do brands use Frak?",
+          "q6": "How is my reward calculated?",
+          "reward": {
+            "percentExample": "e.g. {{reward}} for a {{basket}} order",
+            "percentOfBasket": "{{percent}}% of basket",
+            "refereeLabel": "Reward for your referee",
+            "referrerLabel": "Reward as an ambassador",
+            "tierAndAbove": "{{min}} and above"
+          },
           "title": "Frequently asked questions"
         },
         "legal": {

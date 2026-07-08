@@ -1,5 +1,12 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.55
+
+### Patch Changes
+
+- Updated dependencies [[`9afaea3`](https://github.com/frak-id/wallet/commit/9afaea317fa7e2453c918b66d55e02dd611acbd9)]:
+  - @frak-labs/core-sdk@1.2.0
+
 ## 0.0.54
 
 ### Patch Changes
