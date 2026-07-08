@@ -467,11 +467,7 @@ function ShopifyRegistrationForm({
                             ),
                         }}
                         render={({ field }) => (
-                            <EditField
-                                label={t(
-                                    "merchantEdit.purchaseTracker.sheet.shopify.keyLabel"
-                                )}
-                            >
+                            <EditField>
                                 <FormControl>
                                     <Input
                                         variant="bare"
@@ -479,6 +475,9 @@ function ShopifyRegistrationForm({
                                         disabled={isPending}
                                         placeholder={t(
                                             "merchantEdit.purchaseTracker.sheet.shopify.keyPlaceholder"
+                                        )}
+                                        label={t(
+                                            "merchantEdit.purchaseTracker.sheet.shopify.keyLabel"
                                         )}
                                         {...field}
                                     />

@@ -80,12 +80,6 @@ export const unitGlyph = style({
     whiteSpace: "nowrap",
 });
 
-/** 16px horizontal inset to line a label/hint up with the field text. */
-export const insetX = style({
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
 /* ---- reward model radios ---- */
 
 export const modelRow = style({
@@ -207,13 +201,16 @@ export const tierCpaRow = style({
 /** Unit field: a fixed 88px column. */
 export const tierUnitField = style({ width: "88px", flexShrink: 0 });
 
-/** Recipient reward box surface — layout via `<Stack space="xs" padding="m">`. */
+/** Recipient reward box surface — paired with `tierPadded` for the 16px inset. */
 export const tierRecipientCard = style({
     flex: 1,
     minWidth: 0,
     backgroundColor: vars.surface.elevated,
     borderRadius: alias.cornerRadius.m,
 });
+
+/** 16px padding for a `TierField` column rendered as a card. */
+export const tierPadded = style({ padding: alias.spacing.m });
 
 /** The per-tier distribution bar, sitting 8px below its card. */
 export const tierDistribution = style({

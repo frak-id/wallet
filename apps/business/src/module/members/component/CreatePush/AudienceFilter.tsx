@@ -206,7 +206,7 @@ function NumberField({
                 control={control}
                 name={name}
                 render={({ field }) => (
-                    <EditField label={label}>
+                    <EditField>
                         <FormControl>
                             <Input
                                 variant="bare"
@@ -215,6 +215,7 @@ function NumberField({
                                 min={0}
                                 disabled={disabled}
                                 placeholder={placeholder}
+                                label={label}
                                 value={field.value ?? ""}
                                 onChange={(event) =>
                                     field.onChange(

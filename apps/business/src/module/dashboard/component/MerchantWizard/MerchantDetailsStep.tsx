@@ -50,11 +50,7 @@ export function MerchantDetailsStep({
 
     return (
         <Stack space="l">
-            <WizardFieldCard
-                insetLabel
-                space="xs"
-                label={t("merchant.create.fields.name.label")}
-            >
+            <WizardFieldCard>
                 <FormField
                     control={control}
                     name="name"
@@ -75,6 +71,9 @@ export function MerchantDetailsStep({
                                             variant="bare"
                                             tone="muted"
                                             error={showError}
+                                            label={t(
+                                                "merchant.create.fields.name.label"
+                                            )}
                                             placeholder={t(
                                                 "merchant.create.fields.name.placeholder"
                                             )}
@@ -239,16 +238,6 @@ export function MerchantDetailsStep({
                                 return (
                                     <FormItem>
                                         <Stack space="xxs">
-                                            <Text
-                                                variant="bodySmall"
-                                                weight="medium"
-                                                color="secondary"
-                                                className={styles.inputLabel}
-                                            >
-                                                {t(
-                                                    "merchant.create.platformAdmin.takeadsMerchantId.label"
-                                                )}
-                                            </Text>
                                             <FormControl>
                                                 <InputNumber
                                                     variant="bare"
@@ -256,6 +245,9 @@ export function MerchantDetailsStep({
                                                     inputMode="numeric"
                                                     step="1"
                                                     error={showError}
+                                                    label={t(
+                                                        "merchant.create.platformAdmin.takeadsMerchantId.label"
+                                                    )}
                                                     placeholder={t(
                                                         "merchant.create.platformAdmin.takeadsMerchantId.placeholder"
                                                     )}
@@ -292,21 +284,14 @@ export function MerchantDetailsStep({
                                 return (
                                     <FormItem>
                                         <Stack space="xxs">
-                                            <Text
-                                                variant="bodySmall"
-                                                weight="medium"
-                                                color="secondary"
-                                                className={styles.inputLabel}
-                                            >
-                                                {t(
-                                                    "merchant.create.platformAdmin.takeadsTrackingLink.label"
-                                                )}
-                                            </Text>
                                             <FormControl>
                                                 <Input
                                                     variant="bare"
                                                     tone="muted"
                                                     error={showError}
+                                                    label={t(
+                                                        "merchant.create.platformAdmin.takeadsTrackingLink.label"
+                                                    )}
                                                     placeholder={t(
                                                         "merchant.create.platformAdmin.takeadsTrackingLink.placeholder"
                                                     )}
@@ -345,21 +330,14 @@ export function MerchantDetailsStep({
                             return (
                                 <FormItem>
                                     <Stack space="xxs">
-                                        <Text
-                                            variant="bodySmall"
-                                            weight="medium"
-                                            color="secondary"
-                                            className={styles.inputLabel}
-                                        >
-                                            {t(
-                                                "merchant.create.fields.domain.nameLabel"
-                                            )}
-                                        </Text>
                                         <FormControl>
                                             <Input
                                                 variant="bare"
                                                 tone="muted"
                                                 error={showError}
+                                                label={t(
+                                                    "merchant.create.fields.domain.nameLabel"
+                                                )}
                                                 placeholder="example.com"
                                                 {...field}
                                             />
@@ -381,20 +359,13 @@ export function MerchantDetailsStep({
                         render={({ field }) => (
                             <FormItem>
                                 <Stack space="xxs">
-                                    <Text
-                                        variant="bodySmall"
-                                        weight="medium"
-                                        color="secondary"
-                                        className={styles.inputLabel}
-                                    >
-                                        {t(
-                                            "merchant.create.fields.setupCode.label"
-                                        )}
-                                    </Text>
                                     <FormControl>
                                         <Input
                                             variant="bare"
                                             tone="muted"
+                                            label={t(
+                                                "merchant.create.fields.setupCode.label"
+                                            )}
                                             placeholder={t(
                                                 "merchant.create.fields.setupCode.placeholder"
                                             )}

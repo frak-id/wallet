@@ -101,10 +101,7 @@ export function SdkIdentityPanel({
                         control={form.control}
                         name="name"
                         render={({ field }) => (
-                            <EditField
-                                label={t("customize.identity.name.label")}
-                                hint={t("customize.identity.name.hint")}
-                            >
+                            <EditField>
                                 <FormControl>
                                     <Input
                                         variant="bare"
@@ -113,6 +110,10 @@ export function SdkIdentityPanel({
                                         placeholder={t(
                                             "customize.identity.name.placeholder"
                                         )}
+                                        label={t(
+                                            "customize.identity.name.label"
+                                        )}
+                                        hint={t("customize.identity.name.hint")}
                                         {...field}
                                     />
                                 </FormControl>
@@ -150,15 +151,18 @@ export function SdkIdentityPanel({
                                 t("customize.identity.homepage.invalid"),
                         }}
                         render={({ field }) => (
-                            <EditField
-                                label={t("customize.identity.homepage.label")}
-                                hint={t("customize.identity.homepage.hint")}
-                            >
+                            <EditField>
                                 <FormControl>
                                     <Input
                                         variant="bare"
                                         tone="muted"
                                         placeholder={"https://..."}
+                                        label={t(
+                                            "customize.identity.homepage.label"
+                                        )}
+                                        hint={t(
+                                            "customize.identity.homepage.hint"
+                                        )}
                                         {...field}
                                     />
                                 </FormControl>

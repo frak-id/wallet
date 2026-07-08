@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -60,7 +61,9 @@ export function MultiHeroImagesField({
                         image: file,
                         type: "hero-extra",
                     });
-                    if (data?.url) {
+                    // The backend dedupes files and can return a URL already
+                    // in the slider — don't append it twice.
+                    if (data?.url && !next.includes(data.url)) {
                         next.push(data.url);
                         onChange([...next]);
                     }
@@ -99,7 +102,7 @@ export function MultiHeroImagesField({
         <Stack space="m">
             {values.length > 0 && (
                 <Stack as="ul" space="xs" className={styles.list}>
-                    {values.map((url) => (
+                    {[...new Set(values)].map((url) => (
                         <li
                             key={url}
                             className={styles.item}
@@ -231,16 +234,7 @@ function ExistingFilePicker({
     if (!pickableFiles.length) return null;
 
     return (
-        <Stack space="xs">
-            <Text
-                as="span"
-                variant="bodySmall"
-                weight="medium"
-                color="secondary"
-                className={fieldStyles.fieldLabel}
-            >
-                {t("merchantEdit.explorer.useExisting")}
-            </Text>
+        <FieldLabel label={t("merchantEdit.explorer.useExisting")}>
             <Inline space="xs">
                 {pickableFiles.map((file) => (
                     <button
@@ -259,6 +253,6 @@ function ExistingFilePicker({
                     </button>
                 ))}
             </Inline>
-        </Stack>
+        </FieldLabel>
     );
 }

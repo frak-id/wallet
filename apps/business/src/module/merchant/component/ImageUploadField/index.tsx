@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
@@ -88,31 +89,27 @@ export function ImageUploadField({
 
     return (
         <Stack space="m">
-            <Stack space="xxs">
-                <Input
-                    id={id}
-                    variant="bare"
-                    tone="muted"
-                    placeholder={"https://..."}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    rightSection={
-                        value ? (
-                            <button
-                                type="button"
-                                className={styles.clearButton}
-                                onClick={handleClear}
-                                aria-label={t(
-                                    "merchantEdit.explorer.removeImage"
-                                )}
-                            >
-                                <CloseIcon width={24} height={24} />
-                            </button>
-                        ) : undefined
-                    }
-                />
-                {hint && <p className={styles.fieldHint}>{hint}</p>}
-            </Stack>
+            <Input
+                id={id}
+                variant="bare"
+                tone="muted"
+                placeholder={"https://..."}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                hint={hint}
+                rightSection={
+                    value ? (
+                        <button
+                            type="button"
+                            className={styles.clearButton}
+                            onClick={handleClear}
+                            aria-label={t("merchantEdit.explorer.removeImage")}
+                        >
+                            <CloseIcon width={24} height={24} />
+                        </button>
+                    ) : undefined
+                }
+            />
             <div
                 {...getRootProps({
                     className: clsx(
@@ -208,16 +205,7 @@ function ExistingFilePicker({
     if (!pickableFiles.length) return null;
 
     return (
-        <Stack space="xs">
-            <Text
-                as="span"
-                variant="bodySmall"
-                weight="medium"
-                color="secondary"
-                className={styles.fieldLabel}
-            >
-                {t("merchantEdit.explorer.useExisting")}
-            </Text>
+        <FieldLabel label={t("merchantEdit.explorer.useExisting")}>
             <Inline space="xs">
                 {pickableFiles.map((file) => (
                     <button
@@ -236,6 +224,6 @@ function ExistingFilePicker({
                     </button>
                 ))}
             </Inline>
-        </Stack>
+        </FieldLabel>
     );
 }

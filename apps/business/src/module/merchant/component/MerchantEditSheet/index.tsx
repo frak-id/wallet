@@ -233,10 +233,7 @@ export function MerchantEditSheet({
                                 ),
                             }}
                             render={({ field }) => (
-                                <EditField
-                                    tone="card"
-                                    label={t("merchantEdit.editMerchant.name")}
-                                >
+                                <EditField tone="card">
                                     <FormControl>
                                         <Input
                                             variant="bare"
@@ -244,6 +241,9 @@ export function MerchantEditSheet({
                                             length="big"
                                             placeholder={t(
                                                 "merchantEdit.editMerchant.namePlaceholder"
+                                            )}
+                                            label={t(
+                                                "merchantEdit.editMerchant.name"
                                             )}
                                             {...field}
                                         />
@@ -255,18 +255,16 @@ export function MerchantEditSheet({
                             control={form.control}
                             name="domain"
                             render={({ field }) => (
-                                <EditField
-                                    tone="card"
-                                    label={t(
-                                        "merchantEdit.editMerchant.domain"
-                                    )}
-                                >
+                                <EditField tone="card">
                                     <FormControl>
                                         <Input
                                             variant="bare"
                                             tone="muted"
                                             length="big"
                                             disabled
+                                            label={t(
+                                                "merchantEdit.editMerchant.domain"
+                                            )}
                                             {...field}
                                         />
                                     </FormControl>

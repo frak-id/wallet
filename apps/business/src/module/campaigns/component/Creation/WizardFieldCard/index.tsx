@@ -5,8 +5,12 @@ import type { ReactNode } from "react";
 import * as styles from "./wizardFieldCard.css";
 
 type WizardFieldCardProps = {
-    /** Field label (Body-Secondary / Medium, secondary colour). */
-    label: string;
+    /**
+     * Field label (Body-Secondary / Medium, secondary colour). Omit when the
+     * control inside (e.g. a DS `Input`/`TextArea`) renders its own composed
+     * `label` — the card then wraps the field with no header.
+     */
+    label?: string;
     /** Optional hint under the label (Footnote, tertiary colour). */
     description?: string;
     /** Gap between the header and the content. */
@@ -27,19 +31,28 @@ export function WizardFieldCard({
     insetLabel = false,
     children,
 }: WizardFieldCardProps) {
+    if (!label && !description) {
+        return (
+            <Card radius="m">
+                <Stack space={space}>{children}</Stack>
+            </Card>
+        );
+    }
     const headerClass = insetLabel ? styles.inset : undefined;
     return (
         <Card radius="m">
             <Stack space={space}>
                 <Stack space="xxs">
-                    <Text
-                        variant="bodySmall"
-                        weight="medium"
-                        color="secondary"
-                        className={headerClass}
-                    >
-                        {label}
-                    </Text>
+                    {label ? (
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                            className={headerClass}
+                        >
+                            {label}
+                        </Text>
+                    ) : null}
                     {description ? (
                         <Text
                             variant="caption"

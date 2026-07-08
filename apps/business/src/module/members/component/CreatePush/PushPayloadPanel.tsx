@@ -51,20 +51,7 @@ export function PushPayloadPanel() {
                     },
                 }}
                 render={({ field }) => (
-                    <EditField
-                        label={
-                            <>
-                                {t(
-                                    "push.create.content.notificationTitle.label"
-                                )}
-                                <RequiredMark />
-                            </>
-                        }
-                        hint={t("push.create.charCount", {
-                            current: title?.length ?? 0,
-                            max: TITLE_MAX,
-                        })}
-                    >
+                    <EditField>
                         <FormControl>
                             <Input
                                 variant={"bare"}
@@ -72,6 +59,18 @@ export function PushPayloadPanel() {
                                 placeholder={t(
                                     "push.create.content.notificationTitle.placeholder"
                                 )}
+                                label={
+                                    <>
+                                        {t(
+                                            "push.create.content.notificationTitle.label"
+                                        )}
+                                        <RequiredMark />
+                                    </>
+                                }
+                                hint={t("push.create.charCount", {
+                                    current: title?.length ?? 0,
+                                    max: TITLE_MAX,
+                                })}
                                 {...field}
                             />
                         </FormControl>
@@ -93,18 +92,7 @@ export function PushPayloadPanel() {
                     },
                 }}
                 render={({ field }) => (
-                    <EditField
-                        label={
-                            <>
-                                {t("push.create.content.message.label")}
-                                <RequiredMark />
-                            </>
-                        }
-                        hint={t("push.create.charCount", {
-                            current: message?.length ?? 0,
-                            max: MESSAGE_MAX,
-                        })}
-                    >
+                    <EditField>
                         <FormControl>
                             <TextArea
                                 length={"big"}
@@ -113,6 +101,16 @@ export function PushPayloadPanel() {
                                 placeholder={t(
                                     "push.create.content.message.placeholder"
                                 )}
+                                label={
+                                    <>
+                                        {t("push.create.content.message.label")}
+                                        <RequiredMark />
+                                    </>
+                                }
+                                hint={t("push.create.charCount", {
+                                    current: message?.length ?? 0,
+                                    max: MESSAGE_MAX,
+                                })}
                                 {...field}
                             />
                         </FormControl>
@@ -123,10 +121,7 @@ export function PushPayloadPanel() {
                 control={control}
                 name={"payload.icon"}
                 render={({ field }) => (
-                    <EditField
-                        label={t("push.create.content.image.label")}
-                        hint={t("push.create.content.image.hint")}
-                    >
+                    <EditField>
                         <FormControl>
                             <Input
                                 variant={"bare"}
@@ -134,6 +129,8 @@ export function PushPayloadPanel() {
                                 placeholder={t(
                                     "push.create.content.image.placeholder"
                                 )}
+                                label={t("push.create.content.image.label")}
+                                hint={t("push.create.content.image.hint")}
                                 {...field}
                             />
                         </FormControl>
@@ -144,7 +141,7 @@ export function PushPayloadPanel() {
                 control={control}
                 name={"payload.data.url"}
                 render={({ field }) => (
-                    <EditField label={t("push.create.content.launchUrl.label")}>
+                    <EditField>
                         <FormControl>
                             <Input
                                 variant={"bare"}
@@ -152,6 +149,7 @@ export function PushPayloadPanel() {
                                 placeholder={t(
                                     "push.create.content.launchUrl.placeholder"
                                 )}
+                                label={t("push.create.content.launchUrl.label")}
                                 {...field}
                             />
                         </FormControl>
