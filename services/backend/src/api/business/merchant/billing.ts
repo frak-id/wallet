@@ -3,8 +3,8 @@ import { Elysia, status } from "elysia";
 import {
     BillingDocumentResponseSchema,
     StablecoinSchema,
-    toBillingDocumentResponse as toResponse,
 } from "../../../domain/billing/schemas";
+import { toBillingDocumentResponse as toResponse } from "../../../domain/billing/schemas/toResponse";
 import {
     DepositNotFoundError,
     WithdrawValidationError,

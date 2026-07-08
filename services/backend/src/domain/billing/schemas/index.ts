@@ -1,6 +1,5 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
-import type { BillingDocumentSelect } from "../db/schema";
 
 export const BillingDocumentKindSchema = t.Union([
     t.Literal("deposit"),
@@ -105,24 +104,6 @@ export type BillingDocumentResponse = Static<
     typeof BillingDocumentResponseSchema
 >;
 
-export function toBillingDocumentResponse(
-    doc: BillingDocumentSelect
-): BillingDocumentResponse {
-    return {
-        id: doc.id,
-        merchantId: doc.merchantId,
-        kind: doc.kind,
-        reference: doc.reference,
-        documentDate: doc.documentDate.toISOString(),
-        periodStart: doc.periodStart?.toISOString() ?? null,
-        periodEnd: doc.periodEnd?.toISOString() ?? null,
-        currency: doc.currency,
-        grossAmount: doc.grossAmount,
-        netAmount: doc.netAmount,
-        txHash: doc.txHash,
-        linkedDepositId: doc.linkedDepositId,
-        pdfGeneratedAt: doc.pdfGeneratedAt?.toISOString() ?? null,
-        voidedAt: doc.voidedAt?.toISOString() ?? null,
-        createdAt: doc.createdAt?.toISOString() ?? null,
-    };
-}
+// `toBillingDocumentResponse` (row -> response mapper) lives in
+// `./toResponse` to avoid importing `../db/schema` here, which would create a
+// cycle (db/schema types its columns from these schema types).

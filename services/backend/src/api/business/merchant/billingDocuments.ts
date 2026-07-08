@@ -4,8 +4,8 @@ import { BillingContext } from "../../../domain/billing/context";
 import {
     BillingDocumentKindSchema,
     BillingDocumentResponseSchema,
-    toBillingDocumentResponse,
 } from "../../../domain/billing/schemas";
+import { toBillingDocumentResponse } from "../../../domain/billing/schemas/toResponse";
 import { OrchestrationContext } from "../../../orchestration/context";
 import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
