@@ -24,6 +24,7 @@ import { ExternalLink } from "../../../common/component/ExternalLink";
 import { MerchantLogo } from "../MerchantLogo";
 import { PostShareConfirmation } from "../PostShareConfirmation";
 import { overlay } from "../shared.css";
+import { RewardBreakdown } from "./RewardBreakdown";
 import * as styles from "./sharingPage.css";
 
 export type SharingPageProps = {
@@ -82,6 +83,16 @@ export type SharingPageProps = {
      * line stating when earnings become available.
      */
     lockupDurationDays?: number;
+    /**
+     * Raw per-audience reward details used to render the tier/percentage
+     * breakdown inside the "How is my reward calculated?" FAQ answer. When the
+     * rewards are fixed (or absent), no breakdown is shown.
+     */
+    rewardBreakdown?: {
+        referrer?: EstimatedReward;
+        referee?: EstimatedReward;
+        minPurchaseValue?: number;
+    };
     /**
      * Whether the Web Share API is available in the current browser.
      * When false, the share button is hidden and copy is the only option.
@@ -142,6 +153,7 @@ export function SharingPage({
     rewardType,
     minPurchaseAmount,
     lockupDurationDays,
+    rewardBreakdown,
     canShare = true,
     showConfirmation,
     onShare,
@@ -357,7 +369,7 @@ export function SharingPage({
                             collapsible
                             className={styles.faqList}
                         >
-                            {[1, 2, 3, 4, 5].map((i) => (
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
                                 <AccordionItem
                                     key={`faq-${i}`}
                                     value={`faq-${i}`}
@@ -379,6 +391,20 @@ export function SharingPage({
                                     <AccordionContent>
                                         <div className={styles.faqContent}>
                                             {t(`sdk.sharingPage.faq.a${i}`)}
+                                            {i === 6 && rewardBreakdown && (
+                                                <RewardBreakdown
+                                                    referrer={
+                                                        rewardBreakdown.referrer
+                                                    }
+                                                    referee={
+                                                        rewardBreakdown.referee
+                                                    }
+                                                    minPurchaseValue={
+                                                        rewardBreakdown.minPurchaseValue
+                                                    }
+                                                    t={t}
+                                                />
+                                            )}
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>

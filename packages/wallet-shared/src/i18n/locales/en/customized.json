@@ -86,7 +86,16 @@
                 "q4": "Can my friends also become \"ambassadors\"?",
                 "a4": "Yes, everyone can create their own sharing link and become an ambassador too.",
                 "q5": "Why do brands use Frak?",
-                "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way."
+                "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.",
+                "q6": "How is my reward calculated?",
+                "a6": "The amount shown is the maximum reward you can earn. Depending on the brand, your reward may be a fixed amount, a percentage of the purchase, or vary by tier based on the order amount.",
+                "reward": {
+                    "referrerLabel": "Reward as an ambassador",
+                    "refereeLabel": "Reward for your referee",
+                    "percentOfBasket": "{{percent}}% of basket",
+                    "percentExample": "e.g. {{reward}} for a {{basket}} order",
+                    "tierAndAbove": "{{min}} and above"
+                }
             },
             "legal": {
                 "help": "Help",

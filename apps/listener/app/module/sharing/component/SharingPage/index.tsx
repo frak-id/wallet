@@ -224,6 +224,11 @@ export function ListenerSharingPage() {
             rewardType={reward?.payoutType}
             minPurchaseAmount={reward?.minPurchaseAmount}
             lockupDurationDays={reward?.lockupDurationDays}
+            rewardBreakdown={{
+                referrer: reward?.referrerReward,
+                referee: reward?.refereeReward,
+                minPurchaseValue: reward?.minPurchaseValue,
+            }}
             showConfirmation={showConfirmation}
             onShare={handleShare}
             onCopy={handleCopy}
