@@ -117,5 +117,38 @@ export const businessSessionContext = new Elysia({
                 },
             };
         },
+        /**
+         * Platform-admin-only guard for billing admin mutation routes
+         * (deposits/withdrawals/monthly-bills). Deliberately independent from
+         * `hasMerchantAccess`, whose platform-admin bypass is read-only /
+         * safe-methods-only and must never authorize mutations. The Shopify
+         * session path has no wallet and is always rejected here.
+         */
+        platformAdminAuthenticated(skip?: boolean) {
+            if (skip) return;
+
+            return {
+                beforeHandle: async ({ headers }) => {
+                    const businessAuth = headers["x-business-auth"];
+                    if (!businessAuth) {
+                        return status(401, "Unauthorized");
+                    }
+
+                    const session =
+                        await JwtContext.business.verify(businessAuth);
+                    if (!session) {
+                        return status(401, "Unauthorized");
+                    }
+
+                    if (
+                        !AuthContext.services.platformAdmin.isPlatformAdmin(
+                            session.wallet
+                        )
+                    ) {
+                        return status(403, "Platform admin access required");
+                    }
+                },
+            };
+        },
     })
     .as("scoped");

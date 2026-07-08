@@ -41,12 +41,10 @@ function SettingsLayout() {
                                 {t("settings.tabs.usage")}
                             </Link>
                         </TabsTrigger>
-                        <TabsTrigger
-                            value="billing"
-                            variant="navigation"
-                            disabled
-                        >
-                            {t("settings.tabs.billing")}
+                        <TabsTrigger value="billing" variant="navigation">
+                            <Link to="/settings/billing">
+                                {t("settings.tabs.billing")}
+                            </Link>
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>

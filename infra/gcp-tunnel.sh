@@ -2,7 +2,10 @@
 
 # We are doing that just because sst dev command fck up with the ssh flag param
 
-trap 'kill $(jobs -p) 2>/dev/null; exit' INT TERM EXIT
+# Kill the whole process group (this script is its own session/group leader,
+# set by sst via Setsid) so gcloud/kubectl grandchildren die too, not just
+# the launch_*_tunnel job wrappers.
+trap 'kill -- -$$ 2>/dev/null; exit' INT TERM EXIT
 
 # --- Postgres tunnel (gcloud SSH through bastion) ---
 bastionHost=$BASTION_HOST

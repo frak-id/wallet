@@ -211,6 +211,13 @@
             "when": 1782921231379,
             "tag": "0029_friendly_morg",
             "breakpoints": true
+        },
+        {
+            "idx": 30,
+            "version": "7",
+            "when": 1783431323423,
+            "tag": "0030_strange_puppet_master",
+            "breakpoints": true
         }
     ]
 }

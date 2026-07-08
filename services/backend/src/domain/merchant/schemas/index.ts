@@ -240,3 +240,24 @@ export const SdkConfigSchema = t.Object({
 });
 export type SdkConfig = Static<typeof SdkConfigSchema>;
 export type Placement = Static<typeof PlacementSchema>;
+
+/**
+ * Merchant company/accounting info used on generated billing documents.
+ * `country` and `vatNumber` are tax-relevant and platform-admin-writable only
+ * (see billing-feature-plan.md §3.1) — enforced at the service/route layer,
+ * not by this schema.
+ */
+export const MerchantAccountingInfoSchema = t.Object({
+    companyName: t.String({ maxLength: 200 }),
+    // Lenient format check only — no VIES validation in v1.
+    vatNumber: t.String({ maxLength: 32, pattern: "^[A-Za-z0-9]+$" }),
+    streetAddress: t.String({ maxLength: 300 }),
+    city: t.String({ maxLength: 200 }),
+    postalCode: t.String({ maxLength: 20 }),
+    // ISO-3166 alpha-2, e.g. "FR" — drives VAT applicability (§4).
+    country: t.String({ pattern: "^[A-Z]{2}$" }),
+    billingEmail: t.String({ format: "email", maxLength: 320 }),
+});
+export type MerchantAccountingInfo = Static<
+    typeof MerchantAccountingInfoSchema
+>;

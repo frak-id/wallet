@@ -1147,7 +1147,8 @@
                 "type": "Type",
                 "description": "Description",
                 "pdf": "PDF",
-                "download": "Download PDF"
+                "download": "Download PDF",
+                "downloadError": "Couldn't generate the PDF. Please try again."
             },
             "tag": {
                 "paid": "Paid",
@@ -1155,7 +1156,92 @@
             },
             "validation": {
                 "required": "This field is required",
-                "email": "Enter a valid email address"
+                "email": "Enter a valid email address",
+                "decimal": "Enter a valid decimal amount",
+                "txHash": "Enter a valid transaction hash (0x…)"
+            },
+            "admin": {
+                "panel": {
+                    "title": "Platform admin — billing",
+                    "description": "Create deposit notes and withdraw bills for this merchant. Visible to platform admins only."
+                },
+                "deposit": {
+                    "trigger": "Add deposit",
+                    "title": "Add deposit note",
+                    "description": "Records a deposit and computes VAT and the Frak fee automatically.",
+                    "submit": "Create deposit"
+                },
+                "breakdown": {
+                    "title": "Estimated breakdown",
+                    "gross": "Gross amount",
+                    "vat": "VAT (20%)",
+                    "vatExempt": "VAT (exempt outside FR)",
+                    "frakFee": "Frak fee (20%)",
+                    "gifted": "Gifted amount",
+                    "net": "Net amount",
+                    "hint": "Estimate — final VAT and fee are computed when the deposit is created."
+                },
+                "withdraw": {
+                    "trigger": "Add withdrawal",
+                    "title": "Add withdraw bill",
+                    "description": "Records a withdrawal against a linked deposit and computes the pro-rata restitution automatically.",
+                    "submit": "Create withdrawal"
+                },
+                "fields": {
+                    "grossAmount": {
+                        "label": "Gross amount",
+                        "placeholder": "e.g. 1200"
+                    },
+                    "giftedAmount": {
+                        "label": "Gifted amount (optional)",
+                        "placeholder": "e.g. 200",
+                        "hint": "Offered top-up added back to the net, to make a miscomputed onramp coherent."
+                    },
+                    "remainingBankAmount": {
+                        "label": "Remaining bank amount",
+                        "placeholder": "e.g. 400"
+                    },
+                    "currency": {
+                        "label": "Currency",
+                        "autoPlaceholder": "Select a linked deposit first"
+                    },
+                    "documentDate": {
+                        "label": "Document date"
+                    },
+                    "paymentPlatform": {
+                        "label": "Payment platform",
+                        "none": "None"
+                    },
+                    "linkedDeposit": {
+                        "label": "Linked deposit",
+                        "placeholder": "Select the deposit this withdrawal reverses"
+                    },
+                    "rawIban": {
+                        "label": "IBAN",
+                        "placeholder": "Enter the destination IBAN",
+                        "hint": "Only a masked reference (country code + last digits) is ever stored or sent."
+                    },
+                    "txHash": {
+                        "label": "Transaction hash (optional)"
+                    },
+                    "note": {
+                        "label": "Note (optional)",
+                        "placeholder": "Internal note"
+                    }
+                },
+                "table": {
+                    "void": "Void",
+                    "voidAria": "Void {{reference}}"
+                },
+                "void": {
+                    "title": "Void this document?",
+                    "description": "This will void {{reference}}. Voided documents are kept for records but excluded from the merchant's billing history.",
+                    "confirm": "Void document"
+                },
+                "errors": {
+                    "create": "Something went wrong while creating the document. Please try again.",
+                    "void": "Something went wrong while voiding the document. Please try again."
+                }
             }
         }
     },

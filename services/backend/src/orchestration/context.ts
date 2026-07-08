@@ -1,6 +1,7 @@
 import { AffiliateContext } from "../domain/affiliate/context";
 import { AttributionContext } from "../domain/attribution/context";
 import { AuthContext } from "../domain/auth";
+import { BillingContext } from "../domain/billing/context";
 import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
@@ -16,6 +17,8 @@ import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNVa
 import { getTakeAdsClient } from "../infrastructure/integrations/takeads";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
+import { BillingOrchestrator } from "./billing/BillingOrchestrator";
+import { MonthlyBillOrchestrator } from "./billing/MonthlyBillOrchestrator";
 import {
     CampaignOverviewOrchestrator,
     CampaignStatsOrchestrator,
@@ -49,6 +52,26 @@ import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
 const webhookResolverOrchestrator = new WebhookResolverOrchestrator(
     PurchasesContext.repositories.purchase,
     MerchantContext.repositories.merchant
+);
+
+const billingOrchestrator = new BillingOrchestrator(
+    BillingContext.repositories.billingDocument,
+    BillingContext.repositories.billingStorage,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.assetLog,
+    BillingContext.services.computation,
+    BillingContext.services.pdf,
+    pricingRepository
+);
+
+const monthlyBillOrchestrator = new MonthlyBillOrchestrator(
+    BillingContext.repositories.billingDocument,
+    BillingContext.repositories.billingStorage,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.assetLog,
+    BillingContext.services.computation,
+    BillingContext.services.pdf,
+    pricingRepository
 );
 
 const identityWeightService = new IdentityWeightService(
@@ -245,5 +268,7 @@ export namespace OrchestrationContext {
         pairing: pairingOrchestrator,
         pairingRouter: pairingRouterOrchestrator,
         takeAdsIngestion: takeAdsIngestionOrchestrator,
+        billing: billingOrchestrator,
+        monthlyBill: monthlyBillOrchestrator,
     };
 }

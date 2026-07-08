@@ -1421,6 +1421,89 @@ export default interface Resources {
           "save": "Save information",
           "saveChanges": "Save changes"
         },
+        "admin": {
+          "breakdown": {
+            "frakFee": "Frak fee (20%)",
+            "gifted": "Gifted amount",
+            "gross": "Gross amount",
+            "hint": "Estimate — final VAT and fee are computed when the deposit is created.",
+            "net": "Net amount",
+            "title": "Estimated breakdown",
+            "vat": "VAT (20%)",
+            "vatExempt": "VAT (exempt outside FR)"
+          },
+          "deposit": {
+            "description": "Records a deposit and computes VAT and the Frak fee automatically.",
+            "submit": "Create deposit",
+            "title": "Add deposit note",
+            "trigger": "Add deposit"
+          },
+          "errors": {
+            "create": "Something went wrong while creating the document. Please try again.",
+            "void": "Something went wrong while voiding the document. Please try again."
+          },
+          "fields": {
+            "currency": {
+              "autoPlaceholder": "Select a linked deposit first",
+              "label": "Currency"
+            },
+            "documentDate": {
+              "label": "Document date"
+            },
+            "giftedAmount": {
+              "hint": "Offered top-up added back to the net, to make a miscomputed onramp coherent.",
+              "label": "Gifted amount (optional)",
+              "placeholder": "e.g. 200"
+            },
+            "grossAmount": {
+              "label": "Gross amount",
+              "placeholder": "e.g. 1200"
+            },
+            "linkedDeposit": {
+              "label": "Linked deposit",
+              "placeholder": "Select the deposit this withdrawal reverses"
+            },
+            "note": {
+              "label": "Note (optional)",
+              "placeholder": "Internal note"
+            },
+            "paymentPlatform": {
+              "label": "Payment platform",
+              "none": "None"
+            },
+            "rawIban": {
+              "hint": "Only a masked reference (country code + last digits) is ever stored or sent.",
+              "label": "IBAN",
+              "placeholder": "Enter the destination IBAN"
+            },
+            "remainingBankAmount": {
+              "label": "Remaining bank amount",
+              "placeholder": "e.g. 400"
+            },
+            "txHash": {
+              "label": "Transaction hash (optional)"
+            }
+          },
+          "panel": {
+            "description": "Create deposit notes and withdraw bills for this merchant. Visible to platform admins only.",
+            "title": "Platform admin — billing"
+          },
+          "table": {
+            "void": "Void",
+            "voidAria": "Void {{reference}}"
+          },
+          "void": {
+            "confirm": "Void document",
+            "description": "This will void {{reference}}. Voided documents are kept for records but excluded from the merchant's billing history.",
+            "title": "Void this document?"
+          },
+          "withdraw": {
+            "description": "Records a withdrawal against a linked deposit and computes the pro-rata restitution automatically.",
+            "submit": "Create withdrawal",
+            "title": "Add withdraw bill",
+            "trigger": "Add withdrawal"
+          }
+        },
         "fields": {
           "billingEmail": {
             "label": "Billing email",
@@ -1478,6 +1561,7 @@ export default interface Resources {
           "date": "Date",
           "description": "Description",
           "download": "Download PDF",
+          "downloadError": "Couldn't generate the PDF. Please try again.",
           "pdf": "PDF",
           "type": "Type"
         },
@@ -1486,8 +1570,10 @@ export default interface Resources {
           "paid": "Paid"
         },
         "validation": {
+          "decimal": "Enter a valid decimal amount",
           "email": "Enter a valid email address",
-          "required": "This field is required"
+          "required": "This field is required",
+          "txHash": "Enter a valid transaction hash (0x…)"
         }
       },
       "currency": {
