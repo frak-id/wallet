@@ -1,18 +1,11 @@
+import type { BillingDocumentResponse } from "@frak-labs/backend-elysia/domain/billing";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
 import { accountingQueryKey, documentsQueryKey } from "./queryKeys";
 import type { BillingEntry, BillingInfo } from "./types";
 
-function toBillingEntry(doc: {
-    id: string;
-    kind: "deposit" | "withdraw" | "monthly_bill";
-    reference: string;
-    documentDate: string;
-    currency: string;
-    grossAmount: string | null;
-    pdfGeneratedAt: string | null;
-}): BillingEntry {
+function toBillingEntry(doc: BillingDocumentResponse): BillingEntry {
     return {
         id: doc.id,
         date: doc.documentDate,

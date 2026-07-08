@@ -71,6 +71,7 @@
     "./domain/merchant": "./src/domain/merchant/index.ts",
     "./domain/merchant/context": "./src/domain/merchant/context.ts",
     "./domain/merchant/db/schema": "./src/domain/merchant/db/schema.ts",
+    "./domain/billing": "./src/domain/billing/index.ts",
     "./domain/campaign": "./src/domain/campaign/index.ts",
     "./domain/campaign/context": "./src/domain/campaign/context.ts",
     "./domain/campaign/db/schema": "./src/domain/campaign/db/schema.ts",

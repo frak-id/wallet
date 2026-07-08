@@ -1,19 +1,17 @@
+import type { MerchantAccountingInfo } from "@frak-labs/backend-elysia/domain/merchant";
+
 /**
  * Billing domain shapes. Backed by the `/:merchantId/billing/accounting` and
  * `/:merchantId/billing/documents` endpoints (see `useBillingInfo.ts`).
  */
 
-/** Invoice address / company details used on generated billing documents. */
-export type BillingInfo = {
-    companyName: string;
-    vatNumber: string;
-    streetAddress: string;
-    city: string;
-    postalCode: string;
-    /** ISO-3166 alpha-2 country code (display name resolved via countries.ts). */
-    country: string;
-    billingEmail: string;
-};
+/**
+ * Invoice address / company details used on generated billing documents.
+ * Aliased to the backend TypeBox static type so the field set can't drift from
+ * `MerchantAccountingInfoSchema`. This is the fully-required form shape; the
+ * accounting GET returns `Partial<MerchantAccountingInfo>`.
+ */
+export type BillingInfo = MerchantAccountingInfo;
 
 /**
  * A billing-history line, derived from a `BillingDocumentResponse`.

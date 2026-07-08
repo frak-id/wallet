@@ -35,7 +35,7 @@ const MERCHANT_EDITABLE_FIELDS = new Set<keyof MerchantAccountingInfo>([
 ]);
 
 export const merchantBillingAccountingRoutes = new Elysia({
-    prefix: "/:merchantId/billing/accounting",
+    prefix: "/accounting",
 })
     .use(businessSessionContext)
     .get(

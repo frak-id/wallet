@@ -104,9 +104,7 @@ function mapWithdrawError(err: unknown) {
  * platform-admin bypass is read-only/safe-methods-only (see session.ts).
  * Every handler still re-derives `businessSession.wallet` for `createdBy`.
  */
-export const merchantBillingAdminRoutes = new Elysia({
-    prefix: "/:merchantId/billing",
-})
+export const merchantBillingAdminRoutes = new Elysia()
     .use(businessSessionContext)
     .post(
         "/deposits",

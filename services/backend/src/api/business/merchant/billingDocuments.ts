@@ -33,11 +33,11 @@ const ListDocumentsResponseSchema = t.Object({
  * routes in `billing.ts` only).
  */
 export const merchantBillingDocumentRoutes = new Elysia({
-    prefix: "/:merchantId/billing",
+    prefix: "/documents",
 })
     .use(businessSessionContext)
     .get(
-        "/documents",
+        "",
         async ({
             params: { merchantId },
             query: { kind, from, to },
@@ -79,7 +79,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
         }
     )
     .get(
-        "/documents/:id/pdf",
+        "/:id/pdf",
         async ({
             params: { merchantId, id },
             businessSession,

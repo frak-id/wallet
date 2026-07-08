@@ -11,6 +11,8 @@ export {
     BillingDocumentDetailsSchema,
     type BillingDocumentKind,
     BillingDocumentKindSchema,
+    type BillingDocumentResponse,
+    BillingDocumentResponseSchema,
 } from "./schemas";
 export {
     BillingComputationService,
