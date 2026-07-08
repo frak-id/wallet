@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 1.2.0
+
+### Minor Changes
+
+- [#263](https://github.com/frak-id/wallet/pull/263) [`9afaea3`](https://github.com/frak-id/wallet/commit/9afaea317fa7e2453c918b66d55e02dd611acbd9) Thanks [@srod](https://github.com/srod)! - Expose the raw per-audience rewards on `selectBestReward` / `BestReward`. The result now carries `referrerReward`, `refereeReward`, and the unformatted `minPurchaseValue` alongside the existing formatted fields, so surfaces can render a full reward breakdown (tier rows, percentage worked-examples) instead of just the headline amount.
+
 ## 1.1.6
 
 ### Patch Changes
