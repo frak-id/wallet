@@ -50,6 +50,29 @@ const VAT_RATE = new Decimal("0.20");
 const FRAK_FEE_RATE = new Decimal("0.20");
 
 /**
+ * Deposit-note copy. The document is an attestation that Frak received an
+ * advance on advertising budget credited to the advertiser's campaign wallet —
+ * explicitly NOT an invoice.
+ */
+const DEPOSIT_OBJET =
+    "Alimentation du wallet maître Frak à utiliser pour les campagnes de récompenses client";
+const DEPOSIT_ATTESTATION = [
+    "Ce document atteste que Frak Labs a bien reçu les fonds mentionnés ci-dessus pour être crédités sur le wallet de campagne de l'annonceur.",
+    "Ce crédit constitue une avance sur budget publicitaire, à consommer au fil des campagnes actives, et ne constitue pas une facture.",
+];
+
+/**
+ * Withdraw-note copy. Symmetric to the deposit note: an attestation that Frak
+ * returned the unconsumed advance to the advertiser — also NOT an invoice.
+ */
+const WITHDRAW_OBJET =
+    "Restitution des fonds non consommés du wallet de campagne Frak";
+const WITHDRAW_ATTESTATION = [
+    "Ce document atteste que Frak Labs a restitué à l'annonceur les fonds non consommés mentionnés ci-dessus, initialement crédités sur son wallet de campagne.",
+    "Ce remboursement correspond au solde d'avance sur budget publicitaire non consommé, et ne constitue pas une facture.",
+];
+
+/**
  * Frak brand badge, printed top-right on every generated document. The two
  * paths are the exact vectors from the design system's `LogoFrakBadge`
  * (24×24 viewBox): a `#0043EF` rounded square with the white "F" glyph on
@@ -294,6 +317,49 @@ class PageCursor {
     }
 
     /**
+     * Draws a word-wrapped paragraph from the current position, advancing `y`
+     * past every line drawn (including the last). Used for the longer legal /
+     * attestation copy that can't fit on a single line.
+     */
+    paragraph(
+        text: string,
+        options: DrawOptions & { maxWidth?: number; lineHeight?: number } = {}
+    ): void {
+        const {
+            x = MARGIN,
+            size = 10,
+            useFont = this.font,
+            color = DARK,
+            lineHeight = size + 3,
+        } = options;
+        const maxWidth = options.maxWidth ?? PAGE_WIDTH - MARGIN - x;
+        const words = sanitizeForWinAnsi(text).split(/\s+/).filter(Boolean);
+        let line = "";
+        const flush = () => {
+            if (!line) return;
+            this.page.drawText(line, {
+                x,
+                y: this.y,
+                size,
+                font: useFont,
+                color,
+            });
+            this.y -= lineHeight;
+            line = "";
+        };
+        for (const word of words) {
+            const candidate = line ? `${line} ${word}` : word;
+            if (line && useFont.widthOfTextAtSize(candidate, size) > maxWidth) {
+                flush();
+                line = word;
+            } else {
+                line = candidate;
+            }
+        }
+        flush();
+    }
+
+    /**
      * Draws an SVG path on the current page. `x`/`y` is where the path's SVG
      * origin lands (SVG y grows downward from there), `scale` maps the path's
      * viewBox units to points. Used to stamp the brand badge in page-fixed
@@ -362,6 +428,7 @@ export class BillingPdfService {
         if (dto.kind === "withdraw" && dto.withdraw) {
             this.drawWithdrawDetails(cursor, dto.withdraw, dto.currency, bold);
         }
+        this.drawAttestation(cursor, dto, bold);
 
         this.drawFooters(pdfDoc, font);
         return pdfDoc.save();
@@ -643,8 +710,10 @@ export class BillingPdfService {
         dto: BillingPdfDocumentDto,
         bold: PDFFont
     ): void {
+        // Neither is an invoice (see the attestation) — titled "Note", not
+        // "Facture"; only the monthly bill is an actual invoice.
         const title =
-            dto.kind === "deposit" ? "Note de dépôt" : "Facture de retrait";
+            dto.kind === "deposit" ? "Note de dépôt" : "Note de restitution";
         cursor.text(title, { size: 20, useFont: bold });
         cursor.newLine(28);
 
@@ -655,7 +724,11 @@ export class BillingPdfService {
         });
         cursor.newLine(14);
         cursor.text(`Devise : ${fiatFor(dto.currency).code}`, { size: 11 });
-        cursor.newLine(28);
+        cursor.newLine(18);
+
+        const objet = dto.kind === "deposit" ? DEPOSIT_OBJET : WITHDRAW_OBJET;
+        cursor.paragraph(`Objet : ${objet}`, { size: 10, lineHeight: 14 });
+        cursor.newLine(16);
     }
 
     private drawPartyBlocks(
@@ -683,7 +756,11 @@ export class BillingPdfService {
 
         // Reset y to draw the buyer block in the right column.
         cursor.y = blockTopY;
-        cursor.text("Facturé à", { x: rightX, size: 9, color: GRAY });
+        // Deposit/withdraw are attestations (not invoices) — "Adressé à";
+        // only the monthly bill is an actual invoice ("Facturé à").
+        const buyerLabel =
+            dto.kind === "monthly_bill" ? "Facturé à" : "Adressé à";
+        cursor.text(buyerLabel, { x: rightX, size: 9, color: GRAY });
         cursor.newLine(14);
         cursor.text(
             dto.buyer.companyName ?? "(aucune raison sociale renseignée)",
@@ -728,6 +805,38 @@ export class BillingPdfService {
             `Montant net : ${formatMoney(dto.netAmount, dto.currency)}`
         );
         cursor.newLine(20);
+    }
+
+    /**
+     * The closing attestation for a deposit/withdraw note: a couple of
+     * word-wrapped sentences stating what the document certifies and that it is
+     * NOT an invoice (last line emphasized). No-op for the monthly bill, which
+     * is the actual invoice.
+     */
+    private drawAttestation(
+        cursor: PageCursor,
+        dto: BillingPdfDocumentDto,
+        bold: PDFFont
+    ): void {
+        const lines =
+            dto.kind === "deposit"
+                ? DEPOSIT_ATTESTATION
+                : dto.kind === "withdraw"
+                  ? WITHDRAW_ATTESTATION
+                  : null;
+        if (!lines) return;
+
+        cursor.ensureSpace(70);
+        cursor.newLine(8);
+        lines.forEach((line, index) => {
+            const emphasize = index === lines.length - 1;
+            cursor.paragraph(line, {
+                size: 9,
+                lineHeight: 13,
+                ...(emphasize ? { useFont: bold } : {}),
+            });
+            cursor.newLine(5);
+        });
     }
 
     private drawDepositDetails(
