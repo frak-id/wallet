@@ -19,7 +19,7 @@ import {
     type BillingComputationService,
     stablecoinForTokenAddress,
 } from "../../domain/billing/services/BillingComputationService";
-import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
+import type { BillingPdfService } from "../../domain/billing/services/pdf";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { MerchantAccountingInfo } from "../../domain/merchant/schemas";
 import type { AssetLogSelect } from "../../domain/rewards/db/schema";

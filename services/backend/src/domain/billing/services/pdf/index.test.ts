@@ -3,7 +3,7 @@ import {
     type BillingPdfDocumentDto,
     BillingPdfService,
     sanitizeForWinAnsi,
-} from "./BillingPdfService";
+} from "./index";
 
 const depositDto: BillingPdfDocumentDto = {
     kind: "deposit",

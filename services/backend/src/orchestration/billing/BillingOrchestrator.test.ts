@@ -4,7 +4,7 @@ import type { BillingDocumentSelect } from "../../domain/billing/db/schema";
 import type { BillingDocumentRepository } from "../../domain/billing/repositories/BillingDocumentRepository";
 import type { BillingStorageRepository } from "../../domain/billing/repositories/BillingStorageRepository";
 import { BillingComputationService } from "../../domain/billing/services/BillingComputationService";
-import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
+import type { BillingPdfService } from "../../domain/billing/services/pdf";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
 import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";

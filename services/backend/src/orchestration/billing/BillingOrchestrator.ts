@@ -12,7 +12,7 @@ import type { BillingDocumentRepository } from "../../domain/billing/repositorie
 import type { BillingStorageRepository } from "../../domain/billing/repositories/BillingStorageRepository";
 import type { BillingDocumentDetails } from "../../domain/billing/schemas";
 import type { BillingComputationService } from "../../domain/billing/services/BillingComputationService";
-import type { BillingPdfService } from "../../domain/billing/services/BillingPdfService";
+import type { BillingPdfService } from "../../domain/billing/services/pdf";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
 import { eventEmitter } from "../../infrastructure/messaging/events";

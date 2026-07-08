@@ -22,4 +22,4 @@ export {
 export {
     type BillingPdfDocumentDto,
     BillingPdfService,
-} from "./services/BillingPdfService";
+} from "./services/pdf";

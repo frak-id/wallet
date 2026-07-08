@@ -1,7 +1,7 @@
 import { BillingDocumentRepository } from "./repositories/BillingDocumentRepository";
 import { BillingStorageRepository } from "./repositories/BillingStorageRepository";
 import { BillingComputationService } from "./services/BillingComputationService";
-import { BillingPdfService } from "./services/BillingPdfService";
+import { BillingPdfService } from "./services/pdf";
 
 const billingDocumentRepository = new BillingDocumentRepository();
 const billingStorageRepository = new BillingStorageRepository();
