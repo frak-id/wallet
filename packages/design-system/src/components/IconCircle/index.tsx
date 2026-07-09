@@ -21,9 +21,7 @@ export function IconCircle({
     className,
 }: IconCircleProps) {
     return (
-        <Box
-            className={clsx(iconCircle({ size, tone }), className) || undefined}
-        >
+        <Box className={clsx(iconCircle({ size, tone }), className)}>
             {children}
         </Box>
     );

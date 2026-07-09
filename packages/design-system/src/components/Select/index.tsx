@@ -1,4 +1,5 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
@@ -24,7 +25,9 @@ export const SelectValue = SelectPrimitive.Value;
 /*  Trigger                                                           */
 /* ------------------------------------------------------------------ */
 
-type SelectTriggerLength = "medium" | "big";
+type SelectTriggerLength = NonNullable<
+    RecipeVariants<typeof triggerLength>
+>["length"];
 
 export type SelectTriggerProps = ComponentPropsWithRef<
     typeof SelectPrimitive.Trigger

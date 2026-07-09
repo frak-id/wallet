@@ -20,9 +20,7 @@ export function NumberedCircle({
         <Box
             as="span"
             aria-hidden="true"
-            className={
-                clsx(numberedCircle({ size, color }), className) || undefined
-            }
+            className={clsx(numberedCircle({ size, color }), className)}
         >
             {number}
         </Box>
