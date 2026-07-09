@@ -3,6 +3,7 @@ import {
     alias,
     brand,
     easing,
+    glass,
     safeArea,
     transition,
 } from "@frak-labs/design-system/tokens";
@@ -43,7 +44,7 @@ export const bottomTabBarStyles = {
     progressiveBlur: style({
         position: "absolute",
         inset: 0,
-        background: "rgba(255, 255, 255, 0.01)",
+        background: glass.blurBase,
         backdropFilter: "blur(14px) saturate(130%)",
         maskImage:
             "linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.45) 55%, transparent 100%)",
@@ -66,9 +67,9 @@ export const bottomTabBarStyles = {
         overflow: "hidden",
         zIndex: 1,
         backdropFilter: "blur(5px) saturate(180%)",
-        background: "rgba(255, 255, 255, 0.55)",
-        border: "1px solid rgba(0, 0, 0, 0.06)",
-        boxShadow: "inset 0 0 8px rgba(0, 0, 0, 0.06)",
+        background: glass.fill,
+        border: `1px solid ${glass.border}`,
+        boxShadow: glass.innerShadow,
     }),
 
     tab: style({
@@ -127,7 +128,7 @@ export const bottomTabBarStyles = {
         left: "2px",
         display: "block",
         borderRadius: pillRadius,
-        background: "rgba(118, 118, 128, 0.12)",
+        background: glass.indicator,
         mixBlendMode: "plus-darker",
         zIndex: 0,
         pointerEvents: "none",

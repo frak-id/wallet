@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, safeArea } from "@frak-labs/design-system/tokens";
+import { alias, glass, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 const heroOverlap = 25;
@@ -115,7 +115,7 @@ export const floatingFooter = style({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.55)",
+    backgroundColor: glass.fill,
     backdropFilter: "blur(18px) saturate(140%)",
     WebkitBackdropFilter: "blur(18px) saturate(140%)",
     borderTop: "1px solid rgba(0, 0, 0, 0.04)",

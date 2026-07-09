@@ -319,6 +319,8 @@ export const shadow = {
     panel: "4px 4px 4px 0 rgba(0,0,0,0.08)",
     elevated: "0 2px 8px rgba(0,0,0,0.08)",
     dialog: "0 4px 24px rgba(0,0,0,0.12)",
+    /** Large drop shadow for centered modal cards on desktop. */
+    overlay: "0 20px 50px rgba(0,0,0,0.35)",
 } as const;
 
 /**
@@ -329,6 +331,28 @@ export const overlay = {
     scrim: "#000000cc",
     /** Subtle darkening for hover/press on any tinted surface (5% black). */
     hover: "#0000000d",
+    /** Modal backdrop — 60% black (fullscreen detail overlay). */
+    scrim60: "rgba(0,0,0,0.6)",
+    /** Bottom-sheet backdrop — 50% black. */
+    scrim50: "rgba(0,0,0,0.5)",
+} as const;
+
+/**
+ * Frosted-glass surface values (e.g. the wallet bottom tab bar): fixed,
+ * theme-agnostic rgba values composed under `backdrop-filter`, so they
+ * bypass the `vars` contract like `overlay`/`onDark`.
+ */
+export const glass = {
+    /** Near-transparent paint giving the compositor a surface to blur. */
+    blurBase: "rgba(255,255,255,0.01)",
+    /** Frosted pill fill. */
+    fill: "rgba(255,255,255,0.55)",
+    /** Glass edge border. */
+    border: "rgba(0,0,0,0.06)",
+    /** Inner glass-edge shadow. */
+    innerShadow: "inset 0 0 8px rgba(0,0,0,0.06)",
+    /** Active-tab indicator fill. */
+    indicator: "rgba(118,118,128,0.12)",
 } as const;
 
 export const onDark = {
