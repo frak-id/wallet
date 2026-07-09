@@ -25,7 +25,7 @@ export async function draftCampaignLoader({
     );
 
     // Only drafts are editable; send everything else back to the list.
-    if (!campaign || campaign.status !== "draft") {
+    if (campaign?.status !== "draft") {
         throw redirect({
             to: "/m/$merchantId/campaigns/list",
             params: { merchantId: params.merchantId },
@@ -55,7 +55,7 @@ export function useCampaignDraftSync(campaignId: string) {
         if (!defaultRewardToken) return;
         // A background refetch could resolve to a since-published campaign;
         // never sync that into the draft store.
-        if (!campaign || campaign.status !== "draft") return;
+        if (campaign?.status !== "draft") return;
         if (draftId !== campaignId) {
             setDraft(campaignToDraft(campaign, defaultRewardToken));
         }
