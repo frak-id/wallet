@@ -538,7 +538,7 @@ export class WalletMergeOrchestrator {
                 credentialId,
                 chainId: currentChainId,
             });
-        if (!unlinked || unlinked.reason !== "merged") return null;
+        if (unlinked?.reason !== "merged") return null;
         if (
             params.requesterIsLoser &&
             !isAddressEqual(unlinked.smartWalletAddress, params.requesterWallet)

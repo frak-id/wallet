@@ -232,7 +232,7 @@ export class RewardHistoryOrchestrator {
             if (!link) continue;
 
             const sourceData = link.sourceData as ReferralLinkSourceData | null;
-            if (!sourceData || sourceData.type !== "link") continue;
+            if (sourceData?.type !== "link") continue;
             if (!sourceData.sharedAt) continue;
 
             const key = `${log.identityGroupId}:${log.merchantId}`;

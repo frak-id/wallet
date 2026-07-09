@@ -334,8 +334,7 @@ export class MonthlyBillOrchestrator {
     ): Promise<BillingDocumentSelect | null> {
         const document = await this.billingDocuments.findById(merchantId, id);
         if (
-            !document ||
-            document.kind !== "monthly_bill" ||
+            document?.kind !== "monthly_bill" ||
             document.pdfGeneratedAt ||
             !document.periodStart ||
             !document.periodEnd
