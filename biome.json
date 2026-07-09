@@ -52,7 +52,7 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": true,
+            "preset": "recommended",
             "complexity": {
                 "noExcessiveCognitiveComplexity": {
                     "level": "error",
