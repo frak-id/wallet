@@ -1,7 +1,7 @@
 import clsx from "clsx";
 
 import { Box } from "../Box";
-import { colorVariants, sizeVariants } from "./numberedCircle.css";
+import { numberedCircle } from "./numberedCircle.css";
 
 type NumberedCircleProps = {
     number: number;
@@ -21,8 +21,7 @@ export function NumberedCircle({
             as="span"
             aria-hidden="true"
             className={
-                clsx(sizeVariants[size], colorVariants[color], className) ||
-                undefined
+                clsx(numberedCircle({ size, color }), className) || undefined
             }
         >
             {number}

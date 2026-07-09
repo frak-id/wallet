@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { Box } from "../Box";
-import { iconCircleSizes, iconCircleTones } from "./iconCircle.css";
+import { iconCircle } from "./iconCircle.css";
 
 type IconCircleSize = "sm" | "md" | "lg";
 type IconCircleTone = "neutral" | "action";
@@ -22,10 +22,7 @@ export function IconCircle({
 }: IconCircleProps) {
     return (
         <Box
-            className={
-                clsx(iconCircleSizes[size], iconCircleTones[tone], className) ||
-                undefined
-            }
+            className={clsx(iconCircle({ size, tone }), className) || undefined}
         >
             {children}
         </Box>
