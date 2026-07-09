@@ -75,7 +75,7 @@ export function RootProvider({ children }: PropsWithChildren) {
             {import.meta.env.DEV && (
                 <ReactQueryDevtools
                     initialIsOpen={false}
-                    buttonPosition={"top-right"}
+                    buttonPosition={"bottom-left"}
                 />
             )}
         </PersistQueryClientProvider>

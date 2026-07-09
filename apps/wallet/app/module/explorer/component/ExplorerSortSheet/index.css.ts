@@ -30,6 +30,8 @@ export const option = style({
     justifyContent: "space-between",
     gap: alias.spacing.m,
     padding: alias.spacing.m,
+    // Suppress the mobile/WebView blue box painted over a tapped row.
+    WebkitTapHighlightColor: "transparent",
 });
 
 export const optionLabel = style({
@@ -38,6 +40,11 @@ export const optionLabel = style({
     fontWeight: brand.typography.fontWeight.medium,
     color: vars.text.primary,
     cursor: "pointer",
+    // Tapping the label toggles the radio; don't let it select the text or
+    // paint the mobile tap-highlight box.
+    userSelect: "none",
+    WebkitUserSelect: "none",
+    WebkitTapHighlightColor: "transparent",
 });
 
 export const footer = style({

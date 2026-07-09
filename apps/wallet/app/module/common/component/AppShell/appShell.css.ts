@@ -68,6 +68,22 @@ export const mainContentWithNav = style([
 ]);
 
 /**
+ * Variant of `mainContentWithNav` that lets content scroll up *behind* the
+ * status bar — used by Explorer, whose frosted toolbar blurs content there.
+ * The negative top margin pulls the scroller to the screen top (the shell's
+ * `safeArea.top` padding still protects banners above it); the matching top
+ * padding keeps content starting below the notch at rest, so the resting
+ * layout is unchanged and only over-scroll reveals content behind the bar.
+ */
+export const mainContentWithNavBehindStatusBar = style([
+    mainContentWithNav,
+    {
+        marginTop: `calc(-1 * ${safeArea.top})`,
+        paddingTop: `calc(${safeArea.top} + ${alias.spacing.m})`,
+    },
+]);
+
+/**
  * Main content without nav clearance.
  * Used on auth/onboarding screens where the bottom bar is hidden.
  */
