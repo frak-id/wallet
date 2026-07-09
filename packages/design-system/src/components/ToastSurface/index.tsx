@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { placement, surface } from "./toastSurface.css";
 
-type ToastPlacement = keyof typeof placement;
+type ToastPlacement = "top-center";
 
 type ToastSurfaceProps = {
     children: ReactNode;
@@ -24,7 +24,13 @@ export function ToastSurface({
     className,
 }: ToastSurfaceProps) {
     return (
-        <div className={clsx(surface, placement[placementProp], className)}>
+        <div
+            className={clsx(
+                surface,
+                placement({ placement: placementProp }),
+                className
+            )}
+        >
             {children}
         </div>
     );

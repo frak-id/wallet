@@ -63,7 +63,7 @@ export function Stepper({
                 const content = (
                     <>
                         <span className={styles.indicatorColumn}>
-                            <span className={styles.indicator[status]}>
+                            <span className={styles.indicator({ status })}>
                                 {status === "active" && <ActiveRing />}
                                 {status === "completed" ? (
                                     <CheckIcon

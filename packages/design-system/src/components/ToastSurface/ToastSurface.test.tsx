@@ -17,7 +17,7 @@ describe("ToastSurface", () => {
     it("should default to the top-center placement", () => {
         render(<ToastSurface>toast</ToastSurface>);
         expect(screen.getByText("toast").className).toContain(
-            placement["top-center"]
+            placement({ placement: "top-center" })
         );
     });
 

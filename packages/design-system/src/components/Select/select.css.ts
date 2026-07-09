@@ -1,4 +1,5 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, easing, fontSize, transition, zIndex } from "../../tokens.css";
 
@@ -38,9 +39,15 @@ const triggerBase = style({
     },
 });
 
-export const triggerLength = styleVariants({
-    medium: [triggerBase, { width: "320px" }],
-    big: [triggerBase, { width: "100%" }],
+// `triggerBase` is applied by the consumer; this recipe layers only the
+// width per length so the base can stay a shared standalone style.
+export const triggerLength = recipe({
+    variants: {
+        length: {
+            medium: { width: "320px" },
+            big: { width: "100%" },
+        },
+    },
 });
 
 /** Borderless 56px flat-card trigger — pairs with `Input variant="bare"`. */

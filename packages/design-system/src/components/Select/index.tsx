@@ -24,7 +24,7 @@ export const SelectValue = SelectPrimitive.Value;
 /*  Trigger                                                           */
 /* ------------------------------------------------------------------ */
 
-type SelectTriggerLength = keyof typeof triggerLength;
+type SelectTriggerLength = "medium" | "big";
 
 export type SelectTriggerProps = ComponentPropsWithRef<
     typeof SelectPrimitive.Trigger
@@ -55,9 +55,7 @@ export function SelectTrigger({
                   selectStyles.triggerBare,
                   tone === "muted" && selectStyles.triggerBareMuted
               )
-            : length
-              ? triggerLength[length]
-              : selectStyles.trigger;
+            : clsx(selectStyles.trigger, length && triggerLength({ length }));
     const combined = clsx(base, className);
 
     return (

@@ -1,4 +1,5 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, brand, fontSize, transition } from "../../tokens.css";
 import {
@@ -45,10 +46,14 @@ const wrapperDisabled = style({
     opacity: 0.6,
 });
 
-export const lengthVariants = styleVariants({
-    small: { width: "160px" },
-    medium: { width: "320px" },
-    big: { width: "100%" },
+export const lengthVariants = recipe({
+    variants: {
+        length: {
+            small: { width: "160px" },
+            medium: { width: "320px" },
+            big: { width: "100%" },
+        },
+    },
 });
 
 const fieldBase = style({

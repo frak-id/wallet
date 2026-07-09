@@ -47,7 +47,7 @@ export function TextArea({
 
     const wrapperClassName = clsx(
         textareaStyles.wrapper,
-        length && lengthVariants[length],
+        length && lengthVariants({ length }),
         error && textareaStyles.wrapperError,
         disabled && textareaStyles.wrapperDisabled,
         className
