@@ -1,4 +1,5 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias } from "../../tokens.css";
 
@@ -16,7 +17,14 @@ export const fill = style({
     transition: "width 0.3s ease",
 });
 
-export const fillTones = styleVariants({
-    primary: { backgroundColor: vars.surface.primary },
-    success: { backgroundColor: vars.icon.success },
+export const fillTones = recipe({
+    variants: {
+        tone: {
+            primary: { backgroundColor: vars.surface.primary },
+            success: { backgroundColor: vars.icon.success },
+        },
+    },
+    defaultVariants: {
+        tone: "primary",
+    },
 });

@@ -1,19 +1,27 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { alias } from "../../tokens.css";
 
-export const legendItem = styleVariants({
-    // Swatch and label on one line (status bars, breakdown legends).
-    inline: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: alias.spacing.xxs,
+export const legendItem = recipe({
+    variants: {
+        layout: {
+            // Swatch and label on one line (status bars, breakdown legends).
+            inline: {
+                display: "inline-flex",
+                alignItems: "center",
+                gap: alias.spacing.xxs,
+            },
+            // Swatch above the label, both flush left (chart-card legends).
+            stacked: {
+                display: "inline-flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: alias.spacing.xxs,
+            },
+        },
     },
-    // Swatch above the label, both flush left (chart-card legends).
-    stacked: {
-        display: "inline-flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        gap: alias.spacing.xxs,
+    defaultVariants: {
+        layout: "inline",
     },
 });
 
