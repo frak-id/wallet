@@ -46,6 +46,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 - **Zustand individual selectors mandatory**: `store((s) => s.x)`. Destructuring whole store = re-render storm (business app is most sensitive).
 - **Shopify non-obvious**: no `<a>` / no `react-router` `redirect` in auth routes (loses session); stage literal `"prod"` is FORBIDDEN — use `"production"`; README mentions Prisma/SQLite but project uses Drizzle/Postgres.
 - **Bun bin trap**: `bun test` bypasses Vitest and runs Bun's own runner — always use `bun run test`.
+- **Dual TypeScript (intentional)**: `typescript@6` stays alongside `@typescript/native` (TS 7): typedoc, tsdown/rolldown-plugin-dts, and tsserver (editor) peer on TS ≤6; only `typecheck` scripts use the TS 7 `tsc`. Do NOT "clean up" the TS 6 dep.
 - **Biome config**: 4-space indent, double quotes, ES5 trailing commas, cognitive complexity ≤16 (17 in shopify). `type` over `interface`, no enums, no `as any`/`@ts-ignore`/`!`.
 - **Commit style**: Conventional Commits (`type(scope): subject`) — e.g. `feat`, `fix`, `refactor`, `chore`, `build`, `style`, `perf`, `test`, `docs`.
 - **Vite is aliased to `rolldown-vite`** (Rust); `@wagmi/connectors` stubbed in resolutions to avoid MetaMask SDK bloat.
