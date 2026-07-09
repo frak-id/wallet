@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to release (e.g. 0.0.36)"
-        required: true
+        description: "Version (e.g. 0.0.36). Empty = auto patch bump."
+        required: false
         type: string
       stage:
         description: "SST stage (dev = internal testing, prod = production)"
@@ -41,20 +41,35 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: "✅ Validate version format"
-        env:
-          VERSION: ${{ inputs.version }}
-        run: |
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Invalid version format: $VERSION (expected: X.Y.Z)"
-            exit 1
-          fi
-
       - name: "📥 Checkout source branch"
         uses: actions/checkout@v6
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
+
+      - name: "🔢 Resolve version"
+        id: resolve
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ -z "$VERSION" ]; then
+            LATEST=$(git tag --list 'app-*' \
+              | sed 's/^app-//' \
+              | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -V | tail -1)
+            if [ -z "$LATEST" ]; then
+              echo "::error::No existing app-* tag to bump from"
+              exit 1
+            fi
+            IFS=. read -r MAJOR MINOR PATCH <<< "$LATEST"
+            VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            echo "Auto-bumped $LATEST -> $VERSION"
+          fi
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Invalid version format: $VERSION (expected: X.Y.Z)"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: "🧅 Setup Bun"
         uses: oven-sh/setup-bun@v2
@@ -68,22 +83,22 @@ jobs:
       - name: "🔄 Sync version"
         run: bun run --cwd apps/wallet tauri:version "$VERSION"
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ steps.resolve.outputs.version }}
 
       - name: "📌 Create release PR"
         uses: peter-evans/create-pull-request@v8
         with:
-          branch: release/mobile-${{ inputs.version }}
+          branch: release/mobile-${{ steps.resolve.outputs.version }}
           base: ${{ github.ref_name }}
-          title: "chore(mobile): release ${{ inputs.version }} (${{ inputs.stage }})"
-          commit-message: "chore(mobile): release ${{ inputs.version }}"
+          title: "chore(mobile): release ${{ steps.resolve.outputs.version }} (${{ inputs.stage }})"
+          commit-message: "chore(mobile): release ${{ steps.resolve.outputs.version }}"
           body: |
-            Release **Frak Wallet Mobile ${{ inputs.version }}** (stage: `${{ inputs.stage }}`).
+            Release **Frak Wallet Mobile ${{ steps.resolve.outputs.version }}** (stage: `${{ inputs.stage }}`).
 
             Merging this PR will:
             - Build iOS (IPA) and Android (AAB)
             - Upload iOS to TestFlight and Android to Google Play (internal track)
-            - Tag the merge commit as `app-${{ inputs.version }}`
+            - Tag the merge commit as `app-${{ steps.resolve.outputs.version }}`
             - Create a GitHub release with auto-generated notes + IPA + AAB
           labels: |
             release:mobile
