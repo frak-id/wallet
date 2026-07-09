@@ -1,5 +1,5 @@
 import { style } from "@vanilla-extract/css";
-import { fadeIn } from "../keyframes.css";
+import { fadeInDown } from "../keyframes.css";
 import { vars } from "../theme.css";
 import { alias, onDark, overlay } from "../tokens.css";
 
@@ -17,7 +17,7 @@ export const container = style({
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     color: vars.text.onAction,
-    animation: `${fadeIn} 300ms ease-out`,
+    animation: `${fadeInDown} 300ms ease-out`,
     // Re-enable pointer events on the card so screen readers / hover work,
     // while the parent `BannerStack` lets clicks pass through empty areas.
     pointerEvents: "auto",

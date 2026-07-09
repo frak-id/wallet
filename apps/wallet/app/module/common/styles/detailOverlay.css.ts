@@ -1,3 +1,4 @@
+import { fadeIn, fadeOut } from "@frak-labs/design-system/keyframes";
 import { vars } from "@frak-labs/design-system/theme";
 import {
     alias,
@@ -5,17 +6,7 @@ import {
     shadow,
     zIndex,
 } from "@frak-labs/design-system/tokens";
-import { globalStyle, keyframes, style } from "@vanilla-extract/css";
-
-const fadeIn = keyframes({
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-});
-
-const fadeOut = keyframes({
-    from: { opacity: 1 },
-    to: { opacity: 0 },
-});
+import { globalStyle, style } from "@vanilla-extract/css";
 
 const overlayBase = style({
     position: "fixed",

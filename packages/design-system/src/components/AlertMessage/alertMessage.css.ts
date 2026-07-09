@@ -1,5 +1,5 @@
 import { style, styleVariants } from "@vanilla-extract/css";
-import { fadeIn } from "../../keyframes.css";
+import { fadeInDown } from "../../keyframes.css";
 import { vars } from "../../theme.css";
 import { alias, brand, overlay, semanticLight } from "../../tokens.css";
 
@@ -14,7 +14,7 @@ export const container = style({
     position: "relative",
     borderRadius: alias.cornerRadius.m,
     overflow: "hidden", // clip the edge-fade overlays to the rounded corners
-    animation: `${fadeIn} 300ms ease-out`,
+    animation: `${fadeInDown} 300ms ease-out`,
     textAlign: "left",
     width: "100%",
     pointerEvents: "auto", // re-enable inside the click-through BannerStack
