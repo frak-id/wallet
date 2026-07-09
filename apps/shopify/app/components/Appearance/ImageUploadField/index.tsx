@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { type FileRejection, useDropzone } from "react-dropzone";
 import { useFetcher } from "react-router";
 import styles from "./index.module.css";
@@ -48,7 +48,18 @@ export function ImageUploadField({
 
     const isPending = mediaFetcher.state !== "idle";
 
-    // Handle media operation responses
+    // Keep the latest callback without making it an effect dependency — the
+    // parent recreates it on every state change (autoSave depends on form
+    // state), so depending on its identity would re-run the effect endlessly.
+    const onUploadSuccessRef = useRef(onUploadSuccess);
+    useEffect(() => {
+        onUploadSuccessRef.current = onUploadSuccess;
+    });
+
+    // Handle media operation responses — act once per distinct fetcher result.
+    // mediaFetcher.data stays truthy after an upload, so without this guard the
+    // effect would re-fire (and re-trigger the parent's autoSave) infinitely.
+    const processedResultRef = useRef<unknown>(undefined);
     useEffect(() => {
         const result = mediaFetcher.data as
             | { success: true; url: string }
@@ -56,12 +67,14 @@ export function ImageUploadField({
             | { success: false }
             | undefined;
         if (!result?.success) return;
+        if (processedResultRef.current === mediaFetcher.data) return;
+        processedResultRef.current = mediaFetcher.data;
         if ("url" in result) {
-            onUploadSuccess(result.url);
+            onUploadSuccessRef.current(result.url);
         } else if ("deleted" in result) {
-            onUploadSuccess("");
+            onUploadSuccessRef.current("");
         }
-    }, [mediaFetcher.data, onUploadSuccess]);
+    }, [mediaFetcher.data]);
 
     const onDrop = useCallback(
         (files: File[]) => {
