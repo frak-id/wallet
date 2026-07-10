@@ -40,6 +40,7 @@ import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import { useCampaignView } from "../../campaignView";
 import { useAffiliateShareLink } from "../../hook/useAffiliateShareLink";
+import { useToolbarTitleReveal } from "../../hook/useToolbarTitleReveal";
 import { CampaignInfoSection } from "./CampaignInfoSection";
 import * as styles from "./index.css";
 
@@ -61,6 +62,48 @@ function resolvePrimaryShareAction(
 
 function isCreateStepDisabled(isCreating: boolean, isLoading: boolean) {
     return isCreating || isLoading;
+}
+
+// iOS scroll-edge blur behind the toolbar; kept as its own component so its
+// fade-in branch lives out of ExplorerDetail's body. A masked backdrop-filter
+// band whose blur radius animates in (see toolbarBlur for why radius, not
+// opacity).
+function ToolbarBlur({ visible }: { visible: boolean }) {
+    return (
+        <div
+            aria-hidden="true"
+            className={
+                visible
+                    ? `${styles.toolbarBlur} ${styles.toolbarBlurVisible}`
+                    : styles.toolbarBlur
+            }
+        />
+    );
+}
+
+// Merchant name mirrored into the fixed toolbar; kept as its own component so
+// the reveal branch lives out of ExplorerDetail's body.
+function ToolbarTitle({ name, visible }: { name: string; visible: boolean }) {
+    return (
+        <span
+            aria-hidden="true"
+            className={
+                visible
+                    ? `${styles.toolbarTitle} ${styles.toolbarTitleVisible}`
+                    : styles.toolbarTitle
+            }
+        >
+            <Text
+                as="span"
+                variant="body"
+                weight="semiBold"
+                color="primary"
+                className={styles.toolbarTitleText}
+            >
+                {name}
+            </Text>
+        </span>
+    );
 }
 
 function AffiliateLinkCreateError({
@@ -85,6 +128,16 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
     const { t } = useTranslation();
+
+    // Mirror the merchant name into the fixed toolbar once the large in-body
+    // name scrolls up behind the close / share buttons.
+    const {
+        heroRef,
+        titleRef: brandTitleRef,
+        toolbarRef,
+        blurred,
+        revealed: showToolbar,
+    } = useToolbarTitleReveal();
 
     const view = useCampaignView(merchant.id);
 
@@ -220,7 +273,11 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
-            <DetailSheetHero height={232} className={styles.heroImageSheet}>
+            <DetailSheetHero
+                ref={heroRef}
+                height={232}
+                className={styles.heroImageSheet}
+            >
                 <div ref={scrollContainerRef} className={styles.heroSlider}>
                     {images.map((url, index) => (
                         <div
@@ -237,11 +294,13 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     ))}
                 </div>
 
-                <DetailSheetActions>
+                <DetailSheetActions ref={toolbarRef}>
+                    <ToolbarBlur visible={blurred} />
                     <GlassCloseButton
                         onClick={onClose}
                         label={t("explorer.detail.close")}
                     />
+                    <ToolbarTitle name={merchant.name} visible={showToolbar} />
                     {canShare && !affiliateNeedsLink && (
                         <GlassButton
                             as="button"
@@ -279,7 +338,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
             <DetailSheetBody className={styles.bodyContent}>
                 <Spread align="top" space="m">
                     <div className={styles.brandInfo}>
-                        <Text as="h1" variant="heading1">
+                        <Text as="h1" variant="heading1" ref={brandTitleRef}>
                             <ExternalLink
                                 href={brandLinkUrl}
                                 className={styles.brandLink}
