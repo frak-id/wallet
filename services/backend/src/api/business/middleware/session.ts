@@ -65,6 +65,29 @@ async function isPlatformAdminAuth(
     return false;
 }
 
+/**
+ * Shopify SSO auto-link (§4.7): lazily resolved — only fetched once the
+ * direct wallet/account/admin checks have already failed, since most
+ * requests never need it.
+ */
+async function hasShopifyCredentialAccess(
+    merchantId: string,
+    accountId: string | null
+): Promise<boolean> {
+    if (!accountId) return false;
+    const shopCredentials =
+        await BusinessAuthContext.repositories.credential.findShopifyByAccount(
+            accountId
+        );
+    const shopDomains = shopCredentials
+        .map((c) => c.shopDomain)
+        .filter((d): d is string => !!d);
+    if (!shopDomains.length) return false;
+    return MerchantContext.services.authorization.hasAccess(merchantId, {
+        shopDomains,
+    });
+}
+
 export const businessSessionContext = new Elysia({
     name: "Context.businessSession",
 })
@@ -91,27 +114,13 @@ export const businessSessionContext = new Elysia({
                         )
                             return true;
 
-                        // Shopify SSO auto-link (§4.7): lazily resolved —
-                        // only fetched once the direct wallet/account/admin
-                        // checks above have already failed, since most
-                        // requests never need it.
-                        if (auth.accountId) {
-                            const shopCredentials =
-                                await BusinessAuthContext.repositories.credential.findShopifyByAccount(
-                                    auth.accountId
-                                );
-                            const shopDomains = shopCredentials
-                                .map((c) => c.shopDomain)
-                                .filter((d): d is string => !!d);
-                            if (
-                                shopDomains.length &&
-                                (await MerchantContext.services.authorization.hasAccess(
-                                    merchantId,
-                                    { shopDomains }
-                                ))
-                            ) {
-                                return true;
-                            }
+                        if (
+                            await hasShopifyCredentialAccess(
+                                merchantId,
+                                auth.accountId
+                            )
+                        ) {
+                            return true;
                         }
 
                         if (
