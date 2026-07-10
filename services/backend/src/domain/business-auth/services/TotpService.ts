@@ -6,7 +6,7 @@ import { encodeHexLowerCase } from "@oslojs/encoding";
 import { createTOTPKeyURI, verifyTOTPWithGracePeriod } from "@oslojs/otp";
 import { renderSVG } from "uqr";
 import { bytesToHex, type Hex, hexToBytes } from "viem";
-import type { BusinessTotpRepository } from "../repositories/BusinessTotpRepository";
+import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
 
 const TOTP_KEY_DERIVATION_LABEL = "business-totp-encryption";
 
@@ -34,7 +34,7 @@ export class TotpService {
     private encryptionKey: Buffer | null = null;
 
     constructor(
-        private readonly totpRepository: BusinessTotpRepository,
+        private readonly accountRepository: BusinessAccountRepository,
         private readonly adminWalletsRepository: AdminWalletsRepository
     ) {}
 
@@ -91,15 +91,15 @@ export class TotpService {
         accountId: string;
         accountLabel: string;
     }): Promise<TotpSetup> {
-        const existing = await this.totpRepository.findByAccount(
+        const existing = await this.accountRepository.findById(
             params.accountId
         );
-        if (existing?.activatedAt) {
+        if (existing?.totpActivatedAt) {
             throw new Error("TOTP already activated for this account");
         }
 
         const secret = crypto.getRandomValues(new Uint8Array(20));
-        await this.totpRepository.upsertPending({
+        await this.accountRepository.setPendingTotp({
             accountId: params.accountId,
             encryptedSecret: await this.encryptSecret(secret),
         });
@@ -122,16 +122,16 @@ export class TotpService {
         accountId: string;
         code: string;
     }): Promise<{ recoveryCodes: string[] } | null> {
-        const row = await this.totpRepository.findByAccount(params.accountId);
-        if (!row || row.activatedAt) return null;
+        const row = await this.accountRepository.findById(params.accountId);
+        if (!row?.totpSecretEnc || row.totpActivatedAt) return null;
 
-        const valid = await this.verifyCode(row.encryptedSecret, params.code);
+        const valid = await this.verifyCode(row.totpSecretEnc, params.code);
         if (!valid) return null;
 
         const recoveryCodes = Array.from({ length: RECOVERY_CODE_COUNT }, () =>
             randomBytes(RECOVERY_CODE_BYTES).toString("hex")
         );
-        await this.totpRepository.activate({
+        await this.accountRepository.activateTotp({
             accountId: params.accountId,
             recoveryCodesHash: recoveryCodes.map((code) =>
                 this.hashRecoveryCode(code)
@@ -148,10 +148,10 @@ export class TotpService {
         accountId: string;
         code: string;
     }): Promise<boolean> {
-        const row = await this.totpRepository.findByAccount(params.accountId);
-        if (!row?.activatedAt) return false;
+        const row = await this.accountRepository.findById(params.accountId);
+        if (!row?.totpSecretEnc || !row.totpActivatedAt) return false;
 
-        if (await this.verifyCode(row.encryptedSecret, params.code)) {
+        if (await this.verifyCode(row.totpSecretEnc, params.code)) {
             return true;
         }
 
@@ -161,14 +161,14 @@ export class TotpService {
         // element regardless of match position.
         const codeHash = this.hashRecoveryCode(params.code);
         const codeHashBytes = new TextEncoder().encode(codeHash);
-        const matched = (row.recoveryCodesHash ?? []).some((candidate) =>
+        const matched = (row.totpRecoveryCodesHash ?? []).some((candidate) =>
             constantTimeEqual(
                 new TextEncoder().encode(candidate),
                 codeHashBytes
             )
         );
         if (matched) {
-            await this.totpRepository.consumeRecoveryCode(
+            await this.accountRepository.consumeTotpRecoveryCode(
                 params.accountId,
                 codeHash
             );
@@ -179,8 +179,8 @@ export class TotpService {
     }
 
     async isActivated(accountId: string): Promise<boolean> {
-        const row = await this.totpRepository.findByAccount(accountId);
-        return !!row?.activatedAt;
+        const row = await this.accountRepository.findById(accountId);
+        return !!row?.totpActivatedAt;
     }
 
     private async verifyCode(

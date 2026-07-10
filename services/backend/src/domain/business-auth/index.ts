@@ -2,7 +2,6 @@ export { BusinessAuthContext } from "./context";
 export type {
     BusinessAccountSelect,
     BusinessAuthMethod,
-    BusinessCredentialType,
     BusinessSessionSelect,
 } from "./db/schema";
 export type { TwoFactorMethod } from "./services/BusinessAccountService";

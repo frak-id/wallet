@@ -70,18 +70,6 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
                 );
             }
 
-            const existingCredential =
-                await BusinessAuthContext.repositories.credential.findPasswordByAccount(
-                    auth.accountId
-                );
-            if (existingCredential) {
-                throw HttpError.conflict(
-                    "PASSWORD_EXISTS",
-                    "This account already has a password"
-                );
-            }
-
-            const normalizedEmail = email.trim().toLowerCase();
             const account =
                 await BusinessAuthContext.repositories.account.findById(
                     auth.accountId
@@ -89,6 +77,14 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
             if (!account) {
                 throw HttpError.notFound("NO_ACCOUNT", "Account not found");
             }
+            if (account.passwordHash) {
+                throw HttpError.conflict(
+                    "PASSWORD_EXISTS",
+                    "This account already has a password"
+                );
+            }
+
+            const normalizedEmail = email.trim().toLowerCase();
             if (!account.email) {
                 const emailOwner =
                     await BusinessAuthContext.repositories.account.findByEmail(
@@ -113,7 +109,7 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
 
             const passwordHash =
                 await BusinessAuthContext.services.password.hash(password);
-            await BusinessAuthContext.repositories.credential.createPassword({
+            await BusinessAuthContext.repositories.account.setPasswordHash({
                 accountId: auth.accountId,
                 passwordHash,
             });

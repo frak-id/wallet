@@ -252,10 +252,10 @@ describe("MerchantAuthorizationService.hasAccess (write gate)", () => {
 });
 
 describe("MerchantAuthorizationService — Shopify SSO auto-link (§4.7)", () => {
-    it("grants admin-role access when a shop domain matches the merchant's domain exactly", async () => {
+    it("grants admin-role access when the shop domain matches the merchant's domain exactly", async () => {
         const svc = makeService({ domain: "brand.myshopify.com" });
         const result = await svc.checkAccess(MERCHANT_ID, {
-            shopDomains: ["brand.myshopify.com"],
+            shopDomain: "brand.myshopify.com",
         });
         expect(result).toMatchObject({
             hasAccess: true,
@@ -268,7 +268,7 @@ describe("MerchantAuthorizationService — Shopify SSO auto-link (§4.7)", () =>
     it("grants access when the merchant domain is a subdomain of the proven shop domain", async () => {
         const svc = makeService({ domain: "shop.brand.com" });
         const result = await svc.checkAccess(MERCHANT_ID, {
-            shopDomains: ["brand.com"],
+            shopDomain: "brand.com",
         });
         expect(result.hasAccess).toBe(true);
     });
@@ -276,7 +276,7 @@ describe("MerchantAuthorizationService — Shopify SSO auto-link (§4.7)", () =>
     it("rejects the reverse direction: a shop cannot vouch for a broader merchant domain", async () => {
         const svc = makeService({ domain: "brand.com" });
         const result = await svc.checkAccess(MERCHANT_ID, {
-            shopDomains: ["shop.brand.com"],
+            shopDomain: "shop.brand.com",
         });
         expect(result.hasAccess).toBe(false);
     });
@@ -287,7 +287,7 @@ describe("MerchantAuthorizationService — Shopify SSO auto-link (§4.7)", () =>
             allowedDomains: ["brand.myshopify.com"],
         });
         const result = await svc.checkAccess(MERCHANT_ID, {
-            shopDomains: ["brand.myshopify.com"],
+            shopDomain: "brand.myshopify.com",
         });
         expect(result.hasAccess).toBe(true);
     });
@@ -295,22 +295,22 @@ describe("MerchantAuthorizationService — Shopify SSO auto-link (§4.7)", () =>
     it("denies access for an unrelated shop domain", async () => {
         const svc = makeService({ domain: "brand.com" });
         const result = await svc.checkAccess(MERCHANT_ID, {
-            shopDomains: ["other.myshopify.com"],
+            shopDomain: "other.myshopify.com",
         });
         expect(result.hasAccess).toBe(false);
     });
 
-    it("returns none for an empty identity with no shop domains (no findById call needed)", async () => {
+    it("returns none for an empty identity with no shop domain (no findById call needed)", async () => {
         const svc = makeService();
-        const result = await svc.checkAccess(MERCHANT_ID, { shopDomains: [] });
+        const result = await svc.checkAccess(MERCHANT_ID, { shopDomain: null });
         expect(result).toMatchObject({ hasAccess: false, role: "none" });
     });
 
-    it("includes shop-domain-matched merchants in getAccessibleMerchantIds", async () => {
+    it("includes the shop-domain-matched merchant in getAccessibleMerchantIds", async () => {
         const svc = makeService({ domain: "brand.myshopify.com" });
         expect(
             await svc.getAccessibleMerchantIds({
-                shopDomains: ["brand.myshopify.com"],
+                shopDomain: "brand.myshopify.com",
             })
         ).toEqual([MERCHANT_ID]);
     });

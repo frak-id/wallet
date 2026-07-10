@@ -1,66 +1,60 @@
 import { log } from "@backend-infrastructure";
+import { isUniqueViolation } from "@backend-utils";
 import type { Address } from "viem";
-import type {
-    BusinessAccountSelect,
-    BusinessCredentialSelect,
-} from "../db/schema";
+import type { BusinessAccountSelect } from "../db/schema";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
-import type { BusinessCredentialRepository } from "../repositories/BusinessCredentialRepository";
-import type { BusinessTotpRepository } from "../repositories/BusinessTotpRepository";
 
 export type TwoFactorMethod = "email" | "totp" | "siwe";
 
 /**
- * Same-domain composition over accounts + credentials: idempotent wallet
- * upsert (SIWE login + Phase 0 backfill fallback), account creation with a
- * password credential, and the per-account 2FA method enumeration that the
- * step-up 401 body exposes.
+ * Composition over the single `business_accounts` row: idempotent wallet /
+ * shopify upsert (SIWE login, SSO, Phase 0 backfill fallback), and the
+ * per-account 2FA method enumeration that the step-up 401 body exposes.
  */
 export class BusinessAccountService {
     constructor(
-        private readonly accountRepository: BusinessAccountRepository,
-        private readonly credentialRepository: BusinessCredentialRepository,
-        private readonly totpRepository: BusinessTotpRepository
+        private readonly accountRepository: BusinessAccountRepository
     ) {}
 
     /**
-     * Idempotent: resolve the account owning `wallet`, creating the account +
-     * wallet credential when the wallet was never seen (lazy backfill for
-     * users the Phase 0 migration missed).
+     * Idempotent: resolve the account owning `wallet`, creating the account
+     * when the wallet was never seen (lazy backfill for users the Phase 0
+     * migration missed).
      */
     async upsertWalletAccount(wallet: Address): Promise<BusinessAccountSelect> {
-        const credential = await this.credentialRepository.findByWallet(wallet);
-        if (credential) {
-            const account = await this.accountRepository.findById(
-                credential.accountId
-            );
-            if (account) return account;
-            // Orphan credential (account row deleted) — should not happen;
-            // recreate the account to self-heal rather than dead-locking login.
-            log.warn(
-                { wallet, credentialId: credential.id },
-                "Orphan wallet credential, recreating business account"
-            );
-        }
+        const existing = await this.accountRepository.findByWallet(wallet);
+        if (existing) return existing;
 
         const account = await this.accountRepository.create({});
-        await this.credentialRepository.createWallet({
-            accountId: account.id,
-            wallet,
-        });
-        return account;
+        try {
+            return await this.accountRepository.setWallet({
+                accountId: account.id,
+                wallet,
+            });
+        } catch (error) {
+            // Lost a race with a concurrent login upsert for the same wallet
+            // — the unique index rejected our UPDATE; the winner's row is
+            // authoritative, ours is an orphan (never got its wallet set).
+            log.warn(
+                { wallet, accountId: account.id, error: String(error) },
+                "Wallet upsert race — returning the existing account"
+            );
+            const winner = await this.accountRepository.findByWallet(wallet);
+            if (!winner) throw error;
+            return winner;
+        }
     }
 
     /**
      * Idempotent: resolve the account owning this Shopify staff identity
-     * (`shopify_user_id` + `shop_domain`), creating the account + shopify
-     * credential on first login (§4.7 step 6). When the account has no email
-     * yet, the token's `associated_user.email` fills it in (unverified —
-     * Shopify vouches for the login, not for mailbox ownership, so email 2FA
-     * still requires its own OTP round-trip before counting as verified).
+     * (`shopify_user_id` + `shop_domain`), creating the account on first
+     * login (§4.7 step 6). When the account has no email yet, the token's
+     * `associated_user.email` fills it in (unverified — Shopify vouches for
+     * the login, not for mailbox ownership, so email 2FA still requires its
+     * own OTP round-trip before counting as verified).
      *
      * Also the convergence point for the inline embedded mint (§4.12): a
-     * merchant registered from the embedded app creates this same credential
+     * merchant registered from the embedded app creates this same identity
      * shape, so a later SSO login on the standalone dashboard lands on the
      * account that already owns the merchant.
      */
@@ -69,23 +63,11 @@ export class BusinessAccountService {
         shopDomain: string;
         email: string | null;
     }): Promise<BusinessAccountSelect> {
-        const credential = await this.credentialRepository.findByShopifyUser({
+        const existing = await this.accountRepository.findByShopifyUser({
             shopifyUserId: params.shopifyUserId,
             shopDomain: params.shopDomain,
         });
-        if (credential) {
-            const account = await this.accountRepository.findById(
-                credential.accountId
-            );
-            if (account) return account;
-            log.warn(
-                {
-                    shopifyUserId: params.shopifyUserId,
-                    credentialId: credential.id,
-                },
-                "Orphan shopify credential, recreating business account"
-            );
-        }
+        if (existing) return existing;
 
         // Pre-fill the account email only when it's free — a collision with
         // another account's email must not turn a login into a 500 (or a
@@ -97,41 +79,58 @@ export class BusinessAccountService {
         const account = await this.accountRepository.create(
             params.email && !emailTaken ? { email: params.email } : {}
         );
-        await this.credentialRepository.createShopify({
-            accountId: account.id,
-            shopifyUserId: params.shopifyUserId,
-            shopDomain: params.shopDomain,
-        });
-        return account;
+        try {
+            return await this.accountRepository.setShopifyIdentity({
+                accountId: account.id,
+                shopifyUserId: params.shopifyUserId,
+                shopDomain: params.shopDomain,
+            });
+        } catch (error) {
+            log.warn(
+                {
+                    shopifyUserId: params.shopifyUserId,
+                    accountId: account.id,
+                    error: String(error),
+                },
+                "Shopify identity upsert race — returning the existing account"
+            );
+            const winner = await this.accountRepository.findByShopifyUser({
+                shopifyUserId: params.shopifyUserId,
+                shopDomain: params.shopDomain,
+            });
+            if (!winner) throw error;
+            return winner;
+        }
     }
 
-    /** Attach a SIWE-proven wallet credential to an existing account. */
+    /** Attach a SIWE-proven wallet to an existing account. */
     async linkWallet(params: {
         accountId: string;
         wallet: Address;
     }): Promise<{ status: "linked" | "alreadyLinked" | "walletTaken" }> {
-        const existing = await this.credentialRepository.findByWallet(
+        const existing = await this.accountRepository.findByWallet(
             params.wallet
         );
         if (existing) {
-            return existing.accountId === params.accountId
+            return existing.id === params.accountId
                 ? { status: "alreadyLinked" }
                 : { status: "walletTaken" };
         }
-        await this.credentialRepository.createWallet(params);
+        try {
+            await this.accountRepository.setWallet(params);
+        } catch (error) {
+            // Lost the race against a concurrent link/login for the same
+            // wallet — the partial unique index on wallet_address fired.
+            if (!isUniqueViolation(error)) throw error;
+            return { status: "walletTaken" };
+        }
         return { status: "linked" };
     }
 
-    /**
-     * The wallet attached to an account, if any (walletless ⇒ null). An
-     * account holds at most one wallet credential in practice; the first one
-     * wins if several exist.
-     */
+    /** The wallet attached to an account, if any (walletless ⇒ null). */
     async getWallet(accountId: string): Promise<Address | null> {
-        const credentials =
-            await this.credentialRepository.findByAccount(accountId);
-        const wallet = credentials.find((c) => c.type === "wallet");
-        return wallet?.walletAddress ?? null;
+        const account = await this.accountRepository.findById(accountId);
+        return account?.walletAddress ?? null;
     }
 
     /**
@@ -142,32 +141,24 @@ export class BusinessAccountService {
      *    successful email 2FA stamps `email_verified_at` (solves the
      *    fresh-registration bootstrap where no method is verified yet).
      *  - totp:  activated TOTP enrollment.
-     *  - siwe:  a wallet credential exists (fresh re-sign counts as 2FA).
+     *  - siwe:  a wallet is attached (fresh re-sign counts as 2FA).
      */
     async getEnabledTwoFactorMethods(
         accountId: string
     ): Promise<TwoFactorMethod[]> {
-        const [account, credentials, totp] = await Promise.all([
-            this.accountRepository.findById(accountId),
-            this.credentialRepository.findByAccount(accountId),
-            this.totpRepository.findByAccount(accountId),
-        ]);
+        const account = await this.accountRepository.findById(accountId);
+        if (!account) return [];
 
         const methods: TwoFactorMethod[] = [];
-        if (account?.email) methods.push("email");
-        if (totp?.activatedAt) methods.push("totp");
-        if (credentials.some((c) => c.type === "wallet")) methods.push("siwe");
+        if (account.email) methods.push("email");
+        if (account.totpActivatedAt) methods.push("totp");
+        if (account.walletAddress) methods.push("siwe");
         return methods;
     }
 
-    async getPasswordCredentialByEmail(email: string): Promise<{
-        account: BusinessAccountSelect;
-        credential: BusinessCredentialSelect | null;
-    } | null> {
-        const account = await this.accountRepository.findByEmail(email);
-        if (!account) return null;
-        const credential =
-            await this.credentialRepository.findPasswordByAccount(account.id);
-        return { account, credential };
+    async getPasswordAccountByEmail(
+        email: string
+    ): Promise<BusinessAccountSelect | null> {
+        return this.accountRepository.findByEmail(email);
     }
 }

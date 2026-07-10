@@ -17,19 +17,20 @@ type MerchantAccess = {
  * sessions), account-only (walletless accounts) and dual (wallet-linked
  * accounts) are all valid shapes; a match on either axis grants access.
  *
- * `shopDomains` (design doc §4.7 auto-link): shop domains proven by the
- * account's Shopify SSO credential(s), looked up by the BFF caller
- * (`business-auth` domain, at the API layer — never here, to respect the
- * cross-domain flow rules) and passed through as plain strings. A merchant
- * whose `domain`/`allowedDomains` matches one of them grants read/write
- * access exactly like a wallet or account match — this is what lets a
- * Shopify SSO user who registered the store (or was added later) see and
- * manage it from the standalone dashboard without being a listed admin.
+ * `shopDomain` (design doc §4.7 auto-link): the shop domain proven by the
+ * account's Shopify SSO identity, looked up by the BFF caller (`business-auth`
+ * domain, at the API layer — never here, to respect the cross-domain flow
+ * rules) and passed through as a plain string. A business account holds at
+ * most one Shopify identity (§4.3), so this is a single optional value, not
+ * a list. A merchant whose `domain`/`allowedDomains` matches it grants
+ * read/write access exactly like a wallet or account match — this is what
+ * lets a Shopify SSO user who registered the store (or was added later) see
+ * and manage it from the standalone dashboard without being a listed admin.
  */
 export type MerchantIdentity = {
     wallet?: Address | null;
     accountId?: string | null;
-    shopDomains?: string[];
+    shopDomain?: string | null;
 };
 
 const NO_ACCESS: MerchantAccess = {
@@ -49,8 +50,8 @@ export class MerchantAuthorizationService {
         merchantId: string,
         identity: MerchantIdentity
     ): Promise<MerchantAccess> {
-        const { wallet, accountId, shopDomains } = identity;
-        if (!wallet && !accountId && !shopDomains?.length) return NO_ACCESS;
+        const { wallet, accountId, shopDomain } = identity;
+        if (!wallet && !accountId && !shopDomain) return NO_ACCESS;
 
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant) return NO_ACCESS;
@@ -82,7 +83,7 @@ export class MerchantAuthorizationService {
             };
         }
 
-        if (this.matchesAnyShopDomain(merchant, shopDomains)) {
+        if (this.matchesShopDomain(merchant, shopDomain)) {
             return {
                 hasAccess: true,
                 isOwner: false,
@@ -95,26 +96,24 @@ export class MerchantAuthorizationService {
     }
 
     /**
-     * Shopify SSO auto-link (§4.7): does one of the account's proven shop
-     * domains match this merchant's domain or an allowed domain? Uses the
-     * same asymmetric `matchesShopDomain` direction as the registration
-     * bypass (§4.10) — the merchant's domain must equal or be a subdomain of
-     * the proven shop domain, never the reverse (a shop cannot vouch for a
+     * Shopify SSO auto-link (§4.7): does the account's proven shop domain
+     * match this merchant's domain or an allowed domain? Uses the same
+     * asymmetric `matchesShopDomain` direction as the registration bypass
+     * (§4.10) — the merchant's domain must equal or be a subdomain of the
+     * proven shop domain, never the reverse (a shop cannot vouch for a
      * broader domain than itself).
      */
-    private matchesAnyShopDomain(
+    private matchesShopDomain(
         merchant: { domain: string; allowedDomains: string[] | null },
-        shopDomains: string[] | undefined
+        shopDomain: string | null | undefined
     ): boolean {
-        if (!shopDomains?.length) return false;
+        if (!shopDomain) return false;
         const candidateDomains = [
             merchant.domain,
             ...(merchant.allowedDomains ?? []),
         ];
         return candidateDomains.some((candidate) =>
-            shopDomains.some((shopDomain) =>
-                matchesShopDomain(candidate, shopDomain)
-            )
+            matchesShopDomain(candidate, shopDomain)
         );
     }
 
@@ -140,7 +139,7 @@ export class MerchantAuthorizationService {
     async getAccessibleMerchantIds(
         identity: MerchantIdentity
     ): Promise<string[]> {
-        const { wallet, accountId, shopDomains } = identity;
+        const { wallet, accountId, shopDomain } = identity;
 
         const [ownedByWallet, ownedByAccount, adminOf, allMerchants] =
             await Promise.all([
@@ -151,7 +150,7 @@ export class MerchantAuthorizationService {
                     ? this.merchantRepository.findByOwnerAccount(accountId)
                     : Promise.resolve([]),
                 this.merchantAdminRepository.findByIdentity(identity),
-                shopDomains?.length
+                shopDomain
                     ? this.merchantRepository.findAll()
                     : Promise.resolve([]),
             ]);
@@ -161,7 +160,7 @@ export class MerchantAuthorizationService {
         for (const m of ownedByAccount) ids.add(m.id);
         for (const a of adminOf) ids.add(a.merchantId);
         for (const m of allMerchants) {
-            if (this.matchesAnyShopDomain(m, shopDomains)) ids.add(m.id);
+            if (this.matchesShopDomain(m, shopDomain)) ids.add(m.id);
         }
         return [...ids];
     }

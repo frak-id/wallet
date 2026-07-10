@@ -1,7 +1,7 @@
 import { generateTOTP } from "@oslojs/otp";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
-import type { BusinessTotpRepository } from "../repositories/BusinessTotpRepository";
+import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
 import { TotpService } from "./TotpService";
 
 // MASTER_KEY_SECRET is set by the global vitest-setup.
@@ -10,12 +10,12 @@ const ACCOUNT_ID = "acc-1";
 
 const createRepository = () =>
     ({
-        findByAccount: vi.fn(),
-        upsertPending: vi.fn(),
-        activate: vi.fn(),
-        consumeRecoveryCode: vi.fn(),
-        delete: vi.fn(),
-    }) as unknown as BusinessTotpRepository &
+        findById: vi.fn(),
+        setPendingTotp: vi.fn(),
+        activateTotp: vi.fn(),
+        consumeTotpRecoveryCode: vi.fn(),
+        clearTotp: vi.fn(),
+    }) as unknown as BusinessAccountRepository &
         Record<string, ReturnType<typeof vi.fn>>;
 
 describe("TotpService", () => {
@@ -25,14 +25,14 @@ describe("TotpService", () => {
     beforeEach(() => {
         repository = createRepository();
         service = new TotpService(
-            repository as unknown as BusinessTotpRepository,
+            repository as unknown as BusinessAccountRepository,
             new AdminWalletsRepository()
         );
     });
 
     describe("setup", () => {
         it("persists an encrypted secret and returns URI + QR", async () => {
-            repository.findByAccount.mockResolvedValue(null);
+            repository.findById.mockResolvedValue(null);
 
             const result = await service.setup({
                 accountId: ACCOUNT_ID,
@@ -43,15 +43,15 @@ describe("TotpService", () => {
             expect(result.otpauthUri).toContain("Frak%20Business");
             expect(result.qrSvg).toContain("<svg");
 
-            const stored = repository.upsertPending.mock.calls[0][0];
+            const stored = repository.setPendingTotp.mock.calls[0][0];
             expect(stored.encryptedSecret).toMatch(/^0x[0-9a-f]+$/);
             // iv (12) + secret (20) + tag (16) = 48 bytes = 96 hex chars
             expect(stored.encryptedSecret.length).toBe(2 + 96);
         });
 
         it("refuses to overwrite an activated enrollment", async () => {
-            repository.findByAccount.mockResolvedValue({
-                activatedAt: new Date(),
+            repository.findById.mockResolvedValue({
+                totpActivatedAt: new Date(),
             });
 
             await expect(
@@ -70,13 +70,13 @@ describe("TotpService", () => {
          * then activate and verify against the encrypted-at-rest secret.
          */
         async function setupWithSecret() {
-            repository.findByAccount.mockResolvedValue(null);
+            repository.findById.mockResolvedValue(null);
             const { otpauthUri } = await service.setup({
                 accountId: ACCOUNT_ID,
                 accountLabel: "user@test.com",
             });
             const encryptedSecret =
-                repository.upsertPending.mock.calls[0][0].encryptedSecret;
+                repository.setPendingTotp.mock.calls[0][0].encryptedSecret;
 
             // Decode the base32 secret from the otpauth URI
             const secretParam = new URL(otpauthUri).searchParams.get(
@@ -88,11 +88,11 @@ describe("TotpService", () => {
 
         it("activates with a valid code and returns 8 recovery codes", async () => {
             const { encryptedSecret, secret } = await setupWithSecret();
-            repository.findByAccount.mockResolvedValue({
-                accountId: ACCOUNT_ID,
-                encryptedSecret,
-                activatedAt: null,
-                recoveryCodesHash: null,
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: encryptedSecret,
+                totpActivatedAt: null,
+                totpRecoveryCodesHash: null,
             });
 
             const code = generateTOTP(secret, 30, 6);
@@ -106,7 +106,7 @@ describe("TotpService", () => {
             for (const rc of result?.recoveryCodes ?? []) {
                 expect(rc).toMatch(/^[0-9a-f]{10}$/);
             }
-            const activated = repository.activate.mock.calls[0][0];
+            const activated = repository.activateTotp.mock.calls[0][0];
             expect(activated.recoveryCodesHash).toHaveLength(8);
             // Stored hashes never equal the raw codes
             expect(activated.recoveryCodesHash).not.toEqual(
@@ -116,11 +116,11 @@ describe("TotpService", () => {
 
         it("rejects activation with a wrong code", async () => {
             const { encryptedSecret } = await setupWithSecret();
-            repository.findByAccount.mockResolvedValue({
-                accountId: ACCOUNT_ID,
-                encryptedSecret,
-                activatedAt: null,
-                recoveryCodesHash: null,
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: encryptedSecret,
+                totpActivatedAt: null,
+                totpRecoveryCodesHash: null,
             });
 
             const result = await service.activate({
@@ -132,11 +132,11 @@ describe("TotpService", () => {
 
         it("verifies a valid code on an activated enrollment", async () => {
             const { encryptedSecret, secret } = await setupWithSecret();
-            repository.findByAccount.mockResolvedValue({
-                accountId: ACCOUNT_ID,
-                encryptedSecret,
-                activatedAt: new Date(),
-                recoveryCodesHash: [],
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: encryptedSecret,
+                totpActivatedAt: new Date(),
+                totpRecoveryCodesHash: [],
             });
 
             const code = generateTOTP(secret, 30, 6);
@@ -150,11 +150,11 @@ describe("TotpService", () => {
 
         it("refuses to verify a non-activated enrollment", async () => {
             const { encryptedSecret, secret } = await setupWithSecret();
-            repository.findByAccount.mockResolvedValue({
-                accountId: ACCOUNT_ID,
-                encryptedSecret,
-                activatedAt: null,
-                recoveryCodesHash: null,
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: encryptedSecret,
+                totpActivatedAt: null,
+                totpRecoveryCodesHash: null,
             });
 
             const code = generateTOTP(secret, 30, 6);
@@ -167,22 +167,22 @@ describe("TotpService", () => {
     describe("recovery codes", () => {
         it("accepts and consumes a recovery code (single-use)", async () => {
             // Build a real enrollment to get a valid encrypted secret
-            repository.findByAccount.mockResolvedValue(null);
+            repository.findById.mockResolvedValue(null);
             await service.setup({
                 accountId: ACCOUNT_ID,
                 accountLabel: "user@test.com",
             });
             const encryptedSecret =
-                repository.upsertPending.mock.calls[0][0].encryptedSecret;
+                repository.setPendingTotp.mock.calls[0][0].encryptedSecret;
 
             // sha256("aabbccddee") lowercased-hex — computed via the service's
             // own hashing by activating and replaying is complex; instead
             // verify via the public contract: an unknown code fails.
-            repository.findByAccount.mockResolvedValue({
-                accountId: ACCOUNT_ID,
-                encryptedSecret,
-                activatedAt: new Date(),
-                recoveryCodesHash: [
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: encryptedSecret,
+                totpActivatedAt: new Date(),
+                totpRecoveryCodesHash: [
                     // sha256 of "aabbccddee"
                     computeSha256Hex("aabbccddee"),
                 ],
@@ -194,7 +194,7 @@ describe("TotpService", () => {
                     code: "aabbccddee",
                 })
             ).toBe(true);
-            expect(repository.consumeRecoveryCode).toHaveBeenCalled();
+            expect(repository.consumeTotpRecoveryCode).toHaveBeenCalled();
 
             expect(
                 await service.verify({

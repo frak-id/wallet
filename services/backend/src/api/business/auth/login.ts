@@ -94,7 +94,7 @@ export const loginRoutes = new Elysia()
                 await BusinessAuthContext.repositories.account.create({
                     email: normalizedEmail,
                 });
-            await BusinessAuthContext.repositories.credential.createPassword({
+            await BusinessAuthContext.repositories.account.setPasswordHash({
                 accountId: account.id,
                 passwordHash,
             });
@@ -121,8 +121,8 @@ export const loginRoutes = new Elysia()
     .post(
         "/login/password",
         async ({ body: { email, password }, request }) => {
-            const found =
-                await BusinessAuthContext.services.account.getPasswordCredentialByEmail(
+            const account =
+                await BusinessAuthContext.services.account.getPasswordAccountByEmail(
                     email.trim().toLowerCase()
                 );
 
@@ -130,23 +130,23 @@ export const loginRoutes = new Elysia()
             const valid =
                 await BusinessAuthContext.services.password.verifyOrDummy(
                     password,
-                    found?.credential?.passwordHash
+                    account?.passwordHash
                 );
-            if (!valid || !found) {
+            if (!valid || !account) {
                 return status(401, "Invalid credentials");
             }
 
             // Pending session: unusable outside /auth until 2FA completes.
             const { token, session } =
                 await BusinessAuthContext.services.session.create({
-                    accountId: found.account.id,
+                    accountId: account.id,
                     authMethod: "password",
                     userAgent: request.headers.get("user-agent") ?? undefined,
                 });
 
             const methods =
                 await BusinessAuthContext.services.account.getEnabledTwoFactorMethods(
-                    found.account.id
+                    account.id
                 );
 
             return {

@@ -1,10 +1,7 @@
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { drizzle as drizzlePg } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import {
-    businessAccountCredentialsTable,
-    businessAccountsTable,
-} from "../../backend/src/domain/business-auth/db/schema";
+import { businessAccountsTable } from "../../backend/src/domain/business-auth/db/schema";
 
 type WalletAddress = `0x${string}`;
 
@@ -18,17 +15,17 @@ type BackfillStats = {
 /**
  * Phase-0 eager migration (business-walletless-auth design doc §5):
  * every wallet that owns or administers a merchant gets a `business_account`
- * + `wallet` credential, and `merchants.owner_account_id` /
- * `merchant_admins.account_id` are backfilled from those credentials.
+ * with its `wallet_address` column set, and `merchants.owner_account_id` /
+ * `merchant_admins.account_id` are backfilled from those accounts.
  *
  * The merchant tables are addressed with raw SQL (not the backend Drizzle
  * schema) on purpose: `domain/merchant/db/schema.ts` drags in API-layer type
  * imports (`@backend-utils`) that bootstrap's tsconfig should not resolve.
  * The business-auth schema is import-clean, so typed inserts are used there.
  *
- * Idempotent — wallets that already hold a wallet credential are skipped
- * (partial unique index `bac_wallet_idx`), and the UPDATE statements only
- * touch rows whose account column is still NULL.
+ * Idempotent — wallets that already have an account (`wallet_address` set)
+ * are skipped (partial unique index `business_accounts_wallet_idx`), and the
+ * UPDATE statements only touch rows whose account column is still NULL.
  *
  * Gracefully no-ops when the `business_accounts` table (or the new merchant
  * columns) does not exist yet — those migrations are human-written and may
@@ -83,7 +80,8 @@ async function isSchemaReady(pgClient: postgres.Sql): Promise<boolean> {
 
 /**
  * Distinct wallets from merchants.owner_wallet + merchant_admins.wallet that
- * do not yet hold a wallet credential; create account + credential for each.
+ * do not yet have a business account; create one (with wallet_address set)
+ * for each.
  */
 async function createAccountsForWallets(
     pgDb: ReturnType<typeof drizzlePg>,
@@ -98,8 +96,8 @@ async function createAccountsForWallets(
             WHERE wallet IS NOT NULL
         ) wallets
         WHERE NOT EXISTS (
-            SELECT 1 FROM business_account_credentials c
-            WHERE c.type = 'wallet' AND c.wallet_address = wallets.wallet
+            SELECT 1 FROM business_accounts a
+            WHERE a.wallet_address = wallets.wallet
         )
     `);
 
@@ -107,63 +105,44 @@ async function createAccountsForWallets(
     stats.walletsScanned = wallets.length;
 
     for (const wallet of wallets) {
-        // Sequential + per-wallet transaction: the backfill runs once and the
-        // volume (merchant owners/admins) is small; correctness over speed.
-        await pgDb.transaction(async (tx) => {
-            const [account] = await tx
-                .insert(businessAccountsTable)
-                .values({})
-                .returning({ id: businessAccountsTable.id });
-            if (!account) throw new Error("Failed to create business account");
+        // Sequential: the backfill runs once and the volume (merchant
+        // owners/admins) is small; correctness over speed. The unique index
+        // on wallet_address makes a lost race against a concurrent login
+        // upsert a no-op insert rather than a duplicate account.
+        const inserted = await pgDb
+            .insert(businessAccountsTable)
+            .values({ walletAddress: wallet })
+            .onConflictDoNothing()
+            .returning({ id: businessAccountsTable.id });
 
-            const inserted = await tx
-                .insert(businessAccountCredentialsTable)
-                .values({
-                    accountId: account.id,
-                    type: "wallet",
-                    walletAddress: wallet,
-                })
-                .onConflictDoNothing()
-                .returning({ id: businessAccountCredentialsTable.id });
-
-            if (inserted.length === 0) {
-                // Lost a race with a concurrent login upsert — drop the
-                // orphan account we just created and keep the winner's.
-                // (Explicit DELETE rather than tx.rollback(), which throws.)
-                await tx
-                    .delete(businessAccountsTable)
-                    .where(eq(businessAccountsTable.id, account.id));
-                return;
-            }
+        if (inserted.length > 0) {
             stats.accountsCreated += 1;
-        });
+        }
     }
 }
 
-/** Backfill owner_account_id / account_id from the wallet credentials. */
+/** Backfill owner_account_id / account_id from the business accounts. */
 async function backfillOwnerColumns(
     pgDb: ReturnType<typeof drizzlePg>,
     stats: BackfillStats
 ): Promise<void> {
     const merchantsResult = await pgDb.execute(sql`
         UPDATE merchants m
-        SET owner_account_id = c.account_id
-        FROM business_account_credentials c
+        SET owner_account_id = a.id
+        FROM business_accounts a
         WHERE m.owner_account_id IS NULL
           AND m.owner_wallet IS NOT NULL
-          AND c.type = 'wallet'
-          AND c.wallet_address = m.owner_wallet
+          AND a.wallet_address = m.owner_wallet
     `);
     stats.merchantsBackfilled = merchantsResult.count ?? 0;
 
     const adminsResult = await pgDb.execute(sql`
-        UPDATE merchant_admins a
-        SET account_id = c.account_id
-        FROM business_account_credentials c
-        WHERE a.account_id IS NULL
-          AND a.wallet IS NOT NULL
-          AND c.type = 'wallet'
-          AND c.wallet_address = a.wallet
+        UPDATE merchant_admins ma
+        SET account_id = a.id
+        FROM business_accounts a
+        WHERE ma.account_id IS NULL
+          AND ma.wallet IS NOT NULL
+          AND a.wallet_address = ma.wallet
     `);
     stats.adminsBackfilled = adminsResult.count ?? 0;
 }

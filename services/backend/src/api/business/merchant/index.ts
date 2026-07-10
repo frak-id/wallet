@@ -128,18 +128,17 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                   )
                 : false;
 
-            // Shopify SSO auto-link (§4.7): shop domains proven by the
-            // account's Shopify credential(s), looked up here (BFF layer) and
+            // Shopify SSO auto-link (§4.7): the shop domain proven by the
+            // account's Shopify identity, looked up here (BFF layer) and
             // passed as plain data — the merchant domain must never import
-            // business-auth (flow rules).
-            const shopCredentials = businessSession.accountId
-                ? await BusinessAuthContext.repositories.credential.findShopifyByAccount(
+            // business-auth (flow rules). An account holds at most one
+            // Shopify identity (§4.3).
+            const shopAccount = businessSession.accountId
+                ? await BusinessAuthContext.repositories.account.findById(
                       businessSession.accountId
                   )
-                : [];
-            const shopDomains = shopCredentials
-                .map((c) => c.shopDomain)
-                .filter((d): d is string => !!d);
+                : null;
+            const shopDomain = shopAccount?.shopifyShopDomain ?? null;
 
             // Enumerate ownership on both identity axes (wallet + account)
             // so walletless users see their merchants too.
@@ -174,7 +173,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
             );
 
             const allMerchantsRaw =
-                isPlatAdmin || shopDomains.length > 0
+                isPlatAdmin || shopDomain
                     ? await MerchantContext.repositories.merchant.findAll()
                     : [];
 
@@ -183,15 +182,13 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
             // `MerchantAuthorizationService.checkAccess`. Deduped against
             // `adminOf` below.
             const ownedIds = new Set(owned.map((m) => m.id));
-            const shopMatched = shopDomains.length
+            const shopMatched = shopDomain
                 ? allMerchantsRaw.filter(
                       (m) =>
                           !ownedIds.has(m.id) &&
                           [m.domain, ...(m.allowedDomains ?? [])].some(
                               (candidate) =>
-                                  shopDomains.some((shopDomain) =>
-                                      matchesShopDomain(candidate, shopDomain)
-                                  )
+                                  matchesShopDomain(candidate, shopDomain)
                           )
                   )
                 : [];

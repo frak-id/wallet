@@ -68,23 +68,19 @@ async function isPlatformAdminAuth(
 /**
  * Shopify SSO auto-link (§4.7): lazily resolved — only fetched once the
  * direct wallet/account/admin checks have already failed, since most
- * requests never need it.
+ * requests never need it. An account holds at most one Shopify identity
+ * (design doc §4.3), so this is a single-row read, not a credential scan.
  */
 async function hasShopifyCredentialAccess(
     merchantId: string,
     accountId: string | null
 ): Promise<boolean> {
     if (!accountId) return false;
-    const shopCredentials =
-        await BusinessAuthContext.repositories.credential.findShopifyByAccount(
-            accountId
-        );
-    const shopDomains = shopCredentials
-        .map((c) => c.shopDomain)
-        .filter((d): d is string => !!d);
-    if (!shopDomains.length) return false;
+    const account =
+        await BusinessAuthContext.repositories.account.findById(accountId);
+    if (!account?.shopifyShopDomain) return false;
     return MerchantContext.services.authorization.hasAccess(merchantId, {
-        shopDomains,
+        shopDomain: account.shopifyShopDomain,
     });
 }
 

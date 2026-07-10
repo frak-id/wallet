@@ -1,9 +1,7 @@
 import { adminWalletsRepository } from "@backend-infrastructure";
 import { BusinessAccountRepository } from "./repositories/BusinessAccountRepository";
-import { BusinessCredentialRepository } from "./repositories/BusinessCredentialRepository";
 import { BusinessEmailCodeRepository } from "./repositories/BusinessEmailCodeRepository";
 import { BusinessSessionRepository } from "./repositories/BusinessSessionRepository";
-import { BusinessTotpRepository } from "./repositories/BusinessTotpRepository";
 import { BusinessAccountService } from "./services/BusinessAccountService";
 import { BusinessSessionService } from "./services/BusinessSessionService";
 import { EmailOtpService } from "./services/EmailOtpService";
@@ -12,10 +10,8 @@ import { ShopifySsoService } from "./services/ShopifySsoService";
 import { TotpService } from "./services/TotpService";
 
 const businessAccountRepository = new BusinessAccountRepository();
-const businessCredentialRepository = new BusinessCredentialRepository();
 const businessSessionRepository = new BusinessSessionRepository();
 const businessEmailCodeRepository = new BusinessEmailCodeRepository();
-const businessTotpRepository = new BusinessTotpRepository();
 
 const passwordService = new PasswordService();
 const businessSessionService = new BusinessSessionService(
@@ -23,23 +19,19 @@ const businessSessionService = new BusinessSessionService(
 );
 const emailOtpService = new EmailOtpService(businessEmailCodeRepository);
 const totpService = new TotpService(
-    businessTotpRepository,
+    businessAccountRepository,
     adminWalletsRepository
 );
 const businessAccountService = new BusinessAccountService(
-    businessAccountRepository,
-    businessCredentialRepository,
-    businessTotpRepository
+    businessAccountRepository
 );
 const shopifySsoService = new ShopifySsoService();
 
 export namespace BusinessAuthContext {
     export const repositories = {
         account: businessAccountRepository,
-        credential: businessCredentialRepository,
         session: businessSessionRepository,
         emailCode: businessEmailCodeRepository,
-        totp: businessTotpRepository,
     };
     export const services = {
         account: businessAccountService,

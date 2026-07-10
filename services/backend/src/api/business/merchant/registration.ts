@@ -280,28 +280,23 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
     );
 
 /**
- * Does the session's account hold a Shopify credential whose shop domain
- * matches (or is a subdomain match of, either direction) the domain being
- * registered? Any one matching credential is enough.
+ * Does the session's account hold a Shopify identity whose shop domain
+ * matches (or is a subdomain match of) the domain being registered? An
+ * account holds at most one Shopify identity (§4.3).
  */
 async function isVerifiedViaShopify(
     accountId: string | null,
     registeringDomain: string
 ): Promise<boolean> {
     if (!accountId) return false;
-    const credentials =
-        await BusinessAuthContext.repositories.credential.findShopifyByAccount(
-            accountId
-        );
+    const account =
+        await BusinessAuthContext.repositories.account.findById(accountId);
+    if (!account?.shopifyShopDomain) return false;
     const normalizedDomain =
         MerchantContext.repositories.dnsCheck.getNormalizedDomain(
             registeringDomain
         );
-    return credentials.some(
-        (credential) =>
-            credential.shopDomain &&
-            matchesShopDomain(normalizedDomain, credential.shopDomain)
-    );
+    return matchesShopDomain(normalizedDomain, account.shopifyShopDomain);
 }
 
 const CURRENCY_TO_STABLECOIN: Record<"usd" | "eur" | "gbp", Stablecoin> = {

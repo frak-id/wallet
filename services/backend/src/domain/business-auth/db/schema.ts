@@ -11,14 +11,6 @@ import {
 import type { Address, Hex } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
 
-/**
- * How a credential proves ownership of a business account.
- *  - `password` — email (on the account) + argon2id hash.
- *  - `shopify`  — Shopify staff identity (`associated_user.id` + shop domain).
- *  - `wallet`   — SIWE-proven smart-wallet address.
- */
-export type BusinessCredentialType = "password" | "shopify" | "wallet";
-
 /** Login method that minted a session (drives 2FA semantics). */
 export type BusinessAuthMethod = "siwe" | "password" | "shopify";
 
@@ -32,9 +24,23 @@ export type BusinessAuthMethod = "siwe" | "password" | "shopify";
 export type BusinessEmailCodePurpose = "second_factor" | "email_verify";
 
 /**
- * First-class business identity, decoupled from the wallet. A wallet is one
- * of several credentials attached to an account (see
- * `business_account_credentials`). Email is stored lowercased app-side.
+ * First-class business identity, decoupled from the wallet. A business
+ * account holds AT MOST one of each login method — email/password, Shopify
+ * identity, wallet — inlined as nullable columns rather than a
+ * one-row-per-credential child table: teams never share an account (each
+ * member gets their own via `merchant_admins`), so "N credentials of the
+ * same type per account" never happens and the extra table/join bought
+ * nothing (design doc §4.3, §9 table-count rationale). TOTP enrollment is
+ * inlined the same way — it's already 1:1 with the account.
+ *
+ * A jsonb `credentials` blob was considered and rejected: per-type
+ * uniqueness (one wallet ⇒ one account, one shopify identity ⇒ one account)
+ * needs real (partial) unique indexes, which on jsonb degrade to fragile
+ * expression indexes that silently stop matching the moment the JSON shape
+ * changes — typed nullable columns keep the constraints in the schema, not
+ * in application discipline.
+ *
+ * Email is stored lowercased app-side.
  */
 export const businessAccountsTable = pgTable(
     "business_accounts",
@@ -43,6 +49,22 @@ export const businessAccountsTable = pgTable(
         email: text("email"),
         emailVerifiedAt: timestamp("email_verified_at"),
         displayName: text("display_name"),
+
+        // --- password credential ---
+        passwordHash: text("password_hash"),
+
+        // --- shopify credential (design doc §4.7 / §4.12) ---
+        shopifyUserId: text("shopify_user_id"),
+        shopifyShopDomain: text("shopify_shop_domain"),
+
+        // --- wallet credential ---
+        walletAddress: customHex("wallet_address").$type<Address>(),
+
+        // --- TOTP enrollment (mirrors the former business_totp table) ---
+        totpSecretEnc: customHex("totp_secret_enc").$type<Hex>(),
+        totpActivatedAt: timestamp("totp_activated_at"),
+        totpRecoveryCodesHash: text("totp_recovery_codes_hash").array(),
+
         createdAt: timestamp("created_at").notNull().defaultNow(),
         updatedAt: timestamp("updated_at").notNull().defaultNow(),
     },
@@ -50,48 +72,20 @@ export const businessAccountsTable = pgTable(
         uniqueIndex("business_accounts_email_idx")
             .on(table.email)
             .where(sql`email IS NOT NULL`),
+        // A wallet can only ever belong to one account.
+        uniqueIndex("business_accounts_wallet_idx")
+            .on(table.walletAddress)
+            .where(sql`wallet_address IS NOT NULL`),
+        // A Shopify staff member (at one shop) maps to exactly one account.
+        uniqueIndex("business_accounts_shopify_idx")
+            .on(table.shopifyUserId, table.shopifyShopDomain)
+            .where(
+                sql`shopify_user_id IS NOT NULL AND shopify_shop_domain IS NOT NULL`
+            ),
     ]
 );
 
 export type BusinessAccountSelect = typeof businessAccountsTable.$inferSelect;
-
-/**
- * One row per credential. Column usage per `type`:
- *  - password: `password_hash` (PHC string from argon2id)
- *  - shopify:  `shopify_user_id` + `shop_domain`
- *  - wallet:   `wallet_address`
- */
-export const businessAccountCredentialsTable = pgTable(
-    "business_account_credentials",
-    {
-        id: uuid("id").primaryKey().defaultRandom(),
-        accountId: uuid("account_id").notNull(),
-        type: text("type").$type<BusinessCredentialType>().notNull(),
-        passwordHash: text("password_hash"),
-        shopifyUserId: text("shopify_user_id"),
-        shopDomain: text("shop_domain"),
-        walletAddress: customHex("wallet_address").$type<Address>(),
-        createdAt: timestamp("created_at").notNull().defaultNow(),
-    },
-    (table) => [
-        index("bac_account_idx").on(table.accountId),
-        // A wallet can only ever belong to one account.
-        uniqueIndex("bac_wallet_idx")
-            .on(table.walletAddress)
-            .where(sql`type = 'wallet'`),
-        // A Shopify staff member maps to exactly one account.
-        uniqueIndex("bac_shopify_idx")
-            .on(table.shopifyUserId, table.shopDomain)
-            .where(sql`type = 'shopify'`),
-        // One password credential per account.
-        uniqueIndex("bac_password_idx")
-            .on(table.accountId)
-            .where(sql`type = 'password'`),
-    ]
-);
-
-export type BusinessCredentialSelect =
-    typeof businessAccountCredentialsTable.$inferSelect;
 
 /**
  * DB-backed revocable session (Lucia-guide style). `id` IS the sha256 of the
@@ -120,23 +114,6 @@ export const businessSessionsTable = pgTable(
 );
 
 export type BusinessSessionSelect = typeof businessSessionsTable.$inferSelect;
-
-/**
- * TOTP enrollment, one per account. The secret is AES-256-GCM encrypted with
- * a key derived from `MASTER_KEY_SECRET` (iv ‖ ciphertext ‖ tag, hex-encoded
- * into bytea via `customHex`). `activated_at` null = setup started but not
- * confirmed. Recovery codes are sha256-hashed, single-use (consumed entries
- * are removed from the array).
- */
-export const businessTotpTable = pgTable("business_totp", {
-    accountId: uuid("account_id").primaryKey(),
-    encryptedSecret: customHex("encrypted_secret").$type<Hex>().notNull(),
-    activatedAt: timestamp("activated_at"),
-    recoveryCodesHash: text("recovery_codes_hash").array(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export type BusinessTotpSelect = typeof businessTotpTable.$inferSelect;
 
 /**
  * Transient email OTP challenge — mirror of the identity domain's

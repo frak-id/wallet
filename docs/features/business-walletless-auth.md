@@ -104,13 +104,19 @@ Total new deps: `arctic` + 3 `@oslojs/*` + optional `uqr`. All tiny, auditable, 
 
 Today `identity = wallet`. We introduce a first-class `business_accounts` entity; a wallet becomes **one of several credentials** attached to it.
 
+**One credential per type per account** (decided): an account holds at most one
+email/password, one Shopify identity, and one wallet. Teams never share an account —
+each member gets their own, and multi-admin merchants are modeled by `merchant_admins`.
+Credentials are therefore inlined as nullable columns on `business_accounts` (no child
+table, no join on the auth hot path). A jsonb `credentials` blob was rejected: per-type
+uniqueness (one wallet ⇒ one account) needs real partial unique indexes, which on jsonb
+degrade to fragile expression indexes; and "new auth method without migration" is
+illusory since new methods need new code/indexes anyway — a nullable `ADD COLUMN` is
+the cheap part.
+
 ```
-business_accounts (1) ──< business_account_credentials
-        │                    ├─ type: "password"        (email + argon2id hash)
-        │                    ├─ type: "shopify"          (shopify user id + shop domain)
-        │                    └─ type: "wallet"           (SIWE-proven address)
+business_accounts  (email/password + shopify identity + wallet + TOTP, inlined)
         ├──< business_sessions        (DB-backed, revocable, 2FA state)
-        ├──< business_totp            (encrypted secret, activated flag)
         └──< business_email_codes     (email OTP challenges)
 ```
 
@@ -122,9 +128,9 @@ Follows the existing DDD layout:
 src/domain/business-auth/
 ├── db/schema.ts                    # pgTable (PostgreSQL — NOT libSQL; libSQL is WebAuthn-only)
 ├── repositories/
-│   ├── BusinessAccountRepository.ts
+│   ├── BusinessAccountRepository.ts   # accounts incl. inlined credentials + TOTP
 │   ├── BusinessSessionRepository.ts
-│   └── BusinessCredentialRepository.ts
+│   └── BusinessEmailCodeRepository.ts
 ├── services/
 │   ├── PasswordService.ts          # Bun.password wrapper + policy (zxcvbn-lite optional)
 │   ├── BusinessSessionService.ts   # token gen, sha256 storage, sliding expiry, revoke
@@ -140,18 +146,21 @@ Cross-domain flows (account ↔ merchant linking, wallet linking, Shopify shop �
 ### 4.3 Database schema (Drizzle, human-migrated — sketch for the db team)
 
 ```ts
-// domain/business-auth/db/schema.ts (pgTable)
+// domain/business-auth/db/schema.ts (pgTable) — 3 tables
 
 business_accounts:
-  id uuid PK, email citext UNIQUE NULL, email_verified_at timestamptz,
-  display_name text, created_at, updated_at
-
-business_account_credentials:
-  id uuid PK, account_id FK, type enum('password','shopify','wallet'),
-  -- password: password_hash (PHC string)
-  -- shopify:  shopify_user_id, shop_domain, account_owner bool
-  -- wallet:   wallet_address (customHex)
-  UNIQUE(type, shopify_user_id, shop_domain), UNIQUE(type, wallet_address)
+  id uuid PK, email text UNIQUE NULL (lowercased app-side), email_verified_at,
+  display_name text, created_at, updated_at,
+  -- password credential
+  password_hash text NULL,                       -- argon2id PHC string
+  -- shopify credential
+  shopify_user_id text NULL, shopify_shop_domain text NULL,
+    UNIQUE(shopify_user_id, shopify_shop_domain) partial WHERE both NOT NULL,
+  -- wallet credential
+  wallet_address customHex NULL, UNIQUE partial WHERE NOT NULL,
+  -- TOTP enrollment (1:1, inlined)
+  totp_secret_enc NULL, totp_activated_at timestamptz NULL,
+  totp_recovery_codes_hash text[] NULL           -- sha256 each, consumed → removed
 
 business_sessions:
   id text PK (= sha256(token) hex), account_id FK,
@@ -160,13 +169,9 @@ business_sessions:
   auth_method enum('password','shopify','siwe'),
   ip inet, user_agent text
 
-business_totp:
-  account_id PK/FK, encrypted_secret bytea, activated_at timestamptz NULL,
-  recovery_codes_hash text[] -- sha256 of each, consumed → removed
-
 business_email_codes:            -- mirror of identity's email_verification_codes
-  account_id, purpose enum('login_2fa','step_up','email_verify'),
-  code_hash, attempts int, last_sent_at, expires_at, consumed_at
+  account_id, purpose enum('second_factor','email_verify'),
+  code_hash, attempts int, send_count, last_sent_at, expires_at, consumed_at
 ```
 
 **Merchant schema changes (backward compatible):**
@@ -616,7 +621,7 @@ Testing: Vitest per service (backend-unit project, Node env); mock `resendClient
 | `services/backend/src/api/business/middleware/session.ts` | Session resolution rework + 2 new macros |
 | `services/backend/src/domain/merchant/` | Nullable wallet, account-aware authorization, walletless registration |
 | `services/backend/src/orchestration/business-auth/` | New orchestrators (linking, Shopify→merchant match) |
-| DB migrations (db team) | 5 new tables, 4 altered columns |
+| DB migrations (db team) | 3 new tables, 4 altered columns |
 | `apps/business/src/module/login/` | Multi-method login + 2FA screens |
 | `apps/business/src/stores/authStore.ts` | Account-shaped session |
 | `apps/business/src/module/merchant/` (bank UI) | Capability gating + wallet-link CTA |
