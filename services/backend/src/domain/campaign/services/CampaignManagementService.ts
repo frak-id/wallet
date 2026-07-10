@@ -5,8 +5,80 @@ import type { CampaignStatus } from "../schemas";
 import type {
     BudgetConfig,
     CampaignRuleDefinition,
+    ConditionGroup,
+    RuleCondition,
     TieredRewardDefinition,
 } from "../types";
+
+// The business app encodes a campaign start as a `time.timestamp >= <unix s>`
+// top-level rule condition (mirrors `extractStartDate` in the SDK). It is the
+// only part of the ruleset that carries a date; the end date lives in the
+// `expiresAt` column, never in the rule.
+const START_DATE_FIELD = "time.timestamp";
+
+function isStartDateCondition(node: RuleCondition | ConditionGroup): boolean {
+    return (
+        !("logic" in node) &&
+        node.field === START_DATE_FIELD &&
+        (node.operator === "gte" || node.operator === "gt")
+    );
+}
+
+// Read the current start gate (unix seconds) from a rule, if any. Mirrors the
+// SDK's `extractStartDate`: takes the earliest of the top-level gates.
+function currentStartUnix(rule: CampaignRuleDefinition): number | undefined {
+    const nodes = Array.isArray(rule.conditions)
+        ? rule.conditions
+        : rule.conditions.conditions;
+    const values = nodes
+        .filter(isStartDateCondition)
+        .map((node) => (node as RuleCondition).value)
+        .filter((value): value is number => typeof value === "number");
+    return values.length > 0 ? Math.min(...values) : undefined;
+}
+
+// Merge a scoped start-date gate into an existing rule: drop any current
+// top-level `time.timestamp` gate and, when a date is given, add a fresh
+// `>=` condition (unix seconds). Triggers, rewards and every other condition
+// are left untouched, which is what makes this safe to run on published
+// campaigns where the full rule is otherwise locked.
+// Drop any existing top-level start gate and append the new one (when set).
+// Generic so the flat-array branch keeps its narrow `RuleCondition[]` type.
+function withStartGate<T extends RuleCondition | ConditionGroup>(
+    nodes: T[],
+    gate: RuleCondition | null
+): (T | RuleCondition)[] {
+    const filtered = nodes.filter((c) => !isStartDateCondition(c));
+    return gate ? [...filtered, gate] : filtered;
+}
+
+function applyStartDate(
+    rule: CampaignRuleDefinition,
+    startDate: Date | null
+): CampaignRuleDefinition {
+    const nextCondition: RuleCondition | null = startDate
+        ? {
+              field: START_DATE_FIELD,
+              operator: "gte",
+              value: Math.floor(startDate.getTime() / 1000),
+          }
+        : null;
+
+    const { conditions } = rule;
+    if (Array.isArray(conditions)) {
+        return {
+            ...rule,
+            conditions: withStartGate(conditions, nextCondition),
+        };
+    }
+    return {
+        ...rule,
+        conditions: {
+            ...conditions,
+            conditions: withStartGate(conditions.conditions, nextCondition),
+        },
+    };
+}
 
 type CampaignCreateInput = {
     merchantId: string;
@@ -25,6 +97,10 @@ type CampaignUpdateInput = {
     budgetConfig?: BudgetConfig;
     expiresAt?: Date | null;
     priority?: number;
+    // Scoped start-date edit. Unlike `rule`, this is permitted on published
+    // campaigns: `null` clears the start gate, a Date sets/moves it, and
+    // `undefined` leaves it unchanged.
+    startDate?: Date | null;
 };
 
 type StatusTransition = {
@@ -104,6 +180,19 @@ export class CampaignManagementService {
             allowedUpdates.priority = input.priority;
         }
 
+        // Scoped start-date edit, allowed on published campaigns too. A full
+        // `rule` payload (draft path) already carries its own start gate, so
+        // only apply this when no full rule was supplied to avoid clobbering it.
+        if (input.startDate !== undefined && input.rule === undefined) {
+            if (!isDraft) {
+                this.assertStartDateMovesForward(campaign, input.startDate);
+            }
+            allowedUpdates.rule = applyStartDate(
+                campaign.rule,
+                input.startDate
+            );
+        }
+
         const cleanUpdates = Object.fromEntries(
             Object.entries(allowedUpdates).filter(([_, v]) => v !== undefined)
         ) as Parameters<typeof this.campaignRuleRepository.update>[1];
@@ -125,6 +214,40 @@ export class CampaignManagementService {
         }
 
         return updated;
+    }
+
+    // On a published campaign the start date may only move forward: pulling it
+    // earlier (or clearing it) would retroactively widen the window and match
+    // purchases that happened before the campaign was ever meant to run.
+    private assertStartDateMovesForward(
+        campaign: CampaignRuleSelect,
+        startDate: Date | null
+    ): void {
+        const currentGate = currentStartUnix(campaign.rule);
+
+        if (startDate === null) {
+            // Clearing an explicit gate drops the start back to publish time.
+            if (currentGate !== undefined) {
+                throw HttpError.badRequest(
+                    "START_DATE_BACKWARD",
+                    "Start date can only be moved forward on a published campaign"
+                );
+            }
+            return;
+        }
+
+        const publishedUnix = campaign.publishedAt
+            ? Math.floor(campaign.publishedAt.getTime() / 1000)
+            : undefined;
+        // Floor is the current gate when set, otherwise when it went live.
+        const floor = currentGate ?? publishedUnix ?? 0;
+        const next = Math.floor(startDate.getTime() / 1000);
+        if (next < floor) {
+            throw HttpError.badRequest(
+                "START_DATE_BACKWARD",
+                "Start date can only be moved forward on a published campaign"
+            );
+        }
     }
 
     async publish(campaignId: string): Promise<CampaignRuleSelect> {

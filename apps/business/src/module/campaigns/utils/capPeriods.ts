@@ -15,3 +15,21 @@ export function getCapPeriod(type?: "" | BudgetType | string) {
     if (!type) return 0;
     return capPeriods[type as BudgetType];
 }
+
+/** Inverse of {@link getCapPeriod}: derive the budget type from a duration. */
+export function budgetTypeFromDuration(
+    duration: number | null | undefined
+): BudgetType {
+    if (duration === capPeriods.daily) return "daily";
+    if (duration === capPeriods.weekly) return "weekly";
+    if (duration === capPeriods.monthly) return "monthly";
+    return "global";
+}
+
+/** Human label stored on `BudgetConfigItem.label` (cosmetic; display is i18n-derived). */
+export const BUDGET_TYPE_LABEL: Record<BudgetType, string> = {
+    global: "Global",
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+};

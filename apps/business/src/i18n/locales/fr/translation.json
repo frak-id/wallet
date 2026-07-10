@@ -861,7 +861,13 @@
                         "daily": "Budget quotidien",
                         "weekly": "Budget hebdomadaire",
                         "monthly": "Budget mensuel"
-                    }
+                    },
+                    "edit": "Modifier le budget",
+                    "periodLabel": "Période du budget",
+                    "amountLabel": "Plafond du budget",
+                    "save": "Enregistrer",
+                    "cancel": "Annuler",
+                    "error": "Impossible de mettre à jour le budget. Veuillez réessayer."
                 },
                 "targeting": {
                     "title": "Ciblage",
@@ -885,10 +891,17 @@
                 },
                 "schedule": {
                     "title": "Planification",
+                    "starts": "Commence le",
+                    "immediate": "Immédiatement",
                     "published": "Publiée le",
                     "notPublished": "Pas encore publiée",
                     "expires": "Se termine le",
-                    "noExpiration": "Aucune date de fin"
+                    "noExpiration": "Aucune date de fin",
+                    "edit": "Modifier les dates",
+                    "save": "Enregistrer",
+                    "cancel": "Annuler",
+                    "endBeforeStart": "La date de fin doit être postérieure à la date de début",
+                    "error": "Impossible de mettre à jour la planification. La date de début ne peut être que repoussée."
                 }
             }
         },

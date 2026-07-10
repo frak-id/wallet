@@ -388,6 +388,11 @@ export const merchantCampaignsRoutes = new Elysia({
                         : body.expiresAt === null
                           ? null
                           : undefined,
+                    startDate: body.startDate
+                        ? new Date(body.startDate)
+                        : body.startDate === null
+                          ? null
+                          : undefined,
                     priority: body.priority,
                 }
             );

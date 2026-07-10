@@ -123,3 +123,37 @@ export const tierRow = style({
     gap: alias.spacing.m,
     fontVariantNumeric: "tabular-nums",
 });
+
+// One budget-period radio option in the inline budget editor.
+export const budgetPeriodOption = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.s,
+    cursor: "pointer",
+});
+
+// Small, subtle pencil affordance next to an editable section title.
+export const editIconButton = style({
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: alias.spacing.xxs,
+    border: "none",
+    borderRadius: alias.cornerRadius.s,
+    backgroundColor: "transparent",
+    color: vars.text.tertiary,
+    cursor: "pointer",
+    transition: "color 0.15s ease, background-color 0.15s ease",
+    selectors: {
+        "&:hover": {
+            color: vars.text.primary,
+            backgroundColor: vars.surface.secondary,
+        },
+    },
+});
+
+// Hairline separating the current-values recap from the edit form.
+export const editDivider = style({
+    height: "1px",
+    backgroundColor: vars.border.subtle,
+});

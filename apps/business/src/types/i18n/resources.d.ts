@@ -417,6 +417,10 @@ export default interface Resources {
         "close": "Close campaign details",
         "config": {
           "budget": {
+            "amountLabel": "Budget cap",
+            "cancel": "Cancel",
+            "edit": "Edit budget",
+            "error": "Could not update the budget. Please try again.",
             "none": "No budget cap configured.",
             "period": {
               "daily": "Daily budget",
@@ -424,6 +428,8 @@ export default interface Resources {
               "monthly": "Monthly budget",
               "weekly": "Weekly budget"
             },
+            "periodLabel": "Budget period",
+            "save": "Save",
             "title": "Budget"
           },
           "conditions": {
@@ -473,10 +479,17 @@ export default interface Resources {
             "title": "Rewards"
           },
           "schedule": {
+            "cancel": "Cancel",
+            "edit": "Edit dates",
+            "endBeforeStart": "The end date must be after the start date",
+            "error": "Could not update the schedule. The start date can only be moved forward.",
             "expires": "Ends on",
+            "immediate": "Immediately",
             "noExpiration": "No end date",
             "notPublished": "Not published yet",
             "published": "Published on",
+            "save": "Save",
+            "starts": "Starts on",
             "title": "Schedule"
           },
           "targeting": {

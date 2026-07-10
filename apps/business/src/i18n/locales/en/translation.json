@@ -861,7 +861,13 @@
                         "daily": "Daily budget",
                         "weekly": "Weekly budget",
                         "monthly": "Monthly budget"
-                    }
+                    },
+                    "edit": "Edit budget",
+                    "periodLabel": "Budget period",
+                    "amountLabel": "Budget cap",
+                    "save": "Save",
+                    "cancel": "Cancel",
+                    "error": "Could not update the budget. Please try again."
                 },
                 "targeting": {
                     "title": "Targeting",
@@ -885,10 +891,17 @@
                 },
                 "schedule": {
                     "title": "Schedule",
+                    "starts": "Starts on",
+                    "immediate": "Immediately",
                     "published": "Published on",
                     "notPublished": "Not published yet",
                     "expires": "Ends on",
-                    "noExpiration": "No end date"
+                    "noExpiration": "No end date",
+                    "edit": "Edit dates",
+                    "save": "Save",
+                    "cancel": "Cancel",
+                    "endBeforeStart": "The end date must be after the start date",
+                    "error": "Could not update the schedule. The start date can only be moved forward."
                 }
             }
         },

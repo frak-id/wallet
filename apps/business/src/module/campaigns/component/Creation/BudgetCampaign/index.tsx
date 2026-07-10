@@ -14,7 +14,9 @@ import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import {
+    BUDGET_TYPE_LABEL,
     type BudgetType,
+    budgetTypeFromDuration,
     getCapPeriod,
 } from "@/module/campaigns/utils/capPeriods";
 import { DateField } from "@/module/common/component/DateField";
@@ -52,13 +54,6 @@ const PERIODS = [
     { value: "monthly", labelKey: "campaigns.create.budget.period.monthly" },
 ] as const satisfies ReadonlyArray<{ value: BudgetType; labelKey: string }>;
 
-const PERIOD_LABEL: Record<BudgetType, string> = {
-    global: "Global",
-    daily: "Daily",
-    weekly: "Weekly",
-    monthly: "Monthly",
-};
-
 const SCHEDULE_OPTIONS = [
     {
         value: "immediate",
@@ -81,13 +76,6 @@ const SCHEDULE_OPTIONS = [
     descKey: string;
 }>;
 
-function periodFromDuration(duration: number | null | undefined): BudgetType {
-    if (duration === getCapPeriod("daily")) return "daily";
-    if (duration === getCapPeriod("weekly")) return "weekly";
-    if (duration === getCapPeriod("monthly")) return "monthly";
-    return "global";
-}
-
 function draftToBudgetValues(draft: CampaignDraft): BudgetFormValues {
     const budget = draft.budgetConfig[0];
     const startDate = getStartDate(draft.rule);
@@ -100,7 +88,7 @@ function draftToBudgetValues(draft: CampaignDraft): BudgetFormValues {
     else if (budget) scheduleMode = "immediate";
 
     return {
-        period: periodFromDuration(budget?.durationInSeconds),
+        period: budgetTypeFromDuration(budget?.durationInSeconds),
         amount: budget?.amount ?? 0,
         scheduleMode,
         startDate,
@@ -120,7 +108,7 @@ function budgetValuesToDraft(
         ...draft,
         budgetConfig: [
             {
-                label: PERIOD_LABEL[values.period],
+                label: BUDGET_TYPE_LABEL[values.period],
                 durationInSeconds: getCapPeriod(values.period),
                 amount: values.amount,
             },

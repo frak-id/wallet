@@ -148,6 +148,10 @@ type UpdateCampaignInput = {
     metadata?: CampaignMetadata;
     budgetConfig?: BudgetConfig;
     expiresAt?: string | null;
+    // Scoped start-date edit for published campaigns (ISO to set, null to
+    // clear). The backend merges it into the ruleset's `time.timestamp` gate
+    // without unlocking the rest of the rule.
+    startDate?: string | null;
     priority?: number;
 };
 
