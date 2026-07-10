@@ -55,7 +55,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
             // Determine role: check wallet-based access for business sessions,
             // default to "admin" for Shopify sessions (shop owner)
             let role: "owner" | "admin" | "platform_admin" | "none" = "admin";
-            if (businessSession) {
+            if (businessSession?.wallet) {
                 const access =
                     await MerchantContext.services.authorization.checkAccess(
                         merchantId,
@@ -116,7 +116,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .get(
         "/my",
         async ({ businessSession }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return status(401, "Authentication required");
             }
 

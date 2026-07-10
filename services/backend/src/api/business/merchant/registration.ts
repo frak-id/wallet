@@ -12,7 +12,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
     .get(
         "/dns-txt",
         async ({ query: { domain }, businessSession }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return status(401, "Authentication required");
             }
 
@@ -39,7 +39,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
     .get(
         "/verify",
         async ({ query: { domain, setupCode }, businessSession }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return { isDomainValid: false, isAlreadyRegistered: false };
             }
 

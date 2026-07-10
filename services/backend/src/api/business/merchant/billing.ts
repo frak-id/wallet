@@ -109,7 +109,7 @@ export const merchantBillingAdminRoutes = new Elysia()
     .post(
         "/deposits",
         async ({ params: { merchantId }, body, businessSession }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return status(401, "Authentication required");
             }
 
@@ -136,7 +136,7 @@ export const merchantBillingAdminRoutes = new Elysia()
     .post(
         "/withdrawals",
         async ({ params: { merchantId }, body, businessSession }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return status(401, "Authentication required");
             }
 
@@ -171,7 +171,7 @@ export const merchantBillingAdminRoutes = new Elysia()
     .put(
         "/deposits/:id",
         async ({ params: { merchantId, id }, body, businessSession }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return status(401, "Authentication required");
             }
 
@@ -203,7 +203,7 @@ export const merchantBillingAdminRoutes = new Elysia()
     .put(
         "/withdrawals/:id",
         async ({ params: { merchantId, id }, body, businessSession }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return status(401, "Authentication required");
             }
 

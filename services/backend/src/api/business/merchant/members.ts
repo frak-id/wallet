@@ -12,10 +12,10 @@ import {
 import { businessSessionContext } from "../middleware/session";
 
 async function resolveAccessibleMerchantIds(
-    businessSession: { wallet: `0x${string}` } | null,
+    businessSession: { wallet: `0x${string}` | null } | null,
     shopifySession: { dest: string } | null
 ): Promise<string[]> {
-    if (businessSession) {
+    if (businessSession?.wallet) {
         return MerchantContext.services.authorization.getAccessibleMerchantIds(
             businessSession.wallet
         );

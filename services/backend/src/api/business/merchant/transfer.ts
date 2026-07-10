@@ -145,7 +145,7 @@ export const merchantTransferRoutes = new Elysia({
     .delete(
         "",
         async ({ params: { merchantId }, businessSession }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return status(401, "Authentication required");
             }
 

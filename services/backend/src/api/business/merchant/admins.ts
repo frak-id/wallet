@@ -84,7 +84,7 @@ export const merchantAdminsRoutes = new Elysia({
             body: { wallet },
             businessSession,
         }) => {
-            if (!businessSession) {
+            if (!businessSession?.wallet) {
                 return status(401, "Authentication required");
             }
 

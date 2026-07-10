@@ -1,0 +1,155 @@
+import { log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
+import { sha256 } from "@oslojs/crypto/sha2";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import {
+    buildSecurityCodeEmail,
+    resendClient,
+} from "../../../infrastructure/integrations/email";
+import type { BusinessEmailCodePurpose } from "../db/schema";
+import type { BusinessEmailCodeRepository } from "../repositories/BusinessEmailCodeRepository";
+
+export const EMAIL_OTP = {
+    CODE_TTL_MS: 10 * 60_000,
+    RESEND_DEBOUNCE_MS: 60_000,
+    MAX_VERIFY_ATTEMPTS: 5,
+} as const;
+
+export type SendOtpResult =
+    | { status: "sent" }
+    | { status: "throttled"; retryAfterSec: number };
+
+export type VerifyOtpResult =
+    | { status: "verified" }
+    | { status: "invalid" }
+    | { status: "expired" }
+    | { status: "tooManyAttempts" };
+
+const PURPOSE_INTENT: Record<
+    BusinessEmailCodePurpose,
+    "sign in" | "confirm a sensitive action" | "verify your email"
+> = {
+    second_factor: "confirm a sensitive action",
+    email_verify: "verify your email",
+};
+
+/**
+ * Email OTP challenges for business accounts — mirrors the identity domain's
+ * `EmailVerificationService` hardening (attempts cap, resend debounce, TTL)
+ * with the code additionally hashed at rest, and sent from the dedicated
+ * security address.
+ */
+export class EmailOtpService {
+    constructor(
+        private readonly emailCodeRepository: BusinessEmailCodeRepository
+    ) {}
+
+    private hashCode(code: string): string {
+        return encodeHexLowerCase(
+            sha256(new TextEncoder().encode(code.trim().toUpperCase()))
+        );
+    }
+
+    private generateCode(): string {
+        // 6-digit numeric code, CSPRNG, no modulo bias concern at this size
+        // (2^32 % 10^6 bias is < 0.0001% — irrelevant for a 5-attempt cap).
+        const value = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
+        return value.toString().padStart(6, "0");
+    }
+
+    async sendCode(params: {
+        accountId: string;
+        email: string;
+        purpose: BusinessEmailCodePurpose;
+    }): Promise<SendOtpResult> {
+        // Debounce first — before any side effect.
+        const existing = await this.emailCodeRepository.find(
+            params.accountId,
+            params.purpose
+        );
+        if (existing) {
+            const elapsedMs = Date.now() - existing.lastSentAt.getTime();
+            if (elapsedMs < EMAIL_OTP.RESEND_DEBOUNCE_MS) {
+                return {
+                    status: "throttled",
+                    retryAfterSec: Math.ceil(
+                        (EMAIL_OTP.RESEND_DEBOUNCE_MS - elapsedMs) / 1000
+                    ),
+                };
+            }
+        }
+
+        const code = this.generateCode();
+        const { subject, html } = buildSecurityCodeEmail({
+            code,
+            intent: PURPOSE_INTENT[params.purpose],
+        });
+
+        // Send BEFORE persisting: a failed send must not stamp `lastSentAt`
+        // (which would wrongly throttle the user's immediate retry).
+        try {
+            await resendClient.send({
+                to: params.email,
+                subject,
+                html,
+                from: process.env.RESEND_SECURITY_FROM_EMAIL,
+            });
+        } catch (err) {
+            log.error(
+                { accountId: params.accountId, err },
+                "Failed to send business auth OTP"
+            );
+            throw new HttpError({
+                status: 502,
+                code: "EMAIL_SEND_FAILED",
+                message: "Could not send the security code email",
+            });
+        }
+
+        await this.emailCodeRepository.upsert({
+            accountId: params.accountId,
+            purpose: params.purpose,
+            codeHash: this.hashCode(code),
+            expiresAt: new Date(Date.now() + EMAIL_OTP.CODE_TTL_MS),
+        });
+
+        log.info(
+            { accountId: params.accountId, purpose: params.purpose },
+            "Business auth OTP sent"
+        );
+        return { status: "sent" };
+    }
+
+    async verifyCode(params: {
+        accountId: string;
+        purpose: BusinessEmailCodePurpose;
+        code: string;
+    }): Promise<VerifyOtpResult> {
+        const row = await this.emailCodeRepository.find(
+            params.accountId,
+            params.purpose
+        );
+        if (!row || row.consumedAt) {
+            return { status: "expired" };
+        }
+        if (row.expiresAt.getTime() < Date.now()) {
+            return { status: "expired" };
+        }
+        if (row.attempts >= EMAIL_OTP.MAX_VERIFY_ATTEMPTS) {
+            return { status: "tooManyAttempts" };
+        }
+        if (row.codeHash !== this.hashCode(params.code)) {
+            await this.emailCodeRepository.incrementAttempts(
+                params.accountId,
+                params.purpose
+            );
+            return { status: "invalid" };
+        }
+
+        await this.emailCodeRepository.consume(
+            params.accountId,
+            params.purpose
+        );
+        return { status: "verified" };
+    }
+}

@@ -15,6 +15,8 @@ declare global {
             // Shopify
             SHOPIFY_API_SECRET: string;
             SHOPIFY_CLIENT_ID: string;
+            // Business auth security emails (2FA OTP sender)
+            RESEND_SECURITY_FROM_EMAIL: string;
             // RustFS (object storage)
             RUSTFS_ENDPOINT: string;
             RUSTFS_ACCESS_KEY: string;
