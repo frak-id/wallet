@@ -175,9 +175,7 @@
             "notConnected": "Your shop is not yet connected to the Frak ecosystem. Follow the instructions below to complete setup."
         },
         "modal": {
-            "title": "Register your shop",
-            "button": "Register your shop in the Frak ecosystem",
-            "close": "Close"
+            "button": "Register your shop in the Frak ecosystem"
         },
         "newsletterShare": {
             "title": "Newsletter sharing link",

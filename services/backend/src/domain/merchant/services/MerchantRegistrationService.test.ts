@@ -346,3 +346,83 @@ describe("MerchantRegistrationService.register — Shopify domain bypass (§4.10
         expect(result.verifiedViaShopify).toBe(false);
     });
 });
+
+describe("MerchantRegistrationService.register — shopify-session identity (§4.12)", () => {
+    const shopifySessionParams = {
+        ...baseParams,
+        identity: {
+            type: "shopify-session" as const,
+            accountId: ACCOUNT_ID,
+            shopDomain: "brand.com",
+        },
+    };
+
+    it("registers with owner_wallet NULL, owner_account_id set, no DNS check", async () => {
+        const { service, merchantRepo, dnsRepo } = makeService({
+            dnsValid: false,
+        });
+
+        const result = await service.register(shopifySessionParams);
+
+        expect(result.verifiedViaShopify).toBe(true);
+        expect(dnsRepo.isValidDomain).not.toHaveBeenCalled();
+        const created = merchantRepo.create.mock.calls[0][0];
+        expect(created.ownerWallet).toBeNull();
+        expect(created.ownerAccountId).toBe(ACCOUNT_ID);
+        expect(service.verifySiweMessage).not.toHaveBeenCalled();
+    });
+
+    it("rejects when the registering domain does not match the token's shop domain", async () => {
+        const { service } = makeService();
+
+        await expect(
+            service.register({
+                ...shopifySessionParams,
+                domain: "unrelated.com",
+            })
+        ).rejects.toMatchObject({ status: 400, code: "DOMAIN_MISMATCH" });
+    });
+
+    it("rejects a subdomain of the token's shop domain (route layer decides primaryDomain use, service requires an exact match)", async () => {
+        const { service } = makeService();
+
+        await expect(
+            service.register({
+                ...shopifySessionParams,
+                domain: "shop.brand.com",
+                identity: {
+                    type: "shopify-session",
+                    accountId: ACCOUNT_ID,
+                    shopDomain: "brand.com",
+                },
+            })
+        ).rejects.toMatchObject({ status: 400, code: "DOMAIN_MISMATCH" });
+    });
+
+    it("rejects a duplicate domain with the standard 409", async () => {
+        const { service } = makeService({ existingDomain: "brand.com" });
+
+        await expect(
+            service.register(shopifySessionParams)
+        ).rejects.toMatchObject({
+            status: 409,
+            code: "DOMAIN_ALREADY_REGISTERED",
+        });
+    });
+
+    it("ignores platform-admin options (wallet-bound, no wallet here)", async () => {
+        const { service, merchantRepo } = makeService();
+
+        const result = await service.register({
+            ...shopifySessionParams,
+            skipDomainValidation: true,
+            useFrakBank: true,
+            platformAdminWallets: [ADMIN_WALLET],
+        });
+
+        expect(result.isPlatformAdmin).toBe(false);
+        expect(result.frakBankLinked).toBe(false);
+        const created = merchantRepo.create.mock.calls[0][0];
+        expect(created.bankAddress).toBeUndefined();
+    });
+});

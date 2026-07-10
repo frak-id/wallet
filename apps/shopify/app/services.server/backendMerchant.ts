@@ -46,8 +46,12 @@ function extractSessionToken(request: Request): string | null {
 /**
  * Build headers for authenticated backend calls.
  * Includes the Shopify session token when available.
+ *
+ * Exported for `api.register.tsx` (§4.12 inline embedded mint), the one
+ * caller that needs the header before a `merchantId` exists — every other
+ * consumer of this module resolves the merchant first.
  */
-function buildBackendHeaders(
+export function buildBackendHeaders(
     request: Request
 ): Record<string, string> | undefined {
     const sessionToken = extractSessionToken(request);
@@ -390,6 +394,43 @@ export async function deleteMerchantCampaign(
             error
         );
         return null;
+    }
+}
+
+/**
+ * §4.12 inline embedded mint: register the current shop as a Frak merchant
+ * directly from the embedded app, no wallet/popup involved. The backend
+ * derives the domain from the verified App Bridge token itself — `name` and
+ * `currency` are the only inputs the shop can influence, plus `primaryDomain`
+ * when the storefront domain differs from the myshopify one.
+ */
+export async function registerMerchant(
+    request: Request,
+    body: {
+        name?: string;
+        currency?: "usd" | "eur" | "gbp";
+        primaryDomain?: string;
+    }
+): Promise<{ merchantId: string } | { error: string }> {
+    try {
+        const { data, error } =
+            await backendApi.business.merchant.register.post(body, {
+                headers: buildBackendHeaders(request),
+            });
+        if (error) {
+            const message =
+                typeof error.value === "object" &&
+                error.value &&
+                "error" in error.value
+                    ? String(error.value.error)
+                    : `Registration failed (${error.status})`;
+            console.error(`[backendMerchant] register failed: ${message}`);
+            return { error: message };
+        }
+        return { merchantId: data.merchantId };
+    } catch (error) {
+        console.error("[backendMerchant] register error:", error);
+        return { error: "Registration failed" };
     }
 }
 

@@ -1,12 +1,6 @@
 export default interface Resources {
   "translation": {
     "auth": {
-      "embedded": {
-        "action": "Authenticate",
-        "panelTitle": "Please connect your wallet to continue",
-        "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
-        "title": "Authentication required"
-      },
       "login": {
         "connect": "Connect to Frak Ad Manager",
         "dashboardImageAlt": "Frak Ad Manager dashboard preview",
@@ -856,17 +850,6 @@ export default interface Resources {
       "empty": {
         "description": "You don't have any merchant yet. Add one to start running campaigns.",
         "title": "Welcome to Frak"
-      }
-    },
-    "embedded": {
-      "mint": {
-        "alreadyRegistered": "Maybe the domain is already registered.",
-        "close": "Close",
-        "error": "Can't register your product. Double check that everything is right.",
-        "register": "Register your shop",
-        "registering": "Registering <text>{{domain}}</text>",
-        "subtitle": "We'll verify your domain and set up your merchant space.",
-        "title": "Register your shop on Frak"
       }
     },
     "errors": {

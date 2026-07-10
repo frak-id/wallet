@@ -10,12 +10,6 @@
             "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",
             "footerTerms": "Terms & Conditions",
             "footerPrivacy": "Privacy Policy"
-        },
-        "embedded": {
-            "title": "Authentication required",
-            "panelTitle": "Please connect your wallet to continue",
-            "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
-            "action": "Authenticate"
         }
     },
     "forms": {
@@ -1656,17 +1650,6 @@
             "title": "Global CSS",
             "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
             "toggle": "Custom CSS"
-        }
-    },
-    "embedded": {
-        "mint": {
-            "title": "Register your shop on Frak",
-            "subtitle": "We'll verify your domain and set up your merchant space.",
-            "registering": "Registering <text>{{domain}}</text>",
-            "error": "Can't register your product. Double check that everything is right.",
-            "alreadyRegistered": "Maybe the domain is already registered.",
-            "close": "Close",
-            "register": "Register your shop"
         }
     },
     "welcomePopup": {

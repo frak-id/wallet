@@ -1,4 +1,5 @@
 import { db } from "@backend-infrastructure";
+import { isUniqueViolation } from "@backend-utils";
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { and, asc, desc, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import {
@@ -20,25 +21,6 @@ const REFERENCE_PREFIX: Record<BillingDocumentKind, string> = {
 };
 
 const MAX_REFERENCE_ALLOC_ATTEMPTS = 2;
-
-/**
- * True for any Postgres unique_violation (SQLSTATE 23505) — not specific to
- * the reference index. Used both for `create`'s reference-collision retry
- * and (by `MonthlyBillOrchestrator`) for the `(merchant_id, period_start)`
- * partial-unique collision on monthly bills; callers that need to know
- * *which* index fired must disambiguate separately (e.g. by re-querying).
- * postgres-js surfaces the SQLSTATE code on the thrown error; duck-typed
- * since the driver doesn't export a class. Exported for unit testing (pure
- * predicate, no DB needed).
- */
-export function isUniqueViolation(err: unknown): boolean {
-    return (
-        typeof err === "object" &&
-        err !== null &&
-        "code" in err &&
-        (err as { code?: string }).code === "23505"
-    );
-}
 
 /**
  * Formats the human-facing `{PREFIX}-{year}-{NNNN}` reference string (e.g.

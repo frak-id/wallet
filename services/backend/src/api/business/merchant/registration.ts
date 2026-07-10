@@ -1,5 +1,13 @@
-import { log } from "@backend-infrastructure";
+import {
+    extractShopDomain,
+    log,
+    verifyShopifySessionToken,
+} from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
+import {
+    getTokenAddressForStablecoin,
+    type Stablecoin,
+} from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
 import { AuthContext } from "../../../domain/auth";
@@ -119,8 +127,23 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
     )
     .post(
         "",
-        async ({ body, request, businessSession }) => {
+        async ({ body, request, headers, businessSession }) => {
             const origin = request.headers.get("origin") ?? "";
+
+            // §4.12 inline embedded mint: a verified App Bridge token with NO
+            // business session at all is a third, distinct identity — resolve
+            // it up front so the wallet/account branches below (which require
+            // a business session) are untouched for every other caller.
+            const shopifyRegistration = businessSession
+                ? null
+                : await resolveShopifySessionIdentity(
+                      headers["x-shopify-session-token"],
+                      body
+                  );
+
+            if (shopifyRegistration) {
+                return registerFromShopifySession(shopifyRegistration);
+            }
 
             // Identity resolution (§4.10):
             //  - SIWE proof in the body → wallet path (works for legacy JWT
@@ -146,6 +169,13 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     type: "account",
                     accountId: businessSession.accountId,
                 };
+            }
+
+            if (!body.domain || !body.name || !body.defaultRewardToken) {
+                throw HttpError.badRequest(
+                    "MISSING_FIELDS",
+                    "domain, name and defaultRewardToken are required"
+                );
             }
 
             // The registration service honors the platform-admin options
@@ -178,43 +208,12 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     verifiedViaShopify,
                 });
 
-            // Link the merchant to its affiliate brand (platform admin only) so
-            // share-link generation + conversion ingestion can resolve it.
-            // Non-fatal: the merchant is already created, so a link failure
-            // must not strand it behind a 409-on-retry — we log and move on.
-            const msgOf = (e: unknown) =>
-                e instanceof Error ? e.message : String(e);
-
-            if (isPlatformAdmin && body.takeads) {
-                const externalId = String(body.takeads.takeadsMerchantId);
-                try {
-                    await AffiliateContext.services.affiliateLink.registerBrand(
-                        {
-                            merchantId,
-                            externalId,
-                            trackingLink: body.takeads.trackingLink,
-                        }
-                    );
-                } catch (error) {
-                    log.error(
-                        { merchantId, externalId, error: msgOf(error) },
-                        "Failed to link affiliate brand during registration"
-                    );
-                }
-            }
-
-            // Frak-bank merchants reuse the shared bank; everyone else gets a
-            // dedicated per-merchant bank.
-            if (!frakBankLinked) {
-                CampaignBankContext.services.campaignBank
-                    .deployAndSetupBank(merchantId)
-                    .catch((error) => {
-                        log.error(
-                            { merchantId, error: msgOf(error) },
-                            "Failed to deploy campaign bank during registration"
-                        );
-                    });
-            }
+            await onMerchantRegistered({
+                merchantId,
+                frakBankLinked,
+                isPlatformAdmin,
+                takeads: body.takeads,
+            });
 
             return { merchantId, verifiedViaShopify };
         },
@@ -227,11 +226,33 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 // register through their step-up-verified session instead.
                 message: t.Optional(t.String()),
                 signature: t.Optional(t.Hex()),
-                domain: t.String(),
-                name: t.String(),
+                // Optional here at the schema level: required for the
+                // wallet/account paths (checked at runtime, §4.10), but the
+                // §4.12 embedded-mint path derives the domain from the
+                // Shopify token and never reads this field.
+                domain: t.Optional(t.String()),
+                name: t.Optional(t.String()),
                 setupCode: t.Optional(t.String()),
-                defaultRewardToken: t.Hex(),
+                defaultRewardToken: t.Optional(t.Hex()),
                 allowedDomains: t.Optional(t.Array(t.String())),
+                // §4.12 inline embedded mint only: the storefront's primary
+                // domain, when it differs from the token's myshopify domain.
+                // Registers under `primaryDomain` (with the myshopify domain
+                // added to `allowedDomains`) only when it matches the
+                // authenticated shop per `matchesShopDomain` — otherwise falls
+                // back to registering under the myshopify domain alone, so an
+                // unrelated/unverified custom domain can never be claimed
+                // through this identity.
+                primaryDomain: t.Optional(t.String()),
+                // §4.12 inline embedded mint only: shop's preferred currency,
+                // mapped to the matching Frak stablecoin server-side.
+                currency: t.Optional(
+                    t.Union([
+                        t.Literal("usd"),
+                        t.Literal("eur"),
+                        t.Literal("gbp"),
+                    ])
+                ),
                 // Platform-admin only (ignored otherwise): skip the DNS
                 // ownership check, and/or link the brand to the shared Frak
                 // campaign bank instead of deploying a dedicated one.
@@ -284,4 +305,208 @@ async function isVerifiedViaShopify(
             credential.shopDomain &&
             matchesShopDomain(normalizedDomain, credential.shopDomain)
     );
+}
+
+const CURRENCY_TO_STABLECOIN: Record<"usd" | "eur" | "gbp", Stablecoin> = {
+    usd: "usdc",
+    eur: "eure",
+    gbp: "gbpe",
+};
+
+type ShopifySessionRegistration = {
+    shopDomain: string;
+    shopifyUserId: string;
+    email: string | null;
+    name?: string;
+    currency?: "usd" | "eur" | "gbp";
+    primaryDomain?: string;
+    takeads?: {
+        takeadsMerchantId: number;
+        trackingLink: string;
+    };
+};
+
+/**
+ * §4.12: verify the App Bridge token and shape the inline embedded-mint
+ * identity, or `null` when there is no (valid) Shopify session token — the
+ * caller falls through to the normal wallet/account branches in that case.
+ */
+async function resolveShopifySessionIdentity(
+    shopifyToken: string | undefined,
+    body: {
+        name?: string;
+        currency?: "usd" | "eur" | "gbp";
+        primaryDomain?: string;
+        takeads?: {
+            takeadsMerchantId: number;
+            trackingLink: string;
+        };
+    }
+): Promise<ShopifySessionRegistration | null> {
+    if (!shopifyToken) return null;
+
+    const session = await verifyShopifySessionToken(shopifyToken);
+    if (!session) return null;
+
+    const shopDomain = extractShopDomain(session.dest);
+    if (!shopDomain) return null;
+
+    return {
+        shopDomain,
+        shopifyUserId: session.sub,
+        // The App Bridge token carries no email claim — the account is
+        // upserted without one; an email can be added later via the
+        // standalone-dashboard SSO login or the password-linking flow.
+        email: null,
+        name: body.name,
+        currency: body.currency,
+        primaryDomain: body.primaryDomain,
+        takeads: body.takeads,
+    };
+}
+
+/**
+ * §4.12 inline embedded mint: register (or resolve, on a 409 race) the
+ * merchant for an embedded Shopify caller — no wallet, no business session,
+ * no DNS TXT, no popup. See design doc §4.12 for the full rationale.
+ */
+async function registerFromShopifySession(
+    params: ShopifySessionRegistration
+): Promise<{ merchantId: string; verifiedViaShopify: boolean }> {
+    const account =
+        await BusinessAuthContext.services.account.upsertShopifyAccount({
+            shopifyUserId: params.shopifyUserId,
+            shopDomain: params.shopDomain,
+            email: params.email,
+        });
+
+    const dnsCheck = MerchantContext.repositories.dnsCheck;
+    const normalizedShopDomain = dnsCheck.getNormalizedDomain(
+        params.shopDomain
+    );
+
+    // Register under the storefront's primary domain when it's verifiably
+    // the same shop (subdomain-aware, §4.10); otherwise stay on the
+    // myshopify domain so an unrelated custom domain can never be claimed
+    // through this identity — the merchant can still add it later as an
+    // allowed domain through the normal (DNS-verified) flow.
+    const normalizedPrimaryDomain = params.primaryDomain
+        ? dnsCheck.getNormalizedDomain(params.primaryDomain)
+        : null;
+    const usePrimaryDomain =
+        normalizedPrimaryDomain !== null &&
+        normalizedPrimaryDomain !== normalizedShopDomain &&
+        matchesShopDomain(normalizedPrimaryDomain, normalizedShopDomain);
+
+    const registrationDomain = usePrimaryDomain
+        ? (normalizedPrimaryDomain as string)
+        : normalizedShopDomain;
+    const allowedDomains = usePrimaryDomain
+        ? [normalizedShopDomain]
+        : undefined;
+
+    const defaultRewardToken = getTokenAddressForStablecoin(
+        CURRENCY_TO_STABLECOIN[params.currency ?? "eur"]
+    );
+
+    let merchantId: string;
+    let frakBankLinked: boolean;
+    try {
+        const result = await MerchantContext.services.registration.register({
+            identity: {
+                type: "shopify-session",
+                accountId: account.id,
+                // The service enforces an EXACT match between `domain` and
+                // `identity.shopDomain` (it must not itself reason about
+                // subdomains — that would mean importing business-auth's
+                // `matchesShopDomain` into the merchant domain, a cross-domain
+                // import the flow rules forbid). The subdomain-aware decision
+                // already happened above when picking `registrationDomain`,
+                // so the identity is stamped with that same resolved domain.
+                shopDomain: registrationDomain,
+            },
+            domain: registrationDomain,
+            name: params.name ?? registrationDomain,
+            requestOrigin: "",
+            defaultRewardToken,
+            allowedDomains,
+        });
+        merchantId = result.merchantId;
+        frakBankLinked = result.frakBankLinked;
+    } catch (error) {
+        // Race between two shop admins hitting "Connect" at once (or a
+        // re-install after a previous successful registration): resolve to
+        // the existing merchant instead of surfacing an error the embedded
+        // UI can't do anything useful with (§4.12 edge cases).
+        if (error instanceof HttpError && error.status === 409) {
+            const existing =
+                await MerchantContext.repositories.merchant.findByDomain(
+                    registrationDomain
+                );
+            if (existing) {
+                return { merchantId: existing.id, verifiedViaShopify: true };
+            }
+        }
+        throw error;
+    }
+
+    await onMerchantRegistered({
+        merchantId,
+        frakBankLinked,
+        isPlatformAdmin: false,
+        takeads: params.takeads,
+    });
+
+    return { merchantId, verifiedViaShopify: true };
+}
+
+/**
+ * Shared post-registration side effects (affiliate brand link + bank
+ * deploy), factored out so both the wallet/account path and the §4.12
+ * embedded-session path trigger them identically.
+ */
+async function onMerchantRegistered(params: {
+    merchantId: string;
+    frakBankLinked: boolean;
+    isPlatformAdmin: boolean;
+    takeads?: {
+        takeadsMerchantId: number;
+        trackingLink: string;
+    };
+}): Promise<void> {
+    const { merchantId, frakBankLinked, isPlatformAdmin, takeads } = params;
+    const msgOf = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+    // Link the merchant to its affiliate brand (platform admin only) so
+    // share-link generation + conversion ingestion can resolve it.
+    // Non-fatal: the merchant is already created, so a link failure must not
+    // strand it behind a 409-on-retry — we log and move on.
+    if (isPlatformAdmin && takeads) {
+        const externalId = String(takeads.takeadsMerchantId);
+        try {
+            await AffiliateContext.services.affiliateLink.registerBrand({
+                merchantId,
+                externalId,
+                trackingLink: takeads.trackingLink,
+            });
+        } catch (error) {
+            log.error(
+                { merchantId, externalId, error: msgOf(error) },
+                "Failed to link affiliate brand during registration"
+            );
+        }
+    }
+
+    // Frak-bank merchants reuse the shared bank; everyone else gets a
+    // dedicated per-merchant bank.
+    if (!frakBankLinked) {
+        CampaignBankContext.services.campaignBank
+            .deployAndSetupBank(merchantId)
+            .catch((error) => {
+                log.error(
+                    { merchantId, error: msgOf(error) },
+                    "Failed to deploy campaign bank during registration"
+                );
+            });
+    }
 }

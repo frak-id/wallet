@@ -10,12 +10,6 @@
             "footerCopyright": "© {{year}} FrakLabs. Tous droits réservés.",
             "footerTerms": "Conditions générales",
             "footerPrivacy": "Politique de confidentialité"
-        },
-        "embedded": {
-            "title": "Authentification requise",
-            "panelTitle": "Veuillez connecter votre porte-monnaie pour continuer",
-            "subtitle": "Connectez-vous avec Frak pour lier votre boutique et commencer à récompenser vos clients.",
-            "action": "S'authentifier"
         }
     },
     "forms": {
@@ -1656,17 +1650,6 @@
             "title": "CSS global",
             "description": "Styles CSS appliqués à tous les composants SDK, tous emplacements confondus. Le CSS par emplacement peut les surcharger.",
             "toggle": "CSS personnalisé"
-        }
-    },
-    "embedded": {
-        "mint": {
-            "title": "Enregistrez votre boutique sur Frak",
-            "subtitle": "Nous allons vérifier votre domaine et configurer votre espace marchand.",
-            "registering": "Enregistrement de <text>{{domain}}</text>",
-            "error": "Impossible d'enregistrer votre produit. Vérifiez que tout est correct.",
-            "alreadyRegistered": "Le domaine est peut-être déjà enregistré.",
-            "close": "Fermer",
-            "register": "Enregistrer votre boutique"
         }
     },
     "welcomePopup": {

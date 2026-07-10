@@ -1,4 +1,5 @@
 import { log } from "@backend-infrastructure";
+import { isUniqueViolation } from "@backend-utils";
 import {
     getTokenAddressForStablecoin,
     type Stablecoin,
@@ -9,10 +10,7 @@ import type {
     BillingDocumentInsert,
     BillingDocumentSelect,
 } from "../../domain/billing/db/schema";
-import {
-    type BillingDocumentRepository,
-    isUniqueViolation,
-} from "../../domain/billing/repositories/BillingDocumentRepository";
+import type { BillingDocumentRepository } from "../../domain/billing/repositories/BillingDocumentRepository";
 import type { BillingStorageRepository } from "../../domain/billing/repositories/BillingStorageRepository";
 import type { BillingDocumentDetails } from "../../domain/billing/schemas";
 import {

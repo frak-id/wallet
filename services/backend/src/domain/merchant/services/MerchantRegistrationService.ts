@@ -23,12 +23,19 @@ export const FRAK_SHARED_CAMPAIGN_BANK: Address =
     "0xd9e65b88B7ABA7c1312FED0CefF2098EB43a9B81";
 
 /**
- * Who is registering the merchant (design doc §4.10):
+ * Who is registering the merchant (design doc §4.10, §4.12):
  *  - `wallet`: SIWE statement proof — ownership goes to the wallet (and the
  *    session's account when available).
  *  - `account`: walletless, step-up-verified session IS the ownership proof
  *    (enforced at the route level via `requireStepUp`); DNS TXT binds to the
  *    account id. `owner_wallet` stays NULL until a wallet is linked.
+ *  - `shopify-session`: inline embedded mint (§4.12) — the caller has no
+ *    `business_session` at all, only a verified App Bridge token. The token
+ *    itself is domain proof (Shopify already proved shop domain + staff
+ *    identity), so `accountId` here is pre-resolved by the route layer via
+ *    `upsertShopifyAccount` — this service never talks to business-auth
+ *    directly. `domain` MUST equal the token's shop domain: the caller
+ *    cannot register an arbitrary domain through this identity.
  */
 export type RegistrationIdentity =
     | {
@@ -41,6 +48,11 @@ export type RegistrationIdentity =
     | {
           type: "account";
           accountId: string;
+      }
+    | {
+          type: "shopify-session";
+          accountId: string;
+          shopDomain: string;
       };
 
 export class MerchantRegistrationService {
@@ -89,6 +101,16 @@ export class MerchantRegistrationService {
             params.domain
         );
 
+        // `shopify-session` identity: the registering domain MUST be the
+        // token's own shop domain (or its normalized form) — this identity
+        // proves ownership of exactly that domain, nothing else. Guards
+        // against a route-layer bug ever letting an embedded caller register
+        // an arbitrary third-party domain.
+        this.assertShopifySessionDomainMatches(
+            params.identity,
+            normalizedDomain
+        );
+
         // Platform-admin powers are wallet-bound (env allow-list).
         const platformAdminWallets = params.platformAdminWallets ?? [];
         const isPlatformAdmin =
@@ -108,8 +130,12 @@ export class MerchantRegistrationService {
 
         // Domain ownership check — platform admins may opt to skip it, and a
         // Shopify SSO session whose shop domain matches the registering
-        // domain already proved ownership via OAuth (§4.10).
-        const verifiedViaShopify = params.verifiedViaShopify === true;
+        // domain already proved ownership via OAuth (§4.10). The inline
+        // embedded-mint identity (§4.12) is unconditionally verified — the
+        // domain-match assertion above already ties it to the token.
+        const verifiedViaShopify =
+            params.verifiedViaShopify === true ||
+            params.identity.type === "shopify-session";
         const skipDomainValidation =
             (isPlatformAdmin && params.skipDomainValidation === true) ||
             verifiedViaShopify;
@@ -175,6 +201,26 @@ export class MerchantRegistrationService {
     }
 
     /**
+     * Guard for the `shopify-session` identity (§4.12): it may only ever
+     * register the domain it was itself issued for. No-op for every other
+     * identity type.
+     */
+    private assertShopifySessionDomainMatches(
+        identity: RegistrationIdentity,
+        normalizedDomain: string
+    ): void {
+        if (identity.type !== "shopify-session") return;
+        const normalizedShopDomain =
+            this.dnsCheckRepository.getNormalizedDomain(identity.shopDomain);
+        if (normalizedDomain !== normalizedShopDomain) {
+            throw HttpError.badRequest(
+                "DOMAIN_MISMATCH",
+                "Domain must match the authenticated Shopify shop"
+            );
+        }
+    }
+
+    /**
      * Wallet path: verify the SIWE registration statement, owner = wallet
      * (+ session account). Account path: the step-up-verified session IS the
      * proof — owner = account only.
@@ -185,6 +231,9 @@ export class MerchantRegistrationService {
         domain: string
     ): Promise<{ wallet: Address | null; ownerAccountId: string | null }> {
         if (identity.type === "account") {
+            return { wallet: null, ownerAccountId: identity.accountId };
+        }
+        if (identity.type === "shopify-session") {
             return { wallet: null, ownerAccountId: identity.accountId };
         }
 

@@ -4,6 +4,7 @@ export { noContentPatch } from "./elysiaNoContentPatch";
 export { HttpError } from "./httpError";
 export { MutexCron } from "./mutexCron";
 export { safeRatio, toNumber } from "./numeric";
+export { isUniqueViolation } from "./postgresError";
 export { processCss, processScopedCss } from "./processCss";
 export {
     CANDIDATE_BATCH_SIZE,

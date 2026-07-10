@@ -176,9 +176,7 @@
             "notConnected": "Votre boutique n'est pas encore connectée à l'écosystème Frak. Suivez les instructions ci-dessous pour terminer la configuration."
         },
         "modal": {
-            "title": "Enregistrer votre boutique",
-            "button": "Enregistrer votre boutique dans l'écosystème Frak",
-            "close": "Fermer"
+            "button": "Enregistrer votre boutique dans l'écosystème Frak"
         },
         "newsletterShare": {
             "title": "Lien de partage pour newsletter",

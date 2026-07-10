@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAbsoluteUrl, parseChargeId, validateMintParams } from "./url";
+import { isAbsoluteUrl, parseChargeId } from "./url";
 
 /**
  * Tests for URL utility functions extracted from routes and hooks.
@@ -74,49 +74,5 @@ describe("parseChargeId", () => {
 
     it("handles large numbers", () => {
         expect(parseChargeId("9999999999")).toBe(9999999999);
-    });
-});
-
-/* ------------------------------------------------------------------ */
-/*  validateMintParams                                                 */
-/* ------------------------------------------------------------------ */
-
-describe("validateMintParams", () => {
-    it("accepts valid ethereum address", () => {
-        const result = validateMintParams(
-            "0x1234567890abcdef1234567890abcdef12345678"
-        );
-        expect(result.valid).toBe(true);
-    });
-
-    it("rejects null wallet address", () => {
-        const result = validateMintParams(null);
-        expect(result).toEqual({
-            valid: false,
-            error: "Missing wallet address",
-        });
-    });
-
-    it("rejects invalid wallet address", () => {
-        const result = validateMintParams("not-an-address");
-        expect(result).toEqual({
-            valid: false,
-            error: "Invalid wallet address",
-        });
-    });
-
-    it("rejects too-short hex string", () => {
-        const result = validateMintParams("0x1234");
-        expect(result).toEqual({
-            valid: false,
-            error: "Invalid wallet address",
-        });
-    });
-
-    it("accepts checksummed address", () => {
-        const result = validateMintParams(
-            "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
-        );
-        expect(result.valid).toBe(true);
     });
 });

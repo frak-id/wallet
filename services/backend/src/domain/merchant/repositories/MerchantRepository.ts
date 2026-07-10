@@ -1,4 +1,5 @@
 import { db } from "@backend-infrastructure";
+import { HttpError, isUniqueViolation } from "@backend-utils";
 import { arrayContains, eq, inArray, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address, Hex } from "viem";
@@ -240,15 +241,33 @@ export class MerchantRepository {
         this.defaultRewardTokenCache.delete(id);
     }
 
+    /**
+     * `merchants.domain` is UNIQUE — the existence check in
+     * `MerchantRegistrationService.register` closes most of the race, but a
+     * genuine race between two concurrent registrations (e.g. two Shopify
+     * shop admins clicking "Connect" at once) can still hit the insert.
+     * Catch the unique-violation and surface the same 409 the pre-check
+     * throws so callers have one error shape to handle either way.
+     */
     async create(merchant: MerchantInsert): Promise<MerchantSelect> {
-        const [result] = await db
-            .insert(merchantsTable)
-            .values(merchant)
-            .returning();
-        if (!result) {
-            throw new Error("Failed to create merchant");
+        try {
+            const [result] = await db
+                .insert(merchantsTable)
+                .values(merchant)
+                .returning();
+            if (!result) {
+                throw new Error("Failed to create merchant");
+            }
+            return result;
+        } catch (error) {
+            if (isUniqueViolation(error)) {
+                throw HttpError.conflict(
+                    "DOMAIN_ALREADY_REGISTERED",
+                    "Merchant already registered for this domain"
+                );
+            }
+            throw error;
         }
-        return result;
     }
 
     async updateOwner(
