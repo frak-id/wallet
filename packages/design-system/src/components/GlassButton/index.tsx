@@ -56,17 +56,9 @@ export function GlassButton({
         .join(" ");
 
     const glassContent = (
-        <>
-            {/* Runtime <style> bypasses Lightning CSS which converts backdrop-filter
-               to -webkit-backdrop-filter only (safari 14 target), rejected as invalid. */}
-            <style
-                href="liquid-glass-backdrop"
-                precedence="default"
-            >{`.liquid-glass::after{backdrop-filter:blur(var(--frost-blur-radius))}`}</style>
-            <LiquidGlassBase {...glassConfig}>
-                <span className={styles.glassIcon}>{icon}</span>
-            </LiquidGlassBase>
-        </>
+        <LiquidGlassBase {...glassConfig}>
+            <span className={styles.glassIcon}>{icon}</span>
+        </LiquidGlassBase>
     );
 
     if (as === "button") {
