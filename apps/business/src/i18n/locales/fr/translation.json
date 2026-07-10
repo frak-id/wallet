@@ -27,7 +27,14 @@
                 "noAccount": "Pas encore de compte ?",
                 "registerCta": "S'inscrire",
                 "backToLogin": "Retour à la connexion",
-                "registerSuccess": "Si cet e-mail n'est pas déjà enregistré, vous recevrez bientôt un code de vérification."
+                "registerSuccess": "Si cet e-mail n'est pas déjà enregistré, vous recevrez bientôt un code de vérification.",
+                "forgotPassword": "Mot de passe oublié ?",
+                "resetInstructions": "Saisissez l'e-mail de votre compte et nous vous enverrons un code de réinitialisation.",
+                "sendResetCode": "Envoyer le code",
+                "resetSent": "Si un compte existe, un code de réinitialisation a été envoyé. Saisissez-le ci-dessous avec votre nouveau mot de passe.",
+                "resetCodePlaceholder": "Code de réinitialisation",
+                "resetSubmit": "Réinitialiser le mot de passe",
+                "resetSuccess": "Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter."
             },
             "shopify": {
                 "submit": "Continuer avec Shopify",

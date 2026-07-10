@@ -1,7 +1,10 @@
 import { sha256 } from "@oslojs/crypto/sha2";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { resendClient } from "../../../infrastructure/integrations/email";
+import {
+    buildSecurityCodeEmail,
+    resendClient,
+} from "../../../infrastructure/integrations/email";
 import type { BusinessEmailCodeSelect } from "../db/schema";
 import type { BusinessEmailCodeRepository } from "../repositories/BusinessEmailCodeRepository";
 import { EMAIL_OTP, EmailOtpService } from "./EmailOtpService";
@@ -62,6 +65,24 @@ describe("EmailOtpService", () => {
     });
 
     describe("sendCode", () => {
+        it("maps the password_reset purpose to its email intent (§P1)", async () => {
+            repository.find.mockResolvedValue(null);
+
+            const result = await service.sendCode({
+                accountId: ACCOUNT_ID,
+                email: "user@test.com",
+                purpose: "password_reset",
+            });
+
+            expect(result).toEqual({ status: "sent" });
+            expect(vi.mocked(buildSecurityCodeEmail)).toHaveBeenCalledWith(
+                expect.objectContaining({ intent: "reset your password" })
+            );
+            expect(repository.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({ purpose: "password_reset" })
+            );
+        });
+
         it("sends a 6-digit code and persists its hash (not the code)", async () => {
             repository.find.mockResolvedValue(null);
 

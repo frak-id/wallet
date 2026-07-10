@@ -1,7 +1,11 @@
 type SecurityCodeEmailParams = {
     code: string;
     /** What the code unlocks — shown in the email copy. */
-    intent: "sign in" | "confirm a sensitive action" | "verify your email";
+    intent:
+        | "sign in"
+        | "confirm a sensitive action"
+        | "verify your email"
+        | "reset your password";
 };
 
 export function buildSecurityCodeEmail({

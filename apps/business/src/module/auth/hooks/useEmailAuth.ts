@@ -57,3 +57,53 @@ export function usePasswordLogin() {
         },
     });
 }
+
+/**
+ * `POST /auth/password/reset/request` — forgotten-password recovery step 1
+ * (§P1). Enumeration-safe: always resolves with the same generic message,
+ * whether or not the email maps to a password account.
+ */
+export function useRequestPasswordReset() {
+    return useMutation({
+        mutationKey: ["auth", "password", "reset", "request"],
+        mutationFn: async (params: { email: string }) => {
+            const { data, error } =
+                await authenticatedBackendApi.auth.password.reset.request.post(
+                    params
+                );
+            if (error) {
+                throw new Error(
+                    extractAuthErrorMessage(error, "Could not send reset code")
+                );
+            }
+            return data;
+        },
+    });
+}
+
+/**
+ * `POST /auth/password/reset/confirm` — forgotten-password recovery step 2
+ * (§P1): verify the OTP and set the new password. A wrong code and an unknown
+ * email both surface as the same generic error.
+ */
+export function useConfirmPasswordReset() {
+    return useMutation({
+        mutationKey: ["auth", "password", "reset", "confirm"],
+        mutationFn: async (params: {
+            email: string;
+            code: string;
+            password: string;
+        }) => {
+            const { data, error } =
+                await authenticatedBackendApi.auth.password.reset.confirm.post(
+                    params
+                );
+            if (error) {
+                throw new Error(
+                    extractAuthErrorMessage(error, "Invalid or expired code")
+                );
+            }
+            return data;
+        },
+    });
+}

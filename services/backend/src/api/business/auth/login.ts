@@ -12,6 +12,10 @@ const GENERIC_REGISTER_RESPONSE = {
     message: "If this email is not already registered, a code has been sent",
 } as const;
 
+const GENERIC_RESET_RESPONSE = {
+    message: "If an account exists for this email, a reset code has been sent",
+} as const;
+
 export const loginRoutes = new Elysia()
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .post(
@@ -119,6 +123,99 @@ export const loginRoutes = new Elysia()
             }),
             response: {
                 200: t.Object({ message: t.String() }),
+                400: t.Object({ error: t.String(), message: t.String() }),
+            },
+        }
+    )
+    .post(
+        // Forgotten-password recovery, step 1 (§P1): mail a single-use OTP to a
+        // password account. Enumeration-safe — the response is identical
+        // whether or not the email maps to a password account, and no code is
+        // sent otherwise (SSO-only accounts add a password through the
+        // authenticated `link/password` step-up instead).
+        "/password/reset/request",
+        async ({ body: { email } }) => {
+            const normalizedEmail = email.trim().toLowerCase();
+            const account =
+                await BusinessAuthContext.repositories.account.findByEmail(
+                    normalizedEmail
+                );
+            if (account?.passwordHash) {
+                await BusinessAuthContext.services.emailOtp.sendCode({
+                    accountId: account.id,
+                    email: normalizedEmail,
+                    purpose: "password_reset",
+                });
+            }
+            return GENERIC_RESET_RESPONSE;
+        },
+        {
+            body: t.Object({ email: t.String({ format: "email" }) }),
+            response: { 200: t.Object({ message: t.String() }) },
+        }
+    )
+    .post(
+        // Forgotten-password recovery, step 2 (§P1): verify the OTP and set the
+        // new password. A wrong code, an unknown email, and an SSO-only
+        // account all collapse to the same `INVALID_CODE` so the endpoint
+        // can't confirm which emails exist. The OTP proves email ownership,
+        // so a successful reset also marks the email verified.
+        "/password/reset/confirm",
+        async ({ body: { email, code, password } }) => {
+            if (
+                !BusinessAuthContext.services.password.isValidPassword(password)
+            ) {
+                return status(400, {
+                    error: "WEAK_PASSWORD",
+                    message: `Password must be at least ${PasswordService.MIN_LENGTH} characters`,
+                });
+            }
+
+            const normalizedEmail = email.trim().toLowerCase();
+            const account =
+                await BusinessAuthContext.repositories.account.findByEmail(
+                    normalizedEmail
+                );
+            if (!account?.passwordHash) {
+                return status(400, {
+                    error: "INVALID_CODE",
+                    message: "Invalid or expired code",
+                });
+            }
+
+            const result =
+                await BusinessAuthContext.services.emailOtp.verifyCode({
+                    accountId: account.id,
+                    purpose: "password_reset",
+                    code,
+                });
+            if (result.status !== "verified") {
+                return status(400, {
+                    error: "INVALID_CODE",
+                    message: "Invalid or expired code",
+                });
+            }
+
+            const passwordHash =
+                await BusinessAuthContext.services.password.hash(password);
+            await BusinessAuthContext.repositories.account.setPasswordHash({
+                accountId: account.id,
+                passwordHash,
+            });
+            await BusinessAuthContext.repositories.account.markEmailVerified(
+                account.id
+            );
+
+            return { success: true as const };
+        },
+        {
+            body: t.Object({
+                email: t.String({ format: "email" }),
+                code: t.String(),
+                password: t.String(),
+            }),
+            response: {
+                200: t.Object({ success: t.Literal(true) }),
                 400: t.Object({ error: t.String(), message: t.String() }),
             },
         }

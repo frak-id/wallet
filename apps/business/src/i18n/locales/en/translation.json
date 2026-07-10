@@ -27,7 +27,14 @@
                 "noAccount": "No account yet?",
                 "registerCta": "Register",
                 "backToLogin": "Back to sign in",
-                "registerSuccess": "If this email is not already registered, you'll receive a verification code shortly."
+                "registerSuccess": "If this email is not already registered, you'll receive a verification code shortly.",
+                "forgotPassword": "Forgot your password?",
+                "resetInstructions": "Enter your account email and we'll send you a reset code.",
+                "sendResetCode": "Send reset code",
+                "resetSent": "If an account exists, a reset code has been sent. Enter it below with your new password.",
+                "resetCodePlaceholder": "Reset code",
+                "resetSubmit": "Reset password",
+                "resetSuccess": "Your password has been reset. You can now sign in."
             },
             "shopify": {
                 "submit": "Continue with Shopify",

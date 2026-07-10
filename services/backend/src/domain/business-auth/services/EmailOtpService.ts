@@ -27,10 +27,14 @@ export type VerifyOtpResult =
 
 const PURPOSE_INTENT: Record<
     BusinessEmailCodePurpose,
-    "sign in" | "confirm a sensitive action" | "verify your email"
+    | "sign in"
+    | "confirm a sensitive action"
+    | "verify your email"
+    | "reset your password"
 > = {
     second_factor: "confirm a sensitive action",
     email_verify: "verify your email",
+    password_reset: "reset your password",
 };
 
 /**

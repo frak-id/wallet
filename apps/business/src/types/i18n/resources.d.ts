@@ -7,6 +7,7 @@ export default interface Resources {
         "email": {
           "backToLogin": "Back to sign in",
           "emailPlaceholder": "Email address",
+          "forgotPassword": "Forgot your password?",
           "newPasswordPlaceholder": "Create a password",
           "noAccount": "No account yet?",
           "passwordHint": "At least 10 characters.",
@@ -14,6 +15,12 @@ export default interface Resources {
           "registerCta": "Register",
           "registerSubmit": "Create account",
           "registerSuccess": "If this email is not already registered, you'll receive a verification code shortly.",
+          "resetCodePlaceholder": "Reset code",
+          "resetInstructions": "Enter your account email and we'll send you a reset code.",
+          "resetSent": "If an account exists, a reset code has been sent. Enter it below with your new password.",
+          "resetSubmit": "Reset password",
+          "resetSuccess": "Your password has been reset. You can now sign in.",
+          "sendResetCode": "Send reset code",
           "submit": "Sign in"
         },
         "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",

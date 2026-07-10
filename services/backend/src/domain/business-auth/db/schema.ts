@@ -20,8 +20,13 @@ export type BusinessAuthMethod = "siwe" | "password" | "shopify";
  *    verifying it always refreshes `two_factor_verified_at`).
  *  - `email_verify`  — proves ownership of the account email (registration +
  *    email 2FA enrollment share this purpose).
+ *  - `password_reset` — unauthenticated forgotten-password recovery: the OTP
+ *    proves email ownership before a new password is set (§P1).
  */
-export type BusinessEmailCodePurpose = "second_factor" | "email_verify";
+export type BusinessEmailCodePurpose =
+    | "second_factor"
+    | "email_verify"
+    | "password_reset";
 
 /**
  * First-class business identity, decoupled from the wallet. A business
