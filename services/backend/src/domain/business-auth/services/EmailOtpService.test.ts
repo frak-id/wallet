@@ -40,6 +40,8 @@ const row = (
         attempts: 0,
         createdAt: new Date(),
         lastSentAt: new Date(Date.now() - EMAIL_OTP.RESEND_DEBOUNCE_MS - 1000),
+        sendCount: 1,
+        sendWindowStartedAt: new Date(Date.now() - 1000),
         expiresAt: new Date(Date.now() + EMAIL_OTP.CODE_TTL_MS),
         consumedAt: null,
         ...overrides,
@@ -91,6 +93,73 @@ describe("EmailOtpService", () => {
             expect(result.status).toBe("throttled");
             expect(resendClient.send).not.toHaveBeenCalled();
             expect(repository.upsert).not.toHaveBeenCalled();
+        });
+
+        it("throttles after the hourly send cap is reached, independent of the debounce", async () => {
+            repository.find.mockResolvedValue(
+                row({
+                    lastSentAt: new Date(
+                        Date.now() - EMAIL_OTP.RESEND_DEBOUNCE_MS - 1000
+                    ),
+                    sendCount: EMAIL_OTP.MAX_SENDS_PER_WINDOW,
+                    sendWindowStartedAt: new Date(Date.now() - 5000),
+                })
+            );
+
+            const result = await service.sendCode({
+                accountId: ACCOUNT_ID,
+                email: "user@test.com",
+                purpose: "second_factor",
+            });
+
+            expect(result.status).toBe("throttled");
+            expect(resendClient.send).not.toHaveBeenCalled();
+            expect(repository.upsert).not.toHaveBeenCalled();
+        });
+
+        it("resets the send-rate window once an hour has elapsed", async () => {
+            repository.find.mockResolvedValue(
+                row({
+                    lastSentAt: new Date(
+                        Date.now() - EMAIL_OTP.RESEND_DEBOUNCE_MS - 1000
+                    ),
+                    sendCount: EMAIL_OTP.MAX_SENDS_PER_WINDOW,
+                    sendWindowStartedAt: new Date(
+                        Date.now() - EMAIL_OTP.SEND_WINDOW_MS - 1000
+                    ),
+                })
+            );
+
+            const result = await service.sendCode({
+                accountId: ACCOUNT_ID,
+                email: "user@test.com",
+                purpose: "second_factor",
+            });
+
+            expect(result).toEqual({ status: "sent" });
+            const stored = repository.upsert.mock.calls[0][0];
+            expect(stored.sendCount).toBe(1);
+        });
+
+        it("increments the send count within an active window", async () => {
+            repository.find.mockResolvedValue(
+                row({
+                    lastSentAt: new Date(
+                        Date.now() - EMAIL_OTP.RESEND_DEBOUNCE_MS - 1000
+                    ),
+                    sendCount: 2,
+                    sendWindowStartedAt: new Date(Date.now() - 5000),
+                })
+            );
+
+            await service.sendCode({
+                accountId: ACCOUNT_ID,
+                email: "user@test.com",
+                purpose: "second_factor",
+            });
+
+            const stored = repository.upsert.mock.calls[0][0];
+            expect(stored.sendCount).toBe(3);
         });
 
         it("does not persist when the provider send fails", async () => {

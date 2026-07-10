@@ -3,8 +3,7 @@ import {
     log,
     verifyShopifySessionToken,
 } from "@backend-infrastructure";
-import { AUTH_ERROR_HEADER } from "@backend-infrastructure/macro/authError";
-import { t } from "@backend-utils";
+import { STEP_UP_ERROR_CODE, StepUpRequiredError, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AuthContext } from "../../../domain/auth";
 import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
@@ -17,7 +16,7 @@ import {
 
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
-export const STEP_UP_ERROR_CODE = "step-up-required";
+export { STEP_UP_ERROR_CODE };
 
 /**
  * 401 body emitted by `requireStepUp` (with the `x-frak-auth-error:
@@ -91,6 +90,30 @@ export const businessSessionContext = new Elysia({
                             )
                         )
                             return true;
+
+                        // Shopify SSO auto-link (§4.7): lazily resolved —
+                        // only fetched once the direct wallet/account/admin
+                        // checks above have already failed, since most
+                        // requests never need it.
+                        if (auth.accountId) {
+                            const shopCredentials =
+                                await BusinessAuthContext.repositories.credential.findShopifyByAccount(
+                                    auth.accountId
+                                );
+                            const shopDomains = shopCredentials
+                                .map((c) => c.shopDomain)
+                                .filter((d): d is string => !!d);
+                            if (
+                                shopDomains.length &&
+                                (await MerchantContext.services.authorization.hasAccess(
+                                    merchantId,
+                                    { shopDomains }
+                                ))
+                            ) {
+                                return true;
+                            }
+                        }
+
                         if (
                             SAFE_METHODS.has(request.method) &&
                             (await isPlatformAdminAuth(auth))
@@ -176,33 +199,11 @@ export const businessSessionContext = new Elysia({
                 },
             };
         },
-        /**
-         * Walletless accounts cannot perform user-wallet-signed onchain
-         * actions. Embedded Shopify sessions pass (they are wallet-free by
-         * design and never reach wallet-signed flows).
-         */
-        requireWallet(enabled?: boolean) {
-            if (!enabled) return;
-
-            return {
-                beforeHandle: async ({ headers }) => {
-                    const shopifyToken = headers["x-shopify-session-token"];
-                    if (shopifyToken) return;
-
-                    const businessAuth = headers["x-business-auth"];
-                    if (!businessAuth) {
-                        return status(401, "Unauthorized");
-                    }
-                    const auth = await resolveBusinessAuth(businessAuth);
-                    if (!auth || !isUsableSession(auth)) {
-                        return status(401, "Unauthorized");
-                    }
-                    if (!auth.wallet) {
-                        return status(403, { error: "WALLET_REQUIRED" });
-                    }
-                },
-            };
-        },
+        // NOTE: the design doc (§4.5) sketched a `requireWallet` macro, but no
+        // backend route needs it — all wallet-signed bank actions are pure
+        // frontend transactions (doc §1.2). Gating lives client-side via
+        // `useCapabilities()`; add the macro back only when a backend route
+        // actually requires a wallet-bound session.
         /**
          * Sensitive-action guard: requires a 2FA verification within the
          * 5-minute freshness window (§4.8 of the design doc). Embedded
@@ -215,7 +216,7 @@ export const businessSessionContext = new Elysia({
             if (!enabled) return;
 
             return {
-                beforeHandle: async ({ headers, set }) => {
+                beforeHandle: async ({ headers }) => {
                     // Embedded Shopify admin session — exempt (§4.11)
                     const shopifyToken = headers["x-shopify-session-token"];
                     if (shopifyToken) {
@@ -251,11 +252,7 @@ export const businessSessionContext = new Elysia({
                           )
                         : ["siwe" as const];
 
-                    set.headers[AUTH_ERROR_HEADER] = STEP_UP_ERROR_CODE;
-                    return status(401, {
-                        error: "step_up_required",
-                        methods,
-                    });
+                    throw new StepUpRequiredError(methods);
                 },
             };
         },

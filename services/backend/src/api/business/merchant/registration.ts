@@ -3,7 +3,7 @@ import {
     log,
     verifyShopifySessionToken,
 } from "@backend-infrastructure";
-import { HttpError, t } from "@backend-utils";
+import { HttpError, matchesShopDomain, t } from "@backend-utils";
 import {
     getTokenAddressForStablecoin,
     type Stablecoin,
@@ -11,10 +11,7 @@ import {
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
 import { AuthContext } from "../../../domain/auth";
-import {
-    BusinessAuthContext,
-    matchesShopDomain,
-} from "../../../domain/business-auth";
+import { BusinessAuthContext } from "../../../domain/business-auth";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
 import type { RegistrationIdentity } from "../../../domain/merchant/services/MerchantRegistrationService";

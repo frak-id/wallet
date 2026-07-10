@@ -6,6 +6,7 @@ export { MutexCron } from "./mutexCron";
 export { safeRatio, toNumber } from "./numeric";
 export { isUniqueViolation } from "./postgresError";
 export { processCss, processScopedCss } from "./processCss";
+export { matchesShopDomain } from "./shopDomainMatch";
 export {
     CANDIDATE_BATCH_SIZE,
     CODE_ALPHABET,
@@ -16,6 +17,11 @@ export {
     generateCode,
     STEM_ALPHABET,
 } from "./sixDigitCode";
+export {
+    STEP_UP_ERROR_CODE,
+    StepUpRequiredError,
+    type TwoFactorMethod,
+} from "./stepUpRequired";
 
 export { type ErrorResponse, type TokenAmount, t } from "./typebox/typeSystem";
 export {

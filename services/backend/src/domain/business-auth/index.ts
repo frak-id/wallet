@@ -14,4 +14,3 @@ export type {
     ShopifyAssociatedUser,
     ShopifyIdentity,
 } from "./services/ShopifySsoService";
-export { matchesShopDomain } from "./services/shopDomainMatch";

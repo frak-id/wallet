@@ -70,18 +70,26 @@ export const loginRoutes = new Elysia()
             }
 
             const normalizedEmail = email.trim().toLowerCase();
+
+            // Hash unconditionally, before the existence check: an
+            // already-registered email must burn the exact same argon2id
+            // cost as a fresh registration, otherwise the branch that
+            // short-circuits before hashing is a timing oracle for account
+            // enumeration.
+            const passwordHash =
+                await BusinessAuthContext.services.password.hash(password);
+
             const existing =
                 await BusinessAuthContext.repositories.account.findByEmail(
                     normalizedEmail
                 );
             // Enumeration-safe: an already-registered email returns the same
-            // generic response, and no email is sent to it.
+            // generic response, and no email is sent to it. The hash computed
+            // above is simply discarded in this branch.
             if (existing) {
                 return GENERIC_REGISTER_RESPONSE;
             }
 
-            const passwordHash =
-                await BusinessAuthContext.services.password.hash(password);
             const account =
                 await BusinessAuthContext.repositories.account.create({
                     email: normalizedEmail,

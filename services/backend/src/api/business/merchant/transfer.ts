@@ -42,7 +42,9 @@ export const merchantTransferRoutes = new Elysia({
             return {
                 pending: true as const,
                 fromWallet: transfer.fromWallet,
+                fromAccountId: transfer.fromAccountId,
                 toWallet: transfer.toWallet,
+                toAccountId: transfer.toAccountId,
                 initiatedAt: transfer.initiatedAt.toISOString(),
                 expiresAt: transfer.expiresAt.toISOString(),
             };
@@ -54,8 +56,10 @@ export const merchantTransferRoutes = new Elysia({
                     t.Object({ pending: t.Literal(false) }),
                     t.Object({
                         pending: t.Literal(true),
-                        fromWallet: t.Hex(),
-                        toWallet: t.Hex(),
+                        fromWallet: t.Union([t.Hex(), t.Null()]),
+                        fromAccountId: t.Union([t.String(), t.Null()]),
+                        toWallet: t.Union([t.Hex(), t.Null()]),
+                        toAccountId: t.Union([t.String(), t.Null()]),
                         initiatedAt: t.String(),
                         expiresAt: t.String(),
                     }),
@@ -67,14 +71,34 @@ export const merchantTransferRoutes = new Elysia({
     )
     .post(
         "/initiate",
-        async ({ params: { merchantId }, body, request }) => {
+        async ({ params: { merchantId }, body, businessSession, request }) => {
+            if (!businessSession) {
+                return status(401, "Authentication required");
+            }
+            if (!body.toAccountId && !body.toWallet) {
+                return status(
+                    400,
+                    "Either toWallet or toAccountId is required"
+                );
+            }
+            if (body.message && !body.signature) {
+                return status(400, "signature is required alongside message");
+            }
             const origin = request.headers.get("origin") ?? "";
 
             await MerchantContext.services.ownershipTransfer.initiateTransfer({
                 merchantId,
-                message: body.message,
-                signature: body.signature,
-                toWallet: body.toWallet,
+                actor: {
+                    wallet: businessSession.wallet,
+                    accountId: businessSession.accountId,
+                },
+                target: body.toAccountId
+                    ? { accountId: body.toAccountId }
+                    : { wallet: body.toWallet as `0x${string}` },
+                siweProof:
+                    body.message && body.signature
+                        ? { message: body.message, signature: body.signature }
+                        : undefined,
                 requestOrigin: origin,
             });
             return status(204);
@@ -84,9 +108,14 @@ export const merchantTransferRoutes = new Elysia({
             requireStepUp: true,
             params: MerchantIdParamSchema,
             body: t.Object({
-                message: t.String(),
-                signature: t.Hex(),
-                toWallet: t.Hex(),
+                // Wallet-owned merchants: a fresh SIWE proof (existing flow).
+                // Walletless owners: omitted — the step-up-verified session is
+                // the proof (§7.5).
+                message: t.Optional(t.String()),
+                signature: t.Optional(t.Hex()),
+                // Exactly one of the two identifies the target.
+                toWallet: t.Optional(t.Hex()),
+                toAccountId: t.Optional(t.String()),
             }),
             response: {
                 204: t.Void(),
@@ -97,7 +126,10 @@ export const merchantTransferRoutes = new Elysia({
     )
     .post(
         "/accept",
-        async ({ params: { merchantId }, body, request }) => {
+        async ({ params: { merchantId }, body, businessSession, request }) => {
+            if (!businessSession) {
+                return status(401, "Authentication required");
+            }
             const origin = request.headers.get("origin") ?? "";
 
             const pendingTransfer =
@@ -107,8 +139,14 @@ export const merchantTransferRoutes = new Elysia({
 
             await MerchantContext.services.ownershipTransfer.acceptTransfer({
                 merchantId,
-                message: body.message,
-                signature: body.signature,
+                actor: {
+                    wallet: businessSession.wallet,
+                    accountId: businessSession.accountId,
+                },
+                siweProof:
+                    body.message && body.signature
+                        ? { message: body.message, signature: body.signature }
+                        : undefined,
                 requestOrigin: origin,
             });
             if (pendingTransfer) {
@@ -141,8 +179,11 @@ export const merchantTransferRoutes = new Elysia({
             requireStepUp: true,
             params: MerchantIdParamSchema,
             body: t.Object({
-                message: t.String(),
-                signature: t.Hex(),
+                // Wallet transfer target: a fresh SIWE proof (existing flow).
+                // Account transfer target: omitted — the target's own
+                // step-up-verified session is the proof (§7.5).
+                message: t.Optional(t.String()),
+                signature: t.Optional(t.Hex()),
             }),
             response: {
                 204: t.Void(),
@@ -154,13 +195,16 @@ export const merchantTransferRoutes = new Elysia({
     .delete(
         "",
         async ({ params: { merchantId }, businessSession }) => {
-            if (!businessSession?.wallet) {
+            if (!businessSession?.wallet && !businessSession?.accountId) {
                 return status(401, "Authentication required");
             }
 
             await MerchantContext.services.ownershipTransfer.cancelTransfer({
                 merchantId,
-                wallet: businessSession.wallet,
+                actor: {
+                    wallet: businessSession.wallet,
+                    accountId: businessSession.accountId,
+                },
             });
 
             return status(204);
@@ -176,11 +220,22 @@ export const merchantTransferRoutes = new Elysia({
     )
     .get(
         "/statement/initiate",
-        async ({ params: { merchantId }, query: { toWallet } }) => {
+        async ({
+            params: { merchantId },
+            query: { toWallet, toAccountId },
+        }) => {
+            if (!toAccountId && !toWallet) {
+                return status(
+                    400,
+                    "Either toWallet or toAccountId is required"
+                );
+            }
             const statement =
                 MerchantContext.services.ownershipTransfer.buildInitiateStatement(
                     merchantId,
-                    toWallet
+                    toAccountId
+                        ? { accountId: toAccountId }
+                        : { wallet: toWallet as `0x${string}` }
                 );
 
             return { statement };
@@ -188,12 +243,14 @@ export const merchantTransferRoutes = new Elysia({
         {
             params: MerchantIdParamSchema,
             query: t.Object({
-                toWallet: t.Hex(),
+                toWallet: t.Optional(t.Hex()),
+                toAccountId: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({
                     statement: t.String(),
                 }),
+                400: t.String(),
             },
         }
     )

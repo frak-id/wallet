@@ -154,6 +154,13 @@ export const businessEmailCodesTable = pgTable(
         attempts: integer("attempts").notNull().default(0),
         createdAt: timestamp("created_at").notNull().defaultNow(),
         lastSentAt: timestamp("last_sent_at").notNull().defaultNow(),
+        // Rolling hourly send-rate window (~5 sends/hour, §6). Reset (count=1,
+        // windowStartedAt=now) whenever a send happens more than an hour after
+        // the window began; otherwise incremented in place.
+        sendCount: integer("send_count").notNull().default(1),
+        sendWindowStartedAt: timestamp("send_window_started_at")
+            .notNull()
+            .defaultNow(),
         expiresAt: timestamp("expires_at").notNull(),
         consumedAt: timestamp("consumed_at"),
     },

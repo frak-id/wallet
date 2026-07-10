@@ -1,8 +1,12 @@
-import { log, viemClient } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { Address, Hex } from "viem";
-import { verifyMessage } from "viem/actions";
-import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
+// Deep import (bypasses the `@backend-utils` barrel): `siwe.ts` pulls in
+// `@backend-infrastructure`'s `viemClient` at module scope, and the barrel is
+// eagerly imported by almost every test file before the test-mock setup
+// (`test/mock/common.ts`) finishes initializing — re-exporting it through
+// the barrel causes a real hoisting-order failure across the whole suite.
+import { verifySiweSignature } from "../../../utils/siwe";
 import {
     type ResolvedBusinessAuth,
     resolveBusinessAuth,
@@ -11,7 +15,10 @@ import {
 /**
  * Full SIWE verification (parse + domain validation against the request
  * origin + ERC-1271/6492-aware signature check). Returns the proven address.
- * Shared by login, the `siwe` 2FA method and wallet linking.
+ * Shared by login, the `siwe` 2FA method and wallet linking. Thin wrapper
+ * over the shared `verifySiweSignature` core (`@backend-utils`) that keeps
+ * this call site's original `{ address, nonce } | { error }` return shape
+ * and logging.
  */
 export async function verifySiweProof(params: {
     message: string;
@@ -20,43 +27,23 @@ export async function verifySiweProof(params: {
 }): Promise<
     { address: Address; nonce: string | undefined } | { error: string }
 > {
-    const siweMessage = parseSiweMessage(params.message);
-    if (!siweMessage?.address) {
-        return { error: "Invalid SIWE message" };
-    }
-
-    let originHost: string;
-    try {
-        originHost = new URL(params.origin).host;
-    } catch {
-        return { error: "Invalid origin" };
-    }
-    const isValid = validateSiweMessage({
-        message: siweMessage,
-        domain: originHost,
-    });
-    if (!isValid) {
-        log.error(
-            { siweMessage, origin: params.origin },
-            "Invalid SIWE message"
-        );
-        return { error: "Invalid SIWE message" };
-    }
-
-    const isValidSignature = await verifyMessage(viemClient, {
+    const result = await verifySiweSignature({
         message: params.message,
         signature: params.signature,
-        address: siweMessage.address,
+        requestOrigin: params.origin,
     });
-    if (!isValidSignature) {
+    if (!result.valid) {
         log.error(
-            { signature: params.signature, message: params.message },
-            "Invalid SIWE signature"
+            {
+                message: params.message,
+                origin: params.origin,
+                error: result.error,
+            },
+            "Invalid SIWE proof"
         );
-        return { error: "Invalid signature" };
+        return { error: result.error };
     }
-
-    return { address: siweMessage.address, nonce: siweMessage.nonce };
+    return { address: result.wallet, nonce: result.nonce };
 }
 
 /**

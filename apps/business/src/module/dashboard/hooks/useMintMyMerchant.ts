@@ -10,23 +10,8 @@ import {
 } from "@tanstack/react-query";
 import { useState } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { extractAuthErrorMessage } from "@/module/auth/hooks/useTwoFactorChallenge";
 import { useAuthStore } from "@/stores/authStore";
-
-/**
- * Extract error message from API error response
- */
-function extractErrorMessage(error: unknown): string {
-    if (typeof error === "string") return error;
-    if (
-        error &&
-        typeof error === "object" &&
-        "value" in error &&
-        typeof error.value === "string"
-    ) {
-        return error.value;
-    }
-    return "Registration failed";
-}
 
 /**
  * Hook to register a new merchant
@@ -105,7 +90,9 @@ export function useRegisterMerchant(
                     takeads,
                 });
             if (error) {
-                throw new Error(extractErrorMessage(error));
+                throw new Error(
+                    extractAuthErrorMessage(error, "Registration failed")
+                );
             }
 
             setInfoTxt("Registration complete");

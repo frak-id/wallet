@@ -1,6 +1,7 @@
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { sha256 } from "@oslojs/crypto/sha2";
+import { constantTimeEqual } from "@oslojs/crypto/subtle";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import {
     buildSecurityCodeEmail,
@@ -13,6 +14,8 @@ export const EMAIL_OTP = {
     CODE_TTL_MS: 10 * 60_000,
     RESEND_DEBOUNCE_MS: 60_000,
     MAX_VERIFY_ATTEMPTS: 5,
+    SEND_WINDOW_MS: 60 * 60_000,
+    MAX_SENDS_PER_WINDOW: 5,
 } as const;
 
 export type SendOtpResult =
@@ -79,6 +82,31 @@ export class EmailOtpService {
             }
         }
 
+        // Hourly send-rate cap: rolling window carried on the row itself (no
+        // extra table) — reset once the window has elapsed, otherwise reject
+        // once MAX_SENDS_PER_WINDOW is hit.
+        const now = Date.now();
+        const windowStartedAt =
+            existing &&
+            now - existing.sendWindowStartedAt.getTime() <
+                EMAIL_OTP.SEND_WINDOW_MS
+                ? existing.sendWindowStartedAt
+                : new Date(now);
+        const sendCountInWindow =
+            windowStartedAt === existing?.sendWindowStartedAt
+                ? existing.sendCount
+                : 0;
+        if (sendCountInWindow >= EMAIL_OTP.MAX_SENDS_PER_WINDOW) {
+            return {
+                status: "throttled",
+                retryAfterSec: Math.ceil(
+                    (EMAIL_OTP.SEND_WINDOW_MS -
+                        (now - windowStartedAt.getTime())) /
+                        1000
+                ),
+            };
+        }
+
         const code = this.generateCode();
         const { subject, html } = buildSecurityCodeEmail({
             code,
@@ -111,6 +139,8 @@ export class EmailOtpService {
             purpose: params.purpose,
             codeHash: this.hashCode(code),
             expiresAt: new Date(Date.now() + EMAIL_OTP.CODE_TTL_MS),
+            sendCount: sendCountInWindow + 1,
+            sendWindowStartedAt: windowStartedAt,
         });
 
         log.info(
@@ -138,7 +168,11 @@ export class EmailOtpService {
         if (row.attempts >= EMAIL_OTP.MAX_VERIFY_ATTEMPTS) {
             return { status: "tooManyAttempts" };
         }
-        if (row.codeHash !== this.hashCode(params.code)) {
+        const isMatch = constantTimeEqual(
+            new TextEncoder().encode(row.codeHash),
+            new TextEncoder().encode(this.hashCode(params.code))
+        );
+        if (!isMatch) {
             await this.emailCodeRepository.incrementAttempts(
                 params.accountId,
                 params.purpose

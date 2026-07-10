@@ -85,11 +85,29 @@ export const merchantOwnershipTransfersTable = pgTable(
     {
         id: uuid("id").primaryKey().defaultRandom(),
         merchantId: uuid("merchant_id").notNull().unique(),
-        fromWallet: customHex("from_wallet").$type<Address>().notNull(),
-        toWallet: customHex("to_wallet").$type<Address>().notNull(),
+        // Source identity — whichever axis the current owner has (§7.5:
+        // walletless owners initiate via a step-up-verified session instead
+        // of a SIWE proof).
+        fromWallet: customHex("from_wallet").$type<Address>(),
+        fromAccountId: uuid("from_account_id"),
+        // Target identity — a wallet (existing flow, SIWE-accepted) or an
+        // existing business account (walletless target, accepted via a
+        // step-up-verified session on the target's own account).
+        toWallet: customHex("to_wallet").$type<Address>(),
+        toAccountId: uuid("to_account_id"),
         initiatedAt: timestamp("initiated_at").defaultNow().notNull(),
         expiresAt: timestamp("expires_at").notNull(),
-    }
+    },
+    (table) => [
+        check(
+            "merchant_ownership_transfers_from_check",
+            sql`${table.fromWallet} IS NOT NULL OR ${table.fromAccountId} IS NOT NULL`
+        ),
+        check(
+            "merchant_ownership_transfers_to_check",
+            sql`${table.toWallet} IS NOT NULL OR ${table.toAccountId} IS NOT NULL`
+        ),
+    ]
 );
 
 /**

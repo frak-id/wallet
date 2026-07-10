@@ -1,8 +1,19 @@
 import { log, rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
+import { constantTimeEqual } from "@oslojs/crypto/subtle";
 import { generateState } from "arctic";
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
+
+function statesMatch(a: string, b: string): boolean {
+    return (
+        a.length === b.length &&
+        constantTimeEqual(
+            new TextEncoder().encode(a),
+            new TextEncoder().encode(b)
+        )
+    );
+}
 
 const STATE_COOKIE_NAME = "shopify_sso_state";
 const STATE_COOKIE_TTL_SEC = 10 * 60;
@@ -72,15 +83,17 @@ export const shopifyAuthRoutes = new Elysia({ prefix: "/shopify" })
             const sso = BusinessAuthContext.services.shopifySso;
             const { shop, code, state } = query;
 
-            const cookieState = cookie[STATE_COOKIE_NAME]?.value;
+            const cookieStateValue = cookie[STATE_COOKIE_NAME]?.value;
             cookie[STATE_COOKIE_NAME]?.remove();
+            const cookieState =
+                typeof cookieStateValue === "string" ? cookieStateValue : null;
 
             if (
                 !shop ||
                 !code ||
                 !state ||
                 !cookieState ||
-                state !== cookieState ||
+                !statesMatch(state, cookieState) ||
                 !sso.isValidShopDomain(shop)
             ) {
                 return Response.redirect(errorRedirectUrl("shopify"), 302);

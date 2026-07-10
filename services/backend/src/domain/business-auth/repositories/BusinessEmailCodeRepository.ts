@@ -23,13 +23,18 @@ export class BusinessEmailCodeRepository {
     /**
      * One challenge per (account, purpose): a resend reuses the row, resetting
      * the code hash, expiry and attempt counter, and stamping `last_sent_at`
-     * for the debounce window.
+     * for the debounce window. `sendCount`/`sendWindowStartedAt` carry the
+     * hourly send-rate cap across resends — the caller (EmailOtpService)
+     * computes the next window state and passes it through explicitly so the
+     * decision (reset vs increment) stays in one place.
      */
     async upsert(params: {
         accountId: string;
         purpose: BusinessEmailCodePurpose;
         codeHash: string;
         expiresAt: Date;
+        sendCount: number;
+        sendWindowStartedAt: Date;
     }): Promise<void> {
         await db
             .insert(businessEmailCodesTable)
@@ -45,6 +50,8 @@ export class BusinessEmailCodeRepository {
                     lastSentAt: new Date(),
                     attempts: 0,
                     consumedAt: null,
+                    sendCount: params.sendCount,
+                    sendWindowStartedAt: params.sendWindowStartedAt,
                 },
             });
     }

@@ -1,15 +1,14 @@
-import {
-    createCipheriv,
-    createDecipheriv,
-    createHmac,
-    randomBytes,
-} from "node:crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import type { AdminWalletsRepository } from "@backend-infrastructure/keys/AdminWalletsRepository";
 import { sha256 } from "@oslojs/crypto/sha2";
+import { constantTimeEqual } from "@oslojs/crypto/subtle";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { createTOTPKeyURI, verifyTOTPWithGracePeriod } from "@oslojs/otp";
 import { renderSVG } from "uqr";
 import { bytesToHex, type Hex, hexToBytes } from "viem";
 import type { BusinessTotpRepository } from "../repositories/BusinessTotpRepository";
+
+const TOTP_KEY_DERIVATION_LABEL = "business-totp-encryption";
 
 const TOTP_INTERVAL_SEC = 30;
 const TOTP_DIGITS = 6;
@@ -25,40 +24,34 @@ export type TotpSetup = {
 
 /**
  * TOTP enrollment + verification. Secrets are AES-256-GCM encrypted at rest
- * with a key derived from `MASTER_KEY_SECRET` (same HMAC-SHA256 derivation
- * pattern as `AdminWalletsRepository`, dedicated derivation label). Stored
- * blob layout: iv (12B) ‖ ciphertext ‖ auth tag (16B), hex-encoded.
+ * with a key derived from `MASTER_KEY_SECRET` via
+ * `AdminWalletsRepository.deriveKeyBytes` — the same cached HMAC-SHA256
+ * derivation used for onchain signing keys, under a dedicated label so this
+ * bytes-only secret can never collide with a wallet key. Stored blob layout:
+ * iv (12B) ‖ ciphertext ‖ auth tag (16B), hex-encoded.
  */
 export class TotpService {
     private encryptionKey: Buffer | null = null;
 
-    constructor(private readonly totpRepository: BusinessTotpRepository) {}
+    constructor(
+        private readonly totpRepository: BusinessTotpRepository,
+        private readonly adminWalletsRepository: AdminWalletsRepository
+    ) {}
 
-    private getEncryptionKey(): Buffer {
+    private async getEncryptionKey(): Promise<Buffer> {
         if (this.encryptionKey) return this.encryptionKey;
-        if (!process.env.MASTER_KEY_SECRET) {
-            throw new Error("Missing MASTER_KEY_SECRET");
-        }
-        const { masterPrivateKey } = JSON.parse(
-            process.env.MASTER_KEY_SECRET
-        ) as { masterPrivateKey: string };
-        if (!masterPrivateKey) {
-            throw new Error("Missing masterPrivateKey in the secret");
-        }
-        const hmac = createHmac(
-            "sha256",
-            hexToBytes(`0x${masterPrivateKey.replace(/^0x/, "")}`)
+        const keyBytes = await this.adminWalletsRepository.deriveKeyBytes(
+            TOTP_KEY_DERIVATION_LABEL
         );
-        hmac.update("business-totp-encryption");
-        this.encryptionKey = hmac.digest();
+        this.encryptionKey = Buffer.from(keyBytes);
         return this.encryptionKey;
     }
 
-    private encryptSecret(secret: Uint8Array): Hex {
+    private async encryptSecret(secret: Uint8Array): Promise<Hex> {
         const iv = randomBytes(12);
         const cipher = createCipheriv(
             "aes-256-gcm",
-            this.getEncryptionKey(),
+            await this.getEncryptionKey(),
             iv
         );
         const ciphertext = Buffer.concat([
@@ -69,14 +62,14 @@ export class TotpService {
         return bytesToHex(Buffer.concat([iv, ciphertext, tag]));
     }
 
-    private decryptSecret(blob: Hex): Uint8Array {
+    private async decryptSecret(blob: Hex): Promise<Uint8Array> {
         const raw = Buffer.from(hexToBytes(blob));
         const iv = raw.subarray(0, 12);
         const tag = raw.subarray(raw.length - 16);
         const ciphertext = raw.subarray(12, raw.length - 16);
         const decipher = createDecipheriv(
             "aes-256-gcm",
-            this.getEncryptionKey(),
+            await this.getEncryptionKey(),
             iv
         );
         decipher.setAuthTag(tag);
@@ -108,7 +101,7 @@ export class TotpService {
         const secret = crypto.getRandomValues(new Uint8Array(20));
         await this.totpRepository.upsertPending({
             accountId: params.accountId,
-            encryptedSecret: this.encryptSecret(secret),
+            encryptedSecret: await this.encryptSecret(secret),
         });
 
         const otpauthUri = createTOTPKeyURI(
@@ -132,7 +125,7 @@ export class TotpService {
         const row = await this.totpRepository.findByAccount(params.accountId);
         if (!row || row.activatedAt) return null;
 
-        const valid = this.verifyCode(row.encryptedSecret, params.code);
+        const valid = await this.verifyCode(row.encryptedSecret, params.code);
         if (!valid) return null;
 
         const recoveryCodes = Array.from({ length: RECOVERY_CODE_COUNT }, () =>
@@ -158,13 +151,23 @@ export class TotpService {
         const row = await this.totpRepository.findByAccount(params.accountId);
         if (!row?.activatedAt) return false;
 
-        if (this.verifyCode(row.encryptedSecret, params.code)) {
+        if (await this.verifyCode(row.encryptedSecret, params.code)) {
             return true;
         }
 
-        // Recovery-code fallback (single-use)
+        // Recovery-code fallback (single-use). All hashes are fixed-length
+        // sha256 hex, so a constant-time compare per candidate avoids an
+        // early-exit timing signal — the array-scan itself still visits every
+        // element regardless of match position.
         const codeHash = this.hashRecoveryCode(params.code);
-        if (row.recoveryCodesHash?.includes(codeHash)) {
+        const codeHashBytes = new TextEncoder().encode(codeHash);
+        const matched = (row.recoveryCodesHash ?? []).some((candidate) =>
+            constantTimeEqual(
+                new TextEncoder().encode(candidate),
+                codeHashBytes
+            )
+        );
+        if (matched) {
             await this.totpRepository.consumeRecoveryCode(
                 params.accountId,
                 codeHash
@@ -180,9 +183,12 @@ export class TotpService {
         return !!row?.activatedAt;
     }
 
-    private verifyCode(encryptedSecret: Hex, code: string): boolean {
+    private async verifyCode(
+        encryptedSecret: Hex,
+        code: string
+    ): Promise<boolean> {
         if (!/^\d{6}$/.test(code.trim())) return false;
-        const secret = this.decryptSecret(encryptedSecret);
+        const secret = await this.decryptSecret(encryptedSecret);
         return verifyTOTPWithGracePeriod(
             secret,
             TOTP_INTERVAL_SEC,

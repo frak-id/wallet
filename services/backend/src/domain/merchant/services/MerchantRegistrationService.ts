@@ -1,13 +1,16 @@
-import { viemClient } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { Address, Hex } from "viem";
 import { keccak256, toHex } from "viem";
-import { verifyMessage } from "viem/actions";
-import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
 import type {
     DnsCheckRepository,
     DnsProofOwner,
 } from "../../../infrastructure/dns/DnsCheckRepository";
+// Deep import (bypasses the `@backend-utils` barrel) — see the comment in
+// `api/business/auth/common.ts` for why `siwe.ts` can't be re-exported there.
+import {
+    parseClaimedSiweAddress,
+    verifySiweSignatureWithStatement,
+} from "../../../utils/siwe";
 import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 
@@ -260,49 +263,26 @@ export class MerchantRegistrationService {
     }): Promise<
         { valid: true; wallet: Address } | { valid: false; error: string }
     > {
-        const siweMessage = parseSiweMessage(params.message);
-        if (!siweMessage?.address || !siweMessage.statement) {
+        // The expected statement embeds the signer's address, which we don't
+        // have until the message is parsed — so it's built from whatever
+        // address the (unverified) message claims; a mismatched claimed
+        // address still fails at the statement or signature check below.
+        const claimedAddress = parseClaimedSiweAddress(params.message);
+        if (!claimedAddress) {
             return { valid: false, error: "Invalid SIWE message format" };
         }
 
-        // An absent/malformed Origin header must be a clean validation
-        // failure, not an unhandled `new URL("")` TypeError (500).
-        let originHost: string;
-        try {
-            originHost = new URL(params.requestOrigin).host;
-        } catch {
-            return { valid: false, error: "Missing or invalid Origin header" };
-        }
-        const isValid = validateSiweMessage({
-            message: siweMessage,
-            domain: originHost,
-        });
-        if (!isValid) {
-            return { valid: false, error: "SIWE message validation failed" };
-        }
-
-        const expectedStatements = this.buildRegistrationStatements(
-            params.domain,
-            siweMessage.address
-        );
-
-        if (!expectedStatements.includes(siweMessage.statement)) {
-            return {
-                valid: false,
-                error: "SIWE statement does not match expected registration statement",
-            };
-        }
-
-        const isValidSignature = await verifyMessage(viemClient, {
+        const result = await verifySiweSignatureWithStatement({
             message: params.message,
             signature: params.signature,
-            address: siweMessage.address,
+            requestOrigin: params.requestOrigin,
+            expectedStatements: this.buildRegistrationStatements(
+                params.domain,
+                claimedAddress
+            ),
         });
-        if (!isValidSignature) {
-            return { valid: false, error: "Invalid signature" };
-        }
-
-        return { valid: true, wallet: siweMessage.address };
+        if (!result.valid) return result;
+        return { valid: true, wallet: result.wallet };
     }
 
     private buildRegistrationStatements(

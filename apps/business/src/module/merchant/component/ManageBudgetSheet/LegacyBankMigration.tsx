@@ -6,19 +6,24 @@ import { ArrowRightLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { formatUnits } from "viem";
+import { useCapabilities } from "@/module/common/hook/useCapabilities";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import { useGetLegacyBankStatus } from "@/module/merchant/hook/useGetLegacyBankStatus";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMigrateLegacyBank } from "@/module/merchant/hook/useMigrateLegacyBank";
 import { legacyBankMap } from "@/module/merchant/utils/legacyBanks";
+import { LinkWalletNotice } from "./LinkWalletNotice";
 import * as styles from "./legacy-bank-migration.css";
 
 export function LegacyBankMigration({
     merchantId,
     newBankAddress,
+    hideWalletlessNotice = false,
 }: {
     merchantId: string;
     newBankAddress: Address;
+    /** Parent already renders a `LinkWalletNotice` for this walletless session. */
+    hideWalletlessNotice?: boolean;
 }) {
     const { data: merchant } = useMerchant({ merchantId });
     const productId = merchant?.productId;
@@ -31,6 +36,7 @@ export function LegacyBankMigration({
             merchantId={merchantId}
             oldBankAddress={oldBankAddress}
             newBankAddress={newBankAddress}
+            hideWalletlessNotice={hideWalletlessNotice}
         />
     );
 }
@@ -39,12 +45,15 @@ function LegacyBankMigrationContent({
     merchantId,
     oldBankAddress,
     newBankAddress,
+    hideWalletlessNotice,
 }: {
     merchantId: string;
     oldBankAddress: Address;
     newBankAddress: Address;
+    hideWalletlessNotice: boolean;
 }) {
     const { t } = useTranslation();
+    const { canOnchain } = useCapabilities();
     const { data: status, isLoading } = useGetLegacyBankStatus({
         oldBankAddress,
     });
@@ -55,6 +64,11 @@ function LegacyBankMigrationContent({
 
     if (isLoading) return <Spinner />;
     if (!status || status.withdrawable === 0n) return null;
+
+    // Onchain action (§4.9): a walletless session cannot sign the migration
+    // transaction — show the wallet-link CTA instead of the migrate button,
+    // unless the parent (BudgetView) already renders one for this session.
+    if (!canOnchain) return hideWalletlessNotice ? null : <LinkWalletNotice />;
 
     const decimals = tokenMeta?.decimals ?? 6;
     const symbol = tokenMeta?.symbol ?? "???";

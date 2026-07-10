@@ -1,3 +1,4 @@
+import { adminWalletsRepository } from "@backend-infrastructure";
 import { BusinessAccountRepository } from "./repositories/BusinessAccountRepository";
 import { BusinessCredentialRepository } from "./repositories/BusinessCredentialRepository";
 import { BusinessEmailCodeRepository } from "./repositories/BusinessEmailCodeRepository";
@@ -21,7 +22,10 @@ const businessSessionService = new BusinessSessionService(
     businessSessionRepository
 );
 const emailOtpService = new EmailOtpService(businessEmailCodeRepository);
-const totpService = new TotpService(businessTotpRepository);
+const totpService = new TotpService(
+    businessTotpRepository,
+    adminWalletsRepository
+);
 const businessAccountService = new BusinessAccountService(
     businessAccountRepository,
     businessCredentialRepository,

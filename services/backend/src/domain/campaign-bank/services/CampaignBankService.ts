@@ -140,10 +140,16 @@ export class CampaignBankService {
         }
     }
 
+    /**
+     * Transfer onchain bank-manager role between two wallets. Either side
+     * may be `null` when the corresponding owner (previous or new) is
+     * walletless (§7.5) — that half of the role change is simply skipped;
+     * a later wallet link + `/bank/sync` catches up.
+     */
     async transferBankRoles(
         merchantId: string,
-        fromWallet: Address,
-        toWallet: Address
+        fromWallet: Address | null,
+        toWallet: Address | null
     ): Promise<{ rolesGranted: boolean; rolesRevoked: boolean }> {
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant) {
@@ -166,12 +172,13 @@ export class CampaignBankService {
 
         try {
             const fromHasRole =
-                await this.campaignBankRepository.hasManagerRole(
+                fromWallet &&
+                (await this.campaignBankRepository.hasManagerRole(
                     merchant.bankAddress,
                     fromWallet
-                );
+                ));
 
-            if (fromHasRole) {
+            if (fromWallet && fromHasRole) {
                 await this.campaignBankRepository.revokeManagerRole(
                     merchantId,
                     merchant.bankAddress,
@@ -180,12 +187,14 @@ export class CampaignBankService {
                 rolesRevoked = true;
             }
 
-            const toHasRole = await this.campaignBankRepository.hasManagerRole(
-                merchant.bankAddress,
-                toWallet
-            );
+            const toHasRole =
+                toWallet &&
+                (await this.campaignBankRepository.hasManagerRole(
+                    merchant.bankAddress,
+                    toWallet
+                ));
 
-            if (!toHasRole) {
+            if (toWallet && !toHasRole) {
                 await this.campaignBankRepository.grantManagerRole(
                     merchantId,
                     merchant.bankAddress,

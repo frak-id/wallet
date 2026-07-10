@@ -1,8 +1,9 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
-import { HttpError, t } from "@backend-utils";
+import { HttpError, StepUpRequiredError, t } from "@backend-utils";
 import { encodeBase64urlNoPadding } from "@oslojs/encoding";
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
+import { StepUpRequired401 } from "../middleware/session";
 import { requireDbSession, verifySiweProof } from "./common";
 
 const TwoFactorMethodDto = t.Union([
@@ -196,7 +197,7 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                     status: t.Optional(t.Literal("sent")),
                 }),
                 400: t.ErrorResponse,
-                401: t.ErrorResponse,
+                401: StepUpRequired401,
                 429: t.ErrorResponse,
             },
         }
@@ -319,7 +320,10 @@ async function verifyProof({
 /**
  * `2fa/setup` bootstrap rule: a brand-new account with zero usable methods
  * must be able to enroll its first one; once any method exists, changing
- * enrollment is a sensitive action requiring fresh step-up.
+ * enrollment is a sensitive action requiring fresh step-up. Shares the exact
+ * `StepUpRequiredError` shape (header + body) with the `requireStepUp` macro
+ * (`api/business/middleware/session.ts`) and `link.ts` so the frontend's
+ * `stepUpAwareFetch` recognizes it uniformly.
  */
 async function requireStepUpUnlessBootstrap(
     accountId: string,
@@ -335,9 +339,6 @@ async function requireStepUpUnlessBootstrap(
         twoFactorVerifiedAt: auth.twoFactorVerifiedAt,
     });
     if (!fresh) {
-        throw HttpError.unauthorized(
-            "STEP_UP_REQUIRED",
-            "Fresh two-factor verification required"
-        );
+        throw new StepUpRequiredError(methods);
     }
 }

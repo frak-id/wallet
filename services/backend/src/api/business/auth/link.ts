@@ -1,7 +1,8 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
-import { HttpError, t } from "@backend-utils";
+import { HttpError, StepUpRequiredError, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
+import { StepUpRequired401 } from "../middleware/session";
 import { requireDbSession, verifySiweProof } from "./common";
 
 /**
@@ -13,7 +14,7 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
         "/wallet",
         async ({ body: { message, signature }, headers, request }) => {
             const auth = await requireDbSession(headers);
-            requireFreshStepUp(auth.twoFactorVerifiedAt);
+            await requireFreshStepUp(auth);
 
             const proof = await verifySiweProof({
                 message,
@@ -49,7 +50,7 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
                     wallet: t.Address(),
                 }),
                 400: t.String(),
-                401: t.ErrorResponse,
+                401: StepUpRequired401,
                 409: t.ErrorResponse,
             },
         }
@@ -58,7 +59,7 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
         "/password",
         async ({ body: { email, password }, headers }) => {
             const auth = await requireDbSession(headers);
-            requireFreshStepUp(auth.twoFactorVerifiedAt);
+            await requireFreshStepUp(auth);
 
             if (
                 !BusinessAuthContext.services.password.isValidPassword(password)
@@ -136,21 +137,31 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
             response: {
                 200: t.Object({ linked: t.Literal(true) }),
                 400: t.ErrorResponse,
-                401: t.ErrorResponse,
+                401: StepUpRequired401,
                 404: t.ErrorResponse,
                 409: t.ErrorResponse,
             },
         }
     );
 
-function requireFreshStepUp(twoFactorVerifiedAt: Date | null): void {
+/**
+ * Shares the exact `StepUpRequiredError` shape (header + body) with the
+ * `requireStepUp` macro (`api/business/middleware/session.ts`) and
+ * `2fa/setup` (`twoFactor.ts`) so the frontend's `stepUpAwareFetch`
+ * recognizes it uniformly on credential-change routes.
+ */
+async function requireFreshStepUp(auth: {
+    accountId: string;
+    twoFactorVerifiedAt: Date | null;
+}): Promise<void> {
     const fresh = BusinessAuthContext.services.session.isStepUpFresh({
-        twoFactorVerifiedAt,
+        twoFactorVerifiedAt: auth.twoFactorVerifiedAt,
     });
-    if (!fresh) {
-        throw HttpError.unauthorized(
-            "STEP_UP_REQUIRED",
-            "Fresh two-factor verification required"
+    if (fresh) return;
+
+    const methods =
+        await BusinessAuthContext.services.account.getEnabledTwoFactorMethods(
+            auth.accountId
         );
-    }
+    throw new StepUpRequiredError(methods);
 }

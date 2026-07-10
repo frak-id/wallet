@@ -1,5 +1,6 @@
 import { generateTOTP } from "@oslojs/otp";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
 import type { BusinessTotpRepository } from "../repositories/BusinessTotpRepository";
 import { TotpService } from "./TotpService";
 
@@ -24,7 +25,8 @@ describe("TotpService", () => {
     beforeEach(() => {
         repository = createRepository();
         service = new TotpService(
-            repository as unknown as BusinessTotpRepository
+            repository as unknown as BusinessTotpRepository,
+            new AdminWalletsRepository()
         );
     });
 

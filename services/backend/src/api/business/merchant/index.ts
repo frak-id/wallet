@@ -1,7 +1,8 @@
-import { t } from "@backend-utils";
+import { matchesShopDomain, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
 import { AuthContext } from "../../../domain/auth";
+import { BusinessAuthContext } from "../../../domain/business-auth";
 import { MerchantContext } from "../../../domain/merchant";
 import {
     MerchantDetailResponseSchema,
@@ -127,6 +128,19 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                   )
                 : false;
 
+            // Shopify SSO auto-link (§4.7): shop domains proven by the
+            // account's Shopify credential(s), looked up here (BFF layer) and
+            // passed as plain data — the merchant domain must never import
+            // business-auth (flow rules).
+            const shopCredentials = businessSession.accountId
+                ? await BusinessAuthContext.repositories.credential.findShopifyByAccount(
+                      businessSession.accountId
+                  )
+                : [];
+            const shopDomains = shopCredentials
+                .map((c) => c.shopDomain)
+                .filter((d): d is string => !!d);
+
             // Enumerate ownership on both identity axes (wallet + account)
             // so walletless users see their merchants too.
             const [ownedByWallet, ownedByAccount, adminOf] = await Promise.all([
@@ -159,11 +173,37 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 )
             );
 
-            const allMerchantsRaw = isPlatAdmin
-                ? await MerchantContext.repositories.merchant.findAll()
+            const allMerchantsRaw =
+                isPlatAdmin || shopDomains.length > 0
+                    ? await MerchantContext.repositories.merchant.findAll()
+                    : [];
+
+            // Shop-domain-matched merchants (excluding ones already owned)
+            // surfaced as read/write "admin" access, same role granted by
+            // `MerchantAuthorizationService.checkAccess`. Deduped against
+            // `adminOf` below.
+            const ownedIds = new Set(owned.map((m) => m.id));
+            const shopMatched = shopDomains.length
+                ? allMerchantsRaw.filter(
+                      (m) =>
+                          !ownedIds.has(m.id) &&
+                          [m.domain, ...(m.allowedDomains ?? [])].some(
+                              (candidate) =>
+                                  shopDomains.some((shopDomain) =>
+                                      matchesShopDomain(candidate, shopDomain)
+                                  )
+                          )
+                  )
                 : [];
 
-            const nonNullAdmins = adminMerchants.filter((m) => m !== null);
+            const nonNullAdmins = [
+                ...new Map(
+                    [
+                        ...adminMerchants.filter((m) => m !== null),
+                        ...shopMatched,
+                    ].map((m) => [m.id, m])
+                ).values(),
+            ];
 
             // One batched lookup so each card can flag affiliate (TakeAds) brands.
             const affiliateIds =

@@ -18,8 +18,18 @@ describe("matchesShopDomain", () => {
         expect(matchesShopDomain("shop.brand.com", "brand.com")).toBe(true);
     });
 
-    it("matches when the shop domain is a subdomain of the registering domain (reverse direction)", () => {
-        expect(matchesShopDomain("brand.com", "shop.brand.com")).toBe(true);
+    it("rejects when the shop domain is a subdomain of the registering domain (reverse direction is asymmetric by design)", () => {
+        expect(matchesShopDomain("brand.com", "shop.brand.com")).toBe(false);
+    });
+
+    it("rejects the myshopify.com takeover attack: a shop credential cannot vouch for the bare myshopify.com registering domain", () => {
+        expect(
+            matchesShopDomain("myshopify.com", "attacker.myshopify.com")
+        ).toBe(false);
+    });
+
+    it("rejects a bare-TLD registering domain vouched for by any shop", () => {
+        expect(matchesShopDomain("com", "x.myshopify.com")).toBe(false);
     });
 
     it("rejects a bare suffix match that is not on a dot boundary", () => {

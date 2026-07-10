@@ -26,6 +26,8 @@ function makeService(
         ownerAccountId?: string | null;
         adminWallets?: Address[];
         adminAccountIds?: string[];
+        domain?: string;
+        allowedDomains?: string[] | null;
     } = {}
 ) {
     const ownerWallet =
@@ -33,18 +35,20 @@ function makeService(
     const ownerAccountId = opts.ownerAccountId ?? null;
     const adminWallets = opts.adminWallets ?? [];
     const adminAccountIds = opts.adminAccountIds ?? [];
+    const domain = opts.domain ?? "brand.com";
+    const allowedDomains = opts.allowedDomains ?? null;
+
+    const merchant = {
+        id: MERCHANT_ID,
+        ownerWallet,
+        ownerAccountId,
+        domain,
+        allowedDomains,
+    };
 
     const merchantRepo = {
         findById: vi.fn((_id: string) =>
-            Promise.resolve(
-                _id === MERCHANT_ID
-                    ? ({
-                          id: MERCHANT_ID,
-                          ownerWallet,
-                          ownerAccountId,
-                      } as never)
-                    : null
-            )
+            Promise.resolve(_id === MERCHANT_ID ? (merchant as never) : null)
         ),
         findByOwnerWallet: vi.fn((wallet: Address) =>
             Promise.resolve(
@@ -58,6 +62,7 @@ function makeService(
                     : []
             )
         ),
+        findAll: vi.fn(() => Promise.resolve([merchant as never])),
     };
     const adminRepo = {
         isAdmin: vi.fn(
@@ -243,6 +248,71 @@ describe("MerchantAuthorizationService.hasAccess (write gate)", () => {
         expect(await svc.hasAccess(MERCHANT_ID, { wallet: STRANGER })).toBe(
             false
         );
+    });
+});
+
+describe("MerchantAuthorizationService — Shopify SSO auto-link (§4.7)", () => {
+    it("grants admin-role access when a shop domain matches the merchant's domain exactly", async () => {
+        const svc = makeService({ domain: "brand.myshopify.com" });
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            shopDomains: ["brand.myshopify.com"],
+        });
+        expect(result).toMatchObject({
+            hasAccess: true,
+            isOwner: false,
+            isAdmin: true,
+            role: "admin",
+        });
+    });
+
+    it("grants access when the merchant domain is a subdomain of the proven shop domain", async () => {
+        const svc = makeService({ domain: "shop.brand.com" });
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            shopDomains: ["brand.com"],
+        });
+        expect(result.hasAccess).toBe(true);
+    });
+
+    it("rejects the reverse direction: a shop cannot vouch for a broader merchant domain", async () => {
+        const svc = makeService({ domain: "brand.com" });
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            shopDomains: ["shop.brand.com"],
+        });
+        expect(result.hasAccess).toBe(false);
+    });
+
+    it("matches via allowedDomains", async () => {
+        const svc = makeService({
+            domain: "brand.com",
+            allowedDomains: ["brand.myshopify.com"],
+        });
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            shopDomains: ["brand.myshopify.com"],
+        });
+        expect(result.hasAccess).toBe(true);
+    });
+
+    it("denies access for an unrelated shop domain", async () => {
+        const svc = makeService({ domain: "brand.com" });
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            shopDomains: ["other.myshopify.com"],
+        });
+        expect(result.hasAccess).toBe(false);
+    });
+
+    it("returns none for an empty identity with no shop domains (no findById call needed)", async () => {
+        const svc = makeService();
+        const result = await svc.checkAccess(MERCHANT_ID, { shopDomains: [] });
+        expect(result).toMatchObject({ hasAccess: false, role: "none" });
+    });
+
+    it("includes shop-domain-matched merchants in getAccessibleMerchantIds", async () => {
+        const svc = makeService({ domain: "brand.myshopify.com" });
+        expect(
+            await svc.getAccessibleMerchantIds({
+                shopDomains: ["brand.myshopify.com"],
+            })
+        ).toEqual([MERCHANT_ID]);
     });
 });
 

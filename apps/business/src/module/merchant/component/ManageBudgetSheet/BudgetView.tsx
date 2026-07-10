@@ -8,9 +8,9 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { InfoIcon, PlusIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
-import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Tooltip } from "@/module/common/component/Tooltip";
+import { useCapabilities } from "@/module/common/hook/useCapabilities";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import { useSetBankOpenStatus } from "@/module/merchant/hook/useSetBankOpenStatus";
 import { useSyncMerchantBank } from "@/module/merchant/hook/useSyncMerchantBank";
@@ -19,6 +19,7 @@ import {
     splitTokensByFunding,
 } from "@/module/merchant/utils/budgetTokens";
 import { LegacyBankMigration } from "./LegacyBankMigration";
+import { LinkWalletNotice } from "./LinkWalletNotice";
 import * as styles from "./manage-budget-sheet.css";
 import { EmptyTokenCard, FundedTokenCard } from "./TokenCard";
 
@@ -31,6 +32,11 @@ export function BudgetView({
 }) {
     const { t } = useTranslation();
     const { data, isLoading, isError } = useGetMerchantBank({ merchantId });
+    // `managerRole === "no_wallet"` (server-derived) is the source of truth
+    // for manager status; `canOnchain` (client-side session signal, §4.9) is
+    // a redundant client-only check that shows the same CTA immediately after
+    // logout/session changes, before a bank refetch would otherwise catch up.
+    const { canOnchain } = useCapabilities();
 
     if (isLoading) {
         return (
@@ -48,57 +54,21 @@ export function BudgetView({
         return <SetupBudget merchantId={merchantId} />;
     }
 
+    const isWalletless = data.managerRole === "no_wallet" || !canOnchain;
+
     return (
         <Stack space="l">
-            {data.managerRole === "no_wallet" && <LinkWalletNotice />}
+            {isWalletless && <LinkWalletNotice />}
             <BudgetContent
                 merchantId={merchantId}
                 bankAddress={data.bankAddress}
-                isManager={data.isManager}
+                isManager={data.isManager && canOnchain}
                 isOpen={data.isOpen ?? false}
                 tokens={data.tokens}
                 onAddFunds={onAddFunds}
+                hideLegacyMigrationNotice={isWalletless}
             />
         </Stack>
-    );
-}
-
-/**
- * Walletless-owner CTA (§4.9): the four onchain bank actions (withdraw,
- * allowance, open/close, legacy migration) stay hidden — `isManager` is
- * already `false` server-side for a `no_wallet` owner, so `BudgetContent`
- * naturally renders its read-only state. This banner is the explicit path
- * out of it.
- */
-function LinkWalletNotice() {
-    const { t } = useTranslation();
-    const { mutate: linkWallet, isPending, error } = useLinkWallet();
-
-    return (
-        <Card radius="m">
-            <Stack space="xs">
-                <Text variant="body" weight="medium">
-                    {t("funding.linkWallet.title")}
-                </Text>
-                <Text variant="bodySmall" color="secondary">
-                    {t("funding.linkWallet.description")}
-                </Text>
-                <Button
-                    size="large"
-                    width="auto"
-                    loading={isPending}
-                    disabled={isPending}
-                    onClick={() => linkWallet()}
-                >
-                    {t("funding.linkWallet.cta")}
-                </Button>
-                {error && (
-                    <Text variant="bodySmall" color="error">
-                        {error.message}
-                    </Text>
-                )}
-            </Stack>
-        </Card>
     );
 }
 
@@ -133,6 +103,7 @@ function BudgetContent({
     isOpen,
     tokens,
     onAddFunds,
+    hideLegacyMigrationNotice,
 }: {
     merchantId: string;
     bankAddress: Address;
@@ -140,6 +111,7 @@ function BudgetContent({
     isOpen: boolean;
     tokens: BudgetToken[];
     onAddFunds: () => void;
+    hideLegacyMigrationNotice: boolean;
 }) {
     const { t } = useTranslation();
     const { funded, empty } = splitTokensByFunding(tokens);
@@ -150,6 +122,7 @@ function BudgetContent({
             <LegacyBankMigration
                 merchantId={merchantId}
                 newBankAddress={bankAddress}
+                hideWalletlessNotice={hideLegacyMigrationNotice}
             />
 
             {allTokensEmpty && isOpen && (

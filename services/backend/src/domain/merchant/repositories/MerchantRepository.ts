@@ -270,16 +270,25 @@ export class MerchantRepository {
         }
     }
 
+    /**
+     * Reassign ownership to a new wallet-identified or account-identified
+     * owner (§7.5: ownership transfer to/from walletless accounts). The
+     * previous owner's identity on the axis NOT provided is cleared — a new
+     * owner's other axis (if any) is re-linked lazily on their next
+     * login/backfill run.
+     */
     async updateOwner(
         id: string,
-        ownerWallet: Address
+        newOwner: { wallet: Address } | { accountId: string }
     ): Promise<MerchantSelect | null> {
         const [result] = await db
             .update(merchantsTable)
-            // The previous owner's business account must not retain
-            // ownership: clear `ownerAccountId` (the new owner's account, if
-            // any, is re-linked lazily on their next login/backfill run).
-            .set({ ownerWallet, ownerAccountId: null, updatedAt: new Date() })
+            .set({
+                ownerWallet: "wallet" in newOwner ? newOwner.wallet : null,
+                ownerAccountId:
+                    "accountId" in newOwner ? newOwner.accountId : null,
+                updatedAt: new Date(),
+            })
             .where(eq(merchantsTable.id, id))
             .returning();
         if (result) {
