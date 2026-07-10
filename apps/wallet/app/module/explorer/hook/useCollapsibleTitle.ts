@@ -9,27 +9,29 @@ const BUTTON_ROW_HEIGHT = 44;
 type CollapsibleTitle = {
     /** Attach to the sticky action row — its resting offset sets the trigger. */
     headerRef: RefObject<HTMLDivElement | null>;
-    /** Attach to the large page title being observed. */
-    titleRef: RefObject<HTMLDivElement | null>;
+    /** Attach to the zero-height sentinel at the top of the scrolling content
+     *  (it crossing the toolbar is the collapse trigger). */
+    sentinelRef: RefObject<HTMLSpanElement | null>;
     /** True once the large title has scrolled up under the button row. */
     collapsed: boolean;
 };
 
 /**
- * Drives the iOS large-title collapse: watches the page title against a trigger
- * line measured from the pinned header (safe-area aware, so it fires exactly
- * when the title reaches the bottom of the buttons on any device).
+ * Drives the iOS large-title collapse: the title is sticky and pins itself, so
+ * we watch the scrolling content below it against a trigger line measured from
+ * the pinned header (safe-area aware). It fires exactly when that content
+ * reaches the bottom of the buttons — i.e. when the title has finished pinning.
  */
 export function useCollapsibleTitle(): CollapsibleTitle {
     const scrollRef = useAppShellScroll();
     const headerRef = useRef<HTMLDivElement>(null);
-    const titleRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLSpanElement>(null);
     const [collapsed, setCollapsed] = useState(false);
 
     useEffect(() => {
-        const titleEl = titleRef.current;
+        const sentinelEl = sentinelRef.current;
         const scroller = scrollRef.current;
-        if (!titleEl || !scroller) return;
+        if (!sentinelEl || !scroller) return;
 
         // Fallback tracks the scroller's content padding (spacing.m); a literal
         // because getBoundingClientRect math needs a number and the token is a
@@ -48,9 +50,9 @@ export function useCollapsibleTitle(): CollapsibleTitle {
             ([entry]) => setCollapsed(!entry.isIntersecting),
             { root: scroller, rootMargin: `-${triggerLine}px 0px 0px 0px` }
         );
-        observer.observe(titleEl);
+        observer.observe(sentinelEl);
         return () => observer.disconnect();
     }, [scrollRef]);
 
-    return { headerRef, titleRef, collapsed };
+    return { headerRef, sentinelRef, collapsed };
 }
