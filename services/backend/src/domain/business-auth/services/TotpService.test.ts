@@ -2,6 +2,7 @@ import { generateTOTP } from "@oslojs/otp";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminWalletsRepository } from "../../../infrastructure/keys/AdminWalletsRepository";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
+import { TWO_FACTOR_LOCKOUT } from "./attemptGuard";
 import { TotpService } from "./TotpService";
 
 // MASTER_KEY_SECRET is set by the global vitest-setup.
@@ -218,6 +219,93 @@ describe("TotpService", () => {
                     code: "0000000000",
                 })
             ).toBe(false);
+        });
+    });
+
+    describe("lockout + failure accounting (§1.8 / §1.7)", () => {
+        /** Build a real activated enrollment so `verifyCode` can decrypt. */
+        async function setupSecret() {
+            repository.findById.mockResolvedValue(null);
+            await service.setup({
+                accountId: ACCOUNT_ID,
+                accountLabel: "user@test.com",
+            });
+            return repository.setPendingTotp.mock.calls[0][0].encryptedSecret;
+        }
+
+        it("throws TWO_FACTOR_LOCKED once the windowed ceiling is hit", async () => {
+            // At the ceiling inside an active window — the guard short-circuits
+            // before any decryption, so a dummy secret is fine.
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: "0xdead",
+                totpActivatedAt: new Date(),
+                totpRecoveryCodesHash: [],
+                twoFactorAttempts: TWO_FACTOR_LOCKOUT.MAX_ATTEMPTS,
+                twoFactorWindowStartedAt: new Date(),
+            });
+
+            await expect(
+                service.verify({ accountId: ACCOUNT_ID, code: "000000" })
+            ).rejects.toMatchObject({
+                status: 429,
+                code: "TWO_FACTOR_LOCKED",
+            });
+            expect(repository.recordTwoFactorFailure).not.toHaveBeenCalled();
+        });
+
+        it("records a windowed failure on a wrong code", async () => {
+            const encryptedSecret = await setupSecret();
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: encryptedSecret,
+                totpActivatedAt: new Date(),
+                totpRecoveryCodesHash: [],
+                twoFactorAttempts: 0,
+                twoFactorWindowStartedAt: null,
+            });
+            repository.consumeTotpRecoveryCode.mockResolvedValue(false);
+
+            expect(
+                await service.verify({ accountId: ACCOUNT_ID, code: "000000" })
+            ).toBe(false);
+            expect(repository.recordTwoFactorFailure).toHaveBeenCalledWith({
+                accountId: ACCOUNT_ID,
+                attempts: 1,
+                windowStartedAt: expect.any(Date),
+            });
+        });
+
+        it("consumes a recovery code exactly once (double-spend safe)", async () => {
+            const encryptedSecret = await setupSecret();
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: encryptedSecret,
+                totpActivatedAt: new Date(),
+                totpRecoveryCodesHash: [computeSha256Hex("aabbccddee")],
+                twoFactorAttempts: 0,
+                twoFactorWindowStartedAt: null,
+            });
+            // The atomic conditional UPDATE succeeds once, then the row is gone
+            // — a replay of the same code returns false (§1.7).
+            repository.consumeTotpRecoveryCode
+                .mockResolvedValueOnce(true)
+                .mockResolvedValueOnce(false);
+
+            expect(
+                await service.verify({
+                    accountId: ACCOUNT_ID,
+                    code: "aabbccddee",
+                })
+            ).toBe(true);
+            expect(
+                await service.verify({
+                    accountId: ACCOUNT_ID,
+                    code: "aabbccddee",
+                })
+            ).toBe(false);
+            // The replay counts as a failed attempt.
+            expect(repository.recordTwoFactorFailure).toHaveBeenCalledTimes(1);
         });
     });
 });
