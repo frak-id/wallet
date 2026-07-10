@@ -70,7 +70,7 @@
     "qr": "^0.6.0",
     "i18next": "^26.0.3",
     "idb-keyval": "^6.2.2",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.24.0",
     "micromark": "^4.0.2",
     "nanoid": "^5.1.7",
     "ox": "^0.14.15",

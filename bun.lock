@@ -65,7 +65,7 @@
         "date-fns": "^4.1.0",
         "i18next": "^26.0.3",
         "i18next-browser-languagedetector": "^8.2.1",
-        "lucide-react": "^0.577.0",
+        "lucide-react": "^1.24.0",
         "nprogress": "^0.2.0",
         "radash": "^12.1.1",
         "react": "catalog:",
@@ -241,7 +241,7 @@
         "i18next-browser-languagedetector": "^8.2.1",
         "idb-keyval": "^6.2.2",
         "jose": "^6.2.1",
-        "lucide-react": "^0.577.0",
+        "lucide-react": "^1.24.0",
         "ox": "^0.14.15",
         "permissionless": "^0.3.5",
         "qr": "^0.6.0",
@@ -312,7 +312,7 @@
         "@tanstack/react-query-persist-client": "catalog:",
         "@tanstack/react-router": "1.169.2",
         "@vanilla-extract/css": "^1.19.1",
-        "lucide-react": "^0.577.0",
+        "lucide-react": "^1.24.0",
         "react": "catalog:",
         "react-dom": "catalog:",
         "viem": "catalog:",
@@ -383,7 +383,7 @@
         "clsx": "^2.1.1",
         "d3-array": "^3.2.4",
         "d3-shape": "^3.2.0",
-        "lucide-react": "^0.577.0",
+        "lucide-react": "^1.24.0",
         "motion": "^12.40.0",
         "vaul": "^1.1.2",
       },
@@ -483,7 +483,7 @@
         "clsx": "^2.1.1",
         "i18next": "^26.0.3",
         "idb-keyval": "^6.2.2",
-        "lucide-react": "^0.577.0",
+        "lucide-react": "^1.24.0",
         "micromark": "^4.0.2",
         "nanoid": "^5.1.7",
         "ox": "^0.14.15",
@@ -3082,7 +3082,7 @@
 
     "lru-cache": ["lru-cache@11.5.0", "", {}, "sha512-5YgH9UJd7wVb9hIouI2adWpgqrrICkt070Dnj8EUY1+B4B2P9eRLPAkAAo6NICA7CEhOIeBHl46u9zSNpNu7zA=="],
 
-    "lucide-react": ["lucide-react@0.577.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-4LjoFv2eEPwYDPg/CUdBJQSDfPyzXCRrVW1X7jrx/trgxnxkHFjnVZINbzvzxjN70dxychOfg+FTYwBiS3pQ5A=="],
+    "lucide-react": ["lucide-react@1.24.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-YT6mBD8lGKkg4nM39enlm94/sfJIiW0YKUT60fBy4YK8tai31ylg1VhGNWxkpSKHo9UagfnZqwIff3HTDQwXeA=="],
 
     "lunr": ["lunr@2.3.9", "", {}, "sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow=="],
 

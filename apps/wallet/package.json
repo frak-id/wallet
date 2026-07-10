@@ -71,7 +71,7 @@
     "i18next-browser-languagedetector": "^8.2.1",
     "idb-keyval": "^6.2.2",
     "jose": "^6.2.1",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.24.0",
     "ox": "^0.14.15",
     "permissionless": "^0.3.5",
     "qr": "^0.6.0",
