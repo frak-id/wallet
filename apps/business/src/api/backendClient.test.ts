@@ -13,6 +13,12 @@ function jsonResponse(
     });
 }
 
+/** Assign a vitest mock as the global fetch. The cast drops fetch's static
+ * `preconnect` sibling, which these tests never exercise. */
+function setGlobalFetch(mock: ReturnType<typeof vi.fn>): void {
+    global.fetch = mock as unknown as typeof fetch;
+}
+
 describe("stepUpAwareFetch", () => {
     const originalFetch = global.fetch;
 
@@ -29,9 +35,9 @@ describe("stepUpAwareFetch", () => {
     });
 
     it("passes through non-401 responses untouched", async () => {
-        global.fetch = vi
-            .fn()
-            .mockResolvedValue(jsonResponse(200, { ok: true }));
+        setGlobalFetch(
+            vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }))
+        );
 
         const response = await stepUpAwareFetch("https://api.test/x");
 
@@ -40,9 +46,9 @@ describe("stepUpAwareFetch", () => {
     });
 
     it("passes through a plain 401 (not step-up) without opening the modal", async () => {
-        global.fetch = vi
-            .fn()
-            .mockResolvedValue(jsonResponse(401, "Unauthorized"));
+        setGlobalFetch(
+            vi.fn().mockResolvedValue(jsonResponse(401, "Unauthorized"))
+        );
 
         const response = await stepUpAwareFetch("https://api.test/x");
 
@@ -63,7 +69,7 @@ describe("stepUpAwareFetch", () => {
             .fn()
             .mockResolvedValueOnce(stepUpResponse)
             .mockResolvedValueOnce(successResponse);
-        global.fetch = fetchMock;
+        setGlobalFetch(fetchMock);
 
         const promise = stepUpAwareFetch("https://api.test/x");
 
@@ -94,7 +100,7 @@ describe("stepUpAwareFetch", () => {
         );
 
         const fetchMock = vi.fn().mockResolvedValueOnce(stepUpResponse);
-        global.fetch = fetchMock;
+        setGlobalFetch(fetchMock);
 
         const promise = stepUpAwareFetch("https://api.test/x");
 

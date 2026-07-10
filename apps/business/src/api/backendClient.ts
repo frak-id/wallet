@@ -65,7 +65,9 @@ export const authenticatedBackendApi = treaty<App>(
     process.env.BACKEND_URL ?? "https://localhost:3030",
     {
         fetch: { credentials: "include" },
-        fetcher: stepUpAwareFetch,
+        // `stepUpAwareFetch` implements the call signature but not fetch's
+        // static `preconnect` sibling (unused by treaty).
+        fetcher: stepUpAwareFetch as typeof fetch,
         // Auto add the authentication related header if present
         headers(_path, options) {
             // Build our new headers

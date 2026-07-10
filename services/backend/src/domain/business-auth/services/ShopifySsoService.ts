@@ -54,9 +54,13 @@ export class ShopifySsoService {
         callbackUrl: string;
         state: string;
     }): URL {
+        // Coalesce to "" so this file type-checks under consumer packages that
+        // compile backend source without its ambient `global.d.ts` (the empty
+        // credential just yields an unusable authorize URL at runtime, which
+        // is the same failure mode as a missing secret).
         const client = new OAuth2Client(
-            process.env.SHOPIFY_CLIENT_ID,
-            process.env.SHOPIFY_API_SECRET,
+            process.env.SHOPIFY_CLIENT_ID ?? "",
+            process.env.SHOPIFY_API_SECRET ?? "",
             params.callbackUrl
         );
         const url = client.createAuthorizationURL(

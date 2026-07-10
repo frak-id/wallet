@@ -29,11 +29,13 @@ import {
 } from "@/stores/twoFactorStore";
 import * as styles from "./two-factor-modal.css";
 
-const METHOD_LABEL_KEY: Record<TwoFactorMethod, string> = {
+// `as const` keeps the values as literal i18n keys so `t()` accepts them
+// (a plain `Record<TwoFactorMethod, string>` widens them to `string`).
+const METHOD_LABEL_KEY = {
     email: "auth.twoFactor.method.email",
     totp: "auth.twoFactor.method.totp",
     siwe: "auth.twoFactor.method.siwe",
-};
+} as const satisfies Record<TwoFactorMethod, string>;
 
 /**
  * Global 2FA challenge/verify modal — driven by `useTwoFactorStore`. Opens
