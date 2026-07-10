@@ -3,8 +3,6 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Address } from "viem";
-import { isAddressEqual } from "viem";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { pageBottomSpacer } from "@/module/common/component/FloatingFooter/floating-footer.css";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
@@ -21,18 +19,18 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
     const { data: merchant, isLoading } = useMerchant({ merchantId });
     const { hasAccess } = useHasRoleOnMerchant({ merchantId });
 
-    const [staged, setStaged] = useState<Address[]>([]);
+    const [staged, setStaged] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState(false);
 
     const { mutateAsync: removeAdmin } = useAdminMutation({ action: "remove" });
 
-    const onToggleRemoval = useCallback((wallet: Address) => {
+    const onToggleRemoval = useCallback((adminId: string) => {
         setSaveError(false);
         setStaged((prev) =>
-            prev.some((a) => isAddressEqual(a, wallet))
-                ? prev.filter((a) => !isAddressEqual(a, wallet))
-                : [...prev, wallet]
+            prev.includes(adminId)
+                ? prev.filter((id) => id !== adminId)
+                : [...prev, adminId]
         );
     }, []);
 
@@ -40,13 +38,11 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
         setIsSaving(true);
         setSaveError(false);
         try {
-            // Un-stage each wallet as its removal lands, so a mid-loop failure
-            // never leaves already-removed wallets staged for a retry.
-            for (const wallet of staged) {
-                await removeAdmin({ merchantId, wallet });
-                setStaged((prev) =>
-                    prev.filter((a) => !isAddressEqual(a, wallet))
-                );
+            // Un-stage each admin as its removal lands, so a mid-loop failure
+            // never leaves already-removed admins staged for a retry.
+            for (const adminId of staged) {
+                await removeAdmin({ merchantId, adminId });
+                setStaged((prev) => prev.filter((id) => id !== adminId));
             }
         } catch {
             setSaveError(true);

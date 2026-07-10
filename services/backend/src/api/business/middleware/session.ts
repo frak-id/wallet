@@ -3,12 +3,13 @@ import {
     log,
     verifyShopifySessionToken,
 } from "@backend-infrastructure";
-import { STEP_UP_ERROR_CODE, StepUpRequiredError, t } from "@backend-utils";
+import { STEP_UP_ERROR_CODE, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AuthContext } from "../../../domain/auth";
 import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import { MerchantContext } from "../../../domain/merchant";
+import { assertStepUpFresh } from "../auth/common";
 import {
     type ResolvedBusinessAuth,
     resolveBusinessAuth,
@@ -180,21 +181,20 @@ export const businessSessionContext = new Elysia({
             if (!enabled) return;
 
             return {
-                beforeHandle: async ({ headers, set }) => {
-                    const businessAuth = headers["x-business-auth"];
-                    if (businessAuth) {
-                        const auth = await resolveBusinessAuth(businessAuth);
-                        if (auth && isUsableSession(auth)) return;
-                    }
+                // Reuse the values already resolved by the plugin-level
+                // `.resolve()` above (which runs before macro `beforeHandle`,
+                // same ordering `identityContext` relies on) instead of
+                // re-verifying the JWT / re-fetching the DB session (§2.3).
+                // biome-ignore lint/suspicious/noExplicitAny: Elysia macro contexts don't carry plugin-resolved types.
+                beforeHandle: (ctx: any) => {
+                    if (ctx.businessSession || ctx.shopifySession) return;
 
-                    const shopifyToken = headers["x-shopify-session-token"];
-                    if (shopifyToken) {
-                        const session =
-                            await verifyShopifySessionToken(shopifyToken);
-                        if (session) return;
-
-                        set.headers["X-Shopify-Retry-Invalid-Session-Request"] =
-                            "1";
+                    // A Shopify token was presented but didn't resolve —
+                    // advertise the App Bridge retry protocol.
+                    if (ctx.headers["x-shopify-session-token"]) {
+                        ctx.set.headers[
+                            "X-Shopify-Retry-Invalid-Session-Request"
+                        ] = "1";
                     }
 
                     return status(
@@ -221,43 +221,22 @@ export const businessSessionContext = new Elysia({
             if (!enabled) return;
 
             return {
-                beforeHandle: async ({ headers }) => {
-                    // Embedded Shopify admin session — exempt (§4.11)
-                    const shopifyToken = headers["x-shopify-session-token"];
-                    if (shopifyToken) {
-                        const session =
-                            await verifyShopifySessionToken(shopifyToken);
-                        if (session) return;
-                    }
+                // Consumes the plugin-resolved session (§2.3) rather than
+                // re-verifying the Shopify JWT + re-resolving the DB session.
+                // biome-ignore lint/suspicious/noExplicitAny: Elysia macro contexts don't carry plugin-resolved types.
+                beforeHandle: async (ctx: any) => {
+                    // Embedded Shopify admin session — exempt (§4.11).
+                    if (ctx.shopifySession) return;
 
-                    const businessAuth = headers["x-business-auth"];
-                    if (!businessAuth) {
-                        return status(401, "Unauthorized");
-                    }
-                    const auth = await resolveBusinessAuth(businessAuth);
-                    if (!auth || !isUsableSession(auth)) {
+                    const auth =
+                        ctx.businessSession as ResolvedBusinessAuth | null;
+                    if (!auth) {
                         return status(401, "Unauthorized");
                     }
 
-                    if (
-                        auth.twoFactorVerifiedAt &&
-                        BusinessAuthContext.services.session.isStepUpFresh({
-                            twoFactorVerifiedAt: auth.twoFactorVerifiedAt,
-                        })
-                    ) {
-                        return;
-                    }
-
-                    // Stale or never-verified: surface the step-up protocol.
-                    // Legacy JWT sessions have no account: their only path is
-                    // a fresh SIWE login, so advertise `siwe` alone.
-                    const methods = auth.accountId
-                        ? await BusinessAuthContext.services.account.getEnabledTwoFactorMethods(
-                              auth.accountId
-                          )
-                        : ["siwe" as const];
-
-                    throw new StepUpRequiredError(methods);
+                    // Shared step-up freshness gate (S1) — throws the
+                    // `StepUpRequiredError` protocol when stale/never-verified.
+                    await assertStepUpFresh(auth);
                 },
             };
         },
@@ -273,14 +252,13 @@ export const businessSessionContext = new Elysia({
             if (!enabled) return;
 
             return {
-                beforeHandle: async ({ headers }) => {
-                    const businessAuth = headers["x-business-auth"];
-                    if (!businessAuth) {
-                        return status(401, "Unauthorized");
-                    }
-
-                    const auth = await resolveBusinessAuth(businessAuth);
-                    if (!auth || !isUsableSession(auth)) {
+                // Consumes the plugin-resolved session (§2.3); the Shopify
+                // session path is never a platform admin, so it's ignored.
+                // biome-ignore lint/suspicious/noExplicitAny: Elysia macro contexts don't carry plugin-resolved types.
+                beforeHandle: async (ctx: any) => {
+                    const auth =
+                        ctx.businessSession as ResolvedBusinessAuth | null;
+                    if (!auth) {
                         return status(401, "Unauthorized");
                     }
 

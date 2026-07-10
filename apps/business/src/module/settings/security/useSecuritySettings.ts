@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { extractAuthErrorMessage } from "@/module/auth/hooks/useTwoFactorChallenge";
+import {
+    AuthError,
+    extractAuthErrorCode,
+    extractAuthErrorMessage,
+} from "@/module/auth/hooks/useTwoFactorChallenge";
 import type { TwoFactorMethod } from "@/stores/twoFactorStore";
 
 const SESSIONS_QUERY_KEY = ["auth", "sessions"];
@@ -93,8 +97,11 @@ export function useLinkPassword() {
             const { data, error } =
                 await authenticatedBackendApi.auth.link.password.post(params);
             if (error) {
-                throw new Error(
-                    extractAuthErrorMessage(error, "Could not add password")
+                // Preserve the backend `code` (e.g. EMAIL_TAKEN) so the
+                // linking UI can show a translated message (§2.1).
+                throw new AuthError(
+                    extractAuthErrorMessage(error, "Could not add password"),
+                    extractAuthErrorCode(error)
                 );
             }
             return data;

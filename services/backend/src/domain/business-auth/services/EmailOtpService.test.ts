@@ -178,11 +178,9 @@ describe("EmailOtpService", () => {
     });
 
     describe("verifyCode", () => {
-        // Same hashing as the service (sha256 of the normalized code).
+        // Same hashing as the service (sha256 of the trimmed code).
         const hashOf = (code: string) =>
-            encodeHexLowerCase(
-                sha256(new TextEncoder().encode(code.trim().toUpperCase()))
-            );
+            encodeHexLowerCase(sha256(new TextEncoder().encode(code.trim())));
 
         it("verifies a matching code and consumes it", async () => {
             repository.find.mockResolvedValue(

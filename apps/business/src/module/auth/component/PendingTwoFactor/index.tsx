@@ -1,10 +1,11 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useNavigate } from "@tanstack/react-router";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useCompletePendingSession } from "@/module/auth/hooks/useCompletePendingSession";
+import { safeRedirectTarget } from "@/module/auth/utils/safeRedirect";
 import { useAuthStore } from "@/stores/authStore";
 import {
     type TwoFactorMethod,
@@ -19,6 +20,8 @@ import {
  */
 const SHOPIFY_FALLBACK_METHODS: TwoFactorMethod[] = ["email", "totp"];
 
+const routeApi = getRouteApi("/login/2fa");
+
 /**
  * `/login/2fa` (§2, §4.7): completes a pending login — either a password
  * login already stored in `authStore` (methods known, §4.6), or a Shopify
@@ -29,6 +32,7 @@ const SHOPIFY_FALLBACK_METHODS: TwoFactorMethod[] = ["email", "totp"];
 export function PendingTwoFactor() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { redirect } = routeApi.useSearch();
     const requestVerification = useTwoFactorStore(
         (state) => state.requestVerification
     );
@@ -63,10 +67,11 @@ export function PendingTwoFactor() {
             }
 
             await completeSession();
-            navigate({ to: "/dashboard" });
+            navigate({ to: safeRedirectTarget(redirect) });
         }
     }, [
         navigate,
+        redirect,
         requestVerification,
         consumePendingLoginMethods,
         completeSession,

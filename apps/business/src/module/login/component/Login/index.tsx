@@ -12,7 +12,13 @@ import logo from "./logo-frak.svg";
 // the clock during React render.
 const currentYear = new Date().getFullYear();
 
-export function Login({ error }: { error?: string }) {
+export function Login({
+    redirect,
+    error,
+}: {
+    redirect?: string;
+    error?: string;
+}) {
     const { t } = useTranslation();
 
     return (
@@ -50,7 +56,7 @@ export function Login({ error }: { error?: string }) {
                 {error && (
                     <Notice tone="error">{t("auth.login.ssoError")}</Notice>
                 )}
-                <LoginMethods />
+                <LoginMethods redirect={redirect} />
             </Stack>
 
             <aside className={styles.rightPanel}>

@@ -7,15 +7,23 @@ import {
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import {
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type PropsWithChildren, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type Address, isAddress } from "viem";
+import { extractAuthErrorMessage } from "@/module/auth/hooks/useTwoFactorChallenge";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { useAdminMutation } from "@/module/merchant/hook/useAdminMutation";
 import * as styles from "./add-team-sheet.css";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ButtonAddTeam({
     merchantId,
@@ -23,29 +31,48 @@ export function ButtonAddTeam({
 }: PropsWithChildren<{ merchantId: string }>) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
+    const [mode, setMode] = useState<"wallet" | "email">("wallet");
     const [wallet, setWallet] = useState("");
+    const [email, setEmail] = useState("");
 
     const {
         mutate: addAdmin,
         isPending,
         isError,
+        error,
     } = useAdminMutation({ action: "add" });
 
-    const trimmed = wallet.trim();
-    const isValid = useMemo(() => isAddress(trimmed), [trimmed]);
+    const trimmedWallet = wallet.trim();
+    const trimmedEmail = email.trim();
+    const isWalletValid = useMemo(
+        () => isAddress(trimmedWallet),
+        [trimmedWallet]
+    );
+    const isEmailValid = useMemo(
+        () => EMAIL_PATTERN.test(trimmedEmail),
+        [trimmedEmail]
+    );
+    const isValid = mode === "wallet" ? isWalletValid : isEmailValid;
+    const value = mode === "wallet" ? trimmedWallet : trimmedEmail;
 
     const { guard, dialogProps } = useDiscardGuard({
-        isDirty: trimmed.length > 0,
-        onDiscard: () => setWallet(""),
+        isDirty: value.length > 0,
+        onDiscard: () => {
+            setWallet("");
+            setEmail("");
+        },
     });
 
     function handleAdd() {
         if (!isValid) return;
         addAdmin(
-            { merchantId, wallet: trimmed as Address },
+            mode === "wallet"
+                ? { merchantId, wallet: trimmedWallet as Address }
+                : { merchantId, email: trimmedEmail },
             {
                 onSuccess: () => {
                     setWallet("");
+                    setEmail("");
                     setOpen(false);
                 },
             }
@@ -92,6 +119,22 @@ export function ButtonAddTeam({
 
                 <Stack space="l" padding="l">
                     <Stack space="m" padding="m" className={styles.fieldCard}>
+                        <Tabs
+                            value={mode}
+                            onValueChange={(next) =>
+                                setMode(next as "wallet" | "email")
+                            }
+                        >
+                            <TabsList variant="segmented">
+                                <TabsTrigger value="wallet" variant="segmented">
+                                    {t("merchantEdit.team.add.modeWallet")}
+                                </TabsTrigger>
+                                <TabsTrigger value="email" variant="segmented">
+                                    {t("merchantEdit.team.add.modeEmail")}
+                                </TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+
                         <Stack space="xs">
                             <Text
                                 variant="bodySmall"
@@ -99,29 +142,55 @@ export function ButtonAddTeam({
                                 color="secondary"
                                 className={styles.inputLabel}
                             >
-                                {t("merchantEdit.team.add.label")}
+                                {mode === "wallet"
+                                    ? t("merchantEdit.team.add.label")
+                                    : t("merchantEdit.team.add.emailLabel")}
                             </Text>
-                            <Input
-                                variant="bare"
-                                tone="muted"
-                                length="big"
-                                value={wallet}
-                                onChange={(e) => setWallet(e.target.value)}
-                                placeholder={t(
-                                    "merchantEdit.team.add.placeholder"
-                                )}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleAdd();
-                                }}
-                            />
-                            {trimmed && !isValid && (
+                            {mode === "wallet" ? (
+                                <Input
+                                    variant="bare"
+                                    tone="muted"
+                                    length="big"
+                                    value={wallet}
+                                    onChange={(e) => setWallet(e.target.value)}
+                                    placeholder={t(
+                                        "merchantEdit.team.add.placeholder"
+                                    )}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") handleAdd();
+                                    }}
+                                />
+                            ) : (
+                                <Input
+                                    type="email"
+                                    variant="bare"
+                                    tone="muted"
+                                    length="big"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder={t(
+                                        "merchantEdit.team.add.emailPlaceholder"
+                                    )}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") handleAdd();
+                                    }}
+                                />
+                            )}
+                            {value && !isValid && (
                                 <Text variant="caption" color="error">
-                                    {t("merchantEdit.team.add.invalid")}
+                                    {mode === "wallet"
+                                        ? t("merchantEdit.team.add.invalid")
+                                        : t(
+                                              "merchantEdit.team.add.emailInvalid"
+                                          )}
                                 </Text>
                             )}
                             {isError && (
                                 <Text variant="caption" color="error">
-                                    {t("merchantEdit.team.add.error")}
+                                    {extractAuthErrorMessage(
+                                        error,
+                                        t("merchantEdit.team.add.error")
+                                    )}
                                 </Text>
                             )}
                         </Stack>

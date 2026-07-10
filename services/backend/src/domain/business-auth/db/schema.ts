@@ -65,6 +65,12 @@ export const businessAccountsTable = pgTable(
         totpActivatedAt: timestamp("totp_activated_at"),
         totpRecoveryCodesHash: text("totp_recovery_codes_hash").array(),
 
+        // --- per-account 2FA verification lockout (TOTP + recovery, §1.8) ---
+        // Windowed failed-attempt counter mirroring the email-OTP cap, but
+        // keyed on the account (the IP-keyed limiter is trivially bypassable).
+        twoFactorAttempts: integer("two_factor_attempts").notNull().default(0),
+        twoFactorWindowStartedAt: timestamp("two_factor_window_started_at"),
+
         createdAt: timestamp("created_at").notNull().defaultNow(),
         updatedAt: timestamp("updated_at").notNull().defaultNow(),
     },

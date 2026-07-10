@@ -13,7 +13,6 @@ import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Undo2 } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { Address } from "viem";
 import { isAddressEqual, zeroAddress } from "viem";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
@@ -25,8 +24,8 @@ import * as styles from "./table-team.css";
 
 type Props = {
     merchantId: string;
-    stagedRemovals: Address[];
-    onToggleRemoval: (wallet: Address) => void;
+    stagedRemovals: string[];
+    onToggleRemoval: (adminId: string) => void;
     /** Lock the row actions while a save is running. */
     disabled?: boolean;
 };
@@ -75,11 +74,7 @@ export function TableTeam({
                             key={admin.id}
                             admin={admin}
                             hasAccess={hasAccess}
-                            isStaged={stagedRemovals.some(
-                                (a) =>
-                                    admin.wallet !== null &&
-                                    isAddressEqual(a, admin.wallet)
-                            )}
+                            isStaged={stagedRemovals.includes(admin.id)}
                             onToggleRemoval={onToggleRemoval}
                             disabled={disabled}
                         />
@@ -100,7 +95,7 @@ function AdminRow({
     admin: MerchantAdministrator;
     hasAccess: boolean;
     isStaged: boolean;
-    onToggleRemoval: (wallet: Address) => void;
+    onToggleRemoval: (adminId: string) => void;
     disabled?: boolean;
 }) {
     const { t } = useTranslation();
@@ -108,14 +103,17 @@ function AdminRow({
 
     const canRemove = useMemo(() => {
         if (admin.isOwner) return false;
-        // Removal is wallet-keyed (DELETE /:wallet) — account-only admins
-        // are managed from their own session, not from this table yet.
-        if (admin.wallet === null) return false;
+        // Removal is now row-id-keyed (DELETE /:adminId, §2.7), so
+        // walletless admins are removable too — a full-access caller can
+        // remove anyone, otherwise only the admin's own row (self-removal).
         if (hasAccess) return true;
-        return isAddressEqual(
-            admin.wallet,
-            walletStatus?.wallet ?? zeroAddress
-        );
+        if (admin.wallet !== null) {
+            return isAddressEqual(
+                admin.wallet,
+                walletStatus?.wallet ?? zeroAddress
+            );
+        }
+        return admin.isMe;
     }, [admin, hasAccess, walletStatus]);
 
     return (
@@ -125,7 +123,7 @@ function AdminRow({
                 {admin.wallet ? (
                     <WalletAddress wallet={admin.wallet} />
                 ) : (
-                    t("merchantEdit.team.walletlessMember")
+                    (admin.email ?? t("merchantEdit.team.walletlessMember"))
                 )}
             </TableCell>
             <TableCell align="right" hug>
@@ -149,9 +147,7 @@ function AdminRow({
                                 ? t("merchantEdit.team.undoRemove")
                                 : t("merchantEdit.team.removeMember")
                         }
-                        onClick={() =>
-                            admin.wallet && onToggleRemoval(admin.wallet)
-                        }
+                        onClick={() => onToggleRemoval(admin.id)}
                     >
                         {isStaged ? (
                             <Undo2 size={24} />

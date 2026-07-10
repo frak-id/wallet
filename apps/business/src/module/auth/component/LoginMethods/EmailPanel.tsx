@@ -12,16 +12,24 @@ import {
 } from "@/module/auth/hooks/useEmailAuth";
 import { Input } from "@/module/forms/Input";
 
-export function EmailPanel() {
+export function EmailPanel({ redirect }: { redirect?: string }) {
     const [mode, setMode] = useState<"login" | "register">("login");
 
     if (mode === "register") {
         return <RegisterForm onBackToLogin={() => setMode("login")} />;
     }
-    return <LoginForm onRegister={() => setMode("register")} />;
+    return (
+        <LoginForm redirect={redirect} onRegister={() => setMode("register")} />
+    );
 }
 
-function LoginForm({ onRegister }: { onRegister: () => void }) {
+function LoginForm({
+    redirect,
+    onRegister,
+}: {
+    redirect?: string;
+    onRegister: () => void;
+}) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
@@ -33,7 +41,12 @@ function LoginForm({ onRegister }: { onRegister: () => void }) {
             { email, password },
             {
                 onSuccess: () => {
-                    navigate({ to: "/login/2fa" });
+                    // Carry the redirect through 2FA so the completion step
+                    // lands on the originally-requested page (§2.5).
+                    navigate({
+                        to: "/login/2fa",
+                        search: redirect ? { redirect } : {},
+                    });
                 },
             }
         );

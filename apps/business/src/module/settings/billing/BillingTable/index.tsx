@@ -19,10 +19,10 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { BinIcon, DownloadIcon } from "@frak-labs/design-system/icons";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { businessAuthHeaders, stepUpAwareFetch } from "@/api/backendClient";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
-import { getSafeAuthToken } from "@/stores/authStore";
 import type { BillingEntry } from "../types";
 import { useVoidDocument } from "../useBillingAdmin";
 import { useBillingInfo } from "../useBillingInfo";
@@ -187,13 +187,15 @@ function DownloadPdfButton({ entry }: { entry: BillingEntry }) {
             // as text (corrupting the bytes) — so fetch the binary directly.
             // Hitting this endpoint also lazily generates the PDF if a prior
             // render failed, so it works even when `entry.hasPdf` is false.
+            // Routed through `stepUpAwareFetch` (§2.10) so a future step-up
+            // gate on this endpoint opens the 2FA modal and retries instead of
+            // failing opaquely as a plain 401.
             const baseUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
-            const token = getSafeAuthToken();
-            const response = await fetch(
+            const response = await stepUpAwareFetch(
                 `${baseUrl}/business/merchant/${merchantId}/billing/documents/${entry.id}/pdf`,
                 {
                     credentials: "include",
-                    headers: token ? { "x-business-auth": token } : undefined,
+                    headers: businessAuthHeaders(),
                 }
             );
             if (!response.ok) {

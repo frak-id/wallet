@@ -2,10 +2,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 
-type AdminMutationArg = {
-    merchantId: string;
-    wallet: Address;
-};
+type AddAdminArg =
+    | { merchantId: string; wallet: Address }
+    | { merchantId: string; email: string };
+
+type RemoveAdminArg = { merchantId: string; adminId: string };
+
+type AdminMutationArg = AddAdminArg | RemoveAdminArg;
 
 type AdminMutationOptions = {
     action: "add" | "remove";
@@ -21,24 +24,33 @@ export function useAdminMutation({ action }: AdminMutationOptions) {
         ],
         mutationFn: async (args: AdminMutationArg) => {
             if (action === "add") {
+                const addArgs = args as AddAdminArg;
                 const { data, error } = await authenticatedBackendApi
-                    .merchant({ merchantId: args.merchantId })
-                    .admins.post({ wallet: args.wallet });
+                    .merchant({ merchantId: addArgs.merchantId })
+                    .admins.post(
+                        "wallet" in addArgs
+                            ? { wallet: addArgs.wallet }
+                            : { email: addArgs.email }
+                    );
 
+                // Throw the raw Eden error (not a generic Error) so callers
+                // can surface the backend's message (e.g. the 404 "no account
+                // found for this email") via `extractAuthErrorMessage`.
                 if (!data || error) {
-                    throw new Error("Failed to add admin");
+                    throw error ?? new Error("Failed to add admin");
                 }
 
                 return data;
-            } else {
-                const { error } = await authenticatedBackendApi
-                    .merchant({ merchantId: args.merchantId })
-                    .admins({ wallet: args.wallet })
-                    .delete();
+            }
 
-                if (error) {
-                    throw new Error("Failed to remove admin");
-                }
+            const removeArgs = args as RemoveAdminArg;
+            const { error } = await authenticatedBackendApi
+                .merchant({ merchantId: removeArgs.merchantId })
+                .admins({ adminId: removeArgs.adminId })
+                .delete();
+
+            if (error) {
+                throw error;
             }
         },
         onSuccess: (_data, args) => {

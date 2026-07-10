@@ -25,24 +25,18 @@ export class BusinessAccountService {
         const existing = await this.accountRepository.findByWallet(wallet);
         if (existing) return existing;
 
-        const account = await this.accountRepository.create({});
-        try {
-            return await this.accountRepository.setWallet({
-                accountId: account.id,
-                wallet,
-            });
-        } catch (error) {
-            // Lost a race with a concurrent login upsert for the same wallet
-            // — the unique index rejected our UPDATE; the winner's row is
-            // authoritative, ours is an orphan (never got its wallet set).
-            log.warn(
-                { wallet, accountId: account.id, error: String(error) },
-                "Wallet upsert race — returning the existing account"
-            );
-            const winner = await this.accountRepository.findByWallet(wallet);
-            if (!winner) throw error;
-            return winner;
+        // Single-statement create+set: `ON CONFLICT DO NOTHING` leaves no
+        // orphan account when we lose the race to a concurrent login.
+        const created = await this.accountRepository.insertWalletAccount({
+            wallet,
+        });
+        if (created) return created;
+
+        const winner = await this.accountRepository.findByWallet(wallet);
+        if (!winner) {
+            throw new Error("Wallet account upsert failed to resolve");
         }
+        return winner;
     }
 
     /**
@@ -73,34 +67,47 @@ export class BusinessAccountService {
         // another account's email must not turn a login into a 500 (or a
         // silent account merge). The user can link accounts explicitly later
         // (§4.6 `link/*`, step-up required) if that's what they want.
-        const emailTaken =
-            params.email &&
-            (await this.accountRepository.findByEmail(params.email));
-        const account = await this.accountRepository.create(
-            params.email && !emailTaken ? { email: params.email } : {}
-        );
+        const emailFree =
+            !!params.email &&
+            !(await this.accountRepository.findByEmail(params.email));
+
         try {
-            return await this.accountRepository.setShopifyIdentity({
-                accountId: account.id,
+            // Atomic create-or-resolve on the shopify identity index. A `null`
+            // return is an identity conflict (resolved below); a thrown
+            // unique violation is the email racing another account.
+            const created = await this.accountRepository.insertShopifyAccount({
                 shopifyUserId: params.shopifyUserId,
                 shopDomain: params.shopDomain,
+                email: emailFree ? (params.email ?? undefined) : undefined,
             });
+            if (created) return created;
         } catch (error) {
+            // Narrow catch (A4): only the email unique index racing another
+            // account is recoverable — retry once without the prefill.
+            if (!isUniqueViolation(error) || !emailFree) throw error;
             log.warn(
                 {
                     shopifyUserId: params.shopifyUserId,
-                    accountId: account.id,
                     error: String(error),
                 },
-                "Shopify identity upsert race — returning the existing account"
+                "Shopify account email prefill race — retrying without email"
             );
-            const winner = await this.accountRepository.findByShopifyUser({
+            const retried = await this.accountRepository.insertShopifyAccount({
                 shopifyUserId: params.shopifyUserId,
                 shopDomain: params.shopDomain,
             });
-            if (!winner) throw error;
-            return winner;
+            if (retried) return retried;
         }
+
+        // Identity conflict: the concurrent winner's row is authoritative.
+        const winner = await this.accountRepository.findByShopifyUser({
+            shopifyUserId: params.shopifyUserId,
+            shopDomain: params.shopDomain,
+        });
+        if (!winner) {
+            throw new Error("Shopify account upsert failed to resolve");
+        }
+        return winner;
     }
 
     /** Attach a SIWE-proven wallet to an existing account. */

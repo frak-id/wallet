@@ -65,6 +65,59 @@ export class BusinessAccountRepository {
         return account;
     }
 
+    /**
+     * Atomically create an account already carrying `wallet`, in a single
+     * `INSERT ... ON CONFLICT DO NOTHING` on the partial wallet unique index.
+     * Returns `null` when the wallet already belongs to an account (the
+     * caller resolves the winner) — crucially, no orphan account row is left
+     * behind, unlike a create-then-set-wallet pair (plan §1.5 / M4).
+     */
+    async insertWalletAccount(params: {
+        wallet: Address;
+    }): Promise<BusinessAccountSelect | null> {
+        const [account] = await db
+            .insert(businessAccountsTable)
+            .values({ walletAddress: params.wallet })
+            .onConflictDoNothing({
+                target: businessAccountsTable.walletAddress,
+                where: sql`wallet_address IS NOT NULL`,
+            })
+            .returning();
+        return account ?? null;
+    }
+
+    /**
+     * Atomically create an account already carrying the Shopify staff
+     * identity, `ON CONFLICT DO NOTHING` on the partial shopify-identity
+     * unique index. Returns `null` on an identity conflict (caller resolves
+     * the winner). The optional `email` prefill is NOT part of the conflict
+     * target, so a concurrent email claim surfaces as a unique violation the
+     * caller retries without the email — again, no orphan row (plan §1.5 /
+     * M4 + A4).
+     */
+    async insertShopifyAccount(params: {
+        shopifyUserId: string;
+        shopDomain: string;
+        email?: string;
+    }): Promise<BusinessAccountSelect | null> {
+        const [account] = await db
+            .insert(businessAccountsTable)
+            .values({
+                shopifyUserId: params.shopifyUserId,
+                shopifyShopDomain: params.shopDomain,
+                email: params.email?.toLowerCase(),
+            })
+            .onConflictDoNothing({
+                target: [
+                    businessAccountsTable.shopifyUserId,
+                    businessAccountsTable.shopifyShopDomain,
+                ],
+                where: sql`shopify_user_id IS NOT NULL AND shopify_shop_domain IS NOT NULL`,
+            })
+            .returning();
+        return account ?? null;
+    }
+
     async markEmailVerified(accountId: string): Promise<void> {
         await db
             .update(businessAccountsTable)
@@ -113,28 +166,6 @@ export class BusinessAccountRepository {
             .where(eq(businessAccountsTable.id, params.accountId));
     }
 
-    async setShopifyIdentity(params: {
-        accountId: string;
-        shopifyUserId: string;
-        shopDomain: string;
-    }): Promise<BusinessAccountSelect> {
-        const [account] = await db
-            .update(businessAccountsTable)
-            .set({
-                shopifyUserId: params.shopifyUserId,
-                shopifyShopDomain: params.shopDomain,
-                updatedAt: new Date(),
-            })
-            .where(eq(businessAccountsTable.id, params.accountId))
-            .returning();
-        if (!account) {
-            throw new Error(
-                "Failed to set shopify identity on business account"
-            );
-        }
-        return account;
-    }
-
     /**
      * A re-setup before activation replaces the pending secret; an activated
      * enrollment is never silently overwritten (guarded in `TotpService`).
@@ -168,15 +199,56 @@ export class BusinessAccountRepository {
             .where(eq(businessAccountsTable.id, params.accountId));
     }
 
-    /** Single-use recovery code: remove the consumed hash from the array. */
+    /**
+     * Single-use recovery code consumption, atomic (plan §1.7 / A3): one
+     * conditional UPDATE removes the hash only if it's still present, and the
+     * `RETURNING` row tells us whether THIS call was the one that consumed it.
+     * Two concurrent redeems of the same code therefore can't both succeed —
+     * the loser's `array_remove` is a no-op and returns no row.
+     */
     async consumeTotpRecoveryCode(
         accountId: string,
         codeHash: string
-    ): Promise<void> {
-        await db
+    ): Promise<boolean> {
+        const [row] = await db
             .update(businessAccountsTable)
             .set({
                 totpRecoveryCodesHash: sql`array_remove(${businessAccountsTable.totpRecoveryCodesHash}, ${codeHash})`,
+                updatedAt: new Date(),
+            })
+            .where(
+                and(
+                    eq(businessAccountsTable.id, accountId),
+                    sql`${codeHash} = ANY(${businessAccountsTable.totpRecoveryCodesHash})`
+                )
+            )
+            .returning({ id: businessAccountsTable.id });
+        return row !== undefined;
+    }
+
+    /** Persist the windowed 2FA failed-attempt counter (plan §1.8). */
+    async recordTwoFactorFailure(params: {
+        accountId: string;
+        attempts: number;
+        windowStartedAt: Date | null;
+    }): Promise<void> {
+        await db
+            .update(businessAccountsTable)
+            .set({
+                twoFactorAttempts: params.attempts,
+                twoFactorWindowStartedAt: params.windowStartedAt,
+                updatedAt: new Date(),
+            })
+            .where(eq(businessAccountsTable.id, params.accountId));
+    }
+
+    /** Clear the 2FA failed-attempt counter after a success (plan §1.8). */
+    async resetTwoFactorAttempts(accountId: string): Promise<void> {
+        await db
+            .update(businessAccountsTable)
+            .set({
+                twoFactorAttempts: 0,
+                twoFactorWindowStartedAt: null,
                 updatedAt: new Date(),
             })
             .where(eq(businessAccountsTable.id, accountId));

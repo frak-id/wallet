@@ -8,6 +8,7 @@ import {
     text,
     timestamp,
     unique,
+    uniqueIndex,
     uuid,
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
@@ -73,6 +74,12 @@ export const merchantAdminsTable = pgTable(
         index("merchant_admins_wallet_idx").on(table.wallet),
         index("merchant_admins_account_idx").on(table.accountId),
         unique("merchant_admins_unique").on(table.merchantId, table.wallet),
+        // The `(merchant_id, wallet)` unique above does NOT dedupe account-only
+        // rows: their `wallet` is NULL, and Postgres treats NULLs as distinct.
+        // A partial unique index dedupes admins added by account (§2.7).
+        uniqueIndex("merchant_admins_account_unique")
+            .on(table.merchantId, table.accountId)
+            .where(sql`account_id IS NOT NULL`),
         check(
             "merchant_admins_identity_check",
             sql`${table.wallet} IS NOT NULL OR ${table.accountId} IS NOT NULL`

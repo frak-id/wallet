@@ -3,7 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { BusinessAuthResponseDto } from "../../../domain/auth";
 import { BusinessAuthContext } from "../../../domain/business-auth";
-import { verifySiweProof } from "./common";
+import { resolveClientIp, verifySiweProof } from "./common";
 
 const GENERIC_REGISTER_RESPONSE = {
     message: "If this email is not already registered, a code has been sent",
@@ -13,11 +13,12 @@ export const loginRoutes = new Elysia()
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .post(
         "/login",
-        async ({ body: { message, signature }, request }) => {
+        async ({ body: { message, signature }, request, headers, server }) => {
             const proof = await verifySiweProof({
                 message,
                 signature,
                 origin: request.headers.get("origin") ?? "",
+                requireFreshness: true,
             });
             if ("error" in proof) {
                 return status(400, proof.error);
@@ -37,6 +38,7 @@ export const loginRoutes = new Elysia()
                     accountId: account.id,
                     authMethod: "siwe",
                     twoFactorVerified: true,
+                    ip: resolveClientIp({ request, headers, server }),
                     userAgent: request.headers.get("user-agent") ?? undefined,
                 });
 
@@ -120,7 +122,7 @@ export const loginRoutes = new Elysia()
     )
     .post(
         "/login/password",
-        async ({ body: { email, password }, request }) => {
+        async ({ body: { email, password }, request, headers, server }) => {
             const account =
                 await BusinessAuthContext.services.account.getPasswordAccountByEmail(
                     email.trim().toLowerCase()
@@ -141,6 +143,7 @@ export const loginRoutes = new Elysia()
                 await BusinessAuthContext.services.session.create({
                     accountId: account.id,
                     authMethod: "password",
+                    ip: resolveClientIp({ request, headers, server }),
                     userAgent: request.headers.get("user-agent") ?? undefined,
                 });
 

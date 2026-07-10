@@ -11,6 +11,7 @@
             "footerTerms": "Conditions générales",
             "footerPrivacy": "Politique de confidentialité",
             "ssoError": "La connexion avec Shopify a échoué. Veuillez réessayer.",
+            "walletError": "La connexion avec votre wallet a échoué. Veuillez réessayer.",
             "methods": {
                 "wallet": "Portefeuille",
                 "email": "E-mail",
@@ -1319,7 +1320,8 @@
                 "linkWallet": "Lier un portefeuille",
                 "addPassword": "Ajoutez un mot de passe pour aussi vous connecter par e-mail.",
                 "savePassword": "Enregistrer le mot de passe",
-                "passwordAdded": "Mot de passe ajouté — vérifiez votre e-mail pour le confirmer."
+                "passwordAdded": "Mot de passe ajouté — vérifiez votre e-mail pour le confirmer.",
+                "emailTaken": "Cet e-mail est déjà utilisé par un autre compte."
             },
             "sessions": {
                 "title": "Sessions actives",
@@ -1595,12 +1597,17 @@
             "saveError": "Certaines modifications n'ont pas pu être enregistrées. Réessayez.",
             "add": {
                 "title": "Ajouter un membre",
-                "description": "Invitez un administrateur à votre équipe via son adresse de portefeuille.",
+                "description": "Invitez un administrateur par adresse de wallet ou par email.",
                 "label": "Portefeuille du membre",
                 "placeholder": "0x…",
                 "submit": "Ajouter le membre",
                 "invalid": "Adresse de portefeuille invalide",
-                "error": "Impossible d'ajouter l'administrateur. Réessayez."
+                "error": "Impossible d'ajouter l'administrateur. Réessayez.",
+                "modeWallet": "Wallet",
+                "modeEmail": "Email",
+                "emailLabel": "Email du membre",
+                "emailPlaceholder": "nom@entreprise.com",
+                "emailInvalid": "Adresse email invalide"
             }
         }
     },

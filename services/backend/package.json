@@ -55,7 +55,6 @@
     "prom-client": "^15.1.3",
     "sharp": "^0.34.5",
     "ua-parser-js": "^2.0.9",
-    "uqr": "^0.1.3",
     "viem": "catalog:",
     "web-push": "^3.6.7"
   },

@@ -5,19 +5,25 @@ import { main } from "./login.css";
 
 export const Route = createFileRoute("/login")({
     beforeLoad: redirectIfAuthenticated,
-    validateSearch: (search: Record<string, unknown>) => ({
-        redirect: (search.redirect as string | undefined) ?? undefined,
+    // Keys are emitted only when present so both stay optional — navigations
+    // to `/login` (logout, guards) don't have to supply them.
+    validateSearch: (
+        search: Record<string, unknown>
+    ): { redirect?: string; error?: string } => ({
+        ...(typeof search.redirect === "string"
+            ? { redirect: search.redirect }
+            : {}),
         // Set by the Shopify SSO callback on a failed exchange (§4.7).
-        error: (search.error as string | undefined) ?? undefined,
+        ...(typeof search.error === "string" ? { error: search.error } : {}),
     }),
     component: LoginPage,
 });
 
 function LoginPage() {
-    const { error } = Route.useSearch();
+    const { redirect, error } = Route.useSearch();
     return (
         <main className={main}>
-            <Login error={error} />
+            <Login redirect={redirect} error={error} />
         </main>
     );
 }

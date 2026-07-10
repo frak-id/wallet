@@ -34,6 +34,8 @@ const mockAdminsResponse = {
         {
             id: "admin-1",
             wallet: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as const,
+            accountId: null,
+            email: null,
             addedBy: "0x0000000000000000000000000000000000000000" as const,
             addedAt: "2024-01-01T00:00:00.000Z",
             isOwner: true,
@@ -41,6 +43,8 @@ const mockAdminsResponse = {
         {
             id: "admin-2",
             wallet: "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199" as const,
+            accountId: null,
+            email: null,
             addedBy: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as const,
             addedAt: "2024-01-15T00:00:00.000Z",
             isOwner: false,
@@ -48,8 +52,19 @@ const mockAdminsResponse = {
         {
             id: "admin-3",
             wallet: "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1" as const,
+            accountId: null,
+            email: null,
             addedBy: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as const,
             addedAt: "2024-01-29T00:00:00.000Z",
+            isOwner: false,
+        },
+        {
+            id: "admin-4",
+            wallet: null,
+            accountId: "account-walletless-1",
+            email: "teammate@example.com",
+            addedBy: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as const,
+            addedAt: "2024-02-01T00:00:00.000Z",
             isOwner: false,
         },
     ],
@@ -73,6 +88,34 @@ function createWrapper(queryClient: QueryClient) {
 }
 
 describe("useGetMerchantAdministrators", () => {
+    it("maps a walletless admin's accountId and email", async () => {
+        const queryClient = createQueryClient();
+        const { authenticatedBackendApi } = await import("@/api/backendClient");
+        const mockGet = vi.fn().mockResolvedValue({
+            data: mockAdminsResponse,
+            error: null,
+        });
+
+        vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+            admins: { get: mockGet },
+        } as any);
+
+        const { result } = renderHook(
+            () => useGetMerchantAdministrators({ merchantId: "merchant-1" }),
+            { wrapper: createWrapper(queryClient) }
+        );
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        const walletless = result.current.data?.find(
+            (admin) => admin.wallet === null
+        );
+        expect(walletless?.accountId).toBe("account-walletless-1");
+        expect(walletless?.email).toBe("teammate@example.com");
+    });
+
     it("should return loading state initially", () => {
         const queryClient = createQueryClient();
         const { result } = renderHook(
@@ -106,7 +149,7 @@ describe("useGetMerchantAdministrators", () => {
         });
 
         expect(result.current.data).toBeDefined();
-        expect(result.current.data?.length).toBe(3);
+        expect(result.current.data?.length).toBe(4);
         expect(result.current.data?.[0].id).toBe("admin-1");
     });
 

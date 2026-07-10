@@ -1,7 +1,7 @@
 import {
     extractShopDomain,
     log,
-    verifyShopifySessionToken,
+    rateLimitMiddleware,
 } from "@backend-infrastructure";
 import { HttpError, matchesShopDomain, t } from "@backend-utils";
 import {
@@ -11,6 +11,7 @@ import {
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
 import { AuthContext } from "../../../domain/auth";
+import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
@@ -35,6 +36,11 @@ function dnsOwnerFromSession(
 }
 
 export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
+    // `/register` triggers a real bank deployment and is reachable via the
+    // step-up-exempt embedded branch; `/verify` is a domain-registration
+    // oracle. IP-keyed low ceiling over the whole registration group (every
+    // other auth route already carries one).
+    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .use(businessSessionContext)
     .get(
         "/dns-txt",
@@ -124,19 +130,16 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
     )
     .post(
         "",
-        async ({ body, request, headers, businessSession }) => {
+        async ({ body, request, shopifySession, businessSession }) => {
             const origin = request.headers.get("origin") ?? "";
 
             // §4.12 inline embedded mint: a verified App Bridge token with NO
-            // business session at all is a third, distinct identity — resolve
-            // it up front so the wallet/account branches below (which require
-            // a business session) are untouched for every other caller.
+            // business session at all is a third, distinct identity. Reuse
+            // the session the `businessSessionContext` plugin already verified
+            // (§2.3) rather than re-verifying the token here.
             const shopifyRegistration = businessSession
                 ? null
-                : await resolveShopifySessionIdentity(
-                      headers["x-shopify-session-token"],
-                      body
-                  );
+                : resolveShopifySessionIdentity(shopifySession, body);
 
             if (shopifyRegistration) {
                 return registerFromShopifySession(shopifyRegistration);
@@ -319,12 +322,13 @@ type ShopifySessionRegistration = {
 };
 
 /**
- * §4.12: verify the App Bridge token and shape the inline embedded-mint
- * identity, or `null` when there is no (valid) Shopify session token — the
- * caller falls through to the normal wallet/account branches in that case.
+ * §4.12: shape the inline embedded-mint identity from the already-verified
+ * App Bridge session (verified once by `businessSessionContext`, §2.3), or
+ * `null` when there is no (valid) Shopify session — the caller falls through
+ * to the normal wallet/account branches in that case.
  */
-async function resolveShopifySessionIdentity(
-    shopifyToken: string | undefined,
+function resolveShopifySessionIdentity(
+    session: ShopifySessionToken | null,
     body: {
         name?: string;
         currency?: "usd" | "eur" | "gbp";
@@ -334,10 +338,7 @@ async function resolveShopifySessionIdentity(
             trackingLink: string;
         };
     }
-): Promise<ShopifySessionRegistration | null> {
-    if (!shopifyToken) return null;
-
-    const session = await verifyShopifySessionToken(shopifyToken);
+): ShopifySessionRegistration | null {
     if (!session) return null;
 
     const shopDomain = extractShopDomain(session.dest);
@@ -358,6 +359,51 @@ async function resolveShopifySessionIdentity(
 }
 
 /**
+ * §4.12 domain selection (C1 / plan §1.1). Decides which domain the embedded
+ * merchant registers under and which domains alias it for resolution:
+ *  - primary domain verifiably the same shop (subdomain-aware, §4.10) →
+ *    register under it, alias the myshopify domain;
+ *  - primary domain is a real (unverifiable) custom domain → register under
+ *    the myshopify domain so it can't be *claimed*, but alias the custom
+ *    domain (the Shopify app keys resolution on `primaryDomain.host`, so
+ *    without this a custom-domain merchant is orphaned forever);
+ *  - no distinct primary domain → myshopify domain, no alias.
+ * Aliases are resolution-only (`findByAllowedDomain` is exact-match) and
+ * grant no domain ownership.
+ */
+function resolveEmbeddedMintDomains(
+    shopDomain: string,
+    primaryDomain: string | undefined
+): { registrationDomain: string; allowedDomains: string[] | undefined } {
+    const dnsCheck = MerchantContext.repositories.dnsCheck;
+    const normalizedShopDomain = dnsCheck.getNormalizedDomain(shopDomain);
+
+    const normalizedPrimaryDomain = primaryDomain
+        ? dnsCheck.getNormalizedDomain(primaryDomain)
+        : null;
+    const customDomain =
+        normalizedPrimaryDomain !== null &&
+        normalizedPrimaryDomain !== normalizedShopDomain
+            ? normalizedPrimaryDomain
+            : null;
+
+    const usePrimaryDomain =
+        customDomain !== null &&
+        matchesShopDomain(customDomain, normalizedShopDomain);
+
+    if (usePrimaryDomain) {
+        return {
+            registrationDomain: customDomain,
+            allowedDomains: [normalizedShopDomain],
+        };
+    }
+    return {
+        registrationDomain: normalizedShopDomain,
+        allowedDomains: customDomain !== null ? [customDomain] : undefined,
+    };
+}
+
+/**
  * §4.12 inline embedded mint: register (or resolve, on a 409 race) the
  * merchant for an embedded Shopify caller — no wallet, no business session,
  * no DNS TXT, no popup. See design doc §4.12 for the full rationale.
@@ -372,30 +418,10 @@ async function registerFromShopifySession(
             email: params.email,
         });
 
-    const dnsCheck = MerchantContext.repositories.dnsCheck;
-    const normalizedShopDomain = dnsCheck.getNormalizedDomain(
-        params.shopDomain
+    const { registrationDomain, allowedDomains } = resolveEmbeddedMintDomains(
+        params.shopDomain,
+        params.primaryDomain
     );
-
-    // Register under the storefront's primary domain when it's verifiably
-    // the same shop (subdomain-aware, §4.10); otherwise stay on the
-    // myshopify domain so an unrelated custom domain can never be claimed
-    // through this identity — the merchant can still add it later as an
-    // allowed domain through the normal (DNS-verified) flow.
-    const normalizedPrimaryDomain = params.primaryDomain
-        ? dnsCheck.getNormalizedDomain(params.primaryDomain)
-        : null;
-    const usePrimaryDomain =
-        normalizedPrimaryDomain !== null &&
-        normalizedPrimaryDomain !== normalizedShopDomain &&
-        matchesShopDomain(normalizedPrimaryDomain, normalizedShopDomain);
-
-    const registrationDomain = usePrimaryDomain
-        ? (normalizedPrimaryDomain as string)
-        : normalizedShopDomain;
-    const allowedDomains = usePrimaryDomain
-        ? [normalizedShopDomain]
-        : undefined;
 
     const defaultRewardToken = getTokenAddressForStablecoin(
         CURRENCY_TO_STABLECOIN[params.currency ?? "eur"]

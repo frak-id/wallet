@@ -13,7 +13,9 @@ const createRepository = () =>
         findById: vi.fn(),
         setPendingTotp: vi.fn(),
         activateTotp: vi.fn(),
-        consumeTotpRecoveryCode: vi.fn(),
+        consumeTotpRecoveryCode: vi.fn().mockResolvedValue(false),
+        recordTwoFactorFailure: vi.fn(),
+        resetTwoFactorAttempts: vi.fn(),
         clearTotp: vi.fn(),
     }) as unknown as BusinessAccountRepository &
         Record<string, ReturnType<typeof vi.fn>>;
@@ -31,7 +33,7 @@ describe("TotpService", () => {
     });
 
     describe("setup", () => {
-        it("persists an encrypted secret and returns URI + QR", async () => {
+        it("persists an encrypted secret and returns the otpauth URI", async () => {
             repository.findById.mockResolvedValue(null);
 
             const result = await service.setup({
@@ -41,7 +43,6 @@ describe("TotpService", () => {
 
             expect(result.otpauthUri).toContain("otpauth://totp/");
             expect(result.otpauthUri).toContain("Frak%20Business");
-            expect(result.qrSvg).toContain("<svg");
 
             const stored = repository.setPendingTotp.mock.calls[0][0];
             expect(stored.encryptedSecret).toMatch(/^0x[0-9a-f]+$/);
@@ -54,12 +55,16 @@ describe("TotpService", () => {
                 totpActivatedAt: new Date(),
             });
 
+            // Typed conflict (§1.6 / M5), not a bare Error.
             await expect(
                 service.setup({
                     accountId: ACCOUNT_ID,
                     accountLabel: "user@test.com",
                 })
-            ).rejects.toThrow("TOTP already activated");
+            ).rejects.toMatchObject({
+                status: 409,
+                code: "TOTP_ALREADY_ACTIVATED",
+            });
         });
     });
 
@@ -186,7 +191,15 @@ describe("TotpService", () => {
                     // sha256 of "aabbccddee"
                     computeSha256Hex("aabbccddee"),
                 ],
+                twoFactorAttempts: 0,
+                twoFactorWindowStartedAt: null,
             });
+            // Matching + single-use consumption is now atomic in the repo
+            // (§1.7): the service just delegates and trusts the boolean.
+            repository.consumeTotpRecoveryCode.mockImplementation(
+                async (_id: string, hash: string) =>
+                    hash === computeSha256Hex("aabbccddee")
+            );
 
             expect(
                 await service.verify({
@@ -194,7 +207,11 @@ describe("TotpService", () => {
                     code: "aabbccddee",
                 })
             ).toBe(true);
-            expect(repository.consumeTotpRecoveryCode).toHaveBeenCalled();
+            expect(repository.consumeTotpRecoveryCode).toHaveBeenCalledWith(
+                ACCOUNT_ID,
+                computeSha256Hex("aabbccddee")
+            );
+            expect(repository.resetTwoFactorAttempts).toHaveBeenCalled();
 
             expect(
                 await service.verify({

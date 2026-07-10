@@ -1,10 +1,40 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
-import { HttpError, StepUpRequiredError, t } from "@backend-utils";
+import { HttpError, t } from "@backend-utils";
 import { encodeBase64urlNoPadding } from "@oslojs/encoding";
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
+import type { BusinessEmailCodePurpose } from "../../../domain/business-auth/db/schema";
 import { StepUpRequired401 } from "../middleware/session";
-import { requireDbSession, verifySiweProof } from "./common";
+import { assertStepUpFresh, requireDbSession, verifySiweProof } from "./common";
+
+/**
+ * Send an email OTP for `accountId`, or throw the appropriate typed error
+ * (S2 — previously duplicated between `/challenge` and `/setup`). The account
+ * must already carry an email; a send-rate hit surfaces as a 429.
+ */
+async function sendEmailOtpOrThrow(params: {
+    accountId: string;
+    purpose: BusinessEmailCodePurpose;
+    noEmailMessage: string;
+}): Promise<void> {
+    const account = await BusinessAuthContext.repositories.account.findById(
+        params.accountId
+    );
+    if (!account?.email) {
+        throw HttpError.badRequest("NO_EMAIL", params.noEmailMessage);
+    }
+    const result = await BusinessAuthContext.services.emailOtp.sendCode({
+        accountId: params.accountId,
+        email: account.email,
+        purpose: params.purpose,
+    });
+    if (result.status === "throttled") {
+        throw HttpError.tooManyRequests(
+            "OTP_THROTTLED",
+            `Retry in ${result.retryAfterSec}s`
+        );
+    }
+}
 
 const TwoFactorMethodDto = t.Union([
     t.Literal("email"),
@@ -33,28 +63,11 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
 
             switch (method) {
                 case "email": {
-                    const account =
-                        await BusinessAuthContext.repositories.account.findById(
-                            auth.accountId
-                        );
-                    if (!account?.email) {
-                        throw HttpError.badRequest(
-                            "NO_EMAIL",
-                            "No email on this account"
-                        );
-                    }
-                    const result =
-                        await BusinessAuthContext.services.emailOtp.sendCode({
-                            accountId: auth.accountId,
-                            email: account.email,
-                            purpose: "second_factor",
-                        });
-                    if (result.status === "throttled") {
-                        throw HttpError.tooManyRequests(
-                            "OTP_THROTTLED",
-                            `Retry in ${result.retryAfterSec}s`
-                        );
-                    }
+                    await sendEmailOtpOrThrow({
+                        accountId: auth.accountId,
+                        purpose: "second_factor",
+                        noEmailMessage: "No email on this account",
+                    });
                     return { status: "sent" as const };
                 }
                 case "totp":
@@ -129,14 +142,21 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
             response: {
                 200: t.Object({ verified: t.Literal(true) }),
                 401: t.Union([t.String(), t.ErrorResponse]),
+                429: t.ErrorResponse,
             },
         }
     )
     .post(
         "/setup",
         async ({ body: { method }, headers }) => {
-            const auth = await requireDbSession(headers);
-            await requireStepUpUnlessBootstrap(auth.accountId, auth);
+            // A Shopify-SSO (or password) account can be stuck pending with
+            // zero usable 2FA methods — it must be able to bootstrap its first
+            // one. `requireStepUpUnlessBootstrap` re-checks: a pending session
+            // that already has a method still gets a step-up 401 here.
+            const auth = await requireDbSession(headers, {
+                allowPending: true,
+            });
+            await assertStepUpFresh(auth, { allowBootstrap: true });
 
             switch (method) {
                 case "totp": {
@@ -151,34 +171,14 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                                 account?.email ?? auth.wallet ?? auth.accountId,
                         }
                     );
-                    return {
-                        otpauthUri: setup.otpauthUri,
-                        qrSvg: setup.qrSvg,
-                    };
+                    return { otpauthUri: setup.otpauthUri };
                 }
                 case "email": {
-                    const account =
-                        await BusinessAuthContext.repositories.account.findById(
-                            auth.accountId
-                        );
-                    if (!account?.email) {
-                        throw HttpError.badRequest(
-                            "NO_EMAIL",
-                            "Set an email on the account first"
-                        );
-                    }
-                    const result =
-                        await BusinessAuthContext.services.emailOtp.sendCode({
-                            accountId: auth.accountId,
-                            email: account.email,
-                            purpose: "email_verify",
-                        });
-                    if (result.status === "throttled") {
-                        throw HttpError.tooManyRequests(
-                            "OTP_THROTTLED",
-                            `Retry in ${result.retryAfterSec}s`
-                        );
-                    }
+                    await sendEmailOtpOrThrow({
+                        accountId: auth.accountId,
+                        purpose: "email_verify",
+                        noEmailMessage: "Set an email on the account first",
+                    });
                     return { status: "sent" as const };
                 }
                 case "siwe":
@@ -193,7 +193,6 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
             response: {
                 200: t.Object({
                     otpauthUri: t.Optional(t.String()),
-                    qrSvg: t.Optional(t.String()),
                     status: t.Optional(t.Literal("sent")),
                 }),
                 400: t.ErrorResponse,
@@ -205,7 +204,13 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
     .post(
         "/activate",
         async ({ body: { method, proof }, headers }) => {
-            const auth = await requireDbSession(headers);
+            // Pending allowed so bootstrap enrollment can complete (§1.4): a
+            // valid activation code is itself a fresh 2FA proof, so on success
+            // we stamp the session verified — the pending Shopify-SSO account
+            // lands fully authenticated instead of stuck.
+            const auth = await requireDbSession(headers, {
+                allowPending: true,
+            });
 
             switch (method) {
                 case "totp": {
@@ -217,6 +222,9 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                     if (!result) {
                         return status(401, "Invalid code");
                     }
+                    await BusinessAuthContext.services.session.markTwoFactorVerified(
+                        auth.sessionId
+                    );
                     return { recoveryCodes: result.recoveryCodes };
                 }
                 case "email": {
@@ -231,6 +239,9 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                     }
                     await BusinessAuthContext.repositories.account.markEmailVerified(
                         auth.accountId
+                    );
+                    await BusinessAuthContext.services.session.markTwoFactorVerified(
+                        auth.sessionId
                     );
                     return { verified: true as const };
                 }
@@ -314,31 +325,5 @@ async function verifyProof({
             if (!session?.twoFactorNonce) return false;
             return proof.nonce === session.twoFactorNonce;
         }
-    }
-}
-
-/**
- * `2fa/setup` bootstrap rule: a brand-new account with zero usable methods
- * must be able to enroll its first one; once any method exists, changing
- * enrollment is a sensitive action requiring fresh step-up. Shares the exact
- * `StepUpRequiredError` shape (header + body) with the `requireStepUp` macro
- * (`api/business/middleware/session.ts`) and `link.ts` so the frontend's
- * `stepUpAwareFetch` recognizes it uniformly.
- */
-async function requireStepUpUnlessBootstrap(
-    accountId: string,
-    auth: SessionAuth
-): Promise<void> {
-    const methods =
-        await BusinessAuthContext.services.account.getEnabledTwoFactorMethods(
-            accountId
-        );
-    if (methods.length === 0) return;
-
-    const fresh = BusinessAuthContext.services.session.isStepUpFresh({
-        twoFactorVerifiedAt: auth.twoFactorVerifiedAt,
-    });
-    if (!fresh) {
-        throw new StepUpRequiredError(methods);
     }
 }

@@ -1,7 +1,8 @@
 import { matchesShopDomain } from "@backend-utils";
-import { type Address, isAddressEqual } from "viem";
+import { isAddressEqual } from "viem";
 import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
+import type { MerchantIdentity } from "../schemas";
 
 type MerchantRole = "owner" | "admin" | "none";
 
@@ -10,27 +11,6 @@ type MerchantAccess = {
     isOwner: boolean;
     isAdmin: boolean;
     role: MerchantRole;
-};
-
-/**
- * Caller identity for merchant authorization. Wallet-only (legacy JWT
- * sessions), account-only (walletless accounts) and dual (wallet-linked
- * accounts) are all valid shapes; a match on either axis grants access.
- *
- * `shopDomain` (design doc §4.7 auto-link): the shop domain proven by the
- * account's Shopify SSO identity, looked up by the BFF caller (`business-auth`
- * domain, at the API layer — never here, to respect the cross-domain flow
- * rules) and passed through as a plain string. A business account holds at
- * most one Shopify identity (§4.3), so this is a single optional value, not
- * a list. A merchant whose `domain`/`allowedDomains` matches it grants
- * read/write access exactly like a wallet or account match — this is what
- * lets a Shopify SSO user who registered the store (or was added later) see
- * and manage it from the standalone dashboard without being a listed admin.
- */
-export type MerchantIdentity = {
-    wallet?: Address | null;
-    accountId?: string | null;
-    shopDomain?: string | null;
 };
 
 const NO_ACCESS: MerchantAccess = {
@@ -141,7 +121,7 @@ export class MerchantAuthorizationService {
     ): Promise<string[]> {
         const { wallet, accountId, shopDomain } = identity;
 
-        const [ownedByWallet, ownedByAccount, adminOf, allMerchants] =
+        const [ownedByWallet, ownedByAccount, adminOf, shopMatched] =
             await Promise.all([
                 wallet
                     ? this.merchantRepository.findByOwnerWallet(wallet)
@@ -151,7 +131,7 @@ export class MerchantAuthorizationService {
                     : Promise.resolve([]),
                 this.merchantAdminRepository.findByIdentity(identity),
                 shopDomain
-                    ? this.merchantRepository.findAll()
+                    ? this.getShopDomainMatchedMerchants(shopDomain)
                     : Promise.resolve([]),
             ]);
 
@@ -159,9 +139,27 @@ export class MerchantAuthorizationService {
         for (const m of ownedByWallet) ids.add(m.id);
         for (const m of ownedByAccount) ids.add(m.id);
         for (const a of adminOf) ids.add(a.merchantId);
-        for (const m of allMerchants) {
-            if (this.matchesShopDomain(m, shopDomain)) ids.add(m.id);
-        }
+        for (const m of shopMatched) ids.add(m.id);
         return [...ids];
+    }
+
+    /**
+     * Merchants whose `domain`/`allowedDomains` match a proven Shopify shop
+     * domain (subdomain-aware). Single source of truth for the §4.7
+     * auto-link lookup, shared by `getAccessibleMerchantIds` and
+     * `GET /merchant/my` (§2.13).
+     *
+     * BACKLOG: this scans every merchant (`findAll` + in-app filter) per
+     * call — fine at today's merchant volume. When it grows, replace with an
+     * indexed SQL query (`domain = $1 OR domain LIKE '%.' || $1`, plus an
+     * `unnest(allowed_domains)` match) and drop the full-table scan.
+     */
+    async getShopDomainMatchedMerchants(
+        shopDomain: string
+    ): Promise<Awaited<ReturnType<MerchantRepository["findAll"]>>> {
+        const all = await this.merchantRepository.findAll();
+        return all.filter((merchant) =>
+            this.matchesShopDomain(merchant, shopDomain)
+        );
     }
 }

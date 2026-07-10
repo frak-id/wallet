@@ -23,6 +23,14 @@ export function useCompletePendingSession() {
             }
 
             const current = data.find((session) => session.current);
+            // A verified session MUST surface as the caller's own
+            // `current: true` row. A missing one means the token no longer
+            // resolves server-side (expired/revoked) — fail hard instead of
+            // minting a session around a placeholder `expiresAt` that would
+            // silently desync the store from the backend (§1.9 / M9).
+            if (!current) {
+                throw new Error("Could not resolve the verified session");
+            }
             const state = useAuthStore.getState();
             if (!state.token) {
                 throw new Error("No pending session");
@@ -32,12 +40,12 @@ export function useCompletePendingSession() {
                 token: state.token,
                 wallet: state.wallet,
                 accountId: state.accountId,
-                authMethod: current?.authMethod as
+                authMethod: current.authMethod as
                     | "siwe"
                     | "password"
                     | "shopify"
                     | undefined,
-                expiresAt: current?.expiresAt ?? state.expiresAt ?? Date.now(),
+                expiresAt: current.expiresAt,
                 pending2fa: false,
             });
 

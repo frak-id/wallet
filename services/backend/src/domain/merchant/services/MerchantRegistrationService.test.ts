@@ -177,7 +177,7 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         expect(adminRepo.add).toHaveBeenCalledTimes(1);
         expect(adminRepo.add).toHaveBeenCalledWith({
             merchantId: "new-merchant-id",
-            wallet: OTHER_ADMIN,
+            identity: { wallet: OTHER_ADMIN },
             addedBy: ADMIN_WALLET,
         });
     });

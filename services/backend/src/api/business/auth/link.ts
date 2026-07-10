@@ -1,9 +1,9 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
-import { HttpError, StepUpRequiredError, t } from "@backend-utils";
+import { HttpError, isUniqueViolation, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import { StepUpRequired401 } from "../middleware/session";
-import { requireDbSession, verifySiweProof } from "./common";
+import { assertStepUpFresh, requireDbSession, verifySiweProof } from "./common";
 
 /**
  * Credential linking — sensitive: requires a fresh step-up (§4.8).
@@ -14,12 +14,13 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
         "/wallet",
         async ({ body: { message, signature }, headers, request }) => {
             const auth = await requireDbSession(headers);
-            await requireFreshStepUp(auth);
+            await assertStepUpFresh(auth);
 
             const proof = await verifySiweProof({
                 message,
                 signature,
                 origin: request.headers.get("origin") ?? "",
+                requireFreshness: true,
             });
             if ("error" in proof) {
                 return status(400, proof.error);
@@ -59,7 +60,7 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
         "/password",
         async ({ body: { email, password }, headers }) => {
             const auth = await requireDbSession(headers);
-            await requireFreshStepUp(auth);
+            await assertStepUpFresh(auth);
 
             if (
                 !BusinessAuthContext.services.password.isValidPassword(password)
@@ -96,10 +97,24 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
                         "This email is already used by another account"
                     );
                 }
-                await BusinessAuthContext.repositories.account.setEmail(
-                    auth.accountId,
-                    normalizedEmail
-                );
+                try {
+                    await BusinessAuthContext.repositories.account.setEmail(
+                        auth.accountId,
+                        normalizedEmail
+                    );
+                } catch (error) {
+                    // The findByEmail check above is TOCTOU-racy: a concurrent
+                    // link can claim the email between it and this UPDATE, so
+                    // the partial unique index is the real arbiter — surface it
+                    // as the same 409 instead of a raw 500 (§2.1).
+                    if (isUniqueViolation(error)) {
+                        throw HttpError.conflict(
+                            "EMAIL_TAKEN",
+                            "This email is already used by another account"
+                        );
+                    }
+                    throw error;
+                }
             } else if (account.email !== normalizedEmail) {
                 throw HttpError.badRequest(
                     "EMAIL_MISMATCH",
@@ -139,25 +154,3 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
             },
         }
     );
-
-/**
- * Shares the exact `StepUpRequiredError` shape (header + body) with the
- * `requireStepUp` macro (`api/business/middleware/session.ts`) and
- * `2fa/setup` (`twoFactor.ts`) so the frontend's `stepUpAwareFetch`
- * recognizes it uniformly on credential-change routes.
- */
-async function requireFreshStepUp(auth: {
-    accountId: string;
-    twoFactorVerifiedAt: Date | null;
-}): Promise<void> {
-    const fresh = BusinessAuthContext.services.session.isStepUpFresh({
-        twoFactorVerifiedAt: auth.twoFactorVerifiedAt,
-    });
-    if (fresh) return;
-
-    const methods =
-        await BusinessAuthContext.services.account.getEnabledTwoFactorMethods(
-            auth.accountId
-        );
-    throw new StepUpRequiredError(methods);
-}

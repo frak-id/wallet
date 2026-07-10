@@ -23,6 +23,33 @@ export function extractAuthErrorMessage(
 }
 
 /**
+ * Extract the typed error `code` from an Eden error payload (the
+ * `t.ErrorResponse` shape `{ success, code, message }`), when present. Lets
+ * the UI map a specific backend code (e.g. `EMAIL_TAKEN`) to a translated
+ * message instead of echoing the raw English backend string (§2.1).
+ */
+export function extractAuthErrorCode(error: unknown): string | undefined {
+    if (error && typeof error === "object" && "value" in error) {
+        const { value } = error as { value: unknown };
+        if (value && typeof value === "object" && "code" in value) {
+            const { code } = value as { code: unknown };
+            if (typeof code === "string") return code;
+        }
+    }
+    return undefined;
+}
+
+/** Error carrying the backend's typed `code` so callers can map it (§2.1). */
+export class AuthError extends Error {
+    readonly code?: string;
+    constructor(message: string, code?: string) {
+        super(message);
+        this.name = "AuthError";
+        this.code = code;
+    }
+}
+
+/**
  * `POST /auth/2fa/challenge` — sends an email code, no-ops for TOTP, or
  * issues a SIWE anti-replay nonce (§4.6). Generic across methods; the SIWE
  * verify step signs a message embedding this nonce.

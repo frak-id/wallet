@@ -32,7 +32,8 @@ export default interface Resources {
           "invalidDomain": "Enter a valid myshopify.com domain",
           "submit": "Continue with Shopify"
         },
-        "ssoError": "We couldn't sign you in with Shopify. Please try again."
+        "ssoError": "We couldn't sign you in with Shopify. Please try again.",
+        "walletError": "We couldn't sign you in with your wallet. Please try again."
       },
       "twoFactor": {
         "codePlaceholder": "6-digit code",
@@ -1308,10 +1309,15 @@ export default interface Resources {
       },
       "team": {
         "add": {
-          "description": "Invite an admin to your team by wallet address.",
+          "description": "Invite an admin to your team by wallet address or email.",
+          "emailInvalid": "Invalid email address",
+          "emailLabel": "Member email",
+          "emailPlaceholder": "name@company.com",
           "error": "Could not add the admin. Try again.",
           "invalid": "Invalid wallet address",
           "label": "Member wallet",
+          "modeEmail": "Email",
+          "modeWallet": "Wallet",
           "placeholder": "0x…",
           "submit": "Add member",
           "title": "Add a member"
@@ -1644,6 +1650,7 @@ export default interface Resources {
       "security": {
         "credentials": {
           "addPassword": "Add a password to also sign in with email.",
+          "emailTaken": "This email is already used by another account.",
           "linkWallet": "Link a wallet",
           "passwordAdded": "Password added — check your email to verify it.",
           "savePassword": "Save password",

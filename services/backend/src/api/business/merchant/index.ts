@@ -1,4 +1,4 @@
-import { matchesShopDomain, t } from "@backend-utils";
+import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
 import { AuthContext } from "../../../domain/auth";
@@ -172,25 +172,24 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 )
             );
 
-            const allMerchantsRaw =
-                isPlatAdmin || shopDomain
-                    ? await MerchantContext.repositories.merchant.findAll()
-                    : [];
+            // Platform admins get the full list (for `allMerchants` + the
+            // affiliate batch); everyone else only needs their own rows.
+            const allMerchantsRaw = isPlatAdmin
+                ? await MerchantContext.repositories.merchant.findAll()
+                : [];
 
             // Shop-domain-matched merchants (excluding ones already owned)
             // surfaced as read/write "admin" access, same role granted by
-            // `MerchantAuthorizationService.checkAccess`. Deduped against
-            // `adminOf` below.
+            // `MerchantAuthorizationService.checkAccess`. Shared lookup with
+            // `getAccessibleMerchantIds` (§2.13). Deduped against `adminOf`
+            // below.
             const ownedIds = new Set(owned.map((m) => m.id));
             const shopMatched = shopDomain
-                ? allMerchantsRaw.filter(
-                      (m) =>
-                          !ownedIds.has(m.id) &&
-                          [m.domain, ...(m.allowedDomains ?? [])].some(
-                              (candidate) =>
-                                  matchesShopDomain(candidate, shopDomain)
-                          )
-                  )
+                ? (
+                      await MerchantContext.services.authorization.getShopDomainMatchedMerchants(
+                          shopDomain
+                      )
+                  ).filter((m) => !ownedIds.has(m.id))
                 : [];
 
             const nonNullAdmins = [

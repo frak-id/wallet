@@ -25,6 +25,16 @@ async function readStepUpMethods(
 }
 
 /**
+ * Build the `x-business-auth` header carrying the current session token, if
+ * any. Shared by the Eden `headers()` hook and any raw (non-Eden) fetch that
+ * needs the same header — previously hand-rolled separately in each caller.
+ */
+export function businessAuthHeaders(): Record<string, string> {
+    const token = getSafeAuthToken();
+    return token ? { "x-business-auth": token } : {};
+}
+
+/**
  * Eden treaty can't replay a request from `onResponse`, so step-up handling
  * wraps the underlying `fetch` instead (design doc §4.5): on a
  * `step-up-required` 401, open the shared 2FA modal and transparently retry
@@ -58,13 +68,11 @@ export const authenticatedBackendApi = treaty<App>(
         fetcher: stepUpAwareFetch,
         // Auto add the authentication related header if present
         headers(_path, options) {
-            // Get our token
-            const token = getSafeAuthToken();
-
             // Build our new headers
             const headers = new Headers(options.headers);
-            if (token && !headers.has("x-business-auth")) {
-                headers.append("x-business-auth", token);
+            if (!headers.has("x-business-auth")) {
+                const { "x-business-auth": token } = businessAuthHeaders();
+                if (token) headers.append("x-business-auth", token);
             }
 
             // Return the new headers

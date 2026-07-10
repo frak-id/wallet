@@ -4,6 +4,7 @@ import { constantTimeEqual } from "@oslojs/crypto/subtle";
 import { generateState } from "arctic";
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
+import { resolveClientIp } from "./common";
 
 function statesMatch(a: string, b: string): boolean {
     return (
@@ -79,7 +80,7 @@ export const shopifyAuthRoutes = new Elysia({ prefix: "/shopify" })
     )
     .get(
         "/callback",
-        async ({ query, cookie, request }) => {
+        async ({ query, cookie, request, headers, server }) => {
             const sso = BusinessAuthContext.services.shopifySso;
             const { shop, code, state } = query;
 
@@ -130,6 +131,7 @@ export const shopifyAuthRoutes = new Elysia({ prefix: "/shopify" })
                 {
                     accountId: account.id,
                     authMethod: "shopify",
+                    ip: resolveClientIp({ request, headers, server }),
                     userAgent: request.headers.get("user-agent") ?? undefined,
                 }
             );

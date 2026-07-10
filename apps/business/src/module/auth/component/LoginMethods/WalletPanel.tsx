@@ -1,9 +1,13 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useNavigate } from "@tanstack/react-router";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { extractAuthErrorMessage } from "@/module/auth/hooks/useTwoFactorChallenge";
+import { safeRedirectTarget } from "@/module/auth/utils/safeRedirect";
 import { useAuthStore } from "@/stores/authStore";
 
 // SIWE session lifetime: 1 week.
@@ -13,21 +17,30 @@ const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7;
  * Unchanged SIWE flow (§4.6): `POST /auth/login` mints an already
  * 2FA-verified session — the passkey ceremony counts as inherent MFA.
  */
-export function WalletPanel() {
+export function WalletPanel({ redirect }: { redirect?: string }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [, startTransition] = useTransition();
+    const [error, setError] = useState<string | null>(null);
 
     const { mutate: authenticate, isPending } = useSiweAuthenticate({
         mutations: {
             onSuccess: async (data) => {
+                setError(null);
                 const response = await authenticatedBackendApi.auth.login.post({
                     message: data.message,
                     signature: data.signature,
                 });
 
                 if (response.error) {
-                    console.error("Login failed:", response.error);
+                    // Surface the failure like `EmailPanel` does, instead of
+                    // swallowing it into the console (§2.6).
+                    setError(
+                        extractAuthErrorMessage(
+                            response.error,
+                            t("auth.login.walletError")
+                        )
+                    );
                     return;
                 }
 
@@ -39,28 +52,38 @@ export function WalletPanel() {
                 });
 
                 startTransition(() => {
-                    navigate({ to: "/dashboard" });
+                    navigate({ to: safeRedirectTarget(redirect) });
                 });
+            },
+            onError: (err) => {
+                setError(
+                    extractAuthErrorMessage(err, t("auth.login.walletError"))
+                );
             },
         },
     });
 
-    const handleConnect = () =>
+    const handleConnect = () => {
+        setError(null);
         authenticate({
             siwe: {
                 expirationTimeTimestamp: Date.now() + SESSION_DURATION_MS,
             },
         });
+    };
 
     return (
-        <Button
-            variant="primary"
-            size="large"
-            width="auto"
-            loading={isPending}
-            onClick={handleConnect}
-        >
-            {t("auth.login.connect")}
-        </Button>
+        <Stack space="s">
+            <Button
+                variant="primary"
+                size="large"
+                width="auto"
+                loading={isPending}
+                onClick={handleConnect}
+            >
+                {t("auth.login.connect")}
+            </Button>
+            {error && <FieldError>{error}</FieldError>}
+        </Stack>
     );
 }

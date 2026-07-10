@@ -188,7 +188,7 @@ export class MerchantRegistrationService {
                 otherAdmins.map((admin) =>
                     this.merchantAdminRepository.add({
                         merchantId: merchant.id,
-                        wallet: admin,
+                        identity: { wallet: admin },
                         addedBy: registrarWallet,
                     })
                 )

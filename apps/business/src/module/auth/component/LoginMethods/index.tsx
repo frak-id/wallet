@@ -13,7 +13,7 @@ import { WalletPanel } from "./WalletPanel";
  * Login method selector (§2 of the design doc): wallet (unchanged SIWE),
  * email/password, and Shopify SSO.
  */
-export function LoginMethods() {
+export function LoginMethods({ redirect }: { redirect?: string }) {
     const { t } = useTranslation();
 
     return (
@@ -30,10 +30,10 @@ export function LoginMethods() {
                 </TabsTrigger>
             </TabsList>
             <TabsContent value="wallet">
-                <WalletPanel />
+                <WalletPanel redirect={redirect} />
             </TabsContent>
             <TabsContent value="email">
-                <EmailPanel />
+                <EmailPanel redirect={redirect} />
             </TabsContent>
             <TabsContent value="shopify">
                 <ShopifyPanel />

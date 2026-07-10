@@ -11,6 +11,7 @@
             "footerTerms": "Terms & Conditions",
             "footerPrivacy": "Privacy Policy",
             "ssoError": "We couldn't sign you in with Shopify. Please try again.",
+            "walletError": "We couldn't sign you in with your wallet. Please try again.",
             "methods": {
                 "wallet": "Wallet",
                 "email": "Email",
@@ -1319,7 +1320,8 @@
                 "linkWallet": "Link a wallet",
                 "addPassword": "Add a password to also sign in with email.",
                 "savePassword": "Save password",
-                "passwordAdded": "Password added — check your email to verify it."
+                "passwordAdded": "Password added — check your email to verify it.",
+                "emailTaken": "This email is already used by another account."
             },
             "sessions": {
                 "title": "Active sessions",
@@ -1595,12 +1597,17 @@
             "saveError": "Some changes could not be saved. Try again.",
             "add": {
                 "title": "Add a member",
-                "description": "Invite an admin to your team by wallet address.",
+                "description": "Invite an admin to your team by wallet address or email.",
                 "label": "Member wallet",
                 "placeholder": "0x…",
                 "submit": "Add member",
                 "invalid": "Invalid wallet address",
-                "error": "Could not add the admin. Try again."
+                "error": "Could not add the admin. Try again.",
+                "modeWallet": "Wallet",
+                "modeEmail": "Email",
+                "emailLabel": "Member email",
+                "emailPlaceholder": "name@company.com",
+                "emailInvalid": "Invalid email address"
             }
         }
     },

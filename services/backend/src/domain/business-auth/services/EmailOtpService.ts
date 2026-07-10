@@ -48,8 +48,9 @@ export class EmailOtpService {
     ) {}
 
     private hashCode(code: string): string {
+        // Codes are always `[0-9]{6}` — no case to fold, so `.trim()` alone.
         return encodeHexLowerCase(
-            sha256(new TextEncoder().encode(code.trim().toUpperCase()))
+            sha256(new TextEncoder().encode(code.trim()))
         );
     }
 

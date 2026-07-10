@@ -3,13 +3,30 @@ import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useState } from "react";
+import { encodeQR } from "qr";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/module/forms/Input";
 import {
     useTwoFactorActivate,
     useTwoFactorSetup,
 } from "@/module/settings/security/useSecuritySettings";
+
+/**
+ * Renders the TOTP `otpauthUri` as an SVG QR code client-side (§2.2): the
+ * backend only returns the otpauth URI now, not a pre-rendered SVG — this
+ * replaces the previous `dangerouslySetInnerHTML` block of a
+ * server-generated SVG string with a client-generated one built the same
+ * way (`qr`'s built-in SVG output), so it's still just markup, not user
+ * input reaching the DOM.
+ */
+function TotpQrCode({ otpauthUri }: { otpauthUri: string }) {
+    const qrSvg = useMemo(
+        () => encodeQR(otpauthUri, "svg", { ecc: "medium" }),
+        [otpauthUri]
+    );
+    return <div dangerouslySetInnerHTML={{ __html: qrSvg }} />;
+}
 
 /**
  * TOTP enrollment (§5 deliverable 5): setup → QR + otpauth URI → 6-digit
@@ -45,7 +62,7 @@ export function TotpEnrollment() {
                 </Notice>
                 <Stack space="xxs">
                     {activateData.recoveryCodes.map((recoveryCode) => (
-                        <Text key={recoveryCode} variant="bodySmall" as="code">
+                        <Text key={recoveryCode} variant="bodySmall" as="span">
                             {recoveryCode}
                         </Text>
                     ))}
@@ -54,14 +71,13 @@ export function TotpEnrollment() {
         );
     }
 
-    if (step === "enrolling" && setupData?.qrSvg) {
+    if (step === "enrolling" && setupData?.otpauthUri) {
         return (
             <Stack space="s">
                 <Text variant="bodySmall" color="secondary">
                     {t("settings.security.totp.scanHint")}
                 </Text>
-                {/* Server-generated QR SVG, no user input. */}
-                <div dangerouslySetInnerHTML={{ __html: setupData.qrSvg }} />
+                <TotpQrCode otpauthUri={setupData.otpauthUri} />
                 <Input
                     inputMode="numeric"
                     autoComplete="one-time-code"

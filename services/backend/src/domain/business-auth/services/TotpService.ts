@@ -1,12 +1,12 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import type { AdminWalletsRepository } from "@backend-infrastructure/keys/AdminWalletsRepository";
+import { HttpError } from "@backend-utils";
 import { sha256 } from "@oslojs/crypto/sha2";
-import { constantTimeEqual } from "@oslojs/crypto/subtle";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { createTOTPKeyURI, verifyTOTPWithGracePeriod } from "@oslojs/otp";
-import { renderSVG } from "uqr";
 import { bytesToHex, type Hex, hexToBytes } from "viem";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
+import { isAttemptAllowed, nextFailureState } from "./attemptGuard";
 
 const TOTP_KEY_DERIVATION_LABEL = "business-totp-encryption";
 
@@ -19,7 +19,6 @@ const RECOVERY_CODE_BYTES = 5; // 10 hex chars
 
 export type TotpSetup = {
     otpauthUri: string;
-    qrSvg: string;
 };
 
 /**
@@ -84,8 +83,9 @@ export class TotpService {
 
     /**
      * Begin (or restart) enrollment: mint a fresh 20-byte secret, persist it
-     * encrypted and un-activated, return the otpauth URI + QR. Refuses to
-     * overwrite an activated enrollment.
+     * encrypted and un-activated, return the otpauth URI. The QR is rendered
+     * client-side from this URI (§2.2). Refuses to overwrite an activated
+     * enrollment.
      */
     async setup(params: {
         accountId: string;
@@ -95,7 +95,10 @@ export class TotpService {
             params.accountId
         );
         if (existing?.totpActivatedAt) {
-            throw new Error("TOTP already activated for this account");
+            throw HttpError.conflict(
+                "TOTP_ALREADY_ACTIVATED",
+                "TOTP already activated for this account"
+            );
         }
 
         const secret = crypto.getRandomValues(new Uint8Array(20));
@@ -111,7 +114,7 @@ export class TotpService {
             TOTP_INTERVAL_SEC,
             TOTP_DIGITS
         );
-        return { otpauthUri, qrSvg: renderSVG(otpauthUri) };
+        return { otpauthUri };
     }
 
     /**
@@ -151,30 +154,46 @@ export class TotpService {
         const row = await this.accountRepository.findById(params.accountId);
         if (!row?.totpSecretEnc || !row.totpActivatedAt) return false;
 
-        if (await this.verifyCode(row.totpSecretEnc, params.code)) {
-            return true;
+        // Per-account lockout (§1.8): once the windowed failure counter is
+        // exhausted, stop verifying until the window rolls over.
+        const attemptState = {
+            attempts: row.twoFactorAttempts,
+            windowStartedAt: row.twoFactorWindowStartedAt,
+        };
+        if (!isAttemptAllowed(attemptState)) {
+            throw HttpError.tooManyRequests(
+                "TWO_FACTOR_LOCKED",
+                "Too many failed attempts — try again later"
+            );
         }
 
-        // Recovery-code fallback (single-use). All hashes are fixed-length
-        // sha256 hex, so a constant-time compare per candidate avoids an
-        // early-exit timing signal — the array-scan itself still visits every
-        // element regardless of match position.
-        const codeHash = this.hashRecoveryCode(params.code);
-        const codeHashBytes = new TextEncoder().encode(codeHash);
-        const matched = (row.totpRecoveryCodesHash ?? []).some((candidate) =>
-            constantTimeEqual(
-                new TextEncoder().encode(candidate),
-                codeHashBytes
-            )
-        );
-        if (matched) {
-            await this.accountRepository.consumeTotpRecoveryCode(
-                params.accountId,
-                codeHash
+        if (await this.verifyCode(row.totpSecretEnc, params.code)) {
+            await this.accountRepository.resetTwoFactorAttempts(
+                params.accountId
             );
             return true;
         }
 
+        // Recovery-code fallback: one atomic conditional UPDATE both matches
+        // and single-use-consumes the code (§1.7), immune to double-spend.
+        const consumed = await this.accountRepository.consumeTotpRecoveryCode(
+            params.accountId,
+            this.hashRecoveryCode(params.code)
+        );
+        if (consumed) {
+            await this.accountRepository.resetTwoFactorAttempts(
+                params.accountId
+            );
+            return true;
+        }
+
+        // Record the failure against the windowed counter.
+        const next = nextFailureState(attemptState);
+        await this.accountRepository.recordTwoFactorFailure({
+            accountId: params.accountId,
+            attempts: next.attempts,
+            windowStartedAt: next.windowStartedAt,
+        });
         return false;
     }
 

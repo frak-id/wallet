@@ -6,6 +6,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
+import { AuthError } from "@/module/auth/hooks/useTwoFactorChallenge";
 import { Input } from "@/module/forms/Input";
 import { useLinkPassword } from "@/module/settings/security/useSecuritySettings";
 import { useAuthStore } from "@/stores/authStore";
@@ -67,6 +68,14 @@ function AddPasswordForm() {
         isSuccess,
     } = useLinkPassword();
 
+    // Map the typed EMAIL_TAKEN conflict to a translated message; fall back
+    // to the backend message for anything else (§2.1).
+    const errorMessage = error
+        ? error instanceof AuthError && error.code === "EMAIL_TAKEN"
+            ? t("settings.security.credentials.emailTaken")
+            : error.message
+        : null;
+
     if (isSuccess) {
         return (
             <Text variant="bodySmall" color="success">
@@ -94,7 +103,7 @@ function AddPasswordForm() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
             />
-            {error && <FieldError>{error.message}</FieldError>}
+            {errorMessage && <FieldError>{errorMessage}</FieldError>}
             <Button
                 size="small"
                 variant="secondary"

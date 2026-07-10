@@ -8,6 +8,17 @@ export type SiweVerifyResult =
     | { valid: false; error: string };
 
 /**
+ * SIWE message freshness bounds (opt-in, see `verifySiweSignature`). No
+ * server-side nonce store — replay resistance for the login/link flows comes
+ * from requiring a recently-minted message instead (design decision, plan
+ * §1.3). Paired-wallet flows need phone unlock + wallet open, so 2 minutes
+ * of past skew covers the slowest legitimate ceremony; a small forward skew
+ * absorbs client/server clock drift.
+ */
+const SIWE_MAX_AGE_MS = 2 * 60 * 1000;
+const SIWE_MAX_FORWARD_SKEW_MS = 30 * 1000;
+
+/**
  * Parse the claimed signer address out of an (unverified) SIWE message,
  * without checking the signature. Used only by callers whose expected
  * statement is parameterized by the address (registration, ownership
@@ -33,6 +44,12 @@ export async function verifySiweSignature(params: {
     message: string;
     signature: Hex;
     requestOrigin: string;
+    /**
+     * Enforce message freshness via `issuedAt` (login + wallet link, plan
+     * §1.3). Off by default so callers with their own replay binding (the
+     * `siwe` 2FA path pins a per-session nonce) are unaffected.
+     */
+    requireFreshness?: boolean;
 }): Promise<SiweVerifyResult> {
     const siweMessage = parseSiweMessage(params.message);
     if (!siweMessage?.address) {
@@ -48,12 +65,21 @@ export async function verifySiweSignature(params: {
         return { valid: false, error: "Missing or invalid Origin header" };
     }
 
+    // Passing `time` lets viem enforce `expirationTime`/`notBefore` when the
+    // message carries them.
+    const now = new Date();
     const isValid = validateSiweMessage({
         message: siweMessage,
         domain: originHost,
+        time: now,
     });
     if (!isValid) {
         return { valid: false, error: "SIWE message validation failed" };
+    }
+
+    if (params.requireFreshness) {
+        const freshness = checkSiweFreshness(siweMessage.issuedAt, now);
+        if (!freshness.valid) return freshness;
     }
 
     const isValidSignature = await verifyMessage(viemClient, {
@@ -70,6 +96,30 @@ export async function verifySiweSignature(params: {
         wallet: siweMessage.address,
         nonce: siweMessage.nonce,
     };
+}
+
+/**
+ * Reject SIWE messages whose `issuedAt` is missing, too old, or too far in
+ * the future (clock-skew tolerant). See `SIWE_MAX_AGE_MS` for the rationale.
+ */
+function checkSiweFreshness(
+    issuedAt: Date | undefined,
+    now: Date
+): { valid: true } | { valid: false; error: string } {
+    if (!issuedAt) {
+        return { valid: false, error: "SIWE message is missing issuedAt" };
+    }
+    const ageMs = now.getTime() - issuedAt.getTime();
+    if (ageMs > SIWE_MAX_AGE_MS) {
+        return { valid: false, error: "SIWE message has expired" };
+    }
+    if (ageMs < -SIWE_MAX_FORWARD_SKEW_MS) {
+        return {
+            valid: false,
+            error: "SIWE message issuedAt is in the future",
+        };
+    }
+    return { valid: true };
 }
 
 /**
