@@ -9,7 +9,53 @@
             "dashboardImageAlt": "Frak Ad Manager dashboard preview",
             "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",
             "footerTerms": "Terms & Conditions",
-            "footerPrivacy": "Privacy Policy"
+            "footerPrivacy": "Privacy Policy",
+            "ssoError": "We couldn't sign you in with Shopify. Please try again.",
+            "methods": {
+                "wallet": "Wallet",
+                "email": "Email",
+                "shopify": "Shopify"
+            },
+            "email": {
+                "emailPlaceholder": "Email address",
+                "passwordPlaceholder": "Password",
+                "newPasswordPlaceholder": "Create a password",
+                "passwordHint": "At least 10 characters.",
+                "submit": "Sign in",
+                "registerSubmit": "Create account",
+                "noAccount": "No account yet?",
+                "registerCta": "Register",
+                "backToLogin": "Back to sign in",
+                "registerSuccess": "If this email is not already registered, you'll receive a verification code shortly."
+            },
+            "shopify": {
+                "submit": "Continue with Shopify",
+                "invalidDomain": "Enter a valid myshopify.com domain"
+            }
+        },
+        "twoFactor": {
+            "title": "Verify your identity",
+            "subtitle": "Confirm it's you before continuing.",
+            "pendingHint": "Verifying your session…",
+            "method": {
+                "email": "Email code",
+                "totp": "Authenticator app",
+                "siwe": "Wallet"
+            },
+            "codePlaceholder": "6-digit code",
+            "verify": "Verify",
+            "genericError": "Verification failed. Please try again.",
+            "email": {
+                "sendCode": "Send code by email",
+                "sentHint": "Enter the code we sent to your email."
+            },
+            "totp": {
+                "hint": "Enter the code from your authenticator app."
+            },
+            "siwe": {
+                "hint": "Sign a message with your wallet to confirm it's you.",
+                "cta": "Sign with wallet"
+            }
         }
     },
     "forms": {
@@ -1060,6 +1106,11 @@
             "pending": "Pending rewards (locked)",
             "withdrawable": "Available to migrate",
             "migrate": "Migrate funds to new bank"
+        },
+        "linkWallet": {
+            "title": "Link a wallet to manage funds",
+            "description": "Withdrawing, adjusting allowance, and pausing distribution require a wallet signature. Link a Frak wallet to unlock these actions.",
+            "cta": "Link a Frak wallet"
         }
     },
     "settings": {
@@ -1250,6 +1301,32 @@
                     "void": "Something went wrong while voiding the document. Please try again."
                 }
             }
+        },
+        "security": {
+            "title": "Security",
+            "description": "Manage two-factor authentication and linked sign-in methods.",
+            "totp": {
+                "title": "Authenticator app",
+                "enable": "Enable authenticator app",
+                "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
+                "confirm": "Confirm",
+                "recoveryTitle": "Save your recovery codes",
+                "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app."
+            },
+            "credentials": {
+                "title": "Sign-in methods",
+                "wallet": "Wallet",
+                "linkWallet": "Link a wallet",
+                "addPassword": "Add a password to also sign in with email.",
+                "savePassword": "Save password",
+                "passwordAdded": "Password added — check your email to verify it."
+            },
+            "sessions": {
+                "title": "Active sessions",
+                "description": "Devices and browsers currently signed in to your account.",
+                "current": "this device",
+                "revoke": "Revoke"
+            }
         }
     },
     "merchant": {
@@ -1340,7 +1417,8 @@
                 "copy": "Copy",
                 "helpQuestion": "How to add a DNS TXT record in my DNS settings?",
                 "helpBody": "Adding a DNS TXT record verifies that you own this domain. The process varies depending on your DNS provider (e.g., Cloudflare, GoDaddy, Namecheap). For detailed step-by-step instructions, please visit our documentation:",
-                "helpCta": "View DNS Setup Guide"
+                "helpCta": "View DNS Setup Guide",
+                "verifiedViaShopify": "Domain verified thanks to your Shopify session"
             },
             "summary": {
                 "label": "Summary",

@@ -59,50 +59,11 @@ export function useCheckDomainName() {
             return {
                 isDomainValid: data?.isDomainValid ?? false,
                 isAlreadyRegistered: data?.isAlreadyRegistered ?? false,
+                // §4.10 third DNS bypass: the session's Shopify credential
+                // already proved this domain via OAuth — skip the DNS TXT flow
+                // and show the "verified thanks to Shopify" banner instead.
+                verifiedViaShopify: data?.verifiedViaShopify ?? false,
             };
         },
-    });
-}
-
-/**
- * Hook to listen to the domain name setup
- * @param domain
- * @param setupCode
- */
-export function useListenToDomainNameSetup({
-    domain,
-    setupCode,
-}: {
-    domain: string;
-    setupCode: string;
-}) {
-    return useQuery({
-        queryKey: [
-            "merchant",
-            "register",
-            "listen-to-domain-setup",
-            domain,
-            setupCode,
-        ],
-        queryFn: async () => {
-            const { data, error } =
-                await authenticatedBackendApi.merchant.register.verify.get({
-                    query: { domain, setupCode },
-                });
-            if (error) {
-                console.warn(
-                    "Error while listening to domain name setup",
-                    error
-                );
-                return false;
-            }
-
-            if (data?.isAlreadyRegistered) {
-                return false;
-            }
-
-            return data?.isDomainValid ?? false;
-        },
-        enabled: !!domain,
     });
 }

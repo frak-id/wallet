@@ -9,7 +9,53 @@
             "dashboardImageAlt": "Aperçu du tableau de bord Frak Ad Manager",
             "footerCopyright": "© {{year}} FrakLabs. Tous droits réservés.",
             "footerTerms": "Conditions générales",
-            "footerPrivacy": "Politique de confidentialité"
+            "footerPrivacy": "Politique de confidentialité",
+            "ssoError": "La connexion avec Shopify a échoué. Veuillez réessayer.",
+            "methods": {
+                "wallet": "Portefeuille",
+                "email": "E-mail",
+                "shopify": "Shopify"
+            },
+            "email": {
+                "emailPlaceholder": "Adresse e-mail",
+                "passwordPlaceholder": "Mot de passe",
+                "newPasswordPlaceholder": "Créer un mot de passe",
+                "passwordHint": "Au moins 10 caractères.",
+                "submit": "Se connecter",
+                "registerSubmit": "Créer un compte",
+                "noAccount": "Pas encore de compte ?",
+                "registerCta": "S'inscrire",
+                "backToLogin": "Retour à la connexion",
+                "registerSuccess": "Si cet e-mail n'est pas déjà enregistré, vous recevrez bientôt un code de vérification."
+            },
+            "shopify": {
+                "submit": "Continuer avec Shopify",
+                "invalidDomain": "Saisissez un domaine myshopify.com valide"
+            }
+        },
+        "twoFactor": {
+            "title": "Vérifiez votre identité",
+            "subtitle": "Confirmez que c'est bien vous avant de continuer.",
+            "pendingHint": "Vérification de votre session…",
+            "method": {
+                "email": "Code par e-mail",
+                "totp": "Application d'authentification",
+                "siwe": "Portefeuille"
+            },
+            "codePlaceholder": "Code à 6 chiffres",
+            "verify": "Vérifier",
+            "genericError": "Échec de la vérification. Veuillez réessayer.",
+            "email": {
+                "sendCode": "Envoyer un code par e-mail",
+                "sentHint": "Saisissez le code envoyé à votre e-mail."
+            },
+            "totp": {
+                "hint": "Saisissez le code de votre application d'authentification."
+            },
+            "siwe": {
+                "hint": "Signez un message avec votre portefeuille pour confirmer que c'est vous.",
+                "cta": "Signer avec le portefeuille"
+            }
         }
     },
     "forms": {
@@ -1060,6 +1106,11 @@
             "pending": "Récompenses en attente (bloquées)",
             "withdrawable": "Disponible pour la migration",
             "migrate": "Migrer les fonds vers la nouvelle banque"
+        },
+        "linkWallet": {
+            "title": "Liez un portefeuille pour gérer les fonds",
+            "description": "Retirer, ajuster l'allocation et mettre en pause la distribution nécessitent une signature de portefeuille. Liez un portefeuille Frak pour débloquer ces actions.",
+            "cta": "Lier un portefeuille Frak"
         }
     },
     "settings": {
@@ -1250,6 +1301,32 @@
                     "void": "Une erreur est survenue lors de l'annulation du document. Veuillez réessayer."
                 }
             }
+        },
+        "security": {
+            "title": "Sécurité",
+            "description": "Gérez l'authentification à deux facteurs et les méthodes de connexion liées.",
+            "totp": {
+                "title": "Application d'authentification",
+                "enable": "Activer l'application d'authentification",
+                "scanHint": "Scannez ce QR code avec votre application d'authentification, puis saisissez le code affiché.",
+                "confirm": "Confirmer",
+                "recoveryTitle": "Enregistrez vos codes de récupération",
+                "recoveryHint": "Conservez-les en lieu sûr — chaque code est utilisable une seule fois si vous perdez l'accès à votre application."
+            },
+            "credentials": {
+                "title": "Méthodes de connexion",
+                "wallet": "Portefeuille",
+                "linkWallet": "Lier un portefeuille",
+                "addPassword": "Ajoutez un mot de passe pour aussi vous connecter par e-mail.",
+                "savePassword": "Enregistrer le mot de passe",
+                "passwordAdded": "Mot de passe ajouté — vérifiez votre e-mail pour le confirmer."
+            },
+            "sessions": {
+                "title": "Sessions actives",
+                "description": "Appareils et navigateurs actuellement connectés à votre compte.",
+                "current": "cet appareil",
+                "revoke": "Révoquer"
+            }
         }
     },
     "merchant": {
@@ -1340,7 +1417,8 @@
                 "copy": "Copier",
                 "helpQuestion": "Comment ajouter un enregistrement DNS TXT dans mes paramètres DNS ?",
                 "helpBody": "Ajouter un enregistrement DNS TXT confirme que vous êtes propriétaire de ce domaine. La procédure varie selon votre fournisseur DNS (par ex. Cloudflare, GoDaddy, Namecheap). Pour des instructions détaillées étape par étape, consultez notre documentation :",
-                "helpCta": "Voir le guide de configuration DNS"
+                "helpCta": "Voir le guide de configuration DNS",
+                "verifiedViaShopify": "Domaine vérifié grâce à votre session Shopify"
             },
             "summary": {
                 "label": "Récapitulatif",

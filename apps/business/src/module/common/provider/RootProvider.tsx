@@ -12,6 +12,7 @@ import {
 import { useRouterState } from "@tanstack/react-router";
 import { type PropsWithChildren, useEffect } from "react";
 import { frakWalletSdkConfig } from "@/config/frakWallet";
+import { TwoFactorModal } from "@/module/auth/component/TwoFactorModal";
 import { openPanel } from "../utils/openPanel";
 
 /**
@@ -97,6 +98,7 @@ export function RootProvider({ children }: PropsWithChildren) {
                     <RoutePageAttribute />
                     <ReactQueryDevtools initialIsOpen={false} />
                     {children}
+                    <TwoFactorModal />
                 </FrakIFrameClientProvider>
             </FrakConfigProvider>
         </PersistQueryClientProvider>

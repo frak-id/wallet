@@ -29,6 +29,7 @@ export function MerchantWizard() {
     const queryClient = useQueryClient();
     const [step, setStep] = useState<1 | 2>(1);
     const [domainError, setDomainError] = useState<string | undefined>();
+    const [verifiedViaShopify, setVerifiedViaShopify] = useState(false);
     const { isPlatformAdmin } = useMyMerchants();
 
     const form = useForm<MerchantNew>({
@@ -80,10 +81,11 @@ export function MerchantWizard() {
 
     const onContinue = form.handleSubmit(async (values) => {
         try {
-            const { isAlreadyRegistered, isDomainValid } = await checkDomain({
-                domain: values.domain,
-                setupCode: values.setupCode,
-            });
+            const { isAlreadyRegistered, isDomainValid, verifiedViaShopify } =
+                await checkDomain({
+                    domain: values.domain,
+                    setupCode: values.setupCode,
+                });
             if (isAlreadyRegistered) {
                 setDomainError(
                     t("merchant.create.fields.domain.alreadyRegistered", {
@@ -98,6 +100,7 @@ export function MerchantWizard() {
                 return;
             }
             setDomainError(undefined);
+            setVerifiedViaShopify(verifiedViaShopify);
             setStep(2);
         } catch {
             setDomainError(t("merchant.create.fields.domain.verifyFailed"));
@@ -157,6 +160,7 @@ export function MerchantWizard() {
                         <MerchantDetailsStep
                             domainError={domainError}
                             isPlatformAdmin={isPlatformAdmin}
+                            verifiedViaShopify={verifiedViaShopify}
                         />
                     </form>
                 </Form>

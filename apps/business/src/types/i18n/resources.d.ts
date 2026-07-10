@@ -4,13 +4,59 @@ export default interface Resources {
       "login": {
         "connect": "Connect to Frak Ad Manager",
         "dashboardImageAlt": "Frak Ad Manager dashboard preview",
+        "email": {
+          "backToLogin": "Back to sign in",
+          "emailPlaceholder": "Email address",
+          "newPasswordPlaceholder": "Create a password",
+          "noAccount": "No account yet?",
+          "passwordHint": "At least 10 characters.",
+          "passwordPlaceholder": "Password",
+          "registerCta": "Register",
+          "registerSubmit": "Create account",
+          "registerSuccess": "If this email is not already registered, you'll receive a verification code shortly.",
+          "submit": "Sign in"
+        },
         "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",
         "footerPrivacy": "Privacy Policy",
         "footerTerms": "Terms & Conditions",
         "frakLabsLogoAlt": "Frak Labs",
         "heroSubtitle": "Register in a second. No email, no password.",
         "heroTitleLine1": "Access and discover",
-        "heroTitleLine2": "Frak Ad Manager"
+        "heroTitleLine2": "Frak Ad Manager",
+        "methods": {
+          "email": "Email",
+          "shopify": "Shopify",
+          "wallet": "Wallet"
+        },
+        "shopify": {
+          "invalidDomain": "Enter a valid myshopify.com domain",
+          "submit": "Continue with Shopify"
+        },
+        "ssoError": "We couldn't sign you in with Shopify. Please try again."
+      },
+      "twoFactor": {
+        "codePlaceholder": "6-digit code",
+        "email": {
+          "sendCode": "Send code by email",
+          "sentHint": "Enter the code we sent to your email."
+        },
+        "genericError": "Verification failed. Please try again.",
+        "method": {
+          "email": "Email code",
+          "siwe": "Wallet",
+          "totp": "Authenticator app"
+        },
+        "pendingHint": "Verifying your session…",
+        "siwe": {
+          "cta": "Sign with wallet",
+          "hint": "Sign a message with your wallet to confirm it's you."
+        },
+        "subtitle": "Confirm it's you before continuing.",
+        "title": "Verify your identity",
+        "totp": {
+          "hint": "Enter the code from your authenticator app."
+        },
+        "verify": "Verify"
       }
     },
     "bank": {
@@ -963,6 +1009,11 @@ export default interface Resources {
         "totalBalance": "Total balance",
         "withdrawable": "Available to migrate"
       },
+      "linkWallet": {
+        "cta": "Link a Frak wallet",
+        "description": "Withdrawing, adjusting allowance, and pausing distribution require a wallet signature. Link a Frak wallet to unlock these actions.",
+        "title": "Link a wallet to manage funds"
+      },
       "pause": {
         "title": "Pause rewards"
       },
@@ -1036,7 +1087,8 @@ export default interface Resources {
           "helpCta": "View DNS Setup Guide",
           "helpQuestion": "How to add a DNS TXT record in my DNS settings?",
           "helper": "Add this TXT record to your domain's DNS settings:",
-          "title": "DNS TXT Record Required"
+          "title": "DNS TXT Record Required",
+          "verifiedViaShopify": "Domain verified thanks to your Shopify session"
         },
         "fields": {
           "currency": {
@@ -1588,6 +1640,32 @@ export default interface Resources {
           "fr": "French"
         },
         "title": "Language"
+      },
+      "security": {
+        "credentials": {
+          "addPassword": "Add a password to also sign in with email.",
+          "linkWallet": "Link a wallet",
+          "passwordAdded": "Password added — check your email to verify it.",
+          "savePassword": "Save password",
+          "title": "Sign-in methods",
+          "wallet": "Wallet"
+        },
+        "description": "Manage two-factor authentication and linked sign-in methods.",
+        "sessions": {
+          "current": "this device",
+          "description": "Devices and browsers currently signed in to your account.",
+          "revoke": "Revoke",
+          "title": "Active sessions"
+        },
+        "title": "Security",
+        "totp": {
+          "confirm": "Confirm",
+          "enable": "Enable authenticator app",
+          "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app.",
+          "recoveryTitle": "Save your recovery codes",
+          "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
+          "title": "Authenticator app"
+        }
       },
       "tabs": {
         "billing": "Billing",

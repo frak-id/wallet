@@ -2,7 +2,7 @@ import {
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
-import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
+import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import {
     type UseMutationOptions,
     useMutation,
@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-query";
 import { useState } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { useAuthStore } from "@/stores/authStore";
 
 /**
  * Extract error message from API error response
@@ -32,7 +33,7 @@ function extractErrorMessage(error: unknown): string {
  */
 export function useRegisterMerchant(
     options?: UseMutationOptions<
-        { merchantId: string },
+        { merchantId: string; verifiedViaShopify: boolean },
         Error,
         {
             name: string;
@@ -48,7 +49,6 @@ export function useRegisterMerchant(
     >
 ) {
     const queryClient = useQueryClient();
-    const { data: walletStatus } = useWalletStatus();
     const { mutateAsync: siweAuthenticate } = useSiweAuthenticate();
     const [infoTxt, setInfoTxt] = useState<string | undefined>();
 
@@ -72,30 +72,29 @@ export function useRegisterMerchant(
             useFrakBank,
             takeads,
         }) {
-            const wallet = walletStatus?.wallet;
-            if (!wallet) {
-                throw new Error("Wallet not connected");
+            const defaultRewardToken = getTokenAddressForStablecoin(currency);
+
+            // Walletless accounts (§4.10): the step-up-verified session IS the
+            // ownership proof — no SIWE signature to collect, `message`/
+            // `signature` are simply omitted from the request body.
+            const wallet = useAuthStore.getState().wallet;
+            let siweProof: {
+                message: string;
+                signature: `0x${string}`;
+            } | null = null;
+            if (wallet) {
+                const statement = `I authorize registration of merchant "${domain}" to wallet ${wallet}`;
+                setInfoTxt("Please sign the registration message");
+                siweProof = await siweAuthenticate({ siwe: { statement } });
             }
-
-            // Build the registration statement
-            const statement = `I authorize registration of merchant "${domain}" to wallet ${wallet}`;
-
-            // Sign using SIWE with our custom statement
-            setInfoTxt("Please sign the registration message");
-            const siweResult = await siweAuthenticate({
-                siwe: {
-                    statement,
-                },
-            });
 
             // Register the merchant
             setInfoTxt("Registering your merchant");
-            const defaultRewardToken = getTokenAddressForStablecoin(currency);
 
             const { data, error } =
                 await authenticatedBackendApi.merchant.register.post({
-                    message: siweResult.message,
-                    signature: siweResult.signature,
+                    message: siweProof?.message,
+                    signature: siweProof?.signature,
                     domain,
                     name,
                     setupCode,
@@ -112,6 +111,7 @@ export function useRegisterMerchant(
             setInfoTxt("Registration complete");
             return {
                 merchantId: data.merchantId,
+                verifiedViaShopify: data.verifiedViaShopify,
             };
         },
     });

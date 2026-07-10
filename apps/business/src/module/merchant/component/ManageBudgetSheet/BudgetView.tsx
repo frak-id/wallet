@@ -8,6 +8,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { InfoIcon, PlusIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
+import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
@@ -48,14 +49,56 @@ export function BudgetView({
     }
 
     return (
-        <BudgetContent
-            merchantId={merchantId}
-            bankAddress={data.bankAddress}
-            isManager={data.isManager}
-            isOpen={data.isOpen ?? false}
-            tokens={data.tokens}
-            onAddFunds={onAddFunds}
-        />
+        <Stack space="l">
+            {data.managerRole === "no_wallet" && <LinkWalletNotice />}
+            <BudgetContent
+                merchantId={merchantId}
+                bankAddress={data.bankAddress}
+                isManager={data.isManager}
+                isOpen={data.isOpen ?? false}
+                tokens={data.tokens}
+                onAddFunds={onAddFunds}
+            />
+        </Stack>
+    );
+}
+
+/**
+ * Walletless-owner CTA (§4.9): the four onchain bank actions (withdraw,
+ * allowance, open/close, legacy migration) stay hidden — `isManager` is
+ * already `false` server-side for a `no_wallet` owner, so `BudgetContent`
+ * naturally renders its read-only state. This banner is the explicit path
+ * out of it.
+ */
+function LinkWalletNotice() {
+    const { t } = useTranslation();
+    const { mutate: linkWallet, isPending, error } = useLinkWallet();
+
+    return (
+        <Card radius="m">
+            <Stack space="xs">
+                <Text variant="body" weight="medium">
+                    {t("funding.linkWallet.title")}
+                </Text>
+                <Text variant="bodySmall" color="secondary">
+                    {t("funding.linkWallet.description")}
+                </Text>
+                <Button
+                    size="large"
+                    width="auto"
+                    loading={isPending}
+                    disabled={isPending}
+                    onClick={() => linkWallet()}
+                >
+                    {t("funding.linkWallet.cta")}
+                </Button>
+                {error && (
+                    <Text variant="bodySmall" color="error">
+                        {error.message}
+                    </Text>
+                )}
+            </Stack>
+        </Card>
     );
 }
 

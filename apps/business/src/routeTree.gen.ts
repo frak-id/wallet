@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as RestrictedRouteImport } from './routes/_restricted'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as Login2faRouteImport } from './routes/login/2fa'
 import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/settings'
 import { Route as RestrictedMembersRouteImport } from './routes/_restricted/members'
 import { Route as RestrictedDashboardRouteImport } from './routes/_restricted/dashboard'
@@ -71,6 +72,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const Login2faRoute = Login2faRouteImport.update({
+  id: '/2fa',
+  path: '/2fa',
+  getParentRoute: () => LoginRoute,
 } as any)
 const RestrictedSettingsRoute = RestrictedSettingsRouteImport.update({
   id: '/settings',
@@ -302,10 +308,11 @@ const RestrictedMMerchantIdCampaignsDraftCampaignIdBudgetRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteWithChildren
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
   '/settings': typeof RestrictedSettingsRouteWithChildren
+  '/login/2fa': typeof Login2faRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
   '/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
@@ -346,9 +353,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteWithChildren
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
+  '/login/2fa': typeof Login2faRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
   '/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
@@ -391,10 +399,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_restricted': typeof RestrictedRouteWithChildren
   '/demo': typeof DemoRoute
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteWithChildren
   '/_restricted/dashboard': typeof RestrictedDashboardRoute
   '/_restricted/members': typeof RestrictedMembersRoute
   '/_restricted/settings': typeof RestrictedSettingsRouteWithChildren
+  '/login/2fa': typeof Login2faRoute
   '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/_restricted/campaigns/list': typeof RestrictedCampaignsListRoute
   '/_restricted/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
@@ -441,6 +450,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/members'
     | '/settings'
+    | '/login/2fa'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/m/$merchantId'
@@ -484,6 +494,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/members'
+    | '/login/2fa'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/m/$merchantId'
@@ -529,6 +540,7 @@ export interface FileRouteTypes {
     | '/_restricted/dashboard'
     | '/_restricted/members'
     | '/_restricted/settings'
+    | '/login/2fa'
     | '/_restricted/campaigns/$campaignId'
     | '/_restricted/campaigns/list'
     | '/_restricted/m/$merchantId'
@@ -571,7 +583,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RestrictedRoute: typeof RestrictedRouteWithChildren
   DemoRoute: typeof DemoRoute
-  LoginRoute: typeof LoginRoute
+  LoginRoute: typeof LoginRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -603,6 +615,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/login/2fa': {
+      id: '/login/2fa'
+      path: '/2fa'
+      fullPath: '/login/2fa'
+      preLoaderRoute: typeof Login2faRouteImport
+      parentRoute: typeof LoginRoute
     }
     '/_restricted/settings': {
       id: '/_restricted/settings'
@@ -1006,11 +1025,21 @@ const RestrictedRouteWithChildren = RestrictedRoute._addFileChildren(
   RestrictedRouteChildren,
 )
 
+interface LoginRouteChildren {
+  Login2faRoute: typeof Login2faRoute
+}
+
+const LoginRouteChildren: LoginRouteChildren = {
+  Login2faRoute: Login2faRoute,
+}
+
+const LoginRouteWithChildren = LoginRoute._addFileChildren(LoginRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RestrictedRoute: RestrictedRouteWithChildren,
   DemoRoute: DemoRoute,
-  LoginRoute: LoginRoute,
+  LoginRoute: LoginRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

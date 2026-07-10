@@ -33,9 +33,13 @@ const DOCS_URL = "https://docs.frak.id/business/product/verify";
 export function MerchantDetailsStep({
     domainError,
     isPlatformAdmin = false,
+    verifiedViaShopify = false,
 }: {
     domainError?: string;
     isPlatformAdmin?: boolean;
+    /** §4.10 third DNS bypass: the account's Shopify SSO credential already
+     * proved ownership of this domain — skip the DNS TXT flow entirely. */
+    verifiedViaShopify?: boolean;
 }) {
     const { t } = useTranslation();
     const { control, watch } = useFormContext<MerchantNew>();
@@ -45,7 +49,7 @@ export function MerchantDetailsStep({
 
     const { data: dnsRecord, isLoading: isDnsLoading } = useDnsTxtRecordToSet({
         domain,
-        enabled: !!domain,
+        enabled: !!domain && !verifiedViaShopify,
     });
 
     return (
@@ -379,111 +383,127 @@ export function MerchantDetailsStep({
 
                     {domainError && <FieldError>{domainError}</FieldError>}
 
-                    {!skipDomainValidation && (dnsRecord || isDnsLoading) && (
-                        <Stack space="m" className={styles.dnsBlock}>
-                            <Text
-                                variant="bodySmall"
-                                weight="medium"
-                                color="secondary"
-                            >
-                                {t("merchant.create.dns.title")}
-                            </Text>
-                            <Stack space="none" className={styles.dnsRecordBox}>
-                                <Box paddingY="m">
-                                    <Text
-                                        variant="bodySmall"
-                                        weight="medium"
-                                        color="secondary"
-                                    >
-                                        {t("merchant.create.dns.helper")}
-                                    </Text>
-                                </Box>
-                                <Inline
-                                    space="xs"
-                                    alignY="center"
-                                    wrap={false}
-                                    className={styles.dnsRecordRow}
-                                >
-                                    {isDnsLoading ? (
-                                        <Spinner />
-                                    ) : (
-                                        <>
-                                            <Text
-                                                variant="bodySmall"
-                                                className={
-                                                    styles.dnsRecordValue
-                                                }
-                                            >
-                                                {dnsRecord}
-                                            </Text>
-                                            <button
-                                                type="button"
-                                                className={styles.dnsCopyButton}
-                                                aria-label={t(
-                                                    "merchant.create.dns.copy"
-                                                )}
-                                                onClick={() =>
-                                                    dnsRecord && copy(dnsRecord)
-                                                }
-                                            >
-                                                {copied ? (
-                                                    <CheckIcon
-                                                        width={16}
-                                                        height={16}
-                                                    />
-                                                ) : (
-                                                    <CopyIcon
-                                                        width={16}
-                                                        height={16}
-                                                    />
-                                                )}
-                                            </button>
-                                        </>
-                                    )}
-                                </Inline>
-                            </Stack>
-                            <Accordion
-                                type="single"
-                                collapsible
-                                className={styles.dnsHelpBox}
-                            >
-                                <AccordionItem
-                                    value="dns-help"
-                                    className={styles.dnsHelpItem}
-                                >
-                                    <AccordionTrigger
-                                        className={styles.dnsHelpTrigger}
-                                    >
-                                        {t("merchant.create.dns.helpQuestion")}
-                                    </AccordionTrigger>
-                                    <AccordionContent
-                                        className={styles.dnsHelpContent}
-                                    >
-                                        <Stack space="m">
-                                            <Text
-                                                variant="body"
-                                                color="secondary"
-                                            >
-                                                {t(
-                                                    "merchant.create.dns.helpBody"
-                                                )}
-                                            </Text>
-                                            <a
-                                                href={DOCS_URL}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className={`${button({ variant: "secondary", size: "small", width: "auto" })} ${styles.dnsHelpLink}`}
-                                            >
-                                                {t(
-                                                    "merchant.create.dns.helpCta"
-                                                )}
-                                            </a>
-                                        </Stack>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                        </Stack>
+                    {verifiedViaShopify && (
+                        <Notice tone="success">
+                            {t("merchant.create.dns.verifiedViaShopify")}
+                        </Notice>
                     )}
+
+                    {!verifiedViaShopify &&
+                        !skipDomainValidation &&
+                        (dnsRecord || isDnsLoading) && (
+                            <Stack space="m" className={styles.dnsBlock}>
+                                <Text
+                                    variant="bodySmall"
+                                    weight="medium"
+                                    color="secondary"
+                                >
+                                    {t("merchant.create.dns.title")}
+                                </Text>
+                                <Stack
+                                    space="none"
+                                    className={styles.dnsRecordBox}
+                                >
+                                    <Box paddingY="m">
+                                        <Text
+                                            variant="bodySmall"
+                                            weight="medium"
+                                            color="secondary"
+                                        >
+                                            {t("merchant.create.dns.helper")}
+                                        </Text>
+                                    </Box>
+                                    <Inline
+                                        space="xs"
+                                        alignY="center"
+                                        wrap={false}
+                                        className={styles.dnsRecordRow}
+                                    >
+                                        {isDnsLoading ? (
+                                            <Spinner />
+                                        ) : (
+                                            <>
+                                                <Text
+                                                    variant="bodySmall"
+                                                    className={
+                                                        styles.dnsRecordValue
+                                                    }
+                                                >
+                                                    {dnsRecord}
+                                                </Text>
+                                                <button
+                                                    type="button"
+                                                    className={
+                                                        styles.dnsCopyButton
+                                                    }
+                                                    aria-label={t(
+                                                        "merchant.create.dns.copy"
+                                                    )}
+                                                    onClick={() =>
+                                                        dnsRecord &&
+                                                        copy(dnsRecord)
+                                                    }
+                                                >
+                                                    {copied ? (
+                                                        <CheckIcon
+                                                            width={16}
+                                                            height={16}
+                                                        />
+                                                    ) : (
+                                                        <CopyIcon
+                                                            width={16}
+                                                            height={16}
+                                                        />
+                                                    )}
+                                                </button>
+                                            </>
+                                        )}
+                                    </Inline>
+                                </Stack>
+                                <Accordion
+                                    type="single"
+                                    collapsible
+                                    className={styles.dnsHelpBox}
+                                >
+                                    <AccordionItem
+                                        value="dns-help"
+                                        className={styles.dnsHelpItem}
+                                    >
+                                        <AccordionTrigger
+                                            className={styles.dnsHelpTrigger}
+                                        >
+                                            {t(
+                                                "merchant.create.dns.helpQuestion"
+                                            )}
+                                        </AccordionTrigger>
+                                        <AccordionContent
+                                            className={styles.dnsHelpContent}
+                                        >
+                                            <Stack space="m">
+                                                <Text
+                                                    variant="body"
+                                                    color="secondary"
+                                                >
+                                                    {t(
+                                                        "merchant.create.dns.helpBody"
+                                                    )}
+                                                </Text>
+                                                <a
+                                                    href={DOCS_URL}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`${button({ variant: "secondary", size: "small", width: "auto" })} ${styles.dnsHelpLink}`}
+                                                >
+                                                    {t(
+                                                        "merchant.create.dns.helpCta"
+                                                    )}
+                                                </a>
+                                            </Stack>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
+                            </Stack>
+                        )}
                 </Stack>
             </WizardFieldCard>
         </Stack>
