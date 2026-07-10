@@ -94,17 +94,13 @@ export class MerchantAdminRepository {
         addedBy?: Address | null;
         addedByAccountId?: string | null;
     }): Promise<MerchantAdminSelect> {
-        const wallet =
-            "wallet" in params.identity ? params.identity.wallet : null;
-        const accountId =
-            "accountId" in params.identity ? params.identity.accountId : null;
-
+        const { identity } = params;
         const [result] = await db
             .insert(merchantAdminsTable)
             .values({
                 merchantId: params.merchantId,
-                wallet,
-                accountId,
+                wallet: "wallet" in identity ? identity.wallet : null,
+                accountId: "accountId" in identity ? identity.accountId : null,
                 addedBy: params.addedBy ?? null,
                 addedByAccountId: params.addedByAccountId ?? null,
             })
@@ -112,12 +108,18 @@ export class MerchantAdminRepository {
             .returning();
         if (result) return result;
 
-        const existing = wallet
-            ? await this.findByMerchantAndWallet(params.merchantId, wallet)
-            : await this.findByMerchantAndAccount(
-                  params.merchantId,
-                  accountId as string
-              );
+        // Conflict: resolve the existing row on the axis that was supplied —
+        // branch on the discriminant so each arm keeps its narrowed type.
+        const existing =
+            "wallet" in identity
+                ? await this.findByMerchantAndWallet(
+                      params.merchantId,
+                      identity.wallet
+                  )
+                : await this.findByMerchantAndAccount(
+                      params.merchantId,
+                      identity.accountId
+                  );
         if (!existing) {
             throw new Error("Failed to add admin");
         }

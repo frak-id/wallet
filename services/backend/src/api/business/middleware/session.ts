@@ -18,6 +18,24 @@ import {
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 /**
+ * Read the plugin-resolved session values off a macro context. Elysia's
+ * macro `beforeHandle` contexts don't carry the plugin's `.resolve()` typing
+ * (the param must stay inferred for the hook to typecheck), so this is the
+ * single place that asserts the structural shape those hooks depend on —
+ * the same values the plugin-level `.resolve()` above always provides.
+ */
+function resolvedSessions(ctx: object): {
+    businessSession: ResolvedBusinessAuth | null;
+    shopifySession: ShopifySessionToken | null;
+} {
+    const { businessSession = null, shopifySession = null } = ctx as {
+        businessSession?: ResolvedBusinessAuth | null;
+        shopifySession?: ShopifySessionToken | null;
+    };
+    return { businessSession, shopifySession };
+}
+
+/**
  * 401 body emitted by `requireStepUp` (with the `x-frak-auth-error:
  * step-up-required` header). Routes guarded by the macro must include it
  * in their 401 response schema.
@@ -181,9 +199,10 @@ export const businessSessionContext = new Elysia({
                 // `.resolve()` above (which runs before macro `beforeHandle`,
                 // same ordering `identityContext` relies on) instead of
                 // re-verifying the JWT / re-fetching the DB session (§2.3).
-                // biome-ignore lint/suspicious/noExplicitAny: Elysia macro contexts don't carry plugin-resolved types.
-                beforeHandle: (ctx: any) => {
-                    if (ctx.businessSession || ctx.shopifySession) return;
+                beforeHandle: (ctx) => {
+                    const { businessSession, shopifySession } =
+                        resolvedSessions(ctx);
+                    if (businessSession || shopifySession) return;
 
                     // A Shopify token was presented but didn't resolve —
                     // advertise the App Bridge retry protocol.
@@ -219,20 +238,19 @@ export const businessSessionContext = new Elysia({
             return {
                 // Consumes the plugin-resolved session (§2.3) rather than
                 // re-verifying the Shopify JWT + re-resolving the DB session.
-                // biome-ignore lint/suspicious/noExplicitAny: Elysia macro contexts don't carry plugin-resolved types.
-                beforeHandle: async (ctx: any) => {
+                beforeHandle: async (ctx) => {
+                    const { businessSession, shopifySession } =
+                        resolvedSessions(ctx);
                     // Embedded Shopify admin session — exempt (§4.11).
-                    if (ctx.shopifySession) return;
+                    if (shopifySession) return;
 
-                    const auth =
-                        ctx.businessSession as ResolvedBusinessAuth | null;
-                    if (!auth) {
+                    if (!businessSession) {
                         return status(401, "Unauthorized");
                     }
 
                     // Shared step-up freshness gate (S1) — throws the
                     // `StepUpRequiredError` protocol when stale/never-verified.
-                    await assertStepUpFresh(auth);
+                    await assertStepUpFresh(businessSession);
                 },
             };
         },
@@ -250,15 +268,13 @@ export const businessSessionContext = new Elysia({
             return {
                 // Consumes the plugin-resolved session (§2.3); the Shopify
                 // session path is never a platform admin, so it's ignored.
-                // biome-ignore lint/suspicious/noExplicitAny: Elysia macro contexts don't carry plugin-resolved types.
-                beforeHandle: async (ctx: any) => {
-                    const auth =
-                        ctx.businessSession as ResolvedBusinessAuth | null;
-                    if (!auth) {
+                beforeHandle: async (ctx) => {
+                    const { businessSession } = resolvedSessions(ctx);
+                    if (!businessSession) {
                         return status(401, "Unauthorized");
                     }
 
-                    if (!(await isPlatformAdminAuth(auth))) {
+                    if (!(await isPlatformAdminAuth(businessSession))) {
                         return status(403, "Platform admin access required");
                     }
                 },
