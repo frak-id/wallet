@@ -1,8 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import type { AdminWalletsRepository } from "@backend-infrastructure/keys/AdminWalletsRepository";
-import { HttpError } from "@backend-utils";
-import { sha256 } from "@oslojs/crypto/sha2";
-import { encodeHexLowerCase } from "@oslojs/encoding";
+import { HttpError, sha256Hex } from "@backend-utils";
 import { createTOTPKeyURI, verifyTOTPWithGracePeriod } from "@oslojs/otp";
 import { bytesToHex, type Hex, hexToBytes } from "viem";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
@@ -76,9 +74,7 @@ export class TotpService {
     }
 
     private hashRecoveryCode(code: string): string {
-        return encodeHexLowerCase(
-            sha256(new TextEncoder().encode(code.trim().toLowerCase()))
-        );
+        return sha256Hex(code.trim().toLowerCase());
     }
 
     /**
@@ -195,11 +191,6 @@ export class TotpService {
             windowStartedAt: next.windowStartedAt,
         });
         return false;
-    }
-
-    async isActivated(accountId: string): Promise<boolean> {
-        const row = await this.accountRepository.findById(accountId);
-        return !!row?.totpActivatedAt;
     }
 
     private async verifyCode(

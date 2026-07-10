@@ -21,7 +21,6 @@ export type ResolvedBusinessAuth = {
     twoFactorVerifiedAt: Date | null;
     /** DB session minted but 2FA not yet verified — unusable outside /auth. */
     pending2fa: boolean;
-    isLegacyJwt: boolean;
 };
 
 export async function resolveBusinessAuth(
@@ -39,24 +38,22 @@ export async function resolveBusinessAuth(
             authMethod: "siwe",
             twoFactorVerifiedAt: null,
             pending2fa: false,
-            isLegacyJwt: true,
         };
     }
 
     const session = await BusinessAuthContext.services.session.resolve(token);
     if (!session) return null;
 
-    const wallet = await BusinessAuthContext.services.account.getWallet(
+    const account = await BusinessAuthContext.repositories.account.findById(
         session.accountId
     );
 
     return {
         accountId: session.accountId,
         sessionId: session.id,
-        wallet,
+        wallet: account?.walletAddress ?? null,
         authMethod: session.authMethod,
         twoFactorVerifiedAt: session.twoFactorVerifiedAt,
         pending2fa: session.twoFactorVerifiedAt === null,
-        isLegacyJwt: false,
     };
 }

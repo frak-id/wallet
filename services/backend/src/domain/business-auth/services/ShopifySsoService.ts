@@ -1,6 +1,6 @@
+import { constantTimeStringEqual } from "@backend-utils";
 import { hmac } from "@oslojs/crypto/hmac";
 import { SHA256 } from "@oslojs/crypto/sha2";
-import { constantTimeEqual } from "@oslojs/crypto/subtle";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { OAuth2Client } from "arctic";
 
@@ -9,7 +9,6 @@ const SHOP_DOMAIN_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
 export type ShopifyAssociatedUser = {
     id: string;
     email: string | null;
-    accountOwner: boolean;
 };
 
 /**
@@ -95,14 +94,7 @@ export class ShopifySsoService {
             new TextEncoder().encode(message)
         );
         const computedHex = encodeHexLowerCase(computed);
-
-        // Length must match before constant-time compare — oslojs asserts
-        // equal-length inputs.
-        if (computedHex.length !== receivedHex.length) return false;
-        return constantTimeEqual(
-            new TextEncoder().encode(computedHex),
-            new TextEncoder().encode(receivedHex)
-        );
+        return constantTimeStringEqual(computedHex, receivedHex);
     }
 
     /**
@@ -151,7 +143,6 @@ export class ShopifySsoService {
             associatedUser: {
                 id: String(body.associated_user.id),
                 email: body.associated_user.email ?? null,
-                accountOwner: body.associated_user.account_owner ?? false,
             },
         };
     }

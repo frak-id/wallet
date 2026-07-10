@@ -1,5 +1,5 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
-import { HttpError, t } from "@backend-utils";
+import { HttpError, TwoFactorMethodDto, t } from "@backend-utils";
 import { encodeBase64urlNoPadding } from "@oslojs/encoding";
 import { Elysia, status } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
@@ -35,12 +35,6 @@ async function sendEmailOtpOrThrow(params: {
         );
     }
 }
-
-const TwoFactorMethodDto = t.Union([
-    t.Literal("email"),
-    t.Literal("totp"),
-    t.Literal("siwe"),
-]);
 
 const SiweProofDto = t.Object({
     message: t.String(),
@@ -307,9 +301,11 @@ async function verifyProof({
             if ("error" in proof) return false;
 
             // The signature must come from THIS account's wallet…
-            const wallet = await BusinessAuthContext.services.account.getWallet(
-                auth.accountId
-            );
+            const account =
+                await BusinessAuthContext.repositories.account.findById(
+                    auth.accountId
+                );
+            const wallet = account?.walletAddress ?? null;
             if (
                 !wallet ||
                 wallet.toLowerCase() !== proof.address.toLowerCase()

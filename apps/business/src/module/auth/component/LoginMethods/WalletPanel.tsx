@@ -6,7 +6,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { extractAuthErrorMessage } from "@/module/auth/hooks/useTwoFactorChallenge";
+import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import { safeRedirectTarget } from "@/module/auth/utils/safeRedirect";
 import { useAuthStore } from "@/stores/authStore";
 

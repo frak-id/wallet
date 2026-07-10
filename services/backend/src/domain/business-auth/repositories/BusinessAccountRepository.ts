@@ -253,16 +253,4 @@ export class BusinessAccountRepository {
             })
             .where(eq(businessAccountsTable.id, accountId));
     }
-
-    async clearTotp(accountId: string): Promise<void> {
-        await db
-            .update(businessAccountsTable)
-            .set({
-                totpSecretEnc: null,
-                totpActivatedAt: null,
-                totpRecoveryCodesHash: null,
-                updatedAt: new Date(),
-            })
-            .where(eq(businessAccountsTable.id, accountId));
-    }
 }

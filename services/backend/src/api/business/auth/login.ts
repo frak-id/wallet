@@ -1,8 +1,11 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
-import { t } from "@backend-utils";
+import { TwoFactorMethodDto, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { BusinessAuthResponseDto } from "../../../domain/auth";
-import { BusinessAuthContext } from "../../../domain/business-auth";
+import {
+    BusinessAuthContext,
+    PasswordService,
+} from "../../../domain/business-auth";
 import { resolveClientIp, verifySiweProof } from "./common";
 
 const GENERIC_REGISTER_RESPONSE = {
@@ -67,7 +70,7 @@ export const loginRoutes = new Elysia()
             ) {
                 return status(400, {
                     error: "WEAK_PASSWORD",
-                    message: "Password must be at least 10 characters",
+                    message: `Password must be at least ${PasswordService.MIN_LENGTH} characters`,
                 });
             }
 
@@ -124,7 +127,7 @@ export const loginRoutes = new Elysia()
         "/login/password",
         async ({ body: { email, password }, request, headers, server }) => {
             const account =
-                await BusinessAuthContext.services.account.getPasswordAccountByEmail(
+                await BusinessAuthContext.repositories.account.findByEmail(
                     email.trim().toLowerCase()
                 );
 
@@ -168,13 +171,7 @@ export const loginRoutes = new Elysia()
                 200: t.Object({
                     token: t.String(),
                     pending2fa: t.Literal(true),
-                    methods: t.Array(
-                        t.Union([
-                            t.Literal("email"),
-                            t.Literal("totp"),
-                            t.Literal("siwe"),
-                        ])
-                    ),
+                    methods: t.Array(TwoFactorMethodDto),
                     expiresAt: t.Number(),
                 }),
                 401: t.String(),

@@ -4,7 +4,7 @@ import {
     AuthError,
     extractAuthErrorCode,
     extractAuthErrorMessage,
-} from "@/module/auth/hooks/useTwoFactorChallenge";
+} from "@/module/auth/utils/authError";
 import type { TwoFactorMethod } from "@/stores/twoFactorStore";
 
 const SESSIONS_QUERY_KEY = ["auth", "sessions"];

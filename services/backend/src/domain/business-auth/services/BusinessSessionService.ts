@@ -1,5 +1,5 @@
-import { sha256 } from "@oslojs/crypto/sha2";
-import { encodeBase64urlNoPadding, encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256Hex } from "@backend-utils";
+import { encodeBase64urlNoPadding } from "@oslojs/encoding";
 import type { BusinessAuthMethod, BusinessSessionSelect } from "../db/schema";
 import type { BusinessSessionRepository } from "../repositories/BusinessSessionRepository";
 
@@ -32,7 +32,7 @@ export class BusinessSessionService {
 
     /** sha256 of the raw token = session row id. Deterministic, unkeyed. */
     hashToken(token: string): string {
-        return encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+        return sha256Hex(token);
     }
 
     async create(params: {

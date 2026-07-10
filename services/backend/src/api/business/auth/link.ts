@@ -1,7 +1,10 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
 import { HttpError, isUniqueViolation, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { BusinessAuthContext } from "../../../domain/business-auth";
+import {
+    BusinessAuthContext,
+    PasswordService,
+} from "../../../domain/business-auth";
 import { StepUpRequired401 } from "../middleware/session";
 import { assertStepUpFresh, requireDbSession, verifySiweProof } from "./common";
 
@@ -67,7 +70,7 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
             ) {
                 throw HttpError.badRequest(
                     "WEAK_PASSWORD",
-                    "Password must be at least 10 characters"
+                    `Password must be at least ${PasswordService.MIN_LENGTH} characters`
                 );
             }
 

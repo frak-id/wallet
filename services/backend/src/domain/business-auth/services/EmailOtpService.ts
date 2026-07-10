@@ -1,8 +1,5 @@
 import { log } from "@backend-infrastructure";
-import { HttpError } from "@backend-utils";
-import { sha256 } from "@oslojs/crypto/sha2";
-import { constantTimeEqual } from "@oslojs/crypto/subtle";
-import { encodeHexLowerCase } from "@oslojs/encoding";
+import { constantTimeStringEqual, HttpError, sha256Hex } from "@backend-utils";
 import {
     buildSecurityCodeEmail,
     resendClient,
@@ -49,9 +46,7 @@ export class EmailOtpService {
 
     private hashCode(code: string): string {
         // Codes are always `[0-9]{6}` — no case to fold, so `.trim()` alone.
-        return encodeHexLowerCase(
-            sha256(new TextEncoder().encode(code.trim()))
-        );
+        return sha256Hex(code.trim());
     }
 
     private generateCode(): string {
@@ -169,9 +164,9 @@ export class EmailOtpService {
         if (row.attempts >= EMAIL_OTP.MAX_VERIFY_ATTEMPTS) {
             return { status: "tooManyAttempts" };
         }
-        const isMatch = constantTimeEqual(
-            new TextEncoder().encode(row.codeHash),
-            new TextEncoder().encode(this.hashCode(params.code))
+        const isMatch = constantTimeStringEqual(
+            row.codeHash,
+            this.hashCode(params.code)
         );
         if (!isMatch) {
             await this.emailCodeRepository.incrementAttempts(

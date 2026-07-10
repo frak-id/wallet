@@ -16,7 +16,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { type PropsWithChildren, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type Address, isAddress } from "viem";
-import { extractAuthErrorMessage } from "@/module/auth/hooks/useTwoFactorChallenge";
+import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";

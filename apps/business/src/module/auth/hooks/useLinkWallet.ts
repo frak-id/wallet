@@ -1,8 +1,8 @@
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import { useAuthStore } from "@/stores/authStore";
-import { extractAuthErrorMessage } from "./useTwoFactorChallenge";
 
 /**
  * `POST /auth/link/wallet` (§4.9): SIWE proof attaches a wallet credential

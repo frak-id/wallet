@@ -3,7 +3,7 @@ import {
     log,
     verifyShopifySessionToken,
 } from "@backend-infrastructure";
-import { STEP_UP_ERROR_CODE, t } from "@backend-utils";
+import { TwoFactorMethodDto, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AuthContext } from "../../../domain/auth";
 import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
@@ -17,8 +17,6 @@ import {
 
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
-export { STEP_UP_ERROR_CODE };
-
 /**
  * 401 body emitted by `requireStepUp` (with the `x-frak-auth-error:
  * step-up-required` header). Routes guarded by the macro must include it
@@ -28,9 +26,7 @@ export const StepUpRequired401 = t.Union([
     t.String(),
     t.Object({
         error: t.Literal("step_up_required"),
-        methods: t.Array(
-            t.Union([t.Literal("email"), t.Literal("totp"), t.Literal("siwe")])
-        ),
+        methods: t.Array(TwoFactorMethodDto),
     }),
     t.ErrorResponse,
 ]);

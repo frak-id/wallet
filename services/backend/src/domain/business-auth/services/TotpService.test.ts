@@ -16,7 +16,6 @@ const createRepository = () =>
         consumeTotpRecoveryCode: vi.fn().mockResolvedValue(false),
         recordTwoFactorFailure: vi.fn(),
         resetTwoFactorAttempts: vi.fn(),
-        clearTotp: vi.fn(),
     }) as unknown as BusinessAccountRepository &
         Record<string, ReturnType<typeof vi.fn>>;
 

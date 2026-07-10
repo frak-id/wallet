@@ -1,10 +1,10 @@
 import { log } from "@backend-infrastructure";
-import { isUniqueViolation } from "@backend-utils";
+import { isUniqueViolation, type TwoFactorMethod } from "@backend-utils";
 import type { Address } from "viem";
 import type { BusinessAccountSelect } from "../db/schema";
 import type { BusinessAccountRepository } from "../repositories/BusinessAccountRepository";
 
-export type TwoFactorMethod = "email" | "totp" | "siwe";
+export type { TwoFactorMethod };
 
 /**
  * Composition over the single `business_accounts` row: idempotent wallet /
@@ -134,12 +134,6 @@ export class BusinessAccountService {
         return { status: "linked" };
     }
 
-    /** The wallet attached to an account, if any (walletless ⇒ null). */
-    async getWallet(accountId: string): Promise<Address | null> {
-        const account = await this.accountRepository.findById(accountId);
-        return account?.walletAddress ?? null;
-    }
-
     /**
      * 2FA methods the account can satisfy right now — drives both the
      * step-up 401 body and the pending-login method picker.
@@ -161,11 +155,5 @@ export class BusinessAccountService {
         if (account.totpActivatedAt) methods.push("totp");
         if (account.walletAddress) methods.push("siwe");
         return methods;
-    }
-
-    async getPasswordAccountByEmail(
-        email: string
-    ): Promise<BusinessAccountSelect | null> {
-        return this.accountRepository.findByEmail(email);
     }
 }

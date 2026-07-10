@@ -1,5 +1,6 @@
 export { buildAttestation } from "./attestation";
 export { validateBodyHmac } from "./bodyHmac";
+export { constantTimeStringEqual, sha256Hex } from "./crypto";
 export { noContentPatch } from "./elysiaNoContentPatch";
 export { HttpError } from "./httpError";
 export { MutexCron } from "./mutexCron";
@@ -21,6 +22,7 @@ export {
     STEP_UP_ERROR_CODE,
     StepUpRequiredError,
     type TwoFactorMethod,
+    TwoFactorMethodDto,
 } from "./stepUpRequired";
 
 export { type ErrorResponse, type TokenAmount, t } from "./typebox/typeSystem";

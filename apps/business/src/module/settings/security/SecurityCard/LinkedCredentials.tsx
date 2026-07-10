@@ -6,7 +6,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
-import { AuthError } from "@/module/auth/hooks/useTwoFactorChallenge";
+import { AuthError } from "@/module/auth/utils/authError";
 import { Input } from "@/module/forms/Input";
 import { useLinkPassword } from "@/module/settings/security/useSecuritySettings";
 import { useAuthStore } from "@/stores/authStore";

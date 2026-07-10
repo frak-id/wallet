@@ -164,7 +164,6 @@ describe("ShopifySsoService.exchangeCodeForIdentity", () => {
             associatedUser: {
                 id: "12345",
                 email: "staff@my-shop.com",
-                accountOwner: true,
             },
         });
         expect(identity).not.toHaveProperty("accessToken");

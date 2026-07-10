@@ -18,10 +18,10 @@ import { ExclamationCircleIcon } from "@frak-labs/design-system/icons";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    extractAuthErrorMessage,
     useTwoFactorChallenge,
     useTwoFactorVerify,
 } from "@/module/auth/hooks/useTwoFactorChallenge";
+import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import { Input } from "@/module/forms/Input";
 import {
     type TwoFactorMethod,

@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import { useAuthStore } from "@/stores/authStore";
 import { useTwoFactorStore } from "@/stores/twoFactorStore";
-import { extractAuthErrorMessage } from "./useTwoFactorChallenge";
 
 /**
  * `POST /auth/register` — enumeration-safe: always returns the same generic

@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-query";
 import { useState } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { extractAuthErrorMessage } from "@/module/auth/hooks/useTwoFactorChallenge";
+import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import { useAuthStore } from "@/stores/authStore";
 
 /**

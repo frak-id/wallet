@@ -1,9 +1,16 @@
 import { AUTH_ERROR_HEADER } from "@backend-infrastructure/macro/authError";
-import type { ErrorResponse } from "./typebox/typeSystem";
+import { type ErrorResponse, t } from "./typebox/typeSystem";
 
 export const STEP_UP_ERROR_CODE = "step-up-required";
 
-export type TwoFactorMethod = "email" | "totp" | "siwe";
+/** The single Typebox DTO for a 2FA method, shared across every route. */
+export const TwoFactorMethodDto = t.Union([
+    t.Literal("email"),
+    t.Literal("totp"),
+    t.Literal("siwe"),
+]);
+
+export type TwoFactorMethod = typeof TwoFactorMethodDto.static;
 
 /**
  * The single 401 shape for "fresh 2FA required" (design doc §4.5/§4.8),
