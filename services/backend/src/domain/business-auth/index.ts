@@ -10,3 +10,8 @@ export {
     SESSION_TTL_MS,
     STEP_UP_WINDOW_MS,
 } from "./services/BusinessSessionService";
+export type {
+    ShopifyAssociatedUser,
+    ShopifyIdentity,
+} from "./services/ShopifySsoService";
+export { matchesShopDomain } from "./services/shopDomainMatch";

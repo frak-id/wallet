@@ -51,6 +51,60 @@ export class BusinessAccountService {
         return account;
     }
 
+    /**
+     * Idempotent: resolve the account owning this Shopify staff identity
+     * (`shopify_user_id` + `shop_domain`), creating the account + shopify
+     * credential on first login (§4.7 step 6). When the account has no email
+     * yet, the token's `associated_user.email` fills it in (unverified —
+     * Shopify vouches for the login, not for mailbox ownership, so email 2FA
+     * still requires its own OTP round-trip before counting as verified).
+     *
+     * Also the convergence point for the inline embedded mint (§4.12): a
+     * merchant registered from the embedded app creates this same credential
+     * shape, so a later SSO login on the standalone dashboard lands on the
+     * account that already owns the merchant.
+     */
+    async upsertShopifyAccount(params: {
+        shopifyUserId: string;
+        shopDomain: string;
+        email: string | null;
+    }): Promise<BusinessAccountSelect> {
+        const credential = await this.credentialRepository.findByShopifyUser({
+            shopifyUserId: params.shopifyUserId,
+            shopDomain: params.shopDomain,
+        });
+        if (credential) {
+            const account = await this.accountRepository.findById(
+                credential.accountId
+            );
+            if (account) return account;
+            log.warn(
+                {
+                    shopifyUserId: params.shopifyUserId,
+                    credentialId: credential.id,
+                },
+                "Orphan shopify credential, recreating business account"
+            );
+        }
+
+        // Pre-fill the account email only when it's free — a collision with
+        // another account's email must not turn a login into a 500 (or a
+        // silent account merge). The user can link accounts explicitly later
+        // (§4.6 `link/*`, step-up required) if that's what they want.
+        const emailTaken =
+            params.email &&
+            (await this.accountRepository.findByEmail(params.email));
+        const account = await this.accountRepository.create(
+            params.email && !emailTaken ? { email: params.email } : {}
+        );
+        await this.credentialRepository.createShopify({
+            accountId: account.id,
+            shopifyUserId: params.shopifyUserId,
+            shopDomain: params.shopDomain,
+        });
+        return account;
+    }
+
     /** Attach a SIWE-proven wallet credential to an existing account. */
     async linkWallet(params: {
         accountId: string;

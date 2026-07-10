@@ -64,10 +64,18 @@ export class MerchantRegistrationService {
         skipDomainValidation?: boolean;
         useFrakBank?: boolean;
         platformAdminWallets?: Address[];
+        // Precomputed at the route layer (business-auth is a separate domain —
+        // this service must not import it, per the cross-domain flow rules):
+        // does the caller's Shopify SSO session's proven shop domain match
+        // the domain being registered (§4.10 third DNS bypass)? Skips the DNS
+        // TXT check exactly like `setupCode`, independent of platform-admin
+        // status — any Shopify-authenticated user gets this, not just admins.
+        verifiedViaShopify?: boolean;
     }): Promise<{
         merchantId: string;
         frakBankLinked: boolean;
         isPlatformAdmin: boolean;
+        verifiedViaShopify: boolean;
     }> {
         // Resolve the owner identity — SIWE proof for wallets, the (already
         // step-up-verified) session for walletless accounts.
@@ -98,9 +106,13 @@ export class MerchantRegistrationService {
             );
         }
 
-        // Domain ownership check — platform admins may opt to skip it.
+        // Domain ownership check — platform admins may opt to skip it, and a
+        // Shopify SSO session whose shop domain matches the registering
+        // domain already proved ownership via OAuth (§4.10).
+        const verifiedViaShopify = params.verifiedViaShopify === true;
         const skipDomainValidation =
-            isPlatformAdmin && params.skipDomainValidation === true;
+            (isPlatformAdmin && params.skipDomainValidation === true) ||
+            verifiedViaShopify;
         if (!skipDomainValidation) {
             const dnsOwner: DnsProofOwner = wallet
                 ? { wallet }
@@ -154,7 +166,12 @@ export class MerchantRegistrationService {
             );
         }
 
-        return { merchantId: merchant.id, frakBankLinked, isPlatformAdmin };
+        return {
+            merchantId: merchant.id,
+            frakBankLinked,
+            isPlatformAdmin,
+            verifiedViaShopify,
+        };
     }
 
     /**

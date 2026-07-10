@@ -286,3 +286,63 @@ describe("MerchantRegistrationService.register — identity paths (§4.10)", () 
         expect(created.bankAddress).toBeUndefined();
     });
 });
+
+describe("MerchantRegistrationService.register — Shopify domain bypass (§4.10)", () => {
+    it("skips DNS validation when verifiedViaShopify is true", async () => {
+        const { service, dnsRepo, merchantRepo } = makeService({
+            signerWallet: NON_ADMIN,
+            dnsValid: false,
+        });
+
+        const result = await service.register({
+            ...baseParams,
+            identity: { type: "account", accountId: ACCOUNT_ID },
+            verifiedViaShopify: true,
+        });
+
+        expect(dnsRepo.isValidDomain).not.toHaveBeenCalled();
+        expect(merchantRepo.create).toHaveBeenCalledTimes(1);
+        expect(result.verifiedViaShopify).toBe(true);
+    });
+
+    it("still validates DNS when verifiedViaShopify is false", async () => {
+        const { service, dnsRepo } = makeService({ dnsValid: false });
+
+        await expect(
+            service.register({
+                ...baseParams,
+                identity: { type: "account", accountId: ACCOUNT_ID },
+                verifiedViaShopify: false,
+            })
+        ).rejects.toMatchObject({
+            status: 400,
+            code: "DNS_VERIFICATION_FAILED",
+        });
+        expect(dnsRepo.isValidDomain).toHaveBeenCalledTimes(1);
+    });
+
+    it("is independent of platform-admin status — works for any account", async () => {
+        const { service, dnsRepo } = makeService({
+            signerWallet: NON_ADMIN,
+            dnsValid: false,
+        });
+
+        const result = await service.register({
+            ...baseParams,
+            identity: { type: "account", accountId: ACCOUNT_ID },
+            verifiedViaShopify: true,
+            platformAdminWallets: [ADMIN_WALLET],
+        });
+
+        expect(result.isPlatformAdmin).toBe(false);
+        expect(dnsRepo.isValidDomain).not.toHaveBeenCalled();
+    });
+
+    it("reports verifiedViaShopify: false in the result when not used", async () => {
+        const { service } = makeService({ signerWallet: NON_ADMIN });
+
+        const result = await service.register(baseParams);
+
+        expect(result.verifiedViaShopify).toBe(false);
+    });
+});

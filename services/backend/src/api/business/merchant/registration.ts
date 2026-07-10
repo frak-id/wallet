@@ -3,6 +3,10 @@ import { HttpError, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
 import { AuthContext } from "../../../domain/auth";
+import {
+    BusinessAuthContext,
+    matchesShopDomain,
+} from "../../../domain/business-auth";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
 import type { RegistrationIdentity } from "../../../domain/merchant/services/MerchantRegistrationService";
@@ -64,17 +68,31 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 ? dnsOwnerFromSession(businessSession)
                 : null;
             if (!owner) {
-                return { isDomainValid: false, isAlreadyRegistered: false };
+                return {
+                    isDomainValid: false,
+                    isAlreadyRegistered: false,
+                    verifiedViaShopify: false,
+                };
             }
 
             const dnsCheck = MerchantContext.repositories.dnsCheck;
             const normalizedDomain = dnsCheck.getNormalizedDomain(domain);
 
-            const isDomainValid = await dnsCheck.isValidDomain({
-                domain: normalizedDomain,
-                owner,
-                setupCode,
-            });
+            // §4.10 third bypass: surfaced here too, so the frontend can show
+            // the "Domain verified thanks to your Shopify session" banner
+            // before the user ever touches the DNS TXT flow.
+            const verifiedViaShopify = await isVerifiedViaShopify(
+                businessSession?.accountId ?? null,
+                normalizedDomain
+            );
+
+            const isDomainValid =
+                verifiedViaShopify ||
+                (await dnsCheck.isValidDomain({
+                    domain: normalizedDomain,
+                    owner,
+                    setupCode,
+                }));
 
             const existingMerchant =
                 await MerchantContext.repositories.merchant.findByDomain(
@@ -84,6 +102,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             return {
                 isDomainValid,
                 isAlreadyRegistered: existingMerchant !== null,
+                verifiedViaShopify,
             };
         },
         {
@@ -94,6 +113,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             response: t.Object({
                 isDomainValid: t.Boolean(),
                 isAlreadyRegistered: t.Boolean(),
+                verifiedViaShopify: t.Boolean(),
             }),
         }
     )
@@ -134,6 +154,15 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             const platformAdminWallets =
                 AuthContext.services.platformAdmin.getAdminWallets();
 
+            // §4.10 third DNS bypass: a Shopify SSO session whose proven shop
+            // domain matches the registering domain (subdomain-aware) already
+            // proved ownership via OAuth. Cross-domain lookup happens here (the
+            // BFF layer), never inside MerchantRegistrationService.
+            const verifiedViaShopify = await isVerifiedViaShopify(
+                businessSession?.accountId ?? null,
+                body.domain
+            );
+
             const { merchantId, frakBankLinked, isPlatformAdmin } =
                 await MerchantContext.services.registration.register({
                     identity,
@@ -146,6 +175,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     skipDomainValidation: body.skipDomainValidation,
                     useFrakBank: body.useFrakBank,
                     platformAdminWallets,
+                    verifiedViaShopify,
                 });
 
             // Link the merchant to its affiliate brand (platform admin only) so
@@ -186,7 +216,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     });
             }
 
-            return { merchantId };
+            return { merchantId, verifiedViaShopify };
         },
         {
             // Merchant mint is a sensitive action (§4.8): fresh 2FA required.
@@ -220,6 +250,9 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             response: {
                 200: t.Object({
                     merchantId: t.String(),
+                    // Drives the "Domain verified thanks to your Shopify
+                    // session" banner (§4.10) instead of the DNS TXT flow.
+                    verifiedViaShopify: t.Boolean(),
                 }),
                 400: t.ErrorResponse,
                 401: StepUpRequired401,
@@ -227,3 +260,28 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             },
         }
     );
+
+/**
+ * Does the session's account hold a Shopify credential whose shop domain
+ * matches (or is a subdomain match of, either direction) the domain being
+ * registered? Any one matching credential is enough.
+ */
+async function isVerifiedViaShopify(
+    accountId: string | null,
+    registeringDomain: string
+): Promise<boolean> {
+    if (!accountId) return false;
+    const credentials =
+        await BusinessAuthContext.repositories.credential.findShopifyByAccount(
+            accountId
+        );
+    const normalizedDomain =
+        MerchantContext.repositories.dnsCheck.getNormalizedDomain(
+            registeringDomain
+        );
+    return credentials.some(
+        (credential) =>
+            credential.shopDomain &&
+            matchesShopDomain(normalizedDomain, credential.shopDomain)
+    );
+}

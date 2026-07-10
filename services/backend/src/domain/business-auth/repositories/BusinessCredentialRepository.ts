@@ -43,6 +43,39 @@ export class BusinessCredentialRepository {
         return result ?? null;
     }
 
+    async findByShopifyUser(params: {
+        shopifyUserId: string;
+        shopDomain: string;
+    }): Promise<BusinessCredentialSelect | null> {
+        const result = await db.query.businessAccountCredentialsTable.findFirst(
+            {
+                where: and(
+                    eq(businessAccountCredentialsTable.type, "shopify"),
+                    eq(
+                        businessAccountCredentialsTable.shopifyUserId,
+                        params.shopifyUserId
+                    ),
+                    eq(
+                        businessAccountCredentialsTable.shopDomain,
+                        params.shopDomain
+                    )
+                ),
+            }
+        );
+        return result ?? null;
+    }
+
+    async findShopifyByAccount(
+        accountId: string
+    ): Promise<BusinessCredentialSelect[]> {
+        return db.query.businessAccountCredentialsTable.findMany({
+            where: and(
+                eq(businessAccountCredentialsTable.type, "shopify"),
+                eq(businessAccountCredentialsTable.accountId, accountId)
+            ),
+        });
+    }
+
     async createWallet(params: {
         accountId: string;
         wallet: Address;
@@ -62,6 +95,34 @@ export class BusinessCredentialRepository {
         const existing = await this.findByWallet(params.wallet);
         if (!existing) {
             throw new Error("Failed to create wallet credential");
+        }
+        return existing;
+    }
+
+    async createShopify(params: {
+        accountId: string;
+        shopifyUserId: string;
+        shopDomain: string;
+    }): Promise<BusinessCredentialSelect> {
+        const [credential] = await db
+            .insert(businessAccountCredentialsTable)
+            .values({
+                accountId: params.accountId,
+                type: "shopify",
+                shopifyUserId: params.shopifyUserId,
+                shopDomain: params.shopDomain,
+            })
+            .onConflictDoNothing()
+            .returning();
+        if (credential) return credential;
+        // Conflict path — same (shopify_user_id, shop_domain) pair already
+        // linked (idempotent upsert on repeat SSO login).
+        const existing = await this.findByShopifyUser({
+            shopifyUserId: params.shopifyUserId,
+            shopDomain: params.shopDomain,
+        });
+        if (!existing) {
+            throw new Error("Failed to create shopify credential");
         }
         return existing;
     }
