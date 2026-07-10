@@ -11,6 +11,23 @@ type MerchantAccess = {
     role: MerchantRole;
 };
 
+/**
+ * Caller identity for merchant authorization. Wallet-only (legacy JWT
+ * sessions), account-only (walletless accounts) and dual (wallet-linked
+ * accounts) are all valid shapes; a match on either axis grants access.
+ */
+export type MerchantIdentity = {
+    wallet?: Address | null;
+    accountId?: string | null;
+};
+
+const NO_ACCESS: MerchantAccess = {
+    hasAccess: false,
+    isOwner: false,
+    isAdmin: false,
+    role: "none",
+};
+
 export class MerchantAuthorizationService {
     constructor(
         private readonly merchantRepository: MerchantRepository,
@@ -19,19 +36,19 @@ export class MerchantAuthorizationService {
 
     async checkAccess(
         merchantId: string,
-        wallet: Address
+        identity: MerchantIdentity
     ): Promise<MerchantAccess> {
-        const merchant = await this.merchantRepository.findById(merchantId);
-        if (!merchant) {
-            return {
-                hasAccess: false,
-                isOwner: false,
-                isAdmin: false,
-                role: "none",
-            };
-        }
+        const { wallet, accountId } = identity;
+        if (!wallet && !accountId) return NO_ACCESS;
 
-        const isOwner = isAddressEqual(merchant.ownerWallet, wallet);
+        const merchant = await this.merchantRepository.findById(merchantId);
+        if (!merchant) return NO_ACCESS;
+
+        const isOwner =
+            (wallet &&
+                merchant.ownerWallet &&
+                isAddressEqual(merchant.ownerWallet, wallet)) ||
+            (accountId && merchant.ownerAccountId === accountId);
         if (isOwner) {
             return {
                 hasAccess: true,
@@ -43,7 +60,7 @@ export class MerchantAuthorizationService {
 
         const isAdmin = await this.merchantAdminRepository.isAdmin(
             merchantId,
-            wallet
+            identity
         );
         if (isAdmin) {
             return {
@@ -54,16 +71,14 @@ export class MerchantAuthorizationService {
             };
         }
 
-        return {
-            hasAccess: false,
-            isOwner: false,
-            isAdmin: false,
-            role: "none",
-        };
+        return NO_ACCESS;
     }
 
-    async hasAccess(merchantId: string, wallet: Address): Promise<boolean> {
-        const access = await this.checkAccess(merchantId, wallet);
+    async hasAccess(
+        merchantId: string,
+        identity: MerchantIdentity
+    ): Promise<boolean> {
+        const access = await this.checkAccess(merchantId, identity);
         return access.hasAccess;
     }
 
@@ -78,14 +93,24 @@ export class MerchantAuthorizationService {
         return false;
     }
 
-    async getAccessibleMerchantIds(wallet: Address): Promise<string[]> {
-        const [owned, adminOf] = await Promise.all([
-            this.merchantRepository.findByOwnerWallet(wallet),
-            this.merchantAdminRepository.findByWallet(wallet),
+    async getAccessibleMerchantIds(
+        identity: MerchantIdentity
+    ): Promise<string[]> {
+        const { wallet, accountId } = identity;
+
+        const [ownedByWallet, ownedByAccount, adminOf] = await Promise.all([
+            wallet
+                ? this.merchantRepository.findByOwnerWallet(wallet)
+                : Promise.resolve([]),
+            accountId
+                ? this.merchantRepository.findByOwnerAccount(accountId)
+                : Promise.resolve([]),
+            this.merchantAdminRepository.findByIdentity(identity),
         ]);
 
         const ids = new Set<string>();
-        for (const m of owned) ids.add(m.id);
+        for (const m of ownedByWallet) ids.add(m.id);
+        for (const m of ownedByAccount) ids.add(m.id);
         for (const a of adminOf) ids.add(a.merchantId);
         return [...ids];
     }

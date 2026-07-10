@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+    check,
     index,
     integer,
     jsonb,
@@ -24,7 +26,11 @@ export const merchantsTable = pgTable(
         domain: text("domain").unique().notNull(),
         allowedDomains: text("allowed_domains").array().default([]).notNull(),
         name: text("name").notNull(),
-        ownerWallet: customHex("owner_wallet").$type<Address>().notNull(),
+        // Owner identity — at least one of the two must be set (CHECK below).
+        // `ownerWallet` powers onchain bank-role management; `ownerAccountId`
+        // (business_accounts FK) powers walletless ownership.
+        ownerWallet: customHex("owner_wallet").$type<Address>(),
+        ownerAccountId: uuid("owner_account_id"),
         bankAddress: customHex("bank_address").$type<Address>(),
         defaultRewardToken: customHex("default_reward_token")
             .$type<Address>()
@@ -40,7 +46,14 @@ export const merchantsTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
     },
-    (table) => [index("merchants_owner_wallet_idx").on(table.ownerWallet)]
+    (table) => [
+        index("merchants_owner_wallet_idx").on(table.ownerWallet),
+        index("merchants_owner_account_idx").on(table.ownerAccountId),
+        check(
+            "merchants_owner_check",
+            sql`${table.ownerWallet} IS NOT NULL OR ${table.ownerAccountId} IS NOT NULL`
+        ),
+    ]
 );
 
 export const merchantAdminsTable = pgTable(
@@ -48,13 +61,22 @@ export const merchantAdminsTable = pgTable(
     {
         id: uuid("id").primaryKey().defaultRandom(),
         merchantId: uuid("merchant_id").notNull(),
-        wallet: customHex("wallet").$type<Address>().notNull(),
-        addedBy: customHex("added_by").$type<Address>().notNull(),
+        // Admin identity — wallet and/or business account (CHECK below).
+        wallet: customHex("wallet").$type<Address>(),
+        accountId: uuid("account_id"),
+        // Who added the admin — wallet or account, whichever the actor had.
+        addedBy: customHex("added_by").$type<Address>(),
+        addedByAccountId: uuid("added_by_account_id"),
         addedAt: timestamp("added_at").defaultNow().notNull(),
     },
     (table) => [
         index("merchant_admins_wallet_idx").on(table.wallet),
+        index("merchant_admins_account_idx").on(table.accountId),
         unique("merchant_admins_unique").on(table.merchantId, table.wallet),
+        check(
+            "merchant_admins_identity_check",
+            sql`${table.wallet} IS NOT NULL OR ${table.accountId} IS NOT NULL`
+        ),
     ]
 );
 

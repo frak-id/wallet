@@ -20,11 +20,50 @@ const SAFE_METHODS = new Set(["GET", "HEAD"]);
 export const STEP_UP_ERROR_CODE = "step-up-required";
 
 /**
+ * 401 body emitted by `requireStepUp` (with the `x-frak-auth-error:
+ * step-up-required` header). Routes guarded by the macro must include it
+ * in their 401 response schema.
+ */
+export const StepUpRequired401 = t.Union([
+    t.String(),
+    t.Object({
+        error: t.Literal("step_up_required"),
+        methods: t.Array(
+            t.Union([t.Literal("email"), t.Literal("totp"), t.Literal("siwe")])
+        ),
+    }),
+    t.ErrorResponse,
+]);
+
+/**
  * A pending (2FA-unverified) session may only reach the auth surface itself:
  * completing 2FA, logging out. Everything else treats it as unauthenticated.
  */
 function isUsableSession(auth: ResolvedBusinessAuth): boolean {
     return !auth.pending2fa;
+}
+
+/**
+ * Platform admin = wallet allow-list OR verified @frak-labs.com email
+ * (design doc §7.3). The email check needs the account row, hence async.
+ */
+async function isPlatformAdminAuth(
+    auth: ResolvedBusinessAuth
+): Promise<boolean> {
+    if (
+        auth.wallet &&
+        AuthContext.services.platformAdmin.isPlatformAdmin(auth.wallet)
+    ) {
+        return true;
+    }
+    if (auth.accountId) {
+        return AuthContext.services.platformAdmin.isPlatformAdminAccount(
+            await BusinessAuthContext.repositories.account.findById(
+                auth.accountId
+            )
+        );
+    }
+    return false;
 }
 
 export const businessSessionContext = new Elysia({
@@ -46,23 +85,20 @@ export const businessSessionContext = new Elysia({
                     shopifySession: null as ShopifySessionToken | null,
                     hasMerchantAccess: async (merchantId: string) => {
                         if (
-                            auth.wallet &&
-                            (await MerchantContext.services.authorization.hasAccess(
+                            await MerchantContext.services.authorization.hasAccess(
                                 merchantId,
-                                auth.wallet
-                            ))
+                                auth
+                            )
                         )
                             return true;
                         if (
-                            auth.wallet &&
-                            AuthContext.services.platformAdmin.isPlatformAdmin(
-                                auth.wallet
-                            ) &&
-                            SAFE_METHODS.has(request.method)
+                            SAFE_METHODS.has(request.method) &&
+                            (await isPlatformAdminAuth(auth))
                         ) {
                             log.info(
                                 {
                                     wallet: auth.wallet,
+                                    accountId: auth.accountId,
                                     merchantId,
                                     method: request.method,
                                     path: request.url,
@@ -105,8 +141,15 @@ export const businessSessionContext = new Elysia({
         };
     })
     .macro({
-        businessAuthenticated(skip?: boolean) {
-            if (skip) return;
+        /**
+         * NOTE on macro semantics: Elysia passes the route-side value as the
+         * macro argument (`{ businessAuthenticated: true }` ⇒ `enabled =
+         * true`). Guards must therefore no-op on a FALSY argument — the
+         * previous `(skip?: boolean)` shape silently disabled every
+         * `macro: true` usage.
+         */
+        businessAuthenticated(enabled?: boolean) {
+            if (!enabled) return;
 
             return {
                 beforeHandle: async ({ headers, set }) => {
@@ -138,8 +181,8 @@ export const businessSessionContext = new Elysia({
          * actions. Embedded Shopify sessions pass (they are wallet-free by
          * design and never reach wallet-signed flows).
          */
-        requireWallet(skip?: boolean) {
-            if (skip) return;
+        requireWallet(enabled?: boolean) {
+            if (!enabled) return;
 
             return {
                 beforeHandle: async ({ headers }) => {
@@ -168,8 +211,8 @@ export const businessSessionContext = new Elysia({
          * `x-frak-auth-error: step-up-required` protocol so the Eden fetch
          * wrapper can open the right 2FA modal and transparently retry.
          */
-        requireStepUp(skip?: boolean) {
-            if (skip) return;
+        requireStepUp(enabled?: boolean) {
+            if (!enabled) return;
 
             return {
                 beforeHandle: async ({ headers, set }) => {
@@ -220,11 +263,12 @@ export const businessSessionContext = new Elysia({
          * Platform-admin-only guard for billing admin mutation routes
          * (deposits/withdrawals/monthly-bills). Deliberately independent from
          * `hasMerchantAccess`, whose platform-admin bypass is read-only /
-         * safe-methods-only and must never authorize mutations. The Shopify
-         * session path has no wallet and is always rejected here.
+         * safe-methods-only and must never authorize mutations. Wallet
+         * allow-list or verified @frak-labs.com email (§7.3); the Shopify
+         * session path is always rejected here.
          */
-        platformAdminAuthenticated(skip?: boolean) {
-            if (skip) return;
+        platformAdminAuthenticated(enabled?: boolean) {
+            if (!enabled) return;
 
             return {
                 beforeHandle: async ({ headers }) => {
@@ -234,15 +278,11 @@ export const businessSessionContext = new Elysia({
                     }
 
                     const auth = await resolveBusinessAuth(businessAuth);
-                    if (!auth || !isUsableSession(auth) || !auth.wallet) {
+                    if (!auth || !isUsableSession(auth)) {
                         return status(401, "Unauthorized");
                     }
 
-                    if (
-                        !AuthContext.services.platformAdmin.isPlatformAdmin(
-                            auth.wallet
-                        )
-                    ) {
+                    if (!(await isPlatformAdminAuth(auth))) {
                         return status(403, "Platform admin access required");
                     }
                 },

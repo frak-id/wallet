@@ -52,14 +52,14 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(403, "Access denied");
             }
 
-            // Determine role: check wallet-based access for business sessions,
-            // default to "admin" for Shopify sessions (shop owner)
+            // Determine role: check identity-based access for business
+            // sessions, default to "admin" for Shopify sessions (shop owner)
             let role: "owner" | "admin" | "platform_admin" | "none" = "admin";
-            if (businessSession?.wallet) {
+            if (businessSession) {
                 const access =
                     await MerchantContext.services.authorization.checkAccess(
                         merchantId,
-                        businessSession.wallet
+                        businessSession
                     );
                 role = access.role;
                 // Platform admins have no real merchant relationship so
@@ -67,6 +67,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 // the auth-domain concern out of MerchantAuthorizationService.
                 if (
                     role === "none" &&
+                    businessSession.wallet &&
                     AuthContext.services.platformAdmin.isPlatformAdmin(
                         businessSession.wallet
                     )
@@ -116,24 +117,40 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .get(
         "/my",
         async ({ businessSession }) => {
-            if (!businessSession?.wallet) {
+            if (!businessSession) {
                 return status(401, "Authentication required");
             }
 
-            const isPlatAdmin =
-                AuthContext.services.platformAdmin.isPlatformAdmin(
-                    businessSession.wallet
-                );
+            const isPlatAdmin = businessSession.wallet
+                ? AuthContext.services.platformAdmin.isPlatformAdmin(
+                      businessSession.wallet
+                  )
+                : false;
 
-            const owned =
-                await MerchantContext.repositories.merchant.findByOwnerWallet(
-                    businessSession.wallet
-                );
+            // Enumerate ownership on both identity axes (wallet + account)
+            // so walletless users see their merchants too.
+            const [ownedByWallet, ownedByAccount, adminOf] = await Promise.all([
+                businessSession.wallet
+                    ? MerchantContext.repositories.merchant.findByOwnerWallet(
+                          businessSession.wallet
+                      )
+                    : Promise.resolve([]),
+                businessSession.accountId
+                    ? MerchantContext.repositories.merchant.findByOwnerAccount(
+                          businessSession.accountId
+                      )
+                    : Promise.resolve([]),
+                MerchantContext.repositories.merchantAdmin.findByIdentity(
+                    businessSession
+                ),
+            ]);
 
-            const adminOf =
-                await MerchantContext.repositories.merchantAdmin.findByWallet(
-                    businessSession.wallet
-                );
+            // Dedupe wallet/account overlap (both axes set on one merchant).
+            const owned = [
+                ...new Map(
+                    [...ownedByWallet, ...ownedByAccount].map((m) => [m.id, m])
+                ).values(),
+            ];
 
             const adminMerchantIds = adminOf.map((a) => a.merchantId);
             const adminMerchants = await Promise.all(

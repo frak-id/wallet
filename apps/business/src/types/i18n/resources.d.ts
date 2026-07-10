@@ -1295,7 +1295,8 @@ export default interface Resources {
         },
         "saveAll": "Save all changes",
         "saveError": "Some changes could not be saved. Try again.",
-        "undoRemove": "Undo remove"
+        "undoRemove": "Undo remove",
+        "walletlessMember": "Walletless member"
       },
       "title": "Edit"
     },

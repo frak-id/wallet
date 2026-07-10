@@ -28,7 +28,10 @@ import {
     MerchantCampaignParamSchema,
     MerchantIdParamSchema,
 } from "../../schemas";
-import { businessSessionContext } from "../middleware/session";
+import {
+    businessSessionContext,
+    StepUpRequired401,
+} from "../middleware/session";
 
 function resolveRewardTokens(
     rule: CampaignRuleDefinition,
@@ -441,12 +444,15 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(updated, undefined);
         },
         {
+            // Campaign publish is a sensitive action (§4.8) — pause/resume/
+            // archive stay step-up-free (low risk).
+            requireStepUp: true,
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.ErrorResponse,
                 409: t.ErrorResponse,
-                401: t.String(),
+                401: StepUpRequired401,
                 403: t.String(),
                 404: t.String(),
             },

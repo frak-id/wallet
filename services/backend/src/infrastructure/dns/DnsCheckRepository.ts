@@ -4,6 +4,17 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { type Address, concatHex, isHex, keccak256, toHex } from "viem";
 
 /**
+ * Identity a DNS TXT proof binds to: a wallet address (SIWE registration)
+ * or a business account id (walletless registration, design doc §4.10).
+ */
+export type DnsProofOwner = { wallet: Address } | { accountId: string };
+
+/** Hash input for the owner half of the TXT record. */
+function ownerToHex(owner: DnsProofOwner) {
+    return "wallet" in owner ? owner.wallet : toHex(owner.accountId);
+}
+
+/**
  * Repository used to check for DNS records
  */
 export class DnsCheckRepository {
@@ -21,12 +32,18 @@ export class DnsCheckRepository {
     /**
      * Get the DNS txt record waited for the given domain
      */
-    getDnsTxtString({ domain, owner }: { domain: string; owner: Address }) {
+    getDnsTxtString({
+        domain,
+        owner,
+    }: {
+        domain: string;
+        owner: DnsProofOwner;
+    }) {
         // Normalise the domain (only getting the host from it)
         const host = this.getNormalizedDomain(domain);
 
         // Compute the hash
-        const hash = keccak256(concatHex([toHex(host), owner]));
+        const hash = keccak256(concatHex([toHex(host), ownerToHex(owner)]));
         return `frak-business; hash=${hash}`;
     }
 
@@ -41,16 +58,17 @@ export class DnsCheckRepository {
         setupCode,
     }: {
         domain: string;
-        owner: Address;
+        owner: DnsProofOwner;
         setupCode?: string;
     }) {
-        // If we got a setup code
-        if (setupCode && isHex(setupCode)) {
+        // If we got a setup code (wallet flow only — the Shopify embedded
+        // mint generates it from the wallet address)
+        if (setupCode && isHex(setupCode) && "wallet" in owner) {
             // Rebuild the hash
             const hash = keccak256(
                 concatHex([
                     toHex(domain),
-                    owner,
+                    owner.wallet,
                     toHex(process.env.PRODUCT_SETUP_CODE_SALT as string),
                 ])
             );
@@ -73,7 +91,7 @@ export class DnsCheckRepository {
         owner,
     }: {
         domain: string;
-        owner: Address;
+        owner: DnsProofOwner;
     }) {
         // If not running in prod, return true
         if (!isRunningInProd) return true;

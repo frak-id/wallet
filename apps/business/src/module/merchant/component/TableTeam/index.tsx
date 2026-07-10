@@ -72,11 +72,13 @@ export function TableTeam({
                 ) : (
                     administrators.map((admin) => (
                         <AdminRow
-                            key={admin.wallet}
+                            key={admin.id}
                             admin={admin}
                             hasAccess={hasAccess}
-                            isStaged={stagedRemovals.some((a) =>
-                                isAddressEqual(a, admin.wallet)
+                            isStaged={stagedRemovals.some(
+                                (a) =>
+                                    admin.wallet !== null &&
+                                    isAddressEqual(a, admin.wallet)
                             )}
                             onToggleRemoval={onToggleRemoval}
                             disabled={disabled}
@@ -106,6 +108,9 @@ function AdminRow({
 
     const canRemove = useMemo(() => {
         if (admin.isOwner) return false;
+        // Removal is wallet-keyed (DELETE /:wallet) — account-only admins
+        // are managed from their own session, not from this table yet.
+        if (admin.wallet === null) return false;
         if (hasAccess) return true;
         return isAddressEqual(
             admin.wallet,
@@ -117,7 +122,11 @@ function AdminRow({
         <TableRow className={isStaged ? styles.rowStaged : undefined}>
             <TableCell>
                 {admin.isMe && `${t("merchantEdit.team.me")} `}
-                <WalletAddress wallet={admin.wallet} />
+                {admin.wallet ? (
+                    <WalletAddress wallet={admin.wallet} />
+                ) : (
+                    t("merchantEdit.team.walletlessMember")
+                )}
             </TableCell>
             <TableCell align="right" hug>
                 <Badge
@@ -140,7 +149,9 @@ function AdminRow({
                                 ? t("merchantEdit.team.undoRemove")
                                 : t("merchantEdit.team.removeMember")
                         }
-                        onClick={() => onToggleRemoval(admin.wallet)}
+                        onClick={() =>
+                            admin.wallet && onToggleRemoval(admin.wallet)
+                        }
                     >
                         {isStaged ? (
                             <Undo2 size={24} />

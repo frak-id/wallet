@@ -22,7 +22,8 @@ export const MerchantDetailResponseSchema = t.Object({
     domain: t.String(),
     allowedDomains: t.Array(t.String()),
     name: t.String(),
-    ownerWallet: t.Hex(),
+    // Null for walletless-owned merchants (owner is a business account).
+    ownerWallet: t.Union([t.Hex(), t.Null()]),
     bankAddress: t.Union([t.Hex(), t.Null()]),
     defaultRewardToken: t.Hex(),
     explorerConfig: t.Union([ExplorerConfigSchema, t.Null()]),

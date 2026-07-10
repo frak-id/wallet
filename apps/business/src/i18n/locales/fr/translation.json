@@ -1515,6 +1515,7 @@
                 "admin": "Admin"
             },
             "me": "Moi :",
+            "walletlessMember": "Membre sans portefeuille",
             "addMember": "Ajouter un membre",
             "saveAll": "Enregistrer les modifications",
             "removeMember": "Retirer le membre",

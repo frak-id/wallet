@@ -194,6 +194,12 @@ export class MerchantRepository {
         });
     }
 
+    async findByOwnerAccount(accountId: string): Promise<MerchantSelect[]> {
+        return db.query.merchantsTable.findMany({
+            where: eq(merchantsTable.ownerAccountId, accountId),
+        });
+    }
+
     /**
      * Returns merchant rows — used only by the platform-admin /my endpoint.
      * Capped at 500 rows; revisit with cursor pagination if merchant count
@@ -251,7 +257,10 @@ export class MerchantRepository {
     ): Promise<MerchantSelect | null> {
         const [result] = await db
             .update(merchantsTable)
-            .set({ ownerWallet, updatedAt: new Date() })
+            // The previous owner's business account must not retain
+            // ownership: clear `ownerAccountId` (the new owner's account, if
+            // any, is re-linked lazily on their next login/backfill run).
+            .set({ ownerWallet, ownerAccountId: null, updatedAt: new Date() })
             .where(eq(merchantsTable.id, id))
             .returning();
         if (result) {

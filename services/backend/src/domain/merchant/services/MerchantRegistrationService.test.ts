@@ -60,13 +60,18 @@ function makeService(
 }
 
 const baseParams = {
-    message: "siwe-message",
-    signature: "0xsig" as Address,
+    identity: {
+        type: "wallet" as const,
+        message: "siwe-message",
+        signature: "0xsig" as Address,
+    },
     domain: "brand.com",
     name: "Brand",
     requestOrigin: "https://business.frak.id",
     defaultRewardToken: REWARD_TOKEN,
 };
+
+const ACCOUNT_ID = "11111111-1111-4111-8111-111111111111";
 
 beforeEach(() => {
     vi.clearAllMocks();
@@ -206,5 +211,78 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
             code: "DOMAIN_ALREADY_REGISTERED",
         });
         expect(merchantRepo.create).not.toHaveBeenCalled();
+    });
+});
+
+describe("MerchantRegistrationService.register — identity paths (§4.10)", () => {
+    it("wallet path: stores the SIWE wallet and the session account", async () => {
+        const { service, merchantRepo } = makeService({
+            signerWallet: NON_ADMIN,
+        });
+
+        await service.register({
+            ...baseParams,
+            identity: { ...baseParams.identity, accountId: ACCOUNT_ID },
+        });
+
+        const created = merchantRepo.create.mock.calls[0][0];
+        expect(created.ownerWallet).toBe(NON_ADMIN);
+        expect(created.ownerAccountId).toBe(ACCOUNT_ID);
+    });
+
+    it("walletless path: registers with owner_wallet NULL and account set", async () => {
+        const { service, merchantRepo, dnsRepo } = makeService();
+
+        const result = await service.register({
+            ...baseParams,
+            identity: { type: "account", accountId: ACCOUNT_ID },
+        });
+
+        expect(result.merchantId).toBe("new-merchant-id");
+        expect(result.isPlatformAdmin).toBe(false);
+        const created = merchantRepo.create.mock.calls[0][0];
+        expect(created.ownerWallet).toBeNull();
+        expect(created.ownerAccountId).toBe(ACCOUNT_ID);
+        // No SIWE verification happens on the account path
+        expect(service.verifySiweMessage).not.toHaveBeenCalled();
+        // DNS proof binds to the account id, not a wallet
+        expect(dnsRepo.isValidDomain).toHaveBeenCalledWith(
+            expect.objectContaining({
+                owner: { accountId: ACCOUNT_ID },
+            })
+        );
+    });
+
+    it("walletless path: fails DNS verification like the wallet path", async () => {
+        const { service } = makeService({ dnsValid: false });
+
+        await expect(
+            service.register({
+                ...baseParams,
+                identity: { type: "account", accountId: ACCOUNT_ID },
+            })
+        ).rejects.toMatchObject({
+            status: 400,
+            code: "DNS_VERIFICATION_FAILED",
+        });
+    });
+
+    it("walletless path: platform-admin options are ignored (wallet-bound)", async () => {
+        const { service, merchantRepo, dnsRepo } = makeService();
+
+        const result = await service.register({
+            ...baseParams,
+            identity: { type: "account", accountId: ACCOUNT_ID },
+            skipDomainValidation: true,
+            useFrakBank: true,
+            platformAdminWallets: [ADMIN_WALLET],
+        });
+
+        expect(result.isPlatformAdmin).toBe(false);
+        expect(result.frakBankLinked).toBe(false);
+        // DNS validation still ran despite the skip flag
+        expect(dnsRepo.isValidDomain).toHaveBeenCalledTimes(1);
+        const created = merchantRepo.create.mock.calls[0][0];
+        expect(created.bankAddress).toBeUndefined();
     });
 });

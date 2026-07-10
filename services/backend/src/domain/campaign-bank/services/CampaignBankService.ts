@@ -35,11 +35,16 @@ export class CampaignBankService {
                 bankAddress
             );
 
-            await this.campaignBankRepository.grantManagerRole(
-                merchantId,
-                bankAddress,
-                merchant.ownerWallet
-            );
+            // Walletless owner (§4.10): the bank still deploys via the
+            // backend key; the MANAGER role grant is deferred until a wallet
+            // is linked (then `/bank/sync` grants it).
+            if (merchant.ownerWallet) {
+                await this.campaignBankRepository.grantManagerRole(
+                    merchantId,
+                    bankAddress,
+                    merchant.ownerWallet
+                );
+            }
 
             await this.campaignBankRepository.enableDistribution(bankAddress, {
                 tokens: currentStablecoinsList,
@@ -86,6 +91,11 @@ export class CampaignBankService {
         if (!merchant.bankAddress) {
             await this.deployAndSetupBank(merchantId);
             return { rolesGranted: true, rolesRevoked: false };
+        }
+
+        // Walletless owner — nothing to sync until a wallet is linked.
+        if (!merchant.ownerWallet) {
+            return { rolesGranted: false, rolesRevoked: false };
         }
 
         const hasRole = await this.campaignBankRepository.hasManagerRole(
@@ -219,6 +229,11 @@ export class CampaignBankService {
         deployed: boolean;
         bankAddress: Address | null;
         ownerHasManagerRole: boolean;
+        /**
+         * "no_wallet" — walletless owner: no wallet to hold the MANAGER role
+         * (§4.9); the UI shows the wallet-link CTA instead of a role error.
+         */
+        managerRole: "granted" | "missing" | "no_wallet";
     }> {
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant?.bankAddress) {
@@ -226,8 +241,19 @@ export class CampaignBankService {
                 deployed: false,
                 bankAddress: null,
                 ownerHasManagerRole: false,
+                managerRole: merchant?.ownerWallet ? "missing" : "no_wallet",
             };
         }
+
+        if (!merchant.ownerWallet) {
+            return {
+                deployed: true,
+                bankAddress: merchant.bankAddress,
+                ownerHasManagerRole: false,
+                managerRole: "no_wallet",
+            };
+        }
+
         const ownerHasManagerRole =
             await this.campaignBankRepository.hasManagerRole(
                 merchant.bankAddress,
@@ -238,6 +264,7 @@ export class CampaignBankService {
             deployed: true,
             bankAddress: merchant.bankAddress,
             ownerHasManagerRole,
+            managerRole: ownerHasManagerRole ? "granted" : "missing",
         };
     }
 }

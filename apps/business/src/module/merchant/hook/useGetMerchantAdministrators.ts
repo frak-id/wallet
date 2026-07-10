@@ -33,8 +33,9 @@ const MOCK_ADMINISTRATORS: MerchantAdministrator[] = [
 
 export type MerchantAdministrator = {
     id: string;
-    wallet: Address;
-    addedBy: Address;
+    // Null for walletless identities (business-account owners/admins)
+    wallet: Address | null;
+    addedBy: Address | null;
     addedAt: string;
     isOwner: boolean;
     isMe: boolean;
@@ -78,9 +79,10 @@ export function useGetMerchantAdministrators({
                 addedBy: admin.addedBy,
                 addedAt: admin.addedAt,
                 isOwner: admin.isOwner,
-                isMe: currentWallet
-                    ? isAddressEqual(admin.wallet, currentWallet)
-                    : false,
+                isMe:
+                    currentWallet && admin.wallet
+                        ? isAddressEqual(admin.wallet, currentWallet)
+                        : false,
             }));
         },
         enabled: !!merchantId,

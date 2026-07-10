@@ -1515,6 +1515,7 @@
                 "admin": "Admin"
             },
             "me": "Me:",
+            "walletlessMember": "Walletless member",
             "addMember": "Add Team Member",
             "saveAll": "Save all changes",
             "removeMember": "Remove member",

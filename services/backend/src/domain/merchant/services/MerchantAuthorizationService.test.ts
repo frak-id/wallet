@@ -14,10 +14,25 @@ const ADMIN_WALLET = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" as Address;
 const PLATFORM_ADMIN = "0xcccccccccccccccccccccccccccccccccccccccc" as Address;
 const STRANGER = "0xdddddddddddddddddddddddddddddddddddddddd" as Address;
 
+const OWNER_ACCOUNT = "11111111-1111-4111-8111-111111111111";
+const ADMIN_ACCOUNT = "22222222-2222-4222-8222-222222222222";
+const STRANGER_ACCOUNT = "33333333-3333-4333-8333-333333333333";
+
 const MERCHANT_ID = "merchant-123";
 
-function makeService(opts: { ownerWallet?: Address; isAdmin?: boolean } = {}) {
-    const ownerWallet = opts.ownerWallet ?? OWNER;
+function makeService(
+    opts: {
+        ownerWallet?: Address | null;
+        ownerAccountId?: string | null;
+        adminWallets?: Address[];
+        adminAccountIds?: string[];
+    } = {}
+) {
+    const ownerWallet =
+        opts.ownerWallet === undefined ? OWNER : opts.ownerWallet;
+    const ownerAccountId = opts.ownerAccountId ?? null;
+    const adminWallets = opts.adminWallets ?? [];
+    const adminAccountIds = opts.adminAccountIds ?? [];
 
     const merchantRepo = {
         findById: vi.fn((_id: string) =>
@@ -26,16 +41,51 @@ function makeService(opts: { ownerWallet?: Address; isAdmin?: boolean } = {}) {
                     ? ({
                           id: MERCHANT_ID,
                           ownerWallet,
+                          ownerAccountId,
                       } as never)
                     : null
             )
         ),
+        findByOwnerWallet: vi.fn((wallet: Address) =>
+            Promise.resolve(
+                ownerWallet === wallet ? [{ id: MERCHANT_ID } as never] : []
+            )
+        ),
+        findByOwnerAccount: vi.fn((accountId: string) =>
+            Promise.resolve(
+                ownerAccountId === accountId
+                    ? [{ id: MERCHANT_ID } as never]
+                    : []
+            )
+        ),
     };
     const adminRepo = {
-        isAdmin: vi.fn((_id: string, wallet: Address) =>
-            Promise.resolve(
-                opts.isAdmin === true ? wallet === ADMIN_WALLET : false
-            )
+        isAdmin: vi.fn(
+            (
+                _id: string,
+                identity: { wallet?: Address | null; accountId?: string | null }
+            ) =>
+                Promise.resolve(
+                    (identity.wallet !== undefined &&
+                        identity.wallet !== null &&
+                        adminWallets.includes(identity.wallet)) ||
+                        (!!identity.accountId &&
+                            adminAccountIds.includes(identity.accountId))
+                )
+        ),
+        findByIdentity: vi.fn(
+            (identity: {
+                wallet?: Address | null;
+                accountId?: string | null;
+            }) =>
+                Promise.resolve(
+                    (identity.wallet &&
+                        adminWallets.includes(identity.wallet)) ||
+                        (identity.accountId &&
+                            adminAccountIds.includes(identity.accountId))
+                        ? [{ merchantId: MERCHANT_ID } as never]
+                        : []
+                )
         ),
     };
     return new MerchantAuthorizationService(
@@ -53,9 +103,9 @@ afterEach(() => {
 });
 
 describe("MerchantAuthorizationService.checkAccess", () => {
-    it("returns owner role for merchant owner", async () => {
+    it("returns owner role for merchant owner (wallet identity)", async () => {
         const svc = makeService({ ownerWallet: OWNER });
-        const result = await svc.checkAccess(MERCHANT_ID, OWNER);
+        const result = await svc.checkAccess(MERCHANT_ID, { wallet: OWNER });
         expect(result).toMatchObject({
             hasAccess: true,
             isOwner: true,
@@ -63,9 +113,41 @@ describe("MerchantAuthorizationService.checkAccess", () => {
         });
     });
 
-    it("returns admin role for a merchant admin", async () => {
-        const svc = makeService({ isAdmin: true });
-        const result = await svc.checkAccess(MERCHANT_ID, ADMIN_WALLET);
+    it("returns owner role for a walletless owner (account identity)", async () => {
+        const svc = makeService({
+            ownerWallet: null,
+            ownerAccountId: OWNER_ACCOUNT,
+        });
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            wallet: null,
+            accountId: OWNER_ACCOUNT,
+        });
+        expect(result).toMatchObject({
+            hasAccess: true,
+            isOwner: true,
+            role: "owner",
+        });
+    });
+
+    it("matches owner on the account axis even when the merchant also has a wallet", async () => {
+        const svc = makeService({
+            ownerWallet: OWNER,
+            ownerAccountId: OWNER_ACCOUNT,
+        });
+        // Session has a different wallet but the owning account (e.g. after
+        // wallet re-link) — account match must win.
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            wallet: STRANGER,
+            accountId: OWNER_ACCOUNT,
+        });
+        expect(result.role).toBe("owner");
+    });
+
+    it("returns admin role for a merchant admin (wallet identity)", async () => {
+        const svc = makeService({ adminWallets: [ADMIN_WALLET] });
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            wallet: ADMIN_WALLET,
+        });
         expect(result).toMatchObject({
             hasAccess: true,
             isOwner: false,
@@ -74,13 +156,33 @@ describe("MerchantAuthorizationService.checkAccess", () => {
         });
     });
 
+    it("returns admin role for an account-based admin", async () => {
+        const svc = makeService({ adminAccountIds: [ADMIN_ACCOUNT] });
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            wallet: null,
+            accountId: ADMIN_ACCOUNT,
+        });
+        expect(result.role).toBe("admin");
+    });
+
+    it("returns none for an empty identity", async () => {
+        const svc = makeService();
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            wallet: null,
+            accountId: null,
+        });
+        expect(result).toMatchObject({ hasAccess: false, role: "none" });
+    });
+
     it("returns none role with hasAccess:false for a platform admin — role is derived upstream in merchant/index.ts", async () => {
         // checkAccess is now auth-domain-free. A platform admin has no real
         // merchant relationship so it falls through to role:"none".
         // The "platform_admin" role is derived in the GET /:merchantId handler
         // after checkAccess returns, keeping MerchantAuthorizationService clean.
         const svc = makeService();
-        const result = await svc.checkAccess(MERCHANT_ID, PLATFORM_ADMIN);
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            wallet: PLATFORM_ADMIN,
+        });
         expect(result).toMatchObject({
             hasAccess: false,
             isOwner: false,
@@ -91,7 +193,10 @@ describe("MerchantAuthorizationService.checkAccess", () => {
 
     it("returns none for an unrelated wallet", async () => {
         const svc = makeService();
-        const result = await svc.checkAccess(MERCHANT_ID, STRANGER);
+        const result = await svc.checkAccess(MERCHANT_ID, {
+            wallet: STRANGER,
+            accountId: STRANGER_ACCOUNT,
+        });
         expect(result).toMatchObject({
             hasAccess: false,
             role: "none",
@@ -100,7 +205,9 @@ describe("MerchantAuthorizationService.checkAccess", () => {
 
     it("returns none for an unknown merchant", async () => {
         const svc = makeService();
-        const result = await svc.checkAccess("nonexistent", PLATFORM_ADMIN);
+        const result = await svc.checkAccess("nonexistent", {
+            wallet: PLATFORM_ADMIN,
+        });
         expect(result).toMatchObject({ hasAccess: false, role: "none" });
     });
 });
@@ -108,17 +215,79 @@ describe("MerchantAuthorizationService.checkAccess", () => {
 describe("MerchantAuthorizationService.hasAccess (write gate)", () => {
     it("returns true for the owner", async () => {
         const svc = makeService({ ownerWallet: OWNER });
-        expect(await svc.hasAccess(MERCHANT_ID, OWNER)).toBe(true);
+        expect(await svc.hasAccess(MERCHANT_ID, { wallet: OWNER })).toBe(true);
+    });
+
+    it("returns true for a walletless owner", async () => {
+        const svc = makeService({
+            ownerWallet: null,
+            ownerAccountId: OWNER_ACCOUNT,
+        });
+        expect(
+            await svc.hasAccess(MERCHANT_ID, {
+                wallet: null,
+                accountId: OWNER_ACCOUNT,
+            })
+        ).toBe(true);
     });
 
     it("returns false for a platform admin — write gate is unaffected", async () => {
         const svc = makeService();
-        expect(await svc.hasAccess(MERCHANT_ID, PLATFORM_ADMIN)).toBe(false);
+        expect(
+            await svc.hasAccess(MERCHANT_ID, { wallet: PLATFORM_ADMIN })
+        ).toBe(false);
     });
 
     it("returns false for a stranger", async () => {
         const svc = makeService();
-        expect(await svc.hasAccess(MERCHANT_ID, STRANGER)).toBe(false);
+        expect(await svc.hasAccess(MERCHANT_ID, { wallet: STRANGER })).toBe(
+            false
+        );
+    });
+});
+
+describe("MerchantAuthorizationService.getAccessibleMerchantIds", () => {
+    it("collects merchants owned by wallet", async () => {
+        const svc = makeService({ ownerWallet: OWNER });
+        expect(await svc.getAccessibleMerchantIds({ wallet: OWNER })).toEqual([
+            MERCHANT_ID,
+        ]);
+    });
+
+    it("collects merchants owned by account (walletless)", async () => {
+        const svc = makeService({
+            ownerWallet: null,
+            ownerAccountId: OWNER_ACCOUNT,
+        });
+        expect(
+            await svc.getAccessibleMerchantIds({
+                wallet: null,
+                accountId: OWNER_ACCOUNT,
+            })
+        ).toEqual([MERCHANT_ID]);
+    });
+
+    it("dedupes a merchant matched on both axes", async () => {
+        const svc = makeService({
+            ownerWallet: OWNER,
+            ownerAccountId: OWNER_ACCOUNT,
+        });
+        expect(
+            await svc.getAccessibleMerchantIds({
+                wallet: OWNER,
+                accountId: OWNER_ACCOUNT,
+            })
+        ).toEqual([MERCHANT_ID]);
+    });
+
+    it("returns empty for an empty identity", async () => {
+        const svc = makeService();
+        expect(
+            await svc.getAccessibleMerchantIds({
+                wallet: null,
+                accountId: null,
+            })
+        ).toEqual([]);
     });
 });
 
@@ -139,7 +308,7 @@ describe("platform admin read bypass (hasMerchantAccess closure logic)", () => {
         method: string,
         svc: MerchantAuthorizationService
     ): Promise<boolean> {
-        if (await svc.hasAccess(merchantId, wallet)) return true;
+        if (await svc.hasAccess(merchantId, { wallet })) return true;
         if (isSimulatedPlatformAdmin(wallet) && SAFE_METHODS.has(method))
             return true;
         return false;

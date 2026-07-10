@@ -29,6 +29,16 @@ export class OwnershipTransferService {
             );
         }
 
+        // The SIWE-based transfer flow needs a wallet-owning merchant; a
+        // walletless owner must link a wallet first (design doc §4.10).
+        const ownerWallet = merchant.ownerWallet;
+        if (!ownerWallet) {
+            throw HttpError.forbidden(
+                "WALLETLESS_OWNER",
+                "Merchant owner has no wallet - link a wallet before transferring ownership"
+            );
+        }
+
         const siweResult = await this.verifySiweMessage({
             message: params.message,
             signature: params.signature,
@@ -42,14 +52,14 @@ export class OwnershipTransferService {
             throw HttpError.badRequest("SIWE_INVALID", siweResult.error);
         }
 
-        if (!isAddressEqual(siweResult.wallet, merchant.ownerWallet)) {
+        if (!isAddressEqual(siweResult.wallet, ownerWallet)) {
             throw HttpError.forbidden(
                 "OWNER_ONLY",
                 "Only the current owner can initiate transfer"
             );
         }
 
-        if (isAddressEqual(params.toWallet, merchant.ownerWallet)) {
+        if (isAddressEqual(params.toWallet, ownerWallet)) {
             throw HttpError.conflict(
                 "SAME_OWNER",
                 "Cannot transfer to the same owner"
@@ -58,7 +68,7 @@ export class OwnershipTransferService {
 
         await this.transferRepository.create({
             merchantId: params.merchantId,
-            fromWallet: merchant.ownerWallet,
+            fromWallet: ownerWallet,
             toWallet: params.toWallet,
         });
     }
@@ -117,7 +127,10 @@ export class OwnershipTransferService {
             );
         }
 
-        if (!isAddressEqual(params.wallet, merchant.ownerWallet)) {
+        if (
+            !merchant.ownerWallet ||
+            !isAddressEqual(params.wallet, merchant.ownerWallet)
+        ) {
             throw HttpError.forbidden(
                 "OWNER_ONLY",
                 "Only the current owner can cancel transfer"

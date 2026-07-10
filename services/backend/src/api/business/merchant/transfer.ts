@@ -4,7 +4,10 @@ import { Elysia, status } from "elysia";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
 import { MerchantIdParamSchema } from "../../schemas";
-import { businessSessionContext } from "../middleware/session";
+import {
+    businessSessionContext,
+    StepUpRequired401,
+} from "../middleware/session";
 
 export const merchantTransferRoutes = new Elysia({
     prefix: "/:merchantId/transfer",
@@ -77,6 +80,8 @@ export const merchantTransferRoutes = new Elysia({
             return status(204);
         },
         {
+            // Ownership transfer is a sensitive action (§4.8).
+            requireStepUp: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 message: t.String(),
@@ -86,6 +91,7 @@ export const merchantTransferRoutes = new Elysia({
             response: {
                 204: t.Void(),
                 400: t.String(),
+                401: StepUpRequired401,
             },
         }
     )
@@ -131,6 +137,8 @@ export const merchantTransferRoutes = new Elysia({
             return status(204);
         },
         {
+            // Ownership transfer is a sensitive action (§4.8).
+            requireStepUp: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 message: t.String(),
@@ -139,6 +147,7 @@ export const merchantTransferRoutes = new Elysia({
             response: {
                 204: t.Void(),
                 400: t.String(),
+                401: StepUpRequired401,
             },
         }
     )

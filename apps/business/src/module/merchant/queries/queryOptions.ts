@@ -19,7 +19,8 @@ export type MerchantData = {
     id: string;
     domain: string;
     name: string;
-    ownerWallet: Address;
+    // Null for walletless-owned merchants (backend Phase 2)
+    ownerWallet: Address | null;
     bankAddress: Address | null;
     defaultRewardToken: Address;
     explorerConfig: {

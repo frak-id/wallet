@@ -2,7 +2,10 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../domain/merchant";
 import { MerchantIdParamSchema } from "../../schemas";
-import { businessSessionContext } from "../middleware/session";
+import {
+    businessSessionContext,
+    StepUpRequired401,
+} from "../middleware/session";
 
 export const merchantAdminsRoutes = new Elysia({
     prefix: "/:merchantId/admins",
@@ -40,6 +43,8 @@ export const merchantAdminsRoutes = new Elysia({
                 admins: [
                     {
                         id: merchant.id,
+                        // Walletless owner — wallet is null, identity is the
+                        // business account.
                         wallet: merchant.ownerWallet,
                         addedBy: merchant.ownerWallet,
                         addedAt: (
@@ -64,8 +69,8 @@ export const merchantAdminsRoutes = new Elysia({
                     admins: t.Array(
                         t.Object({
                             id: t.String(),
-                            wallet: t.Hex(),
-                            addedBy: t.Hex(),
+                            wallet: t.Union([t.Hex(), t.Null()]),
+                            addedBy: t.Union([t.Hex(), t.Null()]),
                             addedAt: t.String(),
                             isOwner: t.Boolean(),
                         })
@@ -84,23 +89,26 @@ export const merchantAdminsRoutes = new Elysia({
             body: { wallet },
             businessSession,
         }) => {
-            if (!businessSession?.wallet) {
+            if (!businessSession) {
                 return status(401, "Authentication required");
             }
 
             const hasAccess =
                 await MerchantContext.services.authorization.hasAccess(
                     merchantId,
-                    businessSession.wallet
+                    businessSession
                 );
             if (!hasAccess) {
                 return status(403, "Access denied");
             }
 
+            // `addedBy` records whichever identity the actor holds — wallet
+            // for wallet sessions, business account for walletless ones.
             const admin = await MerchantContext.repositories.merchantAdmin.add({
                 merchantId,
                 wallet,
                 addedBy: businessSession.wallet,
+                addedByAccountId: businessSession.accountId,
             });
 
             return {
@@ -111,6 +119,8 @@ export const merchantAdminsRoutes = new Elysia({
             };
         },
         {
+            // Admin management is a sensitive action (§4.8).
+            requireStepUp: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 wallet: t.Hex(),
@@ -118,11 +128,11 @@ export const merchantAdminsRoutes = new Elysia({
             response: {
                 200: t.Object({
                     id: t.String(),
-                    wallet: t.Hex(),
-                    addedBy: t.Hex(),
+                    wallet: t.Union([t.Hex(), t.Null()]),
+                    addedBy: t.Union([t.Hex(), t.Null()]),
                     addedAt: t.String(),
                 }),
-                401: t.String(),
+                401: StepUpRequired401,
                 403: t.String(),
             },
         }
@@ -157,13 +167,15 @@ export const merchantAdminsRoutes = new Elysia({
             return status(204);
         },
         {
+            // Admin management is a sensitive action (§4.8).
+            requireStepUp: true,
             params: t.Object({
                 merchantId: t.String(),
                 wallet: t.Hex(),
             }),
             response: {
                 204: t.Void(),
-                401: t.String(),
+                401: StepUpRequired401,
                 403: t.String(),
                 404: t.String(),
             },

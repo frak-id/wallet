@@ -4,7 +4,10 @@ import type { Address, Hex } from "viem";
 import { keccak256, toHex } from "viem";
 import { verifyMessage } from "viem/actions";
 import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
-import type { DnsCheckRepository } from "../../../infrastructure/dns/DnsCheckRepository";
+import type {
+    DnsCheckRepository,
+    DnsProofOwner,
+} from "../../../infrastructure/dns/DnsCheckRepository";
 import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 
@@ -19,6 +22,27 @@ import type { MerchantRepository } from "../repositories/MerchantRepository";
 export const FRAK_SHARED_CAMPAIGN_BANK: Address =
     "0xd9e65b88B7ABA7c1312FED0CefF2098EB43a9B81";
 
+/**
+ * Who is registering the merchant (design doc §4.10):
+ *  - `wallet`: SIWE statement proof — ownership goes to the wallet (and the
+ *    session's account when available).
+ *  - `account`: walletless, step-up-verified session IS the ownership proof
+ *    (enforced at the route level via `requireStepUp`); DNS TXT binds to the
+ *    account id. `owner_wallet` stays NULL until a wallet is linked.
+ */
+export type RegistrationIdentity =
+    | {
+          type: "wallet";
+          message: string;
+          signature: Hex;
+          /** Business account of the SIWE session, when unified-session. */
+          accountId?: string | null;
+      }
+    | {
+          type: "account";
+          accountId: string;
+      };
+
 export class MerchantRegistrationService {
     constructor(
         private readonly merchantRepository: MerchantRepository,
@@ -27,8 +51,7 @@ export class MerchantRegistrationService {
     ) {}
 
     async register(params: {
-        message: string;
-        signature: Hex;
+        identity: RegistrationIdentity;
         domain: string;
         name: string;
         requestOrigin: string;
@@ -46,25 +69,25 @@ export class MerchantRegistrationService {
         frakBankLinked: boolean;
         isPlatformAdmin: boolean;
     }> {
-        const siweResult = await this.verifySiweMessage({
-            message: params.message,
-            signature: params.signature,
-            requestOrigin: params.requestOrigin,
-            domain: params.domain,
-        });
-        if (!siweResult.valid) {
-            throw HttpError.badRequest("SIWE_INVALID", siweResult.error);
-        }
+        // Resolve the owner identity — SIWE proof for wallets, the (already
+        // step-up-verified) session for walletless accounts.
+        const { wallet, ownerAccountId } = await this.resolveOwnerIdentity(
+            params.identity,
+            params.requestOrigin,
+            params.domain
+        );
 
-        const wallet = siweResult.wallet;
         const normalizedDomain = this.dnsCheckRepository.getNormalizedDomain(
             params.domain
         );
 
+        // Platform-admin powers are wallet-bound (env allow-list).
         const platformAdminWallets = params.platformAdminWallets ?? [];
-        const isPlatformAdmin = platformAdminWallets.some(
-            (admin) => admin.toLowerCase() === wallet.toLowerCase()
-        );
+        const isPlatformAdmin =
+            wallet !== null &&
+            platformAdminWallets.some(
+                (admin) => admin.toLowerCase() === wallet.toLowerCase()
+            );
 
         const existingMerchant =
             await this.merchantRepository.findByDomain(normalizedDomain);
@@ -79,9 +102,13 @@ export class MerchantRegistrationService {
         const skipDomainValidation =
             isPlatformAdmin && params.skipDomainValidation === true;
         if (!skipDomainValidation) {
+            const dnsOwner: DnsProofOwner = wallet
+                ? { wallet }
+                : // identity.type === "account" always carries accountId
+                  { accountId: ownerAccountId as string };
             const isDnsValid = await this.dnsCheckRepository.isValidDomain({
                 domain: normalizedDomain,
-                owner: wallet,
+                owner: dnsOwner,
                 setupCode: params.setupCode,
             });
             if (!isDnsValid) {
@@ -99,6 +126,7 @@ export class MerchantRegistrationService {
             domain: normalizedDomain,
             name: params.name,
             ownerWallet: wallet,
+            ownerAccountId,
             productId,
             defaultRewardToken: params.defaultRewardToken,
             verifiedAt: new Date(),
@@ -110,22 +138,52 @@ export class MerchantRegistrationService {
 
         // When a platform admin onboards a merchant, co-admin every other
         // platform admin onto it so the whole Frak team can manage it.
-        if (isPlatformAdmin) {
+        if (isPlatformAdmin && wallet) {
+            const registrarWallet = wallet;
             const otherAdmins = platformAdminWallets.filter(
-                (admin) => admin.toLowerCase() !== wallet.toLowerCase()
+                (admin) => admin.toLowerCase() !== registrarWallet.toLowerCase()
             );
             await Promise.all(
                 otherAdmins.map((admin) =>
                     this.merchantAdminRepository.add({
                         merchantId: merchant.id,
                         wallet: admin,
-                        addedBy: wallet,
+                        addedBy: registrarWallet,
                     })
                 )
             );
         }
 
         return { merchantId: merchant.id, frakBankLinked, isPlatformAdmin };
+    }
+
+    /**
+     * Wallet path: verify the SIWE registration statement, owner = wallet
+     * (+ session account). Account path: the step-up-verified session IS the
+     * proof — owner = account only.
+     */
+    private async resolveOwnerIdentity(
+        identity: RegistrationIdentity,
+        requestOrigin: string,
+        domain: string
+    ): Promise<{ wallet: Address | null; ownerAccountId: string | null }> {
+        if (identity.type === "account") {
+            return { wallet: null, ownerAccountId: identity.accountId };
+        }
+
+        const siweResult = await this.verifySiweMessage({
+            message: identity.message,
+            signature: identity.signature,
+            requestOrigin,
+            domain,
+        });
+        if (!siweResult.valid) {
+            throw HttpError.badRequest("SIWE_INVALID", siweResult.error);
+        }
+        return {
+            wallet: siweResult.wallet,
+            ownerAccountId: identity.accountId ?? null,
+        };
     }
 
     async verifySiweMessage(params: {
@@ -191,10 +249,10 @@ export class MerchantRegistrationService {
         ];
     }
 
-    getDnsTxtString(domain: string, wallet: Address): string {
+    getDnsTxtString(domain: string, owner: DnsProofOwner): string {
         return this.dnsCheckRepository.getDnsTxtString({
             domain,
-            owner: wallet,
+            owner,
         });
     }
 
