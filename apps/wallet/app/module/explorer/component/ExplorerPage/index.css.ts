@@ -31,67 +31,39 @@ export const scrollBlur = style({
     pointerEvents: "none",
 });
 
-// Single large title that morphs into the collapsed toolbar title (iOS
-// large-title collapse). At rest it sits in flow at page-title size; `sticky`
-// pins it into the button row as you scroll, and `titleCollapsed` shrinks it
-// there. Fixed height keeps the box stable so the font-size transition never
-// reflows the list below it.
-//
-// Shares `zIndex.sticky` with `stickyHeader` and must stay *after* it in the
-// JSX so the collapsed title paints over the header's blur (paint order is
-// DOM order at equal z-index) while clearing the trailing sort button via
-// `titleCollapsed`'s right padding.
+// Single title pinned in the toolbar band, overlaying the sticky header so it
+// never moves vertically. `useScrollMorphTitle` only shrinks its font-size /
+// font-weight from scroll progress (page title 3xl/bold → toolbar m/semiBold),
+// an in-place collapse with no travel — so the size change can't desync from a
+// moving position. Fixed height + flex centering keep the single line's center
+// fixed as the font shrinks; right padding permanently clears the sort button.
 export const title = style({
-    position: "sticky",
-    top: 0,
-    zIndex: zIndex.sticky,
-    margin: 0,
-    // Fixed height + matching line-height vertically centers the single line in
-    // both states (block layout, not flex, so text-overflow ellipsis applies to
-    // a longer localized title).
-    height: 44,
-    lineHeight: "44px",
-    // Resting typography mirrors <Title size="page"> (fontSize 3xl / bold).
-    fontSize: fontSize["3xl"],
-    fontWeight: brand.typography.fontWeight.bold,
-    color: vars.text.primary,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    // Empty trailing space falls through to the cards; the title never needs taps.
-    pointerEvents: "none",
-    transition:
-        "font-size 0.25s ease, font-weight 0.25s ease, padding-right 0.25s ease",
-    "@media": {
-        "(prefers-reduced-motion: reduce)": {
-            transition: "none",
-        },
-    },
-});
-
-// Collapsed end state: body-sized toolbar title, matching the previous small
-// title (fontSize m / semiBold). Right padding clears the sort button so a
-// longer localized title ellipsizes instead of running under it.
-export const titleCollapsed = style({
-    fontSize: fontSize.m,
-    fontWeight: brand.typography.fontWeight.semiBold,
-    paddingRight: `calc(44px + ${alias.spacing.m})`,
-});
-
-// Anchors the collapse sentinel to the top of the scrolling content.
-export const listWrapper = style({
-    position: "relative",
-});
-
-// 1px marker at the content's top (a zero-area target can be skipped by the
-// IntersectionObserver on some engines). The observer watches it rather than
-// the tall list, which never fully leaves the viewport; absolute so it adds no
-// layout gap.
-export const collapseSentinel = style({
     position: "absolute",
     top: 0,
     left: 0,
-    height: 1,
-    width: 1,
+    right: 0,
+    height: 44,
+    margin: 0,
+    display: "flex",
+    alignItems: "center",
+    lineHeight: 1,
+    paddingRight: `calc(44px + ${alias.spacing.m})`,
+    // Resting (big) start point; mirrors <Title size="page"> (fontSize 3xl / bold).
+    fontSize: fontSize["3xl"],
+    fontWeight: brand.typography.fontWeight.bold,
+    color: vars.text.primary,
+    overflow: "hidden",
+    // Sits above the blur but never intercepts taps (button re-enables its own).
+    zIndex: 1,
     pointerEvents: "none",
+});
+
+// Inner text: ellipsizes a longer localized title. Its own element (rather than
+// the flex h1) because text-overflow doesn't apply to an anonymous flex item;
+// min-width:0 lets it shrink below content width inside the flex row.
+export const titleText = style({
+    minWidth: 0,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
 });

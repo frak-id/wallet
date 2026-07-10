@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ScrollEdgeBlur } from "@/module/common/component/ScrollEdgeBlur";
 import { ExplorerList } from "@/module/explorer/component/ExplorerList";
 import { ExplorerSortButton } from "@/module/explorer/component/ExplorerSortButton";
-import { useCollapsibleTitle } from "@/module/explorer/hook/useCollapsibleTitle";
+import { useScrollMorphTitle } from "@/module/explorer/hook/useScrollMorphTitle";
 import * as styles from "./index.css";
 
 /**
@@ -14,36 +14,22 @@ import * as styles from "./index.css";
  */
 export function ExplorerPage() {
     const { t } = useTranslation();
-    const { headerRef, sentinelRef, collapsed } = useCollapsibleTitle();
+    const { titleRef } = useScrollMorphTitle();
     const pageTitle = t("explorer.pageTitle");
 
     return (
         <Stack space="m">
-            <div ref={headerRef} className={styles.stickyHeader}>
+            <div className={styles.stickyHeader}>
                 <ScrollEdgeBlur className={styles.scrollBlur} />
+                {/* Pinned in the toolbar band; the hook shrinks it in place. */}
+                <h1 ref={titleRef} className={styles.title}>
+                    <span className={styles.titleText}>{pageTitle}</span>
+                </h1>
                 <Inline space="none" align="right">
                     <ExplorerSortButton />
                 </Inline>
             </div>
-            <h1
-                className={`${styles.title}${collapsed ? ` ${styles.titleCollapsed}` : ""}`}
-            >
-                {pageTitle}
-            </h1>
-            {/* The sticky title pins to the top, so observe a zero-height
-                sentinel at the top of the content instead. Once it slides up
-                under the toolbar the title has collapsed. A small sentinel is
-                required: observing the tall list itself never reports
-                "scrolled past", since part of it always stays on screen. It is
-                positioned absolutely so it adds no gap to the layout. */}
-            <div className={styles.listWrapper}>
-                <span
-                    ref={sentinelRef}
-                    className={styles.collapseSentinel}
-                    aria-hidden
-                />
-                <ExplorerList />
-            </div>
+            <ExplorerList />
         </Stack>
     );
 }
