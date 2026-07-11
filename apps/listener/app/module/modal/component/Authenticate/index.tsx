@@ -43,8 +43,11 @@ export function SiweAuthenticateModalStep({
         };
     }, [params, address, chainId]);
 
+    // Undefined until the wallet connection resolves `address`/`chainId`.
+    // Never fall back to a placeholder: signing a bogus message would produce
+    // an invalid SIWE proof the backend rejects (`Invalid proof`).
     const message = useMemo(
-        () => (siweMessage ? createSiweMessage(siweMessage) : "undef"),
+        () => (siweMessage ? createSiweMessage(siweMessage) : undefined),
         [siweMessage]
     );
 
@@ -58,7 +61,7 @@ export function SiweAuthenticateModalStep({
             onSuccess: (signature) =>
                 onFinish({
                     signature,
-                    message,
+                    message: message as string,
                 }),
         },
     });
@@ -66,8 +69,11 @@ export function SiweAuthenticateModalStep({
     // Surface signing errors in the top modal toast (same UX as the wallet app).
     useWebauthnErrorToast(error, {
         operation: "sign",
-        onRetry: () => signMessage({ message }),
+        onRetry: () => message && signMessage({ message }),
     });
+
+    // Block signing until the SIWE message is built (connection ready).
+    const isReady = message !== undefined;
 
     return (
         <>
@@ -88,11 +94,13 @@ export function SiweAuthenticateModalStep({
                 <Button
                     variant="primary"
                     size="large"
-                    icon={isPending ? <Spinner size="s" /> : undefined}
-                    aria-busy={isPending}
+                    icon={
+                        isPending || !isReady ? <Spinner size="s" /> : undefined
+                    }
+                    aria-busy={isPending || !isReady}
                     className={prefixModalCss("button-primary")}
                     onClick={() => {
-                        if (isPending) return;
+                        if (isPending || !message) return;
                         signMessage({ message });
                     }}
                 >
