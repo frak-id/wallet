@@ -1,3 +1,4 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -120,11 +121,12 @@ export function TotpEnrollment() {
                 <Text variant="body" weight="medium">
                     {t("settings.security.totp.title")}
                 </Text>
+                {/* Wrap in `Inline` so the pill hugs its content — a bare
+                    `Badge` in the `Stack` would stretch to full width. */}
                 <Inline space="xs" alignY="center">
-                    <CheckIcon width={16} height={16} />
-                    <Text variant="bodySmall" color="secondary">
+                    <Badge variant="success">
                         {t("settings.security.totp.enabled")}
-                    </Text>
+                    </Badge>
                 </Inline>
             </Stack>
         );
@@ -136,8 +138,18 @@ export function TotpEnrollment() {
                 <Text variant="bodySmall" color="secondary">
                     {t("settings.security.totp.scanHint")}
                 </Text>
-                <TotpQrCode otpauthUri={setupData.otpauthUri} />
-                <TotpManualKey otpauthUri={setupData.otpauthUri} />
+                {/* Side-by-side on wide viewports; `Inline`'s default
+                    `wrap` collapses the manual key under the QR once the
+                    fixed QR width + the key's min-width no longer fit on
+                    one line (there's no `collapseBelow` on Columns/Column). */}
+                <Inline space="m" alignY="top">
+                    <div className={styles.qrColumn}>
+                        <TotpQrCode otpauthUri={setupData.otpauthUri} />
+                    </div>
+                    <div className={styles.manualColumn}>
+                        <TotpManualKey otpauthUri={setupData.otpauthUri} />
+                    </div>
+                </Inline>
                 <Input
                     variant="bare"
                     tone="muted"

@@ -1334,8 +1334,10 @@
             }
         },
         "security": {
-            "title": "Sécurité",
-            "description": "Gérez l'authentification à deux facteurs et les méthodes de connexion liées.",
+            "twoFactor": {
+                "title": "Authentification à deux facteurs",
+                "description": "Ajoutez une couche de sécurité supplémentaire à votre connexion avec une application d'authentification."
+            },
             "totp": {
                 "title": "Application d'authentification",
                 "enable": "Activer l'application d'authentification",
@@ -1350,12 +1352,16 @@
             },
             "credentials": {
                 "title": "Méthodes de connexion",
+                "description": "Portefeuille, mot de passe et comptes liés utilisés pour vous connecter.",
                 "wallet": "Portefeuille",
                 "linkWallet": "Lier un portefeuille",
                 "addPassword": "Ajoutez un mot de passe pour aussi vous connecter par e-mail.",
                 "savePassword": "Enregistrer le mot de passe",
                 "passwordAdded": "Mot de passe ajouté et e-mail vérifié.",
-                "verifyEmailHint": "Vérifiez votre adresse e-mail pour sécuriser votre compte.",
+                "verifyBanner": {
+                    "title": "Vérifiez votre adresse e-mail",
+                    "description": "Confirmez votre e-mail pour sécuriser votre compte et vous assurer de toujours pouvoir vous reconnecter."
+                },
                 "emailTaken": "Cet e-mail est déjà utilisé par un autre compte.",
                 "password": "E-mail et mot de passe",
                 "connected": "Vérifié",

@@ -1682,6 +1682,7 @@ export default interface Resources {
           "addPassword": "Add a password to also sign in with email.",
           "addPasswordCta": "Add password",
           "connected": "Verified",
+          "description": "Wallet, password, and connected accounts used to sign in.",
           "emailTaken": "This email is already used by another account.",
           "linkWallet": "Link a wallet",
           "password": "Email & password",
@@ -1689,10 +1690,12 @@ export default interface Resources {
           "pending": "Pending verification",
           "savePassword": "Save password",
           "title": "Sign-in methods",
-          "verifyEmailHint": "Verify your email address to secure your account.",
+          "verifyBanner": {
+            "description": "Confirm your email to secure your account and make sure you can always sign back in.",
+            "title": "Verify your email address"
+          },
           "wallet": "Wallet"
         },
-        "description": "Manage two-factor authentication and linked sign-in methods.",
         "sessions": {
           "current": "this device",
           "description": "Devices and browsers currently signed in to your account.",
@@ -1708,7 +1711,6 @@ export default interface Resources {
           "revokeTitle": "Revoke this session?",
           "title": "Active sessions"
         },
-        "title": "Security",
         "totp": {
           "confirm": "Confirm",
           "copyCodes": "Copy codes",
@@ -1720,6 +1722,10 @@ export default interface Resources {
           "recoveryTitle": "Save your recovery codes",
           "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
           "title": "Authenticator app"
+        },
+        "twoFactor": {
+          "description": "Add an extra layer of security to your sign-in with an authenticator app.",
+          "title": "Two-Factor Authentication"
         }
       },
       "tabs": {

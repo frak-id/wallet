@@ -1334,8 +1334,10 @@
             }
         },
         "security": {
-            "title": "Security",
-            "description": "Manage two-factor authentication and linked sign-in methods.",
+            "twoFactor": {
+                "title": "Two-Factor Authentication",
+                "description": "Add an extra layer of security to your sign-in with an authenticator app."
+            },
             "totp": {
                 "title": "Authenticator app",
                 "enable": "Enable authenticator app",
@@ -1350,12 +1352,16 @@
             },
             "credentials": {
                 "title": "Sign-in methods",
+                "description": "Wallet, password, and connected accounts used to sign in.",
                 "wallet": "Wallet",
                 "linkWallet": "Link a wallet",
                 "addPassword": "Add a password to also sign in with email.",
                 "savePassword": "Save password",
                 "passwordAdded": "Password added and email verified.",
-                "verifyEmailHint": "Verify your email address to secure your account.",
+                "verifyBanner": {
+                    "title": "Verify your email address",
+                    "description": "Confirm your email to secure your account and make sure you can always sign back in."
+                },
                 "emailTaken": "This email is already used by another account.",
                 "password": "Email & password",
                 "connected": "Verified",

@@ -1,9 +1,11 @@
+import { AlertMessage } from "@frak-labs/design-system/components/AlertMessage";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { ExclamationTriangleIcon } from "@frak-labs/design-system/icons";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { VerifyEmail } from "@/module/auth/component/VerifyEmail";
@@ -46,9 +48,22 @@ export function LinkedCredentials() {
 
     return (
         <Stack space="s">
-            <Text variant="body" weight="medium">
-                {t("settings.security.credentials.title")}
-            </Text>
+            {/* Surfaced as an urgent banner rather than the plain hint text it
+                replaces — an unverified email on a password-linked account is
+                the account's only recovery path, so it warrants more weight
+                than the row-level "Pending verification" badge alone. */}
+            {emailPending && (
+                <AlertMessage
+                    tone="warning"
+                    icon={<ExclamationTriangleIcon width={24} height={24} />}
+                    title={t(
+                        "settings.security.credentials.verifyBanner.title"
+                    )}
+                    description={t(
+                        "settings.security.credentials.verifyBanner.description"
+                    )}
+                />
+            )}
 
             <DetailRow label={t("settings.security.credentials.wallet")}>
                 {wallet ? (
@@ -106,14 +121,7 @@ export function LinkedCredentials() {
             {/* Email attached but unverified — always surface the verify form
                 (explicit send → enter code), no toggle. Disappears once the
                 account query refetches as verified. */}
-            {emailPending && (
-                <Stack space="s">
-                    <Text variant="bodySmall" color="secondary">
-                        {t("settings.security.credentials.verifyEmailHint")}
-                    </Text>
-                    <VerifyEmail embedded />
-                </Stack>
-            )}
+            {emailPending && <VerifyEmail embedded />}
         </Stack>
     );
 }

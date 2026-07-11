@@ -21,6 +21,21 @@ export const qrFrame = style({
     // globalStyle is disallowed here.
 });
 
+// Enrolling step layout (QR + manual key side-by-side, §5 deliverable 5):
+// the QR gets a fixed, non-shrinking width so it stays legibly scannable
+// without stretching to fill the row; the manual key takes the remaining
+// space and carries a min-width so `Inline`'s wrap collapses the pair to
+// stacked once both no longer fit on one line.
+export const qrColumn = style({
+    flexShrink: 0,
+    width: "180px",
+});
+
+export const manualColumn = style({
+    flexGrow: 1,
+    minWidth: "200px",
+});
+
 // Recovery codes: a monospace, selectable grid the user is meant to copy or
 // save. Two columns so ten codes stay compact.
 export const codesBox = style({
