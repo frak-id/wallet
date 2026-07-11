@@ -36,6 +36,9 @@ const mockContext = {} as AuthenticatedContext;
 
 const mockShop = {
     normalizedDomain: "test-shop.myshopify.com",
+    // Same as normalizedDomain (no custom primary domain): the backend
+    // resolve short-circuits to a single fetch on this path (§1.1/C1).
+    myshopifyDomain: "test-shop.myshopify.com",
     name: "Test Shop",
     currency: "eur",
     productId: "gid://shopify/Product/123",

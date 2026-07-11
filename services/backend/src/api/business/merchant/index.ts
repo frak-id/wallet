@@ -1,7 +1,6 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
-import { AuthContext } from "../../../domain/auth";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import { MerchantContext } from "../../../domain/merchant";
 import {
@@ -9,7 +8,10 @@ import {
     MerchantIdParamSchema,
     MyMerchantsResponseSchema,
 } from "../../schemas";
-import { businessSessionContext } from "../middleware/session";
+import {
+    businessSessionContext,
+    isPlatformAdminAuth,
+} from "../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
 import { merchantAllowedDomainsRoutes } from "./allowedDomains";
 import { merchantBankRoutes } from "./bank";
@@ -66,12 +68,11 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 // Platform admins have no real merchant relationship so
                 // checkAccess returns "none". Derive the role here, keeping
                 // the auth-domain concern out of MerchantAuthorizationService.
+                // Covers both grants: the wallet allow-list AND a verified
+                // @frak-labs.com account email.
                 if (
                     role === "none" &&
-                    businessSession.wallet &&
-                    AuthContext.services.platformAdmin.isPlatformAdmin(
-                        businessSession.wallet
-                    )
+                    (await isPlatformAdminAuth(businessSession))
                 ) {
                     role = "platform_admin";
                 }
@@ -122,11 +123,9 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(401, "Authentication required");
             }
 
-            const isPlatAdmin = businessSession.wallet
-                ? AuthContext.services.platformAdmin.isPlatformAdmin(
-                      businessSession.wallet
-                  )
-                : false;
+            // Platform admin via EITHER the wallet allow-list OR a verified
+            // @frak-labs.com account email — the single canonical check.
+            const isPlatAdmin = await isPlatformAdminAuth(businessSession);
 
             // Shopify SSO auto-link (§4.7): the shop domain proven by the
             // account's Shopify identity, looked up here (BFF layer) and

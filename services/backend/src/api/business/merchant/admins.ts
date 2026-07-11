@@ -129,7 +129,7 @@ export const merchantAdminsRoutes = new Elysia({
             } else {
                 const account =
                     await BusinessAuthContext.repositories.account.findByEmail(
-                        body.email
+                        body.email.trim().toLowerCase()
                     );
                 if (!account) {
                     return status(404, "No account found for this email");
