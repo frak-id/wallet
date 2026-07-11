@@ -36,6 +36,10 @@ export function useLinkWallet() {
 
             useAuthStore.getState().setWallet(data.wallet);
             await queryClient.invalidateQueries({ queryKey: ["merchant"] });
+            // Refresh the linked-credentials view (now has a wallet).
+            await queryClient.invalidateQueries({
+                queryKey: ["auth", "account"],
+            });
 
             return data;
         },

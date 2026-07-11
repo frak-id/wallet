@@ -1,7 +1,7 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
 import { HttpError, TwoFactorMethodDto, t } from "@backend-utils";
 import { encodeBase64urlNoPadding } from "@oslojs/encoding";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import type { BusinessEmailCodePurpose } from "../../../domain/business-auth/db/schema";
 import { StepUpRequired401 } from "../middleware/session";
@@ -48,6 +48,28 @@ const SiweProofDto = t.Object({
  */
 export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 15 }))
+    .get(
+        "/methods",
+        async ({ headers }) => {
+            // Works on pending sessions so the login 2FA screen can fetch the
+            // real enrolled list instead of guessing, and on full sessions so
+            // the settings UI knows which methods are already enrolled.
+            const auth = await requireDbSession(headers, {
+                allowPending: true,
+            });
+            const methods =
+                await BusinessAuthContext.services.account.getEnabledTwoFactorMethods(
+                    auth.accountId
+                );
+            return { methods };
+        },
+        {
+            response: {
+                200: t.Object({ methods: t.Array(TwoFactorMethodDto) }),
+                401: t.ErrorResponse,
+            },
+        }
+    )
     .post(
         "/challenge",
         async ({ body: { method }, headers }) => {
@@ -106,7 +128,14 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                 origin: request.headers.get("origin") ?? "",
             });
             if (!verified) {
-                return status(401, "Invalid proof");
+                // A wrong proof is a *validation* failure, not a dead
+                // session: throw a typed 401 so the frontend surfaces it
+                // without logging the user out (mirrored in
+                // `apps/business` `backendClient` 401 handler).
+                throw HttpError.unauthorized(
+                    "INVALID_TWO_FACTOR_PROOF",
+                    "Invalid proof"
+                );
             }
 
             await BusinessAuthContext.services.session.markTwoFactorVerified(
@@ -135,7 +164,7 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
             ]),
             response: {
                 200: t.Object({ verified: t.Literal(true) }),
-                401: t.Union([t.String(), t.ErrorResponse]),
+                401: t.ErrorResponse,
                 429: t.ErrorResponse,
             },
         }
@@ -143,17 +172,20 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
     .post(
         "/setup",
         async ({ body: { method }, headers }) => {
-            // A Shopify-SSO (or password) account can be stuck pending with
-            // zero usable 2FA methods — it must be able to bootstrap its first
-            // one. `requireStepUpUnlessBootstrap` re-checks: a pending session
-            // that already has a method still gets a step-up 401 here.
             const auth = await requireDbSession(headers, {
                 allowPending: true,
             });
-            await assertStepUpFresh(auth, { allowBootstrap: true });
 
             switch (method) {
                 case "totp": {
+                    // Minting a new authenticator secret is sensitive — gate
+                    // it on a fresh step-up (a Shopify-SSO/password account
+                    // stuck pending with zero 2FA methods may bootstrap its
+                    // first one, `allowBootstrap`). Sending an email verify
+                    // code (below) is NOT sensitive — same as `/2fa/challenge`,
+                    // no step-up — so it must not sit here, or an email resend
+                    // would pop a step-up modal and hang.
+                    await assertStepUpFresh(auth, { allowBootstrap: true });
                     const account =
                         await BusinessAuthContext.repositories.account.findById(
                             auth.accountId
@@ -214,7 +246,10 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                             code: proof,
                         });
                     if (!result) {
-                        return status(401, "Invalid code");
+                        throw HttpError.unauthorized(
+                            "INVALID_TWO_FACTOR_CODE",
+                            "Invalid code"
+                        );
                     }
                     await BusinessAuthContext.services.session.markTwoFactorVerified(
                         auth.sessionId
@@ -229,7 +264,10 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                             code: proof,
                         });
                     if (result.status !== "verified") {
-                        return status(401, "Invalid code");
+                        throw HttpError.unauthorized(
+                            "INVALID_TWO_FACTOR_CODE",
+                            "Invalid code"
+                        );
                     }
                     await BusinessAuthContext.repositories.account.markEmailVerified(
                         auth.accountId
@@ -257,7 +295,7 @@ export const twoFactorRoutes = new Elysia({ prefix: "/2fa" })
                     verified: t.Optional(t.Literal(true)),
                 }),
                 400: t.ErrorResponse,
-                401: t.Union([t.String(), t.ErrorResponse]),
+                401: t.ErrorResponse,
             },
         }
     );

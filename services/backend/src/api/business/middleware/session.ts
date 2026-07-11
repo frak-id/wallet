@@ -3,7 +3,7 @@ import {
     log,
     verifyShopifySessionToken,
 } from "@backend-infrastructure";
-import { TwoFactorMethodDto, t } from "@backend-utils";
+import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AuthContext } from "../../../domain/auth";
 import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
@@ -18,36 +18,13 @@ import {
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 /**
- * Read the plugin-resolved session values off a macro context. Elysia's
- * macro `beforeHandle` contexts don't carry the plugin's `.resolve()` typing
- * (the param must stay inferred for the hook to typecheck), so this is the
- * single place that asserts the structural shape those hooks depend on —
- * the same values the plugin-level `.resolve()` above always provides.
+ * 401 response schema for step-up-guarded routes. The step-up challenge is
+ * signalled entirely via headers (`x-frak-auth-error: step-up-required` +
+ * `x-frak-auth-methods`), so its body is the plain `t.ErrorResponse` — the
+ * union just also admits the bare-string 401s these handlers still return
+ * (e.g. `status(401, "Authentication required")`).
  */
-function resolvedSessions(ctx: object): {
-    businessSession: ResolvedBusinessAuth | null;
-    shopifySession: ShopifySessionToken | null;
-} {
-    const { businessSession = null, shopifySession = null } = ctx as {
-        businessSession?: ResolvedBusinessAuth | null;
-        shopifySession?: ShopifySessionToken | null;
-    };
-    return { businessSession, shopifySession };
-}
-
-/**
- * 401 body emitted by `requireStepUp` (with the `x-frak-auth-error:
- * step-up-required` header). Routes guarded by the macro must include it
- * in their 401 response schema.
- */
-export const StepUpRequired401 = t.Union([
-    t.String(),
-    t.Object({
-        error: t.Literal("step_up_required"),
-        methods: t.Array(TwoFactorMethodDto),
-    }),
-    t.ErrorResponse,
-]);
+export const StepUpRequired401 = t.Union([t.String(), t.ErrorResponse]);
 
 /**
  * A pending (2FA-unverified) session may only reach the auth surface itself:
@@ -61,7 +38,7 @@ function isUsableSession(auth: ResolvedBusinessAuth): boolean {
  * Platform admin = wallet allow-list OR verified @frak-labs.com email
  * (design doc §7.3). The email check needs the account row, hence async.
  */
-async function isPlatformAdminAuth(
+export async function isPlatformAdminAuth(
     auth: ResolvedBusinessAuth
 ): Promise<boolean> {
     if (
@@ -184,46 +161,17 @@ export const businessSessionContext = new Elysia({
         };
     })
     .macro({
-        /**
-         * NOTE on macro semantics: Elysia passes the route-side value as the
-         * macro argument (`{ businessAuthenticated: true }` ⇒ `enabled =
-         * true`). Guards must therefore no-op on a FALSY argument — the
-         * previous `(skip?: boolean)` shape silently disabled every
-         * `macro: true` usage.
-         */
-        businessAuthenticated(enabled?: boolean) {
-            if (!enabled) return;
-
-            return {
-                // Reuse the values already resolved by the plugin-level
-                // `.resolve()` above (which runs before macro `beforeHandle`,
-                // same ordering `identityContext` relies on) instead of
-                // re-verifying the JWT / re-fetching the DB session (§2.3).
-                beforeHandle: (ctx) => {
-                    const { businessSession, shopifySession } =
-                        resolvedSessions(ctx);
-                    if (businessSession || shopifySession) return;
-
-                    // A Shopify token was presented but didn't resolve —
-                    // advertise the App Bridge retry protocol.
-                    if (ctx.headers["x-shopify-session-token"]) {
-                        ctx.set.headers[
-                            "X-Shopify-Retry-Invalid-Session-Request"
-                        ] = "1";
-                    }
-
-                    return status(
-                        401,
-                        "Unauthorized - No valid authentication"
-                    );
-                },
-            };
-        },
-        // NOTE: the design doc (§4.5) sketched a `requireWallet` macro, but no
-        // backend route needs it — all wallet-signed bank actions are pure
-        // frontend transactions (doc §1.2). Gating lives client-side via
-        // `useCapabilities()`; add the macro back only when a backend route
-        // actually requires a wallet-bound session.
+        // NOTE on macro semantics: Elysia passes the route-side value as the
+        // macro argument (`{ requireStepUp: true }` ⇒ `enabled = true`).
+        // Guards must therefore no-op on a FALSY argument — the previous
+        // `(skip?: boolean)` shape silently disabled every `macro: true`
+        // usage.
+        //
+        // NOTE: the design doc (§4.5) sketched `requireWallet` and
+        // `businessAuthenticated` macros, but no backend route needs them —
+        // plain authentication gates live in the handlers (via the
+        // plugin-resolved sessions), and wallet-signed bank actions are pure
+        // frontend transactions (doc §1.2, `useCapabilities()`).
         /**
          * Sensitive-action guard: requires a 2FA verification within the
          * 5-minute freshness window (§4.8 of the design doc). Embedded
@@ -238,9 +186,7 @@ export const businessSessionContext = new Elysia({
             return {
                 // Consumes the plugin-resolved session (§2.3) rather than
                 // re-verifying the Shopify JWT + re-resolving the DB session.
-                beforeHandle: async (ctx) => {
-                    const { businessSession, shopifySession } =
-                        resolvedSessions(ctx);
+                beforeHandle: async ({ shopifySession, businessSession }) => {
                     // Embedded Shopify admin session — exempt (§4.11).
                     if (shopifySession) return;
 
@@ -268,8 +214,7 @@ export const businessSessionContext = new Elysia({
             return {
                 // Consumes the plugin-resolved session (§2.3); the Shopify
                 // session path is never a platform admin, so it's ignored.
-                beforeHandle: async (ctx) => {
-                    const { businessSession } = resolvedSessions(ctx);
+                beforeHandle: async ({ businessSession }) => {
                     if (!businessSession) {
                         return status(401, "Unauthorized");
                     }

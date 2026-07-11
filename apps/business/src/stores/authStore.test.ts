@@ -1,4 +1,5 @@
 import type { Address } from "viem";
+import { getSafeAuthToken } from "@/stores/authStore";
 import {
     describe,
     expect,
@@ -118,6 +119,37 @@ describe("authStore", () => {
             });
 
             expect(freshAuthStore.getState().isAuthenticated()).toBe(false);
+        });
+    });
+
+    describe("getSafeAuthToken", () => {
+        test("returns the token for a pending-2FA session — /auth/2fa/* runs on pending sessions", ({
+            freshAuthStore,
+        }: TestContext) => {
+            freshAuthStore.getState().setAuth({
+                token: "pending-tok",
+                authMethod: "password",
+                expiresAt: Date.now() + 60_000,
+                pending2fa: true,
+            });
+
+            // Routing-level auth stays false…
+            expect(freshAuthStore.getState().isAuthenticated()).toBe(false);
+            // …but the header token must still be provided.
+            expect(getSafeAuthToken()).toBe("pending-tok");
+        });
+
+        test("returns null for an expired token", ({
+            freshAuthStore,
+        }: TestContext) => {
+            freshAuthStore.getState().setAuth({
+                token: "tok",
+                authMethod: "password",
+                expiresAt: Date.now() - 1,
+                pending2fa: true,
+            });
+
+            expect(getSafeAuthToken()).toBeNull();
         });
     });
 

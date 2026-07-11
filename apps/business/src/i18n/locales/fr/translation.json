@@ -11,6 +11,7 @@
             "footerTerms": "Conditions générales",
             "footerPrivacy": "Politique de confidentialité",
             "ssoError": "La connexion avec Shopify a échoué. Veuillez réessayer.",
+            "sessionError": "Nous n'avons pas pu finaliser votre connexion. Veuillez réessayer.",
             "walletError": "La connexion avec votre wallet a échoué. Veuillez réessayer.",
             "methods": {
                 "wallet": "Portefeuille",
@@ -27,7 +28,6 @@
                 "noAccount": "Pas encore de compte ?",
                 "registerCta": "S'inscrire",
                 "backToLogin": "Retour à la connexion",
-                "registerSuccess": "Si cet e-mail n'est pas déjà enregistré, vous recevrez bientôt un code de vérification.",
                 "forgotPassword": "Mot de passe oublié ?",
                 "resetInstructions": "Saisissez l'e-mail de votre compte et nous vous enverrons un code de réinitialisation.",
                 "sendResetCode": "Envoyer le code",
@@ -58,17 +58,30 @@
             "genericError": "Échec de la vérification. Veuillez réessayer.",
             "email": {
                 "sendCode": "Envoyer un code par e-mail",
-                "sentHint": "Saisissez le code envoyé à votre e-mail."
+                "sentHint": "Saisissez le code envoyé à votre e-mail.",
+                "resend": "Renvoyer le code",
+                "resent": "Code envoyé"
             },
             "totp": {
-                "hint": "Saisissez le code de votre application d'authentification."
+                "hint": "Saisissez le code de votre application d'authentification.",
+                "recoveryHint": "Saisissez l'un de vos codes de récupération.",
+                "recoveryPlaceholder": "Code de récupération",
+                "useRecovery": "Utiliser un code de récupération",
+                "useCode": "Utiliser votre application d'authentification"
             },
             "siwe": {
                 "hint": "Signez un message avec votre portefeuille pour confirmer que c'est vous.",
                 "cta": "Signer avec le portefeuille"
-            },
-            "tryAnotherWay": "Essayer une autre méthode",
-            "otherMethods": "Choisir une autre méthode"
+            }
+        },
+        "verifyEmail": {
+            "title": "Vérifiez votre e-mail",
+            "hint": "Saisissez le code envoyé à votre adresse e-mail.",
+            "sendCode": "Envoyer le code de vérification",
+            "resend": "Renvoyer le code",
+            "resent": "Code envoyé",
+            "success": "Votre e-mail est vérifié.",
+            "continue": "Continuer"
         }
     },
     "forms": {
@@ -1325,7 +1338,9 @@
             "totp": {
                 "title": "Application d'authentification",
                 "enable": "Activer l'application d'authentification",
+                "enabled": "Application d'authentification activée",
                 "scanHint": "Scannez ce QR code avec votre application d'authentification, puis saisissez le code affiché.",
+                "manualHint": "Impossible de scanner ? Saisissez plutôt cette clé manuellement :",
                 "confirm": "Confirmer",
                 "recoveryTitle": "Enregistrez vos codes de récupération",
                 "recoveryHint": "Conservez-les en lieu sûr — chaque code est utilisable une seule fois si vous perdez l'accès à votre application.",
@@ -1338,10 +1353,12 @@
                 "linkWallet": "Lier un portefeuille",
                 "addPassword": "Ajoutez un mot de passe pour aussi vous connecter par e-mail.",
                 "savePassword": "Enregistrer le mot de passe",
-                "passwordAdded": "Mot de passe ajouté — vérifiez votre e-mail pour le confirmer.",
+                "passwordAdded": "Mot de passe ajouté et e-mail vérifié.",
+                "verifyEmailHint": "Vérifiez votre adresse e-mail pour sécuriser votre compte.",
                 "emailTaken": "Cet e-mail est déjà utilisé par un autre compte.",
                 "password": "E-mail et mot de passe",
-                "connected": "Connecté",
+                "connected": "Vérifié",
+                "pending": "En attente de vérification",
                 "addPasswordCta": "Ajouter un mot de passe"
             },
             "sessions": {

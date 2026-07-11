@@ -11,6 +11,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+    useEnrolledTwoFactorMethods,
     useTwoFactorChallenge,
     useTwoFactorVerify,
 } from "@/module/auth/hooks/useTwoFactorChallenge";
@@ -20,6 +21,7 @@ import {
     type TwoFactorMethod,
     useTwoFactorStore,
 } from "@/stores/twoFactorStore";
+import { OrDivider } from "../LoginMethods/OrDivider";
 
 // `as const` keeps the values as literal i18n keys so `t()` accepts them
 // (a plain `Record<TwoFactorMethod, string>` widens them to `string`).
@@ -60,14 +62,17 @@ export function TwoFactorModal() {
         (state) => state.cancelVerification
     );
 
+    // The account's real enrolled channels are authoritative (the advertised
+    // list handed in via the store is only a hint, and the Shopify SSO path
+    // has none); fall back to the hint while that request is in flight.
+    const { data: enrolledMethods } = useEnrolledTwoFactorMethods(!!request);
     const orderedMethods = useMemo(
-        () => orderMethods(request?.methods ?? []),
-        [request?.methods]
+        () => orderMethods(enrolledMethods ?? request?.methods ?? []),
+        [enrolledMethods, request?.methods]
     );
     const [activeMethod, setActiveMethod] = useState<TwoFactorMethod | null>(
         null
     );
-    const [showAlternatives, setShowAlternatives] = useState(false);
 
     const resolvedMethod = activeMethod ?? orderedMethods[0] ?? null;
     const alternatives = orderedMethods.filter(
@@ -102,37 +107,21 @@ export function TwoFactorModal() {
                         />
                     )}
 
-                    {alternatives.length > 0 &&
-                        (showAlternatives ? (
-                            <Stack space="xs">
-                                <Text variant="caption" color="tertiary">
-                                    {t("auth.twoFactor.otherMethods")}
-                                </Text>
-                                {alternatives.map((method) => (
-                                    <Button
-                                        key={method}
-                                        variant="ghost"
-                                        size="small"
-                                        width="auto"
-                                        onClick={() => {
-                                            setActiveMethod(method);
-                                            setShowAlternatives(false);
-                                        }}
-                                    >
-                                        {t(METHOD_LABEL_KEY[method])}
-                                    </Button>
-                                ))}
-                            </Stack>
-                        ) : (
-                            <Button
-                                variant="ghost"
-                                size="small"
-                                width="auto"
-                                onClick={() => setShowAlternatives(true)}
-                            >
-                                {t("auth.twoFactor.tryAnotherWay")}
-                            </Button>
-                        ))}
+                    {alternatives.length > 0 && (
+                        <Stack space="xs">
+                            <OrDivider label={t("auth.login.or")} />
+                            {alternatives.map((method) => (
+                                <Button
+                                    key={method}
+                                    variant="secondary"
+                                    width="full"
+                                    onClick={() => setActiveMethod(method)}
+                                >
+                                    {t(METHOD_LABEL_KEY[method])}
+                                </Button>
+                            ))}
+                        </Stack>
+                    )}
                 </Stack>
             </DialogContent>
         </Dialog>
@@ -152,6 +141,15 @@ function TwoFactorChallenge({
     return <CodeChallenge method={method} onVerified={onVerified} />;
 }
 
+// Which hint copy to show for the code-entry step, kept out of the JSX so the
+// component stays under the cognitive-complexity budget.
+function codeHintKey(method: "email" | "totp", recoveryMode: boolean) {
+    if (recoveryMode) return "auth.twoFactor.totp.recoveryHint";
+    return method === "totp"
+        ? "auth.twoFactor.totp.hint"
+        : "auth.twoFactor.email.sentHint";
+}
+
 function CodeChallenge({
     method,
     onVerified,
@@ -161,6 +159,10 @@ function CodeChallenge({
 }) {
     const { t } = useTranslation();
     const [code, setCode] = useState("");
+    // Recovery codes are a TOTP-only fallback (§1.7): the backend `totp`
+    // verify path already consumes them, so they submit as `method: "totp"`
+    // — only the input shape differs (10 hex chars, not a 6-digit numeric).
+    const [recoveryMode, setRecoveryMode] = useState(false);
     const {
         mutate: sendChallenge,
         isPending: isSending,
@@ -174,6 +176,8 @@ function CodeChallenge({
     } = useTwoFactorVerify();
 
     const error = sendError ?? verifyError;
+    const trimmed = code.trim();
+    const canSubmit = recoveryMode ? trimmed.length >= 10 : trimmed.length >= 6;
 
     return (
         <Stack space="s">
@@ -192,18 +196,26 @@ function CodeChallenge({
             {(method === "totp" || sent) && (
                 <Stack space="xs">
                     <Text variant="bodySmall" color="secondary">
-                        {method === "totp"
-                            ? t("auth.twoFactor.totp.hint")
-                            : t("auth.twoFactor.email.sentHint")}
+                        {t(codeHintKey(method, recoveryMode))}
                     </Text>
                     <Input
+                        // Remount on mode switch so numeric vs text input
+                        // attributes reset cleanly.
+                        key={recoveryMode ? "recovery" : "code"}
                         variant="bare"
                         tone="muted"
                         autoFocus
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        maxLength={6}
-                        label={t("auth.twoFactor.codePlaceholder")}
+                        inputMode={recoveryMode ? "text" : "numeric"}
+                        autoComplete={recoveryMode ? "off" : "one-time-code"}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        maxLength={recoveryMode ? 20 : 6}
+                        label={t(
+                            recoveryMode
+                                ? "auth.twoFactor.totp.recoveryPlaceholder"
+                                : "auth.twoFactor.codePlaceholder"
+                        )}
                         value={code}
                         onChange={(event) => setCode(event.target.value)}
                     />
@@ -211,16 +223,45 @@ function CodeChallenge({
                         variant="primary"
                         width="auto"
                         loading={isVerifying}
-                        disabled={code.length < 6 || isVerifying}
+                        disabled={!canSubmit || isVerifying}
                         onClick={() =>
                             verify(
-                                { method, proof: code },
+                                { method, proof: trimmed },
                                 { onSuccess: onVerified }
                             )
                         }
                     >
                         {t("auth.twoFactor.verify")}
                     </Button>
+                    {method === "totp" && (
+                        <Button
+                            variant="ghost"
+                            size="small"
+                            width="auto"
+                            onClick={() => {
+                                setRecoveryMode((prev) => !prev);
+                                setCode("");
+                            }}
+                        >
+                            {t(
+                                recoveryMode
+                                    ? "auth.twoFactor.totp.useCode"
+                                    : "auth.twoFactor.totp.useRecovery"
+                            )}
+                        </Button>
+                    )}
+                    {method === "email" && sent && (
+                        <Button
+                            variant="ghost"
+                            size="small"
+                            width="auto"
+                            loading={isSending}
+                            disabled={isSending}
+                            onClick={() => sendChallenge("email")}
+                        >
+                            {t("auth.twoFactor.email.resend")}
+                        </Button>
+                    )}
                 </Stack>
             )}
 

@@ -10,7 +10,10 @@ import {
 // Leaf sub-path import (NOT the barrel) on purpose: importing this value
 // through `@backend-infrastructure` creates a runtime cycle that degrades
 // JwtContext typing. See authError.ts.
-import { AUTH_ERROR_HEADER } from "@backend-infrastructure/macro/authError";
+import {
+    AUTH_ERROR_HEADER,
+    AUTH_METHODS_HEADER,
+} from "@backend-infrastructure/macro/authError";
 import { noContentPatch } from "@backend-utils";
 import { cors } from "@elysiajs/cors";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
@@ -52,10 +55,11 @@ const app = new Elysia({
     .use(
         cors({
             methods: ["DELETE", "GET", "POST", "PUT", "PATCH"],
-            // Expose the auth-error discriminator so the wallet client — which
-            // runs cross-origin inside third-party iframes — can read it from a
-            // 401 response (otherwise the browser strips it).
-            exposeHeaders: [AUTH_ERROR_HEADER],
+            // Expose the auth-error discriminator (and, for a step-up 401, the
+            // offered-methods list) so the frontend — which can run
+            // cross-origin inside third-party iframes — can read them from a
+            // 401 response (otherwise the browser strips them).
+            exposeHeaders: [AUTH_ERROR_HEADER, AUTH_METHODS_HEADER],
         })
     )
     .get("/health", ({ set }) => {

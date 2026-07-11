@@ -182,7 +182,7 @@ describe("BusinessAccountService", () => {
             ).toEqual(["email"]);
         });
 
-        it("returns all three methods in a stable order", async () => {
+        it("offers email, totp and siwe together as peers", async () => {
             repository.findById.mockResolvedValue(
                 account({
                     email: "a@b.com",
@@ -195,7 +195,7 @@ describe("BusinessAccountService", () => {
             ).toEqual(["email", "totp", "siwe"]);
         });
 
-        it("omits email for a walletless TOTP-only account", async () => {
+        it("returns totp and siwe for a walletless-email TOTP account", async () => {
             repository.findById.mockResolvedValue(
                 account({ totpActivatedAt: new Date(), walletAddress: WALLET })
             );

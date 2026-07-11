@@ -13,13 +13,21 @@ import {
     useRequestPasswordReset,
 } from "@/module/auth/hooks/useEmailAuth";
 import { Input } from "@/module/forms/Input";
-import { PasswordInput } from "@/module/forms/PasswordInput";
+import {
+    MIN_PASSWORD_LENGTH,
+    PasswordInput,
+} from "@/module/forms/PasswordInput";
 
 export function EmailPanel({ redirect }: { redirect?: string }) {
     const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
 
     if (mode === "register") {
-        return <RegisterForm onBackToLogin={() => setMode("login")} />;
+        return (
+            <RegisterForm
+                redirect={redirect}
+                onBackToLogin={() => setMode("login")}
+            />
+        );
     }
     if (mode === "forgot") {
         return <ForgotPasswordForm onBackToLogin={() => setMode("login")} />;
@@ -237,7 +245,11 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                 size="large"
                 width="full"
                 loading={isConfirming}
-                disabled={!code || password.length < 10 || isConfirming}
+                disabled={
+                    !code ||
+                    password.length < MIN_PASSWORD_LENGTH ||
+                    isConfirming
+                }
                 onClick={() => confirmReset({ email, code, password })}
             >
                 {t("auth.login.email.resetSubmit")}
@@ -247,27 +259,46 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
     );
 }
 
-function RegisterForm({ onBackToLogin }: { onBackToLogin: () => void }) {
+function RegisterForm({
+    redirect,
+    onBackToLogin,
+}: {
+    redirect?: string;
+    onBackToLogin: () => void;
+}) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const {
-        mutate: register,
-        isPending,
-        error,
-        isSuccess,
-    } = useRegisterAccount();
+    const { mutate: register, isPending, error } = useRegisterAccount();
+    const { mutate: login, isPending: isLoggingIn } = usePasswordLogin();
 
-    if (isSuccess) {
-        return (
-            <Stack space="s">
-                <Notice tone="success">
-                    {t("auth.login.email.registerSuccess")}
-                </Notice>
-                <BackToLoginButton onClick={onBackToLogin} />
-            </Stack>
+    // Register → immediately log in with the same credentials → land on the
+    // 2FA step (the first email OTP doubles as the email ownership proof).
+    // The register response is enumeration-safe (generic 200 either way), so
+    // an already-taken email simply fails the login with "Invalid
+    // credentials" — no dead-end "check your email" screen.
+    const onSubmit = () => {
+        register(
+            { email, password },
+            {
+                onSuccess: () =>
+                    login(
+                        { email, password },
+                        {
+                            onSuccess: () =>
+                                navigate({
+                                    to: "/login/2fa",
+                                    search: redirect ? { redirect } : {},
+                                }),
+                            onError: onBackToLogin,
+                        }
+                    ),
+            }
         );
-    }
+    };
+
+    const busy = isPending || isLoggingIn;
 
     return (
         <Stack space="s">
@@ -301,9 +332,11 @@ function RegisterForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                 variant="primary"
                 size="large"
                 width="full"
-                loading={isPending}
-                disabled={!email || password.length < 10 || isPending}
-                onClick={() => register({ email, password })}
+                loading={busy}
+                disabled={
+                    !email || password.length < MIN_PASSWORD_LENGTH || busy
+                }
+                onClick={onSubmit}
             >
                 {t("auth.login.email.registerSubmit")}
             </Button>

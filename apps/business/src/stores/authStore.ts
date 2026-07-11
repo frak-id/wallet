@@ -107,12 +107,16 @@ export const useAuthStore = create<AuthState>()(
 );
 
 /**
- * Get the current session token safely
+ * Current session token for the `x-business-auth` header, or null when
+ * absent/expired. Deliberately NOT gated on `isAuthenticated()`: a
+ * pending-2FA session is unauthenticated for routing purposes but its token
+ * MUST still be sent — the whole `/auth/2fa/*` surface runs on pending
+ * sessions (`allowPending: true`).
  */
 export function getSafeAuthToken(): string | null {
-    const state = useAuthStore.getState();
-    if (!state.isAuthenticated()) {
+    const { token, expiresAt } = useAuthStore.getState();
+    if (!token || !expiresAt || Date.now() >= expiresAt) {
         return null;
     }
-    return state.token;
+    return token;
 }

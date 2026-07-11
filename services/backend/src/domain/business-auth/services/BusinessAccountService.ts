@@ -150,6 +150,10 @@ export class BusinessAccountService {
         const account = await this.accountRepository.findById(accountId);
         if (!account) return [];
 
+        // All enrolled channels are offered as peers — the user picks
+        // whichever is most convenient at login/step-up (email OTP,
+        // authenticator app, or wallet signature). They coexist rather than
+        // supersede each other.
         const methods: TwoFactorMethod[] = [];
         if (account.email) methods.push("email");
         if (account.totpActivatedAt) methods.push("totp");

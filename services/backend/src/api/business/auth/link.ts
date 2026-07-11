@@ -1,10 +1,7 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
 import { HttpError, isUniqueViolation, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import {
-    BusinessAuthContext,
-    PasswordService,
-} from "../../../domain/business-auth";
+import { BusinessAuthContext } from "../../../domain/business-auth";
 import { StepUpRequired401 } from "../middleware/session";
 import { assertStepUpFresh, requireDbSession, verifySiweProof } from "./common";
 
@@ -65,14 +62,7 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
             const auth = await requireDbSession(headers);
             await assertStepUpFresh(auth);
 
-            if (
-                !BusinessAuthContext.services.password.isValidPassword(password)
-            ) {
-                throw HttpError.badRequest(
-                    "WEAK_PASSWORD",
-                    `Password must be at least ${PasswordService.MIN_LENGTH} characters`
-                );
-            }
+            BusinessAuthContext.services.password.assertValid(password);
 
             const account =
                 await BusinessAuthContext.repositories.account.findById(
@@ -132,15 +122,10 @@ export const linkRoutes = new Elysia({ prefix: "/link" })
                 passwordHash,
             });
 
-            // Prove ownership of a newly-attached email.
-            if (!account.email) {
-                await BusinessAuthContext.services.emailOtp.sendCode({
-                    accountId: auth.accountId,
-                    email: normalizedEmail,
-                    purpose: "email_verify",
-                });
-            }
-
+            // The email is attached but unverified (`email_verified_at` stays
+            // null). The verification code is NOT sent here — the settings
+            // "verify email" form owns that (explicit send → enter), so there's
+            // a single send path and no resend-debounce collision.
             return { linked: true as const };
         },
         {

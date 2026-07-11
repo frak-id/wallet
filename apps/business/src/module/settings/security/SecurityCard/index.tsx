@@ -27,8 +27,8 @@ export function SecurityCard() {
                 description={t("settings.security.description")}
             >
                 <Stack space="m">
-                    <TotpEnrollment />
                     <LinkedCredentials />
+                    <TotpEnrollment />
                 </Stack>
             </SettingsCard>
             <SettingsCard

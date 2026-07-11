@@ -11,6 +11,7 @@
             "footerTerms": "Terms & Conditions",
             "footerPrivacy": "Privacy Policy",
             "ssoError": "We couldn't sign you in with Shopify. Please try again.",
+            "sessionError": "We couldn't finish signing you in. Please try again.",
             "walletError": "We couldn't sign you in with your wallet. Please try again.",
             "methods": {
                 "wallet": "Wallet",
@@ -27,7 +28,6 @@
                 "noAccount": "No account yet?",
                 "registerCta": "Register",
                 "backToLogin": "Back to sign in",
-                "registerSuccess": "If this email is not already registered, you'll receive a verification code shortly.",
                 "forgotPassword": "Forgot your password?",
                 "resetInstructions": "Enter your account email and we'll send you a reset code.",
                 "sendResetCode": "Send reset code",
@@ -58,17 +58,30 @@
             "genericError": "Verification failed. Please try again.",
             "email": {
                 "sendCode": "Send code by email",
-                "sentHint": "Enter the code we sent to your email."
+                "sentHint": "Enter the code we sent to your email.",
+                "resend": "Resend code",
+                "resent": "Code sent"
             },
             "totp": {
-                "hint": "Enter the code from your authenticator app."
+                "hint": "Enter the code from your authenticator app.",
+                "recoveryHint": "Enter one of your recovery codes.",
+                "recoveryPlaceholder": "Recovery code",
+                "useRecovery": "Use a recovery code",
+                "useCode": "Use your authenticator app"
             },
             "siwe": {
                 "hint": "Sign a message with your wallet to confirm it's you.",
                 "cta": "Sign with wallet"
-            },
-            "tryAnotherWay": "Try another way",
-            "otherMethods": "Choose another method"
+            }
+        },
+        "verifyEmail": {
+            "title": "Verify your email",
+            "hint": "Enter the code we sent to your email address.",
+            "sendCode": "Send verification code",
+            "resend": "Resend code",
+            "resent": "Code sent",
+            "success": "Your email is verified.",
+            "continue": "Continue"
         }
     },
     "forms": {
@@ -1325,7 +1338,9 @@
             "totp": {
                 "title": "Authenticator app",
                 "enable": "Enable authenticator app",
+                "enabled": "Authenticator app enabled",
                 "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
+                "manualHint": "Can't scan? Enter this key manually instead:",
                 "confirm": "Confirm",
                 "recoveryTitle": "Save your recovery codes",
                 "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app.",
@@ -1338,10 +1353,12 @@
                 "linkWallet": "Link a wallet",
                 "addPassword": "Add a password to also sign in with email.",
                 "savePassword": "Save password",
-                "passwordAdded": "Password added — check your email to verify it.",
+                "passwordAdded": "Password added and email verified.",
+                "verifyEmailHint": "Verify your email address to secure your account.",
                 "emailTaken": "This email is already used by another account.",
                 "password": "Email & password",
-                "connected": "Connected",
+                "connected": "Verified",
+                "pending": "Pending verification",
                 "addPasswordCta": "Add password"
             },
             "sessions": {

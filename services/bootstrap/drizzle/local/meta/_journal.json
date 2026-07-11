@@ -218,6 +218,13 @@
             "when": 1783431323423,
             "tag": "0030_strange_puppet_master",
             "breakpoints": true
+        },
+        {
+            "idx": 31,
+            "version": "7",
+            "when": 1783774425901,
+            "tag": "0031_fixed_azazel",
+            "breakpoints": true
         }
     ]
 }

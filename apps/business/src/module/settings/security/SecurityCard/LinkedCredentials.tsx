@@ -1,17 +1,25 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { VerifyEmail } from "@/module/auth/component/VerifyEmail";
 import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
 import { AuthError } from "@/module/auth/utils/authError";
 import { DetailRow } from "@/module/common/component/DetailRow";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Input } from "@/module/forms/Input";
-import { useLinkPassword } from "@/module/settings/security/useSecuritySettings";
-import { useAuthStore } from "@/stores/authStore";
+import {
+    MIN_PASSWORD_LENGTH,
+    PasswordInput,
+} from "@/module/forms/PasswordInput";
+import {
+    useAccountCredentials,
+    useLinkPassword,
+} from "@/module/settings/security/useSecuritySettings";
 
 /**
  * Linked credentials overview (§5 deliverable 5): wallet / password /
@@ -24,14 +32,17 @@ import { useAuthStore } from "@/stores/authStore";
  */
 export function LinkedCredentials() {
     const { t } = useTranslation();
-    const wallet = useAuthStore((state) => state.wallet);
-    const authMethod = useAuthStore((state) => state.authMethod);
+    const { data: account } = useAccountCredentials();
     const {
         mutate: linkWallet,
         isPending: isLinkingWallet,
         error: linkWalletError,
     } = useLinkWallet();
     const [addingPassword, setAddingPassword] = useState(false);
+
+    const wallet = account?.wallet ?? null;
+    const hasPassword = !!account?.hasPassword;
+    const emailPending = hasPassword && !account?.emailVerified;
 
     return (
         <Stack space="s">
@@ -63,10 +74,21 @@ export function LinkedCredentials() {
             )}
 
             <DetailRow label={t("settings.security.credentials.password")}>
-                {authMethod === "password" ? (
-                    <Badge variant="success">
-                        {t("settings.security.credentials.connected")}
-                    </Badge>
+                {hasPassword ? (
+                    <Inline space="xs" alignY="center">
+                        {account?.email && (
+                            <Text variant="bodySmall" color="secondary">
+                                {account.email}
+                            </Text>
+                        )}
+                        <Badge variant={emailPending ? "warning" : "success"}>
+                            {t(
+                                emailPending
+                                    ? "settings.security.credentials.pending"
+                                    : "settings.security.credentials.connected"
+                            )}
+                        </Badge>
+                    </Inline>
                 ) : (
                     <Button
                         size="small"
@@ -79,7 +101,19 @@ export function LinkedCredentials() {
                 )}
             </DetailRow>
 
-            {authMethod !== "password" && addingPassword && <AddPasswordForm />}
+            {!hasPassword && addingPassword && <AddPasswordForm />}
+
+            {/* Email attached but unverified — always surface the verify form
+                (explicit send → enter code), no toggle. Disappears once the
+                account query refetches as verified. */}
+            {emailPending && (
+                <Stack space="s">
+                    <Text variant="bodySmall" color="secondary">
+                        {t("settings.security.credentials.verifyEmailHint")}
+                    </Text>
+                    <VerifyEmail embedded />
+                </Stack>
+            )}
         </Stack>
     );
 }
@@ -103,13 +137,10 @@ function AddPasswordForm() {
             : error.message
         : null;
 
-    if (isSuccess) {
-        return (
-            <Notice tone="success">
-                {t("settings.security.credentials.passwordAdded")}
-            </Notice>
-        );
-    }
+    // On success the account query is invalidated → the row flips to the
+    // pending state and the parent renders the (single) verify form. Nothing
+    // to show here anymore.
+    if (isSuccess) return null;
 
     return (
         <Stack space="xs">
@@ -125,10 +156,9 @@ function AddPasswordForm() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
             />
-            <Input
+            <PasswordInput
                 variant="bare"
                 tone="muted"
-                type="password"
                 autoComplete="new-password"
                 label={t("auth.login.email.newPasswordPlaceholder")}
                 hint={errorMessage ?? t("auth.login.email.passwordHint")}
@@ -141,7 +171,9 @@ function AddPasswordForm() {
                 variant="secondary"
                 width="auto"
                 loading={isPending}
-                disabled={!email || password.length < 10 || isPending}
+                disabled={
+                    !email || password.length < MIN_PASSWORD_LENGTH || isPending
+                }
                 onClick={() => linkPassword({ email, password })}
             >
                 {t("settings.security.credentials.savePassword")}

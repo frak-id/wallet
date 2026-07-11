@@ -79,6 +79,17 @@ export class BusinessSessionRepository {
             );
     }
 
+    /**
+     * Revoke every session for an account — credential-reset hygiene: after a
+     * successful password reset, any session established with the old (possibly
+     * compromised) password must not survive the recovery.
+     */
+    async revokeAllForAccount(accountId: string): Promise<void> {
+        await db
+            .delete(businessSessionsTable)
+            .where(eq(businessSessionsTable.accountId, accountId));
+    }
+
     async deleteExpired(): Promise<void> {
         await db
             .delete(businessSessionsTable)

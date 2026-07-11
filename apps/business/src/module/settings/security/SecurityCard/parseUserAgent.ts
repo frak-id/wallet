@@ -3,7 +3,7 @@
  * turns a raw UA string into "OS · Browser" plus a coarse form factor for
  * the device icon. Not exhaustive; unknown parts are simply dropped.
  */
-export type ParsedUserAgent = {
+type ParsedUserAgent = {
     label: string;
     isMobile: boolean;
 };

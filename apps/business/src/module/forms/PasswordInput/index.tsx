@@ -5,6 +5,12 @@ import { Input, type InputProps } from "@/module/forms/Input";
 import * as styles from "./password-input.css";
 
 /**
+ * Client-side mirror of the backend password policy
+ * (`PasswordService.MIN_LENGTH`) — keep the two in sync.
+ */
+export const MIN_PASSWORD_LENGTH = 10;
+
+/**
  * Password field with a show/hide reveal toggle rendered in the DS Input's
  * `rightSection`. Forwards every other `Input` prop (label, hint, error,
  * autoComplete…) untouched.

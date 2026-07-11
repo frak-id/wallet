@@ -15,7 +15,7 @@ const TOTP_GRACE_SEC = 30;
 const RECOVERY_CODE_COUNT = 8;
 const RECOVERY_CODE_BYTES = 5; // 10 hex chars
 
-export type TotpSetup = {
+type TotpSetup = {
     otpauthUri: string;
 };
 
@@ -130,12 +130,16 @@ export class TotpService {
         const recoveryCodes = Array.from({ length: RECOVERY_CODE_COUNT }, () =>
             randomBytes(RECOVERY_CODE_BYTES).toString("hex")
         );
-        await this.accountRepository.activateTotp({
+        // Conditional write: a concurrent activate may have won between the
+        // read above and here — the loser must not return a second (already
+        // clobbered) recovery-code set as if it were valid.
+        const activated = await this.accountRepository.activateTotp({
             accountId: params.accountId,
             recoveryCodesHash: recoveryCodes.map((code) =>
                 this.hashRecoveryCode(code)
             ),
         });
+        if (!activated) return null;
         return { recoveryCodes };
     }
 

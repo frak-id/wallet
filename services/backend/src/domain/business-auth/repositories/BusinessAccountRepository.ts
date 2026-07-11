@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Address, Hex } from "viem";
 import {
     type BusinessAccountSelect,
@@ -185,18 +185,32 @@ export class BusinessAccountRepository {
             .where(eq(businessAccountsTable.id, params.accountId));
     }
 
+    /**
+     * Activate TOTP atomically: the `totp_activated_at IS NULL` predicate
+     * makes the first caller win — a concurrent double-submit would otherwise
+     * clobber the winner's `totp_recovery_codes_hash` with a second random
+     * set while the user saves the first response's (now invalid) codes.
+     * Returns whether this call performed the activation.
+     */
     async activateTotp(params: {
         accountId: string;
         recoveryCodesHash: string[];
-    }): Promise<void> {
-        await db
+    }): Promise<boolean> {
+        const rows = await db
             .update(businessAccountsTable)
             .set({
                 totpActivatedAt: new Date(),
                 totpRecoveryCodesHash: params.recoveryCodesHash,
                 updatedAt: new Date(),
             })
-            .where(eq(businessAccountsTable.id, params.accountId));
+            .where(
+                and(
+                    eq(businessAccountsTable.id, params.accountId),
+                    isNull(businessAccountsTable.totpActivatedAt)
+                )
+            )
+            .returning({ id: businessAccountsTable.id });
+        return rows.length > 0;
     }
 
     /**

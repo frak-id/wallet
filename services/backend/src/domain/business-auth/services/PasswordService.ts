@@ -1,3 +1,5 @@
+import { HttpError } from "@backend-utils";
+
 /**
  * Argon2id password hashing via `Bun.password` (native, RustCrypto-backed).
  * Defaults (64 MiB memory, t=2) exceed OWASP minimums; output is a portable
@@ -6,6 +8,20 @@
 export class PasswordService {
     static readonly MIN_LENGTH = 10;
     static readonly MAX_LENGTH = 128;
+
+    /**
+     * Shared password-policy gate for every password-capturing route
+     * (register, reset/confirm, link/password) — one check, one canonical
+     * `t.ErrorResponse` shape.
+     */
+    assertValid(password: string): void {
+        if (!this.isValidPassword(password)) {
+            throw HttpError.badRequest(
+                "WEAK_PASSWORD",
+                `Password must be at least ${PasswordService.MIN_LENGTH} characters`
+            );
+        }
+    }
 
     /**
      * Pre-computed hash of an unguessable value, used to equalize timing on

@@ -54,7 +54,13 @@ export function Login({
                     {t("auth.login.heroSubtitle")}
                 </Text>
                 {error && (
-                    <Notice tone="error">{t("auth.login.ssoError")}</Notice>
+                    <Notice tone="error" role="alert">
+                        {t(
+                            error === "session"
+                                ? "auth.login.sessionError"
+                                : "auth.login.ssoError"
+                        )}
+                    </Notice>
                 )}
                 <LoginMethods redirect={redirect} />
             </Stack>

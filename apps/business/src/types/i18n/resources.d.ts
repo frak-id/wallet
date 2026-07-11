@@ -15,7 +15,6 @@ export default interface Resources {
           "passwordPlaceholder": "Password",
           "registerCta": "Register",
           "registerSubmit": "Create account",
-          "registerSuccess": "If this email is not already registered, you'll receive a verification code shortly.",
           "resetCodePlaceholder": "Reset code",
           "resetInstructions": "Enter your account email and we'll send you a reset code.",
           "resetSent": "If an account exists, a reset code has been sent. Enter it below with your new password.",
@@ -37,6 +36,7 @@ export default interface Resources {
           "wallet": "Wallet"
         },
         "or": "or",
+        "sessionError": "We couldn't finish signing you in. Please try again.",
         "shopify": {
           "invalidDomain": "Enter a valid myshopify.com domain",
           "label": "Shopify store domain",
@@ -48,6 +48,8 @@ export default interface Resources {
       "twoFactor": {
         "codePlaceholder": "6-digit code",
         "email": {
+          "resend": "Resend code",
+          "resent": "Code sent",
           "sendCode": "Send code by email",
           "sentHint": "Enter the code we sent to your email."
         },
@@ -57,7 +59,6 @@ export default interface Resources {
           "siwe": "Wallet",
           "totp": "Authenticator app"
         },
-        "otherMethods": "Choose another method",
         "pendingHint": "Verifying your session…",
         "siwe": {
           "cta": "Sign with wallet",
@@ -66,10 +67,22 @@ export default interface Resources {
         "subtitle": "Confirm it's you before continuing.",
         "title": "Verify your identity",
         "totp": {
-          "hint": "Enter the code from your authenticator app."
+          "hint": "Enter the code from your authenticator app.",
+          "recoveryHint": "Enter one of your recovery codes.",
+          "recoveryPlaceholder": "Recovery code",
+          "useCode": "Use your authenticator app",
+          "useRecovery": "Use a recovery code"
         },
-        "tryAnotherWay": "Try another way",
         "verify": "Verify"
+      },
+      "verifyEmail": {
+        "continue": "Continue",
+        "hint": "Enter the code we sent to your email address.",
+        "resend": "Resend code",
+        "resent": "Code sent",
+        "sendCode": "Send verification code",
+        "success": "Your email is verified.",
+        "title": "Verify your email"
       }
     },
     "bank": {
@@ -1667,13 +1680,15 @@ export default interface Resources {
         "credentials": {
           "addPassword": "Add a password to also sign in with email.",
           "addPasswordCta": "Add password",
-          "connected": "Connected",
+          "connected": "Verified",
           "emailTaken": "This email is already used by another account.",
           "linkWallet": "Link a wallet",
           "password": "Email & password",
-          "passwordAdded": "Password added — check your email to verify it.",
+          "passwordAdded": "Password added and email verified.",
+          "pending": "Pending verification",
           "savePassword": "Save password",
           "title": "Sign-in methods",
+          "verifyEmailHint": "Verify your email address to secure your account.",
           "wallet": "Wallet"
         },
         "description": "Manage two-factor authentication and linked sign-in methods.",
@@ -1698,6 +1713,8 @@ export default interface Resources {
           "copyCodes": "Copy codes",
           "downloadCodes": "Download",
           "enable": "Enable authenticator app",
+          "enabled": "Authenticator app enabled",
+          "manualHint": "Can't scan? Enter this key manually instead:",
           "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app.",
           "recoveryTitle": "Save your recovery codes",
           "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",

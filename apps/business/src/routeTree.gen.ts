@@ -9,10 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as RestrictedRouteImport } from './routes/_restricted'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as Login2faRouteImport } from './routes/login/2fa'
 import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/settings'
 import { Route as RestrictedMembersRouteImport } from './routes/_restricted/members'
@@ -54,6 +56,11 @@ import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdReferralChainRout
 import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/goals'
 import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdBudgetRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/budget'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -72,6 +79,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LoginIndexRoute = LoginIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LoginRoute,
 } as any)
 const Login2faRoute = Login2faRouteImport.update({
   id: '/2fa',
@@ -309,10 +321,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
   '/settings': typeof RestrictedSettingsRouteWithChildren
   '/login/2fa': typeof Login2faRoute
+  '/login/': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
   '/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
@@ -353,10 +367,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
-  '/login': typeof LoginRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
   '/login/2fa': typeof Login2faRoute
+  '/login': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
   '/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
@@ -400,10 +415,12 @@ export interface FileRoutesById {
   '/_restricted': typeof RestrictedRouteWithChildren
   '/demo': typeof DemoRoute
   '/login': typeof LoginRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
   '/_restricted/dashboard': typeof RestrictedDashboardRoute
   '/_restricted/members': typeof RestrictedMembersRoute
   '/_restricted/settings': typeof RestrictedSettingsRouteWithChildren
   '/login/2fa': typeof Login2faRoute
+  '/login/': typeof LoginIndexRoute
   '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/_restricted/campaigns/list': typeof RestrictedCampaignsListRoute
   '/_restricted/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
@@ -447,10 +464,12 @@ export interface FileRouteTypes {
     | '/'
     | '/demo'
     | '/login'
+    | '/verify-email'
     | '/dashboard'
     | '/members'
     | '/settings'
     | '/login/2fa'
+    | '/login/'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/m/$merchantId'
@@ -491,10 +510,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/demo'
-    | '/login'
+    | '/verify-email'
     | '/dashboard'
     | '/members'
     | '/login/2fa'
+    | '/login'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/m/$merchantId'
@@ -537,10 +557,12 @@ export interface FileRouteTypes {
     | '/_restricted'
     | '/demo'
     | '/login'
+    | '/verify-email'
     | '/_restricted/dashboard'
     | '/_restricted/members'
     | '/_restricted/settings'
     | '/login/2fa'
+    | '/login/'
     | '/_restricted/campaigns/$campaignId'
     | '/_restricted/campaigns/list'
     | '/_restricted/m/$merchantId'
@@ -584,10 +606,18 @@ export interface RootRouteChildren {
   RestrictedRoute: typeof RestrictedRouteWithChildren
   DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRouteWithChildren
+  VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -615,6 +645,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/login/': {
+      id: '/login/'
+      path: '/'
+      fullPath: '/login/'
+      preLoaderRoute: typeof LoginIndexRouteImport
+      parentRoute: typeof LoginRoute
     }
     '/login/2fa': {
       id: '/login/2fa'
@@ -1027,10 +1064,12 @@ const RestrictedRouteWithChildren = RestrictedRoute._addFileChildren(
 
 interface LoginRouteChildren {
   Login2faRoute: typeof Login2faRoute
+  LoginIndexRoute: typeof LoginIndexRoute
 }
 
 const LoginRouteChildren: LoginRouteChildren = {
   Login2faRoute: Login2faRoute,
+  LoginIndexRoute: LoginIndexRoute,
 }
 
 const LoginRouteWithChildren = LoginRoute._addFileChildren(LoginRouteChildren)
@@ -1040,6 +1079,7 @@ const rootRouteChildren: RootRouteChildren = {
   RestrictedRoute: RestrictedRouteWithChildren,
   DemoRoute: DemoRoute,
   LoginRoute: LoginRouteWithChildren,
+  VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

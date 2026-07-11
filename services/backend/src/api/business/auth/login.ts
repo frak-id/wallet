@@ -1,15 +1,34 @@
-import { rateLimitMiddleware } from "@backend-infrastructure";
-import { TwoFactorMethodDto, t } from "@backend-utils";
+import { log, rateLimitMiddleware } from "@backend-infrastructure";
+import {
+    HttpError,
+    isUniqueViolation,
+    TwoFactorMethodDto,
+    t,
+} from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { BusinessAuthResponseDto } from "../../../domain/auth";
-import {
-    BusinessAuthContext,
-    PasswordService,
-} from "../../../domain/business-auth";
+import { BusinessAuthContext } from "../../../domain/business-auth";
 import { resolveClientIp, verifySiweProof } from "./common";
 
+/**
+ * Fire-and-forget the reset OTP on the enumeration-safe request endpoint.
+ * Awaiting the Resend round-trip (tens–hundreds of ms) only on the
+ * account-exists branch is a timing oracle that defeats the
+ * identical-response-body guarantee — so the send happens off the request
+ * path and failures are only logged (the user can always re-request).
+ */
+function sendResetOtpOffPath(params: {
+    accountId: string;
+    email: string;
+}): void {
+    BusinessAuthContext.services.emailOtp
+        .sendCode({ ...params, purpose: "password_reset" })
+        .catch((error) => log.error({ error }, "Reset OTP send failed"));
+}
+
 const GENERIC_REGISTER_RESPONSE = {
-    message: "If this email is not already registered, a code has been sent",
+    message:
+        "If this email was available, the account has been created — sign in to continue",
 } as const;
 
 const GENERIC_RESET_RESPONSE = {
@@ -69,14 +88,7 @@ export const loginRoutes = new Elysia()
     .post(
         "/register",
         async ({ body: { email, password } }) => {
-            if (
-                !BusinessAuthContext.services.password.isValidPassword(password)
-            ) {
-                return status(400, {
-                    error: "WEAK_PASSWORD",
-                    message: `Password must be at least ${PasswordService.MIN_LENGTH} characters`,
-                });
-            }
+            BusinessAuthContext.services.password.assertValid(password);
 
             const normalizedEmail = email.trim().toLowerCase();
 
@@ -99,21 +111,31 @@ export const loginRoutes = new Elysia()
                 return GENERIC_REGISTER_RESPONSE;
             }
 
-            const account =
-                await BusinessAuthContext.repositories.account.create({
-                    email: normalizedEmail,
-                });
+            let account: { id: string };
+            try {
+                account = await BusinessAuthContext.repositories.account.create(
+                    { email: normalizedEmail }
+                );
+            } catch (error) {
+                // The findByEmail check above is TOCTOU-racy: a concurrent
+                // register can win the partial unique index between it and
+                // this INSERT. The loser must return the same generic
+                // response — a raw 500 here would itself be an enumeration
+                // side-channel (200/200 vs 200/500 on a double submit).
+                if (isUniqueViolation(error)) {
+                    return GENERIC_REGISTER_RESPONSE;
+                }
+                throw error;
+            }
             await BusinessAuthContext.repositories.account.setPasswordHash({
                 accountId: account.id,
                 passwordHash,
             });
 
-            await BusinessAuthContext.services.emailOtp.sendCode({
-                accountId: account.id,
-                email: normalizedEmail,
-                purpose: "email_verify",
-            });
-
+            // No verification email here: the first password login requires
+            // email 2FA anyway (`/2fa/verify` marks the email verified), so a
+            // register-time code would be a second, orphaned email — nothing
+            // in the login flow consumes it.
             return GENERIC_REGISTER_RESPONSE;
         },
         {
@@ -123,7 +145,7 @@ export const loginRoutes = new Elysia()
             }),
             response: {
                 200: t.Object({ message: t.String() }),
-                400: t.Object({ error: t.String(), message: t.String() }),
+                400: t.ErrorResponse,
             },
         }
     )
@@ -141,10 +163,9 @@ export const loginRoutes = new Elysia()
                     normalizedEmail
                 );
             if (account?.passwordHash) {
-                await BusinessAuthContext.services.emailOtp.sendCode({
+                sendResetOtpOffPath({
                     accountId: account.id,
                     email: normalizedEmail,
-                    purpose: "password_reset",
                 });
             }
             return GENERIC_RESET_RESPONSE;
@@ -162,14 +183,7 @@ export const loginRoutes = new Elysia()
         // so a successful reset also marks the email verified.
         "/password/reset/confirm",
         async ({ body: { email, code, password } }) => {
-            if (
-                !BusinessAuthContext.services.password.isValidPassword(password)
-            ) {
-                return status(400, {
-                    error: "WEAK_PASSWORD",
-                    message: `Password must be at least ${PasswordService.MIN_LENGTH} characters`,
-                });
-            }
+            BusinessAuthContext.services.password.assertValid(password);
 
             const normalizedEmail = email.trim().toLowerCase();
             const account =
@@ -177,10 +191,10 @@ export const loginRoutes = new Elysia()
                     normalizedEmail
                 );
             if (!account?.passwordHash) {
-                return status(400, {
-                    error: "INVALID_CODE",
-                    message: "Invalid or expired code",
-                });
+                throw HttpError.badRequest(
+                    "INVALID_CODE",
+                    "Invalid or expired code"
+                );
             }
 
             const result =
@@ -190,10 +204,10 @@ export const loginRoutes = new Elysia()
                     code,
                 });
             if (result.status !== "verified") {
-                return status(400, {
-                    error: "INVALID_CODE",
-                    message: "Invalid or expired code",
-                });
+                throw HttpError.badRequest(
+                    "INVALID_CODE",
+                    "Invalid or expired code"
+                );
             }
 
             const passwordHash =
@@ -203,6 +217,11 @@ export const loginRoutes = new Elysia()
                 passwordHash,
             });
             await BusinessAuthContext.repositories.account.markEmailVerified(
+                account.id
+            );
+            // Credential-reset hygiene: any session established with the old
+            // (possibly compromised) password must not survive the recovery.
+            await BusinessAuthContext.repositories.session.revokeAllForAccount(
                 account.id
             );
 
@@ -216,7 +235,7 @@ export const loginRoutes = new Elysia()
             }),
             response: {
                 200: t.Object({ success: t.Literal(true) }),
-                400: t.Object({ error: t.String(), message: t.String() }),
+                400: t.ErrorResponse,
             },
         }
     )

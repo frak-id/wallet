@@ -13,7 +13,7 @@ const createRepository = () =>
     ({
         findById: vi.fn(),
         setPendingTotp: vi.fn(),
-        activateTotp: vi.fn(),
+        activateTotp: vi.fn().mockResolvedValue(true),
         consumeTotpRecoveryCode: vi.fn().mockResolvedValue(false),
         recordTwoFactorFailure: vi.fn(),
         resetTwoFactorAttempts: vi.fn(),
@@ -117,6 +117,26 @@ describe("TotpService", () => {
             expect(activated.recoveryCodesHash).not.toEqual(
                 result?.recoveryCodes
             );
+        });
+
+        it("returns null when a concurrent activation won the conditional write", async () => {
+            const { encryptedSecret, secret } = await setupWithSecret();
+            repository.findById.mockResolvedValue({
+                id: ACCOUNT_ID,
+                totpSecretEnc: encryptedSecret,
+                totpActivatedAt: null,
+                totpRecoveryCodesHash: null,
+            });
+            // The repository's `WHERE totp_activated_at IS NULL` predicate
+            // made another call the winner — the loser must not surface a
+            // second (clobbered) recovery-code set.
+            repository.activateTotp.mockResolvedValue(false);
+
+            const result = await service.activate({
+                accountId: ACCOUNT_ID,
+                code: generateTOTP(secret, 30, 6),
+            });
+            expect(result).toBeNull();
         });
 
         it("rejects activation with a wrong code", async () => {

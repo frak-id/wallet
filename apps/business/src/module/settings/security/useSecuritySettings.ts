@@ -8,6 +8,25 @@ import {
 import type { TwoFactorMethod } from "@/stores/twoFactorStore";
 
 const SESSIONS_QUERY_KEY = ["auth", "sessions"];
+export const ACCOUNT_QUERY_KEY = ["auth", "account"];
+
+/**
+ * `GET /auth/account` — the account's full credential set (email + verified
+ * flag, password, wallet, shopify). The session token alone can't tell the
+ * client this (a SIWE session that later added a password still reports
+ * `authMethod: "siwe"`), so the linked-credentials UI reads it from here.
+ */
+export function useAccountCredentials() {
+    return useQuery({
+        queryKey: ACCOUNT_QUERY_KEY,
+        queryFn: async () => {
+            const { data, error } =
+                await authenticatedBackendApi.auth.account.get();
+            if (error) throw new Error("Could not load account");
+            return data;
+        },
+    });
+}
 
 /** `GET /auth/sessions` — active session list, current one flagged. */
 export function useAuthSessions() {
@@ -73,6 +92,7 @@ export function useTwoFactorSetup() {
  * recovery codes that must be shown exactly once.
  */
 export function useTwoFactorActivate() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationKey: ["auth", "2fa", "activate"],
         mutationFn: async (params: {
@@ -86,11 +106,20 @@ export function useTwoFactorActivate() {
             }
             return data;
         },
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["auth", "2fa", "methods"],
+            });
+            // Email activation flips emailVerified / completes the add-email
+            // flow — refresh the linked-credentials view.
+            queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEY });
+        },
     });
 }
 
 /** `POST /auth/link/password` — add email+password to an SSO-only account. */
 export function useLinkPassword() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationKey: ["auth", "link", "password"],
         mutationFn: async (params: { email: string; password: string }) => {
@@ -105,6 +134,12 @@ export function useLinkPassword() {
                 );
             }
             return data;
+        },
+        onSuccess: () => {
+            // Password added, email now attached-but-pending — refresh the
+            // linked-credentials view so it flips to the pending row + the
+            // (single) verify form.
+            queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEY });
         },
     });
 }

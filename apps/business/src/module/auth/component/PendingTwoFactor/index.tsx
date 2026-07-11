@@ -66,7 +66,16 @@ export function PendingTwoFactor() {
                 return;
             }
 
-            await completeSession();
+            try {
+                await completeSession();
+            } catch {
+                // Session resolution failed (backend error, missing current
+                // session row, …) — without this the component would sit on
+                // its spinner forever. Reset and surface a retryable error.
+                useAuthStore.getState().clearAuth();
+                navigate({ to: "/login", search: { error: "session" } });
+                return;
+            }
             navigate({ to: safeRedirectTarget(redirect) });
         }
     }, [

@@ -1,8 +1,27 @@
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
 import type { TwoFactorMethod } from "@/stores/twoFactorStore";
+
+/**
+ * `GET /auth/2fa/methods` — the account's actually-enrolled 2FA channels.
+ * Works on pending and full sessions, so it's the authoritative list for
+ * both the login-completion and step-up modals (the advertised list handed
+ * in via the store is only a hint, and the Shopify SSO path has none).
+ */
+export function useEnrolledTwoFactorMethods(enabled: boolean) {
+    return useQuery({
+        queryKey: ["auth", "2fa", "methods"],
+        enabled,
+        queryFn: async () => {
+            const { data, error } =
+                await authenticatedBackendApi.auth["2fa"].methods.get();
+            if (error) throw new Error("Could not load 2FA methods");
+            return data.methods;
+        },
+    });
+}
 
 /**
  * `POST /auth/2fa/challenge` — sends an email code, no-ops for TOTP, or

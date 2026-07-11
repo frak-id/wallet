@@ -12,6 +12,8 @@ import {
 import { encodeQR } from "qr";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useEnrolledTwoFactorMethods } from "@/module/auth/hooks/useTwoFactorChallenge";
+import { CopyableValue } from "@/module/common/component/CopyableValue";
 import { useCopyToClipboardWithState } from "@/module/common/hook/useCopyToClipboardWithState";
 import { Input } from "@/module/forms/Input";
 import {
@@ -30,7 +32,14 @@ import * as styles from "./totp-enrollment.css";
  */
 function TotpQrCode({ otpauthUri }: { otpauthUri: string }) {
     const qrSvg = useMemo(
-        () => encodeQR(otpauthUri, "svg", { ecc: "medium" }),
+        () =>
+            // The `qr` SVG carries only a viewBox (no width/height) — inject a
+            // fill-the-frame style on the root element so it scales to the
+            // container (vanilla-extract can't size a descendant `& svg`).
+            encodeQR(otpauthUri, "svg", { ecc: "medium" }).replace(
+                "<svg ",
+                '<svg style="display:block;width:100%;height:100%" '
+            ),
         [otpauthUri]
     );
     return (
@@ -38,6 +47,38 @@ function TotpQrCode({ otpauthUri }: { otpauthUri: string }) {
             className={styles.qrFrame}
             dangerouslySetInnerHTML={{ __html: qrSvg }}
         />
+    );
+}
+
+/**
+ * The base32 `secret` param carried by the otpauth URI, grouped in 4-char
+ * blocks for legibility — the manual-entry fallback for authenticators that
+ * can't scan the QR. Parsed client-side so the raw secret still never leaves
+ * the setup response (§2.2).
+ */
+function manualEntrySecret(otpauthUri: string): string | null {
+    const secret = new URL(otpauthUri).searchParams.get("secret");
+    return secret?.match(/.{1,4}/g)?.join(" ") ?? secret;
+}
+
+function TotpManualKey({ otpauthUri }: { otpauthUri: string }) {
+    const { t } = useTranslation();
+    const formatted = useMemo(
+        () => manualEntrySecret(otpauthUri),
+        [otpauthUri]
+    );
+    if (!formatted) return null;
+
+    return (
+        <Stack space="xxs">
+            <Text variant="bodySmall" color="secondary">
+                {t("settings.security.totp.manualHint")}
+            </Text>
+            <CopyableValue
+                value={formatted}
+                copyText={formatted.replace(/\s/g, "")}
+            />
+        </Stack>
     );
 }
 
@@ -50,6 +91,7 @@ function TotpQrCode({ otpauthUri }: { otpauthUri: string }) {
 export function TotpEnrollment() {
     const { t } = useTranslation();
     const [step, setStep] = useState<"idle" | "enrolling" | "done">("idle");
+    const { data: methods } = useEnrolledTwoFactorMethods(true);
     const {
         mutate: setup,
         data: setupData,
@@ -68,6 +110,26 @@ export function TotpEnrollment() {
         return <RecoveryCodes codes={activateData.recoveryCodes} />;
     }
 
+    // Already enrolled: the /setup call would fail with TOTP_ALREADY_ACTIVATED,
+    // so surface the enabled state instead of a dead "Enable" button. Skipped
+    // while mid-enrollment so the just-activated flow still shows the code
+    // steps from local state.
+    if (step === "idle" && methods?.includes("totp")) {
+        return (
+            <Stack space="xs">
+                <Text variant="body" weight="medium">
+                    {t("settings.security.totp.title")}
+                </Text>
+                <Inline space="xs" alignY="center">
+                    <CheckIcon width={16} height={16} />
+                    <Text variant="bodySmall" color="secondary">
+                        {t("settings.security.totp.enabled")}
+                    </Text>
+                </Inline>
+            </Stack>
+        );
+    }
+
     if (step === "enrolling" && setupData?.otpauthUri) {
         return (
             <Stack space="s">
@@ -75,6 +137,7 @@ export function TotpEnrollment() {
                     {t("settings.security.totp.scanHint")}
                 </Text>
                 <TotpQrCode otpauthUri={setupData.otpauthUri} />
+                <TotpManualKey otpauthUri={setupData.otpauthUri} />
                 <Input
                     variant="bare"
                     tone="muted"

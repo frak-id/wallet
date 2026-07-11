@@ -6,6 +6,41 @@ import { requireDbSession } from "./common";
 
 export const sessionManagementRoutes = new Elysia()
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 30 }))
+    .get(
+        "/account",
+        async ({ headers }) => {
+            // The account's full credential set — which the session token alone
+            // can't tell the client (a SIWE session that later added a password
+            // still reports `authMethod: "siwe"`). Drives the settings
+            // "linked credentials" view (add-X vs connected-as).
+            const auth = await requireDbSession(headers, {
+                allowPending: true,
+            });
+            const account =
+                await BusinessAuthContext.repositories.account.findById(
+                    auth.accountId
+                );
+            return {
+                email: account?.email ?? null,
+                emailVerified: !!account?.emailVerifiedAt,
+                hasPassword: !!account?.passwordHash,
+                wallet: account?.walletAddress ?? null,
+                hasShopify: !!account?.shopifyUserId,
+            };
+        },
+        {
+            response: {
+                200: t.Object({
+                    email: t.Nullable(t.String()),
+                    emailVerified: t.Boolean(),
+                    hasPassword: t.Boolean(),
+                    wallet: t.Nullable(t.Address()),
+                    hasShopify: t.Boolean(),
+                }),
+                401: t.ErrorResponse,
+            },
+        }
+    )
     .post(
         "/logout",
         async ({ headers }) => {
