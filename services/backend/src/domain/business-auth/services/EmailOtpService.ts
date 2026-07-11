@@ -15,11 +15,11 @@ export const EMAIL_OTP = {
     MAX_SENDS_PER_WINDOW: 5,
 } as const;
 
-export type SendOtpResult =
+type SendOtpResult =
     | { status: "sent" }
     | { status: "throttled"; retryAfterSec: number };
 
-export type VerifyOtpResult =
+type VerifyOtpResult =
     | { status: "verified" }
     | { status: "invalid" }
     | { status: "expired" }
@@ -36,6 +36,32 @@ const PURPOSE_INTENT: Record<
     email_verify: "verify your email",
     password_reset: "reset your password",
 };
+
+/**
+ * Deep link that prefills the code on the dashboard. The code rides in the URL
+ * fragment (never sent to the server). Only the purposes with a landing page
+ * that consumes it get a link:
+ *  - `email_verify` → the standalone verify-email page (works on any logged-in
+ *    session, e.g. the add-email flow).
+ *  - `second_factor` → the pending-login completion screen; only usable in the
+ *    same browser (the pending session lives in that tab), falls back to manual
+ *    entry otherwise.
+ * `password_reset` has no link yet (its landing flow isn't built).
+ */
+function buildCodeLink(
+    purpose: BusinessEmailCodePurpose,
+    code: string
+): string | undefined {
+    const base = process.env.BUSINESS_URL;
+    if (!base) return undefined;
+    if (purpose === "email_verify") {
+        return `${base}/verify-email#code=${code}`;
+    }
+    if (purpose === "second_factor") {
+        return `${base}/login/2fa#code=${code}`;
+    }
+    return undefined;
+}
 
 /**
  * Email OTP challenges for business accounts — mirrors the identity domain's
@@ -111,6 +137,7 @@ export class EmailOtpService {
         const { subject, html } = buildSecurityCodeEmail({
             code,
             intent: PURPOSE_INTENT[params.purpose],
+            link: buildCodeLink(params.purpose, code),
         });
 
         // Send BEFORE persisting: a failed send must not stamp `lastSentAt`

@@ -83,6 +83,43 @@ describe("EmailOtpService", () => {
             );
         });
 
+        it("passes a verify-email deep link for the email_verify purpose", async () => {
+            repository.find.mockResolvedValue(null);
+            const previous = process.env.BUSINESS_URL;
+            process.env.BUSINESS_URL = "https://biz.frak.id";
+
+            await service.sendCode({
+                accountId: ACCOUNT_ID,
+                email: "user@test.com",
+                purpose: "email_verify",
+            });
+
+            expect(vi.mocked(buildSecurityCodeEmail)).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    intent: "verify your email",
+                    link: expect.stringMatching(
+                        /^https:\/\/biz\.frak\.id\/verify-email#code=\d{6}$/
+                    ),
+                })
+            );
+
+            process.env.BUSINESS_URL = previous;
+        });
+
+        it("sends no link for password_reset (no landing flow yet)", async () => {
+            repository.find.mockResolvedValue(null);
+
+            await service.sendCode({
+                accountId: ACCOUNT_ID,
+                email: "user@test.com",
+                purpose: "password_reset",
+            });
+
+            expect(vi.mocked(buildSecurityCodeEmail)).toHaveBeenCalledWith(
+                expect.objectContaining({ link: undefined })
+            );
+        });
+
         it("sends a 6-digit code and persists its hash (not the code)", async () => {
             repository.find.mockResolvedValue(null);
 
