@@ -4,8 +4,10 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { TwoFactorChallengePanel } from "@/module/auth/component/TwoFactorChallengePanel";
 import { useCompletePendingSession } from "@/module/auth/hooks/useCompletePendingSession";
 import { safeRedirectTarget } from "@/module/auth/utils/safeRedirect";
+import { Login } from "@/module/login/component/Login";
 import { useAuthStore } from "@/stores/authStore";
 import {
     type TwoFactorMethod,
@@ -39,6 +41,13 @@ export function PendingTwoFactor() {
     const consumePendingLoginMethods = useTwoFactorStore(
         (state) => state.consumePendingLoginMethods
     );
+    // Reactive mirror of the same store request driven by `requestVerification`
+    // below — renders the inline challenge panel whenever one is pending, and
+    // falls back to a spinner while resolving/completing the session.
+    const request = useTwoFactorStore((state) => state.request);
+    const resolveVerification = useTwoFactorStore(
+        (state) => state.resolveVerification
+    );
     const { mutateAsync: completeSession } = useCompletePendingSession();
     const started = useRef(false);
 
@@ -59,7 +68,7 @@ export function PendingTwoFactor() {
 
         async function resolveTwoFactor(hashMethods: TwoFactorMethod[] | null) {
             const methods = hashMethods ?? SHOPIFY_FALLBACK_METHODS;
-            const verified = await requestVerification(methods);
+            const verified = await requestVerification(methods, "inline");
             if (!verified) {
                 useAuthStore.getState().clearAuth();
                 navigate({ to: "/login" });
@@ -87,12 +96,25 @@ export function PendingTwoFactor() {
     ]);
 
     return (
-        <Stack space="m" align="center">
-            <Spinner />
-            <Text variant="body" color="secondary">
-                {t("auth.twoFactor.pendingHint")}
-            </Text>
-        </Stack>
+        <Login>
+            {/* Gate on the `inline` presentation specifically: a step-up 401
+                from a background request could open a `modal` request while
+                this route is mounted — that one belongs to `TwoFactorModal`,
+                not here (never render both surfaces for the same request). */}
+            {request?.presentation === "inline" ? (
+                <TwoFactorChallengePanel
+                    methods={request.methods}
+                    onVerified={resolveVerification}
+                />
+            ) : (
+                <Stack space="m" align="center">
+                    <Spinner />
+                    <Text variant="body" color="secondary">
+                        {t("auth.twoFactor.pendingHint")}
+                    </Text>
+                </Stack>
+            )}
+        </Login>
     );
 }
 

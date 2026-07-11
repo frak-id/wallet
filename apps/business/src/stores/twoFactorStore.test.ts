@@ -25,6 +25,22 @@ describe("twoFactorStore", () => {
             await expect(promise).resolves.toBe(true);
             expect(useTwoFactorStore.getState().request).toBeNull();
         });
+
+        it("defaults to the modal presentation, and accepts inline", () => {
+            useTwoFactorStore.getState().requestVerification(["email"]);
+            expect(useTwoFactorStore.getState().request?.presentation).toBe(
+                "modal"
+            );
+            useTwoFactorStore.getState().resolveVerification();
+
+            useTwoFactorStore
+                .getState()
+                .requestVerification(["email"], "inline");
+            expect(useTwoFactorStore.getState().request?.presentation).toBe(
+                "inline"
+            );
+            useTwoFactorStore.getState().resolveVerification();
+        });
     });
 
     describe("cancelVerification", () => {
@@ -59,6 +75,20 @@ describe("twoFactorStore", () => {
 
             await expect(first).resolves.toBe(true);
             await expect(second).resolves.toBe(true);
+        });
+
+        it("keeps the original presentation when a second call requests a different one", () => {
+            useTwoFactorStore
+                .getState()
+                .requestVerification(["email"], "inline");
+            useTwoFactorStore
+                .getState()
+                .requestVerification(["email"], "modal");
+
+            expect(useTwoFactorStore.getState().request?.presentation).toBe(
+                "inline"
+            );
+            useTwoFactorStore.getState().resolveVerification();
         });
     });
 

@@ -65,6 +65,7 @@
             "totp": {
                 "hint": "Saisissez le code de votre application d'authentification.",
                 "recoveryHint": "Saisissez l'un de vos codes de récupération.",
+                "recoveryNotice": "Vous saisissez un code de récupération à usage unique, et non le code à 6 chiffres de votre application d'authentification.",
                 "recoveryPlaceholder": "Code de récupération",
                 "useRecovery": "Utiliser un code de récupération",
                 "useCode": "Utiliser votre application d'authentification"

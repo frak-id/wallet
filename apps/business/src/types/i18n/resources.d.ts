@@ -69,6 +69,7 @@ export default interface Resources {
         "totp": {
           "hint": "Enter the code from your authenticator app.",
           "recoveryHint": "Enter one of your recovery codes.",
+          "recoveryNotice": "You're entering a one-time recovery code, not your 6-digit authenticator app code.",
           "recoveryPlaceholder": "Recovery code",
           "useCode": "Use your authenticator app",
           "useRecovery": "Use a recovery code"

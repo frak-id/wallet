@@ -2,6 +2,7 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { LoginMethods } from "@/module/auth/component/LoginMethods";
 // Imported last so the component-scoped styles win over DS variant styles.
@@ -15,9 +16,14 @@ const currentYear = new Date().getFullYear();
 export function Login({
     redirect,
     error,
+    children,
 }: {
     redirect?: string;
     error?: string;
+    /** Hero content below the title/subtitle — defaults to the login form.
+     * `/login/2fa` (§2, §4.7) passes the inline 2FA challenge here instead,
+     * so it renders in the same branded shell rather than a blank page. */
+    children?: ReactNode;
 }) {
     const { t } = useTranslation();
 
@@ -62,7 +68,7 @@ export function Login({
                         )}
                     </Notice>
                 )}
-                <LoginMethods redirect={redirect} />
+                {children ?? <LoginMethods redirect={redirect} />}
             </Stack>
 
             <aside className={styles.rightPanel}>
