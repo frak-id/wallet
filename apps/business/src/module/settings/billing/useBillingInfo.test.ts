@@ -65,6 +65,26 @@ const DOCS = [
     },
 ];
 
+const DOCS_WITH_WITHDRAW = [
+    ...DOCS,
+    {
+        id: "wdr-1",
+        kind: "withdraw" as const,
+        reference: "WDR-2026-0001",
+        documentDate: "2026-08-01T00:00:00.000Z",
+        currency: "eure",
+        grossAmount: "400",
+        netAmount: "400",
+        txHash: null,
+        linkedDepositId: "dep-1",
+        periodStart: null,
+        periodEnd: null,
+        pdfGeneratedAt: null,
+        voidedAt: null,
+        createdAt: "2026-08-01T00:00:00.000Z",
+    },
+];
+
 function mockMerchant({
     accounting,
     documents,
@@ -211,7 +231,8 @@ describe("useBillingInfo", () => {
 
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        result.current.saveInfo(INFO);
+        const onSuccess = vi.fn();
+        result.current.saveInfo(INFO, { onSuccess });
 
         await waitFor(() => expect(accountingPut).toHaveBeenCalledWith(INFO));
         await waitFor(() => expect(result.current.isSaving).toBe(false));
@@ -219,6 +240,36 @@ describe("useBillingInfo", () => {
         const mutations = queryWrapper.client.getMutationCache().getAll();
         expect(mutations).toHaveLength(1);
         expect(mutations[0]?.state.status).toBe("error");
+        // B12: the failure must be surfaced to the sheet and the success
+        // callback (which closes the sheet) must NOT have fired.
+        expect(result.current.saveFailed).toBe(true);
+        expect(onSuccess).not.toHaveBeenCalled();
+
+        // resetSaveState clears the sticky error (called on sheet close).
+        result.current.resetSaveState();
+        await waitFor(() => expect(result.current.saveFailed).toBe(false));
+    });
+
+    test("saveInfo success invokes the onSuccess callback (sheet close hook) — B12", async ({
+        queryWrapper,
+    }: TestContext) => {
+        const { accountingPut } = mockMerchant({
+            accounting: { data: { accountingInfo: null }, error: null },
+            documents: { data: { documents: [] }, error: null },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        const onSuccess = vi.fn();
+        result.current.saveInfo(INFO, { onSuccess });
+
+        await waitFor(() => expect(accountingPut).toHaveBeenCalledWith(INFO));
+        await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+        expect(result.current.saveFailed).toBe(false);
     });
 
     test("a monthly_bill document with grossAmount: null maps to amount: null (not NaN)", async ({
@@ -236,5 +287,32 @@ describe("useBillingInfo", () => {
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
         expect(result.current.invoices[0]?.amount).toBeNull();
+    });
+
+    test("a withdraw document maps to its own 'withdraw' entry kind, not 'deposit' (B16)", async ({
+        queryWrapper,
+    }: TestContext) => {
+        mockMerchant({
+            accounting: { data: { accountingInfo: null }, error: null },
+            documents: { data: { documents: DOCS_WITH_WITHDRAW }, error: null },
+        });
+
+        const { result } = renderHook(() => useBillingInfo(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        // Still grouped under the same "deposit" tab (both deposit + withdraw
+        // documents), but distinguishable by `kind`/`rawKind`.
+        expect(result.current.deposits).toHaveLength(2);
+        const withdrawEntry = result.current.deposits.find(
+            (entry) => entry.rawKind === "withdraw"
+        );
+        expect(withdrawEntry?.kind).toBe("withdraw");
+        const depositEntry = result.current.deposits.find(
+            (entry) => entry.rawKind === "deposit"
+        );
+        expect(depositEntry?.kind).toBe("deposit");
     });
 });

@@ -57,6 +57,69 @@ describe("BillingInfoSheet save gating", () => {
     });
 });
 
+describe("BillingInfoSheet failed-save handling (B12)", () => {
+    it("keeps the sheet open with the edits when onSave never succeeds, closes on success", async () => {
+        // Simulated mutation: first call fails (never invokes onSuccess),
+        // second call succeeds.
+        let call = 0;
+        const onSave = vi.fn(
+            (_next: BillingInfo, opts?: { onSuccess?: () => void }) => {
+                call += 1;
+                if (call > 1) opts?.onSuccess?.();
+            }
+        );
+        render(
+            <BillingInfoSheet
+                mode="edit"
+                info={INFO}
+                onSave={onSave}
+                saveFailed={call === 1}
+            />
+        );
+        fireEvent.click(screen.getByRole("button", { name: EDIT }));
+
+        const companyInput =
+            await screen.findByPlaceholderText(COMPANY_PLACEHOLDER);
+        fireEvent.change(companyInput, { target: { value: "Changed" } });
+
+        const save = screen.getByRole("button", { name: SAVE_CHANGES });
+        await waitFor(() => expect(save).not.toBeDisabled());
+
+        // First submit: save fails (no onSuccess) — the sheet must stay
+        // open and the edited value must still be there.
+        fireEvent.click(save);
+        await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+        expect(screen.getByPlaceholderText(COMPANY_PLACEHOLDER)).toHaveValue(
+            "Changed"
+        );
+
+        // Second submit: save succeeds — the sheet closes.
+        fireEvent.click(screen.getByRole("button", { name: SAVE_CHANGES }));
+        await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+        await waitFor(() =>
+            expect(
+                screen.queryByPlaceholderText(COMPANY_PLACEHOLDER)
+            ).not.toBeInTheDocument()
+        );
+    });
+
+    it("shows the inline save-error message when saveFailed is set", async () => {
+        render(
+            <BillingInfoSheet
+                mode="edit"
+                info={INFO}
+                onSave={() => {}}
+                saveFailed
+            />
+        );
+        fireEvent.click(screen.getByRole("button", { name: EDIT }));
+
+        expect(
+            await screen.findByText("settings.billing.errors.save")
+        ).toBeInTheDocument();
+    });
+});
+
 // Company name is a migrated Phase-B field: label/hint now come
 // from the DS Input, not EditField. Confirms the delegated label still
 // associates with the control and the FormMessage still fires on invalid

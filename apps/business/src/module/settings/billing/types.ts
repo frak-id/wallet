@@ -15,9 +15,13 @@ export type BillingInfo = MerchantAccountingInfo;
 
 /**
  * A billing-history line, derived from a `BillingDocumentResponse`.
- * `kind` drives the table tag (Paid vs Deposit) and which tab it's listed
- * under; `monthly_bill` documents become "invoice" rows, `deposit`/`withdraw`
- * documents become "deposit" rows.
+ * `kind` drives the table tag (Paid / Deposit / Withdraw) and which tab
+ * it's listed under: `monthly_bill` documents become "invoice" rows;
+ * `deposit` documents become "deposit" rows; `withdraw` documents become
+ * their own "withdraw" rows (billing-feature-fixes.md B16 — previously
+ * folded into "deposit", making a restitution indistinguishable from an
+ * actual deposit). Both "deposit" and "withdraw" rows are listed under the
+ * same Deposit tab (see `useBillingInfo`'s `deposits` array).
  */
 export type BillingEntry = {
     /** Underlying billing document id — used to fetch the PDF. */
@@ -32,7 +36,7 @@ export type BillingEntry = {
     amount: number | null;
     /** Stablecoin currency code (not an ISO-4217 code — never format as Intl currency). */
     currency: string;
-    kind: "invoice" | "deposit";
+    kind: "invoice" | "deposit" | "withdraw";
     /** Human-facing reference, e.g. "DEP-2026-0001". */
     reference: string;
     description: string;

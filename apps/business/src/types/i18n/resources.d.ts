@@ -1589,6 +1589,9 @@ export default interface Resources {
             "trigger": "Add withdrawal"
           }
         },
+        "errors": {
+          "save": "Something went wrong while saving your billing information. Your changes were kept — please try again."
+        },
         "fields": {
           "billingEmail": {
             "label": "Billing email",
@@ -1652,7 +1655,8 @@ export default interface Resources {
         },
         "tag": {
           "deposit": "Deposit",
-          "paid": "Paid"
+          "paid": "Paid",
+          "withdraw": "Withdraw"
         },
         "validation": {
           "decimal": "Enter a valid decimal amount",

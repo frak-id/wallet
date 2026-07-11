@@ -1,3 +1,4 @@
+import type { Stablecoin } from "@frak-labs/app-essentials";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
@@ -25,7 +26,7 @@ export function maskIban(raw: string): string {
 
 export type CreateDepositInput = {
     grossAmount: string;
-    currency: "eure" | "gbpe" | "usde" | "usdc";
+    currency: Stablecoin;
     documentDate: string;
     country: string;
     giftedAmount?: string;
@@ -36,7 +37,7 @@ export type CreateDepositInput = {
 
 export type CreateWithdrawInput = {
     remainingBankAmount: string;
-    currency: "eure" | "gbpe" | "usde" | "usdc";
+    currency: Stablecoin;
     documentDate: string;
     linkedDepositId: string;
     rawIban: string;

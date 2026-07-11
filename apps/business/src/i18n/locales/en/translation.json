@@ -1241,13 +1241,17 @@
             },
             "tag": {
                 "paid": "Paid",
-                "deposit": "Deposit"
+                "deposit": "Deposit",
+                "withdraw": "Withdraw"
             },
             "validation": {
                 "required": "This field is required",
                 "email": "Enter a valid email address",
                 "decimal": "Enter a valid decimal amount",
                 "txHash": "Enter a valid transaction hash (0x…)"
+            },
+            "errors": {
+                "save": "Something went wrong while saving your billing information. Your changes were kept — please try again."
             },
             "admin": {
                 "panel": {

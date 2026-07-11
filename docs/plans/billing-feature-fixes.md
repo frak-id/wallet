@@ -9,10 +9,22 @@
 > orchestrators, computation service, PDF layer, routes, cron) and frontend module.
 > B1–B6 and B8 still open — B1's agreed interim `// PERF:` comment was never added.
 > B7 is fixed. New findings appended as B9–B18.
+>
+> **Fix pass (uncommitted, this working tree):** B1, B3–B6, B8–B11, B13–B18 all
+> ✅ FIXED (details inline per item). B2 deliberately DEFERRED (low volume today;
+> revisit when document counts grow). B12 remains OPEN (BillingInfoSheet failed-save
+> handling — not in this batch's scope). Review pass additionally hardened:
+> `regeneratePdf` pins the primary currency to the row's frozen `currency` column
+> (re-deriving `currencies[0]` could drift since `updateMonthlyBillDetails` never
+> updates `currency`), and `distinctCurrencies` gained a deterministic `ORDER BY`.
 
 ## Major
 
-### B1 · Monthly-bill annex loads every settled asset log into memory, unbounded
+### B1 · Monthly-bill annex loads every settled asset log into memory, unbounded — ✅ FIXED
+Narrow `AnnexAssetLogRow` projection + `LIMIT ANNEX_MAX_ROWS` (5000) on
+`findByMerchantAndDateRange`; `fiatTotals` computed from grouped `sumSettledByToken`
+sums × price; `rowCount` via new `countSettledByMerchantAndDateRange`; per-row fetch
+gated to PDF-rendering paths only — the data-only cron never loads rows.
 `domain/rewards/repositories/AssetLogRepository.ts` (`findByMerchantAndDateRange` — `SELECT *`,
 no LIMIT) × `orchestration/billing/MonthlyBillOrchestrator.ts` (`buildAnnexData`).
 Called per (merchant, month) by `generateMonthlyBill`, `regeneratePdf`, and the
@@ -22,7 +34,8 @@ only the annex columns (`amount`, `tokenAddress`, `settledAt`, `onchainTxHash`),
 per annex. **Interim action on the auth branch: add a `// PERF:` comment on
 `findByMerchantAndDateRange` + `buildAnnexData` pointing at this plan (agreed).**
 
-### B2 · `GET /merchant/:id/documents` unbounded listing
+### B2 · `GET /merchant/:id/documents` unbounded listing — ⏸ DEFERRED (agreed)
+Company/volume too small for this to matter yet; add pagination when it does.
 `domain/billing/repositories/BillingDocumentRepository.ts` (`findByMerchant`) +
 `api/business/merchant/billingDocuments.ts`. 10-year retention, no pagination — grows forever.
 Fix: `limit`/`cursor` (or default date window) in repo + route query schema + frontend
@@ -30,23 +43,29 @@ Fix: `limit`/`cursor` (or default date window) in repo + route query schema + fr
 
 ## Minor
 
-### B3 · `biome-ignore` non-null assertion in MonthlyBillOrchestrator
+### B3 · `biome-ignore` non-null assertion in MonthlyBillOrchestrator — ✅ FIXED
+Narrowing loop with early `continue`; no assertion, no biome-ignore left.
 `MonthlyBillOrchestrator.ts:779` — `settledAt!` behind the branch's only `biome-ignore`
 (house rule: none allowed). Replace the `.filter().map()` with a narrowing `.flatMap()` that
 returns `[]` for rows without `settledAt`/`tokenAddress`. Quick fix — could land with the
 auth branch since it's a standards violation, not a billing behavior change.
 
-### B4 · Cross-orchestrator import contradicts its own docstring
+### B4 · Cross-orchestrator import contradicts its own docstring — ✅ FIXED
+`buildPdfBuyer` moved to `orchestration/billing/shared.ts`; both orchestrators import it.
 `MonthlyBillOrchestrator.ts:29` imports `buildPdfBuyer` from `./BillingOrchestrator` while
 `BillingOrchestrator`'s docstring says "neither calls the other". Move `buildPdfBuyer` to a
 shared module (e.g. `orchestration/billing/shared.ts` or `domain/billing/schemas/pdfBuyer.ts`).
 
-### B5 · `groupRewards` computed twice per monthly-bill PDF render
+### B5 · `groupRewards` computed twice per monthly-bill PDF render — ✅ FIXED
+Grouped once in `BillingPdfService.render`, passed to both draw functions.
 `domain/billing/services/pdf/MonthlyBillDocument.ts` — `drawRewardTable` and
 `drawTvaAndRecap` each call `groupRewards(annexRows)`. Compute once in the render entry point,
 pass to both.
 
-### B6 · AddDepositSheet / AddWithdrawSheet ~85% duplicated
+### B6 · AddDepositSheet / AddWithdrawSheet ~85% duplicated — ✅ FIXED
+Shared `AdminBillingSheet` shell (controlled/uncontrolled `open`, trigger, toolbar,
+discard guard, footer) + `DocumentDateField`/`TxHashField`/`NoteField` generics;
+both sheets rewritten on top, behavior-identical (incl. close-on-success).
 `apps/business/src/module/settings/billing/AddDepositSheet/index.tsx` (~640 lines) vs
 `AddWithdrawSheet/index.tsx` (~440): identical sheet scaffolding, discard-guard wiring,
 footer, and byte-identical `documentDate`/`txHash`/`note` field blocks. Extract a shared
@@ -59,7 +78,8 @@ re-derives `process.env.BACKEND_URL` instead of importing `backendBaseUrl`).
 
 ## Related (campaigns edit, same branch)
 
-### B8 · `getCapPeriod` unsound cast
+### B8 · `getCapPeriod` unsound cast — ✅ FIXED
+Param narrowed to `"" | BudgetType`, cast dropped, return honestly `number | null`.
 `apps/business/src/module/campaigns/utils/capPeriods.ts:14-17` — accepts `string`, casts
 `as BudgetType`, can return `undefined` while typed `number | null`; flows into
 `durationInSeconds` submitted by `ConfigTab`'s BudgetEditor. Narrow the param to
@@ -69,7 +89,12 @@ re-derives `process.env.BACKEND_URL` instead of importing `backendBaseUrl`).
 
 ### Major
 
-### B9 · Multi-currency monthly bill produces wrong invoice totals
+### B9 · Multi-currency monthly bill produces wrong invoice totals — ✅ FIXED
+`rewardBaseAmount` now sums only rewards whose token maps to the bill's primary
+currency (frozen as `document.currency`); PDF recap filters groups to `dto.currency`;
+non-stablecoin rewards render in a new "Autres récompenses (hors facturation)"
+informational section, excluded from all billed totals. `regeneratePdf` pins the
+primary currency to the row's frozen column; `distinctCurrencies` is now ordered.
 `MonthlyBillOrchestrator.computeBillData` sums `rewardBaseAmount` across ALL settled
 reward tokens — different stablecoins AND non-stablecoin tokens — as if they were one
 currency, then freezes it as `grossAmount`/`netAmount` labeled `currencies[0] ?? "eure"`.
@@ -83,7 +108,11 @@ non-stablecoin tokens must be excluded from `rewardBaseAmount` the same way
 `resolveLedgerCurrencies` excludes them from ledgers. At minimum, log loudly + pick only
 the document currency's rewards until per-currency totals exist.
 
-### B10 · `reissueDeposit` silently voids linked withdraws without re-emitting them
+### B10 · `reissueDeposit` silently voids linked withdraws without re-emitting them — ✅ FIXED
+Linked withdraws are snapshotted before the void and re-created against the new
+deposit (restitution math intentionally recomputes; best-effort per withdraw, logged).
+Known edge: correcting the deposit's currency drops carry-overs (currency-match guard)
+with only a log line — documented in the JSDoc.
 `PUT /deposits/:id` → `reissueDeposit` → `voidDocument(…, "deposit")` →
 `cascadeDepositVoid` voids every non-voided withdraw linking the deposit. The re-emit
 creates only the corrected deposit — the withdraws are gone, unmentioned by
@@ -94,7 +123,9 @@ either way document the behavior.
 
 ### Minor
 
-### B11 · PDF-invalidation order can strand a dangling `pdfStorageKey` → download 500
+### B11 · PDF-invalidation order can strand a dangling `pdfStorageKey` → download 500 — ✅ FIXED
+`clearPdf` first, storage delete after; download route treats a failed storage read
+as 404 instead of an unhandled 500.
 `BillingOrchestrator.invalidateMonthlyBillsCovering` deletes the stored object FIRST, then
 `clearPdf`. If the delete succeeds and `clearPdf` fails, the row still points at a deleted
 object: the download route sees `pdfStorageKey`, skips regeneration, and
@@ -103,7 +134,12 @@ the invalidation. Fix: swap the order (`clearPdf` first, storage delete after �
 object is harmless, a dangling pointer isn't) and make the download route treat a failed
 `read` as "missing" (regenerate or 404) instead of 500.
 
-### B12 · BillingInfoSheet discards merchant edits on failed save
+### B12 · BillingInfoSheet discards merchant edits on failed save — ✅ FIXED
+`saveInfo` now accepts an `onSuccess` callback (fires only on a successful PUT);
+the sheet closes exclusively in that callback, shows a loading submit button via
+`isSaving`, and surfaces `settings.billing.errors.save` inline on failure — the
+merchant's edits stay in the open form. `resetSaveState` clears the sticky error
+on close. Regression tests in BillingInfoSheet.test.tsx + useBillingInfo.test.ts.
 `BillingInfoSheet.onSubmit` calls `onSave(next)` (a fire-and-forget `mutation.mutate`),
 then immediately `form.reset(next)` + `setOpen(false)`. A failed PUT closes the sheet,
 shows nothing, and the merchant's edits are lost. `useBillingInfo` already exposes
@@ -111,7 +147,8 @@ shows nothing, and the merchant's edits are lost. `useBillingInfo` already expos
 loading state and close in the mutation's `onSuccess`, surfacing the error inline —
 exactly the pattern `AddDepositSheet`/`AddWithdrawSheet` already implement.
 
-### B13 · `rewardBaseAmount` recomputed from per-row annex logs it doesn't need
+### B13 · `rewardBaseAmount` recomputed from per-row annex logs it doesn't need — ✅ FIXED
+Computed from the already-fetched grouped `sumSettledByToken` rows (with B9's filter).
 `computeBillData` filters + reduces `annexData.assetLogs` to get `rewardBaseAmount`, but
 `rewardedInPeriodRows` (grouped SQL sums with the *identical* filter set: settled,
 `tokenAddress IS NOT NULL`, `[periodStart, periodEnd)`) is already in scope from the same
@@ -120,13 +157,16 @@ row data — and once B1 moves `fiatTotals`/`rowCount` into SQL, the data-only c
 (`renderPdf: false`, the bulk of `backfillAllMerchantBills`' work) needs no per-row fetch
 at all. (Interacts with B9: the per-currency version should also come from these rows.)
 
-### B14 · Dead re-fetch after create in BillingOrchestrator
+### B14 · Dead re-fetch after create in BillingOrchestrator — ✅ FIXED
+(`MonthlyBillOrchestrator.generateMonthlyBill`'s re-fetch is NOT dead — `setPdf`
+mutates the row in between — and was correctly kept.)
 `createDeposit`/`createWithdraw` end with
 `(await this.billingDocuments.findById(merchantId, document.id)) ?? document` — but
 nothing mutates the just-created row between `create` and the re-fetch (PDF is lazy,
 invalidation only touches monthly bills). Pure wasted round-trip; return `document`.
 
-### B15 · `DecimalStringSchema` accepts unbounded digit strings
+### B15 · `DecimalStringSchema` accepts unbounded digit strings — ✅ FIXED
+Pattern bounded to `^\d{1,18}(\.\d{1,18})?$`; `linkedDepositId` now `format: "uuid"`.
 `api/business/merchant/billing.ts` — `t.String({ pattern: "^\\d+(\\.\\d+)?$" })` has no
 length cap. A thousand-digit gross amount passes validation, survives decimal.js, and
 blows up at insert time on `numeric(36,18)` as a 500. Add `maxLength` (~40) or bound the
@@ -134,13 +174,16 @@ pattern (`^\d{1,18}(\.\d{1,18})?$`). Same file: `CreateWithdrawBodySchema.linked
 is `t.String()` without `format: "uuid"` — a malformed id reaches Postgres as a 500
 instead of 404ing at the boundary (the param schemas already get this right).
 
-### B16 · Withdraws rendered as "Deposit" rows in the billing table
+### B16 · Withdraws rendered as "Deposit" rows in the billing table — ✅ FIXED
+Own `"withdraw"` entry kind, warning badge, `settings.billing.tag.withdraw` (en+fr).
 `useBillingInfo.toBillingEntry` maps `withdraw` → `kind: "deposit"`, so a withdraw shows
 under the Deposit tab with the "Deposit" badge and a positive amount — indistinguishable
 from an actual deposit for the merchant reading their history. Add a third entry kind (or
 at least a distinct tag/sign) — `rawKind` is already on `BillingEntry`.
 
-### B17 · Frontend housekeeping / duplication grab-bag
+### B17 · Frontend housekeeping / duplication grab-bag — ✅ FIXED
+(`backendBaseUrl` reused; patterns moved to `validation.ts`; intlCache formatters;
+`Stablecoin` type reused; `STABLECOINS` derived from `currencyOptions`.)
 - `DownloadPdfButton` re-derives `process.env.BACKEND_URL ?? "https://localhost:3030"`;
   `backendBaseUrl` is already exported from `@/api/backendClient`.
 - `DECIMAL_PATTERN`/`TX_HASH_PATTERN` live in `queryKeys.ts` — wrong home; move to a
@@ -151,21 +194,18 @@ at least a distinct tag/sign) — `rawKind` is already on `BillingEntry`.
   `CreateDepositInput`/`CreateWithdrawInput` duplicate backend types that Eden/`Stablecoin`
   from `@frak-labs/app-essentials` already provide — drift risk.
 
-### B18 · AddDepositSheet `defaultCountry` captured before accounting info loads
+### B18 · AddDepositSheet `defaultCountry` captured before accounting info loads — ✅ FIXED
+Pristine-only backfill effect once the async accounting info resolves.
 `BillingAdminPanel` passes `info?.country`, which arrives async; `useForm` captures
 `defaultValues` on first render, so the country default is almost always empty in
 practice. Either `form.reset` when `defaultCountry` resolves (if pristine) or drop the
 prop. Also: `initialValues` is rebuilt every render and closed over by the discard guard —
 harmless today, but hoist it.
 
-## Suggested order
+## Remaining work
 
-1. B3 (standards, trivial) — with the auth branch.
-2. B9 + B10 (money-correctness / data-destruction) — next billing PR, before any
-   multi-currency merchant or admin correction flow is exercised.
-3. B1 real fix + B13 + B2 before billing GA / first high-volume merchant month
-   (B13 falls out of B1's SQL-aggregation work).
-4. B11, B12, B15, B16 — one robustness PR (backend order-of-ops + schema cap, frontend
-   save/labeling fixes).
-5. B4, B5, B8, B14 — one small cleanup PR.
-6. B6 + B17 + B18 — refactor PR when billing UI is next touched.
+1. B2 — documents-list pagination, when volume warrants it.
+3. Known limitations accepted in this pass: `ANNEX_MAX_ROWS = 5000` truncates the
+   PDF annex listing silently (totals/counts stay exact via grouped SQL);
+   `reissueDeposit` currency changes drop withdraw carry-overs with a log line only;
+   `fiatTotals` intentionally includes all priced tokens (informational, not billed).

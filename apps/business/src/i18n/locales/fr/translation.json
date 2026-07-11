@@ -1241,13 +1241,17 @@
             },
             "tag": {
                 "paid": "Payée",
-                "deposit": "Dépôt"
+                "deposit": "Dépôt",
+                "withdraw": "Restitution"
             },
             "validation": {
                 "required": "Ce champ est requis",
                 "email": "Saisir une adresse e-mail valide",
                 "decimal": "Saisissez un montant décimal valide",
                 "txHash": "Saisissez un hash de transaction valide (0x…)"
+            },
+            "errors": {
+                "save": "Une erreur est survenue lors de l'enregistrement de vos informations de facturation. Vos modifications ont été conservées — veuillez réessayer."
             },
             "admin": {
                 "panel": {
