@@ -103,6 +103,10 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     domain: normalizedDomain,
                     owner,
                     setupCode,
+                    // Walletless setup codes bind to the account email.
+                    email: setupCode
+                        ? await accountEmail(businessSession?.accountId ?? null)
+                        : null,
                 }));
 
             const existingMerchant =
@@ -200,6 +204,11 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     name: body.name,
                     requestOrigin: origin,
                     setupCode: body.setupCode,
+                    // Walletless setup codes bind to the account email
+                    // (resolved here — the merchant domain can't read it).
+                    ownerEmail: body.setupCode
+                        ? await accountEmail(businessSession?.accountId ?? null)
+                        : null,
                     defaultRewardToken: body.defaultRewardToken,
                     allowedDomains: body.allowedDomains,
                     skipDomainValidation: body.skipDomainValidation,
@@ -287,6 +296,18 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
  * matches (or is a subdomain match of) the domain being registered? An
  * account holds at most one Shopify identity (§4.3).
  */
+/**
+ * Resolve the account's email for the walletless setup-code path (the code
+ * binds to it). Kept at the BFF layer since the merchant domain must not read
+ * business-auth state.
+ */
+async function accountEmail(accountId: string | null): Promise<string | null> {
+    if (!accountId) return null;
+    const account =
+        await BusinessAuthContext.repositories.account.findById(accountId);
+    return account?.email ?? null;
+}
+
 async function isVerifiedViaShopify(
     accountId: string | null,
     registeringDomain: string

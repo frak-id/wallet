@@ -150,9 +150,33 @@ describe("DnsCheckRepository", () => {
             expect(result).toBe(true);
         });
 
-        it("should ignore the setup code for account owners (wallet-only bypass)", async () => {
-            // Setup codes are derived from a wallet address; an account-owner
-            // check must fall through to the DNS lookup.
+        it("should validate a setup code bound to the account email (walletless)", async () => {
+            process.env.PRODUCT_SETUP_CODE_SALT = "test-salt";
+            const { keccak256, concatHex, toHex } = await import("viem");
+            const domain = "example.com";
+            const email = "Client@Shop.com";
+            // Bound to the lowercased email, not the wallet.
+            const hash = keccak256(
+                concatHex([
+                    toHex(domain),
+                    toHex(email.toLowerCase()),
+                    toHex("test-salt"),
+                ])
+            );
+
+            const result = await dnsCheckRepository.isValidDomain({
+                domain,
+                owner: { accountId: "5f0e7a3e-1111-4444-8888-aaaaaaaaaaaa" },
+                // Email is compared case-insensitively.
+                email: "client@shop.com",
+                setupCode: hash,
+            });
+
+            expect(result).toBe(true);
+        });
+
+        it("should fall through to DNS for an account owner with no email", async () => {
+            // No email means no setup-code subject — must use the DNS lookup.
             mockIsRunningInProd.value = true;
             mockResolveTxt.mockImplementation((_, callback) => {
                 callback(null, []);
@@ -161,6 +185,7 @@ describe("DnsCheckRepository", () => {
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
                 owner: { accountId: "5f0e7a3e-1111-4444-8888-aaaaaaaaaaaa" },
+                email: null,
                 setupCode:
                     "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
             });

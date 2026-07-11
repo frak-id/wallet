@@ -71,6 +71,11 @@ export class MerchantRegistrationService {
         name: string;
         requestOrigin: string;
         setupCode?: string;
+        // Owner's account email, precomputed at the route layer (this domain
+        // must not import business-auth). Lets the walletless setup-code path
+        // bind the code to the email instead of the server-generated account
+        // id — so it can be issued live at onboarding.
+        ownerEmail?: string | null;
         defaultRewardToken: Address;
         allowedDomains?: string[];
         // Platform-admin options, only honored when the SIWE signer is a
@@ -151,6 +156,7 @@ export class MerchantRegistrationService {
                 domain: normalizedDomain,
                 owner: dnsOwner,
                 setupCode: params.setupCode,
+                email: params.ownerEmail,
             });
             if (!isDnsValid) {
                 throw HttpError.badRequest(
