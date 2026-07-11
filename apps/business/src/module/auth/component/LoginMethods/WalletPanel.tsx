@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useNavigate } from "@tanstack/react-router";
@@ -77,13 +77,13 @@ export function WalletPanel({ redirect }: { redirect?: string }) {
             <Button
                 variant="primary"
                 size="large"
-                width="auto"
+                width="full"
                 loading={isPending}
                 onClick={handleConnect}
             >
                 {t("auth.login.connect")}
             </Button>
-            {error && <FieldError>{error}</FieldError>}
+            {error && <Notice tone="error">{error}</Notice>}
         </Stack>
     );
 }

@@ -5,17 +5,10 @@ import {
     DialogDescription,
     DialogTitle,
 } from "@frak-labs/design-system/components/Dialog";
-import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import {
-    Tabs,
-    TabsList,
-    TabsTrigger,
-} from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { ExclamationCircleIcon } from "@frak-labs/design-system/icons";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     useTwoFactorChallenge,
@@ -27,7 +20,6 @@ import {
     type TwoFactorMethod,
     useTwoFactorStore,
 } from "@/stores/twoFactorStore";
-import * as styles from "./two-factor-modal.css";
 
 // `as const` keeps the values as literal i18n keys so `t()` accepts them
 // (a plain `Record<TwoFactorMethod, string>` widens them to `string`).
@@ -37,12 +29,26 @@ const METHOD_LABEL_KEY = {
     siwe: "auth.twoFactor.method.siwe",
 } as const satisfies Record<TwoFactorMethod, string>;
 
+// Primary-method preference: authenticator app first (most users' default),
+// then email, then wallet. The first available method is auto-selected so the
+// common path renders its challenge with no extra click (§4.5).
+const METHOD_PRIORITY: TwoFactorMethod[] = ["totp", "email", "siwe"];
+
+function orderMethods(methods: TwoFactorMethod[]): TwoFactorMethod[] {
+    return [...methods].sort(
+        (a, b) => METHOD_PRIORITY.indexOf(a) - METHOD_PRIORITY.indexOf(b)
+    );
+}
+
 /**
  * Global 2FA challenge/verify modal — driven by `useTwoFactorStore`. Opens
  * for both a stale-session step-up (`stepUpAwareFetch` 401 retry, §4.5) and
  * the `/login/2fa` pending-login completion; the backend semantics of
  * `POST /auth/2fa/verify` are identical in both cases, so this is the single
  * UI for it.
+ *
+ * Interaction: the highest-priority available method is auto-selected and its
+ * challenge shown immediately; "Try another way" reveals the alternatives.
  */
 export function TwoFactorModal() {
     const { t } = useTranslation();
@@ -54,11 +60,19 @@ export function TwoFactorModal() {
         (state) => state.cancelVerification
     );
 
-    const methods = request?.methods ?? [];
+    const orderedMethods = useMemo(
+        () => orderMethods(request?.methods ?? []),
+        [request?.methods]
+    );
     const [activeMethod, setActiveMethod] = useState<TwoFactorMethod | null>(
         null
     );
-    const resolvedMethod = activeMethod ?? methods[0] ?? null;
+    const [showAlternatives, setShowAlternatives] = useState(false);
+
+    const resolvedMethod = activeMethod ?? orderedMethods[0] ?? null;
+    const alternatives = orderedMethods.filter(
+        (method) => method !== resolvedMethod
+    );
 
     if (!request) return null;
 
@@ -69,7 +83,7 @@ export function TwoFactorModal() {
                 if (!open) cancelVerification();
             }}
         >
-            <DialogContent className={styles.modal}>
+            <DialogContent>
                 <Stack space="m">
                     <Stack space="xs">
                         <DialogTitle>{t("auth.twoFactor.title")}</DialogTitle>
@@ -78,29 +92,47 @@ export function TwoFactorModal() {
                         </DialogDescription>
                     </Stack>
 
-                    {methods.length > 1 && (
-                        <Tabs
-                            value={resolvedMethod ?? undefined}
-                            onValueChange={(value) =>
-                                setActiveMethod(value as TwoFactorMethod)
-                            }
-                        >
-                            <TabsList>
-                                {methods.map((method) => (
-                                    <TabsTrigger key={method} value={method}>
-                                        {t(METHOD_LABEL_KEY[method])}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
-                    )}
-
                     {resolvedMethod && (
                         <TwoFactorChallenge
+                            // Remount on method change so per-method input
+                            // state (code, sent flag) resets cleanly.
+                            key={resolvedMethod}
                             method={resolvedMethod}
                             onVerified={resolveVerification}
                         />
                     )}
+
+                    {alternatives.length > 0 &&
+                        (showAlternatives ? (
+                            <Stack space="xs">
+                                <Text variant="caption" color="tertiary">
+                                    {t("auth.twoFactor.otherMethods")}
+                                </Text>
+                                {alternatives.map((method) => (
+                                    <Button
+                                        key={method}
+                                        variant="ghost"
+                                        size="small"
+                                        width="auto"
+                                        onClick={() => {
+                                            setActiveMethod(method);
+                                            setShowAlternatives(false);
+                                        }}
+                                    >
+                                        {t(METHOD_LABEL_KEY[method])}
+                                    </Button>
+                                ))}
+                            </Stack>
+                        ) : (
+                            <Button
+                                variant="ghost"
+                                size="small"
+                                width="auto"
+                                onClick={() => setShowAlternatives(true)}
+                            >
+                                {t("auth.twoFactor.tryAnotherWay")}
+                            </Button>
+                        ))}
                 </Stack>
             </DialogContent>
         </Dialog>
@@ -141,6 +173,8 @@ function CodeChallenge({
         error: verifyError,
     } = useTwoFactorVerify();
 
+    const error = sendError ?? verifyError;
+
     return (
         <Stack space="s">
             {method === "email" && !sent && (
@@ -163,10 +197,13 @@ function CodeChallenge({
                             : t("auth.twoFactor.email.sentHint")}
                     </Text>
                     <Input
+                        variant="bare"
+                        tone="muted"
+                        autoFocus
                         inputMode="numeric"
                         autoComplete="one-time-code"
                         maxLength={6}
-                        placeholder={t("auth.twoFactor.codePlaceholder")}
+                        label={t("auth.twoFactor.codePlaceholder")}
                         value={code}
                         onChange={(event) => setCode(event.target.value)}
                     />
@@ -187,13 +224,13 @@ function CodeChallenge({
                 </Stack>
             )}
 
-            {(sendError || verifyError) && (
-                <FieldError>
+            {error && (
+                <Notice tone="error">
                     {extractAuthErrorMessage(
-                        sendError ?? verifyError,
+                        error,
                         t("auth.twoFactor.genericError")
                     )}
-                </FieldError>
+                </Notice>
             )}
         </Stack>
     );
@@ -240,10 +277,7 @@ function SiweChallenge({ onVerified }: { onVerified: () => void }) {
                 {t("auth.twoFactor.siwe.cta")}
             </Button>
             {error && (
-                <Notice
-                    tone="error"
-                    icon={<ExclamationCircleIcon width={16} height={16} />}
-                >
+                <Notice tone="error">
                     {extractAuthErrorMessage(
                         error,
                         t("auth.twoFactor.genericError")

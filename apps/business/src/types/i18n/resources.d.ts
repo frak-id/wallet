@@ -2,6 +2,7 @@ export default interface Resources {
   "translation": {
     "auth": {
       "login": {
+        "back": "Back",
         "connect": "Connect to Frak Ad Manager",
         "dashboardImageAlt": "Frak Ad Manager dashboard preview",
         "email": {
@@ -35,8 +36,10 @@ export default interface Resources {
           "shopify": "Shopify",
           "wallet": "Wallet"
         },
+        "or": "or",
         "shopify": {
           "invalidDomain": "Enter a valid myshopify.com domain",
+          "label": "Shopify store domain",
           "submit": "Continue with Shopify"
         },
         "ssoError": "We couldn't sign you in with Shopify. Please try again.",
@@ -54,6 +57,7 @@ export default interface Resources {
           "siwe": "Wallet",
           "totp": "Authenticator app"
         },
+        "otherMethods": "Choose another method",
         "pendingHint": "Verifying your session…",
         "siwe": {
           "cta": "Sign with wallet",
@@ -64,6 +68,7 @@ export default interface Resources {
         "totp": {
           "hint": "Enter the code from your authenticator app."
         },
+        "tryAnotherWay": "Try another way",
         "verify": "Verify"
       }
     },
@@ -739,8 +744,10 @@ export default interface Resources {
       }
     },
     "common": {
+      "cancel": "Cancel",
       "clearAll": "Clear all",
       "close": "Close",
+      "copied": "Copied",
       "copy": "Copy to clipboard",
       "dateField": {
         "openCalendar": "Open calendar",
@@ -756,6 +763,7 @@ export default interface Resources {
           "thisMonth": "This month"
         }
       },
+      "hidePassword": "Hide password",
       "pagination": {
         "label": "pagination",
         "morePages": "More pages",
@@ -766,6 +774,7 @@ export default interface Resources {
       "search": {
         "placeholder": "Search"
       },
+      "showPassword": "Show password",
       "table": {
         "empty": "No results"
       }
@@ -1657,8 +1666,11 @@ export default interface Resources {
       "security": {
         "credentials": {
           "addPassword": "Add a password to also sign in with email.",
+          "addPasswordCta": "Add password",
+          "connected": "Connected",
           "emailTaken": "This email is already used by another account.",
           "linkWallet": "Link a wallet",
+          "password": "Email & password",
           "passwordAdded": "Password added — check your email to verify it.",
           "savePassword": "Save password",
           "title": "Sign-in methods",
@@ -1668,12 +1680,23 @@ export default interface Resources {
         "sessions": {
           "current": "this device",
           "description": "Devices and browsers currently signed in to your account.",
+          "emptyDescription": "Devices signed in to your account will appear here.",
+          "emptyTitle": "No active sessions",
+          "method": {
+            "password": "Email & password",
+            "shopify": "Shopify",
+            "wallet": "Wallet"
+          },
           "revoke": "Revoke",
+          "revokeDescription": "This device will need to sign in again to access your account.",
+          "revokeTitle": "Revoke this session?",
           "title": "Active sessions"
         },
         "title": "Security",
         "totp": {
           "confirm": "Confirm",
+          "copyCodes": "Copy codes",
+          "downloadCodes": "Download",
           "enable": "Enable authenticator app",
           "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app.",
           "recoveryTitle": "Save your recovery codes",

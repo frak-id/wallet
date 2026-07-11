@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -13,6 +13,7 @@ import {
     useRequestPasswordReset,
 } from "@/module/auth/hooks/useEmailAuth";
 import { Input } from "@/module/forms/Input";
+import { PasswordInput } from "@/module/forms/PasswordInput";
 
 export function EmailPanel({ redirect }: { redirect?: string }) {
     const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
@@ -66,41 +67,62 @@ function LoginForm({
     return (
         <Stack space="s">
             <Input
+                variant="bare"
+                tone="muted"
+                autoFocus
                 type="email"
+                inputMode="email"
                 autoComplete="email"
-                placeholder={t("auth.login.email.emailPlaceholder")}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                label={t("auth.login.email.emailPlaceholder")}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
             />
-            <Input
-                type="password"
+            <PasswordInput
+                variant="bare"
+                tone="muted"
                 autoComplete="current-password"
-                placeholder={t("auth.login.email.passwordPlaceholder")}
+                label={t("auth.login.email.passwordPlaceholder")}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                error={Boolean(error)}
+                hint={error ? error.message : undefined}
             />
-            {error && <FieldError>{error.message}</FieldError>}
             <Button
                 variant="primary"
                 size="large"
-                width="auto"
+                width="full"
                 loading={isPending}
                 disabled={!email || !password || isPending}
                 onClick={onSubmit}
             >
                 {t("auth.login.email.submit")}
             </Button>
-            <Text variant="bodySmall" color="secondary">
-                <button type="button" onClick={onForgotPassword}>
+            <Inline space="s" align="space-between" alignY="center">
+                <Button
+                    variant="ghost"
+                    size="small"
+                    width="auto"
+                    onClick={onForgotPassword}
+                >
                     {t("auth.login.email.forgotPassword")}
-                </button>
-            </Text>
-            <Text variant="bodySmall" color="secondary">
-                {t("auth.login.email.noAccount")}{" "}
-                <button type="button" onClick={onRegister}>
-                    {t("auth.login.email.registerCta")}
-                </button>
-            </Text>
+                </Button>
+                <Inline space="xxs" alignY="center">
+                    <Text variant="bodySmall" color="secondary">
+                        {t("auth.login.email.noAccount")}
+                    </Text>
+                    <Button
+                        variant="ghost"
+                        size="small"
+                        width="auto"
+                        onClick={onRegister}
+                    >
+                        {t("auth.login.email.registerCta")}
+                    </Button>
+                </Inline>
+            </Inline>
         </Stack>
     );
 }
@@ -135,11 +157,7 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                 <Notice tone="success">
                     {t("auth.login.email.resetSuccess")}
                 </Notice>
-                <Text variant="bodySmall" color="secondary">
-                    <button type="button" onClick={onBackToLogin}>
-                        {t("auth.login.email.backToLogin")}
-                    </button>
-                </Text>
+                <BackToLoginButton onClick={onBackToLogin} />
             </Stack>
         );
     }
@@ -151,19 +169,24 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                     {t("auth.login.email.resetInstructions")}
                 </Text>
                 <Input
+                    variant="bare"
+                    tone="muted"
                     type="email"
+                    inputMode="email"
                     autoComplete="email"
-                    placeholder={t("auth.login.email.emailPlaceholder")}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    label={t("auth.login.email.emailPlaceholder")}
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
+                    error={Boolean(requestError)}
+                    hint={requestError ? requestError.message : undefined}
                 />
-                {requestError && (
-                    <FieldError>{requestError.message}</FieldError>
-                )}
                 <Button
                     variant="primary"
                     size="large"
-                    width="auto"
+                    width="full"
                     loading={isRequesting}
                     disabled={!email || isRequesting}
                     onClick={() =>
@@ -175,11 +198,7 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                 >
                     {t("auth.login.email.sendResetCode")}
                 </Button>
-                <Text variant="bodySmall" color="secondary">
-                    <button type="button" onClick={onBackToLogin}>
-                        {t("auth.login.email.backToLogin")}
-                    </button>
-                </Text>
+                <BackToLoginButton onClick={onBackToLogin} />
             </Stack>
         );
     }
@@ -190,39 +209,40 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                 {t("auth.login.email.resetSent")}
             </Text>
             <Input
+                variant="bare"
+                tone="muted"
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder={t("auth.login.email.resetCodePlaceholder")}
+                label={t("auth.login.email.resetCodePlaceholder")}
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
             />
-            <Input
-                type="password"
+            <PasswordInput
+                variant="bare"
+                tone="muted"
                 autoComplete="new-password"
-                placeholder={t("auth.login.email.newPasswordPlaceholder")}
+                label={t("auth.login.email.newPasswordPlaceholder")}
+                hint={
+                    confirmError
+                        ? confirmError.message
+                        : t("auth.login.email.passwordHint")
+                }
+                error={Boolean(confirmError)}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
             />
-            <Text variant="caption" color="tertiary">
-                {t("auth.login.email.passwordHint")}
-            </Text>
-            {confirmError && <FieldError>{confirmError.message}</FieldError>}
             <Button
                 variant="primary"
                 size="large"
-                width="auto"
+                width="full"
                 loading={isConfirming}
                 disabled={!code || password.length < 10 || isConfirming}
                 onClick={() => confirmReset({ email, code, password })}
             >
                 {t("auth.login.email.resetSubmit")}
             </Button>
-            <Text variant="bodySmall" color="secondary">
-                <button type="button" onClick={onBackToLogin}>
-                    {t("auth.login.email.backToLogin")}
-                </button>
-            </Text>
+            <BackToLoginButton onClick={onBackToLogin} />
         </Stack>
     );
 }
@@ -240,47 +260,63 @@ function RegisterForm({ onBackToLogin }: { onBackToLogin: () => void }) {
 
     if (isSuccess) {
         return (
-            <Notice tone="success">
-                {t("auth.login.email.registerSuccess")}
-            </Notice>
+            <Stack space="s">
+                <Notice tone="success">
+                    {t("auth.login.email.registerSuccess")}
+                </Notice>
+                <BackToLoginButton onClick={onBackToLogin} />
+            </Stack>
         );
     }
 
     return (
         <Stack space="s">
             <Input
+                variant="bare"
+                tone="muted"
+                autoFocus
                 type="email"
+                inputMode="email"
                 autoComplete="email"
-                placeholder={t("auth.login.email.emailPlaceholder")}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                label={t("auth.login.email.emailPlaceholder")}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
             />
-            <Input
-                type="password"
+            <PasswordInput
+                variant="bare"
+                tone="muted"
                 autoComplete="new-password"
-                placeholder={t("auth.login.email.newPasswordPlaceholder")}
+                label={t("auth.login.email.newPasswordPlaceholder")}
+                hint={
+                    error ? error.message : t("auth.login.email.passwordHint")
+                }
+                error={Boolean(error)}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
             />
-            <Text variant="caption" color="tertiary">
-                {t("auth.login.email.passwordHint")}
-            </Text>
-            {error && <FieldError>{error.message}</FieldError>}
             <Button
                 variant="primary"
                 size="large"
-                width="auto"
+                width="full"
                 loading={isPending}
                 disabled={!email || password.length < 10 || isPending}
                 onClick={() => register({ email, password })}
             >
                 {t("auth.login.email.registerSubmit")}
             </Button>
-            <Text variant="bodySmall" color="secondary">
-                <button type="button" onClick={onBackToLogin}>
-                    {t("auth.login.email.backToLogin")}
-                </button>
-            </Text>
+            <BackToLoginButton onClick={onBackToLogin} />
         </Stack>
+    );
+}
+
+function BackToLoginButton({ onClick }: { onClick: () => void }) {
+    const { t } = useTranslation();
+    return (
+        <Button variant="ghost" size="small" width="auto" onClick={onClick}>
+            {t("auth.login.email.backToLogin")}
+        </Button>
     );
 }

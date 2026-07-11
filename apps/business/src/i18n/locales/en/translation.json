@@ -38,8 +38,11 @@
             },
             "shopify": {
                 "submit": "Continue with Shopify",
-                "invalidDomain": "Enter a valid myshopify.com domain"
-            }
+                "invalidDomain": "Enter a valid myshopify.com domain",
+                "label": "Shopify store domain"
+            },
+            "or": "or",
+            "back": "Back"
         },
         "twoFactor": {
             "title": "Verify your identity",
@@ -63,7 +66,9 @@
             "siwe": {
                 "hint": "Sign a message with your wallet to confirm it's you.",
                 "cta": "Sign with wallet"
-            }
+            },
+            "tryAnotherWay": "Try another way",
+            "otherMethods": "Choose another method"
         }
     },
     "forms": {
@@ -1048,7 +1053,11 @@
         "dateField": {
             "placeholder": "dd/mm/yyyy",
             "openCalendar": "Open calendar"
-        }
+        },
+        "cancel": "Cancel",
+        "copied": "Copied",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
     },
     "bank": {
         "banner": {
@@ -1319,7 +1328,9 @@
                 "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
                 "confirm": "Confirm",
                 "recoveryTitle": "Save your recovery codes",
-                "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app."
+                "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app.",
+                "copyCodes": "Copy codes",
+                "downloadCodes": "Download"
             },
             "credentials": {
                 "title": "Sign-in methods",
@@ -1328,13 +1339,25 @@
                 "addPassword": "Add a password to also sign in with email.",
                 "savePassword": "Save password",
                 "passwordAdded": "Password added — check your email to verify it.",
-                "emailTaken": "This email is already used by another account."
+                "emailTaken": "This email is already used by another account.",
+                "password": "Email & password",
+                "connected": "Connected",
+                "addPasswordCta": "Add password"
             },
             "sessions": {
                 "title": "Active sessions",
                 "description": "Devices and browsers currently signed in to your account.",
                 "current": "this device",
-                "revoke": "Revoke"
+                "revoke": "Revoke",
+                "emptyTitle": "No active sessions",
+                "emptyDescription": "Devices signed in to your account will appear here.",
+                "revokeTitle": "Revoke this session?",
+                "revokeDescription": "This device will need to sign in again to access your account.",
+                "method": {
+                    "wallet": "Wallet",
+                    "password": "Email & password",
+                    "shopify": "Shopify"
+                }
             }
         }
     },

@@ -1,5 +1,4 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,21 +16,34 @@ export function ShopifyPanel() {
     const { t } = useTranslation();
     const [shop, setShop] = useState("");
     const isValid = isValidShopDomain(shop);
+    const showError = shop.length > 0 && !isValid;
 
     return (
         <Stack space="s">
             <Input
+                variant="bare"
+                tone="muted"
+                autoFocus
+                label={t("auth.login.shopify.label")}
                 placeholder="my-store.myshopify.com"
+                inputMode="url"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 value={shop}
                 onChange={(event) => setShop(event.target.value)}
+                error={showError}
+                hint={
+                    showError
+                        ? t("auth.login.shopify.invalidDomain")
+                        : undefined
+                }
             />
-            {shop.length > 0 && !isValid && (
-                <FieldError>{t("auth.login.shopify.invalidDomain")}</FieldError>
-            )}
             <Button
                 variant="primary"
                 size="large"
-                width="auto"
+                width="full"
                 disabled={!isValid}
                 onClick={() => redirectToShopifyAuthorize(shop)}
             >

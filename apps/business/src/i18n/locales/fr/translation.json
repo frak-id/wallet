@@ -38,8 +38,11 @@
             },
             "shopify": {
                 "submit": "Continuer avec Shopify",
-                "invalidDomain": "Saisissez un domaine myshopify.com valide"
-            }
+                "invalidDomain": "Saisissez un domaine myshopify.com valide",
+                "label": "Domaine de la boutique Shopify"
+            },
+            "or": "ou",
+            "back": "Retour"
         },
         "twoFactor": {
             "title": "Vérifiez votre identité",
@@ -63,7 +66,9 @@
             "siwe": {
                 "hint": "Signez un message avec votre portefeuille pour confirmer que c'est vous.",
                 "cta": "Signer avec le portefeuille"
-            }
+            },
+            "tryAnotherWay": "Essayer une autre méthode",
+            "otherMethods": "Choisir une autre méthode"
         }
     },
     "forms": {
@@ -1048,7 +1053,11 @@
         "dateField": {
             "placeholder": "jj/mm/aaaa",
             "openCalendar": "Ouvrir le calendrier"
-        }
+        },
+        "cancel": "Annuler",
+        "copied": "Copié",
+        "showPassword": "Afficher le mot de passe",
+        "hidePassword": "Masquer le mot de passe"
     },
     "bank": {
         "banner": {
@@ -1319,7 +1328,9 @@
                 "scanHint": "Scannez ce QR code avec votre application d'authentification, puis saisissez le code affiché.",
                 "confirm": "Confirmer",
                 "recoveryTitle": "Enregistrez vos codes de récupération",
-                "recoveryHint": "Conservez-les en lieu sûr — chaque code est utilisable une seule fois si vous perdez l'accès à votre application."
+                "recoveryHint": "Conservez-les en lieu sûr — chaque code est utilisable une seule fois si vous perdez l'accès à votre application.",
+                "copyCodes": "Copier les codes",
+                "downloadCodes": "Télécharger"
             },
             "credentials": {
                 "title": "Méthodes de connexion",
@@ -1328,13 +1339,25 @@
                 "addPassword": "Ajoutez un mot de passe pour aussi vous connecter par e-mail.",
                 "savePassword": "Enregistrer le mot de passe",
                 "passwordAdded": "Mot de passe ajouté — vérifiez votre e-mail pour le confirmer.",
-                "emailTaken": "Cet e-mail est déjà utilisé par un autre compte."
+                "emailTaken": "Cet e-mail est déjà utilisé par un autre compte.",
+                "password": "E-mail et mot de passe",
+                "connected": "Connecté",
+                "addPasswordCta": "Ajouter un mot de passe"
             },
             "sessions": {
                 "title": "Sessions actives",
                 "description": "Appareils et navigateurs actuellement connectés à votre compte.",
                 "current": "cet appareil",
-                "revoke": "Révoquer"
+                "revoke": "Révoquer",
+                "emptyTitle": "Aucune session active",
+                "emptyDescription": "Les appareils connectés à votre compte apparaîtront ici.",
+                "revokeTitle": "Révoquer cette session ?",
+                "revokeDescription": "Cet appareil devra se reconnecter pour accéder à votre compte.",
+                "method": {
+                    "wallet": "Portefeuille",
+                    "password": "E-mail et mot de passe",
+                    "shopify": "Shopify"
+                }
             }
         }
     },

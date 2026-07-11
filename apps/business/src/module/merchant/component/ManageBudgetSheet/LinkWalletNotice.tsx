@@ -1,5 +1,6 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
@@ -32,11 +33,7 @@ export function LinkWalletNotice() {
                 >
                     {t("funding.linkWallet.cta")}
                 </Button>
-                {error && (
-                    <Text variant="bodySmall" color="error">
-                        {error.message}
-                    </Text>
-                )}
+                {error && <Notice tone="error">{error.message}</Notice>}
             </Stack>
         </Card>
     );

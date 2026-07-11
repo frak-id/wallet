@@ -1,12 +1,14 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { FieldError } from "@frak-labs/design-system/components/FieldError";
-import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
 import { AuthError } from "@/module/auth/utils/authError";
+import { DetailRow } from "@/module/common/component/DetailRow";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Input } from "@/module/forms/Input";
 import { useLinkPassword } from "@/module/settings/security/useSecuritySettings";
 import { useAuthStore } from "@/stores/authStore";
@@ -24,7 +26,12 @@ export function LinkedCredentials() {
     const { t } = useTranslation();
     const wallet = useAuthStore((state) => state.wallet);
     const authMethod = useAuthStore((state) => state.authMethod);
-    const { mutate: linkWallet, isPending: isLinkingWallet } = useLinkWallet();
+    const {
+        mutate: linkWallet,
+        isPending: isLinkingWallet,
+        error: linkWalletError,
+    } = useLinkWallet();
+    const [addingPassword, setAddingPassword] = useState(false);
 
     return (
         <Stack space="s">
@@ -32,16 +39,16 @@ export function LinkedCredentials() {
                 {t("settings.security.credentials.title")}
             </Text>
 
-            <Inline space="m" align="space-between" alignY="center">
-                <Text variant="bodySmall" color="secondary">
-                    {t("settings.security.credentials.wallet")}
-                </Text>
+            <DetailRow label={t("settings.security.credentials.wallet")}>
                 {wallet ? (
-                    <Text variant="bodySmall">{wallet}</Text>
+                    <WalletAddress
+                        wallet={wallet}
+                        copiedText={t("common.copied")}
+                    />
                 ) : (
                     <Button
                         size="small"
-                        variant="secondary"
+                        variant="ghost"
                         width="auto"
                         loading={isLinkingWallet}
                         disabled={isLinkingWallet}
@@ -50,9 +57,29 @@ export function LinkedCredentials() {
                         {t("settings.security.credentials.linkWallet")}
                     </Button>
                 )}
-            </Inline>
+            </DetailRow>
+            {linkWalletError && (
+                <Notice tone="error">{linkWalletError.message}</Notice>
+            )}
 
-            {authMethod !== "password" && <AddPasswordForm />}
+            <DetailRow label={t("settings.security.credentials.password")}>
+                {authMethod === "password" ? (
+                    <Badge variant="success">
+                        {t("settings.security.credentials.connected")}
+                    </Badge>
+                ) : (
+                    <Button
+                        size="small"
+                        variant="ghost"
+                        width="auto"
+                        onClick={() => setAddingPassword((open) => !open)}
+                    >
+                        {t("settings.security.credentials.addPasswordCta")}
+                    </Button>
+                )}
+            </DetailRow>
+
+            {authMethod !== "password" && addingPassword && <AddPasswordForm />}
         </Stack>
     );
 }
@@ -78,9 +105,9 @@ function AddPasswordForm() {
 
     if (isSuccess) {
         return (
-            <Text variant="bodySmall" color="success">
+            <Notice tone="success">
                 {t("settings.security.credentials.passwordAdded")}
-            </Text>
+            </Notice>
         );
     }
 
@@ -90,20 +117,25 @@ function AddPasswordForm() {
                 {t("settings.security.credentials.addPassword")}
             </Text>
             <Input
+                variant="bare"
+                tone="muted"
                 type="email"
                 autoComplete="email"
-                placeholder={t("auth.login.email.emailPlaceholder")}
+                label={t("auth.login.email.emailPlaceholder")}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
             />
             <Input
+                variant="bare"
+                tone="muted"
                 type="password"
                 autoComplete="new-password"
-                placeholder={t("auth.login.email.newPasswordPlaceholder")}
+                label={t("auth.login.email.newPasswordPlaceholder")}
+                hint={errorMessage ?? t("auth.login.email.passwordHint")}
+                error={Boolean(errorMessage)}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
             />
-            {errorMessage && <FieldError>{errorMessage}</FieldError>}
             <Button
                 size="small"
                 variant="secondary"

@@ -1,16 +1,24 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import {
+    CheckIcon,
+    CopyIcon,
+    DownloadIcon,
+} from "@frak-labs/design-system/icons";
 import { encodeQR } from "qr";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useCopyToClipboardWithState } from "@/module/common/hook/useCopyToClipboardWithState";
 import { Input } from "@/module/forms/Input";
 import {
     useTwoFactorActivate,
     useTwoFactorSetup,
 } from "@/module/settings/security/useSecuritySettings";
+import * as styles from "./totp-enrollment.css";
 
 /**
  * Renders the TOTP `otpauthUri` as an SVG QR code client-side (§2.2): the
@@ -25,7 +33,12 @@ function TotpQrCode({ otpauthUri }: { otpauthUri: string }) {
         () => encodeQR(otpauthUri, "svg", { ecc: "medium" }),
         [otpauthUri]
     );
-    return <div dangerouslySetInnerHTML={{ __html: qrSvg }} />;
+    return (
+        <div
+            className={styles.qrFrame}
+            dangerouslySetInnerHTML={{ __html: qrSvg }}
+        />
+    );
 }
 
 /**
@@ -52,23 +65,7 @@ export function TotpEnrollment() {
     const [code, setCode] = useState("");
 
     if (step === "done" && activateData?.recoveryCodes) {
-        return (
-            <Stack space="s">
-                <Text variant="body" weight="medium">
-                    {t("settings.security.totp.recoveryTitle")}
-                </Text>
-                <Notice tone="warning">
-                    {t("settings.security.totp.recoveryHint")}
-                </Notice>
-                <Stack space="xxs">
-                    {activateData.recoveryCodes.map((recoveryCode) => (
-                        <Text key={recoveryCode} variant="bodySmall" as="span">
-                            {recoveryCode}
-                        </Text>
-                    ))}
-                </Stack>
-            </Stack>
-        );
+        return <RecoveryCodes codes={activateData.recoveryCodes} />;
     }
 
     if (step === "enrolling" && setupData?.otpauthUri) {
@@ -79,10 +76,14 @@ export function TotpEnrollment() {
                 </Text>
                 <TotpQrCode otpauthUri={setupData.otpauthUri} />
                 <Input
+                    variant="bare"
+                    tone="muted"
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     maxLength={6}
-                    placeholder={t("auth.twoFactor.codePlaceholder")}
+                    label={t("auth.twoFactor.codePlaceholder")}
+                    error={Boolean(activateError)}
+                    hint={activateError ? activateError.message : undefined}
                     value={code}
                     onChange={(event) => setCode(event.target.value)}
                 />
@@ -100,9 +101,6 @@ export function TotpEnrollment() {
                 >
                     {t("settings.security.totp.confirm")}
                 </Button>
-                {activateError && (
-                    <FieldError>{activateError.message}</FieldError>
-                )}
             </Stack>
         );
     }
@@ -126,6 +124,69 @@ export function TotpEnrollment() {
                 {t("settings.security.totp.enable")}
             </Button>
             {setupError && <FieldError>{setupError.message}</FieldError>}
+        </Stack>
+    );
+}
+
+function RecoveryCodes({ codes }: { codes: string[] }) {
+    const { t } = useTranslation();
+    const { copied, copy } = useCopyToClipboardWithState();
+
+    const asText = codes.join("\n");
+
+    const download = () => {
+        const blob = new Blob([asText], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "frak-recovery-codes.txt";
+        anchor.click();
+        URL.revokeObjectURL(url);
+    };
+
+    return (
+        <Stack space="s">
+            <Text variant="body" weight="medium">
+                {t("settings.security.totp.recoveryTitle")}
+            </Text>
+            <Notice tone="warning">
+                {t("settings.security.totp.recoveryHint")}
+            </Notice>
+            <div className={styles.codesBox}>
+                {codes.map((recoveryCode) => (
+                    <span key={recoveryCode} className={styles.code}>
+                        {recoveryCode}
+                    </span>
+                ))}
+            </div>
+            <Inline space="s">
+                <Button
+                    variant="secondary"
+                    size="small"
+                    width="auto"
+                    onClick={() => copy(asText)}
+                    icon={
+                        copied ? (
+                            <CheckIcon width={16} height={16} />
+                        ) : (
+                            <CopyIcon width={16} height={16} />
+                        )
+                    }
+                >
+                    {copied
+                        ? t("common.copied")
+                        : t("settings.security.totp.copyCodes")}
+                </Button>
+                <Button
+                    variant="secondary"
+                    size="small"
+                    width="auto"
+                    onClick={download}
+                    icon={<DownloadIcon width={16} height={16} />}
+                >
+                    {t("settings.security.totp.downloadCodes")}
+                </Button>
+            </Inline>
         </Stack>
     );
 }
