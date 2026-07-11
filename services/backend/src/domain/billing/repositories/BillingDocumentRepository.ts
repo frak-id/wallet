@@ -203,8 +203,9 @@ export class BillingDocumentRepository {
      * write-once `setPdf` guard for a fresh render. Scoped by `merchantId`
      * (IDOR-safe) and to `kind='monthly_bill'` — deposit/withdraw PDFs are
      * immutable and never cleared (their correction path is void + re-emit,
-     * not regeneration). The caller deletes the stored object first; this
-     * only detaches the row's reference to it.
+     * not regeneration). This only detaches the row's reference; the caller
+     * deletes the stored object AFTER a successful clear (an orphaned object
+     * is harmless, a dangling pointer 500s the download route).
      */
     async clearPdf(
         merchantId: string,
@@ -339,7 +340,12 @@ export class BillingDocumentRepository {
                     isNull(billingDocumentsTable.voidedAt),
                     sql`${billingDocumentsTable.kind} IN ('deposit', 'withdraw')`
                 )
-            );
+            )
+            // Deterministic order — SELECT DISTINCT without ORDER BY is
+            // plan-dependent, and callers use the FIRST currency as the
+            // monthly bill's primary/invoice currency; a plan change must
+            // never flip which currency a bill is labeled in.
+            .orderBy(asc(billingDocumentsTable.currency));
         return rows.map((row) => row.currency);
     }
 

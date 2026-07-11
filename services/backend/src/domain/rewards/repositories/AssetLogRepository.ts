@@ -37,6 +37,27 @@ import type {
 
 const DEFAULT_EXPIRATION_DAYS = 60;
 
+/**
+ * Hard cap on the per-row annex fetch (`findByMerchantAndDateRange`) — the
+ * monthly-bill PDF annex renders at most this many rows. Totals/counts are
+ * computed by grouped SQL (`sumSettledByToken` /
+ * `countSettledByMerchantAndDateRange`) and stay exact past the cap; only
+ * the per-row listing truncates.
+ */
+export const ANNEX_MAX_ROWS = 5000;
+
+/**
+ * The narrow projection the monthly-bill annex needs — never `SELECT *`:
+ * a high-volume month would otherwise pull every settled reward row's full
+ * width into memory per (merchant, month).
+ */
+export type AnnexAssetLogRow = {
+    amount: string;
+    tokenAddress: Address | null;
+    settledAt: Date | null;
+    onchainTxHash: Hex | null;
+};
+
 export class AssetLogRepository {
     private calculateExpiresAt(expirationDays?: number): Date {
         const days = expirationDays ?? DEFAULT_EXPIRATION_DAYS;
@@ -729,20 +750,27 @@ export class AssetLogRepository {
     /**
      * Settled rewards for a merchant in a half-open window
      * `[start, end)` (monthly-bill reward annex — billing-feature-plan.md
-     * §6.1). Plain rows, no joins — the annex only needs token/amount/status,
-     * not the merchant/interaction enrichment `findDetailedByIdentityGroup`
-     * carries. `opts.statuses` defaults to `['settled']` (only actually-paid
-     * rewards are annex-worthy); `tokenAddress IS NOT NULL` excludes
-     * non-token asset logs.
+     * §6.1). Narrow projection (annex columns only, `AnnexAssetLogRow`), no
+     * joins, capped at `ANNEX_MAX_ROWS` — this is a per-row PDF listing, not
+     * an aggregation input; totals/counts come from the grouped SQL sums and
+     * `countSettledByMerchantAndDateRange`, which stay exact past the cap.
+     * `opts.statuses` defaults to `['settled']` (only actually-paid rewards
+     * are annex-worthy); `tokenAddress IS NOT NULL` excludes non-token asset
+     * logs.
      */
     async findByMerchantAndDateRange(
         merchantId: string,
         start: Date,
         end: Date,
         opts?: { statuses?: AssetStatus[] }
-    ): Promise<AssetLogSelect[]> {
+    ): Promise<AnnexAssetLogRow[]> {
         return db
-            .select()
+            .select({
+                amount: assetLogsTable.amount,
+                tokenAddress: assetLogsTable.tokenAddress,
+                settledAt: assetLogsTable.settledAt,
+                onchainTxHash: assetLogsTable.onchainTxHash,
+            })
             .from(assetLogsTable)
             .where(
                 and(
@@ -756,7 +784,34 @@ export class AssetLogRepository {
                     isNotNull(assetLogsTable.tokenAddress)
                 )
             )
-            .orderBy(assetLogsTable.settledAt);
+            .orderBy(assetLogsTable.settledAt)
+            .limit(ANNEX_MAX_ROWS);
+    }
+
+    /**
+     * Exact settled-reward row count for the same filter set as
+     * `findByMerchantAndDateRange` — the annex `rowCount` must stay accurate
+     * even when the per-row fetch truncates at `ANNEX_MAX_ROWS` (and the
+     * data-only cron path needs the count without fetching any rows).
+     */
+    async countSettledByMerchantAndDateRange(
+        merchantId: string,
+        start: Date,
+        end: Date
+    ): Promise<number> {
+        const [result] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    gte(assetLogsTable.settledAt, start),
+                    lt(assetLogsTable.settledAt, end),
+                    eq(assetLogsTable.status, "settled"),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            );
+        return result?.count ?? 0;
     }
 
     /**

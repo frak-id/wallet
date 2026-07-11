@@ -217,6 +217,89 @@ describe("BillingOrchestrator", () => {
             expect(clearPdf).toHaveBeenCalledWith("merchant-1", "bill-1");
         });
 
+        it("(B11) clears the DB pointer (clearPdf) BEFORE deleting the stored object", async () => {
+            const deposit = makeDeposit();
+            const affectedBill = makeDeposit({
+                id: "bill-1",
+                kind: "monthly_bill",
+                pdfStorageKey: "merchant-1/monthly_bill/bill-1.pdf",
+            });
+            const callOrder: string[] = [];
+            const findById = vi.fn().mockResolvedValue(deposit);
+            const voidFn = vi
+                .fn()
+                .mockResolvedValue({ ...deposit, voidedAt: new Date() });
+            const findMonthlyBillsCovering = vi
+                .fn()
+                .mockResolvedValue([affectedBill]);
+            const clearPdf = vi.fn().mockImplementation(async () => {
+                callOrder.push("clearPdf");
+                return affectedBill;
+            });
+            const storageDelete = vi.fn().mockImplementation(async () => {
+                callOrder.push("storageDelete");
+            });
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById,
+                    void: voidFn,
+                    findMonthlyBillsCovering,
+                    clearPdf,
+                },
+                billingStorage: { delete: storageDelete },
+            });
+
+            await orchestrator.voidDocument(
+                "merchant-1",
+                "deposit-1",
+                "deposit"
+            );
+
+            expect(callOrder).toEqual(["clearPdf", "storageDelete"]);
+        });
+
+        it("(B11) a storage-delete failure after a successful clearPdf never re-throws (best-effort)", async () => {
+            const deposit = makeDeposit();
+            const affectedBill = makeDeposit({
+                id: "bill-1",
+                kind: "monthly_bill",
+                pdfStorageKey: "merchant-1/monthly_bill/bill-1.pdf",
+            });
+            const findById = vi.fn().mockResolvedValue(deposit);
+            const voidFn = vi
+                .fn()
+                .mockResolvedValue({ ...deposit, voidedAt: new Date() });
+            const findMonthlyBillsCovering = vi
+                .fn()
+                .mockResolvedValue([affectedBill]);
+            const clearPdf = vi.fn().mockResolvedValue(affectedBill);
+            const storageDelete = vi
+                .fn()
+                .mockRejectedValue(new Error("storage unavailable"));
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById,
+                    void: voidFn,
+                    findMonthlyBillsCovering,
+                    clearPdf,
+                },
+                billingStorage: { delete: storageDelete },
+            });
+
+            const result = await orchestrator.voidDocument(
+                "merchant-1",
+                "deposit-1",
+                "deposit"
+            );
+
+            // The deposit void itself still succeeds; clearPdf already ran, so
+            // the row no longer points at the (now orphaned) deleted object.
+            expect(result?.voidedAt).not.toBeNull();
+            expect(clearPdf).toHaveBeenCalledWith("merchant-1", "bill-1");
+        });
+
         it("does not cascade when voiding a withdraw", async () => {
             const withdraw = makeDeposit({ kind: "withdraw" });
             const findWithdrawsByLinkedDeposit = vi.fn();
@@ -431,10 +514,7 @@ describe("BillingOrchestrator", () => {
                 id: "deposit-2",
                 reference: "DEP-2026-0002",
             });
-            const findById = vi
-                .fn()
-                .mockResolvedValueOnce(original) // voidDocument lookup
-                .mockResolvedValueOnce(reissued); // createDeposit final read-back
+            const findById = vi.fn().mockResolvedValue(original);
             const voidFn = vi
                 .fn()
                 .mockResolvedValue({ ...original, voidedAt: new Date() });
@@ -454,6 +534,136 @@ describe("BillingOrchestrator", () => {
             expect(voidFn).toHaveBeenCalledWith("merchant-1", "deposit-1");
             expect(create).toHaveBeenCalledTimes(1);
             expect(result?.id).toBe("deposit-2");
+        });
+
+        it("(B10) carries a non-voided linked withdraw over to the reissued deposit", async () => {
+            const original = makeDeposit();
+            const linkedWithdraw = makeDeposit({
+                id: "withdraw-1",
+                kind: "withdraw",
+                linkedDepositId: "deposit-1",
+                currency: "eure",
+                documentDate: new Date("2026-02-01T00:00:00.000Z"),
+                txHash: "0xaaaa000000000000000000000000000000000000000000000000000000aa",
+                details: {
+                    kind: "withdraw",
+                    remainingBankAmount: "300",
+                    distributedRatio: "0.5",
+                    restitutedVat: "10",
+                    restitutedFrakFee: "10",
+                    bankSent: "320",
+                    maskedIban: "FR76 **** **** **** 123",
+                    note: "original note",
+                },
+            });
+            const reissuedDeposit = makeDeposit({
+                id: "deposit-2",
+                reference: "DEP-2026-0002",
+            });
+            const recreatedWithdraw = makeDeposit({
+                id: "withdraw-2",
+                kind: "withdraw",
+                linkedDepositId: "deposit-2",
+            });
+
+            // First findById call resolves the deposit being voided; the linked
+            // deposit lookup inside the withdraw re-create resolves the NEW
+            // deposit (so its currency/void checks pass).
+            const findById = vi
+                .fn()
+                .mockResolvedValueOnce(original) // voidDocument(deposit-1) lookup
+                .mockResolvedValueOnce(reissuedDeposit); // createWithdraw's linked-deposit lookup
+            const voidFn = vi
+                .fn()
+                .mockResolvedValue({ ...original, voidedAt: new Date() });
+            const findWithdrawsByLinkedDeposit = vi
+                .fn()
+                .mockResolvedValue([linkedWithdraw]);
+            const create = vi
+                .fn()
+                .mockResolvedValueOnce(reissuedDeposit) // new deposit
+                .mockResolvedValueOnce(recreatedWithdraw); // re-created withdraw
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById,
+                    void: voidFn,
+                    findWithdrawsByLinkedDeposit,
+                    create,
+                    setPdf: vi.fn(),
+                },
+            });
+
+            const result = await orchestrator.reissueDeposit(
+                "merchant-1",
+                "deposit-1",
+                input,
+                createdBy
+            );
+
+            expect(result?.id).toBe("deposit-2");
+            // Second `create` call is the carried-over withdraw, linked to the
+            // NEW deposit, using the original's frozen inputs.
+            expect(create).toHaveBeenCalledTimes(2);
+            const withdrawCreateArg = create.mock.calls[1][0];
+            expect(withdrawCreateArg.kind).toBe("withdraw");
+            expect(withdrawCreateArg.linkedDepositId).toBe("deposit-2");
+            expect(withdrawCreateArg.grossAmount).toBe("300");
+        });
+
+        it("(B10) a failure re-creating one linked withdraw does not fail the reissue itself", async () => {
+            const original = makeDeposit();
+            const linkedWithdraw = makeDeposit({
+                id: "withdraw-1",
+                kind: "withdraw",
+                linkedDepositId: "deposit-1",
+                details: {
+                    kind: "withdraw",
+                    remainingBankAmount: "300",
+                    distributedRatio: "0.5",
+                    restitutedVat: "10",
+                    restitutedFrakFee: "10",
+                    bankSent: "320",
+                    maskedIban: "FR76 **** **** **** 123",
+                },
+            });
+            const reissuedDeposit = makeDeposit({
+                id: "deposit-2",
+                reference: "DEP-2026-0002",
+            });
+            const findById = vi
+                .fn()
+                .mockResolvedValueOnce(original)
+                .mockResolvedValueOnce(null); // linked-deposit lookup fails inside createWithdraw
+            const voidFn = vi
+                .fn()
+                .mockResolvedValue({ ...original, voidedAt: new Date() });
+            const findWithdrawsByLinkedDeposit = vi
+                .fn()
+                .mockResolvedValue([linkedWithdraw]);
+            const create = vi.fn().mockResolvedValueOnce(reissuedDeposit);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById,
+                    void: voidFn,
+                    findWithdrawsByLinkedDeposit,
+                    create,
+                    setPdf: vi.fn(),
+                },
+            });
+
+            const result = await orchestrator.reissueDeposit(
+                "merchant-1",
+                "deposit-1",
+                input,
+                createdBy
+            );
+
+            // The deposit reissue itself still succeeds even though the
+            // withdraw carry-over failed (best-effort, logged).
+            expect(result?.id).toBe("deposit-2");
+            expect(create).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -488,6 +698,27 @@ describe("BillingOrchestrator", () => {
             expect(setPdf).not.toHaveBeenCalled();
         });
 
+        it("(B14) returns the freshly created row directly, without a redundant findById re-fetch", async () => {
+            const deposit = makeDeposit();
+            const findById = vi.fn();
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    create: vi.fn().mockResolvedValue(deposit),
+                    findById,
+                    findMonthlyBillsCovering: vi.fn().mockResolvedValue([]),
+                },
+            });
+
+            const result = await orchestrator.createDeposit(
+                "merchant-1",
+                input,
+                createdBy
+            );
+
+            expect(result).toBe(deposit);
+            expect(findById).not.toHaveBeenCalled();
+        });
+
         it("clears the cached PDF of monthly bills covering the deposit date", async () => {
             const deposit = makeDeposit({ documentDate: input.documentDate });
             const coveringBill = makeDeposit({
@@ -520,6 +751,41 @@ describe("BillingOrchestrator", () => {
                 "merchant-1/monthly_bill/bill-9.pdf"
             );
             expect(clearPdf).toHaveBeenCalledWith("merchant-1", "bill-9");
+        });
+    });
+
+    describe("createWithdraw (B14 no dead re-fetch)", () => {
+        it("returns the freshly created row directly, without a redundant findById re-fetch", async () => {
+            const deposit = makeDeposit();
+            const createdWithdraw = makeDeposit({
+                id: "withdraw-1",
+                kind: "withdraw",
+                linkedDepositId: "deposit-1",
+            });
+            const findById = vi.fn().mockResolvedValueOnce(deposit); // linked-deposit lookup only
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById,
+                    create: vi.fn().mockResolvedValue(createdWithdraw),
+                    findMonthlyBillsCovering: vi.fn().mockResolvedValue([]),
+                },
+            });
+
+            const result = await orchestrator.createWithdraw(
+                "merchant-1",
+                {
+                    remainingBankAmount: "400",
+                    currency: "eure",
+                    documentDate: new Date("2026-02-01T00:00:00.000Z"),
+                    linkedDepositId: "deposit-1",
+                    rawIban: "FR7630006000011234567890189",
+                },
+                "0x0000000000000000000000000000000000000006"
+            );
+
+            expect(result).toBe(createdWithdraw);
+            // Only the linked-deposit lookup call, no post-create re-fetch.
+            expect(findById).toHaveBeenCalledTimes(1);
         });
     });
 

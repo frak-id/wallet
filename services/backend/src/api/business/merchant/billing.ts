@@ -13,7 +13,11 @@ import { OrchestrationContext } from "../../../orchestration/context";
 import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
-const DecimalStringSchema = t.String({ pattern: "^\\d+(\\.\\d+)?$" });
+// Bounded to what `numeric(36,18)` can hold — an unbounded digit string
+// would pass validation and only blow up at insert time as a 500.
+const DecimalStringSchema = t.String({
+    pattern: "^\\d{1,18}(\\.\\d{1,18})?$",
+});
 
 const CreateDepositBodySchema = t.Object({
     grossAmount: DecimalStringSchema,
@@ -33,7 +37,9 @@ const CreateWithdrawBodySchema = t.Object({
     remainingBankAmount: DecimalStringSchema,
     currency: StablecoinSchema,
     documentDate: t.String({ format: "date-time" }),
-    linkedDepositId: t.String(),
+    // uuid-validated at the boundary so a malformed id 404s here instead of
+    // reaching Postgres as a 500 (same rule as the param schemas).
+    linkedDepositId: t.String({ format: "uuid" }),
     // The frontend already obfuscates this before sending (§3.5); the
     // backend re-masks defensively regardless of what's received here.
     rawIban: t.String({ maxLength: 64 }),

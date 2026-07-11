@@ -1,9 +1,11 @@
+import Decimal from "decimal.js";
 import { describe, expect, it } from "vitest";
 import {
     type BillingPdfDocumentDto,
     BillingPdfService,
     sanitizeForWinAnsi,
 } from "./index";
+import { groupRewards, type RewardGroup } from "./MonthlyBillDocument";
 
 const depositDto: BillingPdfDocumentDto = {
     kind: "deposit",
@@ -176,6 +178,93 @@ describe("BillingPdfService", () => {
             },
         });
         expect(bytes.length).toBeGreaterThan(0);
+    });
+
+    it("renders the 'other rewards' section without throwing when non-stablecoin rewards are present (B9)", async () => {
+        const bytes = await service.render({
+            ...monthlyBillDto,
+            monthlyBill: {
+                ...monthlyBillDto.monthlyBill,
+                otherRewards: [
+                    {
+                        settledAt: new Date("2026-02-12T00:00:00Z"),
+                        amount: "42.5",
+                        txHash: "0xdeadbeef",
+                    },
+                ],
+            } as NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
+        });
+        expect(bytes.length).toBeGreaterThan(0);
+        const header = Buffer.from(bytes.slice(0, 5)).toString("latin1");
+        expect(header).toBe("%PDF-");
+    });
+
+    it("renders mixed-currency annex rows without throwing, recap restricted to the document currency (B9)", async () => {
+        // eure matches dto.currency (the recap currency); usdc is a second
+        // reward group that must stay out of the recap total but still
+        // appear as its own reward-table line.
+        const bytes = await service.render({
+            ...monthlyBillDto,
+            currency: "eure",
+            monthlyBill: {
+                ...monthlyBillDto.monthlyBill,
+                annexRows: [
+                    {
+                        settledAt: new Date("2026-02-10T00:00:00Z"),
+                        amount: "10",
+                        currency: "eure",
+                        fiatValue: "10",
+                        txHash: "0xabc123",
+                    },
+                    {
+                        settledAt: new Date("2026-02-11T00:00:00Z"),
+                        amount: "5",
+                        currency: "usdc",
+                        fiatValue: "5",
+                        txHash: "0xdef456",
+                    },
+                ],
+            } as NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
+        });
+        expect(bytes.length).toBeGreaterThan(0);
+    });
+});
+
+describe("groupRewards currency grouping (B9 recap input)", () => {
+    it("keeps distinct currencies as separate groups so the recap can filter by currency", () => {
+        const rows: NonNullable<
+            BillingPdfDocumentDto["monthlyBill"]
+        >["annexRows"] = [
+            {
+                settledAt: new Date("2026-02-10T00:00:00Z"),
+                amount: "10",
+                currency: "eure",
+                fiatValue: "10",
+            },
+            {
+                settledAt: new Date("2026-02-11T00:00:00Z"),
+                amount: "5",
+                currency: "usdc",
+                fiatValue: "5",
+            },
+        ];
+
+        const groups: RewardGroup[] = groupRewards(rows);
+
+        expect(groups.map((g) => g.currency).sort()).toEqual(["eure", "usdc"]);
+        const eureGroup = groups.find((g) => g.currency === "eure");
+        // unitHt = amount * (1 + FRAK_FEE_RATE 0.20) = 10 * 1.2 = 12.
+        expect(eureGroup?.totalHt.toFixed(2)).toBe("12.00");
+        const usdcGroup = groups.find((g) => g.currency === "usdc");
+        expect(usdcGroup?.totalHt.toFixed(2)).toBe("6.00");
+
+        // The recap sums only the primary-currency group(s) — same filter
+        // `drawTvaAndRecap` applies internally.
+        const recapCurrency = "eure";
+        const recapTotalHt = groups
+            .filter((g) => g.currency === recapCurrency)
+            .reduce((acc, g) => acc.plus(g.totalHt), new Decimal(0));
+        expect(recapTotalHt.toFixed(2)).toBe("12.00");
     });
 });
 

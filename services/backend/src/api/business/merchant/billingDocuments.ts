@@ -129,9 +129,19 @@ export const merchantBillingDocumentRoutes = new Elysia({
                 return status(404, "PDF not generated");
             }
 
-            const bytes = await BillingContext.repositories.billingStorage.read(
-                document.pdfStorageKey
-            );
+            // A stored key can dangle (its object deleted but the row's
+            // pointer not yet cleared — e.g. a partially-failed bill
+            // invalidation). Treat a failed read as "missing" — 404, never an
+            // unhandled 500; the next create/void invalidation clears the
+            // pointer and regeneration takes over.
+            let bytes: Uint8Array;
+            try {
+                bytes = await BillingContext.repositories.billingStorage.read(
+                    document.pdfStorageKey
+                );
+            } catch {
+                return status(404, "PDF not generated");
+            }
 
             return new Response(Buffer.from(bytes), {
                 headers: {
