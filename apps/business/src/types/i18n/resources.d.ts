@@ -1,6 +1,19 @@
 export default interface Resources {
   "translation": {
     "auth": {
+      "invite": {
+        "alreadyAuthenticated": "You're already signed in on this device with a different account than {{email}}.",
+        "alreadyClaimed": "This invitation was already used. Sign in with {{email}} instead.",
+        "askToResend": "Ask your admin to resend the invitation.",
+        "displayNamePlaceholder": "Your name",
+        "goToLogin": "Go to sign in",
+        "invalidToken": "This invitation link is invalid or has expired",
+        "openDashboard": "Open dashboard",
+        "signOutFirst": "Sign out to accept this invitation",
+        "submit": "Accept invitation",
+        "subtitle": "Invited by {{inviterName}}. Set a password to finish creating your account.",
+        "title": "You've been invited to be an admin of <strong>{{merchantName}}</strong> on Frak"
+      },
       "login": {
         "back": "Back",
         "connect": "Connect to Frak Ad Manager",
@@ -1339,12 +1352,14 @@ export default interface Resources {
       },
       "team": {
         "add": {
+          "addedSuccess": "{{email}} was added to the team",
           "description": "Invite an admin to your team by wallet address or email.",
           "emailInvalid": "Invalid email address",
           "emailLabel": "Member email",
           "emailPlaceholder": "name@company.com",
           "error": "Could not add the admin. Try again.",
           "invalid": "Invalid wallet address",
+          "invitedSuccess": "Invitation sent to {{email}}",
           "label": "Member wallet",
           "modeEmail": "Email",
           "modeWallet": "Wallet",
@@ -1358,8 +1373,12 @@ export default interface Resources {
           "role": "Role",
           "wallet": "Wallet"
         },
+        "invited": "Invited",
         "me": "Me:",
         "removeMember": "Remove member",
+        "resendError": "Could not resend the invitation. Try again.",
+        "resendInvite": "Resend invite",
+        "resendSuccess": "Invitation resent to {{email}}",
         "roles": {
           "admin": "Admin",
           "owner": "Owner"

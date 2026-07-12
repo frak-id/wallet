@@ -166,6 +166,16 @@ export class BusinessAccountRepository {
             .where(eq(businessAccountsTable.id, params.accountId));
     }
 
+    async setDisplayName(
+        accountId: string,
+        displayName: string
+    ): Promise<void> {
+        await db
+            .update(businessAccountsTable)
+            .set({ displayName, updatedAt: new Date() })
+            .where(eq(businessAccountsTable.id, accountId));
+    }
+
     /**
      * A re-setup before activation replaces the pending secret; an activated
      * enrollment is never silently overwritten (guarded in `TotpService`).

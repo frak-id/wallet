@@ -15,6 +15,7 @@ const MOCK_ADMINISTRATORS: MerchantAdministrator[] = [
         addedAt: "2024-01-01T00:00:00.000Z",
         isOwner: true,
         isMe: false,
+        status: "active",
     },
     {
         id: "admin-2",
@@ -25,16 +26,18 @@ const MOCK_ADMINISTRATORS: MerchantAdministrator[] = [
         addedAt: "2024-01-15T00:00:00.000Z",
         isOwner: false,
         isMe: false,
+        status: "active",
     },
     {
         id: "admin-3",
-        wallet: "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1" as Address,
-        accountId: null,
-        email: null,
+        wallet: null,
+        accountId: "account-3",
+        email: "invited@example.com",
         addedBy: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as Address,
         addedAt: "2024-01-29T00:00:00.000Z",
         isOwner: false,
         isMe: false,
+        status: "invited",
     },
 ];
 
@@ -50,6 +53,9 @@ export type MerchantAdministrator = {
     addedAt: string;
     isOwner: boolean;
     isMe: boolean;
+    // Derived server-side: an account with zero credentials can't log in yet
+    // — it's a merchant-team invitation still pending claim.
+    status: "active" | "invited";
 };
 
 export function useGetMerchantAdministrators({
@@ -98,6 +104,7 @@ export function useGetMerchantAdministrators({
                         ? isAddressEqual(admin.wallet, currentWallet)
                         : !!currentAccountId &&
                           admin.accountId === currentAccountId,
+                status: admin.status,
             }));
         },
         enabled: !!merchantId,

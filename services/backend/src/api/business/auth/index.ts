@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { inviteRoutes } from "./invite";
 import { linkRoutes } from "./link";
 import { loginRoutes } from "./login";
 import { sessionManagementRoutes } from "./sessions";
@@ -10,4 +11,5 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     .use(twoFactorRoutes)
     .use(sessionManagementRoutes)
     .use(linkRoutes)
-    .use(shopifyAuthRoutes);
+    .use(shopifyAuthRoutes)
+    .use(inviteRoutes);

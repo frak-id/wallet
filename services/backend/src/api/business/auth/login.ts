@@ -7,8 +7,25 @@ import {
 } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { BusinessAuthResponseDto } from "../../../domain/auth";
-import { BusinessAuthContext } from "../../../domain/business-auth";
+import {
+    type BusinessAccountSelect,
+    BusinessAuthContext,
+    isCredentialLessAccount,
+} from "../../../domain/business-auth";
 import { resolveClientIp, verifySiweProof } from "./common";
+
+/**
+ * Password reset is also the self-service unbrick for a merchant-team
+ * invitation whose link expired: the account exists (created by the invite)
+ * but has no password yet. The OTP round-trip proves mailbox ownership just
+ * as much as a fresh registration would, so it's safe to let it set the
+ * first password here too — this must NOT extend to `/register`, which stays
+ * a no-op on an existing row (an attacker guessing the invited email must
+ * not be able to burn the invite by registering first).
+ */
+function canReceiveResetCode(account: BusinessAccountSelect): boolean {
+    return !!account.passwordHash || isCredentialLessAccount(account);
+}
 
 /**
  * Fire-and-forget the reset OTP on the enumeration-safe request endpoint.
@@ -162,7 +179,7 @@ export const loginRoutes = new Elysia()
                 await BusinessAuthContext.repositories.account.findByEmail(
                     normalizedEmail
                 );
-            if (account?.passwordHash) {
+            if (account && canReceiveResetCode(account)) {
                 sendResetOtpOffPath({
                     accountId: account.id,
                     email: normalizedEmail,
@@ -190,7 +207,7 @@ export const loginRoutes = new Elysia()
                 await BusinessAuthContext.repositories.account.findByEmail(
                     normalizedEmail
                 );
-            if (!account?.passwordHash) {
+            if (!account || !canReceiveResetCode(account)) {
                 throw HttpError.badRequest(
                     "INVALID_CODE",
                     "Invalid or expired code"

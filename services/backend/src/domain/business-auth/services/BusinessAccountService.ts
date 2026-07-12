@@ -7,6 +7,37 @@ import type { BusinessAccountRepository } from "../repositories/BusinessAccountR
 export type { TwoFactorMethod };
 
 /**
+ * An account with zero credentials (no password, no Shopify identity, no
+ * wallet) can never log in — it only exists as a merchant-team invitation
+ * placeholder (`createInvitedAccount`). Shared by the admins-list "invited"
+ * status derivation and the password-reset self-service unbrick.
+ */
+export function isCredentialLessAccount(
+    account: Pick<
+        BusinessAccountSelect,
+        "passwordHash" | "shopifyUserId" | "walletAddress"
+    >
+): boolean {
+    return (
+        !account.passwordHash &&
+        !account.shopifyUserId &&
+        !account.walletAddress
+    );
+}
+
+/**
+ * Human-readable label for whoever sent a merchant-team invitation — shared
+ * by the admins-add invitation email and the `/invite/preview` landing page
+ * so both fall back identically when the inviter has no display name/email
+ * (legacy-JWT sessions carry no `accountId`, `invite.ts`).
+ */
+export function inviterLabel(
+    inviter: Pick<BusinessAccountSelect, "displayName" | "email"> | null
+): string {
+    return inviter?.displayName ?? inviter?.email ?? "a team admin";
+}
+
+/**
  * Composition over the single `business_accounts` row: idempotent wallet /
  * shopify upsert (SIWE login, SSO, Phase 0 backfill fallback), and the
  * per-account 2FA method enumeration that the step-up 401 body exposes.
@@ -108,6 +139,26 @@ export class BusinessAccountService {
             throw new Error("Shopify account upsert failed to resolve");
         }
         return winner;
+    }
+
+    /**
+     * Create a credential-less account for a merchant-team invitation: only
+     * `email` is set (no password/shopify/wallet) — the account is "invited"
+     * until the invitee claims it (sets a password) or resets it, at which
+     * point it becomes indistinguishable from a normal registration.
+     * Idempotent under a concurrent invite/register race on the same email.
+     */
+    async createInvitedAccount(email: string): Promise<BusinessAccountSelect> {
+        try {
+            return await this.accountRepository.create({ email });
+        } catch (error) {
+            if (!isUniqueViolation(error)) throw error;
+            const winner = await this.accountRepository.findByEmail(email);
+            if (!winner) {
+                throw new Error("Invited account upsert failed to resolve");
+            }
+            return winner;
+        }
     }
 
     /** Attach a SIWE-proven wallet to an existing account. */

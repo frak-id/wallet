@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InviteRouteImport } from './routes/invite'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as RestrictedRouteImport } from './routes/_restricted'
 import { Route as IndexRouteImport } from './routes/index'
@@ -64,6 +65,11 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteRoute = InviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoRoute = DemoRouteImport.update({
@@ -320,6 +326,7 @@ const RestrictedMMerchantIdCampaignsDraftCampaignIdBudgetRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
+  '/invite': typeof InviteRoute
   '/login': typeof LoginRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof RestrictedDashboardRoute
@@ -367,6 +374,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
+  '/invite': typeof InviteRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
@@ -414,6 +422,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_restricted': typeof RestrictedRouteWithChildren
   '/demo': typeof DemoRoute
+  '/invite': typeof InviteRoute
   '/login': typeof LoginRouteWithChildren
   '/verify-email': typeof VerifyEmailRoute
   '/_restricted/dashboard': typeof RestrictedDashboardRoute
@@ -463,6 +472,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/demo'
+    | '/invite'
     | '/login'
     | '/verify-email'
     | '/dashboard'
@@ -510,6 +520,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/demo'
+    | '/invite'
     | '/verify-email'
     | '/dashboard'
     | '/members'
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_restricted'
     | '/demo'
+    | '/invite'
     | '/login'
     | '/verify-email'
     | '/_restricted/dashboard'
@@ -605,6 +617,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RestrictedRoute: typeof RestrictedRouteWithChildren
   DemoRoute: typeof DemoRoute
+  InviteRoute: typeof InviteRoute
   LoginRoute: typeof LoginRouteWithChildren
   VerifyEmailRoute: typeof VerifyEmailRoute
 }
@@ -623,6 +636,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite': {
+      id: '/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof InviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -1078,6 +1098,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RestrictedRoute: RestrictedRouteWithChildren,
   DemoRoute: DemoRoute,
+  InviteRoute: InviteRoute,
   LoginRoute: LoginRouteWithChildren,
   VerifyEmailRoute: VerifyEmailRoute,
 }

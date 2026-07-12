@@ -8,14 +8,16 @@ import {
     TableHeader,
     TableRow,
 } from "@frak-labs/design-system/components/Table";
-import { DeleteIcon } from "@frak-labs/design-system/icons";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { DeleteIcon, SendIcon } from "@frak-labs/design-system/icons";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Undo2 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isAddressEqual, zeroAddress } from "viem";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
+import { useAdminMutation } from "@/module/merchant/hook/useAdminMutation";
 import {
     type MerchantAdministrator,
     useGetMerchantAdministrators,
@@ -72,6 +74,7 @@ export function TableTeam({
                     administrators.map((admin) => (
                         <AdminRow
                             key={admin.id}
+                            merchantId={merchantId}
                             admin={admin}
                             hasAccess={hasAccess}
                             isStaged={stagedRemovals.includes(admin.id)}
@@ -86,12 +89,14 @@ export function TableTeam({
 }
 
 function AdminRow({
+    merchantId,
     admin,
     hasAccess,
     isStaged,
     onToggleRemoval,
     disabled,
 }: {
+    merchantId: string;
     admin: MerchantAdministrator;
     hasAccess: boolean;
     isStaged: boolean;
@@ -100,6 +105,12 @@ function AdminRow({
 }) {
     const { t } = useTranslation();
     const { data: walletStatus } = useWalletStatus();
+    const { mutate: resendInvite, isPending: isResending } = useAdminMutation({
+        action: "add",
+    });
+    const [resendState, setResendState] = useState<
+        "idle" | "success" | "error"
+    >("idle");
 
     const canRemove = useMemo(() => {
         if (admin.isOwner) return false;
@@ -115,6 +126,11 @@ function AdminRow({
         }
         return admin.isMe;
     }, [admin, hasAccess, walletStatus]);
+
+    // Resend just re-runs the add mutation with the same email — the
+    // backend's credential-less branch is idempotent (mints a fresh token
+    // and resends the invitation email), so no separate endpoint is needed.
+    const canResend = admin.status === "invited" && hasAccess && admin.email;
 
     return (
         <TableRow className={isStaged ? styles.rowStaged : undefined}>
@@ -135,8 +151,36 @@ function AdminRow({
                         ? t("merchantEdit.team.roles.owner")
                         : t("merchantEdit.team.roles.admin")}
                 </Badge>
+                {admin.status === "invited" && (
+                    <Badge size="small" variant="info">
+                        {t("merchantEdit.team.invited")}
+                    </Badge>
+                )}
             </TableCell>
             <TableCell align="right" hug>
+                {canResend && (
+                    <button
+                        type="button"
+                        className={styles.iconButton}
+                        disabled={disabled || isResending}
+                        aria-label={t("merchantEdit.team.resendInvite")}
+                        title={t("merchantEdit.team.resendInvite")}
+                        onClick={() => {
+                            const email = admin.email;
+                            if (!email) return;
+                            setResendState("idle");
+                            resendInvite(
+                                { merchantId, email },
+                                {
+                                    onSuccess: () => setResendState("success"),
+                                    onError: () => setResendState("error"),
+                                }
+                            );
+                        }}
+                    >
+                        <SendIcon width={20} height={20} />
+                    </button>
+                )}
                 {canRemove && (
                     <button
                         type="button"
@@ -155,6 +199,18 @@ function AdminRow({
                             <DeleteIcon width={24} height={24} />
                         )}
                     </button>
+                )}
+                {resendState === "success" && (
+                    <Text variant="caption" color="secondary">
+                        {t("merchantEdit.team.resendSuccess", {
+                            email: admin.email ?? "",
+                        })}
+                    </Text>
+                )}
+                {resendState === "error" && (
+                    <Text variant="caption" color="error">
+                        {t("merchantEdit.team.resendError")}
+                    </Text>
                 )}
             </TableCell>
         </TableRow>

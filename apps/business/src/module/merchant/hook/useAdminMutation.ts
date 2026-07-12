@@ -14,6 +14,13 @@ type AdminMutationOptions = {
     action: "add" | "remove";
 };
 
+/** `POST /admins` response — additive `status` distinguishes a direct add
+ * from a merchant-team invitation sent to a not-yet-registered email. */
+export type AddAdminResult = {
+    id: string;
+    status: "active" | "invited";
+};
+
 export function useAdminMutation({ action }: AdminMutationOptions) {
     const queryClient = useQueryClient();
 
@@ -22,7 +29,9 @@ export function useAdminMutation({ action }: AdminMutationOptions) {
             "merchant",
             action === "add" ? "add-member" : "remove-member",
         ],
-        mutationFn: async (args: AdminMutationArg) => {
+        mutationFn: async (
+            args: AdminMutationArg
+        ): Promise<AddAdminResult | undefined> => {
             if (action === "add") {
                 const addArgs = args as AddAdminArg;
                 const { data, error } = await authenticatedBackendApi
@@ -52,6 +61,7 @@ export function useAdminMutation({ action }: AdminMutationOptions) {
             if (error) {
                 throw error;
             }
+            return undefined;
         },
         onSuccess: (_data, args) => {
             queryClient.invalidateQueries({

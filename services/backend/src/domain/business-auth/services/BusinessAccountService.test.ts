@@ -30,6 +30,7 @@ const createRepository = () =>
         insertShopifyAccount: vi.fn(),
         setWallet: vi.fn(),
         findById: vi.fn(),
+        create: vi.fn(),
     }) as unknown as BusinessAccountRepository &
         Record<string, ReturnType<typeof vi.fn>>;
 
@@ -79,6 +80,43 @@ describe("BusinessAccountService", () => {
 
             await expect(service.upsertWalletAccount(WALLET)).rejects.toThrow(
                 /failed to resolve/
+            );
+        });
+    });
+
+    describe("createInvitedAccount", () => {
+        const EMAIL = "invitee@acme.com";
+
+        it("creates the credential-less account", async () => {
+            const created = account({ email: EMAIL });
+            repository.create.mockResolvedValue(created);
+
+            expect(await service.createInvitedAccount(EMAIL)).toBe(created);
+            expect(repository.create).toHaveBeenCalledWith({ email: EMAIL });
+        });
+
+        it("resolves the concurrent winner on a create race (existing account, resend/cross-merchant invite)", async () => {
+            const winner = account({ email: EMAIL });
+            repository.create.mockRejectedValue(UNIQUE_VIOLATION);
+            repository.findByEmail.mockResolvedValue(winner);
+
+            expect(await service.createInvitedAccount(EMAIL)).toBe(winner);
+        });
+
+        it("throws when the race winner can't be re-read", async () => {
+            repository.create.mockRejectedValue(UNIQUE_VIOLATION);
+            repository.findByEmail.mockResolvedValue(null);
+
+            await expect(service.createInvitedAccount(EMAIL)).rejects.toThrow(
+                /failed to resolve/
+            );
+        });
+
+        it("rethrows a non-unique-violation insert error", async () => {
+            repository.create.mockRejectedValue(new Error("connection reset"));
+
+            await expect(service.createInvitedAccount(EMAIL)).rejects.toThrow(
+                "connection reset"
             );
         });
     });

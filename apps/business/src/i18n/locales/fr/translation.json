@@ -83,6 +83,19 @@
             "resent": "Code envoyé",
             "success": "Votre e-mail est vérifié.",
             "continue": "Continuer"
+        },
+        "invite": {
+            "title": "Vous avez été invité à devenir administrateur de <strong>{{merchantName}}</strong> sur Frak",
+            "subtitle": "Invité par {{inviterName}}. Définissez un mot de passe pour finaliser la création de votre compte.",
+            "displayNamePlaceholder": "Votre nom",
+            "submit": "Accepter l'invitation",
+            "invalidToken": "Ce lien d'invitation est invalide ou a expiré",
+            "askToResend": "Demandez à votre administrateur de renvoyer l'invitation.",
+            "goToLogin": "Aller à la connexion",
+            "alreadyClaimed": "Cette invitation a déjà été utilisée. Connectez-vous avec {{email}}.",
+            "alreadyAuthenticated": "Vous êtes déjà connecté sur cet appareil avec un compte différent de {{email}}.",
+            "openDashboard": "Ouvrir le tableau de bord",
+            "signOutFirst": "Déconnectez-vous pour accepter cette invitation"
         }
     },
     "forms": {
@@ -1653,6 +1666,10 @@
             "removeMember": "Retirer le membre",
             "undoRemove": "Annuler le retrait",
             "saveError": "Certaines modifications n'ont pas pu être enregistrées. Réessayez.",
+            "invited": "Invité",
+            "resendInvite": "Renvoyer l'invitation",
+            "resendSuccess": "Invitation renvoyée à {{email}}",
+            "resendError": "Impossible de renvoyer l'invitation. Réessayez.",
             "add": {
                 "title": "Ajouter un membre",
                 "description": "Invitez un administrateur par adresse de wallet ou par email.",
@@ -1665,7 +1682,9 @@
                 "modeEmail": "Email",
                 "emailLabel": "Email du membre",
                 "emailPlaceholder": "nom@entreprise.com",
-                "emailInvalid": "Adresse email invalide"
+                "emailInvalid": "Adresse email invalide",
+                "addedSuccess": "{{email}} a été ajouté à l'équipe",
+                "invitedSuccess": "Invitation envoyée à {{email}}"
             }
         }
     },

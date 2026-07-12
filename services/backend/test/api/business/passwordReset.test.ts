@@ -33,8 +33,12 @@ vi.mock("../../../src/domain/business-auth", async () => {
     const { PasswordService } = await import(
         "../../../src/domain/business-auth/services/PasswordService"
     );
+    const { isCredentialLessAccount } = await import(
+        "../../../src/domain/business-auth/services/BusinessAccountService"
+    );
     return {
         PasswordService,
+        isCredentialLessAccount,
         BusinessAuthContext: {
             repositories: {
                 account: accountRepositoryMocks,
@@ -61,6 +65,15 @@ const SSO_ONLY_ACCOUNT = {
     id: "00000000-0000-0000-0000-00000000acc2",
     email: "sso@acme.com",
     passwordHash: null,
+    shopifyUserId: "shopify-user-1",
+    walletAddress: null,
+};
+const INVITED_ACCOUNT = {
+    id: "00000000-0000-0000-0000-00000000acc4",
+    email: "invited@acme.com",
+    passwordHash: null,
+    shopifyUserId: null,
+    walletAddress: null,
 };
 
 function post(path: string, body: unknown): Request {
@@ -143,6 +156,24 @@ describe("Password reset routes", () => {
             expect(response.status).toBe(200);
             await flushMicrotasks();
             expect(emailOtpServiceMocks.sendCode).not.toHaveBeenCalled();
+        });
+
+        it("sends a reset code for a credential-less (invited) account — self-service unbrick", async () => {
+            accountRepositoryMocks.findByEmail.mockResolvedValue(
+                INVITED_ACCOUNT
+            );
+
+            const response = await loginRoutes.handle(
+                post("/password/reset/request", { email: "invited@acme.com" })
+            );
+
+            expect(response.status).toBe(200);
+            await flushMicrotasks();
+            expect(emailOtpServiceMocks.sendCode).toHaveBeenCalledWith({
+                accountId: INVITED_ACCOUNT.id,
+                email: "invited@acme.com",
+                purpose: "password_reset",
+            });
         });
     });
 
@@ -230,6 +261,30 @@ describe("Password reset routes", () => {
                 code: "INVALID_CODE",
             });
             expect(emailOtpServiceMocks.verifyCode).not.toHaveBeenCalled();
+        });
+
+        it("allows a credential-less (invited) account to complete the reset", async () => {
+            accountRepositoryMocks.findByEmail.mockResolvedValue(
+                INVITED_ACCOUNT
+            );
+
+            const response = await loginRoutes.handle(
+                post("/password/reset/confirm", {
+                    ...validBody,
+                    email: "invited@acme.com",
+                })
+            );
+
+            expect(response.status).toBe(200);
+            expect(accountRepositoryMocks.setPasswordHash).toHaveBeenCalledWith(
+                {
+                    accountId: INVITED_ACCOUNT.id,
+                    passwordHash: "hashed:brand-new-password",
+                }
+            );
+            expect(
+                accountRepositoryMocks.markEmailVerified
+            ).toHaveBeenCalledWith(INVITED_ACCOUNT.id);
         });
 
         it("rejects a wrong/expired code without touching the password or sessions", async () => {

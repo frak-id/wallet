@@ -1,3 +1,4 @@
+export { buildInvitationEmail } from "./buildInvitationEmail";
 export { buildRecoveryEmail } from "./buildRecoveryEmail";
 export { buildSecurityCodeEmail } from "./buildSecurityCodeEmail";
 export { buildVerificationEmail } from "./buildVerificationEmail";

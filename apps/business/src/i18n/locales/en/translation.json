@@ -83,6 +83,19 @@
             "resent": "Code sent",
             "success": "Your email is verified.",
             "continue": "Continue"
+        },
+        "invite": {
+            "title": "You've been invited to be an admin of <strong>{{merchantName}}</strong> on Frak",
+            "subtitle": "Invited by {{inviterName}}. Set a password to finish creating your account.",
+            "displayNamePlaceholder": "Your name",
+            "submit": "Accept invitation",
+            "invalidToken": "This invitation link is invalid or has expired",
+            "askToResend": "Ask your admin to resend the invitation.",
+            "goToLogin": "Go to sign in",
+            "alreadyClaimed": "This invitation was already used. Sign in with {{email}} instead.",
+            "alreadyAuthenticated": "You're already signed in on this device with a different account than {{email}}.",
+            "openDashboard": "Open dashboard",
+            "signOutFirst": "Sign out to accept this invitation"
         }
     },
     "forms": {
@@ -1653,6 +1666,10 @@
             "removeMember": "Remove member",
             "undoRemove": "Undo remove",
             "saveError": "Some changes could not be saved. Try again.",
+            "invited": "Invited",
+            "resendInvite": "Resend invite",
+            "resendSuccess": "Invitation resent to {{email}}",
+            "resendError": "Could not resend the invitation. Try again.",
             "add": {
                 "title": "Add a member",
                 "description": "Invite an admin to your team by wallet address or email.",
@@ -1665,7 +1682,9 @@
                 "modeEmail": "Email",
                 "emailLabel": "Member email",
                 "emailPlaceholder": "name@company.com",
-                "emailInvalid": "Invalid email address"
+                "emailInvalid": "Invalid email address",
+                "addedSuccess": "{{email}} was added to the team",
+                "invitedSuccess": "Invitation sent to {{email}}"
             }
         }
     },

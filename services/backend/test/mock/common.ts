@@ -49,6 +49,10 @@ export const JwtContextMock = {
         sign: vi.fn(() => Promise.resolve("mock-anonymous-merge-token")),
         verify: vi.fn(() => Promise.resolve(null)),
     },
+    businessInvitation: {
+        sign: vi.fn(() => Promise.resolve("mock-business-invitation-token")),
+        verify: vi.fn(() => Promise.resolve(null)),
+    },
 };
 
 /**
@@ -398,6 +402,10 @@ vi.mock("@backend-infrastructure", () => ({
     rolesRepository: rolesRepositoryMocks,
     sessionContext: sessionContextMock,
     rateLimitMiddleware: () => new Elysia({ name: "Mock.rateLimit" }),
+    // Real session-mint call sites (login/shopify/invite claim) resolve the
+    // client IP off the raw request — a trivial pass-through is enough here,
+    // no test asserts on the extracted IP itself.
+    getClientIp: () => undefined,
     get JwtContext() {
         return JwtContextMock;
     },

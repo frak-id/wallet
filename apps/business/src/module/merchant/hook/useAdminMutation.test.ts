@@ -34,7 +34,7 @@ function createWrapper(queryClient: QueryClient) {
 }
 
 describe("useAdminMutation", () => {
-    it("invites an admin by email", async () => {
+    it("adds an existing account directly by email (status: active)", async () => {
         const queryClient = createQueryClient();
         const { authenticatedBackendApi } = await import("@/api/backendClient");
         const mockPost = vi.fn().mockResolvedValue({
@@ -46,6 +46,7 @@ describe("useAdminMutation", () => {
                 addedBy: "0x0000000000000000000000000000000000000000",
                 addedAt: "2024-01-01T00:00:00.000Z",
                 isOwner: false,
+                status: "active",
             },
             error: null,
         });
@@ -69,7 +70,43 @@ describe("useAdminMutation", () => {
         expect(mockPost).toHaveBeenCalledWith({
             email: "teammate@example.com",
         });
-        expect(data?.email).toBe("teammate@example.com");
+        expect(data?.status).toBe("active");
+    });
+
+    it("invites an unknown email (status: invited)", async () => {
+        const queryClient = createQueryClient();
+        const { authenticatedBackendApi } = await import("@/api/backendClient");
+        const mockPost = vi.fn().mockResolvedValue({
+            data: {
+                id: "admin-new",
+                wallet: null,
+                accountId: "account-invited-1",
+                email: "invitee@example.com",
+                addedBy: "0x0000000000000000000000000000000000000000",
+                addedAt: "2024-01-01T00:00:00.000Z",
+                isOwner: false,
+                status: "invited",
+            },
+            error: null,
+        });
+
+        vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+            admins: { post: mockPost },
+        } as any);
+
+        const { result } = renderHook(
+            () => useAdminMutation({ action: "add" }),
+            {
+                wrapper: createWrapper(queryClient),
+            }
+        );
+
+        const data = await result.current.mutateAsync({
+            merchantId: "merchant-1",
+            email: "invitee@example.com",
+        });
+
+        expect(data?.status).toBe("invited");
     });
 
     it("invites an admin by wallet", async () => {
@@ -105,12 +142,12 @@ describe("useAdminMutation", () => {
         expect(mockPost).toHaveBeenCalledWith({ wallet });
     });
 
-    it("surfaces the backend's 404 'no account for email' error", async () => {
+    it("surfaces a backend error from the add endpoint", async () => {
         const queryClient = createQueryClient();
         const { authenticatedBackendApi } = await import("@/api/backendClient");
         const edenError = {
-            status: 404,
-            value: { message: "No account found for this email" },
+            status: 403,
+            value: { message: "Access denied" },
         };
         const mockPost = vi.fn().mockResolvedValue({
             data: null,
@@ -131,18 +168,18 @@ describe("useAdminMutation", () => {
         await expect(
             result.current.mutateAsync({
                 merchantId: "merchant-1",
-                email: "unknown@example.com",
+                email: "someone@example.com",
             })
         ).rejects.toEqual(edenError);
 
         try {
             await result.current.mutateAsync({
                 merchantId: "merchant-1",
-                email: "unknown@example.com",
+                email: "someone@example.com",
             });
         } catch (error) {
             expect(extractAuthErrorMessage(error, "fallback")).toBe(
-                "No account found for this email"
+                "Access denied"
             );
         }
     });
