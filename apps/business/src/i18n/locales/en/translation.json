@@ -87,7 +87,6 @@
         "invite": {
             "title": "You've been invited to be an admin of <strong>{{merchantName}}</strong> on Frak",
             "subtitle": "Invited by {{inviterName}}. Set a password to finish creating your account.",
-            "displayNamePlaceholder": "Your name",
             "submit": "Accept invitation",
             "invalidToken": "This invitation link is invalid or has expired",
             "askToResend": "Ask your admin to resend the invitation.",

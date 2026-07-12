@@ -53,7 +53,6 @@ export const businessAccountsTable = pgTable(
         id: uuid("id").primaryKey().defaultRandom(),
         email: text("email"),
         emailVerifiedAt: timestamp("email_verified_at"),
-        displayName: text("display_name"),
 
         // --- password credential ---
         passwordHash: text("password_hash"),

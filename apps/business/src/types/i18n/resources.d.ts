@@ -5,7 +5,6 @@ export default interface Resources {
         "alreadyAuthenticated": "You're already signed in on this device with a different account than {{email}}.",
         "alreadyClaimed": "This invitation was already used. Sign in with {{email}} instead.",
         "askToResend": "Ask your admin to resend the invitation.",
-        "displayNamePlaceholder": "Your name",
         "goToLogin": "Go to sign in",
         "invalidToken": "This invitation link is invalid or has expired",
         "openDashboard": "Open dashboard",

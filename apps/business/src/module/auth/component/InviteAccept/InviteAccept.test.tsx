@@ -146,7 +146,7 @@ describe("InviteAccept", () => {
         expect(useAuthStore.getState().isAuthenticated()).toBe(false);
     });
 
-    test("claims with password + display name and navigates to the merchant dashboard", async () => {
+    test("claims with just a password and navigates to the merchant dashboard", async () => {
         const mutate = vi.fn(
             (
                 _params: unknown,
@@ -164,11 +164,11 @@ describe("InviteAccept", () => {
 
         expect(screen.getByText("auth.invite.title")).toBeInTheDocument();
         expect(screen.getByDisplayValue("invitee@test.com")).toBeDisabled();
+        // The invite already carries the email — no name is ever asked.
+        expect(
+            screen.queryByLabelText("auth.invite.displayNamePlaceholder")
+        ).not.toBeInTheDocument();
 
-        fireEvent.change(
-            screen.getByLabelText("auth.invite.displayNamePlaceholder"),
-            { target: { value: "New Admin" } }
-        );
         fireEvent.change(
             screen.getByLabelText("auth.login.email.newPasswordPlaceholder"),
             { target: { value: "long-enough-password" } }
@@ -176,13 +176,53 @@ describe("InviteAccept", () => {
         fireEvent.click(screen.getByText("auth.invite.submit"));
 
         expect(mutate).toHaveBeenCalledWith(
-            {
-                token: "tok",
-                password: "long-enough-password",
-                displayName: "New Admin",
-            },
+            { token: "tok", password: "long-enough-password" },
             expect.anything()
         );
+        await waitFor(() =>
+            expect(mockNavigate).toHaveBeenCalledWith({
+                to: "/m/$merchantId/dashboard",
+                params: { merchantId: "merchant-1" },
+            })
+        );
+    });
+
+    test("navigates after claim even though claiming mints a session mid-flight", async () => {
+        // Reproduces the reported bug: the claim's `setAuth` flips the store to
+        // authenticated *before* `onSuccess` runs. The page must not bounce to
+        // the "already authenticated" notice (which would unmount the form and
+        // swallow the navigation) — the just-claimed invitee should be routed.
+        const mutate = vi.fn(
+            (
+                _params: unknown,
+                callbacks: { onSuccess: (data: unknown) => void }
+            ) => {
+                useAuthStore.getState().setAuth({
+                    token: "fresh-session",
+                    authMethod: "password",
+                    expiresAt: Date.now() + 60_000,
+                    pending2fa: false,
+                });
+                callbacks.onSuccess({
+                    merchantId: "merchant-1",
+                    hasMerchantAccess: true,
+                });
+            }
+        );
+        mockPreview.mockReturnValue(previewState({ data: VALID_PREVIEW }));
+        mockClaim.mockReturnValue({ mutate, isPending: false, error: null });
+
+        render(<InviteAccept token="tok" />);
+
+        fireEvent.change(
+            screen.getByLabelText("auth.login.email.newPasswordPlaceholder"),
+            { target: { value: "long-enough-password" } }
+        );
+        fireEvent.click(screen.getByText("auth.invite.submit"));
+
+        expect(
+            screen.queryByText(/auth\.invite\.alreadyAuthenticated/)
+        ).not.toBeInTheDocument();
         await waitFor(() =>
             expect(mockNavigate).toHaveBeenCalledWith({
                 to: "/m/$merchantId/dashboard",

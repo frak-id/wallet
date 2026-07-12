@@ -50,6 +50,12 @@ export function InviteAccept({ token }: { token: string | undefined }) {
     const currentlyAuthenticated = useAuthStore((state) =>
         state.isAuthenticated()
     );
+    // A successful claim mints a session mid-flight (`setAuth`), which would
+    // otherwise flip `currentlyAuthenticated` and re-render this page into the
+    // "already authenticated" notice — unmounting `ClaimForm` before
+    // react-query fires its per-call `onSuccess`, so the post-claim navigation
+    // never runs. Once the invitee has started claiming, suppress that notice.
+    const [claimStarted, setClaimStarted] = useState(false);
 
     const {
         data: previewData,
@@ -82,7 +88,7 @@ export function InviteAccept({ token }: { token: string | undefined }) {
     // switch the credential set, so require an explicit choice first. Checked
     // before `alreadyClaimed` so a signed-in invitee who re-opens their own
     // (already-claimed) link is offered the dashboard, not a sign-in prompt.
-    if (currentlyAuthenticated) {
+    if (currentlyAuthenticated && !claimStarted) {
         return <AlreadyAuthenticatedNotice invitedEmail={previewData.email} />;
     }
 
@@ -111,6 +117,7 @@ export function InviteAccept({ token }: { token: string | undefined }) {
             email={previewData.email}
             merchantName={previewData.merchantName}
             inviterName={previewData.inviterName}
+            onClaimStart={() => setClaimStarted(true)}
         />
     );
 }
@@ -183,21 +190,23 @@ function ClaimForm({
     email,
     merchantName,
     inviterName,
+    onClaimStart,
 }: {
     token: string;
     email: string;
     merchantName: string;
     inviterName: string;
+    onClaimStart: () => void;
 }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [password, setPassword] = useState("");
-    const [displayName, setDisplayName] = useState("");
     const { mutate: claim, isPending, error } = useInviteClaim();
 
     const onSubmit = () => {
+        onClaimStart();
         claim(
-            { token, password, displayName: displayName.trim() || undefined },
+            { token, password },
             {
                 onSuccess: (data) => {
                     if (data.hasMerchantAccess) {
@@ -239,19 +248,10 @@ function ClaimForm({
                     readOnly
                     disabled
                 />
-                <Input
-                    variant="bare"
-                    tone="muted"
-                    autoFocus
-                    type="text"
-                    autoComplete="name"
-                    label={t("auth.invite.displayNamePlaceholder")}
-                    value={displayName}
-                    onChange={(event) => setDisplayName(event.target.value)}
-                />
                 <PasswordInput
                     variant="bare"
                     tone="muted"
+                    autoFocus
                     autoComplete="new-password"
                     label={t("auth.login.email.newPasswordPlaceholder")}
                     hint={

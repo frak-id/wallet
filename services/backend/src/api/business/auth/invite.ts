@@ -83,12 +83,7 @@ export const inviteRoutes = new Elysia({ prefix: "/invite" })
     )
     .post(
         "/claim",
-        async ({
-            body: { token, password, displayName },
-            request,
-            headers,
-            server,
-        }) => {
+        async ({ body: { token, password }, request, headers, server }) => {
             const { payload, account } = await resolveInvitation(token);
 
             // Replay guard: an account that already has any credential was
@@ -106,12 +101,6 @@ export const inviteRoutes = new Elysia({ prefix: "/invite" })
                 accountId: account.id,
                 passwordHash,
             });
-            if (displayName) {
-                await BusinessAuthContext.repositories.account.setDisplayName(
-                    account.id,
-                    displayName
-                );
-            }
             // Clicking the emailed link is itself the email-ownership proof
             // — same trust argument as the first email-2FA / password-reset
             // OTP verification.
@@ -146,7 +135,6 @@ export const inviteRoutes = new Elysia({ prefix: "/invite" })
             body: t.Object({
                 token: t.String(),
                 password: t.String(),
-                displayName: t.Optional(t.String({ maxLength: 120 })),
             }),
             response: {
                 200: t.Object({

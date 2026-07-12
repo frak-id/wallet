@@ -53,11 +53,7 @@ export function useInvitePreview(token: string | undefined) {
 export function useInviteClaim() {
     return useMutation({
         mutationKey: ["auth", "invite", "claim"],
-        mutationFn: async (params: {
-            token: string;
-            password: string;
-            displayName?: string;
-        }) => {
+        mutationFn: async (params: { token: string; password: string }) => {
             const { data, error } =
                 await authenticatedBackendApi.auth.invite.claim.post(params);
             if (error) {

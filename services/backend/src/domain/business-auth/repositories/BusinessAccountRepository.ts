@@ -48,15 +48,11 @@ export class BusinessAccountRepository {
         return result ?? null;
     }
 
-    async create(params: {
-        email?: string;
-        displayName?: string;
-    }): Promise<BusinessAccountSelect> {
+    async create(params: { email?: string }): Promise<BusinessAccountSelect> {
         const [account] = await db
             .insert(businessAccountsTable)
             .values({
                 email: params.email?.toLowerCase(),
-                displayName: params.displayName,
             })
             .returning();
         if (!account) {
@@ -164,16 +160,6 @@ export class BusinessAccountRepository {
             .update(businessAccountsTable)
             .set({ passwordHash: params.passwordHash, updatedAt: new Date() })
             .where(eq(businessAccountsTable.id, params.accountId));
-    }
-
-    async setDisplayName(
-        accountId: string,
-        displayName: string
-    ): Promise<void> {
-        await db
-            .update(businessAccountsTable)
-            .set({ displayName, updatedAt: new Date() })
-            .where(eq(businessAccountsTable.id, accountId));
     }
 
     /**

@@ -28,13 +28,13 @@ export function isCredentialLessAccount(
 /**
  * Human-readable label for whoever sent a merchant-team invitation — shared
  * by the admins-add invitation email and the `/invite/preview` landing page
- * so both fall back identically when the inviter has no display name/email
- * (legacy-JWT sessions carry no `accountId`, `invite.ts`).
+ * so both fall back identically when the inviter has no email (legacy-JWT
+ * sessions carry no `accountId`, `invite.ts`).
  */
 export function inviterLabel(
-    inviter: Pick<BusinessAccountSelect, "displayName" | "email"> | null
+    inviter: Pick<BusinessAccountSelect, "email"> | null
 ): string {
-    return inviter?.displayName ?? inviter?.email ?? "a team admin";
+    return inviter?.email ?? "a team admin";
 }
 
 /**
