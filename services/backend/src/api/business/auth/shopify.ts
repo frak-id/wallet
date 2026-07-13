@@ -37,15 +37,14 @@ function callbackUrl(requestUrl: string): string {
 }
 
 /**
- * Land on `/login/2fa` carrying the pending session token in the URL hash
- * (never the query string, so the opaque token never hits server logs /
- * Referer headers). `verified` marks a session that already cleared 2FA
- * server-side (the no-enrolled-method Shopify SSO case, below) so the page
- * skips the challenge and goes straight to the dashboard.
+ * Land on `/login/2fa` carrying the session token in the URL hash (never the
+ * query string, so the opaque token never hits server logs / Referer
+ * headers). Shopify SSO grants a usable, non-pending session with no
+ * login-time 2FA (the OAuth grant is the login factor), so the page adopts
+ * the token as a full session and goes straight to the dashboard.
  */
-function loginRedirectUrl(token: string, verified: boolean): string {
-    const hash = new URLSearchParams({ token });
-    if (verified) hash.set("verified", "1");
+function loginRedirectUrl(token: string): string {
+    const hash = new URLSearchParams({ token, sso: "1" });
     return `${process.env.BUSINESS_URL}/login/2fa#${hash.toString()}`;
 }
 
@@ -138,33 +137,22 @@ export const shopifyAuthRoutes = new Elysia({ prefix: "/shopify" })
                     }
                 );
 
-            // Shopify SSO is not exempt from 2FA (§4.8, unlike the embedded
-            // App Bridge flow §4.11) — but 2FA needs an enrolled factor to
-            // challenge. When the account has none (email dropped on a
-            // collision, no TOTP, no wallet), the Shopify OAuth grant is the
-            // sole proof of identity and stands on its own: mint a verified
-            // session rather than dead-ending on an unanswerable challenge.
-            // Sensitive actions still gate on their own step-up bootstrap.
-            const methods =
-                await BusinessAuthContext.services.account.getEnabledTwoFactorMethods(
-                    account.id
-                );
-            const twoFactorVerified = methods.length === 0;
-
+            // Shopify OAuth is itself the login factor: mint a usable session
+            // and send the admin straight to the dashboard — no login-time 2FA
+            // (unlike password/SIWE). The session is deliberately NOT
+            // step-up-fresh (`twoFactorVerifiedAt` stays null), so sensitive
+            // actions still require a real step-up (§4.8); an account with no
+            // enrolled factor is prompted to set one up in Settings.
             const { token } = await BusinessAuthContext.services.session.create(
                 {
                     accountId: account.id,
                     authMethod: "shopify",
-                    twoFactorVerified,
                     ip: resolveClientIp({ request, headers, server }),
                     userAgent: request.headers.get("user-agent") ?? undefined,
                 }
             );
 
-            return Response.redirect(
-                loginRedirectUrl(token, twoFactorVerified),
-                302
-            );
+            return Response.redirect(loginRedirectUrl(token), 302);
         },
         {
             query: t.Object({

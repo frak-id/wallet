@@ -18,12 +18,13 @@ import {
 } from "@/stores/twoFactorStore";
 
 /**
- * The Shopify SSO redirect (`#token=…`) carries no methods list — the
- * backend callback only hands back a token (§4.7). Both channels are
- * offered; the backend rejects whichever the account hasn't actually
- * enabled (`NO_EMAIL`, or an inactive TOTP failing verification).
+ * Fallback hint when a pending (password) login reaches this page without a
+ * stored methods list. Only a hint for the initial render — the challenge
+ * panel then fetches the account's authoritative enrolled methods and, if
+ * there are none, shows the "set up 2FA in Settings" fallback. Shopify SSO
+ * never gets here (its session is usable without a login-time challenge).
  */
-const SHOPIFY_FALLBACK_METHODS: TwoFactorMethod[] = ["email", "totp"];
+const DEFAULT_CHALLENGE_METHODS: TwoFactorMethod[] = ["email", "totp"];
 
 const routeApi = getRouteApi("/login/2fa");
 
@@ -59,7 +60,7 @@ export function PendingTwoFactor() {
         started.current = true;
 
         const methodsFromPasswordLogin = consumePendingLoginMethods();
-        const { alreadyVerified } = adoptHashTokenIfPresent();
+        const { isSso } = adoptHashTokenIfPresent();
 
         const token = useAuthStore.getState().token;
         if (!token) {
@@ -67,17 +68,17 @@ export function PendingTwoFactor() {
             return;
         }
 
-        void resolveTwoFactor(methodsFromPasswordLogin, alreadyVerified);
+        void resolveTwoFactor(methodsFromPasswordLogin, isSso);
 
         async function resolveTwoFactor(
             hashMethods: TwoFactorMethod[] | null,
             skipChallenge: boolean
         ) {
-            // Shopify SSO with no enrolled 2FA method arrives already verified
-            // server-side (OAuth was the sole factor) — go straight to session
-            // completion instead of showing an unanswerable challenge.
+            // Shopify SSO is the login factor on its own: the session is
+            // already usable server-side, so skip the login-time challenge and
+            // go straight to completion. Sensitive actions still step up later.
             if (!skipChallenge) {
-                const methods = hashMethods ?? SHOPIFY_FALLBACK_METHODS;
+                const methods = hashMethods ?? DEFAULT_CHALLENGE_METHODS;
                 const verified = await requestVerification(methods, "inline");
                 if (!verified) {
                     useAuthStore.getState().clearAuth();
@@ -143,34 +144,34 @@ export function PendingTwoFactor() {
 }
 
 /**
- * Shopify SSO redirects here with `#token=…` (hash, not query — the fragment
- * never leaves the browser). Adopts it as a pending session before anything
- * else runs; a no-op when a password login already populated the store.
+ * Shopify SSO redirects here with `#token=…&sso=1` (hash, not query — the
+ * fragment never leaves the browser). The SSO session is usable server-side
+ * without a login-time 2FA, so it's adopted as a full (non-pending) session;
+ * a no-op when a password login already populated the store.
  */
-function adoptHashTokenIfPresent(): { alreadyVerified: boolean } {
+function adoptHashTokenIfPresent(): { isSso: boolean } {
     const hash = window.location.hash;
     if (!hash.startsWith("#") || !hash.includes("token=")) {
-        return { alreadyVerified: false };
+        return { isSso: false };
     }
 
     const params = new URLSearchParams(hash.slice(1));
     const token = params.get("token");
-    if (!token) return { alreadyVerified: false };
-    // `verified=1` marks a Shopify SSO session that already cleared 2FA
-    // server-side (no enrolled factor to challenge) — adopt it as a full
-    // session so the effect skips straight to completion.
-    const alreadyVerified = params.get("verified") === "1";
+    if (!token) return { isSso: false };
+    // `sso=1` marks a Shopify SSO session: usable immediately (OAuth was the
+    // login factor), so adopt it as a full session and skip the challenge.
+    const isSso = params.get("sso") === "1";
     window.history.replaceState(null, "", window.location.pathname);
 
     useAuthStore.getState().setAuth({
         token,
         authMethod: "shopify",
-        // Real expiry is unknown until `/auth/sessions` resolves post-2FA
+        // Real expiry is unknown until `/auth/sessions` resolves
         // (`useCompletePendingSession`); a short placeholder just keeps
         // `isAuthenticated()` conservatively false until then.
         expiresAt: Date.now() + 5 * 60 * 1000,
-        pending2fa: !alreadyVerified,
+        pending2fa: !isSso,
     });
 
-    return { alreadyVerified };
+    return { isSso };
 }

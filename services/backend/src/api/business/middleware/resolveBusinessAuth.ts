@@ -54,6 +54,13 @@ export async function resolveBusinessAuth(
         wallet: account?.walletAddress ?? null,
         authMethod: session.authMethod,
         twoFactorVerifiedAt: session.twoFactorVerifiedAt,
-        pending2fa: session.twoFactorVerifiedAt === null,
+        // Shopify SSO is the login factor on its own: the session is usable
+        // (dashboard + merchant access) immediately, without a login-time 2FA
+        // step. It is deliberately never step-up-fresh though —
+        // `twoFactorVerifiedAt` stays null, so sensitive actions still gate on
+        // a real step-up (§4.8). Password/SIWE keep the pending-until-2FA flow.
+        pending2fa:
+            session.twoFactorVerifiedAt === null &&
+            session.authMethod !== "shopify",
     };
 }

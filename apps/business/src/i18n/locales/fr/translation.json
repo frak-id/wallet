@@ -73,6 +73,11 @@
             "siwe": {
                 "hint": "Signez un message avec votre portefeuille pour confirmer que c'est vous.",
                 "cta": "Signer avec le portefeuille"
+            },
+            "noMethods": {
+                "title": "Authentification à deux facteurs requise",
+                "description": "Cette action est protégée. Configurez l'authentification à deux facteurs dans vos paramètres avant de continuer.",
+                "cta": "Accéder aux paramètres de sécurité"
             }
         },
         "verifyEmail": {

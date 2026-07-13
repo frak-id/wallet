@@ -73,6 +73,11 @@
             "siwe": {
                 "hint": "Sign a message with your wallet to confirm it's you.",
                 "cta": "Sign with wallet"
+            },
+            "noMethods": {
+                "title": "Two-factor authentication required",
+                "description": "This action is protected. Set up two-factor authentication in your settings before continuing.",
+                "cta": "Go to security settings"
             }
         },
         "verifyEmail": {

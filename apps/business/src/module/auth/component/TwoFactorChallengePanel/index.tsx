@@ -2,6 +2,7 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -69,21 +70,27 @@ const DefaultDescription: TwoFactorHeadingSlot = ({ children }) => (
 export function TwoFactorChallengePanel({
     methods,
     onVerified,
+    onDismiss,
     Title = DefaultTitle,
     Description = DefaultDescription,
 }: {
     methods: TwoFactorMethod[];
     onVerified: () => void;
+    /** Close the surrounding surface (e.g. the step-up modal) when the user
+     * leaves for Settings from the no-methods fallback. */
+    onDismiss?: () => void;
     Title?: TwoFactorHeadingSlot;
     Description?: TwoFactorHeadingSlot;
 }) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     // The account's real enrolled channels are authoritative (the advertised
     // list handed in via the store is only a hint, and the Shopify SSO path
     // has none). This component only ever mounts once there's an active
     // challenge, so the query is unconditionally enabled.
-    const { data: enrolledMethods } = useEnrolledTwoFactorMethods(true);
+    const { data: enrolledMethods, isLoading } =
+        useEnrolledTwoFactorMethods(true);
     const orderedMethods = useMemo(
         () => orderMethods(enrolledMethods ?? methods),
         [enrolledMethods, methods]
@@ -91,6 +98,32 @@ export function TwoFactorChallengePanel({
     const [activeMethod, setActiveMethod] = useState<TwoFactorMethod | null>(
         null
     );
+
+    // No enrolled factor to satisfy the step-up (e.g. a Shopify SSO account
+    // that never set one up): a challenge is impossible, so guide the user to
+    // enroll one in Settings instead of dead-ending on an empty panel.
+    if (!isLoading && orderedMethods.length === 0) {
+        return (
+            <Stack space="m">
+                <Stack space="xs">
+                    <Title>{t("auth.twoFactor.noMethods.title")}</Title>
+                    <Description>
+                        {t("auth.twoFactor.noMethods.description")}
+                    </Description>
+                </Stack>
+                <Button
+                    variant="primary"
+                    width="full"
+                    onClick={() => {
+                        onDismiss?.();
+                        void navigate({ to: "/settings" });
+                    }}
+                >
+                    {t("auth.twoFactor.noMethods.cta")}
+                </Button>
+            </Stack>
+        );
+    }
 
     const resolvedMethod = activeMethod ?? orderedMethods[0] ?? null;
     const alternatives = orderedMethods.filter(

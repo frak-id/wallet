@@ -71,6 +71,11 @@ export default interface Resources {
           "siwe": "Wallet",
           "totp": "Authenticator app"
         },
+        "noMethods": {
+          "cta": "Go to security settings",
+          "description": "This action is protected. Set up two-factor authentication in your settings before continuing.",
+          "title": "Two-factor authentication required"
+        },
         "pendingHint": "Verifying your session…",
         "siwe": {
           "cta": "Sign with wallet",

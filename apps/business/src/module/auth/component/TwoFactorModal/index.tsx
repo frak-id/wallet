@@ -59,6 +59,7 @@ export function TwoFactorModal() {
                 <TwoFactorChallengePanel
                     methods={request.methods}
                     onVerified={resolveVerification}
+                    onDismiss={cancelVerification}
                     Title={DialogTitleSlot}
                     Description={DialogDescriptionSlot}
                 />
