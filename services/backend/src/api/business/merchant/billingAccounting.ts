@@ -1,13 +1,15 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { AuthContext } from "../../../domain/auth";
 import type { MerchantAccountingInfo } from "../../../domain/merchant";
 import {
     MerchantAccountingInfoSchema,
     MerchantContext,
 } from "../../../domain/merchant";
 import { MerchantIdParamSchema } from "../../schemas";
-import { businessSessionContext } from "../middleware/session";
+import {
+    businessSessionContext,
+    isPlatformAdminAuth,
+} from "../middleware/session";
 
 const PartialAccountingInfoSchema = t.Partial(MerchantAccountingInfoSchema);
 
@@ -97,11 +99,9 @@ export const merchantBillingAccountingRoutes = new Elysia({
             // Frak staff) is always allowed through; the field-level check
             // below still restricts non-platform-admin callers to the
             // contact fields only.
-            const isPlatformAdmin =
-                !!businessSession?.wallet &&
-                AuthContext.services.platformAdmin.isPlatformAdmin(
-                    businessSession.wallet
-                );
+            const isPlatformAdmin = businessSession
+                ? await isPlatformAdminAuth(businessSession)
+                : false;
 
             const hasAccess =
                 isPlatformAdmin || (await hasMerchantAccess(merchantId));

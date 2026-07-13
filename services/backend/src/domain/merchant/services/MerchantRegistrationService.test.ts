@@ -6,7 +6,6 @@ import {
 } from "./MerchantRegistrationService";
 
 const ADMIN_WALLET = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
-const OTHER_ADMIN = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" as Address;
 const NON_ADMIN = "0xcccccccccccccccccccccccccccccccccccccccc" as Address;
 const REWARD_TOKEN = "0xdddddddddddddddddddddddddddddddddddddddd" as Address;
 
@@ -37,16 +36,9 @@ function makeService(
         ),
         isValidDomain: vi.fn(() => Promise.resolve(opts.dnsValid ?? true)),
     };
-    const adminRepo = {
-        add: vi.fn((params: Record<string, unknown>) =>
-            Promise.resolve(params as never)
-        ),
-    };
-
     const service = new MerchantRegistrationService(
         merchantRepo as never,
-        dnsRepo as never,
-        adminRepo as never
+        dnsRepo as never
     );
 
     // Stub SIWE verification so tests exercise the registration logic, not
@@ -56,7 +48,7 @@ function makeService(
         wallet: signerWallet,
     });
 
-    return { service, merchantRepo, dnsRepo, adminRepo };
+    return { service, merchantRepo, dnsRepo };
 }
 
 const baseParams = {
@@ -90,7 +82,7 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         const result = await service.register({
             ...baseParams,
             skipDomainValidation: true,
-            platformAdminWallets: [ADMIN_WALLET],
+            isPlatformAdmin: true,
         });
 
         expect(dnsRepo.isValidDomain).not.toHaveBeenCalled();
@@ -108,7 +100,7 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
             service.register({
                 ...baseParams,
                 skipDomainValidation: true,
-                platformAdminWallets: [ADMIN_WALLET],
+                isPlatformAdmin: false,
             })
         ).rejects.toMatchObject({
             status: 400,
@@ -124,7 +116,7 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
 
         await service.register({
             ...baseParams,
-            platformAdminWallets: [ADMIN_WALLET],
+            isPlatformAdmin: true,
         });
 
         expect(dnsRepo.isValidDomain).toHaveBeenCalledTimes(1);
@@ -138,11 +130,34 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         const result = await service.register({
             ...baseParams,
             useFrakBank: true,
-            platformAdminWallets: [ADMIN_WALLET],
+            isPlatformAdmin: true,
         });
 
         expect(result.frakBankLinked).toBe(true);
         expect(result.isPlatformAdmin).toBe(true);
+        const created = merchantRepo.create.mock.calls[0][0];
+        expect(created.bankAddress).toBe(FRAK_SHARED_CAMPAIGN_BANK);
+    });
+
+    it("honors admin powers for a walletless caller flagged by the route (email-based @frak-labs.com admin)", async () => {
+        const { service, dnsRepo, merchantRepo } = makeService({
+            signerWallet: NON_ADMIN,
+        });
+
+        const result = await service.register({
+            ...baseParams,
+            identity: { type: "account", accountId: ACCOUNT_ID },
+            skipDomainValidation: true,
+            useFrakBank: true,
+            // Route resolved the caller as a platform admin via the canonical
+            // check (verified @frak-labs.com email) even though there is no
+            // admin wallet on the request.
+            isPlatformAdmin: true,
+        });
+
+        expect(result.isPlatformAdmin).toBe(true);
+        expect(result.frakBankLinked).toBe(true);
+        expect(dnsRepo.isValidDomain).not.toHaveBeenCalled();
         const created = merchantRepo.create.mock.calls[0][0];
         expect(created.bankAddress).toBe(FRAK_SHARED_CAMPAIGN_BANK);
     });
@@ -155,7 +170,7 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         const result = await service.register({
             ...baseParams,
             useFrakBank: true,
-            platformAdminWallets: [ADMIN_WALLET],
+            isPlatformAdmin: false,
         });
 
         expect(result.frakBankLinked).toBe(false);
@@ -164,35 +179,16 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         expect(created.bankAddress).toBeUndefined();
     });
 
-    it("co-admins the other platform admins onto an admin registration", async () => {
-        const { service, adminRepo } = makeService({
-            signerWallet: ADMIN_WALLET,
-        });
-
-        await service.register({
-            ...baseParams,
-            platformAdminWallets: [ADMIN_WALLET, OTHER_ADMIN],
-        });
-
-        expect(adminRepo.add).toHaveBeenCalledTimes(1);
-        expect(adminRepo.add).toHaveBeenCalledWith({
-            merchantId: "new-merchant-id",
-            identity: { wallet: OTHER_ADMIN },
-            addedBy: ADMIN_WALLET,
-        });
-    });
-
-    it("does not co-admin anyone for a non-admin registration", async () => {
-        const { service, adminRepo } = makeService({
+    it("does not treat a non-flagged registration as admin", async () => {
+        const { service } = makeService({
             signerWallet: NON_ADMIN,
         });
 
-        await service.register({
+        const result = await service.register({
             ...baseParams,
-            platformAdminWallets: [ADMIN_WALLET, OTHER_ADMIN],
         });
 
-        expect(adminRepo.add).not.toHaveBeenCalled();
+        expect(result.isPlatformAdmin).toBe(false);
     });
 
     it("rejects a domain that is already registered", async () => {
@@ -204,7 +200,7 @@ describe("MerchantRegistrationService.register — platform-admin options", () =
         await expect(
             service.register({
                 ...baseParams,
-                platformAdminWallets: [ADMIN_WALLET],
+                isPlatformAdmin: true,
             })
         ).rejects.toMatchObject({
             status: 409,
@@ -267,7 +263,7 @@ describe("MerchantRegistrationService.register — identity paths (§4.10)", () 
         });
     });
 
-    it("walletless path: platform-admin options are ignored (wallet-bound)", async () => {
+    it("walletless path: platform-admin options are ignored when not flagged as admin", async () => {
         const { service, merchantRepo, dnsRepo } = makeService();
 
         const result = await service.register({
@@ -275,7 +271,6 @@ describe("MerchantRegistrationService.register — identity paths (§4.10)", () 
             identity: { type: "account", accountId: ACCOUNT_ID },
             skipDomainValidation: true,
             useFrakBank: true,
-            platformAdminWallets: [ADMIN_WALLET],
         });
 
         expect(result.isPlatformAdmin).toBe(false);
@@ -331,7 +326,6 @@ describe("MerchantRegistrationService.register — Shopify domain bypass (§4.10
             ...baseParams,
             identity: { type: "account", accountId: ACCOUNT_ID },
             verifiedViaShopify: true,
-            platformAdminWallets: [ADMIN_WALLET],
         });
 
         expect(result.isPlatformAdmin).toBe(false);
@@ -410,14 +404,13 @@ describe("MerchantRegistrationService.register — shopify-session identity (§4
         });
     });
 
-    it("ignores platform-admin options (wallet-bound, no wallet here)", async () => {
+    it("ignores platform-admin options when not flagged as admin", async () => {
         const { service, merchantRepo } = makeService();
 
         const result = await service.register({
             ...shopifySessionParams,
             skipDomainValidation: true,
             useFrakBank: true,
-            platformAdminWallets: [ADMIN_WALLET],
         });
 
         expect(result.isPlatformAdmin).toBe(false);

@@ -60,13 +60,4 @@ export class PlatformAdminService {
             .toLowerCase()
             .endsWith(PLATFORM_ADMIN_EMAIL_DOMAIN);
     }
-
-    /**
-     * Returns the configured platform-admin wallets (lowercased). Used during
-     * merchant registration to co-admin the whole Frak team onto a merchant a
-     * platform admin registers.
-     */
-    getAdminWallets(): Address[] {
-        return [...this.getAdminSet()] as Address[];
-    }
 }

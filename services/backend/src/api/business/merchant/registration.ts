@@ -10,7 +10,6 @@ import {
 } from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
-import { AuthContext } from "../../../domain/auth";
 import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
 import { BusinessAuthContext } from "../../../domain/business-auth";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
@@ -20,6 +19,7 @@ import type { DnsProofOwner } from "../../../infrastructure/dns/DnsCheckReposito
 import type { ResolvedBusinessAuth } from "../middleware/resolveBusinessAuth";
 import {
     businessSessionContext,
+    isPlatformAdminAuth,
     StepUpRequired401,
 } from "../middleware/session";
 
@@ -183,10 +183,14 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             }
 
             // The registration service honors the platform-admin options
-            // (skipDomainValidation / useFrakBank) and co-admins the team only
-            // when the SIWE signer is one of these wallets.
-            const platformAdminWallets =
-                AuthContext.services.platformAdmin.getAdminWallets();
+            // (skipDomainValidation / useFrakBank / takeads link). The admin
+            // decision is the canonical one (wallet allow-list OR verified
+            // @frak-labs.com account email), resolved here at the BFF layer and
+            // injected into the merchant domain (which must not import
+            // business-auth to resolve it itself).
+            const isPlatformAdmin = businessSession
+                ? await isPlatformAdminAuth(businessSession)
+                : false;
 
             // §4.10 third DNS bypass: a Shopify SSO session whose proven shop
             // domain matches the registering domain (subdomain-aware) already
@@ -197,7 +201,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 body.domain
             );
 
-            const { merchantId, frakBankLinked, isPlatformAdmin } =
+            const { merchantId, frakBankLinked } =
                 await MerchantContext.services.registration.register({
                     identity,
                     domain: body.domain,
@@ -213,7 +217,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     allowedDomains: body.allowedDomains,
                     skipDomainValidation: body.skipDomainValidation,
                     useFrakBank: body.useFrakBank,
-                    platformAdminWallets,
+                    isPlatformAdmin,
                     verifiedViaShopify,
                 });
 

@@ -11,7 +11,6 @@ import {
     parseClaimedSiweAddress,
     verifySiweSignatureWithStatement,
 } from "../../../utils/siwe";
-import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 
 /**
@@ -61,8 +60,7 @@ export type RegistrationIdentity =
 export class MerchantRegistrationService {
     constructor(
         private readonly merchantRepository: MerchantRepository,
-        private readonly dnsCheckRepository: DnsCheckRepository,
-        private readonly merchantAdminRepository: MerchantAdminRepository
+        private readonly dnsCheckRepository: DnsCheckRepository
     ) {}
 
     async register(params: {
@@ -78,12 +76,16 @@ export class MerchantRegistrationService {
         ownerEmail?: string | null;
         defaultRewardToken: Address;
         allowedDomains?: string[];
-        // Platform-admin options, only honored when the SIWE signer is a
-        // platform admin (membership tested against `platformAdminWallets`):
-        // skip the DNS ownership check and/or link the shared Frak bank.
+        // Platform-admin options, only honored when the caller is a platform
+        // admin: skip the DNS ownership check and/or link the shared Frak bank.
         skipDomainValidation?: boolean;
         useFrakBank?: boolean;
-        platformAdminWallets?: Address[];
+        // Canonical platform-admin decision resolved at the route layer
+        // (`isPlatformAdminAuth`: wallet allow-list OR verified @frak-labs.com
+        // account email). Injected because this domain service must not import
+        // business-auth to resolve the email-based admin itself — that would be
+        // a forbidden cross-domain import.
+        isPlatformAdmin?: boolean;
         // Precomputed at the route layer (business-auth is a separate domain —
         // this service must not import it, per the cross-domain flow rules):
         // does the caller's Shopify SSO session's proven shop domain match
@@ -119,13 +121,9 @@ export class MerchantRegistrationService {
             normalizedDomain
         );
 
-        // Platform-admin powers are wallet-bound (env allow-list).
-        const platformAdminWallets = params.platformAdminWallets ?? [];
-        const isPlatformAdmin =
-            wallet !== null &&
-            platformAdminWallets.some(
-                (admin) => admin.toLowerCase() === wallet.toLowerCase()
-            );
+        // Platform-admin status is the canonical decision resolved by the
+        // route (wallet allow-list OR verified @frak-labs.com account email).
+        const isPlatformAdmin = params.isPlatformAdmin === true;
 
         const existingMerchant =
             await this.merchantRepository.findByDomain(normalizedDomain);
@@ -182,24 +180,6 @@ export class MerchantRegistrationService {
                 allowedDomains: params.allowedDomains,
             }),
         });
-
-        // When a platform admin onboards a merchant, co-admin every other
-        // platform admin onto it so the whole Frak team can manage it.
-        if (isPlatformAdmin && wallet) {
-            const registrarWallet = wallet;
-            const otherAdmins = platformAdminWallets.filter(
-                (admin) => admin.toLowerCase() !== registrarWallet.toLowerCase()
-            );
-            await Promise.all(
-                otherAdmins.map((admin) =>
-                    this.merchantAdminRepository.add({
-                        merchantId: merchant.id,
-                        identity: { wallet: admin },
-                        addedBy: registrarWallet,
-                    })
-                )
-            );
-        }
 
         return {
             merchantId: merchant.id,
