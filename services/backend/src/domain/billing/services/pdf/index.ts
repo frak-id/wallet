@@ -47,8 +47,8 @@ export class BillingPdfService {
             drawMonthlyBillHeader(cursor, dto, bold);
             drawPartyBlocks(cursor, dto, bold);
             drawRewardTable(cursor, dto.monthlyBill, bold, rewardGroups);
-            // The recap sums only the document's primary currency — the same
-            // currency the frozen grossAmount/netAmount are computed in.
+            // The recap bills every reward currency in its own currency; the
+            // document currency is only a fallback label for a no-reward bill.
             drawTvaAndRecap(
                 cursor,
                 dto.monthlyBill,

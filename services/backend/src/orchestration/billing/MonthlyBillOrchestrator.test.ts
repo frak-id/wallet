@@ -408,17 +408,19 @@ describe("MonthlyBillOrchestrator", () => {
     });
 
     describe("multi-currency invoice totals (B9/B13)", () => {
-        it("grossAmount/netAmount include only the primary currency's rewards, excluding other stablecoins and unknown tokens", async () => {
+        it("bills the dominant reward currency and excludes other stablecoins + unknown tokens from the total", async () => {
             const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
-            // Primary currency resolves from `distinctCurrencies` (billing docs)
-            // — "eure" is first, so it's the bill's primary/document currency.
+            // Billing docs lead with "eure", but the invoice currency must
+            // follow the REWARDS, not the deposit currency: usdc is the
+            // dominant reward pot, so the bill is labeled + totalled in usdc.
             const distinctCurrencies = vi.fn().mockResolvedValue(["eure"]);
             const sumSettledByToken = vi
                 .fn()
                 // before
                 .mockResolvedValueOnce([])
-                // in-period: eure (primary, counted) + usdc (other stablecoin,
-                // excluded) + an unknown/non-stablecoin token (excluded)
+                // in-period: usdc (dominant reward => primary, counted) + eure
+                // (smaller stablecoin pot, excluded from the total) + an
+                // unknown/non-stablecoin token (excluded)
                 .mockResolvedValueOnce([
                     { tokenAddress: currentStablecoins.eure, total: "100" },
                     { tokenAddress: currentStablecoins.usdc, total: "999" },
@@ -445,13 +447,47 @@ describe("MonthlyBillOrchestrator", () => {
             );
 
             const createArg = create.mock.calls[0][0];
-            expect(createArg.currency).toBe("eure");
-            // rewardBaseAmount = 100 (eure only); totalHt = 100 * 1.20 = 120;
-            // non-FR merchant (no accountingInfo) => vatApplicable false =>
-            // totalTtc = totalHt = 120. The 999 (usdc) and 777 (unknown token)
-            // must NOT be folded in.
-            expect(createArg.netAmount).toBe("120.000000000000000000");
-            expect(createArg.grossAmount).toBe("120.000000000000000000");
+            expect(createArg.currency).toBe("usdc");
+            // rewardBaseAmount = 999 (usdc only); totalHt = 999 * 1.20 =
+            // 1198.8; non-FR merchant (no accountingInfo) => vatApplicable
+            // false => totalTtc = totalHt. The 100 (eure) and 777 (unknown
+            // token) must NOT be folded in.
+            expect(createArg.netAmount).toBe("1198.800000000000000000");
+            expect(createArg.grossAmount).toBe("1198.800000000000000000");
+        });
+
+        it("labels the invoice in the reward currency even when it differs from the deposit currency (no more 0-total bills)", async () => {
+            // Exact reported regression: a merchant whose deposits are in eure
+            // but whose rewards are paid in usdc used to get an invoice
+            // labeled "eure" with a 0 total (the eure reward filter matched
+            // nothing). The bill must now be labeled + totalled in usdc.
+            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
+            const distinctCurrencies = vi.fn().mockResolvedValue(["eure"]);
+            const sumSettledByToken = vi
+                .fn()
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([
+                    { tokenAddress: currentStablecoins.usdc, total: "250" },
+                ]);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    distinctCurrencies,
+                    create,
+                },
+                assetLogs: { sumSettledByToken },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            const createArg = create.mock.calls[0][0];
+            expect(createArg.currency).toBe("usdc");
+            expect(createArg.grossAmount).toBe("300.000000000000000000");
         });
 
         it("regeneratePdf pins the primary currency to the row's frozen currency column, not a re-derived currencies[0]", async () => {

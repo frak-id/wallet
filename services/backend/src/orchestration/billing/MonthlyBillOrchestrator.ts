@@ -490,8 +490,15 @@ export class MonthlyBillOrchestrator {
         // ledgers/reward-table groups; non-stablecoin tokens are annex-only
         // (same exclusion as `resolveLedgerCurrencies`). Computed from the
         // already-fetched grouped SQL sums — no per-row data needed.
+        //
+        // The primary currency is derived from the REWARDS being billed, not
+        // `currencies[0]` (which is dominated by deposit/withdraw currencies):
+        // a merchant funding their bank in one stablecoin while rewarding in
+        // another would otherwise get an invoice labeled in the deposit
+        // currency whose reward filter matches nothing — a permanent 0 total.
         const primaryCurrency =
-            pinnedPrimaryCurrency ?? currencies[0] ?? "eure";
+            pinnedPrimaryCurrency ??
+            this.resolvePrimaryCurrency(rewardedInPeriodRows, currencies);
         const rewardBaseAmount = rewardedInPeriodRows
             .filter(
                 (row) =>
@@ -614,6 +621,46 @@ export class MonthlyBillOrchestrator {
             );
 
         return [...new Set([...billingCurrencies, ...rewardCurrencies])];
+    }
+
+    /**
+     * The invoice/primary currency for the monthly bill. Because the invoice
+     * total only sums rewards in this one currency (see `rewardBaseAmount`),
+     * it MUST be the currency the period's rewards are actually paid in —
+     * deriving it from `currencies[0]` (deposit/withdraw currencies, which may
+     * carry no rewards) is what froze `0` onto bills for merchants whose
+     * reward currency differed from their deposit currency.
+     *
+     * Picks the stablecoin with the largest in-period settled-reward sum, with
+     * an alphabetical tie-break so the choice is deterministic across query
+     * plans. Falls back to the ledger currency set then `eure` only when the
+     * period had no stablecoin rewards at all — such a bill's total is
+     * legitimately 0 whatever currency it wears.
+     */
+    private resolvePrimaryCurrency(
+        rewardedInPeriodRows: Array<{ tokenAddress: Address; total: string }>,
+        ledgerCurrencies: Stablecoin[]
+    ): Stablecoin {
+        const totalsByCurrency = new Map<Stablecoin, Decimal>();
+        for (const row of rewardedInPeriodRows) {
+            const currency = stablecoinForTokenAddress(row.tokenAddress);
+            if (!currency) continue;
+            const previous = totalsByCurrency.get(currency) ?? new Decimal(0);
+            totalsByCurrency.set(currency, previous.plus(row.total));
+        }
+
+        let best: { currency: Stablecoin; total: Decimal } | undefined;
+        for (const [currency, total] of totalsByCurrency) {
+            if (
+                !best ||
+                total.greaterThan(best.total) ||
+                (total.equals(best.total) && currency < best.currency)
+            ) {
+                best = { currency, total };
+            }
+        }
+
+        return best?.currency ?? ledgerCurrencies[0] ?? "eure";
     }
 
     private buildCurrencyLedger(

@@ -140,37 +140,81 @@ export function groupRewards(
         .sort((a, b) => b.totalHt.comparedTo(a.totalHt));
 }
 
+/** One currency's billed totals in the recap — see `recapTotalsByCurrency`. */
+type RecapCurrencyTotals = {
+    currency: string;
+    totalHt: Decimal;
+    totalTva: Decimal;
+    totalTtc: Decimal;
+};
+
+/**
+ * Folds the reward `groups` into per-currency billed totals (Total HT / TVA /
+ * TTC), sorted by Total HT descending so the biggest currency leads. Every
+ * reward currency is billed in ITS OWN currency — no cross-currency sum (which
+ * would be meaningless on a legal document) and, crucially, nothing dropped:
+ * a merchant who rewarded in several stablecoins is billed for all of them.
+ * A non-FR merchant has a 0% rate (reverse-charge), so TVA is 0 and TTC == HT.
+ * When there were no rewards, a single zero row in `fallbackCurrency` keeps the
+ * recap non-empty (matching the document's labeled currency).
+ */
+export function recapTotalsByCurrency(
+    groups: RewardGroup[],
+    vatApplicable: boolean,
+    fallbackCurrency: string
+): RecapCurrencyTotals[] {
+    const vatRate = vatApplicable ? VAT_RATE : new Decimal(0);
+    const htByCurrency = new Map<string, Decimal>();
+    for (const group of groups) {
+        htByCurrency.set(
+            group.currency,
+            (htByCurrency.get(group.currency) ?? new Decimal(0)).plus(
+                group.totalHt
+            )
+        );
+    }
+    if (htByCurrency.size === 0) {
+        htByCurrency.set(fallbackCurrency, new Decimal(0));
+    }
+    return [...htByCurrency.entries()]
+        .map(([currency, totalHt]) => {
+            const totalTva = totalHt.mul(vatRate);
+            return {
+                currency,
+                totalHt,
+                totalTva,
+                totalTtc: totalHt.plus(totalTva),
+            };
+        })
+        .sort((a, b) => b.totalHt.comparedTo(a.totalHt));
+}
+
 /**
  * Two side-by-side blocks under the reward table: `Détails TVA` (the applied
- * rate + its amount) on the left, `Récapitulatif` (Total HT / Total TVA /
- * Total TTC) on the right. Totals sum ONLY the table lines in the bill's
- * primary/document currency (`recapCurrency`) — a cross-currency sum on a
- * document labeled with one currency would be meaningless on a legal
- * document; other-currency groups stay visible in the reward table but are
- * excluded here (they match the frozen `grossAmount`/`netAmount`, which are
- * also primary-currency-only). TVA is the applied rate of that, TTC is
- * HT + TVA. A non-FR merchant has a 0% rate (reverse-charge), so Total TVA
- * is 0 and TTC === HT. `groups` is computed once by the render entry point.
+ * rate + its per-currency amount) on the left, `Récapitulatif` (Total HT /
+ * Total TVA / Total TTC) on the right. Both list EVERY reward currency, each
+ * billed in its own currency (see `recapTotalsByCurrency`) — the whole point
+ * being that a bill shows all the rewards distributed, not only those in the
+ * deposit currency. `fallbackCurrency` (the document currency) is used only
+ * when the period had no rewards, to keep a labeled zero row. `groups` is
+ * computed once by the render entry point.
  */
 export function drawTvaAndRecap(
     cursor: PageCursor,
     monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
     bold: PDFFont,
     groups: RewardGroup[],
-    recapCurrency: string
+    fallbackCurrency: string
 ): void {
-    const currency = recapCurrency;
+    const perCurrency = recapTotalsByCurrency(
+        groups,
+        monthlyBill.vatApplicable,
+        fallbackCurrency
+    );
 
-    const vatRate = monthlyBill.vatApplicable ? VAT_RATE : new Decimal(0);
-    let totalHt = new Decimal(0);
-    for (const group of groups) {
-        if (group.currency !== currency) continue;
-        totalHt = totalHt.plus(group.totalHt);
-    }
-    const totalTva = totalHt.mul(vatRate);
-    const totalTtc = totalHt.plus(totalTva);
-
-    cursor.ensureSpace(70);
+    // ~28pt per currency block on the right + headers; grow with the count so
+    // a multi-currency recap doesn't collide with the next section.
+    cursor.ensureSpace(50 + perCurrency.length * 20);
     const topY = cursor.y;
     const rightX = PAGE_WIDTH / 2 + 10;
 
@@ -183,29 +227,34 @@ export function drawTvaAndRecap(
         { size: 9 }
     );
     cursor.newLine(13);
-    cursor.text(`Montant : ${formatMoney(totalTva.toFixed(2), currency)}`, {
-        size: 9,
-    });
+    for (const { currency, totalTva } of perCurrency) {
+        cursor.text(`Montant : ${formatMoney(totalTva.toFixed(2), currency)}`, {
+            size: 9,
+        });
+        cursor.newLine(13);
+    }
     const leftEndY = cursor.y;
 
     cursor.y = topY;
     cursor.text("Récapitulatif", { x: rightX, size: 12, useFont: bold });
     cursor.newLine(16);
-    cursor.text(`Total HT : ${formatMoney(totalHt.toFixed(2), currency)}`, {
-        x: rightX,
-        size: 9,
-    });
-    cursor.newLine(13);
-    cursor.text(`Total TVA : ${formatMoney(totalTva.toFixed(2), currency)}`, {
-        x: rightX,
-        size: 9,
-    });
-    cursor.newLine(13);
-    cursor.text(`Total TTC : ${formatMoney(totalTtc.toFixed(2), currency)}`, {
-        x: rightX,
-        size: 9,
-        useFont: bold,
-    });
+    for (const { totalHt, totalTva, totalTtc, currency } of perCurrency) {
+        cursor.text(`Total HT : ${formatMoney(totalHt.toFixed(2), currency)}`, {
+            x: rightX,
+            size: 9,
+        });
+        cursor.newLine(13);
+        cursor.text(
+            `Total TVA : ${formatMoney(totalTva.toFixed(2), currency)}`,
+            { x: rightX, size: 9 }
+        );
+        cursor.newLine(13);
+        cursor.text(
+            `Total TTC : ${formatMoney(totalTtc.toFixed(2), currency)}`,
+            { x: rightX, size: 9, useFont: bold }
+        );
+        cursor.newLine(perCurrency.length > 1 ? 18 : 13);
+    }
     const rightEndY = cursor.y;
 
     cursor.y = Math.min(leftEndY, rightEndY) - 26;

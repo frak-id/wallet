@@ -5,7 +5,11 @@ import {
     BillingPdfService,
     sanitizeForWinAnsi,
 } from "./index";
-import { groupRewards, type RewardGroup } from "./MonthlyBillDocument";
+import {
+    groupRewards,
+    type RewardGroup,
+    recapTotalsByCurrency,
+} from "./MonthlyBillDocument";
 
 const depositDto: BillingPdfDocumentDto = {
     kind: "deposit",
@@ -199,10 +203,10 @@ describe("BillingPdfService", () => {
         expect(header).toBe("%PDF-");
     });
 
-    it("renders mixed-currency annex rows without throwing, recap restricted to the document currency (B9)", async () => {
-        // eure matches dto.currency (the recap currency); usdc is a second
-        // reward group that must stay out of the recap total but still
-        // appear as its own reward-table line.
+    it("renders mixed-currency annex rows without throwing, billing every currency in the recap", async () => {
+        // eure matches dto.currency; usdc is a second reward group that must
+        // now ALSO appear in the recap (billed in usdc), not only in the
+        // reward table — the bill shows all rewards, not just deposit-currency.
         const bytes = await service.render({
             ...monthlyBillDto,
             currency: "eure",
@@ -258,13 +262,50 @@ describe("groupRewards currency grouping (B9 recap input)", () => {
         const usdcGroup = groups.find((g) => g.currency === "usdc");
         expect(usdcGroup?.totalHt.toFixed(2)).toBe("6.00");
 
-        // The recap sums only the primary-currency group(s) — same filter
-        // `drawTvaAndRecap` applies internally.
-        const recapCurrency = "eure";
-        const recapTotalHt = groups
-            .filter((g) => g.currency === recapCurrency)
-            .reduce((acc, g) => acc.plus(g.totalHt), new Decimal(0));
-        expect(recapTotalHt.toFixed(2)).toBe("12.00");
+        // The recap now bills EVERY currency (each in its own currency),
+        // not only the primary/deposit one — same fold `drawTvaAndRecap`
+        // applies internally via `recapTotalsByCurrency`.
+        const perCurrency = recapTotalsByCurrency(groups, false, "eure");
+        expect(
+            perCurrency.map((r) => [r.currency, r.totalHt.toFixed(2)]).sort()
+        ).toEqual([
+            ["eure", "12.00"],
+            ["usdc", "6.00"],
+        ]);
+    });
+
+    it("recapTotalsByCurrency applies VAT per currency and sorts by Total HT desc", () => {
+        const groups: RewardGroup[] = [
+            {
+                currency: "eure",
+                qty: 1,
+                unitHt: new Decimal("10"),
+                totalHt: new Decimal("10"),
+                label: "Récompense 10,00 €",
+            },
+            {
+                currency: "usdc",
+                qty: 1,
+                unitHt: new Decimal("40"),
+                totalHt: new Decimal("40"),
+                label: "Récompense 40,00 $",
+            },
+        ];
+
+        const perCurrency = recapTotalsByCurrency(groups, true, "eure");
+
+        // usdc (40) leads eure (10); 20% VAT applied per currency.
+        expect(perCurrency.map((r) => r.currency)).toEqual(["usdc", "eure"]);
+        expect(perCurrency[0].totalTva.toFixed(2)).toBe("8.00");
+        expect(perCurrency[0].totalTtc.toFixed(2)).toBe("48.00");
+        expect(perCurrency[1].totalTtc.toFixed(2)).toBe("12.00");
+    });
+
+    it("recapTotalsByCurrency falls back to a single zero row when there are no rewards", () => {
+        const perCurrency = recapTotalsByCurrency([], false, "gbpe");
+        expect(perCurrency).toHaveLength(1);
+        expect(perCurrency[0].currency).toBe("gbpe");
+        expect(perCurrency[0].totalTtc.toFixed(2)).toBe("0.00");
     });
 });
 
