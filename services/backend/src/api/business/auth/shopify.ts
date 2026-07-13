@@ -26,9 +26,14 @@ const STATE_COOKIE_TTL_SEC = 10 * 60;
  * callback time — the backend already does this everywhere else (SIWE
  * origin checks) rather than hardcoding a public-URL env — so the two legs
  * always agree with each other regardless of which backend host served them.
+ *
+ * Scheme is forced to `https`: the GCP load balancer terminates TLS and
+ * forwards to the backend over plain HTTP, so `request.url` reads `http`,
+ * but Shopify's registered `redirect_urls` are all `https` and matched
+ * exactly — an `http` redirect_uri fails the whitelist check.
  */
 function callbackUrl(requestUrl: string): string {
-    return `${new URL(requestUrl).origin}/business/auth/shopify/callback`;
+    return `https://${new URL(requestUrl).host}/business/auth/shopify/callback`;
 }
 
 function loginRedirectUrl(token: string): string {
