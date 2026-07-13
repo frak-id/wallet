@@ -41,36 +41,36 @@ export function formatReference(
  */
 export class BillingDocumentRepository {
     /**
-     * Atomically allocates the next `{PREFIX}-{year}-{NNNN}` reference for a
-     * merchant+kind+year via `INSERT ... ON CONFLICT DO UPDATE ... RETURNING`
-     * against `billing_document_counters`. The row-level lock taken by the
-     * upsert serializes concurrent allocations — no `SELECT MAX` race, and no
-     * per-year Postgres `SEQUENCE` (which can't reset per merchant+kind+year
-     * without runtime DDL — see schema.ts comment).
+     * Atomically allocates the next `{PREFIX}-{year}-{NNNN}` reference from the
+     * global per-`(kind, year)` sequence via `INSERT ... ON CONFLICT DO UPDATE
+     * ... RETURNING` against `billing_document_counters`. The sequence is
+     * global (not per-merchant) so Frak's issued numbering stays continuous
+     * per issuer for VAT (Art. 242 nonies A — see schema.ts comment). The
+     * row-level lock taken by the upsert serializes concurrent allocations —
+     * no `SELECT MAX` race.
      *
      * Pass the enclosing `tx` so allocation commits atomically with the
      * document insert (`create` below) — a failed insert after a successful
-     * bump would otherwise burn a reference number (gap; acceptable) but,
-     * worse, could hand out the same number to a retried create (duplicate;
-     * not acceptable without the transaction).
+     * bump would otherwise burn a reference number (gap) but, worse, could
+     * hand out the same number to a retried create (duplicate; not acceptable
+     * without the transaction).
      */
     async nextReference(
-        merchantId: string,
         kind: BillingDocumentKind,
         year: number,
         tx: PgRunner = db
     ): Promise<string> {
         const result = await tx.execute<{ last_value: number }>(sql`
-            INSERT INTO billing_document_counters (merchant_id, kind, year, last_value)
-            VALUES (${merchantId}::uuid, ${kind}, ${year}, 1)
-            ON CONFLICT (merchant_id, kind, year)
+            INSERT INTO billing_document_counters (kind, year, last_value)
+            VALUES (${kind}, ${year}, 1)
+            ON CONFLICT (kind, year)
             DO UPDATE SET last_value = billing_document_counters.last_value + 1
             RETURNING last_value
         `);
         const row = [...result][0];
         if (!row) {
             throw new Error(
-                `Failed to allocate billing reference for merchant=${merchantId} kind=${kind} year=${year}`
+                `Failed to allocate billing reference for kind=${kind} year=${year}`
             );
         }
         return formatReference(kind, year, row.last_value);
@@ -125,8 +125,8 @@ export class BillingDocumentRepository {
     /**
      * Allocates the reference and inserts the document atomically (same `tx`).
      * `documentDate`'s UTC year drives the reference counter bucket. On the
-     * rare unique-constraint collision on `(merchant_id, reference)` (e.g. a
-     * concurrent transaction interleaving on a replica), retries once with a
+     * rare unique-constraint collision on `reference` (e.g. a concurrent
+     * transaction interleaving on a replica), retries once with a
      * freshly-allocated reference.
      */
     async create(
@@ -142,7 +142,6 @@ export class BillingDocumentRepository {
             try {
                 return await db.transaction(async (tx) => {
                     const reference = await this.nextReference(
-                        document.merchantId,
                         document.kind,
                         year,
                         tx
