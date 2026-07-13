@@ -36,8 +36,17 @@ function callbackUrl(requestUrl: string): string {
     return `https://${new URL(requestUrl).host}/business/auth/shopify/callback`;
 }
 
-function loginRedirectUrl(token: string): string {
-    return `${process.env.BUSINESS_URL}/login/2fa#token=${encodeURIComponent(token)}`;
+/**
+ * Land on `/login/2fa` carrying the pending session token in the URL hash
+ * (never the query string, so the opaque token never hits server logs /
+ * Referer headers). `verified` marks a session that already cleared 2FA
+ * server-side (the no-enrolled-method Shopify SSO case, below) so the page
+ * skips the challenge and goes straight to the dashboard.
+ */
+function loginRedirectUrl(token: string, verified: boolean): string {
+    const hash = new URLSearchParams({ token });
+    if (verified) hash.set("verified", "1");
+    return `${process.env.BUSINESS_URL}/login/2fa#${hash.toString()}`;
 }
 
 function errorRedirectUrl(reason: string): string {
@@ -129,19 +138,33 @@ export const shopifyAuthRoutes = new Elysia({ prefix: "/shopify" })
                     }
                 );
 
-            // Pending session: 2FA required before it can do anything but
-            // complete 2FA / log out (§4.8) — Shopify SSO is not exempt,
-            // only the embedded App Bridge flow is (§4.11).
+            // Shopify SSO is not exempt from 2FA (§4.8, unlike the embedded
+            // App Bridge flow §4.11) — but 2FA needs an enrolled factor to
+            // challenge. When the account has none (email dropped on a
+            // collision, no TOTP, no wallet), the Shopify OAuth grant is the
+            // sole proof of identity and stands on its own: mint a verified
+            // session rather than dead-ending on an unanswerable challenge.
+            // Sensitive actions still gate on their own step-up bootstrap.
+            const methods =
+                await BusinessAuthContext.services.account.getEnabledTwoFactorMethods(
+                    account.id
+                );
+            const twoFactorVerified = methods.length === 0;
+
             const { token } = await BusinessAuthContext.services.session.create(
                 {
                     accountId: account.id,
                     authMethod: "shopify",
+                    twoFactorVerified,
                     ip: resolveClientIp({ request, headers, server }),
                     userAgent: request.headers.get("user-agent") ?? undefined,
                 }
             );
 
-            return Response.redirect(loginRedirectUrl(token), 302);
+            return Response.redirect(
+                loginRedirectUrl(token, twoFactorVerified),
+                302
+            );
         },
         {
             query: t.Object({

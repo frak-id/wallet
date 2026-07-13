@@ -59,7 +59,7 @@ export function PendingTwoFactor() {
         started.current = true;
 
         const methodsFromPasswordLogin = consumePendingLoginMethods();
-        adoptHashTokenIfPresent();
+        const { alreadyVerified } = adoptHashTokenIfPresent();
 
         const token = useAuthStore.getState().token;
         if (!token) {
@@ -67,15 +67,23 @@ export function PendingTwoFactor() {
             return;
         }
 
-        void resolveTwoFactor(methodsFromPasswordLogin);
+        void resolveTwoFactor(methodsFromPasswordLogin, alreadyVerified);
 
-        async function resolveTwoFactor(hashMethods: TwoFactorMethod[] | null) {
-            const methods = hashMethods ?? SHOPIFY_FALLBACK_METHODS;
-            const verified = await requestVerification(methods, "inline");
-            if (!verified) {
-                useAuthStore.getState().clearAuth();
-                navigate({ to: "/login" });
-                return;
+        async function resolveTwoFactor(
+            hashMethods: TwoFactorMethod[] | null,
+            skipChallenge: boolean
+        ) {
+            // Shopify SSO with no enrolled 2FA method arrives already verified
+            // server-side (OAuth was the sole factor) — go straight to session
+            // completion instead of showing an unanswerable challenge.
+            if (!skipChallenge) {
+                const methods = hashMethods ?? SHOPIFY_FALLBACK_METHODS;
+                const verified = await requestVerification(methods, "inline");
+                if (!verified) {
+                    useAuthStore.getState().clearAuth();
+                    navigate({ to: "/login" });
+                    return;
+                }
             }
 
             try {
@@ -139,11 +147,19 @@ export function PendingTwoFactor() {
  * never leaves the browser). Adopts it as a pending session before anything
  * else runs; a no-op when a password login already populated the store.
  */
-function adoptHashTokenIfPresent(): void {
+function adoptHashTokenIfPresent(): { alreadyVerified: boolean } {
     const hash = window.location.hash;
-    if (!hash.startsWith("#token=")) return;
+    if (!hash.startsWith("#") || !hash.includes("token=")) {
+        return { alreadyVerified: false };
+    }
 
-    const token = decodeURIComponent(hash.slice("#token=".length));
+    const params = new URLSearchParams(hash.slice(1));
+    const token = params.get("token");
+    if (!token) return { alreadyVerified: false };
+    // `verified=1` marks a Shopify SSO session that already cleared 2FA
+    // server-side (no enrolled factor to challenge) — adopt it as a full
+    // session so the effect skips straight to completion.
+    const alreadyVerified = params.get("verified") === "1";
     window.history.replaceState(null, "", window.location.pathname);
 
     useAuthStore.getState().setAuth({
@@ -153,6 +169,8 @@ function adoptHashTokenIfPresent(): void {
         // (`useCompletePendingSession`); a short placeholder just keeps
         // `isAuthenticated()` conservatively false until then.
         expiresAt: Date.now() + 5 * 60 * 1000,
-        pending2fa: true,
+        pending2fa: !alreadyVerified,
     });
+
+    return { alreadyVerified };
 }
