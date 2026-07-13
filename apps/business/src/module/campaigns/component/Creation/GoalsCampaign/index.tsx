@@ -82,6 +82,7 @@ export function GoalsCampaign() {
             isPending={saveCampaign.isPending}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(draft)}
+            hasUnsavedChanges={form.formState.isDirty}
         >
             <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                 <Card radius="m">

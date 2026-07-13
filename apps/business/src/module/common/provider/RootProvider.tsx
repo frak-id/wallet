@@ -3,7 +3,6 @@ import {
     FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
     PersistQueryClientProvider,
@@ -14,19 +13,13 @@ import { type PropsWithChildren, useEffect } from "react";
 import { frakWalletSdkConfig } from "@/config/frakWallet";
 import { TwoFactorModal } from "@/module/auth/component/TwoFactorModal";
 import { openPanel } from "../utils/openPanel";
+import { queryClient } from "./queryClient";
 
 /**
- * The query client that will be used by tanstack/react-query
- * Exported for use in TanStack Router loaders
+ * Re-exported for use in TanStack Router loaders and existing importers.
+ * @see ./queryClient
  */
-export const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            gcTime: Number.POSITIVE_INFINITY,
-            staleTime: 60 * 1000, // 1 minute
-        },
-    },
-});
+export { queryClient };
 
 /**
  * The storage persister to cache our query data's

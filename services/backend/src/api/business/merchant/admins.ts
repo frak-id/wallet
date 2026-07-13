@@ -89,7 +89,6 @@ function sendInvitation(params: {
             to: params.account.email,
             subject,
             html,
-            from: process.env.RESEND_SECURITY_FROM_EMAIL,
         });
     })().catch((error) => {
         log.error(

@@ -59,6 +59,7 @@ export function NewCampaign() {
             isPending={saveCampaign.isPending}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(draft)}
+            hasUnsavedChanges={form.formState.isDirty}
         >
             <Form {...form}>
                 <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>

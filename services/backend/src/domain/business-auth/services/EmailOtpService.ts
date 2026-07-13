@@ -147,7 +147,6 @@ export class EmailOtpService {
                 to: params.email,
                 subject,
                 html,
-                from: process.env.RESEND_SECURITY_FROM_EMAIL,
             });
         } catch (err) {
             log.error(

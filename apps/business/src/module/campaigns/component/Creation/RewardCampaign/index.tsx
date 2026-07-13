@@ -55,6 +55,7 @@ import {
     isRewardFormValid,
     type RewardFormValues,
     type RewardModel,
+    recalcCpaFromSplit,
     recalcSplitOnCpaChange,
     recommendedSplit,
     rewardFormToDraft,
@@ -178,6 +179,8 @@ type StepperFieldProps = {
     allowZero?: boolean;
     /** Fill the field with the error surface when invalid. */
     error?: boolean;
+    /** Native input `step` (e.g. `0.01` to allow 2-decimal entry). */
+    step?: number | string;
 };
 
 /** A numeric field with a double-chevron stepper and a trailing unit. */
@@ -192,12 +195,14 @@ function StepperField({
     tone = "muted",
     allowZero = false,
     error,
+    step,
 }: StepperFieldProps) {
     return (
         <InputNumber
             variant="bare"
             tone={tone}
             error={error}
+            step={step}
             aria-label={label ? undefined : ariaLabel}
             label={label}
             hint={hint}
@@ -334,6 +339,8 @@ export function RecipientBox({
     placeholder,
     hint,
     error,
+    step,
+    onChangeExtra,
 }: {
     control: Control<RewardFormValues>;
     name:
@@ -348,6 +355,10 @@ export function RecipientBox({
     hint?: string;
     /** Tint the input red when the split is invalid. */
     error?: boolean;
+    /** Native input `step` (e.g. `0.01` to allow 2-decimal entry). */
+    step?: number | string;
+    /** Runs after the field update (e.g. to re-derive the Target CPA). */
+    onChangeExtra?: (next: number | "") => void;
 }) {
     return (
         <div className={styles.recipientBox}>
@@ -356,10 +367,17 @@ export function RecipientBox({
                 name={name}
                 render={({ field }) => (
                     <StepperField
-                        field={field}
+                        field={{
+                            ...field,
+                            onChange: (next) => {
+                                field.onChange(next);
+                                onChangeExtra?.(next as number | "");
+                            },
+                        }}
                         unit={unit}
                         tone="elevated"
                         error={error}
+                        step={step}
                         placeholder={placeholder}
                         label={label}
                         hint={hint}
@@ -434,6 +452,14 @@ export function CpaReveal({
         setValue(refName, reco.referee, { shouldValidate: true });
     }
 
+    // Editing a recipient reward makes the split the source of truth: re-derive
+    // the Target CPA (pool ÷ rewards-share, to the cent) so the two stay in sync.
+    function syncCpaFromSplit(nextAmbassador: number, nextReferee: number) {
+        setValue(cpaName, recalcCpaFromSplit(nextAmbassador, nextReferee), {
+            shouldValidate: true,
+        });
+    }
+
     return (
         <Stack space="m">
             <RevealHeader />
@@ -469,6 +495,7 @@ export function CpaReveal({
                             },
                         }}
                         unit={unit}
+                        step={0.01}
                         placeholder={cpaPlaceholder}
                         label={cpaLabel}
                         hint={t("campaigns.create.reward.cpa.hint")}
@@ -501,8 +528,12 @@ export function CpaReveal({
                             "campaigns.create.reward.recipient.ambassadorReward"
                         )}
                         unit={unit}
+                        step={0.01}
                         placeholder={ambPlaceholder}
                         error={splitMismatch}
+                        onChangeExtra={(next) =>
+                            syncCpaFromSplit(num(next), referee)
+                        }
                         hint={
                             hintWhenEmpty || ambassador > 0
                                 ? recipientHint(poolPercent(ambassador))
@@ -516,8 +547,12 @@ export function CpaReveal({
                             "campaigns.create.reward.recipient.refereeReward"
                         )}
                         unit={unit}
+                        step={0.01}
                         placeholder={refPlaceholder}
                         error={splitMismatch}
+                        onChangeExtra={(next) =>
+                            syncCpaFromSplit(ambassador, num(next))
+                        }
                         hint={
                             hintWhenEmpty || referee > 0
                                 ? recipientHint(poolPercent(referee))
@@ -665,6 +700,7 @@ function TierCell({
     tone = "muted",
     error,
     stepper = false,
+    step,
     onChangeExtra,
 }: {
     control: Control<RewardFormValues>;
@@ -674,6 +710,8 @@ function TierCell({
     tone?: "muted" | "elevated";
     error?: boolean;
     stepper?: boolean;
+    /** Native input `step` (e.g. `0.01` to allow 2-decimal entry). */
+    step?: number | string;
     /** Runs after the field update (e.g. the CPA cell re-recommends the split). */
     onChangeExtra?: (next: number | "") => void;
 }) {
@@ -692,6 +730,7 @@ function TierCell({
                         variant="bare"
                         tone={tone}
                         error={error}
+                        step={step}
                         classNameWrapper={styles.inputWrapper}
                         placeholder={placeholder}
                         rightSection={
@@ -777,6 +816,7 @@ function TierCard({
     cpaError,
     onRemove,
     onCpaChange,
+    onRewardChange,
 }: {
     control: Control<RewardFormValues>;
     index: number;
@@ -788,6 +828,11 @@ function TierCard({
     onRemove: () => void;
     /** Re-recommends this tier's split when its Target CPA changes. */
     onCpaChange?: (next: number | "") => void;
+    /** Re-derives this tier's Target CPA when a recipient reward changes. */
+    onRewardChange?: (
+        recipient: "ambassador" | "referee",
+        next: number | ""
+    ) => void;
 }) {
     const { t } = useTranslation();
     const glyph = useCurrencyGlyph();
@@ -855,6 +900,7 @@ function TierCard({
                         unit={unit}
                         tone="elevated"
                         stepper
+                        step={0.01}
                         error={cpaError}
                         onChangeExtra={onCpaChange}
                         placeholder={t(
@@ -887,6 +933,10 @@ function TierCard({
                         name={`ambassadorTiers.${index}.reward`}
                         unit={unit}
                         stepper
+                        step={0.01}
+                        onChangeExtra={(next) =>
+                            onRewardChange?.("ambassador", next)
+                        }
                         placeholder={t(
                             "campaigns.create.reward.tiered.rewardPlaceholder"
                         )}
@@ -902,6 +952,10 @@ function TierCard({
                         name={`refereeTiers.${index}.reward`}
                         unit={unit}
                         stepper
+                        step={0.01}
+                        onChangeExtra={(next) =>
+                            onRewardChange?.("referee", next)
+                        }
                         placeholder={t(
                             "campaigns.create.reward.tiered.rewardPlaceholder"
                         )}
@@ -999,6 +1053,28 @@ function TieredReveal({
             shouldDirty: true,
         });
     }
+    // Reverse of `handleCpaChange`: editing a recipient reward makes the split
+    // the source of truth, so re-derive that tier's Target CPA (pool ÷
+    // rewards-share, to the cent) — mirroring the Fixed/% reveal.
+    function handleRewardChange(
+        index: number,
+        recipient: "ambassador" | "referee",
+        next: number | ""
+    ) {
+        const ambassador =
+            recipient === "ambassador"
+                ? Number(next) || 0
+                : Number(ambTiers[index]?.reward) || 0;
+        const referee =
+            recipient === "referee"
+                ? Number(next) || 0
+                : Number(refTiers[index]?.reward) || 0;
+        setValue(
+            `globalCpaTiers.${index}.cpa`,
+            recalcCpaFromSplit(ambassador, referee),
+            { shouldValidate: true, shouldDirty: true }
+        );
+    }
     // Fill the recommended 80/20 split per tier; the distribution bar always
     // shows that ratio, but the amounts stay the user's to override. Written via
     // `setValue` (not the field array's `replace`) so it reaches the recipient
@@ -1043,6 +1119,9 @@ function TieredReveal({
                             cpaError={errors.cpa}
                             onRemove={() => removeTier(index)}
                             onCpaChange={(next) => handleCpaChange(index, next)}
+                            onRewardChange={(recipient, next) =>
+                                handleRewardChange(index, recipient, next)
+                            }
                         />
                         <div className={styles.tierDistribution}>
                             <DistributionBar
@@ -1210,6 +1289,7 @@ export function RewardCampaign() {
                 isPending={saveCampaign.isPending}
                 onSaveDraft={handleSaveDraft}
                 onClose={() => form.reset(defaultValues)}
+                hasUnsavedChanges={form.formState.isDirty}
             >
                 <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                     <Stack space="l">

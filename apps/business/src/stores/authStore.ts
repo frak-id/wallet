@@ -1,6 +1,7 @@
 import type { Address } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { queryClient } from "@/module/common/provider/queryClient";
 import { pushCreationStore } from "@/stores/pushCreationStore";
 
 export type BusinessAuthMethod = "siwe" | "password" | "shopify";
@@ -75,6 +76,12 @@ export const useAuthStore = create<AuthState>()(
                 // filters) are merchant-scoped and access-checked by
                 // the layout loader, so they stay put for now.
                 pushCreationStore.getState().clearForm();
+                // Drop every cached query so the next (or unauthenticated)
+                // viewer can't read the previous session's data — covers both
+                // an explicit logout and the 401 auto-logout on an expired
+                // token. `clear()` also prompts the persister to flush the
+                // now-empty cache back to storage.
+                queryClient.clear();
             },
 
             isAuthenticated: () => {

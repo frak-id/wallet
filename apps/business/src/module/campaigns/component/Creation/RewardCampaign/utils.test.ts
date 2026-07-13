@@ -5,6 +5,7 @@ import {
     draftToRewardForm,
     isRewardFormValid,
     type RewardFormValues,
+    recalcCpaFromSplit,
     rewardFormToDraft,
     tieredRangesOverlap,
 } from "./utils";
@@ -157,6 +158,20 @@ describe("chaining preservation across a reward re-edit", () => {
             deperditionPerLevel: 20,
             maxDepth: 3,
         });
+    });
+});
+
+describe("recalcCpaFromSplit", () => {
+    // Inverse of the 80/20 pool split: CPA = (ambassador + referee) / 80%.
+    it("derives the CPA from an Ambassador/Referee split", () => {
+        expect(recalcCpaFromSplit(6, 2)).toBe(10);
+    });
+
+    it("rounds the derived CPA to 2 decimals", () => {
+        // (3.33 + 1.11) / 0.8 = 5.55
+        expect(recalcCpaFromSplit(3.33, 1.11)).toBe(5.55);
+        // (1 + 0) / 0.8 = 1.25
+        expect(recalcCpaFromSplit(1, 0)).toBe(1.25);
     });
 });
 

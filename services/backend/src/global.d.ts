@@ -20,8 +20,6 @@ declare global {
             // elysiaEnv (out of scope for this backend-only change — infra's
             // `businessUrl` from infra/config.ts is the value to plumb in).
             BUSINESS_URL: string;
-            // Business auth security emails (2FA OTP sender)
-            RESEND_SECURITY_FROM_EMAIL: string;
             // RustFS (object storage)
             RUSTFS_ENDPOINT: string;
             RUSTFS_ACCESS_KEY: string;

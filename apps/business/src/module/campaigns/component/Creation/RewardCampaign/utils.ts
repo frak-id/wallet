@@ -99,6 +99,16 @@ export function splitTargetCpa(targetCpa: number) {
     return { rewardsPool, frakCommission: roundTo(targetCpa - rewardsPool) };
 }
 
+/**
+ * Reverse of `splitTargetCpa`: derive the Target CPA from an
+ * Ambassador/Referee split. The split is the rewards pool (Frak's commission
+ * sits on top), so CPA = pool / rewards-share, rounded to the cent. Used to
+ * keep the CPA in sync when the user tweaks the split directly.
+ */
+export function recalcCpaFromSplit(ambassador: number, referee: number) {
+    return roundTo((ambassador + referee) / REWARDS_SHARE);
+}
+
 /** Frak's recommended Ambassador/Referee values for a Target CPA (80/20 of pool). */
 export function recommendedSplit(targetCpa: number) {
     const { rewardsPool } = splitTargetCpa(targetCpa);

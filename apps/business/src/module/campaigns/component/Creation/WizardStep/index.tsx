@@ -30,6 +30,11 @@ type WizardStepProps = {
     onSaveDraft?: () => void;
     /** Reset/cleanup before the cancel confirmation navigates away. */
     onClose?: () => void;
+    /**
+     * Whether the step has unsaved edits. When `false` (e.g. right after
+     * "Save as draft"), the close "X" skips the confirmation and leaves.
+     */
+    hasUnsavedChanges?: boolean;
     children: ReactNode;
 };
 
@@ -40,6 +45,7 @@ export function WizardStep({
     isPending = false,
     onSaveDraft,
     onClose,
+    hasUnsavedChanges = true,
     children,
 }: WizardStepProps) {
     const { t } = useTranslation();
@@ -95,7 +101,10 @@ export function WizardStep({
                     >
                         {t("campaigns.create.actions.saveDraft")}
                     </Button>
-                    <ButtonCancel onClick={() => onClose?.()} />
+                    <ButtonCancel
+                        onClick={() => onClose?.()}
+                        hasUnsavedChanges={hasUnsavedChanges}
+                    />
                 </>
             }
             footer={

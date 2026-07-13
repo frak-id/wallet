@@ -1,5 +1,6 @@
 import {
     androidSha256Fingerprint,
+    businessUrl,
     drpcApiKey,
     erpcUrl,
     fcmServiceAccount,
@@ -78,6 +79,7 @@ export const elysiaEnv = {
     STAGE: normalizedStageName,
     ERPC_URL: erpcUrl,
     FRAK_WALLET_URL: walletUrl,
+    BUSINESS_URL: businessUrl,
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
     ...postgresEnv,

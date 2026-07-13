@@ -397,6 +397,7 @@ export function ReferralChainCampaign() {
             isPending={saveCampaign.isPending}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(defaultValues)}
+            hasUnsavedChanges={form.formState.isDirty}
         >
             <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                 <Stack space="l">

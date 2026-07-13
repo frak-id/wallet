@@ -5,8 +5,6 @@ type SendEmailParams = {
     to: string;
     subject: string;
     html: string;
-    /** Override the default sender (e.g. the dedicated security address). */
-    from?: string;
 };
 
 /**
@@ -46,11 +44,10 @@ export class ResendClient {
         to,
         subject,
         html,
-        from,
     }: SendEmailParams): Promise<{ id: string }> {
         return this.api
             .post("emails", {
-                json: { from: from ?? this.from, to: [to], subject, html },
+                json: { from: this.from, to: [to], subject, html },
                 // Unique per logical send; reused across `ky`'s internal retries
                 // (same request, same headers) so a retried 429/503 dedupes
                 // server-side instead of dispatching a second email.
