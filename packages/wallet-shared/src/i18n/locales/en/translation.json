@@ -555,7 +555,7 @@
                 "endLabel": "End date (optional)",
                 "endHelp": "Recovery stops working after this date. Defaults to and is capped at two years from now.",
                 "dateRangeError": "The start date must be before the end date.",
-                "warning": "Choose a strong password. We can never reset or recover it — if you forget it, your backup is permanently useless.",
+                "warning": "Choose a strong password. We can never reset or recover it - if you forget it, your backup is permanently useless.",
                 "continue": "Continue"
             },
             "sign": {
@@ -654,7 +654,7 @@
                 },
                 "confirm": {
                     "title": "Delete recovery",
-                    "description": "This disables your recovery key on-chain and deletes your encrypted backup. This can't be undone — you'll have to set recovery up again from scratch.",
+                    "description": "This disables your recovery key on-chain and deletes your encrypted backup. This can't be undone - you'll have to set recovery up again from scratch.",
                     "warning": "Once deleted, your current recovery key and backup stop working permanently. You can set up a new recovery anytime.",
                     "authorise": "Delete recovery",
                     "retry": "Try again",

@@ -420,7 +420,7 @@
                 "referralChain": {
                     "label": "Chaîne de parrainage",
                     "hint": "Ambassadeur multi-niveaux",
-                    "subtitle": "Activez les récompenses en chaîne pour récompenser les ambassadeurs sur plusieurs niveaux de parrainage — pas seulement le parrain direct."
+                    "subtitle": "Activez les récompenses en chaîne pour récompenser les ambassadeurs sur plusieurs niveaux de parrainage - pas seulement le parrain direct."
                 },
                 "validation": {
                     "label": "Validation de la campagne",
@@ -460,7 +460,7 @@
                 "title": "Campagne lancée !",
                 "subtitle": "« {{name}} » est maintenant en ligne.",
                 "notifyTitle": "Les ambassadeurs Frak seront notifiés",
-                "notifyBody": "La communauté d’ambassadeurs Frak recevra une notification push sur l’app : « {{merchant}} » vient de lancer une nouvelle campagne — ils peuvent commencer à partager immédiatement.",
+                "notifyBody": "La communauté d’ambassadeurs Frak recevra une notification push sur l’app : « {{merchant}} » vient de lancer une nouvelle campagne - ils peuvent commencer à partager immédiatement.",
                 "tipsTitle": "Maximisez vos résultats",
                 "tipsSubtitle": "Les campagnes les plus efficaces utilisent plusieurs points de contact. Activez tous les leviers :",
                 "tip1Title": "Page produit",
@@ -682,7 +682,7 @@
                     "refereePlaceholder": "Ex. 2"
                 },
                 "cpa": {
-                    "hint": "Coût total que vous payez par conversion confirmée. Frak prend 20 % — le reste revient à vos utilisateurs.",
+                    "hint": "Coût total que vous payez par conversion confirmée. Frak prend 20 % - le reste revient à vos utilisateurs.",
                     "rewardsDistributed": "Récompenses distribuées",
                     "frakCommission": "Commission Frak",
                     "reco": "Frak recommande une répartition <highlight>80/20</highlight> en faveur de l’ambassadeur.",
@@ -711,7 +711,7 @@
                     "addTier": "Ajouter un palier",
                     "removeTier": "Supprimer le palier",
                     "incomplete": "Chaque palier doit avoir une tranche de panier et un CPA supérieur à 0",
-                    "overlap": "Les paliers ne peuvent pas se chevaucher — chaque tranche de panier doit commencer là où la précédente se termine."
+                    "overlap": "Les paliers ne peuvent pas se chevaucher - chaque tranche de panier doit commencer là où la précédente se termine."
                 },
                 "eligibility": {
                     "label": "Éligibilité",
@@ -722,8 +722,8 @@
                 },
                 "lockup": {
                     "label": "Blocage des récompenses",
-                    "description": "Protection contre les remboursements — délai avant le versement",
-                    "info": "Les récompenses sont retenues pendant une période de grâce après l’achat. Si la commande est remboursée durant cette période, aucune récompense n’est versée — ce qui protège le budget de votre campagne.",
+                    "description": "Protection contre les remboursements - délai avant le versement",
+                    "info": "Les récompenses sont retenues pendant une période de grâce après l’achat. Si la commande est remboursée durant cette période, aucune récompense n’est versée - ce qui protège le budget de votre campagne.",
                     "durationLabel": "Durée de blocage (jours)",
                     "durationPlaceholder": "Ex. 14",
                     "durationHint": "Mettre 0 pour verser les récompenses immédiatement après l’achat.",
@@ -828,7 +828,7 @@
                 "configuration": "Configuration"
             },
             "economic": {
-                "title": "Valeur économique — Frak vs Meta",
+                "title": "Valeur économique - Frak vs Meta",
                 "yourSpend": "Vos dépenses",
                 "frakTag": "(Frak)",
                 "equivalentMeta": "Coût équivalent sur Meta",
@@ -914,7 +914,7 @@
                 "conditions": {
                     "title": "Conditions",
                     "description": "Règles supplémentaires à remplir pour que la récompense s'applique.",
-                    "none": "Aucune condition supplémentaire — les récompenses s'appliquent à chaque action éligible.",
+                    "none": "Aucune condition supplémentaire - les récompenses s'appliquent à chaque action éligible.",
                     "all": "Toutes les conditions suivantes",
                     "any": "L'une des conditions suivantes",
                     "noneOf": "Aucune des conditions suivantes",
@@ -1087,9 +1087,9 @@
     },
     "bank": {
         "banner": {
-            "depleted": "Votre banque de récompenses est vide — les récompenses ne peuvent pas être distribuées.",
-            "paused": "Votre banque de récompenses est en pause — la distribution est arrêtée.",
-            "warning": "Votre banque de récompenses nécessite votre attention — vérifiez votre solde et l'autorisation de dépense.",
+            "depleted": "Votre banque de récompenses est vide - les récompenses ne peuvent pas être distribuées.",
+            "paused": "Votre banque de récompenses est en pause - la distribution est arrêtée.",
+            "warning": "Votre banque de récompenses nécessite votre attention - vérifiez votre solde et l'autorisation de dépense.",
             "notDeployed": "Votre banque de récompenses n'est pas encore configurée.",
             "ctaAddFunds": "Ajouter des fonds",
             "ctaManageBank": "Gérer la banque",
@@ -1109,7 +1109,7 @@
             "distributing": "Distribution des récompenses",
             "distributingTooltip": "Lorsque cette option est activée, les récompenses sont automatiquement distribuées à vos utilisateurs via les campagnes actives. La désactiver stoppe toute nouvelle distribution.",
             "available": "disponible",
-            "noFundsCaption": "Aucun fonds — ajoutez des fonds pour commencer à distribuer des récompenses.",
+            "noFundsCaption": "Aucun fonds - ajoutez des fonds pour commencer à distribuer des récompenses.",
             "addFunds": "Ajouter des fonds",
             "emptyWarning": "Votre banque n'a aucun fonds. Les campagnes actives ne peuvent pas distribuer de récompenses tant que vous n'ajoutez pas de fonds.",
             "allowanceTooltip": "Jusqu'à {{amount}} autorisé pour la distribution",
@@ -1263,11 +1263,11 @@
                 "txHash": "Saisissez un hash de transaction valide (0x…)"
             },
             "errors": {
-                "save": "Une erreur est survenue lors de l'enregistrement de vos informations de facturation. Vos modifications ont été conservées — veuillez réessayer."
+                "save": "Une erreur est survenue lors de l'enregistrement de vos informations de facturation. Vos modifications ont été conservées - veuillez réessayer."
             },
             "admin": {
                 "panel": {
-                    "title": "Administration — Facturation",
+                    "title": "Administration - Facturation",
                     "description": "Créez des notes de dépôt et des factures de retrait pour ce marchand. Visible uniquement par les administrateurs de la plateforme."
                 },
                 "deposit": {
@@ -1284,7 +1284,7 @@
                     "frakFee": "Frais Frak (20 %)",
                     "gifted": "Montant offert",
                     "net": "Montant net",
-                    "hint": "Estimation — la TVA et les frais définitifs sont calculés à la création du dépôt."
+                    "hint": "Estimation - la TVA et les frais définitifs sont calculés à la création du dépôt."
                 },
                 "withdraw": {
                     "trigger": "Ajouter un retrait",
@@ -1362,7 +1362,7 @@
                 "manualHint": "Impossible de scanner ? Saisissez plutôt cette clé manuellement :",
                 "confirm": "Confirmer",
                 "recoveryTitle": "Enregistrez vos codes de récupération",
-                "recoveryHint": "Conservez-les en lieu sûr — chaque code est utilisable une seule fois si vous perdez l'accès à votre application.",
+                "recoveryHint": "Conservez-les en lieu sûr - chaque code est utilisable une seule fois si vous perdez l'accès à votre application.",
                 "copyCodes": "Copier les codes",
                 "downloadCodes": "Télécharger"
             },
@@ -1579,9 +1579,9 @@
             "useExisting": "Utiliser une image existante :",
             "invalidUrl": "Saisissez une URL d'image valide (https://…)",
             "restrictions": {
-                "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 à 2:1 (Max 10 Mo)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)",
-                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 à 2:1 (Max 10 Mo)"
+                "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 à 2:1 (Max 10 Mo)",
+                "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 à 2:1 (Max 10 Mo)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 à 2:1 (Max 10 Mo)"
             },
             "descriptionPlaceholder": "Description du marchand..."
         },
@@ -1611,7 +1611,7 @@
                 "change": {
                     "title": "Changer de plateforme ?",
                     "description": "Cela pourrait casser le suivi de vos achats. Voulez-vous vraiment changer de plateforme ?",
-                    "internalWarning": "Vous ne pourrez pas revenir en arrière depuis ce tableau de bord — il faudra reconfigurer le webhook depuis l'application de la plateforme (comme l'app Shopify Frak).",
+                    "internalWarning": "Vous ne pourrez pas revenir en arrière depuis ce tableau de bord - il faudra reconfigurer le webhook depuis l'application de la plateforme (comme l'app Shopify Frak).",
                     "confirm": "Changer de plateforme"
                 },
                 "instructions": {
@@ -1723,7 +1723,7 @@
         },
         "placements": {
             "title": "Personnalisation du SDK",
-            "description": "Les réglages globaux s'appliquent à tous les composants SDK. Les emplacements sont des variantes utilisables sur un même site pour présenter vos produits différemment — chacune avec ses textes, styles et comportements.",
+            "description": "Les réglages globaux s'appliquent à tous les composants SDK. Les emplacements sont des variantes utilisables sur un même site pour présenter vos produits différemment - chacune avec ses textes, styles et comportements.",
             "globalDefault": "Réglages globaux",
             "add": "Ajouter un emplacement",
             "dialog": {

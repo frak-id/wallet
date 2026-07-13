@@ -420,7 +420,7 @@
                 "referralChain": {
                     "label": "Referral chain",
                     "hint": "Multi-level ambassador",
-                    "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
+                    "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels - not just the direct referrer."
                 },
                 "validation": {
                     "label": "Campaign validation",
@@ -460,7 +460,7 @@
                 "title": "Campaign launched!",
                 "subtitle": "‘{{name}}’ is now live.",
                 "notifyTitle": "Frak ambassadors will be notified",
-                "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign — they can start sharing immediately.",
+                "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign - they can start sharing immediately.",
                 "tipsTitle": "Maximise your results",
                 "tipsSubtitle": "The most effective campaigns use multiple touchpoints. Make sure you're activating all the levers:",
                 "tip1Title": "Product Page",
@@ -682,7 +682,7 @@
                     "refereePlaceholder": "E.g. 2"
                 },
                 "cpa": {
-                    "hint": "Total cost you pay per confirmed conversion. Frak takes 20% — the rest goes to your users.",
+                    "hint": "Total cost you pay per confirmed conversion. Frak takes 20% - the rest goes to your users.",
                     "rewardsDistributed": "Rewards distributed",
                     "frakCommission": "Frak commission",
                     "reco": "Frak recommends an <highlight>80/20 reward</highlight> split in favor of the Ambassador.",
@@ -711,7 +711,7 @@
                     "addTier": "Add a tier",
                     "removeTier": "Remove tier",
                     "incomplete": "Each tier needs a basket range and a CPA above 0",
-                    "overlap": "Tiers can't overlap — each basket range must start where the previous one ends."
+                    "overlap": "Tiers can't overlap - each basket range must start where the previous one ends."
                 },
                 "eligibility": {
                     "label": "Eligibility",
@@ -722,8 +722,8 @@
                 },
                 "lockup": {
                     "label": "Reward lockup",
-                    "description": "Refund protection — delay before rewards are released",
-                    "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out — protecting your campaign budget.",
+                    "description": "Refund protection - delay before rewards are released",
+                    "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out - protecting your campaign budget.",
                     "durationLabel": "Lockup duration (days)",
                     "durationPlaceholder": "E.g. 14",
                     "durationHint": "Set to 0 to release rewards immediately after purchase.",
@@ -828,7 +828,7 @@
                 "configuration": "Configuration"
             },
             "economic": {
-                "title": "Economic value — Frak vs Meta",
+                "title": "Economic value - Frak vs Meta",
                 "yourSpend": "Your spend",
                 "frakTag": "(Frak)",
                 "equivalentMeta": "Equivalent cost on Meta",
@@ -914,7 +914,7 @@
                 "conditions": {
                     "title": "Conditions",
                     "description": "Extra rules that must be met for the reward to apply.",
-                    "none": "No extra conditions — rewards apply to every qualifying action.",
+                    "none": "No extra conditions - rewards apply to every qualifying action.",
                     "all": "All of the following",
                     "any": "Any of the following",
                     "noneOf": "None of the following",
@@ -1087,9 +1087,9 @@
     },
     "bank": {
         "banner": {
-            "depleted": "Your reward bank is empty — rewards can't be distributed.",
-            "paused": "Your reward bank is paused — distribution is stopped.",
-            "warning": "Your reward bank needs attention — check your balance and spending authorization.",
+            "depleted": "Your reward bank is empty - rewards can't be distributed.",
+            "paused": "Your reward bank is paused - distribution is stopped.",
+            "warning": "Your reward bank needs attention - check your balance and spending authorization.",
             "notDeployed": "Your reward bank isn't set up yet.",
             "ctaAddFunds": "Add funds",
             "ctaManageBank": "Manage bank",
@@ -1109,7 +1109,7 @@
             "distributing": "Distributing Rewards",
             "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
             "available": "available",
-            "noFundsCaption": "No funds — add funds to start distributing rewards.",
+            "noFundsCaption": "No funds - add funds to start distributing rewards.",
             "addFunds": "Add funds",
             "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
             "allowanceTooltip": "Up to {{amount}} authorized for distribution",
@@ -1263,11 +1263,11 @@
                 "txHash": "Enter a valid transaction hash (0x…)"
             },
             "errors": {
-                "save": "Something went wrong while saving your billing information. Your changes were kept — please try again."
+                "save": "Something went wrong while saving your billing information. Your changes were kept - please try again."
             },
             "admin": {
                 "panel": {
-                    "title": "Platform admin — billing",
+                    "title": "Platform admin - billing",
                     "description": "Create deposit notes and withdraw bills for this merchant. Visible to platform admins only."
                 },
                 "deposit": {
@@ -1284,7 +1284,7 @@
                     "frakFee": "Frak fee (20%)",
                     "gifted": "Gifted amount",
                     "net": "Net amount",
-                    "hint": "Estimate — final VAT and fee are computed when the deposit is created."
+                    "hint": "Estimate - final VAT and fee are computed when the deposit is created."
                 },
                 "withdraw": {
                     "trigger": "Add withdrawal",
@@ -1362,7 +1362,7 @@
                 "manualHint": "Can't scan? Enter this key manually instead:",
                 "confirm": "Confirm",
                 "recoveryTitle": "Save your recovery codes",
-                "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app.",
+                "recoveryHint": "Store these somewhere safe - each code can be used once if you lose access to your authenticator app.",
                 "copyCodes": "Copy codes",
                 "downloadCodes": "Download"
             },
@@ -1579,9 +1579,9 @@
             "useExisting": "Use an existing image:",
             "invalidUrl": "Enter a valid image URL (https://…)",
             "restrictions": {
-                "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
-                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 to 2:1 (Max 10MB)"
+                "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 to 2:1 (Max 10MB)",
+                "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 to 2:1 (Max 10MB)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 to 2:1 (Max 10MB)"
             },
             "descriptionPlaceholder": "Merchant description..."
         },
@@ -1611,7 +1611,7 @@
                 "change": {
                     "title": "Change platform?",
                     "description": "This could break your purchase tracking. Are you sure you want to change the platform?",
-                    "internalWarning": "You won't be able to revert back from this dashboard — you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
+                    "internalWarning": "You won't be able to revert back from this dashboard - you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
                     "confirm": "Change platform"
                 },
                 "instructions": {
@@ -1723,7 +1723,7 @@
         },
         "placements": {
             "title": "SDK Customization",
-            "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways — each with its own text, styles, and behavior.",
+            "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways - each with its own text, styles, and behavior.",
             "globalDefault": "Global default",
             "add": "Add another placement",
             "dialog": {

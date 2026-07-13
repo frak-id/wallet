@@ -34,7 +34,7 @@
             },
             "syncFailed": {
                 "title": "Passkey sync issue",
-                "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.",
+                "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device - not a problem with your account.",
                 "step1": "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.",
                 "step2": "Update Google Play Services, then restart your phone and try again.",
                 "step3": "Still stuck? Sign in on another device, or recover your wallet from the settings."
