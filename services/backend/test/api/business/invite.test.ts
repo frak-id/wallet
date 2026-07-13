@@ -21,7 +21,6 @@ const {
     accountRepositoryMocks: {
         findById: vi.fn(),
         setPasswordHash: vi.fn(),
-        setDisplayName: vi.fn(),
         markEmailVerified: vi.fn(),
     },
     sessionServiceMocks: {
@@ -93,7 +92,6 @@ const INVITED_ACCOUNT = {
     id: ACCOUNT_ID,
     email: "invited@acme.com",
     passwordHash: null,
-    displayName: null,
 };
 
 const CLAIMED_ACCOUNT = {
@@ -134,7 +132,6 @@ describe("Business invitation routes", () => {
                     return Promise.resolve({
                         id: INVITER_ID,
                         email: "owner@acme.com",
-                        displayName: "Jane Owner",
                     });
                 }
                 return Promise.resolve(null);
@@ -148,7 +145,7 @@ describe("Business invitation routes", () => {
             expect(await response.json()).toEqual({
                 email: "invited@acme.com",
                 merchantName: "Acme Corp",
-                inviterName: "Jane Owner",
+                inviterName: "owner@acme.com",
                 alreadyClaimed: false,
             });
         });
@@ -218,7 +215,6 @@ describe("Business invitation routes", () => {
         const claimBody = {
             token: "valid-token",
             password: "brand-new-password",
-            displayName: "New Admin",
         };
 
         it("activates the account, marks email verified, mints a 2FA-verified session", async () => {
@@ -240,10 +236,6 @@ describe("Business invitation routes", () => {
                     accountId: ACCOUNT_ID,
                     passwordHash: "hashed:brand-new-password",
                 }
-            );
-            expect(accountRepositoryMocks.setDisplayName).toHaveBeenCalledWith(
-                ACCOUNT_ID,
-                "New Admin"
             );
             expect(
                 accountRepositoryMocks.markEmailVerified
