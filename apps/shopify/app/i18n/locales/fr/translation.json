@@ -129,7 +129,7 @@
         "todo": "Veuillez activer l'application Frak dans votre thème en suivant les instructions ci-dessous",
         "intermediate": {
             "banner": "Votre thème prend en charge les app embeds mais pas les blocs d'application dans les pages",
-            "bannerDescription": "Le Frak Listener fonctionne globalement via un app embed — aucun code manuel nécessaire. Le bouton de partage et la bannière ne peuvent pas être ajoutés automatiquement dans vos pages ; ajoutez-les depuis l'onglet Apparence.",
+            "bannerDescription": "Le Frak Listener fonctionne globalement via un app embed - aucun code manuel nécessaire. Le bouton de partage et la bannière ne peuvent pas être ajoutés automatiquement dans vos pages ; ajoutez-les depuis l'onglet Apparence.",
             "embedTitle": "Activer le Frak Listener"
         },
         "legacy": {
@@ -146,7 +146,7 @@
             "step1": "Collez le code avant </head> dans theme.liquid.",
             "step1Link": "Modifier theme.liquid",
             "step2": "Ajoutez la balise là où vous souhaitez le bouton de partage (généralement près du bouton Ajouter au panier).",
-            "step2ClassHint": "Remplacez <code>btn</code> par la classe de bouton de votre thème pour qu'il s'harmonise — inspectez un de vos boutons existants pour la trouver (ex. <code>btn</code> sur la plupart des thèmes vintage, <code>button</code> sur Dawn).",
+            "step2ClassHint": "Remplacez <code>btn</code> par la classe de bouton de votre thème pour qu'il s'harmonise - inspectez un de vos boutons existants pour la trouver (ex. <code>btn</code> sur la plupart des thèmes vintage, <code>button</code> sur Dawn).",
             "step2SectionHint": "Si votre modèle de produit ne contient qu'une balise <code>{% section %}</code>, ouvrez plutôt ce fichier de section (ex. <code>sections/product-template.liquid</code>).",
             "step2Link": "Modifier le modèle produit",
             "step3": "Personnalisez logo, textes et récompenses dans l'éditeur Frak\u00a0:",
@@ -176,9 +176,7 @@
             "notConnected": "Votre boutique n'est pas encore connectée à l'écosystème Frak. Suivez les instructions ci-dessous pour terminer la configuration."
         },
         "modal": {
-            "title": "Enregistrer votre boutique",
-            "button": "Enregistrer votre boutique dans l'écosystème Frak",
-            "close": "Fermer"
+            "button": "Enregistrer votre boutique dans l'écosystème Frak"
         },
         "newsletterShare": {
             "title": "Lien de partage pour newsletter",
@@ -457,7 +455,7 @@
             "openEditor": "Ouvrir l'éditeur Frak",
             "copyTag": "Copier la balise",
             "copied": "Copié !",
-            "copyError": "Copie automatique impossible — sélectionnez la balise ci-dessus et copiez-la manuellement."
+            "copyError": "Copie automatique impossible - sélectionnez la balise ci-dessus et copiez-la manuellement."
         }
     },
     "funding": {

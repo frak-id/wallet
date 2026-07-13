@@ -79,6 +79,7 @@ function makeOrchestrator(
     const assetLogs = {
         sumSettledByToken: vi.fn().mockResolvedValue([]),
         findByMerchantAndDateRange: vi.fn().mockResolvedValue([]),
+        countSettledByMerchantAndDateRange: vi.fn().mockResolvedValue(0),
         ...overrides.assetLogs,
     } as unknown as AssetLogRepository;
 
@@ -302,6 +303,239 @@ describe("MonthlyBillOrchestrator", () => {
 
             const createArg = create.mock.calls[0][0];
             expect(createArg.details.ledgers).toHaveLength(0);
+        });
+    });
+
+    describe("per-row annex fetch gating (B1 perf)", () => {
+        it("does NOT fetch per-row annex data on the data-only cron path (renderPdf: false)", async () => {
+            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
+            const findByMerchantAndDateRange = vi.fn().mockResolvedValue([]);
+            const sumSettledByToken = vi
+                .fn()
+                .mockResolvedValue([
+                    { tokenAddress: currentStablecoins.eure, total: "10" },
+                ]);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
+                    create,
+                },
+                assetLogs: { findByMerchantAndDateRange, sumSettledByToken },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002",
+                { renderPdf: false }
+            );
+
+            expect(findByMerchantAndDateRange).not.toHaveBeenCalled();
+        });
+
+        it("DOES fetch per-row annex data when a PDF is rendered (renderPdf: true, default)", async () => {
+            const created = makeMonthlyBillDoc();
+            const create = vi.fn().mockResolvedValue(created);
+            const findById = vi.fn().mockResolvedValue(created);
+            const findByMerchantAndDateRange = vi.fn().mockResolvedValue([]);
+            const sumSettledByToken = vi
+                .fn()
+                .mockResolvedValue([
+                    { tokenAddress: currentStablecoins.eure, total: "10" },
+                ]);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
+                    create,
+                    findById,
+                },
+                assetLogs: { findByMerchantAndDateRange, sumSettledByToken },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            expect(findByMerchantAndDateRange).toHaveBeenCalledTimes(1);
+        });
+
+        it("rowCount comes from the grouped COUNT query, not the (possibly capped) per-row fetch length", async () => {
+            const created = makeMonthlyBillDoc();
+            const create = vi.fn().mockResolvedValue(created);
+            const findById = vi.fn().mockResolvedValue(created);
+            // Simulate the per-row fetch being capped well below the real count.
+            const findByMerchantAndDateRange = vi.fn().mockResolvedValue([]);
+            const countSettledByMerchantAndDateRange = vi
+                .fn()
+                .mockResolvedValue(7321);
+            // Non-empty so `buildAnnexData` doesn't take its zero-rewards
+            // early return (which skips the COUNT query entirely).
+            const sumSettledByToken = vi
+                .fn()
+                .mockResolvedValue([
+                    { tokenAddress: currentStablecoins.eure, total: "10" },
+                ]);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    distinctCurrencies: vi.fn().mockResolvedValue(["eure"]),
+                    create,
+                    findById,
+                },
+                assetLogs: {
+                    findByMerchantAndDateRange,
+                    sumSettledByToken,
+                    countSettledByMerchantAndDateRange,
+                },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            const createArg = create.mock.calls[0][0];
+            expect(createArg.details.annexRowCount).toBe(7321);
+        });
+    });
+
+    describe("multi-currency invoice totals (B9/B13)", () => {
+        it("bills the dominant reward currency and excludes other stablecoins + unknown tokens from the total", async () => {
+            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
+            // Billing docs lead with "eure", but the invoice currency must
+            // follow the REWARDS, not the deposit currency: usdc is the
+            // dominant reward pot, so the bill is labeled + totalled in usdc.
+            const distinctCurrencies = vi.fn().mockResolvedValue(["eure"]);
+            const sumSettledByToken = vi
+                .fn()
+                // before
+                .mockResolvedValueOnce([])
+                // in-period: usdc (dominant reward => primary, counted) + eure
+                // (smaller stablecoin pot, excluded from the total) + an
+                // unknown/non-stablecoin token (excluded)
+                .mockResolvedValueOnce([
+                    { tokenAddress: currentStablecoins.eure, total: "100" },
+                    { tokenAddress: currentStablecoins.usdc, total: "999" },
+                    {
+                        tokenAddress:
+                            "0x0000000000000000000000000000000000000099",
+                        total: "777",
+                    },
+                ]);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    distinctCurrencies,
+                    create,
+                },
+                assetLogs: { sumSettledByToken },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            const createArg = create.mock.calls[0][0];
+            expect(createArg.currency).toBe("usdc");
+            // rewardBaseAmount = 999 (usdc only); totalHt = 999 * 1.20 =
+            // 1198.8; non-FR merchant (no accountingInfo) => vatApplicable
+            // false => totalTtc = totalHt. The 100 (eure) and 777 (unknown
+            // token) must NOT be folded in.
+            expect(createArg.netAmount).toBe("1198.800000000000000000");
+            expect(createArg.grossAmount).toBe("1198.800000000000000000");
+        });
+
+        it("labels the invoice in the reward currency even when it differs from the deposit currency (no more 0-total bills)", async () => {
+            // Exact reported regression: a merchant whose deposits are in eure
+            // but whose rewards are paid in usdc used to get an invoice
+            // labeled "eure" with a 0 total (the eure reward filter matched
+            // nothing). The bill must now be labeled + totalled in usdc.
+            const create = vi.fn().mockResolvedValue(makeMonthlyBillDoc());
+            const distinctCurrencies = vi.fn().mockResolvedValue(["eure"]);
+            const sumSettledByToken = vi
+                .fn()
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([
+                    { tokenAddress: currentStablecoins.usdc, total: "250" },
+                ]);
+
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findMonthlyBillByPeriod: vi.fn().mockResolvedValue(null),
+                    distinctCurrencies,
+                    create,
+                },
+                assetLogs: { sumSettledByToken },
+            });
+
+            await orchestrator.generateMonthlyBill(
+                "merchant-1",
+                { periodStart: new Date("2026-02-01T00:00:00.000Z") },
+                "0x0000000000000000000000000000000000000002"
+            );
+
+            const createArg = create.mock.calls[0][0];
+            expect(createArg.currency).toBe("usdc");
+            expect(createArg.grossAmount).toBe("300.000000000000000000");
+        });
+
+        it("regeneratePdf pins the primary currency to the row's frozen currency column, not a re-derived currencies[0]", async () => {
+            // Regression: `distinctCurrencies` (SELECT DISTINCT) can return a
+            // different order across calls, and `updateMonthlyBillDetails`
+            // never updates the row's `currency` column — so regenerating a
+            // usdc-labeled bill while `distinctCurrencies` now leads with
+            // "eure" must still sum rewardBaseAmount in usdc, keeping the
+            // frozen amounts in agreement with the document's labeled
+            // currency (and the PDF recap, which filters by dto.currency).
+            const usdcBill = makeMonthlyBillDoc({ currency: "usdc" });
+            const updateMonthlyBillDetails = vi
+                .fn()
+                .mockResolvedValue(usdcBill);
+            const orchestrator = makeOrchestrator({
+                billingDocuments: {
+                    findById: vi.fn().mockResolvedValue(usdcBill),
+                    // Re-derived order now leads with "eure" — must be ignored.
+                    distinctCurrencies: vi
+                        .fn()
+                        .mockResolvedValue(["eure", "usdc"]),
+                    updateMonthlyBillDetails,
+                    setPdf: vi.fn().mockResolvedValue(usdcBill),
+                },
+                assetLogs: {
+                    sumSettledByToken: vi
+                        .fn()
+                        .mockResolvedValueOnce([]) // before
+                        .mockResolvedValueOnce([
+                            {
+                                tokenAddress: currentStablecoins.eure,
+                                total: "999",
+                            },
+                            {
+                                tokenAddress: currentStablecoins.usdc,
+                                total: "100",
+                            },
+                        ]), // in-period
+                },
+            });
+
+            await orchestrator.regeneratePdf("merchant-1", "bill-1");
+
+            const [, , , amounts] = updateMonthlyBillDetails.mock.calls[0];
+            // usdc (the row's frozen currency) only: 100 * 1.20 = 120 — the
+            // eure 999 must NOT leak in even though eure is currencies[0].
+            expect(amounts.grossAmount).toBe("120.000000000000000000");
+            expect(amounts.netAmount).toBe("120.000000000000000000");
         });
     });
 

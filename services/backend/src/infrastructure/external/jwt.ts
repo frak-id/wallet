@@ -11,6 +11,7 @@ import {
     WalletSdkTokenDto,
     WalletTokenDto,
 } from "../../domain/auth/models/WalletSessionDto";
+import { BusinessInvitationTokenDto } from "../../domain/business-auth/models/BusinessInvitationTokenDto";
 import { AnonymousMergeTokenDto } from "../../domain/identity/models/AnonymousMergeTokenDto";
 import { OriginResumeTokenDto } from "../../domain/pairing/models/OriginResumeTokenDto";
 
@@ -43,6 +44,20 @@ export namespace JwtContext {
         // 60 minutes - user may browse before leaving in-app browser
         expirationDelayInSecond: 60 * 60,
         iss: "frak-identity",
+    });
+    /**
+     * Merchant-team email invitation link (single-purpose action token,
+     * mirrors `anonymousMerge`). Shares `JWT_BUSINESS_SECRET` with the
+     * legacy `business` session context — the schema's `typ` literal is the
+     * cross-acceptance guard, see `BusinessInvitationTokenDto`.
+     */
+    export const businessInvitation = buildJwtContext({
+        secret: process.env.JWT_BUSINESS_SECRET as string,
+        schema: BusinessInvitationTokenDto,
+        // 7 days — long enough that an invitee checking their inbox late
+        // still finds a working link; resend covers expiry in practice.
+        expirationDelayInSecond: 60 * 60 * 24 * 7,
+        iss: "frak.id",
     });
     /**
      * Used to authenticate origin-side `action=resume` requests when the

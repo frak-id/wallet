@@ -1,216 +1,215 @@
 import type { Address } from "viem";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
+import type { MerchantRepository } from "../repositories/MerchantRepository";
 import { MerchantAuthorizationService } from "./MerchantAuthorizationService";
 
-// MerchantAuthorizationService is domain-clean and does not know about platform
-// admins. The platform-admin bypass lives in session.ts (hasMerchantAccess
-// closure), which the simulateHasMerchantAccess helper below mirrors using a
-// local predicate so the test stays independent of PlatformAdminService.
-const isSimulatedPlatformAdmin = (wallet: Address) =>
-    wallet.toLowerCase() === PLATFORM_ADMIN.toLowerCase();
+const MERCHANT_ID = "merchant-1";
+const OWNER_WALLET = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" as Address;
+const OTHER_WALLET = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" as Address;
+const DOMAIN = "shop.myshopify.com";
 
-const OWNER = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
-const ADMIN_WALLET = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" as Address;
-const PLATFORM_ADMIN = "0xcccccccccccccccccccccccccccccccccccccccc" as Address;
-const STRANGER = "0xdddddddddddddddddddddddddddddddddddddddd" as Address;
-
-const MERCHANT_ID = "merchant-123";
-
-function makeService(opts: { ownerWallet?: Address; isAdmin?: boolean } = {}) {
-    const ownerWallet = opts.ownerWallet ?? OWNER;
-
-    const merchantRepo = {
-        findById: vi.fn((_id: string) =>
-            Promise.resolve(
-                _id === MERCHANT_ID
-                    ? ({
-                          id: MERCHANT_ID,
-                          ownerWallet,
-                      } as never)
-                    : null
-            )
-        ),
-    };
-    const adminRepo = {
-        isAdmin: vi.fn((_id: string, wallet: Address) =>
-            Promise.resolve(
-                opts.isAdmin === true ? wallet === ADMIN_WALLET : false
-            )
-        ),
-    };
-    return new MerchantAuthorizationService(
-        merchantRepo as never,
-        adminRepo as never
-    );
-}
-
-beforeEach(() => {
-    vi.clearAllMocks();
+const merchant = (overrides: Record<string, unknown> = {}) => ({
+    id: MERCHANT_ID,
+    domain: DOMAIN,
+    allowedDomains: null,
+    ownerWallet: null,
+    ownerAccountId: null,
+    ...overrides,
 });
 
-afterEach(() => {
-    vi.restoreAllMocks();
-});
+const createRepos = () => {
+    const merchantRepository = {
+        findById: vi.fn(),
+        findByOwnerWallet: vi.fn().mockResolvedValue([]),
+        findByOwnerAccount: vi.fn().mockResolvedValue([]),
+        findAll: vi.fn().mockResolvedValue([]),
+    } as unknown as MerchantRepository &
+        Record<string, ReturnType<typeof vi.fn>>;
+    const merchantAdminRepository = {
+        isAdmin: vi.fn().mockResolvedValue(false),
+        findByIdentity: vi.fn().mockResolvedValue([]),
+    } as unknown as MerchantAdminRepository &
+        Record<string, ReturnType<typeof vi.fn>>;
+    return { merchantRepository, merchantAdminRepository };
+};
 
 describe("MerchantAuthorizationService.checkAccess", () => {
-    it("returns owner role for merchant owner", async () => {
-        const svc = makeService({ ownerWallet: OWNER });
-        const result = await svc.checkAccess(MERCHANT_ID, OWNER);
-        expect(result).toMatchObject({
+    let repos: ReturnType<typeof createRepos>;
+    let service: MerchantAuthorizationService;
+
+    beforeEach(() => {
+        repos = createRepos();
+        service = new MerchantAuthorizationService(
+            repos.merchantRepository,
+            repos.merchantAdminRepository
+        );
+    });
+
+    it("denies an empty identity without hitting the DB", async () => {
+        const access = await service.checkAccess(MERCHANT_ID, {
+            wallet: null,
+            accountId: null,
+            shopDomain: null,
+        });
+        expect(access).toMatchObject({ hasAccess: false, role: "none" });
+        expect(repos.merchantRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it("denies when the merchant does not exist", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(null);
+        const access = await service.checkAccess(MERCHANT_ID, {
+            wallet: OWNER_WALLET,
+            accountId: null,
+            shopDomain: null,
+        });
+        expect(access.hasAccess).toBe(false);
+    });
+
+    it("grants owner by wallet", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(
+            merchant({ ownerWallet: OWNER_WALLET })
+        );
+        const access = await service.checkAccess(MERCHANT_ID, {
+            wallet: OWNER_WALLET,
+            accountId: null,
+            shopDomain: null,
+        });
+        expect(access).toEqual({
             hasAccess: true,
             isOwner: true,
+            isAdmin: false,
             role: "owner",
         });
     });
 
-    it("returns admin role for a merchant admin", async () => {
-        const svc = makeService({ isAdmin: true });
-        const result = await svc.checkAccess(MERCHANT_ID, ADMIN_WALLET);
-        expect(result).toMatchObject({
-            hasAccess: true,
-            isOwner: false,
-            isAdmin: true,
-            role: "admin",
+    it("grants owner by accountId (walletless owner)", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(
+            merchant({ ownerAccountId: "acc-1" })
+        );
+        const access = await service.checkAccess(MERCHANT_ID, {
+            wallet: null,
+            accountId: "acc-1",
+            shopDomain: null,
         });
+        expect(access).toMatchObject({ isOwner: true, role: "owner" });
     });
 
-    it("returns none role with hasAccess:false for a platform admin — role is derived upstream in merchant/index.ts", async () => {
-        // checkAccess is now auth-domain-free. A platform admin has no real
-        // merchant relationship so it falls through to role:"none".
-        // The "platform_admin" role is derived in the GET /:merchantId handler
-        // after checkAccess returns, keeping MerchantAuthorizationService clean.
-        const svc = makeService();
-        const result = await svc.checkAccess(MERCHANT_ID, PLATFORM_ADMIN);
-        expect(result).toMatchObject({
-            hasAccess: false,
-            isOwner: false,
-            isAdmin: false,
-            role: "none",
+    it("grants admin via the admin repository", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(merchant());
+        repos.merchantAdminRepository.isAdmin.mockResolvedValue(true);
+        const access = await service.checkAccess(MERCHANT_ID, {
+            wallet: OTHER_WALLET,
+            accountId: null,
+            shopDomain: null,
         });
+        expect(access).toMatchObject({ isAdmin: true, role: "admin" });
     });
 
-    it("returns none for an unrelated wallet", async () => {
-        const svc = makeService();
-        const result = await svc.checkAccess(MERCHANT_ID, STRANGER);
-        expect(result).toMatchObject({
-            hasAccess: false,
-            role: "none",
+    it("grants admin via the shop-domain auto-link", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(
+            merchant({ domain: DOMAIN })
+        );
+        const access = await service.checkAccess(MERCHANT_ID, {
+            wallet: null,
+            accountId: null,
+            shopDomain: DOMAIN,
         });
+        expect(access).toMatchObject({ isAdmin: true, role: "admin" });
     });
 
-    it("returns none for an unknown merchant", async () => {
-        const svc = makeService();
-        const result = await svc.checkAccess("nonexistent", PLATFORM_ADMIN);
-        expect(result).toMatchObject({ hasAccess: false, role: "none" });
+    it("denies a non-owner non-admin with no shop-domain match", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(
+            merchant({ ownerWallet: OWNER_WALLET })
+        );
+        const access = await service.checkAccess(MERCHANT_ID, {
+            wallet: OTHER_WALLET,
+            accountId: null,
+            shopDomain: null,
+        });
+        expect(access.hasAccess).toBe(false);
+    });
+
+    it("does not auto-link when the proven shop domain is absent", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(
+            merchant({ domain: DOMAIN })
+        );
+        // account has no shopDomain → the domain fallback must not fire.
+        const access = await service.checkAccess(MERCHANT_ID, {
+            wallet: null,
+            accountId: "acc-x",
+            shopDomain: null,
+        });
+        expect(access.hasAccess).toBe(false);
     });
 });
 
-describe("MerchantAuthorizationService.hasAccess (write gate)", () => {
-    it("returns true for the owner", async () => {
-        const svc = makeService({ ownerWallet: OWNER });
-        expect(await svc.hasAccess(MERCHANT_ID, OWNER)).toBe(true);
+describe("MerchantAuthorizationService.hasAccessByDomain", () => {
+    let repos: ReturnType<typeof createRepos>;
+    let service: MerchantAuthorizationService;
+
+    beforeEach(() => {
+        repos = createRepos();
+        service = new MerchantAuthorizationService(
+            repos.merchantRepository,
+            repos.merchantAdminRepository
+        );
     });
 
-    it("returns false for a platform admin — write gate is unaffected", async () => {
-        const svc = makeService();
-        expect(await svc.hasAccess(MERCHANT_ID, PLATFORM_ADMIN)).toBe(false);
+    it("matches the primary domain", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(merchant());
+        expect(await service.hasAccessByDomain(MERCHANT_ID, DOMAIN)).toBe(true);
     });
 
-    it("returns false for a stranger", async () => {
-        const svc = makeService();
-        expect(await svc.hasAccess(MERCHANT_ID, STRANGER)).toBe(false);
+    it("matches an allowed domain alias", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(
+            merchant({ allowedDomains: ["alias.example.com"] })
+        );
+        expect(
+            await service.hasAccessByDomain(MERCHANT_ID, "alias.example.com")
+        ).toBe(true);
+    });
+
+    it("rejects an unrelated domain", async () => {
+        repos.merchantRepository.findById.mockResolvedValue(merchant());
+        expect(
+            await service.hasAccessByDomain(MERCHANT_ID, "evil.example.com")
+        ).toBe(false);
     });
 });
 
-describe("platform admin read bypass (hasMerchantAccess closure logic)", () => {
-    const SAFE_METHODS = new Set(["GET", "HEAD"]);
+describe("MerchantAuthorizationService.getAccessibleMerchantIds", () => {
+    let repos: ReturnType<typeof createRepos>;
+    let service: MerchantAuthorizationService;
 
-    /**
-     * Mirrors the `hasMerchantAccess` closure in
-     * `services/backend/src/api/business/middleware/session.ts`.
-     *
-     * KEEP IN SYNC with that closure: if the bypass logic in session.ts changes
-     * (e.g. new safe methods, additional conditions), update this helper and
-     * the test cases below to match, or add a session.test.ts integration test.
-     */
-    async function simulateHasMerchantAccess(
-        wallet: Address,
-        merchantId: string,
-        method: string,
-        svc: MerchantAuthorizationService
-    ): Promise<boolean> {
-        if (await svc.hasAccess(merchantId, wallet)) return true;
-        if (isSimulatedPlatformAdmin(wallet) && SAFE_METHODS.has(method))
-            return true;
-        return false;
-    }
-
-    it("grants GET access to platform admin on a foreign merchant", async () => {
-        const svc = makeService();
-        expect(
-            await simulateHasMerchantAccess(
-                PLATFORM_ADMIN,
-                MERCHANT_ID,
-                "GET",
-                svc
-            )
-        ).toBe(true);
+    beforeEach(() => {
+        repos = createRepos();
+        service = new MerchantAuthorizationService(
+            repos.merchantRepository,
+            repos.merchantAdminRepository
+        );
     });
 
-    it("denies POST to platform admin on a foreign merchant", async () => {
-        const svc = makeService();
-        expect(
-            await simulateHasMerchantAccess(
-                PLATFORM_ADMIN,
-                MERCHANT_ID,
-                "POST",
-                svc
-            )
-        ).toBe(false);
-    });
+    it("unions and dedupes ids from every access source", async () => {
+        repos.merchantRepository.findByOwnerWallet.mockResolvedValue([
+            { id: "m1" },
+        ]);
+        repos.merchantRepository.findByOwnerAccount.mockResolvedValue([
+            { id: "m1" }, // duplicate of the wallet-owned merchant
+            { id: "m2" },
+        ]);
+        repos.merchantAdminRepository.findByIdentity.mockResolvedValue([
+            { merchantId: "m3" },
+        ]);
+        repos.merchantRepository.findAll.mockResolvedValue([
+            { id: "m4", domain: DOMAIN, allowedDomains: null },
+        ]);
 
-    it("denies PUT to platform admin on a foreign merchant", async () => {
-        const svc = makeService();
-        expect(
-            await simulateHasMerchantAccess(
-                PLATFORM_ADMIN,
-                MERCHANT_ID,
-                "PUT",
-                svc
-            )
-        ).toBe(false);
-    });
-
-    it("denies DELETE to platform admin on a foreign merchant", async () => {
-        const svc = makeService();
-        expect(
-            await simulateHasMerchantAccess(
-                PLATFORM_ADMIN,
-                MERCHANT_ID,
-                "DELETE",
-                svc
-            )
-        ).toBe(false);
-    });
-
-    it("grants GET access to the real owner (unaffected by platform admin logic)", async () => {
-        const svc = makeService({ ownerWallet: OWNER });
-        expect(
-            await simulateHasMerchantAccess(OWNER, MERCHANT_ID, "GET", svc)
-        ).toBe(true);
-    });
-
-    it("grants POST access to the real owner (write-gate unchanged)", async () => {
-        const svc = makeService({ ownerWallet: OWNER });
-        expect(
-            await simulateHasMerchantAccess(OWNER, MERCHANT_ID, "POST", svc)
-        ).toBe(true);
-    });
-
-    it("denies GET for a stranger (neither owner/admin nor platform admin)", async () => {
-        const svc = makeService();
-        expect(
-            await simulateHasMerchantAccess(STRANGER, MERCHANT_ID, "GET", svc)
-        ).toBe(false);
+        const ids = await service.getAccessibleMerchantIds({
+            wallet: OWNER_WALLET,
+            accountId: "acc-1",
+            shopDomain: DOMAIN,
+        });
+        expect([...ids].sort()).toEqual(["m1", "m2", "m3", "m4"]);
     });
 });

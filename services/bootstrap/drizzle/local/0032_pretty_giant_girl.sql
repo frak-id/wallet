@@ -1,0 +1,1 @@
+ALTER TABLE "business_accounts" DROP COLUMN "display_name";

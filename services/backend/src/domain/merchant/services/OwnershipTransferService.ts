@@ -1,10 +1,29 @@
-import { viemClient } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { type Address, type Hex, isAddressEqual } from "viem";
-import { verifyMessage } from "viem/actions";
-import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
+// Deep import (bypasses the `@backend-utils` barrel) — see the comment in
+// `api/business/auth/common.ts` for why `siwe.ts` can't be re-exported there.
+import { verifySiweSignatureWithStatement } from "../../../utils/siwe";
 import type { MerchantOwnershipTransferRepository } from "../repositories/MerchantOwnershipTransferRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
+
+/**
+ * The caller's own identity for the transfer flow — mirrors
+ * `MerchantAuthorizationService.MerchantIdentity` (wallet and/or account).
+ */
+export type TransferActor = {
+    wallet: Address | null;
+    accountId: string | null;
+};
+
+/**
+ * Who the merchant is being transferred to. Exactly one axis is set — a
+ * wallet (verified via a fresh SIWE signature from that wallet, existing
+ * flow) or an existing business account (verified by that account's own
+ * step-up-verified session accepting the transfer, §7.5).
+ */
+export type TransferTarget =
+    | { wallet: Address; accountId?: never }
+    | { wallet?: never; accountId: string };
 
 export class OwnershipTransferService {
     constructor(
@@ -12,11 +31,19 @@ export class OwnershipTransferService {
         private readonly transferRepository: MerchantOwnershipTransferRepository
     ) {}
 
+    /**
+     * Initiate a transfer. The current owner proves ownership per their own
+     * identity axis (§7.5):
+     *  - wallet owner: a fresh SIWE signature over the initiate statement.
+     *  - walletless owner: the caller's step-up-verified session IS the
+     *    proof (enforced by `requireStepUp` at the route level) — no SIWE
+     *    message needed, `siweProof` is omitted.
+     */
     async initiateTransfer(params: {
         merchantId: string;
-        message: string;
-        signature: Hex;
-        toWallet: Address;
+        actor: TransferActor;
+        target: TransferTarget;
+        siweProof?: { message: string; signature: Hex };
         requestOrigin: string;
     }): Promise<void> {
         const merchant = await this.merchantRepository.findById(
@@ -29,27 +56,22 @@ export class OwnershipTransferService {
             );
         }
 
-        const siweResult = await this.verifySiweMessage({
-            message: params.message,
-            signature: params.signature,
-            requestOrigin: params.requestOrigin,
-            expectedStatement: this.buildInitiateStatement(
-                params.merchantId,
-                params.toWallet
-            ),
-        });
-        if (!siweResult.valid) {
-            throw HttpError.badRequest("SIWE_INVALID", siweResult.error);
-        }
+        await this.assertIsOwner(merchant, params.actor, params);
 
-        if (!isAddressEqual(siweResult.wallet, merchant.ownerWallet)) {
-            throw HttpError.forbidden(
-                "OWNER_ONLY",
-                "Only the current owner can initiate transfer"
+        if (
+            params.target.wallet &&
+            merchant.ownerWallet &&
+            isAddressEqual(params.target.wallet, merchant.ownerWallet)
+        ) {
+            throw HttpError.conflict(
+                "SAME_OWNER",
+                "Cannot transfer to the same owner"
             );
         }
-
-        if (isAddressEqual(params.toWallet, merchant.ownerWallet)) {
+        if (
+            params.target.accountId &&
+            params.target.accountId === merchant.ownerAccountId
+        ) {
             throw HttpError.conflict(
                 "SAME_OWNER",
                 "Cannot transfer to the same owner"
@@ -59,14 +81,81 @@ export class OwnershipTransferService {
         await this.transferRepository.create({
             merchantId: params.merchantId,
             fromWallet: merchant.ownerWallet,
-            toWallet: params.toWallet,
+            fromAccountId: merchant.ownerAccountId,
+            toWallet: params.target.wallet ?? null,
+            toAccountId: params.target.accountId ?? null,
         });
     }
 
+    /**
+     * Verifies `params.actor` is the current owner. Wallet owners must
+     * supply a fresh SIWE proof over `buildInitiateStatement`; walletless
+     * owners are trusted on session identity alone (the route's
+     * `requireStepUp` guard already enforced freshness).
+     */
+    private async assertIsOwner(
+        merchant: {
+            ownerWallet: Address | null;
+            ownerAccountId: string | null;
+        },
+        actor: TransferActor,
+        params: {
+            merchantId: string;
+            target: TransferTarget;
+            siweProof?: { message: string; signature: Hex };
+            requestOrigin: string;
+        }
+    ): Promise<void> {
+        if (merchant.ownerWallet) {
+            if (!params.siweProof) {
+                throw HttpError.forbidden(
+                    "SIWE_REQUIRED",
+                    "A wallet-owned merchant requires a fresh SIWE signature to initiate transfer"
+                );
+            }
+            const statement = this.buildInitiateStatement(
+                params.merchantId,
+                params.target
+            );
+            const result = await verifySiweSignatureWithStatement({
+                message: params.siweProof.message,
+                signature: params.siweProof.signature,
+                requestOrigin: params.requestOrigin,
+                expectedStatements: [statement],
+            });
+            if (!result.valid) {
+                throw HttpError.badRequest("SIWE_INVALID", result.error);
+            }
+            if (!isAddressEqual(result.wallet, merchant.ownerWallet)) {
+                throw HttpError.forbidden(
+                    "OWNER_ONLY",
+                    "Only the current owner can initiate transfer"
+                );
+            }
+            return;
+        }
+
+        // Walletless owner (§7.5): the step-up-verified session is the
+        // proof — no SIWE message to check.
+        if (!actor.accountId || actor.accountId !== merchant.ownerAccountId) {
+            throw HttpError.forbidden(
+                "OWNER_ONLY",
+                "Only the current owner can initiate transfer"
+            );
+        }
+    }
+
+    /**
+     * Accept a pending transfer. The designated target proves identity per
+     * their own axis:
+     *  - wallet target: a fresh SIWE signature over the accept statement.
+     *  - account target: the target's own step-up-verified session IS the
+     *    proof (§7.5) — no SIWE message needed.
+     */
     async acceptTransfer(params: {
         merchantId: string;
-        message: string;
-        signature: Hex;
+        actor: TransferActor;
+        siweProof?: { message: string; signature: Hex };
         requestOrigin: string;
     }): Promise<void> {
         const transfer = await this.transferRepository.findActiveByMerchant(
@@ -79,33 +168,58 @@ export class OwnershipTransferService {
             );
         }
 
-        const siweResult = await this.verifySiweMessage({
-            message: params.message,
-            signature: params.signature,
-            requestOrigin: params.requestOrigin,
-            expectedStatement: this.buildAcceptStatement(params.merchantId),
-        });
-        if (!siweResult.valid) {
-            throw HttpError.badRequest("SIWE_INVALID", siweResult.error);
-        }
-
-        if (!isAddressEqual(siweResult.wallet, transfer.toWallet)) {
-            throw HttpError.forbidden(
-                "NEW_OWNER_ONLY",
-                "Only the designated new owner can accept transfer"
+        if (transfer.toWallet) {
+            if (!params.siweProof) {
+                throw HttpError.forbidden(
+                    "SIWE_REQUIRED",
+                    "A wallet transfer target requires a fresh SIWE signature to accept"
+                );
+            }
+            const result = await verifySiweSignatureWithStatement({
+                message: params.siweProof.message,
+                signature: params.siweProof.signature,
+                requestOrigin: params.requestOrigin,
+                expectedStatements: [
+                    this.buildAcceptStatement(params.merchantId),
+                ],
+            });
+            if (!result.valid) {
+                throw HttpError.badRequest("SIWE_INVALID", result.error);
+            }
+            if (!isAddressEqual(result.wallet, transfer.toWallet)) {
+                throw HttpError.forbidden(
+                    "NEW_OWNER_ONLY",
+                    "Only the designated new owner can accept transfer"
+                );
+            }
+            await this.merchantRepository.updateOwner(params.merchantId, {
+                wallet: transfer.toWallet,
+            });
+        } else if (transfer.toAccountId) {
+            if (params.actor.accountId !== transfer.toAccountId) {
+                throw HttpError.forbidden(
+                    "NEW_OWNER_ONLY",
+                    "Only the designated new owner can accept transfer"
+                );
+            }
+            await this.merchantRepository.updateOwner(params.merchantId, {
+                accountId: transfer.toAccountId,
+            });
+        } else {
+            // Unreachable given the create()-time CHECK constraint, but
+            // keeps the branch exhaustive rather than silently no-op-ing.
+            throw HttpError.internal(
+                "INVALID_TRANSFER",
+                "Pending transfer has no target identity"
             );
         }
 
-        await this.merchantRepository.updateOwner(
-            params.merchantId,
-            transfer.toWallet
-        );
         await this.transferRepository.delete(params.merchantId);
     }
 
     async cancelTransfer(params: {
         merchantId: string;
-        wallet: Address;
+        actor: TransferActor;
     }): Promise<void> {
         const merchant = await this.merchantRepository.findById(
             params.merchantId
@@ -117,7 +231,13 @@ export class OwnershipTransferService {
             );
         }
 
-        if (!isAddressEqual(params.wallet, merchant.ownerWallet)) {
+        const isOwner =
+            (params.actor.wallet &&
+                merchant.ownerWallet &&
+                isAddressEqual(params.actor.wallet, merchant.ownerWallet)) ||
+            (params.actor.accountId &&
+                params.actor.accountId === merchant.ownerAccountId);
+        if (!isOwner) {
             throw HttpError.forbidden(
                 "OWNER_ONLY",
                 "Only the current owner can cancel transfer"
@@ -137,49 +257,9 @@ export class OwnershipTransferService {
         return this.transferRepository.findActiveByMerchant(merchantId);
     }
 
-    private async verifySiweMessage(params: {
-        message: string;
-        signature: Hex;
-        requestOrigin: string;
-        expectedStatement: string;
-    }): Promise<
-        { valid: true; wallet: Address } | { valid: false; error: string }
-    > {
-        const siweMessage = parseSiweMessage(params.message);
-        if (!siweMessage?.address) {
-            return { valid: false, error: "Invalid SIWE message format" };
-        }
-
-        const originHost = new URL(params.requestOrigin).host;
-        const isValid = validateSiweMessage({
-            message: siweMessage,
-            domain: originHost,
-        });
-        if (!isValid) {
-            return { valid: false, error: "SIWE message validation failed" };
-        }
-
-        if (siweMessage.statement !== params.expectedStatement) {
-            return {
-                valid: false,
-                error: "SIWE statement does not match expected statement",
-            };
-        }
-
-        const isValidSignature = await verifyMessage(viemClient, {
-            message: params.message,
-            signature: params.signature,
-            address: siweMessage.address,
-        });
-        if (!isValidSignature) {
-            return { valid: false, error: "Invalid signature" };
-        }
-
-        return { valid: true, wallet: siweMessage.address };
-    }
-
-    buildInitiateStatement(merchantId: string, toWallet: Address): string {
-        return `Transfer ownership of merchant ${merchantId} to ${toWallet}`;
+    buildInitiateStatement(merchantId: string, target: TransferTarget): string {
+        const targetLabel = target.wallet ?? target.accountId;
+        return `Transfer ownership of merchant ${merchantId} to ${targetLabel}`;
     }
 
     buildAcceptStatement(merchantId: string): string {

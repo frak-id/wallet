@@ -6,14 +6,21 @@ import { activeMerchantStore } from "@/stores/activeMerchantStore";
  * their URL (e.g. `/settings/billing`), where `useActiveMerchantId()` would
  * throw because there is no `/m/$merchantId` match to read from.
  *
- * Mirrors `resolveActiveMerchant`: prefer the merchant the user was last
- * working in (if still accessible), otherwise the first accessible merchant.
- * Returns `undefined` when the user has no accessible merchant.
+ * Prefer the merchant the user was last working in, resolved against ALL
+ * viewable merchants — including a platform admin's read-only ones. Filtering
+ * to `accessibleMerchants` here silently dropped a read-only selection made in
+ * the picker (which does let a platform admin switch to any merchant, see
+ * `/m/$merchantId` layout), snapping the settings/billing view back to the
+ * first accessible merchant while the picker showed the newly-selected one.
+ *
+ * Falls back to the first accessible merchant (then any viewable one) when
+ * nothing is remembered. Returns `undefined` when there is no viewable
+ * merchant at all.
  */
 export function useSettingsMerchantId(): string | undefined {
     const lastMerchantId = activeMerchantStore((s) => s.lastMerchantId);
-    const { accessibleMerchants } = useMyMerchants();
+    const { merchants, accessibleMerchants } = useMyMerchants();
 
-    const remembered = accessibleMerchants.find((m) => m.id === lastMerchantId);
-    return (remembered ?? accessibleMerchants[0])?.id;
+    const remembered = merchants.find((m) => m.id === lastMerchantId);
+    return (remembered ?? accessibleMerchants[0] ?? merchants[0])?.id;
 }

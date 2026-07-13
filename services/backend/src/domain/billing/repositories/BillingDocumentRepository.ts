@@ -1,4 +1,5 @@
 import { db } from "@backend-infrastructure";
+import { isUniqueViolation } from "@backend-utils";
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { and, asc, desc, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import {
@@ -22,25 +23,6 @@ const REFERENCE_PREFIX: Record<BillingDocumentKind, string> = {
 const MAX_REFERENCE_ALLOC_ATTEMPTS = 2;
 
 /**
- * True for any Postgres unique_violation (SQLSTATE 23505) — not specific to
- * the reference index. Used both for `create`'s reference-collision retry
- * and (by `MonthlyBillOrchestrator`) for the `(merchant_id, period_start)`
- * partial-unique collision on monthly bills; callers that need to know
- * *which* index fired must disambiguate separately (e.g. by re-querying).
- * postgres-js surfaces the SQLSTATE code on the thrown error; duck-typed
- * since the driver doesn't export a class. Exported for unit testing (pure
- * predicate, no DB needed).
- */
-export function isUniqueViolation(err: unknown): boolean {
-    return (
-        typeof err === "object" &&
-        err !== null &&
-        "code" in err &&
-        (err as { code?: string }).code === "23505"
-    );
-}
-
-/**
  * Formats the human-facing `{PREFIX}-{year}-{NNNN}` reference string (e.g.
  * `DEP-2026-0001`). Pure formatting, split out from `nextReference` so it's
  * unit-testable without a DB.
@@ -59,36 +41,36 @@ export function formatReference(
  */
 export class BillingDocumentRepository {
     /**
-     * Atomically allocates the next `{PREFIX}-{year}-{NNNN}` reference for a
-     * merchant+kind+year via `INSERT ... ON CONFLICT DO UPDATE ... RETURNING`
-     * against `billing_document_counters`. The row-level lock taken by the
-     * upsert serializes concurrent allocations — no `SELECT MAX` race, and no
-     * per-year Postgres `SEQUENCE` (which can't reset per merchant+kind+year
-     * without runtime DDL — see schema.ts comment).
+     * Atomically allocates the next `{PREFIX}-{year}-{NNNN}` reference from the
+     * global per-`(kind, year)` sequence via `INSERT ... ON CONFLICT DO UPDATE
+     * ... RETURNING` against `billing_document_counters`. The sequence is
+     * global (not per-merchant) so Frak's issued numbering stays continuous
+     * per issuer for VAT (Art. 242 nonies A — see schema.ts comment). The
+     * row-level lock taken by the upsert serializes concurrent allocations —
+     * no `SELECT MAX` race.
      *
      * Pass the enclosing `tx` so allocation commits atomically with the
      * document insert (`create` below) — a failed insert after a successful
-     * bump would otherwise burn a reference number (gap; acceptable) but,
-     * worse, could hand out the same number to a retried create (duplicate;
-     * not acceptable without the transaction).
+     * bump would otherwise burn a reference number (gap) but, worse, could
+     * hand out the same number to a retried create (duplicate; not acceptable
+     * without the transaction).
      */
     async nextReference(
-        merchantId: string,
         kind: BillingDocumentKind,
         year: number,
         tx: PgRunner = db
     ): Promise<string> {
         const result = await tx.execute<{ last_value: number }>(sql`
-            INSERT INTO billing_document_counters (merchant_id, kind, year, last_value)
-            VALUES (${merchantId}::uuid, ${kind}, ${year}, 1)
-            ON CONFLICT (merchant_id, kind, year)
+            INSERT INTO billing_document_counters (kind, year, last_value)
+            VALUES (${kind}, ${year}, 1)
+            ON CONFLICT (kind, year)
             DO UPDATE SET last_value = billing_document_counters.last_value + 1
             RETURNING last_value
         `);
         const row = [...result][0];
         if (!row) {
             throw new Error(
-                `Failed to allocate billing reference for merchant=${merchantId} kind=${kind} year=${year}`
+                `Failed to allocate billing reference for kind=${kind} year=${year}`
             );
         }
         return formatReference(kind, year, row.last_value);
@@ -143,8 +125,8 @@ export class BillingDocumentRepository {
     /**
      * Allocates the reference and inserts the document atomically (same `tx`).
      * `documentDate`'s UTC year drives the reference counter bucket. On the
-     * rare unique-constraint collision on `(merchant_id, reference)` (e.g. a
-     * concurrent transaction interleaving on a replica), retries once with a
+     * rare unique-constraint collision on `reference` (e.g. a concurrent
+     * transaction interleaving on a replica), retries once with a
      * freshly-allocated reference.
      */
     async create(
@@ -160,7 +142,6 @@ export class BillingDocumentRepository {
             try {
                 return await db.transaction(async (tx) => {
                     const reference = await this.nextReference(
-                        document.merchantId,
                         document.kind,
                         year,
                         tx
@@ -221,8 +202,9 @@ export class BillingDocumentRepository {
      * write-once `setPdf` guard for a fresh render. Scoped by `merchantId`
      * (IDOR-safe) and to `kind='monthly_bill'` — deposit/withdraw PDFs are
      * immutable and never cleared (their correction path is void + re-emit,
-     * not regeneration). The caller deletes the stored object first; this
-     * only detaches the row's reference to it.
+     * not regeneration). This only detaches the row's reference; the caller
+     * deletes the stored object AFTER a successful clear (an orphaned object
+     * is harmless, a dangling pointer 500s the download route).
      */
     async clearPdf(
         merchantId: string,
@@ -357,7 +339,12 @@ export class BillingDocumentRepository {
                     isNull(billingDocumentsTable.voidedAt),
                     sql`${billingDocumentsTable.kind} IN ('deposit', 'withdraw')`
                 )
-            );
+            )
+            // Deterministic order — SELECT DISTINCT without ORDER BY is
+            // plan-dependent, and callers use the FIRST currency as the
+            // monthly bill's primary/invoice currency; a plan change must
+            // never flip which currency a bill is labeled in.
+            .orderBy(asc(billingDocumentsTable.currency));
         return rows.map((row) => row.currency);
     }
 

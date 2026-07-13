@@ -1,22 +1,101 @@
 export default interface Resources {
   "translation": {
     "auth": {
-      "embedded": {
-        "action": "Authenticate",
-        "panelTitle": "Please connect your wallet to continue",
-        "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
-        "title": "Authentication required"
+      "invite": {
+        "alreadyAuthenticated": "You're already signed in on this device with a different account than {{email}}.",
+        "alreadyClaimed": "This invitation was already used. Sign in with {{email}} instead.",
+        "askToResend": "Ask your admin to resend the invitation.",
+        "goToLogin": "Go to sign in",
+        "invalidToken": "This invitation link is invalid or has expired",
+        "openDashboard": "Open dashboard",
+        "signOutFirst": "Sign out to accept this invitation",
+        "submit": "Accept invitation",
+        "subtitle": "Invited by {{inviterName}}. Set a password to finish creating your account.",
+        "title": "You've been invited to be an admin of <strong>{{merchantName}}</strong> on Frak"
       },
       "login": {
+        "back": "Back",
         "connect": "Connect to Frak Ad Manager",
         "dashboardImageAlt": "Frak Ad Manager dashboard preview",
+        "email": {
+          "backToLogin": "Back to sign in",
+          "emailPlaceholder": "Email address",
+          "forgotPassword": "Forgot your password?",
+          "newPasswordPlaceholder": "Create a password",
+          "noAccount": "No account yet?",
+          "passwordHint": "At least 10 characters.",
+          "passwordPlaceholder": "Password",
+          "registerCta": "Register",
+          "registerSubmit": "Create account",
+          "resetCodePlaceholder": "Reset code",
+          "resetInstructions": "Enter your account email and we'll send you a reset code.",
+          "resetSent": "If an account exists, a reset code has been sent. Enter it below with your new password.",
+          "resetSubmit": "Reset password",
+          "resetSuccess": "Your password has been reset. You can now sign in.",
+          "sendResetCode": "Send reset code",
+          "submit": "Sign in"
+        },
         "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",
         "footerPrivacy": "Privacy Policy",
         "footerTerms": "Terms & Conditions",
         "frakLabsLogoAlt": "Frak Labs",
-        "heroSubtitle": "Register in a second. No email, no password.",
+        "heroSubtitle": "Register in a second.",
         "heroTitleLine1": "Access and discover",
-        "heroTitleLine2": "Frak Ad Manager"
+        "heroTitleLine2": "Frak Ad Manager",
+        "methods": {
+          "email": "Email",
+          "shopify": "Shopify",
+          "wallet": "Wallet"
+        },
+        "or": "or",
+        "sessionError": "We couldn't finish signing you in. Please try again.",
+        "shopify": {
+          "invalidDomain": "Enter a valid myshopify.com domain",
+          "label": "Shopify store domain",
+          "submit": "Continue with Shopify"
+        },
+        "ssoError": "We couldn't sign you in with Shopify. Please try again.",
+        "walletError": "We couldn't sign you in with your wallet. Please try again."
+      },
+      "twoFactor": {
+        "codePlaceholder": "6-digit code",
+        "email": {
+          "resend": "Resend code",
+          "resent": "Code sent",
+          "sendCode": "Send code by email",
+          "sentHint": "Enter the code we sent to your email."
+        },
+        "genericError": "Verification failed. Please try again.",
+        "method": {
+          "email": "Email code",
+          "siwe": "Wallet",
+          "totp": "Authenticator app"
+        },
+        "pendingHint": "Verifying your session…",
+        "siwe": {
+          "cta": "Sign with wallet",
+          "hint": "Sign a message with your wallet to confirm it's you."
+        },
+        "subtitle": "Confirm it's you before continuing.",
+        "title": "Verify your identity",
+        "totp": {
+          "hint": "Enter the code from your authenticator app.",
+          "recoveryHint": "Enter one of your recovery codes.",
+          "recoveryNotice": "You're entering a one-time recovery code, not your 6-digit authenticator app code.",
+          "recoveryPlaceholder": "Recovery code",
+          "useCode": "Use your authenticator app",
+          "useRecovery": "Use a recovery code"
+        },
+        "verify": "Verify"
+      },
+      "verifyEmail": {
+        "continue": "Continue",
+        "hint": "Enter the code we sent to your email address.",
+        "resend": "Resend code",
+        "resent": "Code sent",
+        "sendCode": "Send verification code",
+        "success": "Your email is verified.",
+        "title": "Verify your email"
       }
     },
     "bank": {
@@ -691,8 +770,10 @@ export default interface Resources {
       }
     },
     "common": {
+      "cancel": "Cancel",
       "clearAll": "Clear all",
       "close": "Close",
+      "copied": "Copied",
       "copy": "Copy to clipboard",
       "dateField": {
         "openCalendar": "Open calendar",
@@ -708,6 +789,7 @@ export default interface Resources {
           "thisMonth": "This month"
         }
       },
+      "hidePassword": "Hide password",
       "pagination": {
         "label": "pagination",
         "morePages": "More pages",
@@ -718,6 +800,7 @@ export default interface Resources {
       "search": {
         "placeholder": "Search"
       },
+      "showPassword": "Show password",
       "table": {
         "empty": "No results"
       }
@@ -858,17 +941,6 @@ export default interface Resources {
         "title": "Welcome to Frak"
       }
     },
-    "embedded": {
-      "mint": {
-        "alreadyRegistered": "Maybe the domain is already registered.",
-        "close": "Close",
-        "error": "Can't register your product. Double check that everything is right.",
-        "register": "Register your shop",
-        "registering": "Registering <text>{{domain}}</text>",
-        "subtitle": "We'll verify your domain and set up your merchant space.",
-        "title": "Register your shop on Frak"
-      }
-    },
     "errors": {
       "boundary": {
         "goBack": "Go Back",
@@ -980,6 +1052,11 @@ export default interface Resources {
         "totalBalance": "Total balance",
         "withdrawable": "Available to migrate"
       },
+      "linkWallet": {
+        "cta": "Link a Frak wallet",
+        "description": "Withdrawing, adjusting allowance, and pausing distribution require a wallet signature. Link a Frak wallet to unlock these actions.",
+        "title": "Link a wallet to manage funds"
+      },
       "pause": {
         "title": "Pause rewards"
       },
@@ -1053,7 +1130,8 @@ export default interface Resources {
           "helpCta": "View DNS Setup Guide",
           "helpQuestion": "How to add a DNS TXT record in my DNS settings?",
           "helper": "Add this TXT record to your domain's DNS settings:",
-          "title": "DNS TXT Record Required"
+          "title": "DNS TXT Record Required",
+          "verifiedViaShopify": "Domain verified thanks to your Shopify session"
         },
         "fields": {
           "currency": {
@@ -1273,10 +1351,17 @@ export default interface Resources {
       },
       "team": {
         "add": {
-          "description": "Invite an admin to your team by wallet address.",
+          "addedSuccess": "{{email}} was added to the team",
+          "description": "Invite an admin to your team by wallet address or email.",
+          "emailInvalid": "Invalid email address",
+          "emailLabel": "Member email",
+          "emailPlaceholder": "name@company.com",
           "error": "Could not add the admin. Try again.",
           "invalid": "Invalid wallet address",
+          "invitedSuccess": "Invitation sent to {{email}}",
           "label": "Member wallet",
+          "modeEmail": "Email",
+          "modeWallet": "Wallet",
           "placeholder": "0x…",
           "submit": "Add member",
           "title": "Add a member"
@@ -1287,15 +1372,20 @@ export default interface Resources {
           "role": "Role",
           "wallet": "Wallet"
         },
+        "invited": "Invited",
         "me": "Me:",
         "removeMember": "Remove member",
+        "resendError": "Could not resend the invitation. Try again.",
+        "resendInvite": "Resend invite",
+        "resendSuccess": "Invitation resent to {{email}}",
         "roles": {
           "admin": "Admin",
           "owner": "Owner"
         },
         "saveAll": "Save all changes",
         "saveError": "Some changes could not be saved. Try again.",
-        "undoRemove": "Undo remove"
+        "undoRemove": "Undo remove",
+        "walletlessMember": "Walletless member"
       },
       "title": "Edit"
     },
@@ -1517,6 +1607,9 @@ export default interface Resources {
             "trigger": "Add withdrawal"
           }
         },
+        "errors": {
+          "save": "Something went wrong while saving your billing information. Your changes were kept — please try again."
+        },
         "fields": {
           "billingEmail": {
             "label": "Billing email",
@@ -1580,7 +1673,8 @@ export default interface Resources {
         },
         "tag": {
           "deposit": "Deposit",
-          "paid": "Paid"
+          "paid": "Paid",
+          "withdraw": "Withdraw"
         },
         "validation": {
           "decimal": "Enter a valid decimal amount",
@@ -1604,6 +1698,57 @@ export default interface Resources {
           "fr": "French"
         },
         "title": "Language"
+      },
+      "security": {
+        "credentials": {
+          "addPassword": "Add a password to also sign in with email.",
+          "addPasswordCta": "Add password",
+          "connected": "Verified",
+          "description": "Wallet, password, and connected accounts used to sign in.",
+          "emailTaken": "This email is already used by another account.",
+          "linkWallet": "Link a wallet",
+          "password": "Email & password",
+          "passwordAdded": "Password added and email verified.",
+          "pending": "Pending verification",
+          "savePassword": "Save password",
+          "title": "Sign-in methods",
+          "verifyBanner": {
+            "description": "Confirm your email to secure your account and make sure you can always sign back in.",
+            "title": "Verify your email address"
+          },
+          "wallet": "Wallet"
+        },
+        "sessions": {
+          "current": "this device",
+          "description": "Devices and browsers currently signed in to your account.",
+          "emptyDescription": "Devices signed in to your account will appear here.",
+          "emptyTitle": "No active sessions",
+          "method": {
+            "password": "Email & password",
+            "shopify": "Shopify",
+            "wallet": "Wallet"
+          },
+          "revoke": "Revoke",
+          "revokeDescription": "This device will need to sign in again to access your account.",
+          "revokeTitle": "Revoke this session?",
+          "title": "Active sessions"
+        },
+        "totp": {
+          "confirm": "Confirm",
+          "copyCodes": "Copy codes",
+          "downloadCodes": "Download",
+          "enable": "Enable authenticator app",
+          "enabled": "Authenticator app enabled",
+          "manualHint": "Can't scan? Enter this key manually instead:",
+          "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app.",
+          "recoveryTitle": "Save your recovery codes",
+          "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
+          "title": "Authenticator app"
+        },
+        "twoFactor": {
+          "description": "Add an extra layer of security to your sign-in with an authenticator app.",
+          "title": "Two-Factor Authentication"
+        }
       },
       "tabs": {
         "billing": "Billing",

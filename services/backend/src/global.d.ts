@@ -15,6 +15,13 @@ declare global {
             // Shopify
             SHOPIFY_API_SECRET: string;
             SHOPIFY_CLIENT_ID: string;
+            // Business dashboard origin — Shopify SSO callback redirect
+            // target (§4.7). NOTE: not yet wired into infra/gcp/secrets.ts
+            // elysiaEnv (out of scope for this backend-only change — infra's
+            // `businessUrl` from infra/config.ts is the value to plumb in).
+            BUSINESS_URL: string;
+            // Business auth security emails (2FA OTP sender)
+            RESEND_SECURITY_FROM_EMAIL: string;
             // RustFS (object storage)
             RUSTFS_ENDPOINT: string;
             RUSTFS_ACCESS_KEY: string;

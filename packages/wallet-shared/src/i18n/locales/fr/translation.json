@@ -555,7 +555,7 @@
                 "endLabel": "Date de fin (facultatif)",
                 "endHelp": "La récupération cesse de fonctionner après cette date. Par défaut et au maximum deux ans à partir de maintenant.",
                 "dateRangeError": "La date de début doit précéder la date de fin.",
-                "warning": "Choisissez un mot de passe robuste. Nous ne pouvons ni le réinitialiser ni le récupérer — si vous l'oubliez, votre sauvegarde devient définitivement inutilisable.",
+                "warning": "Choisissez un mot de passe robuste. Nous ne pouvons ni le réinitialiser ni le récupérer - si vous l'oubliez, votre sauvegarde devient définitivement inutilisable.",
                 "continue": "Continuer"
             },
             "sign": {
@@ -654,7 +654,7 @@
                 },
                 "confirm": {
                     "title": "Supprimer la récupération",
-                    "description": "Ceci désactive votre clé de récupération sur la blockchain et supprime votre sauvegarde chiffrée. Cette action est irréversible — vous devrez reconfigurer la récupération entièrement.",
+                    "description": "Ceci désactive votre clé de récupération sur la blockchain et supprime votre sauvegarde chiffrée. Cette action est irréversible - vous devrez reconfigurer la récupération entièrement.",
                     "warning": "Une fois supprimées, votre clé de récupération et votre sauvegarde actuelles cessent définitivement de fonctionner. Vous pouvez configurer une nouvelle récupération à tout moment.",
                     "authorise": "Supprimer la récupération",
                     "retry": "Réessayer",

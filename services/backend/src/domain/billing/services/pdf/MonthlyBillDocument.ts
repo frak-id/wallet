@@ -32,17 +32,29 @@ export function drawMonthlyBillHeader(
     cursor.newLine(24);
 }
 
+/** One folded invoice line of the reward table — see `groupRewards`. */
+export type RewardGroup = {
+    currency: string;
+    qty: number;
+    unitHt: Decimal;
+    totalHt: Decimal;
+    label: string;
+};
+
 /**
  * The distributed rewards, as a fiat invoice table (never crypto
  * amounts/addresses). Rows are grouped by identical reward amount — every
  * reward worth the same is one line whose `Qté` is the count. Columns:
  * `Produits | Qté | Prix u. HT | TVA (%) | Total HT`. `Prix u. HT` is the
  * distributed amount plus the 20% Frak fee (§4); `Total HT = Prix u. HT × Qté`.
+ * `groups` is computed ONCE by the render entry point (from `groupRewards`)
+ * and shared with `drawTvaAndRecap` — never recomputed per draw call.
  */
 export function drawRewardTable(
     cursor: PageCursor,
     monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
-    bold: PDFFont
+    bold: PDFFont,
+    groups: RewardGroup[]
 ): void {
     cursor.text("Récompenses distribuées", { size: 13, useFont: bold });
     cursor.newLine(20);
@@ -61,7 +73,6 @@ export function drawRewardTable(
     cursor.text("Total HT", { x: col.total, size: 8, color: GRAY });
     cursor.newLine(15);
 
-    const groups = groupRewards(monthlyBill.annexRows);
     if (groups.length === 0) {
         cursor.text("Aucune récompense distribuée sur cette période.", {
             size: 9,
@@ -100,13 +111,7 @@ export function drawRewardTable(
  */
 export function groupRewards(
     rows: NonNullable<BillingPdfDocumentDto["monthlyBill"]>["annexRows"]
-): Array<{
-    currency: string;
-    qty: number;
-    unitHt: Decimal;
-    totalHt: Decimal;
-    label: string;
-}> {
+): RewardGroup[] {
     const map = new Map<
         string,
         { currency: string; base: Decimal; qty: number }
@@ -135,34 +140,81 @@ export function groupRewards(
         .sort((a, b) => b.totalHt.comparedTo(a.totalHt));
 }
 
+/** One currency's billed totals in the recap — see `recapTotalsByCurrency`. */
+type RecapCurrencyTotals = {
+    currency: string;
+    totalHt: Decimal;
+    totalTva: Decimal;
+    totalTtc: Decimal;
+};
+
+/**
+ * Folds the reward `groups` into per-currency billed totals (Total HT / TVA /
+ * TTC), sorted by Total HT descending so the biggest currency leads. Every
+ * reward currency is billed in ITS OWN currency — no cross-currency sum (which
+ * would be meaningless on a legal document) and, crucially, nothing dropped:
+ * a merchant who rewarded in several stablecoins is billed for all of them.
+ * A non-FR merchant has a 0% rate (reverse-charge), so TVA is 0 and TTC == HT.
+ * When there were no rewards, a single zero row in `fallbackCurrency` keeps the
+ * recap non-empty (matching the document's labeled currency).
+ */
+export function recapTotalsByCurrency(
+    groups: RewardGroup[],
+    vatApplicable: boolean,
+    fallbackCurrency: string
+): RecapCurrencyTotals[] {
+    const vatRate = vatApplicable ? VAT_RATE : new Decimal(0);
+    const htByCurrency = new Map<string, Decimal>();
+    for (const group of groups) {
+        htByCurrency.set(
+            group.currency,
+            (htByCurrency.get(group.currency) ?? new Decimal(0)).plus(
+                group.totalHt
+            )
+        );
+    }
+    if (htByCurrency.size === 0) {
+        htByCurrency.set(fallbackCurrency, new Decimal(0));
+    }
+    return [...htByCurrency.entries()]
+        .map(([currency, totalHt]) => {
+            const totalTva = totalHt.mul(vatRate);
+            return {
+                currency,
+                totalHt,
+                totalTva,
+                totalTtc: totalHt.plus(totalTva),
+            };
+        })
+        .sort((a, b) => b.totalHt.comparedTo(a.totalHt));
+}
+
 /**
  * Two side-by-side blocks under the reward table: `Détails TVA` (the applied
- * rate + its amount) on the left, `Récapitulatif` (Total HT / Total TVA /
- * Total TTC) on the right. Totals are the sum of the table's `Total HT`
- * lines; TVA is the applied rate of that, TTC is HT + TVA. A non-FR merchant
- * has a 0% rate (reverse-charge), so Total TVA is 0 and TTC === HT.
+ * rate + its per-currency amount) on the left, `Récapitulatif` (Total HT /
+ * Total TVA / Total TTC) on the right. Both list EVERY reward currency, each
+ * billed in its own currency (see `recapTotalsByCurrency`) — the whole point
+ * being that a bill shows all the rewards distributed, not only those in the
+ * deposit currency. `fallbackCurrency` (the document currency) is used only
+ * when the period had no rewards, to keep a labeled zero row. `groups` is
+ * computed once by the render entry point.
  */
 export function drawTvaAndRecap(
     cursor: PageCursor,
     monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
-    bold: PDFFont
+    bold: PDFFont,
+    groups: RewardGroup[],
+    fallbackCurrency: string
 ): void {
-    const groups = groupRewards(monthlyBill.annexRows);
-    // Bills are single-currency in practice (one merchant bank/token); the
-    // recap is shown in the reward rows' currency, falling back to the
-    // ledger's currency when there are no rewards.
-    const currency =
-        monthlyBill.annexRows[0]?.currency ??
-        monthlyBill.ledgers[0]?.currency ??
-        "eure";
+    const perCurrency = recapTotalsByCurrency(
+        groups,
+        monthlyBill.vatApplicable,
+        fallbackCurrency
+    );
 
-    const vatRate = monthlyBill.vatApplicable ? VAT_RATE : new Decimal(0);
-    let totalHt = new Decimal(0);
-    for (const group of groups) totalHt = totalHt.plus(group.totalHt);
-    const totalTva = totalHt.mul(vatRate);
-    const totalTtc = totalHt.plus(totalTva);
-
-    cursor.ensureSpace(70);
+    // ~28pt per currency block on the right + headers; grow with the count so
+    // a multi-currency recap doesn't collide with the next section.
+    cursor.ensureSpace(50 + perCurrency.length * 20);
     const topY = cursor.y;
     const rightX = PAGE_WIDTH / 2 + 10;
 
@@ -175,29 +227,34 @@ export function drawTvaAndRecap(
         { size: 9 }
     );
     cursor.newLine(13);
-    cursor.text(`Montant : ${formatMoney(totalTva.toFixed(2), currency)}`, {
-        size: 9,
-    });
+    for (const { currency, totalTva } of perCurrency) {
+        cursor.text(`Montant : ${formatMoney(totalTva.toFixed(2), currency)}`, {
+            size: 9,
+        });
+        cursor.newLine(13);
+    }
     const leftEndY = cursor.y;
 
     cursor.y = topY;
     cursor.text("Récapitulatif", { x: rightX, size: 12, useFont: bold });
     cursor.newLine(16);
-    cursor.text(`Total HT : ${formatMoney(totalHt.toFixed(2), currency)}`, {
-        x: rightX,
-        size: 9,
-    });
-    cursor.newLine(13);
-    cursor.text(`Total TVA : ${formatMoney(totalTva.toFixed(2), currency)}`, {
-        x: rightX,
-        size: 9,
-    });
-    cursor.newLine(13);
-    cursor.text(`Total TTC : ${formatMoney(totalTtc.toFixed(2), currency)}`, {
-        x: rightX,
-        size: 9,
-        useFont: bold,
-    });
+    for (const { totalHt, totalTva, totalTtc, currency } of perCurrency) {
+        cursor.text(`Total HT : ${formatMoney(totalHt.toFixed(2), currency)}`, {
+            x: rightX,
+            size: 9,
+        });
+        cursor.newLine(13);
+        cursor.text(
+            `Total TVA : ${formatMoney(totalTva.toFixed(2), currency)}`,
+            { x: rightX, size: 9 }
+        );
+        cursor.newLine(13);
+        cursor.text(
+            `Total TTC : ${formatMoney(totalTtc.toFixed(2), currency)}`,
+            { x: rightX, size: 9, useFont: bold }
+        );
+        cursor.newLine(perCurrency.length > 1 ? 18 : 13);
+    }
     const rightEndY = cursor.y;
 
     cursor.y = Math.min(leftEndY, rightEndY) - 26;
@@ -231,4 +288,50 @@ export function drawLedgerStatus(
         );
         cursor.newLine(18);
     }
+}
+
+/**
+ * Informational listing of settled rewards paid in NON-stablecoin tokens —
+ * they carry no invoice currency, so they are excluded from the reward
+ * table, the recap, and every billed total (§B9). Token amounts only, no
+ * fiat conversion. Skipped entirely when there are none.
+ */
+export function drawOtherRewards(
+    cursor: PageCursor,
+    monthlyBill: NonNullable<BillingPdfDocumentDto["monthlyBill"]>,
+    bold: PDFFont
+): void {
+    const rows = monthlyBill.otherRewards ?? [];
+    if (rows.length === 0) return;
+
+    cursor.ensureSpace(50);
+    cursor.text("Autres récompenses (hors facturation)", {
+        size: 13,
+        useFont: bold,
+    });
+    cursor.newLine(16);
+    cursor.text(
+        "Récompenses réglées en jetons hors stablecoins — non facturées, données à titre informatif (montants en jetons).",
+        { size: 8, color: GRAY }
+    );
+    cursor.newLine(15);
+
+    const col = { date: MARGIN, amount: 200 };
+    cursor.text("Date", { x: col.date, size: 8, color: GRAY });
+    cursor.text("Montant (jetons)", { x: col.amount, size: 8, color: GRAY });
+    cursor.newLine(13);
+
+    for (const row of rows) {
+        cursor.ensureSpace(13);
+        cursor.text(row.settledAt.toISOString().slice(0, 10), {
+            x: col.date,
+            size: 9,
+        });
+        cursor.text(new Decimal(row.amount).toFixed(2), {
+            x: col.amount,
+            size: 9,
+        });
+        cursor.newLine(13);
+    }
+    cursor.newLine(8);
 }

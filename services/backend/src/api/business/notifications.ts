@@ -88,6 +88,8 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             );
         },
         {
+            // Notification send is a sensitive action (§4.8).
+            requireStepUp: true,
             body: t.Object({
                 merchantId: t.String({ format: "uuid" }),
                 targets: SendNotificationTargetsDto,
@@ -126,6 +128,8 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             return { id: broadcast.id, scheduledAt };
         },
         {
+            // Notification scheduling is a sensitive action (§4.8).
+            requireStepUp: true,
             body: t.Object({
                 merchantId: t.String({ format: "uuid" }),
                 targets: SendNotificationTargetsDto,
@@ -167,6 +171,8 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             return { id, scheduledAt };
         },
         {
+            // Editing a scheduled broadcast re-targets a future send (§4.8).
+            requireStepUp: true,
             params: t.Object({
                 id: t.String({ format: "uuid" }),
             }),

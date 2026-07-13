@@ -85,7 +85,7 @@ export async function resolveMerchantId(
     }
 
     // 3. Fetch from Frak backend using stable domain
-    const info = await fetchMerchantFromBackend(cacheKey);
+    const info = await resolveMerchantFromBackend(shop);
     if (!info) {
         return null;
     }
@@ -116,7 +116,7 @@ export async function resolveMerchantInfo(
         return cached;
     }
 
-    const info = await fetchMerchantFromBackend(cacheKey);
+    const info = await resolveMerchantFromBackend(shop);
     if (!info) {
         return null;
     }
@@ -139,6 +139,29 @@ export async function clearMerchantCache(
     const cacheKey = shop.normalizedDomain;
     merchantIdCache.delete(cacheKey);
     merchantInfoCache.delete(cacheKey);
+}
+
+/**
+ * Resolve merchant info from the Frak backend, primary domain first with a
+ * myshopify-domain fallback.
+ *
+ * Custom-domain merchants are registered under their `myshopify.com` identity
+ * (the anti-claim hardening — a real custom domain isn't a verifiable
+ * subdomain), so a lookup keyed on `primaryDomain.host` (`normalizedDomain`)
+ * misses forever. The myshopify domain is the stable identity, so retry on it
+ * when the primary-domain lookup comes back empty (C1 / plan §1.1). The
+ * backend also aliases the custom domain into `allowedDomains`, so either
+ * side of this belt-and-suspenders fix resolves the merchant.
+ */
+async function resolveMerchantFromBackend(shop: {
+    normalizedDomain: string;
+    myshopifyDomain: string;
+}): Promise<MerchantResolveResponse | null> {
+    const primary = await fetchMerchantFromBackend(shop.normalizedDomain);
+    if (primary) return primary;
+
+    if (shop.myshopifyDomain === shop.normalizedDomain) return null;
+    return fetchMerchantFromBackend(shop.myshopifyDomain);
 }
 
 /**

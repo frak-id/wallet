@@ -1,4 +1,5 @@
 import { db } from "@backend-infrastructure";
+import { HttpError, isUniqueViolation } from "@backend-utils";
 import { arrayContains, eq, inArray, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address, Hex } from "viem";
@@ -194,6 +195,12 @@ export class MerchantRepository {
         });
     }
 
+    async findByOwnerAccount(accountId: string): Promise<MerchantSelect[]> {
+        return db.query.merchantsTable.findMany({
+            where: eq(merchantsTable.ownerAccountId, accountId),
+        });
+    }
+
     /**
      * Returns merchant rows — used only by the platform-admin /my endpoint.
      * Capped at 500 rows; revisit with cursor pagination if merchant count
@@ -234,24 +241,54 @@ export class MerchantRepository {
         this.defaultRewardTokenCache.delete(id);
     }
 
+    /**
+     * `merchants.domain` is UNIQUE — the existence check in
+     * `MerchantRegistrationService.register` closes most of the race, but a
+     * genuine race between two concurrent registrations (e.g. two Shopify
+     * shop admins clicking "Connect" at once) can still hit the insert.
+     * Catch the unique-violation and surface the same 409 the pre-check
+     * throws so callers have one error shape to handle either way.
+     */
     async create(merchant: MerchantInsert): Promise<MerchantSelect> {
-        const [result] = await db
-            .insert(merchantsTable)
-            .values(merchant)
-            .returning();
-        if (!result) {
-            throw new Error("Failed to create merchant");
+        try {
+            const [result] = await db
+                .insert(merchantsTable)
+                .values(merchant)
+                .returning();
+            if (!result) {
+                throw new Error("Failed to create merchant");
+            }
+            return result;
+        } catch (error) {
+            if (isUniqueViolation(error)) {
+                throw HttpError.conflict(
+                    "DOMAIN_ALREADY_REGISTERED",
+                    "Merchant already registered for this domain"
+                );
+            }
+            throw error;
         }
-        return result;
     }
 
+    /**
+     * Reassign ownership to a new wallet-identified or account-identified
+     * owner (§7.5: ownership transfer to/from walletless accounts). The
+     * previous owner's identity on the axis NOT provided is cleared — a new
+     * owner's other axis (if any) is re-linked lazily on their next
+     * login/backfill run.
+     */
     async updateOwner(
         id: string,
-        ownerWallet: Address
+        newOwner: { wallet: Address } | { accountId: string }
     ): Promise<MerchantSelect | null> {
         const [result] = await db
             .update(merchantsTable)
-            .set({ ownerWallet, updatedAt: new Date() })
+            .set({
+                ownerWallet: "wallet" in newOwner ? newOwner.wallet : null,
+                ownerAccountId:
+                    "accountId" in newOwner ? newOwner.accountId : null,
+                updatedAt: new Date(),
+            })
             .where(eq(merchantsTable.id, id))
             .returning();
         if (result) {

@@ -1,18 +1,16 @@
 import { log } from "@backend-infrastructure";
+import { isUniqueViolation } from "@backend-utils";
 import {
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
 import Decimal from "decimal.js";
-import { type Address, isAddressEqual, zeroAddress } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import type {
     BillingDocumentInsert,
     BillingDocumentSelect,
 } from "../../domain/billing/db/schema";
-import {
-    type BillingDocumentRepository,
-    isUniqueViolation,
-} from "../../domain/billing/repositories/BillingDocumentRepository";
+import type { BillingDocumentRepository } from "../../domain/billing/repositories/BillingDocumentRepository";
 import type { BillingStorageRepository } from "../../domain/billing/repositories/BillingStorageRepository";
 import type { BillingDocumentDetails } from "../../domain/billing/schemas";
 import {
@@ -22,13 +20,15 @@ import {
 import type { BillingPdfService } from "../../domain/billing/services/pdf";
 import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import type { MerchantAccountingInfo } from "../../domain/merchant/schemas";
-import type { AssetLogSelect } from "../../domain/rewards/db/schema";
-import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
+import type {
+    AnnexAssetLogRow,
+    AssetLogRepository,
+} from "../../domain/rewards/repositories/AssetLogRepository";
 import type {
     PricingRepository,
     TokenPrice,
 } from "../../infrastructure/pricing/PricingRepository";
-import { buildPdfBuyer } from "./BillingOrchestrator";
+import { buildPdfBuyer } from "./shared";
 
 /** The merchant row shape this orchestrator reads (bank address + accounting). */
 type MerchantSelectForBill = Awaited<
@@ -79,11 +79,11 @@ function isAccountingInfoComplete(
 const MAX_BACKFILL_MONTHS = 600;
 
 /**
- * `created_by` sentinel for cron-generated (unattended) monthly bills — no
- * human admin issued them. The column is nullable, but a stable non-null
- * sentinel keeps the audit column uniformly typed and greppable.
+ * `created_by` for cron-generated (unattended) monthly bills — no human admin
+ * issued them, and there is no system business account, so the audit column
+ * stays null. Named for greppability at the call site.
  */
-const SYSTEM_ACTOR: Address = zeroAddress;
+const SYSTEM_ACTOR: string | null = null;
 
 export class MonthlyBillAlreadyExistsError extends Error {
     constructor(
@@ -132,7 +132,7 @@ export class MonthlyBillOrchestrator {
     async generateMonthlyBill(
         merchantId: string,
         { periodStart }: GenerateMonthlyBillInput,
-        createdBy: Address,
+        createdBy: string | null,
         { renderPdf = true }: { renderPdf?: boolean } = {}
     ): Promise<BillingDocumentSelect> {
         const periodEnd = periodEndOf(periodStart);
@@ -148,17 +148,22 @@ export class MonthlyBillOrchestrator {
             );
         }
 
+        // The per-row annex fetch only happens when a PDF is actually
+        // rendered — the cron's data-only path (`renderPdf: false`, the bulk
+        // of `backfillAllMerchantBills`' work) computes everything from
+        // grouped SQL sums and never loads rows.
         const computed = await this.computeBillData(
             merchantId,
             periodStart,
-            periodEnd
+            periodEnd,
+            { fetchAnnexRows: renderPdf }
         );
 
         const document = await this.insertMonthlyBillDocument(
             merchantId,
             periodStart,
             periodEnd,
-            computed.currencies,
+            computed.primaryCurrency,
             computed.details,
             {
                 grossAmount: computed.grossAmount,
@@ -342,10 +347,16 @@ export class MonthlyBillOrchestrator {
             return document;
         }
 
+        // The primary currency is pinned to the row's frozen `currency`
+        // column (locked at insert time): `updateMonthlyBillDetails` never
+        // updates `currency`, so re-deriving `currencies[0]` here could pick
+        // a different currency than the document is labeled with and freeze
+        // amounts that disagree with the PDF recap.
         const computed = await this.computeBillData(
             merchantId,
             document.periodStart,
-            document.periodEnd
+            document.periodEnd,
+            { fetchAnnexRows: true, primaryCurrency: document.currency }
         );
 
         const refreshed = await this.billingDocuments.updateMonthlyBillDetails(
@@ -375,19 +386,38 @@ export class MonthlyBillOrchestrator {
      * frozen `details` plus the annex rows, the price map (threaded into PDF
      * rendering so annex fiat rows agree with `fiatTotals`, §6.3), and the
      * merchant (fetched once for the PDF buyer block).
+     *
+     * Totals and row count come from grouped SQL (`sumSettledByToken` +
+     * `countSettledByMerchantAndDateRange`); the per-row annex fetch is
+     * opt-in via `fetchAnnexRows` and only needed when a PDF is rendered —
+     * a data-only bill never loads reward rows into memory.
      */
     private async computeBillData(
         merchantId: string,
         periodStart: Date,
-        periodEnd: Date
+        periodEnd: Date,
+        {
+            fetchAnnexRows,
+            primaryCurrency: pinnedPrimaryCurrency,
+        }: {
+            fetchAnnexRows: boolean;
+            /**
+             * Pin the invoice's primary currency instead of deriving
+             * `currencies[0]` — used by `regeneratePdf`, whose document
+             * already froze its `currency` column at insert time.
+             */
+            primaryCurrency?: Stablecoin;
+        }
     ): Promise<{
         currencies: Stablecoin[];
+        /** The invoice currency — drives `rewardBaseAmount` and the row's `currency` column. */
+        primaryCurrency: Stablecoin;
         details: BillingDocumentDetails;
         /** Invoice Total TTC — the amount surfaced on the dashboard/PDF recap. */
         grossAmount: string;
         /** Invoice Total HT (reward base + Frak fee, before VAT). */
         netAmount: string;
-        annexAssetLogs: AssetLogSelect[];
+        annexAssetLogs: AnnexAssetLogRow[];
         priceByToken: Map<Address, TokenPrice | undefined>;
         merchant: MerchantSelectForBill | null;
     }> {
@@ -436,7 +466,9 @@ export class MonthlyBillOrchestrator {
         const annexData = await this.buildAnnexData(
             merchantId,
             periodStart,
-            periodEnd
+            periodEnd,
+            rewardedInPeriodRows,
+            { fetchRows: fetchAnnexRows }
         );
 
         const details: BillingDocumentDetails = {
@@ -449,14 +481,32 @@ export class MonthlyBillOrchestrator {
             fiatTotals: annexData.totals,
         };
 
-        // Invoice total = the same reward set the PDF's reward table bills:
-        // settled rewards in the period (each = distributed amount + Frak fee,
-        // + VAT for FR merchants). Persisted as gross/net so the dashboard's
-        // amount column (which reads `grossAmount`) isn't empty for bills.
-        const rewardBaseAmount = annexData.assetLogs
-            .filter((log) => log.tokenAddress && log.settledAt)
+        // Invoice total = the reward set the PDF's recap bills: settled
+        // rewards in the period WHOSE TOKEN IS THE BILL'S PRIMARY CURRENCY
+        // (frozen as the document's `currency`). Summing across currencies —
+        // or folding in non-stablecoin tokens — would freeze a
+        // cross-currency number onto a legal document labeled with one
+        // currency. Other stablecoin currencies stay visible in their
+        // ledgers/reward-table groups; non-stablecoin tokens are annex-only
+        // (same exclusion as `resolveLedgerCurrencies`). Computed from the
+        // already-fetched grouped SQL sums — no per-row data needed.
+        //
+        // The primary currency is derived from the REWARDS being billed, not
+        // `currencies[0]` (which is dominated by deposit/withdraw currencies):
+        // a merchant funding their bank in one stablecoin while rewarding in
+        // another would otherwise get an invoice labeled in the deposit
+        // currency whose reward filter matches nothing — a permanent 0 total.
+        const primaryCurrency =
+            pinnedPrimaryCurrency ??
+            this.resolvePrimaryCurrency(rewardedInPeriodRows, currencies);
+        const rewardBaseAmount = rewardedInPeriodRows
+            .filter(
+                (row) =>
+                    stablecoinForTokenAddress(row.tokenAddress) ===
+                    primaryCurrency
+            )
             .reduce(
-                (acc, log) => acc.plus(new Decimal(log.amount)),
+                (acc, row) => acc.plus(new Decimal(row.total)),
                 new Decimal(0)
             )
             .toFixed(18);
@@ -467,6 +517,7 @@ export class MonthlyBillOrchestrator {
 
         return {
             currencies,
+            primaryCurrency,
             details,
             grossAmount: totalTtc,
             netAmount: totalHt,
@@ -492,10 +543,10 @@ export class MonthlyBillOrchestrator {
         merchantId: string,
         periodStart: Date,
         periodEnd: Date,
-        currencies: Stablecoin[],
+        primaryCurrency: Stablecoin,
         details: BillingDocumentDetails,
         amounts: { grossAmount: string; netAmount: string },
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect> {
         try {
             return await this.billingDocuments.create({
@@ -510,11 +561,12 @@ export class MonthlyBillOrchestrator {
                 documentDate: new Date(periodEnd.getTime() - 1),
                 periodStart,
                 periodEnd,
-                // The bill's primary currency is the first ledger currency
-                // (bills are single-currency in practice — one merchant
-                // bank/token). Gross = invoice Total TTC, net = Total HT, so
-                // the dashboard amount column isn't empty for bills.
-                currency: currencies[0] ?? "eure",
+                // The bill's primary currency — the SAME value
+                // `computeBillData` summed `rewardBaseAmount` in, so the
+                // frozen gross/net always agree with the labeled currency.
+                // Gross = invoice Total TTC, net = Total HT, so the
+                // dashboard amount column isn't empty for bills.
+                currency: primaryCurrency,
                 grossAmount: amounts.grossAmount,
                 netAmount: amounts.netAmount,
                 details,
@@ -569,6 +621,46 @@ export class MonthlyBillOrchestrator {
             );
 
         return [...new Set([...billingCurrencies, ...rewardCurrencies])];
+    }
+
+    /**
+     * The invoice/primary currency for the monthly bill. Because the invoice
+     * total only sums rewards in this one currency (see `rewardBaseAmount`),
+     * it MUST be the currency the period's rewards are actually paid in —
+     * deriving it from `currencies[0]` (deposit/withdraw currencies, which may
+     * carry no rewards) is what froze `0` onto bills for merchants whose
+     * reward currency differed from their deposit currency.
+     *
+     * Picks the stablecoin with the largest in-period settled-reward sum, with
+     * an alphabetical tie-break so the choice is deterministic across query
+     * plans. Falls back to the ledger currency set then `eure` only when the
+     * period had no stablecoin rewards at all — such a bill's total is
+     * legitimately 0 whatever currency it wears.
+     */
+    private resolvePrimaryCurrency(
+        rewardedInPeriodRows: Array<{ tokenAddress: Address; total: string }>,
+        ledgerCurrencies: Stablecoin[]
+    ): Stablecoin {
+        const totalsByCurrency = new Map<Stablecoin, Decimal>();
+        for (const row of rewardedInPeriodRows) {
+            const currency = stablecoinForTokenAddress(row.tokenAddress);
+            if (!currency) continue;
+            const previous = totalsByCurrency.get(currency) ?? new Decimal(0);
+            totalsByCurrency.set(currency, previous.plus(row.total));
+        }
+
+        let best: { currency: Stablecoin; total: Decimal } | undefined;
+        for (const [currency, total] of totalsByCurrency) {
+            if (
+                !best ||
+                total.greaterThan(best.total) ||
+                (total.equals(best.total) && currency < best.currency)
+            ) {
+                best = { currency, total };
+            }
+        }
+
+        return best?.currency ?? ledgerCurrencies[0] ?? "eure";
     }
 
     private buildCurrencyLedger(
@@ -635,34 +727,30 @@ export class MonthlyBillOrchestrator {
      * frozen legal total, §B3). The only float input anywhere in this path
      * is the spot `TokenPrice` (disclosed limitation, §6.3).
      *
-     * Fetches the settled-reward rows for the period exactly once and returns
-     * both the rows and the `priceByToken` map used to compute `totals`. The
-     * per-row PDF annex rows are derived from the same `assetLogs` array AND
-     * the same price map (threaded through `computeBillData` into
-     * `generateAndStorePdf`) instead of re-querying/re-pricing — avoids a
-     * duplicate DB round-trip and, critically, the price-cache-expiry window
-     * where a second price fetch could make the PDF's per-row fiat values
-     * disagree with the frozen `fiatTotals` (§6.3).
+     * `totals` and `rowCount` are computed from grouped SQL (the in-period
+     * per-token sums already fetched by `computeBillData` + a cheap COUNT) —
+     * never from per-row data, so they stay exact even when the per-row
+     * fetch truncates at its cap. The per-row `assetLogs` are only fetched
+     * when `fetchRows` is set (a PDF will render); the PDF's annex rows then
+     * use the SAME `priceByToken` map that produced `totals`, avoiding the
+     * price-cache-expiry window where a second price fetch could make the
+     * PDF's per-row fiat values disagree with the frozen `fiatTotals` (§6.3).
      */
     private async buildAnnexData(
         merchantId: string,
         periodStart: Date,
-        periodEnd: Date
+        periodEnd: Date,
+        rewardedInPeriodRows: Array<{ tokenAddress: Address; total: string }>,
+        { fetchRows }: { fetchRows: boolean }
     ): Promise<{
-        assetLogs: AssetLogSelect[];
+        assetLogs: AnnexAssetLogRow[];
         rowCount: number;
         totals: { eur: string; usd: string; gbp: string };
         priceByToken: Map<Address, TokenPrice | undefined>;
     }> {
-        const assetLogs = await this.assetLogs.findByMerchantAndDateRange(
-            merchantId,
-            periodStart,
-            periodEnd
-        );
-
-        if (assetLogs.length === 0) {
+        if (rewardedInPeriodRows.length === 0) {
             return {
-                assetLogs,
+                assetLogs: [],
                 rowCount: 0,
                 totals: { eur: "0", usd: "0", gbp: "0" },
                 priceByToken: new Map(),
@@ -670,33 +758,49 @@ export class MonthlyBillOrchestrator {
         }
 
         const uniqueTokens = [
-            ...new Set(
-                assetLogs
-                    .map((log) => log.tokenAddress)
-                    .filter((addr): addr is Address => addr !== null)
-            ),
+            ...new Set(rewardedInPeriodRows.map((row) => row.tokenAddress)),
         ];
 
-        const prices = await Promise.all(
-            uniqueTokens.map(async (token) => ({
-                token,
-                price: await this.pricing.getTokenPrice({ token }),
-            }))
-        );
+        const [prices, rowCount, assetLogs] = await Promise.all([
+            Promise.all(
+                uniqueTokens.map(async (token) => ({
+                    token,
+                    price: await this.pricing.getTokenPrice({ token }),
+                }))
+            ),
+            this.assetLogs.countSettledByMerchantAndDateRange(
+                merchantId,
+                periodStart,
+                periodEnd
+            ),
+            fetchRows
+                ? this.assetLogs.findByMerchantAndDateRange(
+                      merchantId,
+                      periodStart,
+                      periodEnd
+                  )
+                : Promise.resolve([] as AnnexAssetLogRow[]),
+        ]);
         const priceByToken = new Map<Address, TokenPrice | undefined>(
             prices.map((p) => [p.token, p.price])
         );
 
+        // Fiat totals from the grouped per-token sums × spot price — the
+        // conversion is linear, so pricing the SQL total equals summing
+        // per-row conversions, without touching row data. Unpriced tokens
+        // contribute nothing (existing behavior). Deliberately includes
+        // EVERY priced token — stablecoin or not: `fiatTotals` is the
+        // informational "total value distributed" figure, not the invoice
+        // total (which is primary-currency-only, see `rewardBaseAmount`).
         let eur = new Decimal(0);
         let usd = new Decimal(0);
         let gbp = new Decimal(0);
 
-        for (const log of assetLogs) {
-            if (!log.tokenAddress) continue;
-            const price = priceByToken.get(log.tokenAddress);
+        for (const row of rewardedInPeriodRows) {
+            const price = priceByToken.get(row.tokenAddress);
             if (!price) continue;
             const fiat = this.computation.annexRowFiat({
-                amount: log.amount,
+                amount: row.total,
                 price,
             });
             eur = eur.plus(fiat.eur);
@@ -706,7 +810,7 @@ export class MonthlyBillOrchestrator {
 
         return {
             assetLogs,
-            rowCount: assetLogs.length,
+            rowCount,
             totals: {
                 eur: eur.toFixed(18),
                 usd: usd.toFixed(18),
@@ -719,7 +823,7 @@ export class MonthlyBillOrchestrator {
     private async tryGenerateAndStorePdf(
         document: BillingDocumentSelect,
         pdfData: {
-            annexAssetLogs: AssetLogSelect[];
+            annexAssetLogs: AnnexAssetLogRow[];
             priceByToken: Map<Address, TokenPrice | undefined>;
             merchant: MerchantSelectForBill | null;
         }
@@ -743,7 +847,7 @@ export class MonthlyBillOrchestrator {
     private async generateAndStorePdf(
         document: BillingDocumentSelect,
         pdfData: {
-            annexAssetLogs: AssetLogSelect[];
+            annexAssetLogs: AnnexAssetLogRow[];
             priceByToken: Map<Address, TokenPrice | undefined>;
             merchant: MerchantSelectForBill | null;
         }
@@ -761,34 +865,54 @@ export class MonthlyBillOrchestrator {
 
         const buyer = buildPdfBuyer(merchant?.accountingInfo ?? {});
 
-        const annexRows = annexAssetLogs
-            .filter((log) => log.tokenAddress && log.settledAt)
-            .map((log) => {
-                const price = log.tokenAddress
-                    ? priceByToken.get(log.tokenAddress)
-                    : undefined;
-                const currency = log.tokenAddress
-                    ? (stablecoinForTokenAddress(log.tokenAddress) ?? "")
-                    : "";
-                const fiat = price
-                    ? this.computation.annexRowFiat({
-                          amount: log.amount,
-                          price,
-                      })
-                    : { eur: "0", usd: "0", gbp: "0" };
-                return {
-                    // biome-ignore lint/style/noNonNullAssertion: filtered above
-                    settledAt: log.settledAt!,
+        // Narrowing flatMap — rows without a token/settle timestamp return
+        // `[]` (no assertion needed). Stablecoin rewards feed the invoice
+        // table; non-stablecoin tokens are split into the informational
+        // "other rewards" section — they carry no invoice currency and must
+        // never enter the billed totals (same exclusion as the ledgers).
+        const annexRows: Array<{
+            settledAt: Date;
+            amount: string;
+            currency: string;
+            fiatValue: string;
+            txHash?: string;
+        }> = [];
+        const otherRewards: Array<{
+            settledAt: Date;
+            amount: string;
+            txHash?: string;
+        }> = [];
+        for (const log of annexAssetLogs) {
+            const { tokenAddress, settledAt } = log;
+            if (!tokenAddress || !settledAt) continue;
+            const currency = stablecoinForTokenAddress(tokenAddress);
+            if (!currency) {
+                otherRewards.push({
+                    settledAt,
                     amount: log.amount,
-                    currency,
-                    // EUR as the annex's display reporting currency — there's
-                    // no per-merchant reporting-currency preference in the
-                    // schema (v1). `details.fiatTotals` carries eur/usd/gbp
-                    // together; the annex shows one for readability.
-                    fiatValue: fiat.eur,
                     txHash: log.onchainTxHash ?? undefined,
-                };
+                });
+                continue;
+            }
+            const price = priceByToken.get(tokenAddress);
+            const fiat = price
+                ? this.computation.annexRowFiat({
+                      amount: log.amount,
+                      price,
+                  })
+                : { eur: "0", usd: "0", gbp: "0" };
+            annexRows.push({
+                settledAt,
+                amount: log.amount,
+                currency,
+                // EUR as the annex's display reporting currency — there's
+                // no per-merchant reporting-currency preference in the
+                // schema (v1). `details.fiatTotals` carries eur/usd/gbp
+                // together; the annex shows one for readability.
+                fiatValue: fiat.eur,
+                txHash: log.onchainTxHash ?? undefined,
             });
+        }
 
         const bytes = await this.pdf.render({
             kind: "monthly_bill",
@@ -808,6 +932,7 @@ export class MonthlyBillOrchestrator {
                 ledgers: details.ledgers,
                 fiatTotals: details.fiatTotals,
                 annexRows,
+                otherRewards,
             },
         });
 

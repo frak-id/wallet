@@ -22,6 +22,15 @@
  */
 export const AUTH_ERROR_HEADER = "x-frak-auth-error";
 
+/**
+ * Companion to `AUTH_ERROR_HEADER` for a `step-up-required` 401: carries the
+ * offered 2FA methods as a comma-separated list (e.g. `email,totp`). Keeping
+ * the methods in a header lets the frontend classify a step-up purely from
+ * headers — the 401 body is the plain `t.ErrorResponse` every other error
+ * uses. Must be CORS-exposed (see `exposeHeaders` in index.ts).
+ */
+export const AUTH_METHODS_HEADER = "x-frak-auth-methods";
+
 export const AuthErrorCode = {
     walletTokenInvalid: "wallet-token-invalid",
     sdkTokenInvalid: "sdk-token-invalid",

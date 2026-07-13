@@ -3,8 +3,10 @@ import { drawDepositDetails } from "./DepositDocument";
 import {
     drawLedgerStatus,
     drawMonthlyBillHeader,
+    drawOtherRewards,
     drawRewardTable,
     drawTvaAndRecap,
+    groupRewards,
 } from "./MonthlyBillDocument";
 import { PAGE_HEIGHT, PAGE_WIDTH, PageCursor } from "./primitives";
 import {
@@ -40,10 +42,21 @@ export class BillingPdfService {
         drawBrandLogo(cursor);
 
         if (dto.kind === "monthly_bill" && dto.monthlyBill) {
+            // Grouped once here, shared by the reward table and the recap.
+            const rewardGroups = groupRewards(dto.monthlyBill.annexRows);
             drawMonthlyBillHeader(cursor, dto, bold);
             drawPartyBlocks(cursor, dto, bold);
-            drawRewardTable(cursor, dto.monthlyBill, bold);
-            drawTvaAndRecap(cursor, dto.monthlyBill, bold);
+            drawRewardTable(cursor, dto.monthlyBill, bold, rewardGroups);
+            // The recap bills every reward currency in its own currency; the
+            // document currency is only a fallback label for a no-reward bill.
+            drawTvaAndRecap(
+                cursor,
+                dto.monthlyBill,
+                bold,
+                rewardGroups,
+                dto.currency
+            );
+            drawOtherRewards(cursor, dto.monthlyBill, bold);
             drawLedgerStatus(cursor, dto.monthlyBill, bold);
             drawFooters(pdfDoc, font);
             return pdfDoc.save();

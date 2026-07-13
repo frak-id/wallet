@@ -1,9 +1,9 @@
 /**
- * Shared query-key builders and validation patterns for the billing module.
- * Centralised so the hooks that read the documents list
- * (`useBillingInfo`) and the ones that mutate it (`useBillingAdmin`) can never
- * drift on the key shape — a mismatch would silently break cache
- * invalidation.
+ * Shared query-key builders for the billing module. Centralised so the
+ * hooks that read the documents list (`useBillingInfo`) and the ones that
+ * mutate it (`useBillingAdmin`) can never drift on the key shape — a
+ * mismatch would silently break cache invalidation. Form-validation
+ * patterns live in `./validation` (unrelated concern).
  */
 
 /** Merchant accounting-info query key (`/:merchantId/billing/accounting`). */
@@ -28,9 +28,3 @@ export function documentsQueryKey(merchantId: string) {
 export function documentsByKindQueryKey(merchantId: string, kind: string) {
     return [...documentsQueryKey(merchantId), kind] as const;
 }
-
-/** Positive decimal amount, e.g. "1200" or "12.50". */
-export const DECIMAL_PATTERN = /^\d+(\.\d+)?$/;
-
-/** Non-empty `0x`-prefixed hex string (transaction hash). */
-export const TX_HASH_PATTERN = /^0x[0-9a-fA-F]+$/;

@@ -17,6 +17,7 @@ import type { MerchantRepository } from "../../domain/merchant/repositories/Merc
 import type { AssetLogRepository } from "../../domain/rewards/repositories/AssetLogRepository";
 import { eventEmitter } from "../../infrastructure/messaging/events";
 import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
+import { buildPdfBuyer } from "./shared";
 
 export class DepositNotFoundError extends Error {
     constructor(depositId: string) {
@@ -49,42 +50,6 @@ function fiatKeyForStablecoin(currency: Stablecoin): "eur" | "usd" | "gbp" {
  * individually — only the message differs.
  */
 export class WithdrawValidationError extends Error {}
-
-/**
- * Builds the PDF `buyer` block from a merchant's `accountingInfo` (shared by
- * every billing document kind — deposit/withdraw/monthly_bill — so both
- * `BillingOrchestrator` and `MonthlyBillOrchestrator` assemble it the same
- * way). `accountingInfo` is a `Partial<MerchantAccountingInfo>`, so every
- * field is optional — an unfilled-in merchant still gets a (mostly blank)
- * buyer block rather than a crash (§3.1).
- */
-export function buildPdfBuyer(accountingInfo: {
-    companyName?: string;
-    vatNumber?: string;
-    streetAddress?: string;
-    postalCode?: string;
-    city?: string;
-    country?: string;
-}): {
-    companyName?: string;
-    vatNumber?: string;
-    addressLines: string[];
-} {
-    return {
-        companyName: accountingInfo.companyName,
-        vatNumber: accountingInfo.vatNumber,
-        addressLines: [
-            accountingInfo.streetAddress,
-            [accountingInfo.postalCode, accountingInfo.city]
-                .filter(Boolean)
-                .join(" "),
-            // ISO-3166 alpha-2 code as its own trailing line — the merchant's
-            // country is now merchant-editable (§3.1) and belongs on the
-            // buyer block of the legal document.
-            accountingInfo.country,
-        ].filter((line): line is string => Boolean(line)),
-    };
-}
 
 type CreateDepositInput = {
     grossAmount: string;
@@ -136,7 +101,7 @@ export class BillingOrchestrator {
     async createDeposit(
         merchantId: string,
         input: CreateDepositInput,
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect> {
         const { vatAmount, frakFeeAmount, giftedAmount, netAmount } =
             this.computation.computeDeposit({
@@ -182,16 +147,13 @@ export class BillingOrchestrator {
         // the daily cron. Not merchant-scoped — the sweep walks every merchant.
         eventEmitter.emit("newDeposit");
 
-        return (
-            (await this.billingDocuments.findById(merchantId, document.id)) ??
-            document
-        );
+        return document;
     }
 
     async createWithdraw(
         merchantId: string,
         input: CreateWithdrawInput,
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect> {
         const linkedDeposit = await this.billingDocuments.findById(
             merchantId,
@@ -271,10 +233,7 @@ export class BillingOrchestrator {
             document.documentDate
         );
 
-        return (
-            (await this.billingDocuments.findById(merchantId, document.id)) ??
-            document
-        );
+        return document;
     }
 
     /**
@@ -420,13 +379,18 @@ export class BillingOrchestrator {
             return;
         }
         // Per-bill isolation: one bill's storage/clear failure must not skip
-        // the others.
+        // the others. `clearPdf` runs FIRST: once the row no longer points at
+        // the object, a failed storage delete merely orphans a harmless blob.
+        // The old order (delete then clear) could strand a dangling
+        // `pdfStorageKey` pointing at a deleted object, turning the download
+        // route into a 500 until a later invalidation retried.
         for (const bill of affectedBills) {
             try {
-                if (bill.pdfStorageKey) {
-                    await this.billingStorage.delete(bill.pdfStorageKey);
-                }
+                const key = bill.pdfStorageKey;
                 await this.billingDocuments.clearPdf(merchantId, bill.id);
+                if (key) {
+                    await this.billingStorage.delete(key);
+                }
             } catch (err) {
                 log.error(
                     { err, documentId: bill.id },
@@ -446,18 +410,74 @@ export class BillingOrchestrator {
      * create: on the rare create failure the original stays voided and the
      * admin re-submits — an acceptable correction-in-progress state for an
      * admin-only, low-frequency flow.
+     *
+     * Withdraws linked to the deposit are CARRIED OVER, not destroyed: the
+     * void cascade voids them (their restitution source is gone), so each
+     * non-voided linked withdraw is re-created against the NEW deposit from
+     * its own frozen inputs (remaining bank amount, document date, masked
+     * IBAN — `maskIban` is idempotent on already-masked input — note, tx
+     * hash). The restitution math intentionally recomputes against the
+     * corrected deposit's amounts. Each re-create is best-effort: a failure
+     * is logged and never fails the reissue itself — the admin re-enters
+     * that withdraw manually. Note: correcting the deposit's CURRENCY makes
+     * every carry-over fail `createWithdraw`'s currency-match guard (the
+     * withdraw amounts are denominated in the old currency and cannot be
+     * relabeled) — they are dropped with a log line, by design.
      */
     async reissueDeposit(
         merchantId: string,
         id: string,
         input: CreateDepositInput,
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect | null> {
+        // Snapshot BEFORE voiding — the void cascade flips these to voided.
+        const linkedWithdraws =
+            await this.billingDocuments.findWithdrawsByLinkedDeposit(
+                merchantId,
+                id
+            );
+
         const voided = await this.voidDocument(merchantId, id, "deposit");
         if (!voided) {
             return null;
         }
-        return this.createDeposit(merchantId, input, createdBy);
+        const newDeposit = await this.createDeposit(
+            merchantId,
+            input,
+            createdBy
+        );
+
+        for (const withdraw of linkedWithdraws) {
+            if (withdraw.details?.kind !== "withdraw") continue;
+            try {
+                await this.createWithdraw(
+                    merchantId,
+                    {
+                        remainingBankAmount:
+                            withdraw.details.remainingBankAmount,
+                        currency: withdraw.currency,
+                        documentDate: withdraw.documentDate,
+                        linkedDepositId: newDeposit.id,
+                        rawIban: withdraw.details.maskedIban,
+                        note: withdraw.details.note,
+                        txHash: withdraw.txHash ?? undefined,
+                    },
+                    createdBy
+                );
+            } catch (err) {
+                log.error(
+                    {
+                        err,
+                        merchantId,
+                        originalWithdrawId: withdraw.id,
+                        newDepositId: newDeposit.id,
+                    },
+                    "reissueDeposit: failed to carry a linked withdraw over to the reissued deposit; re-enter it manually"
+                );
+            }
+        }
+
+        return newDeposit;
     }
 
     /**
@@ -470,7 +490,7 @@ export class BillingOrchestrator {
         merchantId: string,
         id: string,
         input: CreateWithdrawInput,
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect | null> {
         const voided = await this.voidDocument(merchantId, id, "withdraw");
         if (!voided) {

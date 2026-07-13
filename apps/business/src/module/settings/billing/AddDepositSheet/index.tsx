@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/design-system/components/Button";
+import type { Stablecoin } from "@frak-labs/app-essentials";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Column } from "@frak-labs/design-system/components/Column";
 import { Columns } from "@frak-labs/design-system/components/Columns";
@@ -11,34 +11,35 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@frak-labs/design-system/components/Select";
-import {
-    Sheet,
-    SheetContent,
-    SheetTrigger,
-} from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Button as BusinessButton } from "@/module/common/component/Button";
-import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
-import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
-import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import { COUNTRIES } from "@/module/common/utils/countries";
+import { currencyOptions } from "@/module/common/utils/currencyOptions";
 import { getNumberFormat } from "@/module/common/utils/intlCache";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField } from "@/module/forms/Form";
+import { AdminBillingSheet } from "../AdminBillingSheet";
+import {
+    DocumentDateField,
+    NoteField,
+    TxHashField,
+} from "../AdminBillingSheet/fields";
 import * as sheetStyles from "../BillingInfoSheet/billing-info-sheet.css";
 import { computeDepositBreakdown } from "../computeDepositBreakdown";
-import { DECIMAL_PATTERN, TX_HASH_PATTERN } from "../queryKeys";
 import { type CreateDepositInput, useCreateDeposit } from "../useBillingAdmin";
+import { DECIMAL_PATTERN } from "../validation";
 
-const STABLECOINS = ["eure", "gbpe", "usde", "usdc"] as const;
+/** Single source of truth for the stablecoin set (from `currencyOptions`). */
+const STABLECOINS: readonly Stablecoin[] = currencyOptions.flatMap((group) =>
+    group.options.map((option) => option.value)
+);
 
 type DepositFormValues = {
     grossAmount: string;
-    currency: (typeof STABLECOINS)[number];
+    currency: Stablecoin;
     documentDate: string;
     country: string;
     giftedAmount: string;
@@ -76,19 +77,28 @@ export function AddDepositSheet({
     const [open, setOpen] = useState(false);
     const createDeposit = useCreateDeposit(merchantId);
 
-    const initialValues = emptyValues(defaultCountry);
+    // `useForm` captures `defaultValues` on first render only; later
+    // resets go through `resetForm`, which reads `defaultCountry` fresh.
     const form = useForm<DepositFormValues>({
-        defaultValues: initialValues,
+        defaultValues: emptyValues(defaultCountry),
         mode: "onChange",
     });
 
-    const { guard, dialogProps } = useDiscardGuard({
-        isDirty: form.formState.isDirty,
-        onDiscard: () => form.reset(initialValues),
-    });
+    // `defaultCountry` (the merchant's saved accounting country) arrives
+    // async from `useBillingInfo`, well after this sheet's `useForm` first
+    // captures `defaultValues` — so the initial capture is almost always
+    // empty (billing-feature-fixes.md B18). Backfill it once it resolves,
+    // but only while the form is still pristine and the country field is
+    // still empty, so it never clobbers input the operator already typed.
+    useEffect(() => {
+        if (!defaultCountry) return;
+        if (form.formState.isDirty) return;
+        if (form.getValues("country")) return;
+        form.setValue("country", defaultCountry);
+    }, [defaultCountry, form]);
 
-    function requestClose() {
-        guard(() => setOpen(false));
+    function resetForm() {
+        form.reset(emptyValues(defaultCountry));
     }
 
     // Live, display-only VAT/fee/net preview mirroring the server math
@@ -128,515 +138,379 @@ export function AddDepositSheet({
         };
         createDeposit.mutate(input, {
             onSuccess: () => {
-                form.reset(emptyValues(defaultCountry));
+                resetForm();
                 setOpen(false);
             },
         });
     }
 
     return (
-        <Sheet
+        <AdminBillingSheet
+            triggerLabel={t("settings.billing.admin.deposit.trigger")}
+            title={t("settings.billing.admin.deposit.title")}
+            subtitle={t("settings.billing.admin.deposit.description")}
+            submitLabel={t("settings.billing.admin.deposit.submit")}
+            cancelLabel={t("settings.billing.actions.cancel")}
+            closeLabel={t("settings.billing.actions.close")}
+            isDirty={form.formState.isDirty}
+            onDiscard={resetForm}
             open={open}
-            onOpenChange={(next) => {
-                if (next) {
-                    setOpen(true);
-                    return;
-                }
-                requestClose();
-            }}
+            onOpenChange={setOpen}
+            isSubmitting={createDeposit.isPending}
+            isSubmitDisabled={
+                !form.formState.isValid || createDeposit.isPending
+            }
+            onSubmit={form.handleSubmit(onSubmit)}
         >
-            <SheetTrigger asChild>
-                <BusinessButton variant="secondary" size="small">
-                    {t("settings.billing.admin.deposit.trigger")}
-                </BusinessButton>
-            </SheetTrigger>
-            <SheetContent
-                side="right"
-                size="wide"
-                padded={false}
-                hideCloseButton
-                onEscapeKeyDown={(e) => {
-                    e.preventDefault();
-                    requestClose();
-                }}
-                onInteractOutside={(e) => {
-                    e.preventDefault();
-                    requestClose();
-                }}
-            >
-                <SheetCloseToolbar
-                    size="large"
-                    onClose={requestClose}
-                    closeLabel={t("settings.billing.actions.close")}
-                    title={t("settings.billing.admin.deposit.title")}
-                    subtitle={t("settings.billing.admin.deposit.description")}
-                />
-                <Form {...form}>
-                    <form
-                        className={sheetStyles.body}
-                        onSubmit={form.handleSubmit(onSubmit)}
-                    >
-                        <Card variant="elevated" radius="m">
-                            <Stack space="m">
-                                <Columns space="m">
-                                    <Column width="1/2">
-                                        <FormField
-                                            control={form.control}
-                                            name="grossAmount"
-                                            rules={{
-                                                required: t(
-                                                    "settings.billing.validation.required"
-                                                ),
-                                                pattern: {
-                                                    value: DECIMAL_PATTERN,
-                                                    message: t(
-                                                        "settings.billing.validation.decimal"
-                                                    ),
-                                                },
-                                            }}
-                                            render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.admin.fields.grossAmount.label"
-                                                    )}
-                                                >
-                                                    <FormControl>
-                                                        <Input
-                                                            variant="bare"
-                                                            tone="muted"
-                                                            length="big"
-                                                            inputMode="decimal"
-                                                            placeholder={t(
-                                                                "settings.billing.admin.fields.grossAmount.placeholder"
-                                                            )}
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                </EditField>
-                                            )}
-                                        />
-                                    </Column>
-                                    <Column width="1/2">
-                                        <FormField
-                                            control={form.control}
-                                            name="currency"
-                                            render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.admin.fields.currency.label"
-                                                    )}
-                                                >
-                                                    <Select
-                                                        value={field.value}
-                                                        onValueChange={
-                                                            field.onChange
-                                                        }
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger
-                                                                ref={field.ref}
-                                                                variant="bare"
-                                                                tone="muted"
-                                                            >
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {STABLECOINS.map(
-                                                                (coin) => (
-                                                                    <SelectItem
-                                                                        key={
-                                                                            coin
-                                                                        }
-                                                                        value={
-                                                                            coin
-                                                                        }
-                                                                    >
-                                                                        {coin.toUpperCase()}
-                                                                    </SelectItem>
-                                                                )
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </EditField>
-                                            )}
-                                        />
-                                    </Column>
-                                </Columns>
-                                <Columns space="m">
-                                    <Column width="1/2">
-                                        <FormField
-                                            control={form.control}
-                                            name="documentDate"
-                                            rules={{
-                                                required: t(
-                                                    "settings.billing.validation.required"
-                                                ),
-                                            }}
-                                            render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.admin.fields.documentDate.label"
-                                                    )}
-                                                >
-                                                    <FormControl>
-                                                        <Input
-                                                            type="date"
-                                                            variant="bare"
-                                                            tone="muted"
-                                                            length="big"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                </EditField>
-                                            )}
-                                        />
-                                    </Column>
-                                    <Column width="1/2">
-                                        <FormField
-                                            control={form.control}
-                                            name="country"
-                                            rules={{
-                                                required: t(
-                                                    "settings.billing.validation.required"
-                                                ),
-                                            }}
-                                            render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.country.label"
-                                                    )}
-                                                >
-                                                    <Select
-                                                        value={field.value}
-                                                        onValueChange={
-                                                            field.onChange
-                                                        }
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger
-                                                                ref={field.ref}
-                                                                variant="bare"
-                                                                tone="muted"
-                                                            >
-                                                                <SelectValue
-                                                                    placeholder={t(
-                                                                        "settings.billing.fields.country.placeholder"
-                                                                    )}
-                                                                />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {COUNTRIES.map(
-                                                                (country) => (
-                                                                    <SelectItem
-                                                                        key={
-                                                                            country.code
-                                                                        }
-                                                                        value={
-                                                                            country.code
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            country.name
-                                                                        }
-                                                                    </SelectItem>
-                                                                )
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </EditField>
-                                            )}
-                                        />
-                                    </Column>
-                                </Columns>
-                                <Columns space="m">
-                                    <Column width="1/2">
-                                        <FormField
-                                            control={form.control}
-                                            name="paymentPlatform"
-                                            render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.admin.fields.paymentPlatform.label"
-                                                    )}
-                                                >
-                                                    <Select
-                                                        value={
-                                                            field.value ||
-                                                            "none"
-                                                        }
-                                                        onValueChange={(
-                                                            value
-                                                        ) =>
-                                                            field.onChange(
-                                                                value === "none"
-                                                                    ? ""
-                                                                    : value
-                                                            )
-                                                        }
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger
-                                                                ref={field.ref}
-                                                                variant="bare"
-                                                                tone="muted"
-                                                            >
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="none">
-                                                                {t(
-                                                                    "settings.billing.admin.fields.paymentPlatform.none"
-                                                                )}
-                                                            </SelectItem>
-                                                            <SelectItem value="shopify">
-                                                                Shopify
-                                                            </SelectItem>
-                                                            <SelectItem value="stripe">
-                                                                Stripe
-                                                            </SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </EditField>
-                                            )}
-                                        />
-                                    </Column>
-                                    <Column width="1/2">
-                                        <FormField
-                                            control={form.control}
-                                            name="txHash"
-                                            rules={{
-                                                pattern: {
-                                                    value: TX_HASH_PATTERN,
-                                                    message: t(
-                                                        "settings.billing.validation.txHash"
-                                                    ),
-                                                },
-                                            }}
-                                            render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.admin.fields.txHash.label"
-                                                    )}
-                                                >
-                                                    <FormControl>
-                                                        <Input
-                                                            variant="bare"
-                                                            tone="muted"
-                                                            length="big"
-                                                            placeholder="0x…"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                </EditField>
-                                            )}
-                                        />
-                                    </Column>
-                                </Columns>
-                                <FormField
-                                    control={form.control}
-                                    name="giftedAmount"
-                                    rules={{
-                                        pattern: {
-                                            value: DECIMAL_PATTERN,
-                                            message: t(
-                                                "settings.billing.validation.decimal"
+            <Form {...form}>
+                <form
+                    className={sheetStyles.body}
+                    onSubmit={form.handleSubmit(onSubmit)}
+                >
+                    <Card variant="elevated" radius="m">
+                        <Stack space="m">
+                            <Columns space="m">
+                                <Column width="1/2">
+                                    <FormField
+                                        control={form.control}
+                                        name="grossAmount"
+                                        rules={{
+                                            required: t(
+                                                "settings.billing.validation.required"
                                             ),
-                                        },
-                                    }}
-                                    render={({ field }) => (
-                                        <EditField
-                                            label={t(
-                                                "settings.billing.admin.fields.giftedAmount.label"
-                                            )}
-                                            hint={t(
-                                                "settings.billing.admin.fields.giftedAmount.hint"
-                                            )}
-                                        >
-                                            <FormControl>
-                                                <Input
-                                                    variant="bare"
-                                                    tone="muted"
-                                                    length="big"
-                                                    inputMode="decimal"
-                                                    placeholder={t(
-                                                        "settings.billing.admin.fields.giftedAmount.placeholder"
-                                                    )}
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                        </EditField>
+                                            pattern: {
+                                                value: DECIMAL_PATTERN,
+                                                message: t(
+                                                    "settings.billing.validation.decimal"
+                                                ),
+                                            },
+                                        }}
+                                        render={({ field }) => (
+                                            <EditField
+                                                label={t(
+                                                    "settings.billing.admin.fields.grossAmount.label"
+                                                )}
+                                            >
+                                                <FormControl>
+                                                    <Input
+                                                        variant="bare"
+                                                        tone="muted"
+                                                        length="big"
+                                                        inputMode="decimal"
+                                                        placeholder={t(
+                                                            "settings.billing.admin.fields.grossAmount.placeholder"
+                                                        )}
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                            </EditField>
+                                        )}
+                                    />
+                                </Column>
+                                <Column width="1/2">
+                                    <FormField
+                                        control={form.control}
+                                        name="currency"
+                                        render={({ field }) => (
+                                            <EditField
+                                                label={t(
+                                                    "settings.billing.admin.fields.currency.label"
+                                                )}
+                                            >
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={
+                                                        field.onChange
+                                                    }
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger
+                                                            ref={field.ref}
+                                                            variant="bare"
+                                                            tone="muted"
+                                                        >
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {STABLECOINS.map(
+                                                            (coin) => (
+                                                                <SelectItem
+                                                                    key={coin}
+                                                                    value={coin}
+                                                                >
+                                                                    {coin.toUpperCase()}
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            </EditField>
+                                        )}
+                                    />
+                                </Column>
+                            </Columns>
+                            <Columns space="m">
+                                <Column width="1/2">
+                                    <DocumentDateField<DepositFormValues>
+                                        control={form.control}
+                                        name="documentDate"
+                                    />
+                                </Column>
+                                <Column width="1/2">
+                                    <FormField
+                                        control={form.control}
+                                        name="country"
+                                        rules={{
+                                            required: t(
+                                                "settings.billing.validation.required"
+                                            ),
+                                        }}
+                                        render={({ field }) => (
+                                            <EditField
+                                                label={t(
+                                                    "settings.billing.fields.country.label"
+                                                )}
+                                            >
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={
+                                                        field.onChange
+                                                    }
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger
+                                                            ref={field.ref}
+                                                            variant="bare"
+                                                            tone="muted"
+                                                        >
+                                                            <SelectValue
+                                                                placeholder={t(
+                                                                    "settings.billing.fields.country.placeholder"
+                                                                )}
+                                                            />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {COUNTRIES.map(
+                                                            (country) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        country.code
+                                                                    }
+                                                                    value={
+                                                                        country.code
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        country.name
+                                                                    }
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            </EditField>
+                                        )}
+                                    />
+                                </Column>
+                            </Columns>
+                            <Columns space="m">
+                                <Column width="1/2">
+                                    <FormField
+                                        control={form.control}
+                                        name="paymentPlatform"
+                                        render={({ field }) => (
+                                            <EditField
+                                                label={t(
+                                                    "settings.billing.admin.fields.paymentPlatform.label"
+                                                )}
+                                            >
+                                                <Select
+                                                    value={
+                                                        field.value || "none"
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        field.onChange(
+                                                            value === "none"
+                                                                ? ""
+                                                                : value
+                                                        )
+                                                    }
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger
+                                                            ref={field.ref}
+                                                            variant="bare"
+                                                            tone="muted"
+                                                        >
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">
+                                                            {t(
+                                                                "settings.billing.admin.fields.paymentPlatform.none"
+                                                            )}
+                                                        </SelectItem>
+                                                        <SelectItem value="shopify">
+                                                            Shopify
+                                                        </SelectItem>
+                                                        <SelectItem value="stripe">
+                                                            Stripe
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </EditField>
+                                        )}
+                                    />
+                                </Column>
+                                <Column width="1/2">
+                                    <TxHashField<DepositFormValues>
+                                        control={form.control}
+                                        name="txHash"
+                                    />
+                                </Column>
+                            </Columns>
+                            <FormField
+                                control={form.control}
+                                name="giftedAmount"
+                                rules={{
+                                    pattern: {
+                                        value: DECIMAL_PATTERN,
+                                        message: t(
+                                            "settings.billing.validation.decimal"
+                                        ),
+                                    },
+                                }}
+                                render={({ field }) => (
+                                    <EditField
+                                        label={t(
+                                            "settings.billing.admin.fields.giftedAmount.label"
+                                        )}
+                                        hint={t(
+                                            "settings.billing.admin.fields.giftedAmount.hint"
+                                        )}
+                                    >
+                                        <FormControl>
+                                            <Input
+                                                variant="bare"
+                                                tone="muted"
+                                                length="big"
+                                                inputMode="decimal"
+                                                placeholder={t(
+                                                    "settings.billing.admin.fields.giftedAmount.placeholder"
+                                                )}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                    </EditField>
+                                )}
+                            />
+                            <NoteField<DepositFormValues>
+                                control={form.control}
+                                name="note"
+                            />
+                            {createDeposit.isError && (
+                                <Text variant="caption" color="error">
+                                    {t("settings.billing.admin.errors.create")}
+                                </Text>
+                            )}
+                        </Stack>
+                    </Card>
+                    {breakdown && (
+                        <Card variant="muted" radius="m">
+                            <Stack space="s">
+                                <Text variant="label" color="secondary">
+                                    {t(
+                                        "settings.billing.admin.breakdown.title"
                                     )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="note"
-                                    render={({ field }) => (
-                                        <EditField
-                                            label={t(
-                                                "settings.billing.admin.fields.note.label"
-                                            )}
-                                        >
-                                            <FormControl>
-                                                <Input
-                                                    variant="bare"
-                                                    tone="muted"
-                                                    length="big"
-                                                    placeholder={t(
-                                                        "settings.billing.admin.fields.note.placeholder"
-                                                    )}
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                        </EditField>
-                                    )}
-                                />
-                                {createDeposit.isError && (
-                                    <Text variant="caption" color="error">
+                                </Text>
+                                <Inline
+                                    space="s"
+                                    align="space-between"
+                                    alignY="center"
+                                >
+                                    <Text variant="bodySmall" color="secondary">
                                         {t(
-                                            "settings.billing.admin.errors.create"
+                                            "settings.billing.admin.breakdown.gross"
                                         )}
                                     </Text>
+                                    <Text variant="bodySmall">
+                                        {formatAmount(breakdown.gross)}
+                                    </Text>
+                                </Inline>
+                                <Inline
+                                    space="s"
+                                    align="space-between"
+                                    alignY="center"
+                                >
+                                    <Text variant="bodySmall" color="secondary">
+                                        {t(
+                                            breakdown.vatApplies
+                                                ? "settings.billing.admin.breakdown.vat"
+                                                : "settings.billing.admin.breakdown.vatExempt"
+                                        )}
+                                    </Text>
+                                    <Text variant="bodySmall">
+                                        {formatAmount(breakdown.vat)}
+                                    </Text>
+                                </Inline>
+                                <Inline
+                                    space="s"
+                                    align="space-between"
+                                    alignY="center"
+                                >
+                                    <Text variant="bodySmall" color="secondary">
+                                        {t(
+                                            "settings.billing.admin.breakdown.frakFee"
+                                        )}
+                                    </Text>
+                                    <Text variant="bodySmall">
+                                        {formatAmount(breakdown.frakFee)}
+                                    </Text>
+                                </Inline>
+                                {breakdown.gifted > 0 && (
+                                    <Inline
+                                        space="s"
+                                        align="space-between"
+                                        alignY="center"
+                                    >
+                                        <Text
+                                            variant="bodySmall"
+                                            color="secondary"
+                                        >
+                                            {t(
+                                                "settings.billing.admin.breakdown.gifted"
+                                            )}
+                                        </Text>
+                                        <Text variant="bodySmall">
+                                            {formatAmount(breakdown.gifted)}
+                                        </Text>
+                                    </Inline>
                                 )}
+                                <Inline
+                                    space="s"
+                                    align="space-between"
+                                    alignY="center"
+                                >
+                                    <Text variant="bodySmall" weight="semiBold">
+                                        {t(
+                                            "settings.billing.admin.breakdown.net"
+                                        )}
+                                    </Text>
+                                    <Text variant="bodySmall" weight="semiBold">
+                                        {formatAmount(breakdown.net)}
+                                    </Text>
+                                </Inline>
+                                <Text variant="caption" color="tertiary">
+                                    {t("settings.billing.admin.breakdown.hint")}
+                                </Text>
                             </Stack>
                         </Card>
-                        {breakdown && (
-                            <Card variant="muted" radius="m">
-                                <Stack space="s">
-                                    <Text variant="label" color="secondary">
-                                        {t(
-                                            "settings.billing.admin.breakdown.title"
-                                        )}
-                                    </Text>
-                                    <Inline
-                                        space="s"
-                                        align="space-between"
-                                        alignY="center"
-                                    >
-                                        <Text
-                                            variant="bodySmall"
-                                            color="secondary"
-                                        >
-                                            {t(
-                                                "settings.billing.admin.breakdown.gross"
-                                            )}
-                                        </Text>
-                                        <Text variant="bodySmall">
-                                            {formatAmount(breakdown.gross)}
-                                        </Text>
-                                    </Inline>
-                                    <Inline
-                                        space="s"
-                                        align="space-between"
-                                        alignY="center"
-                                    >
-                                        <Text
-                                            variant="bodySmall"
-                                            color="secondary"
-                                        >
-                                            {t(
-                                                breakdown.vatApplies
-                                                    ? "settings.billing.admin.breakdown.vat"
-                                                    : "settings.billing.admin.breakdown.vatExempt"
-                                            )}
-                                        </Text>
-                                        <Text variant="bodySmall">
-                                            {formatAmount(breakdown.vat)}
-                                        </Text>
-                                    </Inline>
-                                    <Inline
-                                        space="s"
-                                        align="space-between"
-                                        alignY="center"
-                                    >
-                                        <Text
-                                            variant="bodySmall"
-                                            color="secondary"
-                                        >
-                                            {t(
-                                                "settings.billing.admin.breakdown.frakFee"
-                                            )}
-                                        </Text>
-                                        <Text variant="bodySmall">
-                                            {formatAmount(breakdown.frakFee)}
-                                        </Text>
-                                    </Inline>
-                                    {breakdown.gifted > 0 && (
-                                        <Inline
-                                            space="s"
-                                            align="space-between"
-                                            alignY="center"
-                                        >
-                                            <Text
-                                                variant="bodySmall"
-                                                color="secondary"
-                                            >
-                                                {t(
-                                                    "settings.billing.admin.breakdown.gifted"
-                                                )}
-                                            </Text>
-                                            <Text variant="bodySmall">
-                                                {formatAmount(breakdown.gifted)}
-                                            </Text>
-                                        </Inline>
-                                    )}
-                                    <Inline
-                                        space="s"
-                                        align="space-between"
-                                        alignY="center"
-                                    >
-                                        <Text
-                                            variant="bodySmall"
-                                            weight="semiBold"
-                                        >
-                                            {t(
-                                                "settings.billing.admin.breakdown.net"
-                                            )}
-                                        </Text>
-                                        <Text
-                                            variant="bodySmall"
-                                            weight="semiBold"
-                                        >
-                                            {formatAmount(breakdown.net)}
-                                        </Text>
-                                    </Inline>
-                                    <Text variant="caption" color="tertiary">
-                                        {t(
-                                            "settings.billing.admin.breakdown.hint"
-                                        )}
-                                    </Text>
-                                </Stack>
-                            </Card>
-                        )}
-                    </form>
-                </Form>
-                <Inline space="s" padding="l" align="left">
-                    <Button
-                        variant="secondary"
-                        size="large"
-                        className={sheetStyles.footerButton}
-                        onClick={requestClose}
-                    >
-                        {t("settings.billing.actions.cancel")}
-                    </Button>
-                    <Button
-                        variant="primary"
-                        size="large"
-                        width="full"
-                        className={sheetStyles.footerButton}
-                        loading={createDeposit.isPending}
-                        onClick={form.handleSubmit(onSubmit)}
-                        disabled={
-                            !form.formState.isValid || createDeposit.isPending
-                        }
-                    >
-                        {t("settings.billing.admin.deposit.submit")}
-                    </Button>
-                </Inline>
-            </SheetContent>
-            <DiscardChangesDialog {...dialogProps} />
-        </Sheet>
+                    )}
+                </form>
+            </Form>
+        </AdminBillingSheet>
     );
 }

@@ -99,9 +99,11 @@ describe("demoMode atoms", () => {
             result.current.setDemoMode(true);
 
             expect(mockSetAuth).toHaveBeenCalledWith(
-                "demo-token",
-                expect.any(String),
-                expect.any(Number)
+                expect.objectContaining({
+                    token: "demo-token",
+                    wallet: expect.any(String),
+                    expiresAt: expect.any(Number),
+                })
             );
             expect(invalidateQueriesSpy).toHaveBeenCalled();
         });

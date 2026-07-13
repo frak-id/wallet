@@ -98,7 +98,7 @@ export const merchantBillingAccountingRoutes = new Elysia({
             // below still restricts non-platform-admin callers to the
             // contact fields only.
             const isPlatformAdmin =
-                businessSession !== null &&
+                !!businessSession?.wallet &&
                 AuthContext.services.platformAdmin.isPlatformAdmin(
                     businessSession.wallet
                 );

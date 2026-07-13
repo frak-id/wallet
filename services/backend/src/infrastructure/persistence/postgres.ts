@@ -12,6 +12,11 @@ import {
     billingDocumentCountersTable,
     billingDocumentsTable,
 } from "../../domain/billing/db/schema";
+import {
+    businessAccountsTable,
+    businessEmailCodesTable,
+    businessSessionsTable,
+} from "../../domain/business-auth/db/schema";
 import { campaignRulesTable } from "../../domain/campaign/db/schema";
 import {
     emailVerificationCodesTable,
@@ -94,6 +99,9 @@ export const db = drizzle({
         affiliateSyncStateTable,
         billingDocumentsTable,
         billingDocumentCountersTable,
+        businessAccountsTable,
+        businessSessionsTable,
+        businessEmailCodesTable,
     },
 });
 

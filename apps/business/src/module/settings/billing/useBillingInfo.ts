@@ -11,7 +11,15 @@ function toBillingEntry(doc: BillingDocumentResponse): BillingEntry {
         date: doc.documentDate,
         amount: doc.grossAmount ? Number.parseFloat(doc.grossAmount) : null,
         currency: doc.currency,
-        kind: doc.kind === "monthly_bill" ? "invoice" : "deposit",
+        // `monthly_bill` -> "invoice", `deposit` -> "deposit", `withdraw` ->
+        // its own "withdraw" kind (billing-feature-fixes.md B16) so a
+        // restitution is never displayed as an actual deposit.
+        kind:
+            doc.kind === "monthly_bill"
+                ? "invoice"
+                : doc.kind === "withdraw"
+                  ? "withdraw"
+                  : "deposit",
         reference: doc.reference,
         description: doc.reference,
         hasPdf: doc.pdfGeneratedAt !== null,
@@ -93,8 +101,14 @@ export function useBillingInfo() {
         hasInfo: info !== null,
         invoices,
         deposits,
-        saveInfo: (next: BillingInfo) => saveMutation.mutate(next),
+        // `onSuccess` only fires when the PUT succeeded — the sheet uses it
+        // to close itself, so a failed save keeps the form (and its edits)
+        // open with an inline error instead of silently dropping them (B12).
+        saveInfo: (next: BillingInfo, opts?: { onSuccess?: () => void }) =>
+            saveMutation.mutate(next, { onSuccess: opts?.onSuccess }),
         isLoading: accountingQuery.isLoading || documentsQuery.isLoading,
         isSaving: saveMutation.isPending,
+        saveFailed: saveMutation.isError,
+        resetSaveState: saveMutation.reset,
     };
 }

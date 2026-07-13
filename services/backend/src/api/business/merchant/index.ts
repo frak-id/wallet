@@ -1,14 +1,17 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AffiliateContext } from "../../../domain/affiliate";
-import { AuthContext } from "../../../domain/auth";
+import { BusinessAuthContext } from "../../../domain/business-auth";
 import { MerchantContext } from "../../../domain/merchant";
 import {
     MerchantDetailResponseSchema,
     MerchantIdParamSchema,
     MyMerchantsResponseSchema,
 } from "../../schemas";
-import { businessSessionContext } from "../middleware/session";
+import {
+    businessSessionContext,
+    isPlatformAdminAuth,
+} from "../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
 import { merchantAllowedDomainsRoutes } from "./allowedDomains";
 import { merchantBankRoutes } from "./bank";
@@ -52,24 +55,24 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(403, "Access denied");
             }
 
-            // Determine role: check wallet-based access for business sessions,
-            // default to "admin" for Shopify sessions (shop owner)
+            // Determine role: check identity-based access for business
+            // sessions, default to "admin" for Shopify sessions (shop owner)
             let role: "owner" | "admin" | "platform_admin" | "none" = "admin";
             if (businessSession) {
                 const access =
                     await MerchantContext.services.authorization.checkAccess(
                         merchantId,
-                        businessSession.wallet
+                        businessSession
                     );
                 role = access.role;
                 // Platform admins have no real merchant relationship so
                 // checkAccess returns "none". Derive the role here, keeping
                 // the auth-domain concern out of MerchantAuthorizationService.
+                // Covers both grants: the wallet allow-list AND a verified
+                // @frak-labs.com account email.
                 if (
                     role === "none" &&
-                    AuthContext.services.platformAdmin.isPlatformAdmin(
-                        businessSession.wallet
-                    )
+                    (await isPlatformAdminAuth(businessSession))
                 ) {
                     role = "platform_admin";
                 }
@@ -120,20 +123,46 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(401, "Authentication required");
             }
 
-            const isPlatAdmin =
-                AuthContext.services.platformAdmin.isPlatformAdmin(
-                    businessSession.wallet
-                );
+            // Platform admin via EITHER the wallet allow-list OR a verified
+            // @frak-labs.com account email — the single canonical check.
+            const isPlatAdmin = await isPlatformAdminAuth(businessSession);
 
-            const owned =
-                await MerchantContext.repositories.merchant.findByOwnerWallet(
-                    businessSession.wallet
-                );
+            // Shopify SSO auto-link (§4.7): the shop domain proven by the
+            // account's Shopify identity, looked up here (BFF layer) and
+            // passed as plain data — the merchant domain must never import
+            // business-auth (flow rules). An account holds at most one
+            // Shopify identity (§4.3).
+            const shopAccount = businessSession.accountId
+                ? await BusinessAuthContext.repositories.account.findById(
+                      businessSession.accountId
+                  )
+                : null;
+            const shopDomain = shopAccount?.shopifyShopDomain ?? null;
 
-            const adminOf =
-                await MerchantContext.repositories.merchantAdmin.findByWallet(
-                    businessSession.wallet
-                );
+            // Enumerate ownership on both identity axes (wallet + account)
+            // so walletless users see their merchants too.
+            const [ownedByWallet, ownedByAccount, adminOf] = await Promise.all([
+                businessSession.wallet
+                    ? MerchantContext.repositories.merchant.findByOwnerWallet(
+                          businessSession.wallet
+                      )
+                    : Promise.resolve([]),
+                businessSession.accountId
+                    ? MerchantContext.repositories.merchant.findByOwnerAccount(
+                          businessSession.accountId
+                      )
+                    : Promise.resolve([]),
+                MerchantContext.repositories.merchantAdmin.findByIdentity(
+                    businessSession
+                ),
+            ]);
+
+            // Dedupe wallet/account overlap (both axes set on one merchant).
+            const owned = [
+                ...new Map(
+                    [...ownedByWallet, ...ownedByAccount].map((m) => [m.id, m])
+                ).values(),
+            ];
 
             const adminMerchantIds = adminOf.map((a) => a.merchantId);
             const adminMerchants = await Promise.all(
@@ -142,11 +171,34 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 )
             );
 
+            // Platform admins get the full list (for `allMerchants` + the
+            // affiliate batch); everyone else only needs their own rows.
             const allMerchantsRaw = isPlatAdmin
                 ? await MerchantContext.repositories.merchant.findAll()
                 : [];
 
-            const nonNullAdmins = adminMerchants.filter((m) => m !== null);
+            // Shop-domain-matched merchants (excluding ones already owned)
+            // surfaced as read/write "admin" access, same role granted by
+            // `MerchantAuthorizationService.checkAccess`. Shared lookup with
+            // `getAccessibleMerchantIds` (§2.13). Deduped against `adminOf`
+            // below.
+            const ownedIds = new Set(owned.map((m) => m.id));
+            const shopMatched = shopDomain
+                ? (
+                      await MerchantContext.services.authorization.getShopDomainMatchedMerchants(
+                          shopDomain
+                      )
+                  ).filter((m) => !ownedIds.has(m.id))
+                : [];
+
+            const nonNullAdmins = [
+                ...new Map(
+                    [
+                        ...adminMerchants.filter((m) => m !== null),
+                        ...shopMatched,
+                    ].map((m) => [m.id, m])
+                ).values(),
+            ];
 
             // One batched lookup so each card can flag affiliate (TakeAds) brands.
             const affiliateIds =

@@ -1,5 +1,29 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
+import type { Address } from "viem";
+
+/**
+ * Caller identity for merchant authorization. Wallet-only (legacy JWT
+ * sessions), account-only (walletless accounts) and dual (wallet-linked
+ * accounts) are all valid shapes; a match on either axis grants access.
+ *
+ * `shopDomain` (design doc §4.7 auto-link): the shop domain proven by the
+ * account's Shopify SSO identity, resolved by the BFF caller (the
+ * `business-auth` domain, at the API layer — never inside the merchant
+ * domain, to respect the cross-domain flow rules) and passed through as a
+ * plain string. A business account holds at most one Shopify identity
+ * (§4.3), so this is a single optional value, not a list. A merchant whose
+ * `domain`/`allowedDomains` matches it grants read/write access exactly like
+ * a wallet or account match.
+ *
+ * Lives in the schema layer (not the service) so repositories and services
+ * share one definition without a service→repository type import (S §2.8).
+ */
+export type MerchantIdentity = {
+    wallet?: Address | null;
+    accountId?: string | null;
+    shopDomain?: string | null;
+};
 
 export const ExplorerConfigSchema = t.Object({
     heroImageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),

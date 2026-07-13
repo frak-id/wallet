@@ -10,6 +10,7 @@ export { MerchantRepository } from "./repositories/MerchantRepository";
 export type {
     LocalizableString,
     MerchantAccountingInfo,
+    MerchantIdentity,
     SdkConfig,
 } from "./schemas";
 export {

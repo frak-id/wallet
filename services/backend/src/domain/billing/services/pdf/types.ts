@@ -59,12 +59,27 @@ export type BillingPdfDocumentDto = {
             totalRewarded: string;
         }>;
         fiatTotals: { eur: string; usd: string; gbp: string };
-        /** Per-line settled rewards in the period — re-queried at render time (§3.2), not stored in `details`. */
+        /**
+         * Per-line settled STABLECOIN rewards in the period — re-queried at
+         * render time (§3.2), not stored in `details`. `currency` is always
+         * a known stablecoin; non-stablecoin reward rows go to
+         * `otherRewards` instead and never enter invoice totals.
+         */
         annexRows: Array<{
             settledAt: Date;
             amount: string;
             currency: string;
             fiatValue: string;
+            txHash?: string;
+        }>;
+        /**
+         * Settled rewards in non-stablecoin tokens — rendered as a purely
+         * informational "hors facturation" section (token amount only, no
+         * fiat value, excluded from every billed total).
+         */
+        otherRewards?: Array<{
+            settledAt: Date;
+            amount: string;
             txHash?: string;
         }>;
     };

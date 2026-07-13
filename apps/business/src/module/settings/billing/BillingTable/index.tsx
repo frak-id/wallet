@@ -17,16 +17,49 @@ import {
 } from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { BinIcon, DownloadIcon } from "@frak-labs/design-system/icons";
+import type { TFunction } from "i18next";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+    backendBaseUrl,
+    businessAuthHeaders,
+    stepUpAwareFetch,
+} from "@/api/backendClient";
 import { ConfirmDialog } from "@/module/common/component/ConfirmDialog";
 import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
+import {
+    getDateTimeFormat,
+    getNumberFormat,
+} from "@/module/common/utils/intlCache";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
-import { getSafeAuthToken } from "@/stores/authStore";
 import type { BillingEntry } from "../types";
 import { useVoidDocument } from "../useBillingAdmin";
 import { useBillingInfo } from "../useBillingInfo";
 import * as styles from "./billing-table.css";
+
+/** Badge variant per entry kind — invoice (paid) / deposit / withdraw each get a distinct tag. */
+function badgeVariantFor(kind: BillingEntry["kind"]) {
+    switch (kind) {
+        case "invoice":
+            return "success" as const;
+        case "withdraw":
+            return "warning" as const;
+        default:
+            return "info" as const;
+    }
+}
+
+/** Badge label per entry kind (billing-feature-fixes.md B16). */
+function badgeLabelFor(t: TFunction, kind: BillingEntry["kind"]): string {
+    switch (kind) {
+        case "invoice":
+            return t("settings.billing.tag.paid");
+        case "withdraw":
+            return t("settings.billing.tag.withdraw");
+        default:
+            return t("settings.billing.tag.deposit");
+    }
+}
 
 /**
  * Billing history card: segmented Invoices / Deposit control over a read-only
@@ -87,7 +120,7 @@ function EntriesTable({
     const { t, i18n } = useTranslation();
 
     const { formatDate, formatAmount } = useMemo(() => {
-        const dateFmt = new Intl.DateTimeFormat(i18n.language, {
+        const dateFmt = getDateTimeFormat(i18n.language, {
             day: "2-digit",
             month: "short",
             year: "numeric",
@@ -95,7 +128,7 @@ function EntriesTable({
             // negative-offset timezone doesn't render the previous day.
             timeZone: "UTC",
         });
-        const numberFmt = new Intl.NumberFormat(i18n.language, {
+        const numberFmt = getNumberFormat(i18n.language, {
             maximumFractionDigits: 2,
         });
         return {
@@ -143,15 +176,9 @@ function EntriesTable({
                         <TableCell hug>
                             <Badge
                                 size="small"
-                                variant={
-                                    entry.kind === "invoice"
-                                        ? "success"
-                                        : "info"
-                                }
+                                variant={badgeVariantFor(entry.kind)}
                             >
-                                {entry.kind === "invoice"
-                                    ? t("settings.billing.tag.paid")
-                                    : t("settings.billing.tag.deposit")}
+                                {badgeLabelFor(t, entry.kind)}
                             </Badge>
                         </TableCell>
                         <TableCell muted>{entry.description}</TableCell>
@@ -187,13 +214,14 @@ function DownloadPdfButton({ entry }: { entry: BillingEntry }) {
             // as text (corrupting the bytes) — so fetch the binary directly.
             // Hitting this endpoint also lazily generates the PDF if a prior
             // render failed, so it works even when `entry.hasPdf` is false.
-            const baseUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
-            const token = getSafeAuthToken();
-            const response = await fetch(
-                `${baseUrl}/business/merchant/${merchantId}/billing/documents/${entry.id}/pdf`,
+            // Routed through `stepUpAwareFetch` (§2.10) so a future step-up
+            // gate on this endpoint opens the 2FA modal and retries instead of
+            // failing opaquely as a plain 401.
+            const response = await stepUpAwareFetch(
+                `${backendBaseUrl}/business/merchant/${merchantId}/billing/documents/${entry.id}/pdf`,
                 {
                     credentials: "include",
-                    headers: token ? { "x-business-auth": token } : undefined,
+                    headers: businessAuthHeaders(),
                 }
             );
             if (!response.ok) {

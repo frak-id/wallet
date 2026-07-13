@@ -11,7 +11,7 @@ import {
     unique,
     uuid,
 } from "drizzle-orm/pg-core";
-import type { Address, Hex } from "viem";
+import type { Hex } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
 import type { BillingDocumentDetails, BillingDocumentKind } from "../schemas";
 
@@ -49,7 +49,8 @@ export const billingDocumentsTable = pgTable(
         merchantId: uuid("merchant_id").notNull(),
         kind: text("kind").$type<BillingDocumentKind>().notNull(),
 
-        // Human-facing reference (DEP-/WDR-/BILL- + year + counter). Unique per merchant.
+        // Human-facing reference (DEP-/WDR-/BILL- + year + counter). Globally
+        // unique — one continuous per-issuer sequence per (kind, year).
         reference: text("reference").notNull(),
 
         // Event / period
@@ -76,8 +77,10 @@ export const billingDocumentsTable = pgTable(
         pdfStorageKey: text("pdf_storage_key"),
         pdfGeneratedAt: timestamp("pdf_generated_at"),
 
-        // Author + soft delete (10-year financial retention — §3.6)
-        createdBy: customHex("created_by").$type<Address>(),
+        // Author + soft delete (10-year financial retention — §3.6).
+        // Business account id of the acting admin (null for cron-generated
+        // monthly bills / legacy sessions with no account row).
+        createdBy: uuid("created_by"),
         voidedAt: timestamp("voided_at"),
 
         createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -89,10 +92,7 @@ export const billingDocumentsTable = pgTable(
             table.merchantId,
             table.kind
         ),
-        unique("billing_documents_merchant_reference_uq").on(
-            table.merchantId,
-            table.reference
-        ),
+        unique("billing_documents_reference_uq").on(table.reference),
     ]
 );
 
@@ -100,35 +100,40 @@ export type BillingDocumentInsert = typeof billingDocumentsTable.$inferInsert;
 export type BillingDocumentSelect = typeof billingDocumentsTable.$inferSelect;
 
 /**
- * Backs per-merchant, per-kind, per-year reference counters (e.g.
- * `DEP-2026-0001`). A dedicated table — not a Postgres `SEQUENCE` — because
- * sequences can't reset per `(merchant, kind, year)` without runtime DDL
- * (rejected: agents/app never own migrations, see AGENTS.md). Allocation is
- * a single atomic `INSERT ... ON CONFLICT DO UPDATE ... RETURNING` against
- * this table (see `BillingDocumentRepository.nextReference`), which
- * serializes concurrent creates via the row lock — no `SELECT MAX` race.
+ * Backs the reference counter — one continuous sequence per `(kind, year)`,
+ * global across all merchants (`DEP-2026-0001`, `0002`, ... regardless of
+ * which merchant issued them). Global rather than per-merchant because French
+ * VAT law requires continuous, gapless numbering per *issuer* (Art. 242 nonies
+ * A) — Frak is the issuer, so a single sequence spans all clients; `kind` acts
+ * as a justified distinct series. Uniformised across all kinds even though only
+ * `monthly_bill` is a VAT invoice, to keep one allocation path.
+ *
+ * A dedicated table — not a Postgres `SEQUENCE` — because sequences can't reset
+ * per `(kind, year)` without runtime DDL (rejected: agents/app never own
+ * migrations, see AGENTS.md). Allocation is a single atomic `INSERT ... ON
+ * CONFLICT DO UPDATE ... RETURNING` (see `BillingDocumentRepository
+ * .nextReference`), serialized by the row lock — no `SELECT MAX` race. The bump
+ * runs inside the create transaction, so a rolled-back insert rolls back the
+ * bump too (no gap).
  *
  * DB-team migration must add:
  *   CREATE TABLE billing_document_counters (
- *       merchant_id  uuid    NOT NULL,
  *       kind         text    NOT NULL,
  *       year         integer NOT NULL,
  *       last_value   integer NOT NULL DEFAULT 0,
- *       PRIMARY KEY (merchant_id, kind, year)
+ *       PRIMARY KEY (kind, year)
  *   );
- *   -- FK merchant_id -> merchants.id
  */
 export const billingDocumentCountersTable = pgTable(
     "billing_document_counters",
     {
-        merchantId: uuid("merchant_id").notNull(),
         kind: text("kind").$type<BillingDocumentKind>().notNull(),
         year: integer("year").notNull(),
         lastValue: integer("last_value").notNull().default(0),
     },
     (table) => [
         primaryKey({
-            columns: [table.merchantId, table.kind, table.year],
+            columns: [table.kind, table.year],
         }),
     ]
 );

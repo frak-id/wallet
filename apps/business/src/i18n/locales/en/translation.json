@@ -4,18 +4,97 @@
             "frakLabsLogoAlt": "Frak Labs",
             "heroTitleLine1": "Access and discover",
             "heroTitleLine2": "Frak Ad Manager",
-            "heroSubtitle": "Register in a second. No email, no password.",
+            "heroSubtitle": "Register in a second.",
             "connect": "Connect to Frak Ad Manager",
             "dashboardImageAlt": "Frak Ad Manager dashboard preview",
             "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",
             "footerTerms": "Terms & Conditions",
-            "footerPrivacy": "Privacy Policy"
+            "footerPrivacy": "Privacy Policy",
+            "ssoError": "We couldn't sign you in with Shopify. Please try again.",
+            "sessionError": "We couldn't finish signing you in. Please try again.",
+            "walletError": "We couldn't sign you in with your wallet. Please try again.",
+            "methods": {
+                "wallet": "Wallet",
+                "email": "Email",
+                "shopify": "Shopify"
+            },
+            "email": {
+                "emailPlaceholder": "Email address",
+                "passwordPlaceholder": "Password",
+                "newPasswordPlaceholder": "Create a password",
+                "passwordHint": "At least 10 characters.",
+                "submit": "Sign in",
+                "registerSubmit": "Create account",
+                "noAccount": "No account yet?",
+                "registerCta": "Register",
+                "backToLogin": "Back to sign in",
+                "forgotPassword": "Forgot your password?",
+                "resetInstructions": "Enter your account email and we'll send you a reset code.",
+                "sendResetCode": "Send reset code",
+                "resetSent": "If an account exists, a reset code has been sent. Enter it below with your new password.",
+                "resetCodePlaceholder": "Reset code",
+                "resetSubmit": "Reset password",
+                "resetSuccess": "Your password has been reset. You can now sign in."
+            },
+            "shopify": {
+                "submit": "Continue with Shopify",
+                "invalidDomain": "Enter a valid myshopify.com domain",
+                "label": "Shopify store domain"
+            },
+            "or": "or",
+            "back": "Back"
         },
-        "embedded": {
-            "title": "Authentication required",
-            "panelTitle": "Please connect your wallet to continue",
-            "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
-            "action": "Authenticate"
+        "twoFactor": {
+            "title": "Verify your identity",
+            "subtitle": "Confirm it's you before continuing.",
+            "pendingHint": "Verifying your session…",
+            "method": {
+                "email": "Email code",
+                "totp": "Authenticator app",
+                "siwe": "Wallet"
+            },
+            "codePlaceholder": "6-digit code",
+            "verify": "Verify",
+            "genericError": "Verification failed. Please try again.",
+            "email": {
+                "sendCode": "Send code by email",
+                "sentHint": "Enter the code we sent to your email.",
+                "resend": "Resend code",
+                "resent": "Code sent"
+            },
+            "totp": {
+                "hint": "Enter the code from your authenticator app.",
+                "recoveryHint": "Enter one of your recovery codes.",
+                "recoveryNotice": "You're entering a one-time recovery code, not your 6-digit authenticator app code.",
+                "recoveryPlaceholder": "Recovery code",
+                "useRecovery": "Use a recovery code",
+                "useCode": "Use your authenticator app"
+            },
+            "siwe": {
+                "hint": "Sign a message with your wallet to confirm it's you.",
+                "cta": "Sign with wallet"
+            }
+        },
+        "verifyEmail": {
+            "title": "Verify your email",
+            "hint": "Enter the code we sent to your email address.",
+            "sendCode": "Send verification code",
+            "resend": "Resend code",
+            "resent": "Code sent",
+            "success": "Your email is verified.",
+            "continue": "Continue"
+        },
+        "invite": {
+            "title": "You've been invited to be an admin of <strong>{{merchantName}}</strong> on Frak",
+            "subtitle": "Invited by {{inviterName}}. Set a password to finish creating your account.",
+            "submit": "Accept invitation",
+            "invalidToken": "This invitation link is invalid or has expired",
+            "askToResend": "Ask your admin to resend the invitation.",
+            "goToLogin": "Go to sign in",
+            "alreadyClaimed": "This invitation was already used. Sign in with {{email}} instead.",
+            "alreadyAuthenticated": "You're already signed in on this device with a different account than {{email}}.",
+            "openDashboard": "Open dashboard",
+            "signOutFirst": "Sign out to accept this invitation"
         }
     },
     "forms": {
@@ -341,7 +420,7 @@
                 "referralChain": {
                     "label": "Referral chain",
                     "hint": "Multi-level ambassador",
-                    "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
+                    "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels - not just the direct referrer."
                 },
                 "validation": {
                     "label": "Campaign validation",
@@ -381,7 +460,7 @@
                 "title": "Campaign launched!",
                 "subtitle": "‘{{name}}’ is now live.",
                 "notifyTitle": "Frak ambassadors will be notified",
-                "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign — they can start sharing immediately.",
+                "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign - they can start sharing immediately.",
                 "tipsTitle": "Maximise your results",
                 "tipsSubtitle": "The most effective campaigns use multiple touchpoints. Make sure you're activating all the levers:",
                 "tip1Title": "Product Page",
@@ -603,7 +682,7 @@
                     "refereePlaceholder": "E.g. 2"
                 },
                 "cpa": {
-                    "hint": "Total cost you pay per confirmed conversion. Frak takes 20% — the rest goes to your users.",
+                    "hint": "Total cost you pay per confirmed conversion. Frak takes 20% - the rest goes to your users.",
                     "rewardsDistributed": "Rewards distributed",
                     "frakCommission": "Frak commission",
                     "reco": "Frak recommends an <highlight>80/20 reward</highlight> split in favor of the Ambassador.",
@@ -632,7 +711,7 @@
                     "addTier": "Add a tier",
                     "removeTier": "Remove tier",
                     "incomplete": "Each tier needs a basket range and a CPA above 0",
-                    "overlap": "Tiers can't overlap — each basket range must start where the previous one ends."
+                    "overlap": "Tiers can't overlap - each basket range must start where the previous one ends."
                 },
                 "eligibility": {
                     "label": "Eligibility",
@@ -643,8 +722,8 @@
                 },
                 "lockup": {
                     "label": "Reward lockup",
-                    "description": "Refund protection — delay before rewards are released",
-                    "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out — protecting your campaign budget.",
+                    "description": "Refund protection - delay before rewards are released",
+                    "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out - protecting your campaign budget.",
                     "durationLabel": "Lockup duration (days)",
                     "durationPlaceholder": "E.g. 14",
                     "durationHint": "Set to 0 to release rewards immediately after purchase.",
@@ -749,7 +828,7 @@
                 "configuration": "Configuration"
             },
             "economic": {
-                "title": "Economic value — Frak vs Meta",
+                "title": "Economic value - Frak vs Meta",
                 "yourSpend": "Your spend",
                 "frakTag": "(Frak)",
                 "equivalentMeta": "Equivalent cost on Meta",
@@ -835,7 +914,7 @@
                 "conditions": {
                     "title": "Conditions",
                     "description": "Extra rules that must be met for the reward to apply.",
-                    "none": "No extra conditions — rewards apply to every qualifying action.",
+                    "none": "No extra conditions - rewards apply to every qualifying action.",
                     "all": "All of the following",
                     "any": "Any of the following",
                     "noneOf": "None of the following",
@@ -1000,13 +1079,17 @@
         "dateField": {
             "placeholder": "dd/mm/yyyy",
             "openCalendar": "Open calendar"
-        }
+        },
+        "cancel": "Cancel",
+        "copied": "Copied",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
     },
     "bank": {
         "banner": {
-            "depleted": "Your reward bank is empty — rewards can't be distributed.",
-            "paused": "Your reward bank is paused — distribution is stopped.",
-            "warning": "Your reward bank needs attention — check your balance and spending authorization.",
+            "depleted": "Your reward bank is empty - rewards can't be distributed.",
+            "paused": "Your reward bank is paused - distribution is stopped.",
+            "warning": "Your reward bank needs attention - check your balance and spending authorization.",
             "notDeployed": "Your reward bank isn't set up yet.",
             "ctaAddFunds": "Add funds",
             "ctaManageBank": "Manage bank",
@@ -1026,7 +1109,7 @@
             "distributing": "Distributing Rewards",
             "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
             "available": "available",
-            "noFundsCaption": "No funds — add funds to start distributing rewards.",
+            "noFundsCaption": "No funds - add funds to start distributing rewards.",
             "addFunds": "Add funds",
             "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
             "allowanceTooltip": "Up to {{amount}} authorized for distribution",
@@ -1066,6 +1149,11 @@
             "pending": "Pending rewards (locked)",
             "withdrawable": "Available to migrate",
             "migrate": "Migrate funds to new bank"
+        },
+        "linkWallet": {
+            "title": "Link a wallet to manage funds",
+            "description": "Withdrawing, adjusting allowance, and pausing distribution require a wallet signature. Link a Frak wallet to unlock these actions.",
+            "cta": "Link a Frak wallet"
         }
     },
     "settings": {
@@ -1165,7 +1253,8 @@
             },
             "tag": {
                 "paid": "Paid",
-                "deposit": "Deposit"
+                "deposit": "Deposit",
+                "withdraw": "Withdraw"
             },
             "validation": {
                 "required": "This field is required",
@@ -1173,9 +1262,12 @@
                 "decimal": "Enter a valid decimal amount",
                 "txHash": "Enter a valid transaction hash (0x…)"
             },
+            "errors": {
+                "save": "Something went wrong while saving your billing information. Your changes were kept - please try again."
+            },
             "admin": {
                 "panel": {
-                    "title": "Platform admin — billing",
+                    "title": "Platform admin - billing",
                     "description": "Create deposit notes and withdraw bills for this merchant. Visible to platform admins only."
                 },
                 "deposit": {
@@ -1192,7 +1284,7 @@
                     "frakFee": "Frak fee (20%)",
                     "gifted": "Gifted amount",
                     "net": "Net amount",
-                    "hint": "Estimate — final VAT and fee are computed when the deposit is created."
+                    "hint": "Estimate - final VAT and fee are computed when the deposit is created."
                 },
                 "withdraw": {
                     "trigger": "Add withdrawal",
@@ -1254,6 +1346,57 @@
                 "errors": {
                     "create": "Something went wrong while creating the document. Please try again.",
                     "void": "Something went wrong while voiding the document. Please try again."
+                }
+            }
+        },
+        "security": {
+            "twoFactor": {
+                "title": "Two-Factor Authentication",
+                "description": "Add an extra layer of security to your sign-in with an authenticator app."
+            },
+            "totp": {
+                "title": "Authenticator app",
+                "enable": "Enable authenticator app",
+                "enabled": "Authenticator app enabled",
+                "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
+                "manualHint": "Can't scan? Enter this key manually instead:",
+                "confirm": "Confirm",
+                "recoveryTitle": "Save your recovery codes",
+                "recoveryHint": "Store these somewhere safe - each code can be used once if you lose access to your authenticator app.",
+                "copyCodes": "Copy codes",
+                "downloadCodes": "Download"
+            },
+            "credentials": {
+                "title": "Sign-in methods",
+                "description": "Wallet, password, and connected accounts used to sign in.",
+                "wallet": "Wallet",
+                "linkWallet": "Link a wallet",
+                "addPassword": "Add a password to also sign in with email.",
+                "savePassword": "Save password",
+                "passwordAdded": "Password added and email verified.",
+                "verifyBanner": {
+                    "title": "Verify your email address",
+                    "description": "Confirm your email to secure your account and make sure you can always sign back in."
+                },
+                "emailTaken": "This email is already used by another account.",
+                "password": "Email & password",
+                "connected": "Verified",
+                "pending": "Pending verification",
+                "addPasswordCta": "Add password"
+            },
+            "sessions": {
+                "title": "Active sessions",
+                "description": "Devices and browsers currently signed in to your account.",
+                "current": "this device",
+                "revoke": "Revoke",
+                "emptyTitle": "No active sessions",
+                "emptyDescription": "Devices signed in to your account will appear here.",
+                "revokeTitle": "Revoke this session?",
+                "revokeDescription": "This device will need to sign in again to access your account.",
+                "method": {
+                    "wallet": "Wallet",
+                    "password": "Email & password",
+                    "shopify": "Shopify"
                 }
             }
         }
@@ -1346,7 +1489,8 @@
                 "copy": "Copy",
                 "helpQuestion": "How to add a DNS TXT record in my DNS settings?",
                 "helpBody": "Adding a DNS TXT record verifies that you own this domain. The process varies depending on your DNS provider (e.g., Cloudflare, GoDaddy, Namecheap). For detailed step-by-step instructions, please visit our documentation:",
-                "helpCta": "View DNS Setup Guide"
+                "helpCta": "View DNS Setup Guide",
+                "verifiedViaShopify": "Domain verified thanks to your Shopify session"
             },
             "summary": {
                 "label": "Summary",
@@ -1435,9 +1579,9 @@
             "useExisting": "Use an existing image:",
             "invalidUrl": "Enter a valid image URL (https://…)",
             "restrictions": {
-                "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
-                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 to 2:1 (Max 10MB)"
+                "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 to 2:1 (Max 10MB)",
+                "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 to 2:1 (Max 10MB)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 to 2:1 (Max 10MB)"
             },
             "descriptionPlaceholder": "Merchant description..."
         },
@@ -1467,7 +1611,7 @@
                 "change": {
                     "title": "Change platform?",
                     "description": "This could break your purchase tracking. Are you sure you want to change the platform?",
-                    "internalWarning": "You won't be able to revert back from this dashboard — you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
+                    "internalWarning": "You won't be able to revert back from this dashboard - you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
                     "confirm": "Change platform"
                 },
                 "instructions": {
@@ -1515,19 +1659,31 @@
                 "admin": "Admin"
             },
             "me": "Me:",
+            "walletlessMember": "Walletless member",
             "addMember": "Add Team Member",
             "saveAll": "Save all changes",
             "removeMember": "Remove member",
             "undoRemove": "Undo remove",
             "saveError": "Some changes could not be saved. Try again.",
+            "invited": "Invited",
+            "resendInvite": "Resend invite",
+            "resendSuccess": "Invitation resent to {{email}}",
+            "resendError": "Could not resend the invitation. Try again.",
             "add": {
                 "title": "Add a member",
-                "description": "Invite an admin to your team by wallet address.",
+                "description": "Invite an admin to your team by wallet address or email.",
                 "label": "Member wallet",
                 "placeholder": "0x…",
                 "submit": "Add member",
                 "invalid": "Invalid wallet address",
-                "error": "Could not add the admin. Try again."
+                "error": "Could not add the admin. Try again.",
+                "modeWallet": "Wallet",
+                "modeEmail": "Email",
+                "emailLabel": "Member email",
+                "emailPlaceholder": "name@company.com",
+                "emailInvalid": "Invalid email address",
+                "addedSuccess": "{{email}} was added to the team",
+                "invitedSuccess": "Invitation sent to {{email}}"
             }
         }
     },
@@ -1567,7 +1723,7 @@
         },
         "placements": {
             "title": "SDK Customization",
-            "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways — each with its own text, styles, and behavior.",
+            "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways - each with its own text, styles, and behavior.",
             "globalDefault": "Global default",
             "add": "Add another placement",
             "dialog": {
@@ -1655,17 +1811,6 @@
             "title": "Global CSS",
             "description": "CSS styles applied to all SDK components across every placement. Placement-level CSS can override these defaults.",
             "toggle": "Custom CSS"
-        }
-    },
-    "embedded": {
-        "mint": {
-            "title": "Register your shop on Frak",
-            "subtitle": "We'll verify your domain and set up your merchant space.",
-            "registering": "Registering <text>{{domain}}</text>",
-            "error": "Can't register your product. Double check that everything is right.",
-            "alreadyRegistered": "Maybe the domain is already registered.",
-            "close": "Close",
-            "register": "Register your shop"
         }
     },
     "welcomePopup": {

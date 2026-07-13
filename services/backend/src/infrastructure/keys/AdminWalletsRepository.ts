@@ -90,6 +90,23 @@ export class AdminWalletsRepository {
     }
 
     /**
+     * Derive raw key bytes from the master secret for a given label — same
+     * cached HMAC-SHA256 derivation as `getKeySpecificAccount`, but returned
+     * as bytes rather than wrapped into a viem account. For non-wallet
+     * secrets derived from the same root (e.g. TOTP encryption keys, §6 of
+     * the design doc), so every derived secret shares one tested derivation
+     * path instead of each caller re-deriving from `MASTER_KEY_SECRET`
+     * independently. Distinct label namespace from `getKeySpecificAccount`
+     * (`AccountPredefinedKeys` are un-prefixed) is the caller's
+     * responsibility — e.g. `"totp-encryption"` vs the wallet key
+     * `"bank-manager"`.
+     */
+    public async deriveKeyBytes(label: string): Promise<Uint8Array> {
+        const hex = await this.getDerivedKey(label);
+        return hexToBytes(hex);
+    }
+
+    /**
      * Get an account specific to a key
      */
     public getMutexForAccount({ key }: { key: AccountPredefinedKeys }) {

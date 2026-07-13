@@ -25,7 +25,14 @@ scopes = "read_customer_events,read_metaobjects,read_orders,read_pixels,read_pro
 redirect_urls = [
   "https://extension-shop-dev.frak.id/auth/callback",
   "https://extension-shop-dev.frak.id/auth/shopify/callback",
-  "https://extension-shop-dev.frak.id/api/auth/callback"
+  "https://extension-shop-dev.frak.id/api/auth/callback",
+  # Standalone business dashboard SSO (design doc §4.7) — served by the
+  # backend itself, not the embedded app. Both backend hostnames are
+  # registered (`backend-dev.frak.id` legacy alias +
+  # `backend.gcp-dev.frak.id` primary, see infra/gcp/utils.ts) since dev
+  # traffic isn't guaranteed to hit one exclusively.
+  "https://backend-dev.frak.id/business/auth/shopify/callback",
+  "https://backend.gcp-dev.frak.id/business/auth/shopify/callback"
 ]
 
 [pos]

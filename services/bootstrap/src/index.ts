@@ -1,4 +1,5 @@
 import { runAuthBindingBackfill } from "./backfill-auth-bindings";
+import { runBusinessAccountBackfill } from "./backfill-business-accounts";
 import { ensureBuckets } from "./ensure-buckets";
 import { runLibsqlMigrations } from "./migrate-libsql";
 import { runPgMigrations } from "./migrate-pg";
@@ -10,7 +11,9 @@ import { runPgMigrations } from "./migrate-pg";
  *   1. Postgres Drizzle migrations
  *   2. libSQL Drizzle migrations (auth/WebAuthn)
  *   3. libSQL authenticator-wallet bindings back-fill (idempotent, batched)
- *   4. RustFS bucket provisioning (idempotent)
+ *   4. Business-account eager back-fill (idempotent; no-ops until the
+ *      business_accounts migration has been applied)
+ *   5. RustFS bucket provisioning (idempotent)
  */
 async function main(): Promise<void> {
     console.log("[bootstrap] Starting");
@@ -18,6 +21,7 @@ async function main(): Promise<void> {
     await runPgMigrations();
     await runLibsqlMigrations();
     await runAuthBindingBackfill();
+    await runBusinessAccountBackfill();
     await ensureBuckets();
 
     console.log("[bootstrap] All steps complete");

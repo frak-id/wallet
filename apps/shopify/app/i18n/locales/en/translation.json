@@ -129,7 +129,7 @@
         "todo": "Please activate the Frak application in your theme by following the instructions below",
         "intermediate": {
             "banner": "Your theme supports app embeds but not in-page app blocks",
-            "bannerDescription": "The Frak Listener runs globally through an app embed — no manual code needed. The share button and banner can't be dropped into your pages automatically; add them from the Appearance tab.",
+            "bannerDescription": "The Frak Listener runs globally through an app embed - no manual code needed. The share button and banner can't be dropped into your pages automatically; add them from the Appearance tab.",
             "embedTitle": "Enable the Frak Listener"
         },
         "legacy": {
@@ -140,13 +140,13 @@
             "copySnippet": "Copy snippet",
             "copyButton": "Copy the tag",
             "copied": "Copied!",
-            "copyError": "Couldn't copy automatically — select the snippet above and copy it manually.",
+            "copyError": "Couldn't copy automatically - select the snippet above and copy it manually.",
             "noMerchantId": "Your merchant ID is not yet set up. Please complete the onboarding steps first.",
             "steps": "Next steps:",
             "step1": "Paste the snippet before </head> in theme.liquid.",
             "step1Link": "Edit theme.liquid",
             "step2": "Add the tag where you want the share button (usually near the Add to cart button).",
-            "step2ClassHint": "Replace <code>btn</code> with your theme's button class so it matches your store — inspect one of your existing buttons to find it (e.g. <code>btn</code> on most vintage themes, <code>button</code> on Dawn).",
+            "step2ClassHint": "Replace <code>btn</code> with your theme's button class so it matches your store - inspect one of your existing buttons to find it (e.g. <code>btn</code> on most vintage themes, <code>button</code> on Dawn).",
             "step2SectionHint": "If your product template only contains a <code>{% section %}</code> tag, open that section file instead (e.g. <code>sections/product-template.liquid</code>).",
             "step2Link": "Edit product template",
             "step3": "Personalise logo, wording and rewards in the Frak editor:",
@@ -175,9 +175,7 @@
             "notConnected": "Your shop is not yet connected to the Frak ecosystem. Follow the instructions below to complete setup."
         },
         "modal": {
-            "title": "Register your shop",
-            "button": "Register your shop in the Frak ecosystem",
-            "close": "Close"
+            "button": "Register your shop in the Frak ecosystem"
         },
         "newsletterShare": {
             "title": "Newsletter sharing link",
@@ -456,7 +454,7 @@
             "openEditor": "Open Frak editor",
             "copyTag": "Copy the tag",
             "copied": "Copied!",
-            "copyError": "Couldn't copy automatically — select the tag above and copy it manually."
+            "copyError": "Couldn't copy automatically - select the tag above and copy it manually."
         }
     },
     "funding": {

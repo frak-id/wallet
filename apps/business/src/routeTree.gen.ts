@@ -9,18 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InviteRouteImport } from './routes/invite'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as RestrictedRouteImport } from './routes/_restricted'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as EmbeddedAuthRouteImport } from './routes/embedded/auth'
-import { Route as EmbeddedLayoutRouteImport } from './routes/embedded/_layout'
+import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as Login2faRouteImport } from './routes/login/2fa'
 import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/settings'
 import { Route as RestrictedMembersRouteImport } from './routes/_restricted/members'
 import { Route as RestrictedDashboardRouteImport } from './routes/_restricted/dashboard'
 import { Route as RestrictedSettingsIndexRouteImport } from './routes/_restricted/settings/index'
 import { Route as RestrictedCampaignsIndexRouteImport } from './routes/_restricted/campaigns/index'
-import { Route as EmbeddedLayoutMintRouteImport } from './routes/embedded/_layout/mint'
 import { Route as RestrictedSettingsBillingRouteImport } from './routes/_restricted/settings/billing'
 import { Route as RestrictedPushCreateRouteImport } from './routes/_restricted/push/create'
 import { Route as RestrictedMerchantNewRouteImport } from './routes/_restricted/merchant/new'
@@ -56,9 +57,19 @@ import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdReferralChainRout
 import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/goals'
 import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdBudgetRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/budget'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteRoute = InviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoRoute = DemoRouteImport.update({
@@ -75,15 +86,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmbeddedAuthRoute = EmbeddedAuthRouteImport.update({
-  id: '/embedded/auth',
-  path: '/embedded/auth',
-  getParentRoute: () => rootRouteImport,
+const LoginIndexRoute = LoginIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LoginRoute,
 } as any)
-const EmbeddedLayoutRoute = EmbeddedLayoutRouteImport.update({
-  id: '/embedded/_layout',
-  path: '/embedded',
-  getParentRoute: () => rootRouteImport,
+const Login2faRoute = Login2faRouteImport.update({
+  id: '/2fa',
+  path: '/2fa',
+  getParentRoute: () => LoginRoute,
 } as any)
 const RestrictedSettingsRoute = RestrictedSettingsRouteImport.update({
   id: '/settings',
@@ -111,11 +122,6 @@ const RestrictedCampaignsIndexRoute =
     path: '/campaigns/',
     getParentRoute: () => RestrictedRoute,
   } as any)
-const EmbeddedLayoutMintRoute = EmbeddedLayoutMintRouteImport.update({
-  id: '/mint',
-  path: '/mint',
-  getParentRoute: () => EmbeddedLayoutRoute,
-} as any)
 const RestrictedSettingsBillingRoute =
   RestrictedSettingsBillingRouteImport.update({
     id: '/billing',
@@ -320,19 +326,20 @@ const RestrictedMMerchantIdCampaignsDraftCampaignIdBudgetRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
-  '/login': typeof LoginRoute
+  '/invite': typeof InviteRoute
+  '/login': typeof LoginRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
   '/settings': typeof RestrictedSettingsRouteWithChildren
-  '/embedded': typeof EmbeddedLayoutRouteWithChildren
-  '/embedded/auth': typeof EmbeddedAuthRoute
+  '/login/2fa': typeof Login2faRoute
+  '/login/': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
   '/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
   '/merchant/new': typeof RestrictedMerchantNewRoute
   '/push/create': typeof RestrictedPushCreateRoute
   '/settings/billing': typeof RestrictedSettingsBillingRoute
-  '/embedded/mint': typeof EmbeddedLayoutMintRoute
   '/campaigns/': typeof RestrictedCampaignsIndexRoute
   '/settings/': typeof RestrictedSettingsIndexRoute
   '/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
@@ -367,18 +374,18 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
-  '/login': typeof LoginRoute
+  '/invite': typeof InviteRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
-  '/embedded': typeof EmbeddedLayoutRouteWithChildren
-  '/embedded/auth': typeof EmbeddedAuthRoute
+  '/login/2fa': typeof Login2faRoute
+  '/login': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
   '/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
   '/merchant/new': typeof RestrictedMerchantNewRoute
   '/push/create': typeof RestrictedPushCreateRoute
   '/settings/billing': typeof RestrictedSettingsBillingRoute
-  '/embedded/mint': typeof EmbeddedLayoutMintRoute
   '/campaigns': typeof RestrictedCampaignsIndexRoute
   '/settings': typeof RestrictedSettingsIndexRoute
   '/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
@@ -415,19 +422,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_restricted': typeof RestrictedRouteWithChildren
   '/demo': typeof DemoRoute
-  '/login': typeof LoginRoute
+  '/invite': typeof InviteRoute
+  '/login': typeof LoginRouteWithChildren
+  '/verify-email': typeof VerifyEmailRoute
   '/_restricted/dashboard': typeof RestrictedDashboardRoute
   '/_restricted/members': typeof RestrictedMembersRoute
   '/_restricted/settings': typeof RestrictedSettingsRouteWithChildren
-  '/embedded/_layout': typeof EmbeddedLayoutRouteWithChildren
-  '/embedded/auth': typeof EmbeddedAuthRoute
+  '/login/2fa': typeof Login2faRoute
+  '/login/': typeof LoginIndexRoute
   '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/_restricted/campaigns/list': typeof RestrictedCampaignsListRoute
   '/_restricted/m/$merchantId': typeof RestrictedMMerchantIdRouteWithChildren
   '/_restricted/merchant/new': typeof RestrictedMerchantNewRoute
   '/_restricted/push/create': typeof RestrictedPushCreateRoute
   '/_restricted/settings/billing': typeof RestrictedSettingsBillingRoute
-  '/embedded/_layout/mint': typeof EmbeddedLayoutMintRoute
   '/_restricted/campaigns/': typeof RestrictedCampaignsIndexRoute
   '/_restricted/settings/': typeof RestrictedSettingsIndexRoute
   '/_restricted/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
@@ -464,19 +472,20 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/demo'
+    | '/invite'
     | '/login'
+    | '/verify-email'
     | '/dashboard'
     | '/members'
     | '/settings'
-    | '/embedded'
-    | '/embedded/auth'
+    | '/login/2fa'
+    | '/login/'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/m/$merchantId'
     | '/merchant/new'
     | '/push/create'
     | '/settings/billing'
-    | '/embedded/mint'
     | '/campaigns/'
     | '/settings/'
     | '/campaigns/draft/new'
@@ -511,18 +520,18 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/demo'
-    | '/login'
+    | '/invite'
+    | '/verify-email'
     | '/dashboard'
     | '/members'
-    | '/embedded'
-    | '/embedded/auth'
+    | '/login/2fa'
+    | '/login'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/m/$merchantId'
     | '/merchant/new'
     | '/push/create'
     | '/settings/billing'
-    | '/embedded/mint'
     | '/campaigns'
     | '/settings'
     | '/campaigns/draft/new'
@@ -558,19 +567,20 @@ export interface FileRouteTypes {
     | '/'
     | '/_restricted'
     | '/demo'
+    | '/invite'
     | '/login'
+    | '/verify-email'
     | '/_restricted/dashboard'
     | '/_restricted/members'
     | '/_restricted/settings'
-    | '/embedded/_layout'
-    | '/embedded/auth'
+    | '/login/2fa'
+    | '/login/'
     | '/_restricted/campaigns/$campaignId'
     | '/_restricted/campaigns/list'
     | '/_restricted/m/$merchantId'
     | '/_restricted/merchant/new'
     | '/_restricted/push/create'
     | '/_restricted/settings/billing'
-    | '/embedded/_layout/mint'
     | '/_restricted/campaigns/'
     | '/_restricted/settings/'
     | '/_restricted/campaigns/draft/new'
@@ -607,18 +617,32 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RestrictedRoute: typeof RestrictedRouteWithChildren
   DemoRoute: typeof DemoRoute
-  LoginRoute: typeof LoginRoute
-  EmbeddedLayoutRoute: typeof EmbeddedLayoutRouteWithChildren
-  EmbeddedAuthRoute: typeof EmbeddedAuthRoute
+  InviteRoute: typeof InviteRoute
+  LoginRoute: typeof LoginRouteWithChildren
+  VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite': {
+      id: '/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof InviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -642,19 +666,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/embedded/auth': {
-      id: '/embedded/auth'
-      path: '/embedded/auth'
-      fullPath: '/embedded/auth'
-      preLoaderRoute: typeof EmbeddedAuthRouteImport
-      parentRoute: typeof rootRouteImport
+    '/login/': {
+      id: '/login/'
+      path: '/'
+      fullPath: '/login/'
+      preLoaderRoute: typeof LoginIndexRouteImport
+      parentRoute: typeof LoginRoute
     }
-    '/embedded/_layout': {
-      id: '/embedded/_layout'
-      path: '/embedded'
-      fullPath: '/embedded'
-      preLoaderRoute: typeof EmbeddedLayoutRouteImport
-      parentRoute: typeof rootRouteImport
+    '/login/2fa': {
+      id: '/login/2fa'
+      path: '/2fa'
+      fullPath: '/login/2fa'
+      preLoaderRoute: typeof Login2faRouteImport
+      parentRoute: typeof LoginRoute
     }
     '/_restricted/settings': {
       id: '/_restricted/settings'
@@ -690,13 +714,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/campaigns/'
       preLoaderRoute: typeof RestrictedCampaignsIndexRouteImport
       parentRoute: typeof RestrictedRoute
-    }
-    '/embedded/_layout/mint': {
-      id: '/embedded/_layout/mint'
-      path: '/mint'
-      fullPath: '/embedded/mint'
-      preLoaderRoute: typeof EmbeddedLayoutMintRouteImport
-      parentRoute: typeof EmbeddedLayoutRoute
     }
     '/_restricted/settings/billing': {
       id: '/_restricted/settings/billing'
@@ -1065,25 +1082,25 @@ const RestrictedRouteWithChildren = RestrictedRoute._addFileChildren(
   RestrictedRouteChildren,
 )
 
-interface EmbeddedLayoutRouteChildren {
-  EmbeddedLayoutMintRoute: typeof EmbeddedLayoutMintRoute
+interface LoginRouteChildren {
+  Login2faRoute: typeof Login2faRoute
+  LoginIndexRoute: typeof LoginIndexRoute
 }
 
-const EmbeddedLayoutRouteChildren: EmbeddedLayoutRouteChildren = {
-  EmbeddedLayoutMintRoute: EmbeddedLayoutMintRoute,
+const LoginRouteChildren: LoginRouteChildren = {
+  Login2faRoute: Login2faRoute,
+  LoginIndexRoute: LoginIndexRoute,
 }
 
-const EmbeddedLayoutRouteWithChildren = EmbeddedLayoutRoute._addFileChildren(
-  EmbeddedLayoutRouteChildren,
-)
+const LoginRouteWithChildren = LoginRoute._addFileChildren(LoginRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RestrictedRoute: RestrictedRouteWithChildren,
   DemoRoute: DemoRoute,
-  LoginRoute: LoginRoute,
-  EmbeddedLayoutRoute: EmbeddedLayoutRouteWithChildren,
-  EmbeddedAuthRoute: EmbeddedAuthRoute,
+  InviteRoute: InviteRoute,
+  LoginRoute: LoginRouteWithChildren,
+  VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
