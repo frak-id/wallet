@@ -166,11 +166,22 @@ if (isRunningLocally && tls) {
 /**
  * Global graceful shutdown — stops accepting connections and drains in-flight requests.
  * PairingRepository's own SIGTERM handler flushes pending DB writes independently.
+ *
+ * Locally (`bun --watch`), skip the drain: `--watch` sends SIGTERM on every
+ * file save, and waiting up to 15s for keep-alive connections to close left
+ * stacked-up zombie processes still bound to the port across rapid reloads.
  */
 function handleShutdown(signal: string) {
     log.info(`${signal} received, starting graceful shutdown`);
     CronRegistry.stop();
     metricsServer.stop(true);
+
+    if (isRunningLocally) {
+        app.server?.stop(true);
+        process.exit(0);
+        return;
+    }
+
     app.server?.stop(false);
     setTimeout(() => {
         log.warn("Shutdown timeout exceeded, forcing exit");

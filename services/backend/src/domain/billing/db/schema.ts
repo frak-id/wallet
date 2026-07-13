@@ -11,7 +11,7 @@ import {
     unique,
     uuid,
 } from "drizzle-orm/pg-core";
-import type { Address, Hex } from "viem";
+import type { Hex } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
 import type { BillingDocumentDetails, BillingDocumentKind } from "../schemas";
 
@@ -76,8 +76,10 @@ export const billingDocumentsTable = pgTable(
         pdfStorageKey: text("pdf_storage_key"),
         pdfGeneratedAt: timestamp("pdf_generated_at"),
 
-        // Author + soft delete (10-year financial retention — §3.6)
-        createdBy: customHex("created_by").$type<Address>(),
+        // Author + soft delete (10-year financial retention — §3.6).
+        // Business account id of the acting admin (null for cron-generated
+        // monthly bills / legacy sessions with no account row).
+        createdBy: uuid("created_by"),
         voidedAt: timestamp("voided_at"),
 
         createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -1,8 +1,36 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+    type QueryClient,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { documentsQueryKey } from "./queryKeys";
+
+/**
+ * A deposit/withdraw mutation returns as soon as the row is written, but its
+ * side-effects settle a beat later: a reissue voids then recreates, a void
+ * cascades to linked withdraws + clears the affected monthly bill's cached
+ * PDF, and PDF (re)generation runs async. An invalidate fired the instant the
+ * call resolves can therefore refetch the pre-settle state and leave the table
+ * showing the stale document. So invalidate twice — immediately, then once
+ * more after a short delay so the list converges on the final state without a
+ * manual reload. The trailing pass uses the default `active`-only refetch, so
+ * it no-ops (just marks stale) if the user already left the page.
+ */
+const SETTLE_REINVALIDATE_MS = 5_000;
+
+function invalidateDocumentsAfterSettle(
+    queryClient: QueryClient,
+    merchantId: string
+) {
+    const queryKey = documentsQueryKey(merchantId);
+    queryClient.invalidateQueries({ queryKey });
+    setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey });
+    }, SETTLE_REINVALIDATE_MS);
+}
 
 /**
  * Keeps only the country code and last 3 characters of an IBAN-shaped
@@ -63,9 +91,7 @@ export function useCreateDeposit(merchantId: string) {
             return data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: documentsQueryKey(merchantId),
-            });
+            invalidateDocumentsAfterSettle(queryClient, merchantId);
         },
     });
 }
@@ -83,9 +109,7 @@ export function useCreateWithdraw(merchantId: string) {
             return data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: documentsQueryKey(merchantId),
-            });
+            invalidateDocumentsAfterSettle(queryClient, merchantId);
         },
     });
 }
@@ -114,9 +138,7 @@ export function useVoidDocument(merchantId: string) {
             if (error) throw error;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: documentsQueryKey(merchantId),
-            });
+            invalidateDocumentsAfterSettle(queryClient, merchantId);
         },
     });
 }

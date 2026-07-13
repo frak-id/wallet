@@ -1,0 +1,1 @@
+ALTER TABLE "billing_documents" ALTER COLUMN "created_by" SET DATA TYPE uuid;

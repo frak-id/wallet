@@ -39,7 +39,7 @@ export default interface Resources {
         "footerPrivacy": "Privacy Policy",
         "footerTerms": "Terms & Conditions",
         "frakLabsLogoAlt": "Frak Labs",
-        "heroSubtitle": "Register in a second. No email, no password.",
+        "heroSubtitle": "Register in a second.",
         "heroTitleLine1": "Access and discover",
         "heroTitleLine2": "Frak Ad Manager",
         "methods": {

@@ -108,22 +108,23 @@ function mapWithdrawError(err: unknown) {
  * Admin-only deposit/withdraw CRUD (billing-feature-plan.md §5 Phase 2).
  * Guarded by `platformAdminAuthenticated` — never `hasMerchantAccess`, whose
  * platform-admin bypass is read-only/safe-methods-only (see session.ts).
- * Every handler still re-derives `businessSession.wallet` for `createdBy`.
+ * Every handler records the acting admin's business `accountId` as `createdBy`
+ * (null for the legacy-JWT grace path, which carries no account row).
  */
 export const merchantBillingAdminRoutes = new Elysia()
     .use(businessSessionContext)
     .post(
         "/deposits",
         async ({ params: { merchantId }, body, businessSession }) => {
-            if (!businessSession?.wallet) {
-                return status(401, "Authentication required");
-            }
-
+            // `platformAdminAuthenticated` already vouched for the session, so
+            // a missing wallet (email-based @frak-labs.com admin) is not an
+            // auth failure. Attribute to the business account id, which every
+            // session-backed admin has regardless of auth method.
             const document =
                 await OrchestrationContext.orchestrators.billing.createDeposit(
                     merchantId,
                     toDepositInput(body),
-                    businessSession.wallet
+                    businessSession?.accountId ?? null
                 );
 
             return toResponse(document);
@@ -142,16 +143,12 @@ export const merchantBillingAdminRoutes = new Elysia()
     .post(
         "/withdrawals",
         async ({ params: { merchantId }, body, businessSession }) => {
-            if (!businessSession?.wallet) {
-                return status(401, "Authentication required");
-            }
-
             try {
                 const document =
                     await OrchestrationContext.orchestrators.billing.createWithdraw(
                         merchantId,
                         toWithdrawInput(body),
-                        businessSession.wallet
+                        businessSession?.accountId ?? null
                     );
 
                 return toResponse(document);
@@ -177,16 +174,12 @@ export const merchantBillingAdminRoutes = new Elysia()
     .put(
         "/deposits/:id",
         async ({ params: { merchantId, id }, body, businessSession }) => {
-            if (!businessSession?.wallet) {
-                return status(401, "Authentication required");
-            }
-
             const document =
                 await OrchestrationContext.orchestrators.billing.reissueDeposit(
                     merchantId,
                     id,
                     toDepositInput(body),
-                    businessSession.wallet
+                    businessSession?.accountId ?? null
                 );
             if (!document) {
                 return status(404, "Document not found or already voided");
@@ -209,17 +202,13 @@ export const merchantBillingAdminRoutes = new Elysia()
     .put(
         "/withdrawals/:id",
         async ({ params: { merchantId, id }, body, businessSession }) => {
-            if (!businessSession?.wallet) {
-                return status(401, "Authentication required");
-            }
-
             try {
                 const document =
                     await OrchestrationContext.orchestrators.billing.reissueWithdraw(
                         merchantId,
                         id,
                         toWithdrawInput(body),
-                        businessSession.wallet
+                        businessSession?.accountId ?? null
                     );
                 if (!document) {
                     return status(404, "Document not found or already voided");

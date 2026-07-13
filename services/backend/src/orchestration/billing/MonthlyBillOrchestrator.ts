@@ -5,7 +5,7 @@ import {
     type Stablecoin,
 } from "@frak-labs/app-essentials";
 import Decimal from "decimal.js";
-import { type Address, isAddressEqual, zeroAddress } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import type {
     BillingDocumentInsert,
     BillingDocumentSelect,
@@ -79,11 +79,11 @@ function isAccountingInfoComplete(
 const MAX_BACKFILL_MONTHS = 600;
 
 /**
- * `created_by` sentinel for cron-generated (unattended) monthly bills — no
- * human admin issued them. The column is nullable, but a stable non-null
- * sentinel keeps the audit column uniformly typed and greppable.
+ * `created_by` for cron-generated (unattended) monthly bills — no human admin
+ * issued them, and there is no system business account, so the audit column
+ * stays null. Named for greppability at the call site.
  */
-const SYSTEM_ACTOR: Address = zeroAddress;
+const SYSTEM_ACTOR: string | null = null;
 
 export class MonthlyBillAlreadyExistsError extends Error {
     constructor(
@@ -132,7 +132,7 @@ export class MonthlyBillOrchestrator {
     async generateMonthlyBill(
         merchantId: string,
         { periodStart }: GenerateMonthlyBillInput,
-        createdBy: Address,
+        createdBy: string | null,
         { renderPdf = true }: { renderPdf?: boolean } = {}
     ): Promise<BillingDocumentSelect> {
         const periodEnd = periodEndOf(periodStart);
@@ -539,7 +539,7 @@ export class MonthlyBillOrchestrator {
         primaryCurrency: Stablecoin,
         details: BillingDocumentDetails,
         amounts: { grossAmount: string; netAmount: string },
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect> {
         try {
             return await this.billingDocuments.create({

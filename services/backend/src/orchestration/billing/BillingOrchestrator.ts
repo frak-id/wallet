@@ -101,7 +101,7 @@ export class BillingOrchestrator {
     async createDeposit(
         merchantId: string,
         input: CreateDepositInput,
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect> {
         const { vatAmount, frakFeeAmount, giftedAmount, netAmount } =
             this.computation.computeDeposit({
@@ -153,7 +153,7 @@ export class BillingOrchestrator {
     async createWithdraw(
         merchantId: string,
         input: CreateWithdrawInput,
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect> {
         const linkedDeposit = await this.billingDocuments.findById(
             merchantId,
@@ -428,7 +428,7 @@ export class BillingOrchestrator {
         merchantId: string,
         id: string,
         input: CreateDepositInput,
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect | null> {
         // Snapshot BEFORE voiding — the void cascade flips these to voided.
         const linkedWithdraws =
@@ -490,7 +490,7 @@ export class BillingOrchestrator {
         merchantId: string,
         id: string,
         input: CreateWithdrawInput,
-        createdBy: Address
+        createdBy: string | null
     ): Promise<BillingDocumentSelect | null> {
         const voided = await this.voidDocument(merchantId, id, "withdraw");
         if (!voided) {

@@ -1,9 +1,12 @@
+import { Card } from "@frak-labs/design-system/components/Card";
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import * as loginCardStyles from "@/module/auth/component/LoginMethods/login-card.css";
 import { TwoFactorChallengePanel } from "@/module/auth/component/TwoFactorChallengePanel";
 import { useCompletePendingSession } from "@/module/auth/hooks/useCompletePendingSession";
 import { safeRedirectTarget } from "@/module/auth/utils/safeRedirect";
@@ -97,23 +100,36 @@ export function PendingTwoFactor() {
 
     return (
         <Login>
-            {/* Gate on the `inline` presentation specifically: a step-up 401
-                from a background request could open a `modal` request while
-                this route is mounted — that one belongs to `TwoFactorModal`,
-                not here (never render both surfaces for the same request). */}
-            {request?.presentation === "inline" ? (
-                <TwoFactorChallengePanel
-                    methods={request.methods}
-                    onVerified={resolveVerification}
-                />
-            ) : (
-                <Stack space="m" align="center">
-                    <Spinner />
-                    <Text variant="body" color="secondary">
-                        {t("auth.twoFactor.pendingHint")}
-                    </Text>
-                </Stack>
-            )}
+            {/* Same branded card shell as `LoginMethods` so the challenge sits
+                in a card identical to the earlier login steps — no layout
+                shift / visual discrepancy between the two pages. */}
+            <ContentBlock maxWidth="400px" align="left">
+                <Card
+                    variant="elevated"
+                    radius="l"
+                    padding="none"
+                    className={loginCardStyles.card}
+                >
+                    {/* Gate on the `inline` presentation specifically: a
+                        step-up 401 from a background request could open a
+                        `modal` request while this route is mounted — that one
+                        belongs to `TwoFactorModal`, not here (never render both
+                        surfaces for the same request). */}
+                    {request?.presentation === "inline" ? (
+                        <TwoFactorChallengePanel
+                            methods={request.methods}
+                            onVerified={resolveVerification}
+                        />
+                    ) : (
+                        <Stack space="m" align="center">
+                            <Spinner />
+                            <Text variant="body" color="secondary">
+                                {t("auth.twoFactor.pendingHint")}
+                            </Text>
+                        </Stack>
+                    )}
+                </Card>
+            </ContentBlock>
         </Login>
     );
 }
