@@ -704,6 +704,19 @@
         "typescript": "catalog:",
       },
     },
+    "services/shopify-bootstrap": {
+      "name": "@frak-labs/shopify-bootstrap",
+      "version": "0.0.1",
+      "dependencies": {
+        "drizzle-orm": "^0.45.2",
+        "postgres": "^3.4.9",
+      },
+      "devDependencies": {
+        "@typescript/native": "catalog:",
+        "bun-types": "latest",
+        "typescript": "catalog:",
+      },
+    },
   },
   "overrides": {
     "caniuse-lite": "^1.0.30001779",
@@ -1068,6 +1081,8 @@
     "@frak-labs/react-sdk": ["@frak-labs/react-sdk@workspace:sdk/react"],
 
     "@frak-labs/shopify-app": ["@frak-labs/shopify-app@workspace:apps/shopify"],
+
+    "@frak-labs/shopify-bootstrap": ["@frak-labs/shopify-bootstrap@workspace:services/shopify-bootstrap"],
 
     "@frak-labs/test-foundation": ["@frak-labs/test-foundation@workspace:packages/test-foundation"],
 

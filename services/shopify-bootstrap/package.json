@@ -1,0 +1,26 @@
+{
+    "name": "@frak-labs/shopify-bootstrap",
+    "description": "One-shot Shopify bootstrap: Drizzle schema migrations + one-time data migration from the legacy public Postgres to the in-cluster GCP Postgres",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "license": "GNU GPL 3.0",
+    "scripts": {
+        "start": "bun run src/index.ts",
+        "dev": "bun run --watch src/index.ts",
+        "build": "bun run build.ts",
+        "typecheck": "tsc --noEmit",
+        "lint": "biome lint .",
+        "format:check": "biome check .",
+        "format": "biome check --write ."
+    },
+    "dependencies": {
+        "drizzle-orm": "^0.45.2",
+        "postgres": "^3.4.9"
+    },
+    "devDependencies": {
+        "@typescript/native": "catalog:",
+        "bun-types": "latest",
+        "typescript": "catalog:"
+    }
+}

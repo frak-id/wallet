@@ -1,5 +1,6 @@
 import path from "node:path";
-import type { Resource } from "@pulumi/pulumi";
+import type { Input, Resource } from "@pulumi/pulumi";
+import { KubernetesJob } from "../components/KubernetesJob";
 import { KubernetesService } from "../components/KubernetesService";
 import {
     backendUrl,
@@ -15,6 +16,7 @@ import {
     walletUrl,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
+import { shopifyPostgresEnv } from "./secrets";
 import {
     baseDomainName,
     cachedImage,
@@ -25,9 +27,21 @@ import {
 const subDomain = isProd ? "extension-shop" : "extension-shop-dev";
 
 /**
- * Public, non-secret vars. These are inlined into the JS bundle at BUILD time by
- * Vite `define` (see apps/shopify/vite.config.ts), so they are passed as Docker
- * build args — NOT injected at runtime.
+ * Target Postgres = the in-cluster GCP instance, dedicated `shopify` database +
+ * `shopify_<stage>` role (isolated from the backend credentials; read from
+ * Secret Manager in ./secrets). Mapped into the app's existing env var names
+ * (db.server.ts is unchanged).
+ */
+const targetDbEnv = {
+    SHOPIFY_POSTGRES_HOST: shopifyPostgresEnv.POSTGRES_HOST,
+    POSTGRES_SHOPIFY_DB: shopifyPostgresEnv.POSTGRES_DB,
+    POSTGRES_USER: shopifyPostgresEnv.POSTGRES_USER,
+    SHOPIFY_POSTGRES_PASSWORD: shopifyPostgresEnv.POSTGRES_PASSWORD,
+};
+
+/**
+ * Public, non-secret vars. Inlined into the JS bundle at BUILD time by Vite
+ * `define` (apps/shopify/vite.config.ts) — passed as Docker build args.
  */
 const shopifyBuildEnv = {
     NODE_ENV: "production",
@@ -43,31 +57,55 @@ const shopifyBuildEnv = {
 /**
  * Secrets read from `process.env` at RUNTIME by the server (db.server.ts,
  * shopify.server.ts, services). Injected into the pod via a Kubernetes Secret.
- *
- * NOTE: `SHOPIFY_POSTGRES_HOST` currently points at the standalone Shopify
- * Postgres (previously reached from AWS Lambda). The GKE pods must have network
- * reachability to that host, or the DB should be migrated onto the GCP master.
  */
 const shopifyRuntimeEnv = {
     STAGE: normalizedStageName,
     SHOPIFY_APP_URL: shopifyAppUrl,
-    POSTGRES_SHOPIFY_DB: isProd ? "shopify_prod" : "shopify_dev",
-    POSTGRES_USER: isProd ? "shopify-prod" : "shopify-dev",
-    SHOPIFY_POSTGRES_HOST: shopifyPostgresHost.value,
-    SHOPIFY_POSTGRES_PASSWORD: shopifyPostgresPassword.value,
+    ...targetDbEnv,
     SHOPIFY_API_SECRET: shopifyApiSecret.value,
     PRODUCT_SETUP_CODE_SALT: productSetupCodeSalt.value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
 };
 
+/**
+ * Bootstrap Job env: migrates schema + copies legacy data into the GCP DB.
+ * The `SHOPIFY_SOURCE_*` block points at the legacy public Postgres and can be
+ * removed once the cutover is confirmed (the data step then no-ops).
+ */
+const shopifyBootstrapEnv = {
+    STAGE: normalizedStageName,
+    // Target (GCP)
+    POSTGRES_HOST: shopifyPostgresEnv.POSTGRES_HOST,
+    POSTGRES_PORT: "5432",
+    POSTGRES_DB: shopifyPostgresEnv.POSTGRES_DB,
+    POSTGRES_USER: shopifyPostgresEnv.POSTGRES_USER,
+    POSTGRES_PASSWORD: shopifyPostgresEnv.POSTGRES_PASSWORD,
+    // Source (legacy public instance) — drop after cutover
+    SHOPIFY_SOURCE_POSTGRES_HOST: shopifyPostgresHost.value,
+    SHOPIFY_SOURCE_POSTGRES_PORT: "5432",
+    SHOPIFY_SOURCE_POSTGRES_DB: isProd ? "shopify_prod" : "shopify_dev",
+    SHOPIFY_SOURCE_POSTGRES_USER: isProd ? "shopify-prod" : "shopify-dev",
+    SHOPIFY_SOURCE_POSTGRES_PASSWORD: shopifyPostgresPassword.value,
+};
+
+const appLabels = { app: "shopify-frontend" };
+
+// Everything below (DB, images, secrets, bootstrap Job) is real infra and must
+// NOT be created under `sst dev` — only the KubernetesService is created there,
+// and it self-guards down to a DevCommand. Mirrors infra/gcp/business.ts.
 let shopifyImage = $output("");
-const dependency: Resource[] = [];
+let runtimeSecretName: Input<string> | undefined;
+const serviceDeps: Resource[] = [];
 
 if (!$dev) {
+    // The `shopify` database + `shopify_<stage>` role + `shopify-db-secret-<stage>`
+    // Secret Manager entry are provisioned out-of-band by the DB team (same as the
+    // backend's wallet-backend DB/role/secret). The role must own the database /
+    // have CREATE on `public` so the bootstrap Job can run its migrations.
+
+    // Runtime SSR image
     const image = cachedImage("shopify", {
-        context: {
-            location: $cli.paths.root,
-        },
+        context: { location: $cli.paths.root },
         dockerfile: {
             location: path.join($cli.paths.root, "apps/shopify/Dockerfile"),
         },
@@ -77,36 +115,83 @@ if (!$dev) {
         push: true,
         tags: getRegistryPath("shopify"),
     });
-
-    dependency.push(image);
     shopifyImage = image.ref;
+
+    // ---- Bootstrap Job (schema migration + one-time data copy) ------------
+    const shopifyBootstrapSecrets = new kubernetes.core.v1.Secret(
+        "shopify-bootstrap-secret",
+        {
+            metadata: {
+                name: `shopify-bootstrap-secret-${normalizedStageName}`,
+                namespace: walletNamespace.metadata.name,
+            },
+            type: "Opaque",
+            stringData: shopifyBootstrapEnv,
+        }
+    );
+
+    const bootstrapImage = cachedImage("shopify-bootstrap", {
+        context: { location: $cli.paths.root },
+        dockerfile: {
+            location: path.join(
+                $cli.paths.root,
+                "services/shopify-bootstrap/Dockerfile"
+            ),
+        },
+        platforms: ["linux/amd64"],
+        push: true,
+        tags: getRegistryPath("shopify-bootstrap"),
+    });
+
+    const shopifyBootstrapJob = new KubernetesJob(
+        "ShopifyBootstrap",
+        {
+            namespace: walletNamespace.metadata.name,
+            appLabels,
+            job: {
+                container: {
+                    name: "shopify-bootstrap",
+                    image: bootstrapImage.ref,
+                    envFrom: [
+                        {
+                            secretRef: {
+                                name: shopifyBootstrapSecrets.metadata.name,
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+        {
+            dependsOn: [shopifyBootstrapSecrets, bootstrapImage],
+        }
+    );
+
+    // ---- Runtime secret ---------------------------------------------------
+    const shopifySecrets = new kubernetes.core.v1.Secret("shopify-secrets", {
+        metadata: {
+            name: `shopify-secrets-${normalizedStageName}`,
+            namespace: walletNamespace.metadata.name,
+        },
+        type: "Opaque",
+        stringData: shopifyRuntimeEnv,
+    });
+    runtimeSecretName = shopifySecrets.metadata.name;
+
+    // Never serve traffic against an unmigrated DB.
+    serviceDeps.push(image, shopifySecrets, shopifyBootstrapJob);
 }
 
 /**
- * Runtime secrets for the Shopify SSR server.
- */
-const shopifySecrets = new kubernetes.core.v1.Secret("shopify-secrets", {
-    metadata: {
-        name: `shopify-secrets-${normalizedStageName}`,
-        namespace: walletNamespace.metadata.name,
-    },
-    type: "Opaque",
-    stringData: shopifyRuntimeEnv,
-});
-
-dependency.push(shopifySecrets);
-
-/**
  * Shopify embedded app — React Router v7 SSR server on Kubernetes.
- * Replaces the previous `sst.aws.React` (Lambda + CloudFront) deployment.
+ * Replaces the previous `sst.aws.React` (Lambda + CloudFront) deployment and
+ * points at the in-cluster GCP Postgres (migrated by the bootstrap Job).
  */
 export const shopifyService = new KubernetesService(
     "shopify",
     {
         namespace: walletNamespace.metadata.name,
-        appLabels: {
-            app: "shopify-frontend",
-        },
+        appLabels,
 
         // Dev command (runs when `sst dev` is active) — mirrors the old
         // `bun run shopify:dev` flow (Shopify CLI tunnel).
@@ -127,12 +212,9 @@ export const shopifyService = new KubernetesService(
                     image: shopifyImage,
                     ports: [{ containerPort: 3000, name: "http" }],
                     env: [{ name: "PORT", value: "3000" }],
-                    // Runtime secrets (DB creds, API secret, salts)
-                    envFrom: [
-                        {
-                            secretRef: { name: shopifySecrets.metadata.name },
-                        },
-                    ],
+                    envFrom: runtimeSecretName
+                        ? [{ secretRef: { name: runtimeSecretName } }]
+                        : undefined,
                     livenessProbe: {
                         httpGet: { path: "/health", port: 3000 },
                         initialDelaySeconds: 15,
@@ -180,6 +262,6 @@ export const shopifyService = new KubernetesService(
         },
     },
     {
-        dependsOn: dependency,
+        dependsOn: serviceDeps,
     }
 );
