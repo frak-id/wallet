@@ -75,6 +75,9 @@ export function MerchantItem({
                                 : "/m/$merchantId/merchant/customize"
                         }
                         params={{ merchantId }}
+                        // Preload on hover, not render: avoids N per-merchant
+                        // route-loader fetches when the dashboard lists N cards.
+                        preload="intent"
                         variant="secondary"
                         size="small"
                     >
