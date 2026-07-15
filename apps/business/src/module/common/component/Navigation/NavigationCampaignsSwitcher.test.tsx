@@ -22,6 +22,18 @@ vi.mock("@tanstack/react-router", () => ({
     useParams: () => ({}),
 }));
 
+vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
+    useOptionalActiveMerchantId: () => undefined,
+}));
+
+vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
+    useMyMerchants: () => ({ isPlatformAdmin: false }),
+}));
+
+vi.mock("@/module/merchant/hook/useMerchant", () => ({
+    useMerchant: () => ({ data: undefined }),
+}));
+
 vi.mock("./NavigationItem", () => ({
     NavigationItem: ({
         url,
