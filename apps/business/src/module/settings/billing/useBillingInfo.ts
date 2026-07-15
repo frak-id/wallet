@@ -4,6 +4,7 @@ import { authenticatedBackendApi } from "@/api/backendClient";
 import { useSettingsMerchantId } from "@/module/common/hook/useSettingsMerchantId";
 import { accountingQueryKey, documentsQueryKey } from "./queryKeys";
 import type { BillingEntry, BillingInfo } from "./types";
+import { invalidateDocumentsAfterSettle } from "./useBillingAdmin";
 
 function toBillingEntry(doc: BillingDocumentResponse): BillingEntry {
     return {
@@ -69,9 +70,16 @@ export function useBillingInfo() {
             if (error) throw error;
         },
         onSuccess: async () => {
+            // Refresh the accounting info immediately, and settle-invalidate the
+            // documents list (same helper as deposit/withdraw mutations):
+            // saving the info emits `merchantAccountingUpdated`, which wakes the
+            // async monthly-bill sweep, so any bills that just became eligible
+            // land a beat later — the trailing reinvalidate converges the table
+            // on them without a manual reload.
             await queryClient.invalidateQueries({
                 queryKey: accountingQueryKey(merchantId ?? ""),
             });
+            invalidateDocumentsAfterSettle(queryClient, merchantId ?? "");
         },
     });
 

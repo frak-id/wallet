@@ -6,6 +6,7 @@ export type FrakEvents = {
     newInteraction: [];
     newPendingRewards: [{ count: number }];
     newDeposit: [];
+    merchantAccountingUpdated: [];
     notification: [NotificationEvent];
 };
 

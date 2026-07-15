@@ -21,7 +21,7 @@ import { documentsQueryKey } from "./queryKeys";
  */
 const SETTLE_REINVALIDATE_MS = 5_000;
 
-function invalidateDocumentsAfterSettle(
+export function invalidateDocumentsAfterSettle(
     queryClient: QueryClient,
     merchantId: string
 ) {

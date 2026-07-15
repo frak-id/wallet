@@ -1,3 +1,4 @@
+import { eventEmitter } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import type { MerchantAccountingInfo } from "../../../domain/merchant";
@@ -139,6 +140,15 @@ export const merchantBillingAccountingRoutes = new Elysia({
                 merchantId,
                 nextInfo
             );
+
+            // Wake the monthly-bill sweep: a merchant whose accounting info was
+            // previously incomplete is skipped by `backfillMerchant`
+            // (isAccountingInfoComplete gate), so its existing deposits never
+            // produced bills. Completing/updating the info here lets the sweep
+            // generate those missing bills on demand rather than waiting for the
+            // daily cron. Same idempotent path as a new deposit — not
+            // merchant-scoped; the sweep walks every merchant.
+            eventEmitter.emit("merchantAccountingUpdated");
 
             return status(204);
         },

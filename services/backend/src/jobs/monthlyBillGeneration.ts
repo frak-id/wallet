@@ -17,7 +17,7 @@ CronRegistry.register(
     new MutexCron({
         name: "generateMonthlyBills",
         pattern: BillingConfig.cron.monthlyBillGeneration,
-        triggerKeys: ["newDeposit"],
+        triggerKeys: ["newDeposit", "merchantAccountingUpdated"],
         coolDownInMs: 30_000,
         run: async ({ context: { logger } }) => {
             logger.debug("Starting monthly-bill generation job");
