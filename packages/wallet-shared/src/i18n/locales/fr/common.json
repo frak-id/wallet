@@ -37,7 +37,7 @@
                 "message": "Votre téléphone n'a pas pu finaliser l'étape passkey. C'est généralement un problème de synchronisation de Google Password Manager sur cet appareil - pas un problème de votre compte.",
                 "step1": "Ouvrez les Réglages de votre téléphone, vérifiez que Google Password Manager est le gestionnaire de passkeys actif et que la synchronisation des passkeys est activée.",
                 "step2": "Mettez à jour les services Google Play, puis redémarrez votre téléphone et réessayez.",
-                "step3": "Toujours bloqué ? Connectez-vous sur un autre appareil, ou récupérez votre portefeuille depuis les réglages."
+                "step3": "Toujours bloqué ? Connectez-vous sur un autre appareil, ou récupérez votre porte-monnaie depuis les réglages."
             }
         }
     },
@@ -75,7 +75,7 @@
             "confirm": "Confirmer le code",
             "switchPasskey": {
                 "title": "Autre passkey requise",
-                "description": "Cet appairage a été lancé avec une autre passkey de ton portefeuille. Change-en pour continuer sur cet appareil.",
+                "description": "Cet appairage a été lancé avec une autre passkey de ton porte-monnaie. Change-en pour continuer sur cet appareil.",
                 "confirm": "Changer de passkey"
             },
             "pendingPairing": {
@@ -158,7 +158,7 @@
     "mobile-sso": {
         "connecting": "Connexion...",
         "openWallet": "Ouvrir dans Frak Wallet",
-        "waiting": "En attente du wallet...",
+        "waiting": "En attente du porte-monnaie...",
         "retry": "Connexion expirée. Réessayer ?",
         "appNotFound": "Application Frak Wallet introuvable",
         "continueInBrowser": "Continuer dans le navigateur"

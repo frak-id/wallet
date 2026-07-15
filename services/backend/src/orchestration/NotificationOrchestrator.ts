@@ -49,8 +49,8 @@ const notificationMessages = {
             title: "Récompense reçue !",
             body:
                 rewardCount === 1
-                    ? `Votre récompense de ${merchantName} est dans votre portefeuille.`
-                    : `${rewardCount} récompenses de ${merchantName} sont dans votre portefeuille.`,
+                    ? `Votre récompense de ${merchantName} est dans votre porte-monnaie.`
+                    : `${rewardCount} récompenses de ${merchantName} sont dans votre porte-monnaie.`,
         },
     }),
 } as const;

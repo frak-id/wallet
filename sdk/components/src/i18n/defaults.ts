@@ -107,7 +107,7 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             ariaLabel: "Ouvrir dans l'app Frak Wallet",
         },
         buttonWallet: {
-            ariaLabel: "Ouvrir le portefeuille",
+            ariaLabel: "Ouvrir le porte-monnaie",
         },
         banner: {
             referralTitleReward: "Gagnez {REWARD} sur vos achats sur ce site",

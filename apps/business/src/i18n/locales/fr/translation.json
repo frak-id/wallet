@@ -12,9 +12,9 @@
             "footerPrivacy": "Politique de confidentialité",
             "ssoError": "La connexion avec Shopify a échoué. Veuillez réessayer.",
             "sessionError": "Nous n'avons pas pu finaliser votre connexion. Veuillez réessayer.",
-            "walletError": "La connexion avec votre wallet a échoué. Veuillez réessayer.",
+            "walletError": "La connexion avec votre porte-monnaie a échoué. Veuillez réessayer.",
             "methods": {
-                "wallet": "Portefeuille",
+                "wallet": "Porte-monnaie",
                 "email": "E-mail",
                 "shopify": "Shopify"
             },
@@ -52,7 +52,7 @@
             "method": {
                 "email": "Code par e-mail",
                 "totp": "Application d'authentification",
-                "siwe": "Portefeuille"
+                "siwe": "Porte-monnaie"
             },
             "codePlaceholder": "Code à 6 chiffres",
             "verify": "Vérifier",
@@ -72,8 +72,8 @@
                 "useCode": "Utiliser votre application d'authentification"
             },
             "siwe": {
-                "hint": "Signez un message avec votre portefeuille pour confirmer que c'est vous.",
-                "cta": "Signer avec le portefeuille"
+                "hint": "Signez un message avec votre porte-monnaie pour confirmer que c'est vous.",
+                "cta": "Signer avec le porte-monnaie"
             },
             "noMethods": {
                 "title": "Authentification à deux facteurs requise",
@@ -168,8 +168,8 @@
         },
         "linkWallet": {
             "stepUpRequired": "Une vérification à deux facteurs récente est requise. Veuillez la refaire, puis réessayer.",
-            "walletTaken": "Ce portefeuille est déjà lié à un autre compte.",
-            "signatureCancelled": "Signature du portefeuille annulée."
+            "walletTaken": "Ce porte-monnaie est déjà lié à un autre compte.",
+            "signatureCancelled": "Signature du porte-monnaie annulée."
         },
         "auth": {
             "invalidTwoFactorCode": "Code invalide. Veuillez réessayer.",
@@ -258,7 +258,7 @@
     },
     "members": {
         "columns": {
-            "wallet": "Wallet",
+            "wallet": "Porte-monnaie",
             "merchants": "Marchands",
             "memberFrom": "Membre depuis",
             "interactions": "Interactions",
@@ -919,7 +919,7 @@
             "top": {
                 "title": "Meilleurs ambassadeurs",
                 "rank": "#",
-                "wallet": "Wallet",
+                "wallet": "Porte-monnaie",
                 "shares": "Partages",
                 "sales": "Ventes",
                 "generatedRevenue": "Revenu généré",
@@ -1181,7 +1181,7 @@
                 "increaseLimit": "Augmenter la limite",
                 "withdraw": "Retirer",
                 "withdrawCta": "Retirer les fonds",
-                "withdrawTooltip": "Renvoie les fonds disponibles de votre banque vers votre portefeuille. Disponible car la distribution est désactivée.",
+                "withdrawTooltip": "Renvoie les fonds disponibles de votre banque vers votre porte-monnaie. Disponible car la distribution est désactivée.",
                 "confirm": "Confirmer",
                 "cancel": "Annuler",
                 "amountPlaceholder": "Montant"
@@ -1209,9 +1209,9 @@
             "migrate": "Migrer les fonds vers la nouvelle banque"
         },
         "linkWallet": {
-            "title": "Liez un portefeuille pour gérer les fonds",
-            "description": "Retirer, ajuster l'allocation et mettre en pause la distribution nécessitent une signature de portefeuille. Liez un portefeuille Frak pour débloquer ces actions.",
-            "cta": "Lier un portefeuille Frak"
+            "title": "Liez un porte-monnaie pour gérer les fonds",
+            "description": "Retirer, ajuster l'allocation et mettre en pause la distribution nécessitent une signature de porte-monnaie. Liez un Wallet Frak pour débloquer ces actions.",
+            "cta": "Lier un Wallet Frak"
         }
     },
     "settings": {
@@ -1426,9 +1426,9 @@
             },
             "credentials": {
                 "title": "Méthodes de connexion",
-                "description": "Portefeuille, mot de passe et comptes liés utilisés pour vous connecter.",
-                "wallet": "Portefeuille",
-                "linkWallet": "Lier un portefeuille",
+                "description": "Porte-monnaie, mot de passe et comptes liés utilisés pour vous connecter.",
+                "wallet": "Porte-monnaie",
+                "linkWallet": "Lier un porte-monnaie",
                 "addPassword": "Ajoutez un mot de passe pour aussi vous connecter par e-mail.",
                 "savePassword": "Enregistrer le mot de passe",
                 "passwordAdded": "Mot de passe ajouté et e-mail vérifié.",
@@ -1454,7 +1454,7 @@
                 "revokeTitle": "Révoquer cette session ?",
                 "revokeDescription": "Cet appareil devra se reconnecter pour accéder à votre compte.",
                 "method": {
-                    "wallet": "Portefeuille",
+                    "wallet": "Porte-monnaie",
                     "password": "E-mail et mot de passe",
                     "shopify": "Shopify"
                 }
@@ -1539,7 +1539,7 @@
             },
             "currencyInfo": {
                 "moneriumName": "Monerium :",
-                "moneriumDescription": "Idéal pour les virements IBAN faciles. Vos utilisateurs peuvent alimenter leur portefeuille directement par virement bancaire, ce qui le rend simple pour les utilisateurs non-crypto.",
+                "moneriumDescription": "Idéal pour les virements IBAN faciles. Vos utilisateurs peuvent alimenter leur porte-monnaie directement par virement bancaire, ce qui le rend simple pour les utilisateurs non-crypto.",
                 "circleName": "Circle (USDC) :",
                 "circleDescription": "Idéal pour les utilisateurs natifs de la blockchain. Largement utilisé sur les plateformes DeFi et les exchanges."
             },
@@ -1566,7 +1566,7 @@
             },
             "instructions": {
                 "onChain": "Votre marchand sera enregistré on-chain.",
-                "approve": "Il vous sera demandé d'approuver la transaction avec votre portefeuille.",
+                "approve": "Il vous sera demandé d'approuver la transaction avec votre porte-monnaie.",
                 "duration": "L'enregistrement prend généralement moins d'une minute"
             }
         },
@@ -1710,7 +1710,7 @@
         },
         "team": {
             "headers": {
-                "wallet": "Portefeuille",
+                "wallet": "Porte-monnaie",
                 "role": "Rôle",
                 "action": "Action"
             },
@@ -1719,7 +1719,7 @@
                 "admin": "Admin"
             },
             "me": "Moi :",
-            "walletlessMember": "Membre sans portefeuille",
+            "walletlessMember": "Membre sans porte-monnaie",
             "addMember": "Ajouter un membre",
             "saveAll": "Enregistrer les modifications",
             "removeMember": "Retirer le membre",
@@ -1731,13 +1731,13 @@
             "resendError": "Impossible de renvoyer l'invitation. Réessayez.",
             "add": {
                 "title": "Ajouter un membre",
-                "description": "Invitez un administrateur par adresse de wallet ou par email.",
-                "label": "Portefeuille du membre",
+                "description": "Invitez un administrateur par adresse de porte-monnaie ou par email.",
+                "label": "Porte-monnaie du membre",
                 "placeholder": "0x…",
                 "submit": "Ajouter le membre",
-                "invalid": "Adresse de portefeuille invalide",
+                "invalid": "Adresse de porte-monnaie invalide",
                 "error": "Impossible d'ajouter l'administrateur. Réessayez.",
-                "modeWallet": "Wallet",
+                "modeWallet": "Porte-monnaie",
                 "modeEmail": "Email",
                 "emailLabel": "Email du membre",
                 "emailPlaceholder": "nom@entreprise.com",
