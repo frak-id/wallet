@@ -1,26 +1,18 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { focusRing, interactive } from "@/module/common/styles/interaction.css";
 
 /* ---- currency ---- */
 
-export const currencyCell = style([
-    interactive,
-    focusRing,
-    {
-        display: "flex",
-        alignItems: "center",
-        gap: alias.spacing.m,
-        paddingTop: alias.spacing.m,
-        paddingBottom: alias.spacing.m,
-        borderRadius: alias.cornerRadius.l,
-        cursor: "pointer",
-        selectors: {
-            "&:hover": { backgroundColor: vars.surface.muted },
-        },
-    },
-]);
+export const currencyCell = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.m,
+    paddingTop: alias.spacing.m,
+    paddingBottom: alias.spacing.m,
+    borderRadius: alias.cornerRadius.l,
+    cursor: "pointer",
+});
 
 /** Flag/coin icon + code/provider text sit together (8px gap). */
 export const currencyLabel = style({
