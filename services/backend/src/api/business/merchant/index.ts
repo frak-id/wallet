@@ -13,6 +13,7 @@ import {
     isPlatformAdminAuth,
 } from "../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
+import { merchantAffiliateReportingRoutes } from "./affiliateReporting";
 import { merchantAllowedDomainsRoutes } from "./allowedDomains";
 import { merchantBankRoutes } from "./bank";
 import { merchantBillingRoutes } from "./billingRoutes";
@@ -297,4 +298,5 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .use(merchantWebhooksRoutes)
     .use(merchantMediaRoutes)
     .use(merchantAllowedDomainsRoutes)
+    .use(merchantAffiliateReportingRoutes)
     .use(merchantBillingRoutes);

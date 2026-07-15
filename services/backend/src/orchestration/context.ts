@@ -16,6 +16,7 @@ import { tokenMetadataRepository } from "../infrastructure/blockchain/TokenMetad
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
 import { getTakeAdsClient } from "../infrastructure/integrations/takeads";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
+import { AffiliateReportingOrchestrator } from "./AffiliateReportingOrchestrator";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { BillingOrchestrator } from "./billing/BillingOrchestrator";
 import { MonthlyBillOrchestrator } from "./billing/MonthlyBillOrchestrator";
@@ -148,6 +149,12 @@ const takeAdsIngestionOrchestrator = new TakeAdsIngestionOrchestrator(
     () => getTakeAdsClient()
 );
 
+const affiliateReportingOrchestrator = new AffiliateReportingOrchestrator(
+    AffiliateContext.repositories.affiliateBrand,
+    AffiliateContext.repositories.affiliateAttribution,
+    () => getTakeAdsClient()
+);
+
 const settlementOrchestrator = new SettlementOrchestrator(
     RewardsContext.services.settlement,
     RewardsContext.repositories.assetLog,
@@ -268,6 +275,7 @@ export namespace OrchestrationContext {
         pairing: pairingOrchestrator,
         pairingRouter: pairingRouterOrchestrator,
         takeAdsIngestion: takeAdsIngestionOrchestrator,
+        affiliateReporting: affiliateReportingOrchestrator,
         billing: billingOrchestrator,
         monthlyBill: monthlyBillOrchestrator,
     };

@@ -4,6 +4,8 @@ import {
     TAKEADS_PATHS,
     type TakeAdsActionListParams,
     type TakeAdsActionListResponse,
+    type TakeAdsClickListParams,
+    type TakeAdsClickListResponse,
 } from "./config";
 
 /**
@@ -62,6 +64,21 @@ export class TakeAdsClient {
                 searchParams: toSearchParams(params),
             })
             .json<TakeAdsActionListResponse>();
+    }
+
+    /**
+     * Page of day-bucketed click counts. Drive reporting with a
+     * `dateFrom`/`dateTo` window (max 120 days) and paginate with `offset`
+     * until `offset + data.length >= meta.total`.
+     */
+    async getClicks(
+        params: TakeAdsClickListParams = {}
+    ): Promise<TakeAdsClickListResponse> {
+        return this.api
+            .get(TAKEADS_PATHS.statsClick, {
+                searchParams: toSearchParams(params),
+            })
+            .json<TakeAdsClickListResponse>();
     }
 }
 

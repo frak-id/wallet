@@ -14,6 +14,7 @@ export const TAKEADS_BASE_URL = "https://api.takeads.com";
 /** Path segments (the API mixes version prefixes, so each call is absolute). */
 export const TAKEADS_PATHS = {
     statsAction: "v3/api/stats/action",
+    statsClick: "v1/api/stats/click",
 } as const;
 
 // --- Stats: GET /v3/api/stats/action -----------------------------------------
@@ -34,6 +35,8 @@ export type TakeAdsActionType = "LEAD" | "SALE" | "CLICK" | "BONUS";
 export type TakeAdsAction = {
     /** Stable unique id assigned by TakeAds (use for idempotency). */
     actionId: string;
+    /** TakeAds brand identifier the action belongs to (our brand externalId). */
+    merchantId: number;
     status: TakeAdsActionStatus;
     /** Echo of the subId we minted at link generation. */
     subId: string;
@@ -54,6 +57,14 @@ export type TakeAdsAction = {
 export type TakeAdsActionListParams = {
     /** ISO 8601 lower bound on `updatedAt` (the polling watermark). */
     updatedAtFrom?: string;
+    /** ISO 8601 lower bound on `createdAt` (activity-window reporting). */
+    createdAtFrom?: string;
+    /** ISO 8601 upper bound on `createdAt` (activity-window reporting). */
+    createdAtTo?: string;
+    /** Restrict to a single TakeAds brand (our brand externalId). */
+    merchantId?: number;
+    /** Restrict to a single action status. */
+    status?: TakeAdsActionStatus;
     /** Opaque string cursor from `meta.next`. */
     next?: string;
     /** Max 500. */
@@ -63,4 +74,46 @@ export type TakeAdsActionListParams = {
 export type TakeAdsActionListResponse = {
     meta: { limit: number; next: string | null };
     data: TakeAdsAction[];
+};
+
+// --- Stats: GET /v1/api/stats/click ------------------------------------------
+
+/**
+ * A day-bucketed click count for one `(adspace, program, subId, date)` combo.
+ * The clicks report is pre-aggregated by TakeAds — `count` is the total for the
+ * bucket, `subId` echoes the deeplink sub-id we minted (used to attribute the
+ * click back to a Frak merchant/user).
+ */
+export type TakeAdsClick = {
+    id: number | null;
+    adspaceId: string;
+    adspaceName: string;
+    programId: string;
+    programName: string;
+    subId: string | null;
+    /** Click date, `yyyy-MM-dd`. */
+    date: string;
+    count: number;
+    productId: string;
+    updatedAt: string;
+};
+
+export type TakeAdsClickListParams = {
+    /** `yyyy-MM-dd` inclusive lower bound (needs `dateTo`). */
+    dateFrom?: string;
+    /** `yyyy-MM-dd` inclusive upper bound (needs `dateFrom`). */
+    dateTo?: string;
+    /** Restrict to a single program (UUID). */
+    programId?: string;
+    /** Restrict to a single deeplink sub-id. */
+    subId?: string;
+    /** Skip the first N items (pagination). */
+    offset?: number;
+    /** Max 500. */
+    limit?: number;
+};
+
+export type TakeAdsClickListResponse = {
+    meta: { offset: number; limit: number; total: number };
+    data: TakeAdsClick[];
 };

@@ -1,4 +1,5 @@
 import type {
+    AffiliateReportingResponse,
     CampaignDetailsResponse,
     OverviewAnalyticsResponse,
     OverviewSummaryResponse,
@@ -6,6 +7,10 @@ import type {
 import type { Currency } from "@frak-labs/core-sdk";
 import { queryOptions } from "@tanstack/react-query";
 import campaignDetailsMock from "@/mock/campaignDetails.json";
+import {
+    getAffiliateReport,
+    getAffiliateReportMock,
+} from "@/module/campaigns/api/affiliateReportApi";
 import {
     getCampaignDetail,
     getCampaignDetails,
@@ -158,6 +163,37 @@ export const campaignDetailsQueryOptions = ({
         initialData: isDemoMode
             ? (campaignDetailsMock as CampaignDetailsStats)
             : undefined,
+    });
+
+/**
+ * Platform-admin TakeAds reporting (clicks + actions) for a merchant, sourced
+ * live from the TakeAds Stats API via
+ * `GET /business/merchant/:merchantId/affiliate/reporting`. `from`/`to`
+ * (yyyy-MM-dd) thread the window into the key + request.
+ */
+export const affiliateReportQueryOptions = ({
+    merchantId,
+    isDemoMode,
+    from,
+    to,
+}: {
+    merchantId: string;
+    isDemoMode: boolean;
+    from?: string;
+    to?: string;
+}) =>
+    queryOptions<AffiliateReportingResponse>({
+        queryKey: [
+            "campaigns",
+            "affiliate-report",
+            merchantId,
+            isDemoMode ? "demo" : "live",
+            from ?? null,
+            to ?? null,
+        ],
+        queryFn: () => getAffiliateReport({ merchantId, isDemoMode, from, to }),
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        initialData: isDemoMode ? getAffiliateReportMock() : undefined,
     });
 
 export const campaignQueryOptions = ({

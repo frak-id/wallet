@@ -108,10 +108,10 @@ export default interface Resources {
         "ctaAddFunds": "Add funds",
         "ctaManageBank": "Manage bank",
         "ctaSetup": "Set up",
-        "depleted": "Your reward bank is empty — rewards can't be distributed.",
+        "depleted": "Your reward bank is empty - rewards can't be distributed.",
         "notDeployed": "Your reward bank isn't set up yet.",
-        "paused": "Your reward bank is paused — distribution is stopped.",
-        "warning": "Your reward bank needs attention — check your balance and spending authorization."
+        "paused": "Your reward bank is paused - distribution is stopped.",
+        "warning": "Your reward bank needs attention - check your balance and spending authorization."
       }
     },
     "campaigns": {
@@ -131,6 +131,34 @@ export default interface Resources {
         "pauseTitle": "Pause campaign",
         "resume": "Resume",
         "resumeTitle": "Resume campaign"
+      },
+      "affiliateReport": {
+        "actionsOverTime": "Actions per day",
+        "brand": {
+          "title": "TakeAds brand #{{id}}"
+        },
+        "clicksOverTime": "Clicks per day",
+        "kpi": {
+          "actions": "Actions",
+          "clicks": "Clicks",
+          "conversion": "Click → action",
+          "sales": "Sales"
+        },
+        "noData": "No data yet",
+        "revenue": {
+          "commission": "Commission",
+          "currency": "Currency",
+          "orders": "Order volume",
+          "title": "Revenue by currency"
+        },
+        "status": {
+          "canceled": "Canceled",
+          "confirmed": "Confirmed",
+          "pending": "Pending",
+          "settled": "Settled"
+        },
+        "statusBreakdown": "Actions by status",
+        "truncated": "Showing partial data — the reporting window is large and results were capped. Narrow the date range for complete figures."
       },
       "bulk": {
         "archive": "Archive",
@@ -304,7 +332,7 @@ export default interface Resources {
           "cpa": {
             "applyReco": "Apply reco",
             "frakCommission": "Frak commission",
-            "hint": "Total cost you pay per confirmed conversion. Frak takes 20% — the rest goes to your users.",
+            "hint": "Total cost you pay per confirmed conversion. Frak takes 20% - the rest goes to your users.",
             "reco": "Frak recommends an <highlight>80/20 reward</highlight> split in favor of the Ambassador.",
             "rewardsDistributed": "Rewards distributed",
             "splitMismatch": "Ambassador + Referee must add up to {{amount}} (the rewards pool)."
@@ -322,11 +350,11 @@ export default interface Resources {
             "percentOfPool": "{{percent}}% of pool"
           },
           "lockup": {
-            "description": "Refund protection — delay before rewards are released",
+            "description": "Refund protection - delay before rewards are released",
             "durationHint": "Set to 0 to release rewards immediately after purchase.",
             "durationLabel": "Lockup duration (days)",
             "durationPlaceholder": "E.g. 14",
-            "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out — protecting your campaign budget.",
+            "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out - protecting your campaign budget.",
             "label": "Reward lockup",
             "unit": "days"
           },
@@ -364,7 +392,7 @@ export default interface Resources {
             "fromPlaceholder": "E.g. 0",
             "globalCpaTitle": "Target CPA",
             "incomplete": "Each tier needs a basket range and a CPA above 0",
-            "overlap": "Tiers can't overlap — each basket range must start where the previous one ends.",
+            "overlap": "Tiers can't overlap - each basket range must start where the previous one ends.",
             "removeTier": "Remove tier",
             "rewardPlaceholder": "E.g. 5",
             "tierLabel": "Tier {{n}}",
@@ -402,7 +430,7 @@ export default interface Resources {
           "referralChain": {
             "hint": "Multi-level ambassador",
             "label": "Referral chain",
-            "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
+            "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels - not just the direct referrer."
           },
           "reward": {
             "hint": "Model, value & distribution",
@@ -422,7 +450,7 @@ export default interface Resources {
         },
         "success": {
           "communicationGuide": "Communication guide",
-          "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign — they can start sharing immediately.",
+          "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign - they can start sharing immediately.",
           "notifyTitle": "Frak ambassadors will be notified",
           "subtitle": "‘{{name}}’ is now live.",
           "tip1Desc": "Add a sharing CTA right on the product page.",
@@ -521,7 +549,7 @@ export default interface Resources {
             "and": "and",
             "any": "Any of the following",
             "description": "Extra rules that must be met for the reward to apply.",
-            "none": "No extra conditions — rewards apply to every qualifying action.",
+            "none": "No extra conditions - rewards apply to every qualifying action.",
             "noneOf": "None of the following",
             "title": "Conditions"
           },
@@ -624,7 +652,7 @@ export default interface Resources {
           "equivalentMeta": "Equivalent cost on Meta",
           "frakTag": "(Frak)",
           "savedVsMeta": "{{amount}} saved vs Meta",
-          "title": "Economic value — Frak vs Meta",
+          "title": "Economic value - Frak vs Meta",
           "yourSpend": "Your spend"
         },
         "efficiency": {
@@ -917,7 +945,7 @@ export default interface Resources {
           "hint": "This removes all overrides for this placement.",
           "title": "Delete placement · {{placementId}}"
         },
-        "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways — each with its own text, styles, and behavior.",
+        "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways - each with its own text, styles, and behavior.",
         "dialog": {
           "cancel": "Cancel",
           "create": "Create placement",
@@ -1033,7 +1061,7 @@ export default interface Resources {
         "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
         "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
         "limitTooLow": "Distribution limit too low",
-        "noFundsCaption": "No funds — add funds to start distributing rewards.",
+        "noFundsCaption": "No funds - add funds to start distributing rewards.",
         "sectionLabel": "Reward Budget",
         "status": {
           "actionNeeded": "Action needed",
@@ -1283,9 +1311,9 @@ export default interface Resources {
         "previewDisabledHint": "Enable the Explorer",
         "removeImage": "Remove image",
         "restrictions": {
-          "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
-          "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 to 2:1 (Max 10MB)",
-          "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)"
+          "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 to 2:1 (Max 10MB)",
+          "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 to 2:1 (Max 10MB)",
+          "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 to 2:1 (Max 10MB)"
         },
         "title": "Explorer",
         "uploaded": "Image uploaded",
@@ -1305,7 +1333,7 @@ export default interface Resources {
           "change": {
             "confirm": "Change platform",
             "description": "This could break your purchase tracking. Are you sure you want to change the platform?",
-            "internalWarning": "You won't be able to revert back from this dashboard — you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
+            "internalWarning": "You won't be able to revert back from this dashboard - you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
             "title": "Change platform?"
           },
           "description": "Configure how Frak receives purchase events from your store.",
@@ -1534,7 +1562,7 @@ export default interface Resources {
             "frakFee": "Frak fee (20%)",
             "gifted": "Gifted amount",
             "gross": "Gross amount",
-            "hint": "Estimate — final VAT and fee are computed when the deposit is created.",
+            "hint": "Estimate - final VAT and fee are computed when the deposit is created.",
             "net": "Net amount",
             "title": "Estimated breakdown",
             "vat": "VAT (20%)",
@@ -1594,7 +1622,7 @@ export default interface Resources {
           },
           "panel": {
             "description": "Create deposit notes and withdraw bills for this merchant. Visible to platform admins only.",
-            "title": "Platform admin — billing"
+            "title": "Platform admin - billing"
           },
           "table": {
             "void": "Void",
@@ -1613,7 +1641,7 @@ export default interface Resources {
           }
         },
         "errors": {
-          "save": "Something went wrong while saving your billing information. Your changes were kept — please try again."
+          "save": "Something went wrong while saving your billing information. Your changes were kept - please try again."
         },
         "fields": {
           "billingEmail": {
@@ -1745,7 +1773,7 @@ export default interface Resources {
           "enable": "Enable authenticator app",
           "enabled": "Authenticator app enabled",
           "manualHint": "Can't scan? Enter this key manually instead:",
-          "recoveryHint": "Store these somewhere safe — each code can be used once if you lose access to your authenticator app.",
+          "recoveryHint": "Store these somewhere safe - each code can be used once if you lose access to your authenticator app.",
           "recoveryTitle": "Save your recovery codes",
           "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
           "title": "Authenticator app"
@@ -1783,6 +1811,9 @@ export default interface Resources {
       "pages": {
         "campaigns": {
           "nav": "Campaigns"
+        },
+        "campaignsAffiliateReport": {
+          "nav": "TakeAds report"
         },
         "campaignsList": {
           "nav": "List"

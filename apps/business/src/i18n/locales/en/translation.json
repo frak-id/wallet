@@ -188,6 +188,9 @@
             "campaignsList": {
                 "nav": "List"
             },
+            "campaignsAffiliateReport": {
+                "nav": "TakeAds report"
+            },
             "members": {
                 "nav": "Members",
                 "title": "Members List"
@@ -395,6 +398,34 @@
         }
     },
     "campaigns": {
+        "affiliateReport": {
+            "brand": {
+                "title": "TakeAds brand #{{id}}"
+            },
+            "truncated": "Showing partial data — the reporting window is large and results were capped. Narrow the date range for complete figures.",
+            "noData": "No data yet",
+            "clicksOverTime": "Clicks per day",
+            "actionsOverTime": "Actions per day",
+            "statusBreakdown": "Actions by status",
+            "kpi": {
+                "clicks": "Clicks",
+                "actions": "Actions",
+                "sales": "Sales",
+                "conversion": "Click → action"
+            },
+            "status": {
+                "pending": "Pending",
+                "confirmed": "Confirmed",
+                "settled": "Settled",
+                "canceled": "Canceled"
+            },
+            "revenue": {
+                "title": "Revenue by currency",
+                "currency": "Currency",
+                "orders": "Order volume",
+                "commission": "Commission"
+            }
+        },
         "create": {
             "steps": {
                 "basics": {

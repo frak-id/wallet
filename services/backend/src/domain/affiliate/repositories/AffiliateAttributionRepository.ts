@@ -28,6 +28,20 @@ export class AffiliateAttributionRepository {
         return new Map(rows.map((row) => [row.token, row]));
     }
 
+    /**
+     * Every attribution token minted for a merchant, as a Set for O(1)
+     * membership checks. Used to attribute a page of provider-reported clicks
+     * (keyed by our sub-id) back to the merchant, since the clicks report has
+     * no server-side merchant filter.
+     */
+    async listTokensByMerchant(merchantId: string): Promise<Set<string>> {
+        const rows = await db
+            .select({ token: affiliateAttributionTable.token })
+            .from(affiliateAttributionTable)
+            .where(eq(affiliateAttributionTable.merchantId, merchantId));
+        return new Set(rows.map((r) => r.token));
+    }
+
     async findByUserAndBrand(params: {
         provider: AffiliateProvider;
         identityGroupId: string;

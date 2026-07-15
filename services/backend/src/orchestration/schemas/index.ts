@@ -1,4 +1,16 @@
 export {
+    type AffiliateActionStatusBreakdown,
+    type AffiliateActionsReport,
+    type AffiliateActionTypeBreakdown,
+    type AffiliateClicksReport,
+    type AffiliateDailyCount,
+    type AffiliateReportingQuery,
+    AffiliateReportingQuerySchema,
+    type AffiliateReportingResponse,
+    AffiliateReportingResponseSchema,
+    type AffiliateRevenueByCurrency,
+} from "./affiliateReportingSchemas";
+export {
     type CampaignDetailsResponse,
     CampaignDetailsResponseSchema,
     type CpaSegmentKey,

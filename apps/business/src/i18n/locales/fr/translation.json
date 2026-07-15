@@ -188,6 +188,9 @@
             "campaignsList": {
                 "nav": "Liste"
             },
+            "campaignsAffiliateReport": {
+                "nav": "Rapport TakeAds"
+            },
             "members": {
                 "nav": "Membres",
                 "title": "Liste des membres"
@@ -395,6 +398,34 @@
         }
     },
     "campaigns": {
+        "affiliateReport": {
+            "brand": {
+                "title": "Marque TakeAds n°{{id}}"
+            },
+            "truncated": "Données partielles — la période est trop large et les résultats ont été tronqués. Réduisez la plage de dates pour des chiffres complets.",
+            "noData": "Pas encore de données",
+            "clicksOverTime": "Clics par jour",
+            "actionsOverTime": "Actions par jour",
+            "statusBreakdown": "Actions par statut",
+            "kpi": {
+                "clicks": "Clics",
+                "actions": "Actions",
+                "sales": "Ventes",
+                "conversion": "Clic → action"
+            },
+            "status": {
+                "pending": "En attente",
+                "confirmed": "Confirmées",
+                "settled": "Réglées",
+                "canceled": "Annulées"
+            },
+            "revenue": {
+                "title": "Revenus par devise",
+                "currency": "Devise",
+                "orders": "Volume de commandes",
+                "commission": "Commission"
+            }
+        },
         "create": {
             "steps": {
                 "basics": {
