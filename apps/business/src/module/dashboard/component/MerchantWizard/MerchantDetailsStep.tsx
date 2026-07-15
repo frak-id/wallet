@@ -4,7 +4,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@frak-labs/design-system/components/Accordion";
-import { Box } from "@frak-labs/design-system/components/Box";
 import { button } from "@frak-labs/design-system/components/Button";
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -13,12 +12,11 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CheckIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { shouldShowError } from "@/module/campaigns/component/Creation/fieldError";
 import { WizardFieldCard } from "@/module/campaigns/component/Creation/WizardFieldCard";
-import { useCopyToClipboardWithState } from "@/module/common/hook/useCopyToClipboardWithState";
+import { CopyableValue } from "@/module/common/component/CopyableValue";
 import { isValidUrl, validateUrl } from "@/module/common/utils/validateUrl";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { FormControl, FormField, FormItem } from "@/module/forms/Form";
@@ -45,7 +43,6 @@ export function MerchantDetailsStep({
     const { control, watch } = useFormContext<MerchantNew>();
     const domain = watch("domain");
     const skipDomainValidation = watch("skipDomainValidation");
-    const { copied, copy } = useCopyToClipboardWithState();
 
     const { data: dnsRecord, isLoading: isDnsLoading } = useDnsTxtRecordToSet({
         domain,
@@ -400,66 +397,15 @@ export function MerchantDetailsStep({
                                 >
                                     {t("merchant.create.dns.title")}
                                 </Text>
-                                <Stack
-                                    space="none"
-                                    className={styles.dnsRecordBox}
-                                >
-                                    <Box paddingY="m">
-                                        <Text
-                                            variant="bodySmall"
-                                            weight="medium"
-                                            color="secondary"
-                                        >
-                                            {t("merchant.create.dns.helper")}
-                                        </Text>
-                                    </Box>
-                                    <Inline
-                                        space="xs"
-                                        alignY="center"
-                                        wrap={false}
-                                        className={styles.dnsRecordRow}
-                                    >
-                                        {isDnsLoading ? (
-                                            <Spinner />
-                                        ) : (
-                                            <>
-                                                <Text
-                                                    variant="bodySmall"
-                                                    className={
-                                                        styles.dnsRecordValue
-                                                    }
-                                                >
-                                                    {dnsRecord}
-                                                </Text>
-                                                <button
-                                                    type="button"
-                                                    className={
-                                                        styles.dnsCopyButton
-                                                    }
-                                                    aria-label={t(
-                                                        "merchant.create.dns.copy"
-                                                    )}
-                                                    onClick={() =>
-                                                        dnsRecord &&
-                                                        copy(dnsRecord)
-                                                    }
-                                                >
-                                                    {copied ? (
-                                                        <CheckIcon
-                                                            width={16}
-                                                            height={16}
-                                                        />
-                                                    ) : (
-                                                        <CopyIcon
-                                                            width={16}
-                                                            height={16}
-                                                        />
-                                                    )}
-                                                </button>
-                                            </>
-                                        )}
-                                    </Inline>
-                                </Stack>
+                                {isDnsLoading ? (
+                                    <Spinner />
+                                ) : (
+                                    <CopyableValue
+                                        value={dnsRecord ?? ""}
+                                        helper={t("merchant.create.dns.helper")}
+                                        label={t("merchant.create.dns.copy")}
+                                    />
+                                )}
                                 <Accordion
                                     type="single"
                                     collapsible

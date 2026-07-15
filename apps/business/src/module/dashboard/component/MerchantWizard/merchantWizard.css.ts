@@ -38,46 +38,6 @@ export const dnsBlock = style({
     padding: alias.spacing.m,
 });
 
-export const dnsRecordBox = style({
-    backgroundColor: vars.surface.elevated,
-    borderRadius: alias.cornerRadius.m,
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
-/** Record value + copy button row, flush under the helper. */
-export const dnsRecordRow = style({
-    paddingBottom: alias.spacing.m,
-});
-
-/** Single-line, ellipsised TXT record value. */
-export const dnsRecordValue = style({
-    flex: 1,
-    minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-});
-
-export const dnsCopyButton = style([
-    interactive,
-    focusRing,
-    {
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "3px 0",
-        border: "none",
-        background: "transparent",
-        cursor: "pointer",
-        color: vars.icon.secondary,
-        ":hover": {
-            color: vars.icon.primary,
-        },
-    },
-]);
-
 export const dnsHelpBox = style({
     backgroundColor: vars.surface.elevated,
     borderRadius: alias.cornerRadius.l,

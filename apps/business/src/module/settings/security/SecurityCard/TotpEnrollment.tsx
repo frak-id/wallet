@@ -71,15 +71,11 @@ function TotpManualKey({ otpauthUri }: { otpauthUri: string }) {
     if (!formatted) return null;
 
     return (
-        <Stack space="xxs">
-            <Text variant="bodySmall" color="secondary">
-                {t("settings.security.totp.manualHint")}
-            </Text>
-            <CopyableValue
-                value={formatted}
-                copyText={formatted.replace(/\s/g, "")}
-            />
-        </Stack>
+        <CopyableValue
+            value={formatted}
+            copyText={formatted.replace(/\s/g, "")}
+            helper={t("settings.security.totp.manualHint")}
+        />
     );
 }
 
