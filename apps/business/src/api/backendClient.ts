@@ -133,6 +133,10 @@ export const authenticatedBackendApi = treaty<App>(
             if (response.status !== 401) return;
             const { token, pending2fa } = useAuthStore.getState();
             if (token === "demo-token" || pending2fa) return;
+            // No session to clear: re-running `clearAuth()` here wipes the
+            // query cache, forcing suspense queries to refetch and 401 again —
+            // an infinite loop.
+            if (!token) return;
             const { isStepUp, code } = await parse401(response);
             // Step-up challenge → the 2FA modal handles it, keep the session.
             if (isStepUp) return;
