@@ -64,15 +64,17 @@ export function LoginMethods({ redirect }: { redirect?: string }) {
                     </Stack>
                 ) : (
                     <Stack space="m">
-                        <Button
-                            variant="ghost"
-                            size="small"
-                            width="auto"
-                            icon={<ArrowLeftIcon width={16} height={16} />}
-                            onClick={() => setView("choose")}
-                        >
-                            {t("auth.login.back")}
-                        </Button>
+                        <Stack space="none" align="left">
+                            <Button
+                                variant="ghost"
+                                size="small"
+                                width="auto"
+                                icon={<ArrowLeftIcon width={16} height={16} />}
+                                onClick={() => setView("choose")}
+                            >
+                                {t("auth.login.back")}
+                            </Button>
+                        </Stack>
                         {view === "email" ? (
                             <EmailPanel redirect={redirect} />
                         ) : (
