@@ -18,6 +18,7 @@ import {
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -44,18 +45,35 @@ const EMPTY_INFO: BillingInfo = {
 type BillingInfoSheetProps = {
     mode: "add" | "edit";
     info?: BillingInfo | null;
-    onSave: (info: BillingInfo) => void;
+    /**
+     * Persist the edited info. Must invoke `opts.onSuccess` only when the
+     * save actually succeeded — the sheet stays open (edits intact, inline
+     * error shown) until then, so a failed PUT never silently discards the
+     * merchant's changes (billing-feature-fixes.md B12).
+     */
+    onSave: (info: BillingInfo, opts?: { onSuccess?: () => void }) => void;
+    /** Save mutation in flight — drives the submit button's loading state. */
+    isSaving?: boolean;
+    /** Last save attempt failed — shows the inline error message. */
+    saveFailed?: boolean;
+    /** Clears a stale error state (called when the sheet closes). */
+    onResetSaveState?: () => void;
 };
 
 /**
  * Right-side drawer to add or edit the invoice informations. Mirrors the
  * merchant edit-sheet pattern (Sheet + close toolbar + react-hook-form + footer
  * actions + discard guard). In edit mode it shows Cancel + Save changes.
+ * Closes only after a successful save; a failed save keeps the sheet open
+ * with the edits and an inline error (B12).
  */
 export function BillingInfoSheet({
     mode,
     info,
     onSave,
+    isSaving = false,
+    saveFailed = false,
+    onResetSaveState,
 }: BillingInfoSheetProps) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
@@ -74,14 +92,24 @@ export function BillingInfoSheet({
         onDiscard: () => form.reset(values),
     });
 
-    function onSubmit(next: BillingInfo) {
-        onSave(next);
-        form.reset(next);
+    function closeSheet() {
         setOpen(false);
+        onResetSaveState?.();
+    }
+
+    function onSubmit(next: BillingInfo) {
+        // Close only once the save succeeded — on failure the sheet stays
+        // open with the merchant's edits and the inline error below (B12).
+        onSave(next, {
+            onSuccess: () => {
+                form.reset(next);
+                closeSheet();
+            },
+        });
     }
 
     function requestClose() {
-        guard(() => setOpen(false));
+        guard(closeSheet);
     }
 
     const isEdit = mode === "edit";
@@ -147,11 +175,7 @@ export function BillingInfoSheet({
                                                 ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.companyName.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             variant="bare"
@@ -159,6 +183,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.companyName.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.companyName.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -177,11 +204,7 @@ export function BillingInfoSheet({
                                                 ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.vatNumber.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             variant="bare"
@@ -189,6 +212,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.vatNumber.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.vatNumber.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -207,11 +233,7 @@ export function BillingInfoSheet({
                                         ),
                                     }}
                                     render={({ field }) => (
-                                        <EditField
-                                            label={t(
-                                                "settings.billing.fields.streetAddress.label"
-                                            )}
-                                        >
+                                        <EditField>
                                             <FormControl>
                                                 <Input
                                                     variant="bare"
@@ -219,6 +241,9 @@ export function BillingInfoSheet({
                                                     length="big"
                                                     placeholder={t(
                                                         "settings.billing.fields.streetAddress.placeholder"
+                                                    )}
+                                                    label={t(
+                                                        "settings.billing.fields.streetAddress.label"
                                                     )}
                                                     {...field}
                                                 />
@@ -237,11 +262,7 @@ export function BillingInfoSheet({
                                                 ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.city.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             variant="bare"
@@ -249,6 +270,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.city.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.city.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -267,11 +291,7 @@ export function BillingInfoSheet({
                                                 ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.postalCode.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             variant="bare"
@@ -279,6 +299,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.postalCode.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.postalCode.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -364,11 +387,7 @@ export function BillingInfoSheet({
                                                     ),
                                             }}
                                             render={({ field }) => (
-                                                <EditField
-                                                    label={t(
-                                                        "settings.billing.fields.billingEmail.label"
-                                                    )}
-                                                >
+                                                <EditField>
                                                     <FormControl>
                                                         <Input
                                                             type="email"
@@ -377,6 +396,9 @@ export function BillingInfoSheet({
                                                             length="big"
                                                             placeholder={t(
                                                                 "settings.billing.fields.billingEmail.placeholder"
+                                                            )}
+                                                            label={t(
+                                                                "settings.billing.fields.billingEmail.label"
                                                             )}
                                                             {...field}
                                                         />
@@ -388,6 +410,11 @@ export function BillingInfoSheet({
                                 </Columns>
                             </Stack>
                         </Card>
+                        {saveFailed && (
+                            <Text variant="caption" color="error">
+                                {t("settings.billing.errors.save")}
+                            </Text>
+                        )}
                     </form>
                 </Form>
                 <Inline
@@ -410,15 +437,17 @@ export function BillingInfoSheet({
                         size="large"
                         width={isEdit ? "full" : "auto"}
                         className={isEdit ? styles.footerButton : undefined}
+                        loading={isSaving}
                         onClick={form.handleSubmit(onSubmit)}
                         disabled={
-                            isEdit
+                            isSaving ||
+                            (isEdit
                                 ? // Edit: enable as soon as a change is detected
                                   // (Figma note); invalid input is blocked on submit.
                                   !form.formState.isDirty
                                 : // Add: require a complete, valid form.
                                   !form.formState.isDirty ||
-                                  !form.formState.isValid
+                                  !form.formState.isValid)
                         }
                     >
                         {isEdit

@@ -38,6 +38,8 @@ describe("MyMerchants", () => {
     it("should render an empty grid when there is no merchant", async () => {
         vi.mocked(useMyMerchants).mockReturnValue({
             merchants: [],
+            accessibleMerchants: [],
+            readOnlyMerchants: [],
             owned: [],
             adminOf: [],
             isEmpty: true,
@@ -51,19 +53,22 @@ describe("MyMerchants", () => {
     });
 
     it("should render merchants list when loaded", async () => {
+        const list = [
+            {
+                id: "merchant-1",
+                name: "Merchant 1",
+                domain: "merchant1.com",
+            },
+            {
+                id: "merchant-2",
+                name: "Merchant 2",
+                domain: "merchant2.com",
+            },
+        ];
         vi.mocked(useMyMerchants).mockReturnValue({
-            merchants: [
-                {
-                    id: "merchant-1",
-                    name: "Merchant 1",
-                    domain: "merchant1.com",
-                },
-                {
-                    id: "merchant-2",
-                    name: "Merchant 2",
-                    domain: "merchant2.com",
-                },
-            ],
+            merchants: list,
+            accessibleMerchants: list,
+            readOnlyMerchants: [],
             owned: [],
             adminOf: [],
             isEmpty: false,

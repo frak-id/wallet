@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { Input } from ".";
 
@@ -84,5 +85,175 @@ describe("Input", () => {
         expect(wrapper).toBeTruthy();
         expect(screen.getByPlaceholderText("Search")).toBeInTheDocument();
         expect(screen.getByTestId("left")).toBeInTheDocument();
+    });
+
+    it("should render no label/hint nodes and unchanged DOM when neither is set", () => {
+        const { container } = render(<Input aria-label="plain" />);
+        expect(container.querySelector("label")).toBeNull();
+        expect(container.querySelectorAll("span").length).toBe(1);
+        const input = container.querySelector("input");
+        expect(input).toBeTruthy();
+        expect(input?.id).toBe("");
+    });
+
+    it("should render a label associated to the control via htmlFor/id", () => {
+        render(<Input label="Email" />);
+        const input = screen.getByLabelText("Email");
+        expect(input).toBeInTheDocument();
+        expect(input.tagName).toBe("INPUT");
+    });
+
+    it("should focus the control when the label is clicked", async () => {
+        const user = userEvent.setup();
+        render(<Input label="Email" />);
+        const label = screen.getByText("Email");
+        await user.click(label);
+        expect(screen.getByLabelText("Email")).toHaveFocus();
+    });
+
+    it("should preserve a caller-supplied id and match it in htmlFor", () => {
+        const { container } = render(<Input label="Email" id="custom-id" />);
+        const input = container.querySelector("input");
+        const label = container.querySelector("label");
+        expect(input?.id).toBe("custom-id");
+        expect(label?.getAttribute("for")).toBe("custom-id");
+    });
+
+    it("should generate an id when label is set and no id is passed", () => {
+        const { container } = render(<Input label="Email" />);
+        const input = container.querySelector("input");
+        const label = container.querySelector("label");
+        expect(input?.id).toBeTruthy();
+        expect(input?.id).toBe(label?.getAttribute("for"));
+    });
+
+    it("should render a hint", () => {
+        render(
+            <Input aria-label="with-hint" hint="We never share your email" />
+        );
+        expect(
+            screen.getByText("We never share your email")
+        ).toBeInTheDocument();
+    });
+
+    it("should render hint without a label and without wiring an id", () => {
+        const { container } = render(
+            <Input aria-label="hint-only" hint="Just a hint" />
+        );
+        expect(container.querySelector("label")).toBeNull();
+        expect(screen.getByText("Just a hint")).toBeInTheDocument();
+        const input = container.querySelector("input");
+        expect(input?.id).toBe("");
+    });
+
+    it("should link the hint to the control via aria-describedby", () => {
+        render(<Input label="Email" hint="We never share your email" />);
+        expect(screen.getByLabelText("Email")).toHaveAccessibleDescription(
+            "We never share your email"
+        );
+    });
+
+    it("should merge a caller-supplied aria-describedby with the hint", () => {
+        render(
+            <>
+                <span id="external">External note</span>
+                <Input
+                    label="Email"
+                    hint="Hint text"
+                    aria-describedby="external"
+                />
+            </>
+        );
+        const input = screen.getByLabelText("Email");
+        expect(input.getAttribute("aria-describedby")).toContain("external");
+        expect(input).toHaveAccessibleDescription("External note Hint text");
+    });
+
+    // Simulate what react-hook-form's Radix `FormControl` Slot
+    // injects onto its child: id, aria-invalid, aria-describedby.
+    it("should forward FormControl-style id/aria-invalid/aria-describedby to the control", () => {
+        const { container } = render(
+            <Input
+                label="Email"
+                id="x-form-item"
+                aria-invalid="true"
+                aria-describedby="x-msg"
+            />
+        );
+        const input = container.querySelector("input");
+        const label = container.querySelector("label");
+        expect(input?.id).toBe("x-form-item");
+        expect(input?.getAttribute("aria-invalid")).toBe("true");
+        expect(input?.getAttribute("aria-describedby")).toContain("x-msg");
+        expect(label?.getAttribute("for")).toBe("x-form-item");
+    });
+
+    it("should merge a FormControl aria-describedby with the hint id (caller value first)", () => {
+        render(
+            <Input
+                label="Email"
+                hint="We never share your email"
+                id="x-form-item"
+                aria-invalid="true"
+                aria-describedby="x-msg"
+            />
+        );
+        const input = screen.getByLabelText("Email");
+        expect(input.getAttribute("aria-describedby")).toBe(
+            "x-msg x-form-item-hint"
+        );
+        expect(input).toHaveAccessibleDescription("We never share your email");
+    });
+
+    it("should apply field-box error styling in labeled mode (differs from neutral)", () => {
+        const { container: withError } = render(
+            <Input label="Email" error aria-label="with-error" />
+        );
+        const { container: withoutError } = render(
+            <Input label="Email" aria-label="without-error" />
+        );
+        const errorWrapperClass = withError.querySelector("span")?.className;
+        const plainWrapperClass = withoutError.querySelector("span")?.className;
+        expect(errorWrapperClass).toBeTruthy();
+        expect(errorWrapperClass).not.toBe(plainWrapperClass);
+    });
+
+    it("should keep label/hint classes identical under error (no tint)", () => {
+        const errored = render(
+            <Input label="Email" hint="We never share your email" error />
+        );
+        const neutral = render(
+            <Input label="Email" hint="We never share your email" />
+        );
+        // The label + hint must be byte-identical with and without `error` —
+        // this fails the moment any error tint class is added to them.
+        expect(errored.container.querySelector("label")?.className).toBe(
+            neutral.container.querySelector("label")?.className
+        );
+        expect(
+            within(errored.container).getByText("We never share your email")
+                .className
+        ).toBe(
+            within(neutral.container).getByText("We never share your email")
+                .className
+        );
+    });
+
+    // Field spec: 8px label→control, 4px control→hint. Encoded by nesting
+    // the control + hint in an inner Stack that is a sibling of the label, so
+    // the label keeps the wider outer gap. Locks the structure against a
+    // regression back to a single flat 4px stack.
+    it("nests control+hint under the label (8/4 spacing structure)", () => {
+        const { container } = render(
+            <Input label="Email" hint="We never share your email" />
+        );
+        const label = container.querySelector("label");
+        const input = container.querySelector("input");
+        const hint = screen.getByText("We never share your email");
+        const outer = label?.parentElement;
+        const inner = hint.parentElement;
+        expect(outer).not.toBe(inner);
+        expect(outer).toContainElement(inner);
+        expect(inner).toContainElement(input);
     });
 });

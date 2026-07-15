@@ -1,23 +1,42 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import {
+    RadioGroup,
+    RadioGroupItem,
+} from "@frak-labs/design-system/components/RadioGroup";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CartIcon,
     CommunityIcon,
+    PencilIcon,
     ShareIcon,
     SparklesIcon,
 } from "@frak-labs/design-system/icons";
 import { useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { startOfDay } from "date-fns";
+import { type ReactNode, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getCampaignDetail } from "@/module/campaigns/api/campaignApi";
+import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
+import { useUpdateCampaignConfig } from "@/module/campaigns/hook/useUpdateCampaignConfig";
+import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import {
+    BUDGET_TYPE_LABEL,
+    type BudgetType,
+    budgetTypeFromDuration,
+    getCapPeriod,
+} from "@/module/campaigns/utils/capPeriods";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { Button } from "@/module/common/component/Button";
+import { DateField } from "@/module/common/component/DateField";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { getNumberFormat } from "@/module/common/utils/intlCache";
+import { Input } from "@/module/forms/Input";
+import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
+import { getStartDate } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
 import type {
     BudgetConfigItem,
@@ -44,11 +63,9 @@ import { Section } from "./parts";
 export function ConfigTab({ campaignId }: { campaignId: string }) {
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
-    const { data: campaign, isPending } = useQuery({
-        queryKey: ["campaign", campaignId, isDemoMode ? "demo" : "live"],
-        queryFn: () =>
-            getCampaignDetail({ campaignId, merchantId, isDemoMode }),
-    });
+    const { data: campaign, isPending } = useQuery(
+        campaignQueryOptions({ merchantId, campaignId, isDemoMode })
+    );
 
     if (isPending) {
         return <Skeleton variant="rect" height={320} />;
@@ -61,9 +78,21 @@ export function ConfigTab({ campaignId }: { campaignId: string }) {
     return <ConfigContent campaign={campaign} />;
 }
 
+// Start/end date and budget are editable on a live campaign (the ruleset stays
+// locked). Platform admins viewing a merchant are read-only.
+function canEditLiveCampaign(campaign: Campaign, isReadOnly: boolean): boolean {
+    return (
+        !isReadOnly &&
+        (campaign.status === "active" || campaign.status === "paused")
+    );
+}
+
 function ConfigContent({ campaign }: { campaign: Campaign }) {
     const currency = currencyStore((s) => s.preferredCurrency).toUpperCase();
-    const { rule, metadata, budgetConfig } = campaign;
+    const merchantId = useActiveMerchantId();
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
+    const { rule, metadata } = campaign;
+    const canEdit = canEditLiveCampaign(campaign, isReadOnly);
 
     return (
         <Stack space="l">
@@ -71,9 +100,18 @@ function ConfigContent({ campaign }: { campaign: Campaign }) {
             <RewardsSection rewards={rule.rewards} currency={currency} />
             <ConditionsSection conditions={rule.conditions} />
             <LimitsSection rule={rule} />
-            <BudgetSection budgetConfig={budgetConfig} currency={currency} />
+            <BudgetSection
+                campaign={campaign}
+                currency={currency}
+                merchantId={merchantId}
+                canEdit={canEdit}
+            />
             <TargetingSection metadata={metadata} />
-            <ScheduleSection campaign={campaign} />
+            <ScheduleSection
+                campaign={campaign}
+                merchantId={merchantId}
+                canEdit={canEdit}
+            />
         </Stack>
     );
 }
@@ -105,6 +143,27 @@ function ValueText({ children }: { children: ReactNode }) {
         <Text as="span" variant="bodySmall" weight="medium">
             {children}
         </Text>
+    );
+}
+
+/** Small, subtle pencil affordance shown next to an editable section title. */
+function EditPencilButton({
+    onClick,
+    label,
+}: {
+    onClick: () => void;
+    label: string;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-label={label}
+            title={label}
+            className={styles.editIconButton}
+        >
+            <PencilIcon width={16} height={16} />
+        </button>
     );
 }
 
@@ -599,22 +658,9 @@ function LimitsSection({ rule }: { rule: CampaignRuleDefinition }) {
 /* Budget                                                              */
 /* ------------------------------------------------------------------ */
 
-function budgetPeriodKey(
-    durationInSeconds: number | null
-): "global" | "daily" | "weekly" | "monthly" {
-    switch (durationInSeconds) {
-        case 86400:
-            return "daily";
-        case 604800:
-            return "weekly";
-        case 2592000:
-            return "monthly";
-        default:
-            return "global";
-    }
-}
+const BUDGET_PERIODS: BudgetType[] = ["global", "daily", "weekly", "monthly"];
 
-function BudgetSection({
+function BudgetRows({
     budgetConfig,
     currency,
 }: {
@@ -622,39 +668,198 @@ function BudgetSection({
     currency: string;
 }) {
     const { t } = useTranslation();
-    const title = t("campaigns.details.config.budget.title");
-
     if (!budgetConfig || budgetConfig.length === 0) {
         return (
-            <Section title={title}>
-                <Card radius="m">
-                    <Text variant="bodySmall" color="secondary">
-                        {t("campaigns.details.config.budget.none")}
-                    </Text>
-                </Card>
-            </Section>
+            <Text variant="bodySmall" color="secondary">
+                {t("campaigns.details.config.budget.none")}
+            </Text>
         );
+    }
+    return (
+        <div>
+            {budgetConfig.map((item, index) => (
+                <DefinitionRow
+                    key={`${item.label}-${index}`}
+                    label={t(
+                        `campaigns.details.config.budget.period.${budgetTypeFromDuration(item.durationInSeconds)}`
+                    )}
+                >
+                    <ValueText>
+                        {item.amount} {currency}
+                    </ValueText>
+                </DefinitionRow>
+            ))}
+        </div>
+    );
+}
+
+function BudgetSection({
+    campaign,
+    currency,
+    merchantId,
+    canEdit,
+}: {
+    campaign: Campaign;
+    currency: string;
+    merchantId: string;
+    canEdit: boolean;
+}) {
+    const { t } = useTranslation();
+    const [isEditing, setIsEditing] = useState(false);
+    const title = t("campaigns.details.config.budget.title");
+
+    return (
+        <Section
+            title={title}
+            action={
+                canEdit && !isEditing ? (
+                    <EditPencilButton
+                        onClick={() => setIsEditing(true)}
+                        label={t("campaigns.details.config.budget.edit")}
+                    />
+                ) : undefined
+            }
+        >
+            <Card radius="m">
+                {isEditing ? (
+                    <BudgetEditor
+                        campaign={campaign}
+                        merchantId={merchantId}
+                        currency={currency}
+                        onClose={() => setIsEditing(false)}
+                    />
+                ) : (
+                    <BudgetRows
+                        budgetConfig={campaign.budgetConfig}
+                        currency={currency}
+                    />
+                )}
+            </Card>
+        </Section>
+    );
+}
+
+function BudgetEditor({
+    campaign,
+    merchantId,
+    currency,
+    onClose,
+}: {
+    campaign: Campaign;
+    merchantId: string;
+    currency: string;
+    onClose: () => void;
+}) {
+    const { t } = useTranslation();
+    const { mutateAsync, isPending, isError } = useUpdateCampaignConfig();
+    const currencyGlyph = useCampaignCurrencyGlyph();
+    // The app only ever authors a single budget cap, so the editor reads/writes
+    // `budgetConfig[0]`. If multi-cap campaigns are ever introduced this editor
+    // must grow a row per cap to avoid dropping the others.
+    const existing = campaign.budgetConfig?.[0];
+    const [period, setPeriod] = useState<BudgetType>(
+        budgetTypeFromDuration(existing?.durationInSeconds)
+    );
+    const [amount, setAmount] = useState<number>(existing?.amount ?? 0);
+    const invalid = !(amount > 0);
+
+    async function onSave() {
+        if (invalid) return;
+        await mutateAsync({
+            merchantId,
+            campaignId: campaign.id,
+            campaign,
+            budgetConfig: [
+                {
+                    label: BUDGET_TYPE_LABEL[period],
+                    durationInSeconds: getCapPeriod(period),
+                    amount,
+                },
+            ],
+        });
+        onClose();
     }
 
     return (
-        <Section title={title}>
-            <Card radius="m">
-                <div>
-                    {budgetConfig.map((item, index) => (
-                        <DefinitionRow
-                            key={`${item.label}-${index}`}
-                            label={t(
-                                `campaigns.details.config.budget.period.${budgetPeriodKey(item.durationInSeconds)}`
-                            )}
-                        >
-                            <ValueText>
-                                {item.amount} {currency}
-                            </ValueText>
-                        </DefinitionRow>
-                    ))}
-                </div>
-            </Card>
-        </Section>
+        <Stack space="s">
+            <BudgetRows
+                budgetConfig={campaign.budgetConfig}
+                currency={currency}
+            />
+            <div className={styles.editDivider} />
+            <Stack space="xs">
+                <Text as="span" variant="bodySmall" color="secondary">
+                    {t("campaigns.details.config.budget.periodLabel")}
+                </Text>
+                <RadioGroup
+                    value={period}
+                    onValueChange={(value) => setPeriod(value as BudgetType)}
+                >
+                    <Stack space="xs">
+                        {BUDGET_PERIODS.map((p) => (
+                            <label
+                                key={p}
+                                htmlFor={`budget-period-${p}`}
+                                className={styles.budgetPeriodOption}
+                            >
+                                <RadioGroupItem
+                                    id={`budget-period-${p}`}
+                                    value={p}
+                                    size="l"
+                                    disabled={isPending}
+                                />
+                                <Text as="span" variant="bodySmall">
+                                    {t(`campaigns.create.budget.period.${p}`)}
+                                </Text>
+                            </label>
+                        ))}
+                    </Stack>
+                </RadioGroup>
+            </Stack>
+            <Stack space="xs">
+                <Text as="span" variant="bodySmall" color="secondary">
+                    {t("campaigns.details.config.budget.amountLabel")}
+                </Text>
+                <Input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    value={amount || ""}
+                    onChange={(event) => {
+                        const next = event.target.valueAsNumber;
+                        setAmount(Number.isNaN(next) ? 0 : next);
+                    }}
+                    error={invalid}
+                    disabled={isPending}
+                    rightSection={<span>{currencyGlyph}</span>}
+                    aria-label={t(
+                        "campaigns.details.config.budget.amountLabel"
+                    )}
+                />
+            </Stack>
+            {isError && (
+                <Text as="span" variant="bodySmall" color="error">
+                    {t("campaigns.details.config.budget.error")}
+                </Text>
+            )}
+            <Inline space="xs">
+                <Button
+                    variant="secondary"
+                    onClick={onClose}
+                    disabled={isPending}
+                >
+                    {t("campaigns.details.config.budget.cancel")}
+                </Button>
+                <Button
+                    variant="primary"
+                    loading={isPending}
+                    disabled={isPending || invalid}
+                    onClick={onSave}
+                >
+                    {t("campaigns.details.config.budget.save")}
+                </Button>
+            </Inline>
+        </Stack>
     );
 }
 
@@ -739,37 +944,190 @@ function TargetingSection({ metadata }: { metadata: CampaignMetadata | null }) {
 /* Schedule                                                            */
 /* ------------------------------------------------------------------ */
 
-function ScheduleSection({ campaign }: { campaign: Campaign }) {
+function ScheduleRows({
+    campaign,
+    startDate,
+}: {
+    campaign: Campaign;
+    startDate: string | undefined;
+}) {
     const { t } = useTranslation();
+    return (
+        <div>
+            <DefinitionRow
+                label={t("campaigns.details.config.schedule.starts")}
+            >
+                <ValueText>
+                    {startDate
+                        ? formatDate(new Date(startDate))
+                        : t("campaigns.details.config.schedule.immediate")}
+                </ValueText>
+            </DefinitionRow>
+            <DefinitionRow
+                label={t("campaigns.details.config.schedule.published")}
+            >
+                <ValueText>
+                    {campaign.publishedAt
+                        ? formatDate(new Date(campaign.publishedAt))
+                        : t("campaigns.details.config.schedule.notPublished")}
+                </ValueText>
+            </DefinitionRow>
+            <DefinitionRow
+                label={t("campaigns.details.config.schedule.expires")}
+            >
+                <ValueText>
+                    {campaign.expiresAt
+                        ? formatDate(new Date(campaign.expiresAt))
+                        : t("campaigns.details.config.schedule.noExpiration")}
+                </ValueText>
+            </DefinitionRow>
+        </div>
+    );
+}
+
+function ScheduleSection({
+    campaign,
+    merchantId,
+    canEdit,
+}: {
+    campaign: Campaign;
+    merchantId: string;
+    canEdit: boolean;
+}) {
+    const { t } = useTranslation();
+    const [isEditing, setIsEditing] = useState(false);
+    const startDate = getStartDate(campaign.rule);
 
     return (
-        <Section title={t("campaigns.details.config.schedule.title")}>
+        <Section
+            title={t("campaigns.details.config.schedule.title")}
+            action={
+                canEdit && !isEditing ? (
+                    <EditPencilButton
+                        onClick={() => setIsEditing(true)}
+                        label={t("campaigns.details.config.schedule.edit")}
+                    />
+                ) : undefined
+            }
+        >
             <Card radius="m">
-                <div>
-                    <DefinitionRow
-                        label={t("campaigns.details.config.schedule.published")}
-                    >
-                        <ValueText>
-                            {campaign.publishedAt
-                                ? formatDate(new Date(campaign.publishedAt))
-                                : t(
-                                      "campaigns.details.config.schedule.notPublished"
-                                  )}
-                        </ValueText>
-                    </DefinitionRow>
-                    <DefinitionRow
-                        label={t("campaigns.details.config.schedule.expires")}
-                    >
-                        <ValueText>
-                            {campaign.expiresAt
-                                ? formatDate(new Date(campaign.expiresAt))
-                                : t(
-                                      "campaigns.details.config.schedule.noExpiration"
-                                  )}
-                        </ValueText>
-                    </DefinitionRow>
-                </div>
+                {isEditing ? (
+                    <ScheduleEditor
+                        campaign={campaign}
+                        merchantId={merchantId}
+                        startDate={startDate}
+                        onClose={() => setIsEditing(false)}
+                    />
+                ) : (
+                    <ScheduleRows campaign={campaign} startDate={startDate} />
+                )}
             </Card>
         </Section>
+    );
+}
+
+function ScheduleEditor({
+    campaign,
+    merchantId,
+    startDate: currentStart,
+    onClose,
+}: {
+    campaign: Campaign;
+    merchantId: string;
+    startDate: string | undefined;
+    onClose: () => void;
+}) {
+    const { t } = useTranslation();
+    const { mutateAsync, isPending, isError } = useUpdateCampaignConfig();
+    const currentEnd = campaign.expiresAt ?? undefined;
+    const [start, setStart] = useState<string | undefined>(currentStart);
+    const [end, setEnd] = useState<string | undefined>(currentEnd);
+
+    const today = useMemo(() => startOfDay(new Date()), []);
+    // Forward-only: the start can't be pulled before today, nor before an
+    // existing future start.
+    const minStart =
+        currentStart && new Date(currentStart) > today
+            ? new Date(currentStart)
+            : today;
+    const minEnd = start ? new Date(start) : today;
+    // End must be strictly after start (no zero-duration campaign).
+    const endBeforeStart = Boolean(
+        start && end && new Date(end) <= new Date(start)
+    );
+
+    async function onSave() {
+        if (endBeforeStart) return;
+        // Only send fields that actually changed. Notably, if the user blanks a
+        // start that was previously set we leave it untouched (undefined) rather
+        // than sending `null` — the backend forbids clearing/rewinding the start
+        // gate on a live campaign, and "leave as-is" is the sane intent here.
+        const startChanged = start !== currentStart && start !== undefined;
+        const endChanged = end !== currentEnd;
+        await mutateAsync({
+            merchantId,
+            campaignId: campaign.id,
+            campaign,
+            ...(startChanged ? { startDate: start } : {}),
+            ...(endChanged ? { expiresAt: end ?? null } : {}),
+        });
+        onClose();
+    }
+
+    return (
+        <Stack space="s">
+            <ScheduleRows campaign={campaign} startDate={currentStart} />
+            <div className={styles.editDivider} />
+            <Stack space="xs">
+                <Text as="span" variant="bodySmall" color="secondary">
+                    {t("campaigns.details.config.schedule.starts")}
+                </Text>
+                <DateField
+                    value={start}
+                    onChange={setStart}
+                    minDate={minStart}
+                    ariaLabel={t("campaigns.details.config.schedule.starts")}
+                    disabled={isPending}
+                />
+            </Stack>
+            <Stack space="xs">
+                <Text as="span" variant="bodySmall" color="secondary">
+                    {t("campaigns.details.config.schedule.expires")}
+                </Text>
+                <DateField
+                    value={end}
+                    onChange={setEnd}
+                    minDate={minEnd}
+                    ariaLabel={t("campaigns.details.config.schedule.expires")}
+                    disabled={isPending}
+                    error={endBeforeStart}
+                    errorMessage={t(
+                        "campaigns.details.config.schedule.endBeforeStart"
+                    )}
+                />
+            </Stack>
+            {isError && (
+                <Text as="span" variant="bodySmall" color="error">
+                    {t("campaigns.details.config.schedule.error")}
+                </Text>
+            )}
+            <Inline space="xs">
+                <Button
+                    variant="secondary"
+                    onClick={onClose}
+                    disabled={isPending}
+                >
+                    {t("campaigns.details.config.schedule.cancel")}
+                </Button>
+                <Button
+                    variant="primary"
+                    loading={isPending}
+                    disabled={isPending || endBeforeStart}
+                    onClick={onSave}
+                >
+                    {t("campaigns.details.config.schedule.save")}
+                </Button>
+            </Inline>
+        </Stack>
     );
 }

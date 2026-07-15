@@ -1,37 +1,25 @@
 {
     "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
     "files": {
         "includes": [
             "**",
             "!**/_cjs",
             "!**/_esm",
             "!**/_types",
-            "!**/dist",
-            "!**/build",
             "!**/.build",
-            "!**/cdn",
-            "!**/node_modules",
-            "!**/.sst",
-            "!**/.react-router",
-            "!**/.output",
-            "!**/.nitro",
-            "!**/.omo",
             "!**/.claude",
-            "!**/sst-env.d.ts",
             "!**/tsconfig.json",
             "!**/tsconfig.*.json",
             "!**/package.json",
-            "!**/sw.js",
-            "!**/bundle.js",
-            "!**/sst-env.d.ts",
             "!example/vanilla-js/index.html",
-            "!**/playwright-report",
-            "!**/test-results",
-            "!**/coverage",
             "!**/routeTree.gen.ts",
             "!**/types/i18n/resources.d.ts",
             "!**/src-tauri/gen",
-            "!**/src-tauri/target",
             "!**/src-tauri/plugins/**/schema.json",
             "!plugins",
             "!apps/shopify/**/shopify.d.ts"
@@ -52,7 +40,7 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": true,
+            "preset": "recommended",
             "complexity": {
                 "noExcessiveCognitiveComplexity": {
                     "level": "error",
@@ -171,23 +159,15 @@
         "formatter": {
             "quoteStyle": "double",
             "semicolons": "always",
-            "trailingCommas": "es5",
-            "lineEnding": "lf"
+            "trailingCommas": "es5"
         }
     },
     "css": {
-        "parser": {
-            "cssModules": true,
-            "tailwindDirectives": true
-        },
         "linter": {
             "enabled": true
         },
         "formatter": {
-            "enabled": true,
-            "indentStyle": "space",
-            "indentWidth": 4,
-            "lineEnding": "lf"
+            "enabled": true
         }
     }
 }

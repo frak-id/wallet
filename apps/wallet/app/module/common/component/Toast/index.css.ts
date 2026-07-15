@@ -1,5 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { brand, transition, zIndex } from "@frak-labs/design-system/tokens";
+import {
+    brand,
+    fontSize,
+    transition,
+    zIndex,
+} from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 const toastIn = keyframes({
@@ -48,8 +53,34 @@ export const toastActions = style({
     gap: brand.scale[200],
 });
 
-export const toastWarning = style({
-    paddingRight: brand.scale[800],
+// Reproduces the deleted local `Warning` component's look (tint, radius,
+// padding, spacing, text color) on top of the DS `Notice`, plus the extra
+// right padding this toast needs to clear the absolute dismiss button.
+// Reproduces the old `Badge`-based Warning exactly. `&&` doubles specificity so
+// these beat `Notice`'s inline recipe regardless of stylesheet insertion order.
+// `white-space: nowrap` + `font-weight: 600` were inherited from `Badge` base.
+export const toastNotice = style({
+    selectors: {
+        "&&": {
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: brand.scale[200],
+            paddingTop: brand.scale[200],
+            paddingBottom: brand.scale[200],
+            paddingLeft: brand.scale[300],
+            paddingRight: brand.scale[800],
+            borderRadius: brand.scale[200],
+            color: vars.text.primary,
+            whiteSpace: "nowrap",
+            fontWeight: 600,
+        },
+    },
+});
+
+export const toastNoticeText = style({
+    fontFamily:
+        '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiOne Mozilla", "Twemoji Mozilla", "Noto Emoji", "Segoe UI Symbol", EmojiSymbols, emoji, sans-serif',
+    fontSize: fontSize.xs,
 });
 
 export const toastDismissButton = style({

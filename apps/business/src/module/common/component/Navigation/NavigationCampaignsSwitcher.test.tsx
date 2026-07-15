@@ -6,13 +6,13 @@ vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-const mockUseMediaQuery = vi.fn();
+const mockUseResponsiveValue = vi.fn();
 const mockUseLocation = vi.fn();
 const mockNavigate = vi.fn();
 const mockMatchRoute = vi.fn();
 
-vi.mock("@frak-labs/design-system/hooks/useMediaQuery", () => ({
-    useMediaQuery: () => mockUseMediaQuery(),
+vi.mock("@frak-labs/design-system/hooks/useResponsiveValue", () => ({
+    useResponsiveValue: () => mockUseResponsiveValue(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -20,6 +20,18 @@ vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
     useMatchRoute: () => mockMatchRoute,
     useParams: () => ({}),
+}));
+
+vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
+    useOptionalActiveMerchantId: () => undefined,
+}));
+
+vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
+    useMyMerchants: () => ({ isPlatformAdmin: false }),
+}));
+
+vi.mock("@/module/merchant/hook/useMerchant", () => ({
+    useMerchant: () => ({ data: undefined }),
 }));
 
 vi.mock("./NavigationItem", () => ({
@@ -63,7 +75,7 @@ describe("NavigationCampaignsSwitcher", () => {
     });
 
     it("should render mobile navigation item when on mobile", () => {
-        mockUseMediaQuery.mockReturnValue(true);
+        mockUseResponsiveValue.mockReturnValue(true);
 
         render(<NavigationCampaignsSwitcher />);
 
@@ -75,7 +87,7 @@ describe("NavigationCampaignsSwitcher", () => {
     });
 
     it("should render desktop collapsible navigation when not on mobile", () => {
-        mockUseMediaQuery.mockReturnValue(false);
+        mockUseResponsiveValue.mockReturnValue(false);
         mockUseLocation.mockReturnValue({ pathname: "/campaigns/list" });
 
         render(<NavigationCampaignsSwitcher />);
@@ -88,7 +100,7 @@ describe("NavigationCampaignsSwitcher", () => {
     });
 
     it("should show both sub-navigation items when expanded", () => {
-        mockUseMediaQuery.mockReturnValue(false);
+        mockUseResponsiveValue.mockReturnValue(false);
         mockUseLocation.mockReturnValue({ pathname: "/campaigns/list" });
 
         render(<NavigationCampaignsSwitcher />);

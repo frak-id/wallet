@@ -1,5 +1,6 @@
 import {
     androidSha256Fingerprint,
+    businessUrl,
     drpcApiKey,
     erpcUrl,
     fcmServiceAccount,
@@ -15,6 +16,7 @@ import {
     shopifyApiSecret,
     shopifyClientId,
     sqldUrl,
+    takeadsApiKey,
     vapidPublicKey,
     walletUrl,
 } from "../config";
@@ -77,6 +79,7 @@ export const elysiaEnv = {
     STAGE: normalizedStageName,
     ERPC_URL: erpcUrl,
     FRAK_WALLET_URL: walletUrl,
+    BUSINESS_URL: businessUrl,
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
     ...postgresEnv,
@@ -102,7 +105,6 @@ export const elysiaEnv = {
     PIMLICO_API_KEY: pimlicoApiKey.value,
     DRPC_API_KEY: drpcApiKey.value,
     COIN_GECKO_API_KEY: new sst.Secret("COIN_GECKO_API_KEY").value,
-    WORLD_NEWS_API_KEY: new sst.Secret("WORLD_NEWS_API_KEY").value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
     AIRTABLE_API_KEY: new sst.Secret("AIRTABLE_API_KEY").value,
     SLACK_BOT_TOKEN: new sst.Secret("SLACK_BOT_TOKEN").value,
@@ -110,6 +112,9 @@ export const elysiaEnv = {
     // Resend (transactional email)
     RESEND_API_KEY: resendApiKey.value,
     RESEND_FROM_EMAIL: "noreply@frak-labs.com",
+
+    // TakeAds affiliate integration
+    TAKEADS_API_KEY: takeadsApiKey.value,
 
     // Shopify related
     SHOPIFY_API_SECRET: shopifyApiSecret.value,

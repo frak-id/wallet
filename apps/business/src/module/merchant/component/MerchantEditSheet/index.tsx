@@ -5,6 +5,7 @@ import {
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import {
     RadioGroup,
     RadioGroupItem,
@@ -16,6 +17,7 @@ import {
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import {
     EurIcon,
     GbpIcon,
@@ -68,50 +70,60 @@ function CurrencyRadioGroup({
     const groupId = useId();
     return (
         <RadioGroup
-            className={styles.currencyGrid}
             value={value}
             onValueChange={(next) => next && onChange(next as Stablecoin)}
         >
-            {CURRENCIES.map((currency) => {
-                const meta = currencyMetadata[currency];
-                const itemId = `${groupId}-${currency}`;
-                return (
-                    <label
-                        key={currency}
-                        htmlFor={itemId}
-                        className={styles.currencyCell}
-                    >
-                        <RadioGroupItem id={itemId} value={currency} size="l" />
-                        <Inline
-                            as="span"
-                            space="xs"
-                            alignY="center"
-                            wrap={false}
-                            className={styles.currencyMain}
+            {/* Note: original gap was `0 m` (row=0, col=m); Tiles applies uniform m gap — accepted delta */}
+            <Tiles columns={2} space="m">
+                {CURRENCIES.map((currency) => {
+                    const meta = currencyMetadata[currency];
+                    const itemId = `${groupId}-${currency}`;
+                    return (
+                        <label
+                            key={currency}
+                            htmlFor={itemId}
+                            className={styles.currencyCell}
                         >
-                            <span className={styles.currencyIcon}>
-                                {CURRENCY_ICONS[currency]}
-                            </span>
-                            <Stack
+                            <RadioGroupItem
+                                id={itemId}
+                                value={currency}
+                                size="l"
+                            />
+                            <Inline
                                 as="span"
-                                space="xxs"
-                                className={styles.currencyText}
+                                space="xs"
+                                alignY="center"
+                                wrap={false}
+                                className={styles.currencyMain}
                             >
-                                <Text as="span" variant="body" weight="medium">
-                                    {meta.label}
-                                </Text>
-                                <Text
+                                <span className={styles.currencyIcon}>
+                                    {CURRENCY_ICONS[currency]}
+                                </span>
+                                <Stack
                                     as="span"
-                                    variant="bodySmall"
-                                    color="secondary"
+                                    space="xxs"
+                                    className={styles.currencyText}
                                 >
-                                    {meta.provider}
-                                </Text>
-                            </Stack>
-                        </Inline>
-                    </label>
-                );
-            })}
+                                    <Text
+                                        as="span"
+                                        variant="body"
+                                        weight="medium"
+                                    >
+                                        {meta.label}
+                                    </Text>
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        color="secondary"
+                                    >
+                                        {meta.provider}
+                                    </Text>
+                                </Stack>
+                            </Inline>
+                        </label>
+                    );
+                })}
+            </Tiles>
         </RadioGroup>
     );
 }
@@ -221,10 +233,7 @@ export function MerchantEditSheet({
                                 ),
                             }}
                             render={({ field }) => (
-                                <EditField
-                                    tone="card"
-                                    label={t("merchantEdit.editMerchant.name")}
-                                >
+                                <EditField tone="card">
                                     <FormControl>
                                         <Input
                                             variant="bare"
@@ -232,6 +241,9 @@ export function MerchantEditSheet({
                                             length="big"
                                             placeholder={t(
                                                 "merchantEdit.editMerchant.namePlaceholder"
+                                            )}
+                                            label={t(
+                                                "merchantEdit.editMerchant.name"
                                             )}
                                             {...field}
                                         />
@@ -243,18 +255,16 @@ export function MerchantEditSheet({
                             control={form.control}
                             name="domain"
                             render={({ field }) => (
-                                <EditField
-                                    tone="card"
-                                    label={t(
-                                        "merchantEdit.editMerchant.domain"
-                                    )}
-                                >
+                                <EditField tone="card">
                                     <FormControl>
                                         <Input
                                             variant="bare"
                                             tone="muted"
                                             length="big"
                                             disabled
+                                            label={t(
+                                                "merchantEdit.editMerchant.domain"
+                                            )}
                                             {...field}
                                         />
                                     </FormControl>
@@ -289,38 +299,46 @@ export function MerchantEditSheet({
                                 </FormItem>
                             )}
                         />
-                        <Stack
-                            space="m"
-                            paddingY="s"
-                            className={styles.infoBar}
-                        >
-                            <Text as="p" variant="bodySmall" color="primary">
+                        <Notice display="block" tone="info" icon={null}>
+                            <Stack space="m">
                                 <Text
-                                    as="span"
+                                    as="p"
                                     variant="bodySmall"
-                                    weight="semiBold"
+                                    color="primary"
                                 >
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        weight="semiBold"
+                                    >
+                                        {t(
+                                            "merchantEdit.editMerchant.infoMonerium"
+                                        )}{" "}
+                                    </Text>
                                     {t(
-                                        "merchantEdit.editMerchant.infoMonerium"
-                                    )}{" "}
+                                        "forms.currencySelector.moneriumDescription"
+                                    )}
                                 </Text>
-                                {t(
-                                    "forms.currencySelector.moneriumDescription"
-                                )}
-                            </Text>
-                            <Text as="p" variant="bodySmall" color="primary">
                                 <Text
-                                    as="span"
+                                    as="p"
                                     variant="bodySmall"
-                                    weight="semiBold"
+                                    color="primary"
                                 >
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        weight="semiBold"
+                                    >
+                                        {t(
+                                            "merchantEdit.editMerchant.infoCircle"
+                                        )}{" "}
+                                    </Text>
                                     {t(
-                                        "merchantEdit.editMerchant.infoCircle"
-                                    )}{" "}
+                                        "forms.currencySelector.circleDescription"
+                                    )}
                                 </Text>
-                                {t("forms.currencySelector.circleDescription")}
-                            </Text>
-                        </Stack>
+                            </Stack>
+                        </Notice>
                     </form>
                 </Form>
                 <Inline space="s" padding="l">

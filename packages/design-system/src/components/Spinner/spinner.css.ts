@@ -1,4 +1,5 @@
 import { keyframes, style, styleVariants } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 
 const spin = keyframes({
@@ -10,34 +11,22 @@ const spin = keyframes({
     },
 });
 
-const base = style({
-    display: "block",
-    position: "relative",
-    opacity: 0.65,
-});
-
-export const spinnerStyles = styleVariants({
-    s: [
-        base,
-        {
-            width: "16px",
-            height: "16px",
+export const spinnerStyles = recipe({
+    base: {
+        display: "block",
+        position: "relative",
+        opacity: 0.65,
+    },
+    variants: {
+        size: {
+            s: { width: "16px", height: "16px" },
+            m: { width: "24px", height: "24px" },
+            l: { width: "32px", height: "32px" },
         },
-    ],
-    m: [
-        base,
-        {
-            width: "24px",
-            height: "24px",
-        },
-    ],
-    l: [
-        base,
-        {
-            width: "32px",
-            height: "32px",
-        },
-    ],
+    },
+    defaultVariants: {
+        size: "m",
+    },
 });
 
 export const leafStyles = style({
@@ -57,6 +46,9 @@ export const leafStyles = style({
     },
 });
 
+// Kept as `styleVariants`: an enumerated map iterated over in the component
+// (one leaf per key), not selected by a component prop — the niche where
+// `styleVariants` beats `recipe`.
 export const leafRotations = styleVariants({
     leaf0: {
         transform: "rotate(0deg)",

@@ -7,8 +7,17 @@ export {
 export { MerchantAdminRepository } from "./repositories/MerchantAdminRepository";
 export { MerchantOwnershipTransferRepository } from "./repositories/MerchantOwnershipTransferRepository";
 export { MerchantRepository } from "./repositories/MerchantRepository";
-export type { LocalizableString, SdkConfig } from "./schemas";
-export { ExplorerConfigSchema, SdkConfigSchema } from "./schemas";
+export type {
+    LocalizableString,
+    MerchantAccountingInfo,
+    MerchantIdentity,
+    SdkConfig,
+} from "./schemas";
+export {
+    ExplorerConfigSchema,
+    MerchantAccountingInfoSchema,
+    SdkConfigSchema,
+} from "./schemas";
 export { MerchantAuthorizationService } from "./services/MerchantAuthorizationService";
 export { MerchantRegistrationService } from "./services/MerchantRegistrationService";
 export { MerchantResolveService } from "./services/MerchantResolveService";

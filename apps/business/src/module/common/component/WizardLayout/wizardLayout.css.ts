@@ -51,6 +51,7 @@ export const content = style({
     flex: 1,
     padding: alias.spacing.l,
     // The form column is capped at 704px (680px cards + the 24px left inset).
+    // Cap is co-located with padding (border-box) so usable width = 728 - 2*l = 680px.
     maxWidth: 728,
 });
 
@@ -65,7 +66,6 @@ export const footer = style({
 /** Caps the button row to the content column so it centres over the cards. */
 export const footerInner = style({
     width: "100%",
-    maxWidth: 728,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",

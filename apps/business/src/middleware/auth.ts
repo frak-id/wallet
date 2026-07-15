@@ -1,5 +1,6 @@
 import { redirect } from "@tanstack/react-router";
 import { getAuthToken, getWallet, isDemoMode } from "@/config/auth";
+import { safeRedirectTarget } from "@/module/auth/utils/safeRedirect";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -50,16 +51,24 @@ export function requireAuth({ location }: { location: { href: string } }) {
 
 /**
  * beforeLoad hook for login route.
- * Redirects to /dashboard if already authenticated — the legacy redirect
- * there resolves the user's first merchant and lands on the new
- * `/m/$merchantId/dashboard` URL.
+ * Redirects to the requested `redirect` target if already authenticated —
+ * defaults to /dashboard when absent (the legacy redirect there resolves
+ * the user's first merchant and lands on the new `/m/$merchantId/dashboard`
+ * URL). Honoring `redirect` here means an already-authenticated user hitting
+ * a Shopify deep-link (`/login?redirect=/m/x/campaigns` or
+ * `/login/shopify?redirect=…`) lands directly on the intended page instead
+ * of always bouncing to the generic dashboard.
  */
-export function redirectIfAuthenticated() {
+export function redirectIfAuthenticated({
+    search,
+}: {
+    search?: { redirect?: string };
+} = {}) {
     const authenticated = isAuthenticated();
 
     if (authenticated) {
         throw redirect({
-            to: "/dashboard",
+            to: safeRedirectTarget(search?.redirect),
         });
     }
 }

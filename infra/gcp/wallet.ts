@@ -350,16 +350,6 @@ if ($dev) {
         FIREBASE_ANDROID_CONFIG_BASE64: firebaseAndroidConfigBase64.value,
     };
 
-    new sst.x.DevCommand("wallet:tauri", {
-        dev: {
-            title: "Wallet Tauri Dev Server",
-            autostart: false,
-            command: "./scripts/tauri-dev.sh dev",
-            directory: "./apps/wallet",
-        },
-        environment,
-    });
-
     new sst.x.DevCommand("wallet:tauri-android", {
         dev: {
             title: "Tauri Android",

@@ -18,14 +18,18 @@ describe("LegendItem", () => {
         const { container, rerender } = render(
             <LegendItem swatchColor="#000">A</LegendItem>
         );
-        expect(container.firstChild).toHaveClass(legendItem.inline);
+        expect(container.firstChild).toHaveClass(
+            legendItem({ layout: "inline" })
+        );
 
         rerender(
             <LegendItem swatchColor="#000" layout="stacked">
                 A
             </LegendItem>
         );
-        expect(container.firstChild).toHaveClass(legendItem.stacked);
+        expect(container.firstChild).toHaveClass(
+            legendItem({ layout: "stacked" })
+        );
     });
 
     it("forwards div props and className", () => {

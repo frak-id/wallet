@@ -13,7 +13,7 @@ export const navigation = style({
     background: vars.surface.background,
     borderRight: `1px solid ${vars.border.subtle}`,
     "@media": {
-        "screen and (max-width: 768px)": {
+        "screen and (max-width: 767px)": {
             width: "64px",
             padding: "16px 8px",
         },
@@ -27,7 +27,7 @@ export const logoWrapper = style({
     alignItems: "center",
     justifyContent: "flex-start",
     "@media": {
-        "screen and (max-width: 768px)": {
+        "screen and (max-width: 767px)": {
             justifyContent: "center",
             marginBottom: alias.spacing.m,
         },
@@ -37,7 +37,7 @@ export const logoWrapper = style({
 export const logoFull = style({
     display: "block",
     "@media": {
-        "screen and (max-width: 768px)": {
+        "screen and (max-width: 767px)": {
             display: "none",
         },
     },
@@ -46,7 +46,7 @@ export const logoFull = style({
 export const logoBadge = style({
     display: "none",
     "@media": {
-        "screen and (max-width: 768px)": {
+        "screen and (max-width: 767px)": {
             display: "block",
         },
     },
@@ -96,7 +96,7 @@ export const sectionLabel = style({
     listStyle: "none",
     padding: `${alias.spacing.xxs} ${alias.spacing.s}`,
     "@media": {
-        "screen and (max-width: 768px)": {
+        "screen and (max-width: 767px)": {
             display: "none",
         },
     },
@@ -157,7 +157,7 @@ export const item = style([
                     },
                 },
             },
-            "screen and (max-width: 768px)": {
+            "screen and (max-width: 767px)": {
                 justifyContent: "center",
                 padding: 0,
             },
@@ -182,7 +182,7 @@ export const subItem = style([
                     },
                 },
             },
-            "screen and (max-width: 768px)": {
+            "screen and (max-width: 767px)": {
                 display: "none",
             },
         },
@@ -202,7 +202,7 @@ export const itemIcon = style({
 export const itemLabel = style({
     flexGrow: 1,
     "@media": {
-        "screen and (max-width: 768px)": {
+        "screen and (max-width: 767px)": {
             display: "none",
         },
     },
@@ -212,7 +212,7 @@ export const itemRight = style({
     marginLeft: "auto",
     display: "inline-flex",
     "@media": {
-        "screen and (max-width: 768px)": {
+        "screen and (max-width: 767px)": {
             display: "none",
         },
     },

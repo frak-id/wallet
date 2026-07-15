@@ -19,7 +19,10 @@ function initialsOf(name: string): string {
 
 export function Avatar({ name, size = "m", className }: AvatarProps) {
     return (
-        <span className={clsx(avatarSizes[size], className)} aria-hidden="true">
+        <span
+            className={clsx(avatarSizes({ size }), className)}
+            aria-hidden="true"
+        >
             {initialsOf(name)}
         </span>
     );

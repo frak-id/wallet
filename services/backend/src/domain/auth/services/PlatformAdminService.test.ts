@@ -40,6 +40,63 @@ describe("PlatformAdminService", () => {
         expect(service.isPlatformAdmin(ADDR_B)).toBe(false);
     });
 
+    it("isPlatformAdminAccount: verified @frak-labs.com email is admin", () => {
+        const service = new PlatformAdminService();
+        expect(
+            service.isPlatformAdminAccount({
+                email: "dev@frak-labs.com",
+                emailVerifiedAt: new Date(),
+            })
+        ).toBe(true);
+    });
+
+    it("isPlatformAdminAccount: unverified email grants nothing", () => {
+        const service = new PlatformAdminService();
+        expect(
+            service.isPlatformAdminAccount({
+                email: "dev@frak-labs.com",
+                emailVerifiedAt: null,
+            })
+        ).toBe(false);
+    });
+
+    it("isPlatformAdminAccount: other domains are rejected", () => {
+        const service = new PlatformAdminService();
+        expect(
+            service.isPlatformAdminAccount({
+                email: "dev@frak-labs.com.evil.io",
+                emailVerifiedAt: new Date(),
+            })
+        ).toBe(false);
+        expect(
+            service.isPlatformAdminAccount({
+                email: "dev@gmail.com",
+                emailVerifiedAt: new Date(),
+            })
+        ).toBe(false);
+    });
+
+    it("isPlatformAdminAccount: case-insensitive email domain", () => {
+        const service = new PlatformAdminService();
+        expect(
+            service.isPlatformAdminAccount({
+                email: "Dev@FRAK-LABS.com",
+                emailVerifiedAt: new Date(),
+            })
+        ).toBe(true);
+    });
+
+    it("isPlatformAdminAccount: null account is rejected", () => {
+        const service = new PlatformAdminService();
+        expect(service.isPlatformAdminAccount(null)).toBe(false);
+        expect(
+            service.isPlatformAdminAccount({
+                email: null,
+                emailVerifiedAt: new Date(),
+            })
+        ).toBe(false);
+    });
+
     it("is case-insensitive: uppercase address matches", () => {
         // ADDR_B is uppercase; the list entry is lowercased by the service
         process.env.PLATFORM_ADMIN_WALLETS = ADDR_B;

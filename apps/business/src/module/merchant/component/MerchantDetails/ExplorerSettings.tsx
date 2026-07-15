@@ -246,9 +246,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                         control={form.control}
                         name="description"
                         render={({ field }) => (
-                            <EditField
-                                label={t("merchantEdit.explorer.description")}
-                            >
+                            <EditField>
                                 <FormControl>
                                     <TextArea
                                         length="big"
@@ -257,6 +255,9 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                                         className={styles.textareaMuted}
                                         placeholder={t(
                                             "merchantEdit.explorer.descriptionPlaceholder"
+                                        )}
+                                        label={t(
+                                            "merchantEdit.explorer.description"
                                         )}
                                         {...field}
                                     />

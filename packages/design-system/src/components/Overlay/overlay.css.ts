@@ -1,11 +1,7 @@
-import { keyframes, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { fadeIn } from "../../keyframes.css";
 import { vars } from "../../theme.css";
 import { easing, transition, zIndex } from "../../tokens.css";
-
-const fadeIn = keyframes({
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-});
 
 export const overlayStyle = style({
     position: "fixed",

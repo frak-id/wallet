@@ -15,23 +15,14 @@
  * - `bun run test:watch` - Watch mode
  */
 
-import { fileURLToPath } from "node:url";
 import sharedConfig from "@frak-labs/test-foundation/vitest.shared";
 import { defineConfig, mergeConfig } from "vitest/config";
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
-
+// Path aliases (@backend-utils, @backend-infrastructure, @backend-domain) are
+// resolved natively from tsconfig via resolve.tsconfigPaths in the shared config.
 export default mergeConfig(
     sharedConfig,
     defineConfig({
-        resolve: {
-            alias: {
-                "@backend-utils": `${__dirname}/src/utils/index.ts`,
-                "@backend-infrastructure": `${__dirname}/src/infrastructure/index.ts`,
-                "@backend-infrastructure/": `${__dirname}/src/infrastructure/`,
-                "@backend-domain/": `${__dirname}/src/domain/`,
-            },
-        },
         test: {
             name: "backend-unit",
 

@@ -1,8 +1,22 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import {
+    affiliateAttributionTable,
+    affiliateBrandTable,
+    affiliateSyncStateTable,
+} from "../../domain/affiliate/db/schema";
 // Import schemas directly from db/schema.ts files to avoid pulling in
 // domain contexts (which eagerly instantiate services and repositories)
 import { referralLinksTable } from "../../domain/attribution/db/schema";
+import {
+    billingDocumentCountersTable,
+    billingDocumentsTable,
+} from "../../domain/billing/db/schema";
+import {
+    businessAccountsTable,
+    businessEmailCodesTable,
+    businessSessionsTable,
+} from "../../domain/business-auth/db/schema";
 import { campaignRulesTable } from "../../domain/campaign/db/schema";
 import {
     emailVerificationCodesTable,
@@ -36,6 +50,7 @@ import {
     assetLogsTable,
     interactionLogsTable,
 } from "../../domain/rewards/db/schema";
+import { infraMetrics } from "../telemetry/infraMetrics";
 
 const schemaName = process.env.POSTGRES_SCHEMA || "public";
 
@@ -79,6 +94,14 @@ export const db = drizzle({
         pairingSignatureRequestTable,
         interactionLogsTable,
         assetLogsTable,
+        affiliateBrandTable,
+        affiliateAttributionTable,
+        affiliateSyncStateTable,
+        billingDocumentsTable,
+        billingDocumentCountersTable,
+        businessAccountsTable,
+        businessSessionsTable,
+        businessEmailCodesTable,
     },
 });
 
@@ -95,7 +118,8 @@ export const db = drizzle({
  */
 export async function tryWithAdvisoryLock<T>(
     key: number,
-    task: () => Promise<T>
+    task: () => Promise<T>,
+    lockName: string = `0x${key.toString(16)}`
 ): Promise<{ ran: true; result: T } | { ran: false }> {
     const connection = await postgresDb.reserve();
     try {
@@ -103,11 +127,15 @@ export async function tryWithAdvisoryLock<T>(
             SELECT pg_try_advisory_lock(${key}) AS locked
         `;
         if (!row?.locked) {
+            infraMetrics.advisoryLockContended(lockName);
             return { ran: false };
         }
+        infraMetrics.advisoryLockAcquired(lockName);
+        const stopHoldTimer = infraMetrics.advisoryLockHoldTimer(lockName);
         try {
             return { ran: true, result: await task() };
         } finally {
+            stopHoldTimer();
             await connection`SELECT pg_advisory_unlock(${key})`;
         }
     } finally {

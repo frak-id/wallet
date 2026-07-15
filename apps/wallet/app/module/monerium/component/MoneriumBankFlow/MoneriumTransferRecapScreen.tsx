@@ -1,6 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Input } from "@frak-labs/design-system/components/Input";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { BankIcon, CloseIcon } from "@frak-labs/design-system/icons";
 import { useCallback, useEffect, useRef } from "react";
@@ -127,7 +128,7 @@ export function MoneriumTransferRecapScreen({
                 ctaDisabled={isPending}
             >
                 <Card variant="elevated" padding="none">
-                    <Box className={styles.recapRow}>
+                    <Spread space="m" className={styles.recapRow}>
                         <Text
                             variant="bodySmall"
                             weight="medium"
@@ -142,8 +143,8 @@ export function MoneriumTransferRecapScreen({
                         >
                             {amount} €
                         </Text>
-                    </Box>
-                    <Box className={styles.recapRow}>
+                    </Spread>
+                    <Spread space="m" className={styles.recapRow}>
                         <Text
                             variant="bodySmall"
                             weight="medium"
@@ -169,7 +170,7 @@ export function MoneriumTransferRecapScreen({
                                 IBAN {maskIban(selectedIban.iban)}
                             </Text>
                         </Box>
-                    </Box>
+                    </Spread>
                 </Card>
 
                 <Box display={"flex"} flexDirection={"column"} gap={"xs"}>

@@ -51,6 +51,8 @@ yarn-error.log*
 .env.tmp
 .env*.local
 .env.sandbox
+.env.dev
+.env.prod
 
 # typescript
 *.tsbuildinfo
@@ -64,3 +66,5 @@ sst-env.d.ts
 .idea
 .sisyphus/
 .omo/
+
+.pi-subagents/

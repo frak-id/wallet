@@ -1,7 +1,7 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { useTranslation } from "react-i18next";
 import type { CampaignDetailsStats } from "@/module/campaigns/queries/queryOptions";
-import * as styles from "./campaign-details-sheet.css";
 import { BigNumber, MetricCard, Section, useDetailFormatters } from "./parts";
 import { TopAmbassadorsTable } from "./TopAmbassadorsTable";
 import { truncateWallet } from "./truncateWallet";
@@ -13,7 +13,7 @@ export function AmbassadorsTab({ data }: { data: CampaignDetailsStats }) {
 
     return (
         <Stack space="l">
-            <div className={styles.threeCol}>
+            <Tiles columns={3} space="m">
                 <MetricCard
                     label={t("campaigns.details.stats.ambassadors")}
                     descriptor={t("campaigns.details.stats.total")}
@@ -42,7 +42,7 @@ export function AmbassadorsTab({ data }: { data: CampaignDetailsStats }) {
                         value={ambassadorStats.refereesConvertedPct}
                     />
                 </MetricCard>
-            </div>
+            </Tiles>
 
             <Section title={t("campaigns.details.top.title")}>
                 <TopAmbassadorsTable
@@ -52,7 +52,7 @@ export function AmbassadorsTab({ data }: { data: CampaignDetailsStats }) {
             </Section>
 
             <Section title={t("campaigns.details.efficiency.title")}>
-                <div className={styles.threeCol}>
+                <Tiles columns={3} space="m">
                     <MetricCard
                         label={t("campaigns.details.efficiency.ambassadors")}
                         descriptor={t("campaigns.details.efficiency.roi")}
@@ -92,7 +92,7 @@ export function AmbassadorsTab({ data }: { data: CampaignDetailsStats }) {
                             value={efficiency.topPerformerPct}
                         />
                     </MetricCard>
-                </div>
+                </Tiles>
             </Section>
         </Stack>
     );

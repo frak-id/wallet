@@ -10,18 +10,6 @@ export const tabsContent = style({
     marginTop: alias.spacing.l,
 });
 
-export const twoCol = style({
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: alias.spacing.m,
-});
-
-export const threeCol = style({
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: alias.spacing.m,
-});
-
 // Big metric value — tabular figures so amounts line up across cards.
 export const amount = style({
     fontSize: "32px",
@@ -134,4 +122,38 @@ export const tierRow = style({
     justifyContent: "space-between",
     gap: alias.spacing.m,
     fontVariantNumeric: "tabular-nums",
+});
+
+// One budget-period radio option in the inline budget editor.
+export const budgetPeriodOption = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.s,
+    cursor: "pointer",
+});
+
+// Small, subtle pencil affordance next to an editable section title.
+export const editIconButton = style({
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: alias.spacing.xxs,
+    border: "none",
+    borderRadius: alias.cornerRadius.s,
+    backgroundColor: "transparent",
+    color: vars.text.tertiary,
+    cursor: "pointer",
+    transition: "color 0.15s ease, background-color 0.15s ease",
+    selectors: {
+        "&:hover": {
+            color: vars.text.primary,
+            backgroundColor: vars.surface.secondary,
+        },
+    },
+});
+
+// Hairline separating the current-values recap from the edit form.
+export const editDivider = style({
+    height: "1px",
+    backgroundColor: vars.border.subtle,
 });

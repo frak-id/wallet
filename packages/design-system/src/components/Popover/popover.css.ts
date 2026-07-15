@@ -1,6 +1,6 @@
 import { keyframes, style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import { alias } from "../../tokens.css";
+import { alias, zIndex } from "../../tokens.css";
 
 const slideUpAndFade = keyframes({
     from: { opacity: 0, transform: "translateY(2px)" },
@@ -23,6 +23,9 @@ const slideLeftAndFade = keyframes({
 });
 
 export const popoverContentStyle = style({
+    // Above modal/sheet content (zIndex.modal + 1) so popovers opened from
+    // within a Sheet/Dialog render on top instead of behind it.
+    zIndex: zIndex.popover,
     borderRadius: alias.cornerRadius.m,
     backgroundColor: vars.surface.background,
     boxShadow: "0 4px 16px 0 rgba(115, 115, 115, 0.2)",

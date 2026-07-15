@@ -1,5 +1,6 @@
-import { style, styleVariants } from "@vanilla-extract/css";
-import { fadeIn } from "../../keyframes.css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
+import { fadeInDown } from "../../keyframes.css";
 import { vars } from "../../theme.css";
 import { alias, brand, overlay, semanticLight } from "../../tokens.css";
 
@@ -14,16 +15,20 @@ export const container = style({
     position: "relative",
     borderRadius: alias.cornerRadius.m,
     overflow: "hidden", // clip the edge-fade overlays to the rounded corners
-    animation: `${fadeIn} 300ms ease-out`,
+    animation: `${fadeInDown} 300ms ease-out`,
     textAlign: "left",
     width: "100%",
     pointerEvents: "auto", // re-enable inside the click-through BannerStack
 });
 
-export const containerTone = styleVariants({
-    neutral: { backgroundColor: vars.surface.secondary },
-    warning: { backgroundColor: vars.surface.warning },
-    danger: { backgroundColor: vars.surface.error },
+export const containerTone = recipe({
+    variants: {
+        tone: {
+            neutral: { backgroundColor: vars.surface.secondary },
+            warning: { backgroundColor: vars.surface.warning },
+            danger: { backgroundColor: vars.surface.error },
+        },
+    },
 });
 
 /** Inner scroll viewport — content scrolls beneath the pinned close + fades. */
@@ -63,10 +68,14 @@ export const icon = style({
     paddingBlock: "2px",
 });
 
-export const iconTone = styleVariants({
-    neutral: { color: vars.icon.action }, // face-id blue
-    warning: { color: vars.icon.warning },
-    danger: { color: vars.icon.error },
+export const iconTone = recipe({
+    variants: {
+        tone: {
+            neutral: { color: vars.icon.action }, // face-id blue
+            warning: { color: vars.icon.warning },
+            danger: { color: vars.icon.error },
+        },
+    },
 });
 
 export const textColumn = style({
@@ -152,10 +161,14 @@ export const action = style({
     },
 });
 
-export const actionTone = styleVariants({
-    neutral: { color: vars.text.action },
-    warning: { color: vars.text.warning },
-    danger: { color: vars.text.error },
+export const actionTone = recipe({
+    variants: {
+        tone: {
+            neutral: { color: vars.text.action },
+            warning: { color: vars.text.warning },
+            danger: { color: vars.text.error },
+        },
+    },
 });
 
 /** Pinned close (X) button — stays put while content scrolls beneath it. */
@@ -223,8 +236,16 @@ export const fadeBottom = style({ bottom: 0 });
 
 // `to top` → opaque at the bottom edge, transparent upward (the bottom fade).
 // `fadeTop` rotates 180° so the opaque edge sits at the top.
-export const fadeTone = styleVariants({
-    neutral: { backgroundImage: edgeFade(semanticLight.surface.secondary) },
-    warning: { backgroundImage: edgeFade(semanticLight.surface.warning) },
-    danger: { backgroundImage: edgeFade(semanticLight.surface.error) },
+export const fadeTone = recipe({
+    variants: {
+        tone: {
+            neutral: {
+                backgroundImage: edgeFade(semanticLight.surface.secondary),
+            },
+            warning: {
+                backgroundImage: edgeFade(semanticLight.surface.warning),
+            },
+            danger: { backgroundImage: edgeFade(semanticLight.surface.error) },
+        },
+    },
 });

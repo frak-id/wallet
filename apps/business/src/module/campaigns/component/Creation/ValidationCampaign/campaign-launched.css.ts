@@ -18,11 +18,6 @@ export const main = style({
     padding: alias.spacing.l,
 });
 
-export const inner = style({
-    width: "100%",
-    maxWidth: "684px",
-});
-
 /** 48px light-blue disc holding the success check. */
 export const checkCircle = style({
     display: "flex",

@@ -9,7 +9,6 @@
 
 import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import {
-    defaultNS,
     fallbackLng,
     interpolation,
     supportedLngs,
@@ -95,10 +94,10 @@ async function initI18n(): Promise<void> {
         .use(initReactI18next)
         .use(I18nextBrowserLanguageDetector)
         .init({
-            defaultNS,
-            ns: ["translation", "customized"],
+            defaultNS: "customized",
+            ns: ["customized", "common"],
             fallbackLng,
-            fallbackNS: "customized",
+            fallbackNS: "common",
             supportedLngs,
             partialBundledLanguages: true,
             debug: isRunningLocally,

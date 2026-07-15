@@ -24,9 +24,9 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
                 query: { merchantId },
             });
 
-            if (error || !data) return [];
+            if (error) throw error;
 
-            return data.rewards as MerchantReward[];
+            return (data?.rewards ?? []) as MerchantReward[];
         },
         enabled: !!merchantId,
         staleTime: 5 * 60 * 1000,

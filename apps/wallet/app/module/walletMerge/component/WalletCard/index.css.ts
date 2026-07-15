@@ -14,17 +14,3 @@ export const cardWinner = style([
         outlineOffset: -2,
     },
 ]);
-
-export const header = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: alias.spacing.s,
-});
-
-export const statRow = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: alias.spacing.s,
-});

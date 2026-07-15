@@ -1,13 +1,28 @@
 import type { Address } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { queryClient } from "@/module/common/provider/queryClient";
 import { pushCreationStore } from "@/stores/pushCreationStore";
+
+export type BusinessAuthMethod = "siwe" | "password" | "shopify";
 
 type AuthState = {
     token: string | null;
     wallet: Address | null;
+    accountId: string | null;
+    authMethod: BusinessAuthMethod | null;
     expiresAt: number | null;
-    setAuth: (token: string, wallet: Address, expiresAt: number) => void;
+    /** Session minted but 2FA not yet completed — unusable outside `/auth`. */
+    pending2fa: boolean;
+    setAuth: (auth: {
+        token: string;
+        wallet?: Address | null;
+        accountId?: string | null;
+        authMethod?: BusinessAuthMethod;
+        expiresAt: number;
+        pending2fa?: boolean;
+    }) => void;
+    setWallet: (wallet: Address) => void;
     clearAuth: () => void;
     isAuthenticated: () => boolean;
 };
@@ -17,11 +32,31 @@ export const useAuthStore = create<AuthState>()(
         (set, get) => ({
             token: null,
             wallet: null,
+            accountId: null,
+            authMethod: null,
             expiresAt: null,
+            pending2fa: false,
 
-            setAuth: (token, wallet, expiresAt) => {
-                // Update store
-                set({ token, wallet, expiresAt });
+            setAuth: ({
+                token,
+                wallet = null,
+                accountId = null,
+                authMethod = "siwe",
+                expiresAt,
+                pending2fa = false,
+            }) => {
+                set({
+                    token,
+                    wallet,
+                    accountId,
+                    authMethod,
+                    expiresAt,
+                    pending2fa,
+                });
+            },
+
+            setWallet: (wallet) => {
+                set({ wallet });
             },
 
             clearAuth: () => {
@@ -29,7 +64,10 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     token: null,
                     wallet: null,
+                    accountId: null,
+                    authMethod: null,
                     expiresAt: null,
+                    pending2fa: false,
                 });
                 // Wipe transient stores that hold draft data the next
                 // user (or unauthenticated viewer) shouldn't see — the
@@ -38,27 +76,54 @@ export const useAuthStore = create<AuthState>()(
                 // filters) are merchant-scoped and access-checked by
                 // the layout loader, so they stay put for now.
                 pushCreationStore.getState().clearForm();
+                // Drop every cached query so the next (or unauthenticated)
+                // viewer can't read the previous session's data — covers both
+                // an explicit logout and the 401 auto-logout on an expired
+                // token. `clear()` also prompts the persister to flush the
+                // now-empty cache back to storage.
+                queryClient.clear();
             },
 
             isAuthenticated: () => {
-                const { token, expiresAt } = get();
+                const { token, expiresAt, pending2fa } = get();
                 if (!token || !expiresAt) return false;
+                if (pending2fa) return false;
                 return Date.now() < expiresAt;
             },
         }),
         {
             name: "business-auth",
+            // Tolerate the pre-account-model persisted shape
+            // (`{ token, wallet, expiresAt }`, no `accountId`/`authMethod`/
+            // `pending2fa`): the store's own defaults backfill the missing
+            // fields, so an old session just resumes as a wallet-only SIWE
+            // session on next load.
+            version: 1,
+            migrate: (persistedState) => {
+                const state = (persistedState ?? {}) as Partial<AuthState>;
+                return {
+                    ...state,
+                    accountId: state.accountId ?? null,
+                    authMethod:
+                        state.authMethod ?? (state.wallet ? "siwe" : null),
+                    pending2fa: state.pending2fa ?? false,
+                };
+            },
         }
     )
 );
 
 /**
- * Get the current session token safely
+ * Current session token for the `x-business-auth` header, or null when
+ * absent/expired. Deliberately NOT gated on `isAuthenticated()`: a
+ * pending-2FA session is unauthenticated for routing purposes but its token
+ * MUST still be sent — the whole `/auth/2fa/*` surface runs on pending
+ * sessions (`allowPending: true`).
  */
 export function getSafeAuthToken(): string | null {
-    const state = useAuthStore.getState();
-    if (!state.isAuthenticated()) {
+    const { token, expiresAt } = useAuthStore.getState();
+    if (!token || !expiresAt || Date.now() >= expiresAt) {
         return null;
     }
-    return state.token;
+    return token;
 }

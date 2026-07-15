@@ -4,18 +4,103 @@
             "frakLabsLogoAlt": "Frak Labs",
             "heroTitleLine1": "Accédez et découvrez",
             "heroTitleLine2": "Frak Ad Manager",
-            "heroSubtitle": "Inscrivez-vous en une seconde. Sans email, sans mot de passe.",
+            "heroSubtitle": "Inscrivez-vous en une seconde.",
             "connect": "Se connecter à Frak Ad Manager",
             "dashboardImageAlt": "Aperçu du tableau de bord Frak Ad Manager",
             "footerCopyright": "© {{year}} FrakLabs. Tous droits réservés.",
             "footerTerms": "Conditions générales",
-            "footerPrivacy": "Politique de confidentialité"
+            "footerPrivacy": "Politique de confidentialité",
+            "ssoError": "La connexion avec Shopify a échoué. Veuillez réessayer.",
+            "sessionError": "Nous n'avons pas pu finaliser votre connexion. Veuillez réessayer.",
+            "walletError": "La connexion avec votre wallet a échoué. Veuillez réessayer.",
+            "methods": {
+                "wallet": "Portefeuille",
+                "email": "E-mail",
+                "shopify": "Shopify"
+            },
+            "email": {
+                "emailPlaceholder": "Adresse e-mail",
+                "passwordPlaceholder": "Mot de passe",
+                "newPasswordPlaceholder": "Créer un mot de passe",
+                "passwordHint": "Au moins 10 caractères.",
+                "submit": "Se connecter",
+                "registerSubmit": "Créer un compte",
+                "noAccount": "Pas encore de compte ?",
+                "registerCta": "S'inscrire",
+                "backToLogin": "Retour à la connexion",
+                "forgotPassword": "Mot de passe oublié ?",
+                "resetInstructions": "Saisissez l'e-mail de votre compte et nous vous enverrons un code de réinitialisation.",
+                "sendResetCode": "Envoyer le code",
+                "resetSent": "Si un compte existe, un code de réinitialisation a été envoyé. Saisissez-le ci-dessous avec votre nouveau mot de passe.",
+                "resetCodePlaceholder": "Code de réinitialisation",
+                "resetSubmit": "Réinitialiser le mot de passe",
+                "resetSuccess": "Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter."
+            },
+            "shopify": {
+                "submit": "Continuer avec Shopify",
+                "invalidDomain": "Saisissez un domaine myshopify.com valide",
+                "label": "Domaine de la boutique Shopify",
+                "redirecting": "Connexion avec Shopify en cours\u2026"
+            },
+            "or": "ou",
+            "back": "Retour"
         },
-        "embedded": {
-            "title": "Authentification requise",
-            "panelTitle": "Veuillez connecter votre porte-monnaie pour continuer",
-            "subtitle": "Connectez-vous avec Frak pour lier votre boutique et commencer à récompenser vos clients.",
-            "action": "S'authentifier"
+        "twoFactor": {
+            "title": "Vérifiez votre identité",
+            "subtitle": "Confirmez que c'est bien vous avant de continuer.",
+            "pendingHint": "Vérification de votre session…",
+            "method": {
+                "email": "Code par e-mail",
+                "totp": "Application d'authentification",
+                "siwe": "Portefeuille"
+            },
+            "codePlaceholder": "Code à 6 chiffres",
+            "verify": "Vérifier",
+            "genericError": "Échec de la vérification. Veuillez réessayer.",
+            "email": {
+                "sendCode": "Envoyer un code par e-mail",
+                "sentHint": "Saisissez le code envoyé à votre e-mail.",
+                "resend": "Renvoyer le code",
+                "resent": "Code envoyé"
+            },
+            "totp": {
+                "hint": "Saisissez le code de votre application d'authentification.",
+                "recoveryHint": "Saisissez l'un de vos codes de récupération.",
+                "recoveryNotice": "Vous saisissez un code de récupération à usage unique, et non le code à 6 chiffres de votre application d'authentification.",
+                "recoveryPlaceholder": "Code de récupération",
+                "useRecovery": "Utiliser un code de récupération",
+                "useCode": "Utiliser votre application d'authentification"
+            },
+            "siwe": {
+                "hint": "Signez un message avec votre portefeuille pour confirmer que c'est vous.",
+                "cta": "Signer avec le portefeuille"
+            },
+            "noMethods": {
+                "title": "Authentification à deux facteurs requise",
+                "description": "Cette action est protégée. Configurez l'authentification à deux facteurs dans vos paramètres avant de continuer.",
+                "cta": "Accéder aux paramètres de sécurité"
+            }
+        },
+        "verifyEmail": {
+            "title": "Vérifiez votre e-mail",
+            "hint": "Saisissez le code envoyé à votre adresse e-mail.",
+            "sendCode": "Envoyer le code de vérification",
+            "resend": "Renvoyer le code",
+            "resent": "Code envoyé",
+            "success": "Votre e-mail est vérifié.",
+            "continue": "Continuer"
+        },
+        "invite": {
+            "title": "Vous avez été invité à devenir administrateur de <strong>{{merchantName}}</strong> sur Frak",
+            "subtitle": "Invité par {{inviterName}}. Définissez un mot de passe pour finaliser la création de votre compte.",
+            "submit": "Accepter l'invitation",
+            "invalidToken": "Ce lien d'invitation est invalide ou a expiré",
+            "askToResend": "Demandez à votre administrateur de renvoyer l'invitation.",
+            "goToLogin": "Aller à la connexion",
+            "alreadyClaimed": "Cette invitation a déjà été utilisée. Connectez-vous avec {{email}}.",
+            "alreadyAuthenticated": "Vous êtes déjà connecté sur cet appareil avec un compte différent de {{email}}.",
+            "openDashboard": "Ouvrir le tableau de bord",
+            "signOutFirst": "Déconnectez-vous pour accepter cette invitation"
         }
     },
     "forms": {
@@ -104,6 +189,9 @@
             "campaignsList": {
                 "nav": "Liste"
             },
+            "campaignsAffiliateReport": {
+                "nav": "Rapport TakeAds"
+            },
             "members": {
                 "nav": "Membres",
                 "title": "Liste des membres"
@@ -114,8 +202,17 @@
             "settings": {
                 "nav": "Paramètres"
             },
+            "billing": {
+                "nav": "Facturation"
+            },
             "merchant": {
                 "nav": "Marchand"
+            },
+            "funding": {
+                "nav": "Financement"
+            },
+            "setupStatus": {
+                "nav": "État de configuration"
             },
             "push": {
                 "nav": "Push"
@@ -186,7 +283,8 @@
         "platformAdminNotice": "Les données membres ne sont pas disponibles en mode lecture seule administrateur plateforme."
     },
     "platformAdmin": {
-        "readOnlyTag": "Lecture seule"
+        "readOnlyTag": "Lecture seule",
+        "readOnlySectionTitle": "Marchands en lecture seule"
     },
     "push": {
         "create": {
@@ -310,6 +408,34 @@
         }
     },
     "campaigns": {
+        "affiliateReport": {
+            "brand": {
+                "title": "Marque TakeAds n°{{id}}"
+            },
+            "truncated": "Données partielles — la période est trop large et les résultats ont été tronqués. Réduisez la plage de dates pour des chiffres complets.",
+            "noData": "Pas encore de données",
+            "clicksOverTime": "Clics par jour",
+            "actionsOverTime": "Actions par jour",
+            "statusBreakdown": "Actions par statut",
+            "kpi": {
+                "clicks": "Clics",
+                "actions": "Actions",
+                "sales": "Ventes",
+                "conversion": "Clic → action"
+            },
+            "status": {
+                "pending": "En attente",
+                "confirmed": "Confirmées",
+                "settled": "Réglées",
+                "canceled": "Annulées"
+            },
+            "revenue": {
+                "title": "Revenus par devise",
+                "currency": "Devise",
+                "orders": "Volume de commandes",
+                "commission": "Commission"
+            }
+        },
         "create": {
             "steps": {
                 "basics": {
@@ -340,7 +466,7 @@
                 "referralChain": {
                     "label": "Chaîne de parrainage",
                     "hint": "Ambassadeur multi-niveaux",
-                    "subtitle": "Activez les récompenses en chaîne pour récompenser les ambassadeurs sur plusieurs niveaux de parrainage — pas seulement le parrain direct."
+                    "subtitle": "Activez les récompenses en chaîne pour récompenser les ambassadeurs sur plusieurs niveaux de parrainage - pas seulement le parrain direct."
                 },
                 "validation": {
                     "label": "Validation de la campagne",
@@ -380,7 +506,7 @@
                 "title": "Campagne lancée !",
                 "subtitle": "« {{name}} » est maintenant en ligne.",
                 "notifyTitle": "Les ambassadeurs Frak seront notifiés",
-                "notifyBody": "La communauté d’ambassadeurs Frak recevra une notification push sur l’app : « {{merchant}} » vient de lancer une nouvelle campagne — ils peuvent commencer à partager immédiatement.",
+                "notifyBody": "La communauté d’ambassadeurs Frak recevra une notification push sur l’app : « {{merchant}} » vient de lancer une nouvelle campagne - ils peuvent commencer à partager immédiatement.",
                 "tipsTitle": "Maximisez vos résultats",
                 "tipsSubtitle": "Les campagnes les plus efficaces utilisent plusieurs points de contact. Activez tous les leviers :",
                 "tip1Title": "Page produit",
@@ -602,7 +728,7 @@
                     "refereePlaceholder": "Ex. 2"
                 },
                 "cpa": {
-                    "hint": "Coût total que vous payez par conversion confirmée. Frak prend 20 % — le reste revient à vos utilisateurs.",
+                    "hint": "Coût total que vous payez par conversion confirmée. Frak prend 20 % - le reste revient à vos utilisateurs.",
                     "rewardsDistributed": "Récompenses distribuées",
                     "frakCommission": "Commission Frak",
                     "reco": "Frak recommande une répartition <highlight>80/20</highlight> en faveur de l’ambassadeur.",
@@ -631,7 +757,7 @@
                     "addTier": "Ajouter un palier",
                     "removeTier": "Supprimer le palier",
                     "incomplete": "Chaque palier doit avoir une tranche de panier et un CPA supérieur à 0",
-                    "overlap": "Les paliers ne peuvent pas se chevaucher — chaque tranche de panier doit commencer là où la précédente se termine."
+                    "overlap": "Les paliers ne peuvent pas se chevaucher - chaque tranche de panier doit commencer là où la précédente se termine."
                 },
                 "eligibility": {
                     "label": "Éligibilité",
@@ -642,8 +768,8 @@
                 },
                 "lockup": {
                     "label": "Blocage des récompenses",
-                    "description": "Protection contre les remboursements — délai avant le versement",
-                    "info": "Les récompenses sont retenues pendant une période de grâce après l’achat. Si la commande est remboursée durant cette période, aucune récompense n’est versée — ce qui protège le budget de votre campagne.",
+                    "description": "Protection contre les remboursements - délai avant le versement",
+                    "info": "Les récompenses sont retenues pendant une période de grâce après l’achat. Si la commande est remboursée durant cette période, aucune récompense n’est versée - ce qui protège le budget de votre campagne.",
                     "durationLabel": "Durée de blocage (jours)",
                     "durationPlaceholder": "Ex. 14",
                     "durationHint": "Mettre 0 pour verser les récompenses immédiatement après l’achat.",
@@ -748,7 +874,7 @@
                 "configuration": "Configuration"
             },
             "economic": {
-                "title": "Valeur économique — Frak vs Meta",
+                "title": "Valeur économique - Frak vs Meta",
                 "yourSpend": "Vos dépenses",
                 "frakTag": "(Frak)",
                 "equivalentMeta": "Coût équivalent sur Meta",
@@ -834,7 +960,7 @@
                 "conditions": {
                     "title": "Conditions",
                     "description": "Règles supplémentaires à remplir pour que la récompense s'applique.",
-                    "none": "Aucune condition supplémentaire — les récompenses s'appliquent à chaque action éligible.",
+                    "none": "Aucune condition supplémentaire - les récompenses s'appliquent à chaque action éligible.",
                     "all": "Toutes les conditions suivantes",
                     "any": "L'une des conditions suivantes",
                     "noneOf": "Aucune des conditions suivantes",
@@ -860,7 +986,13 @@
                         "daily": "Budget quotidien",
                         "weekly": "Budget hebdomadaire",
                         "monthly": "Budget mensuel"
-                    }
+                    },
+                    "edit": "Modifier le budget",
+                    "periodLabel": "Période du budget",
+                    "amountLabel": "Plafond du budget",
+                    "save": "Enregistrer",
+                    "cancel": "Annuler",
+                    "error": "Impossible de mettre à jour le budget. Veuillez réessayer."
                 },
                 "targeting": {
                     "title": "Ciblage",
@@ -884,10 +1016,17 @@
                 },
                 "schedule": {
                     "title": "Planification",
+                    "starts": "Commence le",
+                    "immediate": "Immédiatement",
                     "published": "Publiée le",
                     "notPublished": "Pas encore publiée",
                     "expires": "Se termine le",
-                    "noExpiration": "Aucune date de fin"
+                    "noExpiration": "Aucune date de fin",
+                    "edit": "Modifier les dates",
+                    "save": "Enregistrer",
+                    "cancel": "Annuler",
+                    "endBeforeStart": "La date de fin doit être postérieure à la date de début",
+                    "error": "Impossible de mettre à jour la planification. La date de début ne peut être que repoussée."
                 }
             }
         },
@@ -986,13 +1125,17 @@
         "dateField": {
             "placeholder": "jj/mm/aaaa",
             "openCalendar": "Ouvrir le calendrier"
-        }
+        },
+        "cancel": "Annuler",
+        "copied": "Copié",
+        "showPassword": "Afficher le mot de passe",
+        "hidePassword": "Masquer le mot de passe"
     },
     "bank": {
         "banner": {
-            "depleted": "Votre banque de récompenses est vide — les récompenses ne peuvent pas être distribuées.",
-            "paused": "Votre banque de récompenses est en pause — la distribution est arrêtée.",
-            "warning": "Votre banque de récompenses nécessite votre attention — vérifiez votre solde et l'autorisation de dépense.",
+            "depleted": "Votre banque de récompenses est vide - les récompenses ne peuvent pas être distribuées.",
+            "paused": "Votre banque de récompenses est en pause - la distribution est arrêtée.",
+            "warning": "Votre banque de récompenses nécessite votre attention - vérifiez votre solde et l'autorisation de dépense.",
             "notDeployed": "Votre banque de récompenses n'est pas encore configurée.",
             "ctaAddFunds": "Ajouter des fonds",
             "ctaManageBank": "Gérer la banque",
@@ -1012,7 +1155,7 @@
             "distributing": "Distribution des récompenses",
             "distributingTooltip": "Lorsque cette option est activée, les récompenses sont automatiquement distribuées à vos utilisateurs via les campagnes actives. La désactiver stoppe toute nouvelle distribution.",
             "available": "disponible",
-            "noFundsCaption": "Aucun fonds — ajoutez des fonds pour commencer à distribuer des récompenses.",
+            "noFundsCaption": "Aucun fonds - ajoutez des fonds pour commencer à distribuer des récompenses.",
             "addFunds": "Ajouter des fonds",
             "emptyWarning": "Votre banque n'a aucun fonds. Les campagnes actives ne peuvent pas distribuer de récompenses tant que vous n'ajoutez pas de fonds.",
             "allowanceTooltip": "Jusqu'à {{amount}} autorisé pour la distribution",
@@ -1052,6 +1195,11 @@
             "pending": "Récompenses en attente (bloquées)",
             "withdrawable": "Disponible pour la migration",
             "migrate": "Migrer les fonds vers la nouvelle banque"
+        },
+        "linkWallet": {
+            "title": "Liez un portefeuille pour gérer les fonds",
+            "description": "Retirer, ajuster l'allocation et mettre en pause la distribution nécessitent une signature de portefeuille. Liez un portefeuille Frak pour débloquer ces actions.",
+            "cta": "Lier un portefeuille Frak"
         }
     },
     "settings": {
@@ -1146,19 +1294,167 @@
                 "type": "Type",
                 "description": "Description",
                 "pdf": "PDF",
-                "download": "Télécharger le PDF"
+                "download": "Télécharger le PDF",
+                "downloadError": "Échec de la génération du PDF. Veuillez réessayer."
             },
             "tag": {
                 "paid": "Payée",
-                "deposit": "Dépôt"
+                "deposit": "Dépôt",
+                "withdraw": "Restitution"
             },
             "validation": {
                 "required": "Ce champ est requis",
-                "email": "Saisir une adresse e-mail valide"
+                "email": "Saisir une adresse e-mail valide",
+                "decimal": "Saisissez un montant décimal valide",
+                "txHash": "Saisissez un hash de transaction valide (0x…)"
+            },
+            "errors": {
+                "save": "Une erreur est survenue lors de l'enregistrement de vos informations de facturation. Vos modifications ont été conservées - veuillez réessayer."
+            },
+            "admin": {
+                "panel": {
+                    "title": "Administration - Facturation",
+                    "description": "Créez des notes de dépôt et des factures de retrait pour ce marchand. Visible uniquement par les administrateurs de la plateforme."
+                },
+                "deposit": {
+                    "trigger": "Ajouter un dépôt",
+                    "title": "Ajouter une note de dépôt",
+                    "description": "Enregistre un dépôt et calcule automatiquement la TVA et les frais Frak.",
+                    "submit": "Créer le dépôt"
+                },
+                "breakdown": {
+                    "title": "Estimation détaillée",
+                    "gross": "Montant brut",
+                    "vat": "TVA (20 %)",
+                    "vatExempt": "TVA (exonérée hors FR)",
+                    "frakFee": "Frais Frak (20 %)",
+                    "gifted": "Montant offert",
+                    "net": "Montant net",
+                    "hint": "Estimation - la TVA et les frais définitifs sont calculés à la création du dépôt."
+                },
+                "withdraw": {
+                    "trigger": "Ajouter un retrait",
+                    "title": "Ajouter une facture de retrait",
+                    "description": "Enregistre un retrait lié à un dépôt et calcule automatiquement la restitution au prorata.",
+                    "submit": "Créer le retrait"
+                },
+                "fields": {
+                    "grossAmount": {
+                        "label": "Montant brut",
+                        "placeholder": "ex. 1200"
+                    },
+                    "giftedAmount": {
+                        "label": "Montant offert (optionnel)",
+                        "placeholder": "ex. 200",
+                        "hint": "Complément offert rajouté au net, pour rendre cohérent un onramp mal calculé."
+                    },
+                    "remainingBankAmount": {
+                        "label": "Montant restant en banque",
+                        "placeholder": "ex. 400"
+                    },
+                    "currency": {
+                        "label": "Devise",
+                        "autoPlaceholder": "Sélectionnez d'abord un dépôt lié"
+                    },
+                    "documentDate": {
+                        "label": "Date du document"
+                    },
+                    "paymentPlatform": {
+                        "label": "Plateforme de paiement",
+                        "none": "Aucune"
+                    },
+                    "linkedDeposit": {
+                        "label": "Dépôt lié",
+                        "placeholder": "Sélectionnez le dépôt que ce retrait annule"
+                    },
+                    "rawIban": {
+                        "label": "IBAN",
+                        "placeholder": "Saisissez l'IBAN de destination",
+                        "hint": "Seule une référence masquée (code pays + derniers chiffres) est stockée ou envoyée."
+                    },
+                    "txHash": {
+                        "label": "Hash de transaction (optionnel)"
+                    },
+                    "note": {
+                        "label": "Note (optionnelle)",
+                        "placeholder": "Note interne"
+                    }
+                },
+                "table": {
+                    "void": "Annuler",
+                    "voidAria": "Annuler {{reference}}"
+                },
+                "void": {
+                    "title": "Annuler ce document ?",
+                    "description": "Ceci annulera {{reference}}. Les documents annulés sont conservés pour les registres mais exclus de l'historique de facturation du marchand.",
+                    "confirm": "Annuler le document"
+                },
+                "errors": {
+                    "create": "Une erreur est survenue lors de la création du document. Veuillez réessayer.",
+                    "void": "Une erreur est survenue lors de l'annulation du document. Veuillez réessayer."
+                }
+            }
+        },
+        "security": {
+            "twoFactor": {
+                "title": "Authentification à deux facteurs",
+                "description": "Ajoutez une couche de sécurité supplémentaire à votre connexion avec une application d'authentification."
+            },
+            "totp": {
+                "title": "Application d'authentification",
+                "enable": "Activer l'application d'authentification",
+                "enabled": "Application d'authentification activée",
+                "scanHint": "Scannez ce QR code avec votre application d'authentification, puis saisissez le code affiché.",
+                "manualHint": "Impossible de scanner ? Saisissez plutôt cette clé manuellement :",
+                "confirm": "Confirmer",
+                "recoveryTitle": "Enregistrez vos codes de récupération",
+                "recoveryHint": "Conservez-les en lieu sûr - chaque code est utilisable une seule fois si vous perdez l'accès à votre application.",
+                "copyCodes": "Copier les codes",
+                "downloadCodes": "Télécharger"
+            },
+            "credentials": {
+                "title": "Méthodes de connexion",
+                "description": "Portefeuille, mot de passe et comptes liés utilisés pour vous connecter.",
+                "wallet": "Portefeuille",
+                "linkWallet": "Lier un portefeuille",
+                "addPassword": "Ajoutez un mot de passe pour aussi vous connecter par e-mail.",
+                "savePassword": "Enregistrer le mot de passe",
+                "passwordAdded": "Mot de passe ajouté et e-mail vérifié.",
+                "verifyBanner": {
+                    "title": "Vérifiez votre adresse e-mail",
+                    "description": "Confirmez votre e-mail pour sécuriser votre compte et vous assurer de toujours pouvoir vous reconnecter."
+                },
+                "emailTaken": "Cet e-mail est déjà utilisé par un autre compte.",
+                "password": "E-mail et mot de passe",
+                "connected": "Vérifié",
+                "pending": "En attente de vérification",
+                "addPasswordCta": "Ajouter un mot de passe"
+            },
+            "sessions": {
+                "title": "Sessions actives",
+                "description": "Appareils et navigateurs actuellement connectés à votre compte.",
+                "current": "cet appareil",
+                "revoke": "Révoquer",
+                "emptyTitle": "Aucune session active",
+                "emptyDescription": "Les appareils connectés à votre compte apparaîtront ici.",
+                "revokeTitle": "Révoquer cette session ?",
+                "revokeDescription": "Cet appareil devra se reconnecter pour accéder à votre compte.",
+                "method": {
+                    "wallet": "Portefeuille",
+                    "password": "E-mail et mot de passe",
+                    "shopify": "Shopify"
+                }
             }
         }
     },
     "merchant": {
+        "affiliateTag": "TakeAds",
+        "affiliate": {
+            "title": "Configuration d'affiliation",
+            "description": "Ce marchand est rémunéré via son intégration d'affiliation (TakeAds).",
+            "brandId": "Identifiant de marque TakeAds",
+            "trackingLink": "Lien de suivi"
+        },
         "create": {
             "steps": {
                 "details": {
@@ -1179,6 +1475,28 @@
                 "back": "Retour",
                 "continue": "Continuer",
                 "completeRegistration": "Finaliser l'enregistrement"
+            },
+            "platformAdmin": {
+                "label": "Options administrateur",
+                "description": "Options avancées réservées aux administrateurs de la plateforme Frak.",
+                "skipDomain": {
+                    "title": "Ignorer la vérification du domaine",
+                    "description": "Enregistrer sans la vérification DNS de propriété. La signature reste requise."
+                },
+                "useFrakBank": {
+                    "title": "Utiliser la banque de campagne Frak",
+                    "description": "Associer ce marchand à la banque Frak partagée au lieu d'en déployer une dédiée."
+                },
+                "takeadsMerchantId": {
+                    "label": "Identifiant de marque TakeAds",
+                    "placeholder": "ex. 12345",
+                    "mustBeInteger": "Veuillez saisir un nombre entier positif"
+                },
+                "takeadsTrackingLink": {
+                    "label": "Lien de suivi TakeAds",
+                    "placeholder": "https://tatrck.com/h/...",
+                    "invalidUrl": "Veuillez saisir une URL valide"
+                }
             },
             "fields": {
                 "name": {
@@ -1217,7 +1535,8 @@
                 "copy": "Copier",
                 "helpQuestion": "Comment ajouter un enregistrement DNS TXT dans mes paramètres DNS ?",
                 "helpBody": "Ajouter un enregistrement DNS TXT confirme que vous êtes propriétaire de ce domaine. La procédure varie selon votre fournisseur DNS (par ex. Cloudflare, GoDaddy, Namecheap). Pour des instructions détaillées étape par étape, consultez notre documentation :",
-                "helpCta": "Voir le guide de configuration DNS"
+                "helpCta": "Voir le guide de configuration DNS",
+                "verifiedViaShopify": "Domaine vérifié grâce à votre session Shopify"
             },
             "summary": {
                 "label": "Récapitulatif",
@@ -1251,6 +1570,7 @@
         "close": "Fermer",
         "tabs": {
             "identity": "Personnaliser l'identité SDK",
+            "affiliate": "Réglages d'affiliation",
             "explorer": "Réglages de l'app Explorer",
             "team": "Gérer votre équipe"
         },
@@ -1305,9 +1625,9 @@
             "useExisting": "Utiliser une image existante :",
             "invalidUrl": "Saisissez une URL d'image valide (https://…)",
             "restrictions": {
-                "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 à 2:1 (Max 10 Mo)",
-                "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 à 2:1 (Max 10 Mo)",
-                "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 à 2:1 (Max 10 Mo)"
+                "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 à 2:1 (Max 10 Mo)",
+                "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 à 2:1 (Max 10 Mo)",
+                "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 à 2:1 (Max 10 Mo)"
             },
             "descriptionPlaceholder": "Description du marchand..."
         },
@@ -1337,7 +1657,7 @@
                 "change": {
                     "title": "Changer de plateforme ?",
                     "description": "Cela pourrait casser le suivi de vos achats. Voulez-vous vraiment changer de plateforme ?",
-                    "internalWarning": "Vous ne pourrez pas revenir en arrière depuis ce tableau de bord — il faudra reconfigurer le webhook depuis l'application de la plateforme (comme l'app Shopify Frak).",
+                    "internalWarning": "Vous ne pourrez pas revenir en arrière depuis ce tableau de bord - il faudra reconfigurer le webhook depuis l'application de la plateforme (comme l'app Shopify Frak).",
                     "confirm": "Changer de plateforme"
                 },
                 "instructions": {
@@ -1385,19 +1705,31 @@
                 "admin": "Admin"
             },
             "me": "Moi :",
+            "walletlessMember": "Membre sans portefeuille",
             "addMember": "Ajouter un membre",
             "saveAll": "Enregistrer les modifications",
             "removeMember": "Retirer le membre",
             "undoRemove": "Annuler le retrait",
             "saveError": "Certaines modifications n'ont pas pu être enregistrées. Réessayez.",
+            "invited": "Invité",
+            "resendInvite": "Renvoyer l'invitation",
+            "resendSuccess": "Invitation renvoyée à {{email}}",
+            "resendError": "Impossible de renvoyer l'invitation. Réessayez.",
             "add": {
                 "title": "Ajouter un membre",
-                "description": "Invitez un administrateur à votre équipe via son adresse de portefeuille.",
+                "description": "Invitez un administrateur par adresse de wallet ou par email.",
                 "label": "Portefeuille du membre",
                 "placeholder": "0x…",
                 "submit": "Ajouter le membre",
                 "invalid": "Adresse de portefeuille invalide",
-                "error": "Impossible d'ajouter l'administrateur. Réessayez."
+                "error": "Impossible d'ajouter l'administrateur. Réessayez.",
+                "modeWallet": "Wallet",
+                "modeEmail": "Email",
+                "emailLabel": "Email du membre",
+                "emailPlaceholder": "nom@entreprise.com",
+                "emailInvalid": "Adresse email invalide",
+                "addedSuccess": "{{email}} a été ajouté à l'équipe",
+                "invitedSuccess": "Invitation envoyée à {{email}}"
             }
         }
     },
@@ -1437,7 +1769,7 @@
         },
         "placements": {
             "title": "Personnalisation du SDK",
-            "description": "Les réglages globaux s'appliquent à tous les composants SDK. Les emplacements sont des variantes utilisables sur un même site pour présenter vos produits différemment — chacune avec ses textes, styles et comportements.",
+            "description": "Les réglages globaux s'appliquent à tous les composants SDK. Les emplacements sont des variantes utilisables sur un même site pour présenter vos produits différemment - chacune avec ses textes, styles et comportements.",
             "globalDefault": "Réglages globaux",
             "add": "Ajouter un emplacement",
             "dialog": {
@@ -1525,17 +1857,6 @@
             "title": "CSS global",
             "description": "Styles CSS appliqués à tous les composants SDK, tous emplacements confondus. Le CSS par emplacement peut les surcharger.",
             "toggle": "CSS personnalisé"
-        }
-    },
-    "embedded": {
-        "mint": {
-            "title": "Enregistrez votre boutique sur Frak",
-            "subtitle": "Nous allons vérifier votre domaine et configurer votre espace marchand.",
-            "registering": "Enregistrement de <text>{{domain}}</text>",
-            "error": "Impossible d'enregistrer votre produit. Vérifiez que tout est correct.",
-            "alreadyRegistered": "Le domaine est peut-être déjà enregistré.",
-            "close": "Fermer",
-            "register": "Enregistrer votre boutique"
         }
     },
     "welcomePopup": {

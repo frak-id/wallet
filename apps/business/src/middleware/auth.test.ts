@@ -114,10 +114,10 @@ describe("middleware/auth", () => {
             mockGetAuthToken.mockReturnValue(null);
             mockIsDemoMode.mockReturnValue(false);
 
-            expect(redirectIfAuthenticated()).toBeUndefined();
+            expect(redirectIfAuthenticated({ search: {} })).toBeUndefined();
         });
 
-        test("should redirect to dashboard when user is authenticated", async () => {
+        test("should redirect to dashboard when user is authenticated and no redirect is given", async () => {
             const { redirectIfAuthenticated } = await import("./auth");
 
             mockGetAuthToken.mockReturnValue("mock-token");
@@ -126,9 +126,43 @@ describe("middleware/auth", () => {
                 isAuthenticated: () => true,
             });
 
-            expect(() => redirectIfAuthenticated()).toThrowError(
-                'REDIRECT:{"to":"/dashboard"}'
+            expect(() =>
+                redirectIfAuthenticated({ search: {} })
+            ).toThrowError('REDIRECT:{"to":"/dashboard"}');
+        });
+
+        test("should redirect to a valid requested target when authenticated", async () => {
+            const { redirectIfAuthenticated } = await import("./auth");
+
+            mockGetAuthToken.mockReturnValue("mock-token");
+            mockIsDemoMode.mockReturnValue(false);
+            mockGetState.mockReturnValue({
+                isAuthenticated: () => true,
+            });
+
+            expect(() =>
+                redirectIfAuthenticated({
+                    search: { redirect: "/m/abc/campaigns/list" },
+                })
+            ).toThrowError(
+                'REDIRECT:{"to":"/m/abc/campaigns/list"}'
             );
+        });
+
+        test("should fall back to dashboard for an unsafe redirect target", async () => {
+            const { redirectIfAuthenticated } = await import("./auth");
+
+            mockGetAuthToken.mockReturnValue("mock-token");
+            mockIsDemoMode.mockReturnValue(false);
+            mockGetState.mockReturnValue({
+                isAuthenticated: () => true,
+            });
+
+            expect(() =>
+                redirectIfAuthenticated({
+                    search: { redirect: "https://evil.com" },
+                })
+            ).toThrowError('REDIRECT:{"to":"/dashboard"}');
         });
     });
 });

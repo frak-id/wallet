@@ -1,11 +1,19 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { log } from "@backend-infrastructure";
+import {
+    httpMetrics,
+    log,
+    metricsContentType,
+    renderMetrics,
+} from "@backend-infrastructure";
 // Leaf sub-path import (NOT the barrel) on purpose: importing this value
 // through `@backend-infrastructure` creates a runtime cycle that degrades
 // JwtContext typing. See authError.ts.
-import { AUTH_ERROR_HEADER } from "@backend-infrastructure/macro/authError";
+import {
+    AUTH_ERROR_HEADER,
+    AUTH_METHODS_HEADER,
+} from "@backend-infrastructure/macro/authError";
 import { noContentPatch } from "@backend-utils";
 import { cors } from "@elysiajs/cors";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
@@ -34,6 +42,7 @@ const app = new Elysia({
     },
 })
     .use(noContentPatch)
+    .use(httpMetrics)
     .onStart(async () => {
         OrchestrationContext.orchestrators.notification.registerListeners();
         CronRegistry.start();
@@ -46,10 +55,11 @@ const app = new Elysia({
     .use(
         cors({
             methods: ["DELETE", "GET", "POST", "PUT", "PATCH"],
-            // Expose the auth-error discriminator so the wallet client — which
-            // runs cross-origin inside third-party iframes — can read it from a
-            // 401 response (otherwise the browser strips it).
-            exposeHeaders: [AUTH_ERROR_HEADER],
+            // Expose the auth-error discriminator (and, for a step-up 401, the
+            // offered-methods list) so the frontend — which can run
+            // cross-origin inside third-party iframes — can read them from a
+            // 401 response (otherwise the browser strips them).
+            exposeHeaders: [AUTH_ERROR_HEADER, AUTH_METHODS_HEADER],
         })
     )
     .get("/health", ({ set }) => {
@@ -114,6 +124,29 @@ log.info(
 );
 
 /**
+ * Prometheus metrics on a dedicated, cluster-internal port — deliberately kept
+ * OFF the public app so `/metrics` is never routed by the ingress and never
+ * world-readable. Prometheus scrapes it pod-to-pod via the `metrics` Service
+ * port (see infra/gcp/backend.ts ServiceMonitor). Plain HTTP: in-cluster only.
+ */
+const metricsPort = Number.parseInt(process.env.METRICS_PORT ?? "9464", 10);
+const metricsServer = Bun.serve({
+    port: metricsPort,
+    async fetch(request) {
+        const { pathname } = new URL(request.url);
+        if (pathname === "/metrics") {
+            return new Response(await renderMetrics(), {
+                headers: { "content-type": metricsContentType },
+            });
+        }
+        return new Response("Not Found", { status: 404 });
+    },
+});
+log.info(
+    `Metrics exposed at http://${metricsServer.hostname}:${metricsPort}/metrics`
+);
+
+/**
  * When running locally with TLS, also start a plain HTTP mirror for mobile development.
  * Mobile WebViews (Android/iOS) can't trust self-signed mkcert certificates,
  * so Tauri dev connects to this HTTP endpoint instead of the HTTPS one.
@@ -133,10 +166,22 @@ if (isRunningLocally && tls) {
 /**
  * Global graceful shutdown — stops accepting connections and drains in-flight requests.
  * PairingRepository's own SIGTERM handler flushes pending DB writes independently.
+ *
+ * Locally (`bun --watch`), skip the drain: `--watch` sends SIGTERM on every
+ * file save, and waiting up to 15s for keep-alive connections to close left
+ * stacked-up zombie processes still bound to the port across rapid reloads.
  */
 function handleShutdown(signal: string) {
     log.info(`${signal} received, starting graceful shutdown`);
     CronRegistry.stop();
+    metricsServer.stop(true);
+
+    if (isRunningLocally) {
+        app.server?.stop(true);
+        process.exit(0);
+        return;
+    }
+
     app.server?.stop(false);
     setTimeout(() => {
         log.warn("Shutdown timeout exceeded, forcing exit");

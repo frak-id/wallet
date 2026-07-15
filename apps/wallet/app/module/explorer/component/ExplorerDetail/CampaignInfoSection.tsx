@@ -7,6 +7,7 @@ import {
 } from "@frak-labs/core-sdk/rewards";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
@@ -213,12 +214,12 @@ function TieredRewardBlock({
     const { t } = useTranslation();
     return (
         <Box paddingX="m" paddingY="s" className={styles.tierBlock}>
-            <div className={styles.tierHeader}>
+            <Spread space="s">
                 <Text variant="bodySmall" color="secondary" weight="bold">
                     {t(labelKey)}
                 </Text>
                 <CoinsIcon width={16} height={16} />
-            </div>
+            </Spread>
             <Stack space="xs">
                 {reward.tiers.map((tier) => (
                     <TierRow key={tierKey(tier)} tier={tier} />
@@ -239,14 +240,14 @@ function TierRow({ tier }: { tier: RewardTier }) {
 
     if ("amount" in tier) {
         return (
-            <div className={styles.tierRow}>
+            <Spread align="top" space="m">
                 <Text variant="bodySmall" color="secondary">
                     {range}
                 </Text>
                 <Text variant="bodySmall" weight="medium">
                     {formatAmount(tier.amount.eurAmount)}
                 </Text>
-            </div>
+            </Spread>
         );
     }
 
@@ -256,7 +257,7 @@ function TierRow({ tier }: { tier: RewardTier }) {
         tier.maxValue
     );
     return (
-        <div className={styles.tierRow}>
+        <Spread align="top" space="m">
             <Text variant="bodySmall" color="secondary">
                 {range}
             </Text>
@@ -268,7 +269,7 @@ function TierRow({ tier }: { tier: RewardTier }) {
                 </Text>
                 {example && <ExampleText example={example} />}
             </Stack>
-        </div>
+        </Spread>
     );
 }
 

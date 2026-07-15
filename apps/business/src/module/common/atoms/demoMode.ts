@@ -16,11 +16,12 @@ export function useDemoMode() {
 
     const setDemoMode = (value: boolean) => {
         if (value) {
-            setAuth(
-                "demo-token",
-                zeroAddress as Address,
-                Date.now() + 7 * 24 * 60 * 60 * 1000
-            );
+            setAuth({
+                token: "demo-token",
+                wallet: zeroAddress as Address,
+                authMethod: "siwe",
+                expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+            });
         } else {
             clearAuth();
         }

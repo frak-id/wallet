@@ -25,7 +25,10 @@ scopes = "read_customer_events,read_metaobjects,read_orders,read_pixels,read_pro
 redirect_urls = [
   "https://extension-shop.frak.id/auth/callback",
   "https://extension-shop.frak.id/auth/shopify/callback",
-  "https://extension-shop.frak.id/api/auth/callback"
+  "https://extension-shop.frak.id/api/auth/callback",
+  # Standalone business dashboard SSO (design doc §4.7) — served by the
+  # backend itself, not the embedded app.
+  "https://backend.frak.id/business/auth/shopify/callback"
 ]
 
 [pos]

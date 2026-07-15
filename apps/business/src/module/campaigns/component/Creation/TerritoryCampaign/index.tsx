@@ -195,6 +195,7 @@ export function TerritoryCampaign() {
             isPending={saveCampaign.isPending}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(draft)}
+            hasUnsavedChanges={form.formState.isDirty}
         >
             <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                 <Stack space="l">

@@ -1,0 +1,1174 @@
+{
+    "__inputs": [],
+    "__requires": [],
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "links": [],
+    "liveNow": false,
+    "refresh": "30s",
+    "schemaVersion": 39,
+    "tags": ["frak", "backend", "elysia"],
+    "templating": {
+        "list": [
+            {
+                "current": {},
+                "hide": 0,
+                "includeAll": false,
+                "label": "Data source",
+                "multi": false,
+                "name": "datasource",
+                "options": [],
+                "query": "prometheus",
+                "refresh": 1,
+                "regex": "",
+                "type": "datasource"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": "All",
+                    "value": "$__all"
+                },
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "definition": "label_values(http_requests_total, bff)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "BFF",
+                "multi": true,
+                "name": "bff",
+                "options": [],
+                "query": {
+                    "query": "label_values(http_requests_total, bff)",
+                    "refId": "bff"
+                },
+                "refresh": 2,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": "All",
+                    "value": "$__all"
+                },
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "definition": "label_values(process_resident_memory_bytes, pod)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Pod",
+                "multi": true,
+                "name": "pod",
+                "options": [],
+                "query": {
+                    "query": "label_values(process_resident_memory_bytes, pod)",
+                    "refId": "pod"
+                },
+                "refresh": 2,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            }
+        ]
+    },
+    "time": { "from": "now-6h", "to": "now" },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Frak Backend — Overview",
+    "uid": "frak-backend-overview",
+    "version": 1,
+    "weekStart": "",
+    "panels": [
+        {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+            "id": 100,
+            "title": "HTTP — Golden signals",
+            "type": "row"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "unit": "reqps",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [{ "color": "green", "value": null }]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 4, "x": 0, "y": 1 },
+            "id": 1,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "reduceOptions": { "calcs": ["lastNotNull"] },
+                "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum(rate(http_requests_total{bff=~\"$bff\"}[$__rate_interval]))",
+                    "legendFormat": "req/s",
+                    "refId": "A"
+                }
+            ],
+            "title": "Request rate",
+            "type": "stat"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "unit": "percent",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "yellow", "value": 1 },
+                            { "color": "red", "value": 5 }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 4, "x": 4, "y": 1 },
+            "id": 2,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "area",
+                "reduceOptions": { "calcs": ["lastNotNull"] },
+                "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "100 * sum(rate(http_requests_total{status_code=~\"5..\",bff=~\"$bff\"}[$__rate_interval])) / clamp_min(sum(rate(http_requests_total{bff=~\"$bff\"}[$__rate_interval])), 1)",
+                    "legendFormat": "5xx %",
+                    "refId": "A"
+                }
+            ],
+            "title": "Error rate (5xx)",
+            "type": "stat"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "unit": "short",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "yellow", "value": 20 },
+                            { "color": "red", "value": 50 }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 4, "x": 8, "y": 1 },
+            "id": 3,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "reduceOptions": { "calcs": ["lastNotNull"] },
+                "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum(http_requests_in_flight{bff=~\"$bff\"})",
+                    "legendFormat": "in-flight",
+                    "refId": "A"
+                }
+            ],
+            "title": "In-flight requests",
+            "type": "stat"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "axisPlacement": "auto",
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 12, "x": 12, "y": 1 },
+            "id": 4,
+            "options": {
+                "legend": {
+                    "calcs": ["last"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{bff=~\"$bff\"}[$__rate_interval])))",
+                    "legendFormat": "p50",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{bff=~\"$bff\"}[$__rate_interval])))",
+                    "legendFormat": "p95",
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{bff=~\"$bff\"}[$__rate_interval])))",
+                    "legendFormat": "p99",
+                    "refId": "C"
+                }
+            ],
+            "title": "Request latency (quantiles)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 20,
+                        "lineWidth": 1,
+                        "showPoints": "never",
+                        "stacking": { "mode": "normal" }
+                    },
+                    "unit": "reqps"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
+            "id": 5,
+            "options": {
+                "legend": {
+                    "calcs": ["mean", "last"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (bff) (rate(http_requests_total{bff=~\"$bff\"}[$__rate_interval]))",
+                    "legendFormat": "{{bff}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Request rate by BFF",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 20,
+                        "lineWidth": 1,
+                        "showPoints": "never",
+                        "stacking": { "mode": "normal" }
+                    },
+                    "unit": "reqps"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
+            "id": 6,
+            "options": {
+                "legend": {
+                    "calcs": ["last"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (status_code) (rate(http_requests_total{bff=~\"$bff\"}[$__rate_interval]))",
+                    "legendFormat": "{{status_code}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Request rate by status code",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "unit": "reqps"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+            "id": 7,
+            "options": {
+                "showHeader": true,
+                "sortBy": [{ "displayName": "Value", "desc": true }]
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "topk(15, sum by (route, method) (rate(http_requests_total{bff=~\"$bff\"}[$__rate_interval])))",
+                    "format": "table",
+                    "instant": true,
+                    "legendFormat": "",
+                    "refId": "A"
+                }
+            ],
+            "title": "Top routes by request rate",
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": { "Time": true },
+                        "renameByName": { "Value": "req/s" }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "unit": "s",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "yellow", "value": 0.5 },
+                            { "color": "red", "value": 1 }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+            "id": 8,
+            "options": {
+                "showHeader": true,
+                "sortBy": [{ "displayName": "p95", "desc": true }]
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "topk(15, histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{bff=~\"$bff\"}[$__rate_interval]))))",
+                    "format": "table",
+                    "instant": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Slowest routes (p95 latency)",
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": { "Time": true },
+                        "renameByName": { "Value": "p95" }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
+            "id": 200,
+            "title": "Runtime / health (Bun process)",
+            "type": "row"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "bytes"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 12, "x": 0, "y": 22 },
+            "id": 9,
+            "options": {
+                "legend": {
+                    "calcs": ["last", "max"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "process_resident_memory_bytes{pod=~\"$pod\"}",
+                    "legendFormat": "RSS {{pod}}",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "nodejs_heap_size_used_bytes{pod=~\"$pod\"}",
+                    "legendFormat": "heap used {{pod}}",
+                    "refId": "B"
+                }
+            ],
+            "title": "Memory — RSS & heap (watch the Bun RSS growth toward the 24h restart)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 6, "x": 12, "y": 22 },
+            "id": 10,
+            "options": {
+                "legend": {
+                    "calcs": ["last", "max"],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "nodejs_eventloop_lag_p99_seconds{pod=~\"$pod\"}",
+                    "legendFormat": "p99 {{pod}}",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "nodejs_eventloop_lag_mean_seconds{pod=~\"$pod\"}",
+                    "legendFormat": "mean {{pod}}",
+                    "refId": "B"
+                }
+            ],
+            "title": "Event loop lag",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 6, "x": 18, "y": 22 },
+            "id": 11,
+            "options": {
+                "legend": {
+                    "calcs": ["last"],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "rate(process_cpu_seconds_total{pod=~\"$pod\"}[$__rate_interval])",
+                    "legendFormat": "cpu cores {{pod}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "CPU usage (cores)",
+            "type": "timeseries"
+        },
+        {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+            "id": 300,
+            "title": "Background jobs (cron)",
+            "type": "row"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "description": "Time since each cron last completed successfully. Rising unbounded = the job silently stopped. Alert when this exceeds a few times the schedule interval.",
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "unit": "s",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "yellow", "value": 3600 },
+                            { "color": "red", "value": 10800 }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 10, "x": 0, "y": 30 },
+            "id": 12,
+            "options": {
+                "showHeader": true,
+                "sortBy": [{ "displayName": "age", "desc": true }]
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "time() - max by (cron) (cron_last_success_timestamp_seconds)",
+                    "format": "table",
+                    "instant": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Time since last successful run",
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": { "Time": true },
+                        "renameByName": { "Value": "age" }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 15,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 7, "x": 10, "y": 30 },
+            "id": 13,
+            "options": {
+                "legend": {
+                    "calcs": ["sum"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (outcome) (rate(cron_runs_total[$__rate_interval]))",
+                    "legendFormat": "{{outcome}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Cron runs by outcome",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 7, "x": 17, "y": 30 },
+            "id": 14,
+            "options": {
+                "legend": {
+                    "calcs": ["max"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "histogram_quantile(0.95, sum by (le, cron) (rate(cron_run_duration_seconds_bucket[$__rate_interval])))",
+                    "legendFormat": "{{cron}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Cron duration (p95)",
+            "type": "timeseries"
+        },
+        {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 38 },
+            "id": 400,
+            "title": "Money path (rewards & settlement)",
+            "type": "row"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "bars",
+                        "fillOpacity": 60,
+                        "lineWidth": 1,
+                        "showPoints": "never",
+                        "stacking": { "mode": "normal" }
+                    },
+                    "unit": "short"
+                },
+                "overrides": [
+                    {
+                        "matcher": { "id": "byName", "options": "settled" },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "green",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": { "id": "byName", "options": "failed" },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": { "id": "byName", "options": "depleted" },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "orange",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 39 },
+            "id": 15,
+            "options": {
+                "legend": {
+                    "calcs": ["sum"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (outcome) (rate(settlement_rewards_total[$__rate_interval]))",
+                    "legendFormat": "{{outcome}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Settlement rewards by outcome",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 39 },
+            "id": 16,
+            "options": {
+                "legend": {
+                    "calcs": ["sum"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "rate(settlement_tx_total[$__rate_interval])",
+                    "legendFormat": "tx broadcast",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "rate(settlement_errors_total[$__rate_interval])",
+                    "legendFormat": "errors",
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "rate(settlement_requeued_rewards_total[$__rate_interval])",
+                    "legendFormat": "requeued (bank refilled)",
+                    "refId": "C"
+                }
+            ],
+            "title": "Settlement tx / errors / requeues",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 15,
+                        "lineWidth": 1,
+                        "showPoints": "never",
+                        "stacking": { "mode": "normal" }
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 47 },
+            "id": 17,
+            "options": {
+                "legend": {
+                    "calcs": ["sum"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (outcome) (rate(reward_interactions_processed_total[$__rate_interval]))",
+                    "legendFormat": "{{outcome}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Reward interactions processed by outcome",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 47 },
+            "id": 18,
+            "options": {
+                "legend": {
+                    "calcs": ["last"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (lock, outcome) (rate(advisory_lock_total[$__rate_interval]))",
+                    "legendFormat": "{{lock}} — {{outcome}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Advisory lock acquire / contended",
+            "type": "timeseries"
+        },
+        {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 55 },
+            "id": 500,
+            "title": "Reliability (ingestion, webhooks, notifications, rate limiting)",
+            "type": "row"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "description": "Age of the affiliate ingestion watermark. Large / growing = ingestion falling behind or stuck.",
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "thresholds" },
+                    "unit": "s",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            { "color": "green", "value": null },
+                            { "color": "yellow", "value": 7200 },
+                            { "color": "red", "value": 21600 }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 6, "x": 0, "y": 56 },
+            "id": 19,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "area",
+                "reduceOptions": { "calcs": ["lastNotNull"] },
+                "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "max(affiliate_ingestion_watermark_lag_seconds)",
+                    "legendFormat": "lag",
+                    "refId": "A"
+                }
+            ],
+            "title": "Affiliate ingestion watermark lag",
+            "type": "stat"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "description": "Webhook handler errors — returned to e-commerce platforms as HTTP 200 'ko:' so they don't retry-storm, therefore invisible to status-code metrics.",
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 20,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 9, "x": 6, "y": 56 },
+            "id": 20,
+            "options": {
+                "legend": {
+                    "calcs": ["sum"],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "rate(webhook_errors_total[$__rate_interval])",
+                    "legendFormat": "webhook errors",
+                    "refId": "A"
+                }
+            ],
+            "title": "Webhook errors (hidden 200 'ko:')",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 15,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 9, "x": 15, "y": 56 },
+            "id": 21,
+            "options": {
+                "legend": {
+                    "calcs": ["last"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (route) (rate(rate_limit_rejected_total[$__rate_interval]))",
+                    "legendFormat": "{{route}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Rate limit rejections by route",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 15,
+                        "lineWidth": 1,
+                        "showPoints": "never",
+                        "stacking": { "mode": "normal" }
+                    },
+                    "unit": "short"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byRegexp",
+                            "options": ".*invalid_token.*"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "orange",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": { "id": "byRegexp", "options": ".*error.*" },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": { "h": 7, "w": 12, "x": 0, "y": 63 },
+            "id": 22,
+            "options": {
+                "legend": {
+                    "calcs": ["sum"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (channel, outcome) (rate(notifications_sent_total[$__rate_interval]))",
+                    "legendFormat": "{{channel}} — {{outcome}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Notifications sent by channel / outcome",
+            "type": "timeseries"
+        },
+        {
+            "datasource": { "type": "prometheus", "uid": "${datasource}" },
+            "fieldConfig": {
+                "defaults": {
+                    "color": { "mode": "palette-classic" },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineWidth": 1,
+                        "showPoints": "never"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 12, "x": 12, "y": 63 },
+            "id": 23,
+            "options": {
+                "legend": {
+                    "calcs": ["last"],
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "tooltip": { "mode": "multi" }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (event) (rate(domain_events_emitted_total[$__rate_interval]))",
+                    "legendFormat": "{{event}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Domain events emitted (system activity)",
+            "type": "timeseries"
+        }
+    ]
+}

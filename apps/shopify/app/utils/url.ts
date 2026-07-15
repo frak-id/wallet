@@ -1,6 +1,3 @@
-import type { Address } from "viem";
-import { isAddress } from "viem";
-
 /**
  * Check if a URL is absolute (http, https, mailto, tel).
  */
@@ -19,16 +16,29 @@ export function parseChargeId(rawChargeId: string | null): number | null {
 }
 
 /**
- * Validate a wallet address for mint operations.
+ * Build a link into the business dashboard that goes through the Shopify SSO
+ * login entrypoint rather than a bare deep link to a guarded route.
+ *
+ * `target` is the relative path (beginning with `/`) inside the business app
+ * that the merchant should land on once authenticated — e.g.
+ * `/m/<merchantId>/dashboard`. When the shop domain is known, `/login/shopify`
+ * attempts an invisible (or one-click) Shopify SSO before redirecting to
+ * `target`. Without a shop domain, this falls back to the generic `/login`
+ * route, which still honors `redirect` once the user picks a login method.
  */
-export function validateMintParams(
-    walletAddress: string | null
-): { valid: true; address: Address } | { valid: false; error: string } {
-    if (!walletAddress) {
-        return { valid: false, error: "Missing wallet address" };
+export function buildBusinessDashboardUrl({
+    businessUrl,
+    shop,
+    target,
+}: {
+    businessUrl: string;
+    shop: string | undefined | null;
+    target: string;
+}): string {
+    if (shop) {
+        const params = new URLSearchParams({ shop, redirect: target });
+        return `${businessUrl}/login/shopify?${params.toString()}`;
     }
-    if (!isAddress(walletAddress)) {
-        return { valid: false, error: "Invalid wallet address" };
-    }
-    return { valid: true, address: walletAddress };
+    const params = new URLSearchParams({ redirect: target });
+    return `${businessUrl}/login?${params.toString()}`;
 }

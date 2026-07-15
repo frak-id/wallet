@@ -105,13 +105,15 @@ export function AlertMessage({
             role="alert"
             className={clsx(
                 styles.container,
-                styles.containerTone[tone],
+                styles.containerTone({ tone }),
                 className
             )}
         >
             <div ref={scrollRef} className={styles.scrollArea}>
                 <div className={styles.row}>
-                    <span className={clsx(styles.icon, styles.iconTone[tone])}>
+                    <span
+                        className={clsx(styles.icon, styles.iconTone({ tone }))}
+                    >
                         {icon}
                     </span>
                     <div className={styles.textColumn}>
@@ -136,7 +138,7 @@ export function AlertMessage({
                             type="button"
                             className={clsx(
                                 styles.action,
-                                styles.actionTone[tone]
+                                styles.actionTone({ tone })
                             )}
                             onClick={action.onClick}
                         >
@@ -150,7 +152,7 @@ export function AlertMessage({
                 className={clsx(
                     styles.fade,
                     styles.fadeTop,
-                    styles.fadeTone[tone],
+                    styles.fadeTone({ tone }),
                     edges.top && styles.fadeVisible
                 )}
             />
@@ -158,7 +160,7 @@ export function AlertMessage({
                 className={clsx(
                     styles.fade,
                     styles.fadeBottom,
-                    styles.fadeTone[tone],
+                    styles.fadeTone({ tone }),
                     edges.bottom && styles.fadeVisible
                 )}
             />

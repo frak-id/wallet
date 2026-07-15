@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { businessMetrics, log } from "@backend-infrastructure";
 import { Elysia } from "elysia";
 import { customWebhook } from "./customWebhook";
 import { magentoWebhook } from "./magentoWebhook";
@@ -25,6 +25,7 @@ export const webhookRoutes = new Elysia()
             },
             "Error while handling purchase webhook"
         );
+        businessMetrics.webhookError();
         set.status = 200;
         return `ko: ${msg ?? "Unknown error"}`;
     });

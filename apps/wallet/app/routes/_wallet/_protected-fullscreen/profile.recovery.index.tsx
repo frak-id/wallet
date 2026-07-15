@@ -40,6 +40,9 @@ function ProfileRecovery() {
     return (
         <RecoveryConfiguration
             onBack={() => navigate({ to: "/profile", replace: true })}
+            onVerifyPassword={() =>
+                navigate({ to: "/profile/recovery/verify", replace: true })
+            }
             onUpdateDates={() =>
                 navigate({ to: "/profile/recovery/dates", replace: true })
             }

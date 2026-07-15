@@ -40,7 +40,7 @@ export function ProgressBar({
             style={height !== undefined ? { height } : undefined}
         >
             <Box
-                className={clsx(fill, fillTones[tone])}
+                className={clsx(fill, fillTones({ tone }))}
                 style={{ width: `${clamped}%` }}
             />
         </Box>

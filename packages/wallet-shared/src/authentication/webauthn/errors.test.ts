@@ -249,6 +249,52 @@ describe("classifyWebauthnError — iOS envelope", () => {
         ).toBe("already-registered");
     });
 
+    it("classifies .notInteractive (1005) with the TYPE_NO_CREDENTIAL token as no-credential", () => {
+        // With preferImmediatelyAvailableCredentials set, the iOS plugin maps
+        // 1005 → a NotAllowedError envelope carrying the same locale-stable
+        // TYPE_NO_CREDENTIAL token Android emits. The no-credential branch must
+        // win over the NotAllowedError→cancelled fallback (branch ordering).
+        const err = nativeError(
+            JSON.stringify({
+                type: "NotAllowedError",
+                message: "[1005] TYPE_NO_CREDENTIAL notInteractive",
+            })
+        );
+        const result = classifyWebauthnError(err);
+        expect(result.kind).toBe("no-credential");
+        expect(result.retryable).toBe(false);
+        expect(result.name).toBe("NotAllowedError");
+        // no-credential is an environment fact, not a developer bug — no report.
+        expect(isReportableWebauthnError(err)).toBe(false);
+    });
+
+    it("classifies a bare .canceled 1001 (no token) as cancelled, guarding branch order", () => {
+        // Without the flag, 1001 has no TYPE_NO_CREDENTIAL token and must stay
+        // cancelled — the no-credential branch must not over-match on 1005 text.
+        expect(
+            classifyWebauthnError(iosError("NotAllowedError", 1001)).kind
+        ).toBe("cancelled");
+    });
+
+    it("classifies flagged .canceled (1001 + TYPE_NO_CREDENTIAL token) as no-credential", () => {
+        // Device-verified iOS behavior: with preferImmediatelyAvailableCredentials
+        // set and no local passkey, Apple fires .canceled (1001) instantly — NOT
+        // .notInteractive (1005). The plugin tags that 1001 with the
+        // TYPE_NO_CREDENTIAL token (it tracks the flag per-request), which must
+        // classify as no-credential so the /login self-heal runs instead of a
+        // cancelled toast.
+        const err = nativeError(
+            JSON.stringify({
+                type: "NotAllowedError",
+                message: "[1001] TYPE_NO_CREDENTIAL preferImmediatelyAvailable",
+            })
+        );
+        const result = classifyWebauthnError(err);
+        expect(result.kind).toBe("no-credential");
+        expect(result.retryable).toBe(false);
+        expect(isReportableWebauthnError(err)).toBe(false);
+    });
+
     it("classifies .failed (1004 → UnknownError) as a reported unknown, code stays out of gpsCode", () => {
         const err = iosError("UnknownError", 1004);
         const result = classifyWebauthnError(err);

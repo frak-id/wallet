@@ -1,4 +1,5 @@
 import { FieldError } from "@frak-labs/design-system/components/FieldError";
+import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import {
     RadioGroup,
@@ -54,6 +55,7 @@ import {
     isRewardFormValid,
     type RewardFormValues,
     type RewardModel,
+    recalcCpaFromSplit,
     recalcSplitOnCpaChange,
     recommendedSplit,
     rewardFormToDraft,
@@ -159,13 +161,26 @@ type StepperFieldProps = {
     /** A localised text unit (e.g. "DAYS"/"JOURS"); a word can't be a glyph. */
     unitLabel?: string;
     placeholder: string;
-    ariaLabel: string;
+    /**
+     * Accessible name when there's no visible composed `label`. Required
+     * unless `label` is set (see below).
+     */
+    ariaLabel?: string;
+    /**
+     * Composed label rendered above the control. When set, it
+     * owns the accessible name via `htmlFor`↔`id` — `ariaLabel` is dropped.
+     */
+    label?: ReactNode;
+    /** Composed hint rendered below the control, linked via `aria-describedby`. */
+    hint?: ReactNode;
     /** "muted" = grey filled (default), "elevated" = white. */
     tone?: "muted" | "elevated";
     /** Keep a literal `0` visible (e.g. min-purchase/lockup, where 0 is valid). */
     allowZero?: boolean;
     /** Fill the field with the error surface when invalid. */
     error?: boolean;
+    /** Native input `step` (e.g. `0.01` to allow 2-decimal entry). */
+    step?: number | string;
 };
 
 /** A numeric field with a double-chevron stepper and a trailing unit. */
@@ -175,16 +190,22 @@ function StepperField({
     unitLabel,
     placeholder,
     ariaLabel,
+    label,
+    hint,
     tone = "muted",
     allowZero = false,
     error,
+    step,
 }: StepperFieldProps) {
     return (
         <InputNumber
             variant="bare"
             tone={tone}
             error={error}
-            aria-label={ariaLabel}
+            step={step}
+            aria-label={label ? undefined : ariaLabel}
+            label={label}
+            hint={hint}
             classNameWrapper={styles.inputWrapper}
             placeholder={placeholder}
             rightSection={
@@ -309,7 +330,8 @@ function RevealHeader() {
     );
 }
 
-function RecipientBox({
+// Exported for unit testing.
+export function RecipientBox({
     control,
     name,
     label,
@@ -317,6 +339,8 @@ function RecipientBox({
     placeholder,
     hint,
     error,
+    step,
+    onChangeExtra,
 }: {
     control: Control<RewardFormValues>;
     name:
@@ -331,40 +355,35 @@ function RecipientBox({
     hint?: string;
     /** Tint the input red when the split is invalid. */
     error?: boolean;
+    /** Native input `step` (e.g. `0.01` to allow 2-decimal entry). */
+    step?: number | string;
+    /** Runs after the field update (e.g. to re-derive the Target CPA). */
+    onChangeExtra?: (next: number | "") => void;
 }) {
     return (
         <div className={styles.recipientBox}>
-            <Text
-                variant="bodySmall"
-                weight="medium"
-                color="secondary"
-                className={styles.insetX}
-            >
-                {label}
-            </Text>
             <Controller
                 control={control}
                 name={name}
                 render={({ field }) => (
                     <StepperField
-                        field={field}
+                        field={{
+                            ...field,
+                            onChange: (next) => {
+                                field.onChange(next);
+                                onChangeExtra?.(next as number | "");
+                            },
+                        }}
                         unit={unit}
                         tone="elevated"
                         error={error}
+                        step={step}
                         placeholder={placeholder}
-                        ariaLabel={label}
+                        label={label}
+                        hint={hint}
                     />
                 )}
             />
-            {hint ? (
-                <Text
-                    variant="caption"
-                    color="tertiary"
-                    className={styles.insetX}
-                >
-                    {hint}
-                </Text>
-            ) : null}
         </div>
     );
 }
@@ -377,7 +396,8 @@ function RecipientBox({
 // Cleared inputs become "" (not 0); coerce so the empty checks hold.
 const num = (v: number | string | undefined) => (typeof v === "number" ? v : 0);
 
-function CpaReveal({
+// Exported for unit testing.
+export function CpaReveal({
     control,
     setValue,
     unit,
@@ -432,63 +452,56 @@ function CpaReveal({
         setValue(refName, reco.referee, { shouldValidate: true });
     }
 
+    // Editing a recipient reward makes the split the source of truth: re-derive
+    // the Target CPA (pool ÷ rewards-share, to the cent) so the two stay in sync.
+    function syncCpaFromSplit(nextAmbassador: number, nextReferee: number) {
+        setValue(cpaName, recalcCpaFromSplit(nextAmbassador, nextReferee), {
+            shouldValidate: true,
+        });
+    }
+
     return (
         <Stack space="m">
             <RevealHeader />
 
-            <Stack space="xs">
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={styles.insetX}
-                >
-                    {cpaLabel}
-                </Text>
-                <Controller
-                    control={control}
-                    name={cpaName}
-                    render={({ field }) => (
-                        <StepperField
-                            field={{
-                                ...field,
-                                // Changing the Target CPA changes the pool. If
-                                // the split is still the untouched reco, keep it
-                                // in sync by recomputing it for the new CPA. If
-                                // the user edited the amounts, leave them — the
-                                // mismatch warning + Continue gating flag it.
-                                onChange: (next) => {
-                                    field.onChange(next);
-                                    const reco = recalcSplitOnCpaChange({
-                                        prevCpa: cpa,
-                                        nextCpa: num(next),
-                                        ambassador,
-                                        referee,
+            <Controller
+                control={control}
+                name={cpaName}
+                render={({ field }) => (
+                    <StepperField
+                        field={{
+                            ...field,
+                            // Changing the Target CPA changes the pool. If
+                            // the split is still the untouched reco, keep it
+                            // in sync by recomputing it for the new CPA. If
+                            // the user edited the amounts, leave them — the
+                            // mismatch warning + Continue gating flag it.
+                            onChange: (next) => {
+                                field.onChange(next);
+                                const reco = recalcSplitOnCpaChange({
+                                    prevCpa: cpa,
+                                    nextCpa: num(next),
+                                    ambassador,
+                                    referee,
+                                });
+                                if (reco) {
+                                    setValue(ambName, reco.ambassador, {
+                                        shouldValidate: true,
                                     });
-                                    if (reco) {
-                                        setValue(ambName, reco.ambassador, {
-                                            shouldValidate: true,
-                                        });
-                                        setValue(refName, reco.referee, {
-                                            shouldValidate: true,
-                                        });
-                                    }
-                                },
-                            }}
-                            unit={unit}
-                            placeholder={cpaPlaceholder}
-                            ariaLabel={cpaLabel}
-                        />
-                    )}
-                />
-                <Text
-                    variant="caption"
-                    color="tertiary"
-                    className={styles.insetX}
-                >
-                    {t("campaigns.create.reward.cpa.hint")}
-                </Text>
-            </Stack>
+                                    setValue(refName, reco.referee, {
+                                        shouldValidate: true,
+                                    });
+                                }
+                            },
+                        }}
+                        unit={unit}
+                        step={0.01}
+                        placeholder={cpaPlaceholder}
+                        label={cpaLabel}
+                        hint={t("campaigns.create.reward.cpa.hint")}
+                    />
+                )}
+            />
 
             <div className={styles.distributionGap}>
                 <DistributionBar
@@ -515,8 +528,12 @@ function CpaReveal({
                             "campaigns.create.reward.recipient.ambassadorReward"
                         )}
                         unit={unit}
+                        step={0.01}
                         placeholder={ambPlaceholder}
                         error={splitMismatch}
+                        onChangeExtra={(next) =>
+                            syncCpaFromSplit(num(next), referee)
+                        }
                         hint={
                             hintWhenEmpty || ambassador > 0
                                 ? recipientHint(poolPercent(ambassador))
@@ -530,8 +547,12 @@ function CpaReveal({
                             "campaigns.create.reward.recipient.refereeReward"
                         )}
                         unit={unit}
+                        step={0.01}
                         placeholder={refPlaceholder}
                         error={splitMismatch}
+                        onChangeExtra={(next) =>
+                            syncCpaFromSplit(ambassador, num(next))
+                        }
                         hint={
                             hintWhenEmpty || referee > 0
                                 ? recipientHint(poolPercent(referee))
@@ -679,6 +700,7 @@ function TierCell({
     tone = "muted",
     error,
     stepper = false,
+    step,
     onChangeExtra,
 }: {
     control: Control<RewardFormValues>;
@@ -688,6 +710,8 @@ function TierCell({
     tone?: "muted" | "elevated";
     error?: boolean;
     stepper?: boolean;
+    /** Native input `step` (e.g. `0.01` to allow 2-decimal entry). */
+    step?: number | string;
     /** Runs after the field update (e.g. the CPA cell re-recommends the split). */
     onChangeExtra?: (next: number | "") => void;
 }) {
@@ -706,6 +730,7 @@ function TierCell({
                         variant="bare"
                         tone={tone}
                         error={error}
+                        step={step}
                         classNameWrapper={styles.inputWrapper}
                         placeholder={placeholder}
                         rightSection={
@@ -751,8 +776,9 @@ function TierDelete({
     );
 }
 
+// Exported for unit testing.
 /** A labelled field column (label above the input). */
-function TierField({
+export function TierField({
     label,
     className,
     padding,
@@ -765,23 +791,12 @@ function TierField({
     children: ReactNode;
 }) {
     return (
-        <Stack
-            space="xs"
-            padding={padding}
-            className={className ?? styles.tierField}
+        <FieldLabel
+            label={label}
+            className={`${className ?? styles.tierField}${padding === "m" ? ` ${styles.tierPadded}` : ""}`}
         >
-            {label ? (
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={styles.insetX}
-                >
-                    {label}
-                </Text>
-            ) : null}
             {children}
-        </Stack>
+        </FieldLabel>
     );
 }
 
@@ -801,6 +816,7 @@ function TierCard({
     cpaError,
     onRemove,
     onCpaChange,
+    onRewardChange,
 }: {
     control: Control<RewardFormValues>;
     index: number;
@@ -812,6 +828,11 @@ function TierCard({
     onRemove: () => void;
     /** Re-recommends this tier's split when its Target CPA changes. */
     onCpaChange?: (next: number | "") => void;
+    /** Re-derives this tier's Target CPA when a recipient reward changes. */
+    onRewardChange?: (
+        recipient: "ambassador" | "referee",
+        next: number | ""
+    ) => void;
 }) {
     const { t } = useTranslation();
     const glyph = useCurrencyGlyph();
@@ -879,6 +900,7 @@ function TierCard({
                         unit={unit}
                         tone="elevated"
                         stepper
+                        step={0.01}
                         error={cpaError}
                         onChangeExtra={onCpaChange}
                         placeholder={t(
@@ -911,6 +933,10 @@ function TierCard({
                         name={`ambassadorTiers.${index}.reward`}
                         unit={unit}
                         stepper
+                        step={0.01}
+                        onChangeExtra={(next) =>
+                            onRewardChange?.("ambassador", next)
+                        }
                         placeholder={t(
                             "campaigns.create.reward.tiered.rewardPlaceholder"
                         )}
@@ -926,6 +952,10 @@ function TierCard({
                         name={`refereeTiers.${index}.reward`}
                         unit={unit}
                         stepper
+                        step={0.01}
+                        onChangeExtra={(next) =>
+                            onRewardChange?.("referee", next)
+                        }
                         placeholder={t(
                             "campaigns.create.reward.tiered.rewardPlaceholder"
                         )}
@@ -1023,6 +1053,28 @@ function TieredReveal({
             shouldDirty: true,
         });
     }
+    // Reverse of `handleCpaChange`: editing a recipient reward makes the split
+    // the source of truth, so re-derive that tier's Target CPA (pool ÷
+    // rewards-share, to the cent) — mirroring the Fixed/% reveal.
+    function handleRewardChange(
+        index: number,
+        recipient: "ambassador" | "referee",
+        next: number | ""
+    ) {
+        const ambassador =
+            recipient === "ambassador"
+                ? Number(next) || 0
+                : Number(ambTiers[index]?.reward) || 0;
+        const referee =
+            recipient === "referee"
+                ? Number(next) || 0
+                : Number(refTiers[index]?.reward) || 0;
+        setValue(
+            `globalCpaTiers.${index}.cpa`,
+            recalcCpaFromSplit(ambassador, referee),
+            { shouldValidate: true, shouldDirty: true }
+        );
+    }
     // Fill the recommended 80/20 split per tier; the distribution bar always
     // shows that ratio, but the amounts stay the user's to override. Written via
     // `setValue` (not the field array's `replace`) so it reaches the recipient
@@ -1067,6 +1119,9 @@ function TieredReveal({
                             cpaError={errors.cpa}
                             onRemove={() => removeTier(index)}
                             onCpaChange={(next) => handleCpaChange(index, next)}
+                            onRewardChange={(recipient, next) =>
+                                handleRewardChange(index, recipient, next)
+                            }
                         />
                         <div className={styles.tierDistribution}>
                             <DistributionBar
@@ -1120,81 +1175,65 @@ function TieredReveal({
 /*  Eligibility + lockup                                               */
 /* ------------------------------------------------------------------ */
 
-function EligibilityField({ control }: { control: Control<RewardFormValues> }) {
+// Exported for unit testing.
+export function EligibilityField({
+    control,
+}: {
+    control: Control<RewardFormValues>;
+}) {
     const { t } = useTranslation();
     return (
-        <Stack space="xs">
-            <Text
-                variant="bodySmall"
-                weight="medium"
-                color="secondary"
-                className={styles.insetX}
-            >
-                {t("campaigns.create.reward.eligibility.minPurchaseLabel")}
-            </Text>
-            <Controller
-                control={control}
-                name="minPurchaseAmount"
-                render={({ field }) => (
-                    <StepperField
-                        field={field}
-                        unit="amount"
-                        allowZero
-                        placeholder={t(
-                            "campaigns.create.reward.eligibility.minPurchasePlaceholder"
-                        )}
-                        ariaLabel={t(
-                            "campaigns.create.reward.eligibility.minPurchaseLabel"
-                        )}
-                    />
-                )}
-            />
-            <Text variant="caption" color="tertiary" className={styles.insetX}>
-                {t("campaigns.create.reward.eligibility.minPurchaseHint")}
-            </Text>
-        </Stack>
+        <Controller
+            control={control}
+            name="minPurchaseAmount"
+            render={({ field }) => (
+                <StepperField
+                    field={field}
+                    unit="amount"
+                    allowZero
+                    placeholder={t(
+                        "campaigns.create.reward.eligibility.minPurchasePlaceholder"
+                    )}
+                    label={t(
+                        "campaigns.create.reward.eligibility.minPurchaseLabel"
+                    )}
+                    hint={t(
+                        "campaigns.create.reward.eligibility.minPurchaseHint"
+                    )}
+                />
+            )}
+        />
     );
 }
 
-function LockupField({ control }: { control: Control<RewardFormValues> }) {
+// Exported for unit testing.
+export function LockupField({
+    control,
+}: {
+    control: Control<RewardFormValues>;
+}) {
     const { t } = useTranslation();
     return (
         <Stack space="m">
             <InfoBanner>{t("campaigns.create.reward.lockup.info")}</InfoBanner>
-            <Stack space="xs">
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={styles.insetX}
-                >
-                    {t("campaigns.create.reward.lockup.durationLabel")}
-                </Text>
-                <Controller
-                    control={control}
-                    name="lockupDays"
-                    render={({ field }) => (
-                        <StepperField
-                            field={field}
-                            unitLabel={t("campaigns.create.reward.lockup.unit")}
-                            allowZero
-                            placeholder={t(
-                                "campaigns.create.reward.lockup.durationPlaceholder"
-                            )}
-                            ariaLabel={t(
-                                "campaigns.create.reward.lockup.durationLabel"
-                            )}
-                        />
-                    )}
-                />
-                <Text
-                    variant="caption"
-                    color="tertiary"
-                    className={styles.insetX}
-                >
-                    {t("campaigns.create.reward.lockup.durationHint")}
-                </Text>
-            </Stack>
+            <Controller
+                control={control}
+                name="lockupDays"
+                render={({ field }) => (
+                    <StepperField
+                        field={field}
+                        unitLabel={t("campaigns.create.reward.lockup.unit")}
+                        allowZero
+                        placeholder={t(
+                            "campaigns.create.reward.lockup.durationPlaceholder"
+                        )}
+                        label={t(
+                            "campaigns.create.reward.lockup.durationLabel"
+                        )}
+                        hint={t("campaigns.create.reward.lockup.durationHint")}
+                    />
+                )}
+            />
         </Stack>
     );
 }
@@ -1250,6 +1289,7 @@ export function RewardCampaign() {
                 isPending={saveCampaign.isPending}
                 onSaveDraft={handleSaveDraft}
                 onClose={() => form.reset(defaultValues)}
+                hasUnsavedChanges={form.formState.isDirty}
             >
                 <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                     <Stack space="l">

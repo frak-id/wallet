@@ -1,6 +1,7 @@
 import { db, log } from "@backend-infrastructure";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { Address } from "viem";
+import { affiliateAttributionTable } from "../../domain/affiliate/db/schema";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
 import {
@@ -35,6 +36,12 @@ type MergeResult = {
     migratedPurchaseClaims: number;
     migratedInteractionLogs: number;
     migratedAssetLogs: number;
+    // Affiliate-attribution counters. Identity-keyed, so they always run.
+    // `deletedConflictingAffiliateAttributions` counts loser rows dropped
+    // because the anchor already holds a stable token for the same
+    // (provider, merchant) — the anchor's token remains authoritative.
+    migratedAffiliateAttributions: number;
+    deletedConflictingAffiliateAttributions: number;
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
     softDeletedConflictingReferralLinks: number;
@@ -321,6 +328,12 @@ export class IdentityMergeService {
             loserWallets,
         });
 
+        const affiliateAttributionOps =
+            await this.migrateAffiliateAttributionsInTrx(trx, {
+                anchorGroupId,
+                mergingGroupIds,
+            });
+
         await this.updateAnchorMergedGroupsInTrx(
             trx,
             anchorGroupId,
@@ -356,6 +369,10 @@ export class IdentityMergeService {
             deletedMerchantOwnershipTransfers:
                 merchantRoleOps.deletedMerchantOwnershipTransfers,
             affectedMerchantIds: merchantRoleOps.affectedMerchantIds,
+            migratedAffiliateAttributions:
+                affiliateAttributionOps.migratedAffiliateAttributions,
+            deletedConflictingAffiliateAttributions:
+                affiliateAttributionOps.deletedConflictingAffiliateAttributions,
             mergedGroupIds: mergingGroupIds,
             previouslyMergedGroupIds,
         };
@@ -773,6 +790,89 @@ export class IdentityMergeService {
     }
 
     /**
+     * Migrate `affiliate_attribution` rows from one-or-many loser groups
+     * onto the anchor group. Identity-keyed (`identity_group_id`), so it
+     * runs for every identity merge.
+     *
+     * The unique `(provider, identity_group_id, merchant_id)` index means a
+     * loser row collides post-merge exactly when the anchor already holds a
+     * row for the same `(provider, merchant_id)` — the anchor already has a
+     * stable token for that brand, so the loser row is redundant and is
+     * deleted rather than migrated (a naive UPDATE would violate the unique
+     * index). Remaining loser rows are re-pointed to the anchor.
+     *
+     * Must run BEFORE the loser `identity_groups` rows are deleted —
+     * otherwise these rows are orphaned and a duplicate token can later be
+     * minted for the same user+brand.
+     */
+    private async migrateAffiliateAttributionsInTrx(
+        trx: PgTx,
+        {
+            anchorGroupId,
+            mergingGroupIds,
+        }: {
+            anchorGroupId: string;
+            mergingGroupIds: string[];
+        }
+    ): Promise<{
+        migratedAffiliateAttributions: number;
+        deletedConflictingAffiliateAttributions: number;
+    }> {
+        const anchorAttributions = await trx
+            .select({
+                provider: affiliateAttributionTable.provider,
+                merchantId: affiliateAttributionTable.merchantId,
+            })
+            .from(affiliateAttributionTable)
+            .where(
+                eq(affiliateAttributionTable.identityGroupId, anchorGroupId)
+            );
+
+        let deletedConflictingAffiliateAttributions = 0;
+        if (anchorAttributions.length > 0) {
+            const deletedResult = await trx
+                .delete(affiliateAttributionTable)
+                .where(
+                    and(
+                        inArray(
+                            affiliateAttributionTable.identityGroupId,
+                            mergingGroupIds
+                        ),
+                        // Tuple membership against anchor's existing
+                        // (provider, merchant) pairs; mirrors the merchantId
+                        // `IN (...)` raw-SQL pattern used above for
+                        // referral_links.
+                        sql`(${affiliateAttributionTable.provider}, ${affiliateAttributionTable.merchantId}) IN (${sql.join(
+                            anchorAttributions.map(
+                                (a) =>
+                                    sql`(${a.provider}, ${a.merchantId}::uuid)`
+                            ),
+                            sql`, `
+                        )})`
+                    )
+                )
+                .returning({ token: affiliateAttributionTable.token });
+            deletedConflictingAffiliateAttributions = deletedResult.length;
+        }
+
+        const migratedResult = await trx
+            .update(affiliateAttributionTable)
+            .set({ identityGroupId: anchorGroupId })
+            .where(
+                inArray(
+                    affiliateAttributionTable.identityGroupId,
+                    mergingGroupIds
+                )
+            )
+            .returning({ token: affiliateAttributionTable.token });
+
+        return {
+            migratedAffiliateAttributions: migratedResult.length,
+            deletedConflictingAffiliateAttributions,
+        };
+    }
+
+    /**
      * Soft-delete the merging group's active referee links that would
      * conflict with anchor's active referee links once the bulk referee
      * update runs.
@@ -933,6 +1033,8 @@ function emptyMergeResult(): MergeResult {
         migratedPurchaseClaims: 0,
         migratedInteractionLogs: 0,
         migratedAssetLogs: 0,
+        migratedAffiliateAttributions: 0,
+        deletedConflictingAffiliateAttributions: 0,
         migratedReferralLinksReferrer: 0,
         migratedReferralLinksReferee: 0,
         softDeletedConflictingReferralLinks: 0,

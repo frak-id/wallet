@@ -63,13 +63,13 @@ export const selectWebauthnSession = (state: SessionStore) => {
 // Get ECDSA session (derived selector)
 export const selectEcdsaSession = (state: SessionStore) => {
     const session = state.session;
-    if (!session || session.type !== "ecdsa") return null;
+    if (session?.type !== "ecdsa") return null;
     return session;
 };
 
 // Get distant webauthn session (derived selector)
 export const selectDistantWebauthnSession = (state: SessionStore) => {
     const session = state.session;
-    if (!session || session.type !== "distant-webauthn") return null;
+    if (session?.type !== "distant-webauthn") return null;
     return session;
 };

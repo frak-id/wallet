@@ -1,6 +1,11 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
-import { alias, transition } from "../../tokens.css";
+import { alias, brand, fontSize, transition } from "../../tokens.css";
+import {
+    FIELD_HINT_LINE_HEIGHT,
+    FIELD_LABEL_LINE_HEIGHT,
+} from "../fieldMetrics";
 
 const wrapperBase = style({
     display: "flex",
@@ -41,10 +46,14 @@ const wrapperDisabled = style({
     opacity: 0.6,
 });
 
-export const lengthVariants = styleVariants({
-    small: { width: "160px" },
-    medium: { width: "320px" },
-    big: { width: "100%" },
+export const lengthVariants = recipe({
+    variants: {
+        length: {
+            small: { width: "160px" },
+            medium: { width: "320px" },
+            big: { width: "100%" },
+        },
+    },
 });
 
 const fieldBase = style({
@@ -75,10 +84,32 @@ const fieldNoResize = style({
     resize: "none",
 });
 
+/**
+ * Composed labeled-field label + hint. Internal to the component — no
+ * consumer-facing className. The column layout is a `Stack`.
+ */
+const fieldLabel = style({
+    fontSize: fontSize.s,
+    lineHeight: `${FIELD_LABEL_LINE_HEIGHT}px`,
+    fontWeight: brand.typography.fontWeight.medium,
+    color: vars.text.secondary,
+    paddingInline: alias.spacing.m,
+});
+
+const fieldHint = style({
+    fontSize: fontSize.xs,
+    lineHeight: `${FIELD_HINT_LINE_HEIGHT}px`,
+    fontWeight: brand.typography.fontWeight.regular,
+    color: vars.text.tertiary,
+    paddingInline: alias.spacing.m,
+});
+
 export const textareaStyles = {
     wrapper: wrapperBase,
     wrapperError,
     wrapperDisabled,
     field: fieldBase,
     fieldNoResize,
+    fieldLabel,
+    fieldHint,
 };

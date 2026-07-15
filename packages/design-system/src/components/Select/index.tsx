@@ -1,4 +1,5 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
@@ -24,7 +25,9 @@ export const SelectValue = SelectPrimitive.Value;
 /*  Trigger                                                           */
 /* ------------------------------------------------------------------ */
 
-type SelectTriggerLength = keyof typeof triggerLength;
+type SelectTriggerLength = NonNullable<
+    RecipeVariants<typeof triggerLength>
+>["length"];
 
 export type SelectTriggerProps = ComponentPropsWithRef<
     typeof SelectPrimitive.Trigger
@@ -55,9 +58,7 @@ export function SelectTrigger({
                   selectStyles.triggerBare,
                   tone === "muted" && selectStyles.triggerBareMuted
               )
-            : length
-              ? triggerLength[length]
-              : selectStyles.trigger;
+            : clsx(selectStyles.trigger, length && triggerLength({ length }));
     const combined = clsx(base, className);
 
     return (

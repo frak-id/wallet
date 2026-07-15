@@ -24,7 +24,7 @@ export function LegendItem({
     ...rest
 }: LegendItemProps) {
     return (
-        <div className={clsx(legendItem[layout], className)} {...rest}>
+        <div className={clsx(legendItem({ layout }), className)} {...rest}>
             <span
                 className={swatch}
                 style={{ backgroundColor: swatchColor }}

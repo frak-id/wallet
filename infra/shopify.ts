@@ -45,4 +45,15 @@ new sst.aws.React("Shopify", {
         name: `${subdomain}.frak.id`,
     },
     environment: shopifyEnv,
+    transform: {
+        // Cap the number of concurrent server Lambdas so we can't exhaust the
+        // shared Postgres connection slots (max_connections = 50). With the
+        // per-instance pool set to 2 (see apps/shopify/app/db.server.ts), this
+        // bounds prod DB connections to ~40, leaving headroom for dev + admin.
+        server: {
+            concurrency: {
+                reserved: 20,
+            },
+        },
+    },
 });

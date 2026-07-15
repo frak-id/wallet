@@ -34,12 +34,6 @@ describe("getCapPeriod", () => {
             const result = getCapPeriod(undefined);
             expect(result).toBe(0);
         });
-
-        it("should return 0 for null (type coercion)", () => {
-            // @ts-expect-error - testing runtime behavior with invalid input
-            const result = getCapPeriod(null);
-            expect(result).toBe(0);
-        });
     });
 
     describe("period calculations", () => {

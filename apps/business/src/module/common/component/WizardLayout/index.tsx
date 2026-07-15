@@ -1,3 +1,4 @@
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
@@ -82,7 +83,9 @@ export function WizardLayout({
                 <div className={styles.content}>{children}</div>
                 {footer && (
                     <div className={styles.footer}>
-                        <div className={styles.footerInner}>{footer}</div>
+                        <ContentBlock maxWidth="728px" align="left">
+                            <div className={styles.footerInner}>{footer}</div>
+                        </ContentBlock>
                     </div>
                 )}
             </div>

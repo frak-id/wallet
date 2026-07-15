@@ -14,12 +14,6 @@ export const fieldCard = style({
     borderRadius: alias.cornerRadius.m,
 });
 
-export const currencyGrid = style({
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: `0 ${alias.spacing.m}`,
-});
-
 export const currencyCell = style({
     display: "flex",
     alignItems: "center",
@@ -42,13 +36,6 @@ export const currencyMain = style({
 
 export const currencyText = style({
     minWidth: 0,
-});
-
-export const infoBar = style({
-    backgroundColor: vars.surface.secondary,
-    borderRadius: alias.cornerRadius.m,
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.l,
 });
 
 export const footerButton = style({

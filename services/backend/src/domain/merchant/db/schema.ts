@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+    check,
     index,
     integer,
     jsonb,
@@ -6,11 +8,16 @@ import {
     text,
     timestamp,
     unique,
+    uniqueIndex,
     uuid,
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
-import type { ExplorerConfig, SdkConfig } from "../schemas";
+import type {
+    ExplorerConfig,
+    MerchantAccountingInfo,
+    SdkConfig,
+} from "../schemas";
 
 export const merchantsTable = pgTable(
     "merchants",
@@ -20,7 +27,11 @@ export const merchantsTable = pgTable(
         domain: text("domain").unique().notNull(),
         allowedDomains: text("allowed_domains").array().default([]).notNull(),
         name: text("name").notNull(),
-        ownerWallet: customHex("owner_wallet").$type<Address>().notNull(),
+        // Owner identity — at least one of the two must be set (CHECK below).
+        // `ownerWallet` powers onchain bank-role management; `ownerAccountId`
+        // (business_accounts FK) powers walletless ownership.
+        ownerWallet: customHex("owner_wallet").$type<Address>(),
+        ownerAccountId: uuid("owner_account_id"),
         bankAddress: customHex("bank_address").$type<Address>(),
         defaultRewardToken: customHex("default_reward_token")
             .$type<Address>()
@@ -30,11 +41,20 @@ export const merchantsTable = pgTable(
         explorerConfig: jsonb("explorer_config").$type<ExplorerConfig>(),
         explorerEnabledAt: timestamp("explorer_enabled_at"),
         sdkConfig: jsonb("sdk_config").$type<SdkConfig>(),
+        accountingInfo:
+            jsonb("accounting_info").$type<Partial<MerchantAccountingInfo>>(),
         verifiedAt: timestamp("verified_at"),
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
     },
-    (table) => [index("merchants_owner_wallet_idx").on(table.ownerWallet)]
+    (table) => [
+        index("merchants_owner_wallet_idx").on(table.ownerWallet),
+        index("merchants_owner_account_idx").on(table.ownerAccountId),
+        check(
+            "merchants_owner_check",
+            sql`${table.ownerWallet} IS NOT NULL OR ${table.ownerAccountId} IS NOT NULL`
+        ),
+    ]
 );
 
 export const merchantAdminsTable = pgTable(
@@ -42,13 +62,28 @@ export const merchantAdminsTable = pgTable(
     {
         id: uuid("id").primaryKey().defaultRandom(),
         merchantId: uuid("merchant_id").notNull(),
-        wallet: customHex("wallet").$type<Address>().notNull(),
-        addedBy: customHex("added_by").$type<Address>().notNull(),
+        // Admin identity — wallet and/or business account (CHECK below).
+        wallet: customHex("wallet").$type<Address>(),
+        accountId: uuid("account_id"),
+        // Who added the admin — wallet or account, whichever the actor had.
+        addedBy: customHex("added_by").$type<Address>(),
+        addedByAccountId: uuid("added_by_account_id"),
         addedAt: timestamp("added_at").defaultNow().notNull(),
     },
     (table) => [
         index("merchant_admins_wallet_idx").on(table.wallet),
+        index("merchant_admins_account_idx").on(table.accountId),
         unique("merchant_admins_unique").on(table.merchantId, table.wallet),
+        // The `(merchant_id, wallet)` unique above does NOT dedupe account-only
+        // rows: their `wallet` is NULL, and Postgres treats NULLs as distinct.
+        // A partial unique index dedupes admins added by account (§2.7).
+        uniqueIndex("merchant_admins_account_unique")
+            .on(table.merchantId, table.accountId)
+            .where(sql`account_id IS NOT NULL`),
+        check(
+            "merchant_admins_identity_check",
+            sql`${table.wallet} IS NOT NULL OR ${table.accountId} IS NOT NULL`
+        ),
     ]
 );
 
@@ -57,11 +92,29 @@ export const merchantOwnershipTransfersTable = pgTable(
     {
         id: uuid("id").primaryKey().defaultRandom(),
         merchantId: uuid("merchant_id").notNull().unique(),
-        fromWallet: customHex("from_wallet").$type<Address>().notNull(),
-        toWallet: customHex("to_wallet").$type<Address>().notNull(),
+        // Source identity — whichever axis the current owner has (§7.5:
+        // walletless owners initiate via a step-up-verified session instead
+        // of a SIWE proof).
+        fromWallet: customHex("from_wallet").$type<Address>(),
+        fromAccountId: uuid("from_account_id"),
+        // Target identity — a wallet (existing flow, SIWE-accepted) or an
+        // existing business account (walletless target, accepted via a
+        // step-up-verified session on the target's own account).
+        toWallet: customHex("to_wallet").$type<Address>(),
+        toAccountId: uuid("to_account_id"),
         initiatedAt: timestamp("initiated_at").defaultNow().notNull(),
         expiresAt: timestamp("expires_at").notNull(),
-    }
+    },
+    (table) => [
+        check(
+            "merchant_ownership_transfers_from_check",
+            sql`${table.fromWallet} IS NOT NULL OR ${table.fromAccountId} IS NOT NULL`
+        ),
+        check(
+            "merchant_ownership_transfers_to_check",
+            sql`${table.toWallet} IS NOT NULL OR ${table.toAccountId} IS NOT NULL`
+        ),
+    ]
 );
 
 /**

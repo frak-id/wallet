@@ -1,7 +1,11 @@
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import sharedConfig from "@frak-labs/test-foundation/vitest.shared";
 import preact from "@preact/preset-vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import { defineConfig, mergeConfig } from "vitest/config";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default mergeConfig(
     sharedConfig,
@@ -13,6 +17,12 @@ export default mergeConfig(
         },
         test: {
             name: "components-sdk-unit",
+            // tsconfig excludes *.test.ts, which strips `@/` path
+            // resolution from those files via resolve.tsconfigPaths.
+            // Provide the alias explicitly so test files resolve `@/*`.
+            alias: {
+                "@": path.resolve(__dirname, "src"),
+            },
             setupFiles: [
                 "./tests/vitest-setup.ts",
                 "@frak-labs/test-foundation/shared-setup",

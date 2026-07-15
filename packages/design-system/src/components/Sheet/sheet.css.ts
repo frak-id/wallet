@@ -1,7 +1,18 @@
-import { keyframes, style, styleVariants } from "@vanilla-extract/css";
+import { keyframes, style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { tablet } from "../../breakpoints";
 import { vars } from "../../theme.css";
 import { alias, easing, shadow, transition, zIndex } from "../../tokens.css";
+
+// Tablet+ width override, shared by the horizontal-only compound variants.
+const horizontalWidth = (px: number) => ({
+    "@media": {
+        [`screen and (min-width: ${tablet}px)`]: {
+            width: `${px}px`,
+            maxWidth: `min(${px}px, 100vw)`,
+        },
+    },
+});
 
 const slideInRight = keyframes({
     from: { transform: "translate3d(100%, 0, 0)" },
@@ -23,94 +34,96 @@ const slideInBottom = keyframes({
     to: { transform: "translate3d(0, 0, 0)" },
 });
 
-export const sheetContentBaseStyle = style({
-    position: "fixed",
-    zIndex: zIndex.modal + 1,
-    backgroundColor: vars.surface.background2,
-    boxShadow: shadow.dialog,
-    display: "flex",
-    flexDirection: "column",
-    width: "100vw",
-    maxWidth: "100vw",
-    overflowY: "auto",
-    animationDuration: transition.base,
-    animationTimingFunction: easing.smooth,
-    selectors: {
-        "&:focus": { outline: "none" },
-    },
-});
-
-export const sheetContentPaddedStyle = style({
-    gap: alias.spacing.m,
-    padding: alias.spacing.l,
-});
-
-export const sheetContentVariants = styleVariants({
-    right: [
-        {
-            top: 0,
-            right: 0,
-            height: "100dvh",
-            animationName: slideInRight,
-        },
-    ],
-    left: [
-        {
-            top: 0,
-            left: 0,
-            height: "100dvh",
-            animationName: slideInLeft,
-        },
-    ],
-    top: [
-        {
-            top: 0,
-            left: 0,
-            right: 0,
-            maxHeight: "85dvh",
-            animationName: slideInTop,
-            borderBottomLeftRadius: alias.cornerRadius.l,
-            borderBottomRightRadius: alias.cornerRadius.l,
-        },
-    ],
-    bottom: [
-        {
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxHeight: "85dvh",
-            animationName: slideInBottom,
-            borderTopLeftRadius: alias.cornerRadius.l,
-            borderTopRightRadius: alias.cornerRadius.l,
-        },
-    ],
-});
-
 /**
- * Tablet+ width override for `right` / `left` sheets. Mobile keeps the
- * full-width base. `top` / `bottom` ignore size (always full width).
+ * Portaled sheet content. `size` only affects width on horizontal
+ * (`left`/`right`) sheets — `top`/`bottom` stay full width (handled via the
+ * horizontal-only compound variants below).
  */
-export const sheetSizeVariants = styleVariants({
-    default: [
-        {
-            "@media": {
-                [`screen and (min-width: ${tablet}px)`]: {
-                    width: "420px",
-                    maxWidth: "min(420px, 100vw)",
-                },
+export const sheetContent = recipe({
+    base: {
+        position: "fixed",
+        zIndex: zIndex.modal + 1,
+        backgroundColor: vars.surface.background2,
+        boxShadow: shadow.dialog,
+        display: "flex",
+        flexDirection: "column",
+        width: "100vw",
+        maxWidth: "100vw",
+        overflowY: "auto",
+        animationDuration: transition.base,
+        animationTimingFunction: easing.smooth,
+        selectors: {
+            "&:focus": { outline: "none" },
+        },
+    },
+    variants: {
+        side: {
+            right: {
+                top: 0,
+                right: 0,
+                height: "100dvh",
+                animationName: slideInRight,
+            },
+            left: {
+                top: 0,
+                left: 0,
+                height: "100dvh",
+                animationName: slideInLeft,
+            },
+            top: {
+                top: 0,
+                left: 0,
+                right: 0,
+                maxHeight: "85dvh",
+                animationName: slideInTop,
+                borderBottomLeftRadius: alias.cornerRadius.l,
+                borderBottomRightRadius: alias.cornerRadius.l,
+            },
+            bottom: {
+                bottom: 0,
+                left: 0,
+                right: 0,
+                maxHeight: "85dvh",
+                animationName: slideInBottom,
+                borderTopLeftRadius: alias.cornerRadius.l,
+                borderTopRightRadius: alias.cornerRadius.l,
             },
         },
-    ],
-    wide: [
-        {
-            "@media": {
-                [`screen and (min-width: ${tablet}px)`]: {
-                    width: "640px",
-                    maxWidth: "min(640px, 100vw)",
-                },
+        size: {
+            default: {},
+            wide: {},
+        },
+        padded: {
+            true: {
+                gap: alias.spacing.m,
+                padding: alias.spacing.l,
             },
+            false: {},
+        },
+    },
+    compoundVariants: [
+        {
+            variants: { side: "right", size: "default" },
+            style: horizontalWidth(420),
+        },
+        {
+            variants: { side: "left", size: "default" },
+            style: horizontalWidth(420),
+        },
+        {
+            variants: { side: "right", size: "wide" },
+            style: horizontalWidth(640),
+        },
+        {
+            variants: { side: "left", size: "wide" },
+            style: horizontalWidth(640),
         },
     ],
+    defaultVariants: {
+        side: "right",
+        size: "default",
+        padded: true,
+    },
 });
 
 export const sheetHeaderStyle = style({

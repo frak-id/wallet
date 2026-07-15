@@ -13,6 +13,7 @@ const MOCK_MERCHANT_BANK = {
     deployed: true,
     bankAddress: "0x1111111111111111111111111111111111111111" as Address,
     isManager: true,
+    managerRole: "granted" as const,
     isOpen: true,
     tokens: [
         {
@@ -65,13 +66,15 @@ export function useGetMerchantBank({ merchantId }: { merchantId: string }) {
                 throw new Error("No bank data returned");
             }
 
-            const { deployed, bankAddress, ownerHasManagerRole } = data;
+            const { deployed, bankAddress, ownerHasManagerRole, managerRole } =
+                data;
 
             if (!deployed || !bankAddress) {
                 return {
                     deployed,
                     bankAddress: null,
                     isManager: ownerHasManagerRole,
+                    managerRole,
                     isOpen: null,
                     tokens: [],
                 };
@@ -124,6 +127,7 @@ export function useGetMerchantBank({ merchantId }: { merchantId: string }) {
                 deployed,
                 bankAddress,
                 isManager: ownerHasManagerRole,
+                managerRole,
                 isOpen,
                 tokens,
             };

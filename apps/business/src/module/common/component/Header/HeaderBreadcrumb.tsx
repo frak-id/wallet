@@ -31,8 +31,16 @@ function labelFor(segment: string, t: TFunction): string {
             return pageNav(t, "pushCreate");
         case "settings":
             return pageNav(t, "settings");
+        case "billing":
+            return pageNav(t, "billing");
         case "merchant":
             return pageNav(t, "merchant");
+        case "funding":
+            return pageNav(t, "funding");
+        case "setup-status":
+            return pageNav(t, "setupStatus");
+        case "affiliate-report":
+            return pageNav(t, "campaignsAffiliateReport");
         default:
             return segment.charAt(0).toUpperCase() + segment.slice(1);
     }

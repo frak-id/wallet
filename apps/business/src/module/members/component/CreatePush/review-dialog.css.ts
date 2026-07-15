@@ -44,21 +44,20 @@ export const cellRow = style({
     paddingBlock: "13.5px",
 });
 
-export const errorBanner = style({
-    display: "flex",
-    alignItems: "flex-start",
-    gap: alias.spacing.xs,
-    marginTop: alias.spacing.m,
-    padding: alias.spacing.s,
-    borderRadius: alias.cornerRadius.m,
-    backgroundColor: vars.surface.error,
-});
-
-export const errorIcon = style({
-    flexShrink: 0,
-    width: "20px",
-    height: "20px",
-    color: vars.text.error,
+// `Notice display="block" tone="error"` already gives borderRadius.m,
+// surface.error bg + text.error color, and paddingBlock.s. This site differs
+// on: top-aligned icon (Notice base centers), a wider icon/text gap (`xs` vs
+// the base `xxs`), a top margin, and 12px inline padding (Notice base is 16px).
+// `&&` self-reference wins the cascade over the recipe class.
+export const errorBannerOverride = style({
+    selectors: {
+        "&&": {
+            alignItems: "flex-start",
+            gap: alias.spacing.xs,
+            marginTop: alias.spacing.m,
+            paddingInline: alias.spacing.s,
+        },
+    },
 });
 
 export const button = style({

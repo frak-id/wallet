@@ -1,12 +1,13 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import { isUserCancellation } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
-import { Notice } from "@/module/common/component/Notice";
+import * as styles from "./index.css";
 
 /**
  * The register component
@@ -41,7 +42,16 @@ export function SsoRegisterComponent({
 
     const statusComponent = useMemo(() => {
         if (error && !isCancelledError && !isPreviouslyUsedAuthenticatorError) {
-            return <Notice>{t("authent.create.error")}</Notice>;
+            return (
+                <Notice
+                    display="inline"
+                    tone="info"
+                    icon={null}
+                    className={styles.noticeSpacing}
+                >
+                    {t("authent.create.error")}
+                </Notice>
+            );
         }
 
         return null;

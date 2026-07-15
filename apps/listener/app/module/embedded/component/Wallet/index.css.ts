@@ -1,3 +1,4 @@
+import { fadeIn } from "@frak-labs/design-system/keyframes";
 import {
     globalStyle,
     keyframes,
@@ -37,11 +38,6 @@ const resizeHeightKf = keyframes({
     "100%": { height: "auto", minHeight: "350px" },
 });
 
-const opacityKf = keyframes({
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-});
-
 export const modalListenerWallet = style({
     position: "fixed",
     bottom: "19px",
@@ -67,7 +63,7 @@ export const modalListenerWallet__inner = style({
     padding: "40px",
     height: "100%",
     overflow: "hidden",
-    animation: `${opacityKf} 0.3s 0.2s forwards`,
+    animation: `${fadeIn} 0.3s 0.2s forwards`,
     /* Create a new stacking context for the toaster to be inside our modal */
     transform: "translateZ(0)",
 });

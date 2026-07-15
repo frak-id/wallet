@@ -10,8 +10,7 @@ type SpinnerProps = {
 };
 
 export function Spinner({ size = "m", className }: SpinnerProps) {
-    const sizeClass = spinnerStyles[size];
-    const combinedClassName = clsx(sizeClass, className);
+    const combinedClassName = clsx(spinnerStyles({ size }), className);
 
     const leafRotationKeys = [
         "leaf0",

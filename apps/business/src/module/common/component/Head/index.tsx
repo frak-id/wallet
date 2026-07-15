@@ -1,3 +1,4 @@
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import type { ReactNode } from "react";
 import { Title, type TitleProps } from "@/module/common/component/Title";
@@ -12,12 +13,12 @@ type HeadProps = {
 export function Head({ title, leftSection, rightSection }: HeadProps) {
     const { content, size } = title ?? {};
     return (
-        <div className={head}>
+        <Spread align="bottom" className={head}>
             <Stack space="xs">
                 {title && <Title size={size ?? "medium"}>{content}</Title>}
                 {leftSection}
             </Stack>
             {rightSection && <div>{rightSection}</div>}
-        </div>
+        </Spread>
     );
 }

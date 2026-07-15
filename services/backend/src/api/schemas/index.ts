@@ -1,6 +1,14 @@
 // Re-export orchestration schemas (used by API routes, kept in orchestration for orchestrator use)
 
 export {
+    type AffiliateActionsReport,
+    type AffiliateClicksReport,
+    type AffiliateReportingQuery,
+    AffiliateReportingQuerySchema,
+    type AffiliateReportingResponse,
+    AffiliateReportingResponseSchema,
+} from "../../orchestration/schemas/affiliateReportingSchemas";
+export {
     type CampaignDetailsResponse,
     CampaignDetailsResponseSchema,
     type CpaSegmentKey,
@@ -114,6 +122,8 @@ export {
     validateArrivalReferrer,
 } from "./interactionSchemas";
 export {
+    type AffiliateBrandInfo,
+    AffiliateBrandInfoSchema,
     type MerchantDetailResponse,
     MerchantDetailResponseSchema,
     type MerchantResolveResponse,

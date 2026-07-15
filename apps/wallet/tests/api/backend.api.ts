@@ -22,8 +22,65 @@ const DEFAULT_E2E_SESSION = {
     sdkJwt: "e2e-mock-sdk-jwt",
 };
 
+/**
+ * Canned merchant list the mocked `/user/merchant/explore` endpoint returns so
+ * the Explorer page renders a stable list without a real backend.
+ */
+// Backend order is [One, Two, Three] with distinguishable campaign counts so
+// specs can assert real reordering: "Most popular" (count desc) surfaces Two
+// first; "Most recent" (reverse) surfaces Three first.
+const DEFAULT_E2E_EXPLORER_MERCHANTS = [
+    {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "Merchant One",
+        domain: "one.example",
+        explorerConfig: null,
+        activeCampaignCount: 1,
+        integration: "native",
+    },
+    {
+        id: "22222222-2222-2222-2222-222222222222",
+        name: "Merchant Two",
+        domain: "two.example",
+        explorerConfig: null,
+        activeCampaignCount: 3,
+        integration: "native",
+    },
+    {
+        id: "33333333-3333-3333-3333-333333333333",
+        name: "Merchant Three",
+        domain: "three.example",
+        explorerConfig: null,
+        activeCampaignCount: 2,
+        integration: "native",
+    },
+];
+
 export class BackendApi {
     constructor(private readonly page: Page) {}
+
+    /**
+     * Stub the Explorer merchant list so the sort spec renders a stable page
+     * without a real backend (mirrors the plain `interceptBalanceRoute` fulfil
+     * pattern — same auth'd client, same cross-origin behaviour).
+     */
+    async mockExplorerMerchants(
+        merchants: readonly Record<
+            string,
+            unknown
+        >[] = DEFAULT_E2E_EXPLORER_MERCHANTS
+    ) {
+        await this.page.route("**/*/merchant/explore*", async (route) => {
+            await route.fulfill({
+                status: 200,
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({
+                    totalResult: merchants.length,
+                    merchants,
+                }),
+            });
+        });
+    }
 
     /**
      * Short-circuit WebAuthn login with a canned session so modal/auth specs

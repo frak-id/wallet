@@ -172,20 +172,19 @@ function PlacementSettingsPanel({
                             },
                         }}
                         render={({ field }) => (
-                            <EditField
-                                label={t(
-                                    "customize.components.targetInteraction.label"
-                                )}
-                                hint={t(
-                                    "customize.components.targetInteraction.hint"
-                                )}
-                            >
+                            <EditField>
                                 <FormControl>
                                     <Input
                                         variant="bare"
                                         tone="muted"
                                         maxLength={200}
                                         placeholder={"purchase_completed"}
+                                        label={t(
+                                            "customize.components.targetInteraction.label"
+                                        )}
+                                        hint={t(
+                                            "customize.components.targetInteraction.hint"
+                                        )}
                                         {...field}
                                     />
                                 </FormControl>

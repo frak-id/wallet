@@ -1,4 +1,5 @@
-import { keyframes, style, styleVariants } from "@vanilla-extract/css";
+import { keyframes, style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, brand } from "../../tokens.css";
 
@@ -63,44 +64,44 @@ export const indicatorColumn = style({
 
 /* ----- indicator circle ----- */
 
-const indicatorBase = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxSizing: "border-box",
-    width: 32,
-    height: 32,
-    borderRadius: "50%",
-    flexShrink: 0,
-    fontSize: "14px",
-    lineHeight: 1,
-    fontWeight: brand.typography.fontWeight.medium,
-    fontVariantNumeric: "tabular-nums",
-    borderWidth: 1,
-    borderStyle: "solid",
-    transition:
-        "color 200ms ease, border-color 200ms ease, background-color 200ms ease",
-} as const;
-
-export const indicator = styleVariants({
-    default: {
-        ...indicatorBase,
-        borderColor: vars.border.default,
-        color: vars.text.tertiary,
-        backgroundColor: "transparent",
+export const indicator = recipe({
+    base: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxSizing: "border-box",
+        width: 32,
+        height: 32,
+        borderRadius: "50%",
+        flexShrink: 0,
+        fontSize: "14px",
+        lineHeight: 1,
+        fontWeight: brand.typography.fontWeight.medium,
+        fontVariantNumeric: "tabular-nums",
+        borderWidth: 1,
+        borderStyle: "solid",
+        transition:
+            "color 200ms ease, border-color 200ms ease, background-color 200ms ease",
     },
-    active: {
-        ...indicatorBase,
-        position: "relative",
-        borderColor: "transparent",
-        color: vars.text.action,
-        backgroundColor: "transparent",
-    },
-    completed: {
-        ...indicatorBase,
-        borderColor: vars.text.action,
-        color: vars.text.onAction,
-        backgroundColor: vars.text.action,
+    variants: {
+        status: {
+            default: {
+                borderColor: vars.border.default,
+                color: vars.text.tertiary,
+                backgroundColor: "transparent",
+            },
+            active: {
+                position: "relative",
+                borderColor: "transparent",
+                color: vars.text.action,
+                backgroundColor: "transparent",
+            },
+            completed: {
+                borderColor: vars.text.action,
+                color: vars.text.onAction,
+                backgroundColor: vars.text.action,
+            },
+        },
     },
 });
 

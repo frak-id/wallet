@@ -1,6 +1,14 @@
 import type { InputHTMLAttributes, ReactNode, Ref } from "react";
+import { useId } from "react";
 import { Box } from "../Box";
-import { inputField, inputSection, inputWrapper } from "./input.css";
+import { Stack } from "../Stack";
+import {
+    fieldHint,
+    fieldLabel,
+    inputField,
+    inputSection,
+    inputWrapper,
+} from "./input.css";
 
 type InputProps = Omit<
     InputHTMLAttributes<HTMLInputElement>,
@@ -25,6 +33,15 @@ type InputProps = Omit<
     className?: string;
     /** Class for the inner `<input>` (the wrapper takes `className`). */
     inputClassName?: string;
+    /**
+     * Composed field label rendered above the control, with `htmlFor`
+     * internally wired to the control's `id` (generated via `useId()` when
+     * no `id` prop is passed). Omit both `label` and `hint` for the
+     * bare-control render.
+     */
+    label?: ReactNode;
+    /** Hint rendered below the control, linked via `aria-describedby`. */
+    hint?: ReactNode;
     ref?: Ref<HTMLInputElement>;
 };
 
@@ -38,10 +55,20 @@ export function Input({
     disabled,
     className,
     inputClassName,
+    label,
+    hint,
+    id,
+    "aria-describedby": ariaDescribedBy,
     ref,
     ...rest
 }: InputProps) {
-    return (
+    const generatedId = useId();
+    const fieldId = id ?? generatedId;
+    const hintId = hint ? `${fieldId}-hint` : undefined;
+    const describedBy =
+        [ariaDescribedBy, hintId].filter(Boolean).join(" ") || undefined;
+
+    const control = (
         <Box
             as="span"
             className={`${inputWrapper({ variant, length, tone, error, disabled })}${className ? ` ${className}` : ""}`}
@@ -57,6 +84,8 @@ export function Input({
             <Box
                 as="input"
                 ref={ref}
+                id={label ? fieldId : id}
+                aria-describedby={describedBy}
                 className={`${inputField({ variant })}${inputClassName ? ` ${inputClassName}` : ""}`}
                 disabled={disabled}
                 {...rest}
@@ -70,5 +99,32 @@ export function Input({
                 </Box>
             ) : null}
         </Box>
+    );
+
+    if (!label && !hint) {
+        return control;
+    }
+
+    return (
+        // Field spec: 8px (spacing.xs) label→control, 4px (spacing.xxs)
+        // control→hint. The hint nests with the control so the label keeps its
+        // 8px offset while the hint sits 4px under the field.
+        <Stack space="xs">
+            {label ? (
+                <Box as="label" htmlFor={fieldId} className={fieldLabel}>
+                    {label}
+                </Box>
+            ) : null}
+            {hint ? (
+                <Stack space="xxs">
+                    {control}
+                    <Box as="span" id={hintId} className={fieldHint}>
+                        {hint}
+                    </Box>
+                </Stack>
+            ) : (
+                control
+            )}
+        </Stack>
     );
 }

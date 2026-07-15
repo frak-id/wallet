@@ -12,11 +12,12 @@ export const Route = createFileRoute("/demo")({
 
         const store = useAuthStore.getState();
         if (store.token !== "demo-token") {
-            store.setAuth(
-                "demo-token",
-                "0x0000000000000000000000000000000000000001" as Address,
-                Date.now() + 7 * 24 * 60 * 60 * 1000
-            );
+            store.setAuth({
+                token: "demo-token",
+                wallet: "0x0000000000000000000000000000000000000001" as Address,
+                authMethod: "siwe",
+                expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+            });
         }
 
         throw redirect({ to: "/dashboard" });

@@ -9,6 +9,7 @@ import { SdkHelper } from "./helpers/sdk.helper";
 import { StorageHelper } from "./helpers/storage.helper";
 import { WebAuthNHelper } from "./helpers/webauthn.helper";
 import { AuthPage } from "./pages/auth.page";
+import { ExplorerPage } from "./pages/explorer.page";
 import { HistoryPage } from "./pages/history.page";
 import { HomePage } from "./pages/home.page";
 import { ModalPage } from "./pages/modal.page";
@@ -33,6 +34,7 @@ type TestFixtures = {
     homePage: HomePage;
     historyPage: HistoryPage;
     modalPage: ModalPage;
+    explorerPage: ExplorerPage;
 };
 
 // WebAuthN should switched to worker scope, with a pre existing authenticator + credentials so we can test login + pairing easily
@@ -112,6 +114,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     },
     modalPage: async ({ page }, use) => {
         await use(new ModalPage(page));
+    },
+    explorerPage: async ({ page }, use) => {
+        await use(new ExplorerPage(page));
     },
 });
 

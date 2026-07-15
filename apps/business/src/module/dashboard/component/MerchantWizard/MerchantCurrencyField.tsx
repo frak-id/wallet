@@ -5,6 +5,7 @@ import {
 } from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import {
     EurIcon,
     GbpIcon,
@@ -37,37 +38,38 @@ export function MerchantCurrencyField({
 }: MerchantCurrencyFieldProps) {
     return (
         <RadioGroup
-            className={styles.currencyGrid}
             value={value}
             onValueChange={(next) => onChange(next as Stablecoin)}
         >
-            {CURRENCIES.map((stablecoin) => {
-                const meta = currencyMetadata[stablecoin];
-                return (
-                    <label
-                        key={stablecoin}
-                        htmlFor={`currency-${stablecoin}`}
-                        className={styles.currencyCell}
-                    >
-                        <RadioGroupItem
-                            id={`currency-${stablecoin}`}
-                            value={stablecoin}
-                            size="l"
-                        />
-                        <div className={styles.currencyLabel}>
-                            {CURRENCY_ICONS[stablecoin]}
-                            <Stack space="xxs">
-                                <Text variant="body" weight="medium">
-                                    {meta.currencySymbol}
-                                </Text>
-                                <Text variant="bodySmall" color="secondary">
-                                    {meta.provider}
-                                </Text>
-                            </Stack>
-                        </div>
-                    </label>
-                );
-            })}
+            <Tiles columns={2} space="m">
+                {CURRENCIES.map((stablecoin) => {
+                    const meta = currencyMetadata[stablecoin];
+                    return (
+                        <label
+                            key={stablecoin}
+                            htmlFor={`currency-${stablecoin}`}
+                            className={styles.currencyCell}
+                        >
+                            <RadioGroupItem
+                                id={`currency-${stablecoin}`}
+                                value={stablecoin}
+                                size="l"
+                            />
+                            <div className={styles.currencyLabel}>
+                                {CURRENCY_ICONS[stablecoin]}
+                                <Stack space="xxs">
+                                    <Text variant="body" weight="medium">
+                                        {meta.currencySymbol}
+                                    </Text>
+                                    <Text variant="bodySmall" color="secondary">
+                                        {meta.provider}
+                                    </Text>
+                                </Stack>
+                            </div>
+                        </label>
+                    );
+                })}
+            </Tiles>
         </RadioGroup>
     );
 }

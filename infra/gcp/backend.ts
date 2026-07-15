@@ -68,7 +68,12 @@ export const backendInstance = new KubernetesService(
                 {
                     name: "elysia",
                     image: elysiaImage.ref,
-                    ports: [{ containerPort: 3030 }],
+                    ports: [
+                        { containerPort: 3030, name: "http" },
+                        // Cluster-internal Prometheus metrics port. NOT routed
+                        // by the ingress — only scraped pod-to-pod.
+                        { containerPort: 9464, name: "metrics" },
+                    ],
                     env: [
                         {
                             name: "BUN_JSC_forceRAMSize",
@@ -119,6 +124,14 @@ export const backendInstance = new KubernetesService(
         service: {
             ports: [
                 { port: 80, targetPort: 3030, protocol: "TCP", name: "http" },
+                // Metrics port is exposed on the ClusterIP service only (no
+                // ingress rule references it), so it stays internal.
+                {
+                    port: 9464,
+                    targetPort: 9464,
+                    protocol: "TCP",
+                    name: "metrics",
+                },
             ],
         },
 
@@ -155,13 +168,14 @@ export const backendInstance = new KubernetesService(
             },
         },
 
-        // ServiceMonitor config
-        // todo: expose some prom metrics
-        // serviceMonitor: {
-        //     port: "metrics",
-        //     path: "/metrics",
-        //     interval: "15s",
-        // },
+        // ServiceMonitor config — scrapes the dedicated, cluster-internal
+        // `metrics` port (9464). Kept off the public `http` port so /metrics
+        // is never reachable through the ingress.
+        serviceMonitor: {
+            port: "metrics",
+            path: "/metrics",
+            interval: "15s",
+        },
     },
     {
         dependsOn: [elysiaImage, elysiaSecrets, bootstrapJob],

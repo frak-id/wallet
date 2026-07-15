@@ -1,4 +1,4 @@
-import { fadeIn } from "@frak-labs/design-system/keyframes";
+import { fadeInDown } from "@frak-labs/design-system/keyframes";
 import { style } from "@vanilla-extract/css";
 
 // ─── Banner Preview ─────────────────────────────────────
@@ -12,7 +12,7 @@ export const bannerContainer = style({
     backgroundColor: "#ffffff",
     borderRadius: 8,
     border: "1px solid #e0e0e0",
-    animation: `${fadeIn} 300ms ease-out`,
+    animation: `${fadeInDown} 300ms ease-out`,
     fontFamily: "system-ui, -apple-system, sans-serif",
 });
 

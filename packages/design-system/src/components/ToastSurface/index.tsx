@@ -1,9 +1,12 @@
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import clsx from "clsx";
 import type { ReactNode } from "react";
 
 import { placement, surface } from "./toastSurface.css";
 
-type ToastPlacement = keyof typeof placement;
+type ToastPlacement = NonNullable<
+    RecipeVariants<typeof placement>
+>["placement"];
 
 type ToastSurfaceProps = {
     children: ReactNode;
@@ -24,7 +27,13 @@ export function ToastSurface({
     className,
 }: ToastSurfaceProps) {
     return (
-        <div className={clsx(surface, placement[placementProp], className)}>
+        <div
+            className={clsx(
+                surface,
+                placement({ placement: placementProp }),
+                className
+            )}
+        >
             {children}
         </div>
     );

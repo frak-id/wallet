@@ -8,8 +8,11 @@ export function Markdown({ md }: { md?: string }) {
         let html = micromark(md ?? "No description", {
             allowDangerousHtml: false,
         });
-        // Post-processing, add target=_blank to every link in the markdown
-        html = html.replace(/<a /g, '<a target="_blank" ');
+        // Post-processing, add target=_blank + rel to every link in the markdown
+        html = html.replace(
+            /<a /g,
+            '<a target="_blank" rel="noopener noreferrer" '
+        );
         // Convert to component
         return jsx("div", { dangerouslySetInnerHTML: { __html: html } });
     }, [md]);

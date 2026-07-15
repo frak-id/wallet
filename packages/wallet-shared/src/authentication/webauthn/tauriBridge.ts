@@ -348,7 +348,17 @@ function fromPluginAuthentication(json: PluginAuthenticationResponse) {
     };
 }
 
-export function getTauriGetFn(): OxGetFn {
+export function getTauriGetFn(opts?: {
+    /**
+     * When true, threads `preferImmediatelyAvailable` to the native
+     * `authenticate` command so the OS fails fast with a `no-credential`
+     * signal (iOS `.notInteractive`/1005, Android `TYPE_NO_CREDENTIAL`)
+     * instead of collapsing onto an opaque `NotAllowedError` when no passkey
+     * exists on the device. `ox`'s `getFn` can't carry custom options, so the
+     * flag is captured in this closure and merged into the plugin invoke args.
+     */
+    preferImmediatelyAvailable?: boolean;
+}): OxGetFn {
     if (!IS_TAURI) return undefined;
 
     return async (options) => {
@@ -365,7 +375,15 @@ export function getTauriGetFn(): OxGetFn {
             const response =
                 await invokeTauriPlugin<PluginAuthenticationResponse>(
                     "authenticate",
-                    { origin, options: pluginOptions }
+                    {
+                        origin,
+                        options: opts?.preferImmediatelyAvailable
+                            ? {
+                                  ...pluginOptions,
+                                  preferImmediatelyAvailable: true,
+                              }
+                            : pluginOptions,
+                    }
                 );
             return fromPluginAuthentication(response) as Awaited<
                 ReturnType<NonNullable<OxGetFn>>

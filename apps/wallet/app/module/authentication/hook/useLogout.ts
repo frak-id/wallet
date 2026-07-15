@@ -1,8 +1,4 @@
-import {
-    recoveryHintStorage,
-    sessionStore,
-    trackEvent,
-} from "@frak-labs/wallet-shared";
+import { sessionStore, trackEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
@@ -29,9 +25,14 @@ function cleanLocalStorage() {
 }
 
 /**
- * Full logout flow: unsubscribe push, wipe recovery hint, clear session
- * + demo private key, drain query cache, scrub local storage, redirect
- * to `/register`.
+ * Full logout flow: unsubscribe push, clear the active session + demo
+ * private key, drain query cache, scrub local storage, redirect to `/register`.
+ *
+ * Keeps the "last authenticator" hints (recovery hint / IDB / zustand) intact
+ * — logout ends the session, it is not account deletion. The surviving hint
+ * lets the next cold start resume quick-login (register gate → `/login`); a
+ * truly stale hint self-heals via the `/login` silent-login `no-credential`
+ * path (Android).
  */
 export function useLogout() {
     const navigate = useNavigate();
@@ -42,7 +43,6 @@ export function useLogout() {
         setIsLoggingOut(true);
         trackEvent("logout");
         await notificationAdapter.unsubscribe().catch(() => {});
-        await recoveryHintStorage.clear();
         sessionStore.getState().clearSession();
         queryClient.removeQueries();
         setTimeout(() => {

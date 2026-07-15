@@ -25,8 +25,10 @@ export class MerchantOwnershipTransferRepository {
 
     async create(params: {
         merchantId: string;
-        fromWallet: Address;
-        toWallet: Address;
+        fromWallet: Address | null;
+        fromAccountId: string | null;
+        toWallet: Address | null;
+        toAccountId: string | null;
     }): Promise<OwnershipTransferSelect> {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + TRANSFER_EXPIRY_DAYS);
@@ -36,14 +38,18 @@ export class MerchantOwnershipTransferRepository {
             .values({
                 merchantId: params.merchantId,
                 fromWallet: params.fromWallet,
+                fromAccountId: params.fromAccountId,
                 toWallet: params.toWallet,
+                toAccountId: params.toAccountId,
                 expiresAt,
             })
             .onConflictDoUpdate({
                 target: merchantOwnershipTransfersTable.merchantId,
                 set: {
                     fromWallet: params.fromWallet,
+                    fromAccountId: params.fromAccountId,
                     toWallet: params.toWallet,
+                    toAccountId: params.toAccountId,
                     initiatedAt: new Date(),
                     expiresAt,
                 },

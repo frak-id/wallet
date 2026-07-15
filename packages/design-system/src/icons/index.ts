@@ -83,6 +83,7 @@ export { SendIcon } from "./SendIcon";
 export { SettingsIcon } from "./SettingsIcon";
 export { ShareIcon } from "./ShareIcon";
 export { ShieldIcon } from "./ShieldIcon";
+export { SortIcon } from "./SortIcon";
 export { SparklesIcon } from "./SparklesIcon";
 export { StarIcon } from "./StarIcon";
 export { TabGridIcon } from "./TabGridIcon";

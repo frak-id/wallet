@@ -69,7 +69,7 @@ describe("DnsCheckRepository", () => {
             const domain = "example.com";
             const result = dnsCheckRepository.getDnsTxtString({
                 domain,
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
             });
 
             expect(result).toMatch(/^frak-business; hash=0x[a-f0-9]{64}$/);
@@ -78,11 +78,11 @@ describe("DnsCheckRepository", () => {
         it("should normalize domain before generating hash", () => {
             const result1 = dnsCheckRepository.getDnsTxtString({
                 domain: "https://www.example.com",
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
             });
             const result2 = dnsCheckRepository.getDnsTxtString({
                 domain: "example.com",
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
             });
 
             expect(result1).toBe(result2);
@@ -95,14 +95,37 @@ describe("DnsCheckRepository", () => {
 
             const result1 = dnsCheckRepository.getDnsTxtString({
                 domain,
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
             });
             const result2 = dnsCheckRepository.getDnsTxtString({
                 domain,
-                owner: owner2,
+                owner: { wallet: owner2 },
             });
 
             expect(result1).not.toBe(result2);
+        });
+
+        it("should bind the TXT record to a business account for walletless owners", () => {
+            const domain = "example.com";
+            const accountA = "5f0e7a3e-1111-4444-8888-aaaaaaaaaaaa";
+            const accountB = "5f0e7a3e-2222-4444-8888-bbbbbbbbbbbb";
+
+            const byAccountA = dnsCheckRepository.getDnsTxtString({
+                domain,
+                owner: { accountId: accountA },
+            });
+            const byAccountB = dnsCheckRepository.getDnsTxtString({
+                domain,
+                owner: { accountId: accountB },
+            });
+            const byWallet = dnsCheckRepository.getDnsTxtString({
+                domain,
+                owner: { wallet: mockOwner },
+            });
+
+            expect(byAccountA).toMatch(/^frak-business; hash=0x[a-f0-9]{64}$/);
+            expect(byAccountA).not.toBe(byAccountB);
+            expect(byAccountA).not.toBe(byWallet);
         });
     });
 
@@ -120,11 +143,55 @@ describe("DnsCheckRepository", () => {
 
             const result = await dnsCheckRepository.isValidDomain({
                 domain,
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
                 setupCode: hash,
             });
 
             expect(result).toBe(true);
+        });
+
+        it("should validate a setup code bound to the account email (walletless)", async () => {
+            process.env.PRODUCT_SETUP_CODE_SALT = "test-salt";
+            const { keccak256, concatHex, toHex } = await import("viem");
+            const domain = "example.com";
+            const email = "Client@Shop.com";
+            // Bound to the lowercased email, not the wallet.
+            const hash = keccak256(
+                concatHex([
+                    toHex(domain),
+                    toHex(email.toLowerCase()),
+                    toHex("test-salt"),
+                ])
+            );
+
+            const result = await dnsCheckRepository.isValidDomain({
+                domain,
+                owner: { accountId: "5f0e7a3e-1111-4444-8888-aaaaaaaaaaaa" },
+                // Email is compared case-insensitively.
+                email: "client@shop.com",
+                setupCode: hash,
+            });
+
+            expect(result).toBe(true);
+        });
+
+        it("should fall through to DNS for an account owner with no email", async () => {
+            // No email means no setup-code subject — must use the DNS lookup.
+            mockIsRunningInProd.value = true;
+            mockResolveTxt.mockImplementation((_, callback) => {
+                callback(null, []);
+            });
+
+            const result = await dnsCheckRepository.isValidDomain({
+                domain: "example.com",
+                owner: { accountId: "5f0e7a3e-1111-4444-8888-aaaaaaaaaaaa" },
+                email: null,
+                setupCode:
+                    "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            });
+
+            expect(result).toBe(false);
+            expect(mockResolveTxt).toHaveBeenCalled();
         });
 
         it("should return false when invalid setup code is provided", async () => {
@@ -135,7 +202,7 @@ describe("DnsCheckRepository", () => {
 
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
                 setupCode:
                     "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
             });
@@ -150,7 +217,7 @@ describe("DnsCheckRepository", () => {
 
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
             });
 
             expect(result).toBe(true);
@@ -163,7 +230,7 @@ describe("DnsCheckRepository", () => {
             // Generate the correct DNS TXT record for this domain and owner
             const expectedTxtRecord = dnsCheckRepository.getDnsTxtString({
                 domain: "example.com",
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
             });
 
             mockResolveTxt.mockImplementation((_, callback) => {
@@ -172,7 +239,7 @@ describe("DnsCheckRepository", () => {
 
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
             });
 
             // Should call DNS check in production mode
@@ -193,7 +260,7 @@ describe("DnsCheckRepository", () => {
 
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
-                owner: mockOwner,
+                owner: { wallet: mockOwner },
             });
 
             // Should call DNS check in production mode

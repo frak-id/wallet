@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
 
 export const glassCircle = style({
@@ -32,4 +32,15 @@ export const glassIcon = style({
     position: "relative",
     zIndex: 1,
     display: "flex",
+});
+
+// The vendor rule uses `blur(var(--frost-blur-radius))`, which Lightning CSS
+// (Safari 14 target) strips as invalid. Re-declared here with the static value
+// (frostBlurRadius is a constant 3) so it ships in build-time CSS — a runtime
+// <style> tag would be blocked by the Tauri production CSP. Only the
+// unprefixed property: Lightning CSS adds the `-webkit-` prefix itself, and
+// declaring both makes it collapse the pair to `-webkit-` only (Chrome
+// ignores it — no blur on web).
+globalStyle(`${glassCircle} .liquid-glass::after`, {
+    backdropFilter: "blur(3px)",
 });

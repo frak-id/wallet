@@ -26,6 +26,5 @@ export const toolbar = style({
 });
 
 export const content = style({
-    maxWidth: "720px",
     paddingTop: alias.spacing.m,
 });

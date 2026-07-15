@@ -1,3 +1,4 @@
+import { businessMetrics } from "@backend-infrastructure";
 import { RewardConfig } from "../domain/rewards/config";
 import { tryWithAdvisoryLock } from "../infrastructure/persistence/postgres";
 import { OrchestrationContext } from "../orchestration";
@@ -24,7 +25,8 @@ CronRegistry.register(
             const outcome = await tryWithAdvisoryLock(
                 SETTLEMENT_ADVISORY_LOCK_KEY,
                 () =>
-                    OrchestrationContext.orchestrators.settlement.runSettlement()
+                    OrchestrationContext.orchestrators.settlement.runSettlement(),
+                "settlement"
             );
 
             if (!outcome.ran) {
@@ -35,6 +37,14 @@ CronRegistry.register(
             }
 
             const { result } = outcome;
+            businessMetrics.settlementRewards("settled", result.settledCount);
+            businessMetrics.settlementRewards("failed", result.failedCount);
+            businessMetrics.settlementRewards(
+                "depleted",
+                result.depletedCount ?? 0
+            );
+            businessMetrics.settlementTx(result.txHashes.length);
+            businessMetrics.settlementErrors(result.errors.length);
             logger.info(
                 {
                     settled: result.settledCount,

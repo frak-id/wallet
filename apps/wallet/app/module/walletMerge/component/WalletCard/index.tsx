@@ -1,5 +1,5 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
@@ -43,7 +43,7 @@ export function WalletCard({
             className={isWinner ? styles.cardWinner : styles.card}
         >
             <Stack space="s">
-                <Box className={styles.header}>
+                <Spread space="s">
                     <Text variant="bodySmall" color="secondary" weight="medium">
                         {label}
                     </Text>
@@ -56,7 +56,7 @@ export function WalletCard({
                             {t("wallet.merge.preview.winnerBadge")}
                         </Text>
                     )}
-                </Box>
+                </Spread>
                 <Text variant="body" weight="semiBold">
                     {shortenAddress(address)}
                 </Text>
@@ -81,13 +81,13 @@ export function WalletCard({
 
 function StatRow({ label, value }: { label: string; value: number }) {
     return (
-        <Box className={styles.statRow}>
+        <Spread space="s">
             <Text variant="bodySmall" color="secondary">
                 {label}
             </Text>
             <Text variant="bodySmall" weight="medium">
                 {value}
             </Text>
-        </Box>
+        </Spread>
     );
 }

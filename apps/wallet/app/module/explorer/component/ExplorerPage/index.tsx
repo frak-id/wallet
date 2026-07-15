@@ -1,7 +1,11 @@
-import { Box } from "@frak-labs/design-system/components/Box";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useTranslation } from "react-i18next";
-import { Title } from "@/module/common/component/Title";
+import { ScrollEdgeBlur } from "@/module/common/component/ScrollEdgeBlur";
 import { ExplorerList } from "@/module/explorer/component/ExplorerList";
+import { ExplorerSortButton } from "@/module/explorer/component/ExplorerSortButton";
+import { useScrollMorphTitle } from "@/module/explorer/hook/useScrollMorphTitle";
+import * as styles from "./index.css";
 
 /**
  * Explorer page body (title + merchant list). Shared by the `/explorer` route
@@ -10,10 +14,22 @@ import { ExplorerList } from "@/module/explorer/component/ExplorerList";
  */
 export function ExplorerPage() {
     const { t } = useTranslation();
+    const { titleRef } = useScrollMorphTitle();
+    const pageTitle = t("explorer.pageTitle");
+
     return (
-        <Box display="flex" flexDirection="column" gap="m">
-            <Title size="page">{t("explorer.pageTitle")}</Title>
+        <Stack space="m">
+            <div className={styles.stickyHeader}>
+                <ScrollEdgeBlur className={styles.scrollBlur} />
+                {/* Pinned in the toolbar band; the hook shrinks it in place. */}
+                <h1 ref={titleRef} className={styles.title}>
+                    <span className={styles.titleText}>{pageTitle}</span>
+                </h1>
+                <Inline space="none" align="right">
+                    <ExplorerSortButton />
+                </Inline>
+            </div>
             <ExplorerList />
-        </Box>
+        </Stack>
     );
 }

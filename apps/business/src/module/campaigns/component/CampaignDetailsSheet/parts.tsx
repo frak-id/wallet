@@ -116,16 +116,38 @@ export function TrendLine({
 
 export function Section({
     title,
+    action,
     children,
 }: {
     title: string;
+    /** Optional trailing control aligned to the right of the title (e.g. an edit pencil). */
+    action?: ReactNode;
     children: ReactNode;
 }) {
     return (
         <Stack space="xs" as="section">
-            <Text as="h3" variant="bodySmall" weight="medium" color="secondary">
-                {title}
-            </Text>
+            {action ? (
+                <Inline space="xs" align="space-between" alignY="center">
+                    <Text
+                        as="h3"
+                        variant="bodySmall"
+                        weight="medium"
+                        color="secondary"
+                    >
+                        {title}
+                    </Text>
+                    {action}
+                </Inline>
+            ) : (
+                <Text
+                    as="h3"
+                    variant="bodySmall"
+                    weight="medium"
+                    color="secondary"
+                >
+                    {title}
+                </Text>
+            )}
             {children}
         </Stack>
     );

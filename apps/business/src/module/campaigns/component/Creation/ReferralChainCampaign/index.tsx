@@ -1,5 +1,6 @@
 import { Column } from "@frak-labs/design-system/components/Column";
 import { Columns } from "@frak-labs/design-system/components/Columns";
+import { FieldLabel } from "@frak-labs/design-system/components/FieldLabel";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { LegendItem } from "@frak-labs/design-system/components/LegendItem";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -17,7 +18,7 @@ import { CheckIcon, PercentIcon } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
 import { useNavigate } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
-import { Fragment, useMemo } from "react";
+import { Fragment, useId, useMemo } from "react";
 import { type Control, Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
@@ -48,8 +49,12 @@ const FORM_ID = "campaign-referral-chain-form";
 
 /* ---- Fields ---- */
 
-/** Numeric field: label above, hint below. */
-function LabeledNumberField({
+/**
+ * Numeric field: label above, hint below.
+ *
+ * Exported for unit testing.
+ */
+export function LabeledNumberField({
     control,
     name,
     label,
@@ -68,13 +73,15 @@ function LabeledNumberField({
     min?: number;
     max?: number;
 }) {
+    const fieldId = useId();
     return (
-        <Stack space="xs" className={styles.field}>
-            <span className={styles.fieldLabel}>
-                <Text variant="bodySmall" weight="medium" color="secondary">
-                    {label}
-                </Text>
-            </span>
+        <FieldLabel
+            label={label}
+            hint={hint}
+            htmlFor={fieldId}
+            reserveLabelLines={2}
+            className={styles.field}
+        >
             <Controller
                 control={control}
                 name={name}
@@ -82,7 +89,8 @@ function LabeledNumberField({
                     <InputNumber
                         variant="bare"
                         tone="muted"
-                        aria-label={label}
+                        id={fieldId}
+                        aria-describedby={`${fieldId}-hint`}
                         classNameWrapper={styles.inputWrapper}
                         placeholder={placeholder}
                         rightSection={rightSection}
@@ -93,10 +101,7 @@ function LabeledNumberField({
                     />
                 )}
             />
-            <Text variant="caption" color="tertiary" className={styles.insetX}>
-                {hint}
-            </Text>
-        </Stack>
+        </FieldLabel>
     );
 }
 
@@ -392,6 +397,7 @@ export function ReferralChainCampaign() {
             isPending={saveCampaign.isPending}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(defaultValues)}
+            hasUnsavedChanges={form.formState.isDirty}
         >
             <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                 <Stack space="l">
@@ -487,56 +493,38 @@ export function ReferralChainCampaign() {
                                     </Column>
                                 </Columns>
 
-                                <Stack space="xs">
-                                    <Text
-                                        variant="bodySmall"
-                                        weight="medium"
-                                        color="secondary"
-                                        className={styles.insetX}
-                                    >
-                                        {t(
-                                            "campaigns.create.referralChain.cac.label"
-                                        )}
-                                    </Text>
-                                    <Input
-                                        variant="bare"
-                                        tone="muted"
-                                        readOnly
-                                        disabled
-                                        aria-label={t(
-                                            "campaigns.create.referralChain.cac.label"
-                                        )}
-                                        placeholder={t(
-                                            isTiered
-                                                ? "campaigns.create.referralChain.cac.placeholderTiered"
-                                                : "campaigns.create.referralChain.cac.placeholder"
-                                        )}
-                                        value={
-                                            cac !== undefined ? String(cac) : ""
-                                        }
-                                        rightSection={
-                                            cac !== undefined ? (
-                                                isPercentage ? (
-                                                    <PercentIcon
-                                                        width={24}
-                                                        height={24}
-                                                        className={
-                                                            styles.unitIcon
-                                                        }
-                                                    />
-                                                ) : (
-                                                    <span
-                                                        className={
-                                                            styles.unitGlyph
-                                                        }
-                                                    >
-                                                        {glyph}
-                                                    </span>
-                                                )
-                                            ) : undefined
-                                        }
-                                    />
-                                </Stack>
+                                <Input
+                                    variant="bare"
+                                    tone="muted"
+                                    readOnly
+                                    disabled
+                                    label={t(
+                                        "campaigns.create.referralChain.cac.label"
+                                    )}
+                                    placeholder={t(
+                                        isTiered
+                                            ? "campaigns.create.referralChain.cac.placeholderTiered"
+                                            : "campaigns.create.referralChain.cac.placeholder"
+                                    )}
+                                    value={cac !== undefined ? String(cac) : ""}
+                                    rightSection={
+                                        cac !== undefined ? (
+                                            isPercentage ? (
+                                                <PercentIcon
+                                                    width={24}
+                                                    height={24}
+                                                    className={styles.unitIcon}
+                                                />
+                                            ) : (
+                                                <span
+                                                    className={styles.unitGlyph}
+                                                >
+                                                    {glyph}
+                                                </span>
+                                            )
+                                        ) : undefined
+                                    }
+                                />
 
                                 <ChainPreview
                                     control={form.control}

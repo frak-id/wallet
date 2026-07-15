@@ -28,6 +28,10 @@ export const CampaignUpdateBodySchema = t.Object({
     metadata: t.Optional(CampaignMetadataSchema),
     budgetConfig: t.Optional(BudgetConfigSchema),
     expiresAt: t.Optional(t.Union([t.String(), t.Null()])),
+    // Scoped start-date edit (ISO string to set/move, null to clear). Unlike
+    // `rule`, this is accepted on published campaigns and merged server-side
+    // into the stored ruleset's `time.timestamp` gate.
+    startDate: t.Optional(t.Union([t.String(), t.Null()])),
     priority: t.Optional(t.Number()),
 });
 export type CampaignUpdateBody = Static<typeof CampaignUpdateBodySchema>;

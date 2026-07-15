@@ -1,6 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CheckCircleFilledIcon,
@@ -11,7 +12,6 @@ import {
     getOriginPairingClient,
     getTargetPairingClient,
     selectEcdsaSession,
-    selectWebauthnSession,
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { useEffect, useMemo, useState } from "react";
@@ -105,7 +105,7 @@ function IdentityRow({
                 <Text as="span" variant="label" color={"secondary"}>
                     {label}
                 </Text>
-                <Box className={styles.valueRow}>
+                <Spread>
                     <Text
                         as="span"
                         variant="label"
@@ -127,7 +127,7 @@ function IdentityRow({
                             className={styles.copyIcon}
                         />
                     )}
-                </Box>
+                </Spread>
             </Box>
         </Box>
     );
@@ -156,21 +156,7 @@ export function ProfileIdentityCard() {
     const { t } = useTranslation();
     const isHydrated = useHydrated();
     const { address } = useConnection();
-    const webauthnWallet = useStore(sessionStore, selectWebauthnSession);
     const ecdsaWallet = useStore(sessionStore, selectEcdsaSession);
-
-    const authenticatorValue = useMemo(() => {
-        if (!webauthnWallet) return null;
-        const authenticatorId = toHex(webauthnWallet.authenticatorId);
-        return {
-            value: authenticatorId,
-            displayValue:
-                formatHash({
-                    hash: authenticatorId,
-                    format: { start: 8, end: 6 },
-                }) ?? authenticatorId,
-        };
-    }, [webauthnWallet]);
 
     const walletValue = useMemo(() => {
         if (!address) return null;
@@ -204,13 +190,6 @@ export function ProfileIdentityCard() {
     return (
         <Card padding="none" className={styles.card}>
             <PairingIdentityRow />
-            {webauthnWallet && authenticatorValue ? (
-                <IdentityRow
-                    label={t("common.authenticator")}
-                    value={authenticatorValue.value}
-                    displayValue={authenticatorValue.displayValue}
-                />
-            ) : null}
             {ecdsaWallet && ecdsaValue ? (
                 <IdentityRow
                     label={t("wallet.settings.ecdsaWallet")}

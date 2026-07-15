@@ -1,9 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { routeMatchesMock } = vi.hoisted(() => ({
-    routeMatchesMock: vi.fn((): unknown[] => []),
-}));
+const { routeMatchesMock, navigateMock, isAuthenticatedMock } = vi.hoisted(
+    () => ({
+        routeMatchesMock: vi.fn((): unknown[] => []),
+        navigateMock: vi.fn(),
+        isAuthenticatedMock: vi.fn(() => true),
+    })
+);
 
 // Mock the layout components
 vi.mock("@/module/common/component/Header", () => ({
@@ -20,6 +24,7 @@ vi.mock("@tanstack/react-router", async () => {
     return {
         ...actual,
         Outlet: () => <div data-testid="outlet">Child content</div>,
+        useNavigate: () => navigateMock,
         useMatches: (options?: { select?: (matches: unknown[]) => unknown }) =>
             options?.select
                 ? options.select(routeMatchesMock())
@@ -30,6 +35,7 @@ vi.mock("@tanstack/react-router", async () => {
 // Mock the auth middleware
 vi.mock("@/middleware/auth", () => ({
     requireAuth: vi.fn(() => ({ session: { user: "test" } })),
+    isAuthenticated: isAuthenticatedMock,
 }));
 
 // Import after mocks
@@ -42,6 +48,8 @@ const RestrictedLayoutRoute = RestrictedRoute.options
 describe("RestrictedLayoutRoute", () => {
     beforeEach(() => {
         routeMatchesMock.mockReturnValue([]);
+        navigateMock.mockClear();
+        isAuthenticatedMock.mockReturnValue(true);
     });
 
     it("should render all required layout components", () => {
@@ -68,6 +76,23 @@ describe("RestrictedLayoutRoute", () => {
         expect(screen.queryByTestId("navigation")).toBeNull();
         expect(container.querySelector("main")).toBeInTheDocument();
         expect(screen.getByTestId("outlet")).toBeInTheDocument();
+    });
+
+    it("should redirect to /login when the session dies mid-render", () => {
+        isAuthenticatedMock.mockReturnValue(false);
+
+        render(<RestrictedLayoutRoute />);
+
+        expect(navigateMock).toHaveBeenCalledWith({
+            to: "/login",
+            replace: true,
+        });
+    });
+
+    it("should not redirect while the session is valid", () => {
+        render(<RestrictedLayoutRoute />);
+
+        expect(navigateMock).not.toHaveBeenCalled();
     });
 
     it("should have requireAuth in beforeLoad", () => {

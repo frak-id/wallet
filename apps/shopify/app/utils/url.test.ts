@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAbsoluteUrl, parseChargeId, validateMintParams } from "./url";
+import { buildBusinessDashboardUrl, isAbsoluteUrl, parseChargeId } from "./url";
 
 /**
  * Tests for URL utility functions extracted from routes and hooks.
@@ -78,45 +78,51 @@ describe("parseChargeId", () => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  validateMintParams                                                 */
+/*  buildBusinessDashboardUrl                                          */
 /* ------------------------------------------------------------------ */
 
-describe("validateMintParams", () => {
-    it("accepts valid ethereum address", () => {
-        const result = validateMintParams(
-            "0x1234567890abcdef1234567890abcdef12345678"
+describe("buildBusinessDashboardUrl", () => {
+    it("routes through /login/shopify with shop + redirect when shop is present", () => {
+        expect(
+            buildBusinessDashboardUrl({
+                businessUrl: "https://business.frak.id",
+                shop: "my-store.myshopify.com",
+                target: "/m/123/dashboard",
+            })
+        ).toBe(
+            "https://business.frak.id/login/shopify?shop=my-store.myshopify.com&redirect=%2Fm%2F123%2Fdashboard"
         );
-        expect(result.valid).toBe(true);
     });
 
-    it("rejects null wallet address", () => {
-        const result = validateMintParams(null);
-        expect(result).toEqual({
-            valid: false,
-            error: "Missing wallet address",
-        });
+    it("falls back to /login with only redirect when shop is absent", () => {
+        expect(
+            buildBusinessDashboardUrl({
+                businessUrl: "https://business.frak.id",
+                shop: null,
+                target: "/dashboard",
+            })
+        ).toBe("https://business.frak.id/login?redirect=%2Fdashboard");
     });
 
-    it("rejects invalid wallet address", () => {
-        const result = validateMintParams("not-an-address");
-        expect(result).toEqual({
-            valid: false,
-            error: "Invalid wallet address",
-        });
+    it("falls back to /login when shop is undefined", () => {
+        expect(
+            buildBusinessDashboardUrl({
+                businessUrl: "https://business.frak.id",
+                shop: undefined,
+                target: "/dashboard",
+            })
+        ).toBe("https://business.frak.id/login?redirect=%2Fdashboard");
     });
 
-    it("rejects too-short hex string", () => {
-        const result = validateMintParams("0x1234");
-        expect(result).toEqual({
-            valid: false,
-            error: "Invalid wallet address",
-        });
-    });
-
-    it("accepts checksummed address", () => {
-        const result = validateMintParams(
-            "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+    it("URL-encodes special characters in the redirect target", () => {
+        expect(
+            buildBusinessDashboardUrl({
+                businessUrl: "https://business.frak.id",
+                shop: "my-store.myshopify.com",
+                target: "/m/123/campaigns/draft/new",
+            })
+        ).toBe(
+            "https://business.frak.id/login/shopify?shop=my-store.myshopify.com&redirect=%2Fm%2F123%2Fcampaigns%2Fdraft%2Fnew"
         );
-        expect(result.valid).toBe(true);
     });
 });

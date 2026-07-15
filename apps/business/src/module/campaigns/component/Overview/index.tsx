@@ -1,4 +1,5 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import {
@@ -50,7 +51,7 @@ export function CampaignsOverview({ from, to }: WindowProps) {
                         statusBreakdown={summary.statusBreakdown}
                     />
                 </div>
-                <div className={styles.threeColumns}>
+                <Tiles columns={{ mobile: 1, tablet: 2, desktop: 3 }} space="m">
                     <PurchasesCard series={summary.series} />
                     <ProjectedRevenueCard
                         series={summary.series}
@@ -59,7 +60,7 @@ export function CampaignsOverview({ from, to }: WindowProps) {
                     <Suspense fallback={<SharingBySourceSkeleton />}>
                         <AnalyticsSharingCard from={from} to={to} />
                     </Suspense>
-                </div>
+                </Tiles>
             </Stack>
             <OverviewFloatingFooter />
         </div>

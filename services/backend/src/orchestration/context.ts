@@ -1,5 +1,7 @@
+import { AffiliateContext } from "../domain/affiliate/context";
 import { AttributionContext } from "../domain/attribution/context";
 import { AuthContext } from "../domain/auth";
+import { BillingContext } from "../domain/billing/context";
 import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
@@ -12,8 +14,12 @@ import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { tokenMetadataRepository } from "../infrastructure/blockchain/TokenMetadataRepository";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
+import { getTakeAdsClient } from "../infrastructure/integrations/takeads";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
+import { AffiliateReportingOrchestrator } from "./AffiliateReportingOrchestrator";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
+import { BillingOrchestrator } from "./billing/BillingOrchestrator";
+import { MonthlyBillOrchestrator } from "./billing/MonthlyBillOrchestrator";
 import {
     CampaignOverviewOrchestrator,
     CampaignStatsOrchestrator,
@@ -41,11 +47,32 @@ import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
 import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
+import { TakeAdsIngestionOrchestrator } from "./TakeAdsIngestionOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
 
 const webhookResolverOrchestrator = new WebhookResolverOrchestrator(
     PurchasesContext.repositories.purchase,
     MerchantContext.repositories.merchant
+);
+
+const billingOrchestrator = new BillingOrchestrator(
+    BillingContext.repositories.billingDocument,
+    BillingContext.repositories.billingStorage,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.assetLog,
+    BillingContext.services.computation,
+    BillingContext.services.pdf,
+    pricingRepository
+);
+
+const monthlyBillOrchestrator = new MonthlyBillOrchestrator(
+    BillingContext.repositories.billingDocument,
+    BillingContext.repositories.billingStorage,
+    MerchantContext.repositories.merchant,
+    RewardsContext.repositories.assetLog,
+    BillingContext.services.computation,
+    BillingContext.services.pdf,
+    pricingRepository
 );
 
 const identityWeightService = new IdentityWeightService(
@@ -113,6 +140,21 @@ const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     rewardLifecycleOrchestrator
 );
 
+const takeAdsIngestionOrchestrator = new TakeAdsIngestionOrchestrator(
+    AffiliateContext.repositories.affiliateAttribution,
+    AffiliateContext.repositories.affiliateSyncState,
+    RewardsContext.repositories.interactionLog,
+    purchaseInteractionCreator,
+    rewardLifecycleOrchestrator,
+    () => getTakeAdsClient()
+);
+
+const affiliateReportingOrchestrator = new AffiliateReportingOrchestrator(
+    AffiliateContext.repositories.affiliateBrand,
+    AffiliateContext.repositories.affiliateAttribution,
+    () => getTakeAdsClient()
+);
+
 const settlementOrchestrator = new SettlementOrchestrator(
     RewardsContext.services.settlement,
     RewardsContext.repositories.assetLog,
@@ -141,7 +183,7 @@ const campaignOverviewOrchestrator = new CampaignOverviewOrchestrator(
     pricingRepository
 );
 
-const explorerOrchestrator = new ExplorerOrchestrator();
+const explorerOrchestrator = new ExplorerOrchestrator(pricingRepository);
 
 const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
     RewardsContext.repositories.interactionLog,
@@ -232,5 +274,9 @@ export namespace OrchestrationContext {
         authenticatorLookup: authenticatorLookupOrchestrator,
         pairing: pairingOrchestrator,
         pairingRouter: pairingRouterOrchestrator,
+        takeAdsIngestion: takeAdsIngestionOrchestrator,
+        affiliateReporting: affiliateReportingOrchestrator,
+        billing: billingOrchestrator,
+        monthlyBill: monthlyBillOrchestrator,
     };
 }

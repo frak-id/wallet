@@ -2,8 +2,8 @@
  * Zustand store for authentication management
  */
 
+import { areAddressesEqual } from "@frak-labs/core-sdk";
 import type { Address } from "viem";
-import { isAddressEqual } from "viem/utils";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import { authenticatorStorage } from "../common/storage/authenticators";
@@ -148,7 +148,10 @@ export async function applyMergeSession({
     previousAddress?: Address;
     session: Session;
 }) {
-    if (previousAddress && !isAddressEqual(previousAddress, session.address)) {
+    if (
+        previousAddress &&
+        !areAddressesEqual(previousAddress, session.address)
+    ) {
         await authenticatorStorage.remove(previousAddress);
     }
 
@@ -159,4 +162,34 @@ export async function applyMergeSession({
         lastWallet: session.address,
         lastLoginAt: Date.now(),
     });
+}
+
+/**
+ * Clear every "current authenticator" surface — the zustand
+ * `lastAuthenticator`, the platform-native recovery hint (iCloud KV / Block
+ * Store), AND (when a wallet is given) its row in the previous-authenticators
+ * IDB list. Symmetric counterpart to `addLastAuthentication` /
+ * `applyMergeSession`, used to self-heal a stale "last authenticator" hint
+ * (e.g. after a silent quick-login fails with `no-credential`) so all three
+ * surfaces agree there is no local authenticator.
+ *
+ * The zustand clear runs synchronously, before any `await` — callers rely on
+ * it flipping UI state (e.g. hiding the "use my account" button) immediately,
+ * without waiting on the native/IDB clears to resolve. The two async clears
+ * are independent and run concurrently: a stalled cloud-KV invoke must not
+ * delay the IDB eviction (the register gate's primary signal). Both storages
+ * swallow their own errors internally, so this helper never rejects in
+ * practice.
+ *
+ * `wallet` is optional: pass the stale hint's wallet to also evict its IDB
+ * row (targeted removal, preserving any other valid entries). Omit it to
+ * clear only the zustand + cloud hint surfaces.
+ */
+export async function clearLastAuthenticator(wallet?: Address) {
+    authenticationStore.getState().setLastAuthenticator(null);
+
+    await Promise.all([
+        recoveryHintStorage.clear(),
+        wallet ? authenticatorStorage.remove(wallet) : undefined,
+    ]);
 }

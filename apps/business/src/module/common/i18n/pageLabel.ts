@@ -5,10 +5,14 @@ export type PageKey =
     | "campaigns"
     | "campaignsOverview"
     | "campaignsList"
+    | "campaignsAffiliateReport"
     | "members"
     | "wallet"
     | "settings"
+    | "billing"
     | "merchant"
+    | "funding"
+    | "setupStatus"
     | "push"
     | "pushCreate";
 

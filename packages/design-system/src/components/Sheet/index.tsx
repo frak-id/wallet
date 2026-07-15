@@ -5,13 +5,10 @@ import type { ComponentProps, ComponentPropsWithRef, ReactNode } from "react";
 import { Overlay } from "../Overlay";
 import {
     sheetCloseStyle,
-    sheetContentBaseStyle,
-    sheetContentPaddedStyle,
-    sheetContentVariants,
+    sheetContent,
     sheetDescriptionStyle,
     sheetFooterStyle,
     sheetHeaderStyle,
-    sheetSizeVariants,
     sheetTitleStyle,
 } from "./sheet.css";
 
@@ -111,7 +108,6 @@ export function SheetContent({
     padded = true,
     ...props
 }: SheetContentProps) {
-    const isHorizontal = side === "right" || side === "left";
     return (
         <RadixDialog.Portal>
             <RadixDialog.Overlay asChild>
@@ -120,10 +116,7 @@ export function SheetContent({
             <RadixDialog.Content
                 aria-describedby={undefined}
                 className={clsx(
-                    sheetContentBaseStyle,
-                    padded && sheetContentPaddedStyle,
-                    sheetContentVariants[side],
-                    isHorizontal && sheetSizeVariants[size],
+                    sheetContent({ side, size, padded }),
                     className
                 )}
                 {...props}

@@ -35,6 +35,7 @@ export const merchantBankRoutes = new Elysia({
                 deployed: result.deployed,
                 bankAddress: result.bankAddress,
                 ownerHasManagerRole: result.ownerHasManagerRole,
+                managerRole: result.managerRole,
             };
         },
         {

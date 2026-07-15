@@ -5,6 +5,7 @@ import {
     eventEmitter,
     type FrakEvents,
 } from "../infrastructure/messaging/events";
+import { cronMetrics } from "../infrastructure/telemetry";
 
 type CronContext = {
     context: {
@@ -55,12 +56,13 @@ export class MutexCron {
         const execute = async () => {
             if (this.isRunning || this.cooldownTimer) {
                 this.hasPending = true;
+                cronMetrics.skipped(name);
                 return;
             }
 
             this.isRunning = true;
             try {
-                await run(runContext);
+                await cronMetrics.observe(name, () => run(runContext));
             } catch (error) {
                 this.logger.warn({ error }, "[Cron] error while processing");
             } finally {

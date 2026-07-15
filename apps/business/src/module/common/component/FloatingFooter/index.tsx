@@ -1,3 +1,4 @@
+import { ContentBlock } from "@frak-labs/design-system/components/ContentBlock";
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import * as styles from "./floating-footer.css";
@@ -31,7 +32,13 @@ export function FloatingFooter({
             <div className={styles.scrollEdge} />
             {align === "content" ? (
                 <div className={clsx(styles.contentWrapper, contentClassName)}>
-                    <div className={styles.contentColumn}>{children}</div>
+                    <ContentBlock
+                        maxWidth="720px"
+                        align="left"
+                        className={styles.contentColumn}
+                    >
+                        {children}
+                    </ContentBlock>
                 </div>
             ) : (
                 <div className={clsx(styles.buttonWrapper, contentClassName)}>

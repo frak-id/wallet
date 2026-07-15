@@ -1,16 +1,12 @@
+import { fadeIn, fadeOut } from "@frak-labs/design-system/keyframes";
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, zIndex } from "@frak-labs/design-system/tokens";
-import { globalStyle, keyframes, style } from "@vanilla-extract/css";
-
-const fadeIn = keyframes({
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-});
-
-const fadeOut = keyframes({
-    from: { opacity: 1 },
-    to: { opacity: 0 },
-});
+import {
+    alias,
+    overlay as overlayToken,
+    shadow,
+    zIndex,
+} from "@frak-labs/design-system/tokens";
+import { globalStyle, style } from "@vanilla-extract/css";
 
 const overlayBase = style({
     position: "fixed",
@@ -21,7 +17,7 @@ const overlayBase = style({
     WebkitOverflowScrolling: "touch",
     "@media": {
         "screen and (min-width: 1024px)": {
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backgroundColor: overlayToken.scrim60,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -42,7 +38,7 @@ globalStyle(`${overlayBase} > *`, {
             maxHeight: "90dvh",
             borderRadius: alias.cornerRadius.xl,
             overflow: "auto",
-            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.35)",
+            boxShadow: shadow.overlay,
         },
     },
 });
@@ -65,7 +61,7 @@ const bottomSheetBase = style({
     position: "fixed",
     inset: 0,
     zIndex: zIndex.modal,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: overlayToken.scrim50,
     display: "flex",
     flexDirection: "column",
     justifyContent: "flex-end",
@@ -104,7 +100,7 @@ globalStyle(`${bottomSheetBase} > *`, {
             maxWidth: "560px",
             maxHeight: "90dvh",
             borderRadius: alias.cornerRadius.xl,
-            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.35)",
+            boxShadow: shadow.overlay,
         },
     },
 });

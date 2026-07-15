@@ -51,6 +51,7 @@ import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { StepLayout } from "@/module/common/component/StepLayout";
+import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 
 /**
  * Metadata actually stored on the SSO context — base SsoMetadata plus the
@@ -280,9 +281,20 @@ function Sso() {
         const ssoContext = authenticationStore.getState().ssoContext;
         // If we got a redirect, redirect to the page directly with success status
         if (ssoContext?.redirectUrl) {
-            const redirectUrl = new URL(
+            // Validate the redirect target (https-only, no open redirect) before
+            // using it. sanitizeRedirectUrl strips the hash/query, so we rebuild
+            // from the sanitized origin+pathname and re-add our own sso param.
+            const safeRedirect = sanitizeRedirectUrl(
                 decodeURIComponent(ssoContext.redirectUrl)
             );
+            if (!safeRedirect) {
+                recordError(new Error("Invalid SSO redirect URL"), {
+                    source: "sso",
+                    context: { stage: "redirect_validation" },
+                });
+                return;
+            }
+            const redirectUrl = new URL(safeRedirect);
 
             // Get the full SSO params and compress them for URL passthrough
             const session = sessionStore.getState().session;

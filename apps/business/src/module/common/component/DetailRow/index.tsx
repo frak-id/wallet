@@ -1,3 +1,4 @@
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
 import * as styles from "./detail-row.css";
@@ -17,12 +18,12 @@ type DetailRowProps = {
  */
 export function DetailRow({ label, children, tall }: DetailRowProps) {
     return (
-        <div className={tall ? styles.rowTall : styles.row}>
+        <Spread space="m" className={tall ? styles.rowTall : styles.row}>
             <Text variant="bodySmall" weight="medium" color="secondary">
                 {label}
             </Text>
             {children}
-        </div>
+        </Spread>
     );
 }
 

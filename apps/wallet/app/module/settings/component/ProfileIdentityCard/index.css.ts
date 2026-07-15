@@ -42,12 +42,6 @@ export const value = style({
     color: vars.text.primary,
 });
 
-export const valueRow = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-});
-
 export const copyIcon = style({
     color: vars.icon.primary,
     flexShrink: 0,

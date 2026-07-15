@@ -205,7 +205,7 @@ function MoneriumCallback() {
                     ? "csrf"
                     : sessionExpired
                       ? "error"
-                      : !code && Boolean(error)
+                      : !code && error
                         ? "cancelled"
                         : "error";
 

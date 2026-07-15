@@ -26,21 +26,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
-
-/**
- * Sanitize a redirect URL from search params to prevent open redirects.
- * Only allows valid https:// URLs, strips hash and query params.
- */
-function sanitizeRedirectUrl(value: unknown): string | undefined {
-    if (typeof value !== "string") return undefined;
-    try {
-        const url = new URL(value);
-        if (url.protocol !== "https:") return undefined;
-        return url.origin + url.pathname;
-    } catch {
-        return undefined;
-    }
-}
+import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 
 /**
  * Build AttributionParams from search params.

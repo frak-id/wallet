@@ -1,0 +1,53 @@
+{
+    "brand": {
+        "provider": "takeads",
+        "externalId": "123456",
+        "trackingLink": "https://go.takeads.com/demo-brand"
+    },
+    "window": { "from": "2024-05-01", "to": "2024-05-30" },
+    "actions": {
+        "total": 214,
+        "byStatus": {
+            "pending": 42,
+            "confirmed": 138,
+            "canceled": 11,
+            "settled": 23
+        },
+        "byType": { "lead": 18, "sale": 176, "click": 12, "bonus": 8 },
+        "revenue": [
+            {
+                "currencyCode": "EUR",
+                "orderAmount": 18452.35,
+                "publisherRevenue": 1240.18
+            },
+            {
+                "currencyCode": "USD",
+                "orderAmount": 3210.5,
+                "publisherRevenue": 198.4
+            }
+        ],
+        "series": [
+            { "date": "2024-05-02", "count": 8 },
+            { "date": "2024-05-05", "count": 14 },
+            { "date": "2024-05-09", "count": 21 },
+            { "date": "2024-05-13", "count": 33 },
+            { "date": "2024-05-18", "count": 41 },
+            { "date": "2024-05-24", "count": 52 },
+            { "date": "2024-05-29", "count": 45 }
+        ],
+        "truncated": false
+    },
+    "clicks": {
+        "total": 4820,
+        "series": [
+            { "date": "2024-05-02", "count": 210 },
+            { "date": "2024-05-05", "count": 340 },
+            { "date": "2024-05-09", "count": 512 },
+            { "date": "2024-05-13", "count": 733 },
+            { "date": "2024-05-18", "count": 918 },
+            { "date": "2024-05-24", "count": 1105 },
+            { "date": "2024-05-29", "count": 1002 }
+        ],
+        "truncated": false
+    }
+}

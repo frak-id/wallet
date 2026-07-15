@@ -1,6 +1,7 @@
 import { ConfirmationTooltip } from "@frak-labs/design-system/components/ConfirmationTooltip";
 import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import {
+    authenticationStore,
     authenticatorStorage,
     type Flow,
     recoveryHintStorage,
@@ -34,19 +35,11 @@ import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./register.css";
 
 type RegisterSearch = {
-    /**
-     * Bypasses the "already has passkeys → /login" redirect guard. Set
-     * when the user explicitly chose to create a new account from a
-     * login surface (e.g. `/login/email` not-found modal, `/login` back
-     * button).
-     */
+    /** Bypasses the "already has passkeys → /login" redirect guard when the
+     * user explicitly chose to create a new account from a login surface. */
     new?: boolean;
-    /**
-     * Pre-fills the onboarding email field. Sent by `/login/email` when
-     * the user types an email the backend can't resolve, accepts the
-     * "create an account" CTA, and lands on `/register`. When present,
-     * the flow skips ahead to the `onboardingThree` step.
-     */
+    /** Pre-fills the onboarding email (from `/login/email` when the backend
+     * can't resolve the typed email); skips ahead to `onboardingThree`. */
     email?: string;
 };
 
@@ -67,7 +60,19 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
         // Skip redirect if user explicitly requested new account creation
         if (search.new) return;
 
-        // If the user already has passkeys stored locally, redirect to login
+        // Synchronous localStorage signal, checked first: always ready at
+        // `beforeLoad` (unlike the async IDB read below, which can be empty on
+        // a cold-start race) and survives logout.
+        const lastAuthenticator =
+            authenticationStore.getState().lastAuthenticator;
+        if (lastAuthenticator?.authenticatorId && lastAuthenticator?.address) {
+            throw redirect({
+                to: "/login",
+                replace: true,
+            });
+        }
+
+        // Passkeys stored locally → login.
         const previousAuthenticators = await authenticatorStorage.getAll();
         if (previousAuthenticators.length > 0) {
             throw redirect({
@@ -76,10 +81,9 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
             });
         }
 
-        // Fresh install with no local state — still try the cross-platform
-        // recovery hint (iCloud KV / Block Store). If we find one, the user
-        // previously had a wallet on this Apple/Google account and should go
-        // through the login flow instead of registering a new one.
+        // Fresh install: fall back to the uninstall-resilient recovery hint
+        // (iCloud KV / Block Store) — a match means the user had a wallet on
+        // this Apple/Google account, so send them to login, not register.
         const hint = await recoveryHintStorage.get();
         if (hint.lastAuthenticatorId && hint.lastWallet) {
             throw redirect({

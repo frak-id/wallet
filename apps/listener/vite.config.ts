@@ -46,6 +46,13 @@ const preactJsxRuntime = path.resolve(
     "node_modules/preact/jsx-runtime"
 );
 
+// Dedupe zustand: @wagmi/core pins zustand@5.0.0 while the workspace catalog
+// resolves 5.0.13, so without an alias Rolldown bundles BOTH copies (the
+// persist middleware shipped twice — once in `common`, once in `vendor`).
+// Absolute-path aliases force every importer (app code and @wagmi/core) onto
+// the single listener-installed copy, mirroring the preact aliases above.
+const zustandRoot = path.resolve(__dirname, "node_modules/zustand/esm");
+
 const DEBUG = JSON.stringify(false);
 
 // Single source of truth for the lazy (Ring 1/2) chunk name roots, consumed by
@@ -348,6 +355,31 @@ export default defineConfig(async () => {
                 {
                     find: /^react\/jsx-dev-runtime$/,
                     replacement: preactJsxRuntime,
+                },
+                // Zustand dedupe (see `zustandRoot` above). Explicit subpath
+                // aliases cover every specifier used in the graph: app code
+                // (`zustand`, `zustand/react`, `zustand/react/shallow`,
+                // `zustand/middleware`, `zustand/vanilla`) and @wagmi/core
+                // (`zustand/vanilla`, `zustand/middleware`).
+                {
+                    find: /^zustand$/,
+                    replacement: path.join(zustandRoot, "index.mjs"),
+                },
+                {
+                    find: /^zustand\/vanilla$/,
+                    replacement: path.join(zustandRoot, "vanilla.mjs"),
+                },
+                {
+                    find: /^zustand\/middleware$/,
+                    replacement: path.join(zustandRoot, "middleware.mjs"),
+                },
+                {
+                    find: /^zustand\/react$/,
+                    replacement: path.join(zustandRoot, "react.mjs"),
+                },
+                {
+                    find: /^zustand\/react\/shallow$/,
+                    replacement: path.join(zustandRoot, "react/shallow.mjs"),
                 },
             ],
         },

@@ -10,6 +10,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { initAnalytics } from "@frak-labs/wallet-shared/common/analytics";
 import {
+    common as frCommon,
     customized as frCustomized,
     translation as frTranslation,
 } from "@frak-labs/wallet-shared/i18n/locales/fr";
@@ -37,11 +38,12 @@ initAnalytics();
 // captured.
 i18next.on("languageChanged", async (lng) => {
     if (lng === "en" && !i18next.hasResourceBundle("en", "translation")) {
-        const { translation, customized } = await import(
+        const { translation, customized, common } = await import(
             "@frak-labs/wallet-shared/i18n/locales/en"
         );
         i18next.addResourceBundle("en", "translation", translation);
         i18next.addResourceBundle("en", "customized", customized);
+        i18next.addResourceBundle("en", "common", common);
     }
 });
 
@@ -125,15 +127,16 @@ async function main() {
         .use(I18nextBrowserLanguageDetector) // Setup a client-side language detector
         .init({
             defaultNS,
-            ns: ["translation", "customized"],
+            ns: ["translation", "customized", "common"],
             fallbackLng,
-            fallbackNS: "customized",
+            fallbackNS: ["customized", "common"],
             supportedLngs,
             partialBundledLanguages: true,
             resources: {
                 fr: {
                     translation: frTranslation,
                     customized: frCustomized,
+                    common: frCommon,
                 },
             },
             debug: isRunningLocally,

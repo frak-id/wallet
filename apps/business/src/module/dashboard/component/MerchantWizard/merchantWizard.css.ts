@@ -1,44 +1,18 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { focusRing, interactive } from "@/module/common/styles/interaction.css";
-
-/** Sub-field label inset 16px to line up with the text inside a bare input. */
-export const inputLabel = style({
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
 
 /* ---- currency ---- */
 
-/** 2×2 grid of currency cells. `&&` beats the DS RadioGroup base flex-column. */
-export const currencyGrid = style({
-    width: "100%",
-    selectors: {
-        "&&": {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: alias.spacing.m,
-        },
-    },
+export const currencyCell = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.m,
+    paddingTop: alias.spacing.m,
+    paddingBottom: alias.spacing.m,
+    borderRadius: alias.cornerRadius.l,
+    cursor: "pointer",
 });
-
-export const currencyCell = style([
-    interactive,
-    focusRing,
-    {
-        display: "flex",
-        alignItems: "center",
-        gap: alias.spacing.m,
-        paddingTop: alias.spacing.m,
-        paddingBottom: alias.spacing.m,
-        borderRadius: alias.cornerRadius.l,
-        cursor: "pointer",
-        selectors: {
-            "&:hover": { backgroundColor: vars.surface.muted },
-        },
-    },
-]);
 
 /** Flag/coin icon + code/provider text sit together (8px gap). */
 export const currencyLabel = style({
@@ -48,18 +22,6 @@ export const currencyLabel = style({
     minWidth: 0,
 });
 
-/* ---- info bar ---- */
-
-export const infoBar = style({
-    backgroundColor: vars.surface.secondary,
-    borderRadius: alias.cornerRadius.m,
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.l,
-    paddingTop: alias.spacing.s,
-    paddingBottom: alias.spacing.s,
-    color: vars.text.primary,
-});
-
 /* ---- DNS ---- */
 
 export const dnsBlock = style({
@@ -67,46 +29,6 @@ export const dnsBlock = style({
     borderRadius: alias.cornerRadius.m,
     padding: alias.spacing.m,
 });
-
-export const dnsRecordBox = style({
-    backgroundColor: vars.surface.elevated,
-    borderRadius: alias.cornerRadius.m,
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
-/** Record value + copy button row, flush under the helper. */
-export const dnsRecordRow = style({
-    paddingBottom: alias.spacing.m,
-});
-
-/** Single-line, ellipsised TXT record value. */
-export const dnsRecordValue = style({
-    flex: 1,
-    minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-});
-
-export const dnsCopyButton = style([
-    interactive,
-    focusRing,
-    {
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "3px 0",
-        border: "none",
-        background: "transparent",
-        cursor: "pointer",
-        color: vars.icon.secondary,
-        ":hover": {
-            color: vars.icon.primary,
-        },
-    },
-]);
 
 export const dnsHelpBox = style({
     backgroundColor: vars.surface.elevated,

@@ -1,5 +1,29 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
+import type { Address } from "viem";
+
+/**
+ * Caller identity for merchant authorization. Wallet-only (legacy JWT
+ * sessions), account-only (walletless accounts) and dual (wallet-linked
+ * accounts) are all valid shapes; a match on either axis grants access.
+ *
+ * `shopDomain` (design doc §4.7 auto-link): the shop domain proven by the
+ * account's Shopify SSO identity, resolved by the BFF caller (the
+ * `business-auth` domain, at the API layer — never inside the merchant
+ * domain, to respect the cross-domain flow rules) and passed through as a
+ * plain string. A business account holds at most one Shopify identity
+ * (§4.3), so this is a single optional value, not a list. A merchant whose
+ * `domain`/`allowedDomains` matches it grants read/write access exactly like
+ * a wallet or account match.
+ *
+ * Lives in the schema layer (not the service) so repositories and services
+ * share one definition without a service→repository type import (S §2.8).
+ */
+export type MerchantIdentity = {
+    wallet?: Address | null;
+    accountId?: string | null;
+    shopDomain?: string | null;
+};
 
 export const ExplorerConfigSchema = t.Object({
     heroImageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
@@ -240,3 +264,24 @@ export const SdkConfigSchema = t.Object({
 });
 export type SdkConfig = Static<typeof SdkConfigSchema>;
 export type Placement = Static<typeof PlacementSchema>;
+
+/**
+ * Merchant company/accounting info used on generated billing documents.
+ * `country` and `vatNumber` are tax-relevant and platform-admin-writable only
+ * (see billing-feature-plan.md §3.1) — enforced at the service/route layer,
+ * not by this schema.
+ */
+export const MerchantAccountingInfoSchema = t.Object({
+    companyName: t.String({ maxLength: 200 }),
+    // Lenient format check only — no VIES validation in v1.
+    vatNumber: t.String({ maxLength: 32, pattern: "^[A-Za-z0-9]+$" }),
+    streetAddress: t.String({ maxLength: 300 }),
+    city: t.String({ maxLength: 200 }),
+    postalCode: t.String({ maxLength: 20 }),
+    // ISO-3166 alpha-2, e.g. "FR" — drives VAT applicability (§4).
+    country: t.String({ pattern: "^[A-Z]{2}$" }),
+    billingEmail: t.String({ format: "email", maxLength: 320 }),
+});
+export type MerchantAccountingInfo = Static<
+    typeof MerchantAccountingInfoSchema
+>;

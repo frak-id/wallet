@@ -23,6 +23,7 @@ import {
     bottomBar,
     mainContentNoNav,
     mainContentWithNav,
+    mainContentWithNavBehindStatusBar,
     navBarScrim,
     shellContainer,
     shellContainerAuth,
@@ -89,6 +90,15 @@ export function AppShell({
 
     const activeKey = useMemo(() => resolveActiveTab(pathname), [pathname]);
 
+    // Explorer's frosted toolbar blurs content behind the status bar, so its
+    // scroller extends up into the safe area instead of stopping below it.
+    // Route-matched here (rather than a prop) on purpose: the shared
+    // `_protected` layout renders one AppShell for every page, so a per-page
+    // prop would need route context or a store. Promote to a prop the moment a
+    // second page needs this.
+    const scrollBehindStatusBar =
+        pathname === "/explorer" || pathname.startsWith("/explorer/");
+
     // Memoize provider value so consumers don't re-render on every AppShell
     // render (e.g. on every pathname change). The ref identity is stable.
     const scrollValue = useMemo(() => ({ scrollContainerRef: mainRef }), []);
@@ -107,7 +117,11 @@ export function AppShell({
                     as="main"
                     ref={mainRef}
                     className={
-                        navigation ? mainContentWithNav : mainContentNoNav
+                        navigation
+                            ? scrollBehindStatusBar
+                                ? mainContentWithNavBehindStatusBar
+                                : mainContentWithNav
+                            : mainContentNoNav
                     }
                 >
                     {children ?? <Outlet />}

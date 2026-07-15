@@ -9,12 +9,21 @@ export {
     type ResolvedSdkConfig,
 } from "../../domain/merchant/schemas";
 
+/** Affiliate brand link exposed to the business dashboard (e.g. TakeAds). */
+export const AffiliateBrandInfoSchema = t.Object({
+    provider: t.Literal("takeads"),
+    externalId: t.String(),
+    trackingLink: t.String(),
+});
+export type AffiliateBrandInfo = Static<typeof AffiliateBrandInfoSchema>;
+
 export const MerchantDetailResponseSchema = t.Object({
     id: t.String(),
     domain: t.String(),
     allowedDomains: t.Array(t.String()),
     name: t.String(),
-    ownerWallet: t.Hex(),
+    // Null for walletless-owned merchants (owner is a business account).
+    ownerWallet: t.Union([t.Hex(), t.Null()]),
     bankAddress: t.Union([t.Hex(), t.Null()]),
     defaultRewardToken: t.Hex(),
     explorerConfig: t.Union([ExplorerConfigSchema, t.Null()]),
@@ -27,6 +36,7 @@ export const MerchantDetailResponseSchema = t.Object({
         t.Literal("platform_admin"),
         t.Literal("none"),
     ]),
+    affiliate: t.Union([AffiliateBrandInfoSchema, t.Null()]),
 });
 export type MerchantDetailResponse = Static<
     typeof MerchantDetailResponseSchema
@@ -36,6 +46,7 @@ const MerchantSummarySchema = t.Object({
     id: t.String(),
     domain: t.String(),
     name: t.String(),
+    isAffiliate: t.Optional(t.Boolean()),
 });
 
 export const MyMerchantsResponseSchema = t.Object({

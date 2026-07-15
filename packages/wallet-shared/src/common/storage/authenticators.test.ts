@@ -118,6 +118,34 @@ describe("authenticatorStorage", () => {
             );
         });
 
+        it("should replace an existing entry stored with a different address casing", async () => {
+            // Regression: different write paths persist checksummed vs
+            // lowercase forms of the same address — a raw string compare
+            // appended a duplicate row instead of replacing it.
+            const existing: PreviousAuthenticatorModel[] = [
+                {
+                    wallet: "0xABCDEF1234567890ABCDEF1234567890ABCDEF12" as `0x${string}`,
+                    authenticatorId: "auth-1",
+                },
+            ];
+
+            const updatedAuthenticator: PreviousAuthenticatorModel = {
+                wallet: "0xabcdef1234567890abcdef1234567890abcdef12" as `0x${string}`,
+                authenticatorId: "auth-1",
+            };
+
+            vi.mocked(idbKeyval.get).mockResolvedValue(existing);
+            vi.mocked(idbKeyval.set).mockResolvedValue(undefined);
+
+            await authenticatorStorage.put(updatedAuthenticator);
+
+            expect(idbKeyval.set).toHaveBeenCalledWith(
+                "previous-authenticators",
+                [updatedAuthenticator],
+                expect.anything()
+            );
+        });
+
         it("should preserve transports when updating authenticator", async () => {
             const walletAddress =
                 "0x1234567890123456789012345678901234567890" as `0x${string}`;
@@ -167,6 +195,28 @@ describe("authenticatorStorage", () => {
             expect(idbKeyval.set).toHaveBeenCalledWith(
                 "previous-authenticators",
                 [{ wallet: keep, authenticatorId: "winner-auth" }],
+                expect.anything()
+            );
+        });
+
+        it("should drop an entry stored with a different address casing", async () => {
+            const existing: PreviousAuthenticatorModel[] = [
+                {
+                    wallet: "0xABCDEF1234567890ABCDEF1234567890ABCDEF12" as `0x${string}`,
+                    authenticatorId: "auth-1",
+                },
+            ];
+
+            vi.mocked(idbKeyval.get).mockResolvedValue(existing);
+            vi.mocked(idbKeyval.set).mockResolvedValue(undefined);
+
+            await authenticatorStorage.remove(
+                "0xabcdef1234567890abcdef1234567890abcdef12" as `0x${string}`
+            );
+
+            expect(idbKeyval.set).toHaveBeenCalledWith(
+                "previous-authenticators",
+                [],
                 expect.anything()
             );
         });

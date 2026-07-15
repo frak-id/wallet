@@ -10,6 +10,7 @@ import {
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
 import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CheckIcon,
@@ -38,6 +39,8 @@ import { useStore } from "zustand";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import { useCampaignView } from "../../campaignView";
+import { useAffiliateShareLink } from "../../hook/useAffiliateShareLink";
+import { useToolbarTitleReveal } from "../../hook/useToolbarTitleReveal";
 import { CampaignInfoSection } from "./CampaignInfoSection";
 import * as styles from "./index.css";
 
@@ -46,6 +49,78 @@ type ExplorerDetailProps = {
     onClose: () => void;
 };
 
+// Step-2 primary CTA must never no-op: `handleShare` silently returns when
+// `canShare` is false (no native share surface), so fall back to copying
+// the link instead of leaving the button dead on desktop.
+function resolvePrimaryShareAction(
+    canShare: boolean,
+    handleShare: () => void,
+    handleCopy: () => void
+) {
+    return canShare ? handleShare : handleCopy;
+}
+
+function isCreateStepDisabled(isCreating: boolean, isLoading: boolean) {
+    return isCreating || isLoading;
+}
+
+// iOS scroll-edge blur behind the toolbar; kept as its own component so its
+// fade-in branch lives out of ExplorerDetail's body. A masked backdrop-filter
+// band whose blur radius animates in (see toolbarBlur for why radius, not
+// opacity).
+function ToolbarBlur({ visible }: { visible: boolean }) {
+    return (
+        <div
+            aria-hidden="true"
+            className={
+                visible
+                    ? `${styles.toolbarBlur} ${styles.toolbarBlurVisible}`
+                    : styles.toolbarBlur
+            }
+        />
+    );
+}
+
+// Merchant name mirrored into the fixed toolbar; kept as its own component so
+// the reveal branch lives out of ExplorerDetail's body.
+function ToolbarTitle({ name, visible }: { name: string; visible: boolean }) {
+    return (
+        <span
+            aria-hidden="true"
+            className={
+                visible
+                    ? `${styles.toolbarTitle} ${styles.toolbarTitleVisible}`
+                    : styles.toolbarTitle
+            }
+        >
+            <Text
+                as="span"
+                variant="body"
+                weight="semiBold"
+                color="primary"
+                className={styles.toolbarTitleText}
+            >
+                {name}
+            </Text>
+        </span>
+    );
+}
+
+function AffiliateLinkCreateError({
+    show,
+    message,
+}: {
+    show: boolean;
+    message: string;
+}) {
+    if (!show) return null;
+    return (
+        <Text variant="bodySmall" color="error" align="center">
+            {message}
+        </Text>
+    );
+}
+
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const clientId = useStore(clientIdStore, (s) => s.clientId);
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
@@ -53,6 +128,16 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
     const { t } = useTranslation();
+
+    // Mirror the merchant name into the fixed toolbar once the large in-body
+    // name scrolls up behind the close / share buttons.
+    const {
+        heroRef,
+        titleRef: brandTitleRef,
+        toolbarRef,
+        blurred,
+        revealed: showToolbar,
+    } = useToolbarTitleReveal();
 
     const view = useCampaignView(merchant.id);
 
@@ -97,8 +182,28 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
         return url.toString();
     }, [merchant.domain, merchant.id, mergeToken]);
 
+    // Affiliate merchants attribute conversions through a per-user tracking
+    // link minted server-side (the subId is bound to the wallet identity).
+    // Native merchants use the client-side fCtx sharing link instead.
+    const isAffiliate = merchant.integration === "affiliate";
+    const {
+        link: affiliateLink,
+        isLoading: isAffiliateLinkLoading,
+        create: createAffiliateLink,
+        isCreating: isCreatingAffiliateLink,
+        isCreateError: isAffiliateLinkCreateError,
+    } = useAffiliateShareLink({
+        merchantId: merchant.id,
+        enabled: isAffiliate,
+    });
+
+    // Two-step affiliate flow: the user must explicitly mint their tracking
+    // link before it can be shared/copied. `null` link + affiliate = step 1.
+    const affiliateNeedsLink = isAffiliate && !affiliateLink;
+
     const shareUrl = useMemo(() => {
         const baseUrl = `https://${merchant.domain}`;
+        if (isAffiliate) return affiliateLink?.url ?? baseUrl;
         return (
             buildSharingLink({
                 clientId: clientId ?? undefined,
@@ -107,7 +212,14 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 baseUrl,
             }) ?? baseUrl
         );
-    }, [clientId, walletAddress, merchant.domain, merchant.id]);
+    }, [
+        isAffiliate,
+        affiliateLink?.url,
+        clientId,
+        walletAddress,
+        merchant.domain,
+        merchant.id,
+    ]);
 
     const { mutate: triggerSharing, canShare } = useShareLink(
         shareUrl,
@@ -133,24 +245,39 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const handleShare = useCallback(() => {
         // `canShare` is true on Tauri (routed through the native plugin) and on
         // web browsers that expose `navigator.share`. No-op elsewhere.
-        if (!canShare) return;
+        if (!canShare || affiliateNeedsLink) return;
         triggerSharing();
-    }, [canShare, triggerSharing]);
+    }, [canShare, affiliateNeedsLink, triggerSharing]);
 
     const { copied, copy } = useCopyToClipboardWithState();
 
     const handleCopy = useCallback(() => {
+        if (affiliateNeedsLink) return;
         copy(shareUrl);
         trackEvent("sharing_link_copied", {
             source: "explorer_detail",
             merchant_id: merchant.id,
             link: shareUrl,
         });
-    }, [copy, shareUrl, merchant.id]);
+    }, [copy, affiliateNeedsLink, shareUrl, merchant.id]);
+
+    const handlePrimaryAction = resolvePrimaryShareAction(
+        canShare,
+        handleShare,
+        handleCopy
+    );
+    const isCreateButtonDisabled = isCreateStepDisabled(
+        isCreatingAffiliateLink,
+        isAffiliateLinkLoading
+    );
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
-            <DetailSheetHero height={232} className={styles.heroImageSheet}>
+            <DetailSheetHero
+                ref={heroRef}
+                height={232}
+                className={styles.heroImageSheet}
+            >
                 <div ref={scrollContainerRef} className={styles.heroSlider}>
                     {images.map((url, index) => (
                         <div
@@ -167,12 +294,14 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     ))}
                 </div>
 
-                <DetailSheetActions>
+                <DetailSheetActions ref={toolbarRef}>
+                    <ToolbarBlur visible={blurred} />
                     <GlassCloseButton
                         onClick={onClose}
                         label={t("explorer.detail.close")}
                     />
-                    {canShare && (
+                    <ToolbarTitle name={merchant.name} visible={showToolbar} />
+                    {canShare && !affiliateNeedsLink && (
                         <GlassButton
                             as="button"
                             icon={<ShareIcon width={20} height={20} />}
@@ -207,9 +336,9 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
             </DetailSheetHero>
 
             <DetailSheetBody className={styles.bodyContent}>
-                <div className={styles.brandHeader}>
+                <Spread align="top" space="m">
                     <div className={styles.brandInfo}>
-                        <Text as="h1" variant="heading1">
+                        <Text as="h1" variant="heading1" ref={brandTitleRef}>
                             <ExternalLink
                                 href={brandLinkUrl}
                                 className={styles.brandLink}
@@ -235,7 +364,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                             className={styles.brandLogo}
                         />
                     )}
-                </div>
+                </Spread>
 
                 {description && (
                     <Card className={styles.description}>
@@ -283,17 +412,41 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
             </DetailSheetBody>
 
             <DetailSheetFooter className={styles.floatingFooter}>
-                <Button
-                    variant="primary"
-                    width="full"
-                    onClick={handleShare}
-                    size="large"
-                    fontSize="s"
-                >
-                    {t("explorer.detail.shareAndEarn")}
-                    <CoinsIcon width={16} height={16} />
-                </Button>
-                {!ua.isMobile && (
+                {affiliateNeedsLink ? (
+                    // Step 1: mint the per-user tracking link on explicit action.
+                    <Button
+                        variant="primary"
+                        width="full"
+                        onClick={() => createAffiliateLink()}
+                        disabled={isCreateButtonDisabled}
+                        size="large"
+                        fontSize="s"
+                    >
+                        {t(
+                            isCreatingAffiliateLink
+                                ? "explorer.detail.creatingShareLink"
+                                : "explorer.detail.createShareLink"
+                        )}
+                        <CoinsIcon width={16} height={16} />
+                    </Button>
+                ) : (
+                    // Step 2: share / copy the ready link.
+                    <Button
+                        variant="primary"
+                        width="full"
+                        onClick={handlePrimaryAction}
+                        size="large"
+                        fontSize="s"
+                    >
+                        {t("explorer.detail.shareAndEarn")}
+                        <CoinsIcon width={16} height={16} />
+                    </Button>
+                )}
+                <AffiliateLinkCreateError
+                    show={isAffiliateLinkCreateError}
+                    message={t("explorer.detail.createShareLinkError")}
+                />
+                {!ua.isMobile && !affiliateNeedsLink && (
                     <Button
                         variant="ghost"
                         width="full"

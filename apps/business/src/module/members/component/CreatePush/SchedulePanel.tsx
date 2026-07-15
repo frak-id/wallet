@@ -5,6 +5,7 @@ import {
 } from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { TimeInput } from "@frak-labs/design-system/components/TimeInput";
 import { startOfDay } from "date-fns";
 import { Controller, useFormContext } from "react-hook-form";
@@ -49,26 +50,27 @@ export function SchedulePanel() {
                 }}
                 render={({ field }) => (
                     <RadioGroup
-                        className={styles.scheduleGrid}
                         value={field.value}
                         onValueChange={field.onChange}
                     >
-                        {!isEditing && (
+                        <Tiles columns={{ mobile: 1, tablet: 2 }} space="m">
+                            {!isEditing && (
+                                <ScheduleOption
+                                    value={"now"}
+                                    label={t("push.create.schedule.now.label")}
+                                    description={t(
+                                        "push.create.schedule.now.description"
+                                    )}
+                                />
+                            )}
                             <ScheduleOption
-                                value={"now"}
-                                label={t("push.create.schedule.now.label")}
+                                value={"later"}
+                                label={t("push.create.schedule.later.label")}
                                 description={t(
-                                    "push.create.schedule.now.description"
+                                    "push.create.schedule.later.description"
                                 )}
                             />
-                        )}
-                        <ScheduleOption
-                            value={"later"}
-                            label={t("push.create.schedule.later.label")}
-                            description={t(
-                                "push.create.schedule.later.description"
-                            )}
-                        />
+                        </Tiles>
                     </RadioGroup>
                 )}
             />

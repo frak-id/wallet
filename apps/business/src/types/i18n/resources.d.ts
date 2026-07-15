@@ -1,22 +1,107 @@
 export default interface Resources {
   "translation": {
     "auth": {
-      "embedded": {
-        "action": "Authenticate",
-        "panelTitle": "Please connect your wallet to continue",
-        "subtitle": "Sign in with Frak to link your shop and start rewarding your customers.",
-        "title": "Authentication required"
+      "invite": {
+        "alreadyAuthenticated": "You're already signed in on this device with a different account than {{email}}.",
+        "alreadyClaimed": "This invitation was already used. Sign in with {{email}} instead.",
+        "askToResend": "Ask your admin to resend the invitation.",
+        "goToLogin": "Go to sign in",
+        "invalidToken": "This invitation link is invalid or has expired",
+        "openDashboard": "Open dashboard",
+        "signOutFirst": "Sign out to accept this invitation",
+        "submit": "Accept invitation",
+        "subtitle": "Invited by {{inviterName}}. Set a password to finish creating your account.",
+        "title": "You've been invited to be an admin of <strong>{{merchantName}}</strong> on Frak"
       },
       "login": {
+        "back": "Back",
         "connect": "Connect to Frak Ad Manager",
         "dashboardImageAlt": "Frak Ad Manager dashboard preview",
+        "email": {
+          "backToLogin": "Back to sign in",
+          "emailPlaceholder": "Email address",
+          "forgotPassword": "Forgot your password?",
+          "newPasswordPlaceholder": "Create a password",
+          "noAccount": "No account yet?",
+          "passwordHint": "At least 10 characters.",
+          "passwordPlaceholder": "Password",
+          "registerCta": "Register",
+          "registerSubmit": "Create account",
+          "resetCodePlaceholder": "Reset code",
+          "resetInstructions": "Enter your account email and we'll send you a reset code.",
+          "resetSent": "If an account exists, a reset code has been sent. Enter it below with your new password.",
+          "resetSubmit": "Reset password",
+          "resetSuccess": "Your password has been reset. You can now sign in.",
+          "sendResetCode": "Send reset code",
+          "submit": "Sign in"
+        },
         "footerCopyright": "© {{year}} FrakLabs. All rights reserved.",
         "footerPrivacy": "Privacy Policy",
         "footerTerms": "Terms & Conditions",
         "frakLabsLogoAlt": "Frak Labs",
-        "heroSubtitle": "Register in a second. No email, no password.",
+        "heroSubtitle": "Register in a second.",
         "heroTitleLine1": "Access and discover",
-        "heroTitleLine2": "Frak Ad Manager"
+        "heroTitleLine2": "Frak Ad Manager",
+        "methods": {
+          "email": "Email",
+          "shopify": "Shopify",
+          "wallet": "Wallet"
+        },
+        "or": "or",
+        "sessionError": "We couldn't finish signing you in. Please try again.",
+        "shopify": {
+          "invalidDomain": "Enter a valid myshopify.com domain",
+          "label": "Shopify store domain",
+          "redirecting": "Signing you in with Shopify…",
+          "submit": "Continue with Shopify"
+        },
+        "ssoError": "We couldn't sign you in with Shopify. Please try again.",
+        "walletError": "We couldn't sign you in with your wallet. Please try again."
+      },
+      "twoFactor": {
+        "codePlaceholder": "6-digit code",
+        "email": {
+          "resend": "Resend code",
+          "resent": "Code sent",
+          "sendCode": "Send code by email",
+          "sentHint": "Enter the code we sent to your email."
+        },
+        "genericError": "Verification failed. Please try again.",
+        "method": {
+          "email": "Email code",
+          "siwe": "Wallet",
+          "totp": "Authenticator app"
+        },
+        "noMethods": {
+          "cta": "Go to security settings",
+          "description": "This action is protected. Set up two-factor authentication in your settings before continuing.",
+          "title": "Two-factor authentication required"
+        },
+        "pendingHint": "Verifying your session…",
+        "siwe": {
+          "cta": "Sign with wallet",
+          "hint": "Sign a message with your wallet to confirm it's you."
+        },
+        "subtitle": "Confirm it's you before continuing.",
+        "title": "Verify your identity",
+        "totp": {
+          "hint": "Enter the code from your authenticator app.",
+          "recoveryHint": "Enter one of your recovery codes.",
+          "recoveryNotice": "You're entering a one-time recovery code, not your 6-digit authenticator app code.",
+          "recoveryPlaceholder": "Recovery code",
+          "useCode": "Use your authenticator app",
+          "useRecovery": "Use a recovery code"
+        },
+        "verify": "Verify"
+      },
+      "verifyEmail": {
+        "continue": "Continue",
+        "hint": "Enter the code we sent to your email address.",
+        "resend": "Resend code",
+        "resent": "Code sent",
+        "sendCode": "Send verification code",
+        "success": "Your email is verified.",
+        "title": "Verify your email"
       }
     },
     "bank": {
@@ -24,10 +109,10 @@ export default interface Resources {
         "ctaAddFunds": "Add funds",
         "ctaManageBank": "Manage bank",
         "ctaSetup": "Set up",
-        "depleted": "Your reward bank is empty — rewards can't be distributed.",
+        "depleted": "Your reward bank is empty - rewards can't be distributed.",
         "notDeployed": "Your reward bank isn't set up yet.",
-        "paused": "Your reward bank is paused — distribution is stopped.",
-        "warning": "Your reward bank needs attention — check your balance and spending authorization."
+        "paused": "Your reward bank is paused - distribution is stopped.",
+        "warning": "Your reward bank needs attention - check your balance and spending authorization."
       }
     },
     "campaigns": {
@@ -47,6 +132,34 @@ export default interface Resources {
         "pauseTitle": "Pause campaign",
         "resume": "Resume",
         "resumeTitle": "Resume campaign"
+      },
+      "affiliateReport": {
+        "actionsOverTime": "Actions per day",
+        "brand": {
+          "title": "TakeAds brand #{{id}}"
+        },
+        "clicksOverTime": "Clicks per day",
+        "kpi": {
+          "actions": "Actions",
+          "clicks": "Clicks",
+          "conversion": "Click → action",
+          "sales": "Sales"
+        },
+        "noData": "No data yet",
+        "revenue": {
+          "commission": "Commission",
+          "currency": "Currency",
+          "orders": "Order volume",
+          "title": "Revenue by currency"
+        },
+        "status": {
+          "canceled": "Canceled",
+          "confirmed": "Confirmed",
+          "pending": "Pending",
+          "settled": "Settled"
+        },
+        "statusBreakdown": "Actions by status",
+        "truncated": "Showing partial data — the reporting window is large and results were capped. Narrow the date range for complete figures."
       },
       "bulk": {
         "archive": "Archive",
@@ -220,7 +333,7 @@ export default interface Resources {
           "cpa": {
             "applyReco": "Apply reco",
             "frakCommission": "Frak commission",
-            "hint": "Total cost you pay per confirmed conversion. Frak takes 20% — the rest goes to your users.",
+            "hint": "Total cost you pay per confirmed conversion. Frak takes 20% - the rest goes to your users.",
             "reco": "Frak recommends an <highlight>80/20 reward</highlight> split in favor of the Ambassador.",
             "rewardsDistributed": "Rewards distributed",
             "splitMismatch": "Ambassador + Referee must add up to {{amount}} (the rewards pool)."
@@ -238,11 +351,11 @@ export default interface Resources {
             "percentOfPool": "{{percent}}% of pool"
           },
           "lockup": {
-            "description": "Refund protection — delay before rewards are released",
+            "description": "Refund protection - delay before rewards are released",
             "durationHint": "Set to 0 to release rewards immediately after purchase.",
             "durationLabel": "Lockup duration (days)",
             "durationPlaceholder": "E.g. 14",
-            "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out — protecting your campaign budget.",
+            "info": "Rewards are held for a grace period after purchase. If the order is refunded during this window, no reward is paid out - protecting your campaign budget.",
             "label": "Reward lockup",
             "unit": "days"
           },
@@ -280,7 +393,7 @@ export default interface Resources {
             "fromPlaceholder": "E.g. 0",
             "globalCpaTitle": "Target CPA",
             "incomplete": "Each tier needs a basket range and a CPA above 0",
-            "overlap": "Tiers can't overlap — each basket range must start where the previous one ends.",
+            "overlap": "Tiers can't overlap - each basket range must start where the previous one ends.",
             "removeTier": "Remove tier",
             "rewardPlaceholder": "E.g. 5",
             "tierLabel": "Tier {{n}}",
@@ -318,7 +431,7 @@ export default interface Resources {
           "referralChain": {
             "hint": "Multi-level ambassador",
             "label": "Referral chain",
-            "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
+            "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels - not just the direct referrer."
           },
           "reward": {
             "hint": "Model, value & distribution",
@@ -338,7 +451,7 @@ export default interface Resources {
         },
         "success": {
           "communicationGuide": "Communication guide",
-          "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign — they can start sharing immediately.",
+          "notifyBody": "The Frak ambassador community will receive a push notification on the app: “{{merchant}}” has just launched a new campaign - they can start sharing immediately.",
           "notifyTitle": "Frak ambassadors will be notified",
           "subtitle": "‘{{name}}’ is now live.",
           "tip1Desc": "Add a sharing CTA right on the product page.",
@@ -417,6 +530,10 @@ export default interface Resources {
         "close": "Close campaign details",
         "config": {
           "budget": {
+            "amountLabel": "Budget cap",
+            "cancel": "Cancel",
+            "edit": "Edit budget",
+            "error": "Could not update the budget. Please try again.",
             "none": "No budget cap configured.",
             "period": {
               "daily": "Daily budget",
@@ -424,6 +541,8 @@ export default interface Resources {
               "monthly": "Monthly budget",
               "weekly": "Weekly budget"
             },
+            "periodLabel": "Budget period",
+            "save": "Save",
             "title": "Budget"
           },
           "conditions": {
@@ -431,7 +550,7 @@ export default interface Resources {
             "and": "and",
             "any": "Any of the following",
             "description": "Extra rules that must be met for the reward to apply.",
-            "none": "No extra conditions — rewards apply to every qualifying action.",
+            "none": "No extra conditions - rewards apply to every qualifying action.",
             "noneOf": "None of the following",
             "title": "Conditions"
           },
@@ -473,10 +592,17 @@ export default interface Resources {
             "title": "Rewards"
           },
           "schedule": {
+            "cancel": "Cancel",
+            "edit": "Edit dates",
+            "endBeforeStart": "The end date must be after the start date",
+            "error": "Could not update the schedule. The start date can only be moved forward.",
             "expires": "Ends on",
+            "immediate": "Immediately",
             "noExpiration": "No end date",
             "notPublished": "Not published yet",
             "published": "Published on",
+            "save": "Save",
+            "starts": "Starts on",
             "title": "Schedule"
           },
           "targeting": {
@@ -527,7 +653,7 @@ export default interface Resources {
           "equivalentMeta": "Equivalent cost on Meta",
           "frakTag": "(Frak)",
           "savedVsMeta": "{{amount}} saved vs Meta",
-          "title": "Economic value — Frak vs Meta",
+          "title": "Economic value - Frak vs Meta",
           "yourSpend": "Your spend"
         },
         "efficiency": {
@@ -678,8 +804,10 @@ export default interface Resources {
       }
     },
     "common": {
+      "cancel": "Cancel",
       "clearAll": "Clear all",
       "close": "Close",
+      "copied": "Copied",
       "copy": "Copy to clipboard",
       "dateField": {
         "openCalendar": "Open calendar",
@@ -695,6 +823,7 @@ export default interface Resources {
           "thisMonth": "This month"
         }
       },
+      "hidePassword": "Hide password",
       "pagination": {
         "label": "pagination",
         "morePages": "More pages",
@@ -705,6 +834,7 @@ export default interface Resources {
       "search": {
         "placeholder": "Search"
       },
+      "showPassword": "Show password",
       "table": {
         "empty": "No results"
       }
@@ -816,7 +946,7 @@ export default interface Resources {
           "hint": "This removes all overrides for this placement.",
           "title": "Delete placement · {{placementId}}"
         },
-        "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways — each with its own text, styles, and behavior.",
+        "description": "Global defaults apply to every SDK component. Placements are variants you can use on the same website to display your products in different ways - each with its own text, styles, and behavior.",
         "dialog": {
           "cancel": "Cancel",
           "create": "Create placement",
@@ -843,17 +973,6 @@ export default interface Resources {
       "empty": {
         "description": "You don't have any merchant yet. Add one to start running campaigns.",
         "title": "Welcome to Frak"
-      }
-    },
-    "embedded": {
-      "mint": {
-        "alreadyRegistered": "Maybe the domain is already registered.",
-        "close": "Close",
-        "error": "Can't register your product. Double check that everything is right.",
-        "register": "Register your shop",
-        "registering": "Registering <text>{{domain}}</text>",
-        "subtitle": "We'll verify your domain and set up your merchant space.",
-        "title": "Register your shop on Frak"
       }
     },
     "errors": {
@@ -943,7 +1062,7 @@ export default interface Resources {
         "distributingTooltip": "When enabled, rewards are automatically distributed to your users through active campaigns. Disabling stops all new distributions.",
         "emptyWarning": "Your bank has no funds. Active campaigns cannot distribute rewards until you add funds.",
         "limitTooLow": "Distribution limit too low",
-        "noFundsCaption": "No funds — add funds to start distributing rewards.",
+        "noFundsCaption": "No funds - add funds to start distributing rewards.",
         "sectionLabel": "Reward Budget",
         "status": {
           "actionNeeded": "Action needed",
@@ -966,6 +1085,11 @@ export default interface Resources {
         "title": "Legacy Bank Migration",
         "totalBalance": "Total balance",
         "withdrawable": "Available to migrate"
+      },
+      "linkWallet": {
+        "cta": "Link a Frak wallet",
+        "description": "Withdrawing, adjusting allowance, and pausing distribution require a wallet signature. Link a Frak wallet to unlock these actions.",
+        "title": "Link a wallet to manage funds"
       },
       "pause": {
         "title": "Pause rewards"
@@ -1014,6 +1138,13 @@ export default interface Resources {
       }
     },
     "merchant": {
+      "affiliate": {
+        "brandId": "TakeAds brand ID",
+        "description": "This merchant earns through its affiliate (TakeAds) integration.",
+        "title": "Affiliate configuration",
+        "trackingLink": "Tracking link"
+      },
+      "affiliateTag": "TakeAds",
       "create": {
         "actions": {
           "back": "Back",
@@ -1033,7 +1164,8 @@ export default interface Resources {
           "helpCta": "View DNS Setup Guide",
           "helpQuestion": "How to add a DNS TXT record in my DNS settings?",
           "helper": "Add this TXT record to your domain's DNS settings:",
-          "title": "DNS TXT Record Required"
+          "title": "DNS TXT Record Required",
+          "verifiedViaShopify": "Domain verified thanks to your Shopify session"
         },
         "fields": {
           "currency": {
@@ -1064,6 +1196,28 @@ export default interface Resources {
           "approve": "You'll be asked to approve the transaction using your wallet.",
           "duration": "Registration usually takes less than a minute",
           "onChain": "Your merchant will be registered on-chain."
+        },
+        "platformAdmin": {
+          "description": "Advanced options available to Frak platform admins.",
+          "label": "Platform admin options",
+          "skipDomain": {
+            "description": "Register without the DNS ownership check. The signature is still required.",
+            "title": "Skip domain verification"
+          },
+          "takeadsMerchantId": {
+            "label": "TakeAds brand ID",
+            "mustBeInteger": "Please enter a positive whole number",
+            "placeholder": "e.g. 12345"
+          },
+          "takeadsTrackingLink": {
+            "invalidUrl": "Please enter a valid URL",
+            "label": "TakeAds tracking link",
+            "placeholder": "https://tatrck.com/h/..."
+          },
+          "useFrakBank": {
+            "description": "Link this merchant to the shared Frak bank instead of deploying a dedicated one.",
+            "title": "Use Frak campaign bank"
+          }
         },
         "registration": {
           "description": "To complete registration:",
@@ -1158,9 +1312,9 @@ export default interface Resources {
         "previewDisabledHint": "Enable the Explorer",
         "removeImage": "Remove image",
         "restrictions": {
-          "hero": "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 (Max 10MB)",
-          "icon": "PNG, JPEG, WebP, SVG, GIF — Min 64×64px — Ratio 1:2 to 2:1 (Max 10MB)",
-          "logo": "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 (Max 10MB)"
+          "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 to 2:1 (Max 10MB)",
+          "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 to 2:1 (Max 10MB)",
+          "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 to 2:1 (Max 10MB)"
         },
         "title": "Explorer",
         "uploaded": "Image uploaded",
@@ -1180,7 +1334,7 @@ export default interface Resources {
           "change": {
             "confirm": "Change platform",
             "description": "This could break your purchase tracking. Are you sure you want to change the platform?",
-            "internalWarning": "You won't be able to revert back from this dashboard — you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
+            "internalWarning": "You won't be able to revert back from this dashboard - you would need to set up the webhook again from the platform application (like the Shopify Frak app).",
             "title": "Change platform?"
           },
           "description": "Configure how Frak receives purchase events from your store.",
@@ -1224,16 +1378,24 @@ export default interface Resources {
       "saveAll": "Save all changes",
       "saveError": "Some changes could not be saved. Check the fields and try again.",
       "tabs": {
+        "affiliate": "Affiliate settings",
         "explorer": "Explorer App settings",
         "identity": "Customize SDK Identity",
         "team": "Manage your team"
       },
       "team": {
         "add": {
-          "description": "Invite an admin to your team by wallet address.",
+          "addedSuccess": "{{email}} was added to the team",
+          "description": "Invite an admin to your team by wallet address or email.",
+          "emailInvalid": "Invalid email address",
+          "emailLabel": "Member email",
+          "emailPlaceholder": "name@company.com",
           "error": "Could not add the admin. Try again.",
           "invalid": "Invalid wallet address",
+          "invitedSuccess": "Invitation sent to {{email}}",
           "label": "Member wallet",
+          "modeEmail": "Email",
+          "modeWallet": "Wallet",
           "placeholder": "0x…",
           "submit": "Add member",
           "title": "Add a member"
@@ -1244,19 +1406,25 @@ export default interface Resources {
           "role": "Role",
           "wallet": "Wallet"
         },
+        "invited": "Invited",
         "me": "Me:",
         "removeMember": "Remove member",
+        "resendError": "Could not resend the invitation. Try again.",
+        "resendInvite": "Resend invite",
+        "resendSuccess": "Invitation resent to {{email}}",
         "roles": {
           "admin": "Admin",
           "owner": "Owner"
         },
         "saveAll": "Save all changes",
         "saveError": "Some changes could not be saved. Try again.",
-        "undoRemove": "Undo remove"
+        "undoRemove": "Undo remove",
+        "walletlessMember": "Walletless member"
       },
       "title": "Edit"
     },
     "platformAdmin": {
+      "readOnlySectionTitle": "Read-only merchants",
       "readOnlyTag": "Read-only"
     },
     "push": {
@@ -1390,6 +1558,92 @@ export default interface Resources {
           "save": "Save information",
           "saveChanges": "Save changes"
         },
+        "admin": {
+          "breakdown": {
+            "frakFee": "Frak fee (20%)",
+            "gifted": "Gifted amount",
+            "gross": "Gross amount",
+            "hint": "Estimate - final VAT and fee are computed when the deposit is created.",
+            "net": "Net amount",
+            "title": "Estimated breakdown",
+            "vat": "VAT (20%)",
+            "vatExempt": "VAT (exempt outside FR)"
+          },
+          "deposit": {
+            "description": "Records a deposit and computes VAT and the Frak fee automatically.",
+            "submit": "Create deposit",
+            "title": "Add deposit note",
+            "trigger": "Add deposit"
+          },
+          "errors": {
+            "create": "Something went wrong while creating the document. Please try again.",
+            "void": "Something went wrong while voiding the document. Please try again."
+          },
+          "fields": {
+            "currency": {
+              "autoPlaceholder": "Select a linked deposit first",
+              "label": "Currency"
+            },
+            "documentDate": {
+              "label": "Document date"
+            },
+            "giftedAmount": {
+              "hint": "Offered top-up added back to the net, to make a miscomputed onramp coherent.",
+              "label": "Gifted amount (optional)",
+              "placeholder": "e.g. 200"
+            },
+            "grossAmount": {
+              "label": "Gross amount",
+              "placeholder": "e.g. 1200"
+            },
+            "linkedDeposit": {
+              "label": "Linked deposit",
+              "placeholder": "Select the deposit this withdrawal reverses"
+            },
+            "note": {
+              "label": "Note (optional)",
+              "placeholder": "Internal note"
+            },
+            "paymentPlatform": {
+              "label": "Payment platform",
+              "none": "None"
+            },
+            "rawIban": {
+              "hint": "Only a masked reference (country code + last digits) is ever stored or sent.",
+              "label": "IBAN",
+              "placeholder": "Enter the destination IBAN"
+            },
+            "remainingBankAmount": {
+              "label": "Remaining bank amount",
+              "placeholder": "e.g. 400"
+            },
+            "txHash": {
+              "label": "Transaction hash (optional)"
+            }
+          },
+          "panel": {
+            "description": "Create deposit notes and withdraw bills for this merchant. Visible to platform admins only.",
+            "title": "Platform admin - billing"
+          },
+          "table": {
+            "void": "Void",
+            "voidAria": "Void {{reference}}"
+          },
+          "void": {
+            "confirm": "Void document",
+            "description": "This will void {{reference}}. Voided documents are kept for records but excluded from the merchant's billing history.",
+            "title": "Void this document?"
+          },
+          "withdraw": {
+            "description": "Records a withdrawal against a linked deposit and computes the pro-rata restitution automatically.",
+            "submit": "Create withdrawal",
+            "title": "Add withdraw bill",
+            "trigger": "Add withdrawal"
+          }
+        },
+        "errors": {
+          "save": "Something went wrong while saving your billing information. Your changes were kept - please try again."
+        },
         "fields": {
           "billingEmail": {
             "label": "Billing email",
@@ -1447,16 +1701,20 @@ export default interface Resources {
           "date": "Date",
           "description": "Description",
           "download": "Download PDF",
+          "downloadError": "Couldn't generate the PDF. Please try again.",
           "pdf": "PDF",
           "type": "Type"
         },
         "tag": {
           "deposit": "Deposit",
-          "paid": "Paid"
+          "paid": "Paid",
+          "withdraw": "Withdraw"
         },
         "validation": {
+          "decimal": "Enter a valid decimal amount",
           "email": "Enter a valid email address",
-          "required": "This field is required"
+          "required": "This field is required",
+          "txHash": "Enter a valid transaction hash (0x…)"
         }
       },
       "currency": {
@@ -1474,6 +1732,57 @@ export default interface Resources {
           "fr": "French"
         },
         "title": "Language"
+      },
+      "security": {
+        "credentials": {
+          "addPassword": "Add a password to also sign in with email.",
+          "addPasswordCta": "Add password",
+          "connected": "Verified",
+          "description": "Wallet, password, and connected accounts used to sign in.",
+          "emailTaken": "This email is already used by another account.",
+          "linkWallet": "Link a wallet",
+          "password": "Email & password",
+          "passwordAdded": "Password added and email verified.",
+          "pending": "Pending verification",
+          "savePassword": "Save password",
+          "title": "Sign-in methods",
+          "verifyBanner": {
+            "description": "Confirm your email to secure your account and make sure you can always sign back in.",
+            "title": "Verify your email address"
+          },
+          "wallet": "Wallet"
+        },
+        "sessions": {
+          "current": "this device",
+          "description": "Devices and browsers currently signed in to your account.",
+          "emptyDescription": "Devices signed in to your account will appear here.",
+          "emptyTitle": "No active sessions",
+          "method": {
+            "password": "Email & password",
+            "shopify": "Shopify",
+            "wallet": "Wallet"
+          },
+          "revoke": "Revoke",
+          "revokeDescription": "This device will need to sign in again to access your account.",
+          "revokeTitle": "Revoke this session?",
+          "title": "Active sessions"
+        },
+        "totp": {
+          "confirm": "Confirm",
+          "copyCodes": "Copy codes",
+          "downloadCodes": "Download",
+          "enable": "Enable authenticator app",
+          "enabled": "Authenticator app enabled",
+          "manualHint": "Can't scan? Enter this key manually instead:",
+          "recoveryHint": "Store these somewhere safe - each code can be used once if you lose access to your authenticator app.",
+          "recoveryTitle": "Save your recovery codes",
+          "scanHint": "Scan this QR code with your authenticator app, then enter the code it shows.",
+          "title": "Authenticator app"
+        },
+        "twoFactor": {
+          "description": "Add an extra layer of security to your sign-in with an authenticator app.",
+          "title": "Two-Factor Authentication"
+        }
       },
       "tabs": {
         "billing": "Billing",
@@ -1501,8 +1810,14 @@ export default interface Resources {
         "noMerchantHint": "Add a merchant first"
       },
       "pages": {
+        "billing": {
+          "nav": "Billing"
+        },
         "campaigns": {
           "nav": "Campaigns"
+        },
+        "campaignsAffiliateReport": {
+          "nav": "TakeAds report"
         },
         "campaignsList": {
           "nav": "List"
@@ -1513,6 +1828,9 @@ export default interface Resources {
         "dashboard": {
           "nav": "My merchants",
           "title": "My Merchants"
+        },
+        "funding": {
+          "nav": "Funding"
         },
         "members": {
           "nav": "Members",
@@ -1529,6 +1847,9 @@ export default interface Resources {
         },
         "settings": {
           "nav": "Settings"
+        },
+        "setupStatus": {
+          "nav": "Setup status"
         },
         "wallet": {
           "nav": "Wallet"

@@ -1,3 +1,4 @@
+import type { AffiliateBrandInfo } from "@frak-labs/backend-elysia/api/schemas";
 import { queryOptions } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
@@ -18,7 +19,8 @@ export type MerchantData = {
     id: string;
     domain: string;
     name: string;
-    ownerWallet: Address;
+    // Null for walletless-owned merchants (backend Phase 2)
+    ownerWallet: Address | null;
     bankAddress: Address | null;
     defaultRewardToken: Address;
     explorerConfig: {
@@ -33,6 +35,8 @@ export type MerchantData = {
     role: MerchantRole;
     allowedDomains: string[];
     productId?: Hex;
+    isAffiliate?: boolean;
+    affiliate?: AffiliateBrandInfo | null;
 };
 
 function getMerchantMockData(merchantId: string): MerchantData {
@@ -84,6 +88,7 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
                 createdAt: data.createdAt,
                 role: data.role,
                 allowedDomains: data.allowedDomains ?? [],
+                affiliate: data.affiliate ?? null,
             };
         },
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,

@@ -60,7 +60,7 @@
         "build": "tsdown",
         "build:watch": "tsdown --watch",
         "check-exports": "attw --pack .",
-        "typecheck": "tsgo --noEmit",
+        "typecheck": "tsc --noEmit",
         "prepublish": "bun run lint && bun run build",
         "publish": "echo 'Publishing rpc...'"
     },
@@ -71,8 +71,9 @@
         "@arethetypeswrong/cli": "^0.18.2",
         "@rolldown/plugin-node-polyfills": "catalog:",
         "@types/node": "catalog:",
+        "@typescript/native": "catalog:",
         "tsdown": "catalog:",
-        "typescript": "^6.0.2",
+        "typescript": "catalog:",
         "viem": "catalog:"
     }
 }

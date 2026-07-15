@@ -14,7 +14,9 @@ import { useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import {
+    BUDGET_TYPE_LABEL,
     type BudgetType,
+    budgetTypeFromDuration,
     getCapPeriod,
 } from "@/module/campaigns/utils/capPeriods";
 import { DateField } from "@/module/common/component/DateField";
@@ -37,7 +39,7 @@ const FRAK_COMMISSION = 0.2;
 
 type ScheduleMode = "immediate" | "startOnly" | "range";
 
-type BudgetFormValues = {
+export type BudgetFormValues = {
     period: BudgetType;
     amount: number;
     scheduleMode?: ScheduleMode;
@@ -51,13 +53,6 @@ const PERIODS = [
     { value: "weekly", labelKey: "campaigns.create.budget.period.weekly" },
     { value: "monthly", labelKey: "campaigns.create.budget.period.monthly" },
 ] as const satisfies ReadonlyArray<{ value: BudgetType; labelKey: string }>;
-
-const PERIOD_LABEL: Record<BudgetType, string> = {
-    global: "Global",
-    daily: "Daily",
-    weekly: "Weekly",
-    monthly: "Monthly",
-};
 
 const SCHEDULE_OPTIONS = [
     {
@@ -81,13 +76,6 @@ const SCHEDULE_OPTIONS = [
     descKey: string;
 }>;
 
-function periodFromDuration(duration: number | null | undefined): BudgetType {
-    if (duration === getCapPeriod("daily")) return "daily";
-    if (duration === getCapPeriod("weekly")) return "weekly";
-    if (duration === getCapPeriod("monthly")) return "monthly";
-    return "global";
-}
-
 function draftToBudgetValues(draft: CampaignDraft): BudgetFormValues {
     const budget = draft.budgetConfig[0];
     const startDate = getStartDate(draft.rule);
@@ -100,7 +88,7 @@ function draftToBudgetValues(draft: CampaignDraft): BudgetFormValues {
     else if (budget) scheduleMode = "immediate";
 
     return {
-        period: periodFromDuration(budget?.durationInSeconds),
+        period: budgetTypeFromDuration(budget?.durationInSeconds),
         amount: budget?.amount ?? 0,
         scheduleMode,
         startDate,
@@ -120,7 +108,7 @@ function budgetValuesToDraft(
         ...draft,
         budgetConfig: [
             {
-                label: PERIOD_LABEL[values.period],
+                label: BUDGET_TYPE_LABEL[values.period],
                 durationInSeconds: getCapPeriod(values.period),
                 amount: values.amount,
             },
@@ -233,7 +221,12 @@ function NumberStepper({
     );
 }
 
-function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
+/** Exported for unit testing (see BudgetCampaign.test.tsx). */
+export function BudgetCapField({
+    control,
+}: {
+    control: Control<BudgetFormValues>;
+}) {
     const { t } = useTranslation();
     const amount = useWatch({ control, name: "amount" });
     const currencyGlyph = useCampaignCurrencyGlyph();
@@ -258,6 +251,8 @@ function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
                                 tone="muted"
                                 error={showError}
                                 classNameWrapper={styles.capInputWrapper}
+                                label={t("campaigns.create.budget.cap.label")}
+                                hint={t("campaigns.create.budget.cap.hint")}
                                 rightSection={
                                     <span className={styles.capRight}>
                                         <NumberStepper
@@ -282,9 +277,6 @@ function BudgetCapField({ control }: { control: Control<BudgetFormValues> }) {
                     );
                 }}
             />
-            <Text variant="caption" color="tertiary" className={styles.capHint}>
-                {t("campaigns.create.budget.cap.hint")}
-            </Text>
             <BudgetBreakdown
                 amount={amount ?? 0}
                 currencyGlyph={currencyGlyph}
@@ -534,6 +526,7 @@ export function BudgetCampaign() {
             isPending={saveCampaign.isPending}
             onSaveDraft={handleSaveDraft}
             onClose={() => form.reset(defaultValues)}
+            hasUnsavedChanges={form.formState.isDirty}
         >
             <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                 <Stack space="l">
@@ -544,11 +537,7 @@ export function BudgetCampaign() {
                         <BudgetPeriodField control={form.control} />
                     </WizardFieldCard>
 
-                    <WizardFieldCard
-                        space="xs"
-                        insetLabel
-                        label={t("campaigns.create.budget.cap.label")}
-                    >
+                    <WizardFieldCard>
                         <BudgetCapField control={form.control} />
                     </WizardFieldCard>
 

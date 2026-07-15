@@ -13,22 +13,6 @@ export const messageArea = style({
     },
 });
 
-export const scheduleGrid = style({
-    selectors: {
-        // Outrank RadioGroup's flex-column base.
-        "&&": {
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-            gap: alias.spacing.m,
-        },
-    },
-    "@media": {
-        "screen and (max-width: 640px)": {
-            selectors: { "&&": { gridTemplateColumns: "1fr" } },
-        },
-    },
-});
-
 export const scheduleCell = style({
     display: "flex",
     alignItems: "center",

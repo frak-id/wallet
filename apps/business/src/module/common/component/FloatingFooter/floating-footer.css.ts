@@ -76,7 +76,6 @@ export const contentWrapper = style({
 });
 
 export const contentColumn = style({
-    maxWidth: "720px",
     display: "flex",
     justifyContent: "center",
 });

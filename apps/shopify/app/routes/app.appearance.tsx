@@ -32,6 +32,7 @@ import {
     getMainThemeId,
 } from "app/services.server/theme";
 import { authenticate } from "app/shopify.server";
+import { buildBusinessDashboardUrl } from "app/utils/url";
 import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
@@ -291,10 +292,19 @@ export default function AppearancePage() {
     const merchantId = rootData?.merchantId;
     const shopDomain = rootData?.shop?.myshopifyDomain;
     // Deep-link the legacy "Open editor" straight to the branding editor, same
-    // as the dashboard's manual-install step 3.
-    const customizeUrl = merchantId
-        ? `${businessUrl}/m/${merchantId}/merchant/customize`
-        : businessUrl;
+    // as the dashboard's manual-install step 3. Routed through the Shopify SSO
+    // login entrypoint so the merchant doesn't have to manually re-authenticate
+    // in the business app.
+    const customizeUrl = buildBusinessDashboardUrl({
+        businessUrl,
+        shop: shopDomain,
+        // No merchant-scoped customize route exists without an id, so fall
+        // back to the dashboard (business resolves the user's first merchant)
+        // rather than a non-existent `/merchant/customize` path.
+        target: merchantId
+            ? `/m/${merchantId}/merchant/customize`
+            : "/dashboard",
+    });
     // Deep-links for the manual (non-app-block) button/banner install.
     const themeBase = `https://${shopDomain}/admin/themes/current`;
     const productTemplateUrl = `${themeBase}?key=templates/product.liquid`;

@@ -1,6 +1,10 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Spinner } from "./index";
+import { spinnerStyles } from "./spinner.css";
+
+const classesFor = (size: "s" | "m" | "l") =>
+    spinnerStyles({ size }).split(" ").filter(Boolean);
 
 describe("Spinner", () => {
     it("should render with default size (m)", () => {
@@ -17,16 +21,20 @@ describe("Spinner", () => {
 
     it("should render with size s", () => {
         const { container } = render(<Spinner size="s" />);
-        const spinner = container.querySelector("span");
-        expect(spinner).toBeInTheDocument();
-        expect(spinner?.className).toContain("s");
+        const cn = container.querySelector("span")?.className ?? "";
+        for (const c of classesFor("s")) expect(cn).toContain(c);
+        const sOnly = classesFor("s").find((c) => !classesFor("m").includes(c));
+        expect(sOnly).toBeDefined();
+        expect(cn).toContain(sOnly);
     });
 
     it("should render with size l", () => {
         const { container } = render(<Spinner size="l" />);
-        const spinner = container.querySelector("span");
-        expect(spinner).toBeInTheDocument();
-        expect(spinner?.className).toContain("l");
+        const cn = container.querySelector("span")?.className ?? "";
+        for (const c of classesFor("l")) expect(cn).toContain(c);
+        const lOnly = classesFor("l").find((c) => !classesFor("m").includes(c));
+        expect(lOnly).toBeDefined();
+        expect(cn).toContain(lOnly);
     });
 
     it("should accept custom className", () => {
