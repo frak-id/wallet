@@ -27,7 +27,7 @@
     "@tanstack/react-query-devtools": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
     "@tanstack/react-router": "1.169.2",
-    "@vanilla-extract/css": "^1.19.1",
+    "@vanilla-extract/css": "catalog:",
     "lucide-react": "^1.24.0",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -39,7 +39,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@typescript/native": "catalog:",
-    "@vanilla-extract/vite-plugin": "^5.2.0",
+    "@vanilla-extract/vite-plugin": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:"
