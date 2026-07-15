@@ -201,8 +201,17 @@
             "settings": {
                 "nav": "Paramètres"
             },
+            "billing": {
+                "nav": "Facturation"
+            },
             "merchant": {
                 "nav": "Marchand"
+            },
+            "funding": {
+                "nav": "Financement"
+            },
+            "setupStatus": {
+                "nav": "État de configuration"
             },
             "push": {
                 "nav": "Push"

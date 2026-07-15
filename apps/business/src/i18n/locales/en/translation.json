@@ -201,8 +201,17 @@
             "settings": {
                 "nav": "Settings"
             },
+            "billing": {
+                "nav": "Billing"
+            },
             "merchant": {
                 "nav": "Merchant"
+            },
+            "funding": {
+                "nav": "Funding"
+            },
+            "setupStatus": {
+                "nav": "Setup status"
             },
             "push": {
                 "nav": "Push"

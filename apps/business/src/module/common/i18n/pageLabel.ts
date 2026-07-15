@@ -9,7 +9,10 @@ export type PageKey =
     | "members"
     | "wallet"
     | "settings"
+    | "billing"
     | "merchant"
+    | "funding"
+    | "setupStatus"
     | "push"
     | "pushCreate";
 

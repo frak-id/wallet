@@ -1809,6 +1809,9 @@ export default interface Resources {
         "noMerchantHint": "Add a merchant first"
       },
       "pages": {
+        "billing": {
+          "nav": "Billing"
+        },
         "campaigns": {
           "nav": "Campaigns"
         },
@@ -1825,6 +1828,9 @@ export default interface Resources {
           "nav": "My merchants",
           "title": "My Merchants"
         },
+        "funding": {
+          "nav": "Funding"
+        },
         "members": {
           "nav": "Members",
           "title": "Members List"
@@ -1840,6 +1846,9 @@ export default interface Resources {
         },
         "settings": {
           "nav": "Settings"
+        },
+        "setupStatus": {
+          "nav": "Setup status"
         },
         "wallet": {
           "nav": "Wallet"
