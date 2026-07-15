@@ -83,7 +83,11 @@ export function WalletPanel({ redirect }: { redirect?: string }) {
             >
                 {t("auth.login.connect")}
             </Button>
-            {error && <Notice tone="error">{error}</Notice>}
+            {error && (
+                <Notice tone="error" role="alert">
+                    {error}
+                </Notice>
+            )}
         </Stack>
     );
 }

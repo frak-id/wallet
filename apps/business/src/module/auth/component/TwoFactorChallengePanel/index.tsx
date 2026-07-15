@@ -309,7 +309,7 @@ function CodeChallenge({
             )}
 
             {error && (
-                <Notice tone="error">
+                <Notice tone="error" role="alert">
                     {extractAuthErrorMessage(
                         error,
                         t("auth.twoFactor.genericError")
@@ -361,7 +361,7 @@ function SiweChallenge({ onVerified }: { onVerified: () => void }) {
                 {t("auth.twoFactor.siwe.cta")}
             </Button>
             {error && (
-                <Notice tone="error">
+                <Notice tone="error" role="alert">
                     {extractAuthErrorMessage(
                         error,
                         t("auth.twoFactor.genericError")

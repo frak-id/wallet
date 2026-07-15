@@ -381,7 +381,7 @@ export function MerchantDetailsStep({
                     {domainError && <FieldError>{domainError}</FieldError>}
 
                     {verifiedViaShopify && (
-                        <Notice tone="success">
+                        <Notice tone="success" role="status">
                             {t("merchant.create.dns.verifiedViaShopify")}
                         </Notice>
                     )}

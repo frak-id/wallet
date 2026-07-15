@@ -162,7 +162,7 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
     if (isSuccess) {
         return (
             <Stack space="s">
-                <Notice tone="success">
+                <Notice tone="success" role="status">
                     {t("auth.login.email.resetSuccess")}
                 </Notice>
                 <BackToLoginButton onClick={onBackToLogin} />

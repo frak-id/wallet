@@ -82,7 +82,9 @@ export function VerifyEmail({
         />
     );
     const errorNotice = sendError ? (
-        <Notice tone="error">{sendError.message}</Notice>
+        <Notice tone="error" role="alert">
+            {sendError.message}
+        </Notice>
     ) : null;
 
     // --- embedded (settings) ---
@@ -99,7 +101,9 @@ export function VerifyEmail({
     if (isSuccess) {
         return (
             <Stack space="m" align="center">
-                <Notice tone="success">{t("auth.verifyEmail.success")}</Notice>
+                <Notice tone="success" role="status">
+                    {t("auth.verifyEmail.success")}
+                </Notice>
                 <Button
                     variant="primary"
                     width="auto"

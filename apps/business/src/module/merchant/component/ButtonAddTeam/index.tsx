@@ -235,7 +235,7 @@ export function ButtonAddTeam({
                 <DiscardChangesDialog {...dialogProps} />
             </Sheet>
             {addedResult && (
-                <Notice tone="success">
+                <Notice tone="success" role="status">
                     {addedResult.status === "invited"
                         ? t("merchantEdit.team.add.invitedSuccess", {
                               email: addedResult.value,

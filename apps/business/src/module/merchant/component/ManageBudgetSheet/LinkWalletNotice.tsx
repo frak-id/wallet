@@ -33,7 +33,11 @@ export function LinkWalletNotice() {
                 >
                     {t("funding.linkWallet.cta")}
                 </Button>
-                {error && <Notice tone="error">{error.message}</Notice>}
+                {error && (
+                    <Notice tone="error" role="alert">
+                        {error.message}
+                    </Notice>
+                )}
             </Stack>
         </Card>
     );

@@ -85,7 +85,9 @@ export function LinkedCredentials() {
                 )}
             </DetailRow>
             {linkWalletError && (
-                <Notice tone="error">{linkWalletError.message}</Notice>
+                <Notice tone="error" role="alert">
+                    {linkWalletError.message}
+                </Notice>
             )}
 
             <DetailRow label={t("settings.security.credentials.password")}>
