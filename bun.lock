@@ -446,7 +446,7 @@
         "@types/react": "*",
         "@vitejs/plugin-react": "*",
         "react": "*",
-        "vitest": "*",
+        "vitest": "^4.1.4",
       },
     },
     "packages/ui-preview": {
