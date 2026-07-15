@@ -165,6 +165,18 @@
         "merchantCreate": {
             "title": "Échec de l'ajout du marchand",
             "back": "Retour au tableau de bord"
+        },
+        "linkWallet": {
+            "stepUpRequired": "Une vérification à deux facteurs récente est requise. Veuillez la refaire, puis réessayer.",
+            "walletTaken": "Ce portefeuille est déjà lié à un autre compte.",
+            "signatureCancelled": "Signature du portefeuille annulée."
+        },
+        "auth": {
+            "invalidTwoFactorCode": "Code invalide. Veuillez réessayer.",
+            "invalidTwoFactorProof": "La vérification a échoué. Veuillez réessayer.",
+            "invalidMethod": "Cette méthode de vérification n'est pas disponible.",
+            "invalidCode": "Code invalide ou expiré.",
+            "otpThrottled": "Trop de tentatives. Réessayez dans {{seconds}} s."
         }
     },
     "shell": {
@@ -1425,6 +1437,8 @@
                     "description": "Confirmez votre e-mail pour sécuriser votre compte et vous assurer de toujours pouvoir vous reconnecter."
                 },
                 "emailTaken": "Cet e-mail est déjà utilisé par un autre compte.",
+                "passwordExists": "Ce compte possède déjà un mot de passe.",
+                "emailMismatch": "Cet e-mail ne correspond pas à celui de votre compte.",
                 "password": "E-mail et mot de passe",
                 "connected": "Vérifié",
                 "pending": "En attente de vérification",

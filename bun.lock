@@ -46,6 +46,7 @@
         "@frak-labs/components": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
+        "@frak-labs/frame-connector": "workspace:*",
         "@frak-labs/react-sdk": "workspace:*",
         "@frak-labs/ui-preview": "workspace:*",
         "@lucasmogari/react-pagination": "^2.1.0",

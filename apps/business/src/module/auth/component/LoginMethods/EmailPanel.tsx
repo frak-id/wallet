@@ -12,6 +12,7 @@ import {
     useRegisterAccount,
     useRequestPasswordReset,
 } from "@/module/auth/hooks/useEmailAuth";
+import { authErrorMessage } from "@/module/auth/utils/authError";
 import { Input } from "@/module/forms/Input";
 import {
     MIN_PASSWORD_LENGTH,
@@ -233,7 +234,11 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                 label={t("auth.login.email.newPasswordPlaceholder")}
                 hint={
                     confirmError
-                        ? confirmError.message
+                        ? authErrorMessage(
+                              confirmError,
+                              t,
+                              t("errors.auth.invalidCode")
+                          )
                         : t("auth.login.email.passwordHint")
                 }
                 error={Boolean(confirmError)}

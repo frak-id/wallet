@@ -10,7 +10,7 @@ import {
     useTwoFactorChallenge,
     useTwoFactorVerify,
 } from "@/module/auth/hooks/useTwoFactorChallenge";
-import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
+import { authErrorMessage } from "@/module/auth/utils/authError";
 import { Input } from "@/module/forms/Input";
 import type { TwoFactorMethod } from "@/stores/twoFactorStore";
 import { OrDivider } from "../LoginMethods/OrDivider";
@@ -310,8 +310,9 @@ function CodeChallenge({
 
             {error && (
                 <Notice tone="error" role="alert">
-                    {extractAuthErrorMessage(
+                    {authErrorMessage(
                         error,
+                        t,
                         t("auth.twoFactor.genericError")
                     )}
                 </Notice>
@@ -362,8 +363,9 @@ function SiweChallenge({ onVerified }: { onVerified: () => void }) {
             </Button>
             {error && (
                 <Notice tone="error" role="alert">
-                    {extractAuthErrorMessage(
+                    {authErrorMessage(
                         error,
+                        t,
                         t("auth.twoFactor.genericError")
                     )}
                 </Notice>

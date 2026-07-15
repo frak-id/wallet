@@ -9,8 +9,11 @@ import { ExclamationTriangleIcon } from "@frak-labs/design-system/icons";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { VerifyEmail } from "@/module/auth/component/VerifyEmail";
-import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
-import { AuthError } from "@/module/auth/utils/authError";
+import {
+    linkWalletErrorMessage,
+    useLinkWallet,
+} from "@/module/auth/hooks/useLinkWallet";
+import { authErrorMessage } from "@/module/auth/utils/authError";
 import { DetailRow } from "@/module/common/component/DetailRow";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Input } from "@/module/forms/Input";
@@ -40,6 +43,7 @@ export function LinkedCredentials() {
         isPending: isLinkingWallet,
         error: linkWalletError,
     } = useLinkWallet();
+    const linkWalletErrorText = linkWalletErrorMessage(linkWalletError, t);
     const [addingPassword, setAddingPassword] = useState(false);
 
     const wallet = account?.wallet ?? null;
@@ -84,9 +88,9 @@ export function LinkedCredentials() {
                     </Button>
                 )}
             </DetailRow>
-            {linkWalletError && (
+            {linkWalletErrorText && (
                 <Notice tone="error" role="alert">
-                    {linkWalletError.message}
+                    {linkWalletErrorText}
                 </Notice>
             )}
 
@@ -128,6 +132,13 @@ export function LinkedCredentials() {
     );
 }
 
+/** Typed conflict codes for `POST /auth/link/password` → translated keys. */
+const ADD_PASSWORD_CODE_KEYS = {
+    EMAIL_TAKEN: "settings.security.credentials.emailTaken",
+    PASSWORD_EXISTS: "settings.security.credentials.passwordExists",
+    EMAIL_MISMATCH: "settings.security.credentials.emailMismatch",
+} as const;
+
 function AddPasswordForm() {
     const { t } = useTranslation();
     const [email, setEmail] = useState("");
@@ -139,12 +150,10 @@ function AddPasswordForm() {
         isSuccess,
     } = useLinkPassword();
 
-    // Map the typed EMAIL_TAKEN conflict to a translated message; fall back
-    // to the backend message for anything else (§2.1).
+    // Map the typed conflict codes to translated messages; fall back to the
+    // backend message for anything else (§2.1).
     const errorMessage = error
-        ? error instanceof AuthError && error.code === "EMAIL_TAKEN"
-            ? t("settings.security.credentials.emailTaken")
-            : error.message
+        ? authErrorMessage(error, t, error.message, ADD_PASSWORD_CODE_KEYS)
         : null;
 
     // On success the account query is invalidated → the row flips to the

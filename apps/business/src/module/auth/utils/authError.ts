@@ -1,3 +1,5 @@
+import type { ParseKeys, TFunction } from "i18next";
+
 /**
  * Extract a readable message from an Eden error payload. The canonical
  * `t.ErrorResponse` shape emitted by every backend `HttpError` is
@@ -5,9 +7,10 @@
  * the `error` field, not `message`.
  *
  * Also handles an already-unwrapped `Error` (top-level `message`): our hooks
- * throw `new Error(extractAuthErrorMessage(...))`, so display sites that call
- * this again on the react-query error must surface that message (e.g. the
- * `OTP_THROTTLED` "Retry in Ns" text) instead of the generic fallback.
+ * throw `new AuthError(extractAuthErrorMessage(...), code)`, so display sites
+ * that call this again on the react-query error must surface that message
+ * (e.g. the `OTP_THROTTLED` "Retry in Ns" text) instead of the generic
+ * fallback.
  */
 export function extractAuthErrorMessage(
     error: unknown,
@@ -36,8 +39,9 @@ function messageFromEdenValue(error: unknown): string | undefined {
 /**
  * A plain `Error` (or any object carrying a non-empty `message`) — the message
  * was already extracted upstream when the error was thrown (our hooks throw
- * `new Error(extractAuthErrorMessage(...))`), so a re-extraction at the display
- * site must surface it (e.g. the `OTP_THROTTLED` "Retry in Ns" text).
+ * `new AuthError(extractAuthErrorMessage(...), code)`), so a re-extraction at
+ * the display site must surface it (e.g. the `OTP_THROTTLED` "Retry in Ns"
+ * text).
  */
 function messageFromError(error: unknown): string | undefined {
     if (!error || typeof error !== "object" || !("message" in error)) return;
@@ -71,4 +75,57 @@ export class AuthError extends Error {
         this.name = "AuthError";
         this.code = code;
     }
+}
+
+/** Seconds parsed out of an `OTP_THROTTLED` "Retry in Ns" backend message. */
+function otpRetrySeconds(error: unknown): number | undefined {
+    const match = extractAuthErrorMessage(error, "").match(
+        /Retry in (\d+)\s*s/i
+    );
+    return match ? Number(match[1]) : undefined;
+}
+
+/**
+ * Globally-unambiguous backend `code` → i18n key. Codes whose wording depends
+ * on the flow (e.g. `STEP_UP_REQUIRED` in link-wallet) belong in the caller's
+ * `overrides` instead. `OTP_THROTTLED` is special-cased in `authErrorMessage`
+ * for its `{{seconds}}` interpolation.
+ */
+const BASE_CODE_KEYS: Record<string, ParseKeys> = {
+    INVALID_TWO_FACTOR_CODE: "errors.auth.invalidTwoFactorCode",
+    INVALID_TWO_FACTOR_PROOF: "errors.auth.invalidTwoFactorProof",
+    INVALID_METHOD: "errors.auth.invalidMethod",
+    INVALID_CODE: "errors.auth.invalidCode",
+};
+
+/**
+ * Map a backend auth error `code` to a translated, user-facing message,
+ * falling back to the (already translated) `fallback` for unknown codes. This
+ * keeps the raw English backend strings from leaking into the localized UI
+ * (§2.1). Requires the throwing hook to preserve the code (throw `AuthError`,
+ * not a plain `Error`).
+ *
+ * `overrides` maps flow-specific codes (or re-maps base codes) to i18n keys,
+ * checked before the shared registry — declare them next to the flow they
+ * belong to.
+ */
+export function authErrorMessage(
+    error: unknown,
+    t: TFunction,
+    fallback: string,
+    overrides?: Record<string, ParseKeys>
+): string {
+    const code =
+        error instanceof AuthError ? error.code : extractAuthErrorCode(error);
+    if (!code) return extractAuthErrorMessage(error, fallback);
+
+    if (code === "OTP_THROTTLED" && !overrides?.[code]) {
+        const seconds = otpRetrySeconds(error);
+        return seconds !== undefined
+            ? t("errors.auth.otpThrottled", { seconds })
+            : extractAuthErrorMessage(error, fallback);
+    }
+
+    const key = overrides?.[code] ?? BASE_CODE_KEYS[code];
+    return key ? t(key) : extractAuthErrorMessage(error, fallback);
 }

@@ -165,6 +165,18 @@
         "merchantCreate": {
             "title": "Failed to Add Merchant",
             "back": "Back to Dashboard"
+        },
+        "linkWallet": {
+            "stepUpRequired": "Recent two-factor verification required. Please verify again, then retry.",
+            "walletTaken": "This wallet is already linked to another account.",
+            "signatureCancelled": "Wallet signature cancelled."
+        },
+        "auth": {
+            "invalidTwoFactorCode": "Invalid code. Please try again.",
+            "invalidTwoFactorProof": "Verification failed. Please try again.",
+            "invalidMethod": "This verification method isn't available.",
+            "invalidCode": "Invalid or expired code.",
+            "otpThrottled": "Too many attempts. Retry in {{seconds}}s."
         }
     },
     "shell": {
@@ -1425,6 +1437,8 @@
                     "description": "Confirm your email to secure your account and make sure you can always sign back in."
                 },
                 "emailTaken": "This email is already used by another account.",
+                "passwordExists": "This account already has a password.",
+                "emailMismatch": "This email doesn't match your account email.",
                 "password": "Email & password",
                 "connected": "Verified",
                 "pending": "Pending verification",

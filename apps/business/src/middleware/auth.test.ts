@@ -126,9 +126,9 @@ describe("middleware/auth", () => {
                 isAuthenticated: () => true,
             });
 
-            expect(() =>
-                redirectIfAuthenticated({ search: {} })
-            ).toThrowError('REDIRECT:{"to":"/dashboard"}');
+            expect(() => redirectIfAuthenticated({ search: {} })).toThrowError(
+                'REDIRECT:{"to":"/dashboard"}'
+            );
         });
 
         test("should redirect to a valid requested target when authenticated", async () => {
@@ -144,9 +144,7 @@ describe("middleware/auth", () => {
                 redirectIfAuthenticated({
                     search: { redirect: "/m/abc/campaigns/list" },
                 })
-            ).toThrowError(
-                'REDIRECT:{"to":"/m/abc/campaigns/list"}'
-            );
+            ).toThrowError('REDIRECT:{"to":"/m/abc/campaigns/list"}');
         });
 
         test("should fall back to dashboard for an unsafe redirect target", async () => {
