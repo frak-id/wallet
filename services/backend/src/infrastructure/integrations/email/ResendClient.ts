@@ -20,7 +20,10 @@ export class ResendClient {
     private readonly from: string;
 
     constructor() {
-        this.from = process.env.RESEND_FROM_EMAIL ?? "noreply@frak-labs.com";
+        // Friendly `Name <email>` form so inboxes show "Frak" instead of the
+        // raw `noreply@` address.
+        const email = process.env.RESEND_FROM_EMAIL ?? "noreply@frak-labs.com";
+        this.from = `Frak <${email}>`;
         this.api = ky.create({
             prefix: "https://api.resend.com",
             headers: {
@@ -47,7 +50,15 @@ export class ResendClient {
     }: SendEmailParams): Promise<{ id: string }> {
         return this.api
             .post("emails", {
-                json: { from: this.from, to: [to], subject, html },
+                json: {
+                    from: this.from,
+                    // Route replies to a monitored inbox since `from` is a
+                    // `noreply@` address.
+                    reply_to: "hello@frak-labs.com",
+                    to: [to],
+                    subject,
+                    html,
+                },
                 // Unique per logical send; reused across `ky`'s internal retries
                 // (same request, same headers) so a retried 429/503 dedupes
                 // server-side instead of dispatching a second email.
