@@ -14,9 +14,6 @@ globalStyle("html", {
     fontSize: "16px",
     scrollBehavior: "smooth",
     overflowX: "hidden",
-    // Always reserve the scrollbar gutter so opening a Radix overlay (Select,
-    // Dialog…) — which locks body scroll — doesn't shift the page sideways.
-    scrollbarGutter: "stable",
 });
 
 globalStyle("body", {
