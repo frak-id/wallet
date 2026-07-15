@@ -10,6 +10,7 @@ type BackfillStats = {
     accountsCreated: number;
     merchantsBackfilled: number;
     adminsBackfilled: number;
+    adminsAddedByBackfilled: number;
 };
 
 /**
@@ -49,13 +50,14 @@ export async function runBusinessAccountBackfill(): Promise<void> {
             accountsCreated: 0,
             merchantsBackfilled: 0,
             adminsBackfilled: 0,
+            adminsAddedByBackfilled: 0,
         };
 
         await createAccountsForWallets(pgDb, stats);
         await backfillOwnerColumns(pgDb, stats);
 
         console.log(
-            `[bootstrap:business-accounts] Complete. walletsScanned=${stats.walletsScanned} accountsCreated=${stats.accountsCreated} merchantsBackfilled=${stats.merchantsBackfilled} adminsBackfilled=${stats.adminsBackfilled}`
+            `[bootstrap:business-accounts] Complete. walletsScanned=${stats.walletsScanned} accountsCreated=${stats.accountsCreated} merchantsBackfilled=${stats.merchantsBackfilled} adminsBackfilled=${stats.adminsBackfilled} adminsAddedByBackfilled=${stats.adminsAddedByBackfilled}`
         );
     } finally {
         await pgClient.end();
@@ -145,6 +147,21 @@ async function backfillOwnerColumns(
           AND a.wallet_address = ma.wallet
     `);
     stats.adminsBackfilled = adminsResult.count ?? 0;
+
+    // Audit column: map `added_by` (the actor wallet that added the admin) to
+    // its business account. Best-effort — joins to existing accounts only; an
+    // `added_by` wallet that never owned/administered a merchant has no account
+    // and its `added_by_account_id` stays NULL (we don't mint accounts for
+    // actors that aren't themselves business admins).
+    const adminsAddedByResult = await pgDb.execute(sql`
+        UPDATE merchant_admins ma
+        SET added_by_account_id = a.id
+        FROM business_accounts a
+        WHERE ma.added_by_account_id IS NULL
+          AND ma.added_by IS NOT NULL
+          AND a.wallet_address = ma.added_by
+    `);
+    stats.adminsAddedByBackfilled = adminsAddedByResult.count ?? 0;
 }
 
 /** postgres.js returns bytea as Buffer/Uint8Array; normalise to 0x-hex. */
