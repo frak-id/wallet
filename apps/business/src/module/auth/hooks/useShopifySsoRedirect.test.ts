@@ -53,5 +53,24 @@ describe("redirectToShopifyAuthorize", () => {
         expect(url.origin).toBe("https://backend.test");
         expect(url.pathname).toBe("/business/auth/shopify/authorize");
         expect(url.searchParams.get("shop")).toBe("my-store.myshopify.com");
+        expect(url.searchParams.has("redirect")).toBe(false);
+    });
+
+    it("forwards the redirect target when provided", () => {
+        redirectToShopifyAuthorize(
+            "my-store.myshopify.com",
+            "/m/abc/campaigns/list"
+        );
+
+        const url = new URL(window.location.href);
+        expect(url.searchParams.get("shop")).toBe("my-store.myshopify.com");
+        expect(url.searchParams.get("redirect")).toBe("/m/abc/campaigns/list");
+    });
+
+    it("omits the redirect param when it is an empty string", () => {
+        redirectToShopifyAuthorize("my-store.myshopify.com", "");
+
+        const url = new URL(window.location.href);
+        expect(url.searchParams.has("redirect")).toBe(false);
     });
 });

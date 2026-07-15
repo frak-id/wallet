@@ -52,6 +52,7 @@ export default interface Resources {
         "shopify": {
           "invalidDomain": "Enter a valid myshopify.com domain",
           "label": "Shopify store domain",
+          "redirecting": "Signing you in with Shopify…",
           "submit": "Continue with Shopify"
         },
         "ssoError": "We couldn't sign you in with Shopify. Please try again.",

@@ -39,7 +39,8 @@
             "shopify": {
                 "submit": "Continuer avec Shopify",
                 "invalidDomain": "Saisissez un domaine myshopify.com valide",
-                "label": "Domaine de la boutique Shopify"
+                "label": "Domaine de la boutique Shopify",
+                "redirecting": "Connexion avec Shopify en cours\u2026"
             },
             "or": "ou",
             "back": "Retour"

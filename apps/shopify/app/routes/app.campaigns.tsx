@@ -5,6 +5,7 @@ import { PageHeading } from "app/components/ui/PageHeading";
 import type { loader as appLoader } from "app/routes/app";
 import { authenticate } from "app/shopify.server";
 import { buildCampaignRule } from "app/utils/campaignCreation";
+import { buildBusinessDashboardUrl } from "app/utils/url";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData, useRouteLoaderData } from "react-router";
@@ -183,13 +184,26 @@ export default function CampaignsPage() {
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const businessUrl = rootData?.businessUrl ?? "";
     const merchantId = rootData?.merchantId;
+    const shopDomain = rootData?.shop?.myshopifyDomain;
     // Path prefix that targets the merchant-scoped business app routes when
-    // we know the merchant id, otherwise falls back to the legacy URL which
+    // we know the merchant id, otherwise falls back to the legacy path which
     // the business app redirects to the user's first merchant. The fallback
     // protects deep links generated before onboarding step 1 completes.
-    const merchantPrefix = merchantId
-        ? `${businessUrl}/m/${merchantId}/campaigns`
-        : `${businessUrl}/campaigns`;
+    // Routed through the Shopify SSO login entrypoint so the merchant doesn't
+    // have to manually re-authenticate in the business app.
+    const campaignsPathPrefix = merchantId
+        ? `/m/${merchantId}/campaigns`
+        : "/campaigns";
+    const viewAllUrl = buildBusinessDashboardUrl({
+        businessUrl,
+        shop: shopDomain,
+        target: `${campaignsPathPrefix}/list`,
+    });
+    const createNewUrl = buildBusinessDashboardUrl({
+        businessUrl,
+        shop: shopDomain,
+        target: `${campaignsPathPrefix}/draft/new`,
+    });
     const { t } = useTranslation();
 
     return (
@@ -204,13 +218,10 @@ export default function CampaignsPage() {
             >
                 <PageHeading>{t("campaigns.title")}</PageHeading>
                 <s-stack direction="inline" gap="base">
-                    <ExternalButton href={`${merchantPrefix}/list`}>
+                    <ExternalButton href={viewAllUrl}>
                         {t("campaigns.viewAll")}
                     </ExternalButton>
-                    <ExternalButton
-                        variant="primary"
-                        href={`${merchantPrefix}/draft/new`}
-                    >
+                    <ExternalButton variant="primary" href={createNewUrl}>
                         {t("campaigns.createNew")}
                     </ExternalButton>
                 </s-stack>

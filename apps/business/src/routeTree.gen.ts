@@ -16,6 +16,7 @@ import { Route as DemoRouteImport } from './routes/demo'
 import { Route as RestrictedRouteImport } from './routes/_restricted'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as LoginShopifyRouteImport } from './routes/login/shopify'
 import { Route as Login2faRouteImport } from './routes/login/2fa'
 import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/settings'
 import { Route as RestrictedMembersRouteImport } from './routes/_restricted/members'
@@ -90,6 +91,11 @@ const IndexRoute = IndexRouteImport.update({
 const LoginIndexRoute = LoginIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => LoginRoute,
+} as any)
+const LoginShopifyRoute = LoginShopifyRouteImport.update({
+  id: '/shopify',
+  path: '/shopify',
   getParentRoute: () => LoginRoute,
 } as any)
 const Login2faRoute = Login2faRouteImport.update({
@@ -340,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof RestrictedMembersRoute
   '/settings': typeof RestrictedSettingsRouteWithChildren
   '/login/2fa': typeof Login2faRoute
+  '/login/shopify': typeof LoginShopifyRoute
   '/login/': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
@@ -387,6 +394,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
   '/login/2fa': typeof Login2faRoute
+  '/login/shopify': typeof LoginShopifyRoute
   '/login': typeof LoginIndexRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/_restricted/members': typeof RestrictedMembersRoute
   '/_restricted/settings': typeof RestrictedSettingsRouteWithChildren
   '/login/2fa': typeof Login2faRoute
+  '/login/shopify': typeof LoginShopifyRoute
   '/login/': typeof LoginIndexRoute
   '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/_restricted/campaigns/list': typeof RestrictedCampaignsListRoute
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/settings'
     | '/login/2fa'
+    | '/login/shopify'
     | '/login/'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/members'
     | '/login/2fa'
+    | '/login/shopify'
     | '/login'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
@@ -586,6 +597,7 @@ export interface FileRouteTypes {
     | '/_restricted/members'
     | '/_restricted/settings'
     | '/login/2fa'
+    | '/login/shopify'
     | '/login/'
     | '/_restricted/campaigns/$campaignId'
     | '/_restricted/campaigns/list'
@@ -684,6 +696,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/login/'
       preLoaderRoute: typeof LoginIndexRouteImport
+      parentRoute: typeof LoginRoute
+    }
+    '/login/shopify': {
+      id: '/login/shopify'
+      path: '/shopify'
+      fullPath: '/login/shopify'
+      preLoaderRoute: typeof LoginShopifyRouteImport
       parentRoute: typeof LoginRoute
     }
     '/login/2fa': {
@@ -1107,11 +1126,13 @@ const RestrictedRouteWithChildren = RestrictedRoute._addFileChildren(
 
 interface LoginRouteChildren {
   Login2faRoute: typeof Login2faRoute
+  LoginShopifyRoute: typeof LoginShopifyRoute
   LoginIndexRoute: typeof LoginIndexRoute
 }
 
 const LoginRouteChildren: LoginRouteChildren = {
   Login2faRoute: Login2faRoute,
+  LoginShopifyRoute: LoginShopifyRoute,
   LoginIndexRoute: LoginIndexRoute,
 }
 

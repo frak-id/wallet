@@ -10,6 +10,7 @@ import {
     type OnboardingStepData,
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
+import { buildBusinessDashboardUrl } from "app/utils/url";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
@@ -43,12 +44,16 @@ export default function Index() {
     const walletUrl = rootData?.walletUrl ?? "";
     const componentsUrl = rootData?.componentsUrl ?? "";
     const merchantId = rootData?.merchantId ?? null;
+    const shopDomain = rootData?.shop?.myshopifyDomain;
     // Deep-link to this store's merchant dashboard rather than the base (which
     // the business guard would redirect to owned[0] — wrong for multi-store
-    // owners).
-    const dashboardUrl = merchantId
-        ? `${businessUrl}/m/${merchantId}/dashboard`
-        : businessUrl;
+    // owners). Routed through the Shopify SSO login entrypoint so the merchant
+    // doesn't have to manually re-authenticate in the business app.
+    const dashboardUrl = buildBusinessDashboardUrl({
+        businessUrl,
+        shop: shopDomain,
+        target: merchantId ? `/m/${merchantId}/dashboard` : "/dashboard",
+    });
     const { t } = useTranslation();
 
     return (

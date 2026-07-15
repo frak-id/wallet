@@ -39,7 +39,8 @@
             "shopify": {
                 "submit": "Continue with Shopify",
                 "invalidDomain": "Enter a valid myshopify.com domain",
-                "label": "Shopify store domain"
+                "label": "Shopify store domain",
+                "redirecting": "Signing you in with Shopify\u2026"
             },
             "or": "or",
             "back": "Back"

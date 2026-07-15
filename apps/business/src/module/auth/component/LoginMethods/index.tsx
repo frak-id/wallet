@@ -78,7 +78,7 @@ export function LoginMethods({ redirect }: { redirect?: string }) {
                         {view === "email" ? (
                             <EmailPanel redirect={redirect} />
                         ) : (
-                            <ShopifyPanel />
+                            <ShopifyPanel redirect={redirect} />
                         )}
                     </Stack>
                 )}
