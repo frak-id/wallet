@@ -10,7 +10,7 @@ import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Table } from "@/module/common/component/Table";
-import { EMPTY_AMOUNT } from "./constants";
+import { EMPTY_AMOUNT } from "../constants";
 import { StatusLegendBar } from "./StatusLegendBar";
 
 const columnHelper = createColumnHelper<OverviewTopCampaign>();

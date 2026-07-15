@@ -18,8 +18,8 @@ import { vars } from "@frak-labs/design-system/theme";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { getDateTimeFormat } from "@/module/common/utils/intlCache";
+import { EMPTY_AMOUNT } from "../constants";
 import { ChartEmptyState } from "./ChartEmptyState";
-import { EMPTY_AMOUNT } from "./constants";
 import * as styles from "./overview.css";
 
 const DAY_MS = 24 * 60 * 60 * 1000;

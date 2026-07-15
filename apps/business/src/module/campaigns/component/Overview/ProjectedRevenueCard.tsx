@@ -20,8 +20,8 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { EMPTY_AMOUNT } from "../constants";
 import { ChartEmptyState } from "./ChartEmptyState";
-import { EMPTY_AMOUNT } from "./constants";
 import * as styles from "./overview.css";
 
 const FORECAST_BUCKETS = 2;
