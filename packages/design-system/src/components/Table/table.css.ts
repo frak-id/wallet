@@ -3,12 +3,19 @@ import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, brand, fontSize } from "../../tokens.css";
 
-export const wrapper = style({
+/** Shared bordered, rounded frame — the single source for the table wrapper's border/radius. */
+export const wrapperBorder = style({
     border: `1px solid ${vars.border.subtle}`,
     borderRadius: alias.cornerRadius.m,
-    overflow: "hidden",
-    width: "100%",
 });
+
+export const wrapper = style([
+    wrapperBorder,
+    {
+        overflow: "hidden",
+        width: "100%",
+    },
+]);
 
 export const table = style({
     width: "100%",

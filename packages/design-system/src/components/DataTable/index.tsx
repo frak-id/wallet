@@ -16,6 +16,10 @@ import clsx from "clsx";
 import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
 import { ArrowUpIcon } from "../../icons";
+import {
+    cell as tableCell,
+    headerCell as tableHeaderCell,
+} from "../Table/table.css";
 import { Text } from "../Text";
 import {
     preTable as preTableStyle,
@@ -167,6 +171,7 @@ export function DataTable<TData extends object>({
                                     <th
                                         key={header.id}
                                         scope="col"
+                                        className={tableHeaderCell()}
                                         style={{
                                             ...(size !== undefined && {
                                                 width: size,
@@ -203,6 +208,7 @@ export function DataTable<TData extends object>({
                         ) : (
                             <tr>
                                 <td
+                                    className={tableCell()}
                                     colSpan={
                                         table.getVisibleLeafColumns().length
                                     }
@@ -242,6 +248,7 @@ export function DataTable<TData extends object>({
                                         return (
                                             <td
                                                 key={cell.id}
+                                                className={tableCell()}
                                                 style={{
                                                     ...(size !== undefined && {
                                                         width: size,
@@ -316,6 +323,7 @@ function EmptyRow<TData>({
                 return (
                     <td
                         key={column.id}
+                        className={tableCell()}
                         style={{
                             ...(size !== undefined && { width: size }),
                             ...(align === "right" && { textAlign: "right" }),
