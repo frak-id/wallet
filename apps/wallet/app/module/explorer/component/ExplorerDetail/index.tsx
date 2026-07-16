@@ -41,85 +41,19 @@ import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import { useCampaignView } from "../../campaignView";
 import { useAffiliateShareLink } from "../../hook/useAffiliateShareLink";
 import { useToolbarTitleReveal } from "../../hook/useToolbarTitleReveal";
+import { AffiliateLinkCreateError } from "./AffiliateLinkCreateError";
 import { CampaignInfoSection } from "./CampaignInfoSection";
 import * as styles from "./index.css";
+import {
+    isCreateStepDisabled,
+    resolvePrimaryShareAction,
+} from "./shareActions";
+import { ToolbarBlur, ToolbarTitle } from "./Toolbar";
 
 type ExplorerDetailProps = {
     merchant: ExplorerMerchantItem;
     onClose: () => void;
 };
-
-// Step-2 primary CTA must never no-op: `handleShare` silently returns when
-// `canShare` is false (no native share surface), so fall back to copying
-// the link instead of leaving the button dead on desktop.
-function resolvePrimaryShareAction(
-    canShare: boolean,
-    handleShare: () => void,
-    handleCopy: () => void
-) {
-    return canShare ? handleShare : handleCopy;
-}
-
-function isCreateStepDisabled(isCreating: boolean, isLoading: boolean) {
-    return isCreating || isLoading;
-}
-
-// iOS scroll-edge blur behind the toolbar; kept as its own component so its
-// fade-in branch lives out of ExplorerDetail's body. A masked backdrop-filter
-// band whose blur radius animates in (see toolbarBlur for why radius, not
-// opacity).
-function ToolbarBlur({ visible }: { visible: boolean }) {
-    return (
-        <div
-            aria-hidden="true"
-            className={
-                visible
-                    ? `${styles.toolbarBlur} ${styles.toolbarBlurVisible}`
-                    : styles.toolbarBlur
-            }
-        />
-    );
-}
-
-// Merchant name mirrored into the fixed toolbar; kept as its own component so
-// the reveal branch lives out of ExplorerDetail's body.
-function ToolbarTitle({ name, visible }: { name: string; visible: boolean }) {
-    return (
-        <span
-            aria-hidden="true"
-            className={
-                visible
-                    ? `${styles.toolbarTitle} ${styles.toolbarTitleVisible}`
-                    : styles.toolbarTitle
-            }
-        >
-            <Text
-                as="span"
-                variant="body"
-                weight="semiBold"
-                color="primary"
-                className={styles.toolbarTitleText}
-            >
-                {name}
-            </Text>
-        </span>
-    );
-}
-
-function AffiliateLinkCreateError({
-    show,
-    message,
-}: {
-    show: boolean;
-    message: string;
-}) {
-    if (!show) return null;
-    return (
-        <Text variant="bodySmall" color="error" align="center">
-            {message}
-        </Text>
-    );
-}
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const clientId = useStore(clientIdStore, (s) => s.clientId);
