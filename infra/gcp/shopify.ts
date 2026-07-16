@@ -255,10 +255,32 @@ export const shopifyService = new KubernetesService(
         },
 
         // Ingress config
+        //
+        // Two-phase cutover from the legacy AWS (CloudFront) deployment. Both
+        // hosts share ONE cert (single tlsSecretName -> one Certificate with
+        // every host as a SAN), and the cluster-issuer validates via HTTP-01.
+        // cert-manager only issues that cert once EVERY SAN passes its
+        // challenge, so the canonical `${subDomain}.frak.id` host cannot be
+        // added until its DNS points at this ingress (otherwise the whole cert
+        // — including the cluster subdomain below — stays pending).
+        //
+        // Phase 1 (this release): serve + validate only on the cluster
+        // subdomain `${subDomain}.${baseDomainName}`, which already resolves to
+        // the nginx ingress LB. The HTTP-01 challenge passes immediately and
+        // the app can be verified end-to-end over HTTPS while the legacy AWS
+        // app keeps serving `${subDomain}.frak.id`.
+        //
+        // Phase 2 (after validation): repoint `${subDomain}.frak.id` DNS from
+        // CloudFront to this ingress LB, then uncomment `additionalHosts`
+        // below and redeploy so cert-manager can complete the apex SAN
+        // challenge. Tear down the legacy AWS Shopify stack LAST (removing it
+        // also deletes the Route53 record it owns — repoint DNS deliberately
+        // rather than relying on that removal).
         ingress: {
-            host: `${subDomain}.frak.id`,
+            host: `${subDomain}.${baseDomainName}`,
             tlsSecretName: "shopify-tls",
-            additionalHosts: [`${subDomain}.${baseDomainName}`],
+            // Phase 2: uncomment once `${subDomain}.frak.id` DNS points here.
+            // additionalHosts: [`${subDomain}.frak.id`],
         },
     },
     {
