@@ -4,25 +4,17 @@ import {
     compressJsonToB64,
     decompressJsonFromB64,
     findIframeInOpener,
-    type SsoMetadata,
 } from "@frak-labs/core-sdk";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { Text } from "@frak-labs/design-system/components/Text";
-import {
-    ArrowLeftIcon,
-    CircleCheckIcon,
-    LogoFrak,
-    WalletIcon,
-} from "@frak-labs/design-system/icons";
+import { CircleCheckIcon } from "@frak-labs/design-system/icons";
 import { createRpcClient } from "@frak-labs/frame-connector";
-import type { Session, SsoRpcSchema } from "@frak-labs/wallet-shared";
+import type { SsoRpcSchema } from "@frak-labs/wallet-shared";
 import {
     authenticationStore,
     clientIdStore,
     compressedSsoToParams,
-    ExternalLink,
     ensureFreshSdkSession,
     notifyWalletAuthExpired,
     openExternalUrl,
@@ -31,33 +23,31 @@ import {
     resolveWebauthnErrorView,
     sessionStore,
     ssoKey,
-    ua,
     useWebauthnErrorToast,
 } from "@frak-labs/wallet-shared";
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { type Address, slice } from "viem";
 import { useStore } from "zustand";
 import * as layout from "@/module/authentication/component/authLayout.css";
+import {
+    BackToSessionAction,
+    ContinueAsSession,
+    PhonePairingAction,
+} from "@/module/authentication/component/Sso/ContinueAsSession";
 import * as styles from "@/module/authentication/component/Sso/index.css";
+import { MerchantIcon } from "@/module/authentication/component/Sso/MerchantIcon";
+import { SsoActions } from "@/module/authentication/component/Sso/SsoActions";
+import { SsoDisclaimer } from "@/module/authentication/component/Sso/SsoDisclaimer";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
-import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
-import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
-import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
+import { SsoSubtitle } from "@/module/authentication/component/Sso/SsoSubtitle";
 import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { StepLayout } from "@/module/common/component/StepLayout";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
-
-/**
- * Metadata actually stored on the SSO context — base SsoMetadata plus the
- * optional `name` field injected by the wallet-shared store layer.
- */
-type Metadata = SsoMetadata & { name?: string };
 
 export const Route = createFileRoute("/_wallet/_sso/sso")({
     component: Sso,
@@ -434,7 +424,7 @@ function Sso() {
                             />
                         ) : (
                             <>
-                                <Actions
+                                <SsoActions
                                     onSuccess={onSuccess}
                                     onError={setError}
                                 />
@@ -449,7 +439,7 @@ function Sso() {
                             </>
                         )}
                     </Box>
-                    <Disclaimer metadata={currentMetadata} />
+                    <SsoDisclaimer metadata={currentMetadata} />
                 </>
             }
         >
@@ -466,309 +456,4 @@ function Sso() {
             </Box>
         </PageLayout>
     );
-}
-
-/**
- * Circular merchant logo used as the hero icon.
- * Falls back to the flat-blue Frak mark when no merchant logo is provided.
- */
-function MerchantIcon({ metadata }: { metadata: Metadata }) {
-    if (metadata.logoUrl) {
-        return (
-            <Box className={layout.heroIcon}>
-                <img
-                    src={metadata.logoUrl}
-                    alt={metadata.name ?? ""}
-                    className={styles.merchantImg}
-                />
-            </Box>
-        );
-    }
-    return (
-        <Box className={layout.heroIcon}>
-            <LogoFrak width={48} height={48} />
-        </Box>
-    );
-}
-
-/**
- * Hero subtitle — "to immediately receive your winnings from {merchant}".
- * Returns null when the metadata has no merchant name.
- */
-function SsoSubtitle({ metadata }: { metadata: Metadata }) {
-    if (!metadata.name) return null;
-    return (
-        <Trans
-            i18nKey={"authent.sso.subTitle"}
-            values={{
-                productName: metadata.name,
-                productLink: metadata.homepageLink,
-            }}
-            components={{
-                pLink: metadata.homepageLink ? (
-                    <ExternalLink
-                        href={metadata.homepageLink}
-                        className={styles.merchantLink}
-                    >
-                        {metadata.name}
-                    </ExternalLink>
-                ) : (
-                    <u>{metadata.name}</u>
-                ),
-            }}
-        />
-    );
-}
-
-/**
- * Simplified disclaimer matching the Figma design.
- */
-function Disclaimer({ metadata }: { metadata: Metadata }) {
-    return (
-        <Text variant="caption" align="center" color="primary">
-            <Trans
-                i18nKey={"authent.sso.description"}
-                values={{
-                    productName: metadata.name,
-                }}
-                components={{
-                    conditionsLink: (
-                        <ExternalLink
-                            href="https://frak.id/terms"
-                            className={styles.disclaimerLink}
-                        />
-                    ),
-                    privacyLink: (
-                        <ExternalLink
-                            href="https://frak.id/privacy"
-                            className={styles.disclaimerLink}
-                        />
-                    ),
-                }}
-            />
-        </Text>
-    );
-}
-
-function Actions({
-    onSuccess,
-    onError,
-}: {
-    onSuccess: () => void;
-    onError: (error: Error | null) => void;
-}) {
-    const lastAuthenticator = useStore(
-        authenticationStore,
-        (state) => state.lastAuthenticator
-    );
-    const merchantId = useStore(
-        authenticationStore,
-        (state) => state.ssoContext?.merchantId
-    );
-    const privateKey = useStore(sessionStore, (state) => state.demoPrivateKey);
-    const { login, isLoginInProgress } = useLoginDemo({
-        onSuccess: () => onSuccess(),
-        onError: (error: Error | null) => onError(error),
-    });
-    const { t } = useTranslation();
-
-    if (privateKey) {
-        return (
-            <Box>
-                <Button
-                    variant="primary"
-                    icon={<WalletIcon width={24} height={24} />}
-                    onClick={() => login()}
-                    loading={isLoginInProgress}
-                >
-                    {t("authent.sso.btn.existing.login")}
-                </Button>
-            </Box>
-        );
-    }
-
-    // Note: the "existing session" smooth path is handled at the parent
-    // level (`Sso` component) via the `ContinueAsSession` component.
-
-    // If previous wallet known
-    if (lastAuthenticator) {
-        return (
-            <>
-                <SsoLoginComponent
-                    onSuccess={onSuccess}
-                    onError={onError}
-                    isPrimary={true}
-                    merchantId={merchantId}
-                    lastAuthentication={{
-                        wallet: lastAuthenticator.address,
-                        authenticatorId: lastAuthenticator.authenticatorId,
-                        transports: lastAuthenticator.transports,
-                    }}
-                />
-                <SsoRegisterComponent
-                    onSuccess={onSuccess}
-                    onError={onError}
-                    isPrimary={false}
-                    merchantId={merchantId}
-                />
-            </>
-        );
-    }
-
-    // If no previous wallet
-    return (
-        <>
-            <SsoRegisterComponent
-                onSuccess={onSuccess}
-                onError={onError}
-                isPrimary={true}
-                merchantId={merchantId}
-            />
-            <SsoLoginComponent
-                onSuccess={onSuccess}
-                onError={onError}
-                isPrimary={false}
-                merchantId={merchantId}
-            />
-        </>
-    );
-}
-
-/**
- * Smooth path shown when an active session is already in `sessionStore`.
- *
- * Renders three stacked elements:
- *  1. A single primary CTA ("Continue with my wallet") that forwards the
- *     existing session to the listener iframe via `sso_complete`. No
- *     biometry, no re-pair.
- *  2. A caption telling the user which merchant + which wallet address
- *     the click will sign them in to.
- *  3. A ghost "Use another account" link that flips the parent state to
- *     reveal the standard login/register choices without touching the
- *     session in store — so cancelling preserves the paired desktop.
- */
-function ContinueAsSession({
-    address,
-    productName,
-    onContinue,
-    loading,
-    onUseAnother,
-}: {
-    address: Address;
-    productName?: string;
-    onContinue: () => void;
-    loading?: boolean;
-    onUseAnother: () => void;
-}) {
-    const { t } = useTranslation();
-    return (
-        <>
-            <Box>
-                <Button
-                    variant="primary"
-                    icon={<WalletIcon width={24} height={24} />}
-                    onClick={onContinue}
-                    loading={loading}
-                >
-                    {t("authent.sso.btn.continue")}
-                </Button>
-            </Box>
-            <Text variant="caption" align="center" color="primary">
-                <Trans
-                    i18nKey="authent.sso.continueDescription"
-                    values={{
-                        productName: productName ?? "",
-                        address: shortenAddress(address),
-                    }}
-                />
-            </Text>
-            <Box>
-                <Button variant="ghost" onClick={onUseAnother}>
-                    {t("authent.sso.btn.useAnother")}
-                </Button>
-            </Box>
-        </>
-    );
-}
-
-function shortenAddress(address: Address): string {
-    const start = slice(address, 0, 3); // "0x" + 2 hex chars
-    const end = slice(address, -4).replace("0x", "");
-    return `${start}...${end}`;
-}
-
-function PhonePairingAction({ onClick }: { onClick: () => void }) {
-    const { t } = useTranslation();
-
-    // Don't show the phone pairing action on mobile devices
-    if (ua.isMobile) {
-        return null;
-    }
-
-    return (
-        <Box>
-            <Button variant="ghost" onClick={onClick}>
-                {t("authent.sso.btn.new.phone")}
-            </Button>
-        </Box>
-    );
-}
-
-/**
- * Ghost "← Back to my wallet" button shown when the user has bypassed the
- * session shortcut (via "Use another account") but might want to return to
- * it. Restores the smooth flow without touching the session in store.
- */
-function BackToSessionAction({ onClick }: { onClick: () => void }) {
-    const { t } = useTranslation();
-    return (
-        <Box>
-            <Button
-                variant="ghost"
-                icon={<ArrowLeftIcon width={16} height={16} />}
-                onClick={onClick}
-            >
-                {t("authent.sso.btn.backToSession")}
-            </Button>
-        </Box>
-    );
-}
-
-function useLoginDemo(options?: UseMutationOptions<Session>) {
-    const { mutateAsync: demoLogin } = useDemoLogin();
-    /**
-     * Mutation used to launch the login demo process
-     */
-    const {
-        isPending: isLoginInProgress,
-        isSuccess,
-        isError,
-        error,
-        mutateAsync,
-    } = useMutation({
-        ...options,
-        mutationKey: ssoKey.demo.login,
-        async mutationFn() {
-            // Retrieve the pkey
-            const pkey = sessionStore.getState().demoPrivateKey;
-            if (!pkey) {
-                throw new Error("No private key found");
-            }
-
-            // Launch the login process
-            return demoLogin({
-                pkey,
-                merchantId:
-                    authenticationStore.getState().ssoContext?.merchantId,
-            });
-        },
-    });
-
-    return {
-        isLoginInProgress,
-        isSuccess,
-        isError,
-        error,
-        login: mutateAsync,
-    };
 }
