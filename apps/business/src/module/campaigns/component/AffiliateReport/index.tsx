@@ -10,6 +10,7 @@ import {
     ChartTooltip,
     NumericYAxis,
 } from "@frak-labs/design-system/components/charts";
+import { DataTable } from "@frak-labs/design-system/components/DataTable";
 import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -23,7 +24,6 @@ import { KpiCard } from "@/module/campaigns/component/KpiCard";
 import { affiliateReportQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { DetailRow, DetailValue } from "@/module/common/component/DetailRow";
-import { Table } from "@/module/common/component/Table";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { getDateTimeFormat } from "@/module/common/utils/intlCache";
 import { AffiliateReportDateChip } from "./AffiliateReportDateChip";
@@ -308,7 +308,12 @@ function RevenueCard({
                 <Text as="h2" variant="bodySmall" color="secondary">
                     {t("campaigns.affiliateReport.revenue.title")}
                 </Text>
-                <Table data={revenue} columns={columns} enableSorting={false} />
+                <DataTable
+                    data={revenue}
+                    columns={columns}
+                    emptyMessage={t("common.table.empty")}
+                    enableSorting={false}
+                />
             </Stack>
         </Card>
     );

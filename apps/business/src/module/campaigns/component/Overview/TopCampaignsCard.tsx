@@ -4,12 +4,12 @@ import type {
 } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { DataTable } from "@frak-labs/design-system/components/DataTable";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Table } from "@/module/common/component/Table";
 import { EMPTY_AMOUNT } from "../constants";
 import { StatusLegendBar } from "./StatusLegendBar";
 
@@ -118,9 +118,10 @@ export function TopCampaignsCard({
                 <Text as="h2" variant="bodySmall" color="secondary">
                     {t("campaigns.overview.top.title")}
                 </Text>
-                <Table
+                <DataTable
                     data={topCampaigns}
                     columns={columns}
+                    emptyMessage={t("common.table.empty")}
                     enableSorting={false}
                 />
                 <StatusLegendBar breakdown={statusBreakdown} />

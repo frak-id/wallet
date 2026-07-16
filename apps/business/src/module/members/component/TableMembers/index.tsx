@@ -1,4 +1,5 @@
 import { formatAmount } from "@frak-labs/core-sdk";
+import { DataTable } from "@frak-labs/design-system/components/DataTable";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -11,7 +12,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
-import { Table } from "@/module/common/component/Table";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import type {
     GetMembersPageItem,
@@ -155,9 +155,10 @@ export function TableMembers() {
         <Stack space="l">
             <TableMembersFilters />
             {page && (
-                <Table
+                <DataTable
                     data={page.members}
                     columns={columns}
+                    emptyMessage={t("common.table.empty")}
                     emptyPlaceholder="–"
                     manualPagination={true}
                     manualSorting={true}

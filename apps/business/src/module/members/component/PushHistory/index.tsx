@@ -1,3 +1,4 @@
+import { DataTable } from "@frak-labs/design-system/components/DataTable";
 import { ProgressBar } from "@frak-labs/design-system/components/ProgressBar";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -6,7 +7,6 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Table } from "@/module/common/component/Table";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { getDateFnsLocale } from "@/module/common/utils/dateLocale";
 import { pushHistoryStore } from "@/stores/pushHistoryStore";
@@ -103,9 +103,10 @@ export function PushHistory() {
     return (
         <Stack space="l">
             <PushHistoryFilters />
-            <Table
+            <DataTable
                 data={rows}
                 columns={columns}
+                emptyMessage={t("common.table.empty")}
                 emptyPlaceholder="–"
                 enableSorting={false}
                 fixedLayout={true}

@@ -1,11 +1,6 @@
-import { vars } from "@frak-labs/design-system/theme";
-import {
-    alias,
-    brand,
-    easing,
-    transition,
-} from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
+import { vars } from "../../theme.css";
+import { alias, brand, easing, fontSize, transition } from "../../tokens.css";
 
 export const tableWrapper = style({
     overflowX: "auto",
@@ -18,7 +13,7 @@ export const tableWrapper = style({
 export const table = style({
     width: "100%",
     borderCollapse: "collapse",
-    fontSize: "14px",
+    fontSize: fontSize.s,
 });
 
 /**
@@ -66,7 +61,7 @@ globalStyle(`${table} > thead > tr > th`, {
     position: "relative",
     height: "48px",
     padding: `0 ${alias.spacing.s}`,
-    background: vars.surface.muted,
+    background: vars.surface.tertiary,
     textAlign: "left",
     whiteSpace: "nowrap",
     color: vars.text.secondary,
@@ -78,6 +73,7 @@ globalStyle(`${table} > thead > tr > th`, {
 globalStyle(`${table} > tbody > tr > td`, {
     height: "56px",
     padding: `0 ${alias.spacing.s}`,
+    backgroundColor: vars.surface.background,
     textAlign: "left",
     color: vars.text.primary,
     fontWeight: brand.typography.fontWeight.regular,
@@ -108,7 +104,7 @@ globalStyle(`${table} > tbody > tr[data-clickable="true"]`, {
     transition: `background-color ${transition.fast} ${easing.default}`,
 });
 
-globalStyle(`${table} > tbody > tr[data-clickable="true"]:hover`, {
+globalStyle(`${table} > tbody > tr[data-clickable="true"]:hover > td`, {
     backgroundColor: vars.surface.muted,
 });
 
