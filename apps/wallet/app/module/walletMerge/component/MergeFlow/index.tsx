@@ -1,33 +1,26 @@
-import { Box } from "@frak-labs/design-system/components/Box";
-import { Button } from "@frak-labs/design-system/components/Button";
-import { Text } from "@frak-labs/design-system/components/Text";
 import { type Flow, startFlow } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
-import {
-    type ReactNode,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
-import {
-    type LoserAssetSummary,
-    looserAssetSummaryQueryOpt,
-} from "../../hook/useLoserAssetSummary";
+import { looserAssetSummaryQueryOpt } from "../../hook/useLoserAssetSummary";
 import { useMergePreview } from "../../hook/useMergePreview";
-import type { MergeStrategy } from "../../strategy/types";
 import { useLocalMergeStrategy } from "../../strategy/useLocalMergeStrategy";
 import { useRemoteMergeStrategy } from "../../strategy/useRemoteMergeStrategy";
 import { AssetMigrationStep } from "../AssetMigrationStep";
 import { ConsentStep } from "../ConsentStep";
 import { type DiscoveryResolution, DiscoveryStep } from "../DiscoveryStep";
 import { PreviewStep } from "../PreviewStep";
-import { type SettleRecoveryTarget, SettlingStep } from "../SettlingStep";
+import { SettlingStep } from "../SettlingStep";
 import { SignStep } from "../SignStep";
 import { SuccessStep } from "../SuccessStep";
+import { PreviewGate, renderStepIndicator } from "./PreviewGate";
+import {
+    nextStepAfterSign,
+    resolvePeerSigningStep,
+    settlingBackStep,
+    settlingRecoveryStep,
+    type Step,
+} from "./stepMachine";
 
 type MergeFlowProps = {
     /** Email the user typed in the AddEmail input step. */
@@ -45,36 +38,6 @@ type MergeFlowProps = {
     onAbort: () => void;
     /** Merge finished successfully — typically navigates back to profile. */
     onCompleted: () => void;
-};
-
-type Step =
-    | { kind: "discovery" }
-    | { kind: "preview" }
-    | { kind: "consent" }
-    | { kind: "sign"; consentSignature: string }
-    | { kind: "migrate"; consentSignature: string }
-    | { kind: "settling"; consentSignature: string }
-    | { kind: "success" };
-
-/**
- * Total non-terminal steps in the merge flow. Migrate is intentionally
- * counted under the same "4" as Sign so the indicator stays at "X/5"
- * regardless of whether the loser had funds to move — keeps the stepper
- * stable for the user and avoids the "1/?" flicker on Discovery (before
- * the asset summary has had a chance to resolve).
- */
-const MERGE_STEP_TOTAL = 5;
-
-const MERGE_STEP_NUMBER: Record<
-    Exclude<Step["kind"], "success">,
-    1 | 2 | 3 | 4 | 5
-> = {
-    discovery: 1,
-    preview: 2,
-    consent: 3,
-    sign: 4,
-    migrate: 4,
-    settling: 5,
 };
 
 /**
@@ -347,125 +310,4 @@ export function MergeFlow({
     }
 
     return null;
-}
-
-/**
- * Which signing step (if any) is routed through the paired mobile in
- * the current cross-device direction. Mirrors the transport matrix in
- * `useRemoteMergeStrategy`. Local merges and pre-preview state both
- * resolve to `null`.
- */
-function resolvePeerSigningStep(
-    mode: MergeStrategy["mode"],
-    needsSwitch: boolean | undefined
-): "sign" | "migrate" | null {
-    if (mode !== "remote" || needsSwitch === undefined) return null;
-    return needsSwitch ? "sign" : "migrate";
-}
-
-/**
- * Migrate is skipped entirely when the loser has no funds (see
- * `nextStepAfterSign`). Mirror that here so the back button lands on the
- * screen the user actually came from.
- */
-function settlingBackStep(
-    consentSignature: string,
-    summary: LoserAssetSummary | null | undefined
-): Step {
-    if (summary?.hasFunds === false) return { kind: "sign", consentSignature };
-    return { kind: "migrate", consentSignature };
-}
-
-function settlingRecoveryStep(
-    target: SettleRecoveryTarget,
-    consentSignature: string
-): Step {
-    if (target === "sign" || target === "migrate")
-        return { kind: target, consentSignature };
-    return { kind: target };
-}
-
-/**
- * Decide which step to move to once the addPassKey has been signed.
- * Skip Migrate entirely when the loser has already been drained — without
- * this guard the user sees an empty "Move your funds" CTA for one frame
- * before AssetMigrationStep's auto-advance effect kicks in. The migrate
- * screen keeps the same defence for the case where the summary resolves
- * between here and its own mount.
- */
-function nextStepAfterSign(
-    consentSignature: string,
-    summary: LoserAssetSummary | null | undefined
-): Step {
-    if (summary && !summary.hasFunds)
-        return { kind: "settling", consentSignature };
-    return { kind: "migrate", consentSignature };
-}
-
-function renderStepIndicator(
-    t: ReturnType<typeof useTranslation>["t"],
-    kind: Step["kind"]
-) {
-    if (kind === "success") return null;
-    return (
-        <Text variant="bodySmall" color="secondary">
-            {t("wallet.merge.stepIndicator", {
-                current: MERGE_STEP_NUMBER[kind],
-                total: MERGE_STEP_TOTAL,
-            })}
-        </Text>
-    );
-}
-
-function PreviewGate({
-    isError,
-    onRetry,
-    onAbort,
-    stepIndicator,
-}: {
-    isError: boolean;
-    onRetry: () => void;
-    onAbort: () => void;
-    stepIndicator?: ReactNode;
-}) {
-    const { t } = useTranslation();
-    if (isError) {
-        return (
-            <EmailFlowResultScreen
-                title={t("wallet.merge.preview.errorTitle")}
-                description={t("wallet.merge.preview.errorDescription")}
-                onBack={onAbort}
-                headerCenter={stepIndicator}
-            >
-                <Button
-                    type="button"
-                    variant="primary"
-                    size="large"
-                    width="full"
-                    onClick={onRetry}
-                >
-                    {t("wallet.merge.preview.errorRetry")}
-                </Button>
-                <Button
-                    type="button"
-                    variant="secondary"
-                    size="large"
-                    width="full"
-                    onClick={onAbort}
-                >
-                    {t("wallet.merge.preview.cancel")}
-                </Button>
-            </EmailFlowResultScreen>
-        );
-    }
-    return (
-        <EmailFlowResultScreen
-            title={t("wallet.merge.preview.loadingTitle")}
-            description={
-                <Box>{t("wallet.merge.preview.loadingDescription")}</Box>
-            }
-            onBack={onAbort}
-            headerCenter={stepIndicator}
-        />
-    );
 }
