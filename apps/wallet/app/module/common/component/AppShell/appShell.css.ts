@@ -132,7 +132,19 @@ export const navBarScrim = style({
     right: 0,
     bottom: 0,
     height: `max(${alias.spacing.m}, ${safeArea.bottom})`,
-    background: vars.surface.background,
+    // Match the page canvas (grey) so the strip is seamless. On full-screen
+    // pages there's no tab bar covering it, so a mismatched fill reads as a
+    // stray border.
+    background: vars.surface.background2,
     zIndex: 5,
     pointerEvents: "none",
 });
+
+/**
+ * Auth/onboarding shells use a white container (`shellContainerAuth`), so the
+ * scrim matches white there instead of the grey canvas.
+ */
+export const navBarScrimAuth = style([
+    navBarScrim,
+    { background: vars.surface.background },
+]);

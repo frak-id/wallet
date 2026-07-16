@@ -25,6 +25,7 @@ import {
     mainContentWithNav,
     mainContentWithNavBehindStatusBar,
     navBarScrim,
+    navBarScrimAuth,
     shellContainer,
     shellContainerAuth,
 } from "./appShell.css";
@@ -135,7 +136,10 @@ export function AppShell({
                         />
                     </Box>
                 )}
-                <Box className={navBarScrim} aria-hidden="true" />
+                <Box
+                    className={auth ? navBarScrimAuth : navBarScrim}
+                    aria-hidden="true"
+                />
             </Box>
         </AppShellScrollContext.Provider>
     );

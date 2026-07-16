@@ -91,6 +91,7 @@
             "currentDeviceConnected": "Connecté",
             "recoveryOptions": "Options de récupération",
             "changeEmail": "Changer d'adresse email",
+            "favorites": "Mes marques favorites",
             "security": {
                 "heading": "Renforce la sécurité de ton porte-monnaie",
                 "headingSecured": "Ton porte-monnaie est sécurisé",
@@ -1062,6 +1063,24 @@
                 "transaction": "Transaction"
             }
         }
+    },
+    "favorites": {
+        "pageTitle": "Mes marques favorites",
+        "empty": {
+            "title": "Aucun favori pour le moment",
+            "description": "Touche le cœur d'une marque pour la retrouver ici."
+        },
+        "error": {
+            "title": "Impossible de charger tes favoris",
+            "description": "Une erreur est survenue lors du chargement de tes marques favorites. Réessaie.",
+            "retry": "Réessayer"
+        },
+        "unavailable": {
+            "title": "Favoris indisponibles",
+            "description": "Nous n'avons pas trouvé tes marques favorites dans la liste actuelle. Elles ne sont peut-être plus disponibles."
+        },
+        "add": "Ajouter aux favoris",
+        "remove": "Retirer des favoris"
     },
     "explorer": {
         "pageTitle": "Explorer",

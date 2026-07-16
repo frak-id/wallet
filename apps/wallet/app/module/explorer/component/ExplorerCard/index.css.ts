@@ -67,7 +67,9 @@ export const contentWrapper = style({
 
 export const imagePlaceholder = style({
     width: "100%",
-    height: "100%",
+    // Match the hero's aspect ratio so image-less merchants still get a full
+    // band (keeps card height consistent and the white favorite heart legible).
+    aspectRatio: "361 / 158.5",
     backgroundColor: vars.surface.disabled,
     display: "flex",
     alignItems: "center",
