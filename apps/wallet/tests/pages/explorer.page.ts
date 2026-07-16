@@ -19,9 +19,10 @@ export class ExplorerPage {
     }
 
     async openSortSheet() {
-        await this.page
-            .getByRole("button", { name: "Sort", exact: true })
-            .click();
+        // Once a non-default sort is applied the header button announces it
+        // ("Sort (Highest reward)"), so match the "Sort" prefix rather than an
+        // exact label.
+        await this.page.getByRole("button", { name: /^Sort/ }).click();
         await expect(this.applyButton).toBeVisible();
     }
 

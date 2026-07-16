@@ -18,14 +18,14 @@ test("applies a sort and remembers it on reopen", async ({ explorerPage }) => {
     await explorerPage.verifySortOptionChecked("Highest reward");
 });
 
-// A real-signal sort actually reorders the list: the default "Most popular"
-// (campaign count desc) leads with Merchant Two; "Most recent" (reverse) leads
-// with Merchant Three.
+// A real-signal sort actually reorders the list: the default "Recommended"
+// (server order) leads with Merchant One; "Most recent" (freshest campaign
+// first) leads with Merchant Three.
 test("reorders the merchant list on a real-signal sort", async ({
     explorerPage,
 }) => {
     await explorerPage.navigateToExplorer();
-    await explorerPage.verifyFirstMerchant("Merchant Two");
+    await explorerPage.verifyFirstMerchant("Merchant One");
 
     await explorerPage.openSortSheet();
     await explorerPage.selectSortOption("Most recent");
