@@ -56,6 +56,13 @@ export function useRegisterFlow({
     );
     const flowRef = useRef<Flow | null>(null);
 
+    // Mirror the latest step into a ref so the mount-scoped abandon cleanup
+    // below reports the step the user actually dropped off on. Reading `step`
+    // straight from the effect closure would freeze it at the initial value
+    // for the flow's lifetime.
+    const stepRef = useRef(step);
+    stepRef.current = step;
+
     // Hold the latest callback in a ref so `goToStep` keeps a stable identity
     // across renders — effects that depend on it (referral / notification
     // auto-skip) must not re-run every render, which would double-fire their
@@ -73,9 +80,10 @@ export function useRegisterFlow({
         const flow = startFlow("onboarding");
         flowRef.current = flow;
         return () => {
-            if (!flow.ended) flow.end("abandoned", { last_step: step });
+            if (!flow.ended) {
+                flow.end("abandoned", { last_step: stepRef.current });
+            }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Fire on each onboarding step entry. Event name keeps the legacy
