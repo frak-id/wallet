@@ -242,7 +242,7 @@ function Badge({ status }: { status: RewardHistoryItemType["status"] }) {
     const Icon = badgeIcons[status];
     return (
         <div className={styles.badge}>
-            <div className={styles.badgeInner[status]}>
+            <div className={styles.badgeInner({ status })}>
                 <Icon color={vars.surface.background} width={12} height={12} />
             </div>
         </div>

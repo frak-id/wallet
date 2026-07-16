@@ -129,7 +129,7 @@ function HeroBadge({ state }: { state: MoneriumOrderState }) {
     if (state === "placed" || state === "pending") {
         return (
             <div className={styles.heroBadge}>
-                <div className={styles.heroBadgeInner.pending}>
+                <div className={styles.heroBadgeInner({ status: "pending" })}>
                     <LockIcon
                         color={vars.surface.background}
                         width={14}
@@ -142,7 +142,7 @@ function HeroBadge({ state }: { state: MoneriumOrderState }) {
     if (state === "rejected") {
         return (
             <div className={styles.heroBadge}>
-                <div className={styles.heroBadgeInner.rejected}>
+                <div className={styles.heroBadgeInner({ status: "rejected" })}>
                     <CloseIcon
                         color={vars.surface.background}
                         width={14}

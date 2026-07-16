@@ -32,9 +32,9 @@ export function ContentBlock({
 }: ContentBlockProps) {
     return (
         <>
-            <Box className={styles.content[contentSpacing]}>
+            <Box className={styles.content({ spacing: contentSpacing })}>
                 <Box className={styles.icon}>{icon}</Box>
-                <Box className={styles.text[textSpacing]}>
+                <Box className={styles.text({ spacing: textSpacing })}>
                     <Text as={TitleTag} className={styles.title}>
                         {title}
                     </Text>

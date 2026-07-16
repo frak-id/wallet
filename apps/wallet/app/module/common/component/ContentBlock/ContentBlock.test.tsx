@@ -16,7 +16,7 @@ describe("ContentBlock", () => {
         const title = screen.getByText("Title");
         const textContainer = title.parentElement;
 
-        expect(textContainer).toHaveClass(styles.text.xs);
+        expect(textContainer).toHaveClass(styles.text({ spacing: "xs" }));
     });
 
     it("should use m text spacing when requested", () => {
@@ -32,6 +32,6 @@ describe("ContentBlock", () => {
         const title = screen.getByText("Title");
         const textContainer = title.parentElement;
 
-        expect(textContainer).toHaveClass(styles.text.m);
+        expect(textContainer).toHaveClass(styles.text({ spacing: "m" }));
     });
 });

@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 
 export const body = style({
     display: "flex",
@@ -40,16 +41,19 @@ export const heroBadge = style({
     background: vars.surface.background,
 });
 
-const heroBadgeInnerBase = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 20,
-    height: 20,
-    borderRadius: alias.cornerRadius.full,
-});
-
-export const heroBadgeInner = styleVariants({
-    pending: [heroBadgeInnerBase, { background: vars.icon.warning }],
-    rejected: [heroBadgeInnerBase, { background: vars.icon.error }],
+export const heroBadgeInner = recipe({
+    base: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 20,
+        height: 20,
+        borderRadius: alias.cornerRadius.full,
+    },
+    variants: {
+        status: {
+            pending: { background: vars.icon.warning },
+            rejected: { background: vars.icon.error },
+        },
+    },
 });

@@ -1,35 +1,42 @@
 import { brand, fontSize } from "@frak-labs/design-system/tokens";
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 
-export const title = style({
-    display: "flex",
-    alignItems: "center",
-    gap: brand.scale[200],
-    margin: 0,
-});
-
-export const size = styleVariants({
-    page: {
-        fontSize: fontSize["3xl"],
-        fontWeight: brand.typography.fontWeight.bold,
-        lineHeight: "38px",
+export const title = recipe({
+    base: {
+        display: "flex",
+        alignItems: "center",
+        gap: brand.scale[200],
+        margin: 0,
     },
-    medium: {
-        fontSize: fontSize.s,
-        fontWeight: brand.typography.fontWeight.medium,
+    variants: {
+        size: {
+            page: {
+                fontSize: fontSize["3xl"],
+                fontWeight: brand.typography.fontWeight.bold,
+                lineHeight: "38px",
+            },
+            medium: {
+                fontSize: fontSize.s,
+                fontWeight: brand.typography.fontWeight.medium,
+            },
+            big: {
+                fontSize: fontSize.l,
+                fontWeight: brand.typography.fontWeight.semiBold,
+            },
+        },
+        align: {
+            left: {
+                justifyContent: "flex-start",
+            },
+            center: {
+                justifyContent: "center",
+            },
+        },
     },
-    big: {
-        fontSize: fontSize.l,
-        fontWeight: brand.typography.fontWeight.semiBold,
-    },
-});
-
-export const align = styleVariants({
-    left: {
-        justifyContent: "flex-start",
-    },
-    center: {
-        justifyContent: "center",
+    defaultVariants: {
+        size: "medium",
+        align: "left",
     },
 });
 
