@@ -73,6 +73,9 @@ export function AuthActions({
                 classifyWebauthnError(error).kind !== "no-credential"
             )
                 return;
+            trackEvent("auth_login_self_heal", {
+                reason: "stale_hint_clear_attempted",
+            });
             void clearLastAuthenticator(hint?.wallet)
                 .then(() =>
                     queryClient.invalidateQueries({
@@ -133,6 +136,7 @@ export function AuthActions({
             void silentLogin({
                 lastAuthentication: hint,
                 silentLogin: IS_ANDROID,
+                trigger: "auto",
             })
                 .catch(() => {})
                 .finally(() => {

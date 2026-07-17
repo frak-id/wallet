@@ -57,12 +57,21 @@ type UseLoginArgs = {
      * web/non-Tauri.
      */
     silentLogin?: boolean;
+    /**
+     * Analytics-only: whether this attempt is the `/login` auto-fire
+     * ("auto") or a user-initiated login ("manual", the default when
+     * omitted). Deliberately separate from `silentLogin` — `silentLogin` is
+     * `IS_ANDROID`-gated at the auto-fire call site, so it's `false` for both
+     * an iOS auto-fire *and* a manual login and can't distinguish the two.
+     */
+    trigger?: "auto" | "manual";
     // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
 } | void;
 
 type LoginContext = {
     flow: Flow;
     method: "global" | "specific";
+    trigger: "auto" | "manual";
 };
 
 /**
@@ -166,9 +175,10 @@ export function useLogin(
                         vars.allowedCredentialIds.length > 0)
             );
             const method = hasSpecificHint ? "specific" : "global";
-            const flow = startFlow("auth_login", { method });
+            const trigger = vars?.trigger ?? "manual";
+            const flow = startFlow("auth_login", { method, trigger });
             options?.onMutate?.(vars, mutationCtx);
-            return { flow, method };
+            return { flow, method, trigger };
         },
         onSuccess: (session, vars, ctx, mutationCtx) => {
             // Skip the analytics identify call when the session is a
@@ -178,7 +188,10 @@ export function useLogin(
             if (!vars?.detachedPairingId) {
                 identifyAuthenticatedUser(session);
             }
-            ctx?.flow.end("succeeded", { method: ctx?.method });
+            ctx?.flow.end("succeeded", {
+                method: ctx?.method,
+                trigger: ctx?.trigger,
+            });
             options?.onSuccess?.(session, vars, ctx, mutationCtx);
         },
         onError: (err, vars, ctx, mutationCtx) => {
@@ -190,9 +203,17 @@ export function useLogin(
                     context: { method: ctx?.method, ...webauthn },
                 });
             }
+            // A silent auto-fire hitting "no passkey on this device" is expected
+            // behavior, not a real auth failure — flag it so dashboards can
+            // exclude it from the failure rate.
+            const silentFallthrough =
+                ctx?.trigger === "auto" &&
+                webauthn.webauthn_error_kind === "no-credential";
             ctx?.flow.end("failed", {
                 operation: "login",
                 method: ctx?.method,
+                trigger: ctx?.trigger,
+                ...(silentFallthrough && { silent_fallthrough: true }),
                 error_type,
                 error_message: reason,
                 ...webauthn,
