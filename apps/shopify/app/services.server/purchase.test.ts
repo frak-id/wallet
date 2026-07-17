@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getCurrentPurchases, getPurchase, startupPurchase } from "./purchase";
 import {
     parseShopifyGid,
@@ -60,6 +60,14 @@ function makeMockCtx(graphqlResponse?: unknown) {
 describe("startupPurchase", () => {
     const validBank = "0x1234567890abcdef1234567890abcdef12345678";
 
+    // The real Billing API path only runs on prod (off-prod is a custom app
+    // and short-circuits to a fake record). Restore STAGE after each test.
+    const originalStage = process.env.STAGE;
+    afterEach(() => {
+        if (originalStage === undefined) delete process.env.STAGE;
+        else process.env.STAGE = originalStage;
+    });
+
     const successGraphqlResponse = {
         data: {
             appPurchaseOneTimeCreate: {
@@ -112,7 +120,37 @@ describe("startupPurchase", () => {
         ).rejects.toThrow("Shop already has more than 10 pending purchases");
     });
 
+    it("creates a fake pending purchase off-prod without calling the Billing API", async () => {
+        delete process.env.STAGE; // dev/non-prod
+        process.env.SHOPIFY_APP_URL = "https://extension-shop-dev.frak.id";
+        vi.mocked(shopInfo).mockResolvedValue(mockShopInfo);
+        mockWhere.mockResolvedValue([]);
+        mockValues.mockResolvedValue(undefined);
+
+        const ctx = makeMockCtx();
+        const result = await startupPurchase(ctx, {
+            amount: "100",
+            bank: validBank,
+        });
+
+        expect(ctx.admin.graphql).not.toHaveBeenCalled();
+        expect(result).toMatch(
+            /^https:\/\/extension-shop-dev\.frak\.id\/purchase\?charge_id=\d+$/
+        );
+        expect(mockValues).toHaveBeenCalledWith(
+            expect.objectContaining({
+                shopId: 12345,
+                shop: "test.myshopify.com",
+                amount: "100",
+                currency: "eur",
+                status: "pending",
+                bank: validBank,
+            })
+        );
+    });
+
     it("should return confirmation URL on success", async () => {
+        process.env.STAGE = "production";
         vi.mocked(shopInfo).mockResolvedValue(mockShopInfo);
         mockWhere.mockResolvedValue([]);
         mockValues.mockResolvedValue(undefined);
@@ -127,6 +165,7 @@ describe("startupPurchase", () => {
     });
 
     it("should insert into DB on success", async () => {
+        process.env.STAGE = "production";
         vi.mocked(shopInfo).mockResolvedValue(mockShopInfo);
         mockWhere.mockResolvedValue([]);
         mockValues.mockResolvedValue(undefined);
@@ -149,6 +188,7 @@ describe("startupPurchase", () => {
     });
 
     it("should throw when GraphQL returns no appPurchaseOneTime", async () => {
+        process.env.STAGE = "production";
         vi.mocked(shopInfo).mockResolvedValue(mockShopInfo);
         mockWhere.mockResolvedValue([]);
 

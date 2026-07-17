@@ -36,6 +36,30 @@ export async function startupPurchase(
 
     // Start the one time purchase
     const generatedName = `Frak bank - ${amount.toFixed(2)}${info.preferredCurrency ?? "eur"} - ${new Date().toISOString()}`;
+    const trimmedShopId = parseShopifyGid(info.id, "Shop");
+
+    // Non-prod stages run as a Shopify *custom* app, which Shopify blocks from
+    // the Billing API ("Custom apps cannot use the Billing API"). Skip the real
+    // charge and persist a fake pending purchase so the funding flow stays
+    // testable end-to-end off-prod.
+    const stage = process.env.STAGE ?? "";
+    const isProd = stage === "prod" || stage.includes("production");
+    if (!isProd) {
+        const fakePurchaseId = Date.now();
+        const confirmationUrl = `${process.env.SHOPIFY_APP_URL}/purchase?charge_id=${fakePurchaseId}`;
+        await drizzleDb.insert(purchaseTable).values({
+            shopId: trimmedShopId,
+            purchaseId: fakePurchaseId,
+            confirmationUrl,
+            shop: info.domain,
+            amount: amount.toString(),
+            currency: info.preferredCurrency ?? "eur",
+            status: "pending",
+            bank,
+        });
+        return confirmationUrl;
+    }
+
     const response = await ctx.admin.graphql(
         `#graphql
         mutation AppPurchaseOneTimeCreate($name: String!, $price: MoneyInput!, $returnUrl: URL!, $test: Boolean!) {
@@ -83,7 +107,6 @@ export async function startupPurchase(
         throw new Error("Failed to create purchase");
     }
 
-    const trimmedShopId = parseShopifyGid(info.id, "Shop");
     const trimmedPurchaseId = parseShopifyGid(
         purchaseData.appPurchaseOneTime.id,
         "AppPurchaseOneTime"

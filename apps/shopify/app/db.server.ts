@@ -16,12 +16,11 @@ const posgresDb = postgres({
     database: process.env.POSTGRES_SHOPIFY_DB,
     username: process.env.POSTGRES_USER,
     password: process.env.SHOPIFY_POSTGRES_PASSWORD,
-    // Small shared pool per Lambda instance. Keeps us well under the DB's tight
-    // max_connections (50) ceiling. The real fan-out guard is the reserved
-    // concurrency on the server function (see infra/shopify.ts).
-    max: 2,
-    // Release the connection during idle periods so frozen/idle Lambdas don't
-    // hold slots (seconds).
+    // Long-lived per-pod pool — we run on k8s now, not Lambda. The deployment
+    // is HPA-capped at 3 replicas (prod), so worst case ~60 connections, well
+    // under the DB's max_connections ceiling.
+    max: 20,
+    // Release idle connections so scaled-down/idle pods don't hold slots (seconds).
     idle_timeout: 20,
     // Fail fast instead of piling up when the DB is saturated (seconds).
     connect_timeout: 10,
