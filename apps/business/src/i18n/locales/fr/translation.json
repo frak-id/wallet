@@ -1221,7 +1221,12 @@
         },
         "currency": {
             "title": "Devise",
-            "label": "Choisissez votre devise préférée"
+            "label": "Choisissez votre devise préférée",
+            "options": {
+                "eur": "EUR",
+                "gbp": "GBP",
+                "usd": "USD"
+            }
         },
         "language": {
             "title": "Langue",

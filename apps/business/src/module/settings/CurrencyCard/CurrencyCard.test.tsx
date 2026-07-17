@@ -1,8 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const LABELS: Record<string, string> = {
+    "settings.currency.options.eur": "EUR",
+    "settings.currency.options.gbp": "GBP",
+    "settings.currency.options.usd": "USD",
+};
+
 vi.mock("react-i18next", () => ({
-    useTranslation: () => ({ t: (key: string) => key }),
+    useTranslation: () => ({ t: (key: string) => LABELS[key] ?? key }),
 }));
 
 const setCurrency = vi.fn();
