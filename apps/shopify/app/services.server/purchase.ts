@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { purchaseTable } from "../../db/schema/purchaseTable";
 import { drizzleDb } from "../db.server";
 import type { AuthenticatedContext } from "../types/context";
+import { isProd } from "../utils/env";
 import {
     parseShopifyGid,
     validateBank,
@@ -42,9 +43,7 @@ export async function startupPurchase(
     // the Billing API ("Custom apps cannot use the Billing API"). Skip the real
     // charge and persist a fake pending purchase so the funding flow stays
     // testable end-to-end off-prod.
-    const stage = process.env.STAGE ?? "";
-    const isProd = stage === "prod" || stage.includes("production");
-    if (!isProd) {
+    if (!isProd()) {
         const fakePurchaseId = Date.now();
         const confirmationUrl = `${process.env.SHOPIFY_APP_URL}/purchase?charge_id=${fakePurchaseId}`;
         await drizzleDb.insert(purchaseTable).values({

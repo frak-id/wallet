@@ -6,6 +6,16 @@ function makeRequest(headers: Record<string, string>): Request {
 }
 
 describe("getRequestId", () => {
+    it("returns x-request-id (nginx-ingress) first", () => {
+        const req = makeRequest({
+            "x-request-id": "9f2c1b7d4e6a8c0f",
+            // AWS headers ignored when the ingress id is present.
+            "x-amzn-trace-id": "Root=1-67abc123-abcdef012345678901234567",
+            "x-amz-cf-id": "ABCDEF1234567890==",
+        });
+        expect(getRequestId(req)).toBe("9f2c1b7d4e6a8c0f");
+    });
+
     it("returns the Root segment from x-amzn-trace-id", () => {
         const req = makeRequest({
             "x-amzn-trace-id":

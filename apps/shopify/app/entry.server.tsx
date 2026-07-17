@@ -25,14 +25,16 @@ import { addDocumentResponseHeaders } from "./shopify.server";
 
 const ABORT_DELAY = 5000;
 
-// Readable placeholder when no AWS header was present (getRequestId → undefined).
+// Readable placeholder when no request-id header was present (local dev;
+// getRequestId → undefined).
 const UNKNOWN_REQ_ID = "n/a";
 
 /**
  * Called by React Router for loader/action errors and for document-render
  * errors that reject the request (including shell render errors, via
- * onShellError below). Logs the request-derived id so support can grep
- * CloudWatch for `reqId=<value>`. Skips aborted requests to avoid noise.
+ * onShellError below). Logs the request-derived id so support can grep the
+ * pod logs (`kubectl logs`) for `reqId=<value>`. Skips aborted requests to
+ * avoid noise.
  */
 export function handleError(error: unknown, { request }: { request: Request }) {
     if (request.signal.aborted) return;

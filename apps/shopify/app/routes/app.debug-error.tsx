@@ -3,17 +3,17 @@
  * can verify the friendly error page + correlation id on a deployed non-prod
  * stage, where the real AWS trace headers are present.
  *
- * Inert in production: returns 404 instead of throwing, matching infra's
- * `isProd` check (STAGE === "prod" || includes "production"). The thrown
- * `Error` is a plain (non-Response) error, so it bubbles to `app.tsx`'s
- * `ErrorBoundary` → `AppError`, exactly like a real fatal error.
+ * Inert in production: returns 404 instead of throwing (shared `isProd`
+ * helper). The thrown `Error` is a plain (non-Response) error, so it bubbles
+ * to `app.tsx`'s `ErrorBoundary` → `AppError`, exactly like a real fatal error.
  *
  * Temporary — revert this commit once the correlation-id path is verified on
  * the dev stage.
  */
+import { isProd } from "../utils/env";
+
 export function loader() {
-    const stage = process.env.STAGE ?? "";
-    if (stage === "prod" || stage.includes("production")) {
+    if (isProd()) {
         throw new Response("Not Found", { status: 404 });
     }
     throw new Error(
