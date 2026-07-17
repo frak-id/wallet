@@ -17,9 +17,9 @@ import { PreviewGate, renderStepIndicator } from "./PreviewGate";
 import {
     nextStepAfterSign,
     resolvePeerSigningStep,
+    type Step,
     settlingBackStep,
     settlingRecoveryStep,
-    type Step,
 } from "./stepMachine";
 
 type MergeFlowProps = {
