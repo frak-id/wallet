@@ -40,7 +40,9 @@ WORKDIR /app/services/shopify-bootstrap
 COPY --from=builder --chown=bun:bun /app/services/shopify-bootstrap/package.json ./
 COPY --from=builder --chown=bun:bun /app/services/shopify-bootstrap/dist ./dist
 # Migration SQL is owned by the app — ship the dev + prod histories.
-COPY --link --chown=bun:bun apps/shopify/drizzle ./drizzle
+# Use numeric uid:gid: `--link` layers are built without the base image's
+# /etc/passwd, so a named `--chown=bun` can't be resolved ("invalid user index: -1").
+COPY --link --chown=1000:1000 apps/shopify/drizzle ./drizzle
 
 USER bun
 
