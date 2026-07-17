@@ -280,7 +280,7 @@ export const shopifyService = new KubernetesService(
             host: `${subDomain}.${baseDomainName}`,
             tlsSecretName: "shopify-tls",
             // Phase 2: uncomment once `${subDomain}.frak.id` DNS points here.
-            // additionalHosts: [`${subDomain}.frak.id`],
+            additionalHosts: [`${subDomain}.frak.id`],
         },
     },
     {
