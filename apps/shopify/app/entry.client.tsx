@@ -13,6 +13,7 @@ import {
     resources,
     supportedLngs,
 } from "./i18n/config";
+import { RequestIdProvider } from "./providers/RequestId";
 
 async function hydrate() {
     await i18next
@@ -36,14 +37,21 @@ async function hydrate() {
             },
         });
 
+    // On an SSR error page the boundary echoes the correlation id onto
+    // <html data-frak-req-id>; re-read it so the client provider matches the
+    // server value (no hydration mismatch). Absent on normal pages → null.
+    const requestId = document.documentElement.getAttribute("data-frak-req-id");
+
     startTransition(() => {
         hydrateRoot(
             document,
-            <I18nextProvider i18n={i18next}>
-                <StrictMode>
-                    <HydratedRouter />
-                </StrictMode>
-            </I18nextProvider>
+            <RequestIdProvider value={requestId}>
+                <I18nextProvider i18n={i18next}>
+                    <StrictMode>
+                        <HydratedRouter />
+                    </StrictMode>
+                </I18nextProvider>
+            </RequestIdProvider>
         );
     });
 }

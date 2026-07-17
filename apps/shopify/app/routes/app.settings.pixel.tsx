@@ -1,4 +1,5 @@
 import { type IntentWebPixel, Pixel } from "app/components/Pixel";
+import { log } from "app/services.server/logger";
 import {
     createWebPixel,
     deleteWebPixel,
@@ -16,7 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     try {
         return await getWebPixel(context);
     } catch (error) {
-        console.error(error);
+        log.error({ err: error }, "web pixel fetch failed");
         return null;
     }
 };
@@ -26,15 +27,26 @@ export async function action({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent") as IntentWebPixel;
 
-    switch (intent) {
-        case "createWebPixel": {
-            return createWebPixel(context);
-        }
+    // Fail open: degrade to a surfaced userError instead of bouncing the whole
+    // settings page to a full-page error (consistent with app.appearance.tsx).
+    try {
+        switch (intent) {
+            case "createWebPixel": {
+                return await createWebPixel(context);
+            }
 
-        case "deleteWebPixel": {
-            const webPixel = await getWebPixel(context);
-            return deleteWebPixel({ ...context, id: webPixel.id });
+            case "deleteWebPixel": {
+                const webPixel = await getWebPixel(context);
+                return await deleteWebPixel({ ...context, id: webPixel.id });
+            }
         }
+    } catch (error) {
+        log.error({ err: error, intent }, "web pixel action failed");
+        return {
+            userErrors: [
+                { message: "Something went wrong. Please try again." },
+            ],
+        };
     }
 }
 

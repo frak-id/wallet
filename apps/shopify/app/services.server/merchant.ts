@@ -1,6 +1,7 @@
 import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
 import { backendApi } from "../utils/backendApi";
+import { levelForStatus, log, setRequestContext } from "./logger";
 import {
     buildShareButtonHtml,
     buildShareUrl,
@@ -70,6 +71,7 @@ export async function resolveMerchantId(
     // 1. Check LRU cache
     const cached = merchantIdCache.get(cacheKey);
     if (cached) {
+        setRequestContext({ merchantId: cached });
         return cached;
     }
 
@@ -78,10 +80,11 @@ export async function resolveMerchantId(
         const metafieldValue = await getMerchantIdMetafield(context);
         if (metafieldValue) {
             merchantIdCache.set(cacheKey, metafieldValue);
+            setRequestContext({ merchantId: metafieldValue });
             return metafieldValue;
         }
     } catch (error) {
-        console.error("[merchantId] metafield read failed:", error);
+        log.error({ err: error }, "merchantId metafield read failed");
     }
 
     // 3. Fetch from Frak backend using stable domain
@@ -94,8 +97,9 @@ export async function resolveMerchantId(
 
     // Cache + persist to metafield for listener.liquid
     merchantIdCache.set(cacheKey, merchantId);
+    setRequestContext({ merchantId });
     writeMerchantIdMetafield(context, merchantId).catch((error) => {
-        console.error("[merchantId] metafield write failed:", error);
+        log.error({ err: error }, "merchantId metafield write failed");
     });
 
     return merchantId;
@@ -175,16 +179,18 @@ async function fetchMerchantFromBackend(
             query: { domain },
         });
         if (error) {
-            console.error(
-                `[merchantId] backend resolve failed (${error.status}) for ${domain}`,
-                error
+            // A 404 here is the routine "merchant not registered yet" case,
+            // not a failure — don't log it at error level.
+            log[levelForStatus(error.status)](
+                { domain, status: error.status },
+                "merchant backend resolve failed"
             );
             return null;
         }
 
         return data as MerchantResolveResponse;
     } catch (error) {
-        console.error(`[merchantId] fetch failed for domain ${domain}:`, error);
+        log.error({ err: error, domain }, "merchant backend resolve error");
         return null;
     }
 }
@@ -214,7 +220,7 @@ export async function ensureWalletUrlMetafield(
         await writeWalletUrlMetafield(context, expectedUrl);
         walletUrlSyncedShops.set(cacheKey, true);
     } catch (error) {
-        console.error("[walletUrl] metafield sync failed:", error);
+        log.error({ err: error }, "walletUrl metafield sync failed");
     }
 }
 
@@ -243,7 +249,7 @@ export async function ensureComponentsUrlMetafield(
         await writeComponentsUrlMetafield(context, expectedUrl);
         componentsUrlSyncedShops.set(cacheKey, true);
     } catch (error) {
-        console.error("[componentsUrl] metafield sync failed:", error);
+        log.error({ err: error }, "componentsUrl metafield sync failed");
     }
 }
 
@@ -293,6 +299,6 @@ export async function ensureKlaviyoShareMetafields(
         }
         klaviyoShareSyncedShops.set(cacheKey, true);
     } catch (error) {
-        console.error("[klaviyoShare] metafield sync failed:", error);
+        log.error({ err: error }, "klaviyoShare metafield sync failed");
     }
 }

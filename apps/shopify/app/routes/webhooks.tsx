@@ -1,4 +1,5 @@
 import { drizzleDb } from "app/db.server";
+import { log } from "app/services.server/logger";
 import { sessionTable } from "db/schema/sessionTable";
 import { eq } from "drizzle-orm";
 import type { ActionFunctionArgs } from "react-router";
@@ -9,7 +10,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const { shop, session, topic, payload } =
         await authenticate.webhook(request);
 
-    console.log(`Received ${topic} webhook for ${shop}`, payload);
+    // NEVER log the raw `payload`: several topics (CUSTOMERS_DATA_REQUEST,
+    // CUSTOMERS_REDACT, ...) carry raw customer PII (email/phone/id). Persisting
+    // that into Cloud Logging (exportable to BigQuery) is a GDPR violation and
+    // directly defeats the purpose of the redaction webhooks. Log only the
+    // topic and shop.
+    log.info({ topic, shop }, "Received webhook");
 
     switch (topic) {
         /*
@@ -49,7 +55,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
         */
             try {
-                console.log("Received purchase update", payload);
                 const purchaseId = Number.parseInt(
                     payload.app_purchase_one_time.admin_graphql_api_id.replace(
                         "gid://shopify/AppPurchaseOneTime/",
@@ -57,7 +62,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     ),
                     10
                 );
-                console.log("Updating purchase", purchaseId);
+                log.info(
+                    {
+                        shop,
+                        purchaseId,
+                        status: payload.app_purchase_one_time.status,
+                    },
+                    "Updating purchase"
+                );
                 await drizzleDb
                     .update(purchaseTable)
                     .set({
@@ -68,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     })
                     .where(eq(purchaseTable.purchaseId, purchaseId));
             } catch (e) {
-                console.error("Error updating purchase", e);
+                log.error({ err: e, shop }, "Error updating purchase");
             }
             break;
 

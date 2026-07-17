@@ -1,5 +1,6 @@
 import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
+import { log, setRequestContext } from "./logger";
 
 const CURRENCY_MAP: Record<string, "usd" | "eur" | "gbp"> = {
     USD: "usd",
@@ -59,13 +60,15 @@ export async function shopInfo({
     admin: { graphql },
     session: { shop: sessionShop },
 }: AuthenticatedContext): Promise<ShopInfoReturnType> {
-    // Check if we got that in our LRU Cache
+    // Enrich the per-request log context so every downstream line carries the
+    // shop, then serve from the LRU cache when possible.
+    setRequestContext({ shop: sessionShop });
     const cachedShopInfo = shopInfoCache.get(sessionShop);
     if (cachedShopInfo) {
-        console.debug("Cache hit for shop", sessionShop);
+        log.debug({ shop: sessionShop }, "shop info cache hit");
         return cachedShopInfo;
     }
-    console.debug("Cache miss for shop", sessionShop);
+    log.debug({ shop: sessionShop }, "shop info cache miss");
     // Otherwise, fetch it from the API
     const response = await graphql(`
     query shopInfo {
@@ -183,7 +186,10 @@ export async function shopBrandInfo({
         shopBrandCache.set(sessionShop, brandInfo);
         return brandInfo;
     } catch (error) {
-        console.error("[shopBrandInfo] query failed:", error);
+        log.error(
+            { err: error, shop: sessionShop },
+            "shopBrandInfo query failed"
+        );
         return { description: null, logoUrl: null, coverImageUrl: null };
     }
 }

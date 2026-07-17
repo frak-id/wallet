@@ -5,6 +5,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData } from "react-router";
 import type { PurchaseTable } from "../../db/schema/purchaseTable";
 import { DescriptionList } from "../components/ui/DescriptionList";
+import { log } from "../services.server/logger";
 import { getPurchase } from "../services.server/purchase";
 import { parseChargeId } from "../utils/url";
 
@@ -22,7 +23,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         const purchase = await getPurchase(chargeId);
         return data({ purchase });
     } catch (error) {
-        console.warn("Purchase not found", error);
+        log.warn({ err: error, chargeId }, "Purchase not found");
         return data({ purchase: null });
     }
 };

@@ -1,4 +1,5 @@
 import { getFrakWebookStatus } from "app/services.server/backendMerchant";
+import { log } from "app/services.server/logger";
 import {
     type FirstProductPublishedReturnType,
     firstProductPublished,
@@ -67,7 +68,7 @@ const stepDataFetchers = {
             const merchantId = await resolveMerchantId(context);
             return { merchantId };
         } catch (e) {
-            console.warn("Error resolving merchantId", e);
+            log.warn({ err: e }, "onboarding: error resolving merchantId");
             return {};
         }
     },
@@ -76,7 +77,7 @@ const stepDataFetchers = {
             const webPixel = await getWebPixel(context);
             return { webPixel };
         } catch (error) {
-            console.error("Error fetching web pixel:", error);
+            log.error({ err: error }, "onboarding: error fetching web pixel");
             return {};
         }
     },
@@ -86,7 +87,10 @@ const stepDataFetchers = {
             const webhooks = await getWebhooks(context);
             return { webhooks };
         } catch (error) {
-            console.error("Error fetching shopify webhooks:", error);
+            log.error(
+                { err: error },
+                "onboarding: error fetching shopify webhooks"
+            );
             return {};
         }
     },
@@ -100,7 +104,10 @@ const stepDataFetchers = {
             const frakWebhook = await getFrakWebookStatus(context, request);
             return { frakWebhook, merchantId };
         } catch (error) {
-            console.error("Error fetching frak webhook:", error);
+            log.error(
+                { err: error },
+                "onboarding: error fetching frak webhook"
+            );
             return {};
         }
     },
@@ -113,7 +120,7 @@ const stepDataFetchers = {
             ]);
             return { isThemeHasFrakActivated, theme };
         } catch (error) {
-            console.error("Error fetching theme data:", error);
+            log.error({ err: error }, "onboarding: error fetching theme data");
             return {};
         }
     },
@@ -126,7 +133,7 @@ const stepDataFetchers = {
             ]);
             return { isThemeHasFrakButton, firstProduct };
         } catch (error) {
-            console.error("Error fetching button data:", error);
+            log.error({ err: error }, "onboarding: error fetching button data");
             return {};
         }
     },
@@ -136,7 +143,7 @@ const stepDataFetchers = {
             const isThemeHasFrakBanner = await doesThemeHasFrakBanner(context);
             return { isThemeHasFrakBanner };
         } catch (error) {
-            console.error("Error fetching banner data:", error);
+            log.error({ err: error }, "onboarding: error fetching banner data");
             return {};
         }
     },
@@ -192,7 +199,10 @@ export async function fetchAllOnboardingData(
             ...bannerData,
         };
     } catch (error) {
-        console.error("Error fetching complete onboarding data:", error);
+        log.error(
+            { err: error },
+            "onboarding: error fetching complete onboarding data"
+        );
         return {};
     }
 }

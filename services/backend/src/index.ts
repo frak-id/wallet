@@ -49,7 +49,19 @@ const app = new Elysia({
     })
     .use(
         log.into({
-            autoLogging: isRunningLocally,
+            // Auto-log every request (previously local-only) so prod requests
+            // are traceable — but never the /health probe, to avoid flooding
+            // the logs with signal-free access lines.
+            autoLogging: {
+                ignore: (ctx) =>
+                    new URL(ctx.request.url).pathname === "/health",
+            },
+            // Surface the ingress correlation id on every line so a backend
+            // log can be tied back to the originating upstream request (e.g. a
+            // Shopify loader that forwards `x-request-id`).
+            customProps: (ctx) => ({
+                reqId: ctx.request.headers.get("x-request-id") ?? undefined,
+            }),
         })
     )
     .use(

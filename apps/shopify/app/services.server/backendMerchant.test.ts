@@ -164,7 +164,7 @@ describe("setupFrakWebhook", () => {
         await setupFrakWebhook(mockContext, requestNoAuth);
 
         expect(mockPost).toHaveBeenCalledWith(expect.any(Object), {
-            headers: undefined,
+            headers: {},
         });
     });
 });
@@ -271,7 +271,29 @@ describe("getMerchantCampaigns", () => {
             makeRequest("https://test.myshopify.com/app")
         );
 
-        expect(mockGet).toHaveBeenCalledWith({ headers: undefined });
+        expect(mockGet).toHaveBeenCalledWith({ headers: {} });
+    });
+
+    it("should forward x-request-id to the backend when present", async () => {
+        const mockGet = vi.fn().mockResolvedValue({
+            data: { campaigns: [] },
+            error: null,
+        });
+        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-123");
+        vi.mocked(backendApi.business.merchant).mockReturnValue({
+            campaigns: { get: mockGet },
+        } as any);
+
+        await getMerchantCampaigns(
+            mockContext,
+            makeRequest("https://test.myshopify.com/app", {
+                "x-request-id": "req-abc-123",
+            })
+        );
+
+        expect(mockGet).toHaveBeenCalledWith({
+            headers: { "x-request-id": "req-abc-123" },
+        });
     });
 
     it("should extract token from id_token query param when no Authorization header", async () => {
@@ -417,7 +439,7 @@ describe("getMerchantBankStatus", () => {
             makeRequest("https://test.myshopify.com/app")
         );
 
-        expect(mockGet).toHaveBeenCalledWith({ headers: undefined });
+        expect(mockGet).toHaveBeenCalledWith({ headers: {} });
     });
 
     it("should extract token from id_token query param when no Authorization header", async () => {
@@ -564,7 +586,7 @@ describe("getFrakWebookStatus", () => {
             makeRequest("https://test.myshopify.com/app")
         );
 
-        expect(mockGet).toHaveBeenCalledWith({ headers: undefined });
+        expect(mockGet).toHaveBeenCalledWith({ headers: {} });
     });
 
     it("should extract token from id_token query param when no Authorization header", async () => {

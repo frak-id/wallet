@@ -1,5 +1,6 @@
 import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
+import { log } from "./logger";
 import { shopInfo } from "./shop";
 
 const FRAK_NAMESPACE = "frak";
@@ -218,7 +219,7 @@ async function readMetafield<T>(
         try {
             return JSON.parse(shop.metafield.value) as T;
         } catch (error) {
-            console.error("Error parsing metafield:", error);
+            log.error({ err: error }, "Error parsing metafield");
         }
     }
 
@@ -552,12 +553,15 @@ async function runGraphQL<TData>(
         const response = await graphql(query, { variables });
         const body = (await response.json()) as GraphQLBody<TData>;
         if (body.errors?.length) {
-            console.error(`[frakI18n] ${label} top-level errors:`, body.errors);
+            log.error(
+                { label, errors: body.errors },
+                "frakI18n top-level errors"
+            );
             return null;
         }
         return body.data ?? null;
     } catch (error) {
-        console.error(`[frakI18n] ${label} threw:`, error);
+        log.error({ err: error, label }, "frakI18n request threw");
         return null;
     }
 }
@@ -643,10 +647,7 @@ async function createFrakI18nDefinition(
             !e.code || !IGNORABLE_METAOBJECT_DEFINITION_ERROR_CODES.has(e.code)
     );
     if (blocking.length > 0) {
-        console.error(
-            "[frakI18n] definition create rejected:",
-            JSON.stringify(blocking)
-        );
+        log.error({ blocking }, "frakI18n definition create rejected");
         return false;
     }
     return true;
@@ -700,9 +701,9 @@ async function upsertFrakI18nEntry(
     if (!data) return null;
     const result = data.metaobjectUpsert;
     if (result?.userErrors?.length) {
-        console.error(
-            "[frakI18n] entry upsert userErrors:",
-            JSON.stringify(result.userErrors)
+        log.error(
+            { userErrors: result.userErrors },
+            "frakI18n entry upsert userErrors"
         );
     }
     return result?.metaobject?.id ?? null;
@@ -799,7 +800,7 @@ async function registerFrakI18nFrTranslations(
     if (!data) return false;
     const errors = data.translationsRegister?.userErrors ?? [];
     if (errors.length > 0) {
-        console.error("[frakI18n] fr translations rejected:", errors);
+        log.error({ errors }, "frakI18n fr translations rejected");
         return false;
     }
     return true;
@@ -950,7 +951,7 @@ export async function getLegacyInstallDismissed({
         );
         return value === true;
     } catch (error) {
-        console.error("[legacyInstall] dismissed read failed:", error);
+        log.error({ err: error }, "legacyInstall dismissed read failed");
         return false;
     }
 }
