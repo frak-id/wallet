@@ -407,6 +407,11 @@ export default defineConfig(
             },
             preview: {
                 port: isTauri ? 3010 : 3000,
+                // Tauri dev bakes the platform flag at server-start and the
+                // WebView loads whatever owns :3010 (devUrl + adb reverse). Fail
+                // loud on a port collision instead of silently moving to :3011
+                // while a stale/wrong-platform squatter keeps :3010.
+                strictPort: isTauri,
                 allowedHosts: isSandbox ? true : undefined,
                 proxy: {
                     // Proxy listener app from separate dev server
@@ -426,6 +431,10 @@ export default defineConfig(
             },
             server: {
                 port: isTauri ? 3010 : 3000,
+                // Fail loud on a :3010 collision rather than silently falling
+                // back to another port while a stale/wrong-platform dev server
+                // squats :3010 and gets loaded by the Tauri WebView.
+                strictPort: isTauri,
                 // For Tauri dev: tell Vite the host so HMR WebSocket can connect
                 host: isTauri ? "0.0.0.0" : "localhost",
                 allowedHosts: isSandbox ? true : undefined,
