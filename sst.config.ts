@@ -41,6 +41,7 @@ export default $config({
             await import("./infra/gcp/credential-sync.ts");
             await import("./infra/gcp/wallet.ts");
             await import("./infra/gcp/business.ts");
+            await import("./infra/gcp/shopify.ts");
             return;
         }
 
@@ -52,7 +53,7 @@ export default $config({
             await import("./infra/gcp/business.ts");
             await import("./infra/gcp/sandbox.ts");
             await import("./infra/example.ts");
-            await import("./infra/shopify.ts");
+            await import("./infra/gcp/shopify.ts");
 
             // SDK build command helper
             new sst.x.DevCommand("sdk:build", {
@@ -67,6 +68,7 @@ export default $config({
             return;
         }
 
-        await import("./infra/shopify.ts");
+        // Shopify now lives on the GCP cluster (see the `isGcp` branch above) —
+        // the plain production/dev stages no longer deploy anything.
     },
 });

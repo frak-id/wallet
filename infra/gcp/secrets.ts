@@ -36,6 +36,15 @@ const dbPassword = $output(
     })
 ).apply((secret) => secret.secretData);
 
+// Dedicated Shopify DB password on the same master instance. Isolated role +
+// secret from the backend's wallet-backend credentials (provisioned out-of-band
+// by the DB team, same flow as wallet-backend-db-secret).
+const shopifyDbPassword = $output(
+    gcp.secretmanager.getSecretVersion({
+        secret: `shopify-db-secret-${dbStage}`,
+    })
+).apply((secret) => secret.secretData);
+
 const masterPkey = $output(
     gcp.secretmanager.getSecretVersion({
         secret: `master-pkey-${isProd ? "prod" : "dev"}`,
@@ -53,6 +62,14 @@ const rustfsSecretKey = $output(
         secret: "rustfs-secret-key-production",
     })
 ).apply((secret) => secret.secretData);
+
+// Shopify dedicated Postgres credentials (isolated role, shared master instance).
+export const shopifyPostgresEnv = {
+    POSTGRES_DB: "shopify",
+    POSTGRES_USER: `shopify_${dbStage}`,
+    POSTGRES_PASSWORD: shopifyDbPassword,
+    POSTGRES_HOST: dbInstance.privateIpAddress,
+};
 
 export const postgresEnv = {
     POSTGRES_DB: "wallet-backend",
