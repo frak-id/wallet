@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type Address, isAddressEqual } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantTeamListQueryKey } from "@/module/merchant/queries/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
 
 const MOCK_ADMINISTRATORS: MerchantAdministrator[] = [
@@ -68,12 +69,7 @@ export function useGetMerchantAdministrators({
     const currentAccountId = useAuthStore((state) => state.accountId);
 
     return useQuery({
-        queryKey: [
-            "merchant",
-            "team",
-            merchantId,
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: merchantTeamListQueryKey(merchantId, isDemoMode),
         queryFn: async (): Promise<MerchantAdministrator[]> => {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 200));

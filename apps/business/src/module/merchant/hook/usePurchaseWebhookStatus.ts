@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantPurchaseWebhookStatusQueryKey } from "@/module/merchant/queries/queryKeys";
 
 export type WebhookPlatform =
     | "shopify"
@@ -32,12 +33,7 @@ export function usePurchaseWebhookStatus({
 
     return useQuery({
         enabled: !!merchantId,
-        queryKey: [
-            "merchant",
-            merchantId,
-            "purchase-webhook-status",
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: merchantPurchaseWebhookStatusQueryKey(merchantId, isDemoMode),
         queryFn: async (): Promise<WebhookStatus> => {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 100));

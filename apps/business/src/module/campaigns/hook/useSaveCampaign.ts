@@ -3,6 +3,7 @@ import {
     createCampaign,
     updateCampaign,
 } from "@/module/campaigns/api/campaignApi";
+import { campaignsQueryKey } from "@/module/campaigns/queries/queryKeys";
 import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import {
@@ -85,7 +86,9 @@ export function useSaveCampaign() {
                 }).queryKey,
                 campaign
             );
-            await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+            await queryClient.invalidateQueries({
+                queryKey: campaignsQueryKey(),
+            });
         },
     });
 }

@@ -7,6 +7,7 @@ import {
     extractAuthErrorMessage,
 } from "@/module/auth/utils/authError";
 import type { TwoFactorMethod } from "@/stores/twoFactorStore";
+import { twoFactorMethodsQueryKey } from "./queryKeys";
 
 /**
  * `GET /auth/2fa/methods` — the account's actually-enrolled 2FA channels.
@@ -16,7 +17,7 @@ import type { TwoFactorMethod } from "@/stores/twoFactorStore";
  */
 export function useEnrolledTwoFactorMethods(enabled: boolean) {
     return useQuery({
-        queryKey: ["auth", "2fa", "methods"],
+        queryKey: twoFactorMethodsQueryKey(),
         enabled,
         queryFn: async () => {
             const { data, error } =

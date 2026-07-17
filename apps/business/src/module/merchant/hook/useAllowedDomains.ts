@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { merchantByIdQueryKey } from "@/module/merchant/queries/queryKeys";
 
 export function useAddAllowedDomain({ merchantId }: { merchantId: string }) {
     const queryClient = useQueryClient();
@@ -17,7 +18,7 @@ export function useAddAllowedDomain({ merchantId }: { merchantId: string }) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ["merchant", merchantId],
+                queryKey: merchantByIdQueryKey(merchantId),
             });
         },
     });
@@ -39,7 +40,7 @@ export function useRemoveAllowedDomain({ merchantId }: { merchantId: string }) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ["merchant", merchantId],
+                queryKey: merchantByIdQueryKey(merchantId),
             });
         },
     });

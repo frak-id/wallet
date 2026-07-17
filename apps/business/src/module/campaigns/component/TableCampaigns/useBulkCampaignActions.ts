@@ -5,6 +5,7 @@ import {
     deleteCampaign,
     pauseCampaign,
 } from "@/module/campaigns/api/campaignApi";
+import { campaignsQueryKey } from "@/module/campaigns/queries/queryKeys";
 import type { CampaignListItemWithActions } from "@/types/Campaign";
 
 type BulkAction = "pause" | "archive" | "delete";
@@ -68,7 +69,7 @@ export function useBulkCampaignActions() {
                     targets.map((c) => fn({ merchantId, campaignId: c.id }))
                 );
                 await queryClient.invalidateQueries({
-                    queryKey: ["campaigns"],
+                    queryKey: campaignsQueryKey(),
                 });
             } finally {
                 setPending(null);

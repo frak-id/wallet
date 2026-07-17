@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateCampaign } from "@/module/campaigns/api/campaignApi";
+import { campaignsQueryKey } from "@/module/campaigns/queries/queryKeys";
 import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { setStartDate } from "@/stores/campaignStore";
@@ -79,7 +80,7 @@ export function useUpdateCampaignConfig() {
             );
             // Refresh the list/overview in the background — not awaited, so Save
             // resolves as soon as the detail cache is seeded.
-            queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+            queryClient.invalidateQueries({ queryKey: campaignsQueryKey() });
         },
     });
 }

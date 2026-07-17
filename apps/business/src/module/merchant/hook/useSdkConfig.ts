@@ -2,6 +2,7 @@ import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import { useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantSdkConfigQueryKey } from "@/module/merchant/queries/queryKeys";
 
 const DEMO_SDK_CONFIG: { sdkConfig: SdkConfig } = {
     sdkConfig: {
@@ -13,12 +14,7 @@ const DEMO_SDK_CONFIG: { sdkConfig: SdkConfig } = {
 export function useSdkConfig({ merchantId }: { merchantId: string }) {
     const isDemoMode = useIsDemoMode();
     return useQuery({
-        queryKey: [
-            "merchant",
-            merchantId,
-            "sdk-config",
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: merchantSdkConfigQueryKey(merchantId, isDemoMode),
         queryFn: async () => {
             if (isDemoMode) {
                 return DEMO_SDK_CONFIG;
