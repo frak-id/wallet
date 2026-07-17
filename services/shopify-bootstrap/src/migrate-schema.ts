@@ -12,13 +12,14 @@ function resolveMigrationFolder(): string {
     return isProd ? "./drizzle/prod" : "./drizzle/dev";
 }
 
-function buildTargetUrl(): string {
-    const host = process.env.POSTGRES_HOST ?? "";
-    const port = process.env.POSTGRES_PORT ?? "5432";
-    const database = process.env.POSTGRES_DB ?? "";
-    const user = process.env.POSTGRES_USER ?? "";
-    const password = process.env.POSTGRES_PASSWORD ?? "";
-    return `postgresql://${user}:${password}@${host}:${port}/${database}`;
+function buildTargetConfig() {
+    return {
+        host: process.env.POSTGRES_HOST ?? "",
+        port: Number(process.env.POSTGRES_PORT ?? "5432"),
+        database: process.env.POSTGRES_DB ?? "",
+        username: process.env.POSTGRES_USER ?? "",
+        password: process.env.POSTGRES_PASSWORD ?? "",
+    };
 }
 
 /**
@@ -31,7 +32,7 @@ export async function runSchemaMigrations(): Promise<void> {
         `[shopify-bootstrap:schema] Running migrations (stage=${process.env.STAGE}, folder=${folder})`
     );
 
-    const sql = postgres(buildTargetUrl(), { max: 1 });
+    const sql = postgres({ ...buildTargetConfig(), max: 1 });
     const db = drizzle(sql);
 
     await migrate(db, {
