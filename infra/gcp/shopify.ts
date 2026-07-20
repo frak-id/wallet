@@ -17,6 +17,7 @@ import { shopifyPostgresEnv } from "./secrets";
 import {
     baseDomainName,
     cachedImage,
+    dbTunnelLocalPort,
     getRegistryPath,
     walletNamespace,
 } from "./utils";
@@ -62,6 +63,18 @@ const shopifyRuntimeEnv = {
     SHOPIFY_API_SECRET: shopifyApiSecret.value,
     PRODUCT_SETUP_CODE_SALT: productSetupCodeSalt.value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
+};
+
+/**
+ * Local-dev runtime env. Same shared master Postgres, but reached through the
+ * GCP tunnel (infra/gcp/dev.ts `db-tunnel`) at localhost:<tunnel port> instead
+ * of the in-cluster private IP — mirrors the wallet backend's dev DB setup.
+ * The shopify DB name/role/password still select the dedicated `shopify` DB.
+ */
+const shopifyDevRuntimeEnv = {
+    ...shopifyRuntimeEnv,
+    SHOPIFY_POSTGRES_HOST: "localhost",
+    SHOPIFY_POSTGRES_PORT: dbTunnelLocalPort,
 };
 
 const appLabels = { app: "shopify-frontend" };
@@ -126,7 +139,7 @@ export const shopifyService = new KubernetesService(
                 directory: "apps/shopify",
                 autostart: false,
             },
-            environment: { ...shopifyBuildEnv, ...shopifyRuntimeEnv },
+            environment: { ...shopifyBuildEnv, ...shopifyDevRuntimeEnv },
         },
 
         // Pod config
