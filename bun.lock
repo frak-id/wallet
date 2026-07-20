@@ -461,7 +461,7 @@
     },
     "packages/ui-preview": {
       "name": "@frak-labs/ui-preview",
-      "version": "0.0.11",
+      "version": "0.0.12",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
@@ -480,7 +480,7 @@
     },
     "packages/wallet-shared": {
       "name": "@frak-labs/wallet-shared",
-      "version": "0.0.14",
+      "version": "0.0.15",
       "dependencies": {
         "@elysiajs/eden": "^1.4.9",
         "@frak-labs/app-essentials": "workspace:*",
@@ -531,7 +531,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "1.0.12",
+      "version": "1.0.13",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
@@ -564,7 +564,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "dependencies": {
         "@frak-labs/frame-connector": "workspace:*",
         "@openpanel/web": "catalog:",
@@ -590,7 +590,7 @@
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
-      "version": "0.0.55",
+      "version": "0.0.56",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
       },
@@ -603,7 +603,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -638,7 +638,7 @@
     },
     "services/backend": {
       "name": "@frak-labs/backend-elysia",
-      "version": "0.0.27",
+      "version": "0.0.28",
       "dependencies": {
         "@bogeychan/elysia-logger": "^0.1.10",
         "@elysiajs/cors": "^1.4.1",
