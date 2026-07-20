@@ -58,6 +58,17 @@ export const logoImage = style({
     borderRadius: "50%",
 });
 
+/**
+ * View count in the title row (a top-aligned `Spread` slot). Matching the
+ * name's line box (body = 26px) and centring within it keeps the count on the
+ * optical centre of the first name line, however many lines the name wraps to.
+ */
+export const viewsCount = style({
+    flexShrink: 0,
+    color: vars.text.secondary,
+    minHeight: "26px",
+});
+
 export const contentWrapper = style({
     display: "flex",
     flexDirection: "column",

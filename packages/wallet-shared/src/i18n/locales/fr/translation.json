@@ -1089,7 +1089,9 @@
             "description": "De nouvelles offres arrivent bientôt. Revenez plus tard !"
         },
         "card": {
-            "until": "Jusqu'au {{date}}"
+            "until": "Jusqu'au {{date}}",
+            "views_one": "{{count}} vue",
+            "views_other": "{{count}} vues"
         },
         "sort": {
             "title": "Trier par",

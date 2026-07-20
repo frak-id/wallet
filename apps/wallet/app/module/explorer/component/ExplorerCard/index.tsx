@@ -1,6 +1,9 @@
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { EyeIcon } from "@frak-labs/design-system/icons";
 import { trackEvent } from "@frak-labs/wallet-shared";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,8 +17,12 @@ type ExplorerCardProps = {
     onClick?: () => void;
 };
 
+// Below this many views the count reads as noise rather than social proof, so
+// the badge is hidden entirely (the card just shows the favorite heart).
+const VIEWS_DISPLAY_THRESHOLD = 50;
+
 export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { name, domain, explorerConfig } = merchant;
     const heroImageUrl = explorerConfig?.heroImageUrl;
     const logoUrl = explorerConfig?.logoUrl;
@@ -52,6 +59,14 @@ export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
     }, [merchant.id]);
 
     const view = useCampaignView(merchant.id);
+
+    const showViews = merchant.views >= VIEWS_DISPLAY_THRESHOLD;
+    // Compact glyph for the pill (e.g. "1.2K"); the full grouped count lives in
+    // the accessible label so screen readers announce the exact number.
+    const compactViews = new Intl.NumberFormat(i18n.language, {
+        notation: "compact",
+        maximumFractionDigits: 1,
+    }).format(merchant.views);
 
     return (
         <Box
@@ -93,9 +108,27 @@ export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
 
             {/* Text content */}
             <Box className={styles.contentWrapper}>
-                <Text as="h2" variant="body" weight="semiBold">
-                    {name}
-                </Text>
+                <Spread space="xs" align="top">
+                    <Text as="h2" variant="body" weight="semiBold">
+                        {name}
+                    </Text>
+                    {showViews && (
+                        <Inline
+                            space="xxs"
+                            alignY="center"
+                            wrap={false}
+                            className={styles.viewsCount}
+                            aria-label={t("explorer.card.views", {
+                                count: merchant.views,
+                            })}
+                        >
+                            <EyeIcon width={13} height={13} />
+                            <Text variant="caption" weight="medium">
+                                {compactViews}
+                            </Text>
+                        </Inline>
+                    )}
+                </Spread>
                 <Text
                     variant="bodySmall"
                     weight="medium"
