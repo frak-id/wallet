@@ -4,6 +4,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { trackEvent } from "@frak-labs/wallet-shared";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { FavoriteButton } from "@/module/favorites/component/FavoriteButton";
 import { useCampaignView } from "../../campaignView";
 import * as styles from "./index.css";
 import { LogoCutout } from "./LogoCutout";
@@ -61,6 +62,8 @@ export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
         >
             {/* Hero image area */}
             <Box className={styles.imageWrapper}>
+                <FavoriteButton merchantId={merchant.id} />
+
                 {heroImageUrl ? (
                     <img
                         src={heroImageUrl}

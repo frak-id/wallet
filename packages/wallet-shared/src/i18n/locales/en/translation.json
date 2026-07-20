@@ -91,6 +91,7 @@
             "currentDeviceConnected": "Connected",
             "recoveryOptions": "Recovery options",
             "changeEmail": "Change email address",
+            "favorites": "My favorite brands",
             "security": {
                 "heading": "Secure your wallet",
                 "headingSecured": "Your wallet is secured",
@@ -1063,6 +1064,24 @@
                 "transaction": "Transaction"
             }
         }
+    },
+    "favorites": {
+        "pageTitle": "My favorite brands",
+        "empty": {
+            "title": "No favorites yet",
+            "description": "Tap the heart on a brand to find it here."
+        },
+        "error": {
+            "title": "Couldn't load your favorites",
+            "description": "Something went wrong while loading your favorite brands. Please try again.",
+            "retry": "Try again"
+        },
+        "unavailable": {
+            "title": "Favorites unavailable",
+            "description": "We couldn't find your favorite brands in the current list. They may no longer be available."
+        },
+        "add": "Add to favorites",
+        "remove": "Remove from favorites"
     },
     "explorer": {
         "pageTitle": "Explorer",

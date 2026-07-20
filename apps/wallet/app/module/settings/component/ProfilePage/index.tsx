@@ -1,7 +1,11 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { HeartIcon, SettingsIcon } from "@frak-labs/design-system/icons";
+import {
+    HeartIcon,
+    ReferralIcon,
+    SettingsIcon,
+} from "@frak-labs/design-system/icons";
 import {
     authenticationStore,
     selectLastAuthenticationAt,
@@ -64,6 +68,13 @@ export function ProfilePage() {
             <InfoCard>
                 <InfoRow
                     icon={HeartIcon}
+                    label={t("wallet.profile.favorites")}
+                    to="/profile/favorites"
+                />
+            </InfoCard>
+            <InfoCard>
+                <InfoRow
+                    icon={ReferralIcon}
                     label={t("wallet.referral.menuLabel")}
                     to="/profile/referral"
                 />
