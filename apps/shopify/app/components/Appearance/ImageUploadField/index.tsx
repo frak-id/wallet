@@ -1,5 +1,7 @@
+import { isValidUrl } from "@frak-labs/app-essentials";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { type FileRejection, useDropzone } from "react-dropzone";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import styles from "./index.module.css";
 
@@ -44,7 +46,11 @@ export function ImageUploadField({
     placeholder = "https://...",
     mediaFiles,
 }: ImageUploadFieldProps) {
+    const { t } = useTranslation();
     const mediaFetcher = useFetcher();
+
+    const urlError =
+        value && !isValidUrl(value) ? t("common.invalidUrl") : undefined;
 
     const isPending = mediaFetcher.state !== "idle";
 
@@ -130,6 +136,7 @@ export function ImageUploadField({
                             label={label}
                             placeholder={placeholder}
                             value={value}
+                            error={urlError}
                             onChange={(e) =>
                                 onChange(e.currentTarget.value ?? "")
                             }

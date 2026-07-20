@@ -1,3 +1,4 @@
+import { isValidUrl } from "@frak-labs/app-essentials";
 import { ExplorerCardPreview } from "@frak-labs/ui-preview";
 import type { action } from "app/routes/app.appearance";
 import type {
@@ -75,6 +76,9 @@ export function ExplorerTab({
         [enabled, logoUrl, heroImageUrl, heroImageUrls, description, defaults]
     );
 
+    // Block persistence of a manually-typed invalid URL (empty is allowed).
+    const hasValidUrls = isValidUrl(logoUrl) && isValidUrl(heroImageUrl);
+
     useEffect(() => {
         if (!fetcher.data?.success) return;
         if (
@@ -87,6 +91,14 @@ export function ExplorerTab({
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        // Implicit submit (Enter in a text field) bypasses the disabled Save
+        // button, so gate the explicit submit path on URL validity too.
+        if (!hasValidUrls) {
+            shopify.toast.show(t("appearance.explorer.invalidUrlToast"), {
+                isError: true,
+            });
+            return;
+        }
         const formData = new FormData(event.target as HTMLFormElement);
         fetcher.submit(formData, {
             method: "post",
@@ -105,6 +117,18 @@ export function ExplorerTab({
                 description,
                 ...overrides,
             };
+            // Never persist a manually-typed invalid URL through a sibling
+            // autosave trigger (hero-extras). Empty is allowed; the invalid
+            // field already shows an inline error, so surface a toast too.
+            if (
+                !isValidUrl(settings.logoUrl) ||
+                !isValidUrl(settings.heroImageUrl)
+            ) {
+                shopify.toast.show(t("appearance.explorer.invalidUrlToast"), {
+                    isError: true,
+                });
+                return;
+            }
             fetcher.submit(
                 {
                     intent: "saveExplorer",
@@ -113,7 +137,7 @@ export function ExplorerTab({
                 { method: "post", action: "/app/appearance" }
             );
         },
-        [enabled, logoUrl, heroImageUrl, heroImageUrls, description, fetcher]
+        [enabled, logoUrl, heroImageUrl, heroImageUrls, description, fetcher, t]
     );
 
     const handleLogoUploadSuccess = useCallback(
@@ -151,12 +175,24 @@ export function ExplorerTab({
                 <s-stack gap="large">
                     <s-text>{t("appearance.explorer.description")}</s-text>
 
-                    <s-checkbox
+                    <s-switch
                         label={t("appearance.explorer.enabledLabel")}
+                        details={t("appearance.explorer.enabledHint")}
                         checked={enabled || undefined}
-                        onChange={(e) =>
-                            setEnabled(e.currentTarget.checked ?? false)
-                        }
+                        onChange={(e) => {
+                            const next = e.currentTarget.checked ?? false;
+                            // Block the toggle while a URL is invalid so the
+                            // switch doesn't flip "on" without persisting.
+                            if (!hasValidUrls) {
+                                shopify.toast.show(
+                                    t("appearance.explorer.invalidUrlToast"),
+                                    { isError: true }
+                                );
+                                return;
+                            }
+                            setEnabled(next);
+                            autoSave({ enabled: next });
+                        }}
                     />
 
                     <ImageUploadField
@@ -201,7 +237,7 @@ export function ExplorerTab({
                     <s-button
                         type="submit"
                         loading={isLoading || undefined}
-                        disabled={!hasChanges || undefined}
+                        disabled={!hasChanges || !hasValidUrls || undefined}
                     >
                         {t("appearance.explorer.save")}
                     </s-button>
