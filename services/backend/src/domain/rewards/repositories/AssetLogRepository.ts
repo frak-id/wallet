@@ -621,27 +621,24 @@ export class AssetLogRepository {
         campaignRuleId: string,
         identityGroupId: string
     ): Promise<number> {
-        const [result] = await db
-            .select({ count: sql<number>`count(*)::int` })
-            .from(assetLogsTable)
-            .where(
-                and(
-                    eq(assetLogsTable.campaignRuleId, campaignRuleId),
-                    eq(assetLogsTable.identityGroupId, identityGroupId),
-                    inArray(assetLogsTable.status, [
-                        "pending",
-                        "processing",
-                        "settled",
-                        "bank_depleted",
-                    ]),
-                    eq(assetLogsTable.recipientType, "referee")
-                )
-            );
-        return result?.count ?? 0;
+        return this.countAsRefereeWhere(
+            eq(assetLogsTable.campaignRuleId, campaignRuleId),
+            identityGroupId
+        );
     }
 
     async countByMerchantAndUserAsReferee(
         merchantId: string,
+        identityGroupId: string
+    ): Promise<number> {
+        return this.countAsRefereeWhere(
+            eq(assetLogsTable.merchantId, merchantId),
+            identityGroupId
+        );
+    }
+
+    private async countAsRefereeWhere(
+        scopeCondition: SQL,
         identityGroupId: string
     ): Promise<number> {
         const [result] = await db
@@ -649,7 +646,7 @@ export class AssetLogRepository {
             .from(assetLogsTable)
             .where(
                 and(
-                    eq(assetLogsTable.merchantId, merchantId),
+                    scopeCondition,
                     eq(assetLogsTable.identityGroupId, identityGroupId),
                     inArray(assetLogsTable.status, [
                         "pending",

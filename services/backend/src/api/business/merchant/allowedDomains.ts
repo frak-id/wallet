@@ -64,22 +64,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
     )
     .delete(
         "/:merchantId/allowed-domains",
-        async ({
-            params: { merchantId },
-            body: { domain },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, body: { domain } }) => {
             const merchant =
                 await MerchantContext.repositories.merchant.findById(
                     merchantId
@@ -102,6 +87,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 domain: t.String({ minLength: 1 }),

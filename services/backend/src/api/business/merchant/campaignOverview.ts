@@ -1,5 +1,5 @@
 import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 import { OrchestrationContext } from "../../../orchestration/context";
 import {
     CurrencyParamSchema,
@@ -16,22 +16,7 @@ export const merchantCampaignOverviewRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "/summary",
-        async ({
-            params: { merchantId },
-            query,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, query }) => {
             return OrchestrationContext.orchestrators.campaignOverview.getSummary(
                 merchantId,
                 { from: query.from, to: query.to },
@@ -39,6 +24,7 @@ export const merchantCampaignOverviewRoutes = new Elysia({
             );
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             // `currency` drives token→fiat conversion of the rewards KPI;
             // composed onto the shared window schema so the analytics
@@ -56,28 +42,14 @@ export const merchantCampaignOverviewRoutes = new Elysia({
     )
     .get(
         "/analytics",
-        async ({
-            params: { merchantId },
-            query,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, query }) => {
             return OrchestrationContext.orchestrators.campaignOverview.getAnalytics(
                 merchantId,
                 { from: query.from, to: query.to }
             );
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             query: OverviewWindowQuerySchema,
             response: {

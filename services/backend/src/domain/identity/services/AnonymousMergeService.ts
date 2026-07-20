@@ -64,7 +64,6 @@ export class AnonymousMergeService {
     }> {
         const { mergeToken, merchantId } = params;
 
-        // Verify JWT signature and extract claims
         const tokenPayload = await JwtContext.anonymousMerge.verify(mergeToken);
 
         if (!tokenPayload) {
@@ -74,7 +73,6 @@ export class AnonymousMergeService {
             );
         }
 
-        // Check merchant matches
         if (tokenPayload.sourceMerchantId !== merchantId) {
             throw HttpError.badRequest(
                 "MERCHANT_MISMATCH",
@@ -82,7 +80,6 @@ export class AnonymousMergeService {
             );
         }
 
-        // Verify source group still exists
         const sourceGroup = await this.identityRepository.findGroupById(
             tokenPayload.sourceGroupId
         );

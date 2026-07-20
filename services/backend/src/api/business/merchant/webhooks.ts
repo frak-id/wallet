@@ -19,21 +19,7 @@ export const merchantWebhooksRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const currentWebhooks = await db
                 .select()
                 .from(merchantWebhooksTable)
@@ -69,6 +55,7 @@ export const merchantWebhooksRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 200: WebhookStatusResponseSchema,
@@ -79,22 +66,7 @@ export const merchantWebhooksRoutes = new Elysia({
     )
     .post(
         "",
-        async ({
-            params: { merchantId },
-            body,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, body }) => {
             const { hookSignatureKey, platform } = body;
 
             await db
@@ -116,6 +88,7 @@ export const merchantWebhooksRoutes = new Elysia({
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 hookSignatureKey: t.String(),
@@ -130,21 +103,7 @@ export const merchantWebhooksRoutes = new Elysia({
     )
     .delete(
         "",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const existingWebhook =
                 await db.query.merchantWebhooksTable.findFirst({
                     where: eq(merchantWebhooksTable.merchantId, merchantId),
@@ -172,6 +131,7 @@ export const merchantWebhooksRoutes = new Elysia({
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 204: t.Void(),

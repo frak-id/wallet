@@ -225,5 +225,37 @@ export const businessSessionContext = new Elysia({
                 },
             };
         },
+        /**
+         * Standard merchant-scoped guard: any authenticated session
+         * (business or Shopify) that resolves access to `params.merchantId`
+         * via the plugin-resolved `hasMerchantAccess` (§2.3), including its
+         * Shopify-credential and read-only platform-admin bypasses. This is
+         * the ~37x copy-pasted auth check across the merchant routes —
+         * kept byte-for-byte identical (same status codes/bodies) so no
+         * route's response contract changes.
+         */
+        requireMerchantAccess(enabled?: boolean) {
+            if (!enabled) return;
+
+            return {
+                beforeHandle: async ({
+                    params,
+                    businessSession,
+                    shopifySession,
+                    hasMerchantAccess,
+                }) => {
+                    if (!businessSession && !shopifySession) {
+                        return status(401, "Authentication required");
+                    }
+
+                    const hasAccess = await hasMerchantAccess?.(
+                        (params as { merchantId: string }).merchantId
+                    );
+                    if (!hasAccess) {
+                        return status(403, "Access denied");
+                    }
+                },
+            };
+        },
     })
     .as("scoped");

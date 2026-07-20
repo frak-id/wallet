@@ -104,21 +104,7 @@ export const merchantAdminsRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const [merchant, admins] = await Promise.all([
                 MerchantContext.repositories.merchant.findById(merchantId),
                 MerchantContext.repositories.merchantAdmin.findByMerchant(
@@ -166,6 +152,7 @@ export const merchantAdminsRoutes = new Elysia({
             return { admins: [ownerRow, ...adminRows] };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 200: t.Object({ admins: t.Array(AdminDto) }),
@@ -284,21 +271,7 @@ export const merchantAdminsRoutes = new Elysia({
     )
     .delete(
         "/:adminId",
-        async ({
-            params: { merchantId, adminId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId, adminId } }) => {
             // Row-id keyed so account-only admins are removable too (§2.7);
             // scoped to `merchantId`, so a foreign id resolves to a 404.
             const removed =
@@ -316,6 +289,7 @@ export const merchantAdminsRoutes = new Elysia({
         {
             // Admin management is a sensitive action (§4.8).
             requireStepUp: true,
+            requireMerchantAccess: true,
             params: t.Object({
                 merchantId: t.String(),
                 adminId: t.String(),

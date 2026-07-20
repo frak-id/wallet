@@ -38,22 +38,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({
-            params: { merchantId },
-            query: { kind, from, to },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, query: { kind, from, to } }) => {
             const documents =
                 await BillingContext.repositories.billingDocument.findByMerchant(
                     merchantId,
@@ -69,6 +54,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             query: ListDocumentsQuerySchema,
             response: {
@@ -80,21 +66,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
     )
     .get(
         "/:id/pdf",
-        async ({
-            params: { merchantId, id },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId, id } }) => {
             let document =
                 await BillingContext.repositories.billingDocument.findById(
                     merchantId,
@@ -151,6 +123,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
             });
         },
         {
+            requireMerchantAccess: true,
             params: DocumentIdParamSchema,
             response: {
                 401: t.String(),

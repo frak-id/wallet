@@ -9,6 +9,15 @@ export type TokenMetadata = {
     decimals: number;
 };
 
+/** The 3 ERC20 read calls (symbol, name, decimals) needed for {@link TokenMetadata}. */
+function erc20MetadataContracts(address: Address) {
+    return [
+        { abi: erc20Abi, address, functionName: "symbol" },
+        { abi: erc20Abi, address, functionName: "name" },
+        { abi: erc20Abi, address, functionName: "decimals" },
+    ] as const;
+}
+
 export class TokenMetadataRepository {
     private readonly cache = new LRUCache<Address, TokenMetadata>({
         max: 128,
@@ -32,23 +41,7 @@ export class TokenMetadataRepository {
         }
 
         const rawMetadata = await multicall(viemClient, {
-            contracts: [
-                {
-                    abi: erc20Abi,
-                    address: token,
-                    functionName: "symbol",
-                },
-                {
-                    abi: erc20Abi,
-                    address: token,
-                    functionName: "name",
-                },
-                {
-                    abi: erc20Abi,
-                    address: token,
-                    functionName: "decimals",
-                },
-            ] as const,
+            contracts: erc20MetadataContracts(token),
             allowFailure: false,
         });
         const metadata: TokenMetadata = {
@@ -78,25 +71,8 @@ export class TokenMetadataRepository {
 
         if (uncached.length === 0) return result;
 
-        const contracts = uncached.flatMap(
-            (token) =>
-                [
-                    {
-                        abi: erc20Abi,
-                        address: token,
-                        functionName: "symbol",
-                    },
-                    {
-                        abi: erc20Abi,
-                        address: token,
-                        functionName: "name",
-                    },
-                    {
-                        abi: erc20Abi,
-                        address: token,
-                        functionName: "decimals",
-                    },
-                ] as const
+        const contracts = uncached.flatMap((token) =>
+            erc20MetadataContracts(token)
         );
 
         const rawResults = await multicall(viemClient, {

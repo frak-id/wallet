@@ -52,22 +52,7 @@ export const merchantMediaRoutes = new Elysia({
     .use(businessSessionContext)
     .post(
         "/upload",
-        async ({
-            params: { merchantId },
-            body: { image, type },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, body: { image, type } }) => {
             // Verify merchant exists
             const merchant =
                 await MerchantContext.repositories.merchant.findById(
@@ -138,6 +123,7 @@ export const merchantMediaRoutes = new Elysia({
             return { url, type: storageType };
         },
         {
+            requireMerchantAccess: true,
             params: t.Object({
                 merchantId: t.String(),
             }),
@@ -159,21 +145,7 @@ export const merchantMediaRoutes = new Elysia({
     )
     .delete(
         "/:type",
-        async ({
-            params: { merchantId, type },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId, type } }) => {
             // Validate type pattern: logo, hero, or hero-{variant}
             if (!mediaTypePattern.test(type)) {
                 throw HttpError.badRequest(
@@ -190,6 +162,7 @@ export const merchantMediaRoutes = new Elysia({
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: t.Object({
                 merchantId: t.String(),
                 type: t.String(),
@@ -204,21 +177,7 @@ export const merchantMediaRoutes = new Elysia({
     )
     .get(
         "/list",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const files = await MediaContext.repositories.mediaStorage.list({
                 merchantId,
             });
@@ -226,6 +185,7 @@ export const merchantMediaRoutes = new Elysia({
             return { files };
         },
         {
+            requireMerchantAccess: true,
             params: t.Object({
                 merchantId: t.String(),
             }),

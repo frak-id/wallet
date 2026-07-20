@@ -210,32 +210,22 @@ export class MerchantResolveService {
 
         const result = { ...components };
 
-        if (result.buttonShare?.rawCss !== undefined) {
-            result.buttonShare = {
-                ...result.buttonShare,
-                css: scoped(result.buttonShare.rawCss, "frak-button-share"),
-            };
-        }
+        const selectors = [
+            ["buttonShare", "frak-button-share"],
+            ["buttonWallet", null],
+            ["openInApp", "frak-open-in-app"],
+            ["banner", "frak-banner"],
+        ] as const;
 
-        if (result.buttonWallet?.rawCss !== undefined) {
-            result.buttonWallet = {
-                ...result.buttonWallet,
-                css: processRawCss(result.buttonWallet.rawCss),
-            };
-        }
-
-        if (result.openInApp?.rawCss !== undefined) {
-            result.openInApp = {
-                ...result.openInApp,
-                css: scoped(result.openInApp.rawCss, "frak-open-in-app"),
-            };
-        }
-
-        if (result.banner?.rawCss !== undefined) {
-            result.banner = {
-                ...result.banner,
-                css: scoped(result.banner.rawCss, "frak-banner"),
-            };
+        for (const [key, selector] of selectors) {
+            const component = result[key];
+            if (component?.rawCss === undefined) continue;
+            result[key] = {
+                ...component,
+                css: selector
+                    ? scoped(component.rawCss, selector)
+                    : processRawCss(component.rawCss),
+            } as typeof component;
         }
 
         return result;
