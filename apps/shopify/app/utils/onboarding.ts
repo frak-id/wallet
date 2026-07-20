@@ -1,26 +1,12 @@
-import { getFrakWebookStatus } from "app/services.server/backendMerchant";
-import { log } from "app/services.server/logger";
-import {
-    type FirstProductPublishedReturnType,
-    firstProductPublished,
-} from "app/services.server/shop";
-import {
-    doesThemeHasFrakActivated,
-    doesThemeHasFrakBanner,
-    doesThemeHasFrakButton,
-    type GetMainThemeIdReturnType,
-    getMainThemeId,
-} from "app/services.server/theme";
-import {
-    type GetWebhooksSubscriptionsReturnType,
-    getWebhooks,
-} from "app/services.server/webhook";
-import {
-    type GetWebPixelReturnType,
-    getWebPixel,
-} from "app/services.server/webPixel";
-import type { AuthenticatedContext } from "app/types/context";
-import { resolveMerchantId } from "../services.server/merchant";
+// NOTE: type-only imports — erased at build, so this module stays client-safe.
+// The server-only data fetchers (which pull in the pino/AsyncLocalStorage
+// logger + Admin GraphQL clients) live in `./onboarding.server`. Keep it that
+// way: importing a `.server` runtime binding here would ship `node:async_hooks`
+// to the browser and crash hydration (blank embedded app).
+import type { FirstProductPublishedReturnType } from "app/services.server/shop";
+import type { GetMainThemeIdReturnType } from "app/services.server/theme";
+import type { GetWebhooksSubscriptionsReturnType } from "app/services.server/webhook";
+import type { GetWebPixelReturnType } from "app/services.server/webPixel";
 
 export type OnboardingStepData = {
     webPixel?: GetWebPixelReturnType;
@@ -60,96 +46,6 @@ export const stepValidations: StepValidation = {
 export const MAX_STEP = Object.keys(stepValidations).length;
 
 /**
- * Data fetchers for each onboarding step
- */
-const stepDataFetchers = {
-    1: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
-        try {
-            const merchantId = await resolveMerchantId(context);
-            return { merchantId };
-        } catch (e) {
-            log.warn({ err: e }, "onboarding: error resolving merchantId");
-            return {};
-        }
-    },
-    2: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
-        try {
-            const webPixel = await getWebPixel(context);
-            return { webPixel };
-        } catch (error) {
-            log.error({ err: error }, "onboarding: error fetching web pixel");
-            return {};
-        }
-    },
-
-    3: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
-        try {
-            const webhooks = await getWebhooks(context);
-            return { webhooks };
-        } catch (error) {
-            log.error(
-                { err: error },
-                "onboarding: error fetching shopify webhooks"
-            );
-            return {};
-        }
-    },
-
-    4: async (
-        context: AuthenticatedContext,
-        request: Request
-    ): Promise<OnboardingStepData> => {
-        try {
-            const merchantId = await resolveMerchantId(context);
-            const frakWebhook = await getFrakWebookStatus(context, request);
-            return { frakWebhook, merchantId };
-        } catch (error) {
-            log.error(
-                { err: error },
-                "onboarding: error fetching frak webhook"
-            );
-            return {};
-        }
-    },
-
-    5: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
-        try {
-            const [isThemeHasFrakActivated, theme] = await Promise.all([
-                doesThemeHasFrakActivated(context),
-                getMainThemeId(context),
-            ]);
-            return { isThemeHasFrakActivated, theme };
-        } catch (error) {
-            log.error({ err: error }, "onboarding: error fetching theme data");
-            return {};
-        }
-    },
-
-    6: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
-        try {
-            const [isThemeHasFrakButton, firstProduct] = await Promise.all([
-                doesThemeHasFrakButton(context),
-                firstProductPublished(context),
-            ]);
-            return { isThemeHasFrakButton, firstProduct };
-        } catch (error) {
-            log.error({ err: error }, "onboarding: error fetching button data");
-            return {};
-        }
-    },
-
-    7: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
-        try {
-            const isThemeHasFrakBanner = await doesThemeHasFrakBanner(context);
-            return { isThemeHasFrakBanner };
-        } catch (error) {
-            log.error({ err: error }, "onboarding: error fetching banner data");
-            return {};
-        }
-    },
-};
-
-/**
  * Validates if a specific step is completed based on the provided data
  * @param step - The step number to validate
  * @param data - The onboarding step data
@@ -160,52 +56,6 @@ export function validateStep(step: number, data: OnboardingStepData): boolean {
     return validator ? !validator(data) : false;
 }
 
-/**
- * Fetches all data needed for comprehensive onboarding validation
- * @param context - The authenticated context
- * @returns Complete onboarding data for all steps
- */
-export async function fetchAllOnboardingData(
-    context: AuthenticatedContext,
-    request: Request
-): Promise<OnboardingStepData> {
-    try {
-        // Fetch all data in parallel for efficiency
-        const [
-            shopInfoData,
-            webPixelData,
-            webhookData,
-            frakWebhookData,
-            themeData,
-            buttonData,
-            bannerData,
-        ] = await Promise.all([
-            stepDataFetchers[1](context),
-            stepDataFetchers[2](context),
-            stepDataFetchers[3](context),
-            stepDataFetchers[4](context, request),
-            stepDataFetchers[5](context),
-            stepDataFetchers[6](context),
-            stepDataFetchers[7](context),
-        ]);
-        // Merge all data
-        return {
-            ...shopInfoData,
-            ...webPixelData,
-            ...webhookData,
-            ...frakWebhookData,
-            ...themeData,
-            ...buttonData,
-            ...bannerData,
-        };
-    } catch (error) {
-        log.error(
-            { err: error },
-            "onboarding: error fetching complete onboarding data"
-        );
-        return {};
-    }
-}
 /**
  * Backend / registration steps that always apply, regardless of theme:
  *  - Frak registration
