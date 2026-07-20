@@ -54,6 +54,12 @@ export function NotificationOptIn({
                             src={notificationImg}
                             alt=""
                             className={stepStyles.heroImageCenter}
+                            // Natural 2x size — reserves aspect ratio so lazy
+                            // loading doesn't shift layout; CSS constrains display.
+                            width={786}
+                            height={700}
+                            loading="lazy"
+                            decoding="async"
                         />
                     }
                     title={t("onboarding.notification.title")}

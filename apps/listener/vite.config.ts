@@ -1,8 +1,6 @@
-import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import * as process from "node:process";
 import { fileURLToPath } from "node:url";
-import { gzipSync } from "node:zlib";
 import preact from "@preact/preset-vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import type { UserConfig } from "vite";
@@ -10,6 +8,7 @@ import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
 import {
+    assertEagerBundleBudget,
     getSandboxEnv,
     getSstResource,
     inlineFontFaces,
@@ -207,100 +206,6 @@ function assertNoLazyCssLeak(htmlSource: string) {
     }
 }
 
-/**
- * Fail the build if the eager boot JS exceeds {@link EAGER_JS_BUDGET_GZIP}.
- *
- * "Eager" = the transitive static-import closure from the entry script. We walk
- * it from disk instead of trusting the `<link rel=modulepreload>` list, which
- * the `modulePreload` filter strips lazy chunks from — a static `import` still
- * fetches the target on boot, so the preload list under-reports.
- */
-// Static module specifiers that ship on boot: `import ... from "./x.js"`, bare
-// `import "./x.js"`, and `export ... from "./x.js"` re-exports. The leading
-// non-identifier boundary (`[^\w$]`) anchors the keyword as a statement — it
-// covers `;`/`}`/newline separation (rolldown emits imports newline-separated,
-// no semicolons) without matching identifiers like `myimport`. The optional
-// `from` clause excludes dynamic `import("./x.js")`; `"\./"` excludes the
-// `"assets/*.js"` preload-helper dep arrays.
-const STATIC_IMPORT_RE =
-    /(?:^|[^\w$])(?:import|export)\s*(?:[^"';]*from\s*)?"\.\/([^"]+\.js)"/g;
-
-function collectEagerClosure(dir: string, entries: string[]) {
-    // Maps each reachable chunk key to its bytes so the budget gate gzips what
-    // was already read here (one disk read per chunk, no re-encode).
-    const eager = new Map<string, Buffer>();
-    const stack = [...entries];
-    while (stack.length > 0) {
-        const key = stack.pop();
-        if (!key || eager.has(key)) continue;
-        let code: Buffer;
-        try {
-            code = readFileSync(path.join(dir, key));
-        } catch {
-            continue;
-        }
-        eager.set(key, code);
-        for (const m of code.toString("utf-8").matchAll(STATIC_IMPORT_RE)) {
-            const dep = `assets/${m[1]}`;
-            if (!eager.has(dep)) stack.push(dep);
-        }
-    }
-    return eager;
-}
-
-function assertEagerBundleBudget() {
-    const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
-
-    return {
-        name: "assert-eager-bundle-budget",
-        apply: "build" as const,
-        // writeBundle (post-write) so the final, fully-transformed index.html and
-        // every chunk are on disk — avoids in-memory bundle timing/encoding edge
-        // cases where the emitted HTML asset isn't yet a string in generateBundle.
-        writeBundle(options: { dir?: string }) {
-            const dir = options.dir;
-            if (!dir) return;
-
-            let htmlSource: string;
-            try {
-                htmlSource = readFileSync(
-                    path.join(dir, "index.html"),
-                    "utf-8"
-                );
-            } catch {
-                return;
-            }
-
-            assertNoLazyCssLeak(htmlSource);
-
-            const entries: string[] = [];
-            for (const m of htmlSource.matchAll(scriptRe)) entries.push(m[1]);
-
-            const eager = collectEagerClosure(dir, entries);
-
-            let totalGzip = 0;
-            const breakdown: string[] = [];
-            for (const [key, code] of eager) {
-                const gz = gzipSync(code).length;
-                totalGzip += gz;
-                breakdown.push(`  ${key}: ${(gz / 1024).toFixed(2)} KB gz`);
-            }
-
-            const totalKb = (totalGzip / 1024).toFixed(2);
-            console.log(
-                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${EAGER_JS_BUDGET_GZIP / 1024} KB)`
-            );
-            if (totalGzip > EAGER_JS_BUDGET_GZIP) {
-                throw new Error(
-                    `Eager boot JS budget exceeded: ${totalKb} KB gz > ${EAGER_JS_BUDGET_GZIP / 1024} KB.\n${breakdown
-                        .sort()
-                        .join("\n")}`
-                );
-            }
-        },
-    };
-}
-
 export default defineConfig(async () => {
     const sandboxEnv = await getSandboxEnv();
 
@@ -436,7 +341,10 @@ export default defineConfig(async () => {
             ...(isProd ? [removeConsole()] : []),
             stripOrphanCrossChunkImports(),
             stripEagerLazyCss(),
-            assertEagerBundleBudget(),
+            assertEagerBundleBudget({
+                budgetGzip: EAGER_JS_BUDGET_GZIP,
+                assertHtml: assertNoLazyCssLeak,
+            }),
         ],
         server: {
             port: 3002,

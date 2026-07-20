@@ -49,8 +49,13 @@ export function Welcome({ onContinue }: WelcomeProps) {
                             src={welcomeImg}
                             alt=""
                             className={stepStyles.heroImageCenter}
-                            // 2x asset → 1x width 786/2 = 393px; bleeds past the
-                            // 375px frame (overflow-clipped) to fill the screen.
+                            // Natural 2x size (constrained to 393px via
+                            // maxWidth); bleeds past the 375px frame (overflow-
+                            // clipped) to fill the screen. Intentionally eager
+                            // (no loading="lazy"): first onboarding screen,
+                            // likely LCP element.
+                            width={786}
+                            height={641}
                             style={{ maxWidth: "393px" }}
                         />
                     }

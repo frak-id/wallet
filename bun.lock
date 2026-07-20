@@ -427,8 +427,11 @@
       "name": "@frak-labs/dev-tooling",
       "version": "0.0.0",
       "devDependencies": {
+        "@frak-labs/test-foundation": "workspace:*",
+        "@vitest/ui": "^4.1.0",
         "typescript": "catalog:",
         "vite": "catalog:",
+        "vitest": "^4.1.4",
       },
     },
     "packages/rpc": {
