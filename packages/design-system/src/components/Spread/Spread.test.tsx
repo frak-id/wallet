@@ -75,6 +75,17 @@ describe("Spread", () => {
         );
     });
 
+    it("forwards aria attributes and role to the container", () => {
+        render(
+            <Spread aria-label="Row" role="group">
+                <span>content</span>
+            </Spread>
+        );
+        const el = screen.getByText("content").parentElement;
+        expect(el).toHaveAttribute("aria-label", "Row");
+        expect(el).toHaveAttribute("role", "group");
+    });
+
     it("renders the given element tag via as prop", () => {
         render(
             <Spread as="header">

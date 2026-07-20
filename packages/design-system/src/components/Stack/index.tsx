@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { AriaAttributes, AriaRole, ReactNode } from "react";
 import type { ResponsiveSpace } from "../../sprinkles.css";
 import { Box } from "../Box";
 
@@ -42,7 +42,7 @@ const justifyToFlexJustify: Record<StackJustify, JustifyContent> = {
     "space-between": "space-between",
 } as const;
 
-export type StackProps = {
+export type StackProps = AriaAttributes & {
     space: ResponsiveSpace;
     padding?: ResponsiveSpace;
     paddingX?: ResponsiveSpace;
@@ -50,6 +50,8 @@ export type StackProps = {
     align?: StackAlign;
     justify?: StackJustify;
     as?: ValidStackElement;
+    role?: AriaRole;
+    id?: string;
     className?: string;
     children?: ReactNode;
 };
@@ -64,10 +66,12 @@ export function Stack({
     as = "div",
     className,
     children,
+    ...rest
 }: StackProps) {
     return (
         <Box
             as={as}
+            {...rest}
             display="flex"
             flexDirection="column"
             gap={space}

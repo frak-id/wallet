@@ -34,6 +34,17 @@ describe("Inline", () => {
         expect(screen.getByText("nav item").parentElement?.tagName).toBe("NAV");
     });
 
+    it("should forward aria attributes and role to the container", () => {
+        render(
+            <Inline space="s" aria-label="420 views" role="group">
+                <span>content</span>
+            </Inline>
+        );
+        const el = screen.getByText("content").parentElement;
+        expect(el).toHaveAttribute("aria-label", "420 views");
+        expect(el).toHaveAttribute("role", "group");
+    });
+
     it("should apply different classes for different alignment combinations", () => {
         const { rerender } = render(
             <Inline space="s" align="center" alignY="center">

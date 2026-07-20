@@ -34,6 +34,17 @@ describe("Stack", () => {
         expect(screen.getByText("item").parentElement?.tagName).toBe("UL");
     });
 
+    it("should forward aria attributes and role to the container", () => {
+        render(
+            <Stack space="m" aria-label="Devices" role="group">
+                <span>content</span>
+            </Stack>
+        );
+        const el = screen.getByText("content").parentElement;
+        expect(el).toHaveAttribute("aria-label", "Devices");
+        expect(el).toHaveAttribute("role", "group");
+    });
+
     it("should set alignItems class when align prop provided", () => {
         const { rerender } = render(
             <Stack space="s" align="center">
