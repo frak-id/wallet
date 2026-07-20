@@ -26,7 +26,10 @@ export {
     isRunningInProd,
     isRunningLocally,
     isValidEmail,
+    isValidUrl,
+    normalizeUrl,
     roundTo,
+    validateUrl,
 } from "./utils";
 export {
     buildMergeConsentChallenge,

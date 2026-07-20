@@ -1,3 +1,4 @@
+import { isValidUrl, normalizeUrl } from "@frak-labs/app-essentials";
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Input } from "@frak-labs/design-system/components/Input";
@@ -14,7 +15,6 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { isValidUrl, normalizeUrl } from "@/module/common/utils/validateUrl";
 import { EditField } from "@/module/forms/EditField";
 import { Form, FormControl, FormField, FormItem } from "@/module/forms/Form";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
