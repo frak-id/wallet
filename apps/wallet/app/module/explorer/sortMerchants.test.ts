@@ -14,6 +14,7 @@ function merchant(
         activeCampaignCount: 0,
         integration: "native",
         popularity: 0,
+        views: 0,
         recent: null,
         expiring: null,
         reward: null,
@@ -27,18 +28,21 @@ const iso = (offsetMs: number) =>
 const list = [
     merchant("a", {
         popularity: 1,
+        views: 30,
         recent: iso(100),
         expiring: iso(300),
         reward: 5,
     }),
     merchant("b", {
         popularity: 3,
+        views: 10,
         recent: iso(300),
         expiring: iso(100),
         reward: 20,
     }),
     merchant("c", {
         popularity: 2,
+        views: 20,
         recent: iso(200),
         expiring: null,
         reward: 10,
@@ -59,6 +63,14 @@ describe("sortMerchants", () => {
             "b",
             "c",
             "a",
+        ]);
+    });
+
+    test("views orders by descending view count", () => {
+        expect(sortMerchants(list, "views").map((m) => m.id)).toEqual([
+            "a",
+            "c",
+            "b",
         ]);
     });
 

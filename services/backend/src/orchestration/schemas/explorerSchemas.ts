@@ -16,6 +16,10 @@ export const ExplorerMerchantItemSchema = t.Object({
     // Interaction count over the last month — a coarse popularity rating used
     // by the frontend to surface merchants users engage with the most.
     popularity: t.Number(),
+    // Total `explorer_card_viewed` impressions for this merchant, sourced from
+    // OpenPanel (heavily cached, see ExplorerOrchestrator). A top-of-funnel
+    // visibility signal, distinct from `popularity` (actual interactions).
+    views: t.Number(),
     // ISO timestamp of the freshest active campaign (published-, else created-
     // at), so the frontend can sort by campaign freshness. Null shouldn't
     // happen (listed merchants always have an active campaign) but stays

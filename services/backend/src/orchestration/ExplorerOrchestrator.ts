@@ -24,6 +24,10 @@ import {
     merchantsTable,
 } from "../domain/merchant/db/schema";
 import { interactionLogsTable } from "../domain/rewards/db/schema";
+import {
+    openPanelExportClient,
+    serieSum,
+} from "../infrastructure/integrations/openpanel";
 import { db } from "../infrastructure/persistence/postgres";
 import type {
     PricingRepository,
@@ -42,6 +46,16 @@ type ExplorerQueryParams = {
 // Popularity window: interactions in the trailing 30 days.
 const POPULARITY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
+// Views live in their own long-lived cache: one OpenPanel breakdown serves
+// every merchant/page, and the export API is slow, so we hold it for 2 hours.
+const VIEWS_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
+const VIEWS_CACHE_KEY = "all";
+// OpenPanel has no "all-time" range, so we span from a fixed floor (before the
+// wallet explorer shipped) to now — effectively every recorded card view.
+const VIEWS_SINCE_ISO = "2024-01-01T00:00:00.000Z";
+// The event carries `properties.merchant_id`, matching `merchants.id`.
+const VIEWS_BREAKDOWN = "properties.merchant_id";
+
 export class ExplorerOrchestrator {
     constructor(private readonly pricingRepository: PricingRepository) {}
 
@@ -51,6 +65,14 @@ export class ExplorerOrchestrator {
     >({
         max: 128,
         ttl: 30_000,
+    });
+
+    // Total explorer-card views per merchant, keyed by a single global key
+    // (one breakdown query covers every merchant). Kept separate from the
+    // per-page query cache so its slow OpenPanel refresh runs at most 2-hourly.
+    private readonly viewsCache = new LRUCache<string, Map<string, number>>({
+        max: 1,
+        ttl: VIEWS_CACHE_TTL_MS,
     });
 
     async queryMerchants(
@@ -168,13 +190,16 @@ export class ExplorerOrchestrator {
 
         const totalResult = rows[0]?.totalResult ?? 0;
 
-        const rewardByMerchant = await this.computeMaxRewardByMerchant(
-            rows.map((row) => ({
-                merchantId: row.id,
-                defaultRewardToken: row.defaultRewardToken,
-            })),
-            now
-        );
+        const [rewardByMerchant, viewsByMerchant] = await Promise.all([
+            this.computeMaxRewardByMerchant(
+                rows.map((row) => ({
+                    merchantId: row.id,
+                    defaultRewardToken: row.defaultRewardToken,
+                })),
+                now
+            ),
+            this.getViewsByMerchant(),
+        ]);
 
         const merchants: ExplorerMerchantItem[] = rows.map((row) => ({
             id: row.id,
@@ -184,6 +209,7 @@ export class ExplorerOrchestrator {
             activeCampaignCount: Number(row.activeCampaignCount),
             integration: row.integration,
             popularity: Number(row.popularity),
+            views: viewsByMerchant.get(row.id) ?? 0,
             recent: row.recentAt ? new Date(row.recentAt).toISOString() : null,
             expiring: row.expiringAt
                 ? new Date(row.expiringAt).toISOString()
@@ -192,6 +218,45 @@ export class ExplorerOrchestrator {
         }));
 
         return { totalResult, merchants };
+    }
+
+    /**
+     * Total `explorer_card_viewed` impressions per merchant id, from OpenPanel.
+     *
+     * One breakdown query (on `properties.merchant_id`) covers every merchant,
+     * and the export API is slow, so the whole map is cached for 2 hours (see
+     * `viewsCache`). A failed/empty OpenPanel response degrades to an empty map
+     * (all merchants report 0 views) rather than breaking the explorer.
+     */
+    private async getViewsByMerchant(): Promise<Map<string, number>> {
+        const cached = this.viewsCache.get(VIEWS_CACHE_KEY);
+        if (cached) {
+            return cached;
+        }
+
+        const response = await openPanelExportClient.getChart({
+            series: [{ name: "explorer_card_viewed" }],
+            startDate: VIEWS_SINCE_ISO,
+            endDate: new Date().toISOString(),
+            range: "custom",
+            interval: "month",
+            breakdowns: [{ name: VIEWS_BREAKDOWN }],
+        });
+
+        // One serie per (event × merchant_id) tuple; `serieSum` totals its
+        // buckets. Multiple series can share a merchant id, so accumulate.
+        const views = new Map<string, number>();
+        for (const serie of response.series) {
+            const merchantId = serie.event.breakdowns?.[VIEWS_BREAKDOWN];
+            if (!merchantId) continue;
+            views.set(
+                merchantId,
+                (views.get(merchantId) ?? 0) + serieSum(serie)
+            );
+        }
+
+        this.viewsCache.set(VIEWS_CACHE_KEY, views);
+        return views;
     }
 
     /**
