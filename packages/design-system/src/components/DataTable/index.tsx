@@ -1,5 +1,3 @@
-import { Text } from "@frak-labs/design-system/components/Text";
-import { ArrowUpIcon } from "@frak-labs/design-system/icons";
 import type { SortingState, TableOptions } from "@tanstack/react-table";
 import {
     type Column,
@@ -17,7 +15,12 @@ import {
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { ArrowUpIcon } from "../../icons";
+import {
+    cell as tableCell,
+    headerCell as tableHeaderCell,
+} from "../Table/table.css";
+import { Text } from "../Text";
 import {
     preTable as preTableStyle,
     tableButton,
@@ -27,7 +30,7 @@ import {
     tableFixedLayout,
     table as tableStyle,
     tableWrapper,
-} from "./table.css";
+} from "./data-table.css";
 
 declare module "@tanstack/react-table" {
     interface ColumnMeta<TData, TValue> {
@@ -35,11 +38,16 @@ declare module "@tanstack/react-table" {
     }
 }
 
-export type ReactTableProps<TData> = {
+export type DataTableProps<TData> = {
     classNameWrapper?: string;
     className?: string;
     preTable?: ReactNode;
     postTable?: ReactNode;
+    /**
+     * Message rendered when there is no data. DS is app-agnostic, so the
+     * consumer passes the translated string (e.g. `t("common.table.empty")`).
+     */
+    emptyMessage: ReactNode;
     /**
      * When set, the empty state renders as a full data row: the empty message
      * in the first column and this placeholder (e.g. `"–"`) in every other,
@@ -81,13 +89,14 @@ export type ReactTableProps<TData> = {
     "state" | "getCoreRowModel" | "getSortedRowModel" | "getFilteredRowModel"
 >;
 
-export function Table<TData extends object>({
+export function DataTable<TData extends object>({
     data,
     columns,
     classNameWrapper = "",
     className = "",
     preTable,
     postTable,
+    emptyMessage,
     emptyPlaceholder,
     sorting,
     enableFiltering = false,
@@ -100,8 +109,7 @@ export function Table<TData extends object>({
     anySelected,
     fixedLayout,
     ...additionalProps
-}: ReactTableProps<TData>) {
-    const { t } = useTranslation();
+}: DataTableProps<TData>) {
     const [sortingInner, setSortingInner] = useState<SortingState>([]);
 
     /**
@@ -163,6 +171,7 @@ export function Table<TData extends object>({
                                     <th
                                         key={header.id}
                                         scope="col"
+                                        className={tableHeaderCell()}
                                         style={{
                                             ...(size !== undefined && {
                                                 width: size,
@@ -193,13 +202,18 @@ export function Table<TData extends object>({
                         emptyPlaceholder !== undefined ? (
                             <EmptyRow
                                 columns={table.getVisibleLeafColumns()}
-                                message={t("common.table.empty")}
+                                message={emptyMessage}
                                 placeholder={emptyPlaceholder}
                             />
                         ) : (
                             <tr>
-                                <td colSpan={table.options.columns.length}>
-                                    {t("common.table.empty")}
+                                <td
+                                    className={tableCell()}
+                                    colSpan={
+                                        table.getVisibleLeafColumns().length
+                                    }
+                                >
+                                    {emptyMessage}
                                 </td>
                             </tr>
                         )
@@ -234,6 +248,7 @@ export function Table<TData extends object>({
                                         return (
                                             <td
                                                 key={cell.id}
+                                                className={tableCell()}
                                                 style={{
                                                     ...(size !== undefined && {
                                                         width: size,
@@ -308,6 +323,7 @@ function EmptyRow<TData>({
                 return (
                     <td
                         key={column.id}
+                        className={tableCell()}
                         style={{
                             ...(size !== undefined && { width: size }),
                             ...(align === "right" && { textAlign: "right" }),

@@ -2,7 +2,17 @@ import type { FlowEvents } from "./flow";
 
 type AuthLoginFlow = FlowEvents<
     "auth_login",
-    { method?: "global" | "specific" }
+    {
+        method?: "global" | "specific";
+        /** Auto-fired `/login` quick-login attempt vs. a user-initiated login. */
+        trigger?: "auto" | "manual";
+        /**
+         * `_failed` only: a `trigger: "auto"` attempt that hit the expected
+         * "no passkey on this device" signal (zero UI). Not a real auth
+         * failure — filter it out of the failure rate on dashboards.
+         */
+        silent_fallthrough?: boolean;
+    }
 >;
 type AuthRegisterFlow = FlowEvents<"auth_register">;
 type AuthDemoFlow = FlowEvents<"auth_demo">;
@@ -20,6 +30,9 @@ type StandaloneAuthEvents = {
         origin?: "existing" | "another";
     };
     auth_recovery_code_clicked: undefined;
+    // Fired when the Android auto-fire self-heals a stale authenticator hint
+    // after a silent `no-credential` outcome.
+    auth_login_self_heal: { reason: "stale_hint_clear_attempted" };
     // Post-auth side-effects
     user_logged_in: undefined;
     logout: undefined;

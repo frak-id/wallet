@@ -1,5 +1,6 @@
 import { Session } from "@shopify/shopify-api";
 import type { SessionStorage } from "@shopify/shopify-app-session-storage";
+import { log } from "app/services.server/logger";
 import {
     desc,
     eq,
@@ -104,7 +105,7 @@ export class DrizzleSessionStorageAdapter<
 
             return this.rowToSession(row[0]);
         } catch (error) {
-            console.error(error);
+            log.error({ err: error, sessionId: id }, "loadSession failed");
 
             return undefined;
         }
@@ -116,7 +117,7 @@ export class DrizzleSessionStorageAdapter<
                 .delete(this.sessionTable)
                 .where(eq(this.sessionTable.id, id));
         } catch (error) {
-            console.error(error);
+            log.error({ err: error, sessionId: id }, "deleteSession failed");
 
             return false;
         }
@@ -132,7 +133,7 @@ export class DrizzleSessionStorageAdapter<
 
             return true;
         } catch (error) {
-            console.error(error);
+            log.error({ err: error, sessionIds: ids }, "deleteSessions failed");
 
             return false;
         }

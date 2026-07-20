@@ -976,6 +976,13 @@ export default interface Resources {
       }
     },
     "errors": {
+      "auth": {
+        "invalidCode": "Invalid or expired code.",
+        "invalidMethod": "This verification method isn't available.",
+        "invalidTwoFactorCode": "Invalid code. Please try again.",
+        "invalidTwoFactorProof": "Verification failed. Please try again.",
+        "otpThrottled": "Too many attempts. Retry in {{seconds}}s."
+      },
       "boundary": {
         "goBack": "Go Back",
         "message": "An unexpected error occurred",
@@ -1003,6 +1010,11 @@ export default interface Resources {
       },
       "generic": {
         "title": "Something went wrong"
+      },
+      "linkWallet": {
+        "signatureCancelled": "Wallet signature cancelled.",
+        "stepUpRequired": "Recent two-factor verification required. Please verify again, then retry.",
+        "walletTaken": "This wallet is already linked to another account."
       },
       "merchantCreate": {
         "back": "Back to Dashboard",
@@ -1739,10 +1751,12 @@ export default interface Resources {
           "addPasswordCta": "Add password",
           "connected": "Verified",
           "description": "Wallet, password, and connected accounts used to sign in.",
+          "emailMismatch": "This email doesn't match your account email.",
           "emailTaken": "This email is already used by another account.",
           "linkWallet": "Link a wallet",
           "password": "Email & password",
           "passwordAdded": "Password added and email verified.",
+          "passwordExists": "This account already has a password.",
           "pending": "Pending verification",
           "savePassword": "Save password",
           "title": "Sign-in methods",

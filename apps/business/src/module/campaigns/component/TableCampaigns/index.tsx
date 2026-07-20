@@ -1,7 +1,9 @@
+import { DataTable } from "@frak-labs/design-system/components/DataTable";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { getRouteApi } from "@tanstack/react-router";
 import type { ColumnFiltersState, Row } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CampaignDetailsSheet } from "@/module/campaigns/component/CampaignDetailsSheet";
 import { CampaignsEditBar } from "@/module/campaigns/component/TableCampaigns/CampaignsEditBar";
 import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
@@ -9,7 +11,6 @@ import {
     type CampaignWithStats,
     useCampaignsWithStats,
 } from "@/module/campaigns/hook/useCampaignsWithStats";
-import { Table } from "@/module/common/component/Table";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { campaignSelectionStore } from "@/stores/campaignSelectionStore";
 import { useCampaignColumns } from "./columns";
@@ -18,6 +19,7 @@ import * as styles from "./table-campaigns.css";
 const routeApi = getRouteApi("/_restricted/m/$merchantId/campaigns/list");
 
 export function TableCampaigns() {
+    const { t } = useTranslation();
     const { data } = useCampaignsWithStats();
     const merchantId = useActiveMerchantId();
     const navigate = routeApi.useNavigate();
@@ -65,10 +67,11 @@ export function TableCampaigns() {
                             selected={selectedCampaigns}
                         />
                     )}
-                    <Table
+                    <DataTable
                         className={styles.campaignsTable}
                         data={data}
                         columns={columns}
+                        emptyMessage={t("common.table.empty")}
                         emptyPlaceholder="–"
                         enableSorting={true}
                         enableFiltering={true}

@@ -3,6 +3,7 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppError } from "app/components/AppError";
 import { Skeleton } from "app/components/Skeleton";
 import type { loader as rootLoader } from "app/root";
+import { log } from "app/services.server/logger";
 import {
     ensureComponentsUrlMetafield,
     ensureKlaviyoShareMetafields,
@@ -35,6 +36,7 @@ import {
     useRouteError,
     useRouteLoaderData,
 } from "react-router";
+import { useRequestId } from "../providers/RequestId";
 import { RootProvider } from "../providers/RootProvider";
 import { authenticate } from "../shopify.server";
 
@@ -45,17 +47,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         resolveMerchantId(context),
     ]);
 
-    // Fire-and-forget: sync wallet URL metafield for listener.liquid
-    ensureWalletUrlMetafield(context).catch(() => {});
-    // Fire-and-forget: sync components CDN URL metafield for listener.liquid
-    ensureComponentsUrlMetafield(context).catch(() => {});
-    // Fire-and-forget: sync Klaviyo share metafields so merchants can paste
-    // a ready-to-use share CTA into their email templates without
-    // hard-coding the storefront host.
-    ensureKlaviyoShareMetafields(context).catch(() => {});
-    // Fire-and-forget: ensure the frak_i18n metaobject singleton entry
-    // exists with EN seeds + bundled FR translations.
-    ensureFrakI18nMetaobject(context).catch(() => {});
+    // Fire-and-forget metafield syncs. Each helper already logs its own
+    // handled failures; the outer `.catch` only guards an unexpected reject
+    // (e.g. the pre-try `shopInfo` lookup). Log it rather than swallowing it
+    // silently — an empty `.catch(() => {})` is a latent trap that hides a
+    // regression exactly when these start failing.
+    ensureWalletUrlMetafield(context).catch((err) =>
+        log.warn({ err }, "ensureWalletUrlMetafield failed")
+    );
+    ensureComponentsUrlMetafield(context).catch((err) =>
+        log.warn({ err }, "ensureComponentsUrlMetafield failed")
+    );
+    ensureKlaviyoShareMetafields(context).catch((err) =>
+        log.warn({ err }, "ensureKlaviyoShareMetafields failed")
+    );
+    ensureFrakI18nMetaobject(context).catch((err) =>
+        log.warn({ err }, "ensureFrakI18nMetaobject failed")
+    );
 
     return {
         apiKey: process.env.SHOPIFY_API_KEY || "",
@@ -152,7 +160,12 @@ function AppContent({
 export function ErrorBoundary() {
     const error = useRouteError();
     // Hooks must run unconditionally, before the isRouteErrorResponse return.
-    const requestId = useRouteLoaderData<typeof rootLoader>("root")?.requestId;
+    // Fall back to the request-scoped id (context) if root's loader data is
+    // unavailable, so the support reference never silently vanishes.
+    const loaderRequestId =
+        useRouteLoaderData<typeof rootLoader>("root")?.requestId;
+    const contextRequestId = useRequestId();
+    const requestId = loaderRequestId ?? contextRequestId;
     if (isRouteErrorResponse(error)) {
         return boundary.error(error);
     }

@@ -1,5 +1,6 @@
 import { alias } from "@frak-labs/design-system/tokens";
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 
 export const cardContainer = style({
     overflow: "hidden",
@@ -14,52 +15,60 @@ export const dismissButton = style({
     zIndex: 1,
 });
 
-export const slider = styleVariants({
-    multiple: {
-        display: "flex",
-        gap: alias.spacing.xs,
-        overflowX: "auto",
-        scrollSnapType: "x mandatory",
-        overscrollBehaviorX: "contain",
-        scrollbarWidth: "none",
-        touchAction: "pan-x pan-y pinch-zoom",
-        WebkitOverflowScrolling: "touch",
-        // Full bleed: extend through the parent's lateral padding so
-        // adjacent cards peek symmetrically and the carousel runs
-        // edge-to-edge of the screen (no white border on either side).
-        marginLeft: `calc(-1 * ${alias.spacing.m})`,
-        marginRight: `calc(-1 * ${alias.spacing.m})`,
-        paddingLeft: alias.spacing.m,
-        paddingRight: alias.spacing.m,
-        scrollPaddingLeft: alias.spacing.m,
-        scrollPaddingRight: alias.spacing.m,
-        selectors: {
-            "&::-webkit-scrollbar": {
-                display: "none",
+export const slider = recipe({
+    variants: {
+        mode: {
+            multiple: {
+                display: "flex",
+                gap: alias.spacing.xs,
+                overflowX: "auto",
+                scrollSnapType: "x mandatory",
+                overscrollBehaviorX: "contain",
+                scrollbarWidth: "none",
+                touchAction: "pan-x pan-y pinch-zoom",
+                WebkitOverflowScrolling: "touch",
+                // Full bleed: extend through the parent's lateral padding so
+                // adjacent cards peek symmetrically and the carousel runs
+                // edge-to-edge of the screen (no white border on either side).
+                marginLeft: `calc(-1 * ${alias.spacing.m})`,
+                marginRight: `calc(-1 * ${alias.spacing.m})`,
+                paddingLeft: alias.spacing.m,
+                paddingRight: alias.spacing.m,
+                scrollPaddingLeft: alias.spacing.m,
+                scrollPaddingRight: alias.spacing.m,
+                selectors: {
+                    "&::-webkit-scrollbar": {
+                        display: "none",
+                    },
+                },
+            },
+            single: {
+                display: "flex",
+                overflow: "hidden",
+                touchAction: "auto",
             },
         },
     },
-    single: {
-        display: "flex",
-        overflow: "hidden",
-        touchAction: "auto",
-    },
 });
 
-export const slide = styleVariants({
-    multiple: {
-        // Match the width of the surrounding blocks (Balance, Earnings).
-        // Adjacent cards peek through the slider's lateral breakout zone.
-        flex: "0 0 100%",
-        overflow: "hidden",
-        borderRadius: alias.cornerRadius.l,
-        scrollSnapAlign: "center",
-        scrollSnapStop: "always",
-    },
-    single: {
-        flex: "1 1 100%",
-        overflow: "hidden",
-        borderRadius: alias.cornerRadius.l,
+export const slide = recipe({
+    variants: {
+        mode: {
+            multiple: {
+                // Match the width of the surrounding blocks (Balance, Earnings).
+                // Adjacent cards peek through the slider's lateral breakout zone.
+                flex: "0 0 100%",
+                overflow: "hidden",
+                borderRadius: alias.cornerRadius.l,
+                scrollSnapAlign: "center",
+                scrollSnapStop: "always",
+            },
+            single: {
+                flex: "1 1 100%",
+                overflow: "hidden",
+                borderRadius: alias.cornerRadius.l,
+            },
+        },
     },
 });
 

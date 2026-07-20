@@ -33,6 +33,9 @@ export { getCurrencyAmountKey } from "./format/getCurrencyAmountKey";
 export { getSupportedCurrency } from "./format/getSupportedCurrency";
 export { getSupportedLocale } from "./format/getSupportedLocale";
 
+// Language detection
+export { detectPageLanguage } from "./i18n/detectPageLanguage";
+
 // Iframe DOM helpers
 export {
     baseIframeProps,

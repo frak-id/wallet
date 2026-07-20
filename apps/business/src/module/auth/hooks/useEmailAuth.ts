@@ -1,6 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
+import {
+    AuthError,
+    extractAuthErrorCode,
+    extractAuthErrorMessage,
+} from "@/module/auth/utils/authError";
 import { useAuthStore } from "@/stores/authStore";
 import { useTwoFactorStore } from "@/stores/twoFactorStore";
 
@@ -99,8 +103,9 @@ export function useConfirmPasswordReset() {
                     params
                 );
             if (error) {
-                throw new Error(
-                    extractAuthErrorMessage(error, "Invalid or expired code")
+                throw new AuthError(
+                    extractAuthErrorMessage(error, "Invalid or expired code"),
+                    extractAuthErrorCode(error)
                 );
             }
             return data;

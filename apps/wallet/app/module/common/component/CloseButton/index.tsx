@@ -1,11 +1,12 @@
 import { CloseIcon } from "@frak-labs/design-system/icons";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { ButtonHTMLAttributes } from "react";
 import * as styles from "./index.css";
 
 type CloseButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
     ariaLabel: string;
     iconSize?: number;
-    variant?: keyof typeof styles.closeButton;
+    variant?: NonNullable<RecipeVariants<typeof styles.closeButton>>["variant"];
 };
 
 export function CloseButton({
@@ -15,7 +16,7 @@ export function CloseButton({
     className,
     ...props
 }: CloseButtonProps) {
-    const classes = [className, styles.closeButton[variant]]
+    const classes = [className, styles.closeButton({ variant })]
         .filter(Boolean)
         .join(" ");
 

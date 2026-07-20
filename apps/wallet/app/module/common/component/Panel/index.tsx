@@ -90,9 +90,7 @@ export function Panel({
         <Card
             padding="none"
             className={[
-                styles.panel,
-                styles.variant[variant],
-                styles.size[size],
+                styles.panel({ variant, size }),
                 withShadow ? styles.shadow : undefined,
                 styles.dismissible,
                 className,

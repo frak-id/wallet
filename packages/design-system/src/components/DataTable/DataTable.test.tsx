@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { Table } from "./index";
+import { DataTable } from "./index";
 
 type TestData = {
     id: number;
@@ -11,7 +11,9 @@ type TestData = {
 
 const columnHelper = createColumnHelper<TestData>();
 
-describe("Table", () => {
+const EMPTY_MESSAGE = "No results found";
+
+describe("DataTable", () => {
     const columns = [
         columnHelper.accessor("name", {
             header: "Name",
@@ -27,7 +29,13 @@ describe("Table", () => {
             { id: 2, name: "Item 2", value: 20 },
         ];
 
-        render(<Table data={data} columns={columns} />);
+        render(
+            <DataTable
+                data={data}
+                columns={columns}
+                emptyMessage={EMPTY_MESSAGE}
+            />
+        );
 
         expect(screen.getByText("Item 1")).toBeInTheDocument();
         expect(screen.getByText("Item 2")).toBeInTheDocument();
@@ -38,27 +46,40 @@ describe("Table", () => {
     it("should render table headers", () => {
         const data: TestData[] = [];
 
-        render(<Table data={data} columns={columns} />);
+        render(
+            <DataTable
+                data={data}
+                columns={columns}
+                emptyMessage={EMPTY_MESSAGE}
+            />
+        );
 
         expect(screen.getByText("Name")).toBeInTheDocument();
         expect(screen.getByText("Value")).toBeInTheDocument();
     });
 
-    it("should render no results message when data is empty", () => {
+    it("should render the empty message when data is empty", () => {
         const data: TestData[] = [];
 
-        render(<Table data={data} columns={columns} />);
+        render(
+            <DataTable
+                data={data}
+                columns={columns}
+                emptyMessage={EMPTY_MESSAGE}
+            />
+        );
 
-        expect(screen.getByText("common.table.empty")).toBeInTheDocument();
+        expect(screen.getByText(EMPTY_MESSAGE)).toBeInTheDocument();
     });
 
     it("should render preTable content", () => {
         const data: TestData[] = [{ id: 1, name: "Item", value: 10 }];
 
         render(
-            <Table
+            <DataTable
                 data={data}
                 columns={columns}
+                emptyMessage={EMPTY_MESSAGE}
                 preTable={<div data-testid="pre-table">Pre content</div>}
             />
         );
@@ -70,9 +91,10 @@ describe("Table", () => {
         const data: TestData[] = [{ id: 1, name: "Item", value: 10 }];
 
         render(
-            <Table
+            <DataTable
                 data={data}
                 columns={columns}
+                emptyMessage={EMPTY_MESSAGE}
                 postTable={<div data-testid="post-table">Post content</div>}
             />
         );
@@ -84,7 +106,12 @@ describe("Table", () => {
         const data: TestData[] = [{ id: 1, name: "Item", value: 10 }];
 
         const { container } = render(
-            <Table data={data} columns={columns} className="custom-table" />
+            <DataTable
+                data={data}
+                columns={columns}
+                emptyMessage={EMPTY_MESSAGE}
+                className="custom-table"
+            />
         );
 
         const table = container.querySelector("table");

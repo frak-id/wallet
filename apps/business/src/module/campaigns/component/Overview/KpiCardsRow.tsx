@@ -3,11 +3,11 @@ import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { KpiCard } from "@/module/campaigns/component/KpiCard";
 import { overviewAnalyticsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { currencyStore } from "@/stores/currencyStore";
-import { OverviewKpiCard } from "./OverviewKpiCard";
 
 const DEFAULT_REVENUE_CURRENCY = "EUR";
 
@@ -97,7 +97,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
 
     return (
         <Tiles columns={{ mobile: 2, tablet: 3, desktop: 5 }} space="m">
-            <OverviewKpiCard
+            <KpiCard
                 label={t("campaigns.overview.kpi.ambassadors")}
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.integer.format(ambassadors.current)}
@@ -105,7 +105,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 hint={ambassadorsAccurate ? undefined : APPROXIMATE_HINT}
                 empty={ambassadors.current === 0}
             />
-            <OverviewKpiCard
+            <KpiCard
                 label={t("campaigns.overview.kpi.shares")}
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.integer.format(shares.current)}
@@ -113,7 +113,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 hint={sharesAccurate ? undefined : APPROXIMATE_HINT}
                 empty={shares.current === 0}
             />
-            <OverviewKpiCard
+            <KpiCard
                 label={t("campaigns.overview.kpi.revenue")}
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.revenue.format(kpis.revenue.current)}
@@ -123,7 +123,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 )}
                 empty={kpis.revenue.current === 0}
             />
-            <OverviewKpiCard
+            <KpiCard
                 label={t("campaigns.overview.kpi.sharingRate")}
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.percent.format(sharingRate.current)}
@@ -135,7 +135,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 }
                 empty={sharingRate.current === 0}
             />
-            <OverviewKpiCard
+            <KpiCard
                 label={t("campaigns.overview.kpi.avgCpa")}
                 descriptor={t("campaigns.overview.kpi.descriptorAllCampaigns")}
                 amount={formatters.cpa.format(avgCpa)}

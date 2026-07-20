@@ -8,6 +8,7 @@ import { ExternalLink } from "app/components/ui/ExternalLink";
 import { useRefreshData } from "app/hooks/useRefreshData";
 import { useVisibilityChange } from "app/hooks/useVisibilityChange";
 import type { loader as rootLoader } from "app/routes/app";
+import { log } from "app/services.server/logger";
 import { getLegacyInstallDismissed } from "app/services.server/metafields";
 import {
     doesThemeHasFrakActivated,
@@ -22,23 +23,37 @@ import { Await, useLoaderData, useRouteLoaderData } from "react-router";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
-    const [
-        isThemeHasFrakActivated,
-        theme,
-        legacyInstallDismissed,
-        supportsAppEmbed,
-    ] = await Promise.all([
-        doesThemeHasFrakActivated(context),
-        getMainThemeId(context),
-        getLegacyInstallDismissed(context),
-        doesThemeSupportAppEmbed(context),
-    ]);
-    return {
-        isThemeHasFrakActivated,
-        theme,
-        legacyInstallDismissed,
-        supportsAppEmbed,
-    };
+    try {
+        const [
+            isThemeHasFrakActivated,
+            theme,
+            legacyInstallDismissed,
+            supportsAppEmbed,
+        ] = await Promise.all([
+            doesThemeHasFrakActivated(context),
+            getMainThemeId(context),
+            getLegacyInstallDismissed(context),
+            doesThemeSupportAppEmbed(context),
+        ]);
+        return {
+            isThemeHasFrakActivated,
+            theme,
+            legacyInstallDismissed,
+            supportsAppEmbed,
+        };
+    } catch (error) {
+        // Degrade gracefully instead of bouncing to a full-page error
+        // (consistent with app.appearance.tsx). Fail open on app-embed
+        // support — it is near-universal, so never hide the Listener flow on
+        // a detection hiccup.
+        log.error({ err: error }, "settings theme loader failed");
+        return {
+            isThemeHasFrakActivated: false,
+            theme: undefined,
+            legacyInstallDismissed: false,
+            supportsAppEmbed: true,
+        };
+    }
 };
 
 export default function SettingsThemePage() {

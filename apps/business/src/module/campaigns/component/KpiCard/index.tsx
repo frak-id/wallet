@@ -4,12 +4,12 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
-import { EMPTY_AMOUNT } from "./constants";
+import { EMPTY_AMOUNT } from "../constants";
 import * as styles from "./kpiCard.css";
 
 type Props = {
     label: string;
-    descriptor: string;
+    descriptor?: string;
     amount: string;
     delta?: number;
     hint?: string;
@@ -18,7 +18,7 @@ type Props = {
     empty?: boolean;
 };
 
-export function OverviewKpiCard({
+export function KpiCard({
     label,
     descriptor,
     amount,
@@ -39,9 +39,11 @@ export function OverviewKpiCard({
                     >
                         {label}
                     </Text>
-                    <Text as="span" variant="caption" color="disabled">
-                        {descriptor}
-                    </Text>
+                    {descriptor && (
+                        <Text as="span" variant="caption" color="disabled">
+                            {descriptor}
+                        </Text>
+                    )}
                 </Inline>
                 {empty ? (
                     <span className={styles.amountEmpty}>{EMPTY_AMOUNT}</span>

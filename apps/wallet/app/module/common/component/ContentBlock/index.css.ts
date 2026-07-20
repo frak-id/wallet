@@ -1,17 +1,21 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize } from "@frak-labs/design-system/tokens";
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 
-export const content = styleVariants({
-    m: {
+export const content = recipe({
+    base: {
         display: "flex",
         flexDirection: "column",
-        gap: alias.spacing.m,
     },
-    l: {
-        display: "flex",
-        flexDirection: "column",
-        gap: alias.spacing.l,
+    variants: {
+        spacing: {
+            m: { gap: alias.spacing.m },
+            l: { gap: alias.spacing.l },
+        },
+    },
+    defaultVariants: {
+        spacing: "m",
     },
 });
 
@@ -20,16 +24,19 @@ export const icon = style({
     justifyContent: "center",
 });
 
-export const text = styleVariants({
-    xs: {
+export const text = recipe({
+    base: {
         display: "flex",
         flexDirection: "column",
-        gap: alias.spacing.xs,
     },
-    m: {
-        display: "flex",
-        flexDirection: "column",
-        gap: alias.spacing.m,
+    variants: {
+        spacing: {
+            xs: { gap: alias.spacing.xs },
+            m: { gap: alias.spacing.m },
+        },
+    },
+    defaultVariants: {
+        spacing: "xs",
     },
 });
 

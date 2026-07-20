@@ -4,7 +4,10 @@ import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
-import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
+import {
+    linkWalletErrorMessage,
+    useLinkWallet,
+} from "@/module/auth/hooks/useLinkWallet";
 
 /**
  * Walletless-owner CTA (§4.9): shown wherever an onchain bank action (bank
@@ -14,6 +17,7 @@ import { useLinkWallet } from "@/module/auth/hooks/useLinkWallet";
 export function LinkWalletNotice() {
     const { t } = useTranslation();
     const { mutate: linkWallet, isPending, error } = useLinkWallet();
+    const errorMessage = linkWalletErrorMessage(error, t);
 
     return (
         <Card radius="m">
@@ -33,9 +37,9 @@ export function LinkWalletNotice() {
                 >
                     {t("funding.linkWallet.cta")}
                 </Button>
-                {error && (
+                {errorMessage && (
                     <Notice tone="error" role="alert">
-                        {error.message}
+                        {errorMessage}
                     </Notice>
                 )}
             </Stack>

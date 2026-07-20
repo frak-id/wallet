@@ -26,9 +26,10 @@ const DEFAULT_E2E_SESSION = {
  * Canned merchant list the mocked `/user/merchant/explore` endpoint returns so
  * the Explorer page renders a stable list without a real backend.
  */
-// Backend order is [One, Two, Three] with distinguishable campaign counts so
-// specs can assert real reordering: "Most popular" (count desc) surfaces Two
-// first; "Most recent" (reverse) surfaces Three first.
+// Backend order is [One, Two, Three]. "recommended" (default) preserves that
+// server order, so One leads by default. The per-signal fields are set so each
+// sort reorders distinguishably: "Most recent" (freshest `recent` first)
+// surfaces Three; "Most popular" / "Highest reward" surface Two.
 const DEFAULT_E2E_EXPLORER_MERCHANTS = [
     {
         id: "11111111-1111-1111-1111-111111111111",
@@ -37,6 +38,10 @@ const DEFAULT_E2E_EXPLORER_MERCHANTS = [
         explorerConfig: null,
         activeCampaignCount: 1,
         integration: "native",
+        popularity: 10,
+        recent: "2026-01-01T00:00:00.000Z",
+        expiring: "2026-06-01T00:00:00.000Z",
+        reward: 5,
     },
     {
         id: "22222222-2222-2222-2222-222222222222",
@@ -45,6 +50,10 @@ const DEFAULT_E2E_EXPLORER_MERCHANTS = [
         explorerConfig: null,
         activeCampaignCount: 3,
         integration: "native",
+        popularity: 30,
+        recent: "2026-02-01T00:00:00.000Z",
+        expiring: "2026-05-01T00:00:00.000Z",
+        reward: 15,
     },
     {
         id: "33333333-3333-3333-3333-333333333333",
@@ -53,6 +62,10 @@ const DEFAULT_E2E_EXPLORER_MERCHANTS = [
         explorerConfig: null,
         activeCampaignCount: 2,
         integration: "native",
+        popularity: 20,
+        recent: "2026-03-01T00:00:00.000Z",
+        expiring: "2026-04-01T00:00:00.000Z",
+        reward: 10,
     },
 ];
 

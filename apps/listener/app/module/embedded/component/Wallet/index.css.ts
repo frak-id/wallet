@@ -1,10 +1,6 @@
 import { fadeIn } from "@frak-labs/design-system/keyframes";
-import {
-    globalStyle,
-    keyframes,
-    style,
-    styleVariants,
-} from "@vanilla-extract/css";
+import { globalStyle, keyframes, style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 
 /* Animation duration tokens — defined as :root CSS variables so the
  * `@media (min-width: 431px)` rule below can override them globally
@@ -53,9 +49,16 @@ export const modalListenerWallet = style({
     color: "#1d1d1d",
 });
 
-export const position = styleVariants({
-    left: { left: "19px" },
-    right: { right: "19px" },
+export const position = recipe({
+    variants: {
+        position: {
+            left: { left: "19px" },
+            right: { right: "19px" },
+        },
+    },
+    defaultVariants: {
+        position: "right",
+    },
 });
 
 export const modalListenerWallet__inner = style({

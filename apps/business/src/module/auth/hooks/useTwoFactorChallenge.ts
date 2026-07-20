@@ -1,7 +1,11 @@
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
-import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
+import {
+    AuthError,
+    extractAuthErrorCode,
+    extractAuthErrorMessage,
+} from "@/module/auth/utils/authError";
 import type { TwoFactorMethod } from "@/stores/twoFactorStore";
 
 /**
@@ -38,8 +42,9 @@ export function useTwoFactorChallenge() {
                 method,
             });
             if (error) {
-                throw new Error(
-                    extractAuthErrorMessage(error, "Could not send code")
+                throw new AuthError(
+                    extractAuthErrorMessage(error, "Could not send code"),
+                    extractAuthErrorCode(error)
                 );
             }
             return data;
@@ -79,8 +84,9 @@ export function useTwoFactorVerify() {
                     },
                 });
                 if (error) {
-                    throw new Error(
-                        extractAuthErrorMessage(error, "Verification failed")
+                    throw new AuthError(
+                        extractAuthErrorMessage(error, "Verification failed"),
+                        extractAuthErrorCode(error)
                     );
                 }
                 return data;
@@ -93,7 +99,10 @@ export function useTwoFactorVerify() {
                 proof: params.proof,
             });
             if (error) {
-                throw new Error(extractAuthErrorMessage(error, "Invalid code"));
+                throw new AuthError(
+                    extractAuthErrorMessage(error, "Invalid code"),
+                    extractAuthErrorCode(error)
+                );
             }
             return data;
         },

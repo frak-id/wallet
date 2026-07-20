@@ -13,7 +13,9 @@ import type { BankStatus } from "@frak-labs/backend-elysia/domain/campaign-bank"
 import { LRUCache } from "lru-cache";
 import type { AuthenticatedContext } from "../types/context";
 import { backendApi } from "../utils/backendApi";
+import { levelForStatus, log } from "./logger";
 import { resolveMerchantId } from "./merchant";
+import { getRequestId } from "./requestId";
 
 export type {
     BankStatus,
@@ -45,20 +47,33 @@ function extractSessionToken(request: Request): string | null {
 
 /**
  * Build headers for authenticated backend calls.
- * Includes the Shopify session token when available.
+ *
+ * Always forwards the ingress correlation id (`x-request-id`) so a backend log
+ * line for this call can be tied back to the originating Shopify request; the
+ * Shopify session token is added when available. Previously this returned
+ * `undefined` entirely when there was no session token, which dropped the
+ * correlation id for every unauthenticated backend call.
  *
  * Exported for `api.register.tsx` (§4.12 inline embedded mint), the one
  * caller that needs the header before a `merchantId` exists — every other
  * consumer of this module resolves the merchant first.
  */
-export function buildBackendHeaders(
-    request: Request
-): Record<string, string> | undefined {
-    const sessionToken = extractSessionToken(request);
-    if (!sessionToken) {
-        return undefined;
+export function buildBackendHeaders(request: Request): Record<string, string> {
+    const headers: Record<string, string> = {};
+
+    // nginx-ingress sets x-request-id on every deployed request; undefined only
+    // in local dev, where it is simply omitted.
+    const reqId = getRequestId(request);
+    if (reqId) {
+        headers["x-request-id"] = reqId;
     }
-    return { "X-Shopify-Session-Token": sessionToken };
+
+    const sessionToken = extractSessionToken(request);
+    if (sessionToken) {
+        headers["X-Shopify-Session-Token"] = sessionToken;
+    }
+
+    return headers;
 }
 
 // ---------------------------------------------------------------------------
@@ -103,8 +118,9 @@ export async function getMerchantCampaigns(
                 headers: buildBackendHeaders(request),
             });
         if (error) {
-            console.error(
-                `[backendMerchant] campaigns fetch failed (${error.status}) for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "campaigns fetch failed"
             );
             return null;
         }
@@ -113,10 +129,7 @@ export async function getMerchantCampaigns(
         campaignsCache.set(merchantId, response);
         return response;
     } catch (error) {
-        console.error(
-            `[backendMerchant] campaigns fetch error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "campaigns fetch error");
         return null;
     }
 }
@@ -145,8 +158,9 @@ export async function getMerchantBankStatus(
                 headers: buildBackendHeaders(request),
             });
         if (error) {
-            console.error(
-                `[backendMerchant] bank fetch failed (${error.status}) for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "bank fetch failed"
             );
             return null;
         }
@@ -154,10 +168,7 @@ export async function getMerchantBankStatus(
         bankStatusCache.set(merchantId, data);
         return data;
     } catch (error) {
-        console.error(
-            `[backendMerchant] bank fetch error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "bank fetch error");
         return null;
     }
 }
@@ -188,8 +199,9 @@ export async function createMerchantCampaign(
                 headers: buildBackendHeaders(request),
             });
         if (error) {
-            console.error(
-                `[backendMerchant] campaign create failed (${error.status}) for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "campaign create failed"
             );
             return null;
         }
@@ -198,10 +210,7 @@ export async function createMerchantCampaign(
         campaignsCache.delete(merchantId);
         return data as CampaignResponse;
     } catch (error) {
-        console.error(
-            `[backendMerchant] campaign create error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "campaign create error");
         return null;
     }
 }
@@ -230,8 +239,9 @@ export async function publishMerchantCampaign(
                 }
             );
         if (error) {
-            console.error(
-                `[backendMerchant] campaign publish failed (${error.status}) for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "campaign publish failed"
             );
             return null;
         }
@@ -240,10 +250,7 @@ export async function publishMerchantCampaign(
         campaignsCache.delete(merchantId);
         return data as CampaignResponse;
     } catch (error) {
-        console.error(
-            `[backendMerchant] campaign publish error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "campaign publish error");
         return null;
     }
 }
@@ -269,8 +276,9 @@ export async function pauseMerchantCampaign(
                 }
             );
         if (error) {
-            console.error(
-                `[backendMerchant] campaign pause failed (${error.status}) for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "campaign pause failed"
             );
             return null;
         }
@@ -278,10 +286,7 @@ export async function pauseMerchantCampaign(
         campaignsCache.delete(merchantId);
         return data as CampaignResponse;
     } catch (error) {
-        console.error(
-            `[backendMerchant] campaign pause error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "campaign pause error");
         return null;
     }
 }
@@ -307,8 +312,9 @@ export async function resumeMerchantCampaign(
                 }
             );
         if (error) {
-            console.error(
-                `[backendMerchant] campaign resume failed (${error.status}) for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "campaign resume failed"
             );
             return null;
         }
@@ -316,10 +322,7 @@ export async function resumeMerchantCampaign(
         campaignsCache.delete(merchantId);
         return data as CampaignResponse;
     } catch (error) {
-        console.error(
-            `[backendMerchant] campaign resume error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "campaign resume error");
         return null;
     }
 }
@@ -345,8 +348,9 @@ export async function archiveMerchantCampaign(
                 }
             );
         if (error) {
-            console.error(
-                `[backendMerchant] campaign archive failed (${error.status}) for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "campaign archive failed"
             );
             return null;
         }
@@ -354,10 +358,7 @@ export async function archiveMerchantCampaign(
         campaignsCache.delete(merchantId);
         return data as CampaignResponse;
     } catch (error) {
-        console.error(
-            `[backendMerchant] campaign archive error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "campaign archive error");
         return null;
     }
 }
@@ -380,8 +381,9 @@ export async function deleteMerchantCampaign(
                 headers: buildBackendHeaders(request),
             });
         if (error) {
-            console.error(
-                `[backendMerchant] campaign delete failed (${error.status}) for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "campaign delete failed"
             );
             return null;
         }
@@ -389,10 +391,7 @@ export async function deleteMerchantCampaign(
         campaignsCache.delete(merchantId);
         return { success: true };
     } catch (error) {
-        console.error(
-            `[backendMerchant] campaign delete error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "campaign delete error");
         return null;
     }
 }
@@ -424,12 +423,15 @@ export async function registerMerchant(
                 "error" in error.value
                     ? String(error.value.error)
                     : `Registration failed (${error.status})`;
-            console.error(`[backendMerchant] register failed: ${message}`);
+            log[levelForStatus(error.status)](
+                { status: error.status, reason: message },
+                "register failed"
+            );
             return { error: message };
         }
         return { merchantId: data.merchantId };
     } catch (error) {
-        console.error("[backendMerchant] register error:", error);
+        log.error({ err: error }, "register error");
         return { error: "Registration failed" };
     }
 }
@@ -468,8 +470,9 @@ export async function setupFrakWebhook(
                     : error instanceof Error
                       ? error.message
                       : "Failed to setup Frak webhook";
-            console.error(
-                `[backendMerchant] webhook setup failed for ${merchantId}: ${errorMessage}`
+            log.error(
+                { merchantId, reason: errorMessage },
+                "webhook setup failed"
             );
             return {
                 success: false,
@@ -482,10 +485,7 @@ export async function setupFrakWebhook(
             userErrors: [],
         };
     } catch (error) {
-        console.error(
-            `[backendMerchant] webhook setup error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "webhook setup error");
         return {
             success: false,
             userErrors: [
@@ -533,7 +533,10 @@ export async function getFrakWebookStatus(
             setup: data.setup === true,
         };
     } catch (error) {
-        console.error(error);
+        log.error(
+            { err: error, merchantId },
+            "frak webhook status fetch error"
+        );
         return {
             userErrors: [{ message: "Error fetching frak webhook status" }],
             setup: false,
@@ -568,8 +571,9 @@ export async function getMerchantExplorerSettings(
                 headers: buildBackendHeaders(request),
             });
         if (error) {
-            console.error(
-                `[backendMerchant] merchant detail fetch failed for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "merchant detail fetch failed"
             );
             return null;
         }
@@ -582,10 +586,7 @@ export async function getMerchantExplorerSettings(
             description: data.explorerConfig?.description ?? "",
         };
     } catch (error) {
-        console.error(
-            `[backendMerchant] merchant detail fetch error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "merchant detail fetch error");
         return null;
     }
 }
@@ -627,8 +628,9 @@ export async function updateMerchantExplorerSettings(
                 { headers: buildBackendHeaders(request) }
             );
         if (error) {
-            console.error(
-                `[backendMerchant] explorer update failed for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "explorer update failed"
             );
             return {
                 success: false,
@@ -638,10 +640,7 @@ export async function updateMerchantExplorerSettings(
 
         return { success: true, message: "Explorer settings saved" };
     } catch (error) {
-        console.error(
-            `[backendMerchant] explorer update error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "explorer update error");
         return {
             success: false,
             message: "Failed to update explorer settings",
@@ -696,10 +695,7 @@ export async function uploadMerchantMedia(
         }
         return { success: true, url: data.url };
     } catch (error) {
-        console.error(
-            `[backendMerchant] media upload error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "media upload error");
         return {
             success: false,
             error: "Upload failed",
@@ -731,10 +727,7 @@ export async function deleteMerchantMedia(
         }
         return { success: true, deleted: true };
     } catch (error) {
-        console.error(
-            `[backendMerchant] media delete error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "media delete error");
         return { success: false, message: "Failed to delete media" };
     }
 }
@@ -760,17 +753,15 @@ export async function listMerchantMedia(
                 headers: buildBackendHeaders(request),
             });
         if (error) {
-            console.error(
-                `[backendMerchant] media list failed for ${merchantId}`
+            log[levelForStatus(error.status)](
+                { merchantId, status: error.status },
+                "media list failed"
             );
             return [];
         }
         return data.files as MediaFile[];
     } catch (error) {
-        console.error(
-            `[backendMerchant] media list error for ${merchantId}:`,
-            error
-        );
+        log.error({ err: error, merchantId }, "media list error");
         return [];
     }
 }

@@ -66,6 +66,46 @@ start_dev_server() {
         sleep 1
     done
     echo "[tauri-dev] Dev server ready"
+    assert_dev_server_owns_port
+}
+
+# Walk the process ancestry of $1 looking for the vite dev server we spawned.
+# `vite dev` binds the socket in its own process, but guard against it holding
+# the port via a child by climbing parents too.
+pid_is_ours() {
+    local pid="$1"
+    local guard=20
+    while [ -n "$pid" ] && [ "$pid" != "0" ] && [ "$pid" != "1" ] && [ $guard -gt 0 ]; do
+        [ "$pid" = "$VITE_PID" ] && return 0
+        pid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')"
+        guard=$((guard - 1))
+    done
+    [ "$pid" = "$VITE_PID" ]
+}
+
+# Confirm the process listening on the dev-server port is the `vite dev` this
+# script just started. The port-reclaim in `start_dev_server` can lose a race
+# with an SST-supervised sibling pane (e.g. a Tauri iOS server) that respawns on
+# :3010: the Tauri WebView would then load a bundle baked for the wrong platform
+# and mis-report it to analytics. Abort rather than ship the mismatch.
+assert_dev_server_owns_port() {
+    if [ -z "$VITE_PID" ] || ! kill -0 "$VITE_PID" 2>/dev/null; then
+        echo "[tauri-dev] ERROR: dev server process (${VITE_PID:-none}) is not running"
+        exit 1
+    fi
+    local listeners
+    listeners="$(lsof -ti "tcp:$DEV_SERVER_PORT" -sTCP:LISTEN 2>/dev/null || true)"
+    if [ -z "$listeners" ]; then
+        echo "[tauri-dev] ERROR: nothing is listening on port $DEV_SERVER_PORT"
+        exit 1
+    fi
+    local pid
+    for pid in $listeners; do
+        pid_is_ours "$pid" && return 0
+    done
+    echo "[tauri-dev] ERROR: port $DEV_SERVER_PORT is held by PID(s) '$listeners', not the vite dev server we started (PID $VITE_PID)."
+    echo "[tauri-dev] A stale/racing dev server (e.g. another Tauri pane) is squatting the port; the WebView would load a bundle built for the wrong platform. Aborting."
+    exit 1
 }
 
 # Best-effort LAN IP of this Mac, empty if none. Prefer the interface that

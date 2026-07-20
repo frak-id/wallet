@@ -2,7 +2,7 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppError } from "app/components/AppError";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import type { LoaderFunctionArgs } from "react-router";
+import type { LoaderFunctionArgs, MiddlewareFunction } from "react-router";
 import {
     isRouteErrorResponse,
     Links,
@@ -15,7 +15,26 @@ import {
     useRouteLoaderData,
 } from "react-router";
 import i18next from "./i18n/i18next.server";
+import { useRequestId } from "./providers/RequestId";
+import { runWithRequestContext } from "./services.server/logger";
 import { getRequestId } from "./services.server/requestId";
+
+/**
+ * Bind the per-request logging context (correlation id + route) for the whole
+ * request lifecycle so every structured log line emitted by downstream
+ * loaders/actions/services carries `reqId`/`route` (and `shop`/`merchantId`
+ * once a loader resolves them via `setRequestContext`). Runs on the server for
+ * every matched route since root is always in the match chain.
+ */
+export const middleware: MiddlewareFunction[] = [
+    ({ request }, next) => {
+        const url = new URL(request.url);
+        return runWithRequestContext(
+            { reqId: getRequestId(request), route: url.pathname },
+            () => next()
+        );
+    },
+];
 
 export async function loader({ request }: LoaderFunctionArgs) {
     const locale = await i18next.getLocale(request);
@@ -67,10 +86,15 @@ export default function App() {
 // replaced when this boundary is active.
 export function ErrorBoundary() {
     const error = useRouteError();
-    // Read the failing request's id from root's loader data. Present when a
-    // child route threw (root loaded fine); undefined when the root loader
-    // itself threw — AppError then omits the reference line.
-    const requestId = useRouteLoaderData<typeof loader>("root")?.requestId;
+    // Prefer root's loader data (present when a child route threw), but fall
+    // back to the request-scoped id from context so the reference is still
+    // shown when the root loader ITSELF threw (its data is gone) — exactly the
+    // case where correlation matters most. `data-frak-req-id` echoes it so the
+    // client hydrates with the same value.
+    const loaderRequestId =
+        useRouteLoaderData<typeof loader>("root")?.requestId;
+    const contextRequestId = useRequestId();
+    const requestId = loaderRequestId ?? contextRequestId;
     // Thrown Responses (OAuth / session-token redirects with App Bridge
     // headers) must keep flowing through Shopify's boundary so the redirect
     // and required headers are emitted — never paint them as an error page.
@@ -78,7 +102,7 @@ export function ErrorBoundary() {
         return boundary.error(error);
     }
     return (
-        <html lang="en">
+        <html lang="en" data-frak-req-id={requestId ?? undefined}>
             <head>
                 <meta charSet="utf-8" />
                 <meta

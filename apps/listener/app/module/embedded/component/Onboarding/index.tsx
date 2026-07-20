@@ -20,11 +20,7 @@ function Onboarding({
 }>) {
     return (
         <div
-            className={cx(
-                isReverse
-                    ? styles.onboarding.reverse
-                    : styles.onboarding.default
-            )}
+            className={cx(styles.onboarding({ reverse: !!isReverse }))}
             style={{
                 top: style?.top ?? "auto",
                 left: style?.left ?? "auto",
@@ -61,13 +57,7 @@ export function OnboardingWelcome() {
     }, []);
 
     return (
-        <div
-            className={cx(
-                hidden
-                    ? styles.onboardingWrapper.hidden
-                    : styles.onboardingWrapper.visible
-            )}
-        >
+        <div className={cx(styles.onboardingWrapper({ hidden }))}>
             <Onboarding style={{ top: "92px", right: "-39px" }}>
                 <Trans
                     i18nKey={"sdk.wallet.loggedIn.onboarding.welcome"}
@@ -95,13 +85,7 @@ export function OnboardingShare({ isHidden = true }: { isHidden?: boolean }) {
     }, [isHidden]);
 
     return (
-        <div
-            className={cx(
-                hidden
-                    ? styles.onboardingWrapper.hidden
-                    : styles.onboardingWrapper.visible
-            )}
-        >
+        <div className={cx(styles.onboardingWrapper({ hidden }))}>
             <Onboarding style={{ top: "-90px", right: "10px" }}>
                 <Trans
                     i18nKey={"sdk.wallet.loggedIn.onboarding.share"}

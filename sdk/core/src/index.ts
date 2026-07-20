@@ -117,6 +117,7 @@ export {
     deleteQueryParamCaseInsensitive,
     type FullSsoParams,
     findIframeInOpener,
+    detectPageLanguage,
     formatAmount,
     generateSsoUrl,
     getCurrencyAmountKey,

@@ -92,32 +92,32 @@
             "recoveryOptions": "Options de récupération",
             "changeEmail": "Changer d'adresse email",
             "security": {
-                "heading": "Renforce la sécurité de ton wallet",
-                "headingSecured": "Ton wallet est sécurisé",
-                "progressLabel": "Progression de la sécurité du wallet",
+                "heading": "Renforce la sécurité de ton porte-monnaie",
+                "headingSecured": "Ton porte-monnaie est sécurisé",
+                "progressLabel": "Progression de la sécurité du porte-monnaie",
                 "steps": {
                     "addEmail": {
                         "title": "Ajoute un email",
-                        "description": "Protège ton wallet et récupère ton accès en cas de perte ou de changement d'appareil.",
+                        "description": "Protège ton porte-monnaie et récupère ton accès en cas de perte ou de changement d'appareil.",
                         "cta": "Ajouter un email"
                     },
                     "verifyEmail": {
                         "title": "Valide ton email",
-                        "description": "Confirme ton adresse email pour qu'elle puisse servir à récupérer ton wallet.",
+                        "description": "Confirme ton adresse email pour qu'elle puisse servir à récupérer ton porte-monnaie.",
                         "cta": "Valider mon email"
                     },
                     "setupRecovery": {
                         "title": "Configure la récupération",
-                        "description": "Ajoute une option de récupération pour toujours pouvoir restaurer l'accès à ton wallet.",
+                        "description": "Ajoute une option de récupération pour toujours pouvoir restaurer l'accès à ton porte-monnaie.",
                         "cta": "Configurer la récupération"
                     },
                     "updateRecovery": {
                         "title": "Mets à jour la récupération",
-                        "description": "Ta récupération expire bientôt. Actualise-la pour garder ton wallet protégé.",
+                        "description": "Ta récupération expire bientôt. Actualise-la pour garder ton porte-monnaie protégé.",
                         "cta": "Mettre à jour la récupération"
                     },
                     "secured": {
-                        "description": "Ton email et ta récupération sont configurés. Ton wallet est entièrement protégé."
+                        "description": "Ton email et ta récupération sont configurés. Ton porte-monnaie est entièrement protégé."
                     }
                 }
             }
@@ -133,7 +133,7 @@
             "alreadyUsed": "Cette adresse e-mail est déjà utilisée et ne peut pas être ajoutée. Essaie-en une autre.",
             "conflict": {
                 "title": "E-mail déjà utilisé",
-                "description": "Cet e-mail est déjà associé à un autre portefeuille. Utilise-en un autre, ou reviens plus tard.",
+                "description": "Cet e-mail est déjà associé à un autre porte-monnaie. Utilise-en un autre, ou reviens plus tard.",
                 "descriptionMergeable": "Cet e-mail est déjà sur un autre de tes comptes. Tu peux les combiner en un seul. On te guide, que l'autre compte soit sur cet appareil ou sur un autre.",
                 "combine": "Combiner mes comptes",
                 "useDifferent": "Utiliser un autre e-mail",
@@ -141,7 +141,7 @@
             },
             "card": {
                 "title": "Ajoute ton e-mail",
-                "description": "Ajoute ton e-mail pour pouvoir récupérer ton portefeuille plus tard."
+                "description": "Ajoute ton e-mail pour pouvoir récupérer ton porte-monnaie plus tard."
             }
         },
         "verifyEmail": {
@@ -312,7 +312,7 @@
             },
             "success": {
                 "title": "Tes comptes ne font plus qu'un",
-                "description": "{{email}} est lié à ton portefeuille. Tout ce qui était sur ton autre compte a été transféré : parrainages, historique, récompenses.",
+                "description": "{{email}} est lié à ton porte-monnaie. Tout ce qui était sur ton autre compte a été transféré : parrainages, historique, récompenses.",
                 "back": "Retour au profil"
             }
         },
@@ -434,7 +434,7 @@
             "termsOfUse": "Conditions générales",
             "deleteAccount": "Supprimer mon compte"
         },
-        "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
+        "installWebApp": "<strong>Installer le porte-monnaie sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
         "invite": {
             "title": "Invitez des amis, gagnez 5€",
             "text": "Gagnez 5€ pour chaque ami que vous invitez. Conditions générales applicables"
@@ -746,10 +746,10 @@
             "logout": "Se déconnecter"
         },
         "distantReauth": {
-            "title": "Reconnectez votre portefeuille",
-            "description": "Votre session appairée a expiré. Scannez avec votre téléphone pour reconnecter le même portefeuille.",
+            "title": "Reconnectez votre porte-monnaie",
+            "description": "Votre session appairée a expiré. Scannez avec votre téléphone pour reconnecter le même porte-monnaie.",
             "action": "Reconnecter",
-            "pairing": "Scannez avec le téléphone détenant votre passkey pour reconnecter le même portefeuille.",
+            "pairing": "Scannez avec le téléphone détenant votre passkey pour reconnecter le même porte-monnaie.",
             "logout": "Se déconnecter"
         },
         "openLogin": {
@@ -803,7 +803,7 @@
         "infoTitle": "Code valable 3 jours",
         "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
         "download": "Télécharger l'app",
-        "processing": "Configuration de ton portefeuille..."
+        "processing": "Configuration de ton porte-monnaie..."
     },
     "onboarding": {
         "start": "Commencer",
@@ -833,10 +833,10 @@
             "continue": "Continuer",
             "clearAriaLabel": "Effacer l'adresse e-mail",
             "alreadyUsed": {
-                "title": "Tu as déjà un portefeuille",
-                "description": "{{email}} est déjà lié à un portefeuille. Connecte-toi avec la biométrie pour y accéder, ou récupère ton portefeuille si tu n'arrives plus à te connecter.",
+                "title": "Tu as déjà un porte-monnaie",
+                "description": "{{email}} est déjà lié à un porte-monnaie. Connecte-toi avec la biométrie pour y accéder, ou récupère ton porte-monnaie si tu n'arrives plus à te connecter.",
                 "login": "Me connecter avec la biométrie",
-                "recover": "Récupérer mon portefeuille"
+                "recover": "Récupérer mon porte-monnaie"
             },
             "checkError": "Impossible de vérifier cet e-mail pour le moment. Réessaie."
         },

@@ -148,6 +148,7 @@ describe("AuthActions silent quick-login", () => {
         expect(mocks.login).toHaveBeenCalledWith({
             lastAuthentication: HINT,
             silentLogin: false,
+            trigger: "auto",
         });
     });
 
@@ -160,6 +161,7 @@ describe("AuthActions silent quick-login", () => {
         expect(mocks.login).toHaveBeenCalledWith({
             lastAuthentication: HINT,
             silentLogin: true,
+            trigger: "auto",
         });
     });
 
@@ -215,6 +217,11 @@ describe("AuthActions silent quick-login", () => {
         expect(mocks.invalidateQueries).toHaveBeenCalledWith({
             queryKey: authKey.recoveryHint,
         });
+        // The self-heal fires alongside the cleanup so it's distinguishable
+        // from a real login failure in analytics.
+        expect(mocks.trackEvent).toHaveBeenCalledWith("auth_login_self_heal", {
+            reason: "stale_hint_clear_attempted",
+        });
         // The page-level error toast must NOT receive the swallowed error.
         expect(onError).not.toHaveBeenCalledWith(expect.any(Error));
     });
@@ -236,6 +243,10 @@ describe("AuthActions silent quick-login", () => {
 
         expect(onError).not.toHaveBeenCalledWith(expect.any(Error));
         expect(mocks.clearLastAuthenticator).not.toHaveBeenCalled();
+        expect(mocks.trackEvent).not.toHaveBeenCalledWith(
+            "auth_login_self_heal",
+            expect.anything()
+        );
     });
 
     test("iOS no-credential is a false negative: keeps the hint and suppresses the toast", async () => {
@@ -258,6 +269,11 @@ describe("AuthActions silent quick-login", () => {
         // The durable surfaces stay intact (no wipe) and no toast is shown.
         expect(mocks.clearLastAuthenticator).not.toHaveBeenCalled();
         expect(onError).not.toHaveBeenCalledWith(expect.any(Error));
+        // iOS never self-heals, so no self-heal event either.
+        expect(mocks.trackEvent).not.toHaveBeenCalledWith(
+            "auth_login_self_heal",
+            expect.anything()
+        );
     });
 
     test("does not auto-fire on web (non-Tauri) even with a hint", async () => {

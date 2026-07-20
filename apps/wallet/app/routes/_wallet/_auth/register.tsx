@@ -3,20 +3,16 @@ import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import {
     authenticationStore,
     authenticatorStorage,
-    type Flow,
     recoveryHintStorage,
-    startFlow,
     trackEvent,
     ua,
     useLogin,
     useReferralStatus,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
-import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
-import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
 import {
     type EmailAlreadyUsedArgs,
@@ -28,7 +24,8 @@ import { ReferralCodeStep } from "@/module/onboarding/component/ReferralCodeStep
 import { onboardingSteps } from "@/module/onboarding/component/step/onboardingSteps";
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
-import { withStepTransition } from "@/module/onboarding/utils/stepTransition";
+import { usePushOptIn } from "@/module/onboarding/hook/usePushOptIn";
+import { useRegisterFlow } from "@/module/onboarding/hook/useRegisterFlow";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { modalStore } from "@/module/stores/modalStore";
@@ -94,22 +91,6 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
     },
 });
 
-const ONBOARDING_FLOW_STEPS = [
-    "onboardingOne",
-    "onboardingTwo",
-    "onboardingThree",
-] as const;
-
-type OnboardingFlowStep = (typeof ONBOARDING_FLOW_STEPS)[number];
-
-type FlowStep =
-    | OnboardingFlowStep
-    | "emailInput"
-    | "emailAlreadyUsed"
-    | "referralCode"
-    | "notification"
-    | "welcome";
-
 type ToastState = "idle" | "shown" | "leaving";
 
 // Visible duration for the referral-code success toast.
@@ -121,13 +102,13 @@ function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { email: prefilledEmail } = Route.useSearch();
-    // When the user arrives from `/login/email` with a confirmed-unused
-    // email, jump straight to the secure-space step — the email
-    // collection step would just re-ask for something they already
-    // typed. Otherwise start at the marketing slides as usual.
-    const [step, setStep] = useState<FlowStep>(
-        prefilledEmail ? "onboardingThree" : "onboardingOne"
-    );
+    const [loginError, setLoginError] = useState<Error | null>(null);
+    // Step state machine, transition helper, and per-step analytics tracking.
+    // `goToStep` clears the transient login error before every transition.
+    const { step, goToStep, flowRef } = useRegisterFlow({
+        prefilledEmail,
+        onBeforeTransition: () => setLoginError(null),
+    });
     // Hold the email collected on the `emailInput` step. Stays in component
     // state so navigating back to the step pre-fills the field, and is
     // forwarded to the register endpoint when the user activates their
@@ -139,7 +120,6 @@ function RegisterPage() {
     const [alreadyUsed, setAlreadyUsed] = useState<EmailAlreadyUsedArgs | null>(
         null
     );
-    const [loginError, setLoginError] = useState<Error | null>(null);
 
     // Detect pairing context once at mount: user landed on /register
     // because they hit a /pairing?id=xxx deep link before authenticating
@@ -154,15 +134,7 @@ function RegisterPage() {
         );
     });
 
-    const goToStep = useCallback(
-        (next: FlowStep, direction: "forward" | "backward" = "forward") => {
-            setLoginError(null);
-            withStepTransition(direction, () => setStep(next));
-        },
-        []
-    );
     const [referralToast, setReferralToast] = useState<ToastState>("idle");
-    const flowRef = useRef<Flow | null>(null);
 
     const { data: referralStatus } = useReferralStatus();
     const hasExistingReferrer = Boolean(referralStatus?.crossMerchantReferrer);
@@ -184,16 +156,6 @@ function RegisterPage() {
             });
         }
     }, [referrerData, openModal]);
-
-    // Start the onboarding flow on mount, end as "abandoned" if never succeeded
-    useEffect(() => {
-        const flow = startFlow("onboarding");
-        flowRef.current = flow;
-        return () => {
-            if (!flow.ended) flow.end("abandoned", { last_step: step });
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const advanceAfterKeypass = useCallback(() => {
         closeModal();
@@ -235,44 +197,13 @@ function RegisterPage() {
         navigate({ to: "/login" });
     }, [login, navigate]);
 
-    const { permissionStatus, permissionGranted, hasBackendToken } =
-        useNotificationStatus();
-    const { subscribeToPushAsync } = useSubscribeToPushNotification();
-
-    // Fire on each onboarding step entry. Event name keeps the legacy
-    // `*_slide_viewed` suffix for analytics-history continuity even though
-    // the UI no longer uses a slider — see the event declaration in
-    // `packages/wallet-shared/src/common/analytics/events/onboarding.ts`.
-    useEffect(() => {
-        const index = ONBOARDING_FLOW_STEPS.indexOf(step as OnboardingFlowStep);
-        if (index === -1) return;
-        flowRef.current?.track("onboarding_slide_viewed", {
-            index,
-            translation_key:
-                onboardingSteps[index]?.translationKey ?? "unknown",
-        });
-    }, [step]);
-
-    // Fire `email_input_viewed` once we land on the email step
-    useEffect(() => {
-        if (step === "emailInput") {
-            flowRef.current?.track("email_input_viewed");
-        }
-    }, [step]);
-
-    // Fire `referral_code_viewed` once we land on that step
-    useEffect(() => {
-        if (step === "referralCode") {
-            flowRef.current?.track("referral_code_viewed");
-        }
-    }, [step]);
-
-    // Fire `notification_opt_in_viewed` once we land on that step
-    useEffect(() => {
-        if (step === "notification") {
-            flowRef.current?.track("notification_opt_in_viewed");
-        }
-    }, [step]);
+    // Notification opt-in handlers + auto-skip effect (subscribe side-effect
+    // and `notification_opt_in_resolved` tracking live in the hook).
+    const { onEnable: onEnablePush, onSkip: onSkipPush } = usePushOptIn({
+        step,
+        flowRef,
+        goToStep,
+    });
 
     // Auto-skip referral step if the user already has an applied referrer
     // (e.g. install-referrer resolved before the user reaches this screen).
@@ -298,25 +229,6 @@ function RegisterPage() {
         );
         return () => window.clearTimeout(timeoutId);
     }, [referralToast]);
-
-    // Auto-skip notification step if already granted or denied
-    useEffect(() => {
-        if (
-            step !== "notification" ||
-            !(
-                permissionStatus === "denied" ||
-                (permissionGranted && hasBackendToken)
-            )
-        )
-            return;
-        flowRef.current?.track("notification_opt_in_resolved", {
-            outcome:
-                permissionStatus === "denied"
-                    ? "auto_skipped_denied"
-                    : "auto_skipped_granted",
-        });
-        goToStep("welcome");
-    }, [step, permissionStatus, permissionGranted, hasBackendToken, goToStep]);
 
     const handleOpenKeypass = useCallback(
         (emailOverride?: string) => {
@@ -474,35 +386,8 @@ function RegisterPage() {
             )}
             {step === "notification" && (
                 <NotificationOptIn
-                    onEnable={() => {
-                        subscribeToPushAsync()
-                            .then(() => {
-                                flowRef.current?.track(
-                                    "notification_opt_in_resolved",
-                                    { outcome: "enabled" }
-                                );
-                                goToStep("welcome");
-                            })
-                            .catch((err: unknown) => {
-                                flowRef.current?.track(
-                                    "notification_opt_in_resolved",
-                                    {
-                                        outcome: "denied",
-                                        reason:
-                                            err instanceof Error
-                                                ? err.message
-                                                : String(err),
-                                    }
-                                );
-                                goToStep("welcome");
-                            });
-                    }}
-                    onSkip={() => {
-                        flowRef.current?.track("notification_opt_in_resolved", {
-                            outcome: "skipped",
-                        });
-                        goToStep("welcome");
-                    }}
+                    onEnable={onEnablePush}
+                    onSkip={onSkipPush}
                 />
             )}
             {step === "welcome" && (

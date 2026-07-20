@@ -1,6 +1,7 @@
 import { parse as jsonc_parse } from "jsonc-parser";
 import { LRUCache } from "lru-cache";
 import type { AuthenticatedContext } from "../types/context";
+import { log } from "./logger";
 
 type ThemeFile = {
     filename: string;
@@ -255,15 +256,13 @@ export async function doesThemeSupportBlock(
             jsonTemplateData.length > 0 &&
             jsonTemplateData.length === sectionsWithAppBlock.length
         ) {
-            console.log(
-                "All desired templates have main sections that support app blocks!"
+            log.debug(
+                "All desired templates have main sections that support app blocks"
             );
         } else if (sectionsWithAppBlock.length) {
-            console.log(
-                "Only some of the desired templates support app blocks."
-            );
+            log.debug("Only some of the desired templates support app blocks");
         } else {
-            console.log("None of the desired templates support app blocks");
+            log.debug("None of the desired templates support app blocks");
         }
 
         return sectionsWithAppBlock.length > 0;
@@ -271,7 +270,7 @@ export async function doesThemeSupportBlock(
         // A custom theme can be shaped in ways we don't expect. Never let a
         // detection failure take down the whole admin route — treat it as
         // "blocks not supported" so the merchant can still reach the setup UI.
-        console.error("doesThemeSupportBlock failed", error);
+        log.error({ err: error }, "doesThemeSupportBlock failed");
         return false;
     }
 }
@@ -320,7 +319,7 @@ export async function doesThemeSupportAppEmbed(
         // OPEN so a transient detection error never hides the Listener
         // onboarding step — showing a step the rare broken theme can't use is
         // far better than silently skipping the critical Listener activation.
-        console.error("doesThemeSupportAppEmbed failed", error);
+        log.error({ err: error }, "doesThemeSupportAppEmbed failed");
         return true;
     }
 }

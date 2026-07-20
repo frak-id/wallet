@@ -1,24 +1,21 @@
-import { vars } from "@frak-labs/design-system/theme";
-import {
-    alias,
-    brand,
-    easing,
-    transition,
-} from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
+import { vars } from "../../theme.css";
+import { alias, brand, easing, fontSize, transition } from "../../tokens.css";
+import { wrapperBorder } from "../Table/table.css";
 
-export const tableWrapper = style({
-    overflowX: "auto",
-    color: vars.text.secondary,
-    backgroundColor: vars.surface.elevated,
-    border: `1px solid ${vars.border.subtle}`,
-    borderRadius: alias.cornerRadius.m,
-});
+export const tableWrapper = style([
+    wrapperBorder,
+    {
+        overflowX: "auto",
+        color: vars.text.secondary,
+        backgroundColor: vars.surface.elevated,
+    },
+]);
 
 export const table = style({
     width: "100%",
     borderCollapse: "collapse",
-    fontSize: "14px",
+    fontSize: fontSize.s,
 });
 
 /**
@@ -62,27 +59,15 @@ export const tableFilterIconDesc = style({
     transform: "rotate(180deg)",
 });
 
+/**
+ * Base header/cell look (48px header, 56px rows, padding, weights,
+ * line-height, dividers, surfaces) comes from the `Table` primitive's
+ * `headerCell`/`cell` recipe classes, applied to the rendered cells. Only
+ * the header props with no recipe equivalent live here.
+ */
 globalStyle(`${table} > thead > tr > th`, {
     position: "relative",
-    height: "48px",
-    padding: `0 ${alias.spacing.s}`,
-    background: vars.surface.muted,
-    textAlign: "left",
     whiteSpace: "nowrap",
-    color: vars.text.secondary,
-    fontWeight: brand.typography.fontWeight.medium,
-    lineHeight: "22px",
-    boxShadow: `inset 0 -1px 0 0 ${vars.border.subtle}`,
-});
-
-globalStyle(`${table} > tbody > tr > td`, {
-    height: "56px",
-    padding: `0 ${alias.spacing.s}`,
-    textAlign: "left",
-    color: vars.text.primary,
-    fontWeight: brand.typography.fontWeight.regular,
-    lineHeight: "22px",
-    boxShadow: `inset 0 -1px 0 0 ${vars.border.subtle}`,
 });
 
 globalStyle(`${table} > tfoot > tr > th`, {
@@ -108,7 +93,7 @@ globalStyle(`${table} > tbody > tr[data-clickable="true"]`, {
     transition: `background-color ${transition.fast} ${easing.default}`,
 });
 
-globalStyle(`${table} > tbody > tr[data-clickable="true"]:hover`, {
+globalStyle(`${table} > tbody > tr[data-clickable="true"]:hover > td`, {
     backgroundColor: vars.surface.muted,
 });
 

@@ -254,7 +254,7 @@
             "address": "Adresse",
             "notDeployed": "Votre budget de récompenses n'est pas encore déployé. Complétez l'assistant de configuration pour commencer.",
             "emptyWarning": "Votre budget n'a aucun fonds. Les campagnes actives ne peuvent pas distribuer de récompenses tant que vous n'ajoutez pas de fonds.",
-            "connectWallet": "Connectez votre portefeuille Frak pour gérer les paramètres de distribution, les allocations et les retraits.",
+            "connectWallet": "Connectez votre porte-monnaie Frak pour gérer les paramètres de distribution, les allocations et les retraits.",
             "distribution": "Distribution",
             "distributionActive": "Active",
             "distributionPaused": "En pause",

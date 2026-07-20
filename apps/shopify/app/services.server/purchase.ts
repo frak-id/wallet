@@ -2,12 +2,31 @@ import { eq } from "drizzle-orm";
 import { purchaseTable } from "../../db/schema/purchaseTable";
 import { drizzleDb } from "../db.server";
 import type { AuthenticatedContext } from "../types/context";
+import { isProd } from "../utils/env";
+import { log } from "./logger";
 import {
     parseShopifyGid,
     validateBank,
     validatePurchaseAmount,
 } from "./purchase.helpers";
 import { shopInfo } from "./shop";
+
+/**
+ * Typed purchase failure carrying the HTTP status the route should surface.
+ * Lets `api.purchase.tsx` distinguish a client/validation-shaped failure (400 /
+ * 409) from a real upstream/server failure (5xx) instead of collapsing
+ * everything into a bare 500 "Error".
+ */
+export class PurchaseError extends Error {
+    constructor(
+        message: string,
+        readonly status: number = 400
+    ) {
+        super(message);
+        this.name = "PurchaseError";
+    }
+}
+
 /**
  * Startup purchase for a shop
  */
@@ -17,9 +36,9 @@ export async function startupPurchase(
 ) {
     // Validate inputs
     const amountError = validatePurchaseAmount(rawAmount);
-    if (amountError) throw new Error(amountError);
+    if (amountError) throw new PurchaseError(amountError);
     const bankError = validateBank(bank);
-    if (bankError) throw new Error(bankError);
+    if (bankError) throw new PurchaseError(bankError);
     const amount = Number(rawAmount);
 
     // Get the shop info and generate a name for this purchase
@@ -31,11 +50,36 @@ export async function startupPurchase(
         (p) => p.status === "pending"
     );
     if (pendingPurchases.length > 9) {
-        throw new Error("Shop already has more than 10 pending purchases");
+        throw new PurchaseError(
+            "Shop already has more than 10 pending purchases",
+            409
+        );
     }
 
     // Start the one time purchase
     const generatedName = `Frak bank - ${amount.toFixed(2)}${info.preferredCurrency ?? "eur"} - ${new Date().toISOString()}`;
+    const trimmedShopId = parseShopifyGid(info.id, "Shop");
+
+    // Non-prod stages run as a Shopify *custom* app, which Shopify blocks from
+    // the Billing API ("Custom apps cannot use the Billing API"). Skip the real
+    // charge and persist a fake pending purchase so the funding flow stays
+    // testable end-to-end off-prod.
+    if (!isProd()) {
+        const fakePurchaseId = Date.now();
+        const confirmationUrl = `${process.env.SHOPIFY_APP_URL}/purchase?charge_id=${fakePurchaseId}`;
+        await drizzleDb.insert(purchaseTable).values({
+            shopId: trimmedShopId,
+            purchaseId: fakePurchaseId,
+            confirmationUrl,
+            shop: info.domain,
+            amount: amount.toString(),
+            currency: info.preferredCurrency ?? "eur",
+            status: "pending",
+            bank,
+        });
+        return confirmationUrl;
+    }
+
     const response = await ctx.admin.graphql(
         `#graphql
         mutation AppPurchaseOneTimeCreate($name: String!, $price: MoneyInput!, $returnUrl: URL!, $test: Boolean!) {
@@ -79,11 +123,13 @@ export async function startupPurchase(
     const purchaseData = result?.data?.appPurchaseOneTimeCreate;
 
     if (!purchaseData?.appPurchaseOneTime || !purchaseData.confirmationUrl) {
-        console.error("Error creating purchase", purchaseData.userErrors);
-        throw new Error("Failed to create purchase");
+        log.error(
+            { userErrors: purchaseData.userErrors, shop: info.domain },
+            "Error creating purchase"
+        );
+        throw new PurchaseError("Failed to create purchase", 502);
     }
 
-    const trimmedShopId = parseShopifyGid(info.id, "Shop");
     const trimmedPurchaseId = parseShopifyGid(
         purchaseData.appPurchaseOneTime.id,
         "AppPurchaseOneTime"

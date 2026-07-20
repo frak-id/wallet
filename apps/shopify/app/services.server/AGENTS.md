@@ -43,7 +43,8 @@ export async function doSomething(
 - **LRU caching**: `lru-cache` with TTL. Cache key = `session.shop` or `normalizedDomain`. `max: 512` entries.
 - **Metafield namespace**: `"frak"`. Keys: `modal_i18n`, `appearance`, `merchant_id`. Values: JSON-stringified.
 - **Generic helpers**: `metafields.ts` has `readMetafield<T>()` / `writeMetafield<T>()` — reuse for new metafields.
-- **Error handling**: try-catch with `console.error`, return `null`/`undefined` on failure. Never throw from services.
+- **Error handling**: try-catch, return `null`/`undefined` on failure. Never throw from services.
+- **Logging**: use the structured pino logger (`import { log } from "./logger"`), never `console.*` (on GKE `console.warn` is misclassified as ERROR severity). Pattern: `log.error({ err, merchantId }, "short message")`. Per-request `reqId`/`shop`/`merchantId`/`route` are attached automatically via the request context (root `middleware` + `setRequestContext`). For backend/HTTP errors branch severity with `levelForStatus(status)` (404 → info, other 4xx → warn, 5xx → error).
 - **Tests**: Co-located `*.test.ts` files (9 total). Run with `bun run test`.
 - **Types over interfaces**: Prefer `type` aliases. Use `interface` only when declaration merging is required.
 

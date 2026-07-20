@@ -8,6 +8,7 @@ import {
     getFrakWebookStatus,
     setupFrakWebhook,
 } from "app/services.server/backendMerchant";
+import { log } from "app/services.server/logger";
 import { resolveMerchantId } from "app/services.server/merchant";
 import {
     createWebhook,
@@ -32,30 +33,47 @@ export async function action({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent") as IntentWebhook;
 
-    switch (intent) {
-        case "createWebhook": {
-            return await createWebhook(context);
-        }
+    // Fail open: a transient Shopify/backend error degrades to a surfaced
+    // userError instead of bouncing the whole settings page to a full-page
+    // error (consistent with app.appearance.tsx).
+    try {
+        switch (intent) {
+            case "createWebhook": {
+                return await createWebhook(context);
+            }
 
-        case "deleteWebhook": {
-            const webhookId = formData.get("webhookId");
-            if (webhookId) {
-                // Delete specific webhook by ID
+            case "deleteWebhook": {
+                const webhookId = formData.get("webhookId");
+                if (webhookId) {
+                    // Delete specific webhook by ID
+                    return await deleteWebhook({
+                        ...context,
+                        id: String(webhookId),
+                    });
+                }
+                // Delete first webhook (legacy behavior)
+                const webhooks = await getWebhooks(context);
+                if (!webhooks[0]?.node?.id)
+                    return {
+                        userErrors: [{ message: "Webhook does not exists" }],
+                    };
                 return await deleteWebhook({
                     ...context,
-                    id: String(webhookId),
+                    id: webhooks[0].node.id,
                 });
             }
-            // Delete first webhook (legacy behavior)
-            const webhooks = await getWebhooks(context);
-            if (!webhooks[0]?.node?.id)
-                return { userErrors: [{ message: "Webhook does not exists" }] };
-            return await deleteWebhook({ ...context, id: webhooks[0].node.id });
-        }
 
-        case "setupFrakWebhook": {
-            return await setupFrakWebhook(context, request);
+            case "setupFrakWebhook": {
+                return await setupFrakWebhook(context, request);
+            }
         }
+    } catch (error) {
+        log.error({ err: error, intent }, "webhook action failed");
+        return {
+            userErrors: [
+                { message: "Something went wrong. Please try again." },
+            ],
+        };
     }
 }
 

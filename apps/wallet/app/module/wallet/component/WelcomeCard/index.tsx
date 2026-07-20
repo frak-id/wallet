@@ -109,21 +109,17 @@ export function WelcomeCard() {
     return (
         <Box display="flex" flexDirection="column" gap="xs">
             <Box
-                className={
-                    hasMultipleSlides
-                        ? styles.slider.multiple
-                        : styles.slider.single
-                }
+                className={styles.slider({
+                    mode: hasMultipleSlides ? "multiple" : "single",
+                })}
                 ref={scrollContainerRef}
             >
                 {visibleSlides.map((slide, index) => (
                     <Box
                         key={slide.id}
-                        className={
-                            hasMultipleSlides
-                                ? styles.slide.multiple
-                                : styles.slide.single
-                        }
+                        className={styles.slide({
+                            mode: hasMultipleSlides ? "multiple" : "single",
+                        })}
                         data-index={index}
                     >
                         <Card

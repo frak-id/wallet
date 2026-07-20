@@ -10,16 +10,20 @@ import {
     ChartTooltip,
     NumericYAxis,
 } from "@frak-labs/design-system/components/charts";
-import { Inline } from "@frak-labs/design-system/components/Inline";
+import { DataTable } from "@frak-labs/design-system/components/DataTable";
+import { Notice } from "@frak-labs/design-system/components/Notice";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Tiles } from "@frak-labs/design-system/components/Tiles";
 import { vars } from "@frak-labs/design-system/theme";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { KpiCard } from "@/module/campaigns/component/KpiCard";
 import { affiliateReportQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { DetailRow, DetailValue } from "@/module/common/component/DetailRow";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { getDateTimeFormat } from "@/module/common/utils/intlCache";
 import { AffiliateReportDateChip } from "./AffiliateReportDateChip";
@@ -65,27 +69,27 @@ export function AffiliateReport({ from, to }: WindowProps) {
                 </div>
 
                 {truncated && (
-                    <div className={styles.truncatedBanner} role="status">
+                    <Notice tone="warning" role="status">
                         {t("campaigns.affiliateReport.truncated")}
-                    </div>
+                    </Notice>
                 )}
 
                 <Tiles columns={{ mobile: 1, tablet: 2, desktop: 4 }} space="m">
-                    <KpiTile
+                    <KpiCard
                         label={t("campaigns.affiliateReport.kpi.clicks")}
-                        value={numberFormatter.format(clicks.total)}
+                        amount={numberFormatter.format(clicks.total)}
                     />
-                    <KpiTile
+                    <KpiCard
                         label={t("campaigns.affiliateReport.kpi.actions")}
-                        value={numberFormatter.format(actions.total)}
+                        amount={numberFormatter.format(actions.total)}
                     />
-                    <KpiTile
+                    <KpiCard
                         label={t("campaigns.affiliateReport.kpi.sales")}
-                        value={numberFormatter.format(actions.byType.sale)}
+                        amount={numberFormatter.format(actions.byType.sale)}
                     />
-                    <KpiTile
+                    <KpiCard
                         label={t("campaigns.affiliateReport.kpi.conversion")}
-                        value={`${conversionRate.toFixed(1)}%`}
+                        amount={`${conversionRate.toFixed(1)}%`}
                     />
                 </Tiles>
 
@@ -118,19 +122,6 @@ export function AffiliateReport({ from, to }: WindowProps) {
                 </div>
             </Stack>
         </div>
-    );
-}
-
-function KpiTile({ label, value }: { label: string; value: string }) {
-    return (
-        <Card radius="m">
-            <Stack space="xxs">
-                <Text as="span" variant="bodySmall" color="secondary">
-                    {label}
-                </Text>
-                <span className={styles.amount}>{value}</span>
-            </Stack>
-        </Card>
     );
 }
 
@@ -242,24 +233,21 @@ function ActionBreakdownCard({
                 </Text>
                 <Stack space="none">
                     {rows.map((row) => (
-                        <Inline
-                            key={row.label}
-                            space="m"
-                            className={styles.breakdownRow}
-                        >
-                            <Text as="span" variant="body">
-                                {row.label}
-                            </Text>
-                            <Text as="span" variant="body" weight="medium">
+                        <DetailRow key={row.label} label={row.label}>
+                            <DetailValue>
                                 {numberFormatter.format(row.value)}
-                            </Text>
-                        </Inline>
+                            </DetailValue>
+                        </DetailRow>
                     ))}
                 </Stack>
             </Stack>
         </Card>
     );
 }
+
+type RevenueRow = AffiliateActionsReport["revenue"][number];
+
+const revenueColumnHelper = createColumnHelper<RevenueRow>();
 
 function RevenueCard({
     revenue,
@@ -269,6 +257,35 @@ function RevenueCard({
     locale: string;
 }) {
     const { t } = useTranslation();
+
+    const columns = useMemo(
+        () =>
+            [
+                revenueColumnHelper.accessor("currencyCode", {
+                    header: t("campaigns.affiliateReport.revenue.currency"),
+                    cell: ({ getValue }) => getValue(),
+                }),
+                revenueColumnHelper.accessor("orderAmount", {
+                    header: t("campaigns.affiliateReport.revenue.orders"),
+                    cell: ({ getValue, row }) =>
+                        new Intl.NumberFormat(locale, {
+                            style: "currency",
+                            currency: row.original.currencyCode,
+                        }).format(getValue()),
+                    meta: { align: "right" },
+                }),
+                revenueColumnHelper.accessor("publisherRevenue", {
+                    header: t("campaigns.affiliateReport.revenue.commission"),
+                    cell: ({ getValue, row }) =>
+                        new Intl.NumberFormat(locale, {
+                            style: "currency",
+                            currency: row.original.currencyCode,
+                        }).format(getValue()),
+                    meta: { align: "right" },
+                }),
+            ] as ColumnDef<RevenueRow>[],
+        [t, locale]
+    );
 
     if (revenue.length === 0) {
         return (
@@ -291,50 +308,12 @@ function RevenueCard({
                 <Text as="h2" variant="bodySmall" color="secondary">
                     {t("campaigns.affiliateReport.revenue.title")}
                 </Text>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th
-                                className={`${styles.cellHead} ${styles.cellStart}`}
-                            >
-                                {t(
-                                    "campaigns.affiliateReport.revenue.currency"
-                                )}
-                            </th>
-                            <th className={styles.cellHead}>
-                                {t("campaigns.affiliateReport.revenue.orders")}
-                            </th>
-                            <th className={styles.cellHead}>
-                                {t(
-                                    "campaigns.affiliateReport.revenue.commission"
-                                )}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {revenue.map((row) => {
-                            const money = new Intl.NumberFormat(locale, {
-                                style: "currency",
-                                currency: row.currencyCode,
-                            });
-                            return (
-                                <tr key={row.currencyCode}>
-                                    <td
-                                        className={`${styles.cell} ${styles.cellStart}`}
-                                    >
-                                        {row.currencyCode}
-                                    </td>
-                                    <td className={styles.cell}>
-                                        {money.format(row.orderAmount)}
-                                    </td>
-                                    <td className={styles.cell}>
-                                        {money.format(row.publisherRevenue)}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                <DataTable
+                    data={revenue}
+                    columns={columns}
+                    emptyMessage={t("common.table.empty")}
+                    enableSorting={false}
+                />
             </Stack>
         </Card>
     );

@@ -13,10 +13,12 @@ import { campaignDetailsQueryOptions } from "@/module/campaigns/queries/queryOpt
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import type { CampaignListItemWithActions } from "@/types/Campaign";
 import { AmbassadorsTab } from "./AmbassadorsTab";
 import { ConfigTab } from "./ConfigTab";
 import * as styles from "./campaign-details-sheet.css";
+import { EditCampaignButton } from "./EditCampaignButton";
 import { ExportButton } from "./ExportButton";
 import { FunnelRoiTab } from "./FunnelRoiTab";
 
@@ -75,6 +77,10 @@ function CampaignDetailsContent({
     const { t } = useTranslation();
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
+    // Platform admins view campaigns in read-only mode: no edit, mirroring the
+    // gate CellRowMenu applies. `canEdit` already implies a draft campaign.
+    const isReadOnly = useReadOnlyMerchant({ merchantId });
+    const canEdit = !isReadOnly && campaign.actions.canEdit;
     const { data } = useQuery(
         campaignDetailsQueryOptions({
             merchantId,
@@ -114,7 +120,16 @@ function CampaignDetailsContent({
                         />
                     </>
                 }
-                action={<ExportButton />}
+                action={
+                    canEdit ? (
+                        <EditCampaignButton
+                            merchantId={merchantId}
+                            campaignId={campaign.id}
+                        />
+                    ) : (
+                        <ExportButton />
+                    )
+                }
             />
 
             {!data ? null : (

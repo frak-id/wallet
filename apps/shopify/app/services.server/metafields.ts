@@ -1,5 +1,6 @@
 import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
+import { log } from "./logger";
 import { shopInfo } from "./shop";
 
 const FRAK_NAMESPACE = "frak";
@@ -218,7 +219,7 @@ async function readMetafield<T>(
         try {
             return JSON.parse(shop.metafield.value) as T;
         } catch (error) {
-            console.error("Error parsing metafield:", error);
+            log.error({ err: error }, "Error parsing metafield");
         }
     }
 
@@ -552,12 +553,15 @@ async function runGraphQL<TData>(
         const response = await graphql(query, { variables });
         const body = (await response.json()) as GraphQLBody<TData>;
         if (body.errors?.length) {
-            console.error(`[frakI18n] ${label} top-level errors:`, body.errors);
+            log.error(
+                { label, errors: body.errors },
+                "frakI18n top-level errors"
+            );
             return null;
         }
         return body.data ?? null;
     } catch (error) {
-        console.error(`[frakI18n] ${label} threw:`, error);
+        log.error({ err: error, label }, "frakI18n request threw");
         return null;
     }
 }
@@ -643,10 +647,7 @@ async function createFrakI18nDefinition(
             !e.code || !IGNORABLE_METAOBJECT_DEFINITION_ERROR_CODES.has(e.code)
     );
     if (blocking.length > 0) {
-        console.error(
-            "[frakI18n] definition create rejected:",
-            JSON.stringify(blocking)
-        );
+        log.error({ blocking }, "frakI18n definition create rejected");
         return false;
     }
     return true;
@@ -700,9 +701,9 @@ async function upsertFrakI18nEntry(
     if (!data) return null;
     const result = data.metaobjectUpsert;
     if (result?.userErrors?.length) {
-        console.error(
-            "[frakI18n] entry upsert userErrors:",
-            JSON.stringify(result.userErrors)
+        log.error(
+            { userErrors: result.userErrors },
+            "frakI18n entry upsert userErrors"
         );
     }
     return result?.metaobject?.id ?? null;
@@ -799,7 +800,7 @@ async function registerFrakI18nFrTranslations(
     if (!data) return false;
     const errors = data.translationsRegister?.userErrors ?? [];
     if (errors.length > 0) {
-        console.error("[frakI18n] fr translations rejected:", errors);
+        log.error({ errors }, "frakI18n fr translations rejected");
         return false;
     }
     return true;
@@ -835,10 +836,43 @@ export async function ensureFrakI18nMetaobject(
     if (frOk) i18nMetaobjectSyncedShops.set(cacheKey, true);
 }
 
+/**
+ * Whether the shop has the French locale enabled. `translationsRegister`
+ * rejects FR translations with `INVALID_LOCALE_FOR_SHOP` for shops that
+ * haven't added French. Because the orchestrator only caches on full
+ * success, such a shop would otherwise re-run the whole metaobject sync and
+ * re-log that error on every single app load. Gating on the shop's enabled
+ * locales turns the FR seed into a cacheable no-op instead.
+ */
+async function shopHasFrLocale(
+    context: AuthenticatedContext
+): Promise<boolean> {
+    const data = await runGraphQL<{
+        shopLocales?: Array<{ locale: string }>;
+    }>(
+        context.admin.graphql,
+        "shop locales read",
+        `#graphql
+        query ReadShopLocales {
+            shopLocales { locale }
+        }`,
+        {}
+    );
+    if (!data?.shopLocales) return false;
+    return data.shopLocales.some(
+        (l) => l.locale?.toLowerCase() === FRAK_I18N_FR_LOCALE
+    );
+}
+
 async function syncFrakI18nFrTranslations(
     context: AuthenticatedContext,
     entryId: string
 ): Promise<boolean> {
+    // Shops without French enabled reject FR translations with
+    // INVALID_LOCALE_FOR_SHOP. Skip as a cacheable success so we don't re-run
+    // the sync and re-log the rejection on every app load.
+    if (!(await shopHasFrLocale(context))) return true;
+
     const state = await readFrakI18nFieldTranslationState(context, entryId);
     if (!state) return false;
     const missing = FRAK_I18N_FIELDS.flatMap((f) => {
@@ -917,7 +951,7 @@ export async function getLegacyInstallDismissed({
         );
         return value === true;
     } catch (error) {
-        console.error("[legacyInstall] dismissed read failed:", error);
+        log.error({ err: error }, "legacyInstall dismissed read failed");
         return false;
     }
 }

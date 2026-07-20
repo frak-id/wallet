@@ -45,7 +45,9 @@ function ListenerWalletInner() {
             <div
                 className={clsx(
                     styles.modalListenerWallet,
-                    styles.position[metadata?.position ?? "right"],
+                    styles.position({
+                        position: metadata?.position ?? "right",
+                    }),
                     prefixWalletCss("modalListenerWallet")
                 )}
             >

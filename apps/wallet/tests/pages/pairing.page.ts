@@ -29,14 +29,12 @@ export class PairingPage {
         ).toBeVisible();
 
         if (code) {
-            // The code renders as one input per digit, not a single text node.
-            const digits = this.page.getByRole("textbox", {
-                name: /^Digit \d+$/,
-            });
-            await expect(digits).toHaveCount(code.length);
-            for (let i = 0; i < code.length; i++) {
-                await expect(digits.nth(i)).toHaveValue(code[i]);
-            }
+            // Read-only CodeInput renders the value as aria-hidden display
+            // boxes and exposes it to AT as a single visually-hidden span of
+            // space-separated characters ("1 6 5 2 8 3").
+            await expect(
+                this.page.getByText(code.split("").join(" "))
+            ).toBeAttached();
         }
     }
 

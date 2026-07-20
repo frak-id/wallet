@@ -1,9 +1,9 @@
+import { DataTable } from "@frak-labs/design-system/components/DataTable";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { CampaignDetailsStats } from "@/module/campaigns/queries/queryOptions";
-import { Table } from "@/module/common/component/Table";
 import { useDetailFormatters } from "./parts";
 import { truncateWallet } from "./truncateWallet";
 
@@ -101,6 +101,11 @@ export function TopAmbassadorsTable({
     );
 
     return (
-        <Table data={topAmbassadors} columns={columns} enableSorting={false} />
+        <DataTable
+            data={topAmbassadors}
+            columns={columns}
+            emptyMessage={t("common.table.empty")}
+            enableSorting={false}
+        />
     );
 }

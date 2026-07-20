@@ -102,7 +102,7 @@ function Badge({ state }: { state: MoneriumOrderState }) {
     if (state === "placed" || state === "pending") {
         return (
             <div className={styles.badge}>
-                <div className={styles.badgeInner.pending}>
+                <div className={styles.badgeInner({ status: "pending" })}>
                     <LockIcon
                         color={vars.surface.background}
                         width={12}
@@ -115,7 +115,7 @@ function Badge({ state }: { state: MoneriumOrderState }) {
     if (state === "rejected") {
         return (
             <div className={styles.badge}>
-                <div className={styles.badgeInner.rejected}>
+                <div className={styles.badgeInner({ status: "rejected" })}>
                     <CloseIcon
                         color={vars.surface.background}
                         width={12}

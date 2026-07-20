@@ -17,6 +17,7 @@ import {
     updateMerchantExplorerSettings,
     uploadMerchantMedia,
 } from "app/services.server/backendMerchant";
+import { log } from "app/services.server/logger";
 import {
     type AppearanceMetafieldValue,
     getAppearanceMetafield,
@@ -55,42 +56,51 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         mediaFiles,
     ] = await Promise.all([
         getI18nCustomizations(context).catch((e): I18nCustomizations => {
-            console.error("[appearance loader] i18n customizations failed:", e);
+            log.error(
+                { err: e },
+                "appearance loader: i18n customizations failed"
+            );
             return {};
         }),
         getAppearanceMetafield(context).catch((e): AppearanceMetafieldValue => {
-            console.error(
-                "[appearance loader] appearance metafield failed:",
-                e
+            log.error(
+                { err: e },
+                "appearance loader: appearance metafield failed"
             );
             return {};
         }),
         doesThemeHasFrakButton(context).catch((e) => {
-            console.error("[appearance loader] button detection failed:", e);
+            log.error({ err: e }, "appearance loader: button detection failed");
             return false;
         }),
         doesThemeHasFrakBanner(context).catch((e) => {
-            console.error("[appearance loader] banner detection failed:", e);
+            log.error({ err: e }, "appearance loader: banner detection failed");
             return false;
         }),
         firstProductPublished(context).catch((e) => {
-            console.error("[appearance loader] first product fetch failed:", e);
+            log.error(
+                { err: e },
+                "appearance loader: first product fetch failed"
+            );
             return undefined;
         }),
         getMainThemeId(context).catch((e) => {
-            console.error("[appearance loader] main theme id failed:", e);
+            log.error({ err: e }, "appearance loader: main theme id failed");
             return { gid: "", id: "" };
         }),
         getMerchantExplorerSettings(context, request).catch((e) => {
-            console.error("[appearance loader] explorer settings failed:", e);
+            log.error(
+                { err: e },
+                "appearance loader: explorer settings failed"
+            );
             return null;
         }),
         shopBrandInfo(context).catch((e) => {
-            console.error("[appearance loader] shop brand info failed:", e);
+            log.error({ err: e }, "appearance loader: shop brand info failed");
             return { description: null, logoUrl: null, coverImageUrl: null };
         }),
         listMerchantMedia(context, request).catch((e) => {
-            console.error("[appearance loader] media list failed:", e);
+            log.error({ err: e }, "appearance loader: media list failed");
             return [];
         }),
     ]);
@@ -169,7 +179,7 @@ async function handleSaveExplorer(
         );
         return data(result, { status: result.success ? 200 : 400 });
     } catch (error) {
-        console.error("Error saving explorer settings:", error);
+        log.error({ err: error }, "Error saving explorer settings");
         return data(
             {
                 success: false,
@@ -264,7 +274,7 @@ export async function action({ request }: ActionFunctionArgs) {
             { status: 400 }
         );
     } catch (error) {
-        console.error("Error in customizations action:", error);
+        log.error({ err: error }, "Error in customizations action");
         return data(
             {
                 success: false,

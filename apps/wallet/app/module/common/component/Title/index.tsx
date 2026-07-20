@@ -25,12 +25,7 @@ export function Title({
     return (
         <Box
             as={tag}
-            className={[
-                styles.title,
-                styles.size[size],
-                styles.align[align],
-                className,
-            ]
+            className={[styles.title({ size, align }), className]
                 .filter(Boolean)
                 .join(" ")}
         >

@@ -33,6 +33,24 @@ vi.mock("../../common/analytics", async (importOriginal) => {
     };
 });
 
+// `startFlow` (used internally by `useLogin`) calls the module-level
+// `trackEvent`, which calls `openPanel.track` directly — mocking the barrel's
+// `trackEvent` export above does NOT intercept that internal call. Mock the
+// underlying `openpanel` module instead, mirroring `startFlow.test.ts`.
+const { mockOpenPanelTrack } = vi.hoisted(() => ({
+    mockOpenPanelTrack: vi.fn(),
+}));
+vi.mock("../../common/analytics/openpanel", async (importOriginal) => {
+    const original =
+        await importOriginal<
+            typeof import("../../common/analytics/openpanel")
+        >();
+    return {
+        ...original,
+        openPanel: { track: mockOpenPanelTrack },
+    };
+});
+
 vi.mock("../../common/api/backendClient", () => ({
     authenticatedWalletApi: {
         auth: {
@@ -651,6 +669,218 @@ describe("useLogin", () => {
             type: "webauthn",
             address: mockAddress,
         });
+    });
+
+    test('defaults trigger to "manual" when omitted', async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi } = await import(
+            "../../common/api/backendClient"
+        );
+        const { authenticationStore } = await import(
+            "../../stores/authenticationStore"
+        );
+        const { sessionStore } = await import("../../stores/sessionStore");
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
+
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: { r: 123n, s: 456n },
+            raw: { id: mockAuthResponse.id },
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
+            data: mockSessionData,
+            error: null,
+        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.login(undefined);
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(mockOpenPanelTrack).toHaveBeenCalledWith(
+            "auth_login_started",
+            expect.objectContaining({ trigger: "manual" })
+        );
+        expect(mockOpenPanelTrack).toHaveBeenCalledWith(
+            "auth_login_succeeded",
+            expect.objectContaining({ trigger: "manual" })
+        );
+    });
+
+    test('tags the started/succeeded flow events with trigger: "auto"', async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi } = await import(
+            "../../common/api/backendClient"
+        );
+        const { authenticationStore } = await import(
+            "../../stores/authenticationStore"
+        );
+        const { sessionStore } = await import("../../stores/sessionStore");
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
+
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: { r: 123n, s: 456n },
+            raw: { id: mockAuthResponse.id },
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
+            data: mockSessionData,
+            error: null,
+        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({} as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.login({ trigger: "auto" });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(mockOpenPanelTrack).toHaveBeenCalledWith(
+            "auth_login_started",
+            expect.objectContaining({ trigger: "auto" })
+        );
+        expect(mockOpenPanelTrack).toHaveBeenCalledWith(
+            "auth_login_succeeded",
+            expect.objectContaining({ trigger: "auto" })
+        );
+    });
+
+    test("marks a silent no-credential auto-fire failure as silent_fallthrough", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+
+        vi.mocked(WebAuthnP256.sign).mockRejectedValue(
+            new Error("TYPE_NO_CREDENTIAL: no credential available")
+        );
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await expect(
+            result.current.login({ trigger: "auto" })
+        ).rejects.toThrow();
+
+        await waitFor(() => {
+            expect(result.current.isError).toBe(true);
+        });
+
+        expect(mockOpenPanelTrack).toHaveBeenCalledWith(
+            "auth_login_failed",
+            expect.objectContaining({
+                trigger: "auto",
+                silent_fallthrough: true,
+            })
+        );
+    });
+
+    test("does not mark a manual no-credential failure as silent_fallthrough", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+
+        vi.mocked(WebAuthnP256.sign).mockRejectedValue(
+            new Error("TYPE_NO_CREDENTIAL: no credential available")
+        );
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await expect(result.current.login(undefined)).rejects.toThrow();
+
+        await waitFor(() => {
+            expect(result.current.isError).toBe(true);
+        });
+
+        expect(mockOpenPanelTrack).toHaveBeenCalledWith(
+            "auth_login_failed",
+            expect.objectContaining({ trigger: "manual" })
+        );
+        const failedCall = mockOpenPanelTrack.mock.calls.find(
+            ([event]) => event === "auth_login_failed"
+        );
+        expect(failedCall?.[1]).not.toHaveProperty("silent_fallthrough", true);
+    });
+
+    test("does not mark an auto-fire cancelled failure as silent_fallthrough", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+
+        vi.mocked(WebAuthnP256.sign).mockRejectedValue(
+            new Error("AbortError: the user cancelled")
+        );
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await expect(
+            result.current.login({ trigger: "auto" })
+        ).rejects.toThrow();
+
+        await waitFor(() => {
+            expect(result.current.isError).toBe(true);
+        });
+
+        const failedCall = mockOpenPanelTrack.mock.calls.find(
+            ([event]) => event === "auth_login_failed"
+        );
+        expect(failedCall?.[1]).not.toHaveProperty("silent_fallthrough", true);
     });
 
     test("should return correct hook properties", ({ queryWrapper }) => {

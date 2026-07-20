@@ -1,59 +1,68 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 
-const buttonContainerBase = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "column",
-    gap: "4px",
-    color: "#ffffff",
-    fontSize: "13px",
-});
-
-export const buttonContainer = styleVariants({
-    default: [buttonContainerBase, {}],
-    disabled: [
-        buttonContainerBase,
-        {
-            opacity: 0.6,
-            cursor: "not-allowed",
-        },
-    ],
-});
-
-export const button = style({
-    boxSizing: "border-box",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 0,
-    cursor: "pointer",
-    outline: "none",
-    borderRadius: "50%",
-    border: "none",
-    width: "55px",
-    height: "55px",
-    backdropFilter: "blur(14px)",
-    color: "#ffffff",
-    selectors: {
-        "&:disabled": {
-            cursor: "not-allowed",
-        },
-    },
-});
-
-export const variant = styleVariants({
-    primary: {
-        background: "#00000059",
+export const buttonContainer = recipe({
+    base: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        gap: "4px",
         color: "#ffffff",
+        fontSize: "13px",
     },
-    danger: {
-        background: "#ff000080",
+    variants: {
+        disabled: {
+            true: {
+                opacity: 0.6,
+                cursor: "not-allowed",
+            },
+            false: {},
+        },
     },
-    success: {
-        background: "#34ff3475",
+    defaultVariants: {
+        disabled: false,
     },
-    disabled: {
-        background: "#4c4c4c59",
+});
+
+export const button = recipe({
+    base: {
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 0,
+        cursor: "pointer",
+        outline: "none",
+        borderRadius: "50%",
+        border: "none",
+        width: "55px",
+        height: "55px",
+        backdropFilter: "blur(14px)",
+        color: "#ffffff",
+        selectors: {
+            "&:disabled": {
+                cursor: "not-allowed",
+            },
+        },
+    },
+    variants: {
+        variant: {
+            primary: {
+                background: "#00000059",
+                color: "#ffffff",
+            },
+            danger: {
+                background: "#ff000080",
+            },
+            success: {
+                background: "#34ff3475",
+            },
+            disabled: {
+                background: "#4c4c4c59",
+            },
+        },
+    },
+    defaultVariants: {
+        variant: "primary",
     },
 });
