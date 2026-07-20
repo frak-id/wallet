@@ -14,6 +14,9 @@ import type {
 type MerchantInsert = typeof merchantsTable.$inferInsert;
 type MerchantSelect = typeof merchantsTable.$inferSelect;
 
+/** Postgres transaction handle as passed to `db.transaction(async (tx) => …)`. */
+type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export class MerchantRepository {
     private readonly domainCache = new LRUCache<
         string,
@@ -271,16 +274,26 @@ export class MerchantRepository {
         }
     }
 
+    /**
+     * Runs under `tx` when supplied by the caller and, per the same
+     * outer-tx contract as `IdentityMergeService`, skips the cache
+     * invalidation in that case — invalidating before the enclosing
+     * transaction commits would let a racing reader repopulate the cache
+     * from pre-commit state. Callers that pass `tx` own the post-commit
+     * invalidation (see `invalidateCachesById`).
+     */
     private async applyUpdate(
         id: string,
-        set: PgUpdateSetSource<typeof merchantsTable>
+        set: PgUpdateSetSource<typeof merchantsTable>,
+        tx?: PgTx
     ): Promise<MerchantSelect | null> {
-        const [result] = await db
+        const runner = tx ?? db;
+        const [result] = await runner
             .update(merchantsTable)
             .set(set)
             .where(eq(merchantsTable.id, id))
             .returning();
-        if (result) {
+        if (result && !tx) {
             this.invalidateCache(result);
         }
         return result ?? null;
@@ -295,14 +308,19 @@ export class MerchantRepository {
      */
     async updateOwner(
         id: string,
-        newOwner: { wallet: Address } | { accountId: string }
+        newOwner: { wallet: Address } | { accountId: string },
+        tx?: PgTx
     ): Promise<MerchantSelect | null> {
-        return this.applyUpdate(id, {
-            ownerWallet: "wallet" in newOwner ? newOwner.wallet : null,
-            ownerAccountId:
-                "accountId" in newOwner ? newOwner.accountId : null,
-            updatedAt: new Date(),
-        });
+        return this.applyUpdate(
+            id,
+            {
+                ownerWallet: "wallet" in newOwner ? newOwner.wallet : null,
+                ownerAccountId:
+                    "accountId" in newOwner ? newOwner.accountId : null,
+                updatedAt: new Date(),
+            },
+            tx
+        );
     }
 
     async updateBankAddress(

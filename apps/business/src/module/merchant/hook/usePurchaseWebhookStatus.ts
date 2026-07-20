@@ -15,7 +15,7 @@ export type WebhookStatus =
     | {
           setup: true;
           platform: WebhookPlatform;
-          webhookSigninKey: string;
+          webhookSigninKey?: string;
           stats?: {
               firstPurchase?: Date;
               lastPurchase?: Date;

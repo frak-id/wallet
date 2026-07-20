@@ -4,6 +4,13 @@ import type { SiweVerifyResult } from "../../../utils/siwe";
 import * as siwe from "../../../utils/siwe";
 import { OwnershipTransferService } from "./OwnershipTransferService";
 
+// The service imports `db` from the infra barrel and now runs the
+// owner-flip + transfer-delete inside `db.transaction`. Run the callback
+// with a throwaway tx handle; the repo methods are mocked and ignore it.
+vi.mock("@backend-infrastructure", () => ({
+    db: { transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb({})) },
+}));
+
 const OWNER_WALLET = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
 const NEW_WALLET = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" as Address;
 const STRANGER_WALLET = "0xccccccccccccccccccccccccccccccccccccccc" as Address;
@@ -35,6 +42,7 @@ function makeService(
             Promise.resolve(id === MERCHANT_ID ? (merchant as never) : null)
         ),
         updateOwner: vi.fn(() => Promise.resolve(merchant as never)),
+        invalidateCachesById: vi.fn(),
     };
 
     let activeTransfer: Record<string, unknown> | null = null;
@@ -235,9 +243,11 @@ describe("OwnershipTransferService.acceptTransfer", () => {
             requestOrigin: "https://business.frak.id",
         });
 
-        expect(merchantRepo.updateOwner).toHaveBeenCalledWith(MERCHANT_ID, {
-            wallet: NEW_WALLET,
-        });
+        expect(merchantRepo.updateOwner).toHaveBeenCalledWith(
+            MERCHANT_ID,
+            { wallet: NEW_WALLET },
+            expect.anything()
+        );
     });
 
     it("account target (§7.5): accepts via the target account's own session, no SIWE proof needed", async () => {
@@ -256,9 +266,11 @@ describe("OwnershipTransferService.acceptTransfer", () => {
             requestOrigin: "https://business.frak.id",
         });
 
-        expect(merchantRepo.updateOwner).toHaveBeenCalledWith(MERCHANT_ID, {
-            accountId: NEW_ACCOUNT,
-        });
+        expect(merchantRepo.updateOwner).toHaveBeenCalledWith(
+            MERCHANT_ID,
+            { accountId: NEW_ACCOUNT },
+            expect.anything()
+        );
     });
 
     it("account target: rejects a caller whose account is not the designated target", async () => {

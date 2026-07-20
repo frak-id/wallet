@@ -340,6 +340,20 @@ export const sessionContextMock = new Elysia({ name: "Macro.session" })
 /*                      Business Session Middleware Mock                      */
 /* -------------------------------------------------------------------------- */
 
+// Controllable access results for the session-resolved access checks.
+// Both default to granted; a test flips them via the setters to exercise
+// the 403 / secret-omitted paths, and resets them in its own beforeEach.
+let mockMerchantAccessGranted = true;
+export function setMockMerchantAccess(granted: boolean) {
+    mockMerchantAccessGranted = granted;
+}
+// "Genuine" access (no platform-admin read bypass) — gates secret-revealing
+// fields (finding 2.8) rather than whole routes.
+let mockGenuineMerchantAccessGranted = true;
+export function setMockGenuineMerchantAccess(granted: boolean) {
+    mockGenuineMerchantAccessGranted = granted;
+}
+
 export const businessSessionContextMock = new Elysia({
     name: "Context.businessSession",
 })
@@ -352,11 +366,13 @@ export const businessSessionContextMock = new Elysia({
     .resolve(async ({ headers }) => {
         const businessAuth = headers["x-business-auth"];
         if (!businessAuth) {
+            const denyAll = (_merchantId: string) =>
+                Promise.resolve(false as boolean);
             return {
                 businessSession: null,
                 shopifySession: null,
-                hasMerchantAccess: (_merchantId: string) =>
-                    Promise.resolve(false as boolean),
+                hasMerchantAccess: denyAll,
+                hasGenuineMerchantAccess: denyAll,
             };
         }
 
@@ -368,7 +384,9 @@ export const businessSessionContextMock = new Elysia({
             businessSession: session || null,
             shopifySession: null,
             hasMerchantAccess: (_merchantId: string) =>
-                Promise.resolve(true as boolean),
+                Promise.resolve(mockMerchantAccessGranted),
+            hasGenuineMerchantAccess: (_merchantId: string) =>
+                Promise.resolve(mockGenuineMerchantAccessGranted),
         };
     })
     .macro({
@@ -384,6 +402,28 @@ export const businessSessionContextMock = new Elysia({
                     if (!session) {
                         set.status = 401;
                         return "Unauthorized - Invalid business token";
+                    }
+                },
+            };
+        },
+        // Mirrors the real macro (same status codes/bodies) so routes that
+        // moved from an inline check to `requireMerchantAccess: true` keep
+        // their 401/403 behavior under test.
+        requireMerchantAccess(enabled?: boolean) {
+            if (!enabled) return;
+            return {
+                // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
+                beforeHandle: async ({ params, businessSession, shopifySession, hasMerchantAccess, set }: any) => {
+                    if (!businessSession && !shopifySession) {
+                        set.status = 401;
+                        return "Authentication required";
+                    }
+                    const hasAccess = await hasMerchantAccess?.(
+                        params?.merchantId
+                    );
+                    if (!hasAccess) {
+                        set.status = 403;
+                        return "Access denied";
                     }
                 },
             };

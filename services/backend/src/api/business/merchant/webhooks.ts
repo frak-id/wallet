@@ -1,4 +1,4 @@
-import { db } from "@backend-infrastructure";
+import { db, log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia, status } from "elysia";
@@ -19,7 +19,11 @@ export const merchantWebhooksRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({ params: { merchantId } }) => {
+        async ({
+            params: { merchantId },
+            businessSession,
+            hasGenuineMerchantAccess,
+        }) => {
             const currentWebhooks = await db
                 .select()
                 .from(merchantWebhooksTable)
@@ -42,10 +46,29 @@ export const merchantWebhooksRoutes = new Elysia({
                 .where(eq(purchasesTable.webhookId, currentWebhook.id))
                 .execute();
 
+            // `hasMerchantAccess` (route guard above) also grants read-only
+            // access via a platform-admin SAFE_METHODS bypass. That bypass
+            // must never reveal the raw signing secret (finding 2.8), so the
+            // secret field alone is gated on the session-resolved genuine
+            // grant (ownership / admin row / Shopify link — no admin bypass).
+            const genuineAccess = await hasGenuineMerchantAccess(merchantId);
+            if (genuineAccess) {
+                log.info(
+                    {
+                        wallet: businessSession?.wallet,
+                        accountId: businessSession?.accountId,
+                        merchantId,
+                    },
+                    "serving webhook signing secret"
+                );
+            }
+
             return {
                 setup: true as const,
                 platform: currentWebhook.platform,
-                webhookSigninKey: currentWebhook.hookSignatureKey,
+                webhookSigninKey: genuineAccess
+                    ? currentWebhook.hookSignatureKey
+                    : undefined,
                 stats: {
                     firstPurchase: stats[0]?.firstPurchase ?? undefined,
                     lastPurchase: stats[0]?.lastPurchase ?? undefined,

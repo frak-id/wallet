@@ -63,7 +63,7 @@ export async function isPlatformAdminAuth(
  * requests never need it. An account holds at most one Shopify identity
  * (design doc §4.3), so this is a single-row read, not a credential scan.
  */
-async function hasShopifyCredentialAccess(
+export async function hasShopifyCredentialAccess(
     merchantId: string,
     accountId: string | null
 ): Promise<boolean> {
@@ -90,24 +90,24 @@ export const businessSessionContext = new Elysia({
         if (businessAuth) {
             const auth = await resolveBusinessAuth(businessAuth);
             if (auth && isUsableSession(auth)) {
+                // "Genuine" grants only: direct wallet/account/admin-row
+                // ownership or the Shopify-credential auto-link — never the
+                // read-only platform-admin bypass below. Exposed separately so
+                // secret-revealing reads (finding 2.8) can gate on it without
+                // re-deriving authorization logic.
+                const hasGenuineMerchantAccess = async (merchantId: string) =>
+                    (await MerchantContext.services.authorization.hasAccess(
+                        merchantId,
+                        auth
+                    )) ||
+                    hasShopifyCredentialAccess(merchantId, auth.accountId);
+
                 return {
                     businessSession: auth,
                     shopifySession: null as ShopifySessionToken | null,
+                    hasGenuineMerchantAccess,
                     hasMerchantAccess: async (merchantId: string) => {
-                        if (
-                            await MerchantContext.services.authorization.hasAccess(
-                                merchantId,
-                                auth
-                            )
-                        )
-                            return true;
-
-                        if (
-                            await hasShopifyCredentialAccess(
-                                merchantId,
-                                auth.accountId
-                            )
-                        ) {
+                        if (await hasGenuineMerchantAccess(merchantId)) {
                             return true;
                         }
 
@@ -138,26 +138,32 @@ export const businessSessionContext = new Elysia({
             const session = await verifyShopifySessionToken(shopifyToken);
             if (session) {
                 const shopDomain = extractShopDomain(session.dest);
+                // An embedded Shopify session's access is always a real
+                // domain match — genuine by construction, so both checks
+                // share the same function.
+                const hasMerchantAccess = shopDomain
+                    ? (merchantId: string) =>
+                          MerchantContext.services.authorization.hasAccessByDomain(
+                              merchantId,
+                              shopDomain
+                          )
+                    : (_merchantId: string) => Promise.resolve(false as boolean);
                 return {
                     businessSession: null as ResolvedBusinessAuth | null,
                     shopifySession: session,
-                    hasMerchantAccess: shopDomain
-                        ? (merchantId: string) =>
-                              MerchantContext.services.authorization.hasAccessByDomain(
-                                  merchantId,
-                                  shopDomain
-                              )
-                        : (_merchantId: string) =>
-                              Promise.resolve(false as boolean),
+                    hasMerchantAccess,
+                    hasGenuineMerchantAccess: hasMerchantAccess,
                 };
             }
         }
 
+        const denyAll = (_merchantId: string) =>
+            Promise.resolve(false as boolean);
         return {
             businessSession: null as ResolvedBusinessAuth | null,
             shopifySession: null as ShopifySessionToken | null,
-            hasMerchantAccess: (_merchantId: string) =>
-                Promise.resolve(false as boolean),
+            hasMerchantAccess: denyAll,
+            hasGenuineMerchantAccess: denyAll,
         };
     })
     .macro({

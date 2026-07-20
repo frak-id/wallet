@@ -6,6 +6,9 @@ import { merchantOwnershipTransfersTable } from "../db/schema";
 type OwnershipTransferSelect =
     typeof merchantOwnershipTransfersTable.$inferSelect;
 
+/** Postgres transaction handle as passed to `db.transaction(async (tx) => …)`. */
+type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 const TRANSFER_EXPIRY_DAYS = 7;
 
 export class MerchantOwnershipTransferRepository {
@@ -62,8 +65,9 @@ export class MerchantOwnershipTransferRepository {
         return result;
     }
 
-    async delete(merchantId: string): Promise<boolean> {
-        const result = await db
+    async delete(merchantId: string, tx?: PgTx): Promise<boolean> {
+        const runner = tx ?? db;
+        const result = await runner
             .delete(merchantOwnershipTransfersTable)
             .where(eq(merchantOwnershipTransfersTable.merchantId, merchantId));
         return result.count > 0;

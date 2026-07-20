@@ -129,7 +129,7 @@ function toRewardSummary(reward: RewardDefinition): CampaignListReward {
 }
 
 // Existence + ownership check repeated inline across the campaign routes.
-export async function getCampaignOrThrow(merchantId: string, campaignId: string) {
+export async function getOwnedCampaign(merchantId: string, campaignId: string) {
     const campaign = await CampaignContext.services.management.getById(campaignId);
     if (!campaign || campaign.merchantId !== merchantId) return null;
     return campaign;
@@ -231,7 +231,7 @@ export const merchantCampaignsRoutes = new Elysia({
     .get(
         "/:campaignId",
         async ({ params: { merchantId, campaignId } }) => {
-            const campaign = await getCampaignOrThrow(merchantId, campaignId);
+            const campaign = await getOwnedCampaign(merchantId, campaignId);
             if (!campaign) {
                 return status(404, "Campaign not found");
             }
@@ -311,7 +311,7 @@ export const merchantCampaignsRoutes = new Elysia({
     .put(
         "/:campaignId",
         async ({ params: { merchantId, campaignId }, body }) => {
-            const existing = await getCampaignOrThrow(merchantId, campaignId);
+            const existing = await getOwnedCampaign(merchantId, campaignId);
             if (!existing) {
                 return status(404, "Campaign not found");
             }
@@ -367,7 +367,7 @@ export const merchantCampaignsRoutes = new Elysia({
     .post(
         "/:campaignId/publish",
         async ({ params: { merchantId, campaignId } }) => {
-            const existing = await getCampaignOrThrow(merchantId, campaignId);
+            const existing = await getOwnedCampaign(merchantId, campaignId);
             if (!existing) {
                 return status(404, "Campaign not found");
             }
@@ -396,7 +396,7 @@ export const merchantCampaignsRoutes = new Elysia({
     .post(
         "/:campaignId/pause",
         async ({ params: { merchantId, campaignId } }) => {
-            const existing = await getCampaignOrThrow(merchantId, campaignId);
+            const existing = await getOwnedCampaign(merchantId, campaignId);
             if (!existing) {
                 return status(404, "Campaign not found");
             }
@@ -422,7 +422,7 @@ export const merchantCampaignsRoutes = new Elysia({
     .post(
         "/:campaignId/resume",
         async ({ params: { merchantId, campaignId } }) => {
-            const existing = await getCampaignOrThrow(merchantId, campaignId);
+            const existing = await getOwnedCampaign(merchantId, campaignId);
             if (!existing) {
                 return status(404, "Campaign not found");
             }
@@ -448,7 +448,7 @@ export const merchantCampaignsRoutes = new Elysia({
     .post(
         "/:campaignId/archive",
         async ({ params: { merchantId, campaignId } }) => {
-            const existing = await getCampaignOrThrow(merchantId, campaignId);
+            const existing = await getOwnedCampaign(merchantId, campaignId);
             if (!existing) {
                 return status(404, "Campaign not found");
             }
@@ -474,7 +474,7 @@ export const merchantCampaignsRoutes = new Elysia({
     .delete(
         "/:campaignId",
         async ({ params: { merchantId, campaignId } }) => {
-            const existing = await getCampaignOrThrow(merchantId, campaignId);
+            const existing = await getOwnedCampaign(merchantId, campaignId);
             if (!existing) {
                 return status(404, "Campaign not found");
             }

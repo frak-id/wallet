@@ -334,7 +334,14 @@ export class BillingOrchestrator {
                 deposit.id
             );
         for (const withdraw of linkedWithdraws) {
-            await this.billingDocuments.void(merchantId, withdraw.id);
+            try {
+                await this.billingDocuments.void(merchantId, withdraw.id);
+            } catch (err) {
+                log.error(
+                    { err, merchantId, documentId: withdraw.id },
+                    "failed to void linked withdraw during deposit-void cascade; withdraw remains unvoided until next successful cascade"
+                );
+            }
         }
 
         await this.invalidateMonthlyBillsCovering(

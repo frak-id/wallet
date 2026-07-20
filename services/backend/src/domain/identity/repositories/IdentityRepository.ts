@@ -332,8 +332,8 @@ export class IdentityRepository {
         );
     }
 
-    async createGroup(): Promise<IdentityGroupSelect> {
-        const [result] = await db
+    async createGroup(runner: PgRunner = db): Promise<IdentityGroupSelect> {
+        const [result] = await runner
             .insert(identityGroupsTable)
             .values({})
             .returning();
@@ -343,19 +343,34 @@ export class IdentityRepository {
         return result;
     }
 
-    async addNode(params: {
-        groupId: string;
-        type: IdentityType;
-        value: string;
-        merchantId?: string;
-    }): Promise<IdentityNodeSelect> {
+    /**
+     * Delete a just-created, still-empty identity group. Used to roll back
+     * the loser side of a concurrent `resolve()` race (see IdentityOrchestrator),
+     * where two racers both create a group before either attaches a node and
+     * only one wins the node's unique constraint.
+     */
+    async deleteGroup(groupId: string, runner: PgRunner = db): Promise<void> {
+        await runner
+            .delete(identityGroupsTable)
+            .where(eq(identityGroupsTable.id, groupId));
+    }
+
+    async addNode(
+        params: {
+            groupId: string;
+            type: IdentityType;
+            value: string;
+            merchantId?: string;
+        },
+        runner: PgRunner = db
+    ): Promise<IdentityNodeSelect> {
         const normalizedValue = this.normalizeValue(params.type, params.value);
         const cacheKey = this.buildIdentityCacheKey(
             params.type,
             normalizedValue,
             params.merchantId
         );
-        const [result] = await db
+        const [result] = await runner
             .insert(identityNodesTable)
             .values({
                 groupId: params.groupId,
@@ -379,7 +394,7 @@ export class IdentityRepository {
         }
 
         if (!result) {
-            const existing = await db.query.identityNodesTable.findFirst({
+            const existing = await runner.query.identityNodesTable.findFirst({
                 where: and(
                     eq(identityNodesTable.identityType, params.type),
                     eq(identityNodesTable.identityValue, normalizedValue),

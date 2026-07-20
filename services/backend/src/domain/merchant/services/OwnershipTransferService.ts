@@ -1,3 +1,4 @@
+import { db } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { type Address, type Hex, isAddressEqual } from "viem";
 // Deep import (bypasses the `@backend-utils` barrel) — see the comment in
@@ -192,9 +193,6 @@ export class OwnershipTransferService {
                     "Only the designated new owner can accept transfer"
                 );
             }
-            await this.merchantRepository.updateOwner(params.merchantId, {
-                wallet: transfer.toWallet,
-            });
         } else if (transfer.toAccountId) {
             if (params.actor.accountId !== transfer.toAccountId) {
                 throw HttpError.forbidden(
@@ -202,9 +200,6 @@ export class OwnershipTransferService {
                     "Only the designated new owner can accept transfer"
                 );
             }
-            await this.merchantRepository.updateOwner(params.merchantId, {
-                accountId: transfer.toAccountId,
-            });
         } else {
             // Unreachable given the create()-time CHECK constraint, but
             // keeps the branch exhaustive rather than silently no-op-ing.
@@ -214,7 +209,24 @@ export class OwnershipTransferService {
             );
         }
 
-        await this.transferRepository.delete(params.merchantId);
+        const newOwner = transfer.toWallet
+            ? { wallet: transfer.toWallet }
+            : { accountId: transfer.toAccountId as string };
+
+        // Flip the owner and drop the transfer row atomically — a crash
+        // between the two writes would otherwise leave the owner already
+        // changed while the transfer still reads as pending. `tx` defers
+        // the owner-cache invalidation (see `applyUpdate`) until after this
+        // commits, same outer-tx contract as `IdentityMergeService`.
+        await db.transaction(async (tx) => {
+            await this.merchantRepository.updateOwner(
+                params.merchantId,
+                newOwner,
+                tx
+            );
+            await this.transferRepository.delete(params.merchantId, tx);
+        });
+        this.merchantRepository.invalidateCachesById(params.merchantId);
     }
 
     async cancelTransfer(params: {

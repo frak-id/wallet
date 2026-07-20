@@ -11,28 +11,13 @@ export const merchantAllowedDomainsRoutes = new Elysia()
     .use(businessSessionContext)
     .post(
         "/:merchantId/allowed-domains",
-        async ({
-            params: { merchantId },
-            body: { domain: rawDomain },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
+        async ({ params: { merchantId }, body: { domain: rawDomain } }) => {
             const domain =
                 MerchantContext.repositories.dnsCheck.getNormalizedDomain(
                     rawDomain
                 );
             if (!domainRegex.test(domain)) {
                 return status(400, "Invalid domain format");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
             }
 
             const updated =
@@ -49,6 +34,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 domain: t.String({ minLength: 1 }),

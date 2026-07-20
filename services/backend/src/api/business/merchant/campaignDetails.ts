@@ -6,7 +6,7 @@ import {
     MerchantCampaignParamSchema,
 } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
-import { getCampaignOrThrow } from "./campaigns";
+import { getOwnedCampaign } from "./campaigns";
 
 export const merchantCampaignDetailsRoutes = new Elysia({
     prefix: "/:merchantId/campaigns/:campaignId/details",
@@ -18,7 +18,7 @@ export const merchantCampaignDetailsRoutes = new Elysia({
             // Ownership check: confirm the campaign belongs to this merchant
             // before exposing its aggregated stats. Mirrors the pattern in
             // `GET /:merchantId/campaigns/:campaignId` (campaigns.ts).
-            const campaign = await getCampaignOrThrow(merchantId, campaignId);
+            const campaign = await getOwnedCampaign(merchantId, campaignId);
             if (!campaign) {
                 return status(404, "Campaign not found");
             }

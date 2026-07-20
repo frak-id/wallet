@@ -207,6 +207,10 @@ export class CampaignRuleRepository {
         return result;
     }
 
+    // `fromStatuses` mirrors the `updateStatus` TOCTOU guard below: the
+    // service validates field permissions against a status it read earlier,
+    // so the write re-checks that status in the same statement. 0 rows =
+    // the status changed concurrently; callers treat null as a conflict.
     async update(
         id: string,
         updates: Partial<
@@ -214,12 +218,20 @@ export class CampaignRuleRepository {
                 CampaignRuleInsert,
                 "name" | "priority" | "rule" | "budgetConfig" | "expiresAt"
             >
-        >
+        >,
+        fromStatuses?: CampaignStatus[]
     ): Promise<CampaignRuleSelect | null> {
         const [result] = await db
             .update(campaignRulesTable)
             .set({ ...updates, updatedAt: new Date() })
-            .where(eq(campaignRulesTable.id, id))
+            .where(
+                fromStatuses
+                    ? and(
+                          eq(campaignRulesTable.id, id),
+                          inArray(campaignRulesTable.status, fromStatuses)
+                      )
+                    : eq(campaignRulesTable.id, id)
+            )
             .returning();
         if (result) {
             this.invalidateMerchantCache(result.merchantId);
@@ -227,8 +239,13 @@ export class CampaignRuleRepository {
         return result ?? null;
     }
 
+    // Guards the write with `WHERE id = $1 AND status = ANY(fromStatuses)` so a
+    // concurrent transition that already flipped the status (TOCTOU race) makes
+    // this UPDATE affect zero rows instead of silently overwriting it. Callers
+    // (the four transition methods below) treat a null result as a conflict.
     async updateStatus(
         id: string,
+        fromStatuses: CampaignStatus[],
         status: CampaignStatus,
         extras?: { publishedAt?: Date; deactivatedAt?: Date | null }
     ): Promise<CampaignRuleSelect | null> {
@@ -239,7 +256,12 @@ export class CampaignRuleRepository {
                 updatedAt: new Date(),
                 ...extras,
             })
-            .where(eq(campaignRulesTable.id, id))
+            .where(
+                and(
+                    eq(campaignRulesTable.id, id),
+                    inArray(campaignRulesTable.status, fromStatuses)
+                )
+            )
             .returning();
         if (result) {
             this.invalidateMerchantCache(result.merchantId);
@@ -248,25 +270,41 @@ export class CampaignRuleRepository {
     }
 
     async publish(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, "active", { publishedAt: new Date() });
+        return this.updateStatus(id, ["draft"], "active", {
+            publishedAt: new Date(),
+        });
     }
 
     async pause(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, "paused", { deactivatedAt: new Date() });
+        return this.updateStatus(id, ["active"], "paused", {
+            deactivatedAt: new Date(),
+        });
     }
 
     async resume(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, "active", { deactivatedAt: null });
+        return this.updateStatus(id, ["paused"], "active", {
+            deactivatedAt: null,
+        });
     }
 
     async archive(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, "archived", { deactivatedAt: new Date() });
+        return this.updateStatus(id, ["draft", "active", "paused"], "archived", {
+            deactivatedAt: new Date(),
+        });
     }
 
+    // Same TOCTOU guard as `update`/`updateStatus`: only draft campaigns may
+    // be deleted, and the status is re-checked atomically in the DELETE so a
+    // concurrent publish can't lose a just-live campaign's config.
     async delete(id: string): Promise<boolean> {
         const result = await db
             .delete(campaignRulesTable)
-            .where(eq(campaignRulesTable.id, id))
+            .where(
+                and(
+                    eq(campaignRulesTable.id, id),
+                    eq(campaignRulesTable.status, "draft")
+                )
+            )
             .returning({
                 id: campaignRulesTable.id,
                 merchantId: campaignRulesTable.merchantId,

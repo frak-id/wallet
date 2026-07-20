@@ -7,14 +7,26 @@ import {
 } from "../../infrastructure/integrations/airtable";
 
 /**
+ * Lazily constructed so a missing `AIRTABLE_API_KEY` surfaces as a scoped
+ * 500 on this route (via the handler's try/catch) instead of throwing at
+ * module-load time and crashing the whole backend, including `/health`.
+ */
+let airtableRepository: AirtableRepository | undefined;
+export function getAirtableRepository(): AirtableRepository {
+    if (!airtableRepository) {
+        airtableRepository = new AirtableRepository();
+    }
+    return airtableRepository;
+}
+
+/**
  * Airtable API routes for external integrations
  * Used by landing pages and other external services
  */
 export const airtableRoutes = new Elysia({ name: "Routes.airtable" })
-    .decorate("airtableRepository", new AirtableRepository())
     .post(
         "/airtable",
-        async ({ body, query, airtableRepository }) => {
+        async ({ body, query }) => {
             // Validate required parameters
             if (!query.table) {
                 return status(
@@ -41,7 +53,7 @@ export const airtableRoutes = new Elysia({ name: "Routes.airtable" })
             }
 
             try {
-                await airtableRepository.processRequest(tableType, body);
+                await getAirtableRepository().processRequest(tableType, body);
 
                 return status(204);
             } catch (err) {

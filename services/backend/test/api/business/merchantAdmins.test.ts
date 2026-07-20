@@ -105,7 +105,7 @@ import { merchantAdminsRoutes } from "../../../src/api/business/merchant/admins"
 // Shared infra mocks (rate limiter no-op, log, JwtContext, business session
 // middleware, …).
 import "../../mock/common";
-import { JwtContextMock } from "../../mock/common";
+import { JwtContextMock, setMockMerchantAccess } from "../../mock/common";
 
 // Wire the invitation JWT mock into the shared JwtContext mock consumed by
 // `@backend-infrastructure`.
@@ -169,6 +169,7 @@ describe("Merchant admins routes", () => {
             accountId: "00000000-0000-0000-0000-0000000000ac",
         } as never);
         authorizationServiceMocks.hasAccess.mockResolvedValue(true);
+        setMockMerchantAccess(true);
         merchantRepositoryMocks.findById.mockResolvedValue(MERCHANT as never);
         merchantAdminRepositoryMocks.isAdmin.mockResolvedValue(true);
     });
@@ -300,7 +301,9 @@ describe("Merchant admins routes", () => {
         });
 
         it("returns 403 when the actor lacks access", async () => {
-            authorizationServiceMocks.hasAccess.mockResolvedValue(false);
+            // Access is now gated by the requireMerchantAccess macro, not an
+            // inline authorization.hasAccess call in the handler.
+            setMockMerchantAccess(false);
 
             const response = await merchantAdminsRoutes.handle(
                 post(`/${MERCHANT_ID}/admins`, { email: "x@acme.com" })

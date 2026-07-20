@@ -9,7 +9,7 @@ export const WebhookStatusResponseSchema = t.Union([
     t.Object({
         setup: t.Literal(true),
         platform: WebhookPlatformSchema,
-        webhookSigninKey: t.String(),
+        webhookSigninKey: t.Optional(t.String()),
         stats: t.Partial(
             t.Object({
                 firstPurchase: t.Date(),
