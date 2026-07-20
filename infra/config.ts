@@ -80,13 +80,6 @@ export const mongoNexusUri = new sst.Secret("MONGODB_NEXUS_URI");
 export const shopifyClientId = new sst.Secret("SHOPIFY_CLIENT_ID");
 export const shopifyApiSecret = new sst.Secret("SHOPIFY_API_SECRET");
 
-// Legacy Shopify Postgres (standalone public instance) — kept only so the
-// bootstrap Job can migrate data off it. Remove after cutover. The new GCP
-// `shopify` role/password are read from Secret Manager in infra/gcp/secrets.ts.
-export const shopifyPostgresHost = new sst.Secret("SHOPIFY_POSTGRES_HOST");
-export const shopifyPostgresPassword = new sst.Secret(
-    "SHOPIFY_POSTGRES_PASSWORD"
-);
 export const productSetupCodeSalt = new sst.Secret("PRODUCT_SETUP_CODE_SALT");
 
 // Shopify app URL configs
