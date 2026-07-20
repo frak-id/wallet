@@ -16,7 +16,8 @@ export type ButtonShareProps = {
      * stripped if no fallback is provided).
      *
      * When omitted, a built-in localized default is used based on the
-     * resolved language (`"Share and earn!"` / `"Partagez et gagnez !"`).
+     * resolved language (`"Share & earn {REWARD}!"` / `"Partagez et gagnez
+     * {REWARD} !"`) — mirroring the dashboard's first wording preset.
      */
     text?: string;
     /**

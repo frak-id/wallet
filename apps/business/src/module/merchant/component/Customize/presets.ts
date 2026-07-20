@@ -1,3 +1,4 @@
+import { componentDefaults } from "@frak-labs/components/i18n/defaults";
 import { type Currency, formatAmount } from "@frak-labs/core-sdk";
 import type { PresetLang } from "./types";
 
@@ -11,7 +12,13 @@ import type { PresetLang } from "./types";
 export type LocalizedPreset = Record<PresetLang, string>;
 
 export const BUTTON_SHARE_PRESETS: readonly LocalizedPreset[] = [
-    { en: "Share & earn {REWARD}!", fr: "Partagez et gagnez {REWARD} !" },
+    // Index 0 is the single source of truth shared with the SDK's built-in
+    // default copy (`@frak-labs/components/i18n/defaults`) — a fresh merchant
+    // renders exactly this wording before any customization.
+    {
+        en: componentDefaults.en.buttonShare.text,
+        fr: componentDefaults.fr.buttonShare.text,
+    },
     {
         en: "Invite friends & earn {REWARD}!",
         fr: "Invitez vos amis et gagnez {REWARD} !",
@@ -34,14 +41,15 @@ export type PostPurchasePreset = {
 };
 
 export const POST_PURCHASE_PRESETS: readonly PostPurchasePreset[] = [
+    // Index 0 mirrors the SDK's built-in default copy (see BUTTON_SHARE_PRESETS).
     {
         referee: {
-            en: "You just earned {REWARD}! Share with friends to earn even more.",
-            fr: "Vous venez de gagner {REWARD} ! Partagez avec vos amis pour gagner encore plus.",
+            en: componentDefaults.en.postPurchase.refereeText,
+            fr: componentDefaults.fr.postPurchase.refereeText,
         },
         referrer: {
-            en: "Earn {REWARD} by sharing this with your friends!",
-            fr: "Gagnez {REWARD} en partageant avec vos amis !",
+            en: componentDefaults.en.postPurchase.referrerText,
+            fr: componentDefaults.fr.postPurchase.referrerText,
         },
     },
     {
@@ -80,16 +88,17 @@ export type BannerPreset = { title: string; description: string };
 export type LocalizedBannerPreset = Record<PresetLang, BannerPreset>;
 
 export const BANNER_PRESETS: readonly LocalizedBannerPreset[] = [
+    // Index 0 mirrors the SDK's built-in default copy (see BUTTON_SHARE_PRESETS).
+    // `referralTitleReward` is the reward-bearing title variant the SDK uses
+    // when an estimated reward is available.
     {
         en: {
-            title: "Earn {REWARD} on purchases",
-            description:
-                "Earn rewards after your purchase via the Frak partner app.",
+            title: componentDefaults.en.banner.referralTitleReward,
+            description: componentDefaults.en.banner.referralDescription,
         },
         fr: {
-            title: "Gagnez {REWARD} sur vos achats",
-            description:
-                "Gagnez des récompenses après votre achat via l'application partenaire Frak.",
+            title: componentDefaults.fr.banner.referralTitleReward,
+            description: componentDefaults.fr.banner.referralDescription,
         },
     },
     {

@@ -54,7 +54,7 @@ type ComponentCopy = {
 export const componentDefaults: Record<Language, ComponentCopy> = {
     en: {
         buttonShare: {
-            text: "Share and earn!",
+            text: "Share & earn {REWARD}!",
         },
         postPurchase: {
             refereeText:
@@ -75,7 +75,7 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             ariaLabel: "Open wallet",
         },
         banner: {
-            referralTitleReward: "Earn {REWARD} on purchases on this site",
+            referralTitleReward: "Earn {REWARD} on purchases",
             referralTitle: "You've been referred!",
             referralDescription:
                 "Earn rewards after your purchase via the Frak partner app.",
@@ -89,7 +89,7 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
     },
     fr: {
         buttonShare: {
-            text: "Partagez et gagnez !",
+            text: "Partagez et gagnez {REWARD} !",
         },
         postPurchase: {
             refereeText:
@@ -110,7 +110,7 @@ export const componentDefaults: Record<Language, ComponentCopy> = {
             ariaLabel: "Ouvrir le porte-monnaie",
         },
         banner: {
-            referralTitleReward: "Gagnez {REWARD} sur vos achats sur ce site",
+            referralTitleReward: "Gagnez {REWARD} sur vos achats",
             referralTitle: "Vous avez été parrainé !",
             referralDescription:
                 "Gagnez des récompenses après votre achat via l'application partenaire Frak.",

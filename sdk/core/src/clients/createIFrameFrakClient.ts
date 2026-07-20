@@ -15,6 +15,7 @@ import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { clearAllCache } from "../utils/cache";
+import { detectPageLanguage } from "../utils/i18n/detectPageLanguage";
 import { setupSsoUrlListener } from "./ssoUrlListener";
 import {
     createIFrameLifecycleManager,
@@ -50,15 +51,10 @@ export function createIFrameFrakClient({
 }): FrakClient {
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
 
-    const browserLang =
-        typeof navigator !== "undefined"
-            ? navigator.language?.split("-")[0]
-            : undefined;
-    const detectedLang =
-        config.metadata.lang ??
-        (browserLang === "en" || browserLang === "fr"
-            ? browserLang
-            : undefined);
+    // Precedence: explicit `metadata.lang` → page `<html lang>` → browser
+    // language. Lets a page authored in a given language drive SDK copy even
+    // when the visitor's browser is set to another language.
+    const detectedLang = config.metadata.lang ?? detectPageLanguage();
     const targetDomain =
         config.domain ??
         (typeof window !== "undefined" ? window.location.hostname : "");

@@ -8,6 +8,7 @@ const coreSdkMock = vi.hoisted(() => ({
     isInAppBrowser: false,
     redirectToExternalBrowser: vi.fn(),
     trackEvent: vi.fn(),
+    detectPageLanguage: () => "en" as const,
     sdkConfigStore: {
         getConfig: () => ({ components: undefined }),
     },

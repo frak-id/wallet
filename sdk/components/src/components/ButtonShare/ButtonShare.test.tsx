@@ -53,7 +53,9 @@ describe.sequential("ButtonShare", () => {
     it("should render with default props", () => {
         render(<ButtonShare />);
         const button = screen.getByRole("button");
-        expect(button).toHaveTextContent("Share and earn!");
+        // Default now mirrors the dashboard's first preset (carries {REWARD});
+        // with no reward resolved the placeholder is stripped.
+        expect(button).toHaveTextContent("Share & earn !");
     });
 
     it("should render the localized default text for the resolved language", () => {
