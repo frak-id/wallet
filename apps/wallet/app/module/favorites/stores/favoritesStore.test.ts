@@ -1,13 +1,22 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
     favoritesStore,
     selectFavorites,
     selectIsFavorite,
 } from "./favoritesStore";
 
+const { trackEvent } = vi.hoisted(() => ({ trackEvent: vi.fn() }));
+
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import("@frak-labs/wallet-shared")>();
+    return { ...actual, trackEvent };
+});
+
 describe("favoritesStore", () => {
     beforeEach(() => {
         favoritesStore.setState({ favorites: {} });
+        trackEvent.mockClear();
     });
 
     test("starts with no favorites", () => {
@@ -26,6 +35,20 @@ describe("favoritesStore", () => {
         toggleFavorite("merchant-1");
         toggleFavorite("merchant-1");
         expect(favoritesStore.getState().favorites).toEqual({});
+    });
+
+    test("toggleFavorite tracks add then remove for a merchant", () => {
+        const { toggleFavorite } = favoritesStore.getState();
+        toggleFavorite("merchant-1");
+        expect(trackEvent).toHaveBeenNthCalledWith(1, "favorite_toggled", {
+            merchant_id: "merchant-1",
+            action: "add",
+        });
+        toggleFavorite("merchant-1");
+        expect(trackEvent).toHaveBeenNthCalledWith(2, "favorite_toggled", {
+            merchant_id: "merchant-1",
+            action: "remove",
+        });
     });
 
     test("toggling one merchant leaves others untouched", () => {

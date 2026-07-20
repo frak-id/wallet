@@ -1,3 +1,4 @@
+import { trackEvent } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -16,18 +17,25 @@ type FavoritesActions = {
  */
 export const favoritesStore = create<FavoritesState & FavoritesActions>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             favorites: {},
-            toggleFavorite: (merchantId) =>
+            toggleFavorite: (merchantId) => {
+                const isRemoving = Boolean(get().favorites[merchantId]);
                 set((state) => {
                     const next = { ...state.favorites };
-                    if (next[merchantId]) {
+                    if (isRemoving) {
                         delete next[merchantId];
                     } else {
                         next[merchantId] = true;
                     }
                     return { favorites: next };
-                }),
+                });
+                // Keep tracking out of the set() updater (see modalStore).
+                trackEvent("favorite_toggled", {
+                    merchant_id: merchantId,
+                    action: isRemoving ? "remove" : "add",
+                });
+            },
         }),
         {
             name: "frak_favorites_store",
