@@ -1,32 +1,295 @@
-// Stores
+// Public API barrel for @frak-labs/wallet-shared.
+//
+// Exports are enumerated explicitly (rather than wildcard re-exports) so the
+// public surface is discoverable and tree-shakeable. Names re-exported by
+// more than one sub-barrel (e.g. the webauthn error helpers, shared by
+// `authentication` and `common`) are listed once, from the first sub-barrel
+// that owns them.
 
-// Authentication
-export * from "./authentication";
-// Blockchain
-export * from "./blockchain";
-// Common utilities and components
-export * from "./common";
-// i18n
-export * from "./i18n";
-// Identity
-export * from "./identity";
-// Pairing
-export * from "./pairing";
+export {
+    authKey,
+    classifyWebauthnError,
+    compressedSsoToParams,
+    getTauriCreateFn,
+    getTauriGetFn,
+    isAuthenticatorAlreadyRegistered,
+    isReportableWebauthnError,
+    isUserCancellation,
+    resolveWebauthnErrorView,
+    ssoKey,
+    useLogin,
+    useWebauthnErrorToast,
+    useWebauthnErrorToastStore,
+    type WebauthnError,
+    type WebauthnErrorKind,
+    WebauthnErrorToast,
+    type WebauthnErrorView,
+    type WebauthnToastOperation,
+    webauthnErrorContext,
+} from "./authentication";
+export {
+    currentChain,
+    currentViemClient,
+    getPimlicoClient,
+    getPimlicoTransport,
+} from "./blockchain";
+export {
+    APP_STORE_URL,
+    type ApiError,
+    type ApiErrorBody,
+    type ApiErrorKeyMap,
+    type AppErrorSource,
+    type AuthEventMap,
+    asApiError,
+    authenticatedBackendApi,
+    authenticatedWalletApi,
+    authenticatorStorage,
+    balanceKey,
+    CodeInput,
+    crashlytics,
+    type DeepLinkEventMap,
+    type DeepLinkSource,
+    type DiagnosticsEventMap,
+    type EmbeddedWalletEventMap,
+    type EventMap,
+    ExternalLink,
+    emitLifecycleEvent,
+    ensureFreshSdkSession,
+    estimatedRewardsQueryOptions,
+    expiresWithinMs,
+    extractAuthError,
+    type Flow,
+    type FlowEndExtras,
+    type FlowEvents,
+    type FlowOutcome,
+    type FlowStartExtras,
+    type FreshSdkResult,
+    formatCurrency,
+    getErrorCode,
+    getErrorStatus,
+    getFromLocalStorage,
+    getInvoke,
+    getOrCreateSessionId,
+    getRateAppUrl,
+    getSafeSdkSession,
+    getSafeSession,
+    getTokenExpMs,
+    HandleErrors,
+    type InAppBrowserRedirectTarget,
+    InAppBrowserToast,
+    type InstallEventMap,
+    type InstallPageView,
+    type InstallReferrerMissingReason,
+    type InstallSource,
+    type InstallStore,
+    identifyAuthenticatedUser,
+    initAnalytics,
+    isExpired,
+    isInIframe,
+    isWebAuthNSupported,
+    type ListenerMiscEventMap,
+    type ListenerTxEventMap,
+    LogoFrakBadge,
+    LogoFrakWithName,
+    Markdown,
+    type ModalDismissSource,
+    type ModalEventMap,
+    type MoneriumCallbackOutcome,
+    type MoneriumEventMap,
+    merchantKey,
+    type NotificationEventMap,
+    type NotificationOptInOutcome,
+    type NotificationTogglePhase,
+    notifyWalletAuthExpired,
+    OfflineBanner,
+    type OnboardingAction,
+    type OnboardingEventMap,
+    openExternalUrl,
+    openPanel,
+    PaginationDots,
+    type PairingErrorState,
+    type PairingEventMap,
+    type PairingMode,
+    PLAY_STORE_URL,
+    type PreviousAuthenticatorModel,
+    prefixModalCss,
+    type RecordErrorOptions,
+    type RecoveryHint,
+    recordError,
+    recoveryHintStorage,
+    resolveApiErrorKey,
+    rewardsKey,
+    SDK_RENEW_BEFORE_MS,
+    type SharingEventMap,
+    type SharingSource,
+    STORE_PACKAGE_ID,
+    sdkKey,
+    selectFormattedReward,
+    setInstallSource,
+    setProfileId,
+    startFlow,
+    subscribeToWalletAuthExpired,
+    type TokensEventMap,
+    type TokensSendAmountBucket,
+    trackEvent,
+    ua,
+    updateGlobalProperties,
+    useCopyToClipboardWithState,
+    useFormattedEstimatedReward,
+    useGetSafeSdkSession,
+    useMountedTimeout,
+    useOnlineStatus,
+    useSessionFlag,
+    WALLET_REAUTH_BEFORE_MS,
+    type WalletMergeEventMap,
+    type WalletMergeMode,
+    type WalletMergeStep,
+    type WalletModalEventMap,
+} from "./common";
+export {
+    defaultNS,
+    fallbackLng,
+    interpolation,
+    supportedLngs,
+} from "./i18n";
+export {
+    mergeTokenKeys,
+    mergeTokenQueryOptions,
+} from "./identity";
+export {
+    BasePairingClient,
+    type BasePairingState,
+    getOriginPairingClient,
+    getTargetPairingClient,
+    isPairingNotFoundError,
+    isPairingSignatureError,
+    LaunchPairing,
+    type OnPairingSuccessCallback,
+    type OriginIdentityNode,
+    type OriginPairingClient,
+    OriginPairingState,
+    PairingNotFoundError,
+    PairingNotReadyError,
+    PairingQrCode,
+    PairingSignatureError,
+    type PairingSignatureErrorCause,
+    PairingStatus,
+    PairingView,
+    type PairingWsEventListener,
+    pairingKey,
+    type SignatureRejectCode,
+    type SignatureRejectReason,
+    StatusBoxModal,
+    StatusBoxWalletEmbedded,
+    TargetPairingClient,
+    type TargetPairingIdState,
+    type TargetPairingPendingSignature,
+    type TargetPairingState,
+    useCancelAllSignatureRequests,
+    useDeclineSignatureRequest,
+    useDeletePairing,
+    useGetActivePairings,
+    usePairingInfo,
+    usePersistentPairingClient,
+    useSignSignatureRequest,
+} from "./pairing";
 // Polyfills
 export { setupBigIntSerialization } from "./polyfills/bigint-serialization";
-// Providers
-export * from "./providers";
-// Referral
-export * from "./referral";
-// Sharing
-export * from "./sharing";
-export * from "./stores/authenticationStore";
-export * from "./stores/clientIdStore";
-export * from "./stores/detachedPairingSessionStore";
-export * from "./stores/sessionStore";
-// Tokens
-export * from "./tokens";
-// Types
-export * from "./types";
-// Wallet
-export * from "./wallet";
+export { WagmiProviderWithDynamicConfig } from "./providers";
+export {
+    REDEEM_ERROR_KEY_MAP,
+    REDEMPTION_CODE_LENGTH,
+    referralKey,
+    useIssueReferralCode,
+    useRedeemReferralCode,
+    useRedeemReferralCodeForm,
+    useReferralStatus,
+    useReplaceReferralCode,
+    useRevokeReferralCode,
+    useSuggestReferralCodes,
+    useUnredeemReferralCode,
+} from "./referral";
+export {
+    buildSharingLink,
+    CopyIcon,
+    clearConfirmation,
+    getSavedConfirmation,
+    PostShareConfirmation,
+    type PostShareConfirmationProps,
+    ShareIcon,
+    SharingPage,
+    type SharingPageProps,
+    saveConfirmation,
+    sharingKey,
+    useShareLink,
+} from "./sharing";
+export {
+    addLastAuthentication,
+    applyMergeSession,
+    authenticationStore,
+    clearLastAuthenticator,
+    type PendingRegistration,
+    recordDistantAuthenticator,
+    selectLastAuthenticationAt,
+    selectLastAuthenticator,
+    selectLastRemoteAuthenticator,
+} from "./stores/authenticationStore";
+export { clientIdStore } from "./stores/clientIdStore";
+export { detachedPairingSessionStore } from "./stores/detachedPairingSessionStore";
+export {
+    selectDemoPrivateKey,
+    selectDistantWebauthnSession,
+    selectEcdsaSession,
+    selectSdkSession,
+    selectSession,
+    selectWebauthnSession,
+    sessionStore,
+} from "./stores/sessionStore";
+export { useGetUserBalance } from "./tokens";
+export type {
+    AssetStatus,
+    BalanceItem,
+    CurrentRecovery,
+    DistantWebAuthnWallet,
+    EcdsaWallet,
+    GeneratedRecoveryData,
+    HistoryGroup,
+    InteractionType,
+    MerchantInfo,
+    P256PubKey,
+    P256Signature,
+    PurchaseInfo,
+    RecipientType,
+    RewardHistoryItem,
+    SdkSession,
+    SdkSessionPayload,
+    Session,
+    SsoRpcSchema,
+    TokenAmount,
+    TokenInfo,
+    WebAuthNSignature,
+    WebAuthNWallet,
+} from "./types";
+export {
+    type AccountMetadata,
+    type BaseFrakSmartAccount,
+    baseFrakWallet,
+    buildSmartAccount,
+    claimableKey,
+    encodeWalletMulticall,
+    type FrakWalletConnector,
+    type FrakWalletConnectorFn,
+    fetchAccountMetadata,
+    formatSignature,
+    frakEcdsaWalletSmartAccount,
+    frakPairedWalletSmartAccount,
+    frakWalletSmartAccount,
+    getRegisterOptions,
+    getSmartAccountProvider,
+    getStubSignature,
+    type SmartAccountConnectorClient,
+    type SmartAccountProviderType,
+    signHashViaWebAuthN,
+    smartAccountConnector,
+    wrapMessageForSignature,
+} from "./wallet";

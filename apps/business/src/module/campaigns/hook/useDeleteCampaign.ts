@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteCampaign } from "@/module/campaigns/api/campaignApi";
+import { campaignsQueryKey } from "@/module/campaigns/queries/queryKeys";
 
 export function useDeleteCampaign() {
     const queryClient = useQueryClient();
@@ -17,7 +18,7 @@ export function useDeleteCampaign() {
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey: ["campaigns"],
+                queryKey: campaignsQueryKey(),
             });
         },
     });

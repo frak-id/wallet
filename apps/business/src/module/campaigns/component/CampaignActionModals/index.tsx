@@ -37,8 +37,15 @@ export function ModalPause({
             title={t("campaigns.actions.pauseTitle")}
             buttonElement={
                 trigger ?? (
-                    <button type={"button"}>
-                        <Pause size={20} absoluteStrokeWidth={true} />
+                    <button
+                        type={"button"}
+                        aria-label={t("campaigns.actions.pause")}
+                    >
+                        <Pause
+                            size={20}
+                            absoluteStrokeWidth={true}
+                            aria-hidden={true}
+                        />
                     </button>
                 )
             }
@@ -103,8 +110,15 @@ export function ModalResume({
             title={t("campaigns.actions.resumeTitle")}
             buttonElement={
                 trigger ?? (
-                    <button type={"button"}>
-                        <Play size={20} absoluteStrokeWidth={true} />
+                    <button
+                        type={"button"}
+                        aria-label={t("campaigns.actions.resume")}
+                    >
+                        <Play
+                            size={20}
+                            absoluteStrokeWidth={true}
+                            aria-hidden={true}
+                        />
                     </button>
                 )
             }
@@ -169,8 +183,15 @@ export function ModalArchive({
             title={t("campaigns.actions.archiveTitle")}
             buttonElement={
                 trigger ?? (
-                    <button type={"button"}>
-                        <Archive size={20} absoluteStrokeWidth={true} />
+                    <button
+                        type={"button"}
+                        aria-label={t("campaigns.actions.archive")}
+                    >
+                        <Archive
+                            size={20}
+                            absoluteStrokeWidth={true}
+                            aria-hidden={true}
+                        />
                     </button>
                 )
             }
@@ -235,8 +256,15 @@ export function ModalDelete({
             title={t("campaigns.actions.deleteTitle")}
             buttonElement={
                 trigger ?? (
-                    <button type={"button"}>
-                        <Trash2 size={20} absoluteStrokeWidth={true} />
+                    <button
+                        type={"button"}
+                        aria-label={t("campaigns.actions.delete")}
+                    >
+                        <Trash2
+                            size={20}
+                            absoluteStrokeWidth={true}
+                            aria-hidden={true}
+                        />
                     </button>
                 )
             }

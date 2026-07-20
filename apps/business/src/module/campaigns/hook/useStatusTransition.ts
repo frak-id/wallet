@@ -5,6 +5,10 @@ import {
     publishCampaign,
     resumeCampaign,
 } from "@/module/campaigns/api/campaignApi";
+import {
+    campaignQueryKey,
+    campaignsQueryKey,
+} from "@/module/campaigns/queries/queryKeys";
 import type { Campaign } from "@/types/Campaign";
 
 type StatusTransitionAction = "publish" | "pause" | "resume" | "archive";
@@ -38,12 +42,16 @@ export function useStatusTransition() {
             const fn = transitionFns[action];
             return fn({ merchantId, campaignId });
         },
-        onSuccess: async (_data, { campaignId }) => {
+        onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey: ["campaigns"],
+                queryKey: campaignsQueryKey(),
             });
+            // Root single-campaign key: prefix-matches both the config
+            // (`["campaign", merchantId, id, mode]`) and details
+            // (`["campaign", "details", ...]`) caches so the details sheet
+            // refetches after a transition.
             await queryClient.invalidateQueries({
-                queryKey: ["campaign", campaignId],
+                queryKey: campaignQueryKey(),
             });
         },
     });

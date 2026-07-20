@@ -1,10 +1,8 @@
 import type { PushBroadcast } from "@frak-labs/backend-elysia/domain/notifications";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { pushHistoryQueryKey } from "@/module/members/queries/queryKeys";
 import type { PushHistoryItem } from "./types";
-
-const historyQueryKey = (merchantId: string) =>
-    ["push", "history", merchantId] as const;
 
 /**
  * Derive a history table row from a raw broadcast: status (pending scheduled
@@ -54,7 +52,7 @@ function toPushHistoryItem(broadcast: PushBroadcast): PushHistoryItem {
  */
 export function usePushHistory(merchantId: string) {
     return useQuery({
-        queryKey: historyQueryKey(merchantId),
+        queryKey: pushHistoryQueryKey(merchantId),
         queryFn: async (): Promise<PushHistoryItem[]> => {
             const { data, error } =
                 await authenticatedBackendApi.notifications.broadcasts.get({
@@ -90,7 +88,7 @@ export function useDeletePushBroadcast(merchantId: string) {
         },
         onSuccess: (id) => {
             queryClient.setQueryData<PushHistoryItem[]>(
-                historyQueryKey(merchantId),
+                pushHistoryQueryKey(merchantId),
                 (prev) => prev?.filter((item) => item.id !== id) ?? []
             );
         },

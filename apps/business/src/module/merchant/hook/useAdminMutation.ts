@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { merchantTeamQueryKey } from "@/module/merchant/queries/queryKeys";
 
 type AddAdminArg =
     | { merchantId: string; wallet: Address }
@@ -65,7 +66,7 @@ export function useAdminMutation({ action }: AdminMutationOptions) {
         },
         onSuccess: (_data, args) => {
             queryClient.invalidateQueries({
-                queryKey: ["merchant", "team", args.merchantId],
+                queryKey: merchantTeamQueryKey(args.merchantId),
             });
         },
     });

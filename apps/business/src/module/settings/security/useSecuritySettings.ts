@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import {
+    authAccountQueryKey,
+    authSessionsQueryKey,
+    twoFactorMethodsQueryKey,
+} from "@/module/auth/hooks/queryKeys";
+import {
     AuthError,
     extractAuthErrorCode,
     extractAuthErrorMessage,
 } from "@/module/auth/utils/authError";
 import type { TwoFactorMethod } from "@/stores/twoFactorStore";
-
-const SESSIONS_QUERY_KEY = ["auth", "sessions"];
-export const ACCOUNT_QUERY_KEY = ["auth", "account"];
 
 /**
  * `GET /auth/account` — the account's full credential set (email + verified
@@ -18,7 +20,7 @@ export const ACCOUNT_QUERY_KEY = ["auth", "account"];
  */
 export function useAccountCredentials() {
     return useQuery({
-        queryKey: ACCOUNT_QUERY_KEY,
+        queryKey: authAccountQueryKey(),
         queryFn: async () => {
             const { data, error } =
                 await authenticatedBackendApi.auth.account.get();
@@ -31,7 +33,7 @@ export function useAccountCredentials() {
 /** `GET /auth/sessions` — active session list, current one flagged. */
 export function useAuthSessions() {
     return useQuery({
-        queryKey: SESSIONS_QUERY_KEY,
+        queryKey: authSessionsQueryKey(),
         queryFn: async () => {
             const { data, error } =
                 await authenticatedBackendApi.auth.sessions.get();
@@ -59,7 +61,7 @@ export function useRevokeSession() {
             }
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: SESSIONS_QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: authSessionsQueryKey() });
         },
     });
 }
@@ -108,11 +110,11 @@ export function useTwoFactorActivate() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ["auth", "2fa", "methods"],
+                queryKey: twoFactorMethodsQueryKey(),
             });
             // Email activation flips emailVerified / completes the add-email
             // flow — refresh the linked-credentials view.
-            queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: authAccountQueryKey() });
         },
     });
 }
@@ -139,7 +141,7 @@ export function useLinkPassword() {
             // Password added, email now attached-but-pending — refresh the
             // linked-credentials view so it flips to the pending row + the
             // (single) verify form.
-            queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: authAccountQueryKey() });
         },
     });
 }

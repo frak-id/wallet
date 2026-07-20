@@ -4,6 +4,7 @@ import type { Address, Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import merchantsMockData from "@/mock/merchants.json";
 import { useAuthStore } from "@/stores/authStore";
+import { merchantDetailQueryKey, myMerchantsQueryKey } from "./queryKeys";
 
 /**
  * Check demo mode via param or Zustand store
@@ -53,7 +54,7 @@ function getMerchantMockData(merchantId: string): MerchantData {
  */
 export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
     queryOptions({
-        queryKey: ["merchant", merchantId, isDemoMode ? "demo" : "live"],
+        queryKey: merchantDetailQueryKey(merchantId, isDemoMode),
         enabled: !!merchantId,
         queryFn: async (): Promise<MerchantData> => {
             const isDemo = checkDemoMode(isDemoMode);
@@ -113,7 +114,7 @@ function getMyMerchantsMockData(): {
  */
 export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
     queryOptions({
-        queryKey: ["merchant", "my", isDemoMode ? "demo" : "live"],
+        queryKey: myMerchantsQueryKey(isDemoMode),
         queryFn: async () => {
             const isDemo = checkDemoMode(isDemoMode);
 

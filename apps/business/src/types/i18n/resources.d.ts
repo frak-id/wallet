@@ -1731,6 +1731,11 @@ export default interface Resources {
       },
       "currency": {
         "label": "Choose your preferred currency",
+        "options": {
+          "eur": "EUR",
+          "gbp": "GBP",
+          "usd": "USD"
+        },
         "title": "Currency"
       },
       "demo": {

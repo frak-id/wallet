@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type Address, erc20Abi } from "viem";
 import { multicall } from "viem/actions";
 import { viemClient } from "@/config/blockchain";
+import { tokenMetadataQueryKey } from "./queryKeys";
 
 type TokenMetadata = {
     name: string;
@@ -15,7 +16,7 @@ type TokenMetadata = {
  */
 export function useTokenMetadata(tokenAddress?: Address) {
     return useQuery({
-        queryKey: ["tokenMetadata", tokenAddress],
+        queryKey: tokenMetadataQueryKey(tokenAddress),
         queryFn: async (): Promise<TokenMetadata> => {
             if (!tokenAddress) {
                 throw new Error("Token address is required");

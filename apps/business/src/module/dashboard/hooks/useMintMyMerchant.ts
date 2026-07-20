@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { extractAuthErrorMessage } from "@/module/auth/utils/authError";
+import { merchantQueryKey } from "@/module/merchant/queries/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -44,7 +45,7 @@ export function useRegisterMerchant(
             // Clear info post mutation
             setInfoTxt(undefined);
             await queryClient.invalidateQueries({
-                queryKey: ["merchant"],
+                queryKey: merchantQueryKey(),
             });
         },
         async mutationFn({

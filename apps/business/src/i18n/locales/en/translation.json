@@ -1221,7 +1221,12 @@
         },
         "currency": {
             "title": "Currency",
-            "label": "Choose your preferred currency"
+            "label": "Choose your preferred currency",
+            "options": {
+                "eur": "EUR",
+                "gbp": "GBP",
+                "usd": "USD"
+            }
         },
         "language": {
             "title": "Language",

@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { sleep } from "radash";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { merchantDnsRecordQueryKey } from "@/module/merchant/queries/queryKeys";
 
 /**
  * Hook to fetch the dns record to be set
@@ -15,7 +16,7 @@ export function useDnsTxtRecordToSet({
     enabled: boolean;
 }) {
     return useQuery({
-        queryKey: ["merchant", "register", "dns-record", domain],
+        queryKey: merchantDnsRecordQueryKey(domain),
         queryFn: async ({ signal }) => {
             if (!domain) return "";
 

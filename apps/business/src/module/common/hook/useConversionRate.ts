@@ -5,11 +5,12 @@ import type { Address } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { currencyStore } from "@/stores/currencyStore";
 import { formatPrice } from "../utils/formatPrice";
+import { conversionRateQueryKey } from "./queryKeys";
 
 function conversionRateQueryOptions(token?: Address, isDemoMode?: boolean) {
     return {
         enabled: !!token,
-        queryKey: ["conversionRate", token, isDemoMode ? "demo" : "live"],
+        queryKey: conversionRateQueryKey(token, isDemoMode),
         queryFn: async () => {
             if (!token) return null;
 

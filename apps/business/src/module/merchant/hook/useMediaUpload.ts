@@ -1,6 +1,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import {
+    mediaListByModeQueryKey,
+    mediaListQueryKey,
+} from "@/module/merchant/queries/queryKeys";
 
 type MediaUploadInput = {
     merchantId: string;
@@ -40,7 +44,7 @@ export function useMediaUpload() {
             { client }
         ) => {
             await client.invalidateQueries({
-                queryKey: ["media", "list", merchantId],
+                queryKey: mediaListQueryKey(merchantId),
             });
         },
     });
@@ -49,7 +53,7 @@ export function useMediaUpload() {
 export function useMediaList(merchantId: string) {
     const isDemoMode = useIsDemoMode();
     return useQuery({
-        queryKey: ["media", "list", merchantId, isDemoMode ? "demo" : "live"],
+        queryKey: mediaListByModeQueryKey(merchantId, isDemoMode),
         queryFn: async () => {
             if (isDemoMode) {
                 return [];

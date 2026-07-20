@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Address, encodeFunctionData } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import { merchantBankQueryKey } from "@/module/merchant/queries/queryKeys";
 
 export function useWithdrawFromBank({
     bankAddress,
@@ -31,7 +32,7 @@ export function useWithdrawFromBank({
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 await queryClient.invalidateQueries({
-                    queryKey: ["merchant", merchantId, "bank"],
+                    queryKey: merchantBankQueryKey(merchantId),
                 });
                 return;
             }
@@ -64,7 +65,7 @@ export function useWithdrawFromBank({
 
             await waitForTxAndInvalidateQueries({
                 hash,
-                queryKey: ["merchant", merchantId, "bank"],
+                queryKey: merchantBankQueryKey(merchantId),
             });
         },
     });
