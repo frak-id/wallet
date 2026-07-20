@@ -18,10 +18,10 @@ import {
 } from "app/services.server/theme";
 import { shouldShowOutletSkeleton } from "app/utils/navigationLoading";
 import {
-    fetchAllOnboardingData,
     type OnboardingStepData,
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
+import { fetchAllOnboardingData } from "app/utils/onboarding.server";
 import { type ReactNode, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
