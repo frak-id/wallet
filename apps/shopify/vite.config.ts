@@ -57,6 +57,9 @@ export default defineConfig(() => {
                 process.env.BUSINESS_URL
             ),
             "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
+            "process.env.PUBLIC_BACKEND_URL": JSON.stringify(
+                process.env.PUBLIC_BACKEND_URL
+            ),
             "process.env.SHOPIFY_API_KEY": JSON.stringify(
                 process.env.SHOPIFY_API_KEY
             ),

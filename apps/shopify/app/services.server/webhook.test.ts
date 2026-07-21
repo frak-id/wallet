@@ -1,5 +1,5 @@
 import type { AuthenticatedContext } from "app/types/context";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type {
     CreateWebhookSubscriptionReturnType,
     DeleteWebhookSubscriptionReturnType,
@@ -117,8 +117,23 @@ describe("webhook filtering", () => {
 });
 
 describe("createWebhook", () => {
+    const savedBackendUrl = process.env.BACKEND_URL;
+    const savedPublicBackendUrl = process.env.PUBLIC_BACKEND_URL;
+
     beforeAll(() => {
         process.env.BACKEND_URL = "https://backend.frak.id";
+        // Resolution prefers PUBLIC_BACKEND_URL; clear it so the callback URL
+        // is deterministic regardless of the caller's shell env.
+        delete process.env.PUBLIC_BACKEND_URL;
+    });
+
+    afterAll(() => {
+        process.env.BACKEND_URL = savedBackendUrl;
+        if (savedPublicBackendUrl === undefined) {
+            delete process.env.PUBLIC_BACKEND_URL;
+        } else {
+            process.env.PUBLIC_BACKEND_URL = savedPublicBackendUrl;
+        }
     });
 
     const emptyWebhooksResponse = {

@@ -18,14 +18,23 @@ const mockContext = {
 } as unknown as AuthenticatedContext;
 
 const savedBackendUrl = process.env.BACKEND_URL;
+const savedPublicBackendUrl = process.env.PUBLIC_BACKEND_URL;
 
 beforeEach(() => {
     mockGraphql.mockClear();
     process.env.BACKEND_URL = "https://backend.frak.id";
+    // Resolution prefers PUBLIC_BACKEND_URL; clear it so the test is
+    // deterministic regardless of the caller's shell env.
+    delete process.env.PUBLIC_BACKEND_URL;
 });
 
 afterEach(() => {
     process.env.BACKEND_URL = savedBackendUrl;
+    if (savedPublicBackendUrl === undefined) {
+        delete process.env.PUBLIC_BACKEND_URL;
+    } else {
+        process.env.PUBLIC_BACKEND_URL = savedPublicBackendUrl;
+    }
 });
 
 describe("getWebPixel", () => {

@@ -39,6 +39,18 @@ export const backendUrl = getStaticVariable({
     dev: "https://backend.gcp-dev.frak.id",
     local: "https://localhost:3030",
 });
+// Publicly-reachable backend URL for callbacks that Shopify's servers or a
+// shopper's browser must hit (order webhooks, the storefront web pixel).
+// Same as `backendUrl` everywhere except the local stage, where `localhost`
+// is unreachable from outside and Shopify rejects it as an internal domain:
+// there it points at the public dev backend by default. Override it with a
+// tunnel URL (e.g. `cloudflared tunnel --url https://localhost:3030`) to route
+// those callbacks to a locally-running backend instead.
+export const publicBackendUrl = getStaticVariable({
+    prod: "https://backend.frak.id",
+    dev: "https://backend.gcp-dev.frak.id",
+    local: "https://backend.gcp-dev.frak.id",
+});
 export const walletUrl = getStaticVariable({
     prod: "https://wallet.frak.id",
     dev: "https://wallet-dev.frak.id",

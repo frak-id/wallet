@@ -7,6 +7,7 @@ import {
     componentsUrl,
     nexusRpcSecret,
     productSetupCodeSalt,
+    publicBackendUrl,
     shopifyApiKey,
     shopifyApiSecret,
     shopifyAppUrl,
@@ -48,6 +49,7 @@ const shopifyBuildEnv = {
     FRAK_COMPONENTS_URL: componentsUrl,
     BUSINESS_URL: businessUrl,
     BACKEND_URL: backendUrl,
+    PUBLIC_BACKEND_URL: publicBackendUrl,
     SHOPIFY_API_KEY: shopifyApiKey,
     SHOPIFY_APP_URL: shopifyAppUrl,
 };
@@ -75,6 +77,10 @@ const shopifyDevRuntimeEnv = {
     ...shopifyRuntimeEnv,
     SHOPIFY_POSTGRES_HOST: "localhost",
     SHOPIFY_POSTGRES_PORT: dbTunnelLocalPort,
+    // Local BACKEND_URL is https://localhost:3030 with a mkcert cert. Node's
+    // fetch ignores the OS trust store by default, so let it read the mkcert
+    // root CA already installed in the system keychain.
+    NODE_OPTIONS: "--use-system-ca",
 };
 
 const appLabels = { app: "shopify-frontend" };
