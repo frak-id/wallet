@@ -309,36 +309,48 @@ export const businessSessionContext = new Elysia({
          * maps to capability: GET/HEAD require `read`, everything else
          * requires `write` — byte-for-byte equivalent to the former
          * `hasMerchantAccess`, whose platform-admin bypass was already gated
-         * on `SAFE_METHODS`. This is the ~37x copy-pasted auth check across
-         * the merchant routes — kept byte-for-byte identical (same status
-         * codes/bodies) so no route's response contract changes.
+         * on `SAFE_METHODS`. Same status codes/bodies as the ~37x formerly
+         * copy-pasted inline check, so no route's response contract changes.
+         *
+         * On success the resolved `merchantPermissions` is injected into the
+         * handler context, so guarded routes consume the capabilities (e.g.
+         * `readSecrets`) without re-resolving them.
+         *
+         * NOTE: implemented as `resolve` (not `beforeHandle`) so it can
+         * inject context — resolve runs before any `beforeHandle`, so on
+         * routes that also declare `requireStepUp` the access check now runs
+         * first: an unauthorized caller with a stale step-up gets 403 here
+         * and never sees the step-up challenge protocol.
+         *
+         * NOTE: object-shorthand form (runs on `requireMerchantAccess: true`
+         * only) rather than the `(enabled?: boolean)` function form used by
+         * the guards above — Elysia only infers resolve-injected context
+         * into handler types from the shorthand form.
          */
-        requireMerchantAccess(enabled?: boolean) {
-            if (!enabled) return;
+        requireMerchantAccess: {
+            resolve: async ({
+                params,
+                request,
+                businessSession,
+                shopifySession,
+                getMerchantPermissions,
+            }) => {
+                if (!businessSession && !shopifySession) {
+                    return status(401, "Authentication required");
+                }
 
-            return {
-                beforeHandle: async ({
-                    params,
-                    request,
-                    businessSession,
-                    shopifySession,
-                    getMerchantPermissions,
-                }) => {
-                    if (!businessSession && !shopifySession) {
-                        return status(401, "Authentication required");
-                    }
+                const merchantPermissions = await getMerchantPermissions?.(
+                    (params as { merchantId: string }).merchantId
+                );
+                const hasAccess = SAFE_METHODS.has(request.method)
+                    ? merchantPermissions?.read
+                    : merchantPermissions?.write;
+                if (!hasAccess || !merchantPermissions) {
+                    return status(403, "Access denied");
+                }
 
-                    const perms = await getMerchantPermissions?.(
-                        (params as { merchantId: string }).merchantId
-                    );
-                    const hasAccess = SAFE_METHODS.has(request.method)
-                        ? perms?.read
-                        : perms?.write;
-                    if (!hasAccess) {
-                        return status(403, "Access denied");
-                    }
-                },
-            };
+                return { merchantPermissions };
+            },
         },
     })
     .as("scoped");

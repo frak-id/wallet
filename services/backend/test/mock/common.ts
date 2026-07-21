@@ -1,4 +1,4 @@
-import { Elysia, t } from "elysia";
+import { Elysia, status, t } from "elysia";
 import type { Address, LocalAccount } from "viem";
 import { vi } from "vitest";
 // Import the real broadcast schema rather than redefining it in the mock, so
@@ -438,34 +438,33 @@ export const businessSessionContextMock = new Elysia({
             };
         },
         // Mirrors the real macro (same status codes/bodies, same method→
-        // capability mapping) so routes that moved from an inline check to
+        // capability mapping, same `merchantPermissions` context injection)
+        // so routes that moved from an inline check to
         // `requireMerchantAccess: true` keep their 401/403 behavior under test.
         requireMerchantAccess(enabled?: boolean) {
             if (!enabled) return;
             return {
-                beforeHandle: async ({
+                resolve: async ({
                     params,
                     request,
                     businessSession,
                     shopifySession,
                     getMerchantPermissions,
-                    set,
                     // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
                 }: any) => {
                     if (!businessSession && !shopifySession) {
-                        set.status = 401;
-                        return "Authentication required";
+                        return status(401, "Authentication required");
                     }
-                    const perms = await getMerchantPermissions?.(
+                    const merchantPermissions = await getMerchantPermissions?.(
                         params?.merchantId
                     );
                     const hasAccess = SAFE_METHODS.has(request.method)
-                        ? perms?.read
-                        : perms?.write;
+                        ? merchantPermissions?.read
+                        : merchantPermissions?.write;
                     if (!hasAccess) {
-                        set.status = 403;
-                        return "Access denied";
+                        return status(403, "Access denied");
                     }
+                    return { merchantPermissions };
                 },
             };
         },

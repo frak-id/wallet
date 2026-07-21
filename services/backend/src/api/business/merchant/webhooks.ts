@@ -22,7 +22,7 @@ export const merchantWebhooksRoutes = new Elysia({
         async ({
             params: { merchantId },
             businessSession,
-            getMerchantPermissions,
+            merchantPermissions,
         }) => {
             const currentWebhooks = await db
                 .select()
@@ -51,8 +51,7 @@ export const merchantWebhooksRoutes = new Elysia({
             // reveal the raw signing secret (finding 2.8), so the secret
             // field alone is gated on `readSecrets` (ownership / admin row /
             // Shopify link — no admin bypass).
-            const genuineAccess = (await getMerchantPermissions(merchantId))
-                .readSecrets;
+            const genuineAccess = merchantPermissions.readSecrets;
             if (genuineAccess) {
                 log.info(
                     {
