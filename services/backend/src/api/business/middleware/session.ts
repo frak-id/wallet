@@ -18,6 +18,37 @@ import {
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 /**
+ * Unified merchant-access capability object, resolved once per request and
+ * consumed by both route handlers and the `requireMerchantAccess` macro.
+ * Replaces the former `hasMerchantAccess` / `hasGenuineMerchantAccess`
+ * boolean pair so new capabilities (e.g. a future granular permission
+ * system) are additional fields here rather than new context functions.
+ *
+ * - `read` / `write`: `write` implies `read`. A genuine grant (real
+ *   ownership/admin/Shopify-link) satisfies both. The platform-admin
+ *   read-only bypass satisfies only `read` — mutations must never ride it.
+ * - `readSecrets`: genuine-only, gates fields that must never reach the
+ *   platform-admin bypass (e.g. webhook signing key, finding 2.8).
+ * - `source`: coarse provenance for logging/UI, not a fine-grained role
+ *   system — `"admin"` covers both real admin-row and Shopify-credential
+ *   grants on the business-auth path (owner is distinguished via
+ *   `checkAccess`'s `role`, at no extra query cost).
+ */
+export type MerchantPermissions = {
+    read: boolean;
+    write: boolean;
+    readSecrets: boolean;
+    source: "owner" | "admin" | "shopify" | "platform-admin" | "none";
+};
+
+const NO_MERCHANT_PERMISSIONS: MerchantPermissions = {
+    read: false,
+    write: false,
+    readSecrets: false,
+    source: "none",
+};
+
+/**
  * 401 response schema for step-up-guarded routes. The step-up challenge is
  * signalled entirely via headers (`x-frak-auth-error: step-up-required` +
  * `x-frak-auth-methods`), so its body is the plain `t.ErrorResponse` — the
@@ -76,6 +107,68 @@ export async function hasShopifyCredentialAccess(
     });
 }
 
+/**
+ * Genuine grants: direct wallet/account/admin-row ownership (via
+ * `checkAccess`, reusing its `role` for `source` so distinguishing
+ * owner/admin costs no extra query) or the Shopify-credential auto-link.
+ * Falls back to the read-only platform-admin grant, logging its use. Neither
+ * genuine path rides that bypass.
+ *
+ * Deliberately method-independent: the resolved capabilities describe what
+ * the caller *may* do, and consumers (the `requireMerchantAccess` macro,
+ * inline route checks) pick the capability the operation needs. The
+ * platform-admin grant is `read`-only regardless of the request method —
+ * the former `hasMerchantAccess` encoded the same restriction by sniffing
+ * `SAFE_METHODS` here instead.
+ */
+async function resolveBusinessMerchantPermissions(
+    merchantId: string,
+    auth: ResolvedBusinessAuth,
+    request: Request
+): Promise<MerchantPermissions> {
+    const access = await MerchantContext.services.authorization.checkAccess(
+        merchantId,
+        auth
+    );
+    if (access.hasAccess) {
+        return {
+            read: true,
+            write: true,
+            readSecrets: true,
+            source: access.role === "owner" ? "owner" : "admin",
+        };
+    }
+
+    if (await hasShopifyCredentialAccess(merchantId, auth.accountId)) {
+        return { read: true, write: true, readSecrets: true, source: "admin" };
+    }
+
+    if (await isPlatformAdminAuth(auth)) {
+        // Audit trail for finding 2.8-adjacent access: fires whenever a
+        // platform admin resolves a (read-only) grant on a merchant they
+        // don't genuinely belong to, whether or not the route ends up
+        // honoring it.
+        log.info(
+            {
+                wallet: auth.wallet,
+                accountId: auth.accountId,
+                merchantId,
+                method: request.method,
+                path: request.url,
+            },
+            "platform-admin read-only access"
+        );
+        return {
+            read: true,
+            write: false,
+            readSecrets: false,
+            source: "platform-admin",
+        };
+    }
+
+    return NO_MERCHANT_PERMISSIONS;
+}
+
 export const businessSessionContext = new Elysia({
     name: "Context.businessSession",
 })
@@ -90,45 +183,15 @@ export const businessSessionContext = new Elysia({
         if (businessAuth) {
             const auth = await resolveBusinessAuth(businessAuth);
             if (auth && isUsableSession(auth)) {
-                // "Genuine" grants only: direct wallet/account/admin-row
-                // ownership or the Shopify-credential auto-link — never the
-                // read-only platform-admin bypass below. Exposed separately so
-                // secret-revealing reads (finding 2.8) can gate on it without
-                // re-deriving authorization logic.
-                const hasGenuineMerchantAccess = async (merchantId: string) =>
-                    (await MerchantContext.services.authorization.hasAccess(
-                        merchantId,
-                        auth
-                    )) ||
-                    hasShopifyCredentialAccess(merchantId, auth.accountId);
-
                 return {
                     businessSession: auth,
                     shopifySession: null as ShopifySessionToken | null,
-                    hasGenuineMerchantAccess,
-                    hasMerchantAccess: async (merchantId: string) => {
-                        if (await hasGenuineMerchantAccess(merchantId)) {
-                            return true;
-                        }
-
-                        if (
-                            SAFE_METHODS.has(request.method) &&
-                            (await isPlatformAdminAuth(auth))
-                        ) {
-                            log.info(
-                                {
-                                    wallet: auth.wallet,
-                                    accountId: auth.accountId,
-                                    merchantId,
-                                    method: request.method,
-                                    path: request.url,
-                                },
-                                "platform-admin read-only access"
-                            );
-                            return true;
-                        }
-                        return false;
-                    },
+                    getMerchantPermissions: (merchantId: string) =>
+                        resolveBusinessMerchantPermissions(
+                            merchantId,
+                            auth,
+                            request
+                        ),
                 };
             }
         }
@@ -139,31 +202,38 @@ export const businessSessionContext = new Elysia({
             if (session) {
                 const shopDomain = extractShopDomain(session.dest);
                 // An embedded Shopify session's access is always a real
-                // domain match — genuine by construction, so both checks
-                // share the same function.
-                const hasMerchantAccess = shopDomain
-                    ? (merchantId: string) =>
-                          MerchantContext.services.authorization.hasAccessByDomain(
-                              merchantId,
-                              shopDomain
-                          )
-                    : (_merchantId: string) => Promise.resolve(false as boolean);
+                // domain match — genuine by construction, so it grants every
+                // capability.
+                const getMerchantPermissions = async (
+                    merchantId: string
+                ): Promise<MerchantPermissions> => {
+                    if (!shopDomain) return NO_MERCHANT_PERMISSIONS;
+                    const hasAccess =
+                        await MerchantContext.services.authorization.hasAccessByDomain(
+                            merchantId,
+                            shopDomain
+                        );
+                    if (!hasAccess) return NO_MERCHANT_PERMISSIONS;
+                    return {
+                        read: true,
+                        write: true,
+                        readSecrets: true,
+                        source: "shopify",
+                    };
+                };
                 return {
                     businessSession: null as ResolvedBusinessAuth | null,
                     shopifySession: session,
-                    hasMerchantAccess,
-                    hasGenuineMerchantAccess: hasMerchantAccess,
+                    getMerchantPermissions,
                 };
             }
         }
 
-        const denyAll = (_merchantId: string) =>
-            Promise.resolve(false as boolean);
         return {
             businessSession: null as ResolvedBusinessAuth | null,
             shopifySession: null as ShopifySessionToken | null,
-            hasMerchantAccess: denyAll,
-            hasGenuineMerchantAccess: denyAll,
+            getMerchantPermissions: (_merchantId: string) =>
+                Promise.resolve(NO_MERCHANT_PERMISSIONS),
         };
     })
     .macro({
@@ -209,10 +279,10 @@ export const businessSessionContext = new Elysia({
         /**
          * Platform-admin-only guard for billing admin mutation routes
          * (deposits/withdrawals/monthly-bills). Deliberately independent from
-         * `hasMerchantAccess`, whose platform-admin bypass is read-only /
-         * safe-methods-only and must never authorize mutations. Wallet
-         * allow-list or verified @frak-labs.com email (§7.3); the Shopify
-         * session path is always rejected here.
+         * `getMerchantPermissions`, whose platform-admin grant is read-only
+         * (`read: true, write: false`) and must never authorize mutations.
+         * Wallet allow-list or verified @frak-labs.com email (§7.3); the
+         * Shopify session path is always rejected here.
          */
         platformAdminAuthenticated(enabled?: boolean) {
             if (!enabled) return;
@@ -234,11 +304,14 @@ export const businessSessionContext = new Elysia({
         /**
          * Standard merchant-scoped guard: any authenticated session
          * (business or Shopify) that resolves access to `params.merchantId`
-         * via the plugin-resolved `hasMerchantAccess` (§2.3), including its
-         * Shopify-credential and read-only platform-admin bypasses. This is
-         * the ~37x copy-pasted auth check across the merchant routes —
-         * kept byte-for-byte identical (same status codes/bodies) so no
-         * route's response contract changes.
+         * via the plugin-resolved `getMerchantPermissions` (§2.3), including
+         * its Shopify-credential and read-only platform-admin grants. Method
+         * maps to capability: GET/HEAD require `read`, everything else
+         * requires `write` — byte-for-byte equivalent to the former
+         * `hasMerchantAccess`, whose platform-admin bypass was already gated
+         * on `SAFE_METHODS`. This is the ~37x copy-pasted auth check across
+         * the merchant routes — kept byte-for-byte identical (same status
+         * codes/bodies) so no route's response contract changes.
          */
         requireMerchantAccess(enabled?: boolean) {
             if (!enabled) return;
@@ -246,17 +319,21 @@ export const businessSessionContext = new Elysia({
             return {
                 beforeHandle: async ({
                     params,
+                    request,
                     businessSession,
                     shopifySession,
-                    hasMerchantAccess,
+                    getMerchantPermissions,
                 }) => {
                     if (!businessSession && !shopifySession) {
                         return status(401, "Authentication required");
                     }
 
-                    const hasAccess = await hasMerchantAccess?.(
+                    const perms = await getMerchantPermissions?.(
                         (params as { merchantId: string }).merchantId
                     );
+                    const hasAccess = SAFE_METHODS.has(request.method)
+                        ? perms?.read
+                        : perms?.write;
                     if (!hasAccess) {
                         return status(403, "Access denied");
                     }

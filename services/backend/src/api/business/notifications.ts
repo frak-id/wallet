@@ -31,17 +31,22 @@ function toPushBroadcast(broadcast: BroadcastWithStats): PushBroadcast {
 
 async function assertMerchantAccess({
     businessSession,
-    hasMerchantAccess,
+    getMerchantPermissions,
     merchantId,
+    requireWrite = true,
 }: {
     businessSession: unknown;
-    hasMerchantAccess: (merchantId: string) => Promise<boolean>;
+    getMerchantPermissions: (
+        merchantId: string
+    ) => Promise<{ read: boolean; write: boolean }>;
     merchantId: string;
+    requireWrite?: boolean;
 }) {
     if (!businessSession) {
         return status(401, "Unauthorized");
     }
-    if (!(await hasMerchantAccess(merchantId))) {
+    const perms = await getMerchantPermissions(merchantId);
+    if (!(requireWrite ? perms.write : perms.read)) {
         return status(403, "Forbidden");
     }
     return null;
@@ -54,11 +59,11 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
         async ({
             body: { targets, payload, merchantId },
             businessSession,
-            hasMerchantAccess,
+            getMerchantPermissions,
         }) => {
             const denied = await assertMerchantAccess({
                 businessSession,
-                hasMerchantAccess,
+                getMerchantPermissions,
                 merchantId,
             });
             if (denied) return denied;
@@ -102,11 +107,11 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
         async ({
             body: { targets, payload, merchantId, scheduledAt },
             businessSession,
-            hasMerchantAccess,
+            getMerchantPermissions,
         }) => {
             const denied = await assertMerchantAccess({
                 businessSession,
-                hasMerchantAccess,
+                getMerchantPermissions,
                 merchantId,
             });
             if (denied) return denied;
@@ -144,11 +149,11 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             params: { id },
             body: { targets, payload, merchantId, scheduledAt },
             businessSession,
-            hasMerchantAccess,
+            getMerchantPermissions,
         }) => {
             const denied = await assertMerchantAccess({
                 businessSession,
-                hasMerchantAccess,
+                getMerchantPermissions,
                 merchantId,
             });
             if (denied) return denied;
@@ -189,12 +194,13 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
         async ({
             query: { merchantId },
             businessSession,
-            hasMerchantAccess,
+            getMerchantPermissions,
         }) => {
             const denied = await assertMerchantAccess({
                 businessSession,
-                hasMerchantAccess,
+                getMerchantPermissions,
                 merchantId,
+                requireWrite: false,
             });
             if (denied) return denied;
 
@@ -222,11 +228,11 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
             params: { id },
             query: { merchantId },
             businessSession,
-            hasMerchantAccess,
+            getMerchantPermissions,
         }) => {
             const denied = await assertMerchantAccess({
                 businessSession,
-                hasMerchantAccess,
+                getMerchantPermissions,
                 merchantId,
             });
             if (denied) return denied;

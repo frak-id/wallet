@@ -340,18 +340,53 @@ export const sessionContextMock = new Elysia({ name: "Macro.session" })
 /*                      Business Session Middleware Mock                      */
 /* -------------------------------------------------------------------------- */
 
+const SAFE_METHODS = new Set(["GET", "HEAD"]);
+
+type MockMerchantPermissions = {
+    read: boolean;
+    write: boolean;
+    readSecrets: boolean;
+    source: "owner" | "admin" | "shopify" | "platform-admin" | "none";
+};
+
+const NO_MOCK_PERMISSIONS: MockMerchantPermissions = {
+    read: false,
+    write: false,
+    readSecrets: false,
+    source: "none",
+};
+
 // Controllable access results for the session-resolved access checks.
 // Both default to granted; a test flips them via the setters to exercise
 // the 403 / secret-omitted paths, and resets them in its own beforeEach.
+// `mockMerchantAccessGranted` alone (genuine false) mirrors the real
+// platform-admin bypass: read-only, never write, never secrets.
 let mockMerchantAccessGranted = true;
 export function setMockMerchantAccess(granted: boolean) {
     mockMerchantAccessGranted = granted;
 }
 // "Genuine" access (no platform-admin read bypass) — gates secret-revealing
-// fields (finding 2.8) rather than whole routes.
+// fields (finding 2.8) and write operations, not just whole-route access.
 let mockGenuineMerchantAccessGranted = true;
 export function setMockGenuineMerchantAccess(granted: boolean) {
     mockGenuineMerchantAccessGranted = granted;
+}
+
+function mockPermissions(): MockMerchantPermissions {
+    if (!mockMerchantAccessGranted) {
+        return NO_MOCK_PERMISSIONS;
+    }
+    if (mockGenuineMerchantAccessGranted) {
+        return { read: true, write: true, readSecrets: true, source: "admin" };
+    }
+    // Route-level access granted but not genuine — mirrors the real
+    // platform-admin bypass: read-only, never write, never secrets.
+    return {
+        read: true,
+        write: false,
+        readSecrets: false,
+        source: "platform-admin",
+    };
 }
 
 export const businessSessionContextMock = new Elysia({
@@ -366,13 +401,11 @@ export const businessSessionContextMock = new Elysia({
     .resolve(async ({ headers }) => {
         const businessAuth = headers["x-business-auth"];
         if (!businessAuth) {
-            const denyAll = (_merchantId: string) =>
-                Promise.resolve(false as boolean);
             return {
                 businessSession: null,
                 shopifySession: null,
-                hasMerchantAccess: denyAll,
-                hasGenuineMerchantAccess: denyAll,
+                getMerchantPermissions: (_merchantId: string) =>
+                    Promise.resolve(NO_MOCK_PERMISSIONS),
             };
         }
 
@@ -383,10 +416,8 @@ export const businessSessionContextMock = new Elysia({
         return {
             businessSession: session || null,
             shopifySession: null,
-            hasMerchantAccess: (_merchantId: string) =>
-                Promise.resolve(mockMerchantAccessGranted),
-            hasGenuineMerchantAccess: (_merchantId: string) =>
-                Promise.resolve(mockGenuineMerchantAccessGranted),
+            getMerchantPermissions: (_merchantId: string) =>
+                Promise.resolve(mockPermissions()),
         };
     })
     .macro({
@@ -406,21 +437,31 @@ export const businessSessionContextMock = new Elysia({
                 },
             };
         },
-        // Mirrors the real macro (same status codes/bodies) so routes that
-        // moved from an inline check to `requireMerchantAccess: true` keep
-        // their 401/403 behavior under test.
+        // Mirrors the real macro (same status codes/bodies, same method→
+        // capability mapping) so routes that moved from an inline check to
+        // `requireMerchantAccess: true` keep their 401/403 behavior under test.
         requireMerchantAccess(enabled?: boolean) {
             if (!enabled) return;
             return {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
-                beforeHandle: async ({ params, businessSession, shopifySession, hasMerchantAccess, set }: any) => {
+                beforeHandle: async ({
+                    params,
+                    request,
+                    businessSession,
+                    shopifySession,
+                    getMerchantPermissions,
+                    set,
+                    // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
+                }: any) => {
                     if (!businessSession && !shopifySession) {
                         set.status = 401;
                         return "Authentication required";
                     }
-                    const hasAccess = await hasMerchantAccess?.(
+                    const perms = await getMerchantPermissions?.(
                         params?.merchantId
                     );
+                    const hasAccess = SAFE_METHODS.has(request.method)
+                        ? perms?.read
+                        : perms?.write;
                     if (!hasAccess) {
                         set.status = 403;
                         return "Access denied";

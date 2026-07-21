@@ -22,7 +22,7 @@ export const merchantWebhooksRoutes = new Elysia({
         async ({
             params: { merchantId },
             businessSession,
-            hasGenuineMerchantAccess,
+            getMerchantPermissions,
         }) => {
             const currentWebhooks = await db
                 .select()
@@ -46,12 +46,13 @@ export const merchantWebhooksRoutes = new Elysia({
                 .where(eq(purchasesTable.webhookId, currentWebhook.id))
                 .execute();
 
-            // `hasMerchantAccess` (route guard above) also grants read-only
-            // access via a platform-admin SAFE_METHODS bypass. That bypass
-            // must never reveal the raw signing secret (finding 2.8), so the
-            // secret field alone is gated on the session-resolved genuine
-            // grant (ownership / admin row / Shopify link — no admin bypass).
-            const genuineAccess = await hasGenuineMerchantAccess(merchantId);
+            // The route guard above only requires `read`, which also grants
+            // access via a platform-admin bypass. That bypass must never
+            // reveal the raw signing secret (finding 2.8), so the secret
+            // field alone is gated on `readSecrets` (ownership / admin row /
+            // Shopify link — no admin bypass).
+            const genuineAccess = (await getMerchantPermissions(merchantId))
+                .readSecrets;
             if (genuineAccess) {
                 log.info(
                     {

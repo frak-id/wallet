@@ -27,10 +27,10 @@ const ListDocumentsResponseSchema = t.Object({
 
 /**
  * Merchant-facing billing document reads (billing-feature-plan.md §5). Guarded
- * by `hasMerchantAccess` (owner/admin, with the read-only platform-admin
- * safe-method bypass) — mirrors `billingAccounting.ts`'s auth pattern exactly.
- * Never `platformAdminAuthenticated` (that guard is for the admin CRUD/mutation
- * routes in `billing.ts` only).
+ * by `requireMerchantAccess` / `getMerchantPermissions` (owner/admin, with the
+ * read-only platform-admin grant) — mirrors `billingAccounting.ts`'s auth
+ * pattern exactly. Never `platformAdminAuthenticated` (that guard is for the
+ * admin CRUD/mutation routes in `billing.ts` only).
  */
 export const merchantBillingDocumentRoutes = new Elysia({
     prefix: "/documents",

@@ -37,7 +37,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
             params: { merchantId },
             businessSession,
             shopifySession,
-            hasMerchantAccess,
+            getMerchantPermissions,
         }) => {
             if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
@@ -51,7 +51,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(404, "Merchant not found");
             }
 
-            const hasAccess = await hasMerchantAccess(merchantId);
+            const hasAccess = (await getMerchantPermissions(merchantId)).read;
             if (!hasAccess) {
                 return status(403, "Access denied");
             }

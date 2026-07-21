@@ -74,14 +74,14 @@ export const merchantBillingAccountingRoutes = new Elysia({
             body,
             businessSession,
             shopifySession,
-            hasMerchantAccess,
+            getMerchantPermissions,
         }) => {
             if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
-            // `hasMerchantAccess`'s platform-admin bypass is read-only
-            // (safe methods only), so it would reject a platform admin here
+            // `getMerchantPermissions`'s platform-admin grant is read-only
+            // (`write: false`), so it would reject a platform admin here
             // even though they must be able to write tax fields (§3.1). This
             // route is the one deliberate exception: a platform admin (trusted
             // Frak staff) is always allowed through; the field-level check
@@ -92,7 +92,8 @@ export const merchantBillingAccountingRoutes = new Elysia({
                 : false;
 
             const hasAccess =
-                isPlatformAdmin || (await hasMerchantAccess(merchantId));
+                isPlatformAdmin ||
+                (await getMerchantPermissions(merchantId)).write;
             if (!hasAccess) {
                 return status(403, "Access denied");
             }
