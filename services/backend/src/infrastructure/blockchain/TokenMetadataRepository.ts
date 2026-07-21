@@ -9,7 +9,6 @@ export type TokenMetadata = {
     decimals: number;
 };
 
-/** The 3 ERC20 read calls (symbol, name, decimals) needed for {@link TokenMetadata}. */
 function erc20MetadataContracts(address: Address) {
     return [
         { abi: erc20Abi, address, functionName: "symbol" },

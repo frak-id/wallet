@@ -128,7 +128,6 @@ function toRewardSummary(reward: RewardDefinition): CampaignListReward {
     }
 }
 
-// Existence + ownership check repeated inline across the campaign routes.
 export async function getOwnedCampaign(merchantId: string, campaignId: string) {
     const campaign =
         await CampaignContext.services.management.getById(campaignId);

@@ -21,8 +21,8 @@ export function validateBodyHmac({
     const recomputedSignature = hasher.digest();
     const baseSignature = Buffer.from(signature ?? "", "base64");
 
-    // Compare the two in constant time (timingSafeEqual throws on length
-    // mismatch, so guard that case explicitly rather than leaking via a throw)
+    // Constant-time compare; guard length first since timingSafeEqual throws
+    // (not compares) on mismatched lengths.
     if (
         baseSignature.length !== recomputedSignature.length ||
         !timingSafeEqual(baseSignature, recomputedSignature)

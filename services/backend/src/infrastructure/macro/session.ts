@@ -12,7 +12,6 @@ type OptionalWalletSession =
     | StaticWalletSdkTokenDto
     | undefined;
 
-// Try x-wallet-auth then x-wallet-sdk-auth; undefined if neither resolves.
 async function resolveWalletOrSdkSession(headers: {
     "x-wallet-auth"?: string;
     "x-wallet-sdk-auth"?: string;

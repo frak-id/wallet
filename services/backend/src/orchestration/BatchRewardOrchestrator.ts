@@ -48,11 +48,9 @@ type MerchantGroupResult = Pick<
     "processedCount" | "rewardsCreated" | "deferredCount" | "errors"
 >;
 
-// How many merchants are processed concurrently. Interactions for a single
-// merchant must stay sequential (per-user reward caps are enforced via COUNT
-// queries, not row locks — see processPendingInteractions), but different
-// merchants are fully independent (budgets/caps are per-merchant), so their
-// groups can run in parallel batches.
+// Interactions within a merchant stay sequential because per-user reward
+// caps are enforced via COUNT queries, not row locks; merchants themselves
+// are independent and run concurrently.
 const MERCHANT_CONCURRENCY = 5;
 
 export class BatchRewardOrchestrator {
@@ -127,10 +125,6 @@ export class BatchRewardOrchestrator {
         return result;
     }
 
-    // Processes one merchant's interactions sequentially (per-user caps rely
-    // on that ordering) and returns its own partial counts/errors so callers
-    // can merge results across concurrently-running merchant groups without
-    // racing on a shared accumulator.
     private async processMerchantGroup(
         merchantId: string,
         merchantInteractions: InteractionLogSelect[]

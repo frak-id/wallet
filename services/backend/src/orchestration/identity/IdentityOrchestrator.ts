@@ -26,11 +26,9 @@ export class IdentityOrchestrator {
             return { groupId: existingGroup.id, isNew: false };
         }
 
-        // Two concurrent resolves for the same brand-new identity can both
-        // reach here (both see no existing group). Only one will win the
-        // unique constraint on the node insert; run the create+attach in a
-        // transaction and, if we lost, roll back our empty group instead of
-        // leaving it orphaned.
+        // Two concurrent resolves for a new identity can both see no existing
+        // group; only one wins the unique constraint on the node insert. Run in
+        // a transaction so the loser can roll back its orphaned empty group.
         return db.transaction(async (tx) => {
             const newGroup = await this.identityRepository.createGroup(tx);
             const attachedNode = await this.identityRepository.addNode(
@@ -45,10 +43,7 @@ export class IdentityOrchestrator {
             );
 
             if (attachedNode.groupId !== newGroup.id) {
-                // Lost the race: `addNode` hit the unique constraint and
-                // returned the node another racer already attached to its
-                // own group. Our group is empty and would otherwise be a
-                // permanent orphan — delete it and report the winner's group.
+                // Lost the race: delete our now-orphaned empty group.
                 await this.identityRepository.deleteGroup(newGroup.id, tx);
 
                 log.debug(

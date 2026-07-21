@@ -112,9 +112,8 @@ export function processBudgetRestore(
     return updatedUsed;
 }
 
-// Max concurrent per-campaign budget-restore transactions. Bounds the fan-out
-// of `restoreBudgetsBatch` (called by the expiry cron over an unbounded set of
-// campaigns) so it can't saturate the shared connection pool.
+// Caps concurrent budget-restore transactions so `restoreBudgetsBatch`
+// (unbounded campaigns from the expiry cron) can't exhaust the connection pool.
 const RESTORE_BUDGET_CONCURRENCY = 5;
 
 export class CampaignRuleRepository {
@@ -212,10 +211,8 @@ export class CampaignRuleRepository {
         return result;
     }
 
-    // `fromStatuses` mirrors the `updateStatus` TOCTOU guard below: the
-    // service validates field permissions against a status it read earlier,
-    // so the write re-checks that status in the same statement. 0 rows =
-    // the status changed concurrently; callers treat null as a conflict.
+    // `fromStatuses` re-checks the status atomically (TOCTOU guard, see
+    // `updateStatus` below); 0 rows means it changed concurrently.
     async update(
         id: string,
         updates: Partial<
@@ -244,10 +241,8 @@ export class CampaignRuleRepository {
         return result ?? null;
     }
 
-    // Guards the write with `WHERE id = $1 AND status = ANY(fromStatuses)` so a
-    // concurrent transition that already flipped the status (TOCTOU race) makes
-    // this UPDATE affect zero rows instead of silently overwriting it. Callers
-    // (the four transition methods below) treat a null result as a conflict.
+    // `status = ANY(fromStatuses)` guards against a concurrent transition
+    // (TOCTOU race); 0 rows affected is treated as a conflict by callers.
     async updateStatus(
         id: string,
         fromStatuses: CampaignStatus[],
@@ -303,8 +298,7 @@ export class CampaignRuleRepository {
         );
     }
 
-    // Same TOCTOU guard as `update`/`updateStatus`: only draft campaigns may
-    // be deleted, and the status is re-checked atomically in the DELETE so a
+    // Same TOCTOU guard: status is re-checked atomically in the DELETE so a
     // concurrent publish can't lose a just-live campaign's config.
     async delete(id: string): Promise<boolean> {
         const result = await db
@@ -430,11 +424,8 @@ export class CampaignRuleRepository {
             );
         }
 
-        // Restore each distinct campaign concurrently (independent single-row
-        // `FOR UPDATE` transactions, no lock-ordering cycle), but bound the
-        // fan-out: the expiry cron can terminate rewards across an unbounded
-        // number of campaigns in one call, and a naive `Promise.all` would open
-        // one connection per campaign and saturate the shared pool.
+        // Chunked to bound fan-out: an unbounded `Promise.all` here could
+        // open one connection per campaign and exhaust the shared pool.
         const restored: Record<string, number> = {};
         const entries = [...amountsByCampaign];
         for (let i = 0; i < entries.length; i += RESTORE_BUDGET_CONCURRENCY) {

@@ -213,11 +213,9 @@ export class OwnershipTransferService {
             ? { wallet: transfer.toWallet }
             : { accountId: transfer.toAccountId as string };
 
-        // Flip the owner and drop the transfer row atomically — a crash
-        // between the two writes would otherwise leave the owner already
-        // changed while the transfer still reads as pending. `tx` defers
-        // the owner-cache invalidation (see `applyUpdate`) until after this
-        // commits, same outer-tx contract as `IdentityMergeService`.
+        // Flip owner and drop the transfer row atomically to avoid a crash
+        // leaving the owner changed but the transfer still pending. `tx`
+        // defers cache invalidation until after commit (see `applyUpdate`).
         await db.transaction(async (tx) => {
             await this.merchantRepository.updateOwner(
                 params.merchantId,

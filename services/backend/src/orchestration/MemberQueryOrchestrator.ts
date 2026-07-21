@@ -58,9 +58,8 @@ export class MemberQueryOrchestrator {
         return filter.filter((id) => accessibleSet.has(id));
     }
 
-    // `asset_logs` left join is kept even where its columns aren't selected
-    // so that `COUNT(interactionLogsTable.id)` fan-out (and thus `having`
-    // filtering) stays identical between queryMembers/countMembers.
+    // Kept even where asset_logs columns aren't selected, so the join fan-out
+    // (and thus `having` filtering) matches between queryMembers/countMembers.
     private interactionJoinCondition(merchantIds: string[]): SQL | undefined {
         return and(
             eq(

@@ -201,10 +201,8 @@ export class CampaignManagementService {
             return campaign;
         }
 
-        // Every field-permission decision above was made against the status
-        // we read, so the write re-checks it atomically (TOCTOU guard, same
-        // pattern as transitionStatus). 0 rows = a concurrent transition (or
-        // delete) invalidated those decisions — surface it as a conflict.
+        // Re-checks the status atomically (TOCTOU guard, same pattern as
+        // transitionStatus); 0 rows means a concurrent change invalidated it.
         const updated = await this.campaignRuleRepository.update(
             campaignId,
             cleanUpdates,
@@ -371,10 +369,8 @@ export class CampaignManagementService {
         }
 
         if (!updated) {
-            // The pre-read validation above passed, but the guarded UPDATE
-            // (`WHERE id = $1 AND status = ANY(from)`) affected zero rows: a
-            // concurrent transition changed the status between the read and
-            // the write. Surface it the same way as the pre-read check.
+            // The guarded UPDATE affected zero rows: a concurrent transition
+            // changed the status between the pre-read check and this write.
             throw HttpError.conflict(
                 "INVALID_TRANSITION",
                 `Cannot ${action} campaign: status changed concurrently. Valid from statuses: ${transition.from.join(", ")}`

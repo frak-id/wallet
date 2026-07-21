@@ -119,8 +119,6 @@ async function resolveBusinessMerchantPermissions(
     }
 
     if (await isPlatformAdminAuth(auth)) {
-        // Audit trail: platform admin resolving access to a merchant they
-        // don't genuinely belong to.
         log.info(
             {
                 wallet: auth.wallet,
@@ -274,14 +272,10 @@ export const businessSessionContext = new Elysia({
             };
         },
         /**
-         * Merchant-scoped guard: GET/HEAD require `read`, everything else
-         * `write`. On success injects `merchantPermissions` into the handler
-         * context.
-         *
-         * Shorthand `resolve` form on purpose: Elysia only infers
-         * resolve-injected context from the shorthand, and `resolve` runs
-         * before `beforeHandle` guards like `requireStepUp` — unauthorized
-         * callers get 403 before any step-up challenge.
+         * Merchant-scoped guard: GET/HEAD require `read`, others `write`;
+         * injects `merchantPermissions` on success. Uses shorthand `resolve`
+         * (not `derive`) so Elysia infers the context, and runs before
+         * `beforeHandle` guards like `requireStepUp`.
          */
         requireMerchantAccess: {
             resolve: async ({

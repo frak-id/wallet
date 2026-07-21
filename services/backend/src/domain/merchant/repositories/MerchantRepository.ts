@@ -275,12 +275,9 @@ export class MerchantRepository {
     }
 
     /**
-     * Runs under `tx` when supplied by the caller and, per the same
-     * outer-tx contract as `IdentityMergeService`, skips the cache
-     * invalidation in that case — invalidating before the enclosing
-     * transaction commits would let a racing reader repopulate the cache
-     * from pre-commit state. Callers that pass `tx` own the post-commit
-     * invalidation (see `invalidateCachesById`).
+     * Skips cache invalidation when `tx` is supplied: invalidating before the
+     * enclosing transaction commits could let a reader repopulate the cache
+     * from pre-commit state. Caller owns post-commit invalidation.
      */
     private async applyUpdate(
         id: string,

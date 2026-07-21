@@ -2,11 +2,7 @@ import { log } from "@backend-infrastructure";
 import { HttpError, validateBodyHmac } from "@backend-utils";
 import { OrchestrationContext } from "../../../../orchestration/context";
 
-/**
- * Resolve a merchant webhook by merchant identifier and verify the request
- * body against the webhook's HMAC signature. Throws the same `HttpError`s
- * each platform handler previously threw inline.
- */
+/** Resolves a merchant webhook and verifies the body against its HMAC signature. */
 export async function resolveAndVerifyWebhook({
     merchantId,
     body,

@@ -344,10 +344,8 @@ export class IdentityRepository {
     }
 
     /**
-     * Delete a just-created, still-empty identity group. Used to roll back
-     * the loser side of a concurrent `resolve()` race (see IdentityOrchestrator),
-     * where two racers both create a group before either attaches a node and
-     * only one wins the node's unique constraint.
+     * Rolls back the loser side of a concurrent `resolve()` race: both
+     * racers create a group before attaching a node, only one wins.
      */
     async deleteGroup(groupId: string, runner: PgRunner = db): Promise<void> {
         await runner

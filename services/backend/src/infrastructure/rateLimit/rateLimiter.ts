@@ -5,14 +5,11 @@ import { infraMetrics } from "../telemetry/infraMetrics";
 import { getClientIp } from "./ipExtraction";
 
 interface RateLimitWindow {
-    // Count of requests consumed since `currentStart`.
     currentCount: number;
-    // Count of requests consumed in the window immediately preceding this one.
+    // Count from the sub-window immediately preceding currentStart.
     previousCount: number;
-    // Start timestamp (ms) of the current fixed sub-window.
     currentStart: number;
-    // windowMs this entry was tracked with, kept for reset/purge bookkeeping
-    // without requiring config on every read.
+    // windowMs this entry was created with, for reset/purge bookkeeping.
     windowMs: number;
 }
 
@@ -27,17 +24,13 @@ const defaultConfig: RateLimitConfig = {
 };
 
 /**
- * In-memory sliding window rate limiter keyed by client IP.
- *
- * Implemented as a sliding window *counter* (not a fixed window): each key
- * tracks the current fixed sub-window plus the immediately preceding one,
- * and the effective count is the current count plus a time-weighted portion
- * of the previous count. This bounds bursts to ~`maxRequests` over any
- * rolling `windowMs` span, including across sub-window boundaries — unlike a
- * classic fixed window, which can allow up to 2x `maxRequests` right at the
- * boundary. It's an approximation (assumes uniform request distribution
- * within the previous sub-window) rather than an exact sliding log, which is
- * the standard, cheap-memory tradeoff for this technique.
+ * In-memory sliding window *counter* rate limiter keyed by client IP: each
+ * key tracks the current fixed sub-window plus the immediately preceding
+ * one, and the effective count is `currentCount` plus a time-weighted
+ * portion of `previousCount`. This bounds bursts to ~`maxRequests` over any
+ * rolling `windowMs` span (a classic fixed window can allow up to 2x right
+ * at the boundary); it's an approximation assuming uniform request
+ * distribution in the previous sub-window, not an exact sliding log.
  *
  * Entries are lazily rolled/evicted on access — no background timer needed.
  * Suitable for single-instance deployments. For multi-replica k8s
@@ -46,10 +39,7 @@ const defaultConfig: RateLimitConfig = {
 export class InMemoryRateLimitStore {
     private readonly windows = new Map<string, RateLimitWindow>();
 
-    /**
-     * Advance `entry` to the sub-window containing `now`, mutating it in
-     * place. No-op if `now` is still within the current sub-window.
-     */
+    /** Advance `entry` to the sub-window containing `now`. No-op if still current. */
     private roll(
         entry: RateLimitWindow,
         config: RateLimitConfig,
@@ -59,7 +49,7 @@ export class InMemoryRateLimitStore {
         if (elapsed < config.windowMs) return;
 
         if (elapsed >= config.windowMs * 2) {
-            // Idle for more than a full extra window: nothing carries over.
+            // Idle long enough that nothing carries over.
             entry.previousCount = 0;
             entry.currentCount = 0;
             entry.currentStart = now;
@@ -70,7 +60,6 @@ export class InMemoryRateLimitStore {
         }
     }
 
-    /** Time-weighted effective request count within the trailing `windowMs`. */
     private estimate(
         entry: RateLimitWindow,
         config: RateLimitConfig,
@@ -123,19 +112,16 @@ export class InMemoryRateLimitStore {
 
         const now = Date.now();
         this.roll(entry, config, now);
-        // Previous sub-window's weight reaches zero at the end of the
-        // current sub-window — the earliest point the bucket is guaranteed
-        // to have room again.
+        // Earliest point the previous sub-window's weight hits zero.
         return entry.currentStart + config.windowMs;
     }
 
     /**
-     * Purge entries old enough to carry no residual effect. An entry is only
-     * truly inert once *two* full `windowMs` have elapsed since
-     * `currentStart`: in the `[windowMs, 2*windowMs)` range the entry has not
-     * been lazily rolled yet, so its `currentCount` would still carry over as
-     * `previousCount` weight on the next `estimate()`. Dropping it earlier
-     * would grant a fresh bucket right after a maxed-out burst.
+     * Purge entries with no residual effect: only safe once *two* full
+     * `windowMs` have elapsed since `currentStart`, since before that the
+     * entry hasn't been rolled yet and its `currentCount` would still carry
+     * over as `previousCount` weight. Purging earlier would grant a fresh
+     * bucket right after a maxed-out burst.
      */
     purgeExpired(): void {
         const now = Date.now();

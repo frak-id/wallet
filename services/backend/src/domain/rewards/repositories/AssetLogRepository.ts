@@ -618,11 +618,8 @@ export class AssetLogRepository {
     }
 
     /**
-     * Batched per-campaign referee counts for a single user — one grouped
-     * query instead of `countByCampaignAndUserAsReferee` run once per
-     * candidate campaign (the RuleEngineService N+1). Campaigns with zero
-     * matching rows are simply absent from the returned map; callers treat a
-     * missing key as 0.
+     * Batched per-campaign referee counts (avoids N+1 in RuleEngineService).
+     * Campaigns with no matching rows are absent; callers treat missing as 0.
      */
     async countByCampaignsAndUserAsReferee(
         campaignRuleIds: string[],

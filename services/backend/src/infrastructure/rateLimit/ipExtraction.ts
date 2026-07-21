@@ -11,20 +11,14 @@ function getHeaderValue(
 }
 
 /**
- * Number of trusted reverse-proxy hops between the internet and this
- * process, i.e. how many entries at the *right* end of `x-forwarded-for` we
- * should skip before reaching the real client IP.
+ * How many entries at the *right* end of `x-forwarded-for` to skip before
+ * reaching the real client IP.
  *
- * Deployment topology (see `infra/gcp/backend.ts` +
- * `infra/components/KubernetesService.ts`): internet -> GCP L4 LoadBalancer
- * (passthrough, does not touch HTTP headers) -> ingress-nginx controller
- * (appends the peer IP it sees to `x-forwarded-for`) -> this pod. That's a
- * single trusted hop, hence the default of `1`.
- *
- * There is no Cloudflare (or any other vendor edge) in front of the
- * ingress, so vendor headers like `cf-connecting-ip` / `true-client-ip` /
- * `fastly-client-ip` are just attacker-controlled input here and must never
- * be trusted.
+ * Topology: internet -> GCP L4 LoadBalancer (passthrough, doesn't touch
+ * headers) -> ingress-nginx (appends the peer IP it sees) -> this pod. A
+ * single trusted hop, hence the default of `1`. No Cloudflare/vendor edge
+ * sits in front, so vendor headers (`cf-connecting-ip`, `true-client-ip`,
+ * `fastly-client-ip`, ...) are attacker-controlled here and must not be trusted.
  */
 function getTrustedProxyHops(): number {
     const raw = Number.parseInt(
@@ -35,17 +29,11 @@ function getTrustedProxyHops(): number {
 }
 
 /**
- * Extract the client IP from `x-forwarded-for`, anchored from the right.
- *
- * Each trusted proxy hop appends the address of whoever it received the
- * request *from* (nginx's `$proxy_add_x_forwarded_for` semantics). So with
- * `TRUSTED_PROXY_HOPS` trusted proxies in the chain, the right-most
- * `TRUSTED_PROXY_HOPS` entries were all appended by proxies we trust, and
- * the left-most of those (`ips.length - TRUSTED_PROXY_HOPS`) is the one
- * appended by the *first* trusted proxy — i.e. the real client address it
- * observed. Everything to the left of that is attacker-controlled (a
- * client can send an arbitrary `x-forwarded-for` prefix) and must never be
- * trusted.
+ * Extract the client IP from `x-forwarded-for`, anchored from the right:
+ * each trusted proxy appends the address it received the request from, so
+ * skipping `TRUSTED_PROXY_HOPS` entries from the right lands on the address
+ * seen by the first trusted proxy. Everything left of that is
+ * attacker-controlled and must never be trusted.
  */
 function extractFromForwardedFor(value: string): string | null {
     const ips = value
@@ -56,11 +44,8 @@ function extractFromForwardedFor(value: string): string | null {
 
     const index = ips.length - getTrustedProxyHops();
     if (index < 0) {
-        // Fewer entries than expected trusted hops (misconfigured hop count
-        // or an upstream that dropped the header). Fail SAFE: return null so
-        // the caller falls through to the real socket peer
-        // (`server.requestIP()`), never the attacker-controlled left-most
-        // entry.
+        // Fewer entries than expected trusted hops: fail safe, fall through
+        // to server.requestIP() rather than trust the left-most entry.
         return null;
     }
     return ips[index] ?? null;
@@ -70,10 +55,8 @@ function extractFromForwardedFor(value: string): string | null {
  * Extract the client IP from a request.
  *
  * Resolution order:
- *  1. `x-forwarded-for`, anchored from the right and stripping
- *     `RATE_LIMIT_TRUSTED_PROXY_HOPS` trusted proxy entries (see comment
- *     above — defaults to the single ingress-nginx hop in front of this
- *     service).
+ *  1. `x-forwarded-for`, anchored from the right, stripping
+ *     `RATE_LIMIT_TRUSTED_PROXY_HOPS` trusted proxy entries (see above).
  *  2. Bun's native `server.requestIP()` (direct socket peer).
  *  3. Explicit `remoteAddress` fallback (e.g. WebSocket `ws.remoteAddress`).
  */

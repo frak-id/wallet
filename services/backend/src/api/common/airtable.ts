@@ -6,11 +6,8 @@ import {
     type TableType,
 } from "../../infrastructure/integrations/airtable";
 
-/**
- * Lazily constructed so a missing `AIRTABLE_API_KEY` surfaces as a scoped
- * 500 on this route (via the handler's try/catch) instead of throwing at
- * module-load time and crashing the whole backend, including `/health`.
- */
+// Lazy: a missing AIRTABLE_API_KEY should 500 this route, not crash the
+// whole backend (incl. /health) at module-load time.
 let airtableRepository: AirtableRepository | undefined;
 export function getAirtableRepository(): AirtableRepository {
     if (!airtableRepository) {
