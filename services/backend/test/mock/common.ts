@@ -356,17 +356,12 @@ const NO_MOCK_PERMISSIONS: MockMerchantPermissions = {
     source: "none",
 };
 
-// Controllable access results for the session-resolved access checks.
-// Both default to granted; a test flips them via the setters to exercise
-// the 403 / secret-omitted paths, and resets them in its own beforeEach.
-// `mockMerchantAccessGranted` alone (genuine false) mirrors the real
-// platform-admin bypass: read-only, never write, never secrets.
+// Controllable access toggles, reset by each test's beforeEach. Access
+// granted + genuine denied mirrors the platform-admin bypass (read-only).
 let mockMerchantAccessGranted = true;
 export function setMockMerchantAccess(granted: boolean) {
     mockMerchantAccessGranted = granted;
 }
-// "Genuine" access (no platform-admin read bypass) — gates secret-revealing
-// fields (finding 2.8) and write operations, not just whole-route access.
 let mockGenuineMerchantAccessGranted = true;
 export function setMockGenuineMerchantAccess(granted: boolean) {
     mockGenuineMerchantAccessGranted = granted;
@@ -379,8 +374,6 @@ function mockPermissions(): MockMerchantPermissions {
     if (mockGenuineMerchantAccessGranted) {
         return { read: true, write: true, readSecrets: true, source: "admin" };
     }
-    // Route-level access granted but not genuine — mirrors the real
-    // platform-admin bypass: read-only, never write, never secrets.
     return {
         read: true,
         write: false,
@@ -437,10 +430,8 @@ export const businessSessionContextMock = new Elysia({
                 },
             };
         },
-        // Mirrors the real macro (same status codes/bodies, same method→
-        // capability mapping, same `merchantPermissions` context injection)
-        // so routes that moved from an inline check to
-        // `requireMerchantAccess: true` keep their 401/403 behavior under test.
+        // Mirrors the real macro: same status codes/bodies, method→capability
+        // mapping, and `merchantPermissions` injection.
         requireMerchantAccess(enabled?: boolean) {
             if (!enabled) return;
             return {

@@ -13,8 +13,7 @@ import { businessSessionContext } from "../middleware/session";
  *
  * Surfaces per-merchant clicks + actions stats pulled live from the TakeAds
  * Stats API. Guarded by `platformAdminAuthenticated` — the report exposes
- * cross-merchant provider data (revenue, commissions), so it's admin-only and
- * never rides the read-only platform-admin grant from `getMerchantPermissions`.
+ * cross-merchant provider data (revenue, commissions), so it's admin-only.
  */
 export const merchantAffiliateReportingRoutes = new Elysia({
     prefix: "/:merchantId/affiliate",

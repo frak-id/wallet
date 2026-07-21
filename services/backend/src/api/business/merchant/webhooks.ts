@@ -46,11 +46,8 @@ export const merchantWebhooksRoutes = new Elysia({
                 .where(eq(purchasesTable.webhookId, currentWebhook.id))
                 .execute();
 
-            // The route guard above only requires `read`, which also grants
-            // access via a platform-admin bypass. That bypass must never
-            // reveal the raw signing secret (finding 2.8), so the secret
-            // field alone is gated on `readSecrets` (ownership / admin row /
-            // Shopify link — no admin bypass).
+            // Secret must never reach the platform-admin read bypass
+            // (finding 2.8) — gated on `readSecrets`, not route access.
             const genuineAccess = merchantPermissions.readSecrets;
             if (genuineAccess) {
                 log.info(

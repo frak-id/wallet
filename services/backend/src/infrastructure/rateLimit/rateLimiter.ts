@@ -217,8 +217,7 @@ export function rateLimitMiddleware(config?: RateLimitOptions) {
                 const retryAfterSec = Math.max(
                     1,
                     Math.ceil(
-                        (store.getResetAt(key, finalConfig) - Date.now()) /
-                            1000
+                        (store.getResetAt(key, finalConfig) - Date.now()) / 1000
                     )
                 );
                 ctx.set.headers["retry-after"] = String(retryAfterSec);

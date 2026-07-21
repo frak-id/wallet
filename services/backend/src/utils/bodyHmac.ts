@@ -1,5 +1,5 @@
-import { CryptoHasher } from "bun";
 import { timingSafeEqual } from "node:crypto";
+import { CryptoHasher } from "bun";
 
 /**
  * Validate a hmac signature around a request body

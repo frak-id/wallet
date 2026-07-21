@@ -1,6 +1,5 @@
-import { beforeEach, describe, expect, it, type vi } from "vitest";
-
 import { log } from "@backend-infrastructure";
+import { beforeEach, describe, expect, it, type vi } from "vitest";
 import { merchantWebhooksRoutes } from "../../../src/api/business/merchant/webhooks";
 // Shared infra mocks (db, log, business session middleware, …). The route
 // consumes the session-resolved `hasGenuineMerchantAccess`, driven here via

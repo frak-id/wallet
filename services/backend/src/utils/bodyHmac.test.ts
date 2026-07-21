@@ -26,16 +26,18 @@ describe("validateBodyHmac", () => {
 
     it("rejects a shorter-than-expected signature without throwing a RangeError", () => {
         const signature = Buffer.from("short").toString("base64");
-        expect(() =>
-            validateBodyHmac({ body, secret, signature })
-        ).toThrow("Webhook signature verification failed");
+        expect(() => validateBodyHmac({ body, secret, signature })).toThrow(
+            "Webhook signature verification failed"
+        );
     });
 
     it("rejects a longer-than-expected signature without throwing a RangeError", () => {
-        const signature = Buffer.from("mocked-hash-and-more").toString("base64");
-        expect(() =>
-            validateBodyHmac({ body, secret, signature })
-        ).toThrow("Webhook signature verification failed");
+        const signature = Buffer.from("mocked-hash-and-more").toString(
+            "base64"
+        );
+        expect(() => validateBodyHmac({ body, secret, signature })).toThrow(
+            "Webhook signature verification failed"
+        );
     });
 
     it("rejects a missing signature", () => {

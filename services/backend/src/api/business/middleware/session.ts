@@ -18,21 +18,10 @@ import {
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 /**
- * Unified merchant-access capability object, resolved once per request and
- * consumed by both route handlers and the `requireMerchantAccess` macro.
- * Replaces the former `hasMerchantAccess` / `hasGenuineMerchantAccess`
- * boolean pair so new capabilities (e.g. a future granular permission
- * system) are additional fields here rather than new context functions.
- *
- * - `read` / `write`: `write` implies `read`. A genuine grant (real
- *   ownership/admin/Shopify-link) satisfies both. The platform-admin
- *   read-only bypass satisfies only `read` — mutations must never ride it.
- * - `readSecrets`: genuine-only, gates fields that must never reach the
- *   platform-admin bypass (e.g. webhook signing key, finding 2.8).
- * - `source`: coarse provenance for logging/UI, not a fine-grained role
- *   system — `"admin"` covers both real admin-row and Shopify-credential
- *   grants on the business-auth path (owner is distinguished via
- *   `checkAccess`'s `role`, at no extra query cost).
+ * Merchant-access capabilities. A genuine grant (ownership/admin-row/
+ * Shopify-link) satisfies everything; the platform-admin bypass grants
+ * `read` only — never `write`, never `readSecrets` (finding 2.8: secrets
+ * like the webhook signing key must not reach platform admins).
  */
 export type MerchantPermissions = {
     read: boolean;
@@ -107,20 +96,6 @@ export async function hasShopifyCredentialAccess(
     });
 }
 
-/**
- * Genuine grants: direct wallet/account/admin-row ownership (via
- * `checkAccess`, reusing its `role` for `source` so distinguishing
- * owner/admin costs no extra query) or the Shopify-credential auto-link.
- * Falls back to the read-only platform-admin grant, logging its use. Neither
- * genuine path rides that bypass.
- *
- * Deliberately method-independent: the resolved capabilities describe what
- * the caller *may* do, and consumers (the `requireMerchantAccess` macro,
- * inline route checks) pick the capability the operation needs. The
- * platform-admin grant is `read`-only regardless of the request method —
- * the former `hasMerchantAccess` encoded the same restriction by sniffing
- * `SAFE_METHODS` here instead.
- */
 async function resolveBusinessMerchantPermissions(
     merchantId: string,
     auth: ResolvedBusinessAuth,
@@ -144,10 +119,8 @@ async function resolveBusinessMerchantPermissions(
     }
 
     if (await isPlatformAdminAuth(auth)) {
-        // Audit trail for finding 2.8-adjacent access: fires whenever a
-        // platform admin resolves a (read-only) grant on a merchant they
-        // don't genuinely belong to, whether or not the route ends up
-        // honoring it.
+        // Audit trail: platform admin resolving access to a merchant they
+        // don't genuinely belong to.
         log.info(
             {
                 wallet: auth.wallet,
@@ -201,9 +174,8 @@ export const businessSessionContext = new Elysia({
             const session = await verifyShopifySessionToken(shopifyToken);
             if (session) {
                 const shopDomain = extractShopDomain(session.dest);
-                // An embedded Shopify session's access is always a real
-                // domain match — genuine by construction, so it grants every
-                // capability.
+                // Embedded Shopify access is genuine by construction —
+                // grants every capability.
                 const getMerchantPermissions = async (
                     merchantId: string
                 ): Promise<MerchantPermissions> => {
@@ -302,30 +274,14 @@ export const businessSessionContext = new Elysia({
             };
         },
         /**
-         * Standard merchant-scoped guard: any authenticated session
-         * (business or Shopify) that resolves access to `params.merchantId`
-         * via the plugin-resolved `getMerchantPermissions` (§2.3), including
-         * its Shopify-credential and read-only platform-admin grants. Method
-         * maps to capability: GET/HEAD require `read`, everything else
-         * requires `write` — byte-for-byte equivalent to the former
-         * `hasMerchantAccess`, whose platform-admin bypass was already gated
-         * on `SAFE_METHODS`. Same status codes/bodies as the ~37x formerly
-         * copy-pasted inline check, so no route's response contract changes.
+         * Merchant-scoped guard: GET/HEAD require `read`, everything else
+         * `write`. On success injects `merchantPermissions` into the handler
+         * context.
          *
-         * On success the resolved `merchantPermissions` is injected into the
-         * handler context, so guarded routes consume the capabilities (e.g.
-         * `readSecrets`) without re-resolving them.
-         *
-         * NOTE: implemented as `resolve` (not `beforeHandle`) so it can
-         * inject context — resolve runs before any `beforeHandle`, so on
-         * routes that also declare `requireStepUp` the access check now runs
-         * first: an unauthorized caller with a stale step-up gets 403 here
-         * and never sees the step-up challenge protocol.
-         *
-         * NOTE: object-shorthand form (runs on `requireMerchantAccess: true`
-         * only) rather than the `(enabled?: boolean)` function form used by
-         * the guards above — Elysia only infers resolve-injected context
-         * into handler types from the shorthand form.
+         * Shorthand `resolve` form on purpose: Elysia only infers
+         * resolve-injected context from the shorthand, and `resolve` runs
+         * before `beforeHandle` guards like `requireStepUp` — unauthorized
+         * callers get 403 before any step-up challenge.
          */
         requireMerchantAccess: {
             resolve: async ({

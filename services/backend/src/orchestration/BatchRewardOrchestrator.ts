@@ -98,18 +98,11 @@ export class BatchRewardOrchestrator {
 
         const merchantGroups = [...this.groupByMerchant(interactions)];
 
-        for (
-            let i = 0;
-            i < merchantGroups.length;
-            i += MERCHANT_CONCURRENCY
-        ) {
+        for (let i = 0; i < merchantGroups.length; i += MERCHANT_CONCURRENCY) {
             const batch = merchantGroups.slice(i, i + MERCHANT_CONCURRENCY);
             const batchResults = await Promise.all(
                 batch.map(([merchantId, merchantInteractions]) =>
-                    this.processMerchantGroup(
-                        merchantId,
-                        merchantInteractions
-                    )
+                    this.processMerchantGroup(merchantId, merchantInteractions)
                 )
             );
 
@@ -524,9 +517,7 @@ export class BatchRewardOrchestrator {
         await Promise.all(
             uniqueGroupIds.map(async (groupId) => {
                 const wallet =
-                    await this.identityOrchestrator.getWalletForGroup(
-                        groupId
-                    );
+                    await this.identityOrchestrator.getWalletForGroup(groupId);
                 walletByGroupId.set(groupId, wallet);
             })
         );

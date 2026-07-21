@@ -247,12 +247,8 @@ export const merchantAdminsRoutes = new Elysia({
         {
             // Admin management is a sensitive action (§4.8).
             requireStepUp: true,
-            // Consistent with the sibling GET/DELETE routes: uses the
-            // plugin's `getMerchantPermissions`, which additionally honors
-            // the Shopify-credential grant (§4.7). Its platform-admin grant
-            // only satisfies `read`, never `write` — which this POST
-            // requires — so the read-only bypass never applies to this
-            // mutation.
+            // Consistent with the sibling GET/DELETE routes — also honors
+            // the Shopify-credential grant (§4.7).
             requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: t.Union([

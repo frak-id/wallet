@@ -293,9 +293,14 @@ export class CampaignRuleRepository {
     }
 
     async archive(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, ["draft", "active", "paused"], "archived", {
-            deactivatedAt: new Date(),
-        });
+        return this.updateStatus(
+            id,
+            ["draft", "active", "paused"],
+            "archived",
+            {
+                deactivatedAt: new Date(),
+            }
+        );
     }
 
     // Same TOCTOU guard as `update`/`updateStatus`: only draft campaigns may

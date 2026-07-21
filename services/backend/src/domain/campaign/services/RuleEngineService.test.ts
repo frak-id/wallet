@@ -43,7 +43,9 @@ describe("RuleEngineService", () => {
 
     const createMockAssetLogRepository = (): AssetLogRepository =>
         ({
-            countByCampaignsAndUserAsReferee: vi.fn().mockResolvedValue(new Map()),
+            countByCampaignsAndUserAsReferee: vi
+                .fn()
+                .mockResolvedValue(new Map()),
             countByMerchantAndUserAsReferee: vi.fn(),
         }) as unknown as AssetLogRepository;
 
