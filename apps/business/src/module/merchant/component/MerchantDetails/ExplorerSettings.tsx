@@ -1,3 +1,4 @@
+import { isValidUrl, normalizeUrl } from "@frak-labs/app-essentials";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { TextArea } from "@frak-labs/design-system/components/TextArea";
@@ -13,7 +14,6 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { EditCard } from "@/module/common/component/EditCard";
 import { FloatingPhonePreview } from "@/module/common/component/FloatingPhonePreview";
-import { isValidUrl, normalizeUrl } from "@/module/common/utils/validateUrl";
 import { EditField } from "@/module/forms/EditField";
 import {
     Form,

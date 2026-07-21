@@ -7,7 +7,8 @@
         "allSet": "L'application Frak est correctement configurée",
         "getStarted": "Commencer la configuration de l'application",
         "dashboardDataUnavailableTitle": "Les donnees du tableau de bord sont temporairement indisponibles.",
-        "dashboardDataUnavailableDescription": "Veuillez actualiser la page dans quelques secondes."
+        "dashboardDataUnavailableDescription": "Veuillez actualiser la page dans quelques secondes.",
+        "invalidUrl": "Veuillez saisir une URL valide."
     },
     "navigation": {
         "campaigns": "Campagnes",
@@ -431,6 +432,8 @@
         "explorer": {
             "description": "Une fois activée, votre boutique sera affichée dans l'application Frak, permettant aux utilisateurs de découvrir vos campagnes de parrainage.",
             "enabledLabel": "Référencé dans le Frak Explorer",
+            "enabledHint": "Rendez votre boutique visible dans l'application Frak.",
+            "invalidUrlToast": "Corrigez l'URL d'image invalide avant d'enregistrer.",
             "logoLabel": "URL du logo",
             "heroLabel": "URL de l'image de couverture",
             "heroExtrasLabel": "Images de couverture supplémentaires",

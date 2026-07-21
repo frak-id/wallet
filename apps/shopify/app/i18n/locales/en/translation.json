@@ -7,7 +7,8 @@
         "allSet": "Frak application is correctly set up",
         "getStarted": "Start application setup",
         "dashboardDataUnavailableTitle": "Dashboard data is temporarily unavailable.",
-        "dashboardDataUnavailableDescription": "Please refresh the page in a few seconds."
+        "dashboardDataUnavailableDescription": "Please refresh the page in a few seconds.",
+        "invalidUrl": "Please enter a valid URL."
     },
     "navigation": {
         "campaigns": "Campaigns",
@@ -430,6 +431,8 @@
         "explorer": {
             "description": "Once enabled, your store will be displayed in the Frak app, helping users discover your referral campaigns.",
             "enabledLabel": "Listed in Frak Explorer",
+            "enabledHint": "Make your store discoverable in the Frak app.",
+            "invalidUrlToast": "Fix the invalid image URL before saving.",
             "logoLabel": "Logo URL",
             "heroLabel": "Hero image URL",
             "heroExtrasLabel": "Additional hero images",
