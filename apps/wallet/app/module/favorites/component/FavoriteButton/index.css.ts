@@ -1,4 +1,9 @@
-import { alias, easing, transition } from "@frak-labs/design-system/tokens";
+import {
+    alias,
+    easing,
+    shadow,
+    transition,
+} from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 /**
@@ -35,6 +40,7 @@ const pop = keyframes({
 export const icon = style({
     display: "block",
     transformOrigin: "center",
+    filter: `drop-shadow(${shadow.iconOnImage})`,
 });
 
 export const iconPop = style({
