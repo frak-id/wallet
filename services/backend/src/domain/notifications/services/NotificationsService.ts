@@ -269,12 +269,16 @@ export class NotificationsService {
                 byLocale.set(token.locale, group);
             }
 
-            for (const [locale, endpoints] of byLocale) {
-                const resolved = resolvePayload(payload, locale);
-                const invalid = await this.fcmSender.send({
-                    tokens: endpoints,
-                    payload: resolved,
-                });
+            const results = await Promise.all(
+                Array.from(byLocale.entries()).map(([locale, endpoints]) => {
+                    const resolved = resolvePayload(payload, locale);
+                    return this.fcmSender.send({
+                        tokens: endpoints,
+                        payload: resolved,
+                    });
+                })
+            );
+            for (const invalid of results) {
                 allInvalidEndpoints.push(...invalid);
             }
         } else {

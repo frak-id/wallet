@@ -112,6 +112,11 @@ export function processBudgetRestore(
     return updatedUsed;
 }
 
+// Max concurrent per-campaign budget-restore transactions. Bounds the fan-out
+// of `restoreBudgetsBatch` (called by the expiry cron over an unbounded set of
+// campaigns) so it can't saturate the shared connection pool.
+const RESTORE_BUDGET_CONCURRENCY = 5;
+
 export class CampaignRuleRepository {
     private readonly activeRulesCache = new LRUCache<
         string,
@@ -420,10 +425,21 @@ export class CampaignRuleRepository {
             );
         }
 
+        // Restore each distinct campaign concurrently (independent single-row
+        // `FOR UPDATE` transactions, no lock-ordering cycle), but bound the
+        // fan-out: the expiry cron can terminate rewards across an unbounded
+        // number of campaigns in one call, and a naive `Promise.all` would open
+        // one connection per campaign and saturate the shared pool.
         const restored: Record<string, number> = {};
-        for (const [campaignRuleId, amount] of amountsByCampaign) {
-            await this.restoreBudget(campaignRuleId, amount);
-            restored[campaignRuleId] = amount;
+        const entries = [...amountsByCampaign];
+        for (let i = 0; i < entries.length; i += RESTORE_BUDGET_CONCURRENCY) {
+            const chunk = entries.slice(i, i + RESTORE_BUDGET_CONCURRENCY);
+            await Promise.all(
+                chunk.map(async ([campaignRuleId, amount]) => {
+                    await this.restoreBudget(campaignRuleId, amount);
+                    restored[campaignRuleId] = amount;
+                })
+            );
         }
         return restored;
     }

@@ -617,14 +617,45 @@ export class AssetLogRepository {
         return result?.count ?? 0;
     }
 
-    async countByCampaignAndUserAsReferee(
-        campaignRuleId: string,
+    /**
+     * Batched per-campaign referee counts for a single user — one grouped
+     * query instead of `countByCampaignAndUserAsReferee` run once per
+     * candidate campaign (the RuleEngineService N+1). Campaigns with zero
+     * matching rows are simply absent from the returned map; callers treat a
+     * missing key as 0.
+     */
+    async countByCampaignsAndUserAsReferee(
+        campaignRuleIds: string[],
         identityGroupId: string
-    ): Promise<number> {
-        return this.countAsRefereeWhere(
-            eq(assetLogsTable.campaignRuleId, campaignRuleId),
-            identityGroupId
-        );
+    ): Promise<Map<string, number>> {
+        if (campaignRuleIds.length === 0) return new Map();
+
+        const rows = await db
+            .select({
+                campaignRuleId: assetLogsTable.campaignRuleId,
+                count: sql<number>`count(*)::int`,
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    inArray(assetLogsTable.campaignRuleId, campaignRuleIds),
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "processing",
+                        "settled",
+                        "bank_depleted",
+                    ]),
+                    eq(assetLogsTable.recipientType, "referee")
+                )
+            )
+            .groupBy(assetLogsTable.campaignRuleId);
+
+        const counts = new Map<string, number>();
+        for (const row of rows) {
+            if (row.campaignRuleId) counts.set(row.campaignRuleId, row.count);
+        }
+        return counts;
     }
 
     async countByMerchantAndUserAsReferee(

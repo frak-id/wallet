@@ -79,6 +79,20 @@ export class RuleEngineService {
                 );
         }
 
+        // Prefetch per-campaign referee counts in one grouped query instead of
+        // one round-trip per capped campaign (N+1).
+        const cappedCampaignIds = activeCampaigns
+            .filter((c) => c.rule.maxRewardsPerUser !== undefined)
+            .map((c) => c.id);
+        let campaignRefereeCounts: Map<string, number> | undefined;
+        if (cappedCampaignIds.length > 0) {
+            campaignRefereeCounts =
+                await this.assetLogRepository.countByCampaignsAndUserAsReferee(
+                    cappedCampaignIds,
+                    fullContext.user.identityGroupId
+                );
+        }
+
         const allRewards: CalculatedReward[] = [];
         const skippedCampaigns: string[] = [];
         const errors: { campaignRuleId: string; error: string }[] = [];
@@ -92,6 +106,7 @@ export class RuleEngineService {
                 fullContext,
                 params.merchantId,
                 merchantRewardCount,
+                campaignRefereeCounts,
                 fetchReferralChain,
                 params.merchantDefaultToken
             );
@@ -141,6 +156,7 @@ export class RuleEngineService {
         context: RuleContext,
         merchantId: string,
         merchantRewardCount: number | undefined,
+        campaignRefereeCounts: Map<string, number> | undefined,
         fetchReferralChain?: ReferralChainFetcher,
         merchantDefaultToken?: Address
     ): Promise<{
@@ -194,10 +210,7 @@ export class RuleEngineService {
         // Check per-campaign per-user cap (only if explicitly set)
         if (campaign.rule.maxRewardsPerUser !== undefined) {
             const userRewardCount =
-                await this.assetLogRepository.countByCampaignAndUserAsReferee(
-                    campaign.id,
-                    context.user.identityGroupId
-                );
+                campaignRefereeCounts?.get(campaign.id) ?? 0;
 
             if (userRewardCount >= campaign.rule.maxRewardsPerUser) {
                 log.debug(

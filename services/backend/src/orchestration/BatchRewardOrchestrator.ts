@@ -43,6 +43,18 @@ type ProcessSingleResult = {
     error?: string;
 };
 
+type MerchantGroupResult = Pick<
+    BatchProcessResult,
+    "processedCount" | "rewardsCreated" | "deferredCount" | "errors"
+>;
+
+// How many merchants are processed concurrently. Interactions for a single
+// merchant must stay sequential (per-user reward caps are enforced via COUNT
+// queries, not row locks — see processPendingInteractions), but different
+// merchants are fully independent (budgets/caps are per-merchant), so their
+// groups can run in parallel batches.
+const MERCHANT_CONCURRENCY = 5;
+
 export class BatchRewardOrchestrator {
     constructor(
         private readonly interactionLogRepository: InteractionLogRepository,
@@ -84,29 +96,28 @@ export class BatchRewardOrchestrator {
             errors: [],
         };
 
-        const interactionsByMerchant = this.groupByMerchant(interactions);
+        const merchantGroups = [...this.groupByMerchant(interactions)];
 
-        for (const [
-            merchantId,
-            merchantInteractions,
-        ] of interactionsByMerchant) {
-            for (const interaction of merchantInteractions) {
-                const processResult = await this.processSingleInteraction(
-                    interaction,
-                    merchantId
-                );
+        for (
+            let i = 0;
+            i < merchantGroups.length;
+            i += MERCHANT_CONCURRENCY
+        ) {
+            const batch = merchantGroups.slice(i, i + MERCHANT_CONCURRENCY);
+            const batchResults = await Promise.all(
+                batch.map(([merchantId, merchantInteractions]) =>
+                    this.processMerchantGroup(
+                        merchantId,
+                        merchantInteractions
+                    )
+                )
+            );
 
-                if (processResult.deferred) {
-                    result.deferredCount++;
-                } else if (processResult.success) {
-                    result.processedCount++;
-                    result.rewardsCreated += processResult.rewardsCreated;
-                } else if (processResult.error) {
-                    result.errors.push({
-                        interactionLogId: interaction.id,
-                        error: processResult.error,
-                    });
-                }
+            for (const groupResult of batchResults) {
+                result.processedCount += groupResult.processedCount;
+                result.rewardsCreated += groupResult.rewardsCreated;
+                result.deferredCount += groupResult.deferredCount;
+                result.errors.push(...groupResult.errors);
             }
         }
 
@@ -121,6 +132,43 @@ export class BatchRewardOrchestrator {
         );
 
         return result;
+    }
+
+    // Processes one merchant's interactions sequentially (per-user caps rely
+    // on that ordering) and returns its own partial counts/errors so callers
+    // can merge results across concurrently-running merchant groups without
+    // racing on a shared accumulator.
+    private async processMerchantGroup(
+        merchantId: string,
+        merchantInteractions: InteractionLogSelect[]
+    ): Promise<MerchantGroupResult> {
+        const groupResult: MerchantGroupResult = {
+            processedCount: 0,
+            rewardsCreated: 0,
+            deferredCount: 0,
+            errors: [],
+        };
+
+        for (const interaction of merchantInteractions) {
+            const processResult = await this.processSingleInteraction(
+                interaction,
+                merchantId
+            );
+
+            if (processResult.deferred) {
+                groupResult.deferredCount++;
+            } else if (processResult.success) {
+                groupResult.processedCount++;
+                groupResult.rewardsCreated += processResult.rewardsCreated;
+            } else if (processResult.error) {
+                groupResult.errors.push({
+                    interactionLogId: interaction.id,
+                    error: processResult.error,
+                });
+            }
+        }
+
+        return groupResult;
     }
 
     private groupByMerchant(
@@ -469,11 +517,23 @@ export class BatchRewardOrchestrator {
     ) {
         if (assets.length === 0) return;
 
+        const uniqueGroupIds = [
+            ...new Set(assets.map((asset) => asset.identityGroupId)),
+        ];
+        const walletByGroupId = new Map<string, Address | null>();
+        await Promise.all(
+            uniqueGroupIds.map(async (groupId) => {
+                const wallet =
+                    await this.identityOrchestrator.getWalletForGroup(
+                        groupId
+                    );
+                walletByGroupId.set(groupId, wallet);
+            })
+        );
+
         const walletCounts = new Map<Address, number>();
         for (const asset of assets) {
-            const wallet = await this.identityOrchestrator.getWalletForGroup(
-                asset.identityGroupId
-            );
+            const wallet = walletByGroupId.get(asset.identityGroupId);
             if (!wallet) continue;
             walletCounts.set(wallet, (walletCounts.get(wallet) ?? 0) + 1);
         }

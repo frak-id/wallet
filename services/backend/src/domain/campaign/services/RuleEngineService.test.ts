@@ -43,7 +43,7 @@ describe("RuleEngineService", () => {
 
     const createMockAssetLogRepository = (): AssetLogRepository =>
         ({
-            countByCampaignAndUserAsReferee: vi.fn(),
+            countByCampaignsAndUserAsReferee: vi.fn().mockResolvedValue(new Map()),
             countByMerchantAndUserAsReferee: vi.fn(),
         }) as unknown as AssetLogRepository;
 
@@ -130,8 +130,8 @@ describe("RuleEngineService", () => {
             ]);
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUserAsReferee
-            ).mockResolvedValue(1);
+                mockAssetLogRepository.countByCampaignsAndUserAsReferee
+            ).mockResolvedValue(new Map([["campaign-1", 1]]));
 
             const service = new RuleEngineService(
                 mockRepository,
@@ -181,8 +181,8 @@ describe("RuleEngineService", () => {
             ]);
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUserAsReferee
-            ).mockResolvedValue(2);
+                mockAssetLogRepository.countByCampaignsAndUserAsReferee
+            ).mockResolvedValue(new Map([["campaign-1", 2]]));
             vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [calculatedReward],
                 errors: [],
@@ -315,7 +315,7 @@ describe("RuleEngineService", () => {
             // Should proceed to calculate rewards — no per-campaign cap
             expect(result.rewards).toEqual([calculatedReward]);
             expect(
-                mockAssetLogRepository.countByCampaignAndUserAsReferee
+                mockAssetLogRepository.countByCampaignsAndUserAsReferee
             ).not.toHaveBeenCalled();
         });
 
@@ -349,8 +349,8 @@ describe("RuleEngineService", () => {
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             // User has 4 rewards, cap is 5, so should proceed
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUserAsReferee
-            ).mockResolvedValue(4);
+                mockAssetLogRepository.countByCampaignsAndUserAsReferee
+            ).mockResolvedValue(new Map([["campaign-1", 4]]));
             vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [calculatedReward],
                 errors: [],
@@ -406,8 +406,8 @@ describe("RuleEngineService", () => {
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             // User has 5 rewards, cap is 5, so should not proceed
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUserAsReferee
-            ).mockResolvedValue(5);
+                mockAssetLogRepository.countByCampaignsAndUserAsReferee
+            ).mockResolvedValue(new Map([["campaign-1", 5]]));
 
             const service = new RuleEngineService(
                 mockRepository,
@@ -564,8 +564,8 @@ describe("RuleEngineService", () => {
             ]);
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUserAsReferee
-            ).mockResolvedValue(0);
+                mockAssetLogRepository.countByCampaignsAndUserAsReferee
+            ).mockResolvedValue(new Map([["campaign-1", 0]]));
             vi.mocked(mockRewardCalculator.calculateAll).mockResolvedValue({
                 calculated: [calculatedReward],
                 errors: [],

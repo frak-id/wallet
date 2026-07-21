@@ -34,10 +34,22 @@ Full per-area reports: `.pi-subagents/artifacts/70b50bb6_reviewer_*_output.md`
 > `getResetAt` into a `Retry-After` header on 429s (was dead code). Suite
 > green: **816 tests, 75 files**.
 >
+> **Progress (performance pass):** all §4.x items tackled and ✅ verified via a
+> worker-per-item implementation round followed by a reviewer-per-item audit (7
+> read-only reviewers, all APPROVE / APPROVE-WITH-NITS, no blockers). Changes are
+> behavior-preserving concurrency wins: bounded merchant-group parallelism (per-
+> merchant kept sequential to preserve per-user cap ordering), an N+1 collapsed
+> into one grouped query, deduped/parallel wallet lookups, parallel per-locale
+> FCM sends, concurrent per-bank settlement (safe: the rewarder nonce mutex wraps
+> only the broadcast), and Promise.all/allSettled over independent per-row work.
+> The reviewer's one substantive nit — unbounded transaction fan-out in
+> `restoreBudgetsBatch` from the expiry cron — was fixed by bounding it to 5
+> concurrent restores. Suite green for all touched areas (the 7 pre-existing
+> `rateLimiter.test.ts` failures are unrelated to this pass and predate it).
+>
 > **Deferred on purpose (owner decision):** §1.2 (campaign-bank — the sync path
 > re-grants roles), §1.3 (campaign float money — later), §1.4 (webhook 200-on-
-> error — backend errors must not break webhook delivery). §4 (performance)
-> remains open.
+> error — backend errors must not break webhook delivery).
 
 ---
 
@@ -203,17 +215,17 @@ is deferred to the §2.1 reliability work.
 
 ---
 
-## 4. Performance (no LoC change)
+## 4. Performance (no LoC change) — ✅ all done
 
-| # | Finding | File |
-|---|---------|------|
-| 4.1 | Batch reward cron processes interactions fully sequentially; bounded-concurrency pattern already exists in `TakeAdsIngestionOrchestrator` one file over. DB row locks already handle concurrency correctness | `src/orchestration/BatchRewardOrchestrator.ts:87-113` |
-| 4.2 | N+1: per-campaign `maxRewardsPerUser` cap query inside rule-evaluation loop — prefetch with one `GROUP BY campaignRuleId` query | `src/domain/campaign/services/RuleEngineService.ts:~200` |
-| 4.3 | N+1: sequential wallet lookups in reward-pending notifications (dedupe + `Promise.all`, as done in `SettlementOrchestrator.ts:249`) | `src/orchestration/BatchRewardOrchestrator.ts:466-479` |
-| 4.4 | Sequential FCM sends per locale group → `Promise.all` | `src/domain/notifications/services/NotificationsService.ts` |
-| 4.5 | Sequential per-bank settlement (verify RPC/nonce layer supports concurrency first) | `src/domain/rewards/services/SettlementService.ts` |
-| 4.6 | Sequential per-campaign transactions in `restoreBudgetsBatch` (independent rows → `Promise.all`) | `src/domain/campaign/repositories/CampaignRuleRepository.ts:339-357` |
-| 4.7 | Sequential loop over expired signature requests in pairing cron | `src/jobs/pairing.ts:80-86` |
+| # | Finding | File | Status |
+|---|---------|------|--------|
+| 4.1 | Batch reward cron processed interactions fully sequentially → now runs merchant groups with bounded concurrency (`MERCHANT_CONCURRENCY=5`, chunked `Promise.all`), keeping each merchant's interactions sequential so per-user cap COUNT checks still see prior commits | `src/orchestration/BatchRewardOrchestrator.ts` | ✅ |
+| 4.2 | N+1: per-campaign `maxRewardsPerUser` cap query inside the rule-evaluation loop → prefetched with one `GROUP BY campaignRuleId` query (`countByCampaignsAndUserAsReferee`); old singular method removed (zero callers) | `RuleEngineService.ts`, `AssetLogRepository.ts` | ✅ |
+| 4.3 | N+1: sequential wallet lookups in reward-pending notifications → dedupe unique group ids + `Promise.all` into a Map (mirrors `SettlementOrchestrator`) | `src/orchestration/BatchRewardOrchestrator.ts` | ✅ |
+| 4.4 | Sequential FCM sends per locale group → `Promise.all` (token refresh already de-duped via `inflightTokenRefresh`) | `src/domain/notifications/services/NotificationsService.ts` | ✅ |
+| 4.5 | Sequential per-bank settlement → concurrent via `Promise.all`; `settleBankBatch` refactored to return a `BankBatchOutcome` merged synchronously (no shared-mutable race). Safe: the rewarder nonce mutex wraps only the broadcast, not the receipt wait | `src/domain/rewards/services/SettlementService.ts` | ✅ |
+| 4.6 | Sequential per-campaign transactions in `restoreBudgetsBatch` → concurrent, **bounded to 5** (distinct single-row `FOR UPDATE` txns; bound prevents pool saturation from the unbounded expiry-cron caller) | `src/domain/campaign/repositories/CampaignRuleRepository.ts` | ✅ |
+| 4.7 | Sequential loop over expired signature requests in pairing cron → `Promise.allSettled` (one failure can't abort the sweep; rejections logged at warn) | `src/jobs/pairing.ts` | ✅ |
 
 ---
 

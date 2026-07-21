@@ -80,11 +80,22 @@ CronRegistry.register(
                     )
                 );
 
-            for (const { pairingId, requestId } of expired) {
-                await OrchestrationContext.orchestrators.pairingRouter.cancelSignatureRequest(
-                    pairingId,
-                    requestId,
-                    { code: "expired" }
+            const cancelResults = await Promise.allSettled(
+                expired.map(({ pairingId, requestId }) =>
+                    OrchestrationContext.orchestrators.pairingRouter.cancelSignatureRequest(
+                        pairingId,
+                        requestId,
+                        { code: "expired" }
+                    )
+                )
+            );
+            const cancelFailures = cancelResults.filter(
+                (r) => r.status === "rejected"
+            );
+            if (cancelFailures.length > 0) {
+                logger.warn(
+                    { failures: cancelFailures.map((r) => r.reason) },
+                    `Failed to cancel ${cancelFailures.length}/${expired.length} expired signature request(s)`
                 );
             }
 
