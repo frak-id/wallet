@@ -416,7 +416,9 @@ export default interface Resources {
     },
     "explorer": {
       "card": {
-        "until": "Until {{date}}"
+        "until": "Until {{date}}",
+        "views_one": "{{count}} view",
+        "views_other": "{{count}} views"
       },
       "detail": {
         "close": "Close",
@@ -464,7 +466,8 @@ export default interface Resources {
         "recent": "Most recent",
         "recommended": "Recommended",
         "reward": "Highest reward",
-        "title": "Sort by"
+        "title": "Sort by",
+        "views": "Most viewed"
       }
     },
     "favorites": {

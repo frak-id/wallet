@@ -19,6 +19,9 @@ export function sortMerchants(
             return sorted;
         case "popular":
             return sorted.sort((a, b) => b.popularity - a.popularity);
+        case "views":
+            // Most-viewed cards first (total explorer impressions).
+            return sorted.sort((a, b) => b.views - a.views);
         case "recent":
             // Freshest campaign first; merchants with no timestamp sort last.
             return sorted.sort((a, b) => compareDateDesc(a.recent, b.recent));

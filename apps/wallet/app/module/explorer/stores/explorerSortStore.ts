@@ -7,6 +7,7 @@ import { create } from "zustand";
 export type ExplorerSort =
     | "recommended"
     | "popular"
+    | "views"
     | "reward"
     | "expiring"
     | "recent";
@@ -31,6 +32,7 @@ export const EXPLORER_SORT_OPTIONS: {
 }[] = [
     { value: "recommended", labelKey: "explorer.sort.recommended" },
     { value: "popular", labelKey: "explorer.sort.popular" },
+    { value: "views", labelKey: "explorer.sort.views" },
     { value: "reward", labelKey: "explorer.sort.reward" },
     { value: "expiring", labelKey: "explorer.sort.expiring" },
     { value: "recent", labelKey: "explorer.sort.recent" },

@@ -1090,7 +1090,9 @@
             "description": "New offers are coming soon. Check back later!"
         },
         "card": {
-            "until": "Until {{date}}"
+            "until": "Until {{date}}",
+            "views_one": "{{count}} view",
+            "views_other": "{{count}} views"
         },
         "sort": {
             "title": "Sort by",
@@ -1099,6 +1101,7 @@
             "apply": "Apply",
             "recommended": "Recommended",
             "popular": "Most popular",
+            "views": "Most viewed",
             "reward": "Highest reward",
             "expiring": "Ending soonest",
             "recent": "Most recent"
