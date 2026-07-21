@@ -20,7 +20,7 @@ function computeNextResetAt(durationInSeconds: number): string {
     return new Date(nextReset).toISOString();
 }
 
-function processbudgetUsed(
+function processBudgetUsed(
     config: BudgetConfig,
     used: BudgetUsed,
     amount: number
@@ -72,7 +72,7 @@ function processbudgetUsed(
 
 /**
  * Reverse a prior budget consumption. Mirrors the window-reset rule in
- * {@link processbudgetUsed}: for a time-windowed budget whose window has
+ * {@link processBudgetUsed}: for a time-windowed budget whose window has
  * already elapsed (`resetAt < now`), the amount being restored was spent in
  * that now-expired window, so the window is reset to zero rather than deducted
  * — subtracting would eat into the fresh window and under-count its real
@@ -347,7 +347,7 @@ export class CampaignRuleRepository {
             }
 
             const currentUsed = campaign.budgetUsed ?? {};
-            const result = processbudgetUsed(
+            const result = processBudgetUsed(
                 campaign.budgetConfig,
                 currentUsed,
                 amount

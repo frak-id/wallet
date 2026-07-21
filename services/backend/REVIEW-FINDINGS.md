@@ -209,9 +209,10 @@ is deferred to the §2.1 reliability work.
 ### 3.3 Architecture nits
 - `webhooks.ts` queries `db` directly from route handlers — the only file bypassing the
   domain/repository layer, and it handles a secret key (`src/api/business/merchant/webhooks.ts`)
-- `console.warn` in `airtable/utils.ts:43` is silently stripped by `build.ts` `drop: ["console"]`
-  in prod — use the shared pino logger; grep repo-wide for other stray `console.*`
-- `processbudgetUsed` naming typo (`CampaignRuleRepository.ts:23`)
+  — ⏳ open (access-control already hardened in §2.8; the layering nit remains)
+- ✅ `console.warn` in `airtable/utils.ts:43` → shared pino logger (`log.warn({ key }, ...)`);
+  repo-wide grep confirmed it was the only stray `console.*` in `src/` (tests excluded)
+- ✅ `processbudgetUsed` → `processBudgetUsed` (all 3 refs in `CampaignRuleRepository.ts`)
 
 ---
 
