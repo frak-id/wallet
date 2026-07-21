@@ -1,5 +1,6 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
+import { base } from "@frak-labs/design-system/utils";
 import { style } from "@vanilla-extract/css";
 
 /**
@@ -174,21 +175,28 @@ export const glassButton = style({
  * Bottom sheet — rounded top overlapping the hero, background merging
  * seamlessly with the frame's screen body. Stops above the baked CTA.
  */
-export const sheet = style({
-    position: "absolute",
-    top: 170,
-    left: 0,
-    width: "100%",
-    bottom: 83,
-    display: "flex",
-    flexDirection: "column",
-    gap: 13.11,
-    paddingTop: 19.66,
-    paddingInline: 13.11,
-    borderRadius: "19.66px 19.66px 0 0",
-    backgroundColor: vars.surface.background2,
-    overflow: "hidden",
-});
+// `base` carries `box-sizing: border-box` so `width: 100%` + padding stays
+// inside the fixed-px screen even in hosts without a global reset (Shopify's
+// admin light DOM); without it content-box overflows and clips the right edge.
+// Compose `base` on any future `width: 100%` + padding style in this file too.
+export const sheet = style([
+    base,
+    {
+        position: "absolute",
+        top: 170,
+        left: 0,
+        width: "100%",
+        bottom: 83,
+        display: "flex",
+        flexDirection: "column",
+        gap: 13.11,
+        paddingTop: 19.66,
+        paddingInline: 13.11,
+        borderRadius: "19.66px 19.66px 0 0",
+        backgroundColor: vars.surface.background2,
+        overflow: "hidden",
+    },
+]);
 
 export const sheetHeader = style({
     display: "flex",
@@ -247,14 +255,17 @@ export const logoPlaceholder = style({
 /**
  * White description card inside the sheet.
  */
-export const descriptionCard = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: 6.55,
-    padding: 13.11,
-    borderRadius: 13.11,
-    backgroundColor: vars.surface.elevated,
-});
+export const descriptionCard = style([
+    base,
+    {
+        display: "flex",
+        flexDirection: "column",
+        gap: 6.55,
+        padding: 13.11,
+        borderRadius: 13.11,
+        backgroundColor: vars.surface.elevated,
+    },
+]);
 
 export const descriptionText = style({
     fontSize: 11.47,
