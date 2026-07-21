@@ -130,16 +130,17 @@ export class InMemoryRateLimitStore {
     }
 
     /**
-     * Purge entries whose current sub-window is old enough that
-     * `previousCount`'s weight has already decayed to zero (i.e. more than
-     * one full `windowMs` has elapsed since `currentStart`) — at that point
-     * the entry carries no residual effect on future `estimate()` calls and
-     * is safe to drop instead of lazily rolled.
+     * Purge entries old enough to carry no residual effect. An entry is only
+     * truly inert once *two* full `windowMs` have elapsed since
+     * `currentStart`: in the `[windowMs, 2*windowMs)` range the entry has not
+     * been lazily rolled yet, so its `currentCount` would still carry over as
+     * `previousCount` weight on the next `estimate()`. Dropping it earlier
+     * would grant a fresh bucket right after a maxed-out burst.
      */
     purgeExpired(): void {
         const now = Date.now();
         for (const [key, window] of this.windows) {
-            if (now - window.currentStart >= window.windowMs) {
+            if (now - window.currentStart >= window.windowMs * 2) {
                 this.windows.delete(key);
             }
         }

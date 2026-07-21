@@ -110,7 +110,7 @@ describe("InMemoryRateLimitStore", () => {
         expect(store.getRemaining("k", config)).toBeGreaterThan(0);
     });
 
-    it("purgeExpired evicts entries whose current sub-window is stale", () => {
+    it("purgeExpired only evicts entries with zero residual weight (>= 2x windowMs)", () => {
         const store = new InMemoryRateLimitStore();
 
         mockNow(0);
@@ -121,12 +121,37 @@ describe("InMemoryRateLimitStore", () => {
 
         store.purgeExpired();
 
-        // "stale" hasn't rolled since t=0, so its currentStart (0) is more
-        // than one windowMs behind now (70_000) -> purged.
+        // "stale" is only one windowMs behind (70s < 2*60s): its un-rolled
+        // currentCount still carries weight, so it must be kept.
+        expect(store.getRemaining("stale", config)).toBeLessThan(
+            config.maxRequests
+        );
+
+        mockNow(120_000);
+        store.purgeExpired();
+
+        // Now two full windows past t=0 -> truly inert -> purged.
         expect(store.getRemaining("stale", config)).toBe(config.maxRequests);
-        // "fresh" was just touched -> kept, still reflects its consumption.
+        // "fresh" (touched at 70s, 50s ago) -> kept.
         expect(store.getRemaining("fresh", config)).toBe(
             config.maxRequests - 1
         );
+    });
+
+    it("purgeExpired does not grant a fresh bucket right after a maxed burst", () => {
+        const store = new InMemoryRateLimitStore();
+
+        // Max out the bucket in the sub-window anchored at t=0.
+        mockNow(0);
+        for (let i = 0; i < 10; i++) {
+            expect(store.consume("k", config)).toBe(true);
+        }
+
+        // A purge sweep fires just past the sub-window boundary. With the
+        // old `>= windowMs` threshold this evicted the entry and the next
+        // burst passed in full — the fixed-window bug reintroduced via purge.
+        mockNow(60_001);
+        store.purgeExpired();
+        expect(store.consume("k", config)).toBe(false);
     });
 });
