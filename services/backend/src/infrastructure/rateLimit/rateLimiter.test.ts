@@ -1,11 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { InMemoryRateLimitStore } from "./rateLimiter";
 
 /**
- * `isRunningLocally` short-circuits `consume()` to always allow, so these
- * tests must run with it falsy. The test env doesn't set the local-dev
- * markers that flag, so this holds by default in CI/vitest.
+ * `consume()` short-circuits to always-allow when `isRunningLocally` is truthy.
+ * That flag is derived from `process.env.STAGE` and defaults to `true` whenever
+ * STAGE is unset (as it is under vitest), which would disable the limiter and
+ * make every assertion below vacuous. Force it off so the tests exercise the
+ * real sliding-window algorithm regardless of the ambient environment.
  */
+vi.mock("@frak-labs/app-essentials", () => ({
+    isRunningLocally: false,
+}));
+
+import { InMemoryRateLimitStore } from "./rateLimiter";
+
 describe("InMemoryRateLimitStore", () => {
     const config = { windowMs: 60_000, maxRequests: 10 };
 
