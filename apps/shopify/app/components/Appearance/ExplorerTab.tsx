@@ -265,6 +265,28 @@ export function ExplorerTab({
                         description={description || undefined}
                     />
                 </div>
+                {/* Explain the dimmed state (parity with the business
+                    dashboard's previewDisabledHint). The info-icon + caption is
+                    always readable and is the hover/focus trigger for the
+                    Polaris tooltip. */}
+                {!enabled && (
+                    <div className={styles.previewHint}>
+                        <s-icon
+                            type="info"
+                            color="subdued"
+                            interestFor="explorer-preview-disabled-tip"
+                        />
+                        <s-text
+                            color="subdued"
+                            interestFor="explorer-preview-disabled-tip"
+                        >
+                            {t("appearance.explorer.previewDisabledLabel")}
+                        </s-text>
+                        <s-tooltip id="explorer-preview-disabled-tip">
+                            {t("appearance.explorer.previewDisabledHint")}
+                        </s-tooltip>
+                    </div>
+                )}
             </div>
         </Form>
     );

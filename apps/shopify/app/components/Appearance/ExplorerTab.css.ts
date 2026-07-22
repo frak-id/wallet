@@ -39,7 +39,9 @@ export const preview = style({
     // Base (narrow admin, and the fractional gap between the breakpoints, e.g.
     // 1199.5px on zoom/HiDPI): stack the preview centred under the form.
     display: "flex",
-    justifyContent: "center",
+    // Column so the disabled-state hint sits under the phone, not beside it.
+    flexDirection: "column",
+    alignItems: "center",
     marginBlockStart: 24,
     "@media": {
         "(min-width: 1200px)": {
@@ -51,4 +53,18 @@ export const preview = style({
             alignSelf: "flex-start",
         },
     },
+});
+
+/**
+ * Info-icon + caption row under the phone, shown only while the listing is
+ * disabled. Always readable (unlike a lone corner icon) and doubles as the
+ * hover/focus trigger for the Polaris tooltip explaining the dimmed state.
+ */
+export const previewHint = style({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    marginBlockStart: 8,
+    // Signal that hovering/focusing reveals more.
+    cursor: "help",
 });

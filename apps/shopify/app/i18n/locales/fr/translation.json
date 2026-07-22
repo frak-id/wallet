@@ -433,6 +433,8 @@
             "description": "Une fois activée, votre boutique sera affichée dans l'application Frak, permettant aux utilisateurs de découvrir vos campagnes de parrainage.",
             "enabledLabel": "Référencé dans le Frak Explorer",
             "enabledHint": "Rendez votre boutique visible dans l'application Frak.",
+            "previewDisabledLabel": "Non référencé",
+            "previewDisabledHint": "Activer l'Explorer",
             "invalidUrlToast": "Corrigez l'URL d'image invalide avant d'enregistrer.",
             "logoLabel": "URL du logo",
             "heroLabel": "URL de l'image de couverture",

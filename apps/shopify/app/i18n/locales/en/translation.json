@@ -432,6 +432,8 @@
             "description": "Once enabled, your store will be displayed in the Frak app, helping users discover your referral campaigns.",
             "enabledLabel": "Listed in Frak Explorer",
             "enabledHint": "Make your store discoverable in the Frak app.",
+            "previewDisabledLabel": "Not listed",
+            "previewDisabledHint": "Enable the Explorer",
             "invalidUrlToast": "Fix the invalid image URL before saving.",
             "logoLabel": "Logo URL",
             "heroLabel": "Hero image URL",
