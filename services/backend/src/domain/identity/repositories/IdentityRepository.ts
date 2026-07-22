@@ -1,4 +1,4 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgRunner, type PgTx } from "@backend-infrastructure";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
@@ -8,13 +8,8 @@ import type { IdentityType } from "../schemas";
 type IdentityGroupSelect = typeof identityGroupsTable.$inferSelect;
 type IdentityNodeSelect = typeof identityNodesTable.$inferSelect;
 
-/**
- * Postgres transaction handle as passed to `db.transaction(async (trx) => …)`.
- * The email attach/unlink writes accept one so the verify flow can commit them
- * atomically with the challenge consumption.
- */
-type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type PgRunner = typeof db | PgTx;
+// The email attach/unlink writes accept a tx so the verify flow can commit
+// them atomically with the challenge consumption.
 
 export class IdentityRepository {
     private readonly identityGroupIdCache = new LRUCache<

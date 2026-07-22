@@ -1,17 +1,12 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgRunner, type PgTx } from "@backend-infrastructure";
 import { eq, lt, sql } from "drizzle-orm";
 import {
     type EmailVerificationCodeSelect,
     emailVerificationCodesTable,
 } from "../db/schema";
 
-/**
- * Postgres transaction handle as passed to `db.transaction(async (trx) => …)`.
- * `consume` accepts one so it can commit atomically with the identity-graph
- * writes the verify flow performs alongside it.
- */
-type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type PgRunner = typeof db | PgTx;
+// `consume` accepts a tx so it can commit atomically with the identity-graph
+// writes the verify flow performs alongside it.
 
 export class EmailVerificationRepository {
     async findByGroup(

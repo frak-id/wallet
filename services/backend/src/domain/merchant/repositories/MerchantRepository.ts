@@ -1,4 +1,4 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgTx } from "@backend-infrastructure";
 import { HttpError, isUniqueViolation } from "@backend-utils";
 import { arrayContains, eq, inArray, sql } from "drizzle-orm";
 import type { PgUpdateSetSource } from "drizzle-orm/pg-core";
@@ -13,9 +13,6 @@ import type {
 
 type MerchantInsert = typeof merchantsTable.$inferInsert;
 type MerchantSelect = typeof merchantsTable.$inferSelect;
-
-/** Postgres transaction handle as passed to `db.transaction(async (tx) => …)`. */
-type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export class MerchantRepository {
     private readonly domainCache = new LRUCache<

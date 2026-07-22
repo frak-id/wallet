@@ -1,13 +1,10 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgTx } from "@backend-infrastructure";
 import { and, eq, gt } from "drizzle-orm";
 import type { Address } from "viem";
 import { merchantOwnershipTransfersTable } from "../db/schema";
 
 type OwnershipTransferSelect =
     typeof merchantOwnershipTransfersTable.$inferSelect;
-
-/** Postgres transaction handle as passed to `db.transaction(async (tx) => …)`. */
-type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 const TRANSFER_EXPIRY_DAYS = 7;
 
