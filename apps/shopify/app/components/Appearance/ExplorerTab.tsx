@@ -118,17 +118,23 @@ export function ExplorerTab({
                 description,
                 ...overrides,
             };
-            // Never persist a manually-typed invalid URL through a sibling
-            // autosave trigger (hero-extras). Empty is allowed; the invalid
-            // field already shows an inline error, so surface a toast too.
-            if (
-                !isValidUrl(settings.logoUrl) ||
-                !isValidUrl(settings.heroImageUrl)
-            ) {
-                shopify.toast.show(t("appearance.explorer.invalidUrlToast"), {
-                    isError: true,
-                });
-                return;
+            const urlsValid =
+                isValidUrl(settings.logoUrl) &&
+                isValidUrl(settings.heroImageUrl);
+            if (!urlsValid) {
+                // Disabling is always allowed: drop invalid URLs so garbage
+                // never reaches storage; local state keeps the inline error.
+                if (settings.enabled === false) {
+                    if (!isValidUrl(settings.logoUrl)) settings.logoUrl = "";
+                    if (!isValidUrl(settings.heroImageUrl))
+                        settings.heroImageUrl = "";
+                } else {
+                    shopify.toast.show(
+                        t("appearance.explorer.invalidUrlToast"),
+                        { isError: true }
+                    );
+                    return;
+                }
             }
             fetcher.submit(
                 {
@@ -183,9 +189,11 @@ export function ExplorerTab({
                             checked={enabled || undefined}
                             onChange={(e) => {
                                 const next = e.currentTarget.checked ?? false;
-                                // Block the toggle while a URL is invalid so the
-                                // switch doesn't flip "on" without persisting.
-                                if (!hasValidUrls) {
+                                // Allow turning off; block turning on while a
+                                // URL is invalid.
+                                if (next && !hasValidUrls) {
+                                    // s-switch self-toggles on click; revert it.
+                                    e.currentTarget.checked = enabled;
                                     shopify.toast.show(
                                         t(
                                             "appearance.explorer.invalidUrlToast"
