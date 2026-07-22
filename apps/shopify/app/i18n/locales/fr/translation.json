@@ -278,6 +278,7 @@
         "purchase": {
             "title": "Achat",
             "description": "En effectuant un achat, vous ajoutez des fonds à la banque. Les fonds seront utilisés pour distribuer des récompenses aux utilisateurs finaux.",
+            "twoStepNotice": "Confirmer ici ne vous prélève pas immédiatement. Vous validerez le paiement sur l'écran de facturation Shopify, puis votre achat sera traité sous 2 à 5 jours ouvrés.",
             "activePurchases": "Achats actifs",
             "amount": "Montant",
             "status": "Statut",

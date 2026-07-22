@@ -277,6 +277,7 @@
         "purchase": {
             "title": "Purchase",
             "description": "By making a Purchase you will add funds to the bank. The fund will be be used to distribute rewards to end users.",
+            "twoStepNotice": "Confirming here does not charge you immediately. You'll validate the charge on Shopify's own billing screen, and your purchase is then processed within 2-5 business days.",
             "activePurchases": "Active Purchases",
             "amount": "Amount",
             "status": "Status",
