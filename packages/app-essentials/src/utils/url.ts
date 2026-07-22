@@ -17,7 +17,13 @@ export function normalizeUrl(value: string): string {
  * valid http(s) URL within the backend's 2048 char limit.
  */
 export function isValidUrl(value: string): boolean {
-    const normalized = normalizeUrl(value);
+    const trimmed = value.trim();
+    // Reject an explicit non-http(s) scheme up front: normalizeUrl only skips
+    // prepending for an existing http(s):// prefix, so `ftp://x` would become
+    // `https://ftp://x` (host `ftp`) and slip past the protocol check below.
+    const scheme = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
+    if (scheme && !/^https?$/i.test(scheme[1])) return false;
+    const normalized = normalizeUrl(trimmed);
     if (normalized === "") return true;
     if (normalized.length > 2048) return false;
     try {

@@ -46,12 +46,16 @@ describe("isValidUrl", () => {
         expect(isValidUrl("https://")).toBe(false);
     });
 
-    it("does NOT reject a non-http(s) scheme (known behavior)", () => {
-        // normalizeUrl only recognizes an existing http(s):// prefix, so a
-        // foreign scheme gets `https://` prepended (`https://ftp://...`), which
-        // parses as host `ftp`. This is verbatim business behavior; tightening
-        // it is a separate, cross-surface change (see plan follow-up).
-        expect(isValidUrl("ftp://example.com")).toBe(true);
+    it("rejects a non-http(s) scheme", () => {
+        expect(isValidUrl("ftp://example.com")).toBe(false);
+        expect(isValidUrl("mailto:foo@example.com")).toBe(false);
+        expect(isValidUrl("javascript:alert(1)")).toBe(false);
+        expect(isValidUrl("data:text/html,<script>")).toBe(false);
+    });
+
+    it("accepts an explicit http(s) scheme", () => {
+        expect(isValidUrl("http://example.com")).toBe(true);
+        expect(isValidUrl("https://example.com")).toBe(true);
     });
 
     it("rejects an unparseable URL", () => {
