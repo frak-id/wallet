@@ -1,33 +1,17 @@
-import {
-    CreateShopifyWebhook,
-    FrakWebhook,
-    type IntentWebhook,
-    WebhookList,
-} from "app/components/Webhook";
-import {
-    getFrakWebookStatus,
-    setupFrakWebhook,
-} from "app/services.server/backendMerchant";
+import type { IntentWebhook } from "app/components/Webhook";
+import { setupFrakWebhook } from "app/services.server/backendMerchant";
 import { log } from "app/services.server/logger";
-import { resolveMerchantId } from "app/services.server/merchant";
 import {
     createWebhook,
     deleteWebhook,
     getWebhooks,
 } from "app/services.server/webhook";
-import { useTranslation } from "react-i18next";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { useLoaderData } from "react-router";
+import type { ActionFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-    const context = await authenticate.admin(request);
-    const merchantId = await resolveMerchantId(context);
-    const frakWebhook = await getFrakWebookStatus(context, request);
-    const webhooks = await getWebhooks(context);
-    return { webhooks, frakWebhook, merchantId };
-};
-
+// Action-only route: the settings page (app.settings.tsx) renders the
+// webhook UI directly, but app/components/Webhook/index.tsx fetcher-submits
+// here.
 export async function action({ request }: ActionFunctionArgs) {
     const context = await authenticate.admin(request);
     const formData = await request.formData();
@@ -75,67 +59,4 @@ export async function action({ request }: ActionFunctionArgs) {
             ],
         };
     }
-}
-
-export default function SettingsWebhookPage() {
-    const data = useLoaderData<typeof loader>();
-    const { webhooks, frakWebhook, merchantId } = data;
-    const isWebhookExists = webhooks.length > 0;
-    const { t } = useTranslation();
-
-    return (
-        <s-stack gap="large">
-            <s-section>
-                <s-stack gap="small">
-                    <s-box paddingBlockStart="small" paddingBlockEnd="small">
-                        {isWebhookExists && (
-                            <s-badge tone="success">
-                                {t("webhook.connected")}
-                            </s-badge>
-                        )}
-                        {!isWebhookExists && (
-                            <s-badge tone="critical">
-                                {t("webhook.notConnected")}
-                            </s-badge>
-                        )}
-                    </s-box>
-                    <s-text>
-                        {!isWebhookExists && t("webhook.needConnection")}
-                    </s-text>
-                    {!isWebhookExists && (
-                        <s-text>
-                            <CreateShopifyWebhook />
-                        </s-text>
-                    )}
-
-                    {/* Display all webhooks */}
-                    <WebhookList webhooks={webhooks} />
-
-                    <s-box paddingBlockStart="small" paddingBlockEnd="small">
-                        {frakWebhook.setup && (
-                            <s-badge tone="success">
-                                {t("webhook.frakConnected")}
-                            </s-badge>
-                        )}
-                        {!frakWebhook.setup && (
-                            <s-badge tone="critical">
-                                {t("webhook.frakNotConnected")}
-                            </s-badge>
-                        )}
-                    </s-box>
-                    {!frakWebhook.setup && (
-                        <s-text>{t("webhook.needFrakConnection")}</s-text>
-                    )}
-                    {merchantId && (
-                        <s-text>
-                            <FrakWebhook
-                                setup={frakWebhook.setup}
-                                merchantId={merchantId}
-                            />
-                        </s-text>
-                    )}
-                </s-stack>
-            </s-section>
-        </s-stack>
-    );
 }
