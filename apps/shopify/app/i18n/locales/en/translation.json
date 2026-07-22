@@ -219,30 +219,7 @@
             "resuming": "Resuming...",
             "archiving": "Archiving...",
             "deleting": "Deleting...",
-            "noCampaigns": "No campaigns yet. Create your first campaign to start distributing rewards.",
-
-            "nameInput": "Campaign name",
-            "rewardToken": "Reward token",
-            "selectToken": "Select a token",
-            "budget": "Global budget",
-            "budgetInfo": "This is the max amount of money that will be distributed to end users by this campaign.",
-            "rawCAC": "Raw CAC per new user",
-            "rawCACInfo": "This is the raw amount that will be distributed to referrer and referee.",
-            "ratio": "Referrer/Referee ratio",
-            "ratioHelp": "Adjust the split between referrer and referee (max 90-10%)",
-            "ratioReferrer": "Referrer",
-            "ratioReferee": "Referee",
-            "breakdown": {
-                "rawCAC": "Raw CAC",
-                "commission": "Frak commission (20%)",
-                "referrer": "Amount for referrer",
-                "referee": "Amount for referee",
-                "newUser": "New user"
-            },
-            "createOpen": "Campaign creation form",
-            "createButton": "Create campaign",
-            "creating": "Creating campaign...",
-            "toastCreated": "Campaign creation (mock): Success!"
+            "noCampaigns": "No campaigns yet. Create your first campaign to start distributing rewards."
         },
         "bank": {
             "title": "Reward Budget",

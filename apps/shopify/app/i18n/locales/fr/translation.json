@@ -220,30 +220,7 @@
             "resuming": "Reprise...",
             "archiving": "Archivage...",
             "deleting": "Suppression...",
-            "noCampaigns": "Aucune campagne pour le moment. Créez votre première campagne pour commencer à distribuer des récompenses.",
-
-            "nameInput": "Nom de la campagne",
-            "rewardToken": "Token de récompense",
-            "selectToken": "Sélectionner un token",
-            "budget": "Budget global",
-            "budgetInfo": "Ce montant est le montant maximum qui sera distribué par cette campagne.",
-            "rawCAC": "CAC brut par nouvel utilisateur",
-            "rawCACInfo": "Ceci est le montant brut qui sera distribué au parrain et au filleul.",
-            "ratio": "Ratio Parrain/Filleul",
-            "ratioHelp": "Ajustez la répartition entre parrain et filleul (max 90-10%)",
-            "ratioReferrer": "Parrain",
-            "ratioReferee": "Filleul",
-            "breakdown": {
-                "rawCAC": "CAC brut",
-                "commission": "Commission Frak (20%)",
-                "referrer": "Récompense pour le parrain/marraine",
-                "referee": "Récompense pour le-a filleul-e",
-                "newUser": "Nombre de nouveaux clients"
-            },
-            "createOpen": "Formulaire de création de campagne",
-            "createButton": "Créer la campagne",
-            "creating": "Création de la campagne...",
-            "toastCreated": "Création de campagne (mock) : Succès !"
+            "noCampaigns": "Aucune campagne pour le moment. Créez votre première campagne pour commencer à distribuer des récompenses."
         },
         "bank": {
             "title": "Budget de récompenses",
