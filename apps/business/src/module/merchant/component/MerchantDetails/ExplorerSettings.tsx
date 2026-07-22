@@ -8,7 +8,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@frak-labs/design-system/components/Tooltip";
-import { ExplorerPhonePreview } from "@frak-labs/ui-preview";
+import { ExplorerPhonePreview, previewWrap } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -275,7 +275,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                             onClick={(e) => e.preventDefault()}
                         >
                             <div
-                                className={styles.previewWrap}
+                                className={previewWrap}
                                 data-disabled={enabled ? undefined : ""}
                             >
                                 {preview}

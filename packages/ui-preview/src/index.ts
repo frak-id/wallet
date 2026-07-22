@@ -1,11 +1,10 @@
 // Sharing page preview (header, card, reward, stepper, footer)
 
-// Explorer card preview
-export type { ExplorerCardPreviewProps } from "./explorer-card";
-export { ExplorerCardPreview } from "./explorer-card";
 // Explorer phone preview (CSS phone-frame mockup)
 export type { ExplorerPhonePreviewProps } from "./explorer-phone";
 export { ExplorerPhonePreview } from "./explorer-phone";
+// Shared preview wrapper (disabled affordance)
+export { previewWrap } from "./preview-frame";
 export type {
     BannerPreviewProps,
     PostPurchasePreviewProps,

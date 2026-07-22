@@ -438,9 +438,7 @@
             "heroExtrasLabel": "Additional hero images",
             "descriptionLabel": "Store description",
             "descriptionPlaceholder": "Describe your store for the Frak Explorer...",
-            "save": "Save",
-            "previewTitle": "Preview",
-            "previewDescription": "This is how your store will appear to users in the Frak Explorer."
+            "save": "Save"
         },
         "legacy": {
             "customizationsNote": "Your theme does not support Shopify app blocks. Logo, wording and reward settings are managed in the Frak editor on the business dashboard.",

@@ -439,9 +439,7 @@
             "heroExtrasLabel": "Images de couverture supplémentaires",
             "descriptionLabel": "Description de la boutique",
             "descriptionPlaceholder": "Décrivez votre boutique pour le Frak Explorer...",
-            "save": "Enregistrer",
-            "previewTitle": "Aperçu",
-            "previewDescription": "Voici comment votre boutique apparaîtra aux utilisateurs dans le Frak Explorer."
+            "save": "Enregistrer"
         },
         "legacy": {
             "customizationsNote": "Votre thème ne prend pas en charge les blocs d'application Shopify. Le logo, les textes et les récompenses sont gérés depuis l'éditeur Frak sur le tableau de bord business.",

@@ -1,5 +1,5 @@
 import { isValidUrl } from "@frak-labs/app-essentials";
-import { ExplorerCardPreview } from "@frak-labs/ui-preview";
+import { ExplorerPhonePreview, previewWrap } from "@frak-labs/ui-preview";
 import type { action } from "app/routes/app.appearance";
 import type {
     ExplorerSettings,
@@ -15,6 +15,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useFetcher, useNavigation } from "react-router";
+import * as styles from "./ExplorerTab.css";
 import { ImageUploadField } from "./ImageUploadField";
 import { MultiHeroImagesField } from "./MultiHeroImagesField";
 
@@ -157,7 +158,7 @@ export function ExplorerTab({
     );
 
     return (
-        <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleSubmit} className={styles.form}>
             <input type="hidden" name="intent" value="saveExplorer" />
             <input
                 type="hidden"
@@ -171,97 +172,100 @@ export function ExplorerTab({
                 })}
             />
 
-            <s-section>
-                <s-stack gap="large">
-                    <s-text>{t("appearance.explorer.description")}</s-text>
-
-                    <s-switch
-                        label={t("appearance.explorer.enabledLabel")}
-                        details={t("appearance.explorer.enabledHint")}
-                        checked={enabled || undefined}
-                        onChange={(e) => {
-                            const next = e.currentTarget.checked ?? false;
-                            // Block the toggle while a URL is invalid so the
-                            // switch doesn't flip "on" without persisting.
-                            if (!hasValidUrls) {
-                                shopify.toast.show(
-                                    t("appearance.explorer.invalidUrlToast"),
-                                    { isError: true }
-                                );
-                                return;
-                            }
-                            setEnabled(next);
-                            autoSave({ enabled: next });
-                        }}
-                    />
-
-                    <ImageUploadField
-                        type="logo"
-                        value={logoUrl}
-                        onChange={setLogoUrl}
-                        onUploadSuccess={handleLogoUploadSuccess}
-                        label={t("appearance.explorer.logoLabel")}
-                        mediaFiles={mediaFiles}
-                    />
-
-                    <ImageUploadField
-                        type="hero"
-                        value={heroImageUrl}
-                        onChange={setHeroImageUrl}
-                        onUploadSuccess={handleHeroUploadSuccess}
-                        label={t("appearance.explorer.heroLabel")}
-                        mediaFiles={mediaFiles}
-                    />
-
-                    <MultiHeroImagesField
-                        label={t("appearance.explorer.heroExtrasLabel")}
-                        values={heroImageUrls}
-                        onChange={(next) => {
-                            setHeroImageUrls(next);
-                            autoSave({ heroImageUrls: next });
-                        }}
-                    />
-
-                    <s-text-area
-                        label={t("appearance.explorer.descriptionLabel")}
-                        placeholder={t(
-                            "appearance.explorer.descriptionPlaceholder"
-                        )}
-                        value={description}
-                        onChange={(e) =>
-                            setDescription(e.currentTarget.value ?? "")
-                        }
-                        autocomplete="off"
-                    />
-
-                    <s-button
-                        type="submit"
-                        loading={isLoading || undefined}
-                        disabled={!hasChanges || !hasValidUrls || undefined}
-                    >
-                        {t("appearance.explorer.save")}
-                    </s-button>
-                </s-stack>
-            </s-section>
-
-            {(logoUrl || heroImageUrl || description) && (
+            <div className={styles.formCol}>
                 <s-section>
-                    <s-stack gap="base">
-                        <s-text font-weight="semibold">
-                            {t("appearance.explorer.previewTitle")}
-                        </s-text>
-                        <s-text color="subdued">
-                            {t("appearance.explorer.previewDescription")}
-                        </s-text>
-                        <ExplorerCardPreview
-                            name={shopName}
-                            heroImageUrl={heroImageUrl || undefined}
-                            logoUrl={logoUrl || undefined}
-                            description={description || undefined}
+                    <s-stack gap="large">
+                        <s-text>{t("appearance.explorer.description")}</s-text>
+
+                        <s-switch
+                            label={t("appearance.explorer.enabledLabel")}
+                            details={t("appearance.explorer.enabledHint")}
+                            checked={enabled || undefined}
+                            onChange={(e) => {
+                                const next = e.currentTarget.checked ?? false;
+                                // Block the toggle while a URL is invalid so the
+                                // switch doesn't flip "on" without persisting.
+                                if (!hasValidUrls) {
+                                    shopify.toast.show(
+                                        t(
+                                            "appearance.explorer.invalidUrlToast"
+                                        ),
+                                        { isError: true }
+                                    );
+                                    return;
+                                }
+                                setEnabled(next);
+                                autoSave({ enabled: next });
+                            }}
                         />
+
+                        <ImageUploadField
+                            type="logo"
+                            value={logoUrl}
+                            onChange={setLogoUrl}
+                            onUploadSuccess={handleLogoUploadSuccess}
+                            label={t("appearance.explorer.logoLabel")}
+                            mediaFiles={mediaFiles}
+                        />
+
+                        <ImageUploadField
+                            type="hero"
+                            value={heroImageUrl}
+                            onChange={setHeroImageUrl}
+                            onUploadSuccess={handleHeroUploadSuccess}
+                            label={t("appearance.explorer.heroLabel")}
+                            mediaFiles={mediaFiles}
+                        />
+
+                        <MultiHeroImagesField
+                            label={t("appearance.explorer.heroExtrasLabel")}
+                            values={heroImageUrls}
+                            onChange={(next) => {
+                                setHeroImageUrls(next);
+                                autoSave({ heroImageUrls: next });
+                            }}
+                        />
+
+                        <s-text-area
+                            label={t("appearance.explorer.descriptionLabel")}
+                            placeholder={t(
+                                "appearance.explorer.descriptionPlaceholder"
+                            )}
+                            value={description}
+                            onChange={(e) =>
+                                setDescription(e.currentTarget.value ?? "")
+                            }
+                            autocomplete="off"
+                        />
+
+                        <s-button
+                            type="submit"
+                            loading={isLoading || undefined}
+                            disabled={!hasChanges || !hasValidUrls || undefined}
+                        >
+                            {t("appearance.explorer.save")}
+                        </s-button>
                     </s-stack>
                 </s-section>
-            )}
+            </div>
+
+            {/* Phone preview column — a flex sibling of the form so Polaris
+                re-centring can't make it overlap the card. Dimmed + shrunk
+                while the explorer listing is disabled. */}
+            <div className={styles.preview}>
+                <div
+                    className={previewWrap}
+                    data-disabled={enabled ? undefined : ""}
+                >
+                    <ExplorerPhonePreview
+                        name={shopName}
+                        heroImageUrl={heroImageUrl || undefined}
+                        heroImageUrls={heroImageUrls}
+                        logoUrl={logoUrl || undefined}
+                        description={description || undefined}
+                    />
+                </div>
+            </div>
         </Form>
     );
 }
