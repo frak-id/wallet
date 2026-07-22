@@ -1,9 +1,10 @@
 import { log } from "@backend-infrastructure";
-import { HttpError, t, validateBodyHmac } from "@backend-utils";
+import { HttpError, t } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import type { CustomWebhookDto } from "../../../../domain/purchases/dto/CustomWebhook";
 import { OrchestrationContext } from "../../../../orchestration/context";
+import { resolveAndVerifyWebhook } from "./resolveAndVerifyWebhook";
 
 export const customWebhook = new Elysia()
     .guard({
@@ -33,28 +34,9 @@ export const customWebhook = new Elysia()
                 throw HttpError.badRequest("WEBHOOK_ERROR", "Invalid body");
             }
 
-            if (!merchantId) {
-                throw HttpError.badRequest(
-                    "WEBHOOK_ERROR",
-                    "Missing merchant identifier"
-                );
-            }
-
-            const resolved =
-                await OrchestrationContext.orchestrators.webhookResolver.resolveWebhook(
-                    merchantId
-                );
-            if (!resolved) {
-                log.warn({ merchantId }, "Webhook not found");
-                throw HttpError.badRequest(
-                    "WEBHOOK_ERROR",
-                    "Webhook not found"
-                );
-            }
-
-            validateBodyHmac({
+            const resolved = await resolveAndVerifyWebhook({
+                merchantId,
                 body,
-                secret: resolved.webhook.hookSignatureKey,
                 signature: headers["x-hmac-sha256"],
             });
 

@@ -1,4 +1,5 @@
 import type { TokenMetadata, TokenPrice } from "@backend-infrastructure";
+import Decimal from "decimal.js";
 import type { Address } from "viem";
 import type { PurchaseInfo, RewardHistoryItem } from "../schemas";
 import type {
@@ -81,12 +82,12 @@ export class RewardHistoryService {
     }
 
     private buildTokenAmount(rawAmount: string, price: TokenPrice | undefined) {
-        const amount = Number.parseFloat(rawAmount);
+        const amount = new Decimal(rawAmount);
         return {
-            amount,
-            eurAmount: price ? amount * price.eur : 0,
-            usdAmount: price ? amount * price.usd : 0,
-            gbpAmount: price ? amount * price.gbp : 0,
+            amount: amount.toNumber(),
+            eurAmount: price ? amount.mul(price.eur).toNumber() : 0,
+            usdAmount: price ? amount.mul(price.usd).toNumber() : 0,
+            gbpAmount: price ? amount.mul(price.gbp).toNumber() : 0,
         };
     }
 
@@ -100,7 +101,7 @@ export class RewardHistoryService {
             if (!referrerPurchase) return undefined;
             return {
                 id: referrerPurchase.purchaseId,
-                amount: Number.parseFloat(referrerPurchase.totalPrice),
+                amount: new Decimal(referrerPurchase.totalPrice).toNumber(),
                 currency: referrerPurchase.currencyCode,
             };
         }
@@ -124,7 +125,7 @@ export class RewardHistoryService {
                 if (purchase) {
                     return {
                         id: payload.purchaseId,
-                        amount: Number.parseFloat(purchase.totalPrice),
+                        amount: new Decimal(purchase.totalPrice).toNumber(),
                         currency: purchase.currencyCode,
                     };
                 }

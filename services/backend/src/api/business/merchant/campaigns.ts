@@ -128,6 +128,13 @@ function toRewardSummary(reward: RewardDefinition): CampaignListReward {
     }
 }
 
+export async function getOwnedCampaign(merchantId: string, campaignId: string) {
+    const campaign =
+        await CampaignContext.services.management.getById(campaignId);
+    if (!campaign || campaign.merchantId !== merchantId) return null;
+    return campaign;
+}
+
 function toListItem(campaign: {
     id: string;
     name: string;
@@ -165,22 +172,7 @@ export const merchantCampaignsRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({
-            params: { merchantId },
-            query,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, query }) => {
             const statusFilter = query.status
                 ? (query.status.split(",") as CampaignStatus[])
                 : undefined;
@@ -224,6 +216,7 @@ export const merchantCampaignsRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             query: t.Object({
                 status: t.Optional(t.String()),
@@ -237,24 +230,9 @@ export const merchantCampaignsRoutes = new Elysia({
     )
     .get(
         "/:campaignId",
-        async ({
-            params: { merchantId, campaignId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
-            const campaign =
-                await CampaignContext.services.management.getById(campaignId);
-            if (!campaign || campaign.merchantId !== merchantId) {
+        async ({ params: { merchantId, campaignId } }) => {
+            const campaign = await getOwnedCampaign(merchantId, campaignId);
+            if (!campaign) {
                 return status(404, "Campaign not found");
             }
 
@@ -281,6 +259,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(campaign, distributionStatus);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
@@ -292,22 +271,7 @@ export const merchantCampaignsRoutes = new Elysia({
     )
     .post(
         "",
-        async ({
-            params: { merchantId },
-            body,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, body }) => {
             const merchant =
                 await MerchantContext.repositories.merchant.findById(
                     merchantId
@@ -332,6 +296,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(campaign, undefined);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: CampaignCreateBodySchema,
             response: {
@@ -345,25 +310,9 @@ export const merchantCampaignsRoutes = new Elysia({
     )
     .put(
         "/:campaignId",
-        async ({
-            params: { merchantId, campaignId },
-            body,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
-            const existing =
-                await CampaignContext.services.management.getById(campaignId);
-            if (!existing || existing.merchantId !== merchantId) {
+        async ({ params: { merchantId, campaignId }, body }) => {
+            const existing = await getOwnedCampaign(merchantId, campaignId);
+            if (!existing) {
                 return status(404, "Campaign not found");
             }
 
@@ -417,24 +366,9 @@ export const merchantCampaignsRoutes = new Elysia({
     )
     .post(
         "/:campaignId/publish",
-        async ({
-            params: { merchantId, campaignId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
-            const existing =
-                await CampaignContext.services.management.getById(campaignId);
-            if (!existing || existing.merchantId !== merchantId) {
+        async ({ params: { merchantId, campaignId } }) => {
+            const existing = await getOwnedCampaign(merchantId, campaignId);
+            if (!existing) {
                 return status(404, "Campaign not found");
             }
 
@@ -447,6 +381,7 @@ export const merchantCampaignsRoutes = new Elysia({
             // Campaign publish is a sensitive action (§4.8) — pause/resume/
             // archive stay step-up-free (low risk).
             requireStepUp: true,
+            requireMerchantAccess: true,
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
@@ -460,24 +395,9 @@ export const merchantCampaignsRoutes = new Elysia({
     )
     .post(
         "/:campaignId/pause",
-        async ({
-            params: { merchantId, campaignId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
-            const existing =
-                await CampaignContext.services.management.getById(campaignId);
-            if (!existing || existing.merchantId !== merchantId) {
+        async ({ params: { merchantId, campaignId } }) => {
+            const existing = await getOwnedCampaign(merchantId, campaignId);
+            if (!existing) {
                 return status(404, "Campaign not found");
             }
 
@@ -487,6 +407,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(updated, undefined);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
@@ -500,24 +421,9 @@ export const merchantCampaignsRoutes = new Elysia({
     )
     .post(
         "/:campaignId/resume",
-        async ({
-            params: { merchantId, campaignId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
-            const existing =
-                await CampaignContext.services.management.getById(campaignId);
-            if (!existing || existing.merchantId !== merchantId) {
+        async ({ params: { merchantId, campaignId } }) => {
+            const existing = await getOwnedCampaign(merchantId, campaignId);
+            if (!existing) {
                 return status(404, "Campaign not found");
             }
 
@@ -527,6 +433,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(updated, undefined);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
@@ -540,24 +447,9 @@ export const merchantCampaignsRoutes = new Elysia({
     )
     .post(
         "/:campaignId/archive",
-        async ({
-            params: { merchantId, campaignId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
-            const existing =
-                await CampaignContext.services.management.getById(campaignId);
-            if (!existing || existing.merchantId !== merchantId) {
+        async ({ params: { merchantId, campaignId } }) => {
+            const existing = await getOwnedCampaign(merchantId, campaignId);
+            if (!existing) {
                 return status(404, "Campaign not found");
             }
 
@@ -567,6 +459,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(updated, undefined);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
@@ -580,24 +473,9 @@ export const merchantCampaignsRoutes = new Elysia({
     )
     .delete(
         "/:campaignId",
-        async ({
-            params: { merchantId, campaignId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
-            const existing =
-                await CampaignContext.services.management.getById(campaignId);
-            if (!existing || existing.merchantId !== merchantId) {
+        async ({ params: { merchantId, campaignId } }) => {
+            const existing = await getOwnedCampaign(merchantId, campaignId);
+            if (!existing) {
                 return status(404, "Campaign not found");
             }
 
@@ -606,6 +484,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantCampaignParamSchema,
             response: {
                 204: t.Void(),

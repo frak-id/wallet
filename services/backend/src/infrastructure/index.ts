@@ -23,7 +23,11 @@ export { sessionContext } from "./macro";
 export { eventEmitter } from "./messaging/events";
 // Database
 export { getLibsqlClient, getLibsqlDb } from "./persistence/libsql";
-export { db } from "./persistence/postgres";
+export {
+    db,
+    type PgRunner,
+    type PgTx,
+} from "./persistence/postgres";
 export {
     FxRateRepository,
     fxRateRepository,

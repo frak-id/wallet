@@ -5,8 +5,12 @@ import { infraMetrics } from "../telemetry/infraMetrics";
 import { getClientIp } from "./ipExtraction";
 
 interface RateLimitWindow {
-    count: number;
-    resetAt: number;
+    currentCount: number;
+    // Count from the sub-window immediately preceding currentStart.
+    previousCount: number;
+    currentStart: number;
+    // windowMs this entry was created with, for reset/purge bookkeeping.
+    windowMs: number;
 }
 
 interface RateLimitConfig {
@@ -20,14 +24,53 @@ const defaultConfig: RateLimitConfig = {
 };
 
 /**
- * In-memory sliding window rate limiter keyed by client IP.
+ * In-memory sliding window *counter* rate limiter keyed by client IP: each
+ * key tracks the current fixed sub-window plus the immediately preceding
+ * one, and the effective count is `currentCount` plus a time-weighted
+ * portion of `previousCount`. This bounds bursts to ~`maxRequests` over any
+ * rolling `windowMs` span (a classic fixed window can allow up to 2x right
+ * at the boundary); it's an approximation assuming uniform request
+ * distribution in the previous sub-window, not an exact sliding log.
  *
- * Entries are lazily evicted on access — no background timer needed.
+ * Entries are lazily rolled/evicted on access — no background timer needed.
  * Suitable for single-instance deployments. For multi-replica k8s
  * deployments, swap the Map for Redis.
  */
 export class InMemoryRateLimitStore {
     private readonly windows = new Map<string, RateLimitWindow>();
+
+    /** Advance `entry` to the sub-window containing `now`. No-op if still current. */
+    private roll(
+        entry: RateLimitWindow,
+        config: RateLimitConfig,
+        now: number
+    ): void {
+        const elapsed = now - entry.currentStart;
+        if (elapsed < config.windowMs) return;
+
+        if (elapsed >= config.windowMs * 2) {
+            // Idle long enough that nothing carries over.
+            entry.previousCount = 0;
+            entry.currentCount = 0;
+            entry.currentStart = now;
+        } else {
+            entry.previousCount = entry.currentCount;
+            entry.currentCount = 0;
+            entry.currentStart += config.windowMs;
+        }
+    }
+
+    private estimate(
+        entry: RateLimitWindow,
+        config: RateLimitConfig,
+        now: number
+    ): number {
+        const weightOfPrevious = Math.max(
+            0,
+            1 - (now - entry.currentStart) / config.windowMs
+        );
+        return entry.currentCount + entry.previousCount * weightOfPrevious;
+    }
 
     consume(key: string, config: RateLimitConfig): boolean {
         // Skip locally: all requests are loopback, so E2E/dev tooling trips
@@ -35,44 +78,55 @@ export class InMemoryRateLimitStore {
         if (isRunningLocally) return true;
 
         const now = Date.now();
-        const existing = this.windows.get(key);
+        let entry = this.windows.get(key);
 
-        if (!existing || now >= existing.resetAt) {
-            this.windows.set(key, {
-                count: 1,
-                resetAt: now + config.windowMs,
-            });
-            return true;
+        if (!entry) {
+            entry = {
+                currentCount: 0,
+                previousCount: 0,
+                currentStart: now,
+                windowMs: config.windowMs,
+            };
+            this.windows.set(key, entry);
+        } else {
+            this.roll(entry, config, now);
         }
 
-        existing.count++;
-        return existing.count <= config.maxRequests;
+        entry.currentCount++;
+        return this.estimate(entry, config, now) <= config.maxRequests;
     }
 
     getRemaining(key: string, config: RateLimitConfig): number {
         const entry = this.windows.get(key);
-        if (!entry || Date.now() >= entry.resetAt) {
-            return config.maxRequests;
-        }
-        return Math.max(0, config.maxRequests - entry.count);
+        if (!entry) return config.maxRequests;
+
+        const now = Date.now();
+        this.roll(entry, config, now);
+        const used = Math.ceil(this.estimate(entry, config, now));
+        return Math.max(0, config.maxRequests - used);
     }
 
-    getResetAt(key: string): number {
+    getResetAt(key: string, config: RateLimitConfig): number {
         const entry = this.windows.get(key);
-        if (!entry || Date.now() >= entry.resetAt) {
-            return Date.now();
-        }
-        return entry.resetAt;
+        if (!entry) return Date.now();
+
+        const now = Date.now();
+        this.roll(entry, config, now);
+        // Earliest point the previous sub-window's weight hits zero.
+        return entry.currentStart + config.windowMs;
     }
 
     /**
-     * Purge expired entries to prevent unbounded memory growth.
-     * Called periodically — not on every request.
+     * Purge entries with no residual effect: only safe once *two* full
+     * `windowMs` have elapsed since `currentStart`, since before that the
+     * entry hasn't been rolled yet and its `currentCount` would still carry
+     * over as `previousCount` weight. Purging earlier would grant a fresh
+     * bucket right after a maxed-out burst.
      */
     purgeExpired(): void {
         const now = Date.now();
         for (const [key, window] of this.windows) {
-            if (now >= window.resetAt) {
+            if (now - window.currentStart >= window.windowMs * 2) {
                 this.windows.delete(key);
             }
         }
@@ -146,6 +200,13 @@ export function rateLimitMiddleware(config?: RateLimitOptions) {
                 infraMetrics.rateLimitRejected(
                     (ctx as { route?: string }).route ?? "unknown"
                 );
+                const retryAfterSec = Math.max(
+                    1,
+                    Math.ceil(
+                        (store.getResetAt(key, finalConfig) - Date.now()) / 1000
+                    )
+                );
+                ctx.set.headers["retry-after"] = String(retryAfterSec);
                 return status(429, "Too Many Requests");
             }
         })

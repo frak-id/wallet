@@ -26,11 +26,9 @@ const ListDocumentsResponseSchema = t.Object({
 });
 
 /**
- * Merchant-facing billing document reads (billing-feature-plan.md §5). Guarded
- * by `hasMerchantAccess` (owner/admin, with the read-only platform-admin
- * safe-method bypass) — mirrors `billingAccounting.ts`'s auth pattern exactly.
- * Never `platformAdminAuthenticated` (that guard is for the admin CRUD/mutation
- * routes in `billing.ts` only).
+ * Merchant-facing billing document reads (billing-feature-plan.md §5).
+ * Guarded by `requireMerchantAccess`, never `platformAdminAuthenticated`
+ * (that guard is for the admin CRUD routes in `billing.ts` only).
  */
 export const merchantBillingDocumentRoutes = new Elysia({
     prefix: "/documents",
@@ -38,22 +36,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({
-            params: { merchantId },
-            query: { kind, from, to },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, query: { kind, from, to } }) => {
             const documents =
                 await BillingContext.repositories.billingDocument.findByMerchant(
                     merchantId,
@@ -69,6 +52,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             query: ListDocumentsQuerySchema,
             response: {
@@ -80,21 +64,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
     )
     .get(
         "/:id/pdf",
-        async ({
-            params: { merchantId, id },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId, id } }) => {
             let document =
                 await BillingContext.repositories.billingDocument.findById(
                     merchantId,
@@ -151,6 +121,7 @@ export const merchantBillingDocumentRoutes = new Elysia({
             });
         },
         {
+            requireMerchantAccess: true,
             params: DocumentIdParamSchema,
             response: {
                 401: t.String(),

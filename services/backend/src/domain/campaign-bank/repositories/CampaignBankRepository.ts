@@ -433,36 +433,6 @@ export class CampaignBankRepository {
         this.onChainStateCache.clear();
     }
 
-    async getBanksTotalBalance(
-        bankAddresses: Map<string, Address>,
-        tokens: Address[]
-    ): Promise<Map<Address, { isOpen: boolean; totalBalance: bigint }>> {
-        const result = new Map<
-            Address,
-            { isOpen: boolean; totalBalance: bigint }
-        >();
-
-        await Promise.all(
-            [...bankAddresses.entries()].map(async ([, bankAddress]) => {
-                const state = await this.getBankOnChainState(
-                    bankAddress,
-                    tokens
-                );
-                let totalBalance = 0n;
-                for (const balance of state.balances.values()) {
-                    totalBalance += balance;
-                }
-
-                result.set(bankAddress, {
-                    isOpen: state.isOpen,
-                    totalBalance,
-                });
-            })
-        );
-
-        return result;
-    }
-
     async enableDistribution(
         bankAddress: Address,
         options?: { tokens?: Address[] }

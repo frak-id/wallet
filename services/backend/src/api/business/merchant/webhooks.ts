@@ -1,4 +1,4 @@
-import { db } from "@backend-infrastructure";
+import { db, log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia, status } from "elysia";
@@ -22,18 +22,8 @@ export const merchantWebhooksRoutes = new Elysia({
         async ({
             params: { merchantId },
             businessSession,
-            shopifySession,
-            hasMerchantAccess,
+            merchantPermissions,
         }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
             const currentWebhooks = await db
                 .select()
                 .from(merchantWebhooksTable)
@@ -56,10 +46,26 @@ export const merchantWebhooksRoutes = new Elysia({
                 .where(eq(purchasesTable.webhookId, currentWebhook.id))
                 .execute();
 
+            // Secret must never reach the platform-admin read bypass
+            // (finding 2.8) — gated on `readSecrets`, not route access.
+            const genuineAccess = merchantPermissions.readSecrets;
+            if (genuineAccess) {
+                log.info(
+                    {
+                        wallet: businessSession?.wallet,
+                        accountId: businessSession?.accountId,
+                        merchantId,
+                    },
+                    "serving webhook signing secret"
+                );
+            }
+
             return {
                 setup: true as const,
                 platform: currentWebhook.platform,
-                webhookSigninKey: currentWebhook.hookSignatureKey,
+                webhookSigninKey: genuineAccess
+                    ? currentWebhook.hookSignatureKey
+                    : undefined,
                 stats: {
                     firstPurchase: stats[0]?.firstPurchase ?? undefined,
                     lastPurchase: stats[0]?.lastPurchase ?? undefined,
@@ -69,6 +75,7 @@ export const merchantWebhooksRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 200: WebhookStatusResponseSchema,
@@ -79,22 +86,7 @@ export const merchantWebhooksRoutes = new Elysia({
     )
     .post(
         "",
-        async ({
-            params: { merchantId },
-            body,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, body }) => {
             const { hookSignatureKey, platform } = body;
 
             await db
@@ -116,6 +108,7 @@ export const merchantWebhooksRoutes = new Elysia({
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 hookSignatureKey: t.String(),
@@ -130,21 +123,7 @@ export const merchantWebhooksRoutes = new Elysia({
     )
     .delete(
         "",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const existingWebhook =
                 await db.query.merchantWebhooksTable.findFirst({
                     where: eq(merchantWebhooksTable.merchantId, merchantId),
@@ -172,6 +151,7 @@ export const merchantWebhooksRoutes = new Elysia({
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 204: t.Void(),

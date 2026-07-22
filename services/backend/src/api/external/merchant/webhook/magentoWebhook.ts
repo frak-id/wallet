@@ -1,5 +1,4 @@
-import { log } from "@backend-infrastructure";
-import { HttpError, t, validateBodyHmac } from "@backend-utils";
+import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import type { PurchaseStatus } from "../../../../domain/purchases";
 import type {
@@ -7,6 +6,7 @@ import type {
     MagentoOrderWebhookDto,
 } from "../../../../domain/purchases/dto/MagentoWebhook";
 import { OrchestrationContext } from "../../../../orchestration/context";
+import { resolveAndVerifyWebhook } from "./resolveAndVerifyWebhook";
 
 export const magentoWebhook = new Elysia()
     .guard({
@@ -32,28 +32,9 @@ export const magentoWebhook = new Elysia()
         async ({ params: { merchantId }, body, headers }) => {
             const webhookData = JSON.parse(body) as MagentoOrderWebhookDto;
 
-            if (!merchantId) {
-                throw HttpError.badRequest(
-                    "WEBHOOK_ERROR",
-                    "Missing merchant identifier"
-                );
-            }
-
-            const resolved =
-                await OrchestrationContext.orchestrators.webhookResolver.resolveWebhook(
-                    merchantId
-                );
-            if (!resolved) {
-                log.warn({ merchantId }, "Webhook not found");
-                throw HttpError.badRequest(
-                    "WEBHOOK_ERROR",
-                    "Webhook not found"
-                );
-            }
-
-            validateBodyHmac({
+            const resolved = await resolveAndVerifyWebhook({
+                merchantId,
                 body,
-                secret: resolved.webhook.hookSignatureKey,
                 signature: headers["x-hmac-sha256"],
             });
 

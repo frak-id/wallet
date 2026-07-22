@@ -1,4 +1,4 @@
-import { db, log } from "@backend-infrastructure";
+import { db, log, type PgTx } from "@backend-infrastructure";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import { affiliateAttributionTable } from "../../domain/affiliate/db/schema";
@@ -26,8 +26,6 @@ import {
     assetLogsTable,
     interactionLogsTable,
 } from "../../domain/rewards/db/schema";
-
-type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type MergeResult = {
     success: boolean;

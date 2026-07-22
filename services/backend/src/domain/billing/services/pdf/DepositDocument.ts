@@ -1,8 +1,8 @@
 import {
+    drawVatLine,
     formatMoney,
     GRAY,
     isPositiveAmount,
-    isVatApplicable,
     type PageCursor,
 } from "./primitives";
 import type { BillingPdfDocumentDto } from "./types";
@@ -12,14 +12,7 @@ export function drawDepositDetails(
     deposit: NonNullable<BillingPdfDocumentDto["deposit"]>,
     currency: string
 ): void {
-    if (isVatApplicable(deposit.vatAmount)) {
-        cursor.text(`TVA (20 %) : ${formatMoney(deposit.vatAmount, currency)}`);
-    } else {
-        cursor.text("TVA : autoliquidation / non applicable", {
-            color: GRAY,
-        });
-    }
-    cursor.newLine(15);
+    drawVatLine(cursor, "TVA (20 %)", deposit.vatAmount, currency, "TVA");
     cursor.text(`Frais Frak : ${formatMoney(deposit.frakFeeAmount, currency)}`);
     cursor.newLine(15);
     if (isPositiveAmount(deposit.giftedAmount)) {

@@ -1,4 +1,4 @@
-import { Elysia, t } from "elysia";
+import { Elysia, status, t } from "elysia";
 import type { Address, LocalAccount } from "viem";
 import { vi } from "vitest";
 // Import the real broadcast schema rather than redefining it in the mock, so
@@ -340,6 +340,48 @@ export const sessionContextMock = new Elysia({ name: "Macro.session" })
 /*                      Business Session Middleware Mock                      */
 /* -------------------------------------------------------------------------- */
 
+const SAFE_METHODS = new Set(["GET", "HEAD"]);
+
+type MockMerchantPermissions = {
+    read: boolean;
+    write: boolean;
+    readSecrets: boolean;
+    source: "owner" | "admin" | "shopify" | "platform-admin" | "none";
+};
+
+const NO_MOCK_PERMISSIONS: MockMerchantPermissions = {
+    read: false,
+    write: false,
+    readSecrets: false,
+    source: "none",
+};
+
+// Controllable access toggles, reset by each test's beforeEach. Access
+// granted + genuine denied mirrors the platform-admin bypass (read-only).
+let mockMerchantAccessGranted = true;
+export function setMockMerchantAccess(granted: boolean) {
+    mockMerchantAccessGranted = granted;
+}
+let mockGenuineMerchantAccessGranted = true;
+export function setMockGenuineMerchantAccess(granted: boolean) {
+    mockGenuineMerchantAccessGranted = granted;
+}
+
+function mockPermissions(): MockMerchantPermissions {
+    if (!mockMerchantAccessGranted) {
+        return NO_MOCK_PERMISSIONS;
+    }
+    if (mockGenuineMerchantAccessGranted) {
+        return { read: true, write: true, readSecrets: true, source: "admin" };
+    }
+    return {
+        read: true,
+        write: false,
+        readSecrets: false,
+        source: "platform-admin",
+    };
+}
+
 export const businessSessionContextMock = new Elysia({
     name: "Context.businessSession",
 })
@@ -355,8 +397,8 @@ export const businessSessionContextMock = new Elysia({
             return {
                 businessSession: null,
                 shopifySession: null,
-                hasMerchantAccess: (_merchantId: string) =>
-                    Promise.resolve(false as boolean),
+                getMerchantPermissions: (_merchantId: string) =>
+                    Promise.resolve(NO_MOCK_PERMISSIONS),
             };
         }
 
@@ -367,8 +409,8 @@ export const businessSessionContextMock = new Elysia({
         return {
             businessSession: session || null,
             shopifySession: null,
-            hasMerchantAccess: (_merchantId: string) =>
-                Promise.resolve(true as boolean),
+            getMerchantPermissions: (_merchantId: string) =>
+                Promise.resolve(mockPermissions()),
         };
     })
     .macro({
@@ -385,6 +427,35 @@ export const businessSessionContextMock = new Elysia({
                         set.status = 401;
                         return "Unauthorized - Invalid business token";
                     }
+                },
+            };
+        },
+        // Mirrors the real macro: same status codes/bodies, method→capability
+        // mapping, and `merchantPermissions` injection.
+        requireMerchantAccess(enabled?: boolean) {
+            if (!enabled) return;
+            return {
+                resolve: async ({
+                    params,
+                    request,
+                    businessSession,
+                    shopifySession,
+                    getMerchantPermissions,
+                    // biome-ignore lint/suspicious/noExplicitAny: Mock needs flexible typing
+                }: any) => {
+                    if (!businessSession && !shopifySession) {
+                        return status(401, "Authentication required");
+                    }
+                    const merchantPermissions = await getMerchantPermissions?.(
+                        params?.merchantId
+                    );
+                    const hasAccess = SAFE_METHODS.has(request.method)
+                        ? merchantPermissions?.read
+                        : merchantPermissions?.write;
+                    if (!hasAccess) {
+                        return status(403, "Access denied");
+                    }
+                    return { merchantPermissions };
                 },
             };
         },

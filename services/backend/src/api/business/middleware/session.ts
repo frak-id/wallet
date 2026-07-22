@@ -18,6 +18,26 @@ import {
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 /**
+ * Merchant-access capabilities. A genuine grant (ownership/admin-row/
+ * Shopify-link) satisfies everything; the platform-admin bypass grants
+ * `read` only — never `write`, never `readSecrets` (finding 2.8: secrets
+ * like the webhook signing key must not reach platform admins).
+ */
+export type MerchantPermissions = {
+    read: boolean;
+    write: boolean;
+    readSecrets: boolean;
+    source: "owner" | "admin" | "shopify" | "platform-admin" | "none";
+};
+
+const NO_MERCHANT_PERMISSIONS: MerchantPermissions = {
+    read: false,
+    write: false,
+    readSecrets: false,
+    source: "none",
+};
+
+/**
  * 401 response schema for step-up-guarded routes. The step-up challenge is
  * signalled entirely via headers (`x-frak-auth-error: step-up-required` +
  * `x-frak-auth-methods`), so its body is the plain `t.ErrorResponse` — the
@@ -63,7 +83,7 @@ export async function isPlatformAdminAuth(
  * requests never need it. An account holds at most one Shopify identity
  * (design doc §4.3), so this is a single-row read, not a credential scan.
  */
-async function hasShopifyCredentialAccess(
+export async function hasShopifyCredentialAccess(
     merchantId: string,
     accountId: string | null
 ): Promise<boolean> {
@@ -74,6 +94,50 @@ async function hasShopifyCredentialAccess(
     return MerchantContext.services.authorization.hasAccess(merchantId, {
         shopDomain: account.shopifyShopDomain,
     });
+}
+
+async function resolveBusinessMerchantPermissions(
+    merchantId: string,
+    auth: ResolvedBusinessAuth,
+    request: Request
+): Promise<MerchantPermissions> {
+    const access = await MerchantContext.services.authorization.checkAccess(
+        merchantId,
+        auth
+    );
+    if (access.hasAccess) {
+        return {
+            read: true,
+            write: true,
+            readSecrets: true,
+            source: access.role === "owner" ? "owner" : "admin",
+        };
+    }
+
+    if (await hasShopifyCredentialAccess(merchantId, auth.accountId)) {
+        return { read: true, write: true, readSecrets: true, source: "admin" };
+    }
+
+    if (await isPlatformAdminAuth(auth)) {
+        log.info(
+            {
+                wallet: auth.wallet,
+                accountId: auth.accountId,
+                merchantId,
+                method: request.method,
+                path: request.url,
+            },
+            "platform-admin read-only access"
+        );
+        return {
+            read: true,
+            write: false,
+            readSecrets: false,
+            source: "platform-admin",
+        };
+    }
+
+    return NO_MERCHANT_PERMISSIONS;
 }
 
 export const businessSessionContext = new Elysia({
@@ -93,42 +157,12 @@ export const businessSessionContext = new Elysia({
                 return {
                     businessSession: auth,
                     shopifySession: null as ShopifySessionToken | null,
-                    hasMerchantAccess: async (merchantId: string) => {
-                        if (
-                            await MerchantContext.services.authorization.hasAccess(
-                                merchantId,
-                                auth
-                            )
-                        )
-                            return true;
-
-                        if (
-                            await hasShopifyCredentialAccess(
-                                merchantId,
-                                auth.accountId
-                            )
-                        ) {
-                            return true;
-                        }
-
-                        if (
-                            SAFE_METHODS.has(request.method) &&
-                            (await isPlatformAdminAuth(auth))
-                        ) {
-                            log.info(
-                                {
-                                    wallet: auth.wallet,
-                                    accountId: auth.accountId,
-                                    merchantId,
-                                    method: request.method,
-                                    path: request.url,
-                                },
-                                "platform-admin read-only access"
-                            );
-                            return true;
-                        }
-                        return false;
-                    },
+                    getMerchantPermissions: (merchantId: string) =>
+                        resolveBusinessMerchantPermissions(
+                            merchantId,
+                            auth,
+                            request
+                        ),
                 };
             }
         }
@@ -138,17 +172,29 @@ export const businessSessionContext = new Elysia({
             const session = await verifyShopifySessionToken(shopifyToken);
             if (session) {
                 const shopDomain = extractShopDomain(session.dest);
+                // Embedded Shopify access is genuine by construction —
+                // grants every capability.
+                const getMerchantPermissions = async (
+                    merchantId: string
+                ): Promise<MerchantPermissions> => {
+                    if (!shopDomain) return NO_MERCHANT_PERMISSIONS;
+                    const hasAccess =
+                        await MerchantContext.services.authorization.hasAccessByDomain(
+                            merchantId,
+                            shopDomain
+                        );
+                    if (!hasAccess) return NO_MERCHANT_PERMISSIONS;
+                    return {
+                        read: true,
+                        write: true,
+                        readSecrets: true,
+                        source: "shopify",
+                    };
+                };
                 return {
                     businessSession: null as ResolvedBusinessAuth | null,
                     shopifySession: session,
-                    hasMerchantAccess: shopDomain
-                        ? (merchantId: string) =>
-                              MerchantContext.services.authorization.hasAccessByDomain(
-                                  merchantId,
-                                  shopDomain
-                              )
-                        : (_merchantId: string) =>
-                              Promise.resolve(false as boolean),
+                    getMerchantPermissions,
                 };
             }
         }
@@ -156,8 +202,8 @@ export const businessSessionContext = new Elysia({
         return {
             businessSession: null as ResolvedBusinessAuth | null,
             shopifySession: null as ShopifySessionToken | null,
-            hasMerchantAccess: (_merchantId: string) =>
-                Promise.resolve(false as boolean),
+            getMerchantPermissions: (_merchantId: string) =>
+                Promise.resolve(NO_MERCHANT_PERMISSIONS),
         };
     })
     .macro({
@@ -203,10 +249,10 @@ export const businessSessionContext = new Elysia({
         /**
          * Platform-admin-only guard for billing admin mutation routes
          * (deposits/withdrawals/monthly-bills). Deliberately independent from
-         * `hasMerchantAccess`, whose platform-admin bypass is read-only /
-         * safe-methods-only and must never authorize mutations. Wallet
-         * allow-list or verified @frak-labs.com email (§7.3); the Shopify
-         * session path is always rejected here.
+         * `getMerchantPermissions`, whose platform-admin grant is read-only
+         * (`read: true, write: false`) and must never authorize mutations.
+         * Wallet allow-list or verified @frak-labs.com email (§7.3); the
+         * Shopify session path is always rejected here.
          */
         platformAdminAuthenticated(enabled?: boolean) {
             if (!enabled) return;
@@ -224,6 +270,37 @@ export const businessSessionContext = new Elysia({
                     }
                 },
             };
+        },
+        /**
+         * Merchant-scoped guard: GET/HEAD require `read`, others `write`;
+         * injects `merchantPermissions` on success. Uses shorthand `resolve`
+         * (not `derive`) so Elysia infers the context, and runs before
+         * `beforeHandle` guards like `requireStepUp`.
+         */
+        requireMerchantAccess: {
+            resolve: async ({
+                params,
+                request,
+                businessSession,
+                shopifySession,
+                getMerchantPermissions,
+            }) => {
+                if (!businessSession && !shopifySession) {
+                    return status(401, "Authentication required");
+                }
+
+                const merchantPermissions = await getMerchantPermissions?.(
+                    (params as { merchantId: string }).merchantId
+                );
+                const hasAccess = SAFE_METHODS.has(request.method)
+                    ? merchantPermissions?.read
+                    : merchantPermissions?.write;
+                if (!hasAccess || !merchantPermissions) {
+                    return status(403, "Access denied");
+                }
+
+                return { merchantPermissions };
+            },
         },
     })
     .as("scoped");

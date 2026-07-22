@@ -48,34 +48,51 @@ export class WebAuthNService {
         authenticatorId: string;
         pubKey: { x: Hex; y: Hex };
     }) {
-        // Compute base stuff to fetch the smart wallet address
         const authenticatorIdHash = keccak256(toHex(authenticatorId));
         const initCode = KernelWallet.getWebAuthNSmartWalletInitCode({
             authenticatorIdHash,
             signerPubKey: pubKey,
         });
 
-        // Get the sender address based on the init code
-        return getSenderAddress(viemClient, {
-            initCode: concatHex([kernelAddresses.factory, initCode]),
-            entryPointAddress: entryPoint06Address,
-        });
+        return this.senderAddressFromInitCode(initCode);
     }
 
     /**
      * Get a wallet address from an authenticator
      */
     async getEcdsaWalletAddress({ ecdsaAddress }: { ecdsaAddress: Address }) {
-        // Compute base stuff to fetch the smart wallet address
         const initCode = KernelWallet.getFallbackWalletInitCode({
             ecdsaAddress,
         });
 
-        // Get the sender address based on the init code
+        return this.senderAddressFromInitCode(initCode);
+    }
+
+    private senderAddressFromInitCode(initCode: Hex) {
         return getSenderAddress(viemClient, {
             initCode: concatHex([kernelAddresses.factory, initCode]),
             entryPointAddress: entryPoint06Address,
         });
+    }
+
+    private buildVerifyInput(
+        authenticator: { publicKey: { x: Hex; y: Hex } },
+        signature: Signature.Signature<false>,
+        metadata: SignMetadata
+    ) {
+        return {
+            publicKey: {
+                x: BigInt(authenticator.publicKey.x),
+                y: BigInt(authenticator.publicKey.y),
+                prefix: 4 as const,
+            },
+            signature: {
+                r: BigInt(signature.r),
+                s: BigInt(signature.s),
+                yParity: signature.yParity,
+            },
+            metadata,
+        };
     }
 
     /**
@@ -103,33 +120,20 @@ export class WebAuthNService {
               transports?: AuthenticatorTransportFuture[];
           }
     > {
-        // Decode the authenticator response
         const result =
             this.parseCompressedResponse<AuthenticationResponseJSON>(
                 compressedSignature
             );
 
-        // Find the authenticator
         const authenticator =
             await this.authenticatorRepository.getByCredentialId(result.id);
         if (!authenticator) {
             return false;
         }
 
-        // Ensure the verification pass using ox
         const { signature, metadata } = result.response;
         const verification = WebAuthnP256.verify({
-            publicKey: {
-                x: BigInt(authenticator.publicKey.x),
-                y: BigInt(authenticator.publicKey.y),
-                prefix: 4,
-            },
-            signature: {
-                r: BigInt(signature.r),
-                s: BigInt(signature.s),
-                yParity: signature.yParity,
-            },
-            metadata,
+            ...this.buildVerifyInput(authenticator, signature, metadata),
             challenge,
         });
 
@@ -190,17 +194,7 @@ export class WebAuthNService {
         const { signature, metadata } = result.response;
         return expectedChallenges.some((challenge) =>
             WebAuthnP256.verify({
-                publicKey: {
-                    x: BigInt(authenticator.publicKey.x),
-                    y: BigInt(authenticator.publicKey.y),
-                    prefix: 4,
-                },
-                signature: {
-                    r: BigInt(signature.r),
-                    s: BigInt(signature.s),
-                    yParity: signature.yParity,
-                },
-                metadata,
+                ...this.buildVerifyInput(authenticator, signature, metadata),
                 challenge: stringToHex(challenge),
             })
         );

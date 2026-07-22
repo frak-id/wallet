@@ -43,21 +43,7 @@ export const merchantBillingAccountingRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const merchant =
                 await MerchantContext.repositories.merchant.findById(
                     merchantId
@@ -71,6 +57,7 @@ export const merchantBillingAccountingRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 200: AccountingInfoResponseSchema,
@@ -87,25 +74,22 @@ export const merchantBillingAccountingRoutes = new Elysia({
             body,
             businessSession,
             shopifySession,
-            hasMerchantAccess,
+            getMerchantPermissions,
         }) => {
             if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
-            // `hasMerchantAccess`'s platform-admin bypass is read-only
-            // (safe methods only), so it would reject a platform admin here
-            // even though they must be able to write tax fields (§3.1). This
-            // route is the one deliberate exception: a platform admin (trusted
-            // Frak staff) is always allowed through; the field-level check
-            // below still restricts non-platform-admin callers to the
-            // contact fields only.
+            // Deliberate exception to the read-only platform-admin grant:
+            // platform admins must write tax fields (§3.1). The field-level
+            // allowlist below still restricts everyone else.
             const isPlatformAdmin = businessSession
                 ? await isPlatformAdminAuth(businessSession)
                 : false;
 
             const hasAccess =
-                isPlatformAdmin || (await hasMerchantAccess(merchantId));
+                isPlatformAdmin ||
+                (await getMerchantPermissions(merchantId)).write;
             if (!hasAccess) {
                 return status(403, "Access denied");
             }

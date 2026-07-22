@@ -1,9 +1,7 @@
 import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
-import { isAddressEqual } from "viem";
+import { Elysia } from "elysia";
 import { AuthContext } from "../../../../domain/auth";
-import { OrchestrationContext } from "../../../../orchestration/context";
 
 export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(sessionContext)
@@ -22,82 +20,6 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
                 200: t.Object({
                     token: t.String(),
                     expires: t.Number(),
-                }),
-            },
-        }
-    )
-    // TODO(delete-next-cycle): client no longer calls this; remove after next release
-    // Generate a new token from a previous webauthn signature
-    .post(
-        "/fromWebAuthNSignature",
-        async ({ body: { signature, challenge, wallet } }) => {
-            // Check the validity of the webauthn signature
-            const verificationnResult =
-                await AuthContext.services.webAuthN.isValidSignature({
-                    compressedSignature: signature,
-                    challenge,
-                });
-
-            // If not valid, return an error
-            if (!verificationnResult) {
-                return status(403, "Invalid signature");
-            }
-
-            const resolvedWallet =
-                await OrchestrationContext.orchestrators.walletSession.resolveWalletForVerifiedCredential(
-                    {
-                        credentialId: verificationnResult.authenticatorId,
-                        publicKey: verificationnResult.publicKey,
-                    }
-                );
-
-            if (!isAddressEqual(resolvedWallet, wallet)) {
-                return status(403, "Invalid signature");
-            }
-
-            // Otherwise generate a new token
-            return await AuthContext.services.walletSdkSession.generateSdkJwt({
-                wallet: resolvedWallet,
-            });
-        },
-        {
-            body: t.Object({
-                challenge: t.Hex(),
-                signature: t.String(),
-                wallet: t.Address(),
-            }),
-            response: {
-                403: t.String(),
-                200: t.Object({
-                    token: t.String(),
-                    expires: t.Number(),
-                }),
-            },
-        }
-    )
-    // TODO(delete-next-cycle): client no longer calls this; remove after next release
-    .get(
-        "/isValid",
-        async ({ walletSdkSession }) => {
-            // Else check the expiration date if any
-            const exp = walletSdkSession.exp;
-            if (exp && exp < Date.now() / 1000) {
-                return {
-                    isValid: false,
-                };
-            }
-
-            // Otherwise all good
-            return {
-                isValid: true,
-            };
-        },
-        {
-            withWalletSdkAuthent: true,
-            response: {
-                401: t.String(),
-                200: t.Object({
-                    isValid: t.Boolean(),
                 }),
             },
         }

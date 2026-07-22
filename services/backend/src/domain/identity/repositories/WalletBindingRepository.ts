@@ -1,4 +1,4 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgRunner, type PgTx } from "@backend-infrastructure";
 import type { FrakChainId } from "@frak-labs/app-essentials/blockchain";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
@@ -9,14 +9,8 @@ import {
     type BindingReason,
 } from "../db/schema";
 
-/**
- * Postgres transaction handle as passed to `db.transaction(async (trx) => …)`.
- * Methods accept an optional handle so callers (e.g. the merge orchestrator)
- * can compose binding writes with other identity-domain writes inside a
- * single transaction.
- */
-type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type PgRunner = typeof db | PgTx;
+// Methods accept an optional tx so callers (e.g. the merge orchestrator) can
+// compose binding writes with other identity-domain writes in one transaction.
 
 type ActiveBindingCacheValue = {
     value: AuthenticatorWalletBindingSelect | null;
