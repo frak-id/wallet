@@ -9,17 +9,13 @@ export function CheckoutExtensionTab() {
     const { t } = useTranslation();
 
     return (
-        <s-section>
-            <s-box>
-                <s-stack gap="base">
-                    <s-text>
-                        {t("appearance.checkoutExtension.description")}
-                    </s-text>
-                    <ExternalLink href={checkoutEditorUrl}>
-                        {t("appearance.checkoutExtension.link")}
-                    </ExternalLink>
-                </s-stack>
-            </s-box>
-        </s-section>
+        <s-box>
+            <s-stack gap="base">
+                <s-text>{t("appearance.checkoutExtension.description")}</s-text>
+                <ExternalLink href={checkoutEditorUrl}>
+                    {t("appearance.checkoutExtension.link")}
+                </ExternalLink>
+            </s-stack>
+        </s-box>
     );
 }

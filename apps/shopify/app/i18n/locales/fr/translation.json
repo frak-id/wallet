@@ -406,11 +406,12 @@
         "title": "Apparence",
         "description": "Personnalisez l'apparence de votre intégration Frak dans votre boutique.",
         "tabs": {
-            "customizations": "Personnalisations de texte",
+            "customizations": "Textes affichés aux clients",
             "shareButton": "Bouton de partage",
             "banner": "Bannière",
             "checkoutExtension": "Extension de checkout",
-            "explorer": "Explorer"
+            "onYourSite": "Sur votre site",
+            "inFrakApp": "Dans l'app Frak"
         },
         "shareButton": {
             "link": "Configurer le bouton dans votre page produit",

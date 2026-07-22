@@ -405,11 +405,12 @@
         "title": "Appearance",
         "description": "Customize the look and feel of your Frak integration across your store.",
         "tabs": {
-            "customizations": "Text Customizations",
+            "customizations": "Text shown to customers",
             "shareButton": "Share Button",
             "banner": "Banner",
             "checkoutExtension": "Checkout Extension",
-            "explorer": "Explorer"
+            "onYourSite": "On your site",
+            "inFrakApp": "In the Frak app"
         },
         "shareButton": {
             "link": "Configure button in your product page",

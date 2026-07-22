@@ -323,70 +323,49 @@ export default function AppearancePage() {
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
 
-    const fullTabs = [
+    // Two conceptual buckets: what shows up on the merchant's storefront
+    // (button, banner, checkout extension, and the text shown to shoppers in
+    // Frak modals), vs. what lives in the Frak app itself (the Explorer
+    // wallet-listing preview).
+    const groupTabs = [
         {
-            id: "customizations",
-            content: t("appearance.tabs.customizations"),
+            id: "on-your-site",
+            content: t("appearance.tabs.onYourSite"),
         },
         {
-            id: "explorer",
-            content: t("appearance.tabs.explorer"),
-        },
-        {
-            id: "share-button",
-            content: t("appearance.tabs.shareButton"),
-        },
-        {
-            id: "banner",
-            content: t("appearance.tabs.banner"),
-        },
-        {
-            id: "checkout-extension",
-            content: t("appearance.tabs.checkoutExtension"),
+            id: "in-frak-app",
+            content: t("appearance.tabs.inFrakApp"),
         },
     ];
 
-    // Single renderer keyed on the tab id. Every theme sees all tabs; the
-    // Customizations / Share Button / Banner tabs swap to a manual (copy-paste
-    // + redirect) view when the theme can't host in-page app blocks.
-    const renderTabContent = (isThemeSupported: boolean) => {
-        switch (fullTabs[selectedTab]?.id) {
-            case "customizations":
-                return isThemeSupported ? (
+    // Every theme sees all storefront sections; the Customizations / Share
+    // Button / Banner sections each swap to a manual (copy-paste + redirect)
+    // view when the theme can't host in-page app blocks.
+    const renderOnYourSite = (isThemeSupported: boolean) => (
+        <s-stack gap="large">
+            <s-section heading={t("appearance.tabs.customizations")}>
+                {isThemeSupported ? (
                     <CustomizationsTab
                         initialCustomizations={customizations}
                         initialAppearanceMetafield={appearanceMetafield}
                         mediaFiles={mediaFiles}
                     />
                 ) : (
-                    <s-section>
-                        <s-stack gap="base">
-                            <s-banner tone="info">
-                                <s-text>
-                                    {t("appearance.legacy.customizationsNote")}
-                                </s-text>
-                            </s-banner>
-                            <ExternalButton
-                                variant="primary"
-                                href={customizeUrl}
-                            >
-                                {t("appearance.legacy.openEditor")}
-                            </ExternalButton>
-                        </s-stack>
-                    </s-section>
-                );
-            case "explorer":
-                return (
-                    <ExplorerTab
-                        initialExplorerSettings={explorerSettings}
-                        shopBrand={shopBrand}
-                        sdkLogoUrl={appearanceMetafield.logoUrl || ""}
-                        shopName={shopName}
-                        mediaFiles={mediaFiles}
-                    />
-                );
-            case "share-button":
-                return isThemeSupported ? (
+                    <s-stack gap="base">
+                        <s-banner tone="info">
+                            <s-text>
+                                {t("appearance.legacy.customizationsNote")}
+                            </s-text>
+                        </s-banner>
+                        <ExternalButton variant="primary" href={customizeUrl}>
+                            {t("appearance.legacy.openEditor")}
+                        </ExternalButton>
+                    </s-stack>
+                )}
+            </s-section>
+
+            <s-section heading={t("appearance.tabs.shareButton")}>
+                {isThemeSupported ? (
                     <ButtonTab
                         isThemeHasFrakButton={isThemeHasFrakButton}
                         firstProduct={firstProduct}
@@ -396,22 +375,35 @@ export default function AppearancePage() {
                         productTemplateUrl={productTemplateUrl}
                         customizeUrl={customizeUrl}
                     />
-                );
-            case "banner":
-                return isThemeSupported ? (
+                )}
+            </s-section>
+
+            <s-section heading={t("appearance.tabs.banner")}>
+                {isThemeSupported ? (
                     <BannerTab isThemeHasFrakBanner={isThemeHasFrakBanner} />
                 ) : (
                     <ManualBannerInstall
                         themeLiquidUrl={themeLiquidUrl}
                         customizeUrl={customizeUrl}
                     />
-                );
-            case "checkout-extension":
-                return <CheckoutExtensionTab />;
-            default:
-                return null;
-        }
-    };
+                )}
+            </s-section>
+
+            <s-section heading={t("appearance.tabs.checkoutExtension")}>
+                <CheckoutExtensionTab />
+            </s-section>
+        </s-stack>
+    );
+
+    const renderInFrakApp = () => (
+        <ExplorerTab
+            initialExplorerSettings={explorerSettings}
+            shopBrand={shopBrand}
+            sdkLogoUrl={appearanceMetafield.logoUrl || ""}
+            shopName={shopName}
+            mediaFiles={mediaFiles}
+        />
+    );
 
     return (
         <s-page heading={t("appearance.title")}>
@@ -422,11 +414,13 @@ export default function AppearancePage() {
                         const supported = isThemeSupported ?? true;
                         return (
                             <Tabs
-                                tabs={fullTabs}
+                                tabs={groupTabs}
                                 selected={selectedTab}
                                 onSelect={setSelectedTab}
                             >
-                                {renderTabContent(supported)}
+                                {groupTabs[selectedTab]?.id === "on-your-site"
+                                    ? renderOnYourSite(supported)
+                                    : renderInFrakApp()}
                             </Tabs>
                         );
                     }}

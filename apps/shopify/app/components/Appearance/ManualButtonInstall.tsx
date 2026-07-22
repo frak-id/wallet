@@ -22,40 +22,38 @@ export function ManualButtonInstall({
 }) {
     const { t } = useTranslation();
     return (
-        <s-section>
-            <s-stack gap="base">
-                <s-text>{t("appearance.manual.buttonDescription")}</s-text>
+        <s-stack gap="base">
+            <s-text>{t("appearance.manual.buttonDescription")}</s-text>
 
-                <CopyableSnippet snippet={BUTTON_TAG} />
+            <CopyableSnippet snippet={BUTTON_TAG} />
 
-                <s-text color="subdued">
-                    <Trans
-                        i18nKey="appearance.manual.classHint"
-                        components={{
-                            code: <code className={inlineCodeClass} />,
-                        }}
-                    />
-                </s-text>
-                <s-text color="subdued">
-                    <Trans
-                        i18nKey="appearance.manual.sectionHint"
-                        components={{
-                            code: <code className={inlineCodeClass} />,
-                        }}
-                    />
-                </s-text>
+            <s-text color="subdued">
+                <Trans
+                    i18nKey="appearance.manual.classHint"
+                    components={{
+                        code: <code className={inlineCodeClass} />,
+                    }}
+                />
+            </s-text>
+            <s-text color="subdued">
+                <Trans
+                    i18nKey="appearance.manual.sectionHint"
+                    components={{
+                        code: <code className={inlineCodeClass} />,
+                    }}
+                />
+            </s-text>
 
-                <ExternalLink href={productTemplateUrl}>
-                    {t("appearance.manual.editProductTemplate")}
+            <ExternalLink href={productTemplateUrl}>
+                {t("appearance.manual.editProductTemplate")}
+            </ExternalLink>
+
+            <s-stack gap="small-100" alignItems="start">
+                <s-text>{t("appearance.manual.customizeNote")}</s-text>
+                <ExternalLink href={customizeUrl}>
+                    {t("appearance.manual.openEditor")}
                 </ExternalLink>
-
-                <s-stack gap="small-100" alignItems="start">
-                    <s-text>{t("appearance.manual.customizeNote")}</s-text>
-                    <ExternalLink href={customizeUrl}>
-                        {t("appearance.manual.openEditor")}
-                    </ExternalLink>
-                </s-stack>
             </s-stack>
-        </s-section>
+        </s-stack>
     );
 }
