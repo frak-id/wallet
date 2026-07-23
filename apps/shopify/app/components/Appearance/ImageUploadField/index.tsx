@@ -4,7 +4,14 @@ import {
     imageValidationMessage,
     validateImageFile,
 } from "app/utils/imageValidation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useId,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 
@@ -46,6 +53,10 @@ export function ImageUploadField({
 
     const urlError =
         value && !isValidUrl(value) ? t("common.invalidUrl") : undefined;
+
+    // Preview the current image next to the field when it's a usable URL, so
+    // the merchant can confirm it without hunting through the phone preview.
+    const showThumbnail = !!value && isValidUrl(value);
 
     const isPending = mediaFetcher.state !== "idle";
 
@@ -127,14 +138,19 @@ export function ImageUploadField({
 
     return (
         <s-stack gap="small">
-            {/* The native `accessory` slot doesn't fire onClick in the App
-                Home embed, so the remove action is a sibling button.
-                Conditional columns keep the input full-width without one. */}
+            {/* `accessory` slot doesn't fire onClick in the App Home embed, so
+                remove is a sibling button; conditional columns keep the input
+                full-width and add a leading thumbnail column when set. */}
             <s-grid
-                gridTemplateColumns={value ? "1fr auto" : "1fr"}
+                gridTemplateColumns={
+                    showThumbnail ? "auto 1fr auto" : value ? "1fr auto" : "1fr"
+                }
                 gap="small"
                 alignItems="end"
             >
+                {showThumbnail && (
+                    <s-thumbnail src={value} alt={label} size="base" />
+                )}
                 <s-text-field
                     label={label}
                     placeholder={placeholder}
@@ -153,10 +169,11 @@ export function ImageUploadField({
                 )}
             </s-grid>
 
-            {/* @shopify/ui-extensions augments the same `s-drop-zone` tag
-                    without a `.files` getter, so the type collides with App
-                    Home's. Cast at the boundary — the runtime element is the
-                    App Home DropZone, which does expose `.files`. */}
+            {/* Cast at the boundary: @shopify/ui-extensions augments this tag
+                without `.files`, but the runtime element is App Home's
+                DropZone, which exposes it. Its built-in "Accepts .png, ..."
+                caption stays English (no caption/slot prop, Shadow DOM) — the
+                localized `<s-text>` sibling below carries that info instead. */}
             <s-drop-zone
                 label={t("appearance.upload.dropzoneLabel")}
                 accept={acceptAttr}
@@ -231,28 +248,47 @@ function ExistingFilePicker({
         });
     }, [mediaFiles, type, currentValue]);
 
+    // Anchored popover (not inline expand) so opening it doesn't shift the
+    // sections below. Open/close is declarative command/commandFor; each
+    // thumbnail also uses `command="--hide"` to close on pick, since the
+    // runtime polaris.js doesn't expose the typed `hideOverlay()` method.
+    const popoverId = useId();
+
     if (!pickableFiles.length) return null;
 
     return (
-        <s-stack gap="small">
-            <s-text>{t("common.useExistingImage")}</s-text>
-            <s-stack direction="inline" gap="small">
-                {pickableFiles.map((file) => (
-                    <s-clickable
-                        key={file.url}
-                        onClick={() => onPick(file.url)}
-                        accessibilityLabel={t("common.useImageOfType", {
-                            type: file.type,
-                        })}
-                    >
-                        <s-thumbnail
-                            src={file.url}
-                            alt={file.type}
-                            size="base"
-                        />
-                    </s-clickable>
-                ))}
-            </s-stack>
+        <s-stack direction="inline">
+            <s-button
+                variant="tertiary"
+                icon="chevron-down"
+                command="--toggle"
+                commandFor={popoverId}
+            >
+                {t("common.useExistingImage")}
+            </s-button>
+            <s-popover id={popoverId}>
+                <s-box padding="base">
+                    <s-stack direction="inline" gap="small">
+                        {pickableFiles.map((file) => (
+                            <s-clickable
+                                key={file.url}
+                                command="--hide"
+                                commandFor={popoverId}
+                                onClick={() => onPick(file.url)}
+                                accessibilityLabel={t("common.useImageOfType", {
+                                    type: file.type,
+                                })}
+                            >
+                                <s-thumbnail
+                                    src={file.url}
+                                    alt={file.type}
+                                    size="base"
+                                />
+                            </s-clickable>
+                        ))}
+                    </s-stack>
+                </s-box>
+            </s-popover>
         </s-stack>
     );
 }

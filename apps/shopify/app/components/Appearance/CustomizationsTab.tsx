@@ -161,7 +161,7 @@ export function CustomizationsTab({
                 <button
                     type="button"
                     variant="primary"
-                    loading={isSaving || undefined}
+                    loading={isSaving ? "" : undefined}
                     onClick={handleSave}
                 >
                     {t("customizations.save")}

@@ -109,6 +109,9 @@ export function MultiHeroImagesField({
                 </s-stack>
             )}
 
+            {/* `s-drop-zone`'s built-in "Accepts .png, ..." caption stays
+                English (no caption/slot prop, Shadow DOM) — the localized
+                `<s-text>` sibling below carries that info instead. */}
             <s-drop-zone
                 label={label}
                 accept={acceptAttr}

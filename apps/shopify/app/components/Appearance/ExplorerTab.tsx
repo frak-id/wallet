@@ -233,7 +233,7 @@ export function ExplorerTab({
                 <button
                     type="button"
                     variant="primary"
-                    loading={isSaving || undefined}
+                    loading={isSaving ? "" : undefined}
                     onClick={handleSave}
                 >
                     {t("appearance.explorer.save")}

@@ -12,7 +12,7 @@
         "invalidUrlToast": "Corrigez l'URL d'image invalide avant d'enregistrer.",
         "removeImage": "Supprimer l'image",
         "imageUploaded": "Image téléchargée",
-        "useExistingImage": "Utiliser une image existante :",
+        "useExistingImage": "Utiliser une image existante",
         "useImageOfType": "Utiliser l'image {{type}}",
         "discard": "Annuler"
     },
