@@ -66,17 +66,20 @@ export function CustomizationsTab({
         onDirtyChange?.(dirty);
     }, [dirty, onDirtyChange]);
 
+    // `hide()` rejects with "not found" when the bar isn't registered yet
+    // (async custom-element upgrade races the initial hide) or is already
+    // hidden — both benign, so swallow that rejection.
     useEffect(() => {
         if (dirty) {
             shopify.saveBar.show(saveBarId);
         } else {
-            shopify.saveBar.hide(saveBarId);
+            shopify.saveBar.hide(saveBarId).catch(() => {});
         }
     }, [dirty, saveBarId]);
 
     useEffect(() => {
         return () => {
-            shopify.saveBar.hide(saveBarId);
+            shopify.saveBar.hide(saveBarId).catch(() => {});
         };
     }, [saveBarId]);
 

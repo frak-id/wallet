@@ -104,12 +104,15 @@ export function ExplorerTab({
         onDirtyChange?.(dirty);
     }, [dirty, onDirtyChange]);
 
-    // Drive the native contextual Save Bar from local dirty state.
+    // Drive the native contextual Save Bar from local dirty state. `hide()`
+    // rejects with "not found" when the bar isn't registered yet (custom
+    // element upgrade is async, so the initial hide races mount) or is already
+    // hidden — both benign, so swallow that rejection.
     useEffect(() => {
         if (dirty) {
             shopify.saveBar.show(saveBarId);
         } else {
-            shopify.saveBar.hide(saveBarId);
+            shopify.saveBar.hide(saveBarId).catch(() => {});
         }
     }, [dirty, saveBarId]);
 
@@ -117,7 +120,7 @@ export function ExplorerTab({
     // from this tab).
     useEffect(() => {
         return () => {
-            shopify.saveBar.hide(saveBarId);
+            shopify.saveBar.hide(saveBarId).catch(() => {});
         };
     }, [saveBarId]);
 
