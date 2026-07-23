@@ -68,14 +68,17 @@ jobs:
               - 'example/**'
               - 'services/**'
               - 'infra/**'
+              - 'sst.config.ts'
             example:
               - 'example/**'
               - 'packages/**'
               - 'infra/**'
+              - 'sst.config.ts'
             apps:
               - 'apps/**'
               - 'packages/**'
               - 'infra/**'
+              - 'sst.config.ts'
             services:
               - 'apps/wallet/**'
               - 'apps/listener/**'
@@ -84,6 +87,7 @@ jobs:
               - 'services/**'
               - 'packages/**'
               - 'infra/**'
+              - 'sst.config.ts'
 
       - name: "🔨 Install dependencies"
         if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'

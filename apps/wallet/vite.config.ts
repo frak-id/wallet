@@ -248,13 +248,32 @@ function buildChunkGroups() {
 
 async function getDefineProps() {
     const sandboxEnv = await getSandboxEnv();
+    const backendUrl =
+        sandboxEnv.backendUrl ??
+        getSstResource("BACKEND_URL") ??
+        "https://backend.gcp-dev.frak.id";
+
+    // Fail loud instead of silently shipping the dev backend in a prod app.
+    // `sst shell` serves `BACKEND_URL` from the last *deployed* stage state, not
+    // from current code — so a stale/undeployed `prod` stage makes the resource
+    // resolve to `undefined` here and fall back to the dev default. The mobile
+    // release sets `FRAK_VARIANT=prod` directly (independent of SST), so use it
+    // as the authoritative prod-build signal: if we're building the prod app but
+    // the backend still points at a dev host, that's a broken release — abort.
+    if (
+        process.env.FRAK_VARIANT === "prod" &&
+        (backendUrl.includes("gcp-dev") || backendUrl.includes("-dev."))
+    ) {
+        throw new Error(
+            `[wallet build] FRAK_VARIANT=prod but BACKEND_URL resolved to "${backendUrl}". ` +
+                `The prod stage's SST_RESOURCE_BACKEND_URL is missing — run \`sst deploy --stage prod\` ` +
+                `to sync the BACKEND_URL linkable into the deployed state before building.`
+        );
+    }
+
     return {
         "process.env.STAGE": JSON.stringify(getSstResource("STAGE") ?? "dev"),
-        "process.env.BACKEND_URL": JSON.stringify(
-            sandboxEnv.backendUrl ??
-                getSstResource("BACKEND_URL") ??
-                "https://backend.gcp-dev.frak.id"
-        ),
+        "process.env.BACKEND_URL": JSON.stringify(backendUrl),
         "process.env.ERPC_URL": JSON.stringify(
             getSstResource("ERPC_URL") ??
                 "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/"
