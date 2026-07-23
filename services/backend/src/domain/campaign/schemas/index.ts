@@ -43,6 +43,7 @@ const RuleConditionValue = t.Union([
     t.Number(),
     t.Boolean(),
     t.Null(),
+    t.Array(t.Union([t.String(), t.Number(), t.Boolean()])),
 ]);
 
 export const RuleConditionSchema = t.Object({
@@ -117,7 +118,10 @@ const PercentageRewardDefinitionSchema = t.Object({
     type: AssetTypeSchema,
     amountType: t.Literal("percentage"),
     percent: t.Number(),
-    percentOf: t.Literal("purchase_amount"),
+    percentOf: t.Union([
+        t.Literal("purchase_amount"),
+        t.Literal("matched_items_amount"),
+    ]),
     maxAmount: t.Optional(t.Number()),
     minAmount: t.Optional(t.Number()),
     token: t.Optional(t.Hex()),
@@ -152,6 +156,13 @@ export type RewardDefinition = Static<typeof RewardDefinitionSchema>;
 export const CampaignRuleDefinitionSchema = t.Object({
     trigger: CampaignTriggerSchema,
     conditions: RuleConditionsSchema,
+    /**
+     * Optional per-item scope: the campaign only matches purchases with at
+     * least one line item satisfying these conditions (evaluated with the
+     * item, not the full context, as the root). Only meaningful for the
+     * `purchase` trigger. Absent = campaign behaves exactly as today.
+     */
+    productScope: t.Optional(RuleConditionsSchema),
     rewards: t.Array(RewardDefinitionSchema),
     pendingRewardExpirationDays: t.Optional(t.Number()),
     /**
@@ -168,6 +179,7 @@ export const CampaignRuleDefinitionSchema = t.Object({
 export type CampaignRuleDefinition = {
     trigger: CampaignTrigger;
     conditions: RuleConditions;
+    productScope?: RuleConditions;
     rewards: RewardDefinition[];
     pendingRewardExpirationDays?: number;
     defaultLockupSeconds?: number;
@@ -262,6 +274,7 @@ const EstimatedRewardItemSchema = t.Object({
     referrer: t.Optional(EstimatedRewardSchema),
     referee: t.Optional(EstimatedRewardSchema),
     conditions: RuleConditionsSchema,
+    productScope: t.Optional(RuleConditionsSchema),
     defaultLockupSeconds: t.Optional(t.Number()),
     pendingRewardExpirationDays: t.Optional(t.Number()),
     maxRewardsPerUser: t.Optional(t.Number()),
@@ -270,8 +283,8 @@ const EstimatedRewardItemSchema = t.Object({
 });
 export type EstimatedRewardItem = Omit<
     Static<typeof EstimatedRewardItemSchema>,
-    "conditions"
-> & { conditions: RuleConditions };
+    "conditions" | "productScope"
+> & { conditions: RuleConditions; productScope?: RuleConditions };
 
 export const EstimatedRewardsResultSchema = t.Object({
     rewards: t.Array(EstimatedRewardItemSchema),

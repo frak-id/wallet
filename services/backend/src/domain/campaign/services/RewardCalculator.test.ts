@@ -481,3 +481,298 @@ describe("RewardCalculator.calculateAll — tiered purchase.amount normalisation
         expect(calculated[0].amount).toBe(10);
     });
 });
+
+describe("RewardCalculator.calculateAll — matched_items_amount basis", () => {
+    const TOKEN = "0x0000000000000000000000000000000000000abc" as Address;
+
+    const purchaseWithMatch = (
+        amount: number,
+        matchedAmount: number | undefined
+    ): PurchaseContext => ({
+        orderId: "order-1",
+        amount,
+        currency: "usd",
+        items: [],
+        matchedAmount,
+    });
+
+    const percentageReward = (
+        overrides: Partial<PercentageRewardDefinition> = {}
+    ): RewardDefinition => ({
+        recipient: "referee",
+        type: "token",
+        amountType: "percentage",
+        percent: 10,
+        percentOf: "matched_items_amount",
+        token: TOKEN,
+        ...overrides,
+    });
+
+    beforeEach(() => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockReset();
+    });
+
+    it("pays on the matched subtotal, not the order total", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 5 }
+        );
+
+        const { calculated } = await calculator.calculateAll(
+            [percentageReward()],
+            {
+                ...baseContext,
+                purchase: purchaseWithMatch(1000, 50),
+            },
+            "campaign-1"
+        );
+
+        expect(pricingRepository.convertFiatToTokenAmount).toHaveBeenCalledWith(
+            expect.objectContaining({ fiatAmount: 5 })
+        );
+        expect(calculated[0].amount).toBe(5);
+    });
+
+    it("still applies min/max caps post-conversion", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 50 }
+        );
+
+        const { calculated } = await calculator.calculateAll(
+            [percentageReward({ maxAmount: 8 })],
+            {
+                ...baseContext,
+                purchase: purchaseWithMatch(1000, 50),
+            },
+            "campaign-1"
+        );
+
+        expect(calculated[0].amount).toBe(8);
+    });
+
+    it("errors (never defers) when matchedAmount is zero", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 0 }
+        );
+
+        const { calculated, errors, deferForUnpriceableReward } =
+            await calculator.calculateAll(
+                [percentageReward()],
+                {
+                    ...baseContext,
+                    purchase: purchaseWithMatch(1000, 0),
+                },
+                "campaign-1"
+            );
+
+        expect(deferForUnpriceableReward).toBe(false);
+        expect(calculated).toHaveLength(0);
+        expect(errors[0]).toContain("zero or negative");
+    });
+
+    it("errors (never defers) when matchedAmount is zero, even if the currency/token is unpriceable", async () => {
+        // Regression: a zero fiat base must short-circuit BEFORE the pricing
+        // call, not rely on convertFiatToTokenAmount happening to succeed. If
+        // the currency/token were genuinely unpriceable this would otherwise
+        // return `defer: true` for a purchase that will never resolve—the
+        // interaction would retry forever.
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: false, reason: "fx_rate_unavailable" }
+        );
+
+        const { calculated, errors, deferForUnpriceableReward } =
+            await calculator.calculateAll(
+                [percentageReward()],
+                {
+                    ...baseContext,
+                    purchase: purchaseWithMatch(1000, 0),
+                },
+                "campaign-1"
+            );
+
+        expect(deferForUnpriceableReward).toBe(false);
+        expect(calculated).toHaveLength(0);
+        expect(errors[0]).toContain("zero or negative");
+        expect(
+            pricingRepository.convertFiatToTokenAmount
+        ).not.toHaveBeenCalled();
+    });
+
+    it("errors (never defers) when matchedAmount is missing", async () => {
+        const { calculated, errors, deferForUnpriceableReward } =
+            await calculator.calculateAll(
+                [percentageReward()],
+                {
+                    ...baseContext,
+                    purchase: purchaseWithMatch(1000, undefined),
+                },
+                "campaign-1"
+            );
+
+        expect(deferForUnpriceableReward).toBe(false);
+        expect(calculated).toHaveLength(0);
+        expect(errors[0]).toContain("matchedAmount");
+        expect(
+            pricingRepository.convertFiatToTokenAmount
+        ).not.toHaveBeenCalled();
+    });
+
+    it("still defers on a genuine FX/token-price gap, not on the zero/missing path", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: false, reason: "fx_rate_unavailable" }
+        );
+
+        const { deferForUnpriceableReward } = await calculator.calculateAll(
+            [percentageReward()],
+            {
+                ...baseContext,
+                purchase: purchaseWithMatch(1000, 50),
+            },
+            "campaign-1"
+        );
+
+        expect(deferForUnpriceableReward).toBe(true);
+    });
+});
+
+describe("RewardCalculator.calculateAll — tiered purchase.matchedAmount normalisation", () => {
+    const TOKEN = "0x0000000000000000000000000000000000000abc" as Address;
+
+    const purchaseWithMatch = (
+        amount: number,
+        matchedAmount: number | undefined
+    ): PurchaseContext => ({
+        orderId: "order-1",
+        amount,
+        currency: "usd",
+        items: [],
+        matchedAmount,
+    });
+
+    const tieredReward = (
+        overrides: Partial<TieredRewardDefinition> = {}
+    ): RewardDefinition => ({
+        recipient: "referee",
+        type: "token",
+        amountType: "tiered",
+        tierField: "purchase.matchedAmount",
+        tiers: [
+            { minValue: 0, maxValue: 99, amount: 1 },
+            { minValue: 100, amount: 5 },
+        ],
+        token: TOKEN,
+        ...overrides,
+    });
+
+    beforeEach(() => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockReset();
+    });
+
+    it("resolves tiers against the matched basis, converted like purchase.amount", async () => {
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 120 }
+        );
+
+        const { calculated } = await calculator.calculateAll(
+            [tieredReward()],
+            {
+                ...baseContext,
+                purchase: purchaseWithMatch(1000, 150),
+            },
+            "campaign-1"
+        );
+
+        expect(pricingRepository.convertFiatToTokenAmount).toHaveBeenCalledWith(
+            expect.objectContaining({ fiatAmount: 150 })
+        );
+        expect(calculated[0].amount).toBe(5);
+    });
+
+    it("is a hard error (not a number) when matchedAmount is missing", async () => {
+        const { calculated, errors, deferForUnpriceableReward } =
+            await calculator.calculateAll(
+                [tieredReward()],
+                {
+                    ...baseContext,
+                    purchase: purchaseWithMatch(1000, undefined),
+                },
+                "campaign-1"
+            );
+
+        expect(deferForUnpriceableReward).toBe(false);
+        expect(calculated).toHaveLength(0);
+        expect(errors[0]).toContain("is not a number");
+    });
+
+    it("resolves the zero-matchedAmount tier without deferring, even if the currency/token is unpriceable", async () => {
+        // Regression: matchedAmount 0 must skip the pricing call entirely—
+        // 0 fiat converts linearly to 0 token, so there's nothing to price—
+        // rather than deferring forever if convertFiatToTokenAmount would have
+        // failed.
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: false, reason: "fx_rate_unavailable" }
+        );
+
+        const { calculated, deferForUnpriceableReward } =
+            await calculator.calculateAll(
+                [tieredReward()],
+                {
+                    ...baseContext,
+                    purchase: purchaseWithMatch(1000, 0),
+                },
+                "campaign-1"
+            );
+
+        expect(deferForUnpriceableReward).toBe(false);
+        expect(
+            pricingRepository.convertFiatToTokenAmount
+        ).not.toHaveBeenCalled();
+        // matchedAmount 0 falls into the { minValue: 0, maxValue: 99 } tier.
+        expect(calculated[0]?.amount).toBe(1);
+    });
+});
+
+describe("RewardCalculator — matchedAmount float rounding", () => {
+    it("roundAmount reconciles sub-cent float drift from summed line totals", async () => {
+        const TOKEN = "0x0000000000000000000000000000000000000abc" as Address;
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockReset();
+        vi.mocked(pricingRepository.convertFiatToTokenAmount).mockResolvedValue(
+            { converted: true, tokenAmount: 10 }
+        );
+
+        // Sum of 0.1 three times is 0.30000000000000004 in floating point —
+        // matchedAmount must already be rounded to 1e-6 by the caller (the
+        // engine), so the reward calculator sees a clean fiat base here.
+        const drifted = 0.1 + 0.1 + 0.1;
+        const rounded = Math.round(drifted * 1_000_000) / 1_000_000;
+        expect(rounded).toBe(0.3);
+
+        const { calculated } = await calculator.calculateAll(
+            [
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "percentage",
+                    percent: 10,
+                    percentOf: "matched_items_amount",
+                    token: TOKEN,
+                },
+            ],
+            {
+                ...baseContext,
+                purchase: {
+                    orderId: "order-1",
+                    amount: rounded,
+                    currency: "usd",
+                    items: [],
+                    matchedAmount: rounded,
+                },
+            },
+            "campaign-1"
+        );
+
+        expect(pricingRepository.convertFiatToTokenAmount).toHaveBeenCalledWith(
+            expect.objectContaining({ fiatAmount: 0.03 })
+        );
+        expect(calculated[0].amount).toBe(10);
+    });
+});

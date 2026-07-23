@@ -58,8 +58,39 @@ async function calculatePercentageReward(
         };
     }
 
+    let fiatBase: number;
+    if (reward.percentOf === "matched_items_amount") {
+        // A missing matchedAmount means the engine never ran the productScope
+        // gate (a validation/wiring bug) and a zero one is a legitimate
+        // all-excluded match — both are hard errors, never `defer`, or the
+        // interaction would retry forever waiting for an FX rate that has
+        // nothing to do with the actual problem.
+        if (context.purchase.matchedAmount === undefined) {
+            return {
+                success: false,
+                error: "matched_items_amount reward requires purchase.matchedAmount",
+            };
+        }
+        fiatBase = context.purchase.matchedAmount;
+    } else {
+        fiatBase = context.purchase.amount;
+    }
+
     // Order total is in fiat; convert to token units or a JPY/SEK order pays ~150x.
-    const fiatAmount = (context.purchase.amount * reward.percent) / 100;
+    const fiatAmount = (fiatBase * reward.percent) / 100;
+
+    // A zero/negative fiat base must hard-error here, before any pricing call.
+    // Otherwise an unpriceable currency/token turns a legitimate zero (e.g. a
+    // fully-excluded matched set) into `defer: true`, and the interaction
+    // retries forever waiting for an FX rate that has nothing to do with the
+    // actual (zero-amount) problem.
+    if (fiatAmount <= 0) {
+        return {
+            success: false,
+            error: "Calculated amount is zero or negative",
+        };
+    }
+
     const conversion = await pricingRepository.convertFiatToTokenAmount({
         token,
         fiatAmount,
@@ -97,6 +128,11 @@ async function calculatePercentageReward(
 // Tier definitions (minValue/maxValue/amount) are all denominated in the
 // reward token, while purchase.amount is fiat in the order's currency —
 // convert it on site or thresholds compare apples to yen.
+const FX_NORMALIZED_TIER_FIELDS = new Set([
+    "purchase.amount",
+    "purchase.matchedAmount",
+]);
+
 async function resolveTierValue(
     reward: TieredRewardDefinition,
     context: RuleContext,
@@ -104,7 +140,15 @@ async function resolveTierValue(
     merchantDefaultToken: Address | undefined,
     pricingRepository: PricingRepository
 ): Promise<{ value: number } | RewardCalculationResult> {
-    if (reward.tierField !== "purchase.amount" || !context.purchase) {
+    if (!FX_NORMALIZED_TIER_FIELDS.has(reward.tierField) || !context.purchase) {
+        return { value: rawValue };
+    }
+
+    // A zero (or negative) fiat basis converts linearly to zero token value —
+    // skip the pricing call entirely so an unpriceable currency/token can't
+    // turn this into an infinite-retry `defer`. Tier bucketing on `{value: 0}`
+    // is then handled the same way a non-FX-normalized rawValue of 0 would be.
+    if (rawValue <= 0) {
         return { value: rawValue };
     }
 
@@ -195,7 +239,7 @@ async function calculateTieredReward(
 
 const PERCENT_BASE = 100;
 
-function roundAmount(amount: number): number {
+export function roundAmount(amount: number): number {
     return Math.round(amount * 1_000_000) / 1_000_000;
 }
 

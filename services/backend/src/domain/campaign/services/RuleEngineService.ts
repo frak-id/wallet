@@ -9,10 +9,12 @@ import type {
     EvaluationResult,
     ReferralChainFetcher,
     ReferralChainMember,
+    RuleConditions,
     RuleContext,
     TimeContext,
 } from "../types";
 import type { RewardCalculator } from "./RewardCalculator";
+import { roundAmount } from "./RewardCalculator";
 import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 type EvaluateRulesParams = {
@@ -151,6 +153,46 @@ export class RuleEngineService {
         };
     }
 
+    // Evaluated with each item as the root object (`field: "productId"`, not
+    // `field: "purchase.items.productId"`). Returns the (possibly enriched)
+    // context when the scope is absent or at least one item matches, and
+    // `undefined` when a present scope matches no item (campaign shouldn't
+    // match — caller treats this as a `matched: false` result).
+    private applyProductScope(
+        productScope: RuleConditions | undefined,
+        context: RuleContext
+    ): RuleContext | undefined {
+        if (!productScope) return context;
+
+        const { purchase } = context;
+        const items = purchase?.items ?? [];
+        const matchedItems = items.filter((item) =>
+            this.conditionEvaluator.evaluateAgainst(productScope, item)
+        );
+
+        // A non-empty matchedItems implies items came from a defined
+        // purchase, but narrow explicitly rather than casting below so the
+        // compiler (not just the reachability argument) knows `purchase` is
+        // defined once we build the scoped context.
+        if (!purchase || matchedItems.length === 0) {
+            return undefined;
+        }
+
+        return {
+            ...context,
+            purchase: {
+                ...purchase,
+                matchedAmount: roundAmount(
+                    matchedItems.reduce((sum, item) => sum + item.totalPrice, 0)
+                ),
+                matchedQuantity: matchedItems.reduce(
+                    (sum, item) => sum + item.quantity,
+                    0
+                ),
+            },
+        };
+    }
+
     private async evaluateSingleCampaign(
         campaign: CampaignRuleSelect,
         context: RuleContext,
@@ -173,6 +215,24 @@ export class RuleEngineService {
         );
 
         if (!conditionsMatch) {
+            return {
+                matched: false,
+                rewards: [],
+                budgetExceeded: false,
+                errors: [],
+                deferForUnpriceableReward: false,
+            };
+        }
+
+        // productScope: the campaign only matches if at least one purchase
+        // line item satisfies the scope conditions. No purchase context (or
+        // no items) on a scoped campaign means it never matches — this also
+        // covers non-purchase triggers, which never carry items.
+        const scopedContext = this.applyProductScope(
+            campaign.rule.productScope,
+            context
+        );
+        if (!scopedContext) {
             return {
                 matched: false,
                 rewards: [],
@@ -253,7 +313,7 @@ export class RuleEngineService {
         const { calculated, errors, deferForUnpriceableReward, deferReason } =
             await this.rewardCalculator.calculateAll(
                 campaign.rule.rewards,
-                context,
+                scopedContext,
                 campaign.id,
                 referralChain,
                 campaign.rule.pendingRewardExpirationDays,

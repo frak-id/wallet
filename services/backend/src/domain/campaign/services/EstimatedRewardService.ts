@@ -90,6 +90,7 @@ export class EstimatedRewardService {
             referrer,
             referee,
             conditions: campaign.rule.conditions,
+            productScope: campaign.rule.productScope,
             defaultLockupSeconds: campaign.rule.defaultLockupSeconds,
             pendingRewardExpirationDays:
                 campaign.rule.pendingRewardExpirationDays,

@@ -5,9 +5,14 @@ import type {
     RuleContext,
 } from "../types";
 
+// Conditions are evaluated against either the full RuleContext (order-level
+// `conditions`) or a single purchase item (`productScope`) — both are plain
+// objects walked by the same dot-path logic, so the shared internals accept
+// `unknown` rather than binding to RuleContext's shape.
+
 type ConditionOrGroup = RuleCondition | ConditionGroup;
 
-function isConditionGroup(
+export function isConditionGroup(
     condition: ConditionOrGroup
 ): condition is ConditionGroup {
     return "logic" in condition && "conditions" in condition;
@@ -81,6 +86,40 @@ function evaluateArrayOperator(
     return operator === "in" ? includes : !includes;
 }
 
+// Arrays are only ever a valid operand for `in`/`not_in`. Order-level
+// `conditions` are not field-allowlisted like `productScope` is, and
+// `RuleConditionValue` accepts arrays, so a scalar/string/comparison operator
+// can receive one (a malformed rule-builder payload, a hand-crafted API call).
+// Silently letting it through would misbehave two different ways depending on
+// operator: `eq`/`neq` do a strict `===`/`!==` against an array, which is
+// always false/true; `gt`/`gte`/`lt`/`lte`/`between` fall through
+// `compareValues`'s `String()` coercion into a meaningless lexicographic
+// compare. Fail closed instead: any of these operators seeing an array
+// operand (in either `value` or `valueTo`) simply never matches.
+const ARRAY_INVALID_OPERATORS = new Set([
+    "eq",
+    "neq",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+    "between",
+    "contains",
+    "starts_with",
+    "ends_with",
+]);
+
+function hasInvalidArrayOperand(
+    operator: ConditionOperator,
+    conditionValue: unknown,
+    conditionValueTo: unknown
+): boolean {
+    return (
+        ARRAY_INVALID_OPERATORS.has(operator) &&
+        (Array.isArray(conditionValue) || Array.isArray(conditionValueTo))
+    );
+}
+
 function evaluateOperator(
     operator: ConditionOperator,
     fieldValue: unknown,
@@ -128,9 +167,19 @@ function evaluateOperator(
 
 function evaluateSingleCondition(
     condition: RuleCondition,
-    context: RuleContext
+    target: unknown
 ): boolean {
-    const fieldValue = getNestedValue(context, condition.field);
+    if (
+        hasInvalidArrayOperand(
+            condition.operator,
+            condition.value,
+            condition.valueTo
+        )
+    ) {
+        return false;
+    }
+
+    const fieldValue = getNestedValue(target, condition.field);
     return evaluateOperator(
         condition.operator,
         fieldValue,
@@ -141,12 +190,12 @@ function evaluateSingleCondition(
 
 function evaluateConditionGroup(
     group: ConditionGroup,
-    context: RuleContext
+    target: unknown
 ): boolean {
     const results = group.conditions.map((c) =>
         isConditionGroup(c)
-            ? evaluateConditionGroup(c, context)
-            : evaluateSingleCondition(c, context)
+            ? evaluateConditionGroup(c, target)
+            : evaluateSingleCondition(c, target)
     );
 
     if (group.logic === "all") return results.every(Boolean);
@@ -156,14 +205,26 @@ function evaluateConditionGroup(
 }
 
 export class RuleConditionEvaluator {
+    /**
+     * Evaluate a condition set against an arbitrary target object — the full
+     * `RuleContext` for order-level `conditions`, or a single purchase item
+     * for `productScope`.
+     */
+    evaluateAgainst(
+        conditions: RuleCondition[] | ConditionGroup,
+        target: unknown
+    ): boolean {
+        if (Array.isArray(conditions)) {
+            return conditions.every((c) => evaluateSingleCondition(c, target));
+        }
+        return evaluateConditionGroup(conditions, target);
+    }
+
     evaluate(
         conditions: RuleCondition[] | ConditionGroup,
         context: RuleContext
     ): boolean {
-        if (Array.isArray(conditions)) {
-            return conditions.every((c) => evaluateSingleCondition(c, context));
-        }
-        return evaluateConditionGroup(conditions, context);
+        return this.evaluateAgainst(conditions, context);
     }
 
     getFieldValue(context: RuleContext, field: string): unknown {
