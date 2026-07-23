@@ -115,6 +115,20 @@ intended behavior for margin protection. A universal-quantifier semantic ("the
 cart must contain none of X or the whole campaign is vetoed") is explicitly out of
 scope for v1.
 
+**Caveat for fixed/tiered rewards not using `matched_items_amount`:** negation
+gates the *trigger* on the matched (complement) set, but a flat `FIXED` reward
+(or a tiered reward keyed on something other than `purchase.matchedAmount`) pays
+its full amount whenever the campaign triggers — it has no concept of a
+partial/basis-scoped payout. So a `not_in [SKU_CHEAP]` scope on a cart
+`[SKU_CHEAP, SKU_NORMAL]` still triggers (the complement `[SKU_NORMAL]` is
+non-empty) and pays the **full** fixed reward, even though the cart contains the
+excluded SKU. Negation excludes items from the reward *basis*, not from the
+cart; it does not veto a cart that also contains a qualifying item. Merchants
+who want the cheap SKU to visibly reduce or zero out the payout should use
+`percentOf: "matched_items_amount"` (or `tierField: "purchase.matchedAmount"`),
+where the exclusion is reflected in the basis, not just a flat reward that
+ignores which items matched.
+
 Merchant expressiveness (reusing existing operators, matches "like other flow rules"):
 
 | Intent | Condition |
