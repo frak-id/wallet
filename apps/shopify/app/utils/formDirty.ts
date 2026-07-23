@@ -5,6 +5,15 @@
  */
 import { isValidUrl } from "@frak-labs/app-essentials";
 
+/**
+ * Imperative handle exposed by the deferred-save appearance tabs so the
+ * route can pull dirty state at tab-switch time instead of having each tab
+ * push it up via an effect (only one tab is ever mounted at a time).
+ */
+export type AppearanceFormHandle = {
+    isDirty: () => boolean;
+};
+
 export type ExplorerFormState = {
     enabled: boolean;
     logoUrl: string;

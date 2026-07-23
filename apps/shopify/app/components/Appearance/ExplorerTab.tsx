@@ -4,11 +4,16 @@ import type {
     ExplorerSettings,
     MediaFile,
 } from "app/services.server/backendMerchant";
-import { isExplorerFormDirty, validateExplorerSave } from "app/utils/formDirty";
+import {
+    type AppearanceFormHandle,
+    isExplorerFormDirty,
+    validateExplorerSave,
+} from "app/utils/formDirty";
 import {
     useCallback,
     useEffect,
     useId,
+    useImperativeHandle,
     useMemo,
     useRef,
     useState,
@@ -23,14 +28,14 @@ type ExplorerTabProps = {
     initialExplorerSettings: ExplorerSettings | null;
     shopName: string;
     mediaFiles?: MediaFile[];
-    onDirtyChange?: (dirty: boolean) => void;
+    ref?: React.Ref<AppearanceFormHandle>;
 };
 
 export function ExplorerTab({
     initialExplorerSettings,
     shopName,
     mediaFiles,
-    onDirtyChange,
+    ref,
 }: ExplorerTabProps) {
     const fetcher = useFetcher<typeof action>();
     const { t } = useTranslation();
@@ -100,9 +105,7 @@ export function ExplorerTab({
 
     const dirty = isExplorerFormDirty(pending, saved);
 
-    useEffect(() => {
-        onDirtyChange?.(dirty);
-    }, [dirty, onDirtyChange]);
+    useImperativeHandle(ref, () => ({ isDirty: () => dirty }), [dirty]);
 
     // Drive the native contextual Save Bar from local dirty state. `hide()`
     // rejects with "not found" when the bar isn't registered yet (custom

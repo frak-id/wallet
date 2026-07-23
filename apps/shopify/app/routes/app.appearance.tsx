@@ -33,9 +33,10 @@ import {
     getMainThemeId,
 } from "app/services.server/theme";
 import { authenticate } from "app/shopify.server";
+import type { AppearanceFormHandle } from "app/utils/formDirty";
 import { urlToMediaType } from "app/utils/mediaUrl";
 import { buildBusinessDashboardUrl } from "app/utils/url";
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Await, data, useLoaderData, useRouteLoaderData } from "react-router";
@@ -413,28 +414,23 @@ export default function AppearancePage() {
 
     // Both forms defer save via the native Save Bar, but they sit behind this
     // local tab switch rather than a route change, so App Bridge's
-    // leave-confirmation (navigation-only) never fires here. Track each form's
-    // dirty state and block the tab switch while either is dirty.
-    const [isCustomizationsDirty, setIsCustomizationsDirty] = useState(false);
-    const [isExplorerDirty, setIsExplorerDirty] = useState(false);
-    const isAnyFormDirty = isCustomizationsDirty || isExplorerDirty;
+    // leave-confirmation (navigation-only) never fires here. Only one form is
+    // ever mounted at a time, so a single ref to the active form is enough —
+    // dirty state is pulled at switch time rather than pushed on every change.
+    const activeFormRef = useRef<AppearanceFormHandle>(null);
 
     const handleTabSelect = async (index: number) => {
         // Native leave-confirmation for the active save bar — window.confirm
         // is unreliable inside the embedded admin iframe (Chrome can suppress
         // it). Resolves when it's safe to leave (nothing dirty, or the
         // merchant discarded); rejects when they choose to stay.
-        if (isAnyFormDirty) {
+        if (activeFormRef.current?.isDirty()) {
             try {
                 await shopify.saveBar.leaveConfirmation();
             } catch {
                 return;
             }
         }
-        // The leaving form unmounts without re-reporting its dirty state, so
-        // clear both flags here; the newly shown form re-reports on mount.
-        setIsCustomizationsDirty(false);
-        setIsExplorerDirty(false);
         setSelectedTab(index);
     };
 
@@ -464,7 +460,7 @@ export default function AppearancePage() {
                         initialCustomizations={customizations}
                         initialAppearanceMetafield={appearanceMetafield}
                         mediaFiles={mediaFiles}
-                        onDirtyChange={setIsCustomizationsDirty}
+                        ref={activeFormRef}
                     />
                 ) : (
                     <s-stack gap="base">
@@ -516,7 +512,7 @@ export default function AppearancePage() {
             initialExplorerSettings={explorerSettings}
             shopName={shopName}
             mediaFiles={mediaFiles}
-            onDirtyChange={setIsExplorerDirty}
+            ref={activeFormRef}
         />
     );
 

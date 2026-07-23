@@ -5,11 +5,15 @@ import type {
     AppearanceMetafieldValue,
     I18nCustomizations,
 } from "app/services.server/metafields";
-import { isCustomizationsFormDirty } from "app/utils/formDirty";
+import {
+    type AppearanceFormHandle,
+    isCustomizationsFormDirty,
+} from "app/utils/formDirty";
 import {
     useCallback,
     useEffect,
     useId,
+    useImperativeHandle,
     useMemo,
     useRef,
     useState,
@@ -22,14 +26,14 @@ interface CustomizationsTabProps {
     initialCustomizations: I18nCustomizations;
     initialAppearanceMetafield: AppearanceMetafieldValue;
     mediaFiles?: MediaFile[];
-    onDirtyChange?: (dirty: boolean) => void;
+    ref?: React.Ref<AppearanceFormHandle>;
 }
 
 export function CustomizationsTab({
     initialCustomizations,
     initialAppearanceMetafield,
     mediaFiles,
-    onDirtyChange,
+    ref,
 }: CustomizationsTabProps) {
     const fetcher = useFetcher<typeof action>();
     const { t } = useTranslation();
@@ -62,9 +66,7 @@ export function CustomizationsTab({
     const isSaving = fetcher.state !== "idle";
     const dirty = isCustomizationsFormDirty(logoUrl, savedLogoUrl);
 
-    useEffect(() => {
-        onDirtyChange?.(dirty);
-    }, [dirty, onDirtyChange]);
+    useImperativeHandle(ref, () => ({ isDirty: () => dirty }), [dirty]);
 
     // `hide()` rejects with "not found" when the bar isn't registered yet
     // (async custom-element upgrade races the initial hide) or is already
