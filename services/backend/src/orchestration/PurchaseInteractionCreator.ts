@@ -14,6 +14,7 @@ type PurchaseInteractionParams = {
         name: string;
         quantity: number;
         price: string;
+        sku?: string | null;
     }[];
     identityGroupId: string;
     merchantId: string;
@@ -58,6 +59,7 @@ export class PurchaseInteractionCreator {
                 quantity: item.quantity,
                 unitPrice: Number(item.price),
                 totalPrice: Number(item.price) * item.quantity,
+                sku: item.sku ?? undefined,
             })),
             purchaseId: params.purchaseId,
         };

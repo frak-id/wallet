@@ -121,6 +121,7 @@ export const shopifyWebhook = new Elysia()
                         name: item.name,
                         title: item.title,
                         quantity: item.quantity,
+                        sku: item.sku,
                     })),
                     merchantId: resolved.merchantId,
                     clientId: frakClientId,

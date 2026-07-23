@@ -68,6 +68,7 @@ export const customWebhook = new Elysia()
                             title: item.title,
                             quantity: item.quantity,
                             imageUrl: item.image,
+                            sku: item.sku,
                         })) ?? [],
                     merchantId: resolved.merchantId,
                 }
