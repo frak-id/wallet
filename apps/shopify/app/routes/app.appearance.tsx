@@ -26,13 +26,14 @@ import {
     updateAppearanceMetafield,
     updateI18nCustomizations,
 } from "app/services.server/metafields";
-import { firstProductPublished, shopBrandInfo } from "app/services.server/shop";
+import { firstProductPublished } from "app/services.server/shop";
 import {
     doesThemeHasFrakBanner,
     doesThemeHasFrakButton,
     getMainThemeId,
 } from "app/services.server/theme";
 import { authenticate } from "app/shopify.server";
+import { urlToMediaType } from "app/utils/mediaUrl";
 import { buildBusinessDashboardUrl } from "app/utils/url";
 import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,7 +53,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         firstProduct,
         theme,
         explorerSettings,
-        shopBrand,
         mediaFiles,
     ] = await Promise.all([
         getI18nCustomizations(context).catch((e): I18nCustomizations => {
@@ -95,10 +95,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             );
             return null;
         }),
-        shopBrandInfo(context).catch((e) => {
-            log.error({ err: e }, "appearance loader: shop brand info failed");
-            return { description: null, logoUrl: null, coverImageUrl: null };
-        }),
         listMerchantMedia(context, request).catch((e) => {
             log.error({ err: e }, "appearance loader: media list failed");
             return [];
@@ -113,7 +109,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         firstProduct,
         themeId: theme.id,
         explorerSettings,
-        shopBrand,
         mediaFiles,
     });
 };
@@ -139,20 +134,27 @@ async function handleMediaUpload(
     return data(result, { status: result.success ? 200 : 400 });
 }
 
-async function handleMediaDelete(
-    context: Awaited<ReturnType<typeof authenticate.admin>>,
-    request: Request,
-    formData: FormData
-) {
-    const type = formData.get("type") as string;
-    if (!type) {
-        return data(
-            { success: false, message: "Missing type" },
-            { status: 400 }
-        );
+// Deletion replay must skip any media type still referenced by the settings
+// being saved — e.g. the main hero field and a hero-extra can share the same
+// file, so removing the extra must not delete it. The logo is a single shared
+// file used by both the Explorer and Customizations forms, and a per-form save
+// can't see the other form's state, so it is never auto-deleted (worst case: a
+// benign orphan on replacement).
+const SHARED_MEDIA_TYPES = ["logo"];
+
+function stillReferencedTypes(settings: ExplorerSettings): Set<string> {
+    const referenced = new Set<string>(SHARED_MEDIA_TYPES);
+    for (const url of [settings.logoUrl, settings.heroImageUrl].filter(
+        Boolean
+    )) {
+        const type = urlToMediaType(url);
+        if (type) referenced.add(type);
     }
-    const result = await deleteMerchantMedia(context, request, type);
-    return data(result, { status: result.success ? 200 : 400 });
+    for (const url of settings.heroImageUrls) {
+        const type = urlToMediaType(url);
+        if (type) referenced.add(type);
+    }
+    return referenced;
 }
 
 async function handleSaveExplorer(
@@ -172,12 +174,33 @@ async function handleSaveExplorer(
         const settings: ExplorerSettings = JSON.parse(
             explorerSettingsData as string
         );
+
+        // Commit the listing first; only replay deferred deletions once the
+        // new references are persisted, so a listing-save failure can't leave
+        // a still-referenced file already deleted (worst case is a benign
+        // orphan, the same class as the accepted upload-then-discard orphan).
         const result = await updateMerchantExplorerSettings(
             context,
             request,
             settings
         );
-        return data(result, { status: result.success ? 200 : 400 });
+        if (!result.success) {
+            return data(result, { status: 400 });
+        }
+
+        // Leave pending state intact on any replay failure so the merchant can
+        // retry rather than losing the unsaved changes (Risks: partial failure).
+        const replayResult = await replayFormDeletions(
+            context,
+            request,
+            formData,
+            stillReferencedTypes(settings)
+        );
+        if (!replayResult.success) {
+            return data(replayResult, { status: 500 });
+        }
+
+        return data(result, { status: 200 });
     } catch (error) {
         log.error({ err: error }, "Error saving explorer settings");
         return data(
@@ -190,29 +213,69 @@ async function handleSaveExplorer(
     }
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-    const context = await authenticate.admin(request);
-    const formData = await request.formData();
-    const intent = formData.get("intent");
-
-    if (intent === "uploadMedia") {
-        return handleMediaUpload(context, request, formData);
+async function replayDeferredDeletions(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    deletedTypes: string[],
+    stillReferenced: Set<string>
+): Promise<{ success: true } | { success: false; message: string }> {
+    for (const type of deletedTypes) {
+        if (stillReferenced.has(type)) continue;
+        const deleteResult = await deleteMerchantMedia(context, request, type);
+        if (!deleteResult.success) {
+            log.error({ type }, "Failed to replay deferred media deletion");
+            return {
+                success: false,
+                message: "Failed to remove one or more images",
+            };
+        }
     }
+    return { success: true };
+}
 
-    if (intent === "deleteMedia") {
-        return handleMediaDelete(context, request, formData);
+// Replay any deferred deletions recorded on the form, skipping types still
+// referenced by the just-saved state. No-op when the form carried none.
+async function replayFormDeletions(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    formData: FormData,
+    stillReferenced: Set<string>
+): Promise<{ success: true } | { success: false; message: string }> {
+    const deletedMediaTypesData = formData.get("deletedMediaTypes");
+    if (!deletedMediaTypesData) {
+        return { success: true };
     }
-    if (intent === "saveExplorer") {
-        return handleSaveExplorer(context, request, formData);
-    }
+    const deletedTypes: string[] = JSON.parse(deletedMediaTypesData as string);
+    return replayDeferredDeletions(
+        context,
+        request,
+        deletedTypes,
+        stillReferenced
+    );
+}
 
-    if (intent !== "save") {
-        return data(
-            { success: false, message: "Invalid action" },
-            { status: 400 }
-        );
+// The customizations form only manages the logo, so the sole still-referenced
+// type is whatever the saved metafield logo URL resolves to (if any).
+function customizationsStillReferenced(
+    appearanceMetafieldData: FormDataEntryValue | null
+): Set<string> {
+    const referenced = new Set<string>(SHARED_MEDIA_TYPES);
+    if (!appearanceMetafieldData) {
+        return referenced;
     }
+    const preview: AppearanceMetafieldValue = JSON.parse(
+        appearanceMetafieldData as string
+    );
+    const type = preview.logoUrl ? urlToMediaType(preview.logoUrl) : null;
+    if (type) referenced.add(type);
+    return referenced;
+}
 
+async function handleSaveCustomizations(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    formData: FormData
+) {
     try {
         const customizationsData = formData.get("customizations");
         const appearanceMetafieldData = formData.get("appearanceMetafield");
@@ -260,6 +323,18 @@ export async function action({ request }: ActionFunctionArgs) {
         }
 
         if (success) {
+            // Replay deferred deletions only after the metafield commit
+            // succeeded, so a failed save can't leave a still-referenced file
+            // already deleted (worst case: benign orphan).
+            const replayResult = await replayFormDeletions(
+                context,
+                request,
+                formData,
+                customizationsStillReferenced(appearanceMetafieldData)
+            );
+            if (!replayResult.success) {
+                return data(replayResult, { status: 500 });
+            }
             return data({
                 success: true,
                 message: "Customizations saved successfully!",
@@ -285,6 +360,25 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 }
 
+export async function action({ request }: ActionFunctionArgs) {
+    const context = await authenticate.admin(request);
+    const formData = await request.formData();
+    const intent = formData.get("intent");
+
+    if (intent === "uploadMedia") {
+        return handleMediaUpload(context, request, formData);
+    }
+
+    if (intent === "saveExplorer") {
+        return handleSaveExplorer(context, request, formData);
+    }
+    if (intent === "save") {
+        return handleSaveCustomizations(context, request, formData);
+    }
+
+    return data({ success: false, message: "Invalid action" }, { status: 400 });
+}
+
 export default function AppearancePage() {
     const {
         customizations,
@@ -293,7 +387,6 @@ export default function AppearancePage() {
         isThemeHasFrakBanner,
         firstProduct,
         explorerSettings,
-        shopBrand,
         mediaFiles,
     } = useLoaderData<typeof loader>();
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
@@ -323,6 +416,33 @@ export default function AppearancePage() {
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
 
+    // Both forms defer save via the native Save Bar, but they sit behind this
+    // local tab switch rather than a route change, so App Bridge's
+    // leave-confirmation (navigation-only) never fires here. Track each form's
+    // dirty state and block the tab switch while either is dirty.
+    const [isCustomizationsDirty, setIsCustomizationsDirty] = useState(false);
+    const [isExplorerDirty, setIsExplorerDirty] = useState(false);
+    const isAnyFormDirty = isCustomizationsDirty || isExplorerDirty;
+
+    const handleTabSelect = async (index: number) => {
+        // Native leave-confirmation for the active save bar — window.confirm
+        // is unreliable inside the embedded admin iframe (Chrome can suppress
+        // it). Resolves when it's safe to leave (nothing dirty, or the
+        // merchant discarded); rejects when they choose to stay.
+        if (isAnyFormDirty) {
+            try {
+                await shopify.saveBar.leaveConfirmation();
+            } catch {
+                return;
+            }
+        }
+        // The leaving form unmounts without re-reporting its dirty state, so
+        // clear both flags here; the newly shown form re-reports on mount.
+        setIsCustomizationsDirty(false);
+        setIsExplorerDirty(false);
+        setSelectedTab(index);
+    };
+
     // Two conceptual buckets: what shows up on the merchant's storefront
     // (button, banner, checkout extension, and the text shown to shoppers in
     // Frak modals), vs. what lives in the Frak app itself (the Explorer
@@ -349,6 +469,7 @@ export default function AppearancePage() {
                         initialCustomizations={customizations}
                         initialAppearanceMetafield={appearanceMetafield}
                         mediaFiles={mediaFiles}
+                        onDirtyChange={setIsCustomizationsDirty}
                     />
                 ) : (
                     <s-stack gap="base">
@@ -398,10 +519,9 @@ export default function AppearancePage() {
     const renderInFrakApp = () => (
         <ExplorerTab
             initialExplorerSettings={explorerSettings}
-            shopBrand={shopBrand}
-            sdkLogoUrl={appearanceMetafield.logoUrl || ""}
             shopName={shopName}
             mediaFiles={mediaFiles}
+            onDirtyChange={setIsExplorerDirty}
         />
     );
 
@@ -416,7 +536,7 @@ export default function AppearancePage() {
                             <Tabs
                                 tabs={groupTabs}
                                 selected={selectedTab}
-                                onSelect={setSelectedTab}
+                                onSelect={handleTabSelect}
                             >
                                 {groupTabs[selectedTab]?.id === "on-your-site"
                                     ? renderOnYourSite(supported)
