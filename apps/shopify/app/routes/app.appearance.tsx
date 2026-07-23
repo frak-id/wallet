@@ -188,17 +188,12 @@ async function handleSaveExplorer(
             return data(result, { status: 400 });
         }
 
-        // Leave pending state intact on any replay failure so the merchant can
-        // retry rather than losing the unsaved changes (Risks: partial failure).
-        const replayResult = await replayFormDeletions(
+        await replayFormDeletions(
             context,
             request,
             formData,
             stillReferencedTypes(settings)
         );
-        if (!replayResult.success) {
-            return data(replayResult, { status: 500 });
-        }
 
         return data(result, { status: 200 });
     } catch (error) {
@@ -213,24 +208,27 @@ async function handleSaveExplorer(
     }
 }
 
+// Best-effort: the listing/metafield save has already committed by the time
+// this runs, so a removed image is no longer referenced. A failed storage
+// delete therefore only leaves a benign orphan (unreferenced file) — not worth
+// failing the whole save and blocking the merchant behind an error toast. Log
+// and continue.
 async function replayDeferredDeletions(
     context: Awaited<ReturnType<typeof authenticate.admin>>,
     request: Request,
     deletedTypes: string[],
     stillReferenced: Set<string>
-): Promise<{ success: true } | { success: false; message: string }> {
+): Promise<void> {
     for (const type of deletedTypes) {
         if (stillReferenced.has(type)) continue;
         const deleteResult = await deleteMerchantMedia(context, request, type);
         if (!deleteResult.success) {
-            log.error({ type }, "Failed to replay deferred media deletion");
-            return {
-                success: false,
-                message: "Failed to remove one or more images",
-            };
+            log.warn(
+                { type },
+                "Deferred media deletion failed; leaving orphaned file"
+            );
         }
     }
-    return { success: true };
 }
 
 // Replay any deferred deletions recorded on the form, skipping types still
@@ -240,13 +238,13 @@ async function replayFormDeletions(
     request: Request,
     formData: FormData,
     stillReferenced: Set<string>
-): Promise<{ success: true } | { success: false; message: string }> {
+): Promise<void> {
     const deletedMediaTypesData = formData.get("deletedMediaTypes");
     if (!deletedMediaTypesData) {
-        return { success: true };
+        return;
     }
     const deletedTypes: string[] = JSON.parse(deletedMediaTypesData as string);
-    return replayDeferredDeletions(
+    await replayDeferredDeletions(
         context,
         request,
         deletedTypes,
@@ -326,15 +324,12 @@ async function handleSaveCustomizations(
             // Replay deferred deletions only after the metafield commit
             // succeeded, so a failed save can't leave a still-referenced file
             // already deleted (worst case: benign orphan).
-            const replayResult = await replayFormDeletions(
+            await replayFormDeletions(
                 context,
                 request,
                 formData,
                 customizationsStillReferenced(appearanceMetafieldData)
             );
-            if (!replayResult.success) {
-                return data(replayResult, { status: 500 });
-            }
             return data({
                 success: true,
                 message: "Customizations saved successfully!",
