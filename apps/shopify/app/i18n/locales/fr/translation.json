@@ -8,7 +8,13 @@
         "getStarted": "Commencer la configuration de l'application",
         "dashboardDataUnavailableTitle": "Les donnees du tableau de bord sont temporairement indisponibles.",
         "dashboardDataUnavailableDescription": "Veuillez actualiser la page dans quelques secondes.",
-        "invalidUrl": "Veuillez saisir une URL valide."
+        "invalidUrl": "Veuillez saisir une URL valide.",
+        "invalidUrlToast": "Corrigez l'URL d'image invalide avant d'enregistrer.",
+        "removeImage": "Supprimer l'image",
+        "imageUploaded": "Image téléchargée",
+        "useExistingImage": "Utiliser une image existante :",
+        "useImageOfType": "Utiliser l'image {{type}}",
+        "discard": "Annuler"
     },
     "navigation": {
         "campaigns": "Campagnes",
@@ -391,6 +397,19 @@
             "onYourSite": "Sur votre site",
             "inFrakApp": "Dans l'app Frak"
         },
+        "upload": {
+            "dropzoneLabel": "Télécharger une image",
+            "restrictions": {
+                "logo": "Min 128×128px — Ratio 1:2 à 2:1 — Max 4 Mo",
+                "hero": "Min 800×450px — Ratio 4:3 à 2:1 — Max 4 Mo"
+            },
+            "failed": "Échec du téléchargement. Veuillez réessayer.",
+            "failedLarge": "Échec du téléchargement. L'image est peut-être trop volumineuse ou la connexion a été interrompue.",
+            "validation": {
+                "unsupportedType": "{{fileName}} n'est pas un format d'image pris en charge (PNG, JPEG, WebP, SVG, GIF).",
+                "tooLarge": "{{fileName}} fait {{size}} Mo — les images doivent rester sous {{max}} Mo."
+            }
+        },
         "shareButton": {
             "link": "Configurer le bouton dans votre page produit",
             "noProduct": "Vous devez ajouter un produit à votre boutique pour ajouter le bouton de partage",
@@ -414,10 +433,12 @@
             "enabledHint": "Rendez votre boutique visible dans l'application Frak.",
             "previewDisabledLabel": "Non référencé",
             "previewDisabledHint": "Activer l'Explorer",
-            "invalidUrlToast": "Corrigez l'URL d'image invalide avant d'enregistrer.",
             "logoLabel": "URL du logo",
             "heroLabel": "URL de l'image de couverture",
             "heroExtrasLabel": "Images de couverture supplémentaires",
+            "heroExtraAlt": "Image de couverture supplémentaire",
+            "heroExtrasRestrictions": "Min 800×450px — Ratio 4:3 à 2:1 — Max 4 Mo ({{current}}/{{max}})",
+            "heroExtrasLimitReached": "Maximum de 4 images de couverture supplémentaires atteint. Supprimez-en une pour en ajouter une autre.",
             "descriptionLabel": "Description de la boutique",
             "descriptionPlaceholder": "Décrivez votre boutique pour le Frak Explorer...",
             "save": "Enregistrer"

@@ -8,7 +8,13 @@
         "getStarted": "Start application setup",
         "dashboardDataUnavailableTitle": "Dashboard data is temporarily unavailable.",
         "dashboardDataUnavailableDescription": "Please refresh the page in a few seconds.",
-        "invalidUrl": "Please enter a valid URL."
+        "invalidUrl": "Please enter a valid URL.",
+        "invalidUrlToast": "Fix the invalid image URL before saving.",
+        "removeImage": "Remove image",
+        "imageUploaded": "Image uploaded",
+        "useExistingImage": "Use an existing image:",
+        "useImageOfType": "Use {{type}} image",
+        "discard": "Discard"
     },
     "navigation": {
         "campaigns": "Campaigns",
@@ -390,6 +396,19 @@
             "onYourSite": "On your site",
             "inFrakApp": "In the Frak app"
         },
+        "upload": {
+            "dropzoneLabel": "Upload image",
+            "restrictions": {
+                "logo": "Min 128×128px — Ratio 1:2 to 2:1 — Max 4MB",
+                "hero": "Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB"
+            },
+            "failed": "Upload failed. Please try again.",
+            "failedLarge": "Upload failed. The image may be too large or the network was interrupted.",
+            "validation": {
+                "unsupportedType": "{{fileName}} is not a supported image format (PNG, JPEG, WebP, SVG, GIF).",
+                "tooLarge": "{{fileName}} is {{size}} MB — images must stay under {{max}} MB."
+            }
+        },
         "shareButton": {
             "link": "Configure button in your product page",
             "noProduct": "You need to add a product to your store to add the sharing button",
@@ -413,10 +432,12 @@
             "enabledHint": "Make your store discoverable in the Frak app.",
             "previewDisabledLabel": "Not listed",
             "previewDisabledHint": "Enable the Explorer",
-            "invalidUrlToast": "Fix the invalid image URL before saving.",
             "logoLabel": "Logo URL",
             "heroLabel": "Hero image URL",
             "heroExtrasLabel": "Additional hero images",
+            "heroExtraAlt": "Additional hero image",
+            "heroExtrasRestrictions": "Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB ({{current}}/{{max}})",
+            "heroExtrasLimitReached": "Maximum of 4 additional hero images reached. Remove one to add another.",
             "descriptionLabel": "Store description",
             "descriptionPlaceholder": "Describe your store for the Frak Explorer...",
             "save": "Save"
