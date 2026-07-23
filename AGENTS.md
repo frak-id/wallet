@@ -37,7 +37,7 @@ bun run deploy / deploy:prod         # AWS SST · bun run deploy-gcp:{staging,pr
 
 - **Service worker gate**: `apps/wallet` requires `bun run build:sw` BEFORE `dev`/`build` — silent load failure otherwise.
 - **Wallet `@/*` dual resolution**: resolves to both `./app/*` AND `../../packages/design-system/src/*` (tsconfig).
-- **Vanilla Extract migration (in-progress)**: new wallet styles → `.css.ts` + `Box` sprinkles; old `.module.css` is legacy.
+- **Vanilla Extract everywhere**: all styles use `.css.ts` (`style()`/`keyframes()`) + `Box` sprinkles. No CSS Modules remain — do not add `.module.css`.
 - **No `globalStyle` (monorepo-wide)**: prefer scoped `style()` classes. To style a child/variant, put the same class on both elements (or add a dedicated class) instead of a `${parent} *` descendant selector.
 - **`wallet-shared` scope rule**: imports FORBIDDEN in `business`/`backend`/`shopify`. Wallet+listener only.
 - **Orchestration rule (backend)**: `service → service` and `service → orchestrator` FORBIDDEN. Cross-domain logic lives only in `src/orchestration/`. Access singletons via `{Domain}Context.services.*`, never `new Service()`.

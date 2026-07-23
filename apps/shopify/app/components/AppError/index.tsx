@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import styles from "./AppError.module.css";
+import * as styles from "./AppError.css";
 
 /**
  * Extract a short, safe message plus an optional verbose detail (stack) from an

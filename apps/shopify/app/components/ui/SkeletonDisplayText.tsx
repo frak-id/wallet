@@ -1,6 +1,6 @@
 import type React from "react";
-import styles from "./SkeletonDisplayText.module.css";
-import skeletonStyles from "./skeleton.module.css";
+import * as styles from "./SkeletonDisplayText.css";
+import * as skeletonStyles from "./skeleton.css";
 
 const sizeMap = {
     small: 20,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import styles from "./CopyableSnippet.module.css";
+import * as styles from "./CopyableSnippet.css";
 
 /**
  * A read-only code block with a copy-to-clipboard button. The embedded admin

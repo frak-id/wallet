@@ -1,6 +1,6 @@
 import type React from "react";
-import styles from "./SkeletonPage.module.css";
-import skeletonStyles from "./skeleton.module.css";
+import * as styles from "./SkeletonPage.css";
+import * as skeletonStyles from "./skeleton.css";
 
 export function SkeletonPage({
     children,

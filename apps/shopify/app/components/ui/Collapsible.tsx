@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import styles from "./Collapsible.module.css";
+import * as styles from "./Collapsible.css";
 
 interface CollapsibleProps {
     open: boolean;

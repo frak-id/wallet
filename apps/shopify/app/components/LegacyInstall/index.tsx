@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useFetcher, useRouteLoaderData } from "react-router";
 import { buildFrakSnippet } from "./buildFrakSnippet";
-import styles from "./LegacyInstall.module.css";
+import * as styles from "./LegacyInstall.css";
 
 /**
  * The share-button web component merchants paste into their product template.
