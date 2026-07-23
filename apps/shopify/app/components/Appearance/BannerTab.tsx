@@ -15,22 +15,20 @@ export function BannerTab({ isThemeHasFrakBanner }: BannerTabProps) {
     const { t } = useTranslation();
 
     return (
-        <s-section>
-            <s-box>
-                {isThemeHasFrakBanner ? (
-                    <>
-                        <Activated text={t("appearance.banner.activated")} />
-                        <s-box paddingBlockStart="small">
-                            <ExternalLink href={`${editorUrl}?context=apps`}>
-                                {t("appearance.banner.link")}
-                            </ExternalLink>
-                        </s-box>
-                    </>
-                ) : (
-                    <BannerNotActivated editorUrl={editorUrl} />
-                )}
-            </s-box>
-        </s-section>
+        <s-box>
+            {isThemeHasFrakBanner ? (
+                <>
+                    <Activated text={t("appearance.banner.activated")} />
+                    <s-box paddingBlockStart="small">
+                        <ExternalLink href={`${editorUrl}?context=apps`}>
+                            {t("appearance.banner.link")}
+                        </ExternalLink>
+                    </s-box>
+                </>
+            ) : (
+                <BannerNotActivated editorUrl={editorUrl} />
+            )}
+        </s-box>
     );
 }
 

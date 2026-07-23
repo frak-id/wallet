@@ -23,7 +23,7 @@ bun run test             # Vitest (10 test files)
 - `app/services.server/` — 11 services + 9 tests; GraphQL lives here; all take `AuthenticatedContext` first
 - `app/hooks/` — client-side (React Query + viem multicall)
 - `app/components/` — feature-organized Polaris UI
-- `app/utils/{onboarding.ts, url.ts, backendApi.ts, viemClient.ts, campaignCreation.ts, tokenStatus.ts, navigationLoading.ts}` — 6-step wizard, URL helpers, ky client, viem wiring
+- `app/utils/{onboarding.ts, url.ts, backendApi.ts, viemClient.ts, tokenStatus.ts, navigationLoading.ts}` — 6-step wizard, URL helpers, ky client, viem wiring
 - `db/schema/{sessionTable, purchaseTable}.ts` · `db/adapter/sessionAdapter.ts` (custom Shopify SessionStorage)
 - Infra lives at repo-root `infra/` (not here) · `shopify.app.{development,frakdevr,production}.toml` (3 configs)
 - `drizzle/{dev,prod}/` — separate migration histories per stage

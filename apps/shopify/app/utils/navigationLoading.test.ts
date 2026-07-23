@@ -15,9 +15,9 @@ describe("shouldShowOutletSkeleton", () => {
     it("returns false for same-route submitting revalidations", () => {
         expect(
             shouldShowOutletSkeleton({
-                currentPathname: "/app/settings/theme",
+                currentPathname: "/app/settings",
                 navigationState: "submitting",
-                nextPathname: "/app/settings/theme",
+                nextPathname: "/app/settings",
             })
         ).toBe(false);
     });

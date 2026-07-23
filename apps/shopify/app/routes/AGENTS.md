@@ -12,11 +12,9 @@
   /campaigns               → app.campaigns.tsx (campaign status)
   /funding                 → app.funding.tsx (bank + purchase status)
   /onboarding              → app.onboarding.tsx (action only: clears onchain cache)
-  /settings                → app.settings.tsx (tab router, no loader)
-    /general               → app.settings.general.tsx
-    /pixel                 → app.settings.pixel.tsx
-    /theme                 → app.settings.theme.tsx
-    /webhook               → app.settings.webhook.tsx
+  /settings                → app.settings.tsx (single page: general/pixel/webhook/theme sections)
+    /pixel                 → app.settings.pixel.tsx (action only: web pixel create/delete)
+    /webhook               → app.settings.webhook.tsx (action only: webhook create/delete)
 /auth/*                    → auth.$.tsx (catch-all auth)
 /auth/login                → auth.login/route.tsx + error.server.tsx
 /api/purchase              → api.purchase.tsx (JSON)
@@ -71,10 +69,9 @@ export async function action({ request }: Route.ActionArgs) {
 | `app.campaigns`        | `getOnchainProductInfo`                                                                                                                                                                       |
 | `app.funding`          | `getOnchainProductInfo`, `getCurrentPurchases`                                                                                                                                                |
 | `app.onboarding`       | `clearOnChainShopCache` (action only)                                                                                                                                                         |
-| `app.settings.general` | `getOnchainProductInfo`                                                                                                                                                                       |
-| `app.settings.pixel`   | `getWebPixel`, `createWebPixel`, `deleteWebPixel`                                                                                                                                             |
-| `app.settings.theme`   | `doesThemeHasFrakActivated`, `getMainThemeId`                                                                                                                                                 |
-| `app.settings.webhook` | `resolveMerchantId`, `frakWebhookStatus`, `getWebhooks`, `createWebhook`, `deleteWebhook`                                                                                                     |
+| `app.settings`         | `getOnchainProductInfo`, `getWebPixel`, `doesThemeHasFrakActivated`, `getMainThemeId`, `resolveMerchantId`, `frakWebhookStatus`, `getWebhooks`                                                 |
+| `app.settings.pixel`   | `createWebPixel`, `deleteWebPixel` (action only)                                                                                                                                              |
+| `app.settings.webhook` | `createWebhook`, `deleteWebhook` (action only)                                                                                                                                                |
 | `api.purchase`         | `startupPurchase`                                                                                                                                                                             |
 | `api.mint`             | `getProductSetupCode`                                                                                                                                                                         |
 

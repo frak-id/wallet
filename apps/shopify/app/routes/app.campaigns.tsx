@@ -4,19 +4,16 @@ import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
 import type { loader as appLoader } from "app/routes/app";
 import { authenticate } from "app/shopify.server";
-import { buildCampaignRule } from "app/utils/campaignCreation";
 import { buildBusinessDashboardUrl } from "app/utils/url";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData, useRouteLoaderData } from "react-router";
 import {
     archiveMerchantCampaign,
-    createMerchantCampaign,
     deleteMerchantCampaign,
     getMerchantBankStatus,
     getMerchantCampaigns,
     pauseMerchantCampaign,
-    publishMerchantCampaign,
     resumeMerchantCampaign,
 } from "../services.server/backendMerchant";
 import type { AuthenticatedContext } from "../types/context";
@@ -60,70 +57,6 @@ const campaignTransitionHandlers: Record<
     },
 };
 
-async function handleCreateCampaign(
-    context: AuthenticatedContext,
-    request: Request,
-    formData: FormData
-): Promise<CampaignActionResult> {
-    const name = formData.get("name") as string;
-    const rewardToken = formData.get("rewardToken") as string | null;
-    const globalBudget = Number(formData.get("globalBudget"));
-    const rawCAC = Number(formData.get("rawCAC"));
-    const ratio = Number(formData.get("ratio"));
-
-    if (!name || !rewardToken || !globalBudget || !rawCAC || !ratio) {
-        return {
-            success: false,
-            error: "Missing required campaign fields",
-        };
-    }
-
-    const rule = buildCampaignRule({
-        cacBrut: rawCAC,
-        ratio,
-        rewardToken,
-    });
-
-    const campaign = await createMerchantCampaign(context, request, {
-        name,
-        rule,
-        budgetConfig: [
-            {
-                label: "global",
-                durationInSeconds: null,
-                amount: globalBudget,
-            },
-        ],
-        metadata: {
-            goal: undefined,
-            specialCategories: [],
-            territories: [],
-        },
-        priority: 0,
-    });
-
-    if (!campaign) {
-        return {
-            success: false,
-            error: "Failed to create campaign",
-        };
-    }
-
-    const published = await publishMerchantCampaign(
-        context,
-        request,
-        campaign.id
-    );
-    if (!published) {
-        return {
-            success: false,
-            error: "Campaign created but failed to publish",
-        };
-    }
-
-    return { success: true, error: null };
-}
-
 async function handleCampaignTransition(
     context: AuthenticatedContext,
     request: Request,
@@ -160,10 +93,6 @@ export async function action({ request }: ActionFunctionArgs) {
     const context = await authenticate.admin(request);
     const formData = await request.formData();
     const intent = formData.get("intent");
-
-    if (intent === "create-campaign") {
-        return data(await handleCreateCampaign(context, request, formData));
-    }
 
     if (
         intent === "pause-campaign" ||
@@ -208,13 +137,11 @@ export default function CampaignsPage() {
 
     return (
         <s-page heading={t("campaigns.title")}>
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "var(--s-space-200)",
-                }}
+            <s-stack
+                direction="inline"
+                gap="base"
+                justifyContent="space-between"
+                alignItems="center"
             >
                 <PageHeading>{t("campaigns.title")}</PageHeading>
                 <s-stack direction="inline" gap="base">
@@ -225,13 +152,10 @@ export default function CampaignsPage() {
                         {t("campaigns.createNew")}
                     </ExternalButton>
                 </s-stack>
-            </div>
+            </s-stack>
             {campaigns && bankStatus ? (
                 <s-stack gap="large">
-                    <CampaignStatus
-                        campaigns={campaigns}
-                        bankStatus={bankStatus}
-                    />
+                    <CampaignStatus campaigns={campaigns} />
                     <NewsletterShareLink />
                 </s-stack>
             ) : (
