@@ -68,7 +68,16 @@ export default $config({
             return;
         }
 
-        // Shopify now lives on the GCP cluster (see the `isGcp` branch above) —
-        // the plain production/dev stages no longer deploy anything.
+        // Shopify now lives on the GCP cluster (see the `isGcp` branch above), so
+        // the plain production/dev stages no longer deploy application infra.
+        //
+        // They still must load `infra/config.ts` for its side effect: it declares the
+        // `STAGE` / `BACKEND_URL` / `ERPC_URL` / `FRAK_WALLET_URL` / `OPEN_PANEL_API_URL`
+        // Linkables (plus the shared Secrets). The mobile release builds the wallet under
+        // `sst shell --stage prod`, and the Vite build reads those via `getSstResource()`.
+        // Without this import, `SST_RESOURCE_BACKEND_URL` is absent and the wallet silently
+        // falls back to its hardcoded dev default — shipping a prod app that talks to the
+        // dev backend.
+        await import("./infra/config.ts");
     },
 });
