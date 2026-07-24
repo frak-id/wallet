@@ -49,6 +49,42 @@ const PRODUCT_SCOPE_TIER_FIELDS = new Set([
     "purchase.matchedQuantity",
 ]);
 
+// A negated predicate selects the complement set, which is non-empty for
+// almost any realistic cart — the trigger gate becomes near-vacuous. A reward
+// without a matched-items basis would then pay in full on essentially every
+// cart (including ones dominated by the excluded product), which is a footgun,
+// not an intent. So negation is only allowed when every reward reflects the
+// exclusion in its basis. Any `logic: "none"` group counts as negative
+// (conservative: rejects contrived double negations, which should be
+// rewritten positively anyway).
+const NEGATIVE_OPERATORS = new Set(["neq", "not_in", "not_exists"]);
+
+function hasNegativePredicate(node: RuleCondition | ConditionGroup): boolean {
+    if (isConditionGroup(node)) {
+        if (node.logic === "none") return true;
+        return node.conditions.some(hasNegativePredicate);
+    }
+    return NEGATIVE_OPERATORS.has(node.operator);
+}
+
+function productScopeHasNegation(productScope: RuleConditions): boolean {
+    const nodes = Array.isArray(productScope) ? productScope : [productScope];
+    return nodes.some(hasNegativePredicate);
+}
+
+function isMatchedBasisReward(
+    reward: CampaignRuleDefinition["rewards"][0]
+): boolean {
+    switch (reward.amountType) {
+        case "percentage":
+            return reward.percentOf === "matched_items_amount";
+        case "tiered":
+            return PRODUCT_SCOPE_TIER_FIELDS.has(reward.tierField);
+        default:
+            return false;
+    }
+}
+
 function validateProductScopeNode(
     node: RuleCondition | ConditionGroup,
     depth: number,
@@ -514,6 +550,13 @@ export class CampaignManagementService {
             }
             const scopeError = validateProductScope(rule.productScope);
             if (scopeError) return scopeError;
+
+            if (
+                productScopeHasNegation(rule.productScope) &&
+                !rule.rewards.every(isMatchedBasisReward)
+            ) {
+                return "productScope with a negative predicate (neq, not_in, not_exists, logic 'none') requires every reward to use a matched-items basis (percentOf matched_items_amount, or tierField purchase.matchedAmount/purchase.matchedQuantity); to gate a flat reward on product presence, express the scope positively (eq, in, contains)";
+            }
         }
 
         for (const reward of rule.rewards) {

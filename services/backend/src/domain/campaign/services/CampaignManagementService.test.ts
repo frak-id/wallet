@@ -389,6 +389,102 @@ describe("CampaignManagementService productScope validation", () => {
         ).rejects.toThrow("cannot use an empty array");
     });
 
+    it("rejects a negated scope (not_in) when a reward is fixed (no matched basis)", async () => {
+        const rule = productScopedRule({
+            productScope: [
+                { field: "sku", operator: "not_in", value: ["CHEAP"] },
+            ],
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("requires every reward to use a matched-items basis");
+    });
+
+    it("rejects a 'neq' scope with a percentOf purchase_amount reward", async () => {
+        const rule = productScopedRule({
+            productScope: [{ field: "sku", operator: "neq", value: "CHEAP" }],
+            rewards: [
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "percentage",
+                    percent: 5,
+                    percentOf: "purchase_amount",
+                },
+            ],
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("requires every reward to use a matched-items basis");
+    });
+
+    it("rejects a logic 'none' group scope with a fixed reward (conservative detection)", async () => {
+        const rule = productScopedRule({
+            productScope: {
+                logic: "none",
+                conditions: [
+                    { field: "sku", operator: "in", value: ["CHEAP"] },
+                ],
+            },
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("requires every reward to use a matched-items basis");
+    });
+
+    it("rejects a negated leaf nested inside a positive group with a fixed reward", async () => {
+        const rule = productScopedRule({
+            productScope: {
+                logic: "all",
+                conditions: [
+                    { field: "name", operator: "starts_with", value: "eco-" },
+                    { field: "sku", operator: "not_in", value: ["CHEAP"] },
+                ],
+            },
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("requires every reward to use a matched-items basis");
+    });
+
+    it("accepts a negated scope when every reward uses a matched basis", async () => {
+        const rule = productScopedRule({
+            productScope: [
+                { field: "sku", operator: "not_in", value: ["CHEAP"] },
+            ],
+            rewards: [
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "percentage",
+                    percent: 5,
+                    percentOf: "matched_items_amount",
+                },
+                {
+                    recipient: "referrer",
+                    type: "token",
+                    amountType: "tiered",
+                    tierField: "purchase.matchedAmount",
+                    tiers: [{ minValue: 0, amount: 5 }],
+                },
+            ],
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).resolves.toBeDefined();
+    });
+
+    it("accepts a positive scope with a fixed reward (guard is negation-only)", async () => {
+        const rule = productScopedRule({
+            productScope: [
+                { field: "sku", operator: "in", value: ["SHOE-42"] },
+            ],
+        });
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).resolves.toBeDefined();
+    });
+
     it("rejects an array valueTo on 'between'", async () => {
         const rule = productScopedRule({
             productScope: [
