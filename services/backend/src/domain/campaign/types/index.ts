@@ -24,7 +24,7 @@ type BudgetUsedItem = {
 
 export type BudgetUsed = Record<string, BudgetUsedItem>;
 
-type PurchaseItem = {
+export type PurchaseItem = {
     productId?: string;
     name?: string;
     quantity: number;

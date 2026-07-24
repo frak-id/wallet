@@ -51,7 +51,6 @@ export const magentoWebhook = new Elysia()
                         totalPrice: webhookData.totalPrice ?? "0",
                         currencyCode: webhookData.currency ?? "EUR",
                     },
-                    // Magento now sends an explicit `sku`, matching the other webhooks.
                     purchaseItems: (webhookData.items ?? []).map((item) => ({
                         externalId: item.productId,
                         price: item.price,

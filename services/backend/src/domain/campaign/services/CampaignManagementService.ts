@@ -42,6 +42,13 @@ const STRING_OPERATORS = new Set(["contains", "starts_with", "ends_with"]);
 const PRODUCT_SCOPE_MAX_DEPTH = 5;
 const PRODUCT_SCOPE_MAX_NODES = 50;
 
+// Tier fields derived from the productScope-matched item set — meaningless
+// without a productScope on the rule.
+const PRODUCT_SCOPE_TIER_FIELDS = new Set([
+    "purchase.matchedAmount",
+    "purchase.matchedQuantity",
+]);
+
 function validateProductScopeNode(
     node: RuleCondition | ConditionGroup,
     depth: number,
@@ -558,10 +565,10 @@ export class CampaignManagementService {
                     return "Tiered reward must have at least one tier";
                 }
                 if (
-                    reward.tierField === "purchase.matchedAmount" &&
+                    PRODUCT_SCOPE_TIER_FIELDS.has(reward.tierField) &&
                     !rule.productScope
                 ) {
-                    return "tierField purchase.matchedAmount requires a productScope";
+                    return `tierField ${reward.tierField} requires a productScope`;
                 }
                 return this.validateTiers(reward);
         }

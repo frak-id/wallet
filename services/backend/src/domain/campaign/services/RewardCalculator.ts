@@ -60,11 +60,8 @@ async function calculatePercentageReward(
 
     let fiatBase: number;
     if (reward.percentOf === "matched_items_amount") {
-        // A missing matchedAmount means the engine never ran the productScope
-        // gate (a validation/wiring bug) and a zero one is a legitimate
-        // all-excluded match — both are hard errors, never `defer`, or the
-        // interaction would retry forever waiting for an FX rate that has
-        // nothing to do with the actual problem.
+        // Missing matchedAmount = the engine never ran the productScope gate
+        // (a wiring bug): hard error, never `defer`.
         if (context.purchase.matchedAmount === undefined) {
             return {
                 success: false,
@@ -79,11 +76,9 @@ async function calculatePercentageReward(
     // Order total is in fiat; convert to token units or a JPY/SEK order pays ~150x.
     const fiatAmount = (fiatBase * reward.percent) / 100;
 
-    // A zero/negative fiat base must hard-error here, before any pricing call.
-    // Otherwise an unpriceable currency/token turns a legitimate zero (e.g. a
-    // fully-excluded matched set) into `defer: true`, and the interaction
-    // retries forever waiting for an FX rate that has nothing to do with the
-    // actual (zero-amount) problem.
+    // Hard-error on a zero/negative base before any pricing call, so an
+    // unpriceable currency/token can't turn a legitimate zero into an
+    // infinite-retry `defer`.
     if (fiatAmount <= 0) {
         return {
             success: false,
@@ -144,10 +139,9 @@ async function resolveTierValue(
         return { value: rawValue };
     }
 
-    // A zero (or negative) fiat basis converts linearly to zero token value —
-    // skip the pricing call entirely so an unpriceable currency/token can't
-    // turn this into an infinite-retry `defer`. Tier bucketing on `{value: 0}`
-    // is then handled the same way a non-FX-normalized rawValue of 0 would be.
+    // Zero/negative fiat converts linearly to zero token value — skip the
+    // pricing call so an unpriceable currency/token can't cause an
+    // infinite-retry `defer`.
     if (rawValue <= 0) {
         return { value: rawValue };
     }

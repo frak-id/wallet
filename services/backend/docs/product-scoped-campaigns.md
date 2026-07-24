@@ -155,24 +155,19 @@ This is additive/low-risk and also un-breaks `in` / `not_in` for the whole engin
 
 ### 3. Item-level evaluation in `RuleConditionEvaluator`
 
-The internal operator helpers already take `unknown`. Add a **new** public entry
-point (net-new — no such method exists today) that evaluates a condition set
-against **any** target object:
+Widen `evaluate` to accept either target — the full `RuleContext`
+(order-level `conditions`) or a single purchase item (`productScope`):
 
 ```ts
-// evaluate conditions against an arbitrary object (item or full context)
-evaluateAgainst(conditions: RuleConditions, target: unknown): boolean
+evaluate(conditions: RuleConditions, target: RuleContext | PurchaseItem): boolean
 ```
 
-`evaluate(conditions, context)` becomes a thin wrapper
-(`evaluateAgainst(conditions, context)`); loosen the shared internals from
-`context: RuleContext` to `unknown` so an item root is accepted. Product-scope
-match uses `filter` (not `some`) so we retain the matched set for §6:
+Product-scope match uses `filter` (not `some`) so we retain the matched set
+for §6:
 
 ```ts
-const items = context.purchase?.items ?? [];
-const matchedItems = items.filter((item) =>
-    conditionEvaluator.evaluateAgainst(productScope, item)
+const matchedItems = purchase.items.filter((item) =>
+    conditionEvaluator.evaluate(productScope, item)
 );
 const productMatches = matchedItems.length > 0;
 ```
@@ -242,7 +237,7 @@ explicit matched-items basis:
   items** and compute `purchase.matchedAmount` (Σ `totalPrice` of matched items)
   and `purchase.matchedQuantity`, then add them to the `RuleContext.purchase`
   passed to the `RewardCalculator`. (The scope predicate already runs via
-  `evaluateAgainst` per item — reuse its result via a `filter` instead of `some`.)
+  `evaluate` per item — reuse its result via a `filter` instead of `some`.)
 - Add `percentOf: "matched_items_amount"` to `PercentageRewardDefinitionSchema`
   (currently only `"purchase_amount"`). In `calculatePercentageReward`, pick the
   fiat base from `percentOf`: `purchase.amount` vs `purchase.matchedAmount`.
@@ -355,7 +350,7 @@ automatically.
 |---|---|
 | `src/domain/campaign/schemas/index.ts` | Widen `RuleConditionValue` (arrays); add `productScope` to `CampaignRuleDefinitionSchema` + manual `CampaignRuleDefinition` type; add `"matched_items_amount"` to `PercentageRewardDefinitionSchema.percentOf`; add `productScope` to `EstimatedRewardItemSchema`. |
 | `src/domain/campaign/types/index.ts` | `CampaignRuleDefinition.productScope?: RuleConditions`; add `matchedAmount?` / `matchedQuantity?` to `PurchaseContext`. |
-| `src/domain/campaign/services/RuleConditionEvaluator.ts` | Add `evaluateAgainst(conditions, target)`; keep `evaluate` as wrapper. |
+| `src/domain/campaign/services/RuleConditionEvaluator.ts` | Widen `evaluate` to accept a `RuleContext` or a single `PurchaseItem` target. |
 | `src/domain/campaign/services/RuleEngineService.ts` | Product-scope gate in `evaluateSingleCampaign` (skip campaign, no budget, when no item matches); compute `matchedAmount`/`matchedQuantity` from matched items and inject into the purchase context. |
 | `src/domain/campaign/services/RewardCalculator.ts` | Honor `percentOf: "matched_items_amount"` in `calculatePercentageReward`; accept `tierField: "purchase.matchedAmount"` in `resolveTierValue`. |
 | `src/domain/campaign/services/CampaignManagementService.ts` | Validate `productScope` (field allowlist, operator/value coherence, purchase-trigger only); reject `matched_items_amount` without a `productScope`. |

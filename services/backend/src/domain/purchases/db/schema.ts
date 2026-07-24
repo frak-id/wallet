@@ -68,10 +68,8 @@ export const purchaseItemsTable = pgTable(
         title: varchar("title").notNull(),
         imageUrl: varchar("image_url"),
         quantity: integer("quantity").notNull(),
-        // Optional product SKU, used for SKU-based campaign product-scope
-        // matching. Nullable: not every provider sends it (see per-provider
-        // availability table in docs/product-scoped-campaigns.md §7), and
-        // rows written before this column's migration lands have no value.
+        // Optional product SKU for campaign product-scope matching; nullable
+        // since not every provider sends it.
         sku: varchar("sku"),
         createdAt: timestamp("created_at").defaultNow(),
     },

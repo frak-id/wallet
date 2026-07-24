@@ -498,6 +498,25 @@ describe("CampaignManagementService productScope validation", () => {
         ).rejects.toThrow("requires a productScope");
     });
 
+    it("rejects tierField purchase.matchedQuantity without a productScope", async () => {
+        const rule: CampaignRuleDefinition = {
+            trigger: "purchase",
+            conditions: [],
+            rewards: [
+                {
+                    recipient: "referee",
+                    type: "token",
+                    amountType: "tiered",
+                    tierField: "purchase.matchedQuantity",
+                    tiers: [{ minValue: 0, amount: 5 }],
+                },
+            ],
+        };
+        await expect(
+            serviceWithDraft().update("campaign-1", { rule })
+        ).rejects.toThrow("requires a productScope");
+    });
+
     it("applyStartDate preserves an existing productScope", async () => {
         const scope: CampaignRuleDefinition["productScope"] = [
             { field: "productId", operator: "eq", value: "A" },

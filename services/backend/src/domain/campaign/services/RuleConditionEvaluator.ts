@@ -1,14 +1,15 @@
 import type {
     ConditionGroup,
     ConditionOperator,
+    PurchaseItem,
     RuleCondition,
     RuleContext,
 } from "../types";
 
 // Conditions are evaluated against either the full RuleContext (order-level
-// `conditions`) or a single purchase item (`productScope`) — both are plain
-// objects walked by the same dot-path logic, so the shared internals accept
-// `unknown` rather than binding to RuleContext's shape.
+// `conditions`) or a single purchase item (`productScope`), both walked by
+// the same dot-path logic.
+type EvaluationTarget = RuleContext | PurchaseItem;
 
 type ConditionOrGroup = RuleCondition | ConditionGroup;
 
@@ -86,16 +87,10 @@ function evaluateArrayOperator(
     return operator === "in" ? includes : !includes;
 }
 
-// Arrays are only ever a valid operand for `in`/`not_in`. Order-level
-// `conditions` are not field-allowlisted like `productScope` is, and
-// `RuleConditionValue` accepts arrays, so a scalar/string/comparison operator
-// can receive one (a malformed rule-builder payload, a hand-crafted API call).
-// Silently letting it through would misbehave two different ways depending on
-// operator: `eq`/`neq` do a strict `===`/`!==` against an array, which is
-// always false/true; `gt`/`gte`/`lt`/`lte`/`between` fall through
-// `compareValues`'s `String()` coercion into a meaningless lexicographic
-// compare. Fail closed instead: any of these operators seeing an array
-// operand (in either `value` or `valueTo`) simply never matches.
+// Arrays are only a valid operand for `in`/`not_in`. Comparison operators
+// would otherwise `String()`-coerce an array into a meaningless lexicographic
+// compare (and `neq` would be always-true), so fail closed: never match.
+// String operators already fail closed on non-string operands.
 const ARRAY_INVALID_OPERATORS = new Set([
     "eq",
     "neq",
@@ -104,9 +99,6 @@ const ARRAY_INVALID_OPERATORS = new Set([
     "lt",
     "lte",
     "between",
-    "contains",
-    "starts_with",
-    "ends_with",
 ]);
 
 function hasInvalidArrayOperand(
@@ -167,7 +159,7 @@ function evaluateOperator(
 
 function evaluateSingleCondition(
     condition: RuleCondition,
-    target: unknown
+    target: EvaluationTarget
 ): boolean {
     if (
         hasInvalidArrayOperand(
@@ -190,7 +182,7 @@ function evaluateSingleCondition(
 
 function evaluateConditionGroup(
     group: ConditionGroup,
-    target: unknown
+    target: EvaluationTarget
 ): boolean {
     const results = group.conditions.map((c) =>
         isConditionGroup(c)
@@ -206,25 +198,17 @@ function evaluateConditionGroup(
 
 export class RuleConditionEvaluator {
     /**
-     * Evaluate a condition set against an arbitrary target object — the full
-     * `RuleContext` for order-level `conditions`, or a single purchase item
-     * for `productScope`.
+     * Evaluate a condition set against the full `RuleContext` (order-level
+     * `conditions`) or a single purchase item (`productScope`).
      */
-    evaluateAgainst(
+    evaluate(
         conditions: RuleCondition[] | ConditionGroup,
-        target: unknown
+        target: EvaluationTarget
     ): boolean {
         if (Array.isArray(conditions)) {
             return conditions.every((c) => evaluateSingleCondition(c, target));
         }
         return evaluateConditionGroup(conditions, target);
-    }
-
-    evaluate(
-        conditions: RuleCondition[] | ConditionGroup,
-        context: RuleContext
-    ): boolean {
-        return this.evaluateAgainst(conditions, context);
     }
 
     getFieldValue(context: RuleContext, field: string): unknown {

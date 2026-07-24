@@ -17,6 +17,28 @@ import type { RewardCalculator } from "./RewardCalculator";
 import { roundAmount } from "./RewardCalculator";
 import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
+type SingleCampaignResult = {
+    matched: boolean;
+    rewards: CalculatedReward[];
+    budgetExceeded: boolean;
+    errors: string[];
+    deferForUnpriceableReward: boolean;
+    deferReason?: string;
+};
+
+function campaignResult(
+    overrides: Partial<SingleCampaignResult> = {}
+): SingleCampaignResult {
+    return {
+        matched: false,
+        rewards: [],
+        budgetExceeded: false,
+        errors: [],
+        deferForUnpriceableReward: false,
+        ...overrides,
+    };
+}
+
 type EvaluateRulesParams = {
     merchantId: string;
     trigger: CampaignTrigger;
@@ -165,16 +187,12 @@ export class RuleEngineService {
         if (!productScope) return context;
 
         const { purchase } = context;
-        const items = purchase?.items ?? [];
-        const matchedItems = items.filter((item) =>
-            this.conditionEvaluator.evaluateAgainst(productScope, item)
-        );
+        if (!purchase) return undefined;
 
-        // A non-empty matchedItems implies items came from a defined
-        // purchase, but narrow explicitly rather than casting below so the
-        // compiler (not just the reachability argument) knows `purchase` is
-        // defined once we build the scoped context.
-        if (!purchase || matchedItems.length === 0) {
+        const matchedItems = purchase.items.filter((item) =>
+            this.conditionEvaluator.evaluate(productScope, item)
+        );
+        if (matchedItems.length === 0) {
             return undefined;
         }
 
@@ -201,27 +219,14 @@ export class RuleEngineService {
         campaignRefereeCounts: Map<string, number> | undefined,
         fetchReferralChain?: ReferralChainFetcher,
         merchantDefaultToken?: Address
-    ): Promise<{
-        matched: boolean;
-        rewards: CalculatedReward[];
-        budgetExceeded: boolean;
-        errors: string[];
-        deferForUnpriceableReward: boolean;
-        deferReason?: string;
-    }> {
+    ): Promise<SingleCampaignResult> {
         const conditionsMatch = this.conditionEvaluator.evaluate(
             campaign.rule.conditions,
             context
         );
 
         if (!conditionsMatch) {
-            return {
-                matched: false,
-                rewards: [],
-                budgetExceeded: false,
-                errors: [],
-                deferForUnpriceableReward: false,
-            };
+            return campaignResult();
         }
 
         // productScope: the campaign only matches if at least one purchase
@@ -233,13 +238,7 @@ export class RuleEngineService {
             context
         );
         if (!scopedContext) {
-            return {
-                matched: false,
-                rewards: [],
-                budgetExceeded: false,
-                errors: [],
-                deferForUnpriceableReward: false,
-            };
+            return campaignResult();
         }
 
         // Check merchant-wide per-user cap (across all campaigns for this merchant)
@@ -258,13 +257,7 @@ export class RuleEngineService {
                 },
                 "Merchant-wide per-user reward cap reached"
             );
-            return {
-                matched: true,
-                rewards: [],
-                budgetExceeded: false,
-                errors: [],
-                deferForUnpriceableReward: false,
-            };
+            return campaignResult({ matched: true });
         }
 
         // Check per-campaign per-user cap (only if explicitly set)
@@ -282,13 +275,7 @@ export class RuleEngineService {
                     },
                     "Per-campaign per-user reward cap reached"
                 );
-                return {
-                    matched: true,
-                    rewards: [],
-                    budgetExceeded: false,
-                    errors: [],
-                    deferForUnpriceableReward: false,
-                };
+                return campaignResult({ matched: true });
             }
         }
 
@@ -324,24 +311,16 @@ export class RuleEngineService {
         // Unpriceable reward: bail before consuming budget so the
         // orchestrator can leave the interaction unprocessed for a later retry.
         if (deferForUnpriceableReward) {
-            return {
+            return campaignResult({
                 matched: true,
-                rewards: [],
-                budgetExceeded: false,
                 errors,
                 deferForUnpriceableReward: true,
                 deferReason,
-            };
+            });
         }
 
         if (calculated.length === 0) {
-            return {
-                matched: true,
-                rewards: [],
-                budgetExceeded: false,
-                errors,
-                deferForUnpriceableReward: false,
-            };
+            return campaignResult({ matched: true, errors });
         }
 
         const totalAmount = calculated.reduce((sum, r) => sum + r.amount, 0);
@@ -360,13 +339,11 @@ export class RuleEngineService {
                 },
                 "Budget exceeded for campaign"
             );
-            return {
+            return campaignResult({
                 matched: true,
-                rewards: [],
                 budgetExceeded: true,
                 errors,
-                deferForUnpriceableReward: false,
-            };
+            });
         }
 
         log.debug(
@@ -379,12 +356,10 @@ export class RuleEngineService {
             "Campaign rules evaluated successfully"
         );
 
-        return {
+        return campaignResult({
             matched: true,
             rewards: calculated,
-            budgetExceeded: false,
             errors,
-            deferForUnpriceableReward: false,
-        };
+        });
     }
 }

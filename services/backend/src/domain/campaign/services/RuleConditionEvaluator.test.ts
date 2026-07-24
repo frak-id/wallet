@@ -6,18 +6,30 @@ const evaluator = new RuleConditionEvaluator();
 
 // productScope items — evaluated with the item itself as the root object
 // (`field: "productId"`, not `field: "purchase.items.productId"`).
-const itemA = { productId: "A", name: "Widget", quantity: 2, unitPrice: 10 };
-const itemB = { productId: "B", name: "Gadget", quantity: 1, unitPrice: 25 };
+const itemA = {
+    productId: "A",
+    name: "Widget",
+    quantity: 2,
+    unitPrice: 10,
+    totalPrice: 20,
+};
+const itemB = {
+    productId: "B",
+    name: "Gadget",
+    quantity: 1,
+    unitPrice: 25,
+    totalPrice: 25,
+};
 
-describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () => {
+describe("RuleConditionEvaluator.evaluate — item-level matching", () => {
     it("eq matches a single product id", () => {
         const condition: RuleCondition = {
             field: "productId",
             operator: "eq",
             value: "A",
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(true);
-        expect(evaluator.evaluateAgainst([condition], itemB)).toBe(false);
+        expect(evaluator.evaluate([condition], itemA)).toBe(true);
+        expect(evaluator.evaluate([condition], itemB)).toBe(false);
     });
 
     it("neq matches everything but the excluded product", () => {
@@ -26,8 +38,8 @@ describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () =>
             operator: "neq",
             value: "A",
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(false);
-        expect(evaluator.evaluateAgainst([condition], itemB)).toBe(true);
+        expect(evaluator.evaluate([condition], itemA)).toBe(false);
+        expect(evaluator.evaluate([condition], itemB)).toBe(true);
     });
 
     it("in matches any product id in the list", () => {
@@ -36,8 +48,8 @@ describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () =>
             operator: "in",
             value: ["A", "C"],
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(true);
-        expect(evaluator.evaluateAgainst([condition], itemB)).toBe(false);
+        expect(evaluator.evaluate([condition], itemA)).toBe(true);
+        expect(evaluator.evaluate([condition], itemB)).toBe(false);
     });
 
     it("not_in selects the complement set", () => {
@@ -46,8 +58,8 @@ describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () =>
             operator: "not_in",
             value: ["A"],
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(false);
-        expect(evaluator.evaluateAgainst([condition], itemB)).toBe(true);
+        expect(evaluator.evaluate([condition], itemA)).toBe(false);
+        expect(evaluator.evaluate([condition], itemB)).toBe(true);
     });
 
     it("contains matches a substring of the item name", () => {
@@ -56,8 +68,8 @@ describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () =>
             operator: "contains",
             value: "idg",
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(true);
-        expect(evaluator.evaluateAgainst([condition], itemB)).toBe(false);
+        expect(evaluator.evaluate([condition], itemA)).toBe(true);
+        expect(evaluator.evaluate([condition], itemB)).toBe(false);
     });
 
     it("starts_with matches a name prefix", () => {
@@ -66,8 +78,8 @@ describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () =>
             operator: "starts_with",
             value: "Gad",
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(false);
-        expect(evaluator.evaluateAgainst([condition], itemB)).toBe(true);
+        expect(evaluator.evaluate([condition], itemA)).toBe(false);
+        expect(evaluator.evaluate([condition], itemB)).toBe(true);
     });
 
     it("evaluates a nested ConditionGroup against an item", () => {
@@ -84,10 +96,10 @@ describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () =>
                 },
             ],
         };
-        expect(evaluator.evaluateAgainst(group, itemA)).toBe(true);
-        expect(evaluator.evaluateAgainst(group, itemB)).toBe(true);
+        expect(evaluator.evaluate(group, itemA)).toBe(true);
+        expect(evaluator.evaluate(group, itemB)).toBe(true);
         expect(
-            evaluator.evaluateAgainst(group, {
+            evaluator.evaluate(group, {
                 ...itemB,
                 productId: "C",
             })
@@ -95,7 +107,7 @@ describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () =>
     });
 
     it("negation under a matched-set filter yields the complement, not a cart-wide veto", () => {
-        // Mirrors how RuleEngineService uses evaluateAgainst per item: the
+        // Mirrors how RuleEngineService uses evaluate per item: the
         // matched set is every item satisfying the scope, independently.
         const scope: RuleCondition[] = [
             { field: "productId", operator: "not_in", value: ["CHEAP"] },
@@ -106,22 +118,22 @@ describe("RuleConditionEvaluator.evaluateAgainst — item-level matching", () =>
                 name: "Loss leader",
                 quantity: 1,
                 unitPrice: 1,
+                totalPrice: 1,
             },
             {
                 productId: "NORMAL",
                 name: "Regular",
                 quantity: 1,
                 unitPrice: 50,
+                totalPrice: 50,
             },
         ];
-        const matched = cart.filter((item) =>
-            evaluator.evaluateAgainst(scope, item)
-        );
+        const matched = cart.filter((item) => evaluator.evaluate(scope, item));
         expect(matched).toEqual([cart[1]]);
 
         const cheapOnlyCart = [cart[0]];
         const matchedCheapOnly = cheapOnlyCart.filter((item) =>
-            evaluator.evaluateAgainst(scope, item)
+            evaluator.evaluate(scope, item)
         );
         expect(matchedCheapOnly).toEqual([]);
     });
@@ -167,7 +179,7 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
             operator: "neq",
             value: ["A", "B"],
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(false);
+        expect(evaluator.evaluate([condition], itemA)).toBe(false);
     });
 
     it("eq with an array value returns false", () => {
@@ -176,7 +188,7 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
             operator: "eq",
             value: ["A"],
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(false);
+        expect(evaluator.evaluate([condition], itemA)).toBe(false);
     });
 
     it("gt with an array value returns false instead of a lexicographic compare", () => {
@@ -185,7 +197,7 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
             operator: "gt",
             value: [1],
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(false);
+        expect(evaluator.evaluate([condition], itemA)).toBe(false);
     });
 
     it("between with an array valueTo returns false", () => {
@@ -195,7 +207,7 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
             value: 1,
             valueTo: [100] as unknown as number,
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(false);
+        expect(evaluator.evaluate([condition], itemA)).toBe(false);
     });
 
     it("contains with an array value returns false", () => {
@@ -204,7 +216,7 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
             operator: "contains",
             value: ["Widget"],
         };
-        expect(evaluator.evaluateAgainst([condition], itemA)).toBe(false);
+        expect(evaluator.evaluate([condition], itemA)).toBe(false);
     });
 
     it("in and not_in still work with array values (unaffected by the guard)", () => {
@@ -218,7 +230,7 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
             operator: "not_in",
             value: ["B"],
         };
-        expect(evaluator.evaluateAgainst([inCondition], itemA)).toBe(true);
-        expect(evaluator.evaluateAgainst([notInCondition], itemA)).toBe(true);
+        expect(evaluator.evaluate([inCondition], itemA)).toBe(true);
+        expect(evaluator.evaluate([notInCondition], itemA)).toBe(true);
     });
 });
