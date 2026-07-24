@@ -135,6 +135,7 @@ export { recoveryHintStorage } from "./storage/recoveryHint";
 export { getInvoke } from "./tauri";
 export { formatCurrency } from "./utils/formatCurrency";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";
+export { type MediaSrcSetMode, mediaSrcSet } from "./utils/mediaSrcSet";
 export { openExternalUrl } from "./utils/openExternalUrl";
 export { prefixModalCss } from "./utils/prefixModalCss";
 export {

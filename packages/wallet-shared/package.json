@@ -32,6 +32,7 @@
     "./common": "./src/common/index.ts",
     "./common/analytics": "./src/common/analytics/index.ts",
     "./common/api/backendClient": "./src/common/api/backendClient.ts",
+    "./common/utils/mediaSrcSet": "./src/common/utils/mediaSrcSet.ts",
     "./common/utils/safeSession": "./src/common/utils/safeSession.ts",
     "./common/utils/lifecycleEvents": "./src/common/utils/lifecycleEvents.ts",
     "./common/utils/base64url": "./src/common/utils/base64url.ts",

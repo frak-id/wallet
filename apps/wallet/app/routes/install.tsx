@@ -19,6 +19,7 @@ import {
     trackEvent,
     useFormattedEstimatedReward,
 } from "@frak-labs/wallet-shared";
+import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Info } from "lucide-react";
@@ -244,7 +245,7 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
                 <Box display="flex" alignItems="center" gap="m">
                     {merchantInfo?.logoUrl && (
                         <img
-                            src={merchantInfo.logoUrl}
+                            {...mediaSrcSet(merchantInfo.logoUrl)}
                             alt={merchantInfo.name}
                             className={styles.merchantLogo}
                         />
