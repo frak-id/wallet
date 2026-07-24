@@ -43,6 +43,9 @@ export type CampaignView = {
     pendingDays?: number;
     minPurchaseAmount?: number;
     minPurchaseDisplay?: string;
+    /** Whether the campaign carries a `productScope` (reward only applies to
+     * selected products, not the whole basket). */
+    hasProductScope: boolean;
 };
 
 function buildCampaignView(
@@ -75,6 +78,7 @@ function buildCampaignView(
             minPurchaseAmount != null && minPurchaseAmount > 0
                 ? formatAmount(minPurchaseAmount)
                 : undefined,
+        hasProductScope: campaign.productScope != null,
     };
 }
 

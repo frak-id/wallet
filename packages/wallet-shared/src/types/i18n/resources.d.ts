@@ -238,6 +238,7 @@ export default interface Resources {
           "tagline1": "Earn {{estimatedReward}},",
           "tagline1_tiered": "Earn up to {{estimatedReward}},",
           "tagline2": "on every purchase!",
+          "tagline2_product": "on selected products!",
           "upTo": "Up to"
         },
         "confirmation": {
@@ -279,6 +280,7 @@ export default interface Resources {
           "reward": {
             "percentExample": "e.g. {{reward}} for a {{basket}} order",
             "percentOfBasket": "{{percent}}% of basket",
+            "percentOfEligible": "{{percent}}% of eligible products",
             "refereeLabel": "Reward for your referee",
             "referrerLabel": "Reward as an ambassador",
             "tierAndAbove": "{{min}} and above"
@@ -298,6 +300,8 @@ export default interface Resources {
           "1": "Share in 1 click. A personal link is automatically generated with each share.",
           "2": "Earn on every purchase. Every order placed through your link earns you cash.",
           "2_min": "Earn on every purchase. Every order of at least {{minAmount}} placed through your link earns you cash.",
+          "2_min_product": "Earn on every purchase of selected products of at least {{minAmount}}. Every qualifying order placed through your link earns you cash.",
+          "2_product": "Earn on every purchase of selected products. Every qualifying order placed through your link earns you cash.",
           "3": "Collect your earnings in the app. Install FRAK to collect your earnings.",
           "3_lockup": "Your earnings will be available {{lockupInDay}} days after the purchase is confirmed.",
           "title": ""
@@ -437,6 +441,8 @@ export default interface Resources {
         "pendingDays_other": "{{count}} days",
         "percentExample": "e.g. {{reward}} for a {{basket}} order",
         "percentOfBasket": "{{percent}}% of basket",
+        "percentOfEligible": "{{percent}}% of eligible products",
+        "productScopeNote": "On selected products only",
         "readMore": "Read more",
         "refereeReward": "Reward as referee",
         "referrerReward": "Reward as referrer",

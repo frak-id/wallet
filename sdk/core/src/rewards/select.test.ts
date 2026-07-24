@@ -31,6 +31,7 @@ function campaign(opts: {
     referrer?: EstimatedReward;
     referee?: EstimatedReward;
     conditions?: RuleConditions;
+    productScope?: RuleConditions;
     expiresAt?: string | null;
     defaultLockupSeconds?: number;
 }): MerchantReward {
@@ -39,6 +40,7 @@ function campaign(opts: {
         name: opts.id,
         interactionTypeKey: opts.interactionTypeKey ?? "purchase",
         conditions: opts.conditions ?? [],
+        productScope: opts.productScope,
         referrer: opts.referrer,
         referee: opts.referee,
         expiresAt: opts.expiresAt,
@@ -325,5 +327,29 @@ describe("selectBestReward", () => {
             { now: NOW }
         );
         expect(best?.minPurchaseValue).toBeUndefined();
+    });
+
+    it("isProductScoped is false when the campaign has no productScope", () => {
+        const best = selectBestReward(
+            [campaign({ id: "c", referrer: fixedReward(50) })],
+            { now: NOW }
+        );
+        expect(best?.isProductScoped).toBe(false);
+    });
+
+    it("isProductScoped is true when the campaign carries a productScope", () => {
+        const best = selectBestReward(
+            [
+                campaign({
+                    id: "c",
+                    referrer: uncappedPercentage(10),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ],
+            { now: NOW }
+        );
+        expect(best?.isProductScoped).toBe(true);
     });
 });

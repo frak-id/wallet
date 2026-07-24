@@ -148,6 +148,14 @@ export type BestReward = {
      * worked-examples consistent with the campaign's gating.
      */
     minPurchaseValue?: number;
+    /**
+     * Whether the selected campaign carries a `productScope` — the reward
+     * only applies to matching line items, not the whole basket. Surfaces
+     * use this to adapt copy that otherwise assumes a whole-basket reward
+     * (e.g. "X% of basket" + a basket-based worked example, both wrong for a
+     * scoped percentage/tiered reward).
+     */
+    isProductScoped: boolean;
 };
 
 /**
@@ -193,6 +201,7 @@ export function selectBestReward(
         referrerReward: selected.campaign.referrer,
         refereeReward: selected.campaign.referee,
         minPurchaseValue: minPurchase ?? undefined,
+        isProductScoped: selected.campaign.productScope != null,
     };
 }
 

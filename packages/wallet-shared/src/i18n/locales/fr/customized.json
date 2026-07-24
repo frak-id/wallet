@@ -66,13 +66,16 @@
                 "upTo": "Jusqu'à",
                 "tagline1": "Gagnez {{ estimatedReward }},",
                 "tagline1_tiered": "Gagnez jusqu'à {{ estimatedReward }},",
-                "tagline2": "à chaque achat réalisé !"
+                "tagline2": "à chaque achat réalisé !",
+                "tagline2_product": "sur une sélection de produits !"
             },
             "steps": {
                 "title": "",
                 "1": "Partagez en 1 clic. Un lien personnel est généré automatiquement à chaque partage.",
                 "2": "Gagnez à chaque achat. Chaque commande réalisée grâce à vous est récompensée en cash.",
                 "2_min": "Gagnez à chaque achat. Chaque commande de {{ minAmount }} minimum réalisée grâce à vous est récompensée en cash.",
+                "2_product": "Gagnez sur chaque achat d'une sélection de produits. Chaque commande éligible réalisée grâce à vous est récompensée en cash.",
+                "2_min_product": "Gagnez sur chaque achat d'une sélection de produits de {{ minAmount }} minimum. Chaque commande éligible réalisée grâce à vous est récompensée en cash.",
                 "3": "Encaissez vos gains dans l'app. Installez FRAK pour récupérer vos gains.",
                 "3_lockup": "Vos gains seront disponibles {{ lockupInDay }} jours après la validation de l'achat."
             },
@@ -94,6 +97,7 @@
                     "referrerLabel": "Récompense en tant que parrain",
                     "refereeLabel": "Récompense en tant que filleul",
                     "percentOfBasket": "{{percent}}% du panier",
+                    "percentOfEligible": "{{percent}}% des produits éligibles",
                     "percentExample": "Ex. {{reward}} pour {{basket}} d'achat",
                     "tierAndAbove": "{{min}} et plus"
                 }

@@ -22,11 +22,21 @@ export function RewardBreakdown({
     referrer,
     referee,
     minPurchaseValue,
+    isProductScoped = false,
     t,
 }: {
     referrer?: EstimatedReward;
     referee?: EstimatedReward;
     minPurchaseValue?: number;
+    /**
+     * Whether the campaign these rewards belong to carries a `productScope`.
+     * The scope is a rule-level property shared by both audiences, so a
+     * single flag (not per-reward) is enough. When true, percentage/percent-
+     * tier rows render "% of eligible products" instead of "% of basket" and
+     * skip the worked example — there is no correct basket-based number for a
+     * reward that only applies to some line items.
+     */
+    isProductScoped?: boolean;
     t: Translate;
 }) {
     const hasReferrer = hasBreakdown(referrer);
@@ -40,6 +50,7 @@ export function RewardBreakdown({
                     label={t("sdk.sharingPage.faq.reward.referrerLabel")}
                     reward={referrer}
                     minPurchaseValue={minPurchaseValue}
+                    isProductScoped={isProductScoped}
                     t={t}
                 />
             )}
@@ -48,6 +59,7 @@ export function RewardBreakdown({
                     label={t("sdk.sharingPage.faq.reward.refereeLabel")}
                     reward={referee}
                     minPurchaseValue={minPurchaseValue}
+                    isProductScoped={isProductScoped}
                     t={t}
                 />
             )}
@@ -67,11 +79,13 @@ function RewardBlock({
     label,
     reward,
     minPurchaseValue,
+    isProductScoped,
     t,
 }: {
     label: string;
     reward: EstimatedReward;
     minPurchaseValue?: number;
+    isProductScoped: boolean;
     t: Translate;
 }) {
     return (
@@ -79,12 +93,18 @@ function RewardBlock({
             <span className={styles.rewardBlockLabel}>{label}</span>
             {reward.payoutType === "tiered"
                 ? reward.tiers.map((tier) => (
-                      <TierRow key={tierKey(tier)} tier={tier} t={t} />
+                      <TierRow
+                          key={tierKey(tier)}
+                          tier={tier}
+                          isProductScoped={isProductScoped}
+                          t={t}
+                      />
                   ))
                 : reward.payoutType === "percentage" && (
                       <PercentageRow
                           reward={reward}
                           minPurchaseValue={minPurchaseValue}
+                          isProductScoped={isProductScoped}
                           t={t}
                       />
                   )}
@@ -92,7 +112,15 @@ function RewardBlock({
     );
 }
 
-function TierRow({ tier, t }: { tier: RewardTier; t: Translate }) {
+function TierRow({
+    tier,
+    isProductScoped,
+    t,
+}: {
+    tier: RewardTier;
+    isProductScoped: boolean;
+    t: Translate;
+}) {
     const range =
         tier.maxValue == null
             ? t("sdk.sharingPage.faq.reward.tierAndAbove", {
@@ -111,18 +139,22 @@ function TierRow({ tier, t }: { tier: RewardTier; t: Translate }) {
         );
     }
 
-    const example = buildTierExample(
-        tier.percent,
-        tier.minValue,
-        tier.maxValue
-    );
+    // No basket-based worked example when the reward is product-scoped — the
+    // percent applies to matched line items only, not the reference basket
+    // `buildTierExample` assumes.
+    const example = isProductScoped
+        ? undefined
+        : buildTierExample(tier.percent, tier.minValue, tier.maxValue);
     return (
         <div className={styles.rewardRow}>
             <span>{range}</span>
             <span className={styles.rewardRowValue}>
-                {t("sdk.sharingPage.faq.reward.percentOfBasket", {
-                    percent: tier.percent,
-                })}
+                {t(
+                    isProductScoped
+                        ? "sdk.sharingPage.faq.reward.percentOfEligible"
+                        : "sdk.sharingPage.faq.reward.percentOfBasket",
+                    { percent: tier.percent }
+                )}
                 {example && <ExampleText example={example} t={t} />}
             </span>
         </div>
@@ -132,19 +164,29 @@ function TierRow({ tier, t }: { tier: RewardTier; t: Translate }) {
 function PercentageRow({
     reward,
     minPurchaseValue,
+    isProductScoped,
     t,
 }: {
     reward: Extract<EstimatedReward, { payoutType: "percentage" }>;
     minPurchaseValue?: number;
+    isProductScoped: boolean;
     t: Translate;
 }) {
-    const example = buildPercentageExample(reward, minPurchaseValue);
+    // No basket-based worked example when the reward is product-scoped — the
+    // percent applies to matched line items only, not the reference basket
+    // `buildPercentageExample` assumes.
+    const example = isProductScoped
+        ? undefined
+        : buildPercentageExample(reward, minPurchaseValue);
     return (
         <div className={styles.rewardRow}>
             <span>
-                {t("sdk.sharingPage.faq.reward.percentOfBasket", {
-                    percent: reward.percent,
-                })}
+                {t(
+                    isProductScoped
+                        ? "sdk.sharingPage.faq.reward.percentOfEligible"
+                        : "sdk.sharingPage.faq.reward.percentOfBasket",
+                    { percent: reward.percent }
+                )}
             </span>
             {example && (
                 <span className={styles.rewardRowValue}>

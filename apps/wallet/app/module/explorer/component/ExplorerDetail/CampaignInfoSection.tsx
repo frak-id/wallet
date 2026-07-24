@@ -102,6 +102,7 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                         labelKey="explorer.detail.referrerReward"
                         reward={view.referrer}
                         minPurchase={view.minPurchaseAmount}
+                        isProductScoped={view.hasProductScope}
                     />
                 )}
                 {view.referee && (
@@ -109,6 +110,7 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                         labelKey="explorer.detail.refereeReward"
                         reward={view.referee}
                         minPurchase={view.minPurchaseAmount}
+                        isProductScoped={view.hasProductScope}
                     />
                 )}
                 <InfoRow
@@ -137,6 +139,13 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                         }
                     />
                 )}
+                {view.hasProductScope && (
+                    <InfoRow
+                        labelVariant="bodySmall"
+                        labelColor="secondary"
+                        label={t("explorer.detail.productScopeNote")}
+                    />
+                )}
             </InfoCard>
         </Stack>
     );
@@ -146,14 +155,22 @@ function RewardRow({
     labelKey,
     reward,
     minPurchase,
+    isProductScoped,
 }: {
     labelKey: string;
     reward: EstimatedReward;
     minPurchase: number | undefined;
+    isProductScoped: boolean;
 }) {
     const { t } = useTranslation();
     if (reward.payoutType === "tiered") {
-        return <TieredRewardBlock labelKey={labelKey} reward={reward} />;
+        return (
+            <TieredRewardBlock
+                labelKey={labelKey}
+                reward={reward}
+                isProductScoped={isProductScoped}
+            />
+        );
     }
     return (
         <InfoRow
@@ -161,7 +178,13 @@ function RewardRow({
             labelColor="secondary"
             align={reward.payoutType === "percentage" ? "top" : "center"}
             label={t(labelKey)}
-            action={<RewardValue reward={reward} minPurchase={minPurchase} />}
+            action={
+                <RewardValue
+                    reward={reward}
+                    minPurchase={minPurchase}
+                    isProductScoped={isProductScoped}
+                />
+            }
         />
     );
 }
@@ -169,9 +192,11 @@ function RewardRow({
 function RewardValue({
     reward,
     minPurchase,
+    isProductScoped,
 }: {
     reward: FlatReward;
     minPurchase: number | undefined;
+    isProductScoped: boolean;
 }) {
     const { t } = useTranslation();
     if (reward.payoutType === "fixed") {
@@ -186,7 +211,12 @@ function RewardValue({
             </Text>
         );
     }
-    const example = buildPercentageExample(reward, minPurchase);
+    // No basket-based worked example when the reward is product-scoped — the
+    // percent applies to matched line items only, not the reference basket
+    // `buildPercentageExample` assumes.
+    const example = isProductScoped
+        ? undefined
+        : buildPercentageExample(reward, minPurchase);
     return (
         <Stack space="xxs" align="right">
             <Text
@@ -195,9 +225,12 @@ function RewardValue({
                 className={styles.infoValue}
             >
                 <CoinsIcon width={16} height={16} />{" "}
-                {t("explorer.detail.percentOfBasket", {
-                    percent: reward.percent,
-                })}
+                {t(
+                    isProductScoped
+                        ? "explorer.detail.percentOfEligible"
+                        : "explorer.detail.percentOfBasket",
+                    { percent: reward.percent }
+                )}
             </Text>
             {example && <ExampleText example={example} />}
         </Stack>
@@ -207,9 +240,11 @@ function RewardValue({
 function TieredRewardBlock({
     labelKey,
     reward,
+    isProductScoped,
 }: {
     labelKey: string;
     reward: TieredReward;
+    isProductScoped: boolean;
 }) {
     const { t } = useTranslation();
     return (
@@ -222,14 +257,24 @@ function TieredRewardBlock({
             </Spread>
             <Stack space="xs">
                 {reward.tiers.map((tier) => (
-                    <TierRow key={tierKey(tier)} tier={tier} />
+                    <TierRow
+                        key={tierKey(tier)}
+                        tier={tier}
+                        isProductScoped={isProductScoped}
+                    />
                 ))}
             </Stack>
         </Box>
     );
 }
 
-function TierRow({ tier }: { tier: RewardTier }) {
+function TierRow({
+    tier,
+    isProductScoped,
+}: {
+    tier: RewardTier;
+    isProductScoped: boolean;
+}) {
     const { t } = useTranslation();
     const range =
         tier.maxValue == null
@@ -251,11 +296,12 @@ function TierRow({ tier }: { tier: RewardTier }) {
         );
     }
 
-    const example = buildTierExample(
-        tier.percent,
-        tier.minValue,
-        tier.maxValue
-    );
+    // No basket-based worked example when the reward is product-scoped — the
+    // percent applies to matched line items only, not the reference basket
+    // `buildTierExample` assumes.
+    const example = isProductScoped
+        ? undefined
+        : buildTierExample(tier.percent, tier.minValue, tier.maxValue);
     return (
         <Spread align="top" space="m">
             <Text variant="bodySmall" color="secondary">
@@ -263,9 +309,12 @@ function TierRow({ tier }: { tier: RewardTier }) {
             </Text>
             <Stack space="xxs" align="right">
                 <Text variant="bodySmall" weight="medium">
-                    {t("explorer.detail.percentOfBasket", {
-                        percent: tier.percent,
-                    })}
+                    {t(
+                        isProductScoped
+                            ? "explorer.detail.percentOfEligible"
+                            : "explorer.detail.percentOfBasket",
+                        { percent: tier.percent }
+                    )}
                 </Text>
                 {example && <ExampleText example={example} />}
             </Stack>

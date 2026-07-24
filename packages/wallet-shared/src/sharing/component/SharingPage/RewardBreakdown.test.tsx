@@ -14,6 +14,8 @@ const t = (key: string, opts?: Record<string, unknown>): string => {
             return "Reward for referee";
         case "sdk.sharingPage.faq.reward.percentOfBasket":
             return `${opts?.percent}% of basket`;
+        case "sdk.sharingPage.faq.reward.percentOfEligible":
+            return `${opts?.percent}% of eligible products`;
         case "sdk.sharingPage.faq.reward.percentExample":
             return `e.g. ${opts?.reward} for ${opts?.basket}`;
         case "sdk.sharingPage.faq.reward.tierAndAbove":
@@ -149,5 +151,48 @@ describe("RewardBreakdown", () => {
     it("renders nothing when no rewards are provided", () => {
         const { container } = render(<RewardBreakdown t={t} />);
         expect(container).toBeEmptyDOMElement();
+    });
+
+    it("renders 'eligible products' copy and no worked example for a scoped percentage", () => {
+        render(
+            <RewardBreakdown
+                referrer={percentage(10)}
+                isProductScoped={true}
+                t={t}
+            />
+        );
+
+        expect(
+            screen.getByText("10% of eligible products")
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/e\.g\./)).not.toBeInTheDocument();
+    });
+
+    it("renders 'eligible products' copy and no worked example for scoped percent tiers", () => {
+        render(
+            <RewardBreakdown
+                referrer={tiered([{ minValue: 0, maxValue: 100, percent: 5 }])}
+                isProductScoped={true}
+                t={t}
+            />
+        );
+
+        expect(screen.getByText("5% of eligible products")).toBeInTheDocument();
+        expect(screen.queryByText(/e\.g\./)).not.toBeInTheDocument();
+    });
+
+    it("still renders the basket copy and worked example when not scoped", () => {
+        render(
+            <RewardBreakdown
+                referrer={percentage(10)}
+                isProductScoped={false}
+                t={t}
+            />
+        );
+
+        expect(screen.getByText("10% of basket")).toBeInTheDocument();
+        expect(
+            screen.getByText(`e.g. ${fmt(10)} for ${fmt(100)}`)
+        ).toBeInTheDocument();
     });
 });

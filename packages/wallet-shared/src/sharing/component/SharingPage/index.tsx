@@ -80,6 +80,13 @@ export type SharingPageProps = {
      */
     minPurchaseAmount?: string;
     /**
+     * Whether the selected campaign carries a `productScope` — the reward
+     * only applies to purchases of selected products, not any purchase. When
+     * true, step 2 and the credit-card tagline mention "selected products"
+     * instead of implying every purchase qualifies.
+     */
+    isProductScoped?: boolean;
+    /**
      * Whole-day lockup applied before a reward settles. When set, step 3 adds a
      * line stating when earnings become available.
      */
@@ -93,6 +100,8 @@ export type SharingPageProps = {
         referrer?: EstimatedReward;
         referee?: EstimatedReward;
         minPurchaseValue?: number;
+        /** Whether the selected campaign carries a `productScope`. */
+        isProductScoped?: boolean;
     };
     /**
      * Whether the Web Share API is available in the current browser.
@@ -198,6 +207,23 @@ function splitStep(text: string) {
     };
 }
 
+/**
+ * Step 2's i18next context key: mentions the minimum order value and/or that
+ * only selected products qualify, when the campaign gates on either.
+ * i18next context strings don't compose (no `"min_product"` from two
+ * separate context values), so the four combinations are enumerated here as
+ * distinct context keys.
+ */
+function getStep2Context(
+    isProductScoped: boolean,
+    minPurchaseAmount: string | undefined
+): "min" | "product" | "min_product" | undefined {
+    if (isProductScoped) {
+        return minPurchaseAmount ? "min_product" : "product";
+    }
+    return minPurchaseAmount ? "min" : undefined;
+}
+
 export function SharingPage({
     appName,
     logoUrl,
@@ -211,6 +237,7 @@ export function SharingPage({
     isRewardLoading = false,
     rewardType,
     minPurchaseAmount,
+    isProductScoped = false,
     lockupDurationDays,
     rewardBreakdown,
     canShare = true,
@@ -242,12 +269,12 @@ export function SharingPage({
     }
 
     const step1 = splitStep(t("sdk.sharingPage.steps.1"));
-    // Mention the minimum order value in step 2 when the campaign gates on one.
+    const step2Context = getStep2Context(isProductScoped, minPurchaseAmount);
     const step2 = splitStep(
         t(
             "sdk.sharingPage.steps.2",
-            minPurchaseAmount
-                ? { context: "min", minAmount: minPurchaseAmount }
+            step2Context
+                ? { context: step2Context, minAmount: minPurchaseAmount }
                 : undefined
         )
     );
@@ -339,7 +366,12 @@ export function SharingPage({
                                         )
                                     )}
                                     <br />
-                                    {t("sdk.sharingPage.card.tagline2")}
+                                    {t(
+                                        "sdk.sharingPage.card.tagline2",
+                                        isProductScoped
+                                            ? { context: "product" }
+                                            : undefined
+                                    )}
                                 </span>
                                 <MerchantLogo
                                     src={logoUrl}
@@ -448,6 +480,9 @@ export function SharingPage({
                                                     }
                                                     minPurchaseValue={
                                                         rewardBreakdown.minPurchaseValue
+                                                    }
+                                                    isProductScoped={
+                                                        rewardBreakdown.isProductScoped
                                                     }
                                                     t={t}
                                                 />

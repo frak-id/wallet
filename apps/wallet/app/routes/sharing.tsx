@@ -474,11 +474,13 @@ function WalletSharingPage() {
             isRewardLoading={isRewardLoading && !seededReward}
             rewardType={reward?.payoutType}
             minPurchaseAmount={reward?.minPurchaseAmount}
+            isProductScoped={reward?.isProductScoped}
             lockupDurationDays={reward?.lockupDurationDays}
             rewardBreakdown={{
                 referrer: reward?.referrerReward,
                 referee: reward?.refereeReward,
                 minPurchaseValue: reward?.minPurchaseValue,
+                isProductScoped: reward?.isProductScoped,
             }}
             canShare={canShare}
             chromeless={native}
