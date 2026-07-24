@@ -1,46 +1,18 @@
 import { HttpError } from "@backend-utils";
 import sharp from "sharp";
+import {
+    type DownscaleVariant,
+    generateWebpVariants,
+    type ImageType,
+    imageTypeConfigs,
+} from "./imageVariants";
 
-/**
- * Constraints per image type:
- *  - maxWidth/maxHeight: bounding box for resize (aspect ratio preserved)
- *  - minWidth/minHeight: minimum input size
- *  - minRatio/maxRatio: allowed width/height aspect ratio range
- */
-const imageConstraints = {
-    logo: {
-        maxWidth: 512,
-        maxHeight: 512,
-        minWidth: 128,
-        minHeight: 128,
-        minRatio: 0.5, // 1:2 (tall)
-        maxRatio: 2, // 2:1 (wide)
-    },
-    hero: {
-        maxWidth: 1200,
-        maxHeight: 800,
-        minWidth: 800,
-        minHeight: 450,
-        minRatio: 1.33, // 4:3
-        maxRatio: 2, // 2:1
-    },
-    // Small, roughly-square illustration shown in place of the gift icon on the
-    // post-purchase card and the referral banner.
-    icon: {
-        maxWidth: 512,
-        maxHeight: 512,
-        minWidth: 64,
-        minHeight: 64,
-        minRatio: 0.5, // 1:2 (tall)
-        maxRatio: 2, // 2:1 (wide)
-    },
-} as const;
-
-export type ImageType = keyof typeof imageConstraints;
+export type { ImageType } from "./imageVariants";
 
 type ProcessedImage = {
-    buffer: Buffer;
-    contentType: string;
+    contentType: string; // 'image/webp' or 'image/svg+xml'
+    canonical: Buffer; // the {type}.{ext} object: lg webp, or the original for svg
+    downscales: { size: DownscaleVariant; buffer: Buffer }[]; // [] for svg
 };
 
 // Image validation errors are surfaced as 400 HttpError instances so Elysia
@@ -49,7 +21,7 @@ type ProcessedImage = {
 /**
  * Service for validating and processing merchant images
  *  - SVGs are passed through as-is (already vector, no compression needed)
- *  - Raster images are validated, resized within bounds, and converted to WebP
+ *  - Raster images are validated, and resized into sm/md/lg WebP variants
  */
 export class ImageProcessingService {
     /**
@@ -63,12 +35,13 @@ export class ImageProcessingService {
         // SVG passthrough — already vector, no validation on dimensions
         if (file.type === "image/svg+xml") {
             return {
-                buffer: inputBuffer,
                 contentType: "image/svg+xml",
+                canonical: inputBuffer,
+                downscales: [],
             };
         }
 
-        const constraints = imageConstraints[type];
+        const constraints = imageTypeConfigs[type];
 
         // Read metadata to validate dimensions before processing
         const metadata = await sharp(inputBuffer).metadata();
@@ -101,18 +74,15 @@ export class ImageProcessingService {
             );
         }
 
-        // Resize within bounding box (preserves original aspect ratio)
-        const buffer = await sharp(inputBuffer)
-            .resize(constraints.maxWidth, constraints.maxHeight, {
-                fit: "inside",
-                withoutEnlargement: true,
-            })
-            .webp({ quality: 82, effort: 4 })
-            .toBuffer();
+        const { sm, md, lg } = await generateWebpVariants(inputBuffer, type);
 
         return {
-            buffer,
             contentType: "image/webp",
+            canonical: lg,
+            downscales: [
+                { size: "sm", buffer: sm },
+                { size: "md", buffer: md },
+            ],
         };
     }
 }

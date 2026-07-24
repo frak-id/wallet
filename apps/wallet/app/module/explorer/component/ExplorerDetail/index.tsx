@@ -32,6 +32,7 @@ import {
     useCopyToClipboardWithState,
     useShareLink,
 } from "@frak-labs/wallet-shared";
+import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -300,7 +301,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     </div>
                     {logoUrl && (
                         <img
-                            src={logoUrl}
+                            {...mediaSrcSet(logoUrl)}
                             alt={`${merchant.name} logo`}
                             className={styles.brandLogo}
                             loading="lazy"

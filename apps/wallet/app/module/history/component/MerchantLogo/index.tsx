@@ -1,4 +1,5 @@
 import type { MerchantInfo } from "@frak-labs/wallet-shared";
+import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
 import type { RecipeVariants } from "@vanilla-extract/recipes";
 import * as styles from "./index.css";
 
@@ -25,7 +26,7 @@ export function MerchantLogo({
         <div className={styles.merchantLogo({ size })}>
             {merchant.logoUrl ? (
                 <img
-                    src={merchant.logoUrl}
+                    {...mediaSrcSet(merchant.logoUrl)}
                     alt={merchant.name}
                     className={styles.merchantLogoImg}
                     width={MERCHANT_LOGO_PX[size]}

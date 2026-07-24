@@ -5,6 +5,7 @@ import { Spread } from "@frak-labs/design-system/components/Spread";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { EyeIcon } from "@frak-labs/design-system/icons";
 import { trackEvent } from "@frak-labs/wallet-shared";
+import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useOneShotInView } from "@/module/common/hook/useOneShotInView";
@@ -114,7 +115,7 @@ function ExplorerCardComponent({ merchant, priority }: ExplorerCardProps) {
                         </Box>
                         <Box className={styles.logoWrapper}>
                             <img
-                                src={logoUrl}
+                                {...mediaSrcSet(logoUrl)}
                                 alt={`${name} logo`}
                                 className={styles.logoImage}
                                 loading={priority ? "eager" : "lazy"}
