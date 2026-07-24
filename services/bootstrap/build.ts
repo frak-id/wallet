@@ -8,6 +8,9 @@ const result = await build({
     minify: true,
     splitting: false,
     target: "bun",
+    // sharp ships native libvips bindings that cannot be bundled; it is
+    // installed in the runtime image instead (same approach as services/backend).
+    external: ["sharp"],
     drop: ["debugger"],
     sourcemap: "linked",
 });
