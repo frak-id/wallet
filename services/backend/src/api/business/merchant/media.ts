@@ -94,7 +94,7 @@ export const merchantMediaRoutes = new Elysia({
                 );
 
             const storageType = hashSuffixed
-                ? `${hashSuffixed.prefix}-${generateContentHash(processed.buffer)}`
+                ? `${hashSuffixed.prefix}-${generateContentHash(processed.canonical)}`
                 : type;
 
             // Reject duplicate hash-suffixed uploads (same content → same hash)
@@ -116,7 +116,8 @@ export const merchantMediaRoutes = new Elysia({
             const url = await MediaContext.repositories.mediaStorage.upload({
                 merchantId,
                 type: storageType,
-                body: processed.buffer,
+                canonical: processed.canonical,
+                downscales: processed.downscales,
                 contentType: processed.contentType,
             });
 
