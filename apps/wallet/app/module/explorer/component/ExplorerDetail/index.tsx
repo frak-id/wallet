@@ -223,6 +223,13 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                                 src={url}
                                 alt={`${merchant.name}${images.length > 1 ? ` ${index + 1}` : ""}`}
                                 className={styles.heroImage}
+                                // Slide 1 is the sheet's LCP: load it eagerly
+                                // and hint high priority. Defer 2..N so a
+                                // multi-image carousel doesn't decode every
+                                // slide the moment the sheet opens.
+                                loading={index === 0 ? "eager" : "lazy"}
+                                decoding="async"
+                                fetchPriority={index === 0 ? "high" : undefined}
                             />
                         </div>
                     ))}
@@ -296,6 +303,8 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                             src={logoUrl}
                             alt={`${merchant.name} logo`}
                             className={styles.brandLogo}
+                            loading="lazy"
+                            decoding="async"
                         />
                     )}
                 </Spread>
