@@ -38,9 +38,15 @@ function evaluateArrayOperator(
     operator: "in" | "not_in",
     fieldValue: string | number | undefined,
     value: RuleCondition["value"]
-): boolean {
+): boolean | undefined {
     if (!Array.isArray(value)) return operator === "not_in";
-    if (fieldValue === undefined) return false;
+    // Missing field: non-evaluable, fail open (matches) — deliberate
+    // divergence from the backend, which hard-fails `in` to `false` (and
+    // `not_in` to `true`) here because it evaluates a complete purchase line
+    // item. Client-side absence just means the integrator didn't supply that
+    // field, not that it's actually missing, so we can't assert a match or
+    // non-match either way.
+    if (fieldValue === undefined) return undefined;
     const includes = value.includes(fieldValue);
     return operator === "in" ? includes : !includes;
 }

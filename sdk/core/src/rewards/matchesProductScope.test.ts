@@ -345,6 +345,24 @@ describe("matchesProductScope — fail-open cases", () => {
             )
         ).toBe(true);
     });
+
+    it("in with a missing field fails open (matches), unlike the backend's fail-closed", () => {
+        expect(
+            matchesProductScope(
+                [{ field: "sku", operator: "in", value: ["SHOE-42"] }],
+                {}
+            )
+        ).toBe(true);
+    });
+
+    it("not_in with a missing field fails open (matches)", () => {
+        expect(
+            matchesProductScope(
+                [{ field: "sku", operator: "not_in", value: ["SHOE-42"] }],
+                {}
+            )
+        ).toBe(true);
+    });
 });
 
 // Parity test: keeps this SDK subset honest against the backend's allowlist.
@@ -355,6 +373,11 @@ describe("matchesProductScope — fail-open cases", () => {
 //               (PRODUCT_SCOPE_FIELDS)
 //  - operators: services/backend/src/domain/campaign/services/RuleConditionEvaluator.ts
 //               (evaluateOperator's exhaustive operator switch)
+//
+// These two lists are manually copied from the backend, not machine-checked
+// against it (no shared import across the SDK/backend boundary) — a backend
+// allowlist change requires updating `BACKEND_PRODUCT_SCOPE_FIELDS` /
+// `BACKEND_OPERATORS` below by hand.
 describe("matchesProductScope — parity with backend allowlist", () => {
     const BACKEND_PRODUCT_SCOPE_FIELDS = [
         "productId",

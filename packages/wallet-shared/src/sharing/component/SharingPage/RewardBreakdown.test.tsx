@@ -153,11 +153,14 @@ describe("RewardBreakdown", () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    it("renders 'eligible products' copy and no worked example for a scoped percentage", () => {
+    it("renders 'eligible products' copy and no worked example for a matched-items-basis percentage", () => {
         render(
             <RewardBreakdown
-                referrer={percentage(10)}
-                isProductScoped={true}
+                referrer={{
+                    payoutType: "percentage",
+                    percent: 10,
+                    percentOf: "matched_items_amount",
+                }}
                 t={t}
             />
         );
@@ -168,11 +171,14 @@ describe("RewardBreakdown", () => {
         expect(screen.queryByText(/e\.g\./)).not.toBeInTheDocument();
     });
 
-    it("renders 'eligible products' copy and no worked example for scoped percent tiers", () => {
+    it("renders 'eligible products' copy and no worked example for matched-items-basis percent tiers", () => {
         render(
             <RewardBreakdown
-                referrer={tiered([{ minValue: 0, maxValue: 100, percent: 5 }])}
-                isProductScoped={true}
+                referrer={{
+                    payoutType: "tiered",
+                    tierField: "purchase.matchedAmount",
+                    tiers: [{ minValue: 0, maxValue: 100, percent: 5 }],
+                }}
                 t={t}
             />
         );
@@ -182,10 +188,25 @@ describe("RewardBreakdown", () => {
     });
 
     it("still renders the basket copy and worked example when not scoped", () => {
+        render(<RewardBreakdown referrer={percentage(10)} t={t} />);
+
+        expect(screen.getByText("10% of basket")).toBeInTheDocument();
+        expect(
+            screen.getByText(`e.g. ${fmt(10)} for ${fmt(100)}`)
+        ).toBeInTheDocument();
+    });
+
+    it("renders basket copy WITH the worked example for a product-gated campaign whose reward is still a whole-basket percentage", () => {
+        // A campaign can carry a `productScope` (pure eligibility gate) while
+        // its reward is still `percentOf: "purchase_amount"` — the display
+        // split must follow the reward's basis, not the campaign-level gate.
         render(
             <RewardBreakdown
-                referrer={percentage(10)}
-                isProductScoped={false}
+                referrer={{
+                    payoutType: "percentage",
+                    percent: 10,
+                    percentOf: "purchase_amount",
+                }}
                 t={t}
             />
         );

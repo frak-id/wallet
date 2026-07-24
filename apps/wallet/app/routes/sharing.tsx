@@ -480,7 +480,6 @@ function WalletSharingPage() {
                 referrer: reward?.referrerReward,
                 referee: reward?.refereeReward,
                 minPurchaseValue: reward?.minPurchaseValue,
-                isProductScoped: reward?.isProductScoped,
             }}
             canShare={canShare}
             chromeless={native}

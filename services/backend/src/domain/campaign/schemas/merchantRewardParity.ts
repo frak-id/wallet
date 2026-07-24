@@ -9,8 +9,8 @@
 // Zero runtime cost: nothing here is imported or executed, only typechecked.
 // Isolated in its own file (rather than inline in `schemas/index.ts`) so this
 // checkout's unbuilt `@frak-labs/core-sdk` workspace package (10 pre-existing
-// tsc errors, tracked in docs/product-scoped-campaigns-decisions.md) only
-// breaks this one file locally; CI, where the SDK package is built, still
+// tsc errors, tracked in services/backend/docs/product-scoped-campaigns-decisions.md)
+// only breaks this one file locally; CI, where the SDK package is built, still
 // typechecks the real assertion.
 //
 // Two-part check:

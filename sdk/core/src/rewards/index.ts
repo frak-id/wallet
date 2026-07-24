@@ -30,4 +30,4 @@ export {
     selectBestReward,
     selectDisplayCampaign,
 } from "./select";
-export { getRewardValue } from "./value";
+export { getRewardValue, isMatchedItemsBasis } from "./value";

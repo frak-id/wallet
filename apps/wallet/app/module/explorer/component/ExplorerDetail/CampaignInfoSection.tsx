@@ -3,6 +3,7 @@ import { formatAmount } from "@frak-labs/core-sdk";
 import {
     buildPercentageExample,
     buildTierExample,
+    isMatchedItemsBasis,
     type RewardExample,
 } from "@frak-labs/core-sdk/rewards";
 import { Badge } from "@frak-labs/design-system/components/Badge";
@@ -102,7 +103,6 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                         labelKey="explorer.detail.referrerReward"
                         reward={view.referrer}
                         minPurchase={view.minPurchaseAmount}
-                        isProductScoped={view.hasProductScope}
                     />
                 )}
                 {view.referee && (
@@ -110,7 +110,6 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                         labelKey="explorer.detail.refereeReward"
                         reward={view.referee}
                         minPurchase={view.minPurchaseAmount}
-                        isProductScoped={view.hasProductScope}
                     />
                 )}
                 <InfoRow
@@ -155,22 +154,14 @@ function RewardRow({
     labelKey,
     reward,
     minPurchase,
-    isProductScoped,
 }: {
     labelKey: string;
     reward: EstimatedReward;
     minPurchase: number | undefined;
-    isProductScoped: boolean;
 }) {
     const { t } = useTranslation();
     if (reward.payoutType === "tiered") {
-        return (
-            <TieredRewardBlock
-                labelKey={labelKey}
-                reward={reward}
-                isProductScoped={isProductScoped}
-            />
-        );
+        return <TieredRewardBlock labelKey={labelKey} reward={reward} />;
     }
     return (
         <InfoRow
@@ -178,13 +169,7 @@ function RewardRow({
             labelColor="secondary"
             align={reward.payoutType === "percentage" ? "top" : "center"}
             label={t(labelKey)}
-            action={
-                <RewardValue
-                    reward={reward}
-                    minPurchase={minPurchase}
-                    isProductScoped={isProductScoped}
-                />
-            }
+            action={<RewardValue reward={reward} minPurchase={minPurchase} />}
         />
     );
 }
@@ -192,11 +177,9 @@ function RewardRow({
 function RewardValue({
     reward,
     minPurchase,
-    isProductScoped,
 }: {
     reward: FlatReward;
     minPurchase: number | undefined;
-    isProductScoped: boolean;
 }) {
     const { t } = useTranslation();
     if (reward.payoutType === "fixed") {
@@ -211,10 +194,11 @@ function RewardValue({
             </Text>
         );
     }
-    // No basket-based worked example when the reward is product-scoped — the
-    // percent applies to matched line items only, not the reference basket
-    // `buildPercentageExample` assumes.
-    const example = isProductScoped
+    // No basket-based worked example when the reward's basis is the matched
+    // line items — `buildPercentageExample` assumes a whole-basket reference,
+    // which is wrong for a percent applied only to matched items.
+    const matchedItemsBasis = isMatchedItemsBasis(reward);
+    const example = matchedItemsBasis
         ? undefined
         : buildPercentageExample(reward, minPurchase);
     return (
@@ -226,7 +210,7 @@ function RewardValue({
             >
                 <CoinsIcon width={16} height={16} />{" "}
                 {t(
-                    isProductScoped
+                    matchedItemsBasis
                         ? "explorer.detail.percentOfEligible"
                         : "explorer.detail.percentOfBasket",
                     { percent: reward.percent }
@@ -240,13 +224,12 @@ function RewardValue({
 function TieredRewardBlock({
     labelKey,
     reward,
-    isProductScoped,
 }: {
     labelKey: string;
     reward: TieredReward;
-    isProductScoped: boolean;
 }) {
     const { t } = useTranslation();
+    const matchedItemsBasis = isMatchedItemsBasis(reward);
     return (
         <Box paddingX="m" paddingY="s" className={styles.tierBlock}>
             <Spread space="s">
@@ -260,7 +243,7 @@ function TieredRewardBlock({
                     <TierRow
                         key={tierKey(tier)}
                         tier={tier}
-                        isProductScoped={isProductScoped}
+                        isMatchedItemsBasis={matchedItemsBasis}
                     />
                 ))}
             </Stack>
@@ -270,10 +253,10 @@ function TieredRewardBlock({
 
 function TierRow({
     tier,
-    isProductScoped,
+    isMatchedItemsBasis,
 }: {
     tier: RewardTier;
-    isProductScoped: boolean;
+    isMatchedItemsBasis: boolean;
 }) {
     const { t } = useTranslation();
     const range =
@@ -296,10 +279,10 @@ function TierRow({
         );
     }
 
-    // No basket-based worked example when the reward is product-scoped — the
-    // percent applies to matched line items only, not the reference basket
-    // `buildTierExample` assumes.
-    const example = isProductScoped
+    // No basket-based worked example when the reward's basis is the matched
+    // line items — `buildTierExample` assumes a whole-basket reference, which
+    // is wrong for a percent applied only to matched items.
+    const example = isMatchedItemsBasis
         ? undefined
         : buildTierExample(tier.percent, tier.minValue, tier.maxValue);
     return (
@@ -310,7 +293,7 @@ function TierRow({
             <Stack space="xxs" align="right">
                 <Text variant="bodySmall" weight="medium">
                     {t(
-                        isProductScoped
+                        isMatchedItemsBasis
                             ? "explorer.detail.percentOfEligible"
                             : "explorer.detail.percentOfBasket",
                         { percent: tier.percent }

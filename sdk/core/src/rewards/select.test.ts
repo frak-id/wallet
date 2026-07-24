@@ -423,6 +423,11 @@ describe("selectBestReward", () => {
     });
 
     it("isProductScoped is true when the campaign carries a productScope", () => {
+        // This flag is the *gate*, not the reward's basis: this campaign's
+        // percentage is still `percentOf: "purchase_amount"` (whole basket) —
+        // see `isMatchedItemsBasis` for the basis question, which display
+        // surfaces must use instead for "% of basket" vs "% of eligible
+        // products" copy.
         const best = selectBestReward(
             [
                 campaign({

@@ -43,8 +43,10 @@ export type CampaignView = {
     pendingDays?: number;
     minPurchaseAmount?: number;
     minPurchaseDisplay?: string;
-    /** Whether the campaign carries a `productScope` (reward only applies to
-     * selected products, not the whole basket). */
+    /** Whether the campaign is gated to a `productScope` — it only pays out
+     * on purchases containing a matching line item. This is a gate, not the
+     * reward's basis: use `isMatchedItemsBasis` (per reward) to decide "% of
+     * basket" vs "% of eligible products" copy. */
     hasProductScope: boolean;
 };
 

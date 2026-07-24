@@ -234,7 +234,6 @@ export function ListenerSharingPage() {
                 referrer: reward?.referrerReward,
                 referee: reward?.refereeReward,
                 minPurchaseValue: reward?.minPurchaseValue,
-                isProductScoped: reward?.isProductScoped,
             }}
             showConfirmation={showConfirmation}
             onShare={handleShare}

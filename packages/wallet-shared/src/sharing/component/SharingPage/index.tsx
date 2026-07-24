@@ -100,8 +100,6 @@ export type SharingPageProps = {
         referrer?: EstimatedReward;
         referee?: EstimatedReward;
         minPurchaseValue?: number;
-        /** Whether the selected campaign carries a `productScope`. */
-        isProductScoped?: boolean;
     };
     /**
      * Whether the Web Share API is available in the current browser.
@@ -214,7 +212,7 @@ function splitStep(text: string) {
  * separate context values), so the four combinations are enumerated here as
  * distinct context keys.
  */
-function getStep2Context(
+export function getStep2Context(
     isProductScoped: boolean,
     minPurchaseAmount: string | undefined
 ): "min" | "product" | "min_product" | undefined {
@@ -366,11 +364,19 @@ export function SharingPage({
                                         )
                                     )}
                                     <br />
-                                    {t(
-                                        "sdk.sharingPage.card.tagline2",
-                                        isProductScoped
-                                            ? { context: "product" }
-                                            : undefined
+                                    {isRewardLoading ? (
+                                        <Skeleton
+                                            variant="text"
+                                            width={70}
+                                            height={14}
+                                        />
+                                    ) : (
+                                        t(
+                                            "sdk.sharingPage.card.tagline2",
+                                            isProductScoped
+                                                ? { context: "product" }
+                                                : undefined
+                                        )
                                     )}
                                 </span>
                                 <MerchantLogo
@@ -480,9 +486,6 @@ export function SharingPage({
                                                     }
                                                     minPurchaseValue={
                                                         rewardBreakdown.minPurchaseValue
-                                                    }
-                                                    isProductScoped={
-                                                        rewardBreakdown.isProductScoped
                                                     }
                                                     t={t}
                                                 />

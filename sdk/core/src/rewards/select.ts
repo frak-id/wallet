@@ -180,11 +180,16 @@ export type BestReward = {
      */
     minPurchaseValue?: number;
     /**
-     * Whether the selected campaign carries a `productScope` — the reward
-     * only applies to matching line items, not the whole basket. Surfaces
-     * use this to adapt copy that otherwise assumes a whole-basket reward
-     * (e.g. "X% of basket" + a basket-based worked example, both wrong for a
-     * scoped percentage/tiered reward).
+     * Whether the selected campaign is gated to a `productScope` — it only
+     * pays out on purchases containing a matching line item. This is a
+     * *gate*, not the reward's basis: a product-gated campaign can still pay
+     * a percentage of the whole basket (e.g. `percentOf: "purchase_amount"`),
+     * so surfaces should use this flag only for gate-related copy (e.g. "on
+     * selected products only"). Whether the reward itself is computed over
+     * matched line items rather than the whole basket is a separate question
+     * — see {@link isMatchedItemsBasis}, which surfaces must use instead for
+     * "% of basket" vs "% of eligible products" copy and worked-example
+     * suppression.
      */
     isProductScoped: boolean;
 };
