@@ -36,9 +36,19 @@ export function pickTierBasket(
 
 export function buildPercentageExample(
     reward: PercentageReward,
-    minPurchase: number | undefined
+    minPurchase: number | undefined,
+    productPrice?: number
 ): RewardExample | undefined {
-    const basket = pickFlatBasket(minPurchase);
+    // A scoped percentage (`percentOf: "matched_items_amount"`) is a percentage
+    // of the matched line items, not the whole basket — a basket-based example
+    // would be actively wrong for it. When the caller knows the actual product
+    // on display (the reward's real basis), use its price instead of the
+    // fictional reference basket; the campaign's minimum purchase doesn't apply
+    // to a per-product basis, so it's only used for the whole-basket case.
+    const basket =
+        reward.percentOf === "matched_items_amount" && productPrice != null
+            ? productPrice
+            : pickFlatBasket(minPurchase);
     if (basket <= 0) return undefined;
     let amount = (reward.percent / 100) * basket;
     if (reward.minAmount) amount = Math.max(amount, reward.minAmount.eurAmount);

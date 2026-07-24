@@ -10,6 +10,10 @@ import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 import { extractMinPurchaseAmount, extractStartDate } from "./conditions";
 import { formatRewardOrHide } from "./format";
+import {
+    matchesProductScope,
+    type ProductScopeTarget,
+} from "./matchesProductScope";
 import { getRewardRank } from "./value";
 
 /** Reward side a surface cares about: the sharer (`referrer`) or the referred
@@ -31,6 +35,16 @@ export type SelectDisplayCampaignOptions = {
     targetInteraction?: InteractionTypeKey;
     /** Reward side to rank campaigns by; defaults to `"referrer"`. */
     audience?: RewardAudience;
+    /**
+     * The product currently on display, when known (e.g. a product page).
+     * Purely advisory (see {@link matchesProductScope}): when set, a
+     * `productScope`d campaign whose scope does **not** match this product is
+     * deprioritized below every campaign that does match (unscoped campaigns
+     * always count as matching). Ranking *among* matching campaigns is
+     * unchanged. Omit when the product isn't known — every campaign is then
+     * treated as matching, same as today.
+     */
+    product?: ProductScopeTarget;
 };
 
 function isExpired(campaign: MerchantReward, nowMs: number): boolean {
@@ -56,6 +70,14 @@ function campaignRank(
 ): number {
     const reward = audienceReward(campaign, audience);
     return reward ? getRewardRank(reward, key) : 0;
+}
+
+function matchesProduct(
+    campaign: MerchantReward,
+    product: ProductScopeTarget | undefined
+): boolean {
+    if (!product) return true;
+    return matchesProductScope(campaign.productScope, product);
 }
 
 /**
@@ -86,11 +108,20 @@ export function selectDisplayCampaign(
 
     const live = active.filter((campaign) => hasStarted(campaign, nowMs));
     if (live.length > 0) {
-        const best = live.reduce((a, b) =>
-            campaignRank(b, key, audience) > campaignRank(a, key, audience)
+        // Product-matching campaigns are ranked first as a group; within each
+        // group, the existing reward-value ranking applies unchanged. This only
+        // ever moves a non-matching *scoped* campaign down — it never changes
+        // the winner when `options.product` is omitted, or among campaigns that
+        // already agree on whether they match.
+        const best = live.reduce((a, b) => {
+            const aMatches = matchesProduct(a, options.product);
+            const bMatches = matchesProduct(b, options.product);
+            if (aMatches !== bMatches) return bMatches ? b : a;
+            return campaignRank(b, key, audience) >
+                campaignRank(a, key, audience)
                 ? b
-                : a
-        );
+                : a;
+        });
         return { campaign: best, status: "live" };
     }
 

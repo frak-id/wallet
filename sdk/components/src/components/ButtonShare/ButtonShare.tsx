@@ -7,6 +7,7 @@ import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { useProductScopeTarget } from "@/hooks/useProductScopeTarget";
 import { useReward } from "@/hooks/useReward";
 import { componentDefaults } from "@/i18n/defaults";
 import { applyRewardPlaceholder } from "@/utils/format/formatReward";
@@ -53,6 +54,14 @@ import type { ButtonShareProps } from "./types";
  * <frak-button-share text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!" target-interaction="custom.customerMeeting"></frak-button-share>
  * ```
  *
+ * @example
+ * On a product page, pass the displayed product's identifiers so a
+ * `productScope`d campaign matching it is advisorily preferred over a
+ * richer campaign that doesn't apply to this product:
+ * ```html
+ * <frak-button-share text="Share and earn up to {REWARD}!" product-id="prod_123" product-sku="SHOE-42" product-price="79.90"></frak-button-share>
+ * ```
+ *
  * @see {@link @frak-labs/core-sdk!actions.displaySharingPage | `displaySharingPage()`} for more info about the sharing-page flow
  * @see {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} for more info about the estimated reward fetching
  */
@@ -62,6 +71,9 @@ export function ButtonShare({
     classname = "",
     noRewardText,
     targetInteraction,
+    productId,
+    productSku,
+    productPrice,
     clickAction: rawClickAction,
     preview,
 }: ButtonShareProps) {
@@ -97,9 +109,12 @@ export function ButtonShare({
         [componentConfig?.clickAction, rawClickAction]
     );
     const { shouldRender, isHidden, isClientReady } = useClientReady();
+    const product = useProductScopeTarget(productId, productSku, productPrice);
     const { reward } = useReward(
         wantsReward && isClientReady,
-        resolvedTargetInteraction
+        resolvedTargetInteraction,
+        undefined,
+        product
     );
 
     const btnText = useMemo(() => {

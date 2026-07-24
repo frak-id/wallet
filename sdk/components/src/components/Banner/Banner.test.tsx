@@ -389,7 +389,8 @@ describe.sequential("Banner", () => {
         expect(useRewardHook.useReward).toHaveBeenCalledWith(
             true,
             "referral",
-            "referee"
+            "referee",
+            undefined
         );
     });
 
@@ -402,10 +403,11 @@ describe.sequential("Banner", () => {
             expect(container.querySelector(".frak-banner")).toBeInTheDocument();
         });
 
-        expect(useRewardHook.useReward).toHaveBeenCalledWith(
+        expect(useRewardHook.useReward).toHaveBeenLastCalledWith(
             true,
             undefined,
-            "referee"
+            "referee",
+            undefined
         );
     });
 });

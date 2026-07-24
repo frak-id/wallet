@@ -145,7 +145,12 @@ describe.sequential("ButtonShare", () => {
         render(<ButtonShare text="Share and earn!" />);
         const button = screen.getByRole("button");
         expect(button).toHaveTextContent("Share and earn!");
-        expect(useRewardHook.useReward).toHaveBeenCalledWith(false, undefined);
+        expect(useRewardHook.useReward).toHaveBeenCalledWith(
+            false,
+            undefined,
+            undefined,
+            undefined
+        );
     });
 
     it("should call openSharingPage on click by default", async () => {
@@ -225,7 +230,9 @@ describe.sequential("ButtonShare", () => {
 
         expect(useRewardHook.useReward).toHaveBeenCalledWith(
             true,
-            "custom.customerMeeting"
+            "custom.customerMeeting",
+            undefined,
+            undefined
         );
     });
 

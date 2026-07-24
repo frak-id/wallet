@@ -259,4 +259,57 @@ describe.sequential("useReward", () => {
             expect(getMerchantInformation).toHaveBeenCalledTimes(2);
         });
     });
+
+    it("should prefer a matching-productScope campaign when product is provided", async () => {
+        vi.mocked(getMerchantInformation).mockResolvedValue({
+            id: "merchant-1",
+            onChainMetadata: { name: "Test", domain: "test.com" },
+            rewards: [
+                {
+                    campaignId: "rich-nonmatching",
+                    name: "Rich, wrong product",
+                    conditions: [],
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "OTHER-SKU" },
+                    ],
+                    interactionTypeKey: "purchase",
+                    referrer: {
+                        payoutType: "fixed",
+                        amount: {
+                            amount: 50,
+                            eurAmount: 50,
+                            usdAmount: 55,
+                            gbpAmount: 45,
+                        },
+                    },
+                },
+                {
+                    campaignId: "poor-matching",
+                    name: "Poor, right product",
+                    conditions: [],
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                    interactionTypeKey: "purchase",
+                    referrer: {
+                        payoutType: "fixed",
+                        amount: {
+                            amount: 5,
+                            eurAmount: 5,
+                            usdAmount: 6,
+                            gbpAmount: 4,
+                        },
+                    },
+                },
+            ],
+        });
+
+        const { result } = renderHook(() =>
+            useReward(true, undefined, undefined, { sku: "SHOE-42" })
+        );
+
+        await waitFor(() => {
+            expect(result.current.reward).toContain("5");
+        });
+    });
 });

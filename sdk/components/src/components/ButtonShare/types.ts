@@ -34,6 +34,21 @@ export type ButtonShareProps = {
      */
     targetInteraction?: InteractionTypeKey;
     /**
+     * Identifiers of the product currently on display (e.g. on a product
+     * page), used to advisorily prefer a campaign whose `productScope`
+     * matches this product when picking the reward to advertise. Purely a
+     * display hint — omit when the product isn't known or isn't relevant.
+     */
+    productId?: string;
+    /** See {@link productId}. */
+    productSku?: string;
+    /**
+     * Numeric price of the displayed product. Accepts a `string` too (HTML
+     * attribute binding always delivers strings); an unparseable value is
+     * dropped. See {@link productId}.
+     */
+    productPrice?: number | string;
+    /**
      * Which UI to open on click.
      *
      * Legacy values (e.g. `"share-modal"`) are accepted at runtime and

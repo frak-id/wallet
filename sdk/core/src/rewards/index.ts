@@ -18,6 +18,10 @@ export {
     formatRewardOrHide,
 } from "./format";
 export {
+    matchesProductScope,
+    type ProductScopeTarget,
+} from "./matchesProductScope";
+export {
     type BestReward,
     type DisplayCampaign,
     formatBestReward,

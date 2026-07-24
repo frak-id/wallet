@@ -82,6 +82,22 @@ export type PostPurchaseProps = {
      */
     products?: SharingPageProduct[] | string;
     /**
+     * Identifiers of the single product this post-purchase card is about,
+     * when known, used to advisorily prefer a campaign whose `productScope`
+     * matches it when picking the reward to advertise. Purely a display
+     * hint — distinct from {@link products}, which is about the sharing-page
+     * product cards, not reward selection. Omit when not relevant.
+     */
+    productId?: string;
+    /** See {@link productId}. */
+    productSku?: string;
+    /**
+     * Numeric price of the product. Accepts a `string` too (HTML attribute
+     * binding always delivers strings); an unparseable value is dropped.
+     * See {@link productId}.
+     */
+    productPrice?: number | string;
+    /**
      * When set, renders the card in preview mode (e.g. Shopify/WP editor).
      * Bypasses the client-ready / RPC gates that normally hide the card
      * until the backend resolves, and no-ops the click handler so merchants

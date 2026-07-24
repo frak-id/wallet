@@ -12,6 +12,7 @@ import {
     trackPurchaseStatus,
 } from "@frak-labs/core-sdk/actions";
 import {
+    type ProductScopeTarget,
     type RewardAudience,
     selectDisplayCampaign,
 } from "@frak-labs/core-sdk/rewards";
@@ -30,6 +31,7 @@ import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { useProductScopeTarget } from "@/hooks/useProductScopeTarget";
 import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import {
@@ -71,7 +73,8 @@ type ResolvedPostPurchaseContext = {
 function resolvePostPurchaseContext(
     referralStatus: UserReferralStatusType | null,
     merchantInfo: GetMerchantInformationReturnType,
-    currency: Currency | undefined
+    currency: Currency | undefined,
+    product: ProductScopeTarget | undefined
 ): ResolvedPostPurchaseContext | null {
     const audience: RewardAudience = referralStatus?.isReferred
         ? "referee"
@@ -82,6 +85,7 @@ function resolvePostPurchaseContext(
         targetInteraction: "purchase",
         currency,
         audience,
+        product,
     });
     if (!selected) return null;
 
@@ -143,12 +147,16 @@ export function PostPurchase({
     preview,
     previewVariant,
     products,
+    productId,
+    productSku,
+    productPrice,
     imageUrl: propImageUrl,
 }: PostPurchaseProps) {
     const isPreview = !!preview;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const placement = usePlacement(placementId);
     const lang = useLang();
+    const product = useProductScopeTarget(productId, productSku, productPrice);
 
     useLightDomStyles(
         "frak-post-purchase",
@@ -194,7 +202,8 @@ export function PostPurchase({
                     resolvePostPurchaseContext(
                         referralStatus,
                         merchantInfo,
-                        client.config.metadata?.currency
+                        client.config.metadata?.currency,
+                        product
                     )
                 );
             })
@@ -210,6 +219,9 @@ export function PostPurchase({
                 // Transient errors: allow retry on next render
                 console.warn("[Frak] Post-purchase context error", e);
             });
+        // `product` intentionally excluded from deps below: this effect is
+        // gated by `hasFetched` (fetch-once), so it must not re-run when a
+        // memoized `product` object identity changes after the first fetch.
     }, [isPreview, isClientReady, hasFetched]);
 
     // Impression tracking fires once per (mount, variant) pair after the

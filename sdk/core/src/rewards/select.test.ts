@@ -159,6 +159,91 @@ describe("selectDisplayCampaign", () => {
                 ?.campaign.campaignId
         ).toBe("rich-referee");
     });
+
+    describe("with a `product` option", () => {
+        it("does not change the winner when the product is omitted", () => {
+            const rewards = [
+                campaign({
+                    id: "scoped",
+                    referrer: fixedReward(9),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+                campaign({ id: "unscoped", referrer: fixedReward(3) }),
+            ];
+            expect(
+                selectDisplayCampaign(rewards, { now: NOW })?.campaign
+                    .campaignId
+            ).toBe("scoped");
+        });
+
+        it("prefers a matching-scope campaign over a richer non-matching one", () => {
+            const rewards = [
+                campaign({
+                    id: "rich-nonmatching",
+                    referrer: fixedReward(50),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "OTHER-SKU" },
+                    ],
+                }),
+                campaign({
+                    id: "poor-matching",
+                    referrer: fixedReward(5),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                product: { sku: "SHOE-42" },
+            });
+            expect(result?.campaign.campaignId).toBe("poor-matching");
+        });
+
+        it("treats an unscoped campaign as always matching", () => {
+            const rewards = [
+                campaign({
+                    id: "scoped-nonmatching",
+                    referrer: fixedReward(50),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "OTHER-SKU" },
+                    ],
+                }),
+                campaign({ id: "unscoped", referrer: fixedReward(5) }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                product: { sku: "SHOE-42" },
+            });
+            expect(result?.campaign.campaignId).toBe("unscoped");
+        });
+
+        it("still ranks normally by reward value among matching campaigns", () => {
+            const rewards = [
+                campaign({
+                    id: "matching-poor",
+                    referrer: fixedReward(3),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+                campaign({
+                    id: "matching-rich",
+                    referrer: fixedReward(9),
+                    productScope: [
+                        { field: "sku", operator: "eq", value: "SHOE-42" },
+                    ],
+                }),
+            ];
+            const result = selectDisplayCampaign(rewards, {
+                now: NOW,
+                product: { sku: "SHOE-42" },
+            });
+            expect(result?.campaign.campaignId).toBe("matching-rich");
+        });
+    });
 });
 
 describe("formatBestReward", () => {
