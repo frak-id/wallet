@@ -75,4 +75,5 @@ RUN find dist -type f \
 FROM nginx:1.29.1-alpine
 COPY --from=app-builder /app/apps/listener/dist /usr/share/nginx/html
 COPY apps/listener/nginx.conf /etc/nginx/conf.d/default.conf
+COPY apps/listener/security-headers.conf /etc/nginx/snippets/security-headers.conf
 EXPOSE 80
