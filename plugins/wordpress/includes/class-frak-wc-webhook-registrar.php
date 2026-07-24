@@ -454,8 +454,8 @@ class Frak_WC_Webhook_Registrar {
 	}
 
 	/**
-	 * Project line-item entries down to the DTO shape. Drops `sku`,
-	 * `meta_data`, tax breakdowns, variation ids, parent names, and any other
+	 * Project line-item entries down to the DTO shape. Drops `meta_data`,
+	 * tax breakdowns, variation ids, parent names, and any other
 	 * field WC adds — none are read by the backend handler and `meta_data`
 	 * in particular is a free-form bag that other plugins frequently stuff
 	 * with PII (gift messages, custom-field input, etc.).
@@ -481,6 +481,10 @@ class Frak_WC_Webhook_Registrar {
 				'price'      => $item['price'] ?? null,
 				'name'       => $item['name'] ?? null,
 			);
+
+			if ( isset( $item['sku'] ) && '' !== $item['sku'] ) {
+				$entry['sku'] = $item['sku'];
+			}
 
 			if ( isset( $item['image'] ) && is_array( $item['image'] ) ) {
 				$image = array();
