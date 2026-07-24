@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **Order webhooks now send an explicit per-item `sku`, aligning the Magento payload with WooCommerce/PrestaShop/custom webhooks.** `WebhookSender::buildPayload()` adds a `sku` key (from `$item->getSku()`) to every line item; `name` now carries the human-readable product name (`$item->getName()`) instead of doubling as the SKU. The backend's Magento webhook handler drops its special name-as-SKU mapping and reads the explicit `sku` field like every other integration, so product-scoped campaigns match on SKU consistently across all storefronts.
+
 ## [1.0.0] - 2026-03-26
 
 ### Added
