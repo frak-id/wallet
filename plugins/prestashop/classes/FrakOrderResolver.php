@@ -81,7 +81,7 @@ class FrakOrderResolver
      *
      * @param Order  $order  Loaded PrestaShop order object.
      * @param string $status Mapped Frak status (`pending|confirmed|cancelled|refunded`).
-     * @return array{id:int,customerId:int,status:string,token:string,currency:string,totalPrice:float,items:array<int,array{productId:int,quantity:int,price:float,name:string,title:string}>}
+     * @return array{id:int,customerId:int,status:string,token:string,currency:string,totalPrice:float,items:array<int,array{productId:int,quantity:int,price:float,name:string,title:string,sku?:string}>}
      */
     public static function getWebhookPayload($order, string $status): array
     {
@@ -106,13 +106,17 @@ class FrakOrderResolver
 
         $items = [];
         foreach ($products as $product) {
-            $items[] = [
+            $item = [
                 'productId' => $product['product_id'],
                 'quantity' => $product['product_quantity'],
                 'price' => $product['unit_price_tax_incl'],
                 'name' => $product['product_name'],
                 'title' => $product['product_name'],
             ];
+            if (!empty($product['product_reference'])) {
+                $item['sku'] = (string) $product['product_reference'];
+            }
+            $items[] = $item;
         }
 
         return [
