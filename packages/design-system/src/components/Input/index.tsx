@@ -1,14 +1,8 @@
 import type { InputHTMLAttributes, ReactNode, Ref } from "react";
-import { useId } from "react";
 import { Box } from "../Box";
-import { Stack } from "../Stack";
-import {
-    fieldHint,
-    fieldLabel,
-    inputField,
-    inputSection,
-    inputWrapper,
-} from "./input.css";
+import { FieldLabel } from "../FieldLabel";
+import { useFieldIds } from "../useFieldIds";
+import { inputField, inputSection, inputWrapper } from "./input.css";
 
 type InputProps = Omit<
     InputHTMLAttributes<HTMLInputElement>,
@@ -62,11 +56,11 @@ export function Input({
     ref,
     ...rest
 }: InputProps) {
-    const generatedId = useId();
-    const fieldId = id ?? generatedId;
-    const hintId = hint ? `${fieldId}-hint` : undefined;
-    const describedBy =
-        [ariaDescribedBy, hintId].filter(Boolean).join(" ") || undefined;
+    const { fieldId, hintId, describedBy } = useFieldIds({
+        id,
+        hint,
+        ariaDescribedBy,
+    });
 
     const control = (
         <Box
@@ -106,25 +100,8 @@ export function Input({
     }
 
     return (
-        // Field spec: 8px (spacing.xs) label→control, 4px (spacing.xxs)
-        // control→hint. The hint nests with the control so the label keeps its
-        // 8px offset while the hint sits 4px under the field.
-        <Stack space="xs">
-            {label ? (
-                <Box as="label" htmlFor={fieldId} className={fieldLabel}>
-                    {label}
-                </Box>
-            ) : null}
-            {hint ? (
-                <Stack space="xxs">
-                    {control}
-                    <Box as="span" id={hintId} className={fieldHint}>
-                        {hint}
-                    </Box>
-                </Stack>
-            ) : (
-                control
-            )}
-        </Stack>
+        <FieldLabel label={label} hint={hint} htmlFor={fieldId} hintId={hintId}>
+            {control}
+        </FieldLabel>
     );
 }
