@@ -5,6 +5,9 @@
  */
 export type MediaSrcSetMode = "small" | "large";
 
+/** Host serving merchant media on every stage (see infra/config.ts). */
+const MEDIA_CDN_HOST = "cdn.gcp.frak.id";
+
 /**
  * Derive a responsive `srcSet` from a canonical merchant-media URL.
  *
@@ -15,6 +18,10 @@ export type MediaSrcSetMode = "small" | "large";
  *
  * - Non-webp URLs (SVG or anything unexpected) get no `srcSet`; the canonical
  *   URL is returned as-is so vector logos keep working untouched.
+ * - URLs not hosted on the Frak media CDN get no `srcSet` either: merchants can
+ *   register arbitrary external URLs, and derived `-sm`/`-md` variants would 404
+ *   on foreign hosts. Matching is on the URL hostname (not a substring) so
+ *   `https://evil.com/frak.webp` doesn't qualify.
  * - Uses DPR (`x`) descriptors so no `sizes` attribute is needed — this matters
  *   because most logos are height-constrained with `width: auto`.
  *
@@ -25,6 +32,14 @@ export function mediaSrcSet(
     url: string,
     mode: MediaSrcSetMode = "small"
 ): { src: string; srcSet?: string } {
+    // Only Frak-hosted media has derived size variants; merchant-registered
+    // external URLs (or relative/malformed ones) are served as-is.
+    try {
+        if (new URL(url).hostname !== MEDIA_CDN_HOST) return { src: url };
+    } catch {
+        return { src: url };
+    }
+
     const match = url.match(/^(.*)\.webp(\?.*)?$/);
     if (!match) return { src: url };
 
