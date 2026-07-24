@@ -1,6 +1,6 @@
 import type { AffiliateBrandInfo } from "@frak-labs/backend-elysia/api/schemas";
 import { queryOptions } from "@tanstack/react-query";
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import merchantsMockData from "@/mock/merchants.json";
 import { useAuthStore } from "@/stores/authStore";
@@ -35,7 +35,6 @@ export type MerchantData = {
     createdAt: string | null;
     role: MerchantRole;
     allowedDomains: string[];
-    productId?: Hex;
     isAffiliate?: boolean;
     affiliate?: AffiliateBrandInfo | null;
 };

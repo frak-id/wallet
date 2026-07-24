@@ -1,10 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import React, { type ReactNode } from "react";
-import { keccak256, toHex } from "viem";
 import { describe, expect, it, vi } from "vitest";
 import * as queryOptions from "../queries/queryOptions";
-import { computeProductId, useMerchant } from "./useMerchant";
+import { useMerchant } from "./useMerchant";
 
 // Mock the query options
 vi.mock("../queries/queryOptions", () => ({
@@ -47,29 +46,6 @@ function createWrapper(queryClient: QueryClient) {
         );
 }
 
-describe("computeProductId", () => {
-    it("should compute productId from domain", () => {
-        const domain = "example.com";
-        const productId = computeProductId(domain);
-
-        const expectedProductId = keccak256(toHex("example.com"));
-        expect(productId).toBe(expectedProductId);
-    });
-
-    it("should remove www prefix before computing hash", () => {
-        const domain = "www.example.com";
-        const productId = computeProductId(domain);
-
-        const expectedProductId = keccak256(toHex("example.com"));
-        expect(productId).toBe(expectedProductId);
-    });
-
-    it("should return valid Hex format", () => {
-        const productId = computeProductId("test.com");
-        expect(productId).toMatch(/^0x[a-f0-9]{64}$/i);
-    });
-});
-
 describe("useMerchant", () => {
     it("should return loading state initially", () => {
         const queryClient = createQueryClient();
@@ -90,7 +66,7 @@ describe("useMerchant", () => {
         expect(result.current.data).toBeUndefined();
     });
 
-    it("should return merchant data with computed productId on success", async () => {
+    it("should return merchant data on success", async () => {
         const queryClient = createQueryClient();
         vi.mocked(queryOptions.merchantQueryOptions).mockReturnValue({
             queryKey: ["merchant", "merchant-1", "live"],
@@ -109,61 +85,14 @@ describe("useMerchant", () => {
         expect(result.current.data).toBeDefined();
         expect(result.current.data?.id).toBe("merchant-1");
         expect(result.current.data?.domain).toBe("example.com");
-        expect(result.current.data?.productId).toBe(
-            computeProductId("example.com")
-        );
     });
 
-    it("should compute productId from domain in returned data", async () => {
-        const queryClient = createQueryClient();
-        const expectedProductId = keccak256(toHex("example.com"));
-
-        vi.mocked(queryOptions.merchantQueryOptions).mockReturnValue({
-            queryKey: ["merchant", "merchant-1", "live"],
-            queryFn: async () => mockMerchantData,
-        } as any);
-
-        const { result } = renderHook(
-            () => useMerchant({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        await waitFor(() => {
-            expect(result.current.isSuccess).toBe(true);
-        });
-
-        expect(result.current.data?.productId).toBe(expectedProductId);
-    });
-
-    it("should return undefined productId when data is undefined", async () => {
+    it("should surface error state with undefined data when query fails", async () => {
         const queryClient = createQueryClient();
         vi.mocked(queryOptions.merchantQueryOptions).mockReturnValue({
             queryKey: ["merchant", "merchant-1", "live"],
             queryFn: async () => {
-                throw new Error("Failed to fetch");
-            },
-        } as any);
-
-        const { result } = renderHook(
-            () => useMerchant({ merchantId: "merchant-1" }),
-            { wrapper: createWrapper(queryClient) }
-        );
-
-        await waitFor(() => {
-            expect(result.current.isError).toBe(true);
-        });
-
-        expect(result.current.data).toBeUndefined();
-    });
-
-    it("should handle error state", async () => {
-        const queryClient = createQueryClient();
-        const error = new Error("Failed to fetch merchant");
-
-        vi.mocked(queryOptions.merchantQueryOptions).mockReturnValue({
-            queryKey: ["merchant", "merchant-1", "live"],
-            queryFn: async () => {
-                throw error;
+                throw new Error("Failed to fetch merchant");
             },
         } as any);
 
@@ -177,6 +106,7 @@ describe("useMerchant", () => {
         });
 
         expect(result.current.error).toBeDefined();
+        expect(result.current.data).toBeUndefined();
     });
 
     it("should pass merchantId to merchantQueryOptions", () => {

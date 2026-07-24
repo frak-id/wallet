@@ -17,16 +17,11 @@ const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const isProd = process.env.NODE_ENV === "production";
 
 // Hard ceiling on the gzipped eager boot JS (login-screen static-import
-// closure, walked by `assertEagerBundleBudget`). Measured ~338 KB after the
-// feature grouping below (from ~463 KB); 360 KB leaves headroom and fails the
+// closure, walked by `assertEagerBundleBudget`). Measured ~250 KB after
+// evicting `blockchain-vendor` (viem) from the eager graph — see the
+// `blockchain-vendor` group below; 265 KB leaves headroom and fails the
 // build if a lazy chunk leaks back into the eager path.
-//
-// Far larger than the listener's 32 KB because the ~48 KB `blockchain-vendor`
-// chunk is still eager: a manual vendor chunk is all-or-nothing, and viem is
-// reached from eager route top-level imports (`autoCodeSplitting` only splits a
-// route's `component`, not its `beforeLoad`/other top-level imports). Fully
-// evicting it needs route-level import discipline — deferred.
-const EAGER_JS_BUDGET_GZIP = 360 * 1024;
+const EAGER_JS_BUDGET_GZIP = 265 * 1024;
 
 // Rolldown code-splitting groups, mirroring `apps/wallet/vite.config.ts`.
 // `tags: ["$initial"]` on `app-shell` limits it to modules statically
@@ -51,11 +46,14 @@ function buildChunkGroups() {
             minShareCount: 1,
         },
         {
-            // Post-login only; must outrank `app-shell` to stay out of the
-            // `$initial` closure.
+            // Post-login only. Sits *below* `app-shell` (unlike wallet's
+            // config): with no eager value-level viem import, a higher
+            // priority would bucket the eager `__vitePreload` helper here and
+            // drag this ~48 KB chunk into the eager closure. Below app-shell,
+            // the helper rides in app-shell and viem stays fully lazy.
             name: "blockchain-vendor",
             test: /node_modules[\\/](viem|@noble|@scure)/,
-            priority: 35,
+            priority: 25,
             minShareCount: 1,
         },
         {

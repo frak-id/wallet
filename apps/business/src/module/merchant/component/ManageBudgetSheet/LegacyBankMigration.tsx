@@ -11,6 +11,7 @@ import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import { useGetLegacyBankStatus } from "@/module/merchant/hook/useGetLegacyBankStatus";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMigrateLegacyBank } from "@/module/merchant/hook/useMigrateLegacyBank";
+import { computeProductId } from "@/module/merchant/utils/computeProductId";
 import { legacyBankMap } from "@/module/merchant/utils/legacyBanks";
 import { LinkWalletNotice } from "./LinkWalletNotice";
 import * as styles from "./legacy-bank-migration.css";
@@ -26,7 +27,9 @@ export function LegacyBankMigration({
     hideWalletlessNotice?: boolean;
 }) {
     const { data: merchant } = useMerchant({ merchantId });
-    const productId = merchant?.productId;
+    const productId = merchant?.domain
+        ? computeProductId(merchant.domain)
+        : undefined;
     const oldBankAddress = productId ? legacyBankMap[productId] : undefined;
 
     if (!oldBankAddress) return null;
