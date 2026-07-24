@@ -32,11 +32,14 @@ export const scrollBlur = style({
 });
 
 // Single title pinned in the toolbar band, overlaying the sticky header so it
-// never moves vertically. `useScrollMorphTitle` only shrinks its font-size /
-// font-weight from scroll progress (page title 3xl/bold → toolbar m/semiBold),
+// never moves vertically. `useScrollMorphTitle` shrinks it via `transform:
+// scale()` from scroll progress (page title 3xl/bold → toolbar m/semiBold),
 // an in-place collapse with no travel — so the size change can't desync from a
-// moving position. Fixed height + flex centering keep the single line's center
-// fixed as the font shrinks; right padding permanently clears the sort button.
+// moving position, and staying off `font-size` keeps the animation on the
+// compositor (no reflow / font re-rasterization per frame). Fixed height + flex
+// centering keep the single line's center fixed as it scales down; right
+// padding permanently clears the sort button; `transform-origin: left` so the
+// scale shrinks toward the text start rather than its center.
 export const title = style({
     position: "absolute",
     top: 0,
@@ -56,6 +59,8 @@ export const title = style({
     // Sits above the blur but never intercepts taps (button re-enables its own).
     zIndex: 1,
     pointerEvents: "none",
+    transformOrigin: "left center",
+    willChange: "transform",
 });
 
 // Inner text: ellipsizes a longer localized title. Its own element (rather than

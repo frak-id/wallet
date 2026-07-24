@@ -12,12 +12,10 @@ import {
     favoritesStore,
     selectFavorites,
 } from "@/module/favorites/stores/favoritesStore";
-import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
 export function FavoritesPage() {
     const { t } = useTranslation();
-    const openModal = modalStore((s) => s.openModal);
     const favorites = useStore(favoritesStore, selectFavorites);
 
     // Favorites are frontend-only ids, so resolve them against the Explorer
@@ -72,15 +70,7 @@ export function FavoritesPage() {
                 <Stack as="ul" space="m" className={styles.list}>
                     {favoriteMerchants.map((merchant) => (
                         <li key={merchant.id}>
-                            <ExplorerCard
-                                merchant={merchant}
-                                onClick={() =>
-                                    openModal({
-                                        id: "explorerDetail",
-                                        merchant,
-                                    })
-                                }
-                            />
+                            <ExplorerCard merchant={merchant} />
                         </li>
                     ))}
                 </Stack>

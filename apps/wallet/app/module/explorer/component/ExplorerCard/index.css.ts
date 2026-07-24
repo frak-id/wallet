@@ -9,6 +9,12 @@ export const cardWrapper = style({
     backgroundColor: vars.surface.elevated,
     overflow: "hidden",
     cursor: "pointer",
+    // Skip rendering + layout for cards outside the viewport (cheap virtualization
+    // without a library). `auto` lets the browser cache the real size after the
+    // first paint, so the placeholder height only matters for not-yet-rendered
+    // cards — kept close to the actual card height to avoid scrollbar jumps.
+    contentVisibility: "auto",
+    containIntrinsicSize: "auto 260px",
 });
 
 export const imageWrapper = style({
@@ -16,6 +22,9 @@ export const imageWrapper = style({
     position: "relative",
     width: "100%",
     overflow: "visible",
+    // Placeholder tint shown behind the hero while it lazy-loads (and under the
+    // transparent PNG edges of logos), so a slow image doesn't flash empty.
+    backgroundColor: vars.surface.disabled,
 });
 
 export const heroImage = style({

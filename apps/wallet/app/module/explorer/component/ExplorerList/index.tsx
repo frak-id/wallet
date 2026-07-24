@@ -8,12 +8,15 @@ import { useAppShellScroll } from "@/module/common/component/AppShell";
 import { ExplorerCard } from "@/module/explorer/component/ExplorerCard";
 import { useGetExplorerMerchants } from "@/module/explorer/hook/useGetExplorerMerchants";
 import { explorerSortStore } from "@/module/explorer/stores/explorerSortStore";
-import { modalStore } from "@/module/stores/modalStore";
+
+// Above-the-fold cards get their images loaded eagerly instead of lazily
+// (see ExplorerCard's `priority` prop) so the first paint doesn't wait on
+// lazy-load discovery for what's already visible on mount.
+const PRIORITY_CARD_COUNT = 2;
 
 export function ExplorerList() {
     const { merchants, isLoading } = useGetExplorerMerchants();
     const { t } = useTranslation();
-    const openModal = modalStore((s) => s.openModal);
 
     // Reordering on a new sort makes the old scroll position meaningless, so
     // jump back to the top-ranked results (skip the first run — mount is
@@ -49,16 +52,11 @@ export function ExplorerList() {
 
     return (
         <Stack as="ul" space="m">
-            {merchants.map((merchant) => (
+            {merchants.map((merchant, index) => (
                 <li key={merchant.id} style={{ listStyle: "none" }}>
                     <ExplorerCard
                         merchant={merchant}
-                        onClick={() =>
-                            openModal({
-                                id: "explorerDetail",
-                                merchant,
-                            })
-                        }
+                        priority={index < PRIORITY_CARD_COUNT}
                     />
                 </li>
             ))}
