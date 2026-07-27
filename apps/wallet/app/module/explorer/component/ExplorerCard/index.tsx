@@ -97,7 +97,7 @@ function ExplorerCardComponent({ merchant, priority }: ExplorerCardProps) {
 
                 {heroImageUrl ? (
                     <img
-                        src={heroImageUrl}
+                        {...mediaSrcSet(heroImageUrl)}
                         alt={name}
                         className={styles.heroImage}
                         loading={priority ? "eager" : "lazy"}

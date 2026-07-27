@@ -221,7 +221,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                             data-index={index}
                         >
                             <img
-                                src={url}
+                                {...mediaSrcSet(url)}
                                 alt={`${merchant.name}${images.length > 1 ? ` ${index + 1}` : ""}`}
                                 className={styles.heroImage}
                                 // Slide 1 is the sheet's LCP: load it eagerly

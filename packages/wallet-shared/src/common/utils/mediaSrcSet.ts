@@ -1,7 +1,9 @@
 /**
- * DPR mapping for the element's rendered size.
- *  - "small" (default): elements up to ~64px → sm 1x, md 2x, lg 3x
- *  - "large": elements up to ~256px (e.g. the embedded wallet) → md 1x, lg 2x
+ * DPR ladder for the element's rendered size.
+ *  - "small" (default): sm 1x, md 2x, lg 3x. Correct for anything the app
+ *    shell caps at ~430px CSS — merchant logos and Explorer heroes alike.
+ *  - "large": md 1x, lg 2x. For elements already near the md box at 1x
+ *    (e.g. the ~195px embedded-wallet header logo).
  */
 export type MediaSrcSetMode = "small" | "large";
 
@@ -23,7 +25,8 @@ const MEDIA_CDN_HOST = "cdn.gcp.frak.id";
  *   on foreign hosts. Matching is on the URL hostname (not a substring) so
  *   `https://evil.com/frak.webp` doesn't qualify.
  * - Uses DPR (`x`) descriptors so no `sizes` attribute is needed — this matters
- *   because most logos are height-constrained with `width: auto`.
+ *   because most logos are height-constrained with `width: auto`, and it keeps
+ *   full-bleed images from having to restate the shell's width breakpoints.
  *
  * @example
  * <img {...mediaSrcSet(logoUrl)} alt="" />

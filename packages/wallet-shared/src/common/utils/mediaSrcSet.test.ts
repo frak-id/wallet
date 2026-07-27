@@ -29,6 +29,27 @@ describe("mediaSrcSet", () => {
         );
     });
 
+    it("derives sm/md variants for a hero image", () => {
+        const url = "https://cdn.gcp.frak.id/images-dev/0xabc/hero.webp";
+        expect(mediaSrcSet(url)).toEqual({
+            src: url,
+            srcSet:
+                "https://cdn.gcp.frak.id/images-dev/0xabc/hero-sm.webp 1x, " +
+                "https://cdn.gcp.frak.id/images-dev/0xabc/hero-md.webp 2x, " +
+                `${url} 3x`,
+        });
+    });
+
+    it("derives variants for hash-suffixed carousel heroes", () => {
+        const url =
+            "https://cdn.gcp.frak.id/images-dev/0xabc/hero-a1b2c3d4.webp";
+        expect(mediaSrcSet(url).srcSet).toBe(
+            "https://cdn.gcp.frak.id/images-dev/0xabc/hero-a1b2c3d4-sm.webp 1x, " +
+                "https://cdn.gcp.frak.id/images-dev/0xabc/hero-a1b2c3d4-md.webp 2x, " +
+                `${url} 3x`
+        );
+    });
+
     it("skips srcSet for non-webp Frak URLs (e.g. SVG)", () => {
         const url = "https://cdn.gcp.frak.id/images-dev/0xabc/logo.svg";
         expect(mediaSrcSet(url)).toEqual({ src: url });
