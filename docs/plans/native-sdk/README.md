@@ -29,16 +29,29 @@ identity will be verified manually — no SEB domain currently publishes usable
 well-known files, so auto-verification cannot be the launch path. See
 [`01-platform-changes.md`](./01-platform-changes.md) §3.8.
 
-## ⚠️ Blocking security work
+## ⚠️ Prerequisite: identity proof-of-possession
 
 A security review during planning found a **live, exploitable reward-theft
 vulnerability in production today**, independent of native: `POST /user/identity/merge/execute`
 has no authentication at all, and `merge/initiate` mints a merge token for any
 `sourceAnonymousId` a caller names — an id that every share link publishes in clear.
+Worse than the theft, a hostile merge **permanently locks the victim out** of ever
+linking their wallet for that merchant (`WALLET_CONFLICT`).
 
-Native does not cause it, but native depends on the identity-merge path and would ship
-more anonymous ids into more hands. **It must be fixed before any native release.**
-Details, attack chain, and fixes: [`01-platform-changes.md`](./01-platform-changes.md) §3.2.
+**This is being fixed first, before any native work.** The plan lives in
+[`../identity-proof-of-possession/`](../identity-proof-of-possession/): anonymous ids
+become derived from a device-held P-256 keypair, and sensitive operations carry a
+timestamped signature.
+
+We do it now because we currently have almost no shares and no active users — the
+legacy-id population that cannot be retrofitted is nearly empty. That window closes as
+we grow.
+
+Native consequences:
+- native v0.1 ships key derivation + signing from day one (no legacy native ids, so
+  native is cryptographic-only — no trust-on-first-use path)
+- the `?fmt=` merge flow stays unsupported until the fix lands
+- see [`01-platform-changes.md`](./01-platform-changes.md) §3.2 for the attack chain
 
 ## Core architectural decision
 

@@ -349,6 +349,12 @@ device locale** — `eur→fr-FR`, `usd→en-US`, `gbp→en-GB`, with
 > today**, independent of native — native only widens the supply of usable
 > `merchantId`s and makes anonymous ids easier to harvest. It is the single most
 > serious item in this document.
+>
+> ➤ **Now owned by its own plan, being executed first:**
+> [`../identity-proof-of-possession/`](../identity-proof-of-possession/). That document
+> covers the full attack chain, the permanent-lockout consequence, the P-256
+> proof-of-possession design, and the backend fixes. Kept summarised here because it
+> gates native work.
 
 **`POST /user/identity/merge/execute` has no auth macro at all**
 (`services/backend/src/api/user/identity/merge.ts:53-85`) — not even the optional one.
@@ -395,16 +401,25 @@ the same wallet-priority merge. Any authenticated wallet user can claim a scrape
 anonymous id. The `frakwallet://install?m=&a=` deep link this plan reuses (§2.1) drives
 exactly that call with `a` taken from an untrusted URL.
 
-**Fixes (all needed):**
-- `merge/execute` must require a session, and the token's `sourceGroupId` must not be
-  attachable to a target the caller cannot demonstrate control of.
-- `merge/initiate` without a session must not accept an arbitrary `sourceAnonymousId`.
-  Require proof-of-possession — e.g. HMAC the anonymous id with a per-install secret
-  established at first use, so only the owning device can mint a merge token.
-- Snapshot the recipient wallet at reward **creation** time instead of resolving at
-  settlement, so a later merge cannot redirect an already-earned reward.
-- Rate limiting (20/min, IP-keyed) does not mitigate this; the fixes above are required
-  regardless.
+**Additional consequence — permanent lockout, worse than the theft.** The merge deletes
+the victim's group and repoints their `anonymous_fingerprint` node at the attacker's.
+When the victim later installs, `ensure` → `resolveAndAssociate` →
+`determineAnchorFromMultiple` sees two different wallets and throws `WALLET_CONFLICT`
+(`IdentityWeightService.ts:184-188`). `ensure.ts` has no `try`/`catch` and no recovery
+path exists anywhere in the backend. **They can never link their wallet for that
+merchant** — silently, until they hit an unresolvable error.
+
+**Fixes** — full design in
+[`../identity-proof-of-possession/`](../identity-proof-of-possession/):
+- anonymous ids become **derived from a device-held P-256 keypair**
+  (`clientId = uuid(SHA-256(pubkey)[0..16])`), so identity is self-authenticating
+- merge/ensure carry a **timestamped signature** (±2 min window, replay-cached), no
+  challenge round-trip
+- `merge/execute` must require a session
+- **snapshot the recipient wallet at reward accrual** instead of at settlement, so a
+  later merge cannot redirect an already-earned reward (highest-leverage single fix)
+- stop returning `anonymousId` from `install-code/resolve`
+- Rate limiting (20/min, IP-keyed) does not mitigate any of this.
 
 **This blocks the §2.1 `?fmt=` merge path.** Until it is fixed, the native SDK must not
 advertise merge as a supported flow.

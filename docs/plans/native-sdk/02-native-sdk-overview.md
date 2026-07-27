@@ -126,7 +126,25 @@ sees an error.
 
 ## 4. Anonymous identity
 
-UUIDv4, lazily generated, persisted per app installation, **lowercase canonical form**.
+**Derived from a device-held P-256 keypair**, persisted per app installation,
+**lowercase canonical form**:
+
+```
+keypair  = P-256 (Keystore / Secure Enclave)
+clientId = uuid_from(SHA-256(pubkey_uncompressed)[0..16])   // RFC-4122 bits set
+```
+
+This makes identity self-authenticating and closes the merge vulnerability described in
+[`../identity-proof-of-possession/`](../identity-proof-of-possession/). Native has **no
+legacy ids**, so it is cryptographic-only — no trust-on-first-use path, unlike web.
+
+Sensitive calls (merge/ensure) carry `{pubkey, ts, sig}` with a ±2 min window. Never
+signed on `track/*` — signing stays off the hot path.
+
+**Ship this in v0.1 even if backend enforcement lands later.** A released binary cannot
+be retrofitted; enforcement then becomes a pure backend flip with no version skew.
+Generate key and id **atomically** — a surviving key with a lost id (or vice versa)
+silently fails derivation.
 
 > Swift's `UUID.uuidString` is **uppercase**. The FrakContext v2 codec validates with a
 > hex regex and parses with a naive hex read — an uppercase UUID produces silently
