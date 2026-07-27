@@ -69,12 +69,12 @@
     ]
   },
   "catalog": {
-    "viem": "^2.55.8",
+    "viem": "^2.55.10",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "@types/react": "19.2.13",
+    "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.5",
     "typescript": "^6.0.3",
     "zustand": "^5.0.14",
     "wagmi": "^3.7.4",
@@ -114,9 +114,9 @@
     "sonner": "^2.0.7",
     "preact": "^10.29.7",
     "@preact/preset-vite": "^2.10.6",
-    "@tanstack/react-router": "1.169.2",
-    "@tanstack/router-plugin": "1.167.35",
-    "@tanstack/react-router-devtools": "1.166.13",
+    "@tanstack/react-router": "1.170.18",
+    "@tanstack/router-plugin": "1.168.23",
+    "@tanstack/react-router-devtools": "1.167.0",
     "ox": "^0.14.33",
     "permissionless": "^0.3.7",
     "radash": "^12.1.1",
@@ -125,8 +125,9 @@
     "@elysiajs/eden": "^1.4.9",
     "vite-plugin-remove-console": "^2.2.0",
     "@arethetypeswrong/cli": "^0.18.5",
-    "@biomejs/biome": "2.5.3",
-    "elysia": "1.4.28"
+    "@biomejs/biome": "2.5.5",
+    "elysia": "1.4.29",
+    "nanoid": "^6.0.0"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

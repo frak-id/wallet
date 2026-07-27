@@ -85,36 +85,33 @@ describe("DnsCheckRepository", () => {
             ).toBe("example.com");
         });
 
-        it.each([
-            "https://",
-            "http://",
-            "https:/",
-            "",
-            "   ",
-        ])("should reject the partial input %j with a 400", (input) => {
-            expect(() =>
-                dnsCheckRepository.getNormalizedDomain(input)
-            ).toThrowError(
-                expect.objectContaining({
-                    status: 400,
-                    code: "INVALID_DOMAIN",
-                })
-            );
-        });
+        it.each(["https://", "http://", "https:/", "", "   "])(
+            "should reject the partial input %j with a 400",
+            (input) => {
+                expect(() =>
+                    dnsCheckRepository.getNormalizedDomain(input)
+                ).toThrowError(
+                    expect.objectContaining({
+                        status: 400,
+                        code: "INVALID_DOMAIN",
+                    })
+                );
+            }
+        );
 
-        it.each([
-            "ftp://example.com",
-            "javascript://example.com",
-        ])("should reject the non-http(s) scheme %j", (input) => {
-            expect(() =>
-                dnsCheckRepository.getNormalizedDomain(input)
-            ).toThrowError(
-                expect.objectContaining({
-                    status: 400,
-                    code: "INVALID_DOMAIN",
-                })
-            );
-        });
+        it.each(["ftp://example.com", "javascript://example.com"])(
+            "should reject the non-http(s) scheme %j",
+            (input) => {
+                expect(() =>
+                    dnsCheckRepository.getNormalizedDomain(input)
+                ).toThrowError(
+                    expect.objectContaining({
+                        status: 400,
+                        code: "INVALID_DOMAIN",
+                    })
+                );
+            }
+        );
     });
 
     describe("getDnsTxtString", () => {

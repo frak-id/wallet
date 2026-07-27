@@ -146,14 +146,14 @@ describe("normalizeProductCandidate", () => {
     });
 
     describe("imageUrl gating", () => {
-        it.each([
-            "https://example.com/img.jpg",
-            "http://example.com/img.jpg",
-        ])("keeps an http(s) URL: %s", (url) => {
-            expect(
-                normalizeProductCandidate({ title: "x", imageUrl: url })
-            ).toEqual({ title: "x", imageUrl: url });
-        });
+        it.each(["https://example.com/img.jpg", "http://example.com/img.jpg"])(
+            "keeps an http(s) URL: %s",
+            (url) => {
+                expect(
+                    normalizeProductCandidate({ title: "x", imageUrl: url })
+                ).toEqual({ title: "x", imageUrl: url });
+            }
+        );
 
         it.each([
             ["javascript: scheme", "javascript:alert(1)"],

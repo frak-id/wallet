@@ -47,7 +47,7 @@
     "ky": "^2.0.2",
     "lightningcss": "^1.33.0",
     "lru-cache": "^11.5.2",
-    "nanoid": "^6.0.0",
+    "nanoid": "catalog:",
     "ox": "catalog:",
     "pdf-lib": "^1.17.1",
     "permissionless": "catalog:",
