@@ -35,10 +35,41 @@ Attack:
    auth. Wallet-priority anchoring (`IdentityWeightService.checkWalletPriority`, called
    from `determineAnchor:150`) selects the attacker's group as anchor, because the
    victim's pre-install group has no wallet.
-4. `getWalletForGroup` resolves at **settlement time, not accrual**
-   (`BatchRewardOrchestrator.ts:196`, `SettlementOrchestrator.ts:269`). Lockup windows
-   run up to 30 days. Rewards the victim **already earned** but that have not settled now
-   pay out to the attacker.
+4. Rewards are attached to an **identity group**, not to a wallet
+   (`asset_logs.identityGroupId` is `notNull`; `recipientWallet` is nullable), and the
+   wallet is resolved at settlement (`BatchRewardOrchestrator.ts:196`,
+   `SettlementOrchestrator.ts:269`). Lockup windows run up to 30 days. Because the
+   victim's anonymous id now points at the attacker's group, rewards the victim
+   **already earned** but that have not settled pay out to the attacker.
+
+### Late wallet binding is a feature — do not "fix" it
+
+It is tempting to conclude that the wallet should be snapshotted at accrual. **That would
+break the product.** The whole point of decoupling the anonymous id from the wallet is
+that a user — an influencer especially — can share a link, earn rewards, and create their
+wallet *later*, with the merchant site reminding them that rewards are pending. At
+accrual there is frequently no wallet to snapshot; forcing one would either drop the
+reward or block accrual on wallet creation, destroying the share-first / install-later
+flow.
+
+The defect is not *when* the wallet is resolved. It is that **group membership can be
+changed by an unauthenticated attacker**:
+
+```
+reward           → identityGroupId      ✅ deliberate, keep
+identityGroupId  → wallet (late)        ✅ deliberate, keep
+anonymousId      → identityGroupId      ❌ anyone can repoint this
+```
+
+Late binding is safe **iff** the binding target is stable. Authenticate the merge and
+the existing settlement model is correct as-is. Everything in this document targets that
+third arrow and nothing else.
+
+> Note this interacts with the planned "pending rewards" reminder on merchant sites.
+> That feature is *easier* under the current model (rewards on a wallet-less group are
+> exactly the queryable state it needs) — but it also raises the stakes: it tells a user
+> a concrete pending amount, and a hijacked user would then install and hit the lockout
+> below with that number in mind. Fix this first.
 
 ### The consequence that is worse than theft
 
@@ -275,16 +306,107 @@ surface. These are independent and must land:
 
 | # | Fix | Why |
 |---|---|---|
-| 3.1 | **Snapshot the payout wallet at reward *accrual*, not settlement** | highest value. Even a successful hostile merge cannot retroactively redirect an already-earned reward. Changes `getWalletForGroup` from settlement-time to write-time |
-| 3.2 | Require a session on `merge/execute` | it currently has no auth macro at all |
-| 3.3 | Stop returning `anonymousId` from `install-code/resolve` | closes the harvesting oracle; the wallet already holds the code and does not need the id echoed |
-| 3.4 | Per-code attempt limiting on `install-code/resolve`, independent of source IP | 31⁶ keyspace with IP-only limiting is harvestable at botnet scale |
-| 3.5 | Refuse to absorb a wallet-less group holding unsettled rewards | blunts anchoring abuse |
-| 3.6 | Rate limit tracking endpoints keyed by `(merchantId, clientId)`, not IP alone | CGNAT makes IP-only limiting both too harsh and too weak |
-| 3.7 | Remove the raw-hex-address bypass in `sdkIdentity.ts:39-48` | any address string is currently accepted as proof of wallet identity |
+| 3.1 | **Require a session on `merge/execute`** | it currently has no auth macro at all — the single most direct hole |
+| 3.2 | Replace `anonymousId` with an opaque ticket in the install-code flow (§3a) | closes the harvesting oracle. **Coordinated backend + wallet change**, not a one-line response edit |
+| 3.3 | Per-code attempt limiting on `install-code/resolve`, independent of source IP | 31⁶ keyspace with IP-only limiting is harvestable at botnet scale |
+| 3.4 | Alert when a merge would move a group holding **unsettled** `asset_logs` under a different wallet | the high-value case. Monitoring + a candidate for requiring proof on **both** sides of the merge, not just the source |
+| 3.5 | Rate limit tracking endpoints keyed by `(merchantId, clientId)`, not IP alone | CGNAT makes IP-only limiting both too harsh and too weak |
+| 3.6 | Remove the raw-hex-address bypass in `sdkIdentity.ts:39-48` | any address string is currently accepted as proof of wallet identity |
 
-3.1 is the single highest-leverage item: it converts theft into a nuisance and is a
-write-time-vs-read-time change, not an architectural one.
+None of these change *when* the payout wallet is resolved. Settlement-time resolution is
+correct and deliberate (see §1); the fix is to make group membership unforgeable.
+
+3.1 is the most direct, but it is not sufficient on its own — `merge/initiate` still
+names an arbitrary `sourceAnonymousId`, which is what §2 closes.
+
+---
+
+## 3a. The install-code flow — why `anonymousId` is returned, and how to replace it
+
+### Why it exists today
+
+`resolve` returning `anonymousId` is **load-bearing**, not an oversight. The wallet feeds
+it into a deferred action that survives authentication
+(`useResolveInstallCode.ts:52-57`):
+
+```
+user pastes code            ← NOT yet authenticated
+  → resolve → {merchantId, anonymousId, merchant, hasWallet}
+  → pendingActionsStore.addAction({type:"ensure", merchantId, anonymousId, merchant})
+  → localStorage, deduped on `ensure:${merchantId}:${anonymousId}`
+  → user completes registration / login
+  → useExecutePendingActions drains → POST /identity/ensure {merchantId, anonymousId}
+```
+
+The binding constraint: **resolution happens before the user has a wallet session**, so
+there is no session to scope the identity to server-side at that moment. The id has to
+be carried across the unauthenticated → authenticated boundary, and it must survive app
+download plus onboarding — `DEFAULT_ENSURE_TTL_MS` is **one week**
+(`pendingActionsStore.ts:9`; the doc comment above it saying 24h is stale).
+
+It is also used for the dedupe key, and the response's `merchant` / `hasWallet` fields
+drive the confirmation card and branching.
+
+### Where the signature goes — `generate`, not `resolve`
+
+The natural assumption is that the wallet signs at `resolve`. **It cannot: the private
+key is on the sharer's device, and the wallet is a different app** — frequently a
+different device entirely (share on desktop, install on phone).
+
+Note also that `/install?m=&a=` is a **web page** today — both `InstallProcessing`
+(`install.tsx:95`) and `InstallCodeView` (`install.tsx:174`) read `{m, a}` straight from
+the URL, and the latter calls `generate` with that `anonymousId`. Anyone can edit those
+params. So proof must be established when the code is minted:
+
+```
+generate  ← signature proves ownership   (sharer's device holds the key)
+resolve   ← no signature needed          (possession of the code implies a verified generate)
+```
+
+### The flow
+
+```
+1. SDK / install page signs:
+      msg = "frak-install-v1" ‖ merchantId ‖ anonymousId ‖ ts
+   POST /install-code/generate { merchantId, anonymousId, pubkey, ts, sig }
+   → backend verifies: derived id == anonymousId, sig valid, |now-ts| <= window
+   → code is bound to a VERIFIED identity
+
+2. Wallet: POST /install-code/resolve { code }        ← no signature
+   → { ticket, merchantId, merchant, hasWallet }     ← no anonymousId
+
+3. Wallet: pendingActionsStore.addAction({type:"ensure", merchantId, ticket, merchant})
+   → post-auth drain → POST /identity/ensure { merchantId, ticket }
+   → backend resolves ticket → anonymousId, burns it, links
+```
+
+The Android arm is the same substitution: the install page puts the **ticket** in the
+Play referrer string instead of the raw `anonymousId` (`install.tsx:230`).
+
+### Ticket design
+
+A **signed JWT** — no new table, stateless verification:
+
+```jsonc
+{ "sub": "<anonymousId>", "mid": "<merchantId>", "jti": "<uuid>",
+  "iat": …, "exp": …, "aud": "install-ticket" }
+```
+
+Requirements:
+
+| Rule | Why |
+|---|---|
+| **TTL ≥ pending-action TTL (one week)** | a shorter ticket means the wallet drains a dead one. Tie both to a single shared constant |
+| **Single-use** | a stateless JWT cannot enforce this alone — needs a small burn-set on `jti` (Redis/KV, still no schema change) |
+| Audience-scoped (`aud`) | must not be replayable as any other token type |
+| Dedupe key becomes `ensure:${merchantId}:${ticket}` | tickets are per-resolve, not per-identity, so add a server-side idempotency guard on burn — `ensure` is already idempotent |
+
+### What this actually buys
+
+An attacker brute-forcing install codes no longer harvests a durable `anonymousId`
+usable against `merge/initiate`. They get a ticket that is single-use, expiring, and
+only usable to link to **their own authenticated wallet** — a merge they could already
+attempt directly. The oracle closes without changing a single user-visible step.
 
 ---
 
@@ -293,8 +415,11 @@ write-time-vs-read-time change, not an architectural one.
 Ordered so each step is independently shippable and useful.
 
 ### Phase 1 — backend hardening (no client changes)
-§3.1 through §3.7. Protects the existing installed base immediately. **No SDK release,
-no version skew, no waiting on anyone.**
+§3.1, §3.3, §3.4, §3.5, §3.6. Protects the existing installed base immediately. **No SDK
+release, no version skew, no waiting on anyone.**
+
+§3.2 (the install ticket) is deliberately **not** here — it needs a coordinated wallet
+release, so it lands in Phase 3.
 
 ### Phase 2 — web SDK key material
 - P-256 keygen + JWK persistence, atomic with the client id
@@ -303,10 +428,14 @@ no version skew, no waiting on anyone.**
 - signature attached to merge/ensure calls, **accepted but not enforced** server-side
 - telemetry: how many clients are derived vs bound vs failed
 
-### Phase 3 — backend verification
+### Phase 3 — backend verification + install ticket
 - verify signature, derivation, timestamp window, replay cache
 - enforce for derived ids; accept bound ids with the signature as a secondary signal
 - alarm on conflicting bind attempts
+- **§3.2 install ticket**: `generate` accepts and verifies a signature; `resolve` returns
+  a ticket instead of `anonymousId`; `ensure` accepts `{merchantId, ticket}`. Ships
+  **with** the wallet change that stores and drains the ticket — keep the `anonymousId`
+  arm on `ensure` until the old wallet build has aged out
 
 ### Phase 4 — enforcement
 Once telemetry shows coverage is high enough, require proof on merge/ensure for all ids

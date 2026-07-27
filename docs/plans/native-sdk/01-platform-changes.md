@@ -382,11 +382,18 @@ Attack:
    — no auth. Wallet-priority anchoring (`IdentityWeightService.checkWalletPriority`,
    invoked from `determineAnchor:150`) picks the **attacker's** group as anchor because
    the victim's pre-install group has no wallet, and merges the victim in.
-4. `getWalletForGroup` is resolved **at settlement time, not accrual time**
+4. Rewards attach to an **identity group**, not a wallet (`asset_logs.identityGroupId`
+   is `notNull`, `recipientWallet` nullable), and the wallet is resolved at settlement
    (`BatchRewardOrchestrator.ts:196`, `SettlementOrchestrator.ts:269`). Lockup windows
-   run up to 30 days. So rewards the victim **already earned** but that have not yet
-   settled now pay out to the attacker's wallet — along with all future activity under
-   that anonymous id.
+   run up to 30 days. Since the victim's id now points at the attacker's group, rewards
+   the victim **already earned** but that have not yet settled pay out to the attacker —
+   along with all future activity under that anonymous id.
+
+> **Late wallet binding is deliberate and must not be "fixed".** Decoupling the anonymous
+> id from the wallet is what lets a user share, earn, and create their wallet *later*.
+> The defect is not *when* the wallet resolves — it is that **group membership can be
+> repointed by an unauthenticated attacker**. Authenticate the merge and the settlement
+> model is correct as-is.
 
 This lands precisely in the window the native SDK is designed to optimise: a user with
 an active anonymous identity accruing rewards who has not yet installed the wallet.
@@ -416,9 +423,10 @@ merchant** — silently, until they hit an unresolvable error.
 - merge/ensure carry a **timestamped signature** (±2 min window, replay-cached), no
   challenge round-trip
 - `merge/execute` must require a session
-- **snapshot the recipient wallet at reward accrual** instead of at settlement, so a
-  later merge cannot redirect an already-earned reward (highest-leverage single fix)
-- stop returning `anonymousId` from `install-code/resolve`
+- replace `anonymousId` with an opaque single-use ticket in the install-code flow
+- alert when a merge would move a group holding unsettled `asset_logs` under a different
+  wallet — and consider requiring proof on **both** sides of the merge, not just the
+  source
 - Rate limiting (20/min, IP-keyed) does not mitigate any of this.
 
 **This blocks the §2.1 `?fmt=` merge path.** Until it is fixed, the native SDK must not
@@ -438,9 +446,15 @@ keyspace, and expected hits scale linearly with the number of concurrently live 
 Each hit yields a valid `anonymousId` — which is exactly the capability needed for the
 §3.2 merge attack. It is a free anonymous-id oracle.
 
-**Fixes:** stop returning `anonymousId` in the response (the wallet already holds the
-code; the subsequent `ensure` can be scoped server-side without echoing the id), and add
+**Fixes:** replace `anonymousId` with an opaque, single-use, expiring **ticket**, and add
 per-code attempt limiting / backoff independent of source IP.
+
+> The id cannot simply be dropped — it is load-bearing. `resolve` happens **before** the
+> user is authenticated, and the wallet carries the id in `pendingActionsStore` across
+> registration to drain against `ensure` later (one-week TTL). And the signature must be
+> verified at **`generate`**, not `resolve`: the private key belongs to the sharer's
+> device, while the wallet is a different app on a possibly different device. Full design:
+> [`../identity-proof-of-possession/`](../identity-proof-of-possession/) §3a.
 
 ### 3.4 Rate limiting on SDK-facing endpoints **[SECURITY — before public release]**
 
@@ -733,7 +747,7 @@ need, so it doubles as the migration beachhead if we later go native (see
 | # | Change | Where |
 |---|---|---|
 | 3.2 | **Authenticate identity merge** — `merge/execute` has no auth; live reward-theft vector | `services/backend` |
-| 3.3 | Stop returning `anonymousId` from `install-code/resolve`; per-code attempt limiting | `services/backend` |
+| 3.3 | Install-code ticket instead of `anonymousId`; per-code attempt limiting | `services/backend` + `apps/wallet` |
 | 3.4 | Rate limit the 4 SDK-facing endpoints, keyed by `(merchantId, clientId)` not IP | `services/backend` |
 | 3.6 | Remove raw-address identity bypass | `services/backend` |
 

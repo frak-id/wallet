@@ -394,7 +394,9 @@ returns will lose events in the field.
 ### iOS install flow (App Clip excluded)
 
 ```
-1. SDK: POST /user/identity/install-code/generate → { code, expiresAt (+72h) }
+1. SDK: POST /user/identity/install-code/generate
+     { merchantId, anonymousId, pubkey, ts, sig }   ← signed here, see note below
+   → { code, expiresAt (+72h) }
 2. SDK: UIPasteboard.general.setItems([...], options: [.expirationDate: expiresAt])
 3. SDK: present SKStoreProductViewController(id: 6740261164)   ← IN-APP App Store
 4. user installs, opens Frak
@@ -425,6 +427,12 @@ Design notes:
 - **Manual code entry remains the floor**, and given the point above it is the real
   path, not the fallback. The existing 6-char / 31-symbol code is adequate as a UX
   primitive; see `01-platform-changes.md` §3.3 for its security problem.
+- **The SDK signs at `generate`, not at `resolve`.** The SDK holds the private key; the
+  Frak wallet app that later resolves the code is a different app on a possibly
+  different device and cannot produce that signature. `resolve` therefore returns an
+  opaque **ticket** rather than the `anonymousId`, and the wallet drains the ticket
+  against `ensure` post-auth. Full design:
+  [`../identity-proof-of-possession/`](../identity-proof-of-possession/) §3a.
 
 Net: iOS goes from "read a 6-digit code off a web page and type it" to "tap Get, tap the
 suggestion". Still short of Android's Install Referrer, but no longer painful. **No
