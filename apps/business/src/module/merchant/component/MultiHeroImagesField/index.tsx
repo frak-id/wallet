@@ -9,7 +9,10 @@ import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useTranslation } from "react-i18next";
-import { imageAccept } from "@/module/merchant/component/ImageUploadField";
+import {
+    hiddenFileInput,
+    imageAccept,
+} from "@/module/merchant/component/ImageUploadField";
 import {
     useMediaList,
     useMediaUpload,
@@ -86,8 +89,8 @@ export function MultiHeroImagesField({
         [onChange, values]
     );
 
-    // No maxFiles: dropzone would reject oversized selections wholesale —
-    // onDrop slices the batch to the remaining slots instead.
+    // Without maxFiles the accepted batch is uncapped, so onDrop slices it
+    // down to the slots still free.
     const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
         onDrop,
         accept: imageAccept,
@@ -156,7 +159,7 @@ export function MultiHeroImagesField({
                         ),
                     })}
                 >
-                    <input {...getInputProps()} />
+                    <input {...getInputProps({ style: hiddenFileInput })} />
                     <IconCircle size="md">
                         <UploadIcon
                             width={24}

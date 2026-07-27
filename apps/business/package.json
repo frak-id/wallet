@@ -55,7 +55,7 @@
         "react": "catalog:",
         "react-day-picker": "^10.0.1",
         "react-dom": "catalog:",
-        "react-dropzone": "^15.0.0",
+        "react-dropzone": "^19.1.1",
         "react-hook-form": "^7.83.0",
         "react-i18next": "catalog:",
         "viem": "catalog:",
