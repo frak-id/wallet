@@ -53,7 +53,7 @@
         "qr": "catalog:",
         "radash": "catalog:",
         "react": "catalog:",
-        "react-day-picker": "^9.14.0",
+        "react-day-picker": "^10.0.1",
         "react-dom": "catalog:",
         "react-dropzone": "^15.0.0",
         "react-hook-form": "^7.83.0",

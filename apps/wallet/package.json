@@ -112,7 +112,7 @@
     "sst": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vite-plugin-mkcert": "^1.17.12",
+    "vite-plugin-mkcert": "^2.1.0",
     "vite-plugin-remove-console": "catalog:",
     "vitest": "catalog:"
   }
