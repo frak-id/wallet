@@ -68,6 +68,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 200: t.Object({
                     dnsTxt: t.String(),
                 }),
+                400: t.ErrorResponse,
                 401: t.String(),
             },
         }
@@ -125,11 +126,14 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 domain: t.String(),
                 setupCode: t.Optional(t.String()),
             }),
-            response: t.Object({
-                isDomainValid: t.Boolean(),
-                isAlreadyRegistered: t.Boolean(),
-                verifiedViaShopify: t.Boolean(),
-            }),
+            response: {
+                200: t.Object({
+                    isDomainValid: t.Boolean(),
+                    isAlreadyRegistered: t.Boolean(),
+                    verifiedViaShopify: t.Boolean(),
+                }),
+                400: t.ErrorResponse,
+            },
         }
     )
     .post(

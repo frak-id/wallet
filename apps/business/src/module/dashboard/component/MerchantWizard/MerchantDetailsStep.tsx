@@ -44,9 +44,12 @@ export function MerchantDetailsStep({
     const domain = watch("domain");
     const skipDomainValidation = watch("skipDomainValidation");
 
+    // Gated on `validateUrl`, not just a non-empty value: this re-fires on
+    // every keystroke, and typing `https://example.com` transiently sends
+    // `https://`, which the backend can't normalize.
     const { data: dnsRecord, isLoading: isDnsLoading } = useDnsTxtRecordToSet({
         domain,
-        enabled: !!domain && !verifiedViaShopify,
+        enabled: validateUrl(domain ?? "") && !verifiedViaShopify,
     });
 
     return (

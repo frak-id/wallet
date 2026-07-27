@@ -1,4 +1,4 @@
-import { t } from "@backend-utils";
+import { HttpError, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../domain/merchant";
 import { MerchantIdParamSchema } from "../../schemas";
@@ -17,7 +17,12 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                     rawDomain
                 );
             if (!domainRegex.test(domain)) {
-                return status(400, "Invalid domain format");
+                // Same code the normalization above throws, so both rejection
+                // paths look identical to a client.
+                throw HttpError.badRequest(
+                    "INVALID_DOMAIN",
+                    `Invalid domain: "${rawDomain}"`
+                );
             }
 
             const updated =
@@ -41,7 +46,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
             }),
             response: {
                 204: t.Void(),
-                400: t.String(),
+                400: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

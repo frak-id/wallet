@@ -1,4 +1,5 @@
-import { Elysia, status, t } from "elysia";
+import { t } from "@backend-utils";
+import { Elysia, status } from "elysia";
 import { CampaignContext } from "../../../domain/campaign/context";
 import { EstimatedRewardsResultSchema } from "../../../domain/campaign/schemas";
 import { MerchantContext } from "../../../domain/merchant/context";
@@ -34,6 +35,7 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" })
             }),
             response: {
                 200: MerchantResolveResponseSchema,
+                400: t.ErrorResponse,
                 404: t.String(),
             },
         }

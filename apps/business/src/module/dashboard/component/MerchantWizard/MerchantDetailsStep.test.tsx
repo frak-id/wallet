@@ -9,6 +9,15 @@ vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+const useDnsTxtRecordToSet = vi.fn(() => ({
+    data: undefined,
+    isLoading: false,
+}));
+vi.mock("@/module/dashboard/hooks/dnsRecordHooks", () => ({
+    useDnsTxtRecordToSet: (args: unknown) =>
+        useDnsTxtRecordToSet(args as never),
+}));
+
 import { MerchantDetailsStep } from "./MerchantDetailsStep";
 
 const DEFAULT_VALUES: MerchantNew = {
@@ -21,8 +30,8 @@ const DEFAULT_VALUES: MerchantNew = {
 /**
  * `MerchantDetailsStep` reads its form via `useFormContext<MerchantNew>()` —
  * untyped at runtime like `FormTitle`'s harness. Domain stays empty so the
- * DNS-lookup query (`useDnsTxtRecordToSet`, gated by `enabled: !!domain`)
- * never fires; a `QueryClientProvider` is still required for the hook call.
+ * DNS-lookup query (`useDnsTxtRecordToSet`) never fires; a
+ * `QueryClientProvider` is still required for the hook call.
  */
 function Harness({ isPlatformAdmin }: { isPlatformAdmin?: boolean } = {}) {
     const form = useForm({ defaultValues: DEFAULT_VALUES, mode: "onSubmit" });
@@ -143,6 +152,28 @@ describe("MerchantDetailsStep platform-admin fields (inputLabel delegated to DS 
         );
         expect(label.tagName).toBe("LABEL");
         expect(label).toHaveAttribute("for", input.id);
+    });
+
+    it("only enables the DNS lookup once the typed domain is a valid url", () => {
+        render(<Harness />);
+        const input = screen.getByLabelText(
+            "merchant.create.fields.domain.nameLabel"
+        );
+
+        // Typing `https://example.com` passes through `https://`, which the
+        // backend used to 500 on.
+        const enabledFor = (value: string) => {
+            useDnsTxtRecordToSet.mockClear();
+            fireEvent.change(input, { target: { value } });
+            return useDnsTxtRecordToSet.mock.calls.at(-1)?.[0] as unknown as {
+                enabled: boolean;
+            };
+        };
+
+        expect(enabledFor("https:/").enabled).toBe(false);
+        expect(enabledFor("https://").enabled).toBe(false);
+        expect(enabledFor("https://exam").enabled).toBe(false);
+        expect(enabledFor("https://example.com").enabled).toBe(true);
     });
 
     it("shows the takeadsTrackingLink FieldError on an invalid url", async () => {
