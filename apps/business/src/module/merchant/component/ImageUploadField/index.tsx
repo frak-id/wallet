@@ -6,8 +6,9 @@ import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon, UploadIcon } from "@frak-labs/design-system/icons";
+import { visuallyHidden } from "@frak-labs/design-system/utils";
 import clsx from "clsx";
-import { type CSSProperties, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import { useTranslation } from "react-i18next";
 import {
@@ -35,23 +36,6 @@ export const imageAccept = {
     "image/webp": [".webp"],
     "image/svg+xml": [".svg"],
     "image/gif": [".gif"],
-};
-
-/**
- * Takes the hidden file input out of flow. The dropzone root is a flex
- * column with a gap, and react-dropzone's own input style is in-flow, so
- * it would otherwise count as a flex item and add an empty gap row.
- */
-export const hiddenFileInput: CSSProperties = {
-    position: "absolute",
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-    whiteSpace: "nowrap",
-    border: 0,
 };
 
 export function ImageUploadField({
@@ -102,7 +86,7 @@ export function ImageUploadField({
         noClick: true,
     });
 
-    const errorMessage = getUploadErrorMessage(uploadError);
+    const errorMessage = getUploadErrorMessage(uploadError, t);
 
     return (
         <Stack space="m">
@@ -135,7 +119,11 @@ export function ImageUploadField({
                     ),
                 })}
             >
-                <input {...getInputProps({ style: hiddenFileInput })} />
+                {/* react-dropzone sizes the input inline, and those rules win
+                    over the class. Only `position: absolute` is needed here:
+                    it takes the input out of flow so the flex row above stops
+                    reserving a gap for it. */}
+                <input {...getInputProps({ className: visuallyHidden })} />
                 <IconCircle size="md">
                     <UploadIcon
                         width={24}

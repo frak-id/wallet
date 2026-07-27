@@ -1648,6 +1648,10 @@
                 "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 to 2:1 (Max 10MB)",
                 "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 to 2:1 (Max 10MB)"
             },
+            "errors": {
+                "fileRejected": "This file was rejected — check the requirements above.",
+                "uploadFailed": "Upload failed"
+            },
             "descriptionPlaceholder": "Merchant description..."
         },
         "purchaseTracker": {

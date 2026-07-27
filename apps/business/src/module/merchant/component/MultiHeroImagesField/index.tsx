@@ -5,14 +5,12 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { UploadIcon } from "@frak-labs/design-system/icons";
+import { visuallyHidden } from "@frak-labs/design-system/utils";
 import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useTranslation } from "react-i18next";
-import {
-    hiddenFileInput,
-    imageAccept,
-} from "@/module/merchant/component/ImageUploadField";
+import { imageAccept } from "@/module/merchant/component/ImageUploadField";
 import {
     useMediaList,
     useMediaUpload,
@@ -99,7 +97,7 @@ export function MultiHeroImagesField({
         noClick: true,
     });
 
-    const errorMessage = getUploadErrorMessage(uploadError);
+    const errorMessage = getUploadErrorMessage(uploadError, t);
 
     return (
         <Stack space="m">
@@ -159,7 +157,11 @@ export function MultiHeroImagesField({
                         ),
                     })}
                 >
-                    <input {...getInputProps({ style: hiddenFileInput })} />
+                    {/* react-dropzone sizes the input inline, and those rules
+                        win over the class. Only `position: absolute` is needed
+                        here: it takes the input out of flow so the flex column
+                        stops reserving a gap for it. */}
+                    <input {...getInputProps({ className: visuallyHidden })} />
                     <IconCircle size="md">
                         <UploadIcon
                             width={24}
