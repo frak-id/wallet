@@ -5,6 +5,6 @@
     "license": "UNLICENSED",
     "dependencies": {
         "@shopify/ui-extensions": "2025.10.1",
-        "preact": "^10.25.0"
+        "preact": "catalog:"
     }
 }

@@ -23,6 +23,6 @@
         "@types/react": "*",
         "@vitejs/plugin-react": "*",
         "react": "*",
-        "vitest": "^4.1.4"
+        "vitest": "catalog:"
     }
 }
