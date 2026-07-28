@@ -42,7 +42,7 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 sourceAnonymousId: t.Optional(t.String()),
                 merchantId: t.String({ format: "uuid" }),
                 // frak-merge-v1 proof binding sourceAnonymousId (README §4.2).
-                // Phase 2: optional, verified when present, never required.
+                // Required whenever sourceAnonymousId is supplied (Phase 4a).
                 proof: t.Optional(t.String()),
             }),
             response: {
@@ -51,6 +51,9 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                     expiresAt: t.String(),
                 }),
                 400: t.ErrorResponse,
+                // PROOF_REQUIRED (sourceAnonymousId with no/absent proof) or
+                // PROOF_INVALID (proof present but fails verification).
+                403: t.ErrorResponse,
             },
         }
     )
@@ -78,8 +81,9 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 targetAnonymousId: t.String(),
                 merchantId: t.String({ format: "uuid" }),
                 // frak-merge-v1 proof binding targetAnonymousId and
-                // SHA-256(mergeToken) (README §2.2, §4.3). Phase 2: optional,
-                // verified when present, never required.
+                // SHA-256(mergeToken) (README §2.2, §4.3). Required only once
+                // targetAnonymousId has previously proven itself (Phase 4a
+                // latch); unlatched/legacy ids keep working without one.
                 proof: t.Optional(t.String()),
             }),
             response: {
@@ -89,6 +93,9 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 }),
                 400: t.ErrorResponse,
                 401: t.ErrorResponse,
+                // PROOF_REQUIRED (latched targetAnonymousId with no proof) or
+                // PROOF_INVALID (proof present but fails verification).
+                403: t.ErrorResponse,
             },
         }
     );

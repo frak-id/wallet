@@ -49,6 +49,11 @@
       "types": "./src/constants/emailVerification.ts",
       "import": "./src/constants/emailVerification.ts",
       "default": "./src/constants/emailVerification.ts"
+    },
+    "./constants/installTicket": {
+      "types": "./src/constants/installTicket.ts",
+      "import": "./src/constants/installTicket.ts",
+      "default": "./src/constants/installTicket.ts"
     }
   }
 }

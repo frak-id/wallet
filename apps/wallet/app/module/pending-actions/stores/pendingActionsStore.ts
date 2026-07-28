@@ -1,3 +1,4 @@
+import { INSTALL_TICKET_TTL_MS } from "@frak-labs/app-essentials/constants/installTicket";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -6,7 +7,10 @@ import type {
 } from "@/module/pending-actions/types";
 
 const DEFAULT_NAV_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const DEFAULT_ENSURE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // One week
+// Shared with the install-ticket JWT the ensure action carries (README §5):
+// a pending action outliving its ticket drains a dead one, and a ticket
+// outliving the action is bearer material with no purpose left.
+const DEFAULT_ENSURE_TTL_MS = INSTALL_TICKET_TTL_MS;
 
 type PendingActionsState = {
     actions: PendingAction[];

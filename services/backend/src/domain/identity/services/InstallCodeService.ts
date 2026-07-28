@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { JwtContext, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { InstallCodeRepository } from "../repositories/InstallCodeRepository";
 
@@ -42,5 +42,39 @@ export class InstallCodeService {
             merchantId: installCode.merchantId,
             anonymousId: installCode.anonymousId,
         };
+    }
+
+    /**
+     * Mint an install ticket (README §5) unconditionally from a resolved
+     * install-code row. Not gated on whether `generate` carried a proof —
+     * see the README's "Why `resolve` mints the ticket unconditionally"
+     * blockquote.
+     */
+    async mintTicket(params: {
+        merchantId: string;
+        anonymousId: string;
+    }): Promise<string> {
+        return JwtContext.installTicket.sign({
+            aud: "install-ticket",
+            sub: params.anonymousId,
+            mid: params.merchantId,
+            jti: crypto.randomUUID(),
+        });
+    }
+
+    /**
+     * Verify an install ticket, returning the identity it authenticates or
+     * `null` when it is missing, expired, or scoped to a different
+     * audience. Callers must reject on `null` rather than fall back to a
+     * different resolution arm — see README §5, "Rules from §5's table".
+     */
+    async verifyTicket(ticket: string): Promise<{
+        anonymousId: string;
+        merchantId: string;
+    } | null> {
+        const payload = await JwtContext.installTicket.verify(ticket);
+        if (!payload) return null;
+
+        return { anonymousId: payload.sub, merchantId: payload.mid };
     }
 }

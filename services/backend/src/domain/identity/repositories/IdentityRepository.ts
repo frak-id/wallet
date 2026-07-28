@@ -98,6 +98,61 @@ export class IdentityRepository {
     }
 
     /**
+     * Node-level lookup (README §4.6 latch). Unlike `findGroupByIdentity`, this
+     * returns the raw node — `proofSeenAt` lives on the node, not the group —
+     * so it cannot be answered by resolving to a group. Hits the same unique
+     * constraint `(identity_type, identity_value, merchant_id)`, no new index.
+     * Uncached: only ever called on the proof-absent path (README §7 Phase
+     * 4a — "zero extra query" is about the *proven* path, not this one).
+     */
+    async findNodeByIdentity(params: {
+        type: IdentityType;
+        value: string;
+        merchantId?: string;
+    }): Promise<IdentityNodeSelect | null> {
+        const normalizedValue = this.normalizeValue(params.type, params.value);
+        const node = await db.query.identityNodesTable.findFirst({
+            where: and(
+                eq(identityNodesTable.identityType, params.type),
+                eq(identityNodesTable.identityValue, normalizedValue),
+                params.merchantId
+                    ? eq(identityNodesTable.merchantId, params.merchantId)
+                    : isNull(identityNodesTable.merchantId)
+            ),
+        });
+        return node ?? null;
+    }
+
+    /**
+     * One-way proof-of-possession latch (README §4.6). Idempotent: only
+     * writes when `proofSeenAt` is still `NULL`, so it never overwrites or
+     * clears an existing stamp — an id that has ever proven itself stays
+     * latched forever. A no-op when the node doesn't exist yet (the caller
+     * may be proving a brand-new id whose node is created moments later by
+     * `resolveAndAssociate`; see `AnonymousMergeOrchestrator.initiateMerge`).
+     */
+    async markProofSeen(params: {
+        type: IdentityType;
+        value: string;
+        merchantId?: string;
+    }): Promise<void> {
+        const normalizedValue = this.normalizeValue(params.type, params.value);
+        await db
+            .update(identityNodesTable)
+            .set({ proofSeenAt: new Date() })
+            .where(
+                and(
+                    eq(identityNodesTable.identityType, params.type),
+                    eq(identityNodesTable.identityValue, normalizedValue),
+                    params.merchantId
+                        ? eq(identityNodesTable.merchantId, params.merchantId)
+                        : isNull(identityNodesTable.merchantId),
+                    isNull(identityNodesTable.proofSeenAt)
+                )
+            );
+    }
+
+    /**
      * Find all identity group IDs that contain a wallet node for the given address.
      * Unlike findGroupByIdentity, this returns ALL groups (any merchantId).
      */

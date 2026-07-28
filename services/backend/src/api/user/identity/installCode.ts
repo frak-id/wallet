@@ -1,4 +1,4 @@
-import { rateLimitMiddleware } from "@backend-infrastructure";
+import { log, rateLimitMiddleware } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { IdentityContext } from "../../../domain/identity/context";
@@ -9,9 +9,31 @@ const installCodeGenerateRoute = new Elysia()
     .post(
         "/generate",
         async ({ body }) => {
+            const { merchantId, anonymousId, proof } = body;
+
+            // Phase 2 pattern (README §5, "Where the signature goes"):
+            // verify and record telemetry when a proof is present, never
+            // require one. Reuses IdentityProofService — no second verifier.
+            if (proof) {
+                const proofResult =
+                    await IdentityContext.services.identityProof.verify({
+                        op: "frak-install-v1",
+                        proof,
+                        merchantId,
+                        anonymousId,
+                        binding: new Uint8Array(0),
+                    });
+                if (!proofResult.valid) {
+                    log.info(
+                        { merchantId, anonymousId, reason: proofResult.reason },
+                        "Install proof present but invalid (Phase 2: logged, not enforced)"
+                    );
+                }
+            }
+
             const result = await IdentityContext.services.installCode.generate({
-                merchantId: body.merchantId,
-                anonymousId: body.anonymousId,
+                merchantId,
+                anonymousId,
             });
             return {
                 code: result.code,
@@ -22,6 +44,9 @@ const installCodeGenerateRoute = new Elysia()
             body: t.Object({
                 merchantId: t.String({ format: "uuid" }),
                 anonymousId: t.String(),
+                // frak-install-v1 proof (README §4.4). Phase 2: optional,
+                // verified when present, never required.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({
@@ -67,6 +92,15 @@ const installCodeResolveRoute = new Elysia()
                 hasWallet = wallet !== null;
             }
 
+            // Minted unconditionally from the row's anonymousId, regardless
+            // of whether `generate` carried a proof (README §5, "Why
+            // `resolve` mints the ticket unconditionally").
+            const ticket =
+                await IdentityContext.services.installCode.mintTicket({
+                    merchantId,
+                    anonymousId,
+                });
+
             return {
                 merchantId,
                 anonymousId,
@@ -75,6 +109,7 @@ const installCodeResolveRoute = new Elysia()
                     domain: merchant.domain,
                 },
                 hasWallet,
+                ticket,
             };
         },
         {
@@ -90,6 +125,7 @@ const installCodeResolveRoute = new Elysia()
                         domain: t.String(),
                     }),
                     hasWallet: t.Boolean(),
+                    ticket: t.String(),
                 }),
                 404: t.ErrorResponse,
             },

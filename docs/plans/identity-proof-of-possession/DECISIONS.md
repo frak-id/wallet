@@ -235,6 +235,9 @@ and Phase 4a enforcement is otherwise blocked on db-team lead time.
 | D4 | §4.6 `proofSeen` boolean | `proof_seen_at` nullable timestamp | §2.5 — same cost, makes the §2.6 alarm investigable, matches table idiom |
 | D5 | §2.2 `frak-ensure-v1` window = 90 days | **30 days** | The 90-day justification is the install→forget→reopen funnel, which runs on the **wallet** arm — and that arm carries a *ticket*, not this proof, capped at the 7-day `DEFAULT_ENSURE_TTL_MS`. The SDK arm signs in place at call time, so a long window buys nothing and only extends bearer exposure. Windows are backend **policy**, not frozen wire format, so this stays revisable after native ships. |
 | D6 | §2.6 legacy→derived migration merge, in Phase 2 | **deferred out of phases 0–4a** | See §3.1 below |
+| D7 | §2.2 backend verifies via a shared SDK `verify.ts` | **verification lives only in the backend** (`IdentityProofService`) | The SDK never verifies anything, so shipping a verifier in it is dead weight on every merchant page and a wider public surface for no gain. What is genuinely shared — and what the golden fixtures pin — is the canonical byte layout and the derivation, which both sides must agree on to the byte. Signing is the SDK's job; verifying is the backend's. Also removes the need for the bundle-isolation test that existed only to keep `verify.ts` out of the browser build. |
+| D8 | §2.4 accepts the pure-JS fallback's bundle weight | **embed `@noble/curves`, do not stub it out of the CDN build** | See §3.3 below |
+| D9 | §7 Phase 4a: "a legacy id may be a merge target but never a merge source" | source arm is **latch-gated**, like the target arm | See §3.4 below |
 
 ### 3.1 D6 — deferring the §2.6 migration merge
 
@@ -262,6 +265,44 @@ Reasons, in order:
 
 Not a scope cut for convenience — it removes code **and** improves the security posture.
 To revisit after Phase 4a; tracked here, not lost.
+
+### 3.3 D8 — `@noble/curves` ships in the CDN bundle
+
+The IIFE/CDN format cannot code-split: a single `<script>` tag has no module loader, so a
+dynamic `import()` gets inlined. A first pass therefore aliased the fallback to a throwing
+stub on the CDN target, keeping that bundle small at the cost of HTTP merchants silently
+degrading to an unprovable legacy id.
+
+**Reverted — the measurement was pointed at the wrong artifact.** The bundle merchants
+actually load is `@frak-labs/components`, which is ESM and *does* code-split: `@noble/curves`
+lands in its own lazy chunk (~13 KB gzip) fetched only by the non-secure-context clients
+that actually need it. Every plugin (PHP, Shopify, Magento, Prestashop) loads that path;
+core-sdk's IIFE is real but rarely used, and npm consumers are effectively nil today.
+
+So the cost is a lazy chunk on the path that matters, and unconditional weight only on the
+rarely-used one. §2.4 is explicit that the fallback is *required, not optional*: a dual-tier
+system where HTTP merchants keep getting unprovable ids preserves the exact hole this work
+exists to close. Weight on the minor path is the cheaper half of that trade.
+
+### 3.4 D9 — the merge source arm is latch-gated, not unconditional
+
+§7 Phase 4a reads as though a named `sourceAnonymousId` must always carry a proof. Taken
+literally that is unshippable today: the listener's `useOnGetMergeToken` still drops its
+RPC param, so nothing in production sends one and **every** in-app-browser escape would
+403 — the exact flow the same section's acceptance criteria require to keep working end
+to end.
+
+Both arms are therefore latch-gated: an id that has never proven itself keeps working, and
+from its first valid proof onward it must always present one. The intended end state is
+reached without a flag day, and the practical effect matches §7's rule — a legacy id has
+no key, so it can never latch, and once the listener sends proofs every derived id latches
+on first use.
+
+The residual gap is that an unproven derived id stays claimable until it first signs. §7
+accepts exactly this ("accept that the migration path keeps legacy ids claimable-as-target
+by whoever moves first"), and §2.6 is explicit there is no fix beyond shipping early.
+Tighten to unconditional once C12 lands and telemetry shows the proof-bearing share of
+this arm at ~100%.
 
 ### 3.2 Kept as-is, deliberately
 
@@ -291,11 +332,10 @@ To revisit after Phase 4a; tracked here, not lost.
 | — | audit fix: don't repoint an attributed purchase (§1.3) | ✅ `409bc6439` |
 | — | audit fix: first-claim-wins on purchase claims (§1.3) | ✅ `477f1429a` |
 | C8 | surface non-retryable ensure failure, client half | ✅ `e7fde0fdd` |
-| C9 | SDK P-256 keygen, JWK storage, derived client id (phase 2) | after C1 |
-| C10 | attach proofs to ensure + getMergeToken (§4.1, §4.2) | after C9 |
-| C11 | backend verifies proofs when present (phase 2) | after C1 |
-| C12 | listener/wallet install ticket + proof plumbing (phase 3) | E |
-| C13 | enforce proofs on latched ids (phase 4a) | F, last |
+| C9+C10+C11 | SDK keygen/derivation/proofs + backend verify (phase 2) | ✅ `bb565ab0c` |
+| C13 | enforce proofs on latched ids (phase 4a) | ✅ `56cd290ef` |
+| C12 (backend half) | install ticket + JWT audience/401 fixes (phase 3) | ✅ `9e75e83c0` |
+| C12 (client half) | listener/wallet proof plumbing, `#p=` fragment | next |
 
 Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
 `ensure.ts` (C5 → C11 → C13, serialised), `orchestration/context.ts` (C11+C13).
@@ -308,6 +348,28 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
   Enforcement code ships behind the column; until it exists the latch never sets and every
   id behaves as legacy — fail-open, which is the pre-existing behaviour, not a regression.
 - §2.6 migration merge (D6) — revisit after Phase 4a.
+- **Tighten the merge source arm to unconditional** once C12 ships and telemetry confirms
+  proof coverage on that arm (D9/§3.4).
+- **`proofs.install` is produced but unconsumed** — it rides inertly on `resolved-config`
+  until C12 wires the `#p=` fragment.
+- **No bundle-size regression guard.** Nothing fails CI if an eager `@noble/curves` import
+  reaches an entry chunk; only manual inspection would catch it.
+
+### Pre-existing bugs found while auditing (both fixed in `9e75e83c0`)
+
+- **The JWT `aud` claim was never enforced.** `buildJwtContext` accepted and signed it, but
+  `verify()` never passed it to `jwtVerify`, and the JWT-spec claims merged into the
+  validator widen any `t.Literal` a schema declares back to an optional string. A token
+  minted under a *different* audience with the same secret and payload shape verified
+  fine. The pre-existing cross-type test passed on payload shape alone — confirmed by
+  weakening the schema literal and watching it still pass. Fixed at the source, so every
+  context benefits; only `installTicket` sets `aud` today, so nothing else changed
+  behaviour.
+- **`/identity/ensure` returned 401 for every request.** A route-local `headers` schema
+  *replaces* the one `sessionContext` declares in its `.guard()` rather than merging, so
+  the auth macro never saw `x-wallet-auth`. Reproduced on unmodified HEAD. It is the only
+  route in the codebase combining a local `headers` schema with the auth macro — worth a
+  lint rule if a second one ever appears.
 - §9.3 — the §3.5 / §2.6 alarms still have no Alertmanager destination. Out of scope here.
 - §9.4 — whether `#p=` survives the install redirect chain must be verified on-device
   before Phase 3 store submission.
