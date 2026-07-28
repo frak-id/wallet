@@ -27,7 +27,7 @@ Plus, cross-cutting: anonymous id generation + interaction tracking, inbound ref
 **First client:** the My Moulinex app (`com.groupeseb.moulinex.food`). Its merchant
 identity will be verified manually — no SEB domain currently publishes usable
 well-known files, so auto-verification cannot be the launch path. See
-[`01-platform-changes.md`](./01-platform-changes.md) §3.8.
+[`01-platform-changes.md`](./01-platform-changes.md) §3.5.
 
 ## ⚠️ Prerequisite: identity proof-of-possession
 

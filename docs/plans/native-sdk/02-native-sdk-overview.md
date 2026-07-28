@@ -195,9 +195,10 @@ pending event queue so nothing is emitted under a dead id), `setTrackingEnabled(
 ### Linking to the wallet
 
 > ⚠️ **The merge path below is blocked on a security fix.** `merge/initiate` /
-> `merge/execute` are currently exploitable for reward theft
-> (`01-platform-changes.md` §3.2). The `ensure` path is unaffected and is the MVP
-> mechanism; **do not ship the `?fmt=` merge flow until §3.2 lands**.
+> `merge/execute` are currently exploitable for reward theft — see
+> [`../identity-proof-of-possession/`](../identity-proof-of-possession/). The `ensure`
+> path is unaffected and is the MVP mechanism; **do not ship the `?fmt=` merge flow until
+> that plan's enforcement phase lands**.
 
 When the Frak app is installed, the anonymous id can be linked to the user's wallet with
 **no backend changes** — the plumbing already exists:
@@ -426,7 +427,8 @@ Design notes:
   is a nice accelerant when it fires — **never the primary mechanism**.
 - **Manual code entry remains the floor**, and given the point above it is the real
   path, not the fallback. The existing 6-char / 31-symbol code is adequate as a UX
-  primitive; see `01-platform-changes.md` §3.3 for its security problem.
+  primitive; see [`../identity-proof-of-possession/`](../identity-proof-of-possession/)
+  §3.2 and §5 for its security problem and the ticket replacement.
 - **The SDK signs at `generate`, not at `resolve`.** The SDK holds the private key; the
   Frak wallet app that later resolves the code is a different app on a possibly
   different device and cannot produce that signature. `resolve` therefore returns an
@@ -532,7 +534,7 @@ table does not justify Room/CoreData — but the failure modes must be pinned do
 
 | Concern | Rule |
 |---|---|
-| **Idempotency** | stamp `idempotencyKey` (UUID) at **enqueue**, never per attempt. Without it, retries create duplicate `create_referral_link` rows (`01-platform-changes.md` §3.7). |
+| **Idempotency** | stamp `idempotencyKey` (UUID) at **enqueue**, never per attempt. Without it, retries create duplicate `create_referral_link` rows (`01-platform-changes.md` §3.4). |
 | **Timestamps** | capture-time, not flush-time. Otherwise offline events land in the wrong attribution window. |
 | **Ordering** | strict FIFO. |
 | **Single writer** | one process only. Android multi-process apps (`:remote`) would corrupt both the file and `SharedPreferences` — document main-process-only init and assert in debug builds. |
@@ -635,7 +637,7 @@ Always resolve merchants by server-issued `merchantId` (opaque UUID), or by
 reason.
 
 `productId` itself is a **legacy field** (nullable, one remaining consumer behind
-`legacyRoutes.ts`, no on-chain use — see `01-platform-changes.md` §3.8). It is neither
+`legacyRoutes.ts`, no on-chain use — see `01-platform-changes.md` §3.5). It is neither
 a constraint on the app-identity design nor something native ever touches.
 
 ### 8.4 Frak has no telemetry on native funnels
@@ -666,7 +668,7 @@ end to end before launch.**
 
 Related: with no App Links registered for merchant apps, an `fCtx` link opened on a
 device that *has* the merchant's app installed still always opens a browser. Solving
-package-id identity (§3.8 of the platform doc) does not by itself fix link routing —
+package-id identity (§3.5 of the platform doc) does not by itself fix link routing —
 that needs Universal/App Link registration too.
 
 ---
@@ -677,7 +679,7 @@ that needs Universal/App Link registration too.
 // ── Setup ─────────────────────────────────────────────────────────
 FrakConfig(merchantId:, bundleId:, metadata:, attribution:, deepLink:,
            walletURL:, i18nOverrides:, preloadSharing:, logLevel:, trackingEnabled:)
-// merchantId optional — resolved from bundleId when omitted (01 §3.8)
+// merchantId optional — resolved from bundleId when omitted (01 §3.5)
 // deepLink: .automatic (default) | .manual | .disabled   — see §6.1
 Frak.initialize(_:)                     // non-blocking, no I/O, never throws
 

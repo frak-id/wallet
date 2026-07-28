@@ -246,7 +246,8 @@ mechanism as the existing web in-app-browser escape flow.
 > ⚠️ **Do not ship this path yet.** That "no session at all" property is exactly the
 > vulnerability described in §3.2 — it lets anyone mint a merge token for an anonymous
 > id they do not own, and every share link publishes those ids in clear. The `ensure`
-> path above is unaffected and is the MVP mechanism. Revisit once §3.2 lands.
+> path above is unaffected and is the MVP mechanism. Revisit once the identity plan's
+> enforcement phase lands.
 
 ### 2.2 iOS: focus the install-code field on first launch **[BLOCKING for iOS]**
 
@@ -343,193 +344,66 @@ The formatting contract that must hold everywhere: **currency drives locale, not
 device locale** — `eur→fr-FR`, `usd→en-US`, `gbp→en-GB`, with
 `minimumFractionDigits: 0`, `maximumFractionDigits: 2`.
 
-### 3.2 Identity merge is unauthenticated — reward theft **[SECURITY — CRITICAL, fix before any native release]**
+### 3.2 Identity & tracking security **[SECURITY — owned by another plan]**
 
-> Found during native-SDK security review. **This is a live vulnerability in production
-> today**, independent of native — native only widens the supply of usable
-> `merchantId`s and makes anonymous ids easier to harvest. It is the single most
-> serious item in this document.
+> ➤ **All of this is now owned by
+> [`../identity-proof-of-possession/`](../identity-proof-of-possession/), which is
+> scheduled to ship *before* any native SDK work.**
 >
-> ➤ **Now owned by its own plan, being executed first:**
-> [`../identity-proof-of-possession/`](../identity-proof-of-possession/). That document
-> covers the full attack chain, the permanent-lockout consequence, the P-256
-> proof-of-possession design, and the backend fixes. Kept summarised here because it
-> gates native work.
+> This section previously restated the full attack chain and fix list. That duplicate has
+> been removed: it had already drifted out of sync (it still claimed a 30-day lockup, a
+> replay cache, and a session requirement on `merge/execute` — all since corrected or
+> reversed), and it predated the `track/*` single-request variant entirely. **One source
+> of truth.**
 
-**`POST /user/identity/merge/execute` has no auth macro at all**
-(`services/backend/src/api/user/identity/merge.ts:53-85`) — not even the optional one.
-`/initiate` accepts a bare `{sourceAnonymousId, merchantId}` with no session
-(`merge.ts:6-51`), and `AnonymousMergeOrchestrator.initiateMerge` will auto-create an
-identity group for any `sourceAnonymousId` and mint a JWT bound to it, with **no proof
-the caller controls that id** (`AnonymousMergeOrchestrator.ts:29-70`). The token carries
-`sourceGroupId`, `sourceMerchantId`, `sourceAnonymousId` and `sourceWalletAddress`
-(`AnonymousMergeService.ts:38-43`), but only `sourceGroupId` drives behaviour at execute
-time — and **nothing in it identifies the requester**.
+What native needs to know, and nothing more:
 
-**The anonymous id is public by design.** FrakContext v2 carries the referrer's raw
-client UUID in the clear at bytes 21..36 of every share link. Anyone who receives a
-shared link — or screenshots it, or finds it reposted — has the referrer's
-`sourceAnonymousId` for free. `install-code/resolve` also echoes `anonymousId` back to
-an unauthenticated caller (§3.3), giving a second harvesting route.
+| Concern | Where |
+|---|---|
+| Unauthenticated identity merge → reward theft + permanent wallet lockout | identity plan §1 |
+| The same attack in **one request** via `POST /user/track/interaction` | identity plan §1, fix in §3.9 |
+| `install-code/resolve` leaking `anonymousId`; the opaque-ticket replacement | identity plan §3.2, §5 |
+| `GET /identity/order-client` — second `anonymousId` oracle | identity plan §3.4 |
+| Raw-hex-address bypass in `sdkIdentity.ts` | identity plan §3.7 |
+| Unverified purchase / arrival claims | identity plan §3.5 |
+| P-256 derived ids + timestamped proofs | identity plan §2 |
 
-Attack:
+Two consequences that bind this plan:
 
-1. `POST /merge/initiate {sourceAnonymousId: <victim's, from their share link>, merchantId}`
-   — no session → attacker gets a valid `mergeToken` for the victim's group.
-2. Attacker links their own wallet to their own anonymous id via the legitimate flow,
-   so their group has `hasWallet = true`.
-3. `POST /merge/execute {mergeToken, targetAnonymousId: <attacker's own>, merchantId}`
-   — no auth. Wallet-priority anchoring (`IdentityWeightService.checkWalletPriority`,
-   invoked from `determineAnchor:150`) picks the **attacker's** group as anchor because
-   the victim's pre-install group has no wallet, and merges the victim in.
-4. Rewards attach to an **identity group**, not a wallet (`asset_logs.identityGroupId`
-   is `notNull`, `recipientWallet` nullable), and the wallet is resolved at settlement
-   (`BatchRewardOrchestrator.ts:196`, `SettlementOrchestrator.ts:269`). Lockup windows
-   run up to 30 days. Since the victim's id now points at the attacker's group, rewards
-   the victim **already earned** but that have not yet settled pay out to the attacker —
-   along with all future activity under that anonymous id.
+1. **The `?fmt=` merge path in §2.1 is not shippable** until the identity plan's
+   enforcement phase lands. The `ensure` path is unaffected and is the MVP mechanism.
+2. **Native v0.1 must ship key derivation and signing from day one.** A released binary
+   cannot be retrofitted, so this is not deferrable to v0.2 even though enforcement lands
+   later. There are no legacy native ids, so native is cryptographic-only — no
+   trust-on-first-use path. See
+   [`02-native-sdk-overview.md`](./02-native-sdk-overview.md) §4.
 
-> **Late wallet binding is deliberate and must not be "fixed".** Decoupling the anonymous
-> id from the wallet is what lets a user share, earn, and create their wallet *later*.
-> The defect is not *when* the wallet resolves — it is that **group membership can be
-> repointed by an unauthenticated attacker**. Authenticate the merge and the settlement
-> model is correct as-is.
+### 3.3 Rate limiting on SDK-facing endpoints **[SECURITY — before public release]**
 
-This lands precisely in the window the native SDK is designed to optimise: a user with
-an active anonymous identity accruing rewards who has not yet installed the wallet.
-
-Not vulnerable: if both groups already hold *different* wallets, `WALLET_CONFLICT` is
-thrown (`IdentityOrchestrator.ts:88-91`) — post-install users are protected. The victims
-are exactly the pre-install users this SDK is meant to convert.
-
-A milder variant exists on `/identity/ensure`: it *requires* a wallet session, but takes
-`anonymousId` from the request with no proof of ownership (`ensure.ts:29-45`), feeding
-the same wallet-priority merge. Any authenticated wallet user can claim a scraped
-anonymous id. The `frakwallet://install?m=&a=` deep link this plan reuses (§2.1) drives
-exactly that call with `a` taken from an untrusted URL.
-
-**Additional consequence — permanent lockout, worse than the theft.** The merge deletes
-the victim's group and repoints their `anonymous_fingerprint` node at the attacker's.
-When the victim later installs, `ensure` → `resolveAndAssociate` →
-`determineAnchorFromMultiple` sees two different wallets and throws `WALLET_CONFLICT`
-(`IdentityWeightService.ts:184-188`). `ensure.ts` has no `try`/`catch` and no recovery
-path exists anywhere in the backend. **They can never link their wallet for that
-merchant** — silently, until they hit an unresolvable error.
-
-**Fixes** — full design in
-[`../identity-proof-of-possession/`](../identity-proof-of-possession/):
-- anonymous ids become **derived from a device-held P-256 keypair**
-  (`clientId = uuid(SHA-256(pubkey)[0..16])`), so identity is self-authenticating
-- merge/ensure carry a **timestamped signature** (±2 min window, replay-cached), no
-  challenge round-trip
-- `merge/execute` must require a session
-- replace `anonymousId` with an opaque single-use ticket in the install-code flow
-- alert when a merge would move a group holding unsettled `asset_logs` under a different
-  wallet — and consider requiring proof on **both** sides of the merge, not just the
-  source
-- Rate limiting (20/min, IP-keyed) does not mitigate any of this.
-
-**This blocks the §2.1 `?fmt=` merge path.** Until it is fixed, the native SDK must not
-advertise merge as a supported flow.
-
-### 3.3 `install-code/resolve` leaks `anonymousId` **[SECURITY]**
-
-`services/backend/src/api/user/identity/installCode.ts:36-90` is fully unauthenticated
-and returns `{merchantId, anonymousId, merchant:{name,domain}, hasWallet}`.
-
-Entropy is adequate against a *targeted* attack: 31⁶ = 887,503,681 codes
-(`sixDigitCode.ts:8-21`), 10/min per IP → targeting one victim's code is infeasible.
-
-The real exposure is **harvesting**. The limit is IP-keyed only, so a modest proxy pool
-(500–1000 IPs × 10/min sustained over the 72h TTL) reaches a meaningful fraction of the
-keyspace, and expected hits scale linearly with the number of concurrently live codes.
-Each hit yields a valid `anonymousId` — which is exactly the capability needed for the
-§3.2 merge attack. It is a free anonymous-id oracle.
-
-**Fixes:** replace `anonymousId` with an opaque, single-use, expiring **ticket**, and add
-per-code attempt limiting / backoff independent of source IP.
-
-> The id cannot simply be dropped — it is load-bearing. `resolve` happens **before** the
-> user is authenticated, and the wallet carries the id in `pendingActionsStore` across
-> registration to drain against `ensure` later (one-week TTL). And the signature must be
-> verified at **`generate`**, not `resolve`: the private key belongs to the sharer's
-> device, while the wallet is a different app on a possibly different device. Full design:
-> [`../identity-proof-of-possession/`](../identity-proof-of-possession/) §3a.
-
-### 3.4 Rate limiting on SDK-facing endpoints **[SECURITY — before public release]**
-
-These four have **no** `rateLimitMiddleware` today (it is wired only on `explorer`,
-`registration`, wallet-auth, `identity/ensure`, `identity/merge`, `identity/installCode`,
-`identity/orderClient`):
+The identity plan owns the tracking-endpoint limits (its §3.6, and note `trackApi` has
+**no** rate limiting at all today). Two config/discovery endpoints are native-specific
+and belong here:
 
 | Endpoint | File |
 |---|---|
-| `POST /user/track/interaction` | `services/backend/src/api/user/track/interaction.ts` |
-| `POST /user/track/purchase` | `services/backend/src/api/user/track/purchase.ts` |
 | `GET /user/merchant/resolve` | `services/backend/src/api/user/merchant/index.ts:11` |
 | `GET /user/merchant/estimated-rewards` | `services/backend/src/api/user/merchant/index.ts:44` |
 
 A native binary is decompilable and the `merchantId` is a static compile-time constant
-extractable from every APK/IPA, making these trivially enumerable and floodable. Native
-also cannot be origin/Referer-checked at all. Add rate limiting before public release.
+extractable from every APK/IPA, making these trivially enumerable. Native also cannot be
+origin/Referer-checked at all.
 
-Three constraints on *how*:
+Two native-specific constraints on *how*, which the identity plan does not cover:
 
-- **Key by `(merchantId, clientId)`, not IP alone.** `x-frak-client-id` is a free-form
-  caller-supplied string (`sdkIdentity.ts:9-13`), so an attacker mints unlimited fresh
-  identities; but IP-only limiting is simultaneously too weak against that and too harsh
-  against real users, because **carrier-grade NAT puts thousands of legitimate mobile
-  users behind one IP**. An aggressive IP limit rate-limits an entire carrier. Use IP
-  only as an outer circuit breaker.
-- **Coordinate with the SDK's offline queue.** This document mandates a durable queue
-  that burst-flushes on reconnect — straight into these new limits. The SDK must honour
-  `Retry-After` and back off *without dropping* queued events or poisoning the queue
-  head, and must **jitter** flush-on-reconnect so a regional connectivity blip doesn't
-  synchronise a merchant-wide stampede.
-- Return `429` with `Retry-After` rather than a generic error, so the SDK can comply.
+- **Coordinate with the SDK's offline queue.** The native SDK has a durable queue that
+  burst-flushes on reconnect — straight into these limits. It must honour `Retry-After`
+  and back off *without dropping* queued events or poisoning the queue head, and must
+  **jitter** flush-on-reconnect so a regional connectivity blip doesn't synchronise a
+  merchant-wide stampede. Return `429` with `Retry-After` so the SDK can comply.
+- **The limiter is in-memory per-pod** (`rateLimiter.ts`), so with N replicas the
+  effective limit is N× the configured value. Relevant to any number chosen here.
 
-### 3.5 Purchase and arrival claims are unverified **[SECURITY — pre-existing, worth fixing]**
-
-Not native-specific, but native raises the stakes and the docs should not imply the
-tracking endpoints are safe:
-
-- **Purchase claims:** `/track/purchase` never validates the checkout `token`
-  (`purchase.ts:1-84`). It is stored unconditionally via upsert and only later compared
-  for string equality against the merchant webhook's report
-  (`PurchaseLinkingOrchestrator.ts:87-98`, `PurchaseClaimRepository.ts:38-47`). Anyone
-  who observes or guesses `{merchantId, orderId, token}` can claim a purchase they did
-  not make, racing the real webhook. Fix: HMAC the token with a per-merchant secret
-  rather than treating the raw order key as secret material.
-- **Arrival claims:** `arrival` interactions accept attacker-chosen `referrerWallet` /
-  `referrerClientId` with only shape validation, never provenance
-  (`interactionSchemas.ts:5-11`, `validateArrivalReferrer:45-77`). Combined with
-  free-form `x-frak-client-id` and no rate limit, this is straightforward Sybil referral
-  farming. Fix: require referrer claims to be backed by something the backend itself
-  issued when the link was built.
-
-### 3.6 Raw hex address accepted as identity proof **[SECURITY — must fix]**
-
-File: `services/backend/src/api/user/track/sdkIdentity.ts:39-48`
-
-`resolveWalletAddress()` treats any string passing `isHex()` + `isAddress()` as a valid
-`x-wallet-sdk-auth` identity for `/track/interaction` and `/track/purchase`. No
-signature is verified.
-
-An attacker sets `x-wallet-sdk-auth: <any address>` and posts interactions and purchase
-claims **as any wallet**, polluting referral graphs and poisoning reward attribution.
-
-To be precise about blast radius: **the exposure is already total today** for any HTTP
-client — this is server-side and origin-blind, so `curl` suffices; native adds nothing
-qualitatively new. What native adds is *scale and cover*: shipping `merchantId`s in
-binaries supplies attackers with valid ids to pair with forged addresses, and native
-traffic patterns remove the informal UA/Referer heuristics that make abuse noticeable
-today.
-
-Fix: drop the raw-address bypass entirely; require a verified `JwtContext.walletSdk`
-token as every other caller already uses. Native SDKs do **not** send this header (they
-use the anonymous `x-frak-client-id` path only), so this is not a native blocker.
-
-### 3.7 `idempotencyKey` on `sharing` and `arrival` interactions **[BLOCKING]**
+### 3.4 `idempotencyKey` on `sharing` and `arrival` interactions **[BLOCKING]**
 
 Only `custom` accepts an `idempotencyKey` today
 (`services/backend/src/api/schemas/interactionSchemas.ts`). For `sharing`, the
@@ -559,7 +433,7 @@ Related and equally important: queued events must carry **capture-time**
 queued offline lands in the wrong attribution window — which silently invalidates the
 tier-3 offline claim in §4 that "attribution is fully preserved".
 
-### 3.8 Merchant identification by package id **[BLOCKING — MVP]**
+### 3.5 Merchant identification by package id **[BLOCKING — MVP]**
 
 Today every merchant lookup keys off a web domain. `merchants.domain` is
 `text UNIQUE NOT NULL` (`services/backend/src/domain/merchant/db/schema.ts:27`); there
@@ -707,7 +581,7 @@ confirming ownership out-of-band. Auto-verification is worth building for self-s
 later, and Moulinex is a good regression fixture precisely because it exercises both
 traps.
 
-### 3.9 OpenAPI / schema export **[ENHANCEMENT — cheap, high leverage]**
+### 3.6 OpenAPI / schema export **[ENHANCEMENT — cheap, high leverage]**
 
 Every backend route already uses typed Elysia `t.*` schemas. Exporting an OpenAPI
 artifact enables Kotlin/Swift model codegen and kills the entire wire-format
@@ -744,12 +618,20 @@ need, so it doubles as the migration beachhead if we later go native (see
 
 ### Must land before **any** native release (security)
 
+All owned by [`../identity-proof-of-possession/`](../identity-proof-of-possession/) and
+tracked in its phasing — listed here only so this plan's gate is explicit. See §3.2.
+
+| Item | Identity plan |
+|---|---|
+| Make `track/*` resolve-only (the one-request attack) | §3.9 — ship first |
+| Handle `WALLET_CONFLICT` on `ensure`, backend **and** client | §3.8 |
+| Install-code ticket instead of `anonymousId` | §3.2, §5 |
+| Proof-of-possession on the merge endpoints | §2, §4 |
+| Remove raw-address identity bypass | §3.7 |
+
 | # | Change | Where |
 |---|---|---|
-| 3.2 | **Authenticate identity merge** — `merge/execute` has no auth; live reward-theft vector | `services/backend` |
-| 3.3 | Install-code ticket instead of `anonymousId`; per-code attempt limiting | `services/backend` + `apps/wallet` |
-| 3.4 | Rate limit the 4 SDK-facing endpoints, keyed by `(merchantId, clientId)` not IP | `services/backend` |
-| 3.6 | Remove raw-address identity bypass | `services/backend` |
+| 3.3 | Rate limit `merchant/resolve` + `estimated-rewards` (native-specific) | `services/backend` |
 
 ### Blocking for MVP
 
@@ -762,8 +644,8 @@ need, so it doubles as the migration beachhead if we later go native (see
 | 1.3 | Install CTA emits native handoff; SDK owns the whole install step | `apps/wallet` `/sharing` |
 | 1.5 | `?sdkv=`, `x-frak-sdk-version`, unknown-value tolerance, kill switch | both |
 | 2.2 | iOS: autofocus install-code field, never read pasteboard | `apps/wallet` `/install` |
-| 3.7 | `idempotencyKey` on `sharing`/`arrival` interactions | `services/backend` |
-| 3.8 | `allowed_package_ids` column + package-id resolve arm | `services/backend` |
+| 3.4 | `idempotencyKey` on `sharing`/`arrival` interactions | `services/backend` |
+| 3.5 | `allowed_package_ids` column + package-id resolve arm | `services/backend` |
 | 2.1 | Verify `frakwallet://install?m=&a=` end to end | `apps/wallet` deep links |
 
 ### Enhancements
@@ -772,8 +654,7 @@ need, so it doubles as the migration beachhead if we later go native (see
 |---|---|---|---|
 | 3.1 | Pre-formatted rewards (`?formatted=1`) | `services/backend` | high — kills worst drift risk |
 | 1.4 | Seeded initial state params | `apps/wallet` `/sharing` | high — biggest perf win |
-| 3.9 | OpenAPI export | `services/backend` | high — cheap, kills wire duplication |
-| 3.5 | Verify purchase/arrival claim provenance | `services/backend` | pre-existing fraud surface |
+| 3.6 | OpenAPI export | `services/backend` | high — cheap, kills wire duplication |
 | 2.3 | Service worker cache + preconnect (**Android only**) | `apps/wallet` | medium |
 
 `apps/listener` requires **no changes**. The native SDK does not use the listener at
