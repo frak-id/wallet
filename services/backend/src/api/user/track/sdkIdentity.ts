@@ -1,7 +1,6 @@
 import { JwtContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import type { Address } from "viem";
-import { isAddress, isHex } from "viem";
 import { OrchestrationContext } from "../../../orchestration/context";
 import type { IdentityNode } from "../../../orchestration/identity";
 
@@ -36,13 +35,17 @@ type SdkIdentityError = {
 
 type SdkIdentityResult = SdkIdentitySuccess | SdkIdentityError;
 
+/**
+ * Resolve the caller's wallet address from a `x-wallet-sdk-auth` JWT.
+ *
+ * §3.7: a raw hex address string used to be accepted directly, with no
+ * proof of wallet identity at all. Reachable from `/track/purchase`,
+ * `/track/interaction`, `/merchant/referral-status` — a signed
+ * `JwtContext.walletSdk` token is now the only accepted form.
+ */
 export async function resolveWalletAddress(
     walletSdkAuth: string
 ): Promise<Address | null> {
-    if (isHex(walletSdkAuth) && isAddress(walletSdkAuth)) {
-        return walletSdkAuth;
-    }
-
     const session = await JwtContext.walletSdk.verify(walletSdkAuth);
     if (!session) {
         return null;
@@ -113,14 +116,16 @@ export async function resolveSdkIdentity(
         };
     }
 
-    const { finalGroupId } =
-        await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
+    // §3.9: never merge identity groups from an unauthenticated track/*
+    // call — attribute to the anchor group (wallet's, when present) only.
+    const { groupId } =
+        await OrchestrationContext.orchestrators.identity.resolveForAttribution(
             identityNodes
         );
 
     return {
         success: true,
-        identityGroupId: finalGroupId,
+        identityGroupId: groupId,
         walletAddress,
     };
 }

@@ -13,6 +13,15 @@ type ClaimPurchaseParams = {
     customerId: string;
     orderId: string;
     token: string;
+    /**
+     * Whether identity groups may be merged while claiming this purchase
+     * (§3.9). Defaults to `true` for the trusted, server-to-server webhook
+     * path (`PurchaseWebhookOrchestrator`), where merging is correct and
+     * desirable. The SDK-facing `/track/purchase` route passes `false`: it
+     * is reachable with an unauthenticated `x-frak-client-id`, so it must
+     * only ever attribute to an existing group, never reassign one.
+     */
+    merge?: boolean;
 };
 
 type ClaimPurchaseResult = {
@@ -75,11 +84,22 @@ export class PurchaseLinkingOrchestrator {
             params.token,
             params.orderId
         );
+        const merge = params.merge ?? true;
 
-        const { finalGroupId, merged } =
-            await this.identityOrchestrator.resolveAndAssociate(
-                params.identityNodes
-            );
+        let finalGroupId: string;
+        let merged: boolean;
+        if (merge) {
+            ({ finalGroupId, merged } =
+                await this.identityOrchestrator.resolveAndAssociate(
+                    params.identityNodes
+                ));
+        } else {
+            ({ groupId: finalGroupId } =
+                await this.identityOrchestrator.resolveForAttribution(
+                    params.identityNodes
+                ));
+            merged = false;
+        }
 
         const purchase = await this.purchaseRepository.findByOrderAndToken(
             params.orderId,
@@ -92,7 +112,8 @@ export class PurchaseLinkingOrchestrator {
                 purchase,
                 finalGroupId,
                 merged,
-                params.merchantId
+                params.merchantId,
+                merge
             );
         }
 
@@ -120,12 +141,14 @@ export class PurchaseLinkingOrchestrator {
         purchase: PurchaseSelect,
         claimingGroupId: string,
         alreadyMerged: boolean,
-        merchantId: string
+        merchantId: string,
+        merge: boolean
     ): Promise<ClaimPurchaseResult> {
         let finalIdentityGroupId = claimingGroupId;
         let merged = alreadyMerged;
 
         if (
+            merge &&
             purchase.identityGroupId &&
             purchase.identityGroupId !== claimingGroupId
         ) {

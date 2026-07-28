@@ -56,11 +56,46 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                 );
             }
 
-            // Resolve and associate — idempotent, cheap when already linked
-            const { finalGroupId, merged } =
-                await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
-                    identityNodes
-                );
+            // Resolve and associate — idempotent, cheap when already linked.
+            //
+            // A hostile actor can have already merged this anonymousId into a
+            // group that holds a DIFFERENT wallet than the one authenticating
+            // here (README §1, "the consequence that is worse than theft").
+            // `resolveAndAssociate` -> `determineAnchorFromMultiple` refuses
+            // that merge and throws WALLET_CONFLICT — correctly, but left
+            // uncaught the 409 propagates to a caller
+            // (`useExecutePendingActions`) that retries it for the full
+            // 7-day pending-action TTL with nothing ever surfaced (§3.8).
+            // Catch specifically this conflict, log it as a security event,
+            // and return a stable, non-retryable error code. Every other
+            // error still propagates unchanged.
+            let finalGroupId: string;
+            let merged: boolean;
+            try {
+                ({ finalGroupId, merged } =
+                    await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
+                        identityNodes
+                    ));
+            } catch (err) {
+                if (
+                    err instanceof HttpError &&
+                    err.code === "WALLET_CONFLICT"
+                ) {
+                    log.warn(
+                        {
+                            walletAddress: walletSession.address,
+                            anonymousId,
+                            merchantId,
+                        },
+                        "Identity ensure: refused to merge groups linked to different wallets"
+                    );
+                    throw HttpError.conflict(
+                        "WALLET_ALREADY_LINKED",
+                        "This anonymous identity is already linked to a different wallet and cannot be merged"
+                    );
+                }
+                throw err;
+            }
 
             if (merged) {
                 log.info(
@@ -100,6 +135,7 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                 }),
                 400: t.ErrorResponse,
                 401: t.String(),
+                409: t.ErrorResponse,
             },
         }
     );

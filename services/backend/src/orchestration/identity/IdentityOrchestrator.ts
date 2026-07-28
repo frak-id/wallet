@@ -152,6 +152,30 @@ export class IdentityOrchestrator {
         return { finalGroupId: anchorGroupId, merged: true };
     }
 
+    /**
+     * Resolve nodes to a single attribution group WITHOUT merging (§3.9).
+     *
+     * Precedence: the authenticated wallet's group when a wallet node is
+     * present, else the anonymous fingerprint's. A forged `x-frak-client-id`
+     * can then only mis-attribute into the forger's own group, never move
+     * anyone else's group — `mergeGroups` is never called from this path.
+     *
+     * Only the anchor node is resolved. Resolving the others would create
+     * identity groups for identities we are not attributing to — pure write
+     * amplification on every `track/*` request for no benefit.
+     */
+    async resolveForAttribution(
+        nodes: IdentityNode[]
+    ): Promise<{ groupId: string }> {
+        if (nodes.length === 0) {
+            throw new Error("At least one identity node is required");
+        }
+
+        const anchor = nodes.find((node) => node.type === "wallet") ?? nodes[0];
+        const { groupId } = await this.resolve(anchor);
+        return { groupId };
+    }
+
     async getWalletForGroup(groupId: string): Promise<Address | null> {
         return this.identityRepository.getWalletForGroup(groupId);
     }
