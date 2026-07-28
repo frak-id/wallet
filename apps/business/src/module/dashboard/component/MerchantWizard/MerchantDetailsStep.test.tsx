@@ -9,13 +9,15 @@ vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-const useDnsTxtRecordToSet = vi.fn(() => ({
-    data: undefined,
-    isLoading: false,
-}));
+const useDnsTxtRecordToSet = vi.fn(
+    (_args: { domain?: string; enabled: boolean }) => ({
+        data: undefined,
+        isLoading: false,
+    })
+);
 vi.mock("@/module/dashboard/hooks/dnsRecordHooks", () => ({
     useDnsTxtRecordToSet: (args: unknown) =>
-        useDnsTxtRecordToSet(args as never),
+        useDnsTxtRecordToSet(args as { domain?: string; enabled: boolean }),
 }));
 
 import { MerchantDetailsStep } from "./MerchantDetailsStep";
@@ -165,15 +167,13 @@ describe("MerchantDetailsStep platform-admin fields (inputLabel delegated to DS 
         const enabledFor = (value: string) => {
             useDnsTxtRecordToSet.mockClear();
             fireEvent.change(input, { target: { value } });
-            return useDnsTxtRecordToSet.mock.calls.at(-1)?.[0] as unknown as {
-                enabled: boolean;
-            };
+            return useDnsTxtRecordToSet.mock.calls.at(-1)?.[0];
         };
 
-        expect(enabledFor("https:/").enabled).toBe(false);
-        expect(enabledFor("https://").enabled).toBe(false);
-        expect(enabledFor("https://exam").enabled).toBe(false);
-        expect(enabledFor("https://example.com").enabled).toBe(true);
+        expect(enabledFor("https:/")?.enabled).toBe(false);
+        expect(enabledFor("https://")?.enabled).toBe(false);
+        expect(enabledFor("https://exam")?.enabled).toBe(false);
+        expect(enabledFor("https://example.com")?.enabled).toBe(true);
     });
 
     it("shows the takeadsTrackingLink FieldError on an invalid url", async () => {
