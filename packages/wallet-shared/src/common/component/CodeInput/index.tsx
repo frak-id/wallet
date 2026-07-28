@@ -35,6 +35,16 @@ type CodeInputCommonProps = {
     error?: string;
     /** When true, cells flex-grow to fill the row width (instead of fixed 41px) */
     fill?: boolean;
+    /**
+     * Focus the field on mount. Opt-in: only use it on a dedicated screen where
+     * the code is the sole input — stealing focus inside a larger form moves the
+     * viewport out from under the user. Ignored in read-only mode.
+     *
+     * On iOS this is what surfaces a copied code in the keyboard suggestion bar,
+     * which requires focus plus `autocomplete="one-time-code"` and never a
+     * programmatic clipboard read.
+     */
+    autoFocus?: boolean;
 };
 
 /**
@@ -75,6 +85,7 @@ export function CodeInput({
     pasteErrorLabel,
     error,
     fill,
+    autoFocus,
 }: CodeInputProps) {
     const readOnly = value !== undefined;
     const sanitize = useCallback(
@@ -106,6 +117,14 @@ export function CodeInput({
             setCode(sanitize(value));
         }
     }, [value, sanitize]);
+
+    // Focus on mount when opted in. Done in an effect rather than via the DOM
+    // `autofocus` attribute, which is unreliable for an element mounted after
+    // first paint.
+    useEffect(() => {
+        if (!autoFocus) return;
+        inputRef.current?.focus();
+    }, [autoFocus]);
 
     const handleChange = useCallback(
         (e: ChangeEvent<HTMLInputElement>) => {

@@ -2,7 +2,7 @@
  * Tests for CodeInput — the single-overlay-input OTP component.
  * Covers sanitization (numeric vs alphanumeric), multi-char paste/autofill,
  * length capping, defaultValue seeding, read-only rendering + a11y exposure,
- * and the clipboard paste button.
+ * the clipboard paste button, and opt-in autofocus.
  */
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -97,6 +97,23 @@ describe("CodeInput — clipboard paste button", () => {
         expect(
             await screen.findByText("Clipboard blocked")
         ).toBeInTheDocument();
+    });
+});
+
+describe("CodeInput — autofocus", () => {
+    it("does not focus the field by default", () => {
+        const { input } = renderEditable();
+        expect(document.activeElement).not.toBe(input);
+    });
+
+    it("focuses the field on mount when opted in", () => {
+        const { input } = renderEditable({ autoFocus: true });
+        expect(document.activeElement).toBe(input);
+    });
+
+    it("leaves focus alone in read-only mode, which renders no input", () => {
+        render(<CodeInput value="135" autoFocus />);
+        expect(document.activeElement).toBe(document.body);
     });
 });
 

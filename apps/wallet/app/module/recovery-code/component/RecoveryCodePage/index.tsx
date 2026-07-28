@@ -76,6 +76,10 @@ export function RecoveryCodePage() {
                 label={t("recoveryCode.codeLabel")}
                 pasteLabel={t("recoveryCode.paste")}
                 error={errorMessage}
+                // Sole input on this screen, so focusing on arrival costs the
+                // user nothing and saves a tap. On iOS it also surfaces a code
+                // copied from the install page in the keyboard suggestion bar.
+                autoFocus
             />
         </FlowStepScreen>
     );
