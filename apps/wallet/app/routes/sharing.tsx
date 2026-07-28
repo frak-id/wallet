@@ -177,7 +177,14 @@ function WalletSharingPage() {
 
     const clientId = immediateClientId ?? resolvedClientId ?? undefined;
 
-    // Compute the install URL pointing to the /install route
+    // Compute the install URL pointing to the /install route.
+    //
+    // No `#p=` proof here, unlike the listener's builder (README §4.4): this
+    // page's `clientId` arrives from a URL param, the wallet's own store, or
+    // a backend lookup by checkout token — never from the SDK keypair that
+    // could sign for it. There is nothing to sign with, so this arm stays a
+    // bare id and is covered by the §2.6 legacy population rather than by a
+    // proof.
     const installUrl = useMemo(() => {
         if (!(merchantId && clientId)) return null;
         return `/install?m=${encodeURIComponent(merchantId)}&a=${encodeURIComponent(clientId)}`;

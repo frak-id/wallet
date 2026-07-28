@@ -81,6 +81,17 @@ describe("JwtContext.installTicket — mint/verify round trip", () => {
     });
 
     it("rejects an install ticket verified as an anonymousMerge token (reverse direction)", async () => {
+        // Note this direction is currently blocked by payload SHAPE, not by
+        // the audience: `anonymousMerge` declares no `aud`, so jose enforces
+        // nothing, and the rejection comes from `AnonymousMergeTokenDto`
+        // requiring sourceGroupId/sourceMerchantId. Adding an `aud` to that
+        // context would make this a real audience check, but it would also
+        // reject every token already in flight — verified: jose fails a
+        // token with no `aud` the moment an audience is required — which
+        // for `walletSdk`/`anonymousMerge` means logging users out mid
+        // session. Not worth it for defence-in-depth on a case the schemas
+        // already cover; revisit behind a dual-accept window if a future
+        // token type on this secret has a shape that collides.
         const ticket = await JwtContext.installTicket.sign({
             sub: "anon-1",
             mid: "550e8400-e29b-41d4-a716-446655440000",

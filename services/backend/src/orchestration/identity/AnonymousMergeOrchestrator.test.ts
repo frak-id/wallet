@@ -6,10 +6,13 @@ import { AnonymousMergeOrchestrator } from "./AnonymousMergeOrchestrator";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
 
 /**
- * Phase 4a enforcement (README §7, §4.6; DECISIONS §2.3) — a merge naming a
- * latched id without a valid proof is rejected, on both arms; unlatched and
- * legacy ids keep working until they first prove themselves; the
- * wallet-session arm is never gated at all.
+ * `initiateMerge`'s `sourceAnonymousId` arm (ROLLOUT-STEP-2, README §4.2) —
+ * a valid proof is now MANDATORY: no proof, or an invalid one, is always
+ * rejected. `executeMerge`'s `targetAnonymousId` arm stays latch-gated
+ * (README §7 Phase 4a, DECISIONS §3.4 D9): legacy ids, which can never
+ * produce a proof, must keep working as merge targets forever. The
+ * wallet-session arm of `initiateMerge` (no `sourceAnonymousId`) is never
+ * gated at all.
  */
 
 const MERCHANT_ID = "merchant-1";
@@ -55,12 +58,9 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
         vi.clearAllMocks();
     });
 
-    describe("initiateMerge — sourceAnonymousId branch", () => {
-        it("rejects a latched id as a merge source when no proof is supplied", async () => {
+    describe("initiateMerge — sourceAnonymousId branch (ROLLOUT-STEP-2: mandatory)", () => {
+        it("rejects sourceAnonymousId with no proof at all", async () => {
             const ctx = makeOrchestrator();
-            ctx.identityRepository.findNodeByIdentity.mockResolvedValue({
-                proofSeenAt: new Date(),
-            });
 
             await expect(
                 ctx.orchestrator.initiateMerge({
@@ -74,34 +74,37 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
             expect(
                 ctx.identityOrchestrator.resolveAndAssociate
             ).not.toHaveBeenCalled();
+            // No latch fallback left on this arm — the id's proof history is
+            // never consulted; would fail if a latch-gated fallback were
+            // reintroduced here.
+            expect(
+                ctx.identityRepository.findNodeByIdentity
+            ).not.toHaveBeenCalled();
+            expect(ctx.identityProofService.verify).not.toHaveBeenCalled();
         });
 
-        it("still allows an unlatched legacy id as a merge source, so the in-app-browser escape keeps working", async () => {
-            // §7 Phase 4a acceptance: "in-app-browser escape attribution
-            // still works end to end". The listener does not send a proof
-            // yet, so gating this arm unconditionally would 403 every escape.
+        it("rejects a legacy/unlatched sourceAnonymousId with no proof — it is NOT waved through anymore", async () => {
+            // Pre-STEP-2 this id would have sailed through unlatched ("the
+            // in-app-browser escape keeps working"). Post-STEP-2 the listener
+            // forwards a proof on every call, so there is no fail-open path
+            // left to preserve; a legacy id can never produce one and is
+            // correctly rejected as a *source* (README §7 Phase 4a: "a legacy
+            // id may be a merge target but never a merge source").
             const ctx = makeOrchestrator();
-            ctx.identityRepository.findNodeByIdentity.mockResolvedValue(null);
-            ctx.identityOrchestrator.resolveAndAssociate.mockResolvedValue({
-                finalGroupId: "group-1",
-            });
-            ctx.anonymousMergeService.generateToken.mockResolvedValue({
-                mergeToken: MERGE_TOKEN,
-                expiresAt: new Date(),
-            });
 
             await expect(
                 ctx.orchestrator.initiateMerge({
                     merchantId: MERCHANT_ID,
                     sourceAnonymousId: "legacy-id",
                 })
-            ).resolves.toMatchObject({ mergeToken: MERGE_TOKEN });
+            ).rejects.toMatchObject({ code: "PROOF_REQUIRED", status: 403 });
 
-            // Never proven, so never latched — it must stay usable.
-            expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
+            expect(
+                ctx.identityOrchestrator.resolveAndAssociate
+            ).not.toHaveBeenCalled();
         });
 
-        it("rejects a latched id used as merge source when the supplied proof is invalid", async () => {
+        it("rejects sourceAnonymousId with an invalid proof", async () => {
             const ctx = makeOrchestrator();
             ctx.identityProofService.verify.mockResolvedValue({
                 valid: false,
@@ -116,13 +119,20 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                 })
             ).rejects.toMatchObject({ code: "PROOF_INVALID", status: 403 });
 
+            expect(ctx.identityProofService.verify).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    op: "frak-merge-v1",
+                    anonymousId: "some-id",
+                    merchantId: MERCHANT_ID,
+                })
+            );
             expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
             expect(
                 ctx.identityOrchestrator.resolveAndAssociate
             ).not.toHaveBeenCalled();
         });
 
-        it("allows and latches a fresh derived id presenting a first valid proof", async () => {
+        it("allows and marks proof seen for sourceAnonymousId presenting a valid proof", async () => {
             const ctx = makeOrchestrator();
             ctx.identityProofService.verify.mockResolvedValue({ valid: true });
             ctx.identityOrchestrator.resolveAndAssociate.mockResolvedValue({
@@ -147,7 +157,7 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                     merchantId: MERCHANT_ID,
                 })
             );
-            // Latched exactly once, and only AFTER resolveAndAssociate: this
+            // Written exactly once, and only AFTER resolveAndAssociate: this
             // arm's node usually does not exist before that call, so an
             // earlier write would match zero rows and leave the id unlatched
             // — permanently claimable by anyone.
@@ -327,6 +337,37 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
             expect(
                 ctx.identityRepository.findNodeByIdentity
             ).not.toHaveBeenCalled();
+        });
+
+        it("binds the proof to this merge token, not an empty binding", async () => {
+            // Pairs with IdentityProofService's binding-mismatch test: that
+            // one proves a wrong binding fails verification, this one proves
+            // executeMerge actually feeds the token hash in. Wiring an empty
+            // binding here would silently defeat §2.2.1 while every other
+            // test kept passing.
+            const ctx = makeOrchestrator();
+            setupSuccessfulExecute(ctx);
+            ctx.identityProofService.verify.mockResolvedValue({ valid: true });
+            const tokenHash = new Uint8Array(32).fill(7);
+            ctx.identityProofService.hashMergeToken.mockReturnValue(tokenHash);
+
+            await ctx.orchestrator.executeMerge({
+                mergeToken: MERGE_TOKEN,
+                targetAnonymousId: "proven-id",
+                merchantId: MERCHANT_ID,
+                proof: "valid-proof",
+            });
+
+            expect(
+                ctx.identityProofService.hashMergeToken
+            ).toHaveBeenCalledWith(MERGE_TOKEN);
+            expect(ctx.identityProofService.verify).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    op: "frak-merge-v1",
+                    anonymousId: "proven-id",
+                    binding: tokenHash,
+                })
+            );
         });
     });
 });

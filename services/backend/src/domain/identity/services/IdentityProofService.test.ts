@@ -152,6 +152,28 @@ describe("IdentityProofService", () => {
             expect(result).toEqual({ valid: false, reason: "id_mismatch" });
         });
 
+        it("rejects a frak-merge-v1 proof presented with a different token's binding", async () => {
+            // The property the whole no-replay-cache argument rests on
+            // (README §2.2.1): a proof commits to one specific mergeToken, so
+            // capturing it buys nothing without that exact token. If the
+            // binding ever stopped entering the signed message, every other
+            // test here would still pass — this is the only one that fails.
+            const mergeFixture = goldenProofs.fixtures.find(
+                (f) => f.op === "frak-merge-v1"
+            );
+            if (!mergeFixture) throw new Error("fixture set needs a merge op");
+            vi.setSystemTime(mergeFixture.ts * 1000);
+
+            const result = await service.verify({
+                op: "frak-merge-v1",
+                proof: mergeFixture.proof,
+                merchantId: mergeFixture.merchantId,
+                anonymousId: mergeFixture.anonymousId,
+                binding: service.hashMergeToken("a-different-merge-token"),
+            });
+            expect(result).toEqual({ valid: false, reason: "bad_signature" });
+        });
+
         it("rejects a malformed proof string", async () => {
             const result = await service.verify({
                 op: base.op as ProofOp,

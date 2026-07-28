@@ -337,6 +337,12 @@ async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
  * to `SHA-256(mergeToken)` — it must be signed after the token is known,
  * which holds here since `pendingMergeToken` is read from the URL before
  * this runs.
+ *
+ * ROLLOUT-STEP-1 (C12): `proofs.install` is produced and travels on
+ * `resolved-config`. The listener now forwards it into the `/install` URL
+ * as a `#p=` fragment (README §4.4) — the wallet's install route still
+ * needs to read it off that fragment and send it to the backend. Harmless
+ * either way: old builds ignore unknown fields. See ROLLOUT.md.
  */
 async function buildSdkIdentity({
     merchantId,

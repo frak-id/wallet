@@ -45,6 +45,26 @@ export const Route = createFileRoute("/install")({
 });
 
 /**
+ * Parses the `frak-install-v1` proof from the URL fragment (`#p=...`).
+ *
+ * A fragment, not a search param, deliberately (README §2.2): it is never
+ * sent to the server, never logged, never in a `Referer` header.
+ * `validateSearch` only covers search params, so this is a separate read
+ * path off `window.location.hash`. Must never throw — a missing, empty or
+ * malformed fragment (or one carrying unrelated keys) all degrade silently
+ * to "no proof", exactly as if the fragment were absent.
+ */
+export function parseInstallProofFragment(hash: string): string | undefined {
+    const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!raw) return undefined;
+    try {
+        return new URLSearchParams(raw).get("p") ?? undefined;
+    } catch {
+        return undefined;
+    }
+}
+
+/**
  * Install page — unified entry point for the install/ensure flow.
  *
  * Decision matrix:
@@ -53,6 +73,13 @@ export const Route = createFileRoute("/install")({
  */
 function InstallPage() {
     const search = Route.useSearch();
+    // frak-install-v1 proof, read once from the fragment (README §2.2 — not
+    // a search param, never sent to the server). Only `InstallCodeView`
+    // forwards it, to `generate`; `InstallProcessing` has no use for it.
+    const proof = useMemo(
+        () => parseInstallProofFragment(window.location.hash),
+        []
+    );
 
     // Web + not logged in → show install code + store download links
     // Otherwise → use the web processing flow (ensure + register/login)
@@ -67,7 +94,7 @@ function InstallPage() {
     }, [search.m, search.a, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
-        return <InstallCodeView {...search} />;
+        return <InstallCodeView {...search} proof={proof} />;
     }
 
     // Tauri (any auth) or web + logged in → processing
@@ -171,7 +198,11 @@ function merchantInfoQueryOptions(merchantId?: string) {
     });
 }
 
-function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
+function InstallCodeView({
+    m: merchantId,
+    a: anonymousId,
+    proof,
+}: InstallSearch & { proof?: string }) {
     const { t: rawT } = useTranslation();
     const [copied, setCopied] = useState(false);
 
@@ -199,6 +230,7 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
     } = useGenerateInstallCode({
         merchantId,
         anonymousId,
+        proof,
     });
 
     // `install_code_displayed` fires once per successful generation,

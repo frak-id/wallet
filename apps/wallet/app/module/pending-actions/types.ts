@@ -8,6 +8,13 @@ type PendingEnsureAction = {
     anonymousId: string;
     /** Optional merchant metadata for UI display */
     merchant?: { name: string; domain: string };
+    /**
+     * Optional install ticket (README §5, "Ticket design"). Minted by
+     * `install-code/resolve`. When present, the backend prefers it over
+     * `anonymousId`; when absent (old-shape action written by a pre-ticket
+     * binary), `anonymousId` is used exactly as before.
+     */
+    ticket?: string;
 };
 
 /**

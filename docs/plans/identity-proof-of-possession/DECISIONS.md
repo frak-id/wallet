@@ -301,8 +301,11 @@ on first use.
 The residual gap is that an unproven derived id stays claimable until it first signs. §7
 accepts exactly this ("accept that the migration path keeps legacy ids claimable-as-target
 by whoever moves first"), and §2.6 is explicit there is no fix beyond shipping early.
-Tighten to unconditional once C12 lands and telemetry shows the proof-bearing share of
-this arm at ~100%.
+
+**Resolved in `3e84f376e`.** The premise was that no caller sends a proof, which stopped
+being true once the listener forwarded its RPC param. The source arm is now unconditional:
+a named `sourceAnonymousId` must carry a valid proof. `/merge/execute` stays latch-gated,
+since its targets are frequently legacy ids that can never produce one.
 
 ### 3.2 Kept as-is, deliberately
 
@@ -335,7 +338,8 @@ this arm at ~100%.
 | C9+C10+C11 | SDK keygen/derivation/proofs + backend verify (phase 2) | ✅ `bb565ab0c` |
 | C13 | enforce proofs on latched ids (phase 4a) | ✅ `56cd290ef` |
 | C12 (backend half) | install ticket + JWT audience/401 fixes (phase 3) | ✅ `9e75e83c0` |
-| C12 (client half) | listener/wallet proof plumbing, `#p=` fragment | next |
+| C12 (client half) | listener/wallet proof plumbing, `#p=` fragment | ✅ `3e84f376e` |
+| STEP-2 | mandatory proofs on the non-store-gated arms | ✅ `3e84f376e` |
 
 Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
 `ensure.ts` (C5 → C11 → C13, serialised), `orchestration/context.ts` (C11+C13).
@@ -348,12 +352,23 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
   Enforcement code ships behind the column; until it exists the latch never sets and every
   id behaves as legacy — fail-open, which is the pre-existing behaviour, not a regression.
 - §2.6 migration merge (D6) — revisit after Phase 4a.
-- **Tighten the merge source arm to unconditional** once C12 ships and telemetry confirms
-  proof coverage on that arm (D9/§3.4).
-- **`proofs.install` is produced but unconsumed** — it rides inertly on `resolved-config`
-  until C12 wires the `#p=` fragment.
 - **No bundle-size regression guard.** Nothing fails CI if an eager `@noble/curves` import
   reaches an entry chunk; only manual inspection would catch it.
+- **`?fmt=` is still a search param.** README §4.2/§5 want it moved to a fragment, with the
+  SDK accepting both before the wallet switches. Not started; it is the highest-leak merge
+  surface since the URL is user-visible and shareable.
+- **STEP-3 is the only remaining gated work** — see `ROLLOUT.md`. Blocked on store
+  approval *and* the `minVersion` bump, in that order.
+
+### Rollout
+
+See `ROLLOUT.md`. `apps/wallet` builds **both** the web app and the Tauri store binary
+from one source, so every contract the installed binary touches
+(`install-code/generate`, `install-code/resolve`, `/identity/ensure`'s wallet arm,
+`pendingActionsStore`) has to stay permissive until `minVersion` excludes old builds.
+The listener/SDK arms have no such constraint and can be tightened immediately.
+Eight `ROLLOUT-STEP-{1,2,3}` markers in the code mark every site that changes, greppable
+as a single list.
 
 ### Pre-existing bugs found while auditing (both fixed in `9e75e83c0`)
 

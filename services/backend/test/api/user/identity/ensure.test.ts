@@ -64,9 +64,18 @@ vi.mock("@backend-infrastructure", () => {
         .macro({
             withWalletOrSdkAuthent: {
                 async resolve({ request }: any) {
+                    // Mirrors the real macro: either credential resolves a
+                    // session. `ensure.ts` additionally reads
+                    // `x-wallet-sdk-auth` itself to tell the SDK arm from the
+                    // wallet arm, so both must be honoured here.
                     const walletAuth = request.headers.get("x-wallet-auth");
                     if (walletAuth) {
                         const session = await mockWalletVerify(walletAuth);
+                        if (session) return { walletSession: session };
+                    }
+                    const sdkAuth = request.headers.get("x-wallet-sdk-auth");
+                    if (sdkAuth) {
+                        const session = await mockWalletVerify(sdkAuth);
                         if (session) return { walletSession: session };
                     }
                     throw new UnauthorizedError();
@@ -102,6 +111,60 @@ async function postEnsure(body: Record<string, unknown>) {
         })
     );
 }
+
+/**
+ * The exact request the SHIPPED Tauri binary sends. `backendClient.ts`
+ * attaches `x-wallet-auth`, `x-wallet-sdk-auth` AND `x-frak-client-id` to
+ * every call when all three exist in the session, and the install/ensure
+ * flow POSTs a body `anonymousId` with no ticket and no proof.
+ *
+ * This is the regression that matters most on this branch: an installed
+ * binary cannot be fixed, so anything that 4xx's this shape is a production
+ * outage for every user who has not updated.
+ */
+describe("POST /identity/ensure — the live Tauri binary's request shape", () => {
+    beforeEach(() => {
+        mockVerifyTicket.mockReset();
+        mockProofVerify.mockReset();
+        mockResolveAndAssociate.mockReset();
+        mockWalletVerify.mockReset();
+        mockResolveAndAssociate.mockResolvedValue({
+            finalGroupId: "group-1",
+            merged: true,
+        });
+    });
+
+    it("succeeds with both auth headers, a client-id header, and a bare body anonymousId", async () => {
+        walletAuthed();
+
+        const response = await identityEnsureRoutes.handle(
+            new Request("http://localhost/ensure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-wallet-auth": "valid-wallet-jwt",
+                    "x-wallet-sdk-auth": "valid-sdk-jwt",
+                    "x-frak-client-id": "anon-from-store",
+                },
+                body: JSON.stringify({
+                    merchantId: MERCHANT_ID,
+                    anonymousId: "anon-body",
+                }),
+            })
+        );
+
+        expect(response.status).toBe(200);
+        expect(mockProofVerify).not.toHaveBeenCalled();
+        expect(mockResolveAndAssociate).toHaveBeenCalledWith([
+            { type: "wallet", value: WALLET_ADDRESS },
+            {
+                type: "anonymous_fingerprint",
+                value: "anon-body",
+                merchantId: MERCHANT_ID,
+            },
+        ]);
+    });
+});
 
 describe("POST /identity/ensure — resolution order (README §5)", () => {
     beforeEach(() => {
@@ -264,5 +327,121 @@ describe("POST /identity/ensure — resolution order (README §5)", () => {
         expect(response.status).toBe(400);
         const data = await response.json();
         expect(data.code).toBe("MISSING_ANONYMOUS_ID");
+    });
+});
+
+/**
+ * SDK arm (ROLLOUT-STEP-2, README §5) — anonymousId arrives ONLY via the
+ * `x-frak-client-id` header, never reaches the Tauri binary, so a
+ * valid proof is now mandatory. The wallet arm (body `anonymousId` or
+ * `ticket`, covered above) must stay untouched and permissive.
+ */
+describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof mandatory", () => {
+    beforeEach(() => {
+        mockVerifyTicket.mockReset();
+        mockProofVerify.mockReset();
+        mockResolveAndAssociate.mockReset();
+        mockWalletVerify.mockReset();
+        mockResolveAndAssociate.mockResolvedValue({
+            finalGroupId: "group-1",
+            merged: true,
+        });
+    });
+
+    async function postEnsureViaHeader(
+        body: Record<string, unknown>,
+        clientId: string
+    ) {
+        return identityEnsureRoutes.handle(
+            new Request("http://localhost/ensure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // The SDK credential is what selects this arm — not where
+                    // the id sits in the request. See
+                    // `resolveEnsureAnonymousId`.
+                    "x-wallet-sdk-auth": "valid-sdk-jwt",
+                    "x-frak-client-id": clientId,
+                },
+                body: JSON.stringify(body),
+            })
+        );
+    }
+
+    it("rejects with no proof at all", async () => {
+        walletAuthed();
+
+        const response = await postEnsureViaHeader(
+            { merchantId: MERCHANT_ID },
+            "anon-sdk"
+        );
+
+        expect(response.status).toBe(403);
+        const data = await response.json();
+        expect(data.code).toBe("PROOF_REQUIRED");
+        expect(mockProofVerify).not.toHaveBeenCalled();
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
+    it("rejects an invalid proof", async () => {
+        walletAuthed();
+        mockProofVerify.mockResolvedValue({
+            valid: false,
+            reason: "bad_signature",
+        });
+
+        const response = await postEnsureViaHeader(
+            { merchantId: MERCHANT_ID, proof: "bogus-proof" },
+            "anon-sdk"
+        );
+
+        expect(response.status).toBe(403);
+        const data = await response.json();
+        expect(data.code).toBe("PROOF_INVALID");
+        expect(mockProofVerify).toHaveBeenCalledWith(
+            expect.objectContaining({
+                op: "frak-ensure-v1",
+                proof: "bogus-proof",
+                merchantId: MERCHANT_ID,
+                anonymousId: "anon-sdk",
+            })
+        );
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
+    it("accepts a valid proof", async () => {
+        walletAuthed();
+        mockProofVerify.mockResolvedValue({ valid: true });
+
+        const response = await postEnsureViaHeader(
+            { merchantId: MERCHANT_ID, proof: "valid-proof" },
+            "anon-sdk"
+        );
+
+        expect(response.status).toBe(200);
+        expect(mockResolveAndAssociate).toHaveBeenCalledWith([
+            { type: "wallet", value: WALLET_ADDRESS },
+            {
+                type: "anonymous_fingerprint",
+                value: "anon-sdk",
+                merchantId: MERCHANT_ID,
+            },
+        ]);
+    });
+
+    it("an SDK caller cannot dodge the proof by moving its id into the body", async () => {
+        // The arm is chosen by the credential, not by where the id sits. If
+        // routing were based on field placement, an SDK caller could skip
+        // its mandatory proof just by also sending a body `anonymousId` and
+        // landing on the permissive wallet arm.
+        walletAuthed();
+
+        const response = await postEnsureViaHeader(
+            { merchantId: MERCHANT_ID, anonymousId: "anon-body" },
+            "anon-header"
+        );
+
+        expect(response.status).toBe(403);
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
     });
 });

@@ -42,7 +42,10 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 sourceAnonymousId: t.Optional(t.String()),
                 merchantId: t.String({ format: "uuid" }),
                 // frak-merge-v1 proof binding sourceAnonymousId (README §4.2).
-                // Required whenever sourceAnonymousId is supplied (Phase 4a).
+                // ROLLOUT-STEP-2 (see ROLLOUT.md): mandatory whenever
+                // sourceAnonymousId is supplied — this arm is listener-only
+                // and never reaches the Tauri binary. The wallet-session arm
+                // (no sourceAnonymousId) is untouched.
                 proof: t.Optional(t.String()),
             }),
             response: {
@@ -51,7 +54,7 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                     expiresAt: t.String(),
                 }),
                 400: t.ErrorResponse,
-                // PROOF_REQUIRED (sourceAnonymousId with no/absent proof) or
+                // PROOF_REQUIRED (sourceAnonymousId supplied with no proof) or
                 // PROOF_INVALID (proof present but fails verification).
                 403: t.ErrorResponse,
             },

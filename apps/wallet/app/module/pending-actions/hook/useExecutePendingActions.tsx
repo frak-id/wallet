@@ -153,9 +153,13 @@ export function useExecutePendingActions(
 async function executeEnsure(
     action: Extract<PendingAction, { type: "ensure" }>
 ): Promise<void> {
+    // Resolution order on the backend is ticket -> proof+anonymousId -> bare
+    // anonymousId (README §5), so sending both is safe: an old-shape action
+    // with no ticket falls back to anonymousId exactly as today.
     const { error } = await authenticatedBackendApi.user.identity.ensure.post({
         merchantId: action.merchantId,
         anonymousId: action.anonymousId,
+        ...(action.ticket && { ticket: action.ticket }),
     });
 
     if (error) {
