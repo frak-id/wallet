@@ -109,6 +109,15 @@ type SharingSearch = {
      * do not belong to the active session.
      */
     sid?: string;
+    /**
+     * Version of the native SDK that opened this page.
+     *
+     * A shipped binary is immortal while this page ships continuously, so an
+     * old SDK must remain identifiable to be branched on or degraded. Read
+     * only for telemetry today; the value has to be accepted from v0.1 since
+     * binaries already in the field can never start sending it.
+     */
+    sdkv?: string;
 };
 
 export const Route = createFileRoute("/sharing")({
@@ -138,6 +147,7 @@ export const Route = createFileRoute("/sharing")({
         confirmed: search.confirmed === "1" || search.confirmed === true,
         returnScheme: sanitizeReturnScheme(search.returnScheme),
         sid: typeof search.sid === "string" ? search.sid : undefined,
+        sdkv: typeof search.sdkv === "string" ? search.sdkv : undefined,
     }),
     beforeLoad: ({ search }) => {
         // A native host owns the caller identity, so a missing `clientId` is a
@@ -169,6 +179,7 @@ function WalletSharingPage() {
         confirmed,
         returnScheme,
         sid,
+        sdkv,
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
@@ -188,8 +199,14 @@ function WalletSharingPage() {
     // Fire `sharing_page_viewed` once per mount, independent of whether we end up
     // rendering the confirmation screen. Denominator for the sharing funnel.
     useEffect(() => {
-        trackEvent("sharing_page_viewed", { merchant_id: merchantId });
-    }, [merchantId]);
+        trackEvent("sharing_page_viewed", {
+            merchant_id: merchantId,
+            // Which SDK versions are still in the field, so a change here can
+            // be weighed against what it would break.
+            sdk_version: sdkv,
+            native,
+        });
+    }, [merchantId, sdkv, native]);
 
     // Fetch backend-driven merchant config to source attribution defaults
     const { data: defaultAttribution } = useMerchantResolvedConfig({
