@@ -83,6 +83,24 @@
         "types": "./dist/rewards.d.cts",
         "default": "./dist/rewards.cjs"
       }
+    },
+    "./identity": {
+      "development": "./src/identity/index.ts",
+      "production": "./src/identity/index.ts",
+      "import": {
+        "types": "./dist/identity.d.ts",
+        "default": "./dist/identity.js"
+      },
+      "require": {
+        "types": "./dist/identity.d.cts",
+        "default": "./dist/identity.cjs"
+      }
+    },
+    "./identity/fixtures": {
+      "development": "./src/identity/fixtures/golden-proofs.json",
+      "production": "./src/identity/fixtures/golden-proofs.json",
+      "import": "./src/identity/fixtures/golden-proofs.json",
+      "require": "./src/identity/fixtures/golden-proofs.json"
     }
   },
   "scripts": {
@@ -105,6 +123,8 @@
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.2.0",
     "@openpanel/web": "catalog:"
   },
   "devDependencies": {
