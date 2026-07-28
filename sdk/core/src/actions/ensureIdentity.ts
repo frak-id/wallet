@@ -1,6 +1,7 @@
 import { getBackendUrl } from "../config/backendUrl";
 import { getClientId } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
+import { signProof } from "../identity/sign";
 
 const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
 
@@ -48,6 +49,15 @@ export async function ensureIdentity(interactionToken: string): Promise<void> {
 
     try {
         const backendUrl = getBackendUrl();
+        // Proof-of-possession (README §4.1), always optional: if it can't be
+        // produced (legacy id, keygen failed), the call goes out exactly as
+        // it does today. Signing is off the critical path — a single sign
+        // is <1 ms and never blocks or throws.
+        const proof = await signProof({
+            op: "frak-ensure-v1",
+            merchantId,
+            anonymousId: clientId,
+        });
         const response = await fetch(`${backendUrl}/user/identity/ensure`, {
             method: "POST",
             headers: {
@@ -56,7 +66,10 @@ export async function ensureIdentity(interactionToken: string): Promise<void> {
                 "x-wallet-sdk-auth": interactionToken,
                 "x-frak-client-id": clientId,
             },
-            body: JSON.stringify({ merchantId }),
+            body: JSON.stringify({
+                merchantId,
+                ...(proof && { proof }),
+            }),
         });
 
         if (response.ok) {

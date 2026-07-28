@@ -25,6 +25,7 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                         sourceAnonymousId: body.sourceAnonymousId,
                         sourceWalletAddress: walletSession?.address,
                         merchantId: body.merchantId,
+                        proof: body.proof,
                     }
                 );
 
@@ -40,6 +41,9 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
             body: t.Object({
                 sourceAnonymousId: t.Optional(t.String()),
                 merchantId: t.String({ format: "uuid" }),
+                // frak-merge-v1 proof binding sourceAnonymousId (README §4.2).
+                // Phase 2: optional, verified when present, never required.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({
@@ -59,6 +63,7 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                         mergeToken: body.mergeToken,
                         targetAnonymousId: body.targetAnonymousId,
                         merchantId: body.merchantId,
+                        proof: body.proof,
                     }
                 );
 
@@ -72,6 +77,10 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 mergeToken: t.String(),
                 targetAnonymousId: t.String(),
                 merchantId: t.String({ format: "uuid" }),
+                // frak-merge-v1 proof binding targetAnonymousId and
+                // SHA-256(mergeToken) (README §2.2, §4.3). Phase 2: optional,
+                // verified when present, never required.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({

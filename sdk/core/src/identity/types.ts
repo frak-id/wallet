@@ -1,9 +1,9 @@
 /**
  * Shared types for the identity proof-of-possession wire format.
  *
- * This file is imported by both browser code (`sign.ts`) and backend code
- * (`verify.ts`), so it must stay a pure type module with no runtime code and
- * no crypto import.
+ * Imported by both the browser signer (`sign.ts`) and the backend verifier
+ * (`IdentityProofService`), so it must stay a pure type module with no
+ * runtime code and no crypto import.
  *
  * See `docs/plans/identity-proof-of-possession/README.md` §2.1-§2.3 for the
  * design this implements, and `canonical.ts` for the frozen byte layout.

@@ -193,7 +193,8 @@ const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
 const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.anonymousMerge,
     IdentityContext.repositories.identity,
-    identityOrchestrator
+    identityOrchestrator,
+    IdentityContext.services.identityProof
 );
 
 const referralCodeRedemptionOrchestrator =

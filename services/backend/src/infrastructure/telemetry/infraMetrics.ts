@@ -41,6 +41,28 @@ const domainEventsEmittedTotal = register(
     })
 );
 
+/**
+ * Identity proof-of-possession verification outcomes (identity
+ * proof-of-possession plan, Phase 2 acceptance: "telemetry: % of calls
+ * carrying a valid proof, split derived / legacy / keygen-failed").
+ *
+ * Only calls that actually presented a proof reach `IdentityProofService.
+ * verify()`, so `valid`/`invalid` are the only outcomes recorded here —
+ * there is deliberately no `absent` label. That third state doesn't need
+ * one: it is already the existing per-route request-count metric
+ * (`httpMetrics`) minus this counter's `valid + invalid` total for the
+ * same route, for any route that accepts an optional proof. Adding an
+ * explicit `absent` increment would require touching every optional-proof
+ * call site for a number that is already derivable.
+ */
+const identityProofCheckedTotal = register(
+    new Counter({
+        name: "identity_proof_checked_total",
+        help: "Identity proof-of-possession verifications by op and outcome (valid/invalid only — absence is derived from the route's request count)",
+        labelNames: ["op", "outcome"] as const,
+    })
+);
+
 export const infraMetrics = {
     advisoryLockAcquired(lock: string) {
         advisoryLockTotal.inc({ lock, outcome: "acquired" });
@@ -56,5 +78,8 @@ export const infraMetrics = {
     },
     domainEventEmitted(event: string) {
         domainEventsEmittedTotal.inc({ event });
+    },
+    identityProofChecked(op: string, outcome: "valid" | "invalid") {
+        identityProofCheckedTotal.inc({ op, outcome });
     },
 };

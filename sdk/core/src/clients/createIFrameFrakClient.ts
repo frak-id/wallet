@@ -9,6 +9,7 @@ import { OpenPanel } from "@openpanel/web";
 import { getClientId } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { BACKUP_KEY } from "../constants";
+import { signProof } from "../identity/sign";
 import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
@@ -278,6 +279,115 @@ function setupHeartbeat(
     return stopHeartbeat;
 }
 
+/** Extracted from `sendLifecycleConfig` to keep its cognitive complexity in budget. */
+function buildResolvedSdkConfig(resolved: SdkResolvedConfig) {
+    if (resolved.hasRawSdkConfig) {
+        return {
+            name: resolved.name,
+            logoUrl: resolved.logoUrl,
+            homepageLink: resolved.homepageLink,
+            lang: resolved.lang,
+            currency: resolved.currency,
+            hidden: resolved.hidden,
+            css: resolved.css,
+            translations: resolved.translations,
+            placements: resolved.placements,
+            attribution: resolved.attribution,
+        };
+    }
+    return resolved.attribution
+        ? { attribution: resolved.attribution }
+        : undefined;
+}
+
+/** Extracted from `sendLifecycleConfig` to keep its cognitive complexity in budget. */
+function updateOpenPanelMerchantProps(
+    openPanel: OpenPanel | undefined,
+    resolved: SdkResolvedConfig
+): void {
+    if (!openPanel) return;
+    const current = openPanel.global ?? {};
+    openPanel.setGlobalProperties({
+        ...current,
+        merchant_id: resolved.merchantId,
+        domain: resolved.domain ?? "",
+    });
+}
+
+async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
+    if (typeof crypto === "undefined" || !crypto.subtle) return undefined;
+    try {
+        const digest = await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(token) as BufferSource
+        );
+        return new Uint8Array(digest);
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * Produce the two named, domain-separated proofs carried on `resolved-config`
+ * (README §4.3). Never throws and never blocks the handshake: signing is a
+ * single <1 ms ECDSA op per proof, and `signProof` itself already resolves
+ * to `null` (never rejects) when no key is available.
+ *
+ * `merge` is only produced when a pending merge token exists, and is bound
+ * to `SHA-256(mergeToken)` — it must be signed after the token is known,
+ * which holds here since `pendingMergeToken` is read from the URL before
+ * this runs.
+ */
+async function buildSdkIdentity({
+    merchantId,
+    anonymousId,
+    pendingMergeToken,
+}: {
+    merchantId: string;
+    anonymousId: string;
+    pendingMergeToken?: string;
+}): Promise<
+    | { anonymousId: string; proofs: { merge?: string; install?: string } }
+    | undefined
+> {
+    const mergeBinding = pendingMergeToken
+        ? await hashMergeToken(pendingMergeToken)
+        : undefined;
+    // No binding could be produced (e.g. no WebCrypto on an HTTP merchant
+    // page, §2.4) but a token is pending — omit the merge proof rather than
+    // sign over the wrong binding.
+    if (pendingMergeToken && !mergeBinding) {
+        const install = await signProof({
+            op: "frak-install-v1",
+            merchantId,
+            anonymousId,
+        });
+        return install ? { anonymousId, proofs: { install } } : undefined;
+    }
+
+    const [merge, install] = await Promise.all([
+        mergeBinding
+            ? signProof({
+                  op: "frak-merge-v1",
+                  merchantId,
+                  anonymousId,
+                  binding: mergeBinding,
+              })
+            : Promise.resolve(null),
+        signProof({ op: "frak-install-v1", merchantId, anonymousId }),
+    ]);
+
+    if (!merge && !install) return undefined;
+
+    return {
+        anonymousId,
+        proofs: {
+            ...(merge && { merge }),
+            ...(install && { install }),
+        },
+    };
+}
+
 /**
  * Perform the post connection setup
  * @param config - SDK configuration
@@ -367,37 +477,14 @@ async function postConnectionSetup({
     // subsequent SDK event is merchant-attributed. We pass
     // `sdkAnonymousId` through so the listener can join SDK funnels.
     let mergeTokenConsumed = false;
-    const sendLifecycleConfig = (resolved: SdkResolvedConfig) => {
+    const sendLifecycleConfig = async (resolved: SdkResolvedConfig) => {
         const token = mergeTokenConsumed ? undefined : pendingMergeToken;
         mergeTokenConsumed = true;
 
-        const sdkConfig = resolved.hasRawSdkConfig
-            ? {
-                  name: resolved.name,
-                  logoUrl: resolved.logoUrl,
-                  homepageLink: resolved.homepageLink,
-                  lang: resolved.lang,
-                  currency: resolved.currency,
-                  hidden: resolved.hidden,
-                  css: resolved.css,
-                  translations: resolved.translations,
-                  placements: resolved.placements,
-                  attribution: resolved.attribution,
-              }
-            : resolved.attribution
-              ? { attribution: resolved.attribution }
-              : undefined;
-
+        const sdkConfig = buildResolvedSdkConfig(resolved);
         const sdkAnonymousId = getClientId();
 
-        if (openPanel) {
-            const current = openPanel.global ?? {};
-            openPanel.setGlobalProperties({
-                ...current,
-                merchant_id: resolved.merchantId,
-                domain: resolved.domain ?? "",
-            });
-        }
+        updateOpenPanelMerchantProps(openPanel, resolved);
 
         rpcClient.sendLifecycle({
             clientLifecycle: "resolved-config",
@@ -409,13 +496,23 @@ async function postConnectionSetup({
                 ...(sdkAnonymousId && { sdkAnonymousId }),
                 ...(token && { pendingMergeToken: token }),
                 ...(sdkConfig && { sdkConfig }),
+                ...(sdkAnonymousId && {
+                    sdkIdentity: await buildSdkIdentity({
+                        merchantId: resolved.merchantId,
+                        anonymousId: sdkAnonymousId,
+                        pendingMergeToken: token,
+                    }),
+                }),
             },
         });
     };
 
-    // SWR: if we have cached data, send it to the iframe immediately
+    // SWR: if we have cached data, send it to the iframe immediately.
+    // Not awaited — signing must stay off the connection-establishment
+    // critical path (README §2.5); `contextSent` resolves as soon as the
+    // event is queued for sending, same as before this proof was added.
     if (sdkConfigStore.isResolved) {
-        sendLifecycleConfig(sdkConfigStore.getConfig());
+        void sendLifecycleConfig(sdkConfigStore.getConfig());
         contextSent.resolve();
     }
 
@@ -423,7 +520,7 @@ async function postConnectionSetup({
     if (configPromise) {
         const merchantConfig = await configPromise;
         mergeAndSetConfig(merchantConfig);
-        sendLifecycleConfig(sdkConfigStore.getConfig());
+        void sendLifecycleConfig(sdkConfigStore.getConfig());
         contextSent.resolve();
     }
 

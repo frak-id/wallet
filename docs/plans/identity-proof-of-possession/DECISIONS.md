@@ -46,7 +46,29 @@ bucket (`track:{merchantId}:{clientId}`, 120/min) and an IP-keyed catch-all (300
 Unit-test the extractor + store directly, not over HTTP (`isRunningLocally` short-circuits
 `consume()` in tests).
 
-### 1.3 🟠 §3.3 per-code limiting is not implementable as specified
+### 1.3 🔴 Two more attribution-mutating writes on `/track/purchase` — found during audit
+
+Removing the merge from `claimPurchase` was not sufficient. Two further writes on the
+same unauthenticated path still let a caller take over someone else's attribution, both
+found while auditing the workers' output, neither in the plan:
+
+- **`reconcileWithExistingPurchase` repointed the purchase row.** With the merge skipped,
+  control fell through to `updateIdentityGroup`, overwriting `purchase.identityGroupId`
+  with the caller's group. Same theft, no merge required. Fixed: the stored attribution is
+  kept and the interaction is recorded against it.
+- **`claimPurchase` rebound the purchase *claim*.** When the webhook has not landed yet,
+  the claim row's `claimingIdentityGroupId` is what the webhook later reads to attribute
+  the purchase. `PurchaseClaimRepository.upsert` overwrote it unconditionally, so whoever
+  called `/track/purchase` last won. Fixed: the SDK arm is first-claim-wins
+  (`onConflictDoNothing`, returning the existing claim); the trusted webhook path keeps
+  rebinding.
+
+Lesson recorded because it generalises: **"stop merging" is not the same as "stop
+mutating attribution"**. Every write reachable from an unauthenticated route that decides
+which identity group owns a record has to be audited, not just the calls into the merge
+machinery. Both of these sat one and two steps downstream of the merge call the plan named.
+
+### 1.4 🟠 §3.3 per-code limiting is not implementable as specified
 
 The plan concedes "per-code limiting needs shared state to mean anything", then schedules
 it in Phase 1 as a code change. With the in-memory store, a limit of 5 across 3 pods is 15.
@@ -207,7 +229,7 @@ and Phase 4a enforcement is otherwise blocked on db-team lead time.
 
 | # | Plan says | We do | Why |
 |---|---|---|---|
-| D1 | §3.9 fixes `sdkIdentity.ts` | also fix `PurchaseLinkingOrchestrator` (2 sites) | §1.1 — the plan is incomplete; shipping only site 1 leaves the headline attack open |
+| D1 | §3.9 fixes `sdkIdentity.ts` | also fix `PurchaseLinkingOrchestrator` (4 sites total) | §1.1 + §1.3 — the plan is incomplete; shipping only site 1 leaves the headline attack open on `/track/purchase` |
 | D2 | §3.6 rate-limit by `(merchantId, clientId)` | **two stacked limiters**, identity-keyed + IP catch-all, with different `maxRequests` | §1.2 — a lone identity extractor limits nothing for header-less callers, and identical configs collapse via Elysia's plugin dedupe |
 | D3 | §3.3 per-code attempt limiting via the rate limiter | durable `attempts` column on `install_codes` | §1.3 — the in-memory store is per-pod; §5 leans on §3.3 as *the* interim mitigation, so it has to actually work |
 | D4 | §4.6 `proofSeen` boolean | `proof_seen_at` nullable timestamp | §2.5 — same cost, makes the §2.6 alarm investigable, matches table idiom |
@@ -259,19 +281,21 @@ To revisit after Phase 4a; tracked here, not lost.
 
 | # | Commit | Wave |
 |---|---|---|
-| C1 | `feat(sdk): freeze proof-of-possession wire format (phase 0)` | **serial — blocks D** |
-| C2 | `fix(backend): make track/* resolve-only (§3.9)` | A |
-| C3 | `fix(backend): drop raw-hex wallet bypass (§3.7)` | A (after C2, same file) |
-| C4 | `feat(backend): rate-limit track/* (§3.6)` | A |
-| C5 | `feat(backend): handle WALLET_CONFLICT on ensure (§3.8)` | B |
-| C6 | `feat(backend): per-code + order-client limiting (§3.3, §3.4)` | B |
-| C7 | `feat(backend): declare proof_seen_at + install-code attempts` | B |
-| C8 | `feat(wallet): surface non-retryable ensure failure (§3.8 client half)` | C |
-| C9 | `feat(sdk): P-256 keygen, JWK storage, derived client id (phase 2)` | D, after C1 |
-| C10 | `feat(sdk): attach proofs to ensure + getMergeToken (§4.1, §4.2)` | D, after C9 |
-| C11 | `feat(backend): verify proofs when present (phase 2)` | D, after C1 |
-| C12 | `feat(listener,wallet): install ticket + proof plumbing (phase 3)` | E |
-| C13 | `feat(backend): enforce proofs on latched ids (phase 4a)` | F, last |
+| # | Commit | Status |
+|---|---|---|
+| C1 | freeze the wire format (phase 0) | ✅ `af8d9f81e` |
+| C2+C3 | track/* resolve-only + drop raw-hex bypass | ✅ `470ca57be` |
+| C4 | rate-limit track/* | ✅ `3cebbb90d` |
+| C5 | WALLET_CONFLICT on ensure, backend half | ✅ `241ad83d6` |
+| C6+C7 | per-code attempts, order-client limit, schema columns | ✅ `4e51e0f5c` |
+| — | audit fix: don't repoint an attributed purchase (§1.3) | ✅ `409bc6439` |
+| — | audit fix: first-claim-wins on purchase claims (§1.3) | ✅ `477f1429a` |
+| C8 | surface non-retryable ensure failure, client half | ✅ `e7fde0fdd` |
+| C9 | SDK P-256 keygen, JWK storage, derived client id (phase 2) | after C1 |
+| C10 | attach proofs to ensure + getMergeToken (§4.1, §4.2) | after C9 |
+| C11 | backend verifies proofs when present (phase 2) | after C1 |
+| C12 | listener/wallet install ticket + proof plumbing (phase 3) | E |
+| C13 | enforce proofs on latched ids (phase 4a) | F, last |
 
 Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
 `ensure.ts` (C5 → C11 → C13, serialised), `orchestration/context.ts` (C11+C13).

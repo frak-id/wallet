@@ -1,5 +1,5 @@
 import { getBackendUrl } from "../../config/backendUrl";
-import { getClientId } from "../../config/clientId";
+import { getClientId, initClientId } from "../../config/clientId";
 import type { FrakWalletSdkConfig, ListenerPreloadOption } from "../../types";
 
 /**
@@ -29,7 +29,7 @@ export const baseIframeProps = {
  * @param args.walletBaseUrl - Use `config.walletUrl` instead. Will be removed in future versions.
  * @param args.config - The configuration object containing iframe options, including the replacement for `walletBaseUrl`.
  */
-export function createIframe({
+export async function createIframe({
     walletBaseUrl,
     config,
 }: {
@@ -57,6 +57,13 @@ export function createIframe({
     // Set src BEFORE appending to DOM to avoid about:blank load event
     const walletUrl =
         config?.walletUrl ?? walletBaseUrl ?? "https://wallet.frak.id";
+
+    // Key generation happens here, once ever per browser (README §2.1/§2.5):
+    // this is the critical-path call site, before `iframe.src` is assigned.
+    // `createIframe` is already async and already awaited by `setupClient`,
+    // so every other `getClientId()` call site runs after this resolves and
+    // reads the now-populated module cache.
+    await initClientId();
     const clientId = getClientId();
 
     // Preconnect to the wallet + backend origins so the handshake doesn't pay

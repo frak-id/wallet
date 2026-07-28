@@ -5,6 +5,7 @@ import {
 } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
+import { IdentityContext } from "../../../domain/identity";
 import { OrchestrationContext } from "../../../orchestration/context";
 import { buildIdentityNodes } from "../track/sdkIdentity";
 
@@ -27,7 +28,7 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
     .post(
         "",
         async ({ headers, body, walletSession, request }) => {
-            const { merchantId, anonymousId: bodyAnonymousId } = body;
+            const { merchantId, anonymousId: bodyAnonymousId, proof } = body;
 
             // Determine the anonymousId: body (wallet app) or header (SDK)
             const anonymousId =
@@ -40,6 +41,30 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                     "MISSING_ANONYMOUS_ID",
                     "anonymousId must be provided in body or via x-frak-client-id header"
                 );
+            }
+
+            // Verified inline rather than delegated to an orchestrator: this
+            // route already calls `identity.resolveAndAssociate` directly and
+            // has no dedicated orchestrator of its own (DECISIONS §2.3 — the
+            // one documented exception to "orchestrator owns policy").
+            // Phase 2: verify and log/telemetry the outcome when a proof is
+            // present; never require one and never reject on an invalid
+            // proof — enforcement is Phase 4a, gated on the §4.6 latch.
+            if (proof) {
+                const result =
+                    await IdentityContext.services.identityProof.verify({
+                        op: "frak-ensure-v1",
+                        proof,
+                        merchantId,
+                        anonymousId,
+                        binding: new Uint8Array(0),
+                    });
+                if (!result.valid) {
+                    log.info(
+                        { merchantId, anonymousId, reason: result.reason },
+                        "Identity proof present but invalid (Phase 2: logged, not enforced)"
+                    );
+                }
             }
 
             // Build identity nodes for both wallet and anonymous fingerprint
@@ -125,6 +150,9 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
             body: t.Object({
                 merchantId: t.String({ format: "uuid" }),
                 anonymousId: t.Optional(t.String()),
+                // frak-ensure-v1 proof (README §4.1). Phase 2: optional,
+                // verified when present, never required.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({

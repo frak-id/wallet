@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 vi.mock("../../config/clientId", () => ({
     getClientId: vi.fn(() => "mock-client-id-for-test"),
+    initClientId: vi.fn(() => Promise.resolve("mock-client-id-for-test")),
 }));
 
 /**

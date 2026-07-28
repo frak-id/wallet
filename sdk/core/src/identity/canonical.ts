@@ -2,8 +2,9 @@
  * Frozen wire format for identity proof-of-possession.
  *
  * PURE module: no crypto import, no `crypto.subtle`, no `@noble/*`. This is
- * the single artifact `sign.ts` (browser) and `verify.ts` (backend) both
- * build on, and the one native (Phase 6) must reproduce byte-for-byte. Do
+ * the single artifact the SDK signer and the backend verifier
+ * (`IdentityProofService`) both build on, and the one native (Phase 6) must
+ * reproduce byte-for-byte. Do
  * not change anything in this file without updating
  * `docs/plans/identity-proof-of-possession/README.md` §2.3 and regenerating
  * the golden fixtures — this layout is frozen before native SDKs branch.

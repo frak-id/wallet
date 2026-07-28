@@ -1,11 +1,10 @@
 /**
  * Public surface of `@frak-labs/core-sdk/identity`.
  *
- * Browser code (SDK actions, clients, utils) must NOT import this barrel —
- * import `./canonical` and `./sign` by deep path instead, so verification
- * code (`./verify`, backend-only) never reaches the CDN bundle. See
- * `bundle-isolation.test.ts` and
- * `docs/plans/identity-proof-of-possession/DECISIONS.md` §2.1.
+ * The SDK only ever *signs*. Verification is the backend's job and lives
+ * there (`IdentityProofService`); what is shared is the frozen material
+ * both sides must agree on to the byte — the canonical message layout and
+ * the id derivation — plus the golden fixtures that pin them.
  */
 
 export type { ProofMessageParams } from "./canonical";
