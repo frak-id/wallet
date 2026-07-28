@@ -87,6 +87,7 @@ requirement: a merchant with both apps must not have to learn two mental models.
 the naming map in §9.
 
 ### Android
+
 - coroutine-first: `suspend` for one-shot, `StateFlow` for observable config
 - Compose-first UI with a View/Activity fallback for imperative call sites
 - **embedded `WebView`** as the sharing transport, mirroring iOS `WKWebView`
@@ -107,6 +108,7 @@ the naming map in §9.
 > and cannot do origin-pinned navigation interception. `WebView` it is.
 
 ### iOS
+
 - `async`/`await` with typed throws; `AsyncStream` for observable config
 - SwiftUI-first (`.frakSharingSheet` modifier) with a `UIViewController` fallback
 - `WKWebView` in a `UISheetPresentationController` as the sharing transport
@@ -146,9 +148,21 @@ be retrofitted; enforcement then becomes a pure backend flip with no version ske
 Generate key and id **atomically** — a surviving key with a lost id (or vice versa)
 silently fails derivation.
 
-> Swift's `UUID.uuidString` is **uppercase**. The FrakContext v2 codec validates with a
-> hex regex and parses with a naive hex read — an uppercase UUID produces silently
-> wrong bytes and broken attribution. Lowercase at the boundary, always.
+> Swift's `UUID.uuidString` is **uppercase**. Lowercase at the boundary, always.
+>
+> The failure is *not* in the codec. `UUID_RE` carries the `i` flag
+> (`frakContextV2Codec.ts:46`) and the hex read is case-insensitive, so an uppercase
+> UUID validates and encodes to correct bytes; `bytesToUuid` (line 65) then always
+> emits lowercase, so a round-trip silently **normalises** case.
+>
+> That silent normalisation is exactly what makes this dangerous. The break happens
+> upstream, wherever an uppercase `uuidString` meets a lowercased decoded value as a
+> *string*: cache keys, storage keys, `merchantId` equality checks, the self-referral
+> guard in §6.1, and the signed-payload UUIDs in the identity plan
+> ([`../identity-proof-of-possession/README.md`](../identity-proof-of-possession/README.md)
+> §2.3), which are signed as UTF-8 bytes of the lowercase string — where case *does*
+> change the signature. Normalise once at the Swift boundary rather than at each call
+> site.
 
 | | Storage | Uninstall |
 |---|---|---|
@@ -567,9 +581,13 @@ bytes 37..56   wallet address  (20 bytes, if has_w)
 Sizes 37 / 41 / 57. V1 is exactly 20 bytes (raw address), disambiguated purely by
 length. Then **unpadded base64url** into `?fCtx=`.
 
-Every one of those is a silent-failure trap: big-endian, unpadded base64url, lowercase
-UUIDs, exact length disambiguation. A mistake produces links that *look* valid and fail
-attribution with no error anywhere.
+Every one of those is a silent-failure trap: big-endian, unpadded base64url, exact
+length disambiguation. A mistake produces links that *look* valid and fail attribution
+with no error anywhere.
+
+UUID case is a trap too, but a different one — the codec tolerates either case and
+normalises to lowercase on decode, so the break lands upstream in string comparisons
+rather than in the bytes. See the note in §4.
 
 **Non-negotiable:** generate golden fixtures from `frakContextV2Codec.test.ts`, commit
 them as a shared JSON file, and assert against them in both native test suites.
@@ -614,19 +632,21 @@ it means a merchant who sets a global default sees it silently ignored on native
 `copy()` API also needs a host-default parameter to express tier 3.
 
 Also undocumented and worth deciding on deliberately rather than by accident:
+
 - **The config cache never expires.** `sdkConfigStore.resolve()` passes
   `cacheTime: Number.POSITIVE_INFINITY` (`sdkConfigStore.ts:238`) — not the 30s
   `DEFAULT_CACHE_TIME`, which applies to *other* actions (`getMerchantInformation`,
   `getUserReferralStatus`). And `withCache` is **not** stale-while-revalidate: it is a
   blocking cache-or-fetch that never serves stale data while refreshing
-  (`withCache.ts`). Native must choose its own policy deliberately — a literal port
+  (`utils/cache/withCache.ts`). Native must choose its own policy deliberately — a literal port
   means config never refreshes for the life of the process, which is defensible on web
   (page reloads) but wrong for a long-lived app.
 - `sdkConfigStore` is a **dual** cache: full config plus a separate bare-`merchantId`
   fast path that resolves even when the full config is absent
   (`getMerchantId()`, `sdkConfigStore.ts:242-253`).
 - `withCache` does **negative caching**: a failed fetch is remembered for 1s and
-  short-circuits retries (`NEGATIVE_CACHE_TIME`, `withCache.ts:12`, checked at 78-81).
+  short-circuits retries (`NEGATIVE_CACHE_TIME`, `utils/cache/withCache.ts:12`, checked
+  at 78-81).
   Native should decide explicitly whether to match this.
 
 ### 8.3 Never derive merchant identity client-side
@@ -885,6 +905,7 @@ await Frak.client.trackPurchase(customerId: order.customerId,
 ## 11. Phasing
 
 ### MVP (v0.1)
+
 - `FrakConfig`; init; anonymous id
 - **package-id merchant resolution** — `merchantId` optional, derived from bundle/package id
 - HTTP layer, backend URL derivation, dual SWR config cache
@@ -908,6 +929,7 @@ Gated on platform changes 1.0, 1.1, 1.2, 1.2b, 1.3, 1.5, 2.2, 3.7, 3.8.
 live vulnerability today.
 
 ### v0.2
+
 - native `FrakShareButton` / `FrakPostPurchaseCard` / `FrakBanner` (all self-rendered, no web view)
 - `allowed_package_ids` auto-verification (Android via Google's Digital Asset Links API; iOS self-declared + reviewed)
 - Android silent identity linking via bound service
@@ -917,6 +939,7 @@ live vulnerability today.
 - first-party telemetry to Frak's analytics backend, if not pulled into v0.1 (§8.4)
 
 ### Deferred
+
 | Feature | Why |
 |---|---|
 | Wallet session / passkey login | needs WebAuthn + ERC-4337 + SSO ported. The anonymous path covers every MVP use case. |

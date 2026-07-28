@@ -7,7 +7,9 @@ hand-written codebases rather than one shared core.
 `apps/wallet`, `apps/listener`, and `services/backend`.
 [`02-native-sdk-overview.md`](./02-native-sdk-overview.md) covers what the SDKs do.
 This document covers **how we build and ship them**, and corrects three claims in
-those documents that industry research contradicts.
+those documents that industry research contradicts (§2 and §3). Two smaller factual
+corrections — the uppercase-UUID failure mode and the `withCache.ts` path — were
+applied directly in `02` rather than recorded here.
 
 ---
 
