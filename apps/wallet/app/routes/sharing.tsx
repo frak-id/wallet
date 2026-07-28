@@ -26,7 +26,12 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
+import {
+    buildHostResultUrl,
+    type HostResultAction,
+} from "@/module/common/utils/buildHostResultUrl";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
+import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 
 /**
  * Build AttributionParams from search params.
@@ -89,6 +94,21 @@ type SharingSearch = {
      * step still happens.
      */
     confirmed?: boolean;
+    /**
+     * Custom scheme a native host listens on for outcomes.
+     *
+     * The host cannot observe in-page navigation or React callbacks, and
+     * there is no JS bridge, so outcomes are handed back as a navigation to
+     * `<scheme>://result?action=…` that the host intercepts in its own web
+     * view. Validated shape, since the page navigates to whatever it carries.
+     */
+    returnScheme?: string;
+    /**
+     * Opaque single-use token minted by the host before it presents this
+     * page, echoed back on every outcome so the host can drop callbacks that
+     * do not belong to the active session.
+     */
+    sid?: string;
 };
 
 export const Route = createFileRoute("/sharing")({
@@ -116,6 +136,8 @@ export const Route = createFileRoute("/sharing")({
         attribution: parseAttributionFromSearch(search),
         native: search.native === "1" || search.native === true,
         confirmed: search.confirmed === "1" || search.confirmed === true,
+        returnScheme: sanitizeReturnScheme(search.returnScheme),
+        sid: typeof search.sid === "string" ? search.sid : undefined,
     }),
     beforeLoad: ({ search }) => {
         // A native host owns the caller identity, so a missing `clientId` is a
@@ -145,6 +167,8 @@ function WalletSharingPage() {
         attribution,
         native,
         confirmed,
+        returnScheme,
+        sid,
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
@@ -310,7 +334,23 @@ function WalletSharingPage() {
         setShowConfirmation(true);
     };
 
+    // Hand an outcome back to the native host, which intercepts the navigation
+    // inside its own web view.
+    const returnToHost = useCallback(
+        (action: HostResultAction) => {
+            if (!returnScheme) return false;
+            window.location.assign(
+                buildHostResultUrl({ scheme: returnScheme, action, sid })
+            );
+            return true;
+        },
+        [returnScheme, sid]
+    );
+
     const handleDismiss = async () => {
+        // A native host owns the outcome: `redirectUrl` is a web-only concern
+        // and is not sent in native mode.
+        if (returnToHost("dismiss")) return;
         if (redirectUrl) {
             if (IS_TAURI) {
                 // In Tauri, open the redirect URL in the external browser
@@ -327,17 +367,27 @@ function WalletSharingPage() {
     };
 
     const handleShareAgain = () => {
+        // Clear first either way: the host may re-present this same URL, and a
+        // stale flag would drop the user straight back on the confirmation
+        // screen they just left.
         clearConfirmation();
         setShowConfirmation(false);
+        returnToHost("shareAgain");
     };
 
     const handleInstall = useCallback(() => {
+        // The SDK owns the whole install step: it knows whether the wallet app
+        // is already installed, and two parts of the iOS path cannot run in a
+        // web view at all (pasteboard entries with an expiry, and the in-app
+        // App Store sheet). So the page hands back control instead of
+        // navigating to its own install route.
+        if (returnToHost("install")) return;
         if (!installUrl) return;
         navigate({
             to: "/install",
             search: { m: merchantId, a: clientId ?? undefined },
         });
-    }, [installUrl, merchantId, clientId, navigate]);
+    }, [returnToHost, installUrl, merchantId, clientId, navigate]);
 
     return (
         <SharingPage
