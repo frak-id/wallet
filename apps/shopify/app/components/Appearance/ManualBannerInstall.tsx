@@ -18,23 +18,21 @@ export function ManualBannerInstall({
 }) {
     const { t } = useTranslation();
     return (
-        <s-section>
-            <s-stack gap="base">
-                <s-text>{t("appearance.manual.bannerDescription")}</s-text>
+        <s-stack gap="base">
+            <s-text>{t("appearance.manual.bannerDescription")}</s-text>
 
-                <CopyableSnippet snippet={BANNER_TAG} />
+            <CopyableSnippet snippet={BANNER_TAG} />
 
-                <ExternalLink href={themeLiquidUrl}>
-                    {t("appearance.manual.editTheme")}
+            <ExternalLink href={themeLiquidUrl}>
+                {t("appearance.manual.editTheme")}
+            </ExternalLink>
+
+            <s-stack gap="small-100" alignItems="start">
+                <s-text>{t("appearance.manual.customizeNote")}</s-text>
+                <ExternalLink href={customizeUrl}>
+                    {t("appearance.manual.openEditor")}
                 </ExternalLink>
-
-                <s-stack gap="small-100" alignItems="start">
-                    <s-text>{t("appearance.manual.customizeNote")}</s-text>
-                    <ExternalLink href={customizeUrl}>
-                        {t("appearance.manual.openEditor")}
-                    </ExternalLink>
-                </s-stack>
             </s-stack>
-        </s-section>
+        </s-stack>
     );
 }

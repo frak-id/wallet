@@ -88,22 +88,62 @@ describe("resolveMerchantId", () => {
         expect(backendGet).not.toHaveBeenCalled();
     });
 
-    it("should return metafield value when cache misses but metafield exists", async () => {
+    it("should fall back to the metafield value when the backend is unreachable", async () => {
         vi.mocked(getMerchantIdMetafield).mockResolvedValue(
             "metafield-merchant-id"
         );
+        // Backend unreachable (network error) — the metafield mirror is the
+        // graceful fallback.
+        backendGet.mockRejectedValue(new Error("Network error"));
 
         const result = await resolveMerchantId(mockContext);
 
         expect(result).toBe("metafield-merchant-id");
+        expect(backendGet).toHaveBeenCalled();
         expect(getMerchantIdMetafield).toHaveBeenCalledWith(mockContext);
-        expect(backendGet).not.toHaveBeenCalled();
     });
 
-    it("should populate LRU cache after metafield hit", async () => {
+    it("should NOT fall back to the metafield on an authoritative 404", async () => {
+        // A stale metafield must never resurrect after the backend says the
+        // shop isn't registered (e.g. after a local backend DB reseed).
+        vi.mocked(getMerchantIdMetafield).mockResolvedValue(
+            "stale-merchant-id"
+        );
+        backendGet.mockResolvedValue({
+            data: null,
+            error: { status: 404, value: { error: "Merchant not found" } },
+        });
+
+        const result = await resolveMerchantId(mockContext);
+
+        expect(result).toBeNull();
+        // Not-found short-circuits before the metafield is ever read.
+        expect(getMerchantIdMetafield).not.toHaveBeenCalled();
+    });
+
+    it("should prefer the backend id over a stale metafield value", async () => {
+        vi.mocked(getMerchantIdMetafield).mockResolvedValue(
+            "stale-merchant-id"
+        );
+        backendGet.mockResolvedValue({ data: mockMerchantInfo, error: null });
+
+        const result = await resolveMerchantId(mockContext);
+
+        expect(result).toBe("merchant-abc");
+        // The stale mirror is reconciled to the authoritative backend id.
+        await vi.waitFor(() =>
+            expect(writeMerchantIdMetafield).toHaveBeenCalledWith(
+                mockContext,
+                "merchant-abc"
+            )
+        );
+    });
+
+    it("should populate LRU cache after a metafield fallback", async () => {
         vi.mocked(getMerchantIdMetafield).mockResolvedValue(
             "metafield-merchant-id"
         );
+        backendGet.mockRejectedValue(new Error("Network error"));
 
         await resolveMerchantId(mockContext);
 
@@ -127,16 +167,18 @@ describe("resolveMerchantId", () => {
         });
     });
 
-    it("should write merchantId to metafield after backend resolve", async () => {
+    it("should sync merchantId to metafield after backend resolve", async () => {
         backendGet.mockResolvedValue({ data: mockMerchantInfo, error: null });
 
         await resolveMerchantId(mockContext);
 
-        // writeMerchantIdMetafield is fire-and-forget; flush microtasks
-        await Promise.resolve();
-        expect(writeMerchantIdMetafield).toHaveBeenCalledWith(
-            mockContext,
-            "merchant-abc"
+        // syncMerchantIdMetafield is fire-and-forget (reads current, writes on
+        // drift) — wait for the write to land.
+        await vi.waitFor(() =>
+            expect(writeMerchantIdMetafield).toHaveBeenCalledWith(
+                mockContext,
+                "merchant-abc"
+            )
         );
     });
 

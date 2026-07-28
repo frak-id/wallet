@@ -38,7 +38,11 @@ function buildPixelSettings(
     merchantId?: string | null
 ): Record<string, string> {
     const settings: Record<string, string> = {
-        backendUrl: process.env.BACKEND_URL ?? "",
+        // The pixel runs in the shopper's browser, so it needs the publicly
+        // reachable backend (PUBLIC_BACKEND_URL); localhost isn't reachable
+        // from a storefront. Falls back to BACKEND_URL when unset.
+        backendUrl:
+            process.env.PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "",
     };
 
     if (merchantId) {

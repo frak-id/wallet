@@ -1,4 +1,4 @@
-import { t } from "@backend-utils";
+import { HttpError, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../domain/merchant";
 import { MerchantIdParamSchema } from "../../schemas";
@@ -11,28 +11,18 @@ export const merchantAllowedDomainsRoutes = new Elysia()
     .use(businessSessionContext)
     .post(
         "/:merchantId/allowed-domains",
-        async ({
-            params: { merchantId },
-            body: { domain: rawDomain },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
+        async ({ params: { merchantId }, body: { domain: rawDomain } }) => {
             const domain =
                 MerchantContext.repositories.dnsCheck.getNormalizedDomain(
                     rawDomain
                 );
             if (!domainRegex.test(domain)) {
-                return status(400, "Invalid domain format");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
+                // Same code the normalization above throws, so both rejection
+                // paths look identical to a client.
+                throw HttpError.badRequest(
+                    "INVALID_DOMAIN",
+                    `Invalid domain: "${rawDomain}"`
+                );
             }
 
             const updated =
@@ -49,13 +39,14 @@ export const merchantAllowedDomainsRoutes = new Elysia()
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 domain: t.String({ minLength: 1 }),
             }),
             response: {
                 204: t.Void(),
-                400: t.String(),
+                400: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -64,22 +55,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
     )
     .delete(
         "/:merchantId/allowed-domains",
-        async ({
-            params: { merchantId },
-            body: { domain },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, body: { domain } }) => {
             const merchant =
                 await MerchantContext.repositories.merchant.findById(
                     merchantId
@@ -102,6 +78,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 domain: t.String({ minLength: 1 }),

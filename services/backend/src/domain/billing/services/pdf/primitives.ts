@@ -142,6 +142,24 @@ export function isPositiveAmount(value: string | undefined): value is string {
     return Number.isFinite(n) && n > 0;
 }
 
+/** Shared "VAT or reverse-charge" line for the deposit/withdraw documents. */
+export function drawVatLine(
+    cursor: PageCursor,
+    label: string,
+    amount: string,
+    currency: string,
+    fallbackLabel = label
+): void {
+    if (isVatApplicable(amount)) {
+        cursor.text(`${label} : ${formatMoney(amount, currency)}`);
+    } else {
+        cursor.text(`${fallbackLabel} : autoliquidation / non applicable`, {
+            color: GRAY,
+        });
+    }
+    cursor.newLine(15);
+}
+
 export type DrawOptions = {
     x?: number;
     size?: number;

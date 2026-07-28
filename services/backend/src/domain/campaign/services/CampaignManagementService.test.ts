@@ -72,17 +72,22 @@ describe("CampaignManagementService start-date edit", () => {
         const { service, update } = serviceWith(activeCampaign([]));
         await service.update("campaign-1", { startDate: START });
 
-        expect(update).toHaveBeenCalledWith("campaign-1", {
-            rule: expect.objectContaining({
-                conditions: [
-                    {
-                        field: "time.timestamp",
-                        operator: "gte",
-                        value: START_UNIX,
-                    },
-                ],
-            }),
-        });
+        expect(update).toHaveBeenCalledWith(
+            "campaign-1",
+            {
+                rule: expect.objectContaining({
+                    conditions: [
+                        {
+                            field: "time.timestamp",
+                            operator: "gte",
+                            value: START_UNIX,
+                        },
+                    ],
+                }),
+            },
+            // TOCTOU guard: the write re-checks the status the service read.
+            ["active"]
+        );
     });
 
     it("replaces an existing start gate rather than duplicating it", async () => {

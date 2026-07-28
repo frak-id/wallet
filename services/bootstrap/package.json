@@ -27,14 +27,15 @@
         "db:studio:libsql": "drizzle-kit studio --config drizzle-libsql.config.ts"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.1030.0",
+        "@aws-sdk/client-s3": "^3.1095.0",
         "@frak-labs/app-essentials": "workspace:*",
-        "@libsql/client": "^0.17.2",
+        "@libsql/client": "^0.17.4",
         "drizzle-orm": "^0.45.2",
-        "postgres": "^3.4.9"
+        "postgres": "^3.4.9",
+        "sharp": "^0.35.3"
     },
     "devDependencies": {
-        "@swc/core": "^1.15.24",
+        "@swc/core": "^1.15.46",
         "@typescript/native": "catalog:",
         "bun-types": "latest",
         "drizzle-kit": "^0.31.10",

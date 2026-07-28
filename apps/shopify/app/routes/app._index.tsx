@@ -210,7 +210,7 @@ function OnBoardingComplete({
     return (
         <s-stack gap="large">
             <NewsletterShareLink />
-            <CampaignStatus campaigns={campaigns} bankStatus={bankStatus} />
+            <CampaignStatus campaigns={campaigns} />
             <BankingStatus bankStatus={bankStatus} />
             {/* OptionalSetup prompts for OS-2.0 share-button/banner app blocks,
                 which legacy themes can't host — omit it for them. */}

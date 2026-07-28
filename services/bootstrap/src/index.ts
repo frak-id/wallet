@@ -1,5 +1,6 @@
 import { runAuthBindingBackfill } from "./backfill-auth-bindings";
 import { runBusinessAccountBackfill } from "./backfill-business-accounts";
+import { runImageVariantBackfill } from "./backfill-image-variants";
 import { ensureBuckets } from "./ensure-buckets";
 import { runLibsqlMigrations } from "./migrate-libsql";
 import { runPgMigrations } from "./migrate-pg";
@@ -14,6 +15,7 @@ import { runPgMigrations } from "./migrate-pg";
  *   4. Business-account eager back-fill (idempotent; no-ops until the
  *      business_accounts migration has been applied)
  *   5. RustFS bucket provisioning (idempotent)
+ *   6. Merchant media image size-variant backfill (idempotent)
  */
 async function main(): Promise<void> {
     console.log("[bootstrap] Starting");
@@ -23,6 +25,7 @@ async function main(): Promise<void> {
     await runAuthBindingBackfill();
     await runBusinessAccountBackfill();
     await ensureBuckets();
+    await runImageVariantBackfill();
 
     console.log("[bootstrap] All steps complete");
 }

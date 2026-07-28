@@ -7,5 +7,6 @@ declare module "*.css";
 declare namespace React.JSX {
     interface IntrinsicElements {
         "ui-nav-menu": import("@shopify/app-bridge-types").UINavMenuAttributes;
+        "ui-save-bar": import("@shopify/app-bridge-types").UISaveBarAttributes;
     }
 }

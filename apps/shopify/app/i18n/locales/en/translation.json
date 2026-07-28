@@ -7,7 +7,14 @@
         "allSet": "Frak application is correctly set up",
         "getStarted": "Start application setup",
         "dashboardDataUnavailableTitle": "Dashboard data is temporarily unavailable.",
-        "dashboardDataUnavailableDescription": "Please refresh the page in a few seconds."
+        "dashboardDataUnavailableDescription": "Please refresh the page in a few seconds.",
+        "invalidUrl": "Please enter a valid URL.",
+        "invalidUrlToast": "Fix the invalid image URL before saving.",
+        "removeImage": "Remove image",
+        "imageUploaded": "Image uploaded",
+        "useExistingImage": "Use an existing image",
+        "useImageOfType": "Use {{type}} image",
+        "discard": "Discard"
     },
     "navigation": {
         "campaigns": "Campaigns",
@@ -218,30 +225,7 @@
             "resuming": "Resuming...",
             "archiving": "Archiving...",
             "deleting": "Deleting...",
-            "noCampaigns": "No campaigns yet. Create your first campaign to start distributing rewards.",
-
-            "nameInput": "Campaign name",
-            "rewardToken": "Reward token",
-            "selectToken": "Select a token",
-            "budget": "Global budget",
-            "budgetInfo": "This is the max amount of money that will be distributed to end users by this campaign.",
-            "rawCAC": "Raw CAC per new user",
-            "rawCACInfo": "This is the raw amount that will be distributed to referrer and referee.",
-            "ratio": "Referrer/Referee ratio",
-            "ratioHelp": "Adjust the split between referrer and referee (max 90-10%)",
-            "ratioReferrer": "Referrer",
-            "ratioReferee": "Referee",
-            "breakdown": {
-                "rawCAC": "Raw CAC",
-                "commission": "Frak commission (20%)",
-                "referrer": "Amount for referrer",
-                "referee": "Amount for referee",
-                "newUser": "New user"
-            },
-            "createOpen": "Campaign creation form",
-            "createButton": "Create campaign",
-            "creating": "Creating campaign...",
-            "toastCreated": "Campaign creation (mock): Success!"
+            "noCampaigns": "No campaigns yet. Create your first campaign to start distributing rewards."
         },
         "bank": {
             "title": "Reward Budget",
@@ -276,6 +260,7 @@
         "purchase": {
             "title": "Purchase",
             "description": "By making a Purchase you will add funds to the bank. The fund will be be used to distribute rewards to end users.",
+            "twoStepNotice": "Confirming here does not charge you immediately. You'll validate the charge on Shopify's own billing screen, and your purchase is then processed within 2-5 business days.",
             "activePurchases": "Active Purchases",
             "amount": "Amount",
             "status": "Status",
@@ -404,11 +389,25 @@
         "title": "Appearance",
         "description": "Customize the look and feel of your Frak integration across your store.",
         "tabs": {
-            "customizations": "Text Customizations",
+            "customizations": "Text shown to customers",
             "shareButton": "Share Button",
             "banner": "Banner",
             "checkoutExtension": "Checkout Extension",
-            "explorer": "Explorer"
+            "onYourSite": "On your site",
+            "inFrakApp": "In the Frak app"
+        },
+        "upload": {
+            "dropzoneLabel": "Upload image",
+            "restrictions": {
+                "logo": "Min 128×128px — Ratio 1:2 to 2:1 — Max 4MB",
+                "hero": "Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB"
+            },
+            "failed": "Upload failed. Please try again.",
+            "failedLarge": "Upload failed. The image may be too large or the network was interrupted.",
+            "validation": {
+                "unsupportedType": "{{fileName}} is not a supported image format (PNG, JPEG, WebP, SVG, GIF).",
+                "tooLarge": "{{fileName}} is {{size}} MB — images must stay under {{max}} MB."
+            }
         },
         "shareButton": {
             "link": "Configure button in your product page",
@@ -430,14 +429,18 @@
         "explorer": {
             "description": "Once enabled, your store will be displayed in the Frak app, helping users discover your referral campaigns.",
             "enabledLabel": "Listed in Frak Explorer",
+            "enabledHint": "Make your store discoverable in the Frak app.",
+            "previewDisabledLabel": "Not listed",
+            "previewDisabledHint": "Enable the Explorer",
             "logoLabel": "Logo URL",
             "heroLabel": "Hero image URL",
             "heroExtrasLabel": "Additional hero images",
+            "heroExtraAlt": "Additional hero image",
+            "heroExtrasRestrictions": "Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB ({{current}}/{{max}})",
+            "heroExtrasLimitReached": "Maximum of 4 additional hero images reached. Remove one to add another.",
             "descriptionLabel": "Store description",
             "descriptionPlaceholder": "Describe your store for the Frak Explorer...",
-            "save": "Save",
-            "previewTitle": "Preview",
-            "previewDescription": "This is how your store will appear to users in the Frak Explorer."
+            "save": "Save"
         },
         "legacy": {
             "customizationsNote": "Your theme does not support Shopify app blocks. Logo, wording and reward settings are managed in the Frak editor on the business dashboard.",

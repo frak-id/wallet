@@ -617,16 +617,25 @@ export class AssetLogRepository {
         return result?.count ?? 0;
     }
 
-    async countByCampaignAndUserAsReferee(
-        campaignRuleId: string,
+    /**
+     * Batched per-campaign referee counts (avoids N+1 in RuleEngineService).
+     * Campaigns with no matching rows are absent; callers treat missing as 0.
+     */
+    async countByCampaignsAndUserAsReferee(
+        campaignRuleIds: string[],
         identityGroupId: string
-    ): Promise<number> {
-        const [result] = await db
-            .select({ count: sql<number>`count(*)::int` })
+    ): Promise<Map<string, number>> {
+        if (campaignRuleIds.length === 0) return new Map();
+
+        const rows = await db
+            .select({
+                campaignRuleId: assetLogsTable.campaignRuleId,
+                count: sql<number>`count(*)::int`,
+            })
             .from(assetLogsTable)
             .where(
                 and(
-                    eq(assetLogsTable.campaignRuleId, campaignRuleId),
+                    inArray(assetLogsTable.campaignRuleId, campaignRuleIds),
                     eq(assetLogsTable.identityGroupId, identityGroupId),
                     inArray(assetLogsTable.status, [
                         "pending",
@@ -636,12 +645,28 @@ export class AssetLogRepository {
                     ]),
                     eq(assetLogsTable.recipientType, "referee")
                 )
-            );
-        return result?.count ?? 0;
+            )
+            .groupBy(assetLogsTable.campaignRuleId);
+
+        const counts = new Map<string, number>();
+        for (const row of rows) {
+            if (row.campaignRuleId) counts.set(row.campaignRuleId, row.count);
+        }
+        return counts;
     }
 
     async countByMerchantAndUserAsReferee(
         merchantId: string,
+        identityGroupId: string
+    ): Promise<number> {
+        return this.countAsRefereeWhere(
+            eq(assetLogsTable.merchantId, merchantId),
+            identityGroupId
+        );
+    }
+
+    private async countAsRefereeWhere(
+        scopeCondition: SQL,
         identityGroupId: string
     ): Promise<number> {
         const [result] = await db
@@ -649,7 +674,7 @@ export class AssetLogRepository {
             .from(assetLogsTable)
             .where(
                 and(
-                    eq(assetLogsTable.merchantId, merchantId),
+                    scopeCondition,
                     eq(assetLogsTable.identityGroupId, identityGroupId),
                     inArray(assetLogsTable.status, [
                         "pending",

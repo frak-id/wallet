@@ -1,3 +1,4 @@
+import { isValidUrl, normalizeUrl } from "@frak-labs/app-essentials";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { TextArea } from "@frak-labs/design-system/components/TextArea";
@@ -7,13 +8,12 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@frak-labs/design-system/components/Tooltip";
-import { ExplorerPhonePreview } from "@frak-labs/ui-preview";
+import { ExplorerPhonePreview, previewWrap } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { EditCard } from "@/module/common/component/EditCard";
 import { FloatingPhonePreview } from "@/module/common/component/FloatingPhonePreview";
-import { isValidUrl, normalizeUrl } from "@/module/common/utils/validateUrl";
 import { EditField } from "@/module/forms/EditField";
 import {
     Form,
@@ -275,7 +275,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                             onClick={(e) => e.preventDefault()}
                         >
                             <div
-                                className={styles.previewWrap}
+                                className={previewWrap}
                                 data-disabled={enabled ? undefined : ""}
                             >
                                 {preview}

@@ -1,6 +1,7 @@
 import { dbInstance, elysiaEnv, postgresEnv } from "./secrets";
+import { dbTunnelLocalPort } from "./utils";
 
-const localPort = "8888";
+const localPort = dbTunnelLocalPort;
 const sqldLocalPort = "8089";
 const rustfsLocalPort = "9100";
 

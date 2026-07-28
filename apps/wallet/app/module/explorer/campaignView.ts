@@ -82,12 +82,20 @@ function buildCampaignView(
  * Fetches the merchant's estimated rewards and derives the display campaign
  * view, memoized on the rewards + active language. Shared by the explorer card
  * and detail surfaces.
+ *
+ * `enabled: false` defers the network call (e.g. until the card nears the
+ * viewport) — the query stays idle and the view resolves to null until then.
  */
-export function useCampaignView(merchantId: string): CampaignView | null {
+export function useCampaignView(
+    merchantId: string,
+    { enabled = true }: { enabled?: boolean } = {}
+): CampaignView | null {
     const { i18n } = useTranslation();
-    const { data: rewards } = useQuery(
-        estimatedRewardsQueryOptions(merchantId)
-    );
+    const options = estimatedRewardsQueryOptions(merchantId);
+    const { data: rewards } = useQuery({
+        ...options,
+        enabled: options.enabled && enabled,
+    });
     return useMemo(
         () => buildCampaignView(rewards ?? [], i18n.language),
         [rewards, i18n.language]

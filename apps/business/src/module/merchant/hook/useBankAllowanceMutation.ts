@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Address, encodeFunctionData } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import { merchantBankQueryKey } from "@/module/merchant/queries/queryKeys";
 
 type BankAllowanceMutationParams = {
     merchantId: string;
@@ -43,7 +44,7 @@ export function useBankAllowanceMutation({
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 await queryClient.invalidateQueries({
-                    queryKey: ["merchant", merchantId, "bank"],
+                    queryKey: merchantBankQueryKey(merchantId),
                 });
                 return;
             }
@@ -78,7 +79,7 @@ export function useBankAllowanceMutation({
 
                 await waitForTxAndInvalidateQueries({
                     hash,
-                    queryKey: ["merchant", merchantId, "bank"],
+                    queryKey: merchantBankQueryKey(merchantId),
                 });
             } else {
                 const { token, amount } = input as UpdateMutationInput;
@@ -110,7 +111,7 @@ export function useBankAllowanceMutation({
 
                 await waitForTxAndInvalidateQueries({
                     hash,
-                    queryKey: ["merchant", merchantId, "bank"],
+                    queryKey: merchantBankQueryKey(merchantId),
                 });
             }
         },

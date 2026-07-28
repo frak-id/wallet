@@ -21,13 +21,9 @@ import * as styles from "./campaign-details-sheet.css";
 import { EditCampaignButton } from "./EditCampaignButton";
 import { ExportButton } from "./ExportButton";
 import { FunnelRoiTab } from "./FunnelRoiTab";
+import type { CampaignDetailsTab } from "./tabs";
 
-export const CAMPAIGN_DETAILS_TABS = [
-    "funnel",
-    "ambassadors",
-    "config",
-] as const;
-export type CampaignDetailsTab = (typeof CAMPAIGN_DETAILS_TABS)[number];
+export { CAMPAIGN_DETAILS_TABS, type CampaignDetailsTab } from "./tabs";
 
 type Props = {
     campaign: CampaignListItemWithActions | undefined;

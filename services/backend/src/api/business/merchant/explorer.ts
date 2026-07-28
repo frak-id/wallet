@@ -14,22 +14,7 @@ export const merchantExplorerRoutes = new Elysia({
     .use(businessSessionContext)
     .put(
         "",
-        async ({
-            params: { merchantId },
-            body,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, body }) => {
             await MerchantContext.repositories.merchant.updateExplorer(
                 merchantId,
                 {
@@ -43,6 +28,7 @@ export const merchantExplorerRoutes = new Elysia({
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: t.Object({
                 enabled: t.Optional(t.Boolean()),

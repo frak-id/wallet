@@ -6,6 +6,7 @@ import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon, UploadIcon } from "@frak-labs/design-system/icons";
+import { visuallyHidden } from "@frak-labs/design-system/utils";
 import clsx from "clsx";
 import { useCallback, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
@@ -85,7 +86,7 @@ export function ImageUploadField({
         noClick: true,
     });
 
-    const errorMessage = getUploadErrorMessage(uploadError);
+    const errorMessage = getUploadErrorMessage(uploadError, t);
 
     return (
         <Stack space="m">
@@ -118,7 +119,11 @@ export function ImageUploadField({
                     ),
                 })}
             >
-                <input {...getInputProps()} />
+                {/* react-dropzone sizes the input inline, and those rules win
+                    over the class. Only `position: absolute` is needed here:
+                    it takes the input out of flow so the flex row above stops
+                    reserving a gap for it. */}
+                <input {...getInputProps({ className: visuallyHidden })} />
                 <IconCircle size="md">
                     <UploadIcon
                         width={24}

@@ -1315,6 +1315,10 @@ export default interface Resources {
         "descriptionPlaceholder": "Merchant description...",
         "dragAndDrop": "Drag and drop files here",
         "dropHere": "Drop image here",
+        "errors": {
+          "fileRejected": "This file was rejected — check the requirements above.",
+          "uploadFailed": "Upload failed"
+        },
         "heroHint": "The main image shown at the top of your Explorer page.",
         "heroImage": "Hero image",
         "invalidUrl": "Enter a valid image URL (https://…)",
@@ -1731,6 +1735,11 @@ export default interface Resources {
       },
       "currency": {
         "label": "Choose your preferred currency",
+        "options": {
+          "eur": "EUR",
+          "gbp": "GBP",
+          "usd": "USD"
+        },
         "title": "Currency"
       },
       "demo": {

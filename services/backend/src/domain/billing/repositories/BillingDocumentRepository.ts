@@ -1,4 +1,4 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgRunner } from "@backend-infrastructure";
 import { isUniqueViolation } from "@backend-utils";
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { and, asc, desc, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
@@ -8,10 +8,6 @@ import {
     billingDocumentsTable,
 } from "../db/schema";
 import type { BillingDocumentDetails, BillingDocumentKind } from "../schemas";
-
-/** Postgres transaction handle as passed to `db.transaction(async (tx) => …)`. */
-type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type PgRunner = typeof db | PgTx;
 
 // Human-facing reference prefix per kind (billing-feature-plan.md §1/§3.2).
 const REFERENCE_PREFIX: Record<BillingDocumentKind, string> = {

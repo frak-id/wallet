@@ -1,3 +1,4 @@
+import { log } from "@backend-infrastructure/external/logger";
 import type { AirtableRequestBody } from "./config";
 
 /**
@@ -40,7 +41,7 @@ export function mapToAirtableFields(
             }
         } else {
             // If no mapping found, log a warning but still include the field
-            console.warn(`No Airtable field mapping found for key: ${key}`);
+            log.warn({ key }, "No Airtable field mapping found for key");
             mappedFields[key] = value;
         }
     }

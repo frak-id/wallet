@@ -605,20 +605,15 @@ export async function updateMerchantExplorerSettings(
     }
 
     const hasHeroExtras = settings.heroImageUrls.length > 0;
-    const config =
-        settings.heroImageUrl ||
-        hasHeroExtras ||
-        settings.logoUrl ||
-        settings.description
-            ? {
-                  heroImageUrl: settings.heroImageUrl || undefined,
-                  heroImageUrls: hasHeroExtras
-                      ? settings.heroImageUrls
-                      : undefined,
-                  logoUrl: settings.logoUrl || undefined,
-                  description: settings.description || undefined,
-              }
-            : undefined;
+    // Always send the config object (matches the business app): the backend
+    // replaces the whole explorer config, so omitting it when every field is
+    // empty would fail to clear a previously-set logo/hero on the last removal.
+    const config = {
+        heroImageUrl: settings.heroImageUrl || undefined,
+        heroImageUrls: hasHeroExtras ? settings.heroImageUrls : undefined,
+        logoUrl: settings.logoUrl || undefined,
+        description: settings.description || undefined,
+    };
 
     try {
         const { error } = await backendApi.business

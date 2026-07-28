@@ -27,6 +27,15 @@ type PreparedSettlement = {
     errors: { assetLogId: string; error: string }[];
 };
 
+type BankBatchOutcome = {
+    settledCount: number;
+    failedCount: number;
+    txHashes: Hex[];
+    errors: { assetLogId: string; error: string }[];
+    banks: Set<Address>;
+    settledAssetLogIds: string[];
+};
+
 export class SettlementService {
     constructor(
         private readonly assetLogRepository: AssetLogRepository,
@@ -90,8 +99,13 @@ export class SettlementService {
             existing.assetLogIds.push(prepared.validAssetLogIds[index]);
         });
 
-        for (const [bank, bankBatch] of rewardsByBank.entries()) {
-            await this.settleBankBatch(bank, bankBatch, result);
+        const partials = await Promise.all(
+            [...rewardsByBank.entries()].map(([bank, bankBatch]) =>
+                this.settleBankBatch(bank, bankBatch)
+            )
+        );
+        for (const partial of partials) {
+            this.mergeBankBatchOutcome(result, partial);
         }
 
         log.info(
@@ -108,9 +122,17 @@ export class SettlementService {
 
     private async settleBankBatch(
         bank: Address,
-        bankBatch: { rewards: PushRewardParams[]; assetLogIds: string[] },
-        result: SettlementResult
-    ): Promise<void> {
+        bankBatch: { rewards: PushRewardParams[]; assetLogIds: string[] }
+    ): Promise<BankBatchOutcome> {
+        const outcome: BankBatchOutcome = {
+            settledCount: 0,
+            failedCount: 0,
+            txHashes: [],
+            errors: [],
+            banks: new Set(),
+            settledAssetLogIds: [],
+        };
+
         await this.assetLogRepository.markSettlementProcessing(
             bankBatch.assetLogIds
         );
@@ -141,11 +163,11 @@ export class SettlementService {
                 errorMessage
             );
             this.recordBatchFailure(
-                result,
+                outcome,
                 bankBatch.assetLogIds,
                 errorMessage
             );
-            return;
+            return outcome;
         }
 
         if (txResult.status === "confirmed") {
@@ -156,11 +178,11 @@ export class SettlementService {
             );
             // Report ids as settled only after the status write commits, so
             // callers never notify on a reward whose persistence failed.
-            result.txHashes.push(txResult.txHash);
-            result.banks.add(bank);
-            result.settledCount += bankBatch.rewards.length;
-            result.settledAssetLogIds.push(...bankBatch.assetLogIds);
-            return;
+            outcome.txHashes.push(txResult.txHash);
+            outcome.banks.add(bank);
+            outcome.settledCount += bankBatch.rewards.length;
+            outcome.settledAssetLogIds.push(...bankBatch.assetLogIds);
+            return outcome;
         }
 
         if (txResult.status === "reverted") {
@@ -169,11 +191,11 @@ export class SettlementService {
                 "Settlement transaction reverted on-chain"
             );
             this.recordBatchFailure(
-                result,
+                outcome,
                 bankBatch.assetLogIds,
                 "Settlement transaction reverted on-chain"
             );
-            return;
+            return outcome;
         }
 
         // status === "timeout": the tx was broadcast but its receipt is unknown.
@@ -193,23 +215,38 @@ export class SettlementService {
                 "Failed to re-persist settlement tx hash after timeout"
             );
         }
-        result.txHashes.push(txResult.txHash);
-        result.banks.add(bank);
+        outcome.txHashes.push(txResult.txHash);
+        outcome.banks.add(bank);
         log.warn(
             { bank, txHash: txResult.txHash, count: bankBatch.rewards.length },
             "Settlement receipt pending; left for reconciliation"
         );
+        return outcome;
     }
 
     private recordBatchFailure(
-        result: SettlementResult,
+        outcome: BankBatchOutcome,
         assetLogIds: string[],
         error: string
     ): void {
         for (const assetLogId of assetLogIds) {
-            result.errors.push({ assetLogId, error });
+            outcome.errors.push({ assetLogId, error });
         }
-        result.failedCount += assetLogIds.length;
+        outcome.failedCount += assetLogIds.length;
+    }
+
+    private mergeBankBatchOutcome(
+        result: SettlementResult,
+        outcome: BankBatchOutcome
+    ): void {
+        result.settledCount += outcome.settledCount;
+        result.failedCount += outcome.failedCount;
+        result.txHashes.push(...outcome.txHashes);
+        result.errors.push(...outcome.errors);
+        result.settledAssetLogIds.push(...outcome.settledAssetLogIds);
+        for (const bank of outcome.banks) {
+            result.banks.add(bank);
+        }
     }
 
     /**

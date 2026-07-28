@@ -35,7 +35,7 @@ export class AirtableRepository {
     private readonly slackApi?: KyInstance;
 
     constructor() {
-        const apiKey = process.env.AIRTABLE_API_KEY ?? "no-airtable-api-key";
+        const apiKey = process.env.AIRTABLE_API_KEY;
         if (!apiKey) {
             throw new Error(
                 "AIRTABLE_API_KEY environment variable is required"

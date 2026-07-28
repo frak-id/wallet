@@ -23,29 +23,25 @@ export function ButtonTab({
     const { t } = useTranslation();
 
     return (
-        <s-section>
-            <s-box>
-                {isThemeHasFrakButton && (
-                    <>
-                        <Activated
-                            text={t("appearance.shareButton.activated")}
-                        />
-                        <s-box paddingBlockStart="small">
-                            {firstProduct ? (
-                                <ExternalLink
-                                    href={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
-                                >
-                                    {t("appearance.shareButton.link")}
-                                </ExternalLink>
-                            ) : (
-                                t("appearance.shareButton.noProduct")
-                            )}
-                        </s-box>
-                    </>
-                )}
-                {!isThemeHasFrakButton && <ButtonNotActivated />}
-            </s-box>
-        </s-section>
+        <s-box>
+            {isThemeHasFrakButton && (
+                <>
+                    <Activated text={t("appearance.shareButton.activated")} />
+                    <s-box paddingBlockStart="small">
+                        {firstProduct ? (
+                            <ExternalLink
+                                href={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
+                            >
+                                {t("appearance.shareButton.link")}
+                            </ExternalLink>
+                        ) : (
+                            t("appearance.shareButton.noProduct")
+                        )}
+                    </s-box>
+                </>
+            )}
+            {!isThemeHasFrakButton && <ButtonNotActivated />}
+        </s-box>
     );
 }
 

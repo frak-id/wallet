@@ -1,4 +1,4 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgRunner, type PgTx } from "@backend-infrastructure";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
@@ -8,13 +8,8 @@ import type { IdentityType } from "../schemas";
 type IdentityGroupSelect = typeof identityGroupsTable.$inferSelect;
 type IdentityNodeSelect = typeof identityNodesTable.$inferSelect;
 
-/**
- * Postgres transaction handle as passed to `db.transaction(async (trx) => …)`.
- * The email attach/unlink writes accept one so the verify flow can commit them
- * atomically with the challenge consumption.
- */
-type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type PgRunner = typeof db | PgTx;
+// The email attach/unlink writes accept a tx so the verify flow can commit
+// them atomically with the challenge consumption.
 
 export class IdentityRepository {
     private readonly identityGroupIdCache = new LRUCache<
@@ -332,8 +327,8 @@ export class IdentityRepository {
         );
     }
 
-    async createGroup(): Promise<IdentityGroupSelect> {
-        const [result] = await db
+    async createGroup(runner: PgRunner = db): Promise<IdentityGroupSelect> {
+        const [result] = await runner
             .insert(identityGroupsTable)
             .values({})
             .returning();
@@ -343,19 +338,32 @@ export class IdentityRepository {
         return result;
     }
 
-    async addNode(params: {
-        groupId: string;
-        type: IdentityType;
-        value: string;
-        merchantId?: string;
-    }): Promise<IdentityNodeSelect> {
+    /**
+     * Rolls back the loser side of a concurrent `resolve()` race: both
+     * racers create a group before attaching a node, only one wins.
+     */
+    async deleteGroup(groupId: string, runner: PgRunner = db): Promise<void> {
+        await runner
+            .delete(identityGroupsTable)
+            .where(eq(identityGroupsTable.id, groupId));
+    }
+
+    async addNode(
+        params: {
+            groupId: string;
+            type: IdentityType;
+            value: string;
+            merchantId?: string;
+        },
+        runner: PgRunner = db
+    ): Promise<IdentityNodeSelect> {
         const normalizedValue = this.normalizeValue(params.type, params.value);
         const cacheKey = this.buildIdentityCacheKey(
             params.type,
             normalizedValue,
             params.merchantId
         );
-        const [result] = await db
+        const [result] = await runner
             .insert(identityNodesTable)
             .values({
                 groupId: params.groupId,
@@ -379,7 +387,7 @@ export class IdentityRepository {
         }
 
         if (!result) {
-            const existing = await db.query.identityNodesTable.findFirst({
+            const existing = await runner.query.identityNodesTable.findFirst({
                 where: and(
                     eq(identityNodesTable.identityType, params.type),
                     eq(identityNodesTable.identityValue, normalizedValue),

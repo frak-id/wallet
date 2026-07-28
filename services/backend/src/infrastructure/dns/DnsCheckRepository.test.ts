@@ -62,6 +62,56 @@ describe("DnsCheckRepository", () => {
             );
             expect(result).toBe("example.com");
         });
+
+        it("should keep the host of an http:// domain (not the scheme)", () => {
+            expect(
+                dnsCheckRepository.getNormalizedDomain("http://www.example.com")
+            ).toBe("example.com");
+        });
+
+        it("should be case-insensitive on the scheme and host", () => {
+            expect(
+                dnsCheckRepository.getNormalizedDomain(
+                    "HTTPS://WWW.Example.COM"
+                )
+            ).toBe("example.com");
+        });
+
+        it("should trim surrounding whitespace", () => {
+            expect(
+                dnsCheckRepository.getNormalizedDomain(
+                    "  https://example.com  "
+                )
+            ).toBe("example.com");
+        });
+
+        it.each(["https://", "http://", "https:/", "", "   "])(
+            "should reject the partial input %j with a 400",
+            (input) => {
+                expect(() =>
+                    dnsCheckRepository.getNormalizedDomain(input)
+                ).toThrowError(
+                    expect.objectContaining({
+                        status: 400,
+                        code: "INVALID_DOMAIN",
+                    })
+                );
+            }
+        );
+
+        it.each(["ftp://example.com", "javascript://example.com"])(
+            "should reject the non-http(s) scheme %j",
+            (input) => {
+                expect(() =>
+                    dnsCheckRepository.getNormalizedDomain(input)
+                ).toThrowError(
+                    expect.objectContaining({
+                        status: 400,
+                        code: "INVALID_DOMAIN",
+                    })
+                );
+            }
+        );
     });
 
     describe("getDnsTxtString", () => {

@@ -30,7 +30,7 @@ export default interface Resources {
         },
         "retry": "Try again",
         "syncFailed": {
-          "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.",
+          "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device - not a problem with your account.",
           "step1": "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.",
           "step2": "Update Google Play Services, then restart your phone and try again.",
           "step3": "Still stuck? Sign in on another device, or recover your wallet from the settings.",
@@ -416,7 +416,9 @@ export default interface Resources {
     },
     "explorer": {
       "card": {
-        "until": "Until {{date}}"
+        "until": "Until {{date}}",
+        "views_one": "{{count}} view",
+        "views_other": "{{count}} views"
       },
       "detail": {
         "close": "Close",
@@ -464,7 +466,26 @@ export default interface Resources {
         "recent": "Most recent",
         "recommended": "Recommended",
         "reward": "Highest reward",
-        "title": "Sort by"
+        "title": "Sort by",
+        "views": "Most viewed"
+      }
+    },
+    "favorites": {
+      "add": "Add to favorites",
+      "empty": {
+        "description": "Tap the heart on a brand to find it here.",
+        "title": "No favorites yet"
+      },
+      "error": {
+        "description": "Something went wrong while loading your favorite brands. Please try again.",
+        "retry": "Try again",
+        "title": "Couldn't load your favorites"
+      },
+      "pageTitle": "My favorite brands",
+      "remove": "Remove from favorites",
+      "unavailable": {
+        "description": "We couldn't find your favorite brands in the current list. They may no longer be available.",
+        "title": "Favorites unavailable"
       }
     },
     "installCode": {
@@ -1013,6 +1034,7 @@ export default interface Resources {
         "changeEmail": "Change email address",
         "currentDeviceConnected": "Connected",
         "enableNotifications": "Enable notifications",
+        "favorites": "My favorite brands",
         "helpSupport": "Help & support",
         "lastConnection": "Last connection",
         "manageNotifications": "Manage notifications",
@@ -1131,7 +1153,7 @@ export default interface Resources {
             "authorise": "Delete recovery",
             "cancelled": "Authorization was cancelled.",
             "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
-            "description": "This disables your recovery key on-chain and deletes your encrypted backup. This can't be undone — you'll have to set recovery up again from scratch.",
+            "description": "This disables your recovery key on-chain and deletes your encrypted backup. This can't be undone - you'll have to set recovery up again from scratch.",
             "failed": "Recovery deletion failed.",
             "failedDescription": "Something went wrong while deleting your recovery. You can try again.",
             "retry": "Try again",
@@ -1164,7 +1186,7 @@ export default interface Resources {
           "startLabel": "Start date (optional)",
           "title": "Protect your recovery",
           "toggle": "Toggle password visibility",
-          "warning": "Choose a strong password. We can never reset or recover it — if you forget it, your backup is permanently useless."
+          "warning": "Choose a strong password. We can never reset or recover it - if you forget it, your backup is permanently useless."
         },
         "refresh": {
           "replaceNote": "This replaces your current recovery key and password. Your old backup stops working once you authorize the change.",

@@ -14,13 +14,11 @@ import type {
     WsSignatureRequest,
     WsSignatureResponseRequest,
 } from "../../domain/pairing/dto/WebsocketDirectMessage";
-import type {
-    WsMergeCompleted,
-    WsTopicMessage,
-} from "../../domain/pairing/dto/WebsocketTopicMessage";
+import type { WsMergeCompleted } from "../../domain/pairing/dto/WebsocketTopicMessage";
 import type { PairingRepository } from "../../domain/pairing/repositories/PairingRepository";
 import type { PairingSignatureRepository } from "../../domain/pairing/repositories/PairingSignatureRepository";
 import { originTopic, targetTopic } from "../../domain/pairing/topics";
+import { sendTopic } from "./wsHelpers";
 
 /** Server-driven topic publisher that doesn't require an `ElysiaWS` sender. */
 type TopicPublisher = (topic: string, message: object) => void;
@@ -264,8 +262,9 @@ export class PairingRouterOrchestrator {
             return;
         }
 
-        this.sendTopic(
+        sendTopic(
             ws,
+            this.pairingRepository,
             wallet.pairingId,
             {
                 type: "ping",
@@ -317,8 +316,9 @@ export class PairingRouterOrchestrator {
             kind: message.payload.signatureKind,
         });
 
-        this.sendTopic(
+        sendTopic(
             ws,
+            this.pairingRepository,
             wallet.pairingId,
             {
                 type: "signature-request",
@@ -357,8 +357,9 @@ export class PairingRouterOrchestrator {
             return;
         }
 
-        this.sendTopic(
+        sendTopic(
             ws,
+            this.pairingRepository,
             message.payload.pairingId,
             {
                 type: "pong",
@@ -395,8 +396,9 @@ export class PairingRouterOrchestrator {
                 : undefined,
         });
 
-        this.sendTopic(
+        sendTopic(
             ws,
+            this.pairingRepository,
             message.payload.pairingId,
             {
                 type: "signature-response",
@@ -455,8 +457,9 @@ export class PairingRouterOrchestrator {
         const oppositeTopic: "origin" | "target" =
             wallet.type === "distant-webauthn" ? "target" : "origin";
 
-        this.sendTopic(
+        sendTopic(
             ws,
+            this.pairingRepository,
             pairingId,
             {
                 type: "signature-reject",
@@ -506,23 +509,5 @@ export class PairingRouterOrchestrator {
                 payload
             );
         }
-    }
-
-    private sendTopic(
-        ws: ElysiaWS,
-        pairingId: string,
-        message: WsTopicMessage,
-        topic: "origin" | "target",
-        opts: { skipLastActiveUpdate?: boolean } = {}
-    ): void {
-        if (!opts.skipLastActiveUpdate) {
-            this.pairingRepository.touchLastActiveBatched(pairingId);
-        }
-        ws.publish(
-            topic === "origin"
-                ? originTopic(pairingId)
-                : targetTopic(pairingId),
-            message
-        );
     }
 }

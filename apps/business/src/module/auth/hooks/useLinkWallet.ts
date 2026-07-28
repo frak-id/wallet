@@ -9,7 +9,9 @@ import {
     extractAuthErrorCode,
     extractAuthErrorMessage,
 } from "@/module/auth/utils/authError";
+import { merchantQueryKey } from "@/module/merchant/queries/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
+import { authAccountQueryKey } from "./queryKeys";
 
 /** Synthetic code for a wallet signature the user dismissed in the modal. */
 const SIGNATURE_CANCELLED_CODE = "WALLET_SIGNATURE_CANCELLED";
@@ -96,10 +98,12 @@ export function useLinkWallet() {
             }
 
             useAuthStore.getState().setWallet(data.wallet);
-            await queryClient.invalidateQueries({ queryKey: ["merchant"] });
+            await queryClient.invalidateQueries({
+                queryKey: merchantQueryKey(),
+            });
             // Refresh the linked-credentials view (now has a wallet).
             await queryClient.invalidateQueries({
-                queryKey: ["auth", "account"],
+                queryKey: authAccountQueryKey(),
             });
 
             return data;

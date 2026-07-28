@@ -31,6 +31,11 @@ const merchantIdCache = new LRUCache<string, string>({
     ttl: 5 * 60_000,
 });
 
+// Metafield-fallback hits (backend unreachable) are cached only briefly so a
+// transient outage doesn't pin a stale value for the full TTL — recovery is
+// near-immediate once the backend is reachable again.
+const FALLBACK_CACHE_TTL_MS = 30_000;
+
 const merchantInfoCache = new LRUCache<string, MerchantResolveResponse>({
     max: 512,
     ttl: 5 * 60_000,
@@ -56,11 +61,16 @@ const klaviyoShareSyncedShops = new LRUCache<string, boolean>({
  *
  * Resolution order:
  *  1. In-memory LRU cache
- *  2. Shop metafield (frak.merchant_id)
- *  3. Frak backend API (by stable normalizedDomain)
+ *  2. Frak backend API (by stable normalizedDomain) — the source of truth
+ *  3. Shop metafield (frak.merchant_id), only if the backend is UNREACHABLE
  *
- * On successful backend resolve, writes the merchantId to the shop
- * metafield so listener.liquid can read it via Liquid.
+ * The metafield is a Liquid-readable mirror of the backend id, not an
+ * authority: trusting it first lets a value left over from a previous backend
+ * dataset (e.g. a local DB reseed) shadow the real id and fail authorization
+ * downstream. So we resolve from the backend and reconcile the metafield,
+ * falling back to the last-known metafield value only when the backend can't
+ * be reached — never when it authoritatively reports the shop isn't
+ * registered (a 404), which would re-introduce the stale-id bug.
  */
 export async function resolveMerchantId(
     context: AuthenticatedContext
@@ -75,11 +85,32 @@ export async function resolveMerchantId(
         return cached;
     }
 
-    // 2. Check metafield
+    // 2. Resolve from the Frak backend using the stable domain
+    const result = await resolveMerchantFromBackend(shop);
+    if (result.status === "resolved") {
+        const merchantId = result.info.merchantId;
+        merchantInfoCache.set(cacheKey, result.info);
+        merchantIdCache.set(cacheKey, merchantId);
+        setRequestContext({ merchantId });
+        syncMerchantIdMetafield(context, merchantId);
+        return merchantId;
+    }
+
+    // Authoritative "not registered" (404): do NOT fall back to the metafield.
+    // A value from a previous backend dataset would shadow reality and 403
+    // downstream — exactly the bug this resolution order fixes.
+    if (result.status === "not-found") {
+        return null;
+    }
+
+    // 3. Backend unreachable — fall back to the last-known metafield value so
+    //    the app still functions instead of losing the merchant entirely.
     try {
         const metafieldValue = await getMerchantIdMetafield(context);
         if (metafieldValue) {
-            merchantIdCache.set(cacheKey, metafieldValue);
+            merchantIdCache.set(cacheKey, metafieldValue, {
+                ttl: FALLBACK_CACHE_TTL_MS,
+            });
             setRequestContext({ merchantId: metafieldValue });
             return metafieldValue;
         }
@@ -87,22 +118,29 @@ export async function resolveMerchantId(
         log.error({ err: error }, "merchantId metafield read failed");
     }
 
-    // 3. Fetch from Frak backend using stable domain
-    const info = await resolveMerchantFromBackend(shop);
-    if (!info) {
-        return null;
-    }
-    const merchantId = info.merchantId;
-    merchantInfoCache.set(cacheKey, info);
+    return null;
+}
 
-    // Cache + persist to metafield for listener.liquid
-    merchantIdCache.set(cacheKey, merchantId);
-    setRequestContext({ merchantId });
-    writeMerchantIdMetafield(context, merchantId).catch((error) => {
-        log.error({ err: error }, "merchantId metafield write failed");
-    });
-
-    return merchantId;
+/**
+ * Keep the Liquid-readable `frak.merchant_id` metafield in sync with the
+ * backend-resolved id, writing only when it drifted. Fire-and-forget so the
+ * request path isn't blocked on a metafield round-trip.
+ */
+function syncMerchantIdMetafield(
+    context: AuthenticatedContext,
+    merchantId: string
+): void {
+    void (async () => {
+        try {
+            const current = await getMerchantIdMetafield(context);
+            if (current === merchantId) {
+                return;
+            }
+            await writeMerchantIdMetafield(context, merchantId);
+        } catch (error) {
+            log.error({ err: error }, "merchantId metafield sync failed");
+        }
+    })();
 }
 
 /**
@@ -120,10 +158,14 @@ export async function resolveMerchantInfo(
         return cached;
     }
 
-    const info = await resolveMerchantFromBackend(shop);
-    if (!info) {
+    // No metafield fallback here (unlike resolveMerchantId): the mirror stores
+    // only the id, not name/productId/domain — so on a backend outage the full
+    // info is genuinely unavailable and callers degrade to empty by design.
+    const result = await resolveMerchantFromBackend(shop);
+    if (result.status !== "resolved") {
         return null;
     }
+    const info = result.info;
 
     merchantInfoCache.set(cacheKey, info);
     // Also populate the id-only cache
@@ -160,38 +202,61 @@ export async function clearMerchantCache(
 async function resolveMerchantFromBackend(shop: {
     normalizedDomain: string;
     myshopifyDomain: string;
-}): Promise<MerchantResolveResponse | null> {
+}): Promise<BackendResolveResult> {
     const primary = await fetchMerchantFromBackend(shop.normalizedDomain);
-    if (primary) return primary;
+    if (primary.status === "resolved") return primary;
+    if (shop.myshopifyDomain === shop.normalizedDomain) return primary;
 
-    if (shop.myshopifyDomain === shop.normalizedDomain) return null;
-    return fetchMerchantFromBackend(shop.myshopifyDomain);
+    const fallback = await fetchMerchantFromBackend(shop.myshopifyDomain);
+    if (fallback.status === "resolved") return fallback;
+
+    // Prefer "unreachable" when either lookup couldn't reach the backend, so
+    // the caller falls back to the metafield rather than treating a transient
+    // outage as an authoritative "not registered".
+    return primary.status === "unreachable" || fallback.status === "unreachable"
+        ? { status: "unreachable" }
+        : { status: "not-found" };
 }
+
+/**
+ * Outcome of a backend merchant lookup. Distinguishes an authoritative
+ * "not registered" (404) from a "couldn't reach the backend" failure so the
+ * caller only falls back to the stale metafield mirror on `unreachable`.
+ */
+type BackendResolveResult =
+    | { status: "resolved"; info: MerchantResolveResponse }
+    | { status: "not-found" }
+    | { status: "unreachable" };
 
 /**
  * Fetch merchant info from the Frak backend by domain.
  */
 async function fetchMerchantFromBackend(
     domain: string
-): Promise<MerchantResolveResponse | null> {
+): Promise<BackendResolveResult> {
     try {
         const { data, error } = await backendApi.user.merchant.resolve.get({
             query: { domain },
         });
         if (error) {
-            // A 404 here is the routine "merchant not registered yet" case,
-            // not a failure — don't log it at error level.
+            // A 404 is the routine, authoritative "merchant not registered
+            // yet" case; any other status means the backend answered but
+            // failed, treated as unreachable (don't trust it over the
+            // metafield).
             log[levelForStatus(error.status)](
                 { domain, status: error.status },
                 "merchant backend resolve failed"
             );
-            return null;
+            return error.status === 404
+                ? { status: "not-found" }
+                : { status: "unreachable" };
         }
 
-        return data as MerchantResolveResponse;
+        if (!data) return { status: "not-found" };
+        return { status: "resolved", info: data as MerchantResolveResponse };
     } catch (error) {
         log.error({ err: error, domain }, "merchant backend resolve error");
-        return null;
+        return { status: "unreachable" };
     }
 }
 

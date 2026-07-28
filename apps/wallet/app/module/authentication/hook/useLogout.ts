@@ -13,6 +13,7 @@ function cleanLocalStorage() {
         "frak_sdkSession",
         "frak_user",
         "frak_userSetupLater",
+        "frak_demoPrivateKey",
     ];
     for (const item of localStorageItems) {
         window.localStorage.removeItem(item);

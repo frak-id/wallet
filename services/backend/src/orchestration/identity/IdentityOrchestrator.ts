@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { db, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { type Address, isAddressEqual } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
@@ -26,20 +26,41 @@ export class IdentityOrchestrator {
             return { groupId: existingGroup.id, isNew: false };
         }
 
-        const newGroup = await this.identityRepository.createGroup();
-        await this.identityRepository.addNode({
-            groupId: newGroup.id,
-            type: node.type,
-            value: node.value,
-            merchantId: "merchantId" in node ? node.merchantId : undefined,
+        // Two concurrent resolves for a new identity can both see no existing
+        // group; only one wins the unique constraint on the node insert. Run in
+        // a transaction so the loser can roll back its orphaned empty group.
+        return db.transaction(async (tx) => {
+            const newGroup = await this.identityRepository.createGroup(tx);
+            const attachedNode = await this.identityRepository.addNode(
+                {
+                    groupId: newGroup.id,
+                    type: node.type,
+                    value: node.value,
+                    merchantId:
+                        "merchantId" in node ? node.merchantId : undefined,
+                },
+                tx
+            );
+
+            if (attachedNode.groupId !== newGroup.id) {
+                // Lost the race: delete our now-orphaned empty group.
+                await this.identityRepository.deleteGroup(newGroup.id, tx);
+
+                log.debug(
+                    { groupId: attachedNode.groupId, nodeType: node.type },
+                    "Lost identity group creation race; reusing existing group"
+                );
+
+                return { groupId: attachedNode.groupId, isNew: false };
+            }
+
+            log.debug(
+                { groupId: newGroup.id, nodeType: node.type },
+                "Created new identity group"
+            );
+
+            return { groupId: newGroup.id, isNew: true };
         });
-
-        log.debug(
-            { groupId: newGroup.id, nodeType: node.type },
-            "Created new identity group"
-        );
-
-        return { groupId: newGroup.id, isNew: true };
     }
 
     async associate(

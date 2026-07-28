@@ -9,6 +9,9 @@ import {
     keccak256,
     toHex,
 } from "viem";
+// Leaf import, not the `@backend-utils` barrel: the barrel re-exports modules
+// that import back into `infrastructure/` (see the cycle note in `src/index.ts`).
+import { HttpError } from "../../utils/httpError";
 
 /**
  * Identity a DNS TXT proof binds to: a wallet address (SIWE registration)
@@ -43,14 +46,39 @@ function setupCodeSubject(
  */
 export class DnsCheckRepository {
     /**
-     * Get the normalized domain from a given domain
+     * Reduce a user-supplied domain to its bare host (no scheme, no `www.`,
+     * no path). Invalid input throws a 400 rather than a raw `new URL()`
+     * TypeError, since this runs on values read while the user is still typing.
+     *
+     * The return value is a frozen hash input: setup codes and product ids are
+     * keccak'd from it (see `isValidDomain`, `scripts/genSetupCode.ts`), so
+     * changing what an already-valid domain normalizes to invalidates issued
+     * codes and orphans stored merchants. Widening what is accepted is safe.
      */
     getNormalizedDomain(domain: string) {
-        const baseDomainUrl = domain.startsWith("https://")
-            ? domain
-            : `https://${domain}`;
-        const domainHost = new URL(baseDomainUrl).host;
-        return domainHost.replace("www.", "");
+        const trimmed = domain.trim();
+        const invalid = () =>
+            HttpError.badRequest(
+                "INVALID_DOMAIN",
+                `Invalid domain: "${domain}"`
+            );
+
+        // Detect the scheme rather than matching `https://` alone, otherwise
+        // `http://example.com` is prefixed into `https://http://example.com`
+        // and normalizes to the host `http`.
+        const scheme = trimmed.match(/^([a-z][a-z0-9+.-]*):\/\//i)?.[1];
+        if (scheme && !/^https?$/i.test(scheme)) throw invalid();
+        // A half-typed `https:` / `https:/` has no `://` to match above; left
+        // alone it would normalize to the bogus host `https`. Matches a bare
+        // scheme only, so `example.com:8080` still takes the prefix path.
+        if (!scheme && /^https?:\/?$/i.test(trimmed)) throw invalid();
+        const baseDomainUrl = scheme ? trimmed : `https://${trimmed}`;
+
+        try {
+            return new URL(baseDomainUrl).host.replace("www.", "");
+        } catch {
+            throw invalid();
+        }
     }
 
     /**

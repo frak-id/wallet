@@ -3,6 +3,7 @@ import type { DeepLinkEventMap } from "./deepLink";
 import type { DiagnosticsEventMap } from "./diagnostics";
 import type { EmbeddedWalletEventMap } from "./embeddedWallet";
 import type { ExplorerEventMap } from "./explorer";
+import type { FavoritesEventMap } from "./favorites";
 import type { InstallEventMap } from "./install";
 import type { ListenerMiscEventMap } from "./listener";
 import type { ModalEventMap, WalletModalEventMap } from "./modal";
@@ -20,6 +21,7 @@ export type { DeepLinkEventMap, DeepLinkSource } from "./deepLink";
 export type { AppErrorSource, DiagnosticsEventMap } from "./diagnostics";
 export type { EmbeddedWalletEventMap } from "./embeddedWallet";
 export type { ExplorerEventMap } from "./explorer";
+export type { FavoritesEventMap } from "./favorites";
 export type {
     FlowEndExtras,
     FlowEvents,
@@ -82,4 +84,5 @@ export type EventMap = AuthEventMap &
     DeepLinkEventMap &
     DiagnosticsEventMap &
     WalletMergeEventMap &
-    ExplorerEventMap;
+    ExplorerEventMap &
+    FavoritesEventMap;

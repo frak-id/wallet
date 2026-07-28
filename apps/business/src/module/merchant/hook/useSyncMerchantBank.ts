@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantBankQueryKey } from "@/module/merchant/queries/queryKeys";
 
 export function useSyncMerchantBank({ merchantId }: { merchantId: string }) {
     const isDemoMode = useIsDemoMode();
@@ -29,7 +30,7 @@ export function useSyncMerchantBank({ merchantId }: { merchantId: string }) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ["merchant", merchantId, "bank"],
+                queryKey: merchantBankQueryKey(merchantId),
             });
         },
     });

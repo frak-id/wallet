@@ -20,7 +20,7 @@ function computeNextResetAt(durationInSeconds: number): string {
     return new Date(nextReset).toISOString();
 }
 
-function processbudgetUsed(
+function processBudgetUsed(
     config: BudgetConfig,
     used: BudgetUsed,
     amount: number
@@ -72,7 +72,7 @@ function processbudgetUsed(
 
 /**
  * Reverse a prior budget consumption. Mirrors the window-reset rule in
- * {@link processbudgetUsed}: for a time-windowed budget whose window has
+ * {@link processBudgetUsed}: for a time-windowed budget whose window has
  * already elapsed (`resetAt < now`), the amount being restored was spent in
  * that now-expired window, so the window is reset to zero rather than deducted
  * — subtracting would eat into the fresh window and under-count its real
@@ -111,6 +111,10 @@ export function processBudgetRestore(
 
     return updatedUsed;
 }
+
+// Caps concurrent budget-restore transactions so `restoreBudgetsBatch`
+// (unbounded campaigns from the expiry cron) can't exhaust the connection pool.
+const RESTORE_BUDGET_CONCURRENCY = 5;
 
 export class CampaignRuleRepository {
     private readonly activeRulesCache = new LRUCache<
@@ -207,6 +211,8 @@ export class CampaignRuleRepository {
         return result;
     }
 
+    // `fromStatuses` re-checks the status atomically (TOCTOU guard, see
+    // `updateStatus` below); 0 rows means it changed concurrently.
     async update(
         id: string,
         updates: Partial<
@@ -214,12 +220,20 @@ export class CampaignRuleRepository {
                 CampaignRuleInsert,
                 "name" | "priority" | "rule" | "budgetConfig" | "expiresAt"
             >
-        >
+        >,
+        fromStatuses?: CampaignStatus[]
     ): Promise<CampaignRuleSelect | null> {
         const [result] = await db
             .update(campaignRulesTable)
             .set({ ...updates, updatedAt: new Date() })
-            .where(eq(campaignRulesTable.id, id))
+            .where(
+                fromStatuses
+                    ? and(
+                          eq(campaignRulesTable.id, id),
+                          inArray(campaignRulesTable.status, fromStatuses)
+                      )
+                    : eq(campaignRulesTable.id, id)
+            )
             .returning();
         if (result) {
             this.invalidateMerchantCache(result.merchantId);
@@ -227,8 +241,11 @@ export class CampaignRuleRepository {
         return result ?? null;
     }
 
+    // `status = ANY(fromStatuses)` guards against a concurrent transition
+    // (TOCTOU race); 0 rows affected is treated as a conflict by callers.
     async updateStatus(
         id: string,
+        fromStatuses: CampaignStatus[],
         status: CampaignStatus,
         extras?: { publishedAt?: Date; deactivatedAt?: Date | null }
     ): Promise<CampaignRuleSelect | null> {
@@ -239,7 +256,12 @@ export class CampaignRuleRepository {
                 updatedAt: new Date(),
                 ...extras,
             })
-            .where(eq(campaignRulesTable.id, id))
+            .where(
+                and(
+                    eq(campaignRulesTable.id, id),
+                    inArray(campaignRulesTable.status, fromStatuses)
+                )
+            )
             .returning();
         if (result) {
             this.invalidateMerchantCache(result.merchantId);
@@ -248,25 +270,45 @@ export class CampaignRuleRepository {
     }
 
     async publish(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, "active", { publishedAt: new Date() });
+        return this.updateStatus(id, ["draft"], "active", {
+            publishedAt: new Date(),
+        });
     }
 
     async pause(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, "paused", { deactivatedAt: new Date() });
+        return this.updateStatus(id, ["active"], "paused", {
+            deactivatedAt: new Date(),
+        });
     }
 
     async resume(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, "active", { deactivatedAt: null });
+        return this.updateStatus(id, ["paused"], "active", {
+            deactivatedAt: null,
+        });
     }
 
     async archive(id: string): Promise<CampaignRuleSelect | null> {
-        return this.updateStatus(id, "archived", { deactivatedAt: new Date() });
+        return this.updateStatus(
+            id,
+            ["draft", "active", "paused"],
+            "archived",
+            {
+                deactivatedAt: new Date(),
+            }
+        );
     }
 
+    // Same TOCTOU guard: status is re-checked atomically in the DELETE so a
+    // concurrent publish can't lose a just-live campaign's config.
     async delete(id: string): Promise<boolean> {
         const result = await db
             .delete(campaignRulesTable)
-            .where(eq(campaignRulesTable.id, id))
+            .where(
+                and(
+                    eq(campaignRulesTable.id, id),
+                    eq(campaignRulesTable.status, "draft")
+                )
+            )
             .returning({
                 id: campaignRulesTable.id,
                 merchantId: campaignRulesTable.merchantId,
@@ -304,7 +346,7 @@ export class CampaignRuleRepository {
             }
 
             const currentUsed = campaign.budgetUsed ?? {};
-            const result = processbudgetUsed(
+            const result = processBudgetUsed(
                 campaign.budgetConfig,
                 currentUsed,
                 amount
@@ -382,10 +424,18 @@ export class CampaignRuleRepository {
             );
         }
 
+        // Chunked to bound fan-out: an unbounded `Promise.all` here could
+        // open one connection per campaign and exhaust the shared pool.
         const restored: Record<string, number> = {};
-        for (const [campaignRuleId, amount] of amountsByCampaign) {
-            await this.restoreBudget(campaignRuleId, amount);
-            restored[campaignRuleId] = amount;
+        const entries = [...amountsByCampaign];
+        for (let i = 0; i < entries.length; i += RESTORE_BUDGET_CONCURRENCY) {
+            const chunk = entries.slice(i, i + RESTORE_BUDGET_CONCURRENCY);
+            await Promise.all(
+                chunk.map(async ([campaignRuleId, amount]) => {
+                    await this.restoreBudget(campaignRuleId, amount);
+                    restored[campaignRuleId] = amount;
+                })
+            );
         }
         return restored;
     }

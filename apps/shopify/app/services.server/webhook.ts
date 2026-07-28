@@ -36,13 +36,33 @@ export type DeleteWebhookSubscriptionReturnType = {
 };
 
 /**
+ * Host-independent path suffix of a merchant's Frak order webhook. Matching
+ * stale webhooks on this (rather than the current backend host) also cleans up
+ * subscriptions left on a previous cloudflared tunnel URL, which would
+ * otherwise keep receiving orders at a dead endpoint.
+ */
+function merchantWebhookPath(merchantId: string): string {
+    return `/ext/merchant/${merchantId}/webhook/shopify`;
+}
+
+/**
  * Build the expected webhook URL for a merchant.
  */
 export function buildExpectedWebhookUrl(
     backendUrl: string,
     merchantId: string
 ): string {
-    return `${backendUrl}/ext/merchant/${merchantId}/webhook/shopify`;
+    return `${backendUrl}${merchantWebhookPath(merchantId)}`;
+}
+
+/**
+ * Backend URL for Shopify webhook callbacks. Shopify's servers must reach this
+ * publicly, so it uses PUBLIC_BACKEND_URL — which only differs from BACKEND_URL
+ * in the local stage, where `localhost` is unreachable and Shopify rejects it
+ * as an internal domain. Falls back to BACKEND_URL when unset.
+ */
+function webhookBackendUrl(): string {
+    return process.env.PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "";
 }
 
 /**
@@ -64,7 +84,7 @@ export async function getWebhooks(
     context: AuthenticatedContext
 ): Promise<GetWebhooksSubscriptionsReturnType["edges"]> {
     const merchantId = await resolveMerchantId(context);
-    const backendUrl = process.env.BACKEND_URL ?? "";
+    const backendUrl = webhookBackendUrl();
 
     if (!merchantId || !backendUrl) {
         return [];
@@ -109,12 +129,12 @@ async function fetchAllOrdersWebhooks(
  */
 async function deleteStaleBackendWebhooks(
     context: AuthenticatedContext,
-    backendUrl: string
+    merchantId: string
 ): Promise<void> {
     const edges = await fetchAllOrdersWebhooks(context.admin.graphql);
+    const path = merchantWebhookPath(merchantId);
     const staleWebhooks = edges.filter(
-        (webhook) =>
-            webhook.node.endpoint.callbackUrl?.includes(backendUrl) ?? false
+        (webhook) => webhook.node.endpoint.callbackUrl?.includes(path) ?? false
     );
     if (staleWebhooks.length === 0) {
         return;
@@ -144,11 +164,12 @@ export async function createWebhook(
             webhookSubscription: null,
         };
     }
-    const backendUrl = process.env.BACKEND_URL ?? "";
+    const backendUrl = webhookBackendUrl();
     const { graphql } = context.admin;
 
-    // Clean up any stale webhooks pointing to our backend
-    await deleteStaleBackendWebhooks(context, backendUrl);
+    // Clean up any stale Frak webhooks for this merchant (across any host,
+    // including rotated tunnel URLs) before creating the fresh one.
+    await deleteStaleBackendWebhooks(context, merchantId);
 
     const webhookUrl = buildExpectedWebhookUrl(backendUrl, merchantId);
     const response = await graphql(

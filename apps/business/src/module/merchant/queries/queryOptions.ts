@@ -1,9 +1,10 @@
 import type { AffiliateBrandInfo } from "@frak-labs/backend-elysia/api/schemas";
 import { queryOptions } from "@tanstack/react-query";
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import merchantsMockData from "@/mock/merchants.json";
 import { useAuthStore } from "@/stores/authStore";
+import { merchantDetailQueryKey, myMerchantsQueryKey } from "./queryKeys";
 
 /**
  * Check demo mode via param or Zustand store
@@ -34,7 +35,6 @@ export type MerchantData = {
     createdAt: string | null;
     role: MerchantRole;
     allowedDomains: string[];
-    productId?: Hex;
     isAffiliate?: boolean;
     affiliate?: AffiliateBrandInfo | null;
 };
@@ -53,7 +53,7 @@ function getMerchantMockData(merchantId: string): MerchantData {
  */
 export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
     queryOptions({
-        queryKey: ["merchant", merchantId, isDemoMode ? "demo" : "live"],
+        queryKey: merchantDetailQueryKey(merchantId, isDemoMode),
         enabled: !!merchantId,
         queryFn: async (): Promise<MerchantData> => {
             const isDemo = checkDemoMode(isDemoMode);
@@ -113,7 +113,7 @@ function getMyMerchantsMockData(): {
  */
 export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
     queryOptions({
-        queryKey: ["merchant", "my", isDemoMode ? "demo" : "live"],
+        queryKey: myMerchantsQueryKey(isDemoMode),
         queryFn: async () => {
             const isDemo = checkDemoMode(isDemoMode);
 

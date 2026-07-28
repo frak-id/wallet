@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { mediaSrcSet } from "../../common/utils/mediaSrcSet";
 
 /**
  * Renders a merchant logo only after it has successfully loaded.
@@ -21,7 +22,7 @@ export function MerchantLogo({
     if (!src) return null;
     return (
         <img
-            src={src}
+            {...mediaSrcSet(src)}
             alt={alt}
             className={className}
             style={{ display: loaded ? undefined : "none" }}

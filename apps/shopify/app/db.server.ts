@@ -12,7 +12,9 @@ import { sessionTable } from "../db/schema/sessionTable";
  */
 const posgresDb = postgres({
     host: process.env.SHOPIFY_POSTGRES_HOST,
-    port: 5432,
+    port: process.env.SHOPIFY_POSTGRES_PORT
+        ? Number(process.env.SHOPIFY_POSTGRES_PORT)
+        : 5432,
     database: process.env.POSTGRES_SHOPIFY_DB,
     username: process.env.POSTGRES_USER,
     password: process.env.SHOPIFY_POSTGRES_PASSWORD,

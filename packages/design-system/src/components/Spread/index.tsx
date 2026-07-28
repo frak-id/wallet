@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { ReactNode } from "react";
+import type { AriaAttributes, AriaRole, ReactNode } from "react";
 import type { ResponsiveSpace } from "../../sprinkles.css";
 import { Box } from "../Box";
 import * as styles from "./index.css";
@@ -25,7 +25,7 @@ const alignToFlexAlign: Record<SpreadAlign, AlignItems> = {
     bottom: "flex-end",
 } as const;
 
-export type SpreadProps = {
+export type SpreadProps = AriaAttributes & {
     /** Minimum gap between the two slots. Uses the DS spacing scale. */
     space?: ResponsiveSpace;
     /** Main-axis direction. Defaults to "horizontal". */
@@ -33,6 +33,8 @@ export type SpreadProps = {
     /** Cross-axis alignment. Defaults to "center". */
     align?: SpreadAlign;
     as?: ValidSpreadElement;
+    role?: AriaRole;
+    id?: string;
     className?: string;
     children?: ReactNode;
 };
@@ -44,10 +46,12 @@ export function Spread({
     as = "div",
     className,
     children,
+    ...rest
 }: SpreadProps) {
     return (
         <Box
             as={as}
+            {...rest}
             display="flex"
             flexDirection={direction === "vertical" ? "column" : undefined}
             justifyContent="space-between"

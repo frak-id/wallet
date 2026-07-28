@@ -1221,7 +1221,12 @@
         },
         "currency": {
             "title": "Devise",
-            "label": "Choisissez votre devise préférée"
+            "label": "Choisissez votre devise préférée",
+            "options": {
+                "eur": "EUR",
+                "gbp": "GBP",
+                "usd": "USD"
+            }
         },
         "language": {
             "title": "Langue",
@@ -1642,6 +1647,10 @@
                 "logo": "PNG, JPEG, WebP, SVG, GIF - Min 128×128px - Ratio 1:2 à 2:1 (Max 10 Mo)",
                 "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 à 2:1 (Max 10 Mo)",
                 "icon": "PNG, JPEG, WebP, SVG, GIF - Min 64×64px - Ratio 1:2 à 2:1 (Max 10 Mo)"
+            },
+            "errors": {
+                "fileRejected": "Ce fichier a été refusé — vérifiez les conditions ci-dessus.",
+                "uploadFailed": "Échec de l'envoi"
             },
             "descriptionPlaceholder": "Description du marchand..."
         },

@@ -5,9 +5,12 @@ import { useAppShellScroll } from "@/module/common/component/AppShell";
 // Typography end-points the scroll progress interpolates between: page title
 // (fontSize 3xl / bold) at rest, toolbar title (fontSize m / semiBold) once
 // collapsed. Derived from the same DS tokens the resting CSS uses so a token
-// change can't desync the two. Weight interpolates because Inter is variable.
+// change can't desync the two. The size ratio drives a `transform: scale()`
+// instead of writing `font-size` per frame (compositor-only, no reflow/
+// re-rasterization); weight snaps at the midpoint instead of interpolating.
 const BIG_FONT_PX = Number.parseInt(fontSize["3xl"], 10);
 const SMALL_FONT_PX = Number.parseInt(fontSize.m, 10);
+const SMALL_SCALE = SMALL_FONT_PX / BIG_FONT_PX;
 const BIG_WEIGHT = brand.typography.fontWeight.bold;
 const SMALL_WEIGHT = brand.typography.fontWeight.semiBold;
 // Scroll distance over which the title fully shrinks. A fixed value (not a
@@ -22,10 +25,11 @@ type ScrollMorphTitle = {
 
 /**
  * In-place variant of the iOS large-title collapse: the title is pinned in the
- * toolbar band and only its size changes, driven from scroll progress by a
- * rAF-throttled listener. Because the title never moves, the per-frame size
+ * toolbar band and only its scale changes, driven from scroll progress by a
+ * rAF-throttled listener. Because the title never moves, the per-frame scale
  * change has no position to desync from, so there is no scroll wobble. Styles
- * are written imperatively to avoid a re-render every frame.
+ * are written imperatively (and via `transform`, not `font-size`) to avoid a
+ * re-render and a layout/paint pass every frame.
  */
 export function useScrollMorphTitle(): ScrollMorphTitle {
     const scrollRef = useAppShellScroll();
@@ -54,12 +58,13 @@ export function useScrollMorphTitle(): ScrollMorphTitle {
             );
             // Reduced motion: skip the continuous shrink, snap at the midpoint.
             if (reduceMotion) p = p < 0.5 ? 0 : 1;
-            // Round to a half pixel so the glyphs don't re-snap every frame.
-            const fontPx =
-                Math.round(lerp(BIG_FONT_PX, SMALL_FONT_PX, p) * 2) / 2;
-            title.style.fontSize = `${fontPx}px`;
+            const scale = lerp(1, SMALL_SCALE, p);
+            title.style.transform = `scale(${scale})`;
+            // Snapped rather than interpolated: a per-frame weight write would
+            // still force glyph re-rasterization every frame, defeating the
+            // point of moving to a compositor-only transform.
             title.style.fontWeight = String(
-                Math.round(lerp(BIG_WEIGHT, SMALL_WEIGHT, p))
+                p < 0.5 ? BIG_WEIGHT : SMALL_WEIGHT
             );
         };
         const onScroll = () => {

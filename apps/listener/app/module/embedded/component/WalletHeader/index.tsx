@@ -1,4 +1,5 @@
 import { LogoFrakWithName } from "@frak-labs/wallet-shared/common";
+import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { clsx as cx } from "clsx";
 import { useState } from "react";
@@ -37,7 +38,7 @@ export function ListenerWalletHeader() {
             {logoUrl && !logoFailed && (
                 <h1>
                     <img
-                        src={logoUrl}
+                        {...mediaSrcSet(logoUrl, "large")}
                         className={cx(
                             styles.modalListenerWallet__logo,
                             prefixWalletCss("modalListenerWallet__logo")

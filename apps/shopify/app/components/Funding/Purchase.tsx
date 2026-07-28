@@ -26,7 +26,12 @@ export function PurchaseStatus({
                 <s-text>{t("status.purchase.description")}</s-text>
 
                 {bankStatus.deployed && bankStatus.bankAddress && (
-                    <CreatePurchase bankAddress={bankStatus.bankAddress} />
+                    <>
+                        <s-text tone="neutral">
+                            {t("status.purchase.twoStepNotice")}
+                        </s-text>
+                        <CreatePurchase bankAddress={bankStatus.bankAddress} />
+                    </>
                 )}
 
                 <ActivePurchases currentPurchases={currentPurchases} />

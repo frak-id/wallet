@@ -6,6 +6,7 @@ import {
     extractAuthErrorMessage,
 } from "@/module/auth/utils/authError";
 import { useAuthStore } from "@/stores/authStore";
+import { invitePreviewQueryKey } from "./queryKeys";
 
 const GENERIC_INVALID_TOKEN = "This invitation link is invalid or has expired";
 
@@ -20,7 +21,7 @@ const GENERIC_INVALID_TOKEN = "This invitation link is invalid or has expired";
  */
 export function useInvitePreview(token: string | undefined) {
     return useQuery({
-        queryKey: ["auth", "invite", "preview", token],
+        queryKey: invitePreviewQueryKey(token),
         enabled: Boolean(token),
         // Retry transient failures (network/5xx), but not a definitive
         // rejection from the backend (bad/expired token) — those should

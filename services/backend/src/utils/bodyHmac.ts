@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { CryptoHasher } from "bun";
 
 /**
@@ -20,8 +21,12 @@ export function validateBodyHmac({
     const recomputedSignature = hasher.digest();
     const baseSignature = Buffer.from(signature ?? "", "base64");
 
-    // Compare the two
-    if (!baseSignature.equals(recomputedSignature)) {
+    // Constant-time compare; guard length first since timingSafeEqual throws
+    // (not compares) on mismatched lengths.
+    if (
+        baseSignature.length !== recomputedSignature.length ||
+        !timingSafeEqual(baseSignature, recomputedSignature)
+    ) {
         throw new Error("Webhook signature verification failed");
     }
 }

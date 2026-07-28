@@ -35,7 +35,11 @@ components/
 
 - **Entry point**: Always `index.tsx`. No barrel files.
 - **Feature isolation**: Each dir = one feature. Cross-imports between features are rare.
-- **CSS Modules**: Only `ModalPreview/` and `SocialPreview/`. Everything else is Polaris-only.
+- **Custom CSS** (rare — Polaris handles most styling): CSS Modules in `ModalPreview/`
+  and `SocialPreview/`; vanilla-extract (`*.css.ts`) in `Appearance/ExplorerTab` (two-column
+  layout around a shared `@frak-labs/ui-preview` vanilla-extract style). New custom CSS should
+  prefer vanilla-extract, per the FRA-278 `.module.css` → vanilla-extract migration. Everything
+  else stays Polaris-only.
 - **Props**: Prefer `type {ComponentName}Props` aliases.
 - **Types over interfaces**: Prefer `type` aliases. Use `interface` only when declaration merging is required.
 

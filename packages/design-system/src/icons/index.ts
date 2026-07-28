@@ -48,6 +48,7 @@ export { FiltersIcon } from "./FiltersIcon";
 export { GbpIcon } from "./GbpIcon";
 export { GiftIcon } from "./GiftIcon";
 export { HeartIcon } from "./HeartIcon";
+export { HeartOutlineIcon } from "./HeartOutlineIcon";
 export { HelpChatIcon } from "./HelpChatIcon";
 export { HourglassIcon } from "./HourglassIcon";
 export { ImageIcon } from "./ImageIcon";

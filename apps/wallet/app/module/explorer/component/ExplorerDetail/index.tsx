@@ -32,6 +32,7 @@ import {
     useCopyToClipboardWithState,
     useShareLink,
 } from "@frak-labs/wallet-shared";
+import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -220,9 +221,16 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                             data-index={index}
                         >
                             <img
-                                src={url}
+                                {...mediaSrcSet(url)}
                                 alt={`${merchant.name}${images.length > 1 ? ` ${index + 1}` : ""}`}
                                 className={styles.heroImage}
+                                // Slide 1 is the sheet's LCP: load it eagerly
+                                // and hint high priority. Defer 2..N so a
+                                // multi-image carousel doesn't decode every
+                                // slide the moment the sheet opens.
+                                loading={index === 0 ? "eager" : "lazy"}
+                                decoding="async"
+                                fetchPriority={index === 0 ? "high" : undefined}
                             />
                         </div>
                     ))}
@@ -293,9 +301,11 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     </div>
                     {logoUrl && (
                         <img
-                            src={logoUrl}
+                            {...mediaSrcSet(logoUrl)}
                             alt={`${merchant.name} logo`}
                             className={styles.brandLogo}
+                            loading="lazy"
+                            decoding="async"
                         />
                     )}
                 </Spread>

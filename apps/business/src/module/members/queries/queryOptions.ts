@@ -5,6 +5,7 @@ import {
     getMerchantMembers,
 } from "@/module/members/api/getMerchantMembers";
 import { getMerchantMembersMockInitialData } from "@/module/members/api/mock";
+import { membersPageQueryKey } from "./queryKeys";
 
 /**
  * Builds the merchant-scoped query for the members page.
@@ -36,13 +37,7 @@ export const membersPageQueryOptions = ({
         },
     };
     return queryOptions({
-        queryKey: [
-            "members",
-            "page",
-            merchantId,
-            scoped,
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: membersPageQueryKey(merchantId, scoped, isDemoMode),
         queryFn: () => getMerchantMembers(scoped, isDemoMode),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         initialData: isDemoMode

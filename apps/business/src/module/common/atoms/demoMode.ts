@@ -1,6 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { type Address, zeroAddress } from "viem";
+import type { Address } from "viem";
 import { useAuthStore } from "@/stores/authStore";
+
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 
 /**
  * Hook to get and set demo mode state
@@ -18,7 +20,7 @@ export function useDemoMode() {
         if (value) {
             setAuth({
                 token: "demo-token",
-                wallet: zeroAddress as Address,
+                wallet: ZERO_ADDRESS,
                 authMethod: "siwe",
                 expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
             });

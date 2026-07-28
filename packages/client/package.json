@@ -13,11 +13,11 @@
     "./types/*": "./src/types/*"
   },
   "dependencies": {
-    "@elysiajs/eden": "^1.4.9"
+    "@elysiajs/eden": "catalog:"
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
-    "elysia": "^1.4.28",
+    "elysia": "catalog:",
     "typescript": "catalog:"
   }
 }

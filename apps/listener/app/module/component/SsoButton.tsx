@@ -255,7 +255,14 @@ function MobileSsoButton({
         attemptIdRef.current += 1;
 
         try {
-            client.disconnect();
+            // `softReset`, not `disconnect`: disconnect only closes the socket
+            // and leaves `state.pairing` holding the PREVIOUS pairing. The
+            // deep-link effect below reads that state on the very next render
+            // (before `pairing-initiated` for the new pairing arrives) and
+            // would send the app to the old pairing id while this client
+            // subscribes to the new one — the two sides then never meet, and
+            // the latched `waiting` status blocks the correct deep link.
+            client.softReset();
             await client.initiatePairing({ originNode });
         } catch {
             setStatus("idle");

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantQueryKey } from "@/module/merchant/queries/queryKeys";
 
 /**
  * Hook to fund a bank
@@ -24,7 +25,7 @@ export function useFundTestBank() {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 await queryClient.invalidateQueries({
-                    queryKey: ["merchant"],
+                    queryKey: merchantQueryKey(),
                     exact: false,
                 });
                 return;
@@ -35,7 +36,7 @@ export function useFundTestBank() {
                 stablecoin,
             });
             await queryClient.invalidateQueries({
-                queryKey: ["merchant"],
+                queryKey: merchantQueryKey(),
                 exact: false,
             });
         },

@@ -1,5 +1,5 @@
 import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { BankStatusSchema } from "../../../domain/campaign-bank/schemas";
 import { MerchantIdParamSchema } from "../../schemas";
@@ -11,21 +11,7 @@ export const merchantBankRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const result =
                 await CampaignBankContext.services.campaignBank.getBankStatus(
                     merchantId
@@ -39,6 +25,7 @@ export const merchantBankRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 200: BankStatusSchema,
@@ -49,21 +36,7 @@ export const merchantBankRoutes = new Elysia({
     )
     .post(
         "/sync",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const { rolesGranted, rolesRevoked } =
                 await CampaignBankContext.services.campaignBank.syncBankRoles(
                     merchantId
@@ -75,6 +48,7 @@ export const merchantBankRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 200: t.Object({
@@ -90,21 +64,7 @@ export const merchantBankRoutes = new Elysia({
     )
     .post(
         "/deploy",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const { bankAddress } =
                 await CampaignBankContext.services.campaignBank.deployAndSetupBank(
                     merchantId
@@ -115,6 +75,7 @@ export const merchantBankRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 200: t.Object({

@@ -14,21 +14,7 @@ export const merchantSdkConfigRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({
-            params: { merchantId },
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId } }) => {
             const merchant =
                 await MerchantContext.repositories.merchant.findById(
                     merchantId
@@ -42,6 +28,7 @@ export const merchantSdkConfigRoutes = new Elysia({
             };
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             response: {
                 200: SdkConfigResponseSchema,
@@ -53,22 +40,7 @@ export const merchantSdkConfigRoutes = new Elysia({
     )
     .put(
         "",
-        async ({
-            params: { merchantId },
-            body,
-            businessSession,
-            shopifySession,
-            hasMerchantAccess,
-        }) => {
-            if (!businessSession && !shopifySession) {
-                return status(401, "Authentication required");
-            }
-
-            const hasAccess = await hasMerchantAccess(merchantId);
-            if (!hasAccess) {
-                return status(403, "Access denied");
-            }
-
+        async ({ params: { merchantId }, body }) => {
             const merchant =
                 await MerchantContext.repositories.merchant.findById(
                     merchantId
@@ -109,6 +81,7 @@ export const merchantSdkConfigRoutes = new Elysia({
             return status(204);
         },
         {
+            requireMerchantAccess: true,
             params: MerchantIdParamSchema,
             body: SdkConfigSchema,
             response: {

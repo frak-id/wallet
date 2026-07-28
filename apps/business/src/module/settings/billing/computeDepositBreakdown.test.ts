@@ -49,13 +49,10 @@ describe("computeDepositBreakdown", () => {
         });
     });
 
-    test.each([
-        "",
-        "   ",
-        "not-a-number",
-        "-10",
-        "Infinity",
-    ])("returns null for unusable input %j", (input) => {
-        expect(computeDepositBreakdown(input, "FR")).toBeNull();
-    });
+    test.each(["", "   ", "not-a-number", "-10", "Infinity"])(
+        "returns null for unusable input %j",
+        (input) => {
+            expect(computeDepositBreakdown(input, "FR")).toBeNull();
+        }
+    );
 });

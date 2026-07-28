@@ -106,10 +106,10 @@ function mapWithdrawError(err: unknown) {
 
 /**
  * Admin-only deposit/withdraw CRUD (billing-feature-plan.md §5 Phase 2).
- * Guarded by `platformAdminAuthenticated` — never `hasMerchantAccess`, whose
- * platform-admin bypass is read-only/safe-methods-only (see session.ts).
- * Every handler records the acting admin's business `accountId` as `createdBy`
- * (null for the legacy-JWT grace path, which carries no account row).
+ * Guarded by `platformAdminAuthenticated` — never `requireMerchantAccess`,
+ * whose platform-admin grant is read-only. Every handler records the acting
+ * admin's business `accountId` as `createdBy` (null for the legacy-JWT grace
+ * path, which carries no account row).
  */
 export const merchantBillingAdminRoutes = new Elysia()
     .use(businessSessionContext)

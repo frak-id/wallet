@@ -5,6 +5,7 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { UploadIcon } from "@frak-labs/design-system/icons";
+import { visuallyHidden } from "@frak-labs/design-system/utils";
 import clsx from "clsx";
 import { useCallback, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -86,8 +87,8 @@ export function MultiHeroImagesField({
         [onChange, values]
     );
 
-    // No maxFiles: dropzone would reject oversized selections wholesale —
-    // onDrop slices the batch to the remaining slots instead.
+    // Without maxFiles the accepted batch is uncapped, so onDrop slices it
+    // down to the slots still free.
     const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
         onDrop,
         accept: imageAccept,
@@ -96,7 +97,7 @@ export function MultiHeroImagesField({
         noClick: true,
     });
 
-    const errorMessage = getUploadErrorMessage(uploadError);
+    const errorMessage = getUploadErrorMessage(uploadError, t);
 
     return (
         <Stack space="m">
@@ -156,7 +157,11 @@ export function MultiHeroImagesField({
                         ),
                     })}
                 >
-                    <input {...getInputProps()} />
+                    {/* react-dropzone sizes the input inline, and those rules
+                        win over the class. Only `position: absolute` is needed
+                        here: it takes the input out of flow so the flex column
+                        stops reserving a gap for it. */}
+                    <input {...getInputProps({ className: visuallyHidden })} />
                     <IconCircle size="md">
                         <UploadIcon
                             width={24}

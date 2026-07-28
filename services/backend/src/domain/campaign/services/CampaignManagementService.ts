@@ -201,15 +201,18 @@ export class CampaignManagementService {
             return campaign;
         }
 
+        // Re-checks the status atomically (TOCTOU guard, same pattern as
+        // transitionStatus); 0 rows means a concurrent change invalidated it.
         const updated = await this.campaignRuleRepository.update(
             campaignId,
-            cleanUpdates
+            cleanUpdates,
+            [campaign.status]
         );
 
         if (!updated) {
-            throw HttpError.internal(
-                "UPDATE_FAILED",
-                "Failed to update campaign"
+            throw HttpError.conflict(
+                "CONCURRENT_MODIFICATION",
+                "Campaign status changed while updating, please retry"
             );
         }
 
@@ -282,11 +285,13 @@ export class CampaignManagementService {
             );
         }
 
+        // The DELETE re-checks `status = 'draft'` atomically (TOCTOU guard):
+        // 0 rows means a concurrent publish/transition or delete won the race.
         const deleted = await this.campaignRuleRepository.delete(campaignId);
         if (!deleted) {
-            throw HttpError.internal(
-                "DELETE_FAILED",
-                "Failed to delete campaign"
+            throw HttpError.conflict(
+                "NOT_DRAFT",
+                "Only draft campaigns can be deleted. Use archive for published campaigns."
             );
         }
     }
@@ -364,9 +369,11 @@ export class CampaignManagementService {
         }
 
         if (!updated) {
-            throw HttpError.internal(
-                "TRANSITION_FAILED",
-                `Failed to ${action} campaign`
+            // The guarded UPDATE affected zero rows: a concurrent transition
+            // changed the status between the pre-read check and this write.
+            throw HttpError.conflict(
+                "INVALID_TRANSITION",
+                `Cannot ${action} campaign: status changed concurrently. Valid from statuses: ${transition.from.join(", ")}`
             );
         }
 

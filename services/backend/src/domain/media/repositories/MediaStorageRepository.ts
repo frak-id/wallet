@@ -1,5 +1,6 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { S3Client } from "bun";
+import type { DownscaleVariant } from "../services/imageVariants";
 
 /**
  * Repository for storing media objects in RustFS (S3-compatible) using Bun's native S3 client.
@@ -30,24 +31,36 @@ export class MediaStorageRepository {
     }
 
     /**
-     * Upload a processed image to the bucket.
-     *  - Key format: {merchantId}/{type}.webp (or .svg)
+     * Upload a processed image + its downscales to the bucket.
+     *  - Canonical key: {merchantId}/{type}.webp (or .svg) — the "lg" size.
+     *  - Downscale keys: {merchantId}/{type}-{size}.webp (sm, md).
      */
     async upload({
         merchantId,
         type,
-        body,
+        canonical,
+        downscales,
         contentType,
     }: {
         merchantId: string;
         type: string;
-        body: Buffer | Uint8Array;
+        canonical: Buffer | Uint8Array;
+        downscales: { size: DownscaleVariant; buffer: Buffer | Uint8Array }[];
         contentType: string;
     }): Promise<string> {
         const extension = contentType === "image/svg+xml" ? "svg" : "webp";
         const key = `${merchantId}/${type}.${extension}`;
 
-        await this.client.write(key, body, { type: contentType });
+        await Promise.all([
+            this.client.write(key, canonical, { type: contentType }),
+            ...downscales.map(({ size, buffer }) =>
+                this.client.write(
+                    `${merchantId}/${type}-${size}.${extension}`,
+                    buffer,
+                    { type: contentType }
+                )
+            ),
+        ]);
 
         return `${this.cdnBaseUrl}/${this.bucketName}/${key}`;
     }
@@ -71,7 +84,7 @@ export class MediaStorageRepository {
     }
 
     /**
-     * Delete all image variants for a given merchant + type.
+     * Delete all image variants (canonical + sm + md) for a given merchant + type.
      */
     async delete({
         merchantId,
@@ -80,15 +93,21 @@ export class MediaStorageRepository {
         merchantId: string;
         type: string;
     }): Promise<void> {
+        const suffixes = ["", "-sm", "-md"];
+        const extensions = ["webp", "svg"];
+
         await Promise.all(
-            ["webp", "svg"].map((ext) =>
-                this.client.delete(`${merchantId}/${type}.${ext}`)
+            extensions.flatMap((ext) =>
+                suffixes.map((suffix) =>
+                    this.client.delete(`${merchantId}/${type}${suffix}.${ext}`)
+                )
             )
         );
     }
 
     /**
      * List all media files for a given merchant.
+     * Returns one canonical URL per base type (size variants are skipped).
      */
     async list({
         merchantId,
@@ -103,6 +122,9 @@ export class MediaStorageRepository {
 
         const files: { type: string; url: string }[] = [];
         for (const obj of result.contents) {
+            // Skip size-variant objects (e.g. logo-sm.webp, hero-md.webp)
+            if (/-(sm|md|lg)\.(webp|svg)$/.test(obj.key)) continue;
+
             // Match logo, icon-{hash}, hero, or hero-{variant} (e.g. hero-home)
             const match = obj.key.match(
                 /^[^/]+\/(logo|icon(?:-[a-zA-Z0-9_-]+)?|hero(?:-[a-zA-Z0-9_-]+)?)\.(webp|svg)$/

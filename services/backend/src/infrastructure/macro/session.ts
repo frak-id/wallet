@@ -12,6 +12,30 @@ type OptionalWalletSession =
     | StaticWalletSdkTokenDto
     | undefined;
 
+async function resolveWalletOrSdkSession(headers: {
+    "x-wallet-auth"?: string;
+    "x-wallet-sdk-auth"?: string;
+}): Promise<OptionalWalletSession> {
+    const walletAuth = headers["x-wallet-auth"];
+    if (walletAuth) {
+        const walletAuthSession = await JwtContext.wallet.verify(walletAuth);
+        if (walletAuthSession) {
+            return walletAuthSession;
+        }
+    }
+
+    const walletSdkAuth = headers["x-wallet-sdk-auth"];
+    if (walletSdkAuth) {
+        const walletSdkAuthSession =
+            await JwtContext.walletSdk.verify(walletSdkAuth);
+        if (walletSdkAuthSession) {
+            return walletSdkAuthSession;
+        }
+    }
+
+    return undefined;
+}
+
 /**
  * Some default auth cookies props
  */
@@ -53,22 +77,9 @@ export const sessionContext = new Elysia({
         },
         withWalletOrSdkAuthent: {
             async resolve({ headers, set }) {
-                const walletAuth = headers["x-wallet-auth"];
-                if (walletAuth) {
-                    const walletAuthSession =
-                        await JwtContext.wallet.verify(walletAuth);
-                    if (walletAuthSession) {
-                        return { walletSession: walletAuthSession };
-                    }
-                }
-
-                const walletSdkAuth = headers["x-wallet-sdk-auth"];
-                if (walletSdkAuth) {
-                    const walletSdkAuthSession =
-                        await JwtContext.walletSdk.verify(walletSdkAuth);
-                    if (walletSdkAuthSession) {
-                        return { walletSession: walletSdkAuthSession };
-                    }
+                const session = await resolveWalletOrSdkSession(headers);
+                if (session) {
+                    return { walletSession: session };
                 }
 
                 // Neither credential resolved (wallet token absent/invalid AND
@@ -86,27 +97,11 @@ export const sessionContext = new Elysia({
             async resolve({
                 headers,
             }): Promise<{ walletSession: OptionalWalletSession }> {
-                const walletAuth = headers["x-wallet-auth"];
-                if (walletAuth) {
-                    const walletAuthSession =
-                        await JwtContext.wallet.verify(walletAuth);
-                    if (walletAuthSession) {
-                        return { walletSession: walletAuthSession };
-                    }
-                }
-
-                const walletSdkAuth = headers["x-wallet-sdk-auth"];
-                if (walletSdkAuth) {
-                    const walletSdkAuthSession =
-                        await JwtContext.walletSdk.verify(walletSdkAuth);
-                    if (walletSdkAuthSession) {
-                        return { walletSession: walletSdkAuthSession };
-                    }
-                }
-
                 // No auth or invalid auth — return undefined session rather
                 // than 401 so the route can decide how to react.
-                return { walletSession: undefined };
+                return {
+                    walletSession: await resolveWalletOrSdkSession(headers),
+                };
             },
         },
         withWalletSdkAuthent: {

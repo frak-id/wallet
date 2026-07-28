@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { type QueryKey, useQueryClient } from "@tanstack/react-query";
 import { guard } from "radash";
 import { useCallback } from "react";
 import type { Hex } from "viem";
@@ -18,7 +18,7 @@ export function useWaitForTxAndInvalidateQueries() {
             confirmations = 16,
         }: {
             hash: Hex;
-            queryKey: string[];
+            queryKey: QueryKey;
             confirmations?: number;
         }) => {
             // Wait a bit for the tx to be confirmed

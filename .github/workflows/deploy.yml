@@ -83,6 +83,7 @@ jobs:
               - 'apps/wallet/**'
               - 'apps/listener/**'
               - 'apps/business/**'
+              - 'apps/shopify/**'
               - 'packages/wallet-shared/**'
               - 'services/**'
               - 'packages/**'

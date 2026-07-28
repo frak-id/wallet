@@ -3,6 +3,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Address, encodeFunctionData, erc20Abi } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import {
+    legacyBankQueryKey,
+    merchantBankQueryKey,
+} from "@/module/merchant/queries/queryKeys";
 import { legacyCampaignBankAbi } from "@/module/merchant/utils/legacyBanks";
 
 type MigrateLegacyBankParams = {
@@ -31,7 +35,7 @@ export function useMigrateLegacyBank({ merchantId }: { merchantId: string }) {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 await queryClient.invalidateQueries({
-                    queryKey: ["merchant", merchantId, "bank"],
+                    queryKey: merchantBankQueryKey(merchantId),
                 });
                 return;
             }
@@ -87,11 +91,11 @@ export function useMigrateLegacyBank({ merchantId }: { merchantId: string }) {
 
             await waitForTxAndInvalidateQueries({
                 hash,
-                queryKey: ["merchant", merchantId, "bank"],
+                queryKey: merchantBankQueryKey(merchantId),
             });
 
             await queryClient.invalidateQueries({
-                queryKey: ["legacy-bank"],
+                queryKey: legacyBankQueryKey(),
                 exact: false,
             });
         },

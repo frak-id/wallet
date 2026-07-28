@@ -183,12 +183,7 @@ export class PurchaseLinkingOrchestrator {
             externalCustomerId: purchase.externalCustomerId,
             totalPrice: purchase.totalPrice,
             currencyCode: purchase.currencyCode,
-            items: items.map((item) => ({
-                externalId: item.externalId,
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price,
-            })),
+            items,
             identityGroupId: finalIdentityGroupId,
             merchantId,
             cancelled: isCancelled,

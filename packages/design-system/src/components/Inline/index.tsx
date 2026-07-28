@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { ReactNode } from "react";
+import type { AriaAttributes, AriaRole, ReactNode } from "react";
 import type { ResponsiveSpace } from "../../sprinkles.css";
 import { Box } from "../Box";
 import * as styles from "./index.css";
@@ -24,7 +24,7 @@ const alignYToFlexAlign: Record<InlineAlignY, AlignItems> = {
     baseline: "baseline",
 } as const;
 
-export type InlineProps = {
+export type InlineProps = AriaAttributes & {
     space: ResponsiveSpace;
     padding?: ResponsiveSpace;
     paddingX?: ResponsiveSpace;
@@ -34,6 +34,8 @@ export type InlineProps = {
     fill?: boolean;
     wrap?: boolean;
     as?: ValidInlineElement;
+    role?: AriaRole;
+    id?: string;
     className?: string;
     children?: ReactNode;
 };
@@ -50,10 +52,12 @@ export function Inline({
     as = "div",
     className,
     children,
+    ...rest
 }: InlineProps) {
     return (
         <Box
             as={as}
+            {...rest}
             display="flex"
             flexWrap={fill ? undefined : wrap ? "wrap" : "nowrap"}
             gap={space}

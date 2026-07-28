@@ -15,6 +15,7 @@ import { WizardStep } from "@/module/campaigns/component/Creation/WizardStep";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
+import { campaignsQueryKey } from "@/module/campaigns/queries/queryKeys";
 import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { DetailRow, DetailValue } from "@/module/common/component/DetailRow";
@@ -64,7 +65,9 @@ export function ValidationCampaign() {
         },
         onSuccess: async () => {
             setSuccess(true);
-            await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+            await queryClient.invalidateQueries({
+                queryKey: campaignsQueryKey(),
+            });
         },
     });
 

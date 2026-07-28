@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantAccessQueryKey } from "@/module/merchant/queries/queryKeys";
 import type { MerchantRole } from "@/module/merchant/queries/queryOptions";
 
 const defaultAccess = {
@@ -25,12 +26,7 @@ export function useHasRoleOnMerchant({ merchantId }: { merchantId: string }) {
         isSuccess,
         refetch: refresh,
     } = useQuery({
-        queryKey: [
-            "merchant",
-            merchantId,
-            "access",
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: merchantAccessQueryKey(merchantId, isDemoMode),
         queryFn: async () => {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 100));

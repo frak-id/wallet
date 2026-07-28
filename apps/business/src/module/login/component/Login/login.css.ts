@@ -5,14 +5,17 @@ import { loginStackedMedia } from "./breakpoints";
 
 export const login = style({
     position: "relative",
+    display: "flex",
     width: "100%",
     minHeight: "100vh",
     background: vars.surface.background2,
-    overflow: "hidden",
+    // Clip horizontally only, so a hero taller than the viewport still scrolls
+    // (overflow-x:hidden forces overflow-y to auto) instead of clipping the
+    // submit button off-screen.
+    overflowX: "hidden",
     "@media": {
         // Stacked: full-height column so hero + panel split the viewport 50/50.
         [loginStackedMedia]: {
-            display: "flex",
             flexDirection: "column",
             minHeight: "100dvh",
             overflow: "visible",
@@ -21,18 +24,18 @@ export const login = style({
 });
 
 export const hero = style({
-    position: "absolute",
-    left: "120px",
+    // Auto margins centre the hero but clamp to 0 on overflow, so a tall hero
+    // grows the page and scrolls rather than clipping the submit button.
+    marginTop: "auto",
+    marginBottom: "auto",
+    marginLeft: "120px",
     // Bound the hero by the panel edge (50%) so the text never slides under it.
-    right: "calc(50% + 24px)",
-    top: "50%",
-    transform: "translateY(-50%)",
+    marginRight: "calc(50% + 24px)",
+    width: "100%",
     maxWidth: "515px",
     "@media": {
         [loginStackedMedia]: {
-            position: "static",
-            transform: "none",
-            right: "auto",
+            margin: 0,
             width: "100%",
             maxWidth: "none",
             flex: "0 0 auto",

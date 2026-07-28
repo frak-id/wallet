@@ -68,7 +68,7 @@
         "viem": "^2.x"
     },
     "devDependencies": {
-        "@arethetypeswrong/cli": "^0.18.2",
+        "@arethetypeswrong/cli": "catalog:",
         "@rolldown/plugin-node-polyfills": "catalog:",
         "@types/node": "catalog:",
         "@typescript/native": "catalog:",

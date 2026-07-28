@@ -2,7 +2,10 @@ import { Elysia } from "elysia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import the route AFTER setting up the mock (mocked in vitest-setup.ts)
-import { airtableRoutes } from "../../../src/api/common/airtable";
+import {
+    airtableRoutes,
+    getAirtableRepository,
+} from "../../../src/api/common/airtable";
 import { noContentPatch } from "../../../src/utils";
 
 // Wrap the routes with `noContentPatch` because Bun rejects
@@ -11,18 +14,16 @@ import { noContentPatch } from "../../../src/utils";
 // See `src/utils/elysiaNoContentPatch.ts` for context.
 const app = new Elysia().use(noContentPatch).use(airtableRoutes);
 
-// The airtableRoutes instance has a decorator "airtableRepository" which is a mock instance
-// We'll access it using type assertions to get around Elysia's type complexity
-const getMockRepository = () => {
-    const instance = airtableRoutes as any;
-    // Elysia stores decorators in instance.decorator
-    return instance.decorator.airtableRepository as {
+// The route lazily constructs a single (mocked) repository via
+// `getAirtableRepository()`; calling it here returns that same memoized
+// instance so tests can configure its mocked methods.
+const getMockRepository = () =>
+    getAirtableRepository() as unknown as {
         processRequest: ReturnType<typeof vi.fn>;
         checkDuplicateEmail: ReturnType<typeof vi.fn>;
         createRecord: ReturnType<typeof vi.fn>;
         sendSlackNotification: ReturnType<typeof vi.fn>;
     };
-};
 
 describe("Airtable Route API", () => {
     beforeEach(() => {

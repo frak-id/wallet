@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantByIdQueryKey } from "@/module/merchant/queries/queryKeys";
 
 type EditMerchantInput = {
     name?: string;
@@ -78,7 +79,7 @@ export function useMerchantUpdate({
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ["merchant", merchantId],
+                queryKey: merchantByIdQueryKey(merchantId),
             });
         },
     });

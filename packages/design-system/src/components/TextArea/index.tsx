@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import type { ReactNode, TextareaHTMLAttributes } from "react";
-import { useId } from "react";
 import { Box } from "../Box";
-import { Stack } from "../Stack";
+import { FieldLabel } from "../FieldLabel";
+import { useFieldIds } from "../useFieldIds";
 import { lengthVariants, textareaStyles } from "./textarea.css";
 
 type TextAreaLength = "small" | "medium" | "big";
@@ -39,11 +39,11 @@ export function TextArea({
     "aria-describedby": ariaDescribedBy,
     ...rest
 }: TextAreaProps) {
-    const generatedId = useId();
-    const fieldId = id ?? generatedId;
-    const hintId = hint ? `${fieldId}-hint` : undefined;
-    const describedBy =
-        [ariaDescribedBy, hintId].filter(Boolean).join(" ") || undefined;
+    const { fieldId, hintId, describedBy } = useFieldIds({
+        id,
+        hint,
+        ariaDescribedBy,
+    });
 
     const wrapperClassName = clsx(
         textareaStyles.wrapper,
@@ -76,33 +76,8 @@ export function TextArea({
     }
 
     return (
-        // Field spec: 8px (spacing.xs) label→control, 4px (spacing.xxs)
-        // control→hint. The hint nests with the control so the label keeps its
-        // 8px offset while the hint sits 4px under the field.
-        <Stack space="xs">
-            {label ? (
-                <Box
-                    as="label"
-                    htmlFor={fieldId}
-                    className={textareaStyles.fieldLabel}
-                >
-                    {label}
-                </Box>
-            ) : null}
-            {hint ? (
-                <Stack space="xxs">
-                    {control}
-                    <Box
-                        as="span"
-                        id={hintId}
-                        className={textareaStyles.fieldHint}
-                    >
-                        {hint}
-                    </Box>
-                </Stack>
-            ) : (
-                control
-            )}
-        </Stack>
+        <FieldLabel label={label} hint={hint} htmlFor={fieldId} hintId={hintId}>
+            {control}
+        </FieldLabel>
     );
 }

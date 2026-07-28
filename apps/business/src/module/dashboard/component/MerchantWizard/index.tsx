@@ -16,6 +16,7 @@ import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { Form } from "@/module/forms/Form";
+import { merchantQueryKey } from "@/module/merchant/queries/queryKeys";
 import type { MerchantNew } from "@/types/Merchant";
 import { MerchantDetailsStep } from "./MerchantDetailsStep";
 import { MerchantRegistrationStep } from "./MerchantRegistrationStep";
@@ -58,7 +59,7 @@ export function MerchantWizard() {
         // the new merchant must be in cache or the guard bounces away.
         onSuccess: async (data) => {
             await queryClient.invalidateQueries({
-                queryKey: ["merchant"],
+                queryKey: merchantQueryKey(),
                 refetchType: "all",
             });
             navigate({

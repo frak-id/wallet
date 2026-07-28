@@ -12,6 +12,7 @@ import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import { getMerchantsMembersCount } from "@/module/members/api/getMerchantMembers";
 import { AudienceFilter } from "@/module/members/component/CreatePush/AudienceFilter";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
+import { audienceCountQueryKey } from "@/module/members/queries/queryKeys";
 
 const COUNT_DEBOUNCE_MS = 400;
 
@@ -57,12 +58,7 @@ function SelectAudience() {
     const debouncedFilter = useDebouncedValue(filter, COUNT_DEBOUNCE_MS);
 
     const { data: count } = useQuery({
-        queryKey: [
-            "create-push",
-            "audience-count",
-            debouncedFilter,
-            isDemoMode,
-        ],
+        queryKey: audienceCountQueryKey(debouncedFilter, isDemoMode),
         queryFn: () =>
             getMerchantsMembersCount({ filter: debouncedFilter }, isDemoMode),
         enabled: debouncedFilter !== undefined,

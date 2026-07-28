@@ -1,4 +1,5 @@
 import { concatHex, type Hex, isAddress, keccak256, toHex } from "viem";
+import { DnsCheckRepository } from "../src/infrastructure/dns/DnsCheckRepository";
 
 // Usage: bun scripts/genSetupCode.ts <domain> <subject>
 //   <domain>  the merchant domain (any form, e.g. "https://www.shop.com/")
@@ -13,16 +14,9 @@ if (!domainArg || !subjectArg) {
     process.exit(1);
 }
 
-// Normalise the domain exactly like `DnsCheckRepository.getNormalizedDomain`
-// (only keep the host, drop `www.`) so the hash matches the backend.
-function getNormalizedDomain(domain: string) {
-    const baseDomainUrl = domain.startsWith("https://")
-        ? domain
-        : `https://${domain}`;
-    const domainHost = new URL(baseDomainUrl).host;
-    return domainHost.replace("www.", "");
-}
-const domain = getNormalizedDomain(domainArg);
+// Reuse the backend's own normalization so a generated code always hashes the
+// same host the server derives at registration.
+const domain = new DnsCheckRepository().getNormalizedDomain(domainArg);
 
 // The code binds to the owner's stable public identifier: the wallet address
 // (used as-is), else the lowercased email. Mirrors `setupCodeSubject` in

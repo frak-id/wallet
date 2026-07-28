@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantSetupStatusQueryKey } from "@/module/merchant/queries/queryKeys";
 import { useGetMerchantAdministrators } from "./useGetMerchantAdministrators";
 import { useGetMerchantBank } from "./useGetMerchantBank";
 
@@ -81,12 +82,7 @@ export function useMerchantSetupStatus({ merchantId }: { merchantId: string }) {
     });
 
     return useQuery({
-        queryKey: [
-            "merchant",
-            merchantId,
-            "setup-status",
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: merchantSetupStatusQueryKey(merchantId, isDemoMode),
         queryFn: async (): Promise<MerchantSetupStatus> => {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));

@@ -27,6 +27,14 @@ import {
     getOverviewSummaryMock,
 } from "@/module/campaigns/api/overviewApi";
 import type { CampaignListResponse } from "@/types/Campaign";
+import {
+    affiliateReportQueryKey,
+    campaignConfigQueryKey,
+    campaignDetailsQueryKey,
+    campaignsListQueryKey,
+    overviewAnalyticsQueryKey,
+    overviewSummaryQueryKey,
+} from "./queryKeys";
 
 export type CampaignDetailsStats = CampaignDetailsResponse;
 
@@ -38,12 +46,7 @@ export const campaignsListQueryOptions = ({
     isDemoMode: boolean;
 }) =>
     queryOptions<CampaignListResponse>({
-        queryKey: [
-            "campaigns",
-            "list",
-            merchantId,
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: campaignsListQueryKey(merchantId, isDemoMode),
         queryFn: () => getMerchantCampaigns({ merchantId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         initialData: isDemoMode
@@ -72,16 +75,13 @@ export const overviewSummaryQueryOptions = ({
     currency: Currency;
 }) =>
     queryOptions<OverviewSummaryResponse>({
-        queryKey: [
-            "campaigns",
-            "overview",
-            "summary",
+        queryKey: overviewSummaryQueryKey(
             merchantId,
-            isDemoMode ? "demo" : "live",
-            from ?? null,
-            to ?? null,
-            currency,
-        ],
+            isDemoMode,
+            from,
+            to,
+            currency
+        ),
         queryFn: () =>
             getOverviewSummary({ merchantId, isDemoMode, from, to, currency }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
@@ -110,15 +110,7 @@ export const overviewAnalyticsQueryOptions = ({
     to?: string;
 }) =>
     queryOptions<OverviewAnalyticsResponse>({
-        queryKey: [
-            "campaigns",
-            "overview",
-            "analytics",
-            merchantId,
-            isDemoMode ? "demo" : "live",
-            from ?? null,
-            to ?? null,
-        ],
+        queryKey: overviewAnalyticsQueryKey(merchantId, isDemoMode, from, to),
         queryFn: () =>
             getOverviewAnalytics({ merchantId, isDemoMode, from, to }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
@@ -148,13 +140,7 @@ export const campaignDetailsQueryOptions = ({
     isDemoMode: boolean;
 }) =>
     queryOptions<CampaignDetailsStats>({
-        queryKey: [
-            "campaign",
-            "details",
-            merchantId,
-            campaignId,
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: campaignDetailsQueryKey(merchantId, campaignId, isDemoMode),
         queryFn: () =>
             getCampaignDetails({ merchantId, campaignId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
@@ -183,14 +169,7 @@ export const affiliateReportQueryOptions = ({
     to?: string;
 }) =>
     queryOptions<AffiliateReportingResponse>({
-        queryKey: [
-            "campaigns",
-            "affiliate-report",
-            merchantId,
-            isDemoMode ? "demo" : "live",
-            from ?? null,
-            to ?? null,
-        ],
+        queryKey: affiliateReportQueryKey(merchantId, isDemoMode, from, to),
         queryFn: () => getAffiliateReport({ merchantId, isDemoMode, from, to }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         initialData: isDemoMode ? getAffiliateReportMock() : undefined,
@@ -206,12 +185,7 @@ export const campaignQueryOptions = ({
     isDemoMode: boolean;
 }) =>
     queryOptions({
-        queryKey: [
-            "campaign",
-            merchantId,
-            campaignId,
-            isDemoMode ? "demo" : "live",
-        ],
+        queryKey: campaignConfigQueryKey(merchantId, campaignId, isDemoMode),
         queryFn: () =>
             getCampaignDetail({ merchantId, campaignId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,

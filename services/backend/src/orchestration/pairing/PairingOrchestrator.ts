@@ -19,6 +19,7 @@ import type { PairingSignatureRepository } from "../../domain/pairing/repositori
 import { originTopic, targetTopic } from "../../domain/pairing/topics";
 import type { IdentityOrchestrator } from "../identity/IdentityOrchestrator";
 import type { IdentityNode } from "../identity/types";
+import { sendTopic } from "./wsHelpers";
 
 /**
  * Owns the full WebSocket-open lifecycle for a pairing connection:
@@ -433,8 +434,9 @@ export class PairingOrchestrator {
             }),
         ]);
 
-        this.sendTopic(
+        sendTopic(
             ws,
+            this.pairingRepository,
             pairing.pairingId,
             {
                 type: "authenticated",
@@ -478,8 +480,9 @@ export class PairingOrchestrator {
     }) {
         if (wallet.type === "distant-webauthn") {
             ws.subscribe(originTopic(wallet.pairingId));
-            this.sendTopic(
+            sendTopic(
                 ws,
+                this.pairingRepository,
                 wallet.pairingId,
                 {
                     type: "partner-connected",
@@ -524,8 +527,9 @@ export class PairingOrchestrator {
 
         for (const pairingId of pairingIds) {
             ws.subscribe(targetTopic(pairingId));
-            this.sendTopic(
+            sendTopic(
                 ws,
+                this.pairingRepository,
                 pairingId,
                 {
                     type: "partner-connected",
@@ -568,23 +572,5 @@ export class PairingOrchestrator {
         message: WsDirectMessageResponse | WsTopicMessage
     ): void {
         ws.send(message);
-    }
-
-    private sendTopic(
-        ws: ElysiaWS,
-        pairingId: string,
-        message: WsTopicMessage,
-        topic: "origin" | "target",
-        opts: { skipLastActiveUpdate?: boolean } = {}
-    ): void {
-        if (!opts.skipLastActiveUpdate) {
-            this.pairingRepository.touchLastActiveBatched(pairingId);
-        }
-        ws.publish(
-            topic === "origin"
-                ? originTopic(pairingId)
-                : targetTopic(pairingId),
-            message
-        );
     }
 }

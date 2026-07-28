@@ -11,6 +11,7 @@ import {
     prefixModalCss,
     trackEvent,
 } from "@frak-labs/wallet-shared/common";
+import { mediaSrcSet } from "@frak-labs/wallet-shared/common/utils/mediaSrcSet";
 import {
     getOriginPairingClient,
     OriginPairingState,
@@ -291,7 +292,7 @@ function ModalHeader({
             <Stack space="m" align="center">
                 {logoUrl && !logoFailed ? (
                     <img
-                        src={logoUrl}
+                        {...mediaSrcSet(logoUrl)}
                         alt=""
                         className={styles.modalHeaderLogo}
                         onError={onLogoError}

@@ -321,6 +321,11 @@ export const shadow = {
     dialog: "0 4px 24px rgba(0,0,0,0.12)",
     /** Large drop shadow for centered modal cards on desktop. */
     overlay: "0 20px 50px rgba(0,0,0,0.35)",
+    /**
+     * Tight, high-contrast edge for white glyphs overlaid on imagery, keeping
+     * them legible on light backgrounds. Use with `filter: drop-shadow(...)`.
+     */
+    iconOnImage: "0 1px 2px rgba(0,0,0,0.45)",
 } as const;
 
 /**

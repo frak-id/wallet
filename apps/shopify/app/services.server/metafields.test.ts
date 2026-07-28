@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { AuthenticatedContext } from "../types/context";
 import type { I18nCustomizations } from "./metafields";
 import {
     buildMetafieldValue,
     parseI18nMetafield,
     polishAppearance,
+    registerFrakI18nFrTranslations,
     stripEmptyEntries,
 } from "./metafields";
 
@@ -174,5 +176,92 @@ describe("polishAppearance", () => {
 
     it("returns null when logoUrl is undefined", () => {
         expect(polishAppearance({})).toBeNull();
+    });
+});
+
+/* ------------------------------------------------------------------ */
+/*  FR translation register — INVALID_LOCALE_FOR_SHOP swallow          */
+/* ------------------------------------------------------------------ */
+
+describe("registerFrakI18nFrTranslations", () => {
+    const translations = [
+        { key: "modal.title", value: "Bonjour", digest: "d" },
+    ];
+
+    function mockContext(
+        userErrors: Array<{ message: string; code?: string }>
+    ): AuthenticatedContext {
+        const graphql = vi.fn().mockResolvedValue({
+            json: async () => ({
+                data: { translationsRegister: { userErrors } },
+            }),
+        });
+        return { admin: { graphql } } as unknown as AuthenticatedContext;
+    }
+
+    it("treats an all-INVALID_LOCALE_FOR_SHOP rejection as success", async () => {
+        const ctx = mockContext([
+            {
+                message: "locale isn't available",
+                code: "INVALID_LOCALE_FOR_SHOP",
+            },
+        ]);
+        expect(
+            await registerFrakI18nFrTranslations(
+                ctx,
+                "gid://entry",
+                translations
+            )
+        ).toBe(true);
+    });
+
+    it("fails when a real error is mixed in", async () => {
+        const ctx = mockContext([
+            {
+                message: "locale isn't available",
+                code: "INVALID_LOCALE_FOR_SHOP",
+            },
+            { message: "something else", code: "INVALID_VALUE" },
+        ]);
+        expect(
+            await registerFrakI18nFrTranslations(
+                ctx,
+                "gid://entry",
+                translations
+            )
+        ).toBe(false);
+    });
+
+    it("fails on a non-locale error", async () => {
+        const ctx = mockContext([
+            { message: "something else", code: "INVALID_VALUE" },
+        ]);
+        expect(
+            await registerFrakI18nFrTranslations(
+                ctx,
+                "gid://entry",
+                translations
+            )
+        ).toBe(false);
+    });
+
+    it("succeeds when there are no user errors", async () => {
+        const ctx = mockContext([]);
+        expect(
+            await registerFrakI18nFrTranslations(
+                ctx,
+                "gid://entry",
+                translations
+            )
+        ).toBe(true);
+    });
+
+    it("no-ops (success) when there are no translations to register", async () => {
+        const graphql = vi.fn();
+        const ctx = { admin: { graphql } } as unknown as AuthenticatedContext;
+        expect(
+            await registerFrakI18nFrTranslations(ctx, "gid://entry", [])
+        ).toBe(true);
+        expect(graphql).not.toHaveBeenCalled();
     });
 });

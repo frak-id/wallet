@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { Box } from "../Box";
+import { fieldHint, fieldLabel } from "../fieldChrome.css";
 import { FIELD_LABEL_LINE_HEIGHT } from "../fieldMetrics";
 import { Stack } from "../Stack";
 import * as styles from "./fieldLabel.css";
@@ -60,7 +61,7 @@ export function FieldLabel({
                     as="label"
                     htmlFor={htmlFor}
                     className={clsx(
-                        styles.label,
+                        fieldLabel,
                         reserveLabelLines ? styles.labelReserve : undefined
                     )}
                     style={reserveStyle}
@@ -71,7 +72,7 @@ export function FieldLabel({
             {hint ? (
                 <Stack space="xxs">
                     {children}
-                    <Box as="span" id={resolvedHintId} className={styles.hint}>
+                    <Box as="span" id={resolvedHintId} className={fieldHint}>
                         {hint}
                     </Box>
                 </Stack>

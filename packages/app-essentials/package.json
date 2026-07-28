@@ -15,9 +15,9 @@
   },
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
-    "@vitest/ui": "^4.1.0",
+    "@vitest/ui": "catalog:",
     "typescript": "catalog:",
-    "vitest": "^4.1.4"
+    "vitest": "catalog:"
   },
   "exports": {
     ".": {

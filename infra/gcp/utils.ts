@@ -6,6 +6,10 @@ export const baseDomainName = isProd ? "gcp.frak.id" : "gcp-dev.frak.id";
 
 export const domainName = `backend.${baseDomainName}`;
 
+// Local port the GCP DB tunnel (infra/gcp/dev.ts `db-tunnel`) forwards to the
+// shared master Postgres. Shared so dev DB consumers (backend, shopify) agree.
+export const dbTunnelLocalPort = "8888";
+
 // Create a dedicated namespace for the wallet
 export const walletNamespace = new kubernetes.core.v1.Namespace(
     "infra-wallet",

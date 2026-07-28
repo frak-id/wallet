@@ -6,11 +6,17 @@
   "license": "GNU GPL 3.0",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
+  "scripts": {
+    "test": "vitest"
+  },
   "exports": {
     ".": "./src/index.ts"
   },
   "devDependencies": {
+    "@frak-labs/test-foundation": "workspace:*",
+    "@vitest/ui": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

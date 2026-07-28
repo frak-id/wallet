@@ -1,7 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { type FileRejection, useDropzone } from "react-dropzone";
+import { isValidUrl } from "@frak-labs/app-essentials";
+import {
+    ACCEPTED_IMAGE_TYPES,
+    imageValidationMessage,
+    validateImageFile,
+} from "app/utils/imageValidation";
+import {
+    useCallback,
+    useEffect,
+    useId,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
-import styles from "./index.module.css";
 
 type MediaFile = { type: string; url: string };
 
@@ -10,60 +22,59 @@ type ImageUploadFieldProps = {
     value: string;
     onChange: (value: string) => void;
     onUploadSuccess: (url: string) => void;
+    /**
+     * Called when the merchant removes the current image, with the URL that
+     * was cleared, so the parent can defer the storage delete until Save.
+     */
+    onRemove?: (previousUrl: string) => void;
     label: string;
     placeholder?: string;
     mediaFiles?: MediaFile[];
+    // Externally-supplied field error (e.g. a save-time validation failure);
+    // takes precedence over the live URL-format check.
+    error?: string;
 };
 
-// 4 MB cap — the SSR Lambda Function URL (sst.aws.React in infra/shopify.ts)
-// hard-caps request payloads at 6 MB and base64-encodes binary content (~33%
-// overhead), so the effective ceiling is ~4.5 MB. Larger uploads return an
-// opaque 413 from Lambda before the action runs; do not raise this without
-// switching to a direct-to-backend or pre-signed-URL flow.
-const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
-
-const imageAccept = {
-    "image/png": [".png"],
-    "image/jpeg": [".jpg", ".jpeg"],
-    "image/webp": [".webp"],
-    "image/svg+xml": [".svg"],
-    "image/gif": [".gif"],
-};
-
-const restrictionsText = {
-    logo: "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 — Max 4MB",
-    hero: "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB",
-} as const;
+const acceptAttr = ACCEPTED_IMAGE_TYPES.join(",");
 
 export function ImageUploadField({
     type,
     value,
     onChange,
     onUploadSuccess,
+    onRemove,
     label,
     placeholder = "https://...",
     mediaFiles,
+    error,
 }: ImageUploadFieldProps) {
+    const { t } = useTranslation();
     const mediaFetcher = useFetcher();
+
+    const urlError =
+        value && !isValidUrl(value) ? t("common.invalidUrl") : undefined;
+
+    // Preview the current image next to the field when it's a usable URL, so
+    // the merchant can confirm it without hunting through the phone preview.
+    const showThumbnail = !!value && isValidUrl(value);
 
     const isPending = mediaFetcher.state !== "idle";
 
     // Keep the latest callback without making it an effect dependency — the
-    // parent recreates it on every state change (autoSave depends on form
-    // state), so depending on its identity would re-run the effect endlessly.
+    // parent recreates it on every state change, so depending on its identity
+    // would re-run the effect endlessly.
     const onUploadSuccessRef = useRef(onUploadSuccess);
     useEffect(() => {
         onUploadSuccessRef.current = onUploadSuccess;
     });
 
-    // Handle media operation responses — act once per distinct fetcher result.
-    // mediaFetcher.data stays truthy after an upload, so without this guard the
-    // effect would re-fire (and re-trigger the parent's autoSave) infinitely.
+    // Handle upload responses — act once per distinct fetcher result.
+    // mediaFetcher.data stays truthy after an upload, so without this guard
+    // the effect would re-fire (and re-trigger the parent) infinitely.
     const processedResultRef = useRef<unknown>(undefined);
     useEffect(() => {
         const result = mediaFetcher.data as
             | { success: true; url: string }
-            | { success: true; deleted: true }
             | { success: false }
             | undefined;
         if (!result?.success) return;
@@ -71,16 +82,11 @@ export function ImageUploadField({
         processedResultRef.current = mediaFetcher.data;
         if ("url" in result) {
             onUploadSuccessRef.current(result.url);
-        } else if ("deleted" in result) {
-            onUploadSuccessRef.current("");
         }
     }, [mediaFetcher.data]);
 
-    const onDrop = useCallback(
-        (files: File[]) => {
-            const file = files[0];
-            if (!file) return;
-
+    const uploadFile = useCallback(
+        (file: File) => {
             const formData = new FormData();
             formData.set("intent", "uploadMedia");
             formData.set("type", type);
@@ -95,131 +101,127 @@ export function ImageUploadField({
         [type, mediaFetcher]
     );
 
+    const [validationError, setValidationError] = useState<string | null>(null);
+    const handleDropZoneChange = useCallback(
+        (files: File[]) => {
+            const file = files[0];
+            if (!file) return;
+            const validation = validateImageFile(file);
+            if (!validation.valid) {
+                setValidationError(
+                    imageValidationMessage(validation.reason, t)
+                );
+                return;
+            }
+            setValidationError(null);
+            uploadFile(file);
+        },
+        [uploadFile, t]
+    );
+
+    // Removal only clears the pending reference; the storage delete is
+    // replayed on Save, so Discard can still restore it until then.
     const handleClear = useCallback(() => {
-        const formData = new FormData();
-        formData.set("intent", "deleteMedia");
-        formData.set("type", type);
+        onRemove?.(value);
+        onChange("");
+    }, [onChange, onRemove, value]);
 
-        mediaFetcher.submit(formData, {
-            method: "post",
-            action: "/app/appearance",
-        });
-    }, [type, mediaFetcher]);
-
-    const { getRootProps, getInputProps, isDragActive, fileRejections } =
-        useDropzone({
-            onDrop,
-            accept: imageAccept,
-            maxFiles: 1,
-            maxSize: MAX_UPLOAD_BYTES,
-            disabled: isPending,
-        });
-
-    const errorMessage = resolveUploadError(fileRejections, mediaFetcher.data);
+    const dropZoneError =
+        validationError ?? resolveUploadError(mediaFetcher.data, t);
+    // Only while the field still holds the just-uploaded URL — otherwise the
+    // "uploaded" note would linger after a remove/Discard (mediaFetcher.data
+    // stays populated).
     const isUploadSuccess =
-        mediaFetcher.data &&
-        (mediaFetcher.data as { success: boolean }).success &&
-        "url" in (mediaFetcher.data as object);
+        !!value &&
+        typeof (mediaFetcher.data as { url?: string })?.url === "string" &&
+        (mediaFetcher.data as { url: string }).url === value;
 
     return (
-        <div className={styles.imageUploadField}>
-            <div className={styles.controls}>
-                <div className={styles.inputRow}>
-                    <div className={styles.inputWrapper}>
-                        <s-text-field
-                            label={label}
-                            placeholder={placeholder}
-                            value={value}
-                            onChange={(e) =>
-                                onChange(e.currentTarget.value ?? "")
-                            }
-                            autocomplete="off"
-                        />
-                    </div>
-                    {value && (
-                        <button
-                            type="button"
-                            className={styles.clearButton}
-                            onClick={handleClear}
-                            title="Remove image"
-                        >
-                            ✕
-                        </button>
-                    )}
-                </div>
-                <div
-                    {...getRootProps({
-                        className: `${styles.dropzone} ${isDragActive ? styles.dropzoneActive : ""} ${isPending ? styles.dropzonePending : ""}`,
-                    })}
-                >
-                    <input {...getInputProps()} />
-                    <span className={styles.dropzoneText}>
-                        {isPending
-                            ? "Uploading..."
-                            : isDragActive
-                              ? "Drop image here"
-                              : "Drag & drop an image, or click to browse"}
-                    </span>
-                </div>
-                <p className={styles.restrictions}>{restrictionsText[type]}</p>
-                {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-                {isUploadSuccess && (
-                    <p className={styles.success}>Image uploaded</p>
+        <s-stack gap="small">
+            {/* `accessory` slot doesn't fire onClick in the App Home embed, so
+                remove is a sibling button; conditional columns keep the input
+                full-width and add a leading thumbnail column when set. */}
+            <s-grid
+                gridTemplateColumns={
+                    showThumbnail ? "auto 1fr auto" : value ? "1fr auto" : "1fr"
+                }
+                gap="small"
+                alignItems="end"
+            >
+                {showThumbnail && (
+                    <s-thumbnail src={value} alt={label} size="base" />
                 )}
-                <ExistingFilePicker
-                    type={type}
-                    currentValue={value}
-                    mediaFiles={mediaFiles}
-                    onPick={(url) => {
-                        onChange(url);
-                        onUploadSuccess(url);
-                    }}
+                <s-text-field
+                    label={label}
+                    placeholder={placeholder}
+                    value={value}
+                    error={error ?? urlError}
+                    onChange={(e) => onChange(e.currentTarget.value ?? "")}
+                    autocomplete="off"
                 />
-            </div>
-        </div>
+                {value && (
+                    <s-button
+                        variant="tertiary"
+                        icon="delete"
+                        accessibilityLabel={t("common.removeImage")}
+                        onClick={handleClear}
+                    />
+                )}
+            </s-grid>
+
+            {/* Cast at the boundary: @shopify/ui-extensions augments this tag
+                without `.files`, but the runtime element is App Home's
+                DropZone, which exposes it. Its built-in "Accepts .png, ..."
+                caption stays English (no caption/slot prop, Shadow DOM) — the
+                localized `<s-text>` sibling below carries that info instead. */}
+            <s-drop-zone
+                label={t("appearance.upload.dropzoneLabel")}
+                accept={acceptAttr}
+                error={dropZoneError ?? undefined}
+                disabled={isPending || undefined}
+                onChange={(e) => {
+                    const target = e.currentTarget as unknown as {
+                        files: File[];
+                    };
+                    handleDropZoneChange(Array.from(target.files ?? []));
+                }}
+            />
+
+            <s-text color="subdued">
+                {t(`appearance.upload.restrictions.${type}`)}
+            </s-text>
+            {isUploadSuccess && (
+                <s-text tone="success">{t("common.imageUploaded")}</s-text>
+            )}
+
+            <ExistingFilePicker
+                type={type}
+                currentValue={value}
+                mediaFiles={mediaFiles}
+                onPick={(url) => {
+                    onChange(url);
+                    onUploadSuccess(url);
+                }}
+            />
+        </s-stack>
     );
 }
 
 function resolveUploadError(
-    rejections: readonly FileRejection[],
-    data: unknown
+    data: unknown,
+    t: (key: string) => string
 ): string | null {
-    const rejection = rejections[0];
-    if (rejection) return describeRejection(rejection);
-    return describeServerError(data);
-}
-
-function describeRejection(rejection: FileRejection): string {
-    const error = rejection.errors[0];
-    if (!error) return "File rejected.";
-    switch (error.code) {
-        case "file-too-large":
-            return `${rejection.file.name} is ${formatMb(rejection.file.size)} — images must stay under ${formatMb(MAX_UPLOAD_BYTES)}.`;
-        case "file-invalid-type":
-            return `${rejection.file.name} is not a supported image format (PNG, JPEG, WebP, SVG, GIF).`;
-        case "too-many-files":
-            return "Please upload one image at a time.";
-        default:
-            return error.message || "File rejected.";
-    }
-}
-
-function describeServerError(data: unknown): string | null {
     if (data === undefined || data === null) return null;
     if (typeof data === "object") {
         const d = data as { success?: boolean; error?: string };
         if (d.success === false) {
-            return d.error ?? "Upload failed. Please try again.";
+            return d.error ?? t("appearance.upload.failed");
         }
         return null;
     }
     // Non-object payload — typically a 413/502 from the SSR Lambda or an
     // upstream proxy returning HTML before the action could respond.
-    return "Upload failed. The image may be too large or the network was interrupted.";
-}
-
-function formatMb(bytes: number): string {
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return t("appearance.upload.failedLarge");
 }
 
 function ExistingFilePicker({
@@ -233,8 +235,10 @@ function ExistingFilePicker({
     mediaFiles?: MediaFile[];
     onPick: (url: string) => void;
 }) {
-    // Show files matching the same type (logo → logo, hero → hero or hero-{variant}),
-    // excluding the file currently selected in the input.
+    const { t } = useTranslation();
+
+    // Show files matching the same type (logo → logo, hero → hero or
+    // hero-{variant}), excluding the file currently selected in the input.
     const pickableFiles = useMemo(() => {
         if (!mediaFiles?.length) return [];
         return mediaFiles.filter((f) => {
@@ -244,24 +248,47 @@ function ExistingFilePicker({
         });
     }, [mediaFiles, type, currentValue]);
 
+    // Anchored popover (not inline expand) so opening it doesn't shift the
+    // sections below. Open/close is declarative command/commandFor; each
+    // thumbnail also uses `command="--hide"` to close on pick, since the
+    // runtime polaris.js doesn't expose the typed `hideOverlay()` method.
+    const popoverId = useId();
+
     if (!pickableFiles.length) return null;
 
     return (
-        <div className={styles.existingFiles}>
-            <p className={styles.existingFilesLabel}>Use an existing image:</p>
-            <div className={styles.existingFilesList}>
-                {pickableFiles.map((file) => (
-                    <button
-                        key={file.url}
-                        type="button"
-                        className={styles.existingFileButton}
-                        onClick={() => onPick(file.url)}
-                        title={`Use ${file.type} image`}
-                    >
-                        <img src={file.url} alt={file.type} loading="lazy" />
-                    </button>
-                ))}
-            </div>
-        </div>
+        <s-stack direction="inline">
+            <s-button
+                variant="tertiary"
+                icon="chevron-down"
+                command="--toggle"
+                commandFor={popoverId}
+            >
+                {t("common.useExistingImage")}
+            </s-button>
+            <s-popover id={popoverId}>
+                <s-box padding="base">
+                    <s-stack direction="inline" gap="small">
+                        {pickableFiles.map((file) => (
+                            <s-clickable
+                                key={file.url}
+                                command="--hide"
+                                commandFor={popoverId}
+                                onClick={() => onPick(file.url)}
+                                accessibilityLabel={t("common.useImageOfType", {
+                                    type: file.type,
+                                })}
+                            >
+                                <s-thumbnail
+                                    src={file.url}
+                                    alt={file.type}
+                                    size="base"
+                                />
+                            </s-clickable>
+                        ))}
+                    </s-stack>
+                </s-box>
+            </s-popover>
+        </s-stack>
     );
 }

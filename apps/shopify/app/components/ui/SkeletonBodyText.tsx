@@ -1,6 +1,6 @@
 import type React from "react";
-import styles from "./SkeletonBodyText.module.css";
-import skeletonStyles from "./skeleton.module.css";
+import * as styles from "./SkeletonBodyText.css";
+import * as skeletonStyles from "./skeleton.css";
 
 const widths = ["100%", "90%", "95%", "85%", "70%"];
 

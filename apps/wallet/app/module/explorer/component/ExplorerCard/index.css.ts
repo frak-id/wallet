@@ -9,6 +9,12 @@ export const cardWrapper = style({
     backgroundColor: vars.surface.elevated,
     overflow: "hidden",
     cursor: "pointer",
+    // Skip rendering + layout for cards outside the viewport (cheap virtualization
+    // without a library). `auto` lets the browser cache the real size after the
+    // first paint, so the placeholder height only matters for not-yet-rendered
+    // cards — kept close to the actual card height to avoid scrollbar jumps.
+    contentVisibility: "auto",
+    containIntrinsicSize: "auto 260px",
 });
 
 export const imageWrapper = style({
@@ -16,6 +22,9 @@ export const imageWrapper = style({
     position: "relative",
     width: "100%",
     overflow: "visible",
+    // Placeholder tint shown behind the hero while it lazy-loads (and under the
+    // transparent PNG edges of logos), so a slow image doesn't flash empty.
+    backgroundColor: vars.surface.disabled,
 });
 
 export const heroImage = style({
@@ -58,6 +67,17 @@ export const logoImage = style({
     borderRadius: "50%",
 });
 
+/**
+ * View count in the title row (a top-aligned `Spread` slot). Matching the
+ * name's line box (body = 26px) and centring within it keeps the count on the
+ * optical centre of the first name line, however many lines the name wraps to.
+ */
+export const viewsCount = style({
+    flexShrink: 0,
+    color: vars.text.secondary,
+    minHeight: "26px",
+});
+
 export const contentWrapper = style({
     display: "flex",
     flexDirection: "column",
@@ -67,7 +87,9 @@ export const contentWrapper = style({
 
 export const imagePlaceholder = style({
     width: "100%",
-    height: "100%",
+    // Match the hero's aspect ratio so image-less merchants still get a full
+    // band (keeps card height consistent and the white favorite heart legible).
+    aspectRatio: "361 / 158.5",
     backgroundColor: vars.surface.disabled,
     display: "flex",
     alignItems: "center",

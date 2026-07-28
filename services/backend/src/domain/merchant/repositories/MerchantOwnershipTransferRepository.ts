@@ -1,4 +1,4 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgTx } from "@backend-infrastructure";
 import { and, eq, gt } from "drizzle-orm";
 import type { Address } from "viem";
 import { merchantOwnershipTransfersTable } from "../db/schema";
@@ -62,8 +62,9 @@ export class MerchantOwnershipTransferRepository {
         return result;
     }
 
-    async delete(merchantId: string): Promise<boolean> {
-        const result = await db
+    async delete(merchantId: string, tx?: PgTx): Promise<boolean> {
+        const runner = tx ?? db;
+        const result = await runner
             .delete(merchantOwnershipTransfersTable)
             .where(eq(merchantOwnershipTransfersTable.merchantId, merchantId));
         return result.count > 0;

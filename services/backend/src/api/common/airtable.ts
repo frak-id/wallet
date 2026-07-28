@@ -6,71 +6,74 @@ import {
     type TableType,
 } from "../../infrastructure/integrations/airtable";
 
+// Lazy: a missing AIRTABLE_API_KEY should 500 this route, not crash the
+// whole backend (incl. /health) at module-load time.
+let airtableRepository: AirtableRepository | undefined;
+export function getAirtableRepository(): AirtableRepository {
+    if (!airtableRepository) {
+        airtableRepository = new AirtableRepository();
+    }
+    return airtableRepository;
+}
+
 /**
  * Airtable API routes for external integrations
  * Used by landing pages and other external services
  */
-export const airtableRoutes = new Elysia({ name: "Routes.airtable" })
-    .decorate("airtableRepository", new AirtableRepository())
-    .post(
-        "/airtable",
-        async ({ body, query, airtableRepository }) => {
-            // Validate required parameters
-            if (!query.table) {
-                return status(
-                    400,
-                    "table query parameter is required (demo_request, simulation, or newsletter)"
-                );
-            }
-
-            if (
-                !["demo_request", "simulation", "newsletter"].includes(
-                    query.table
-                )
-            ) {
-                return status(
-                    400,
-                    "table must be one of 'demo_request', 'simulation', or 'newsletter'"
-                );
-            }
-
-            const tableType = query.table as TableType;
-
-            if (!body.email) {
-                return status(400, "email is required in request body");
-            }
-
-            try {
-                await airtableRepository.processRequest(tableType, body);
-
-                return status(204);
-            } catch (err) {
-                log.error({ err }, "Airtable operation failed:");
-
-                const errorMessage =
-                    err instanceof Error ? err.message : String(err);
-
-                // Handle specific error cases
-                if (errorMessage.includes("already exists")) {
-                    return status(409, errorMessage);
-                }
-
-                return status(
-                    500,
-                    `Failed to process request: ${errorMessage}`
-                );
-            }
-        },
-        {
-            body: AirtableRequestBodyType,
-            query: t.Object({
-                table: t.String(),
-            }),
-            response: {
-                204: t.Void(),
-                400: t.String(),
-                409: t.String(),
-                500: t.String(),
-            },
+export const airtableRoutes = new Elysia({ name: "Routes.airtable" }).post(
+    "/airtable",
+    async ({ body, query }) => {
+        // Validate required parameters
+        if (!query.table) {
+            return status(
+                400,
+                "table query parameter is required (demo_request, simulation, or newsletter)"
+            );
         }
-    );
+
+        if (
+            !["demo_request", "simulation", "newsletter"].includes(query.table)
+        ) {
+            return status(
+                400,
+                "table must be one of 'demo_request', 'simulation', or 'newsletter'"
+            );
+        }
+
+        const tableType = query.table as TableType;
+
+        if (!body.email) {
+            return status(400, "email is required in request body");
+        }
+
+        try {
+            await getAirtableRepository().processRequest(tableType, body);
+
+            return status(204);
+        } catch (err) {
+            log.error({ err }, "Airtable operation failed:");
+
+            const errorMessage =
+                err instanceof Error ? err.message : String(err);
+
+            // Handle specific error cases
+            if (errorMessage.includes("already exists")) {
+                return status(409, errorMessage);
+            }
+
+            return status(500, `Failed to process request: ${errorMessage}`);
+        }
+    },
+    {
+        body: AirtableRequestBodyType,
+        query: t.Object({
+            table: t.String(),
+        }),
+        response: {
+            204: t.Void(),
+            400: t.String(),
+            409: t.String(),
+            500: t.String(),
+        },
+    }
+);

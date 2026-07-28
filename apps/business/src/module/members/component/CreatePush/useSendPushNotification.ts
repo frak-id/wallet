@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { pushHistoryQueryKey } from "@/module/members/queries/queryKeys";
 import { pushCreationStore } from "@/stores/pushCreationStore";
 import type { NotificationPayload } from "@/types/NotificationPayload";
 import { deriveScheduledAt } from "./schedule";
@@ -117,7 +118,7 @@ export function useSendPushNotification(merchantId: string) {
             // Refresh the push-history table so the freshly sent/scheduled
             // broadcast shows up without a manual reload.
             queryClient.invalidateQueries({
-                queryKey: ["push", "history", merchantId],
+                queryKey: pushHistoryQueryKey(merchantId),
             });
             navigate({
                 to: "/m/$merchantId/members",

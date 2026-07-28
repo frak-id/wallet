@@ -1,10 +1,13 @@
+import {
+    CopyableSnippet,
+    inlineCodeClass,
+} from "app/components/ui/CopyableSnippet";
 import { ExternalLink } from "app/components/ui/ExternalLink";
 import type { loader as appLoader } from "app/routes/app";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useFetcher, useRouteLoaderData } from "react-router";
 import { buildFrakSnippet } from "./buildFrakSnippet";
-import styles from "./LegacyInstall.module.css";
 
 /**
  * The share-button web component merchants paste into their product template.
@@ -92,24 +95,12 @@ export function LegacyInstall({
                     <s-text>{t("theme.legacy.snippetDescription")}</s-text>
 
                     {snippet ? (
-                        <div className={styles.snippetWrapper}>
-                            <pre className={styles.snippet}>{snippet}</pre>
-                            <div className={styles.copyButton}>
-                                <s-button
-                                    variant="primary"
-                                    onClick={() => copy(snippet, "snippet")}
-                                >
-                                    {copiedKey === "snippet"
-                                        ? t("theme.legacy.copied")
-                                        : t("theme.legacy.copySnippet")}
-                                </s-button>
-                            </div>
-                            {copyError && (
-                                <s-text color="subdued">
-                                    {t("theme.legacy.copyError")}
-                                </s-text>
-                            )}
-                        </div>
+                        <CopyableSnippet
+                            snippet={snippet}
+                            copyLabelKey="theme.legacy.copySnippet"
+                            copiedLabelKey="theme.legacy.copied"
+                            errorLabelKey="theme.legacy.copyError"
+                        />
                     ) : (
                         <s-banner tone="critical">
                             <s-text>{t("theme.legacy.noMerchantId")}</s-text>
@@ -142,14 +133,17 @@ export function LegacyInstall({
                                         : t("theme.legacy.copyButton")}
                                 </s-button>
                             </s-stack>
+                            {copyError && (
+                                <s-text color="subdued">
+                                    {t("theme.legacy.copyError")}
+                                </s-text>
+                            )}
                             <s-text color="subdued">
                                 <Trans
                                     i18nKey="theme.legacy.step2ClassHint"
                                     components={{
                                         code: (
-                                            <code
-                                                className={styles.inlineCode}
-                                            />
+                                            <code className={inlineCodeClass} />
                                         ),
                                     }}
                                 />
@@ -159,9 +153,7 @@ export function LegacyInstall({
                                     i18nKey="theme.legacy.step2SectionHint"
                                     components={{
                                         code: (
-                                            <code
-                                                className={styles.inlineCode}
-                                            />
+                                            <code className={inlineCodeClass} />
                                         ),
                                     }}
                                 />

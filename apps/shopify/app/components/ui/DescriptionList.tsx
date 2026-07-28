@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import styles from "./DescriptionList.module.css";
+import * as styles from "./DescriptionList.css";
 
 interface DescriptionListItem {
     term: string;

@@ -1,10 +1,5 @@
 import type { PDFFont } from "pdf-lib";
-import {
-    formatMoney,
-    GRAY,
-    isVatApplicable,
-    type PageCursor,
-} from "./primitives";
+import { drawVatLine, formatMoney, type PageCursor } from "./primitives";
 import type { BillingPdfDocumentDto } from "./types";
 
 export function drawWithdrawDetails(
@@ -26,16 +21,7 @@ export function drawWithdrawDetails(
     cursor.text(`Ratio distribué : ${ratioPct} %`);
     cursor.newLine(15);
 
-    if (isVatApplicable(withdraw.restitutedVat)) {
-        cursor.text(
-            `TVA restituée : ${formatMoney(withdraw.restitutedVat, currency)}`
-        );
-    } else {
-        cursor.text("TVA restituée : autoliquidation / non applicable", {
-            color: GRAY,
-        });
-    }
-    cursor.newLine(15);
+    drawVatLine(cursor, "TVA restituée", withdraw.restitutedVat, currency);
     cursor.text(
         `Frais Frak restitués : ${formatMoney(withdraw.restitutedFrakFee, currency)}`
     );

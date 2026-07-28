@@ -8,6 +8,7 @@ import { multicall } from "viem/actions";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { viemClient } from "@/config/blockchain";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { merchantBankQueryKey } from "@/module/merchant/queries/queryKeys";
 
 const MOCK_MERCHANT_BANK = {
     deployed: true,
@@ -47,7 +48,7 @@ export function useGetMerchantBank({ merchantId }: { merchantId: string }) {
     const isDemoMode = useIsDemoMode();
 
     return useQuery({
-        queryKey: ["merchant", merchantId, "bank"],
+        queryKey: merchantBankQueryKey(merchantId),
         queryFn: async () => {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));

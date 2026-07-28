@@ -58,6 +58,33 @@ export class MemberQueryOrchestrator {
         return filter.filter((id) => accessibleSet.has(id));
     }
 
+    // Kept even where asset_logs columns aren't selected, so the join fan-out
+    // (and thus `having` filtering) matches between queryMembers/countMembers.
+    private interactionJoinCondition(merchantIds: string[]): SQL | undefined {
+        return and(
+            eq(
+                interactionLogsTable.identityGroupId,
+                identityNodesTable.groupId
+            ),
+            inArray(interactionLogsTable.merchantId, merchantIds)
+        );
+    }
+
+    private assetLogsJoinCondition(merchantIds: string[]): SQL | undefined {
+        return and(
+            eq(assetLogsTable.identityGroupId, identityNodesTable.groupId),
+            inArray(assetLogsTable.merchantId, merchantIds)
+        );
+    }
+
+    private audienceWhereCondition(): SQL | undefined {
+        return and(
+            eq(identityNodesTable.identityType, "wallet"),
+            isNull(identityNodesTable.merchantId),
+            isNull(identityNodesTable.unlinkedAt)
+        );
+    }
+
     async queryMembers(
         accessibleMerchantIds: string[],
         params: MemberQueryParams
@@ -105,31 +132,13 @@ export class MemberQueryOrchestrator {
                 .from(identityNodesTable)
                 .innerJoin(
                     interactionLogsTable,
-                    and(
-                        eq(
-                            interactionLogsTable.identityGroupId,
-                            identityNodesTable.groupId
-                        ),
-                        inArray(interactionLogsTable.merchantId, merchantIds)
-                    )
+                    this.interactionJoinCondition(merchantIds)
                 )
                 .leftJoin(
                     assetLogsTable,
-                    and(
-                        eq(
-                            assetLogsTable.identityGroupId,
-                            identityNodesTable.groupId
-                        ),
-                        inArray(assetLogsTable.merchantId, merchantIds)
-                    )
+                    this.assetLogsJoinCondition(merchantIds)
                 )
-                .where(
-                    and(
-                        eq(identityNodesTable.identityType, "wallet"),
-                        isNull(identityNodesTable.merchantId),
-                        isNull(identityNodesTable.unlinkedAt)
-                    )
-                )
+                .where(this.audienceWhereCondition())
                 .groupBy(identityNodesTable.groupId)
                 .having(havingConditions)
                 .as("counted_members")
@@ -168,31 +177,10 @@ export class MemberQueryOrchestrator {
             .from(identityNodesTable)
             .innerJoin(
                 interactionLogsTable,
-                and(
-                    eq(
-                        interactionLogsTable.identityGroupId,
-                        identityNodesTable.groupId
-                    ),
-                    inArray(interactionLogsTable.merchantId, merchantIds)
-                )
+                this.interactionJoinCondition(merchantIds)
             )
-            .leftJoin(
-                assetLogsTable,
-                and(
-                    eq(
-                        assetLogsTable.identityGroupId,
-                        identityNodesTable.groupId
-                    ),
-                    inArray(assetLogsTable.merchantId, merchantIds)
-                )
-            )
-            .where(
-                and(
-                    eq(identityNodesTable.identityType, "wallet"),
-                    isNull(identityNodesTable.merchantId),
-                    isNull(identityNodesTable.unlinkedAt)
-                )
-            )
+            .leftJoin(assetLogsTable, this.assetLogsJoinCondition(merchantIds))
+            .where(this.audienceWhereCondition())
             .groupBy(
                 identityNodesTable.groupId,
                 identityNodesTable.identityValue
@@ -262,31 +250,13 @@ export class MemberQueryOrchestrator {
                 .from(identityNodesTable)
                 .innerJoin(
                     interactionLogsTable,
-                    and(
-                        eq(
-                            interactionLogsTable.identityGroupId,
-                            identityNodesTable.groupId
-                        ),
-                        inArray(interactionLogsTable.merchantId, merchantIds)
-                    )
+                    this.interactionJoinCondition(merchantIds)
                 )
                 .leftJoin(
                     assetLogsTable,
-                    and(
-                        eq(
-                            assetLogsTable.identityGroupId,
-                            identityNodesTable.groupId
-                        ),
-                        inArray(assetLogsTable.merchantId, merchantIds)
-                    )
+                    this.assetLogsJoinCondition(merchantIds)
                 )
-                .where(
-                    and(
-                        eq(identityNodesTable.identityType, "wallet"),
-                        isNull(identityNodesTable.merchantId),
-                        isNull(identityNodesTable.unlinkedAt)
-                    )
-                )
+                .where(this.audienceWhereCondition())
                 .groupBy(identityNodesTable.groupId)
                 .having(havingConditions)
                 .as("counted_members")
@@ -319,21 +289,9 @@ export class MemberQueryOrchestrator {
             .from(identityNodesTable)
             .innerJoin(
                 interactionLogsTable,
-                and(
-                    eq(
-                        interactionLogsTable.identityGroupId,
-                        identityNodesTable.groupId
-                    ),
-                    inArray(interactionLogsTable.merchantId, merchantIds)
-                )
+                this.interactionJoinCondition(merchantIds)
             )
-            .where(
-                and(
-                    eq(identityNodesTable.identityType, "wallet"),
-                    isNull(identityNodesTable.merchantId),
-                    isNull(identityNodesTable.unlinkedAt)
-                )
-            )
+            .where(this.audienceWhereCondition())
             .groupBy(
                 identityNodesTable.groupId,
                 identityNodesTable.identityValue

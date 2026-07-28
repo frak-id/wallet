@@ -3,7 +3,7 @@ import { isDemoMode } from "@/config/auth";
 import {
     CAMPAIGN_DETAILS_TABS,
     type CampaignDetailsTab,
-} from "@/module/campaigns/component/CampaignDetailsSheet";
+} from "@/module/campaigns/component/CampaignDetailsSheet/tabs";
 import { TableCampaigns } from "@/module/campaigns/component/TableCampaigns";
 import { CampaignsListFooter } from "@/module/campaigns/component/TableCampaigns/CampaignsListFooter";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";

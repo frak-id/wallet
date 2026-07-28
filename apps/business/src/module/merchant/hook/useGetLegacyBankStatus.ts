@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type Address, erc20Abi } from "viem";
 import { multicall } from "viem/actions";
 import { viemClient } from "@/config/blockchain";
+import { legacyBankStatusQueryKey } from "@/module/merchant/queries/queryKeys";
 import { legacyCampaignBankAbi } from "@/module/merchant/utils/legacyBanks";
 
 export function useGetLegacyBankStatus({
@@ -10,7 +11,7 @@ export function useGetLegacyBankStatus({
     oldBankAddress?: Address;
 }) {
     return useQuery({
-        queryKey: ["legacy-bank", oldBankAddress],
+        queryKey: legacyBankStatusQueryKey(oldBankAddress),
         queryFn: async () => {
             if (!oldBankAddress) {
                 throw new Error("No legacy bank address");

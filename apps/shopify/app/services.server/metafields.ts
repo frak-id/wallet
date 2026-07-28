@@ -762,7 +762,8 @@ async function readFrakI18nFieldTranslationState(
     return { digestByKey, keysWithFr };
 }
 
-async function registerFrakI18nFrTranslations(
+// Exported for unit testing.
+export async function registerFrakI18nFrTranslations(
     context: AuthenticatedContext,
     entryId: string,
     translations: Array<{ key: string; value: string; digest: string }>
@@ -770,7 +771,7 @@ async function registerFrakI18nFrTranslations(
     if (translations.length === 0) return true;
     const data = await runGraphQL<{
         translationsRegister?: {
-            userErrors?: Array<{ message: string }>;
+            userErrors?: Array<{ message: string; code?: string }>;
         };
     }>(
         context.admin.graphql,
@@ -800,6 +801,16 @@ async function registerFrakI18nFrTranslations(
     if (!data) return false;
     const errors = data.translationsRegister?.userErrors ?? [];
     if (errors.length > 0) {
+        // Shops without the French locale enabled reject every FR translation
+        // with INVALID_LOCALE_FOR_SHOP. Treat that as a cacheable no-op
+        // success: it lets us skip the `read_locales`-scoped shopLocales
+        // precheck entirely, and avoids re-running the sync on every load.
+        const onlyInvalidLocale = errors.every(
+            (e) => e.code === "INVALID_LOCALE_FOR_SHOP"
+        );
+        if (onlyInvalidLocale) {
+            return true;
+        }
         log.error({ errors }, "frakI18n fr translations rejected");
         return false;
     }
@@ -837,42 +848,16 @@ export async function ensureFrakI18nMetaobject(
 }
 
 /**
- * Whether the shop has the French locale enabled. `translationsRegister`
- * rejects FR translations with `INVALID_LOCALE_FOR_SHOP` for shops that
- * haven't added French. Because the orchestrator only caches on full
- * success, such a shop would otherwise re-run the whole metaobject sync and
- * re-log that error on every single app load. Gating on the shop's enabled
- * locales turns the FR seed into a cacheable no-op instead.
+ * Seed the bundled FR translations for any field that doesn't already have
+ * one. Shops without the French locale enabled reject the register with
+ * INVALID_LOCALE_FOR_SHOP, which `registerFrakI18nFrTranslations` swallows as
+ * a cacheable no-op success — so we don't need the `read_locales` scope to
+ * precheck the shop's enabled locales.
  */
-async function shopHasFrLocale(
-    context: AuthenticatedContext
-): Promise<boolean> {
-    const data = await runGraphQL<{
-        shopLocales?: Array<{ locale: string }>;
-    }>(
-        context.admin.graphql,
-        "shop locales read",
-        `#graphql
-        query ReadShopLocales {
-            shopLocales { locale }
-        }`,
-        {}
-    );
-    if (!data?.shopLocales) return false;
-    return data.shopLocales.some(
-        (l) => l.locale?.toLowerCase() === FRAK_I18N_FR_LOCALE
-    );
-}
-
 async function syncFrakI18nFrTranslations(
     context: AuthenticatedContext,
     entryId: string
 ): Promise<boolean> {
-    // Shops without French enabled reject FR translations with
-    // INVALID_LOCALE_FOR_SHOP. Skip as a cacheable success so we don't re-run
-    // the sync and re-log the rejection on every app load.
-    if (!(await shopHasFrLocale(context))) return true;
-
     const state = await readFrakI18nFieldTranslationState(context, entryId);
     if (!state) return false;
     const missing = FRAK_I18N_FIELDS.flatMap((f) => {

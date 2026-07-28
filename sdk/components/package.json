@@ -93,19 +93,19 @@
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
+    "@frak-labs/design-system": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
-    "preact": "^10.29.0",
-    "preact-custom-element": "^4.6.0",
-    "@frak-labs/design-system": "workspace:*"
+    "preact": "catalog:",
+    "preact-custom-element": "^4.6.0"
   },
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
-    "@preact/preset-vite": "^2.10.4",
+    "@preact/preset-vite": "catalog:",
     "@rolldown/plugin-node-polyfills": "catalog:",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/preact": "^3.2.4",
-    "@testing-library/user-event": "^14.6.1",
-    "@types/jsdom": "^28.0.0",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/preact": "catalog:",
+    "@testing-library/user-event": "catalog:",
+    "@types/jsdom": "catalog:",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
     "@typescript/native": "catalog:",
@@ -113,11 +113,11 @@
     "@vanilla-extract/integration": "catalog:",
     "@vanilla-extract/sprinkles": "catalog:",
     "@vanilla-extract/vite-plugin": "catalog:",
-    "@vitest/coverage-v8": "^4.1.0",
-    "@vitest/ui": "^4.1.0",
-    "jsdom": "^29.0.0",
+    "@vitest/coverage-v8": "catalog:",
+    "@vitest/ui": "catalog:",
+    "jsdom": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
-    "vitest": "^4.1.4"
+    "vitest": "catalog:"
   }
 }

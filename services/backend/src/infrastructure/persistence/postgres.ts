@@ -105,6 +105,11 @@ export const db = drizzle({
     },
 });
 
+/** Postgres transaction handle as passed to `db.transaction(async (tx) => …)`. */
+export type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+/** Either the root `db` or a transaction handle — for tx-composable queries. */
+export type PgRunner = typeof db | PgTx;
+
 /**
  * Run `task` while holding a Postgres session-level advisory lock identified by
  * `key`, so it runs on a single process at a time across replicas. Returns

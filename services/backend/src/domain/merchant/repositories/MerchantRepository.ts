@@ -1,6 +1,7 @@
-import { db } from "@backend-infrastructure";
+import { db, type PgTx } from "@backend-infrastructure";
 import { HttpError, isUniqueViolation } from "@backend-utils";
 import { arrayContains, eq, inArray, sql } from "drizzle-orm";
+import type { PgUpdateSetSource } from "drizzle-orm/pg-core";
 import { LRUCache } from "lru-cache";
 import type { Address, Hex } from "viem";
 import { merchantsTable } from "../db/schema";
@@ -271,6 +272,28 @@ export class MerchantRepository {
     }
 
     /**
+     * Skips cache invalidation when `tx` is supplied: invalidating before the
+     * enclosing transaction commits could let a reader repopulate the cache
+     * from pre-commit state. Caller owns post-commit invalidation.
+     */
+    private async applyUpdate(
+        id: string,
+        set: PgUpdateSetSource<typeof merchantsTable>,
+        tx?: PgTx
+    ): Promise<MerchantSelect | null> {
+        const runner = tx ?? db;
+        const [result] = await runner
+            .update(merchantsTable)
+            .set(set)
+            .where(eq(merchantsTable.id, id))
+            .returning();
+        if (result && !tx) {
+            this.invalidateCache(result);
+        }
+        return result ?? null;
+    }
+
+    /**
      * Reassign ownership to a new wallet-identified or account-identified
      * owner (§7.5: ownership transfer to/from walletless accounts). The
      * previous owner's identity on the axis NOT provided is cleared — a new
@@ -279,37 +302,26 @@ export class MerchantRepository {
      */
     async updateOwner(
         id: string,
-        newOwner: { wallet: Address } | { accountId: string }
+        newOwner: { wallet: Address } | { accountId: string },
+        tx?: PgTx
     ): Promise<MerchantSelect | null> {
-        const [result] = await db
-            .update(merchantsTable)
-            .set({
+        return this.applyUpdate(
+            id,
+            {
                 ownerWallet: "wallet" in newOwner ? newOwner.wallet : null,
                 ownerAccountId:
                     "accountId" in newOwner ? newOwner.accountId : null,
                 updatedAt: new Date(),
-            })
-            .where(eq(merchantsTable.id, id))
-            .returning();
-        if (result) {
-            this.invalidateCache(result);
-        }
-        return result ?? null;
+            },
+            tx
+        );
     }
 
     async updateBankAddress(
         id: string,
         bankAddress: Address
     ): Promise<MerchantSelect | null> {
-        const [result] = await db
-            .update(merchantsTable)
-            .set({ bankAddress, updatedAt: new Date() })
-            .where(eq(merchantsTable.id, id))
-            .returning();
-        if (result) {
-            this.invalidateCache(result);
-        }
-        return result ?? null;
+        return this.applyUpdate(id, { bankAddress, updatedAt: new Date() });
     }
 
     async update(
@@ -321,111 +333,63 @@ export class MerchantRepository {
         );
         if (Object.keys(updates).length === 0) return this.findById(id);
 
-        const [result] = await db
-            .update(merchantsTable)
-            .set({ ...updates, updatedAt: new Date() })
-            .where(eq(merchantsTable.id, id))
-            .returning();
-        if (result) {
-            this.invalidateCache(result);
-        }
-        return result ?? null;
+        return this.applyUpdate(id, { ...updates, updatedAt: new Date() });
     }
 
     async updateExplorer(
         id: string,
         { config, enabled }: { config?: ExplorerConfig; enabled?: boolean }
     ): Promise<MerchantSelect | null> {
-        const [result] = await db
-            .update(merchantsTable)
-            .set({
-                ...(config !== undefined && { explorerConfig: config }),
-                ...(enabled !== undefined && {
-                    explorerEnabledAt: enabled ? new Date() : null,
-                }),
-                updatedAt: new Date(),
-            })
-            .where(eq(merchantsTable.id, id))
-            .returning();
-        if (result) {
-            this.invalidateCache(result);
-        }
-        return result ?? null;
+        return this.applyUpdate(id, {
+            ...(config !== undefined && { explorerConfig: config }),
+            ...(enabled !== undefined && {
+                explorerEnabledAt: enabled ? new Date() : null,
+            }),
+            updatedAt: new Date(),
+        });
     }
 
     async updateSdkConfig(
         id: string,
         config: SdkConfig
     ): Promise<MerchantSelect | null> {
-        const [result] = await db
-            .update(merchantsTable)
-            .set({
-                sdkConfig: config,
-                updatedAt: new Date(),
-            })
-            .where(eq(merchantsTable.id, id))
-            .returning();
-        if (result) {
-            this.invalidateCache(result);
-        }
-        return result ?? null;
+        return this.applyUpdate(id, {
+            sdkConfig: config,
+            updatedAt: new Date(),
+        });
     }
 
     async updateAccountingInfo(
         id: string,
         accountingInfo: Partial<MerchantAccountingInfo>
     ): Promise<MerchantSelect | null> {
-        const [result] = await db
-            .update(merchantsTable)
-            .set({
-                accountingInfo,
-                updatedAt: new Date(),
-            })
-            .where(eq(merchantsTable.id, id))
-            .returning();
-        if (result) {
-            this.invalidateCache(result);
-        }
-        return result ?? null;
+        return this.applyUpdate(id, {
+            accountingInfo,
+            updatedAt: new Date(),
+        });
     }
 
     async addAllowedDomain(
         id: string,
         domain: string
     ): Promise<MerchantSelect | null> {
-        const [result] = await db
-            .update(merchantsTable)
-            .set({
-                allowedDomains: sql`array_append(
+        return this.applyUpdate(id, {
+            allowedDomains: sql`array_append(
                     array_remove(${merchantsTable.allowedDomains}, ${domain}),
                     ${domain}
                 )`,
-                updatedAt: new Date(),
-            })
-            .where(eq(merchantsTable.id, id))
-            .returning();
-        if (result) {
-            this.invalidateCache(result);
-        }
-        return result ?? null;
+            updatedAt: new Date(),
+        });
     }
 
     async setAllowedDomains(
         id: string,
         domains: string[]
     ): Promise<MerchantSelect | null> {
-        const [result] = await db
-            .update(merchantsTable)
-            .set({
-                allowedDomains: domains,
-                updatedAt: new Date(),
-            })
-            .where(eq(merchantsTable.id, id))
-            .returning();
-        if (result) {
-            this.invalidateCache(result);
-        }
-        return result ?? null;
+        return this.applyUpdate(id, {
+            allowedDomains: domains,
+            updatedAt: new Date(),
+        });
     }
 
     async findByAllowedDomain(domain: string): Promise<MerchantSelect | null> {

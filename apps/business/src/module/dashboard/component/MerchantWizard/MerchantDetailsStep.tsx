@@ -1,3 +1,4 @@
+import { isValidUrl, validateUrl } from "@frak-labs/app-essentials";
 import {
     Accordion,
     AccordionContent,
@@ -17,7 +18,6 @@ import { useTranslation } from "react-i18next";
 import { shouldShowError } from "@/module/campaigns/component/Creation/fieldError";
 import { WizardFieldCard } from "@/module/campaigns/component/Creation/WizardFieldCard";
 import { CopyableValue } from "@/module/common/component/CopyableValue";
-import { isValidUrl, validateUrl } from "@/module/common/utils/validateUrl";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { FormControl, FormField, FormItem } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
@@ -44,9 +44,12 @@ export function MerchantDetailsStep({
     const domain = watch("domain");
     const skipDomainValidation = watch("skipDomainValidation");
 
+    // Gated on `validateUrl`, not just a non-empty value: this re-fires on
+    // every keystroke, and typing `https://example.com` transiently sends
+    // `https://`, which the backend can't normalize.
     const { data: dnsRecord, isLoading: isDnsLoading } = useDnsTxtRecordToSet({
         domain,
-        enabled: !!domain && !verifiedViaShopify,
+        enabled: validateUrl(domain ?? "") && !verifiedViaShopify,
     });
 
     return (

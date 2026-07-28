@@ -91,6 +91,7 @@
             "currentDeviceConnected": "Connected",
             "recoveryOptions": "Recovery options",
             "changeEmail": "Change email address",
+            "favorites": "My favorite brands",
             "security": {
                 "heading": "Secure your wallet",
                 "headingSecured": "Your wallet is secured",
@@ -1064,6 +1065,24 @@
             }
         }
     },
+    "favorites": {
+        "pageTitle": "My favorite brands",
+        "empty": {
+            "title": "No favorites yet",
+            "description": "Tap the heart on a brand to find it here."
+        },
+        "error": {
+            "title": "Couldn't load your favorites",
+            "description": "Something went wrong while loading your favorite brands. Please try again.",
+            "retry": "Try again"
+        },
+        "unavailable": {
+            "title": "Favorites unavailable",
+            "description": "We couldn't find your favorite brands in the current list. They may no longer be available."
+        },
+        "add": "Add to favorites",
+        "remove": "Remove from favorites"
+    },
     "explorer": {
         "pageTitle": "Explorer",
         "empty": {
@@ -1071,7 +1090,9 @@
             "description": "New offers are coming soon. Check back later!"
         },
         "card": {
-            "until": "Until {{date}}"
+            "until": "Until {{date}}",
+            "views_one": "{{count}} view",
+            "views_other": "{{count}} views"
         },
         "sort": {
             "title": "Sort by",
@@ -1080,6 +1101,7 @@
             "apply": "Apply",
             "recommended": "Recommended",
             "popular": "Most popular",
+            "views": "Most viewed",
             "reward": "Highest reward",
             "expiring": "Ending soonest",
             "recent": "Most recent"
