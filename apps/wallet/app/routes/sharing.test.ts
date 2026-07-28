@@ -77,6 +77,12 @@ describe("/sharing param contract", () => {
         ).toBeUndefined();
     });
 
+    it("accepts a seeded reward headline but not arbitrary text", () => {
+        expect(validateSearch({ r: "12,50 €" }).r).toBe("12,50 €");
+        expect(validateSearch({ r: "<img src=x>" }).r).toBeUndefined();
+        expect(validateSearch({}).r).toBeUndefined();
+    });
+
     it("keeps a null attribution distinct from an absent one", () => {
         // null disables backend attribution defaults; undefined still applies
         // them, so the two must not collapse into each other.

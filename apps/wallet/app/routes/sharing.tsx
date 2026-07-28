@@ -32,6 +32,7 @@ import {
 } from "@/module/common/utils/buildHostResultUrl";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
+import { sanitizeSeededReward } from "@/module/common/utils/sanitizeSeededReward";
 
 /**
  * Build AttributionParams from search params.
@@ -118,6 +119,15 @@ type SharingSearch = {
      * binaries already in the field can never start sending it.
      */
     sdkv?: string;
+    /**
+     * Already-formatted reward headline from a host's local cache, painted on
+     * the first frame in place of a skeleton and replaced as soon as the real
+     * query resolves.
+     *
+     * Untrusted display-only text: it never reaches the sharing link,
+     * tracking, or any identity decision.
+     */
+    r?: string;
 };
 
 export const Route = createFileRoute("/sharing")({
@@ -148,6 +158,7 @@ export const Route = createFileRoute("/sharing")({
         returnScheme: sanitizeReturnScheme(search.returnScheme),
         sid: typeof search.sid === "string" ? search.sid : undefined,
         sdkv: typeof search.sdkv === "string" ? search.sdkv : undefined,
+        r: sanitizeSeededReward(search.r),
     }),
     beforeLoad: ({ search }) => {
         // A native host owns the caller identity, so a missing `clientId` is a
@@ -180,6 +191,7 @@ function WalletSharingPage() {
         returnScheme,
         sid,
         sdkv,
+        r: seededReward,
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
@@ -194,7 +206,10 @@ function WalletSharingPage() {
         useFormattedEstimatedReward({
             merchantId,
         });
-    const estimatedReward = reward?.formatted;
+    // Paint the host's cached headline until the real one arrives, so the page
+    // opens on content instead of a skeleton. The query still runs and takes
+    // over the moment it resolves.
+    const estimatedReward = reward?.formatted ?? seededReward;
 
     // Fire `sharing_page_viewed` once per mount, independent of whether we end up
     // rendering the confirmation screen. Denominator for the sharing funnel.
@@ -417,7 +432,7 @@ function WalletSharingPage() {
             installUrl={installUrl}
             t={t}
             isSharing={isSharing}
-            isRewardLoading={isRewardLoading}
+            isRewardLoading={isRewardLoading && !seededReward}
             rewardType={reward?.payoutType}
             minPurchaseAmount={reward?.minPurchaseAmount}
             lockupDurationDays={reward?.lockupDurationDays}
