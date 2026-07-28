@@ -167,7 +167,7 @@ The `clientId` exists in **two separate copies on two separate origins**:
 | Listener copy — cache | `clientIdStore`, key `frak_client_id_store` | **`wallet.frak.id`** | seeded from the `?clientId=` iframe param (`resolvingContextStore.ts:14-23`) |
 
 `wallet.frak.id` serves both the wallet app and `/listener` via ingress path routing
-(`infra/gcp/wallet.ts:216-234`), so the listener shares an origin with the wallet app.
+(`infra/gcp/wallet.ts:289-308`), so the listener shares an origin with the wallet app.
 
 The listener copy is **not a second identity**: it is overwritten from the SDK-supplied
 URL param on every load, including after persist rehydration
@@ -177,7 +177,7 @@ the SDK value, always.
 
 > One exception worth tracking: `useInstallReferrer.ts:77` writes `clientId` into that
 > same store from the Play referrer, in the **wallet app** (top-level `wallet.frak.id`),
-> and `sharing.tsx:138` reads it back. That path is not SDK-seeded.
+> and `sharing.tsx:118` reads it back. That path is not SDK-seeded.
 
 **The key lives on the merchant origin, in `sdk/core`, next to the id it derives.**
 That is the correct trust boundary — the merchant page is where the id is born, used, and
@@ -189,9 +189,11 @@ There is no shared key, no cross-merchant id, and therefore no cross-merchant co
 to engineer around. Per-merchant derivation variants (`SHA-256(pubkey ‖ merchantId)` and
 similar) are unnecessary — the browser already enforces the property.
 
-**All RPC stays SDK → listener.** There is no listener → SDK request/response channel
-(`packages/rpc/src/client.ts` gives the client only fire-and-forget `lifecycleHandlers`),
-and we are not building one. Instead, the SDK **pushes proofs down** as additional
+**All RPC stays SDK → listener.** `packages/rpc` has a full correlated request/response
+mechanism, but it is strictly **SDK-initiated** — the SDK asks, the listener answers.
+There is no listener-**initiated** request channel: `packages/rpc/src/listener.ts`
+exposes only `lifecycleHandlers` on that side, with no listener-side `request`. We are
+not building one. Instead, the SDK **pushes proofs down** as additional
 parameters on calls it already makes, and the listener **passes them through** to the
 backend without interpreting them:
 
@@ -316,7 +318,7 @@ would break the product.
 
 > **Accepted limitation — the long-lived ensure proof is bearer material.** Whoever holds
 > it can link that anonymous id to *their* wallet: pre-install, the victim's group has no
-> wallet, so `checkWalletPriority` returns `null` (`IdentityWeightService.ts:267`), no
+> wallet, so `checkWalletPriority` returns `null` (`IdentityWeightService.ts:258`), no
 > conflict fires, and the merge proceeds by weight. This is **not a regression** — today
 > the raw `anonymousId` grants exactly the same power with no proof at all. But it means:
 >
@@ -518,7 +520,7 @@ Three things this must get right:
   nodes are scoped `(value, merchantId)` (`identity/db/schema.ts:83-85`), which lines up
   with this one-to-one.
 - **Never delete the legacy id.** `mergeGroups` repoints `identity_nodes.groupId` and
-  deletes the *losing group row*, not the node (`IdentityMergeService.ts:199-203,331-333`)
+  deletes the *losing group row*, not the node (`IdentityMergeService.ts:198-201,341-343`)
   — which is correct and must stay. The legacy id is embedded in already-published `fCtx`
   links; deleting it orphans every one of them.
 
@@ -818,9 +820,9 @@ Wallet (new binary):
 
 #### Step 2 — after the new binary has been live 5–6 days, bump `minVersion`, then delete
 
-`GET /common/version` → `minVersion.{ios,android}` (`services/backend/src/api/common/version.ts:18-21`)
+`GET /common/version` → `minVersion.{ios,android}` (`services/backend/src/api/common/version.ts:19-22`)
 is the hard gate. The wallet polls it on boot and on window focus, 5-minute stale time
-(`useVersionGate.ts:36-46`), and enters `hard_update` below the floor. It is an **env
+(`useVersionGate.ts:36-46,130-144`), and enters `hard_update` below the floor. It is an **env
 var captured at module load**, so bumping it requires a backend deploy/restart.
 
 Once the floor excludes every pre-ticket binary, delete — **all of these must be tagged
@@ -1015,7 +1017,7 @@ outcome.
 - **Recovery tooling for locked-out users.** Skipped. At <100 users the realistic victim
   count is zero, and shipping fast is the better mitigation than building an unmerge path
   for a population that does not exist. If a victim appears, repair is a manual DB
-  operation against the `mergedGroups` audit jsonb (`IdentityMergeService.ts:331-333`).
+  operation against the `mergedGroups` audit jsonb (`IdentityMergeService.ts:335-339`).
 - **Binding `merge/execute`'s target at `initiate` time.** Skipped. Binding the proof to
   `SHA-256(mergeToken)` (§2.2) already removes the replay risk statelessly; binding the
   token itself would require reshaping the in-app-browser flow to know its target at mint
