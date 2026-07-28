@@ -293,19 +293,60 @@ sending the user to the App Store. On first launch, the wallet should **autofocu
 code input**.
 
 Critically: **do not read the pasteboard programmatically.** Calling
-`UIPasteboard.general.string` triggers the "pasted from…" banner and a permission
-prompt. Focusing the field is enough — iOS surfaces clipboard content in the keyboard
-suggestion bar automatically, with no read, no banner, no prompt. One tap for the user.
+`UIPasteboard.general.string` triggers a blocking "Allow Paste" alert on
+iOS 16+ (an informational banner on iOS 14–15).
 
-If presence detection is genuinely needed, use `UIPasteboard.detectPatterns(for:)`,
-which checks without reading.
+If presence detection is genuinely needed, use
+`UIPasteboard.detectPatterns(for:)`, which returns a match/no-match per
+pattern without a prompt. Its sibling `detectValues(for:)` **does** prompt —
+Apple's docs are explicit that returning actual values triggers the same
+notification as a direct read.
 
 Concretely:
 
-- autofocus the `CodeInput` when arriving at the install-code entry with no code in
-  the URL
-- ensure the input's `textContentType` / `inputMode` does not suppress the keyboard
-  suggestion bar
+- autofocus the `CodeInput` when arriving at the install-code entry with no
+  code in the URL
+
+> ⚠️ **The one-tap paste this section assumes does not exist on shipping
+> iOS.**
+>
+> "Focusing the field is enough — iOS surfaces clipboard content in the
+> keyboard suggestion bar automatically" does not hold on any GA release:
+>
+> - **`autocomplete="one-time-code"` is SMS-only.** It hooks Security Code
+>   AutoFill, which parses codes out of incoming Messages (iOS 12+) or
+>   iCloud Keychain's own TOTP generator (iOS 15+). A code the SDK *writes
+>   to the pasteboard* does not feed it, and Apple documents no pasteboard
+>   path into that suggestion.
+> - **The generic "paste candidate" chip is iOS 27.** A QuickType chip that
+>   previews clipboard content on focus and inserts it in one tap appears in
+>   Apple's iOS 27 release notes (Keyboard section, bug entry "Unlocalized
+>   text can appear for paste candidates"). It is absent from iOS 26 and
+>   earlier, so on today's install base the behaviour is simply not there.
+>
+> On shipping iOS the user must long-press the field and choose Paste.
+> Autofocus still helps — field focused, keyboard up, one less tap — but it
+> is not the one-tap flow described above, and the iOS install step should
+> not be costed as if it were.
+>
+> Apple's prompt-free one-tap affordance is **`UIPasteControl`** (iOS 16+):
+> a system-rendered button the user taps, no alert and no banner. It needs
+> native UI so it cannot live in the web view — which fits this plan, since
+> §1.3 already hands the whole install step to the SDK.
+>
+> **The wider point: the industry does not carry tokens across an install
+> this way.** Pasteboard matching was a growth-hack that iOS 14's banner
+> exposed (TikTok, LinkedIn, Reddit, 2020) and iOS 16's modal closed. Branch
+> still ships it as NativeLink with the prompt as a disclosed cost. Firebase
+> Dynamic Links shut down in August 2025. Probabilistic fingerprint matching
+> is dead post-ATT. What production apps do — Venmo, Cash App, Signal,
+> WalletConnect-style pairing — is a universal link when the app is present
+> and **explicit manual code or QR entry** when it is not, redeemed
+> server-side against an authenticated account. For a wallet the clipboard
+> is also a known clipper-malware surface, which is its own argument.
+>
+> Verify on a device before designing around any of this, and treat manual
+> entry as the flow rather than the fallback.
 
 ### 2.3 Service worker caching for `/sharing` **[ENHANCEMENT — Android only]**
 
