@@ -9,6 +9,7 @@ Native Android (Kotlin) and iOS (Swift) SDKs mirroring the capabilities of
 |---|---|
 | [`01-platform-changes.md`](./01-platform-changes.md) | Changes required in `apps/wallet`, `apps/listener`, `services/backend` before/alongside native work |
 | [`02-native-sdk-overview.md`](./02-native-sdk-overview.md) | What we build natively, philosophy, architecture, API surface, phasing |
+| [`03-implementation-strategy.md`](./03-implementation-strategy.md) | How we build and ship it: two native codebases vs a shared core, distribution, React Native, monorepo integration, and the v0.1 POC scope |
 
 ## Scope (MVP)
 
@@ -48,6 +49,7 @@ legacy-id population that cannot be retrofitted is nearly empty. That window clo
 we grow.
 
 Native consequences:
+
 - native v0.1 ships key derivation + signing from day one (no legacy native ids, so
   native is cryptographic-only — no trust-on-first-use path)
 - the `?fmt=` merge flow stays unsupported until the fix lands
@@ -111,4 +113,20 @@ and the SDK — not the merchant — must own the install step end to end.
 ## Status
 
 Planning. No implementation yet. Reviewed by architecture, security, platform-research
-and codebase-gap passes; findings folded into both documents.
+and codebase-gap passes; findings folded into `01` and `02`.
+
+`03-implementation-strategy.md` adds the build-and-ship decisions the first two
+documents leave open (code sharing, distribution, React Native, monorepo integration)
+and corrects three claims in them: the CocoaPods and Maven Central distribution
+targets, and the "first production Kotlin/Swift codebase" premise of `02` §12
+question 6.
+
+It also reframes v0.1: the MVP scope in `02` §11 is preceded by a deliberately thin
+**POC** that proves one share loop end to end on both platforms, driven by example apps
+under `example/native-{android,ios}/` — which are not a demo but the only way to run a
+native SDK at all. See `03` §6.
+
+**The POC is internal only.** No merchant integrates it, Moulinex included; they get the
+hardened MVP. That is what makes the §6.1 cuts safe, and it splits the security
+checklist: `3.2` and `3.6` still block because they are live production vulnerabilities,
+while `3.3` and `3.4` move to before public release (`03` §6.1b).
