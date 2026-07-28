@@ -85,6 +85,9 @@ jobs:
         env:
           VERSION: ${{ steps.resolve.outputs.version }}
 
+      - name: "🔒 Update lockfile"
+        run: bun install --lockfile-only
+
       - name: "📌 Create release PR"
         uses: peter-evans/create-pull-request@v8
         with:
