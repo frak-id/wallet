@@ -61,6 +61,7 @@ header (merchant logo, close button) and its own footer (Share / Copy buttons wi
 `UIActivityViewController` / `Intent.ACTION_SEND`).
 
 When `native=1`:
+
 - hide the page header (`MerchantLogo` + Frak logo + dismiss)
 - hide the sharing-screen footer CTAs (Share / Copy)
 - keep everything else: reward credit card, product cards, how-it-works stepper, FAQ,
@@ -141,6 +142,26 @@ wallet-origin page into an arbitrary scheme launcher (`?returnScheme=some-bankin
 Validate server/route-side against a strict shape — `^frak-[a-z0-9._-]{1,60}$` — and
 navigate only in response to a user gesture.
 
+(The `frak-` prefix is worth a second look: the section above retracts
+the `frak-<merchantId>` scheme design and explains that no OS
+registration is needed, so the prefix no longer distinguishes anything.
+It is implemented as written; if it is now vestigial, this is the line to
+change.)
+
+#### `?returnScheme=` is native-only
+
+The channel exists because a native host intercepts the navigation in its
+own web view. Nothing intercepts it anywhere else, so in a plain browser
+the navigation is a silent no-op and **every outcome becomes a dead
+end**: install, dismiss and share-again all stop responding, with no
+error.
+
+This is deliberate — a fallback timer would have to guess whether the
+host is slow or absent, and guessing wrong either double-fires an outcome
+or overrides a host that was about to handle it. A native integrator must
+therefore never send `returnScheme` on a URL that can be opened outside
+the SDK's web view.
+
 ### 1.2b `?confirmed=1` — inbound native → web channel **[BLOCKING]**
 
 The outbound channel above has a matching inbound gap that breaks the whole install
@@ -180,6 +201,7 @@ Frak app installed?
 ```
 
 Two steps in the iOS path **must** be native and cannot live in the web view:
+
 - writing the install code to `UIPasteboard` with an `expirationDate` — the web
   clipboard API offers no expiry control
 - presenting `SKStoreProductViewController` (in-app App Store) — impossible from JS
@@ -188,15 +210,28 @@ So the page hands back control; the SDK does the rest.
 
 ### 1.4 Seeded initial state **[ENHANCEMENT — high value]**
 
-Optional params letting the SDK pass locally-cached values so the page paints real
-content on first frame instead of a skeleton:
+One optional param letting the SDK pass a locally-cached value so the
+page paints real content on first frame instead of a skeleton:
 
 ```
-?r=<preformatted reward>&n=<appName>&l=<logoUrl>
+?r=<preformatted reward>
 ```
 
-The page renders these immediately, then revalidates via its normal
+The page renders it immediately, then revalidates via its normal
 `useFormattedEstimatedReward` query and reconciles.
+
+The other two seeded values, `appName` and `logoUrl`, are already in the
+§1.0 param contract and are sent under those names. An earlier draft of
+this section also listed them as `n=` and `l=`; that would give one value
+two spellings and two precedence rules, so only `r` is new here.
+
+The reward is **untrusted display text**, so the route matches it against
+the shape the reward formatter actually produces — digits plus a currency
+symbol or percent — rather than filtering characters. Every supported
+currency (eur, usd, gbp) formats with a symbol and no letters, and the
+"up to" qualifier is added by the page from its own translations. A
+looser check accepts short prose (`1 free iPhone`, `50% off scam`), which
+would put attacker copy inside the merchant's sheet.
 
 This is the single biggest perceived-performance win: it removes a full network
 round-trip from the critical path (today the page mounts, *then* fetches the reward,
@@ -266,6 +301,7 @@ If presence detection is genuinely needed, use `UIPasteboard.detectPatterns(for:
 which checks without reading.
 
 Concretely:
+
 - autofocus the `CodeInput` when arriving at the install-code entry with no code in
   the URL
 - ensure the input's `textContentType` / `inputMode` does not suppress the keyboard
@@ -275,6 +311,7 @@ Concretely:
 
 The wallet already builds a custom service worker (`apps/wallet/vite.config.ts`,
 `mode === "sw"`). Caching the `/sharing` shell gives:
+
 - near-instant repeat presentations
 - a usable offline render when combined with §1.4 seeded params
 
@@ -444,7 +481,7 @@ to hand-copy a `merchantId` into their build config is exactly the kind of setup
 that kills adoption. `merchantId` remains supported as an explicit override and as the
 fallback when package resolution fails.
 
-**Design rule: a merchant app is an additional identity _route_ to an existing
+**Design rule: a merchant app is an additional identity *route* to an existing
 merchant, never a new merchant.** Apps map to the merchant their domain already
 identifies.
 
@@ -519,11 +556,13 @@ convenience, not a gate.**
 1. **Android — genuinely verifiable.** Query Google's Digital Asset Links API rather
    than fetching the file yourself; it is the same verifier the OS uses and handles
    redirects, caching, and `include` chasing:
+
    ```
    GET https://digitalassetlinks.googleapis.com/v1/statements:list
          ?source.web.site=https://<domain>
          &relation=delegate_permission/common.handle_all_urls
    ```
+
    On a match, append `android:<package_name>` to `allowed_package_ids`.
 2. **iOS — weaker by construction.** Fetch `/.well-known/apple-app-site-association`
    and read `applinks.details[].appID`. This proves only that the domain *claims* the
