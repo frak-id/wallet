@@ -75,10 +75,20 @@ type SharingSearch = {
     /**
      * Set by a native host embedding this page in its own sheet.
      *
-     * Native hosts own the caller identity, so `clientId` becomes mandatory:
-     * see the guard in `WalletSharingPage`.
+     * Drives two things: `clientId` becomes mandatory (the host owns the
+     * caller identity) and the page renders without its own chrome, since
+     * the host supplies a header and share controls of its own.
      */
     native?: boolean;
+    /**
+     * Open directly on the post-share confirmation screen.
+     *
+     * Under `native` the page's own share and copy buttons are hidden, and
+     * they are the only things that flip that screen on. The host reloads
+     * this URL with the flag once its share sheet completes, so the install
+     * step still happens.
+     */
+    confirmed?: boolean;
 };
 
 export const Route = createFileRoute("/sharing")({
@@ -105,6 +115,7 @@ export const Route = createFileRoute("/sharing")({
         redirectUrl: sanitizeRedirectUrl(search.redirectUrl),
         attribution: parseAttributionFromSearch(search),
         native: search.native === "1" || search.native === true,
+        confirmed: search.confirmed === "1" || search.confirmed === true,
     }),
     beforeLoad: ({ search }) => {
         // A native host owns the caller identity, so a missing `clientId` is a
@@ -133,6 +144,7 @@ function WalletSharingPage() {
         redirectUrl,
         attribution,
         native,
+        confirmed,
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
@@ -219,9 +231,12 @@ function WalletSharingPage() {
         return `/install?m=${encodeURIComponent(merchantId)}&a=${encodeURIComponent(clientId)}`;
     }, [merchantId, clientId]);
 
-    // Check sessionStorage for a recent confirmation
-    const [showConfirmation, setShowConfirmation] = useState(() =>
-        merchantId ? getSavedConfirmation(merchantId) : false
+    // Check sessionStorage for a recent confirmation. A host that completed a
+    // share in its own sheet says so via the URL, since the in-page buttons
+    // that would otherwise set this are hidden.
+    const [showConfirmation, setShowConfirmation] = useState(
+        () =>
+            confirmed || (merchantId ? getSavedConfirmation(merchantId) : false)
     );
 
     // Build the final sharing link with Frak context via shared helper.
@@ -345,6 +360,7 @@ function WalletSharingPage() {
                 minPurchaseValue: reward?.minPurchaseValue,
             }}
             canShare={canShare}
+            chromeless={native}
             showConfirmation={showConfirmation}
             onShare={handleShare}
             onCopy={handleCopy}
