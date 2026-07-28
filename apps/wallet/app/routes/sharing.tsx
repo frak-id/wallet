@@ -72,6 +72,13 @@ type SharingSearch = {
     redirectUrl?: string;
     /** Attribution overrides for the outbound sharing URL (UTMs, ref, via). */
     attribution?: AttributionParams | null;
+    /**
+     * Set by a native host embedding this page in its own sheet.
+     *
+     * Native hosts own the caller identity, so `clientId` becomes mandatory:
+     * see the guard in `WalletSharingPage`.
+     */
+    native?: boolean;
 };
 
 export const Route = createFileRoute("/sharing")({
@@ -97,7 +104,20 @@ export const Route = createFileRoute("/sharing")({
                 : undefined,
         redirectUrl: sanitizeRedirectUrl(search.redirectUrl),
         attribution: parseAttributionFromSearch(search),
+        native: search.native === "1" || search.native === true,
     }),
+    beforeLoad: ({ search }) => {
+        // A native host owns the caller identity, so a missing `clientId` is a
+        // host integration bug, not a state to render: the page would come up
+        // with share and copy inert and no install link, saying nothing about
+        // why. Rejecting here keeps it out of the funnel numbers and away from
+        // the identity-resolution queries below.
+        if (!(search.native && !search.clientId)) return;
+
+        throw new Error(
+            "sharing: `clientId` is required when `native` is set. The host owns the caller identity; the wallet's own stored id must not stand in for it."
+        );
+    },
     component: WalletSharingPage,
 });
 
@@ -112,6 +132,7 @@ function WalletSharingPage() {
         checkoutToken,
         redirectUrl,
         attribution,
+        native,
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
@@ -151,8 +172,19 @@ function WalletSharingPage() {
         [rawT, estimatedReward, appName]
     );
 
-    // Immediate clientId from params or store
-    const immediateClientId = paramClientId ?? storeClientId;
+    // Whether this page may resolve a caller identity for itself.
+    //
+    // `clientIdStore` is a single global slot, not keyed by merchant, so it can
+    // hold an id belonging to a different merchant than the one being shared,
+    // and `checkoutToken` is a Shopify affordance. A native host states the
+    // identity outright, so either substitute would build `installUrl` — and
+    // the `ensure` that follows — against the wrong one, with no visible
+    // symptom. Both fallbacks below hang off this single value.
+    const mayResolveIdentity = !native;
+
+    const immediateClientId = mayResolveIdentity
+        ? (paramClientId ?? storeClientId)
+        : paramClientId;
 
     // Fallback: resolve clientId from the backend via checkout token when not directly provided
     const { data: resolvedClientId } = useQuery({
@@ -170,7 +202,11 @@ function WalletSharingPage() {
             if (error) throw error;
             return data.clientId;
         },
-        enabled: !immediateClientId && !!merchantId && !!checkoutToken,
+        enabled:
+            mayResolveIdentity &&
+            !immediateClientId &&
+            !!merchantId &&
+            !!checkoutToken,
         retry: 5,
         retryDelay: 300,
     });
