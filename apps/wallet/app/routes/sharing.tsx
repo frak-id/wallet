@@ -168,6 +168,19 @@ export const Route = createFileRoute("/sharing")({
         // the identity-resolution queries below.
         if (!(search.native && !search.clientId)) return;
 
+        // Tell the host, so its sheet closes instead of hanging on a
+        // wallet-branded error page it cannot interpret.
+        if (search.returnScheme) {
+            window.location.assign(
+                buildHostResultUrl({
+                    scheme: search.returnScheme,
+                    action: "error",
+                    sid: search.sid,
+                })
+            );
+            return;
+        }
+
         throw new Error(
             "sharing: `clientId` is required when `native` is set. The host owns the caller identity; the wallet's own stored id must not stand in for it."
         );
