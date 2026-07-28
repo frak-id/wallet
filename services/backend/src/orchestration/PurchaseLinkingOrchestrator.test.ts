@@ -20,7 +20,15 @@ function makeOrchestrator() {
         updateIdentityGroup: vi.fn(),
         findItemsByPurchaseId: vi.fn().mockResolvedValue([]),
     };
-    const purchaseClaimRepository = { upsert: vi.fn() };
+    const purchaseClaimRepository = {
+        upsert: vi
+            .fn()
+            .mockImplementation(
+                (params: { claimingIdentityGroupId: string }) => ({
+                    claimingIdentityGroupId: params.claimingIdentityGroupId,
+                })
+            ),
+    };
     const identityOrchestrator = {
         resolveAndAssociate: vi.fn(),
         resolveForAttribution: vi.fn(),
@@ -82,7 +90,35 @@ describe("PurchaseLinkingOrchestrator.claimPurchase", () => {
             ).not.toHaveBeenCalled();
         });
 
-        it("never calls associate() to reconcile with an existing purchase's identity group", async () => {
+        it("claims first-wins: never rebinds an existing claim to a later caller", async () => {
+            ctx.identityOrchestrator.resolveForAttribution.mockResolvedValue({
+                groupId: CLAIMING_GROUP,
+            });
+            ctx.purchaseRepository.findByOrderAndToken.mockResolvedValue(null);
+            // A claim already exists for this (merchant, order, token), so the
+            // repository keeps the original attribution and returns it.
+            ctx.purchaseClaimRepository.upsert.mockResolvedValue({
+                claimingIdentityGroupId: EXISTING_PURCHASE_GROUP,
+            });
+
+            const result = await ctx.orchestrator.claimPurchase({
+                identityNodes: nodes,
+                merchantId: MERCHANT_ID,
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "tok-1",
+                merge: false,
+            });
+
+            // The claim row drives attribution once the webhook lands, so a
+            // later unauthenticated caller must not be able to take it over.
+            expect(ctx.purchaseClaimRepository.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({ rebindExisting: false })
+            );
+            expect(result.identityGroupId).toBe(EXISTING_PURCHASE_GROUP);
+        });
+
+        it("neither merges nor repoints an already-attributed purchase", async () => {
             ctx.identityOrchestrator.resolveForAttribution.mockResolvedValue({
                 groupId: CLAIMING_GROUP,
             });
@@ -105,11 +141,16 @@ describe("PurchaseLinkingOrchestrator.claimPurchase", () => {
                 merge: false,
             });
 
-            // Attribution stays on the claiming group — the purchase's
-            // (potentially a stranger's) group is never merged in.
-            expect(result.identityGroupId).toBe(CLAIMING_GROUP);
+            // The purchase keeps its stored attribution: merging is refused,
+            // AND the row is not repointed at the claimer. Repointing would
+            // let a forged `x-frak-client-id` steal an existing purchase —
+            // the same class of hole as the merge itself.
+            expect(result.identityGroupId).toBe(EXISTING_PURCHASE_GROUP);
             expect(result.merged).toBe(false);
             expect(ctx.identityOrchestrator.associate).not.toHaveBeenCalled();
+            expect(
+                ctx.purchaseRepository.updateIdentityGroup
+            ).not.toHaveBeenCalled();
         });
     });
 

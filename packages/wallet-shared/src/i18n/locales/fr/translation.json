@@ -794,6 +794,9 @@
             "merchantInfo": "Connecté à {{merchantName}}"
         }
     },
+    "pendingActions": {
+        "walletAlreadyLinked": "Ce lien de parrainage est déjà lié à un autre portefeuille. Tes autres gains et soldes ne sont pas affectés."
+    },
     "installCode": {
         "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ce code",
         "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",

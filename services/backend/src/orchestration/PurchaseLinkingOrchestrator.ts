@@ -117,22 +117,30 @@ export class PurchaseLinkingOrchestrator {
             );
         }
 
-        await this.purchaseClaimRepository.upsert({
+        const claim = await this.purchaseClaimRepository.upsert({
             merchantId: params.merchantId,
             customerId: params.customerId,
             orderId: params.orderId,
             purchaseToken: normalizedToken,
             claimingIdentityGroupId: finalGroupId,
+            // §3.9: on the unauthenticated arm the first claim wins. The
+            // claim row is what the webhook later reads to attribute the
+            // purchase, so letting a later caller overwrite it is the same
+            // hijack as merging, one step earlier.
+            rebindExisting: merge,
         });
 
         log.debug(
-            { identityGroupId: finalGroupId, orderId: params.orderId },
+            {
+                identityGroupId: claim.claimingIdentityGroupId,
+                orderId: params.orderId,
+            },
             "Created purchase claim, awaiting webhook validation"
         );
 
         return {
             success: true,
-            identityGroupId: finalGroupId,
+            identityGroupId: claim.claimingIdentityGroupId,
             pendingWebhook: true,
         };
     }
@@ -148,27 +156,44 @@ export class PurchaseLinkingOrchestrator {
         let merged = alreadyMerged;
 
         if (
-            merge &&
             purchase.identityGroupId &&
             purchase.identityGroupId !== claimingGroupId
         ) {
-            const { finalGroupId } = await this.identityOrchestrator.associate(
-                claimingGroupId,
-                purchase.identityGroupId
-            );
+            if (!merge) {
+                // §3.9: the purchase is already attributed to another group
+                // and this caller is unauthenticated. Neither merging the two
+                // groups nor repointing the row is safe — repointing would let
+                // a forged `x-frak-client-id` steal an existing purchase. Keep
+                // the stored attribution and record the interaction against it.
+                log.warn(
+                    {
+                        purchaseId: purchase.id,
+                        claimingGroupId,
+                        purchaseGroupId: purchase.identityGroupId,
+                    },
+                    "Unauthenticated purchase claim for an already-attributed purchase; keeping the stored group"
+                );
+                finalIdentityGroupId = purchase.identityGroupId;
+            } else {
+                const { finalGroupId } =
+                    await this.identityOrchestrator.associate(
+                        claimingGroupId,
+                        purchase.identityGroupId
+                    );
 
-            log.info(
-                {
-                    purchaseId: purchase.id,
-                    claimingGroupId,
-                    purchaseGroupId: purchase.identityGroupId,
-                    finalGroupId,
-                },
-                "Merged claiming group with purchase group"
-            );
+                log.info(
+                    {
+                        purchaseId: purchase.id,
+                        claimingGroupId,
+                        purchaseGroupId: purchase.identityGroupId,
+                        finalGroupId,
+                    },
+                    "Merged claiming group with purchase group"
+                );
 
-            finalIdentityGroupId = finalGroupId;
-            merged = true;
+                finalIdentityGroupId = finalGroupId;
+                merged = true;
+            }
         }
 
         // Persist the resolved identity group on the purchase row whenever

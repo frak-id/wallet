@@ -8,11 +8,26 @@ import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { pendingActionsKey } from "@/module/pending-actions/queryKeys/pendingActions";
+import { ensureConflictStore } from "@/module/pending-actions/stores/ensureConflictStore";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import type {
     PendingAction,
     PendingActionInput,
 } from "@/module/pending-actions/types";
+
+/**
+ * Stable error code the backend returns for a non-retryable ensure failure
+ * (README §3.8): the anonymous id was already linked to a different wallet,
+ * so retrying can never succeed. `ensure.ts` remaps its internal
+ * `WALLET_CONFLICT` to this code before it reaches the client.
+ */
+const WALLET_ALREADY_LINKED = "WALLET_ALREADY_LINKED";
+
+function isNonRetryable(error: unknown): boolean {
+    const code = (error as { value?: { code?: string } } | undefined)?.value
+        ?.code;
+    return code === WALLET_ALREADY_LINKED;
+}
 
 type ExecutePendingActionsArgs = {
     newAction?: PendingActionInput;
@@ -30,7 +45,9 @@ type ExecutePendingActionsArgs = {
  *
  * Handles:
  *   - Storing a new action (optional, e.g. from /install)
- *   - Draining ensure actions (fire-and-forget, kept on failure for retry)
+ *   - Draining ensure actions (fire-and-forget, kept on failure for retry —
+ *     except a non-retryable WALLET_ALREADY_LINKED, which is dropped
+ *     immediately; see README §3.8)
  *   - Navigating to pending navigation target (if any)
  *
  * Returns `true` via mutation data if a navigation was triggered,
@@ -77,15 +94,28 @@ export function useExecutePendingActions(
                         store.removeAction(action.id);
                     },
                     (err) => {
+                        const nonRetryable = isNonRetryable(err);
                         trackEvent("identity_ensure_failed", {
                             source,
                             error_type:
                                 err instanceof Error ? err.name : "unknown",
+                            non_retryable: nonRetryable,
                         });
                         recordError(err, {
                             source: "pending_actions",
                             context: { action_type: "ensure", source },
                         });
+                        if (nonRetryable) {
+                            // Can never succeed — stop the 7-day retry loop
+                            // and tell the user, instead of a silent no-op
+                            // on every future app launch. The flag lives in a
+                            // module store, not local state: every caller
+                            // navigates away before this fire-and-forget
+                            // rejection lands, so component state would be
+                            // unmounted by the time it is set.
+                            store.removeAction(action.id);
+                            ensureConflictStore.getState().raise();
+                        }
                     }
                 );
             }
@@ -115,7 +145,10 @@ export function useExecutePendingActions(
 }
 
 /**
- * Execute a single ensure action against the backend.
+ * Execute a single ensure action against the backend. Rejects with the raw
+ * Eden Treaty error object (not a stringified `Error`) so callers can read
+ * `.value.code` to distinguish a non-retryable conflict from a transient
+ * failure.
  */
 async function executeEnsure(
     action: Extract<PendingAction, { type: "ensure" }>
@@ -126,7 +159,7 @@ async function executeEnsure(
     });
 
     if (error) {
-        throw new Error(`Ensure failed: ${JSON.stringify(error)}`);
+        throw error;
     }
 }
 

@@ -96,5 +96,10 @@ export type InstallEventMap = {
     identity_ensure_failed: {
         source: InstallSource;
         error_type: string;
+        // True for a stable WALLET_ALREADY_LINKED conflict (README §3.8) —
+        // the anonymous id is already linked to a different wallet, so the
+        // action is dropped instead of retried on every future launch.
+        // Optional: only the pending-actions ensure path currently sets it.
+        non_retryable?: boolean;
     };
 };

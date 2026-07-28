@@ -714,6 +714,9 @@ export default interface Resources {
         "title": "Welcome to your wallet"
       }
     },
+    "pendingActions": {
+      "walletAlreadyLinked": "This referral link is already linked to another wallet. Your other rewards and balances are unaffected."
+    },
     "recoveryCode": {
       "codeLabel": "Recovery code",
       "description": "Paste the code copied from wallet.frak.id to recover your earnings.",

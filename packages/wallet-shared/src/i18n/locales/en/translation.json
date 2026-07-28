@@ -794,6 +794,9 @@
             "merchantInfo": "Connected to {{merchantName}}"
         }
     },
+    "pendingActions": {
+        "walletAlreadyLinked": "This referral link is already linked to another wallet. Your other rewards and balances are unaffected."
+    },
     "installCode": {
         "title": "Don't lose your {{ estimatedReward }}!\nCopy this code",
         "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
