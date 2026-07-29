@@ -5,6 +5,7 @@ import type { FrakWalletSdkConfig } from "../types/config";
 
 vi.mock("../config/clientId", () => ({
     getClientId: vi.fn(() => "anon-client-id"),
+    getClientIdAsync: vi.fn(async () => "anon-client-id"),
 }));
 
 vi.mock("../identity/sign", () => ({
@@ -136,7 +137,16 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
             "./createIFrameFrakClient"
         );
 
-        createIFrameFrakClient({ config: baseConfig(), iframe: makeIframe() });
+        // Not awaited: the client is still being built while we drive the
+        // config resolution below. `createIFrameFrakClient` is now async (it
+        // resolves the anonymous id before wiring OpenPanel), so give it a
+        // turn to reach `sdkConfigStore.resolve()` and populate
+        // `resolveFreshConfig`.
+        void createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
 
         // Let the cached-config branch call `sendLifecycleConfig`, and the
         // fresh-config branch start waiting on `configPromise`.
@@ -173,7 +183,11 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
             "./createIFrameFrakClient"
         );
 
-        createIFrameFrakClient({ config: baseConfig(), iframe: makeIframe() });
+        void createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
 
         await Promise.resolve();
         await Promise.resolve();

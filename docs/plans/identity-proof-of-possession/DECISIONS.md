@@ -26,6 +26,10 @@ sites. `POST /user/track/purchase` takes the same `x-frak-client-id` +
 Fixing only site 1 would leave the headline single-request attack fully open on
 `/track/purchase`. **All three are fixed.** See §2.2 below.
 
+> **This enumeration was itself incomplete.** The sweep covered `track/*` and
+> `/track/purchase` only; the wallet auth routes are a fourth merge surface and remain
+> unprotected. See §1.5.
+
 ### 1.2 🔴 §3.6's rate-limit key does not behave as the plan implies — BLOCKER
 
 `rateLimitMiddleware`'s `keyExtractor` returning `null` **skips the limiter entirely**
@@ -81,6 +85,80 @@ the one code table missing it. Correct across replicas, no Redis, one column on 
 are already touching. Folded into the same DDL request as `proof_seen_at`.
 
 ---
+
+### 1.5 🔴 The auth routes are a fourth merge surface, and they carry no proof — UNRESOLVED
+
+> **Status: recorded, not fixed.** Found while asking why SSO transmits a `clientId` at
+> all. Deliberately left untouched — owner is analysing these by hand. The `clientId`
+> workstream continues independently; revisit this afterwards.
+
+§1.1 above corrected the plan from one merge site to three. That audit swept `track/*`
+and `/track/purchase` only. It missed a fourth surface: **the wallet auth routes**.
+
+```
+login.ts:62,125            ─┐
+register.ts:154            ─┼→ linkWalletToFingerprint({ walletAddress, clientId, merchantId })
+RecoveryClaimOrchestrator  ─┘        └→ resolveAndAssociate([wallet, anonymous_fingerprint])
+  .ts:155                                   └→ mergeService.mergeGroups(...)   ← real merge
+```
+
+All three read `clientId` from the `x-frak-client-id` header and reach
+`mergeGroups`. None calls `enforceLatchedProof`, which landed on exactly two arms
+(`/merge/initiate`, `/identity/ensure`).
+
+Note the asymmetry with `resolveForAttribution` (`IdentityOrchestrator.ts:157-177`), which
+was *deliberately* hardened — its comment states a forged header "can then only
+mis-attribute into the forger's own group, never move anyone else's group — `mergeGroups`
+is never called from this path." The auth path has the opposite property: it **does** call
+`mergeGroups`. An attacker who plants a victim's `clientId` and then registers a fresh
+wallet pulls the victim's anonymous group into their own — and registration mints the
+session, so no pre-existing wallet is needed.
+
+**Why SSO makes this the softest injection point.** The wallet cannot read the merchant
+site's `localStorage`, so the SDK ships the anonymous id across the origin boundary inside
+the compressed `?p=` payload (`cId`, `sso.ts:87`). `/sso` stores it
+(`sso.tsx:96-98`) into `clientIdStore`, and `backendClient.ts:35` then attaches it as
+`x-frak-client-id` on **every** subsequent wallet→backend call for the rest of the
+session. `cId` is attacker-controlled plaintext in a base64 blob in a URL, with no
+signature over the payload.
+
+That last point is the actual structural problem, and it is worth stating plainly:
+**`clientIdStore` is sticky and ambient.** It is set once and then rides along on
+unrelated requests. The three call sites above did not ask for a `clientId`; they just
+read a header that the transport layer attaches unconditionally.
+
+**Which of the three are actually reachable** — checked, because "reads the header" and
+"performs a merge" are not the same claim:
+
+| Site | Sends `merchantId`? | Merge reachable? |
+|---|---|---|
+| `login.ts:62,125` | yes | **yes** |
+| `register.ts:154` | yes (`cleanMerchantId`) | **yes** |
+| `RecoveryClaimOrchestrator.ts:155` | **no** | **no** — inert |
+
+`linkWalletToFingerprint` only appends the `anonymous_fingerprint` node when
+`clientId && merchantId` are *both* present (`IdentityOrchestrator.ts:204`). Recovery
+passes only `clientId`, so the node is never built and the call degrades to a
+single-node `resolveAndAssociate` — no merge. The header on the recovery path is
+therefore **inert today, and arguably should never have been plumbed**: the recovery flow
+has no merchant context and no reason to carry a merchant-scoped anonymous id. It is
+load-bearing only as a latent hazard — anyone adding a `merchantId` there later silently
+activates a merge on a binary-reachable route.
+
+**Why this cannot be fixed the way the other arms were.** `enforceLatchedProof` needs the
+proof to travel with the id. On the SDK arm the proof rides the request body. Here the id
+crosses via a URL the SDK generates but the *wallet* consumes, and the signing key lives
+in the merchant page's `localStorage` — the wallet origin cannot mint a proof for it. The
+proof would have to be generated SDK-side in `generateSsoUrl` and carried as a fourth
+compressed field, then forwarded by the wallet as a header. That runs straight into the
+same unsolved shape as `TODO(merge-initiate-proof)`: a ±2min proof window versus an SSO
+popup the user can leave open indefinitely.
+
+**Not verified by test.** The attack is derived from reading the call graph; no failing
+test reproduces it yet. Treat the severity as argued, not demonstrated.
+
+Smaller adjacent finding: `useSsoLink.ts:47` passes `clientId ?? ""`, sending an
+empty-string id rather than omitting the field.
 
 ## 2. Architecture decisions
 
@@ -505,6 +583,11 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
 - ✅ §2.6 migration merge (D6) — **shipped**, see §3.1.1. Enforcing proofs across the SDK
   and listener surface is now unblocked on this, but still blocked on
   `TODO(merge-initiate-proof)` (the listener modal / embedded-wallet path sends no proof).
+- 🔴 **The wallet auth routes merge without a proof** (§1.5) — `login`, `register` and
+  (inertly) `RecoveryClaimOrchestrator` reach `mergeGroups` off an unverified
+  `x-frak-client-id`, injectable via SSO's unsigned `cId`. Recorded and **left unfixed by
+  agreement**; owner is analysing by hand. Blocks nothing in the `clientId` workstream,
+  but must be resolved before proofs can be called mandatory across the surface.
 - The §2.6 conflicting-migration alarm is still **not built** — two different derived ids
   racing to claim the same legacy id is the harvesting signal, but §9.3 gives it no
   Alertmanager destination. Out of scope with the migration itself.

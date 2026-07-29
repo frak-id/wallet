@@ -1,4 +1,4 @@
-import { getClientId } from "../config/clientId";
+import { getClientId, getClientIdAsync } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import type {
     FrakClient,
@@ -92,6 +92,8 @@ export async function openSso(
 
     // Popup flow: Generate URL on SDK side and open synchronously
     // This ensures window.open() is called in same tick as user gesture (no popup blocker)
+    // If client id not cached, get it in an async manner, it will trigger popup blocker, but if user reclick on it, all good
+    const clientId = getClientId() ?? (await getClientIdAsync());
 
     // Step 1: Generate or use provided SSO URL
     const ssoUrl =
@@ -101,7 +103,7 @@ export async function openSso(
             args,
             (await sdkConfigStore.resolveMerchantId()) ?? "",
             metadata.name,
-            getClientId(),
+            clientId,
             customizations?.css
         );
 

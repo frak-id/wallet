@@ -6,7 +6,7 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
 import { OpenPanel } from "@openpanel/web";
-import { getClientId } from "../config/clientId";
+import { getClientIdAsync } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { BACKUP_KEY } from "../constants";
 import { signProof } from "../identity/sign";
@@ -43,13 +43,13 @@ type MerchantConfigResult = Awaited<ReturnType<typeof sdkConfigStore.resolve>>;
  * const iframe = await createIframe({ config: frakConfig });
  * const client = createIFrameFrakClient({ config: frakConfig, iframe });
  */
-export function createIFrameFrakClient({
+export async function createIFrameFrakClient({
     config,
     iframe,
 }: {
     config: FrakWalletSdkConfig;
     iframe: HTMLIFrameElement;
-}): FrakClient {
+}): Promise<FrakClient> {
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
 
     // Precedence: explicit `metadata.lang` → page `<html lang>` → browser
@@ -66,6 +66,17 @@ export function createIFrameFrakClient({
     const configPromise = sdkConfigStore.isCacheFresh
         ? undefined
         : sdkConfigStore.resolve(config.domain, config.walletUrl, detectedLang);
+
+    // Resolved once, here, rather than read inside OpenPanel's `filter`
+    // callback below: that callback is a synchronous predicate returning
+    // `boolean` and cannot await, and `getClientId()` is now nullable.
+    //
+    // Deliberately awaited AFTER `configPromise` is kicked off, so derivation
+    // overlaps the merchant-config fetch instead of delaying it. Callers
+    // arriving via `setupClient` have already warmed the cache in
+    // `createIframe`, making this an immediate hit in the common case.
+    // Analytics must never block client creation, hence the catch.
+    const resolvedClientId = await getClientIdAsync().catch(() => undefined);
 
     // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({
@@ -154,7 +165,9 @@ export function createIFrameFrakClient({
                     payload.properties = {
                         ...payload.properties,
                         sdk_version: process.env.SDK_VERSION,
-                        user_anonymous_client_id: getClientId(),
+                        ...(resolvedClientId && {
+                            user_anonymous_client_id: resolvedClientId,
+                        }),
                     };
                 }
 
@@ -163,7 +176,9 @@ export function createIFrameFrakClient({
         });
         openPanel.setGlobalProperties({
             sdk_version: process.env.SDK_VERSION,
-            user_anonymous_client_id: getClientId(),
+            ...(resolvedClientId && {
+                user_anonymous_client_id: resolvedClientId,
+            }),
         });
         openPanel.init();
         openPanel.track("sdk_initialized", {
@@ -208,6 +223,7 @@ export function createIFrameFrakClient({
         configPromise,
         contextSent,
         openPanel,
+        clientId: resolvedClientId,
     })
         .then(() => {})
         .catch((err) => {
@@ -407,6 +423,7 @@ async function postConnectionSetup({
     configPromise,
     contextSent,
     openPanel,
+    clientId,
 }: {
     config: FrakWalletSdkConfig;
     rpcClient: SdkRpcClient;
@@ -414,6 +431,8 @@ async function postConnectionSetup({
     configPromise: Promise<MerchantConfigResult> | undefined;
     contextSent: Deferred<void>;
     openPanel: OpenPanel | undefined;
+    /** Resolved once by the caller — see `createIFrameFrakClient`. */
+    clientId: string | undefined;
 }): Promise<void> {
     await lifecycleManager.isConnected;
 
@@ -498,7 +517,10 @@ async function postConnectionSetup({
         mergeTokenConsumed = true;
 
         const sdkConfig = buildResolvedSdkConfig(resolved);
-        const sdkAnonymousId = getClientId();
+        // Reuses the id resolved once at client construction rather than
+        // re-reading the sync accessor: this runs inside a sync callback, so
+        // a cold read here could only ever yield `undefined`.
+        const sdkAnonymousId = clientId;
         const sourceUrl = window.location.href;
 
         updateOpenPanelMerchantProps(openPanel, resolved);

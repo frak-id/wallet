@@ -1,4 +1,4 @@
-import { getClientId } from "../config/clientId";
+import { getClientIdAsync } from "../config/clientId";
 import type { FrakClient } from "../types";
 import type { SendInteractionParamsType } from "../types/rpc/interaction";
 
@@ -45,9 +45,10 @@ export async function sendInteraction(
     params: SendInteractionParamsType
 ): Promise<void> {
     try {
+        const clientId = await getClientIdAsync().catch(() => undefined);
         await client.request({
             method: "frak_sendInteraction",
-            params: [params, { clientId: getClientId() }],
+            params: [params, { clientId }],
         });
     } catch {
         // Silent failure - fire-and-forget

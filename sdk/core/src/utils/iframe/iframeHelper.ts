@@ -1,5 +1,5 @@
 import { getBackendUrl } from "../../config/backendUrl";
-import { getClientId, initClientId } from "../../config/clientId";
+import { initClientId } from "../../config/clientId";
 import type { FrakWalletSdkConfig, ListenerPreloadOption } from "../../types";
 
 /**
@@ -63,8 +63,15 @@ export async function createIframe({
     // `createIframe` is already async and already awaited by `setupClient`,
     // so every other `getClientId()` call site runs after this resolves and
     // reads the now-populated module cache.
-    await initClientId();
-    const clientId = getClientId();
+    //
+    // Use the resolved value directly rather than a follow-up `getClientId()`:
+    // that accessor is now nullable, and the listener URL must never carry
+    // `clientId=undefined`. On failure the iframe is built without the param
+    // and the listener falls back to its own persisted store.
+    const clientId = await initClientId().catch((error) => {
+        console.warn("[Frak SDK] Unable to derive a client id", error);
+        return undefined;
+    });
 
     // Preconnect to the wallet + backend origins so the handshake doesn't pay
     // for a cold DNS/TLS round-trip on partner sites that didn't warm them.
@@ -86,24 +93,32 @@ export async function createIframe({
 /**
  * Build the listener iframe URL.
  *
+ * Exported so every iframe creator (here and `@frak-labs/react-sdk`'s
+ * provider) builds the same URL — they drifted before, and a missing
+ * `clientId` param silently costs the listener its SDK-seeded identity.
+ *
  * Query params:
  *  - `clientId` — anonymous SDK client identifier used for funnel joining.
+ *    Omitted entirely when derivation failed; never serialised as
+ *    `"undefined"`. The listener then falls back to its persisted store.
  *
  * Hash params (consumed by `apps/listener/app/bootstrap.ts#setupPreloadHints`):
  *  - `preload=modal,sharing` — idle-warms the matching Ring 1 + Ring 2 chunks.
  *    Skipped entirely when no preload hints are provided so the listener
  *    doesn't pay for warm-ups that nobody asked for.
  */
-function buildListenerUrl({
+export function buildListenerUrl({
     walletUrl,
     clientId,
     preload,
 }: {
     walletUrl: string;
-    clientId: string;
+    clientId?: string;
     preload?: ListenerPreloadOption[];
 }): string {
-    const base = `${walletUrl}/listener?clientId=${encodeURIComponent(clientId)}`;
+    const base = clientId
+        ? `${walletUrl}/listener?clientId=${encodeURIComponent(clientId)}`
+        : `${walletUrl}/listener`;
     if (!preload || preload.length === 0) return base;
     return `${base}#preload=${preload.join(",")}`;
 }

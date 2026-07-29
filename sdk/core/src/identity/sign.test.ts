@@ -1,5 +1,5 @@
 import { p256 } from "@noble/curves/nist.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildProofMessage, decodeProof } from "./canonical";
 import {
     clearPendingLegacyId,
@@ -15,11 +15,16 @@ describe("sign", () => {
         localStorage.clear();
     });
 
+    afterEach(() => {
+        // `stubGlobal` survives `restoreAllMocks`; the no-entropy test stubs
+        // `crypto` away and would otherwise break every subsequent test.
+        vi.unstubAllGlobals();
+    });
+
     describe("ensureIdentityKey", () => {
         it("generates a derived id and persists key + id together", async () => {
             const result = await ensureIdentityKey();
 
-            expect(result.derived).toBe(true);
             expect(result.clientId).toMatch(
                 /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
             );
@@ -34,7 +39,6 @@ describe("sign", () => {
             const second = await ensureIdentityKey();
 
             expect(second.clientId).toBe(first.clientId);
-            expect(second.derived).toBe(true);
         });
 
         it("re-derives from the key rather than trusting a mismatched stored id (§2.3 atomicity)", async () => {
@@ -58,7 +62,7 @@ describe("sign", () => {
 
             // The id flips immediately, before the caller boots the iframe,
             // so the listener is only ever seeded with the derived id.
-            expect(result.derived).toBe(true);
+
             expect(result.clientId).not.toBe("legacy-random-id");
             expect(localStorage.getItem("frak-client-id")).toBe(
                 result.clientId
@@ -82,7 +86,7 @@ describe("sign", () => {
             const second = await ensureIdentityKey();
 
             expect(second.clientId).toBe(first.clientId);
-            expect(second.derived).toBe(true);
+
             expect(second.pendingLegacyId).toBe("legacy-random-id");
         });
 
@@ -97,15 +101,27 @@ describe("sign", () => {
             expect(getPendingLegacyId()).toBeUndefined();
         });
 
-        it("regenerates both key and id when the stored key is corrupt", async () => {
+        it("clears a corrupt key and rethrows rather than minting an unprovable id", async () => {
             localStorage.setItem("frak-client-id", "some-id");
             localStorage.setItem("frak-client-key", "not valid json");
 
-            const result = await ensureIdentityKey();
+            await expect(ensureIdentityKey()).rejects.toThrow();
 
-            expect(result.derived).toBe(false);
+            // The unusable key is cleared so the NEXT visit derives cleanly
+            // instead of failing forever on the same corrupt material.
             expect(localStorage.getItem("frak-client-key")).toBeNull();
-            expect(result.clientId).toBeTruthy();
+
+            const retry = await ensureIdentityKey();
+            expect(retry.clientId).toBeTruthy();
+            expect(retry.pendingLegacyId).toBe("some-id");
+        });
+
+        it("rejects when no entropy source exists, never returning an unprovable id", async () => {
+            vi.stubGlobal("crypto", {});
+
+            await expect(ensureIdentityKey()).rejects.toThrow(
+                /getRandomValues/
+            );
         });
 
         it("still derives when crypto.subtle is unavailable (§2.4 pure-JS fallback)", async () => {
@@ -124,7 +140,6 @@ describe("sign", () => {
                 );
                 const result = await freshEnsure();
 
-                expect(result.derived).toBe(true);
                 expect(localStorage.getItem("frak-client-key")).toBeTruthy();
                 expect(localStorage.getItem("frak-client-id")).toBe(
                     result.clientId

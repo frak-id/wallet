@@ -1,5 +1,5 @@
 import { getBackendUrl } from "../config/backendUrl";
-import { getClientId } from "../config/clientId";
+import { getClientIdAsync } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { signProof } from "../identity/sign";
 
@@ -32,7 +32,9 @@ export async function ensureIdentity(interactionToken: string): Promise<void> {
         return;
     }
 
-    const clientId = getClientId();
+    // Awaited rather than read synchronously: this is a failsafe that must
+    // work even when it runs before derivation has completed.
+    const clientId = await getClientIdAsync().catch(() => undefined);
     if (!clientId) {
         return;
     }

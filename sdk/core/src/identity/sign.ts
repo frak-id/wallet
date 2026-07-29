@@ -234,27 +234,9 @@ function hasEntropySource(): boolean {
     return typeof crypto !== "undefined" && !!crypto.getRandomValues;
 }
 
-/**
- * Random UUID v4, preferring `crypto.randomUUID()` and falling back to a
- * `crypto.getRandomValues`-free template for older/non-secure contexts.
- * Shared with `config/clientId.ts`, which has the same fallback need.
- */
-export function generateUUID(): string {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-        return crypto.randomUUID();
-    }
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-}
-
 export type IdentityKeyMaterial = {
-    /** The anonymous id — derived and provable, or a plain legacy id. */
+    /** The anonymous id. Always derived from the keypair, always provable. */
     clientId: string;
-    /** `true` when `clientId` was cryptographically derived and can be proven. */
-    derived: boolean;
     /**
      * The pre-derivation id this client used until now, present only on the
      * visit that migrates it (README §2.6). The caller folds it into
@@ -285,35 +267,33 @@ export function clearPendingLegacyId(): void {
 }
 
 /**
- * Mint a random, unprovable id and persist it as a legacy id (README §2.4,
- * §2.6). Reused whenever key generation is impossible or unavailable — no
- * separate code path, no extra decision to make later.
- */
-function legacyFallback(): IdentityKeyMaterial {
-    const clientId = generateUUID();
-    if (typeof window !== "undefined" && window.localStorage) {
-        localStorage.setItem(CLIENT_ID_KEY, clientId);
-    }
-    return { clientId, derived: false };
-}
-
-/**
  * Load the persisted key/id pair, generating a fresh keypair when neither
  * exists, and enforcing the §2.3 atomicity invariant: a stored id that
  * doesn't match its key is never trusted over the key. On mismatch or a
  * missing half, the key is authoritative and the id is rewritten from it;
  * if the key itself is unusable, both are regenerated together.
  *
- * Never throws. Falls back to an unprovable legacy id when no entropy
- * source exists at all.
+ * **Throws** when no provable id can be produced. There is deliberately no
+ * unprovable fallback (README §2.4): minting a random id here would recreate
+ * the dual-tier system proof-of-possession exists to remove, and would give
+ * attackers a downgrade target. Callers that must not throw use
+ * `getClientId()` and handle `undefined`.
  */
 export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
     if (typeof window === "undefined" || !window.localStorage) {
-        return legacyFallback();
+        throw new Error(
+            "[Frak SDK] No window/localStorage available to derive a client id"
+        );
     }
 
+    // `crypto.getRandomValues` is not secure-context gated and has shipped
+    // since IE11, so this is effectively unreachable in a real browser. It
+    // stays because `@noble` throws without it, and a clear error here beats
+    // that failure surfacing from inside the fallback signer.
     if (!hasEntropySource()) {
-        return legacyFallback();
+        throw new Error(
+            "[Frak SDK] crypto.getRandomValues unavailable, cannot derive a client id"
+        );
     }
 
     const storedId = localStorage.getItem(CLIENT_ID_KEY);
@@ -337,7 +317,6 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
             const pendingLegacyId = getPendingLegacyId();
             return {
                 clientId: derivedId,
-                derived: true,
                 ...(pendingLegacyId && { pendingLegacyId }),
             };
         }
@@ -367,15 +346,14 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
 
         return {
             clientId: derivedId,
-            derived: true,
             ...(storedId && { pendingLegacyId: storedId }),
         };
-    } catch {
-        // Keygen/import failed outright (corrupt JWK, unusable signer,
-        // etc). Regenerate both from scratch rather than leaving a
-        // half-broken pair around.
+    } catch (error) {
+        // Keygen/import failed outright (corrupt JWK, unusable signer, etc).
+        // Clear the unusable key so the next visit regenerates cleanly, then
+        // rethrow — an unprovable id is not an acceptable substitute.
         localStorage.removeItem(CLIENT_KEY_KEY);
-        return legacyFallback();
+        throw error;
     }
 }
 

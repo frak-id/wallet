@@ -39,6 +39,7 @@ export { detectPageLanguage } from "./i18n/detectPageLanguage";
 // Iframe DOM helpers
 export {
     baseIframeProps,
+    buildListenerUrl,
     createIframe,
     findIframeInOpener,
 } from "./iframe/iframeHelper";

@@ -1,4 +1,4 @@
-import { getClientId } from "../config/clientId";
+import { getClientIdAsync } from "../config/clientId";
 import { signProof } from "../identity/sign";
 import type { FrakClient } from "../types";
 import { withCache } from "../utils/cache";
@@ -32,7 +32,7 @@ export async function getMergeToken(
             // exactly as it does today. Signing lives inside this closure
             // so a cache hit performs no crypto — `withCache` only invokes
             // it on a miss (or to join an in-flight call).
-            const anonymousId = getClientId();
+            const anonymousId = await getClientIdAsync().catch(() => undefined);
             const proof = anonymousId
                 ? await signProof({
                       op: "frak-merge-v1",
