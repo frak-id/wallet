@@ -1041,8 +1041,14 @@ describe("useLogin", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
+        // Both come from `ssoContext`, with nothing passed to `login()` —
+        // the SSO merge on the backend needs the pair, so a regression that
+        // dropped either one would silently disable it.
         expect(authenticatedWalletApi.auth.login.post).toHaveBeenCalledWith(
-            expect.objectContaining({ proof: "frak-sso-v1.deadbeef" })
+            expect.objectContaining({
+                merchantId: "merchant-1",
+                proof: "frak-sso-v1.deadbeef",
+            })
         );
         expect(setSsoContext).toHaveBeenCalledWith({
             ...ssoContext,

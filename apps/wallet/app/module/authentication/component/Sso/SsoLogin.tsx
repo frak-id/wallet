@@ -13,13 +13,11 @@ export function SsoLoginComponent({
     isPrimary,
     onSuccess,
     onError,
-    merchantId,
     lastAuthentication,
 }: {
     isPrimary: boolean;
     onSuccess: () => void;
     onError: (error: Error | null) => void;
-    merchantId?: string;
     lastAuthentication?: PreviousAuthenticatorModel;
 }) {
     const { t } = useTranslation();
@@ -46,7 +44,7 @@ export function SsoLoginComponent({
                     // Reset the error
                     onError(null);
 
-                    login({ lastAuthentication, merchantId });
+                    login({ lastAuthentication });
                 }}
             >
                 {label}

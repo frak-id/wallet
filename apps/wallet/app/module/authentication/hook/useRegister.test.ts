@@ -505,7 +505,6 @@ describe("useRegister", () => {
 
         await result.current.register({
             email: { fakeReactEvent: true } as unknown as string,
-            merchantId: "",
         });
 
         await waitFor(() => {

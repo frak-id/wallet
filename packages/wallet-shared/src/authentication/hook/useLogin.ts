@@ -37,7 +37,6 @@ type UseLoginArgs = {
      * over `lastAuthentication.authenticatorId`.
      */
     allowedCredentialIds?: string[];
-    merchantId?: string;
     /**
      * When set, the freshly minted session is written to the tab-scoped
      * `detachedPairingSessionStore` under this pairing id instead of the
@@ -134,17 +133,18 @@ export function useLogin(
             const encodedResponse = btoa(
                 JSON.stringify(authenticationResponse)
             );
-            // Read straight from the store rather than threading a new prop
-            // through every `useLogin` caller: the proof is a one-shot,
-            // session-scoped credential set solely by the /sso route, so a
-            // direct read here keeps it out of the merchantId-style prop
-            // chain that non-SSO login paths don't need to know about.
-            const proof = authenticationStore.getState().ssoContext?.proof;
+            // Both of these are SSO-only, and `/sso` is the only writer of
+            // `ssoContext`, so they are read straight from the store instead
+            // of being threaded through every caller. Non-SSO login paths
+            // (reauth, pairing, email, onboarding) have no merchant and no
+            // proof, and shouldn't have to pass `undefined` for either.
+            const { merchantId, proof } =
+                authenticationStore.getState().ssoContext ?? {};
             const { data, error } =
                 await authenticatedWalletApi.auth.login.post({
                     expectedChallenge: challenge,
                     authenticatorResponse: encodedResponse,
-                    merchantId: args?.merchantId || undefined,
+                    merchantId: merchantId || undefined,
                     proof,
                 });
             if (error) {

@@ -31,7 +31,6 @@ import { toHex } from "viem";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 
 type UseRegisterArgs = {
-    merchantId?: string;
     email?: string;
     // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
 } | void;
@@ -56,7 +55,12 @@ export function useRegister(
         mutationKey: authKey.register,
         mutationFn: async (args?: UseRegisterArgs) => {
             const email = asString(args?.email);
-            const merchantId = asString(args?.merchantId);
+            // SSO-only, and `/sso` is the only writer of `ssoContext`, so it
+            // is read straight from the store rather than threaded through
+            // every caller — non-SSO register paths have no merchant.
+            const { merchantId: ssoMerchantId, proof } =
+                authenticationStore.getState().ssoContext ?? {};
+            const merchantId = asString(ssoMerchantId);
 
             // Reuse the persisted credential if a previous attempt got past
             // the WebAuthn ceremony — keeps biometrics from prompting twice
@@ -69,12 +73,6 @@ export function useRegister(
                 ),
             });
 
-            // Read straight from the store rather than threading a new prop
-            // through every `useRegister` caller: the proof is a one-shot,
-            // session-scoped credential set solely by the /sso route, so a
-            // direct read here keeps it out of the merchantId-style prop
-            // chain that non-SSO register paths don't need to know about.
-            const proof = authenticationStore.getState().ssoContext?.proof;
             const { data, error: apiError } =
                 await authenticatedWalletApi.auth.register.post({
                     id: pending.credentialId,
@@ -141,7 +139,12 @@ export function useRegister(
             if (isReportableWebauthnError(err)) {
                 recordError(err, {
                     source: "registration",
-                    context: { merchant: vars?.merchantId, ...webauthn },
+                    context: {
+                        merchant:
+                            authenticationStore.getState().ssoContext
+                                ?.merchantId,
+                        ...webauthn,
+                    },
                 });
             }
             ctx?.flow.end("failed", {
