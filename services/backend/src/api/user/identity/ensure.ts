@@ -7,7 +7,38 @@ import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { IdentityContext } from "../../../domain/identity";
 import { OrchestrationContext } from "../../../orchestration/context";
+import { enforceLatchedProof } from "../../../orchestration/identity/latchedProof";
 import { buildIdentityNodes } from "../track/sdkIdentity";
+
+/**
+ * Shared latch-gated proof policy (DUAL-ARM-PLAN.md WS-BE-1) — the same
+ * function `AnonymousMergeOrchestrator.enforceProof` uses for
+ * `/merge/execute` and `/merge/initiate`. `ensure.ts` has no dedicated
+ * orchestrator (DECISIONS §2.3), so it calls the shared helper directly
+ * rather than going through an orchestrator instance.
+ *
+ *   1. proof present → verify; invalid ⇒ 403 PROOF_INVALID, valid ⇒ allow
+ *      (and the caller may now latch).
+ *   2. proof absent  → read the node's latch; latched ⇒ 403 PROOF_REQUIRED,
+ *      otherwise allow (legacy id, or a derived id never yet proven).
+ *
+ * Returns whether a valid proof was presented, so the caller only writes
+ * the latch when it is actually earned — never on the fail-open path.
+ */
+async function enforceEnsureProof(params: {
+    anonymousId: string;
+    merchantId: string;
+    proof?: string;
+    op: "frak-ensure-v1" | "frak-install-v1";
+    context: string;
+}): Promise<boolean> {
+    return enforceLatchedProof({
+        ...params,
+        binding: new Uint8Array(0),
+        identityProofService: IdentityContext.services.identityProof,
+        identityRepository: IdentityContext.repositories.identity,
+    });
+}
 
 /**
  * WALLET arm (README §5) — anonymousId comes from the request BODY, or a
@@ -75,9 +106,30 @@ async function resolveWalletEnsureAnonymousId(params: {
     // Verify and record the outcome when a proof is present; never require
     // one, never reject on an invalid one — this arm stays permissive until
     // ROLLOUT-STEP-3.
+    //
+    // op is `frak-install-v1`, NOT `frak-ensure-v1` (DUAL-ARM-PLAN.md D-B).
+    // The wallet holds no signing key (README §2.0, §9 "settled" — it must
+    // never get a second P-256 identity key), so it can never produce a
+    // `frak-ensure-v1` proof; verifying against that op meant this block was
+    // dead code, guaranteed to fail for every proof it would ever see. The
+    // only proof this arm can ever receive is the `frak-install-v1` one
+    // carried through the `#p=` fragment / Play referrer / pending action
+    // (`InstallProcessing`, `useInstallReferrer`), which binds exactly
+    // `merchantId` ‖ `anonymousId` with an empty binding — precisely what
+    // this arm needs to authenticate.
+    //
+    // ROLLOUT-STEP-3: today this is redundant with the bare `anonymousId`
+    // arm right above, which is open to anyone — accepting the proof can
+    // only add evidence, never remove it. Once that bare arm is deleted,
+    // `frak-install-v1` becomes a SUFFICIENT ensure credential on its own,
+    // and its "high" leak rating (README §2.2 — URL fragment + Play
+    // referrer) starts to matter. Revisit then whether it should still be
+    // accepted directly or must be exchanged for an install ticket first
+    // (`install-code/generate` + `resolve`, `ensure.ts`'s own ticket arm
+    // above) before this route accepts it as sufficient on its own.
     if (proof) {
         const result = await IdentityContext.services.identityProof.verify({
-            op: "frak-ensure-v1",
+            op: "frak-install-v1",
             proof,
             merchantId,
             anonymousId: bodyAnonymousId,
@@ -90,7 +142,7 @@ async function resolveWalletEnsureAnonymousId(params: {
                     anonymousId: bodyAnonymousId,
                     reason: result.reason,
                 },
-                "Identity proof present but invalid (Phase 2: logged, not enforced)"
+                "Identity proof present but invalid (verified, not enforced — ROLLOUT-STEP-3)"
             );
         }
     }
@@ -100,9 +152,13 @@ async function resolveWalletEnsureAnonymousId(params: {
 
 /**
  * SDK arm (README §5) — anonymousId comes from the `x-frak-client-id`
- * HEADER, never from the body. ROLLOUT-STEP-2 (see ROLLOUT.md): this arm
- * never reaches the Tauri binary, so a valid `frak-ensure-v1` proof is now
- * mandatory — missing or invalid ⇒ 403.
+ * HEADER, never from the body. Latch-gated (DUAL-ARM-PLAN.md D-A, WS-BE-1),
+ * NOT unconditionally mandatory as ROLLOUT-STEP-2 previously had it: every
+ * legacy client (no key, can never sign — DECISIONS §3.1 D6 never migrates
+ * legacy ids) would otherwise hard-403 on every ensure call and silently
+ * lose attribution, forever, on this arm never reaching the Tauri binary.
+ * Same policy `enforceProof` gives `/merge/execute`: proof present →
+ * verify; proof absent → allow unless this id has ever latched.
  */
 async function resolveSdkEnsureAnonymousId(params: {
     merchantId: string;
@@ -111,21 +167,26 @@ async function resolveSdkEnsureAnonymousId(params: {
 }): Promise<string> {
     const { merchantId, anonymousId, proof } = params;
 
-    if (!proof) {
-        throw HttpError.forbidden(
-            "PROOF_REQUIRED",
-            "A frak-ensure-v1 proof is required"
-        );
-    }
-
-    await IdentityContext.services.identityProof.verifyOrThrow({
-        op: "frak-ensure-v1",
-        context: "ensure (Phase 4a: enforced)",
-        proof,
-        merchantId,
+    const proofVerified = await enforceEnsureProof({
         anonymousId,
-        binding: new Uint8Array(0),
+        merchantId,
+        proof,
+        op: "frak-ensure-v1",
+        context: "ensure SDK arm",
     });
+
+    // 🔴 Gated on `proofVerified`, not unconditional: latching an id that
+    // never actually proved possession (fail-open branch — legacy id, or a
+    // derived id that has simply never signed yet) would be a one-way
+    // corruption, permanently locking that id out of ever ensuring again
+    // without a key it may not have.
+    if (proofVerified) {
+        await IdentityContext.repositories.identity.markProofSeen({
+            type: "anonymous_fingerprint",
+            value: anonymousId,
+            merchantId,
+        });
+    }
 
     return anonymousId;
 }
@@ -134,8 +195,9 @@ async function resolveSdkEnsureAnonymousId(params: {
  * Routes to the WALLET arm or the SDK arm.
  *
  * The discriminator is the CREDENTIAL, not where the id sits in the
- * request — routing on field placement would let an SDK caller skip its
- * mandatory proof (ROLLOUT-STEP-2) just by moving its id into the body.
+ * request — routing on field placement would let an SDK caller with a
+ * LATCHED id dodge its proof requirement (DUAL-ARM-PLAN.md WS-BE-1) just by
+ * moving its id into the body.
  *
  * But the test is the ABSENCE of a wallet credential, not the presence of
  * an SDK one. The wallet's shared API client attaches every token it holds
@@ -349,10 +411,12 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                 // Install ticket (README §5). Authenticates its own
                 // anonymousId — takes priority over `proof`/`anonymousId`.
                 ticket: t.Optional(t.String()),
-                // frak-ensure-v1 proof (README §4.1). Mandatory on the SDK
-                // arm (ROLLOUT-STEP-2); optional, verified when present,
-                // never required on the wallet arm (ROLLOUT-STEP-3). See
-                // ROLLOUT.md.
+                // Proof (README §4.1). Latch-gated on the SDK arm
+                // (frak-ensure-v1; DUAL-ARM-PLAN.md WS-BE-1 — required only
+                // once this id has ever proven itself, not unconditionally);
+                // verified-and-logged (frak-install-v1) but never required
+                // on the wallet arm until ROLLOUT-STEP-3. See ROLLOUT.md and
+                // DUAL-ARM-PLAN.md.
                 proof: t.Optional(t.String()),
             }),
             response: {
@@ -364,8 +428,8 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                 }),
                 400: t.ErrorResponse,
                 401: t.String(),
-                // PROOF_REQUIRED or PROOF_INVALID on the SDK arm only
-                // (ROLLOUT-STEP-2).
+                // PROOF_REQUIRED (latched id, no/invalid proof) or
+                // PROOF_INVALID on the SDK arm (DUAL-ARM-PLAN.md WS-BE-1).
                 403: t.ErrorResponse,
                 409: t.ErrorResponse,
             },

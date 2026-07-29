@@ -8,16 +8,26 @@ const {
     mockProofVerifyOrThrow,
     mockResolveAndAssociate,
     mockWalletVerify,
+    mockFindNodeByIdentity,
+    mockMarkProofSeen,
 } = vi.hoisted(() => ({
     mockVerifyTicket: vi.fn(),
     mockProofVerify: vi.fn(),
     mockProofVerifyOrThrow: vi.fn(),
     mockResolveAndAssociate: vi.fn(),
     mockWalletVerify: vi.fn(),
+    mockFindNodeByIdentity: vi.fn(),
+    mockMarkProofSeen: vi.fn(),
 }));
 
 vi.mock("../../../../src/domain/identity", () => ({
     IdentityContext: {
+        repositories: {
+            identity: {
+                findNodeByIdentity: mockFindNodeByIdentity,
+                markProofSeen: mockMarkProofSeen,
+            },
+        },
         services: {
             installCode: {
                 verifyTicket: mockVerifyTicket,
@@ -94,7 +104,9 @@ vi.mock("@backend-infrastructure", () => {
     };
 });
 
+import goldenProofs from "@frak-labs/core-sdk/identity/fixtures";
 import { identityEnsureRoutes } from "../../../../src/api/user/identity/ensure";
+import { IdentityProofService } from "../../../../src/domain/identity/services/IdentityProofService";
 
 const MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440000";
 const WALLET_ADDRESS = "0x1111111111111111111111111111111111111111";
@@ -225,7 +237,12 @@ describe("POST /identity/ensure — resolution order (README §5)", () => {
         ]);
     });
 
-    it("proof + anonymousId arm: verifies and observes, never rejects on invalid proof", async () => {
+    it("proof + anonymousId arm: verifies as frak-install-v1, observes, never rejects on invalid proof", async () => {
+        // The wallet arm can only ever receive a `frak-install-v1` proof (the
+        // `#p=` / Play-referrer / pending-action one) — the wallet has no
+        // signing key and can never produce a `frak-ensure-v1` proof
+        // (DUAL-ARM-PLAN.md D-B). Asserting the op here is a regression
+        // guard against silently reverting to the dead `frak-ensure-v1` check.
         walletAuthed();
         mockProofVerify.mockResolvedValue({
             valid: false,
@@ -242,10 +259,30 @@ describe("POST /identity/ensure — resolution order (README §5)", () => {
         expect(mockVerifyTicket).not.toHaveBeenCalled();
         expect(mockProofVerify).toHaveBeenCalledWith(
             expect.objectContaining({
-                op: "frak-ensure-v1",
+                op: "frak-install-v1",
                 proof: "some-proof",
                 merchantId: MERCHANT_ID,
                 anonymousId: "anon-1",
+            })
+        );
+        expect(mockResolveAndAssociate).toHaveBeenCalled();
+    });
+
+    it("proof + anonymousId arm: accepts a valid frak-install-v1 proof", async () => {
+        walletAuthed();
+        mockProofVerify.mockResolvedValue({ valid: true });
+
+        const response = await postEnsure({
+            merchantId: MERCHANT_ID,
+            anonymousId: "anon-2",
+            proof: "good-proof",
+        });
+
+        expect(response.status).toBe(200);
+        expect(mockProofVerify).toHaveBeenCalledWith(
+            expect.objectContaining({
+                op: "frak-install-v1",
+                anonymousId: "anon-2",
             })
         );
         expect(mockResolveAndAssociate).toHaveBeenCalled();
@@ -357,12 +394,15 @@ describe("POST /identity/ensure — resolution order (README §5)", () => {
 });
 
 /**
- * SDK arm (ROLLOUT-STEP-2, README §5) — anonymousId arrives ONLY via the
- * `x-frak-client-id` header, never reaches the Tauri binary, so a
- * valid proof is now mandatory. The wallet arm (body `anonymousId` or
- * `ticket`, covered above) must stay untouched and permissive.
+ * SDK arm (DUAL-ARM-PLAN.md D-A, WS-BE-1) — anonymousId arrives ONLY via
+ * the `x-frak-client-id` header. LATCH-GATED, not unconditionally
+ * mandatory as ROLLOUT-STEP-2 previously had it: a valid proof, when
+ * present, is verified; when absent, the id is allowed unless it has
+ * previously latched (mirrors `AnonymousMergeOrchestrator.enforceProof`).
+ * The wallet arm (body `anonymousId` or `ticket`, covered above) must stay
+ * untouched and permissive.
  */
-describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof mandatory", () => {
+describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gated", () => {
     beforeEach(() => {
         mockVerifyTicket.mockReset();
         mockProofVerify.mockReset();
@@ -379,6 +419,8 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof man
         });
         mockResolveAndAssociate.mockReset();
         mockWalletVerify.mockReset();
+        mockFindNodeByIdentity.mockReset();
+        mockMarkProofSeen.mockReset();
         mockResolveAndAssociate.mockResolvedValue({
             finalGroupId: "group-1",
             merged: true,
@@ -405,8 +447,34 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof man
         );
     }
 
-    it("rejects with no proof at all", async () => {
+    it("allows an unlatched id with no proof at all", async () => {
         walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: null });
+
+        const response = await postEnsureViaHeader(
+            { merchantId: MERCHANT_ID },
+            "anon-sdk"
+        );
+
+        expect(response.status).toBe(200);
+        expect(mockProofVerify).not.toHaveBeenCalled();
+        expect(mockFindNodeByIdentity).toHaveBeenCalledWith({
+            type: "anonymous_fingerprint",
+            value: "anon-sdk",
+            merchantId: MERCHANT_ID,
+        });
+        expect(mockResolveAndAssociate).toHaveBeenCalled();
+        // 🔴 No proof was ever presented (fail-open branch) — the latch must
+        // NOT be written. Writing it here would permanently lock this id out
+        // of ever ensuring again without a key it may not have.
+        expect(mockMarkProofSeen).not.toHaveBeenCalled();
+    });
+
+    it("rejects a LATCHED id with no proof", async () => {
+        walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue({
+            proofSeenAt: new Date(),
+        });
 
         const response = await postEnsureViaHeader(
             { merchantId: MERCHANT_ID },
@@ -418,6 +486,7 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof man
         expect(data.code).toBe("PROOF_REQUIRED");
         expect(mockProofVerify).not.toHaveBeenCalled();
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+        expect(mockMarkProofSeen).not.toHaveBeenCalled();
     });
 
     it("rejects an invalid proof", async () => {
@@ -446,7 +515,7 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof man
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
     });
 
-    it("accepts a valid proof", async () => {
+    it("accepts a valid proof and latches the id", async () => {
         walletAuthed();
         mockProofVerify.mockResolvedValue({ valid: true });
 
@@ -464,14 +533,44 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof man
                 merchantId: MERCHANT_ID,
             },
         ]);
+        expect(mockMarkProofSeen).toHaveBeenCalledWith({
+            type: "anonymous_fingerprint",
+            value: "anon-sdk",
+            merchantId: MERCHANT_ID,
+        });
     });
 
-    it("an SDK caller cannot dodge the proof by moving its id into the body", async () => {
-        // The arm is chosen by the credential, not by where the id sits. If
-        // routing were based on field placement, an SDK caller could skip
-        // its mandatory proof just by also sending a body `anonymousId` and
-        // landing on the permissive wallet arm.
+    it("a latched id presenting a proof that fails verification still rejects", async () => {
         walletAuthed();
+        mockProofVerify.mockResolvedValue({
+            valid: false,
+            reason: "bad_signature",
+        });
+
+        const response = await postEnsureViaHeader(
+            { merchantId: MERCHANT_ID, proof: "bogus-proof" },
+            "anon-sdk"
+        );
+
+        expect(response.status).toBe(403);
+        const data = await response.json();
+        expect(data.code).toBe("PROOF_INVALID");
+        // Proof present → verified directly; the latch is never consulted on
+        // this path, matching `enforceProof`'s "latch read happens ONLY on
+        // the proof-absent path" invariant.
+        expect(mockFindNodeByIdentity).not.toHaveBeenCalled();
+        expect(mockMarkProofSeen).not.toHaveBeenCalled();
+    });
+
+    it("an SDK caller cannot dodge the arm by moving its id into the body", async () => {
+        // The arm is chosen by the credential, not by where the id sits. If
+        // routing were based on field placement, an SDK caller with a
+        // LATCHED id could dodge its proof requirement just by also sending
+        // a body `anonymousId` and landing on the permissive wallet arm.
+        walletAuthed();
+        mockFindNodeByIdentity.mockResolvedValue({
+            proofSeenAt: new Date(),
+        });
 
         const response = await postEnsureViaHeader(
             { merchantId: MERCHANT_ID, anonymousId: "anon-body" },
@@ -480,5 +579,56 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof man
 
         expect(response.status).toBe(403);
         expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+});
+
+/**
+ * The wallet arm's proof check against the REAL `IdentityProofService` and
+ * the shared golden fixture (`sdk/core/src/identity/fixtures/golden-proofs.json`)
+ * — not the mocked `verify`/`verifyOrThrow` used everywhere else in this
+ * file. This is the regression guard for D-B/WS-BE-1 change 4: the wallet
+ * arm must verify a `frak-install-v1` proof, not the `frak-ensure-v1` op it
+ * used to (and could never actually satisfy, since the wallet holds no
+ * signing key for that op).
+ */
+describe("POST /identity/ensure — wallet arm verifies against the real IdentityProofService", () => {
+    const installFixture = goldenProofs.fixtures.find(
+        (f) => f.op === "frak-install-v1"
+    );
+    if (!installFixture) {
+        throw new Error("fixture set must cover frak-install-v1");
+    }
+
+    beforeEach(() => {
+        mockWalletVerify.mockReset();
+        mockResolveAndAssociate.mockReset();
+        mockResolveAndAssociate.mockResolvedValue({
+            finalGroupId: "group-1",
+            merged: true,
+        });
+
+        // Delegate the mocked service boundary to a REAL IdentityProofService
+        // instance so this test exercises actual WebCrypto verification
+        // against the golden fixture, not a hand-rolled mock.
+        const realService = new IdentityProofService();
+        mockProofVerify.mockImplementation((params: unknown) =>
+            realService.verify(
+                params as Parameters<IdentityProofService["verify"]>[0]
+            )
+        );
+        vi.setSystemTime(installFixture.ts * 1000);
+    });
+
+    it("accepts the golden frak-install-v1 proof on the wallet arm", async () => {
+        walletAuthed();
+
+        const response = await postEnsure({
+            merchantId: installFixture.merchantId,
+            anonymousId: installFixture.anonymousId,
+            proof: installFixture.proof,
+        });
+
+        expect(response.status).toBe(200);
+        expect(mockResolveAndAssociate).toHaveBeenCalled();
     });
 });

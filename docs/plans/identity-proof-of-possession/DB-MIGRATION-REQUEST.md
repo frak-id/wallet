@@ -1,8 +1,13 @@
 # DB migration request — identity proof-of-possession (Phase 1)
 
+> **✅ APPLIED.** Both columns landed in
+> `services/bootstrap/drizzle/local/0035_natural_carlie_cooper.sql` (journal `idx: 35`),
+> matching the DDL below exactly. This file is kept as the record of intent and
+> rationale. The deploy-ordering rule still stands: migration `0035` must be applied to
+> an environment before this branch is deployed there — see `ROLLOUT.md`.
+
 Per `services/backend/AGENTS.md`: migrations are never authored by application code — this
-file specifies the exact DDL for the db team to apply. Nothing under
-`services/bootstrap/drizzle/` has been touched.
+file specifies the exact DDL for the db team to apply.
 
 Both columns are declared in `services/backend/src/domain/identity/db/schema.ts` already
 (the domain's Drizzle source of truth); `db:generate` should derive the same DDL from that
@@ -25,10 +30,27 @@ ALTER TABLE identity_nodes ADD COLUMN proof_seen_at timestamp;
   derived id that has simply never presented a proof yet. Both read identically as
   "proof not required," which is the pre-existing (fail-open) behaviour. No backfill
   needed; every existing row is correctly `NULL`.
-- **Blocks:** Phase 4a enforcement (the §4.6 one-way latch). Until this column exists,
-  enforcement code must not be deployed — it would either no-op (harmless) or fail at
-  runtime depending on how it's written; the intent is to land the column well ahead of
-  the enforcement code, not to race them.
+- 🔴 **Blocks: this is a hard deploy prerequisite, confirmed by reading the code, not a
+  soft one.** An earlier version of this note claimed a missing column would "either
+  no-op (harmless) or fail at runtime depending on how it's written." That was aspirational,
+  not a description of what the code does. **Checked against the actual repository code:
+  it does not no-op.** `IdentityRepository.findNodeByIdentity` and `markProofSeen`
+  (`services/backend/src/domain/identity/repositories/IdentityRepository.ts`) use
+  Drizzle's relational query builder, which selects/writes `proof_seen_at` by name. Against
+  a database missing the column, Postgres raises an undefined-column error (`42703`) and
+  the query throws — there is no fallback path. Concretely, deployed ahead of this DDL:
+  - every `POST /identity/merge/execute` call with no proof present (the common case)
+    500s inside the latch read, instead of returning 200;
+  - every successful `POST /identity/merge/initiate` anonymous-arm call 500s on the
+    latch write.
+
+  This is strictly worse than the 403 the latch is meant to add. **This DDL must be
+  confirmed applied in an environment before the corresponding backend code is deployed
+  to it** — not "well ahead of," but strictly before. See
+  `docs/plans/identity-proof-of-possession/ROLLOUT.md` and `DUAL-ARM-PLAN.md` §D-G, which
+  records that a defensive code-level guard (catching `42703` and degrading gracefully)
+  was considered and deliberately not written — this is treated as a deploy-ordering
+  problem to be solved by sequencing, not papered over in application code.
 - **Rationale:** a timestamp rather than a boolean, at the same storage cost, so the
   §2.6 conflicting-migration alarm (two different derived ids racing to claim the same
   legacy id) is investigable — "when did this first latch" rather than a bare yes/no.
@@ -75,6 +97,8 @@ ALTER TABLE install_codes ADD COLUMN attempts integer NOT NULL DEFAULT 0;
 | `proof_seen_at` | `identity_nodes` | `timestamp` | yes | none | Phase 4a enforcement |
 | `attempts` | `install_codes` | `integer` | no | `0` | `install-code/resolve` deploy |
 
-Both are additive, backwards-compatible, and require no backfill. Please confirm once
-applied so the corresponding backend deploys (already merged in code, gated behind these
-columns existing) can go out.
+Both are additive, backwards-compatible, and require no backfill. **Please confirm once
+applied — do not deploy the corresponding backend code to any environment before that
+confirmation lands for that environment.** For `proof_seen_at` specifically this is not a
+precaution: the current code throws (500), it does not degrade, if the column is absent.
+See §1 above.

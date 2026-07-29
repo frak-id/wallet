@@ -113,4 +113,66 @@ describe("useExecutePendingActions — executeEnsure body", () => {
             });
         });
     });
+
+    test("drains a pending action carrying a frak-install-v1 proof alongside the legacy pair", async ({
+        queryWrapper,
+    }) => {
+        pendingActionsStore.getState().addAction({
+            type: "ensure",
+            merchantId: "merchant-3",
+            anonymousId: "anon-3",
+            proof: "install-proof-blob",
+        });
+
+        const { useExecutePendingActions } = await import(
+            "./useExecutePendingActions"
+        );
+        const { result } = renderHook(() => useExecutePendingActions(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await act(async () => {
+            await result.current.executePendingActions();
+        });
+
+        await waitFor(() => {
+            expect(mockEnsurePost).toHaveBeenCalledWith({
+                merchantId: "merchant-3",
+                anonymousId: "anon-3",
+                proof: "install-proof-blob",
+            });
+        });
+    });
+
+    test("drains a pending action carrying BOTH a ticket and a proof — every arm travels together", async ({
+        queryWrapper,
+    }) => {
+        pendingActionsStore.getState().addAction({
+            type: "ensure",
+            merchantId: "merchant-4",
+            anonymousId: "anon-4",
+            ticket: "signed-ticket-jwt",
+            proof: "install-proof-blob",
+        });
+
+        const { useExecutePendingActions } = await import(
+            "./useExecutePendingActions"
+        );
+        const { result } = renderHook(() => useExecutePendingActions(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await act(async () => {
+            await result.current.executePendingActions();
+        });
+
+        await waitFor(() => {
+            expect(mockEnsurePost).toHaveBeenCalledWith({
+                merchantId: "merchant-4",
+                anonymousId: "anon-4",
+                ticket: "signed-ticket-jwt",
+                proof: "install-proof-blob",
+            });
+        });
+    });
 });

@@ -165,9 +165,7 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
 
     test("only the first sendLifecycleConfig call carries the pending merge token", async () => {
         Object.defineProperty(window, "location", {
-            value: new URL(
-                "https://merchant.example.com/?fmt=merge-token-123"
-            ),
+            value: new URL("https://merchant.example.com/?fmt=merge-token-123"),
             writable: true,
         });
 

@@ -1,5 +1,8 @@
 import { describe, expect, test } from "@/tests/vitest-fixtures";
-import { parseInstallProofFragment } from "./install";
+import {
+    buildInstallProcessingEnsureAction,
+    parseInstallProofFragment,
+} from "./install";
 
 describe("parseInstallProofFragment", () => {
     test("returns undefined when there is no fragment", () => {
@@ -35,5 +38,79 @@ describe("parseInstallProofFragment", () => {
     test("never throws on pathological input", () => {
         expect(() => parseInstallProofFragment("#%%%invalid%%%")).not.toThrow();
         expect(() => parseInstallProofFragment("#=====")).not.toThrow();
+    });
+});
+
+describe("buildInstallProcessingEnsureAction — WS-3 W1", () => {
+    test("direct link WITH a proof: the ensure action carries merchantId, anonymousId AND proof", () => {
+        const action = buildInstallProcessingEnsureAction({
+            merchantId: "merchant-1",
+            anonymousId: "anon-1",
+            proof: "install-proof-blob",
+        });
+
+        expect(action).toEqual({
+            type: "ensure",
+            merchantId: "merchant-1",
+            anonymousId: "anon-1",
+            proof: "install-proof-blob",
+        });
+    });
+
+    test("fragment stripped (no proof): falls back to the bare legacy pair, byte-identical to today", () => {
+        const action = buildInstallProcessingEnsureAction({
+            merchantId: "merchant-1",
+            anonymousId: "anon-1",
+        });
+
+        expect(action).toEqual({
+            type: "ensure",
+            merchantId: "merchant-1",
+            anonymousId: "anon-1",
+        });
+        expect(action).not.toHaveProperty("proof");
+    });
+
+    test("missing merchantId or anonymousId: no action, regardless of a proof being present", () => {
+        expect(
+            buildInstallProcessingEnsureAction({
+                anonymousId: "anon-1",
+                proof: "install-proof-blob",
+            })
+        ).toBeUndefined();
+        expect(
+            buildInstallProcessingEnsureAction({
+                merchantId: "merchant-1",
+                proof: "install-proof-blob",
+            })
+        ).toBeUndefined();
+        expect(buildInstallProcessingEnsureAction({})).toBeUndefined();
+    });
+});
+
+describe("Play referrer string — literal-string dual-arm contract (DUAL-ARM-PLAN.md D-C)", () => {
+    test("a parser without proof support (pre-W3) still reads merchantId/anonymousId correctly and ignores proof", () => {
+        // Literal string this branch's `downloadUrl` builder produces —
+        // asserts an OLD `useInstallReferrer` (reading only two keys) still
+        // parses it correctly and simply never sees the third.
+        const referrerData =
+            "merchantId=merchant-1&anonymousId=anon-1&proof=install-proof-blob";
+        const legacyParams = new URLSearchParams(referrerData);
+
+        expect(legacyParams.get("merchantId")).toBe("merchant-1");
+        expect(legacyParams.get("anonymousId")).toBe("anon-1");
+        // An old parser that never reads "proof" simply never calls .get("proof") —
+        // asserting it's still resolvable here shows the key doesn't corrupt
+        // the other two, which is the actual compatibility contract.
+        expect(legacyParams.get("proof")).toBe("install-proof-blob");
+    });
+
+    test("legacy string with no proof key still parses merchantId/anonymousId identically", () => {
+        const referrerData = "merchantId=merchant-1&anonymousId=anon-1";
+        const legacyParams = new URLSearchParams(referrerData);
+
+        expect(legacyParams.get("merchantId")).toBe("merchant-1");
+        expect(legacyParams.get("anonymousId")).toBe("anon-1");
+        expect(legacyParams.get("proof")).toBeNull();
     });
 });

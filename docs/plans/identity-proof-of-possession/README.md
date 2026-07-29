@@ -1174,9 +1174,16 @@ Wallet (new binary):
 - `useExecutePendingActions` sends `ticket` when present, else `anonymousId`.
 - `install.tsx:230` referrer string gains `&proof=…`; `useInstallReferrer.ts:46-48`
   reads it if present. Existing keys unchanged.
+  **Done.** Shipped as part of the dual-arm revision
+  (`docs/plans/identity-proof-of-possession/DUAL-ARM-PLAN.md` WS-3, W2/W3): the referrer
+  string carries all three keys, measured at ~397 encoded chars against the ~1024-char
+  Play cap. `useInstallReferrer.ts` reads `proof` and carries it onto the pending action.
 - `pendingActionsStore` gains `version: 1` and an identity `migrate`. It currently has
   neither (`pendingActionsStore.ts:115-120`), so there is no hook available when one is
   eventually needed. Add it now, while the migration is a no-op.
+  **Done.** `pendingActionsStore.ts` now declares `version: 1` and a `migrate` that
+  returns an unversioned or malformed persisted payload as `{actions: []}` rather than
+  throwing — necessary because the same store also backs `navigation` actions (§6.1).
 
 > Deliberately not doing the "return the ticket inside the existing `anonymousId` field"
 > trick. It would work — the wallet treats that value as fully opaque on every path
@@ -1398,12 +1405,19 @@ without waiting on store review:
 - require proof on `/merge/initiate`'s `sourceAnonymousId` branch and on `/merge/execute`
   (this is where §3.1's intent actually lands, via proof rather than session). The
   wallet-session branch of `initiate` needs nothing — §4.2.
-- **a legacy id may be a merge *target* but never a merge *source*.** Legacy ids stay
-  resolvable forever, because they are embedded in published `fCtx` links, but they stop
-  being usable to *claim* anything.
+- **a legacy id may be a merge *target* but never a merge *source* — deferred past Phase
+  5.** This line was implemented, found to 403 every legacy client on the source arm (the
+  in-app-browser escape this same phase's acceptance criteria require to keep working),
+  and reverted: both the source and target arms are **latch-gated**, not unconditional.
+  An unlatched id — legacy, or derived-but-never-signed — is allowed as an unproven
+  source, exactly as it was pre-plan. See
+  [`DUAL-ARM-PLAN.md`](./DUAL-ARM-PLAN.md) §0/D-A and `DECISIONS.md` D9 for the full
+  account and the cost accounting. Revisit this rule no earlier than §5's
+  `ROLLOUT-STEP-3`.
 - with §4.6's latch in place, enforcement is per-identity and immediate: any id that has
   ever presented a proof must always present one. No global coverage threshold, no flag
-  day, no undefined go/no-go.
+  day, no undefined go/no-go. Both mandatory-arm reversions above route through the same
+  shared policy function (`enforceLatchedProof`) that `/merge/execute` always used.
 - accept that the migration path (§2.6) keeps legacy ids claimable-as-target by whoever
   moves first. There is no fix; there is only shipping early and §3.
 
@@ -1507,6 +1521,15 @@ an existing home on the web side.
 4. **Does the `#p=` fragment survive the full install redirect chain** on both platforms?
    §2.2 assumes it does; some interstitials strip fragments. Verify before Phase 3
    submission — a silent drop here fails closed and kills direct-link attribution.
+   **No longer blocking.** The dual-arm revision
+   (`docs/plans/identity-proof-of-possession/DUAL-ARM-PLAN.md` D-D) removed the
+   dependency instead of resolving it: the legacy `(merchantId, anonymousId)` pair now
+   always travels alongside the proof, on every install entry point, so a stripped
+   fragment degrades to the existing bare-pair flow rather than losing attribution.
+   `install_page_viewed`/`install_processing_triggered` (`has_install_proof`) and
+   `install_store_clicked`/`install_referrer_resolved` (`has_referrer_proof`) telemetry
+   now answer this empirically from production traffic instead of requiring an on-device
+   verification pass.
 
 > The keygen benchmark is not among these — §2.5 downgrades it to informational, since the
 > iframe is hidden and never blocks merchant rendering. The Phase 4a coverage threshold is

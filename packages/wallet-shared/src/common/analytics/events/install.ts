@@ -33,6 +33,11 @@ export type InstallEventMap = {
     // ---------------------------------------------------------------------
     install_page_viewed: MerchantMaybe & {
         has_anonymous_id: boolean;
+        // Answers README §9.4 empirically (DUAL-ARM-PLAN.md D-D): whether the
+        // `#p=` install-proof fragment survived the redirect chain that led
+        // here, measured from production traffic. Purely diagnostic —
+        // attribution never depends on this being true.
+        has_install_proof: boolean;
         view: InstallPageView;
     };
     // Fire-and-forget — no `_succeeded/_failed` outcome is tracked at this level;
@@ -40,6 +45,7 @@ export type InstallEventMap = {
     install_processing_triggered: {
         is_logged_in: boolean;
         has_ensure_action: boolean;
+        has_install_proof: boolean;
     };
     install_code_displayed: MerchantMaybe;
     install_code_generation_failed: MerchantMaybe & {
@@ -49,6 +55,10 @@ export type InstallEventMap = {
     install_store_clicked: MerchantMaybe & {
         store: InstallStore;
         has_referrer: boolean;
+        // Play referrer only (DUAL-ARM-PLAN.md D-C/WS-3 W2) — whether the
+        // referrer string being launched carries a frak-install-v1 proof
+        // alongside the legacy merchantId/anonymousId pair.
+        has_referrer_proof: boolean;
     };
     install_page_dismissed: undefined;
 
@@ -62,6 +72,7 @@ export type InstallEventMap = {
     install_referrer_checked: undefined;
     install_referrer_resolved: {
         has_merchant: boolean;
+        has_referrer_proof: boolean;
     };
     install_referrer_missing: {
         reason: InstallReferrerMissingReason;

@@ -7,13 +7,15 @@ import { AnonymousMergeOrchestrator } from "./AnonymousMergeOrchestrator";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
 
 /**
- * `initiateMerge`'s `sourceAnonymousId` arm (ROLLOUT-STEP-2, README §4.2) —
- * a valid proof is now MANDATORY: no proof, or an invalid one, is always
- * rejected. `executeMerge`'s `targetAnonymousId` arm stays latch-gated
- * (README §7 Phase 4a, DECISIONS §3.4 D9): legacy ids, which can never
- * produce a proof, must keep working as merge targets forever. The
- * wallet-session arm of `initiateMerge` (no `sourceAnonymousId`) is never
- * gated at all.
+ * `initiateMerge`'s `sourceAnonymousId` arm is LATCH-GATED
+ * (DUAL-ARM-PLAN.md D-A, WS-BE-1 — reverts the ROLLOUT-STEP-2 unconditional
+ * regime): a valid proof, when present, is verified; when absent, the id
+ * is allowed unless it has previously latched. `executeMerge`'s
+ * `targetAnonymousId` arm uses the identical policy (README §7 Phase 4a,
+ * DECISIONS §3.4 D9): legacy ids, which can never produce a proof, must
+ * keep working as merge sources AND targets until they first prove
+ * themselves. The wallet-session arm of `initiateMerge` (no
+ * `sourceAnonymousId`) is never gated at all.
  */
 
 const MERCHANT_ID = "merchant-1";
@@ -70,50 +72,55 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
         vi.clearAllMocks();
     });
 
-    describe("initiateMerge — sourceAnonymousId branch (ROLLOUT-STEP-2: mandatory)", () => {
-        it("rejects sourceAnonymousId with no proof at all", async () => {
+    describe("initiateMerge — sourceAnonymousId branch (latch-gated, WS-BE-1)", () => {
+        it("allows an unlatched legacy/derived sourceAnonymousId with no proof at all", async () => {
             const ctx = makeOrchestrator();
-
-            await expect(
-                ctx.orchestrator.initiateMerge({
-                    merchantId: MERCHANT_ID,
-                    sourceAnonymousId: "derived-id",
-                })
-            ).rejects.toMatchObject({ code: "PROOF_REQUIRED", status: 403 });
-
-            // Rejected before the group resolution that would have merged the
-            // caller's wallet group into whatever this id resolves to.
-            expect(
-                ctx.identityOrchestrator.resolveAndAssociate
-            ).not.toHaveBeenCalled();
-            // No latch fallback left on this arm — the id's proof history is
-            // never consulted; would fail if a latch-gated fallback were
-            // reintroduced here.
-            expect(
-                ctx.identityRepository.findNodeByIdentity
-            ).not.toHaveBeenCalled();
-            expect(ctx.identityProofService.verify).not.toHaveBeenCalled();
-        });
-
-        it("rejects a legacy/unlatched sourceAnonymousId with no proof — it is NOT waved through anymore", async () => {
-            // Pre-STEP-2 this id would have sailed through unlatched ("the
-            // in-app-browser escape keeps working"). Post-STEP-2 the listener
-            // forwards a proof on every call, so there is no fail-open path
-            // left to preserve; a legacy id can never produce one and is
-            // correctly rejected as a *source* (README §7 Phase 4a: "a legacy
-            // id may be a merge target but never a merge source").
-            const ctx = makeOrchestrator();
+            ctx.identityRepository.findNodeByIdentity.mockResolvedValue({
+                proofSeenAt: null,
+            });
+            ctx.identityOrchestrator.resolveAndAssociate.mockResolvedValue({
+                finalGroupId: "group-1",
+            });
+            ctx.anonymousMergeService.generateToken.mockResolvedValue({
+                mergeToken: MERGE_TOKEN,
+                expiresAt: new Date(),
+            });
 
             await expect(
                 ctx.orchestrator.initiateMerge({
                     merchantId: MERCHANT_ID,
                     sourceAnonymousId: "legacy-id",
                 })
+            ).resolves.toMatchObject({ mergeToken: MERGE_TOKEN });
+
+            expect(
+                ctx.identityOrchestrator.resolveAndAssociate
+            ).toHaveBeenCalled();
+            expect(ctx.identityProofService.verify).not.toHaveBeenCalled();
+            // 🔴 The critical assertion for WS-BE-1 change 2: no proof was ever
+            // presented (fail-open branch), so the latch must NOT be written.
+            // Writing it here would permanently lock this legacy id out of
+            // ever being a merge source again — a one-way corruption.
+            expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
+        });
+
+        it("rejects a LATCHED sourceAnonymousId with no proof", async () => {
+            const ctx = makeOrchestrator();
+            ctx.identityRepository.findNodeByIdentity.mockResolvedValue({
+                proofSeenAt: new Date(),
+            });
+
+            await expect(
+                ctx.orchestrator.initiateMerge({
+                    merchantId: MERCHANT_ID,
+                    sourceAnonymousId: "latched-id",
+                })
             ).rejects.toMatchObject({ code: "PROOF_REQUIRED", status: 403 });
 
             expect(
                 ctx.identityOrchestrator.resolveAndAssociate
             ).not.toHaveBeenCalled();
+            expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
         });
 
         it("rejects sourceAnonymousId with an invalid proof", async () => {

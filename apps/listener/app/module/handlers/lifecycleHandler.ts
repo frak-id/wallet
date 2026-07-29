@@ -216,10 +216,20 @@ function extractSdkProvenId(sdkIdentity: unknown): string | undefined {
  *
  * The proof only verifies against the exact id it was signed over, so the
  * target must be that id. Where they cannot be reconciled the merge still
- * goes out, unproven — the backend accepts that while the id is unlatched,
- * and it is strictly better than sending a proof bound to a different id,
- * which would always fail verification and pollute the invalid-proof
- * telemetry ROLLOUT.md step 2 reads to decide when to enforce.
+ * goes out, unproven — the legacy `(merchantId, anonymousId)` pair always
+ * travels alongside whatever proof is available (DUAL-ARM-PLAN §0 decision
+ * 1/2). The backend accepts an unproven target as long as it has never
+ * latched (`proofSeenAt` unset) — true for every legacy id, and for any
+ * derived id that hasn't signed yet — and 403s only once that id has
+ * proven itself at least once (DUAL-ARM-PLAN D-A). This is strictly better
+ * than sending a proof bound to a different id, which would always fail
+ * verification and pollute the invalid-proof telemetry the rollout reads.
+ *
+ * ROLLOUT-STEP-3: the `fallbackId ?? undefined` branch below — the
+ * unproven-target fallback — is the site to delete once `minVersion`
+ * excludes every binary that can still reach this path unproven
+ * (DUAL-ARM-PLAN D-E item 14). Do not remove until then; every legacy
+ * client depends on it to keep in-app-browser attribution working.
  */
 function resolveMergeTarget(
     sdkIdentity: unknown,
@@ -232,6 +242,7 @@ function resolveMergeTarget(
             proof: extractSdkProof(sdkIdentity, "merge"),
         };
     }
+    // ROLLOUT-STEP-3: unproven fallback — see the function doc above.
     return { targetAnonymousId: fallbackId ?? undefined };
 }
 

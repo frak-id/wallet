@@ -147,12 +147,16 @@ export function useExecutePendingActions(
 async function executeEnsure(
     action: Extract<PendingAction, { type: "ensure" }>
 ): Promise<void> {
-    // The backend resolves ticket -> proof+anonymousId -> bare anonymousId,
-    // so an old-shape action with no ticket still works.
+    // Every arm the action carries travels together (DUAL-ARM-PLAN.md
+    // decision 1) — `merchantId`/`anonymousId` always sent, `ticket` and
+    // `proof` added on top when present. The backend's wallet arm already
+    // resolves ticket -> proof+anonymousId -> bare anonymousId (README §5),
+    // so an old-shape action with neither still works, ROLLOUT-STEP-3.
     const { error } = await authenticatedBackendApi.user.identity.ensure.post({
         merchantId: action.merchantId,
         anonymousId: action.anonymousId,
         ...(action.ticket && { ticket: action.ticket }),
+        ...(action.proof && { proof: action.proof }),
     });
 
     if (error) {

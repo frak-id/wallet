@@ -74,8 +74,12 @@ export function parseInstallProofFragment(hash: string): string | undefined {
 function InstallPage() {
     const search = Route.useSearch();
     // frak-install-v1 proof, read once from the fragment (README §2.2 — not
-    // a search param, never sent to the server). Only `InstallCodeView`
-    // forwards it, to `generate`; `InstallProcessing` has no use for it.
+    // a search param, never sent to the server). Forwarded to BOTH
+    // `InstallCodeView` (to `generate`) and `InstallProcessing` (to
+    // `/identity/ensure`, DUAL-ARM-PLAN.md D-B/WS-3 W1) — every arm
+    // (legacy pair, ticket, proof) travels together, no platform branch:
+    // whether a proof is present is a property of the INPUT (was `#p=` in
+    // the URL?), not of which shell (web/Tauri) is running (plan D-F).
     const proof = useMemo(
         () => parseInstallProofFragment(window.location.hash),
         []
@@ -89,16 +93,22 @@ function InstallPage() {
         trackEvent("install_page_viewed", {
             merchant_id: search.m,
             has_anonymous_id: Boolean(search.a),
+            // Answers README §9.4 empirically (plan D-D): whether the `#p=`
+            // fragment survives the full install redirect chain, measured
+            // from production traffic instead of on-device testing. A drop
+            // here degrades to the legacy pair — attribution is preserved
+            // either way, so this is purely diagnostic.
+            has_install_proof: Boolean(proof),
             view: shouldShowCodeView ? "code" : "processing",
         });
-    }, [search.m, search.a, shouldShowCodeView]);
+    }, [search.m, search.a, proof, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
         return <InstallCodeView {...search} proof={proof} />;
     }
 
     // Tauri (any auth) or web + logged in → processing
-    return <InstallProcessing {...search} />;
+    return <InstallProcessing {...search} proof={proof} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -112,6 +122,37 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Builds the ensure action for the direct-link / Tauri processing path
+ * (DUAL-ARM-PLAN.md WS-3 W1). Exported for direct testing, mirroring
+ * `parseInstallProofFragment`.
+ *
+ * Every arm the caller has travels together: with `merchantId`/`anonymousId`
+ * but no proof, this is byte-identical to the pre-existing bare action —
+ * the fragment being stripped or absent degrades silently, never blocks.
+ */
+export function buildInstallProcessingEnsureAction(params: {
+    merchantId?: string;
+    anonymousId?: string;
+    proof?: string;
+}):
+    | {
+          type: "ensure";
+          merchantId: string;
+          anonymousId: string;
+          proof?: string;
+      }
+    | undefined {
+    const { merchantId, anonymousId, proof } = params;
+    if (!merchantId || !anonymousId) return undefined;
+    return {
+        type: "ensure",
+        merchantId,
+        anonymousId,
+        ...(proof && { proof }),
+    };
+}
+
+/**
  * Brief processing screen that handles the ensure call.
  *
  *   Logged in     → store ensure action + drain all pending actions + navigate /wallet
@@ -119,26 +160,27 @@ function sleep(ms: number): Promise<void> {
  *
  * Always shows for at least MIN_PROCESSING_MS to avoid a flash.
  */
-function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
+function InstallProcessing({
+    m: merchantId,
+    a: anonymousId,
+    proof,
+}: InstallSearch & { proof?: string }) {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { executePendingActions } = useExecutePendingActions();
 
     useEffect(() => {
-        // Build ensure action from install referral params
-        const ensureAction =
-            merchantId && anonymousId
-                ? ({
-                      type: "ensure",
-                      merchantId,
-                      anonymousId,
-                  } as const)
-                : undefined;
+        const ensureAction = buildInstallProcessingEnsureAction({
+            merchantId,
+            anonymousId,
+            proof,
+        });
 
         const isLoggedIn = !!getSafeSession()?.token;
         trackEvent("install_processing_triggered", {
             is_logged_in: isLoggedIn,
             has_ensure_action: Boolean(ensureAction),
+            has_install_proof: Boolean(proof),
         });
 
         if (isLoggedIn) {
@@ -160,7 +202,7 @@ function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
                 navigate({ to: "/register", replace: true });
             });
         }
-    }, [merchantId, anonymousId, navigate, executePendingActions]);
+    }, [merchantId, anonymousId, proof, navigate, executePendingActions]);
 
     return (
         <PageLayout>
@@ -259,9 +301,23 @@ function InstallCodeView({
     const downloadUrl = useMemo(() => {
         if (!isAndroid) return APP_STORE_URL;
         if (!merchantId || !anonymousId) return PLAY_STORE_URL;
-        const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}`;
+        // Both arms travel in the referrer (DUAL-ARM-PLAN.md D-C/WS-3 W2):
+        // `proof` is additive, appended only when present, and the legacy
+        // `merchantId`/`anonymousId` keys keep their existing positions so a
+        // binary parsing with `URLSearchParams` (pre-W3) reads exactly what
+        // it reads today and silently ignores the extra key.
+        //
+        // Measured against the real `frak-install-v1` golden fixture (plan
+        // D-C): proof ~284 chars (base64url has no reserved chars, so
+        // encodeURIComponent is a no-op on it); full dual string ~387 chars
+        // raw, ~397 encoded as the referrer value — 39% of the Play
+        // referrer's ~1024-char cap. Comfortable; re-measure if more keys
+        // are ever added here.
+        const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}${
+            proof ? `&proof=${proof}` : ""
+        }`;
         return `${PLAY_STORE_URL}&referrer=${encodeURIComponent(referrerData)}`;
-    }, [merchantId, anonymousId, isAndroid]);
+    }, [merchantId, anonymousId, proof, isAndroid]);
 
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
@@ -379,6 +435,7 @@ function InstallCodeView({
                             store: isAndroid ? "play_store" : "app_store",
                             has_referrer:
                                 isAndroid && Boolean(merchantId && anonymousId),
+                            has_referrer_proof: isAndroid && Boolean(proof),
                             merchant_id: merchantId,
                         });
                     }}

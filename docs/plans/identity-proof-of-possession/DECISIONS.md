@@ -237,7 +237,8 @@ and Phase 4a enforcement is otherwise blocked on db-team lead time.
 | D6 | §2.6 legacy→derived migration merge, in Phase 2 | **deferred out of phases 0–4a** | See §3.1 below |
 | D7 | §2.2 backend verifies via a shared SDK `verify.ts` | **verification lives only in the backend** (`IdentityProofService`) | The SDK never verifies anything, so shipping a verifier in it is dead weight on every merchant page and a wider public surface for no gain. What is genuinely shared — and what the golden fixtures pin — is the canonical byte layout and the derivation, which both sides must agree on to the byte. Signing is the SDK's job; verifying is the backend's. Also removes the need for the bundle-isolation test that existed only to keep `verify.ts` out of the browser build. |
 | D8 | §2.4 accepts the pure-JS fallback's bundle weight | **embed `@noble/curves`, do not stub it out of the CDN build** | See §3.3 below |
-| D9 | §7 Phase 4a: "a legacy id may be a merge target but never a merge source" | source arm is **latch-gated**, like the target arm | See §3.4 below |
+| D9 | §7 Phase 4a: "a legacy id may be a merge target but never a merge source" | source arm is **latch-gated**, like the target arm (reverted from a brief unconditional detour — see §3.4) | See §3.4 below |
+| D10 | §5 install proof reaches `/identity/ensure` via a `generate`+`resolve` ticket exchange | **forwarded on the existing arm** as a `frak-install-v1` proof, no exchange, no extra round-trip | See §3.5 below |
 
 ### 3.1 D6 — deferring the §2.6 migration merge
 
@@ -307,6 +308,79 @@ being true once the listener forwarded its RPC param. The source arm is now unco
 a named `sourceAnonymousId` must carry a valid proof. `/merge/execute` stays latch-gated,
 since its targets are frequently legacy ids that can never produce one.
 
+**Reverted, post-`3e84f376e`, back to latch-gated — see `DUAL-ARM-PLAN.md`.** The
+"unconditional" premise above was wrong in a different way than the one it fixed: the
+listener forwarding its RPC param means a *current-generation* caller sends a proof, but
+it does nothing for the SDK's own legacy population. `signProof` returns `null` — never
+throws — whenever no key is stored (`sdk/core/src/identity/sign.ts`), which is every
+client that predates derivation, and D6 above ships derivation for *new* clients only. So
+unconditional enforcement on this arm 403'd every legacy client hitting the in-app-browser
+escape — the exact flow this section's own acceptance criteria require to keep working.
+The same defect existed on `/identity/ensure`'s SDK arm (`ensure.ts`), which had been made
+unconditional at the same time.
+
+Both arms now call the same `enforceLatchedProof` helper
+(`services/backend/src/orchestration/identity/latchedProof.ts`) that `/merge/execute`
+always used — one policy function, three call sites, instead of a bespoke
+`requireProof` (deleted) duplicating the same logic slightly differently. Net effect: the
+end state described two paragraphs up ("an id that has never proven itself keeps working,
+and from its first valid proof onward it must always present one") is exactly what ships
+now — the unconditional detour did not reach that state any faster, it just broke legacy
+callers on the way.
+
+**Cost of the revert, stated honestly (`DUAL-ARM-PLAN.md` D-A):** an attacker holding a
+harvested *legacy* `sourceAnonymousId` can still mint a merge token for it on this arm —
+identical to pre-branch behaviour, and identical to what §2.6 already proves is
+unfixable by any design in this document. For a *derived* id the exposure is bounded to
+the window before its first proof-carrying call, which in practice is one call wide,
+since the listener sends a proof on this arm for every derived id already
+(`useOnGetMergeToken.ts`). `/merge/execute` is unaffected by this revert — it was already
+latch-gated and stays exactly as it was.
+
+See also D10 below for the analogous fix to `/identity/ensure`'s wallet arm, which had a
+different bug (a proof op it could never satisfy) rather than an over-strict policy.
+
+### 3.5 D10 — the install proof reaches `/identity/ensure` by forwarding, not exchange
+
+§5's ticket design is unaffected — `install-code/resolve` still mints a ticket
+unconditionally and it remains the strongest credential on that path. This decision is
+about the *other* two install entry points, the direct `/install?m=&a=#p=` link and the
+Play referrer, neither of which goes through `generate`/`resolve` at all.
+
+An initial design (recorded, then rejected, in `DUAL-ARM-PLAN.md`'s original D-B) had
+`InstallProcessing` call `install-code/generate` + `install-code/resolve` purely to trade
+the `#p=` proof it already holds for a ticket, adding two network round-trips to the
+direct-link path for no new credential — the wallet already had a proof, it just wasn't
+wired anywhere.
+
+**Shipped instead:** `/identity/ensure`'s wallet arm already accepts an optional `proof`
+field (`ensure.ts`) — verified when present, logged, never required, never rejecting. It
+had been verifying that field as `op: "frak-ensure-v1"`, an op the wallet can never
+produce (no signing key on that origin — README §2.0, §9 "settled"), so the check failed
+for every proof it would ever see and the failure was silently swallowed by the
+log-only path. Fixed by changing the op to `"frak-install-v1"`, which binds exactly
+`merchantId` ‖ `anonymousId` with an empty binding — precisely the tuple this arm needs
+to authenticate, and precisely what the wallet's `#p=`/referrer proof already is. The
+wallet now forwards that proof on `PendingEnsureAction.proof` through to the existing
+`/identity/ensure` POST body, alongside `merchantId`/`anonymousId` (and `ticket`, when
+present). Zero new round-trips, zero new backend arms, zero schema changes.
+
+**On domain separation.** README §4.3 warns that collapsing distinct proof ops into one
+generic signature would undo the domain-separation protection the golden fixtures pin.
+That warning stands, and this is not that: `frak-install-v1` keeps its own prefix, its own
+fixture, its own binding rule in `canonical.ts`. It simply gained one more *accepting*
+endpoint, on an arm whose bare fallback (a raw `anonymousId` with zero proof at all) is
+still open until `ROLLOUT-STEP-3`. The security delta today is therefore zero-or-positive:
+anyone who could already forge this arm with a bare id gains nothing new from also being
+able to present a `frak-install-v1` proof.
+
+**The decision to revisit at `ROLLOUT-STEP-3`.** Once the bare `anonymousId` arm is
+deleted, `frak-install-v1` stops being redundant with an open fallback and becomes a
+*sufficient* ensure credential on its own — at which point its "high" leak-surface rating
+(README §2.2: URL fragment + Play referrer, browser history, `Referer` headers, link
+previews) starts to matter, and the ticket-exchange design should be reconsidered on its
+merits from that tagged site rather than assumed necessary today.
+
 ### 3.2 Kept as-is, deliberately
 
 - Derivation over a registry (§2.1) — the TOFU argument is sound.
@@ -339,7 +413,8 @@ since its targets are frequently legacy ids that can never produce one.
 | C13 | enforce proofs on latched ids (phase 4a) | ✅ `56cd290ef` |
 | C12 (backend half) | install ticket + JWT audience/401 fixes (phase 3) | ✅ `9e75e83c0` |
 | C12 (client half) | listener/wallet proof plumbing, `#p=` fragment | ✅ `3e84f376e` |
-| STEP-2 | mandatory proofs on the non-store-gated arms | ✅ `3e84f376e` |
+| STEP-2 | mandatory proofs on the non-store-gated arms | ⚠️ **superseded** — see D9 revert, `DUAL-ARM-PLAN.md` WS-BE-1. Both arms are latch-gated, not mandatory. `ROLLOUT-STEP-2` no longer marks live code. |
+| WS-BE-1/2/3 | dual-arm revert + wallet proof plumbing + doc sync (this pass) | ✅ landed on `feat/identity-proof-of-possession` |
 
 Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
 `ensure.ts` (C5 → C11 → C13, serialised), `orchestration/context.ts` (C11+C13).
@@ -348,15 +423,39 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
 
 ## 5. Open items carried forward
 
-- **Phase 4a is blocked on the db team** applying the DDL in `DB-MIGRATION-REQUEST.md`.
-  Enforcement code ships behind the column; until it exists the latch never sets and every
-  id behaves as legacy — fail-open, which is the pre-existing behaviour, not a regression.
+- ✅ **The DDL is applied** — migration
+  `services/bootstrap/drizzle/local/0035_natural_carlie_cooper.sql` adds both
+  `identity_nodes.proof_seen_at` and `install_codes.attempts`, exactly as
+  `DB-MIGRATION-REQUEST.md` specifies. Phase 4a is no longer blocked. The ordering rule
+  below still applies to every environment this branch is deployed to.
+  This is a **hard deploy prerequisite, not a soft one**. The claim on this line
+  used to say enforcement is "fail-open… the pre-existing behaviour, not a regression" if
+  deployed ahead of the DDL. That claim was checked against the actual repository code
+  and found **false**: `IdentityRepository.findNodeByIdentity` and `markProofSeen` use
+  Drizzle's relational query builder, which selects/writes `proof_seen_at` explicitly: a
+  missing column raises an undefined-column error (`42703`), not a `null`/no-op. Deployed
+  ahead of the DDL, every `/merge/execute` call with no proof 500s, and every successful
+  `/merge/initiate` anonymous-arm call 500s on the latch write — strictly worse than the
+  403 it replaces. A scoped `42703` guard was considered and rejected
+  (`DUAL-ARM-PLAN.md` D-G) as scaffolding for what is a deploy-ordering problem, not a
+  logic one. **Do not deploy to any environment before migration `0035` is confirmed
+  applied there.** See `ROLLOUT.md` and the corrected `DB-MIGRATION-REQUEST.md`.
 - §2.6 migration merge (D6) — revisit after Phase 4a.
 - **No bundle-size regression guard.** Nothing fails CI if an eager `@noble/curves` import
   reaches an entry chunk; only manual inspection would catch it.
 - **`?fmt=` is still a search param.** README §4.2/§5 want it moved to a fragment, with the
   SDK accepting both before the wallet switches. Not started; it is the highest-leak merge
-  surface since the URL is user-visible and shareable.
+  surface since the URL is user-visible and shareable. Out of scope for the dual-arm
+  revision (`DUAL-ARM-PLAN.md` §5).
+- **README §9.4 (`#p=` fragment survival) is no longer load-bearing.** Previously this
+  needed on-device verification before Phase 3 submission, because the fragment was the
+  *only* proof transport on the direct-install path. It no longer is: the legacy
+  `(merchantId, anonymousId)` pair now always travels alongside the proof end-to-end
+  (dual-arm decision), so a stripped fragment degrades to the existing bare-pair flow
+  instead of losing attribution. `install_page_viewed`/`install_processing_triggered`
+  (`has_install_proof`) and `install_store_clicked`/`install_referrer_resolved`
+  (`has_referrer_proof`) telemetry now answer the survival question empirically from
+  production instead of requiring an on-device test pass (`DUAL-ARM-PLAN.md` D-D).
 - **STEP-3 is the only remaining gated work** — see `ROLLOUT.md`. Blocked on store
   approval *and* the `minVersion` bump, in that order.
 

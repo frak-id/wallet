@@ -5,6 +5,7 @@ import type { IdentityRepository } from "../../domain/identity/repositories/Iden
 import type { AnonymousMergeService } from "../../domain/identity/services/AnonymousMergeService";
 import type { IdentityProofService } from "../../domain/identity/services/IdentityProofService";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
+import { enforceLatchedProof } from "./latchedProof";
 import type { IdentityNode } from "./types";
 
 export class AnonymousMergeOrchestrator {
@@ -16,13 +17,17 @@ export class AnonymousMergeOrchestrator {
     ) {}
 
     /**
-     * Phase 4a latch enforcement (README §4.6, §7; DECISIONS §2.3) — used
-     * ONLY by `executeMerge`'s `targetAnonymousId` arm. A target may be a
-     * LEGACY id (minted before derivation shipped, no key, can never
-     * produce a proof) and must keep working forever (README §2.6, §7
-     * Phase 4a: "a legacy id may be a merge target but never a merge
-     * source"). The latch is what still closes the hole for every id that
-     * *does* have a key:
+     * Latch enforcement (README §4.6, §7; DECISIONS §2.3;
+     * DUAL-ARM-PLAN.md D-A) — shared by BOTH `initiateMerge`'s
+     * `sourceAnonymousId` arm and `executeMerge`'s `targetAnonymousId` arm.
+     *
+     * Either side may be a LEGACY id (minted before derivation shipped, no
+     * key, can never produce a proof) and must keep working (README §2.6).
+     * README §7 Phase 4a's "a legacy id may be a merge target but never a
+     * merge source" is DEFERRED past Phase 5 by the revised dual-arm
+     * decision: an unlatched id is allowed as an unproven source too, so
+     * that the pre-derivation population is not cut off. The latch is what
+     * still closes the hole for every id that *does* have a key:
      *
      *   1. proof present  → verify; invalid ⇒ 403 PROOF_INVALID, valid ⇒
      *      allow.
@@ -42,67 +47,18 @@ export class AnonymousMergeOrchestrator {
         merchantId: string;
         proof?: string;
         binding: Uint8Array;
+        context?: string;
     }): Promise<boolean> {
-        const { anonymousId, merchantId, proof, binding } = params;
-
-        if (proof) {
-            await this.identityProofService.verifyOrThrow({
-                op: "frak-merge-v1",
-                context: "merge execute (Phase 4a: enforced)",
-                proof,
-                merchantId,
-                anonymousId,
-                binding,
-            });
-            return true;
-        }
-
-        const node = await this.identityRepository.findNodeByIdentity({
-            type: "anonymous_fingerprint",
-            value: anonymousId,
-            merchantId,
-        });
-        if (node?.proofSeenAt) {
-            throw HttpError.forbidden(
-                "PROOF_REQUIRED",
-                "This identity has previously proven possession of its key and now requires a proof on every merge"
-            );
-        }
-        // Unlatched — legacy id, or a derived id that has never proven
-        // itself yet. Fail-open, matching today's pre-proof behaviour.
-        return false;
-    }
-
-    /**
-     * Mandatory proof check used ONLY by `initiateMerge`'s
-     * `sourceAnonymousId` arm (ROLLOUT-STEP-2 — listener-only, never reaches
-     * the Tauri binary; see ROLLOUT.md). Unlike `enforceProof` there is no
-     * latch fallback: no proof, or an invalid one, is always a 403. This is
-     * the arm that mints merge tokens for arbitrary ids, so it is the
-     * highest-value place to require possession outright rather than
-     * per-identity latch it.
-     */
-    private async requireProof(params: {
-        anonymousId: string;
-        merchantId: string;
-        proof?: string;
-    }): Promise<void> {
-        const { anonymousId, merchantId, proof } = params;
-
-        if (!proof) {
-            throw HttpError.forbidden(
-                "PROOF_REQUIRED",
-                "A frak-merge-v1 proof is required for sourceAnonymousId"
-            );
-        }
-
-        await this.identityProofService.verifyOrThrow({
+        const { anonymousId, merchantId, proof, binding, context } = params;
+        return enforceLatchedProof({
             op: "frak-merge-v1",
-            context: "merge initiate (Phase 4a: mandatory)",
-            proof,
-            merchantId,
             anonymousId,
-            binding: new Uint8Array(0),
+            merchantId,
+            proof,
+            binding,
+            context: context ?? "merge execute (Phase 4a: enforced)",
+            identityProofService: this.identityProofService,
+            identityRepository: this.identityRepository,
         });
     }
 
@@ -129,11 +85,13 @@ export class AnonymousMergeOrchestrator {
         sourceWalletAddress?: Address;
         /**
          * `frak-merge-v1` proof binding `sourceAnonymousId` (README §4.2).
-         * Mandatory whenever `sourceAnonymousId` is supplied (ROLLOUT-STEP-2
-         * — listener-only arm, never reaches the Tauri binary). The wallet
-         * arm (no `sourceAnonymousId`) is already authenticated by session
-         * and is never gated at all (README §4.2, "per-arm, not
-         * per-endpoint").
+         * Latch-gated whenever `sourceAnonymousId` is supplied
+         * (DUAL-ARM-PLAN.md WS-BE-1): verified when present, required only
+         * once this id has ever latched (README §4.6). A legacy id — or a
+         * derived id that has simply never signed yet — keeps working
+         * without one. The wallet arm (no `sourceAnonymousId`) is already
+         * authenticated by session and is never gated at all (README §4.2,
+         * "per-arm, not per-endpoint").
          */
         proof?: string;
     }): Promise<{ mergeToken: string; expiresAt: Date }> {
@@ -152,19 +110,37 @@ export class AnonymousMergeOrchestrator {
         // sourceAnonymousId resolves to, so an unverified id must never
         // reach it.
         //
-        // Mandatory, not latch-gated (ROLLOUT-STEP-2, ROLLOUT.md): the
-        // listener now forwards its `frak-merge-v1` proof on this arm, so
-        // every in-app-browser escape presents one and there is no fail-open
-        // path left to preserve here. The wallet-session arm (no
-        // `sourceAnonymousId`) is untouched — it is authenticated by session,
-        // never by this check.
-        if (sourceAnonymousId) {
-            await this.requireProof({
-                anonymousId: sourceAnonymousId,
-                merchantId,
-                proof,
-            });
-        }
+        // Latch-gated (DUAL-ARM-PLAN.md WS-BE-1), NOT unconditionally
+        // mandatory as ROLLOUT-STEP-2 previously had it: a legacy id (no
+        // key, can never sign — the entire pre-derivation population, per
+        // DECISIONS §3.1 D6) must still be usable as a merge source until it
+        // has proven itself once. `enforceProof` is the exact same policy
+        // `executeMerge` already uses: proof present → verify (invalid ⇒
+        // 403 PROOF_INVALID); proof absent → 403 only if this id has ever
+        // latched, else allow (fail-open, matching pre-proof behaviour). The
+        // wallet-session arm (no `sourceAnonymousId`) is untouched — it is
+        // authenticated by session, never by this check.
+        //
+        // ROLLOUT-STEP-3: revisit whether this arm should become
+        // unconditionally mandatory once the wallet binary and legacy SDK
+        // population have aged out (see ROLLOUT.md).
+        //
+        // TODO(merge-initiate-proof): one production caller still sends NO
+        // proof here — the listener's modal / embedded-wallet path, via
+        // `mergeTokenQueryOptions` (see the TODO there for why it is
+        // deferred and the two constraints on fixing it). Those ids can
+        // therefore never latch. That caller must send a proof BEFORE this
+        // arm is made mandatory, or the in-app-browser escape 403s outright.
+        // The SDK's RPC path (`useOnGetMergeToken`) already sends one.
+        const sourceProofPresented = sourceAnonymousId
+            ? await this.enforceProof({
+                  anonymousId: sourceAnonymousId,
+                  merchantId,
+                  proof,
+                  binding: new Uint8Array(0),
+                  context: "merge initiate (WS-BE-1: latch-gated)",
+              })
+            : false;
 
         // Build source identity nodes. Wallet nodes are merchant-agnostic;
         // anonymous fingerprints are scoped to the merchant.
@@ -186,12 +162,15 @@ export class AnonymousMergeOrchestrator {
         const { finalGroupId: sourceGroupId } =
             await this.identityOrchestrator.resolveAndAssociate(identityNodes);
 
-        if (sourceAnonymousId) {
+        if (sourceAnonymousId && sourceProofPresented) {
             // Written only now: the node is not guaranteed to exist before
             // `resolveAndAssociate` above, which creates it on first-ever
-            // use — the common case for this arm. A proof is guaranteed valid
-            // here (mandatory check above already threw otherwise), so this
-            // is unconditional rather than gated on a returned "proven" flag.
+            // use — the common case for this arm. Gated on
+            // `sourceProofPresented`, NOT unconditional: `enforceProof` above
+            // can return `false` on the fail-open path (no proof, id never
+            // latched — e.g. a legacy id). Latching an id that never proved
+            // possession would be a one-way corruption, permanently locking
+            // that id out of ever being a merge source again.
             await this.identityRepository.markProofSeen({
                 type: "anonymous_fingerprint",
                 value: sourceAnonymousId,

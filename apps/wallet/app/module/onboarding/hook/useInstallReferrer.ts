@@ -14,6 +14,13 @@ type ReferrerData = {
     merchantId: string;
     anonymousId: string;
     merchant?: { name: string; domain: string };
+    /**
+     * `frak-install-v1` proof, when the sharer's SDK could sign at share
+     * time (DUAL-ARM-PLAN.md D-C/WS-3 W2). Optional — an old build's link
+     * or a legacy sharer never carries one, and this arm must keep working
+     * without it.
+     */
+    proof?: string;
 };
 
 /**
@@ -46,6 +53,10 @@ export function useInstallReferrer() {
             const params = new URLSearchParams(referrer);
             const merchantId = params.get("merchantId");
             const anonymousId = params.get("anonymousId");
+            // Additive read (WS-3 W3) — a referrer string produced by an old
+            // sharing page simply has no `proof` key, and `URLSearchParams`
+            // returns null for it exactly as it always has for any absent key.
+            const proof = params.get("proof") ?? undefined;
             if (!merchantId || !anonymousId) {
                 trackEvent("install_referrer_missing", {
                     reason: "missing_params",
@@ -64,19 +75,27 @@ export function useInstallReferrer() {
 
             trackEvent("install_referrer_resolved", {
                 has_merchant: Boolean(merchant),
+                has_referrer_proof: Boolean(proof),
             });
             setInstallSource("install_referrer");
 
-            // Store ensure action (deduped, persisted, survives crashes)
+            // Store ensure action (deduped, persisted, survives crashes).
+            // `proof` is additive, alongside the legacy pair (DUAL-ARM-PLAN.md
+            // decision 1) — both arms travel together, same as the direct-link
+            // path in `InstallProcessing`.
             pendingActionsStore.getState().addAction({
                 type: "ensure",
                 merchantId,
                 anonymousId,
                 merchant,
+                ...(proof && { proof }),
             });
+            // One documented exception to "clientIdStore is SDK-seeded"
+            // (README §2.0): the Play referrer, in the wallet app, is the one
+            // place this store is written from something else.
             clientIdStore.getState().setClientId(anonymousId);
 
-            return { merchantId, anonymousId, merchant };
+            return { merchantId, anonymousId, merchant, proof };
         },
         enabled: IS_TAURI && IS_ANDROID,
         staleTime: Number.POSITIVE_INFINITY,

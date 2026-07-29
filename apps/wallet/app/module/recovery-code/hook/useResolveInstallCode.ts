@@ -55,6 +55,11 @@ export function useResolveInstallCode(
             // Add ensure action for post-auth identity merge. `ticket` is
             // carried when present; `anonymousId` stays populated so the
             // store remains readable by a rolled-back build.
+            //
+            // No `proof` here (WS-3 W7, DUAL-ARM-PLAN.md): `install-code/resolve`
+            // never returns a `frak-install-v1` proof — the ticket, minted
+            // unconditionally from the code's row, is this path's credential
+            // (README §5). Nothing to forward.
             pendingActionsStore.getState().addAction({
                 type: "ensure",
                 merchantId: data.merchantId,
