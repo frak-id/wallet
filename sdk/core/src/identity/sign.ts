@@ -12,11 +12,12 @@
  */
 
 import {
+    base64UrlToBytes,
     buildProofMessage,
     bytesToBase64Url,
-    deriveClientIdFromHash,
     encodeProof,
 } from "./canonical";
+import { deriveClientId } from "./derive";
 import type { ProofEnvelope, ProofOp } from "./types";
 
 const CLIENT_ID_KEY = "frak-client-id";
@@ -162,20 +163,6 @@ async function nobleSigner(): Promise<Signer> {
     };
 }
 
-function base64UrlToBytesLocal(value: string): Uint8Array {
-    const padLength = (4 - (value.length % 4)) % 4;
-    const base64 = value
-        .replace(/-/g, "+")
-        .replace(/_/g, "/")
-        .padEnd(value.length + padLength, "=");
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-}
-
 /** Builds the JWK the `@noble` fallback needs to round-trip through storage. */
 function privateKeyToJwk(
     privateKey: Uint8Array,
@@ -194,7 +181,7 @@ function jwkToPrivateKeyBytes(jwk: JsonWebKey): Uint8Array {
     if (!jwk.d) {
         throw new Error("JWK has no private key material");
     }
-    return base64UrlToBytesLocal(jwk.d);
+    return base64UrlToBytes(jwk.d);
 }
 
 /**
@@ -260,15 +247,6 @@ function legacyFallback(): IdentityKeyMaterial {
     return { clientId, derived: false };
 }
 
-/** Re-derive the id from a keypair's public key (README §2.1). */
-async function deriveFromPublicKey(publicKey: Uint8Array): Promise<string> {
-    const digest = await crypto.subtle.digest(
-        "SHA-256",
-        publicKey as BufferSource
-    );
-    return deriveClientIdFromHash(new Uint8Array(digest));
-}
-
 /**
  * Load the persisted key/id pair, generating a fresh keypair when neither
  * exists, and enforcing the §2.3 atomicity invariant: a stored id that
@@ -297,7 +275,7 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         if (storedKeyJson) {
             const jwk = JSON.parse(storedKeyJson) as JsonWebKey;
             const keypair = await signer.importJwk(jwk);
-            const derivedId = await deriveFromPublicKey(keypair.publicKey);
+            const derivedId = await deriveClientId(keypair.publicKey);
 
             // §2.3 atomicity: the key is authoritative. A missing or
             // mismatched stored id is silently corrected, never trusted.
@@ -317,7 +295,7 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         }
 
         const keypair = await signer.generate();
-        const derivedId = await deriveFromPublicKey(keypair.publicKey);
+        const derivedId = await deriveClientId(keypair.publicKey);
         const jwk = await keypair.exportJwk();
 
         // Store key and id together (§2.3) — never one without the other.

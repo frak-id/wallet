@@ -1,5 +1,5 @@
 import { p256 } from "@noble/curves/nist.js";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildProofMessage, decodeProof } from "./canonical";
 import { ensureIdentityKey, signProof } from "./sign";
 
@@ -65,6 +65,35 @@ describe("sign", () => {
             expect(result.derived).toBe(false);
             expect(localStorage.getItem("frak-client-key")).toBeNull();
             expect(result.clientId).toBeTruthy();
+        });
+
+        it("still derives when crypto.subtle is unavailable (§2.4 pure-JS fallback)", async () => {
+            const { subtle } = crypto;
+            Object.defineProperty(crypto, "subtle", {
+                value: undefined,
+                configurable: true,
+            });
+            // The signer is cached per module load, and the tests above
+            // already cached the WebCrypto one.
+            vi.resetModules();
+
+            try {
+                const { ensureIdentityKey: freshEnsure } = await import(
+                    "./sign"
+                );
+                const result = await freshEnsure();
+
+                expect(result.derived).toBe(true);
+                expect(localStorage.getItem("frak-client-key")).toBeTruthy();
+                expect(localStorage.getItem("frak-client-id")).toBe(
+                    result.clientId
+                );
+            } finally {
+                Object.defineProperty(crypto, "subtle", {
+                    value: subtle,
+                    configurable: true,
+                });
+            }
         });
     });
 
@@ -141,7 +170,7 @@ describe("sign", () => {
                 })
             ).toBe(true);
 
-            // Low-S normalisation (README §2.3).
+            // Low-S normalisation (docs/plans/identity-proof-of-possession/README.md §2.3).
             const s = BigInt(
                 `0x${Array.from(decoded.sig.slice(32), (b) =>
                     b.toString(16).padStart(2, "0")
