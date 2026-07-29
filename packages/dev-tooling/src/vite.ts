@@ -279,6 +279,91 @@ export function assertEagerBundleBudget(
     };
 }
 
+export type PreconnectOrigin = {
+    /** Absolute URL; only its origin is used. */
+    url: string | undefined;
+    /**
+     * CORS mode of the requests that will follow, which the hint has to match:
+     * a connection opened under the wrong mode cannot be reused, leaving only
+     * the DNS lookup shared, since resolution is unaffected by CORS.
+     *
+     * Omitting this is not the same as `"anonymous"` — a bare hint matches
+     * `no-cors`, while `crossorigin=""` matches anonymous CORS. So omit it for
+     * `no-cors` (a document navigation, or an image without `crossorigin`),
+     * `"anonymous"` for CORS without credentials, `"use-credentials"` for CORS
+     * that sends them. An origin fetched under more than one mode needs one
+     * entry per mode.
+     */
+    crossorigin?: "anonymous" | "use-credentials";
+};
+
+export type PreconnectOriginsOptions = {
+    /**
+     * Origins to open a connection to. Anything unparseable, or pointing
+     * somewhere other than http(s), is dropped rather than emitted as a broken
+     * hint.
+     */
+    origins: PreconnectOrigin[];
+};
+
+/**
+ * Emit `<link rel="preconnect">` into the HTML for origins the app is certain
+ * to call.
+ *
+ * This has to be a build-time tag rather than a runtime one. The entry module
+ * cannot hint at its own behalf: by the time its first line executes the
+ * browser has already downloaded and parsed it and every vendor chunk the HTML
+ * lists as `modulepreload`, which is the exact window a preconnect exists to
+ * use. Only a tag the preload scanner finds while parsing `<head>` lands early
+ * enough to matter.
+ *
+ * Each entry states the CORS mode of the requests that will follow, because a
+ * connection opened under a different mode cannot be reused for them.
+ */
+export function preconnectOrigins(options: PreconnectOriginsOptions): Plugin {
+    const seen = new Set<string>();
+    const hints: { origin: string; crossorigin?: string }[] = [];
+
+    for (const { url, crossorigin } of options.origins) {
+        if (!url) continue;
+        let origin: string;
+        try {
+            const parsed = new URL(url);
+            if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+                continue;
+            }
+            origin = parsed.origin;
+        } catch {
+            continue;
+        }
+
+        // Keyed by mode too: the same origin legitimately needs one connection
+        // per mode when it is fetched both ways.
+        const key = `${origin}|${crossorigin ?? ""}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        hints.push({ origin, crossorigin });
+    }
+
+    return {
+        name: "frak:preconnect-origins",
+        transformIndexHtml() {
+            return hints.map(({ origin, crossorigin }) => ({
+                tag: "link",
+                attrs: {
+                    rel: "preconnect",
+                    href: origin,
+                    ...(crossorigin ? { crossorigin } : {}),
+                },
+                // Prepend: `head` appends after the injected module scripts
+                // and their `modulepreload` links, which puts the hint behind
+                // the very downloads it is meant to run alongside.
+                injectTo: "head-prepend" as const,
+            }));
+        },
+    };
+}
+
 export function inlineFontFaces(options: InlineFontFacesOptions): Plugin {
     let projectRoot = process.cwd();
     return {
