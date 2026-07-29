@@ -84,16 +84,23 @@ describe("clientId", () => {
             expect(first).toBe(second);
         });
 
-        it("cold getClientId calls before init still resolve, and init later reconciles the cache", async () => {
+        it("cold getClientId calls before init still resolve, and init later derives over them", async () => {
             const { getClientId, initClientId } = await freshClientIdModule();
 
             const coldId = getClientId();
             expect(coldId).toBeTruthy();
 
-            // No key on file yet (cold path never generates one), so this is
-            // a legacy id — initClientId must leave it untouched (§2.6 D6).
+            // The cold path never generates a key, so its id is a legacy
+            // one. `initClientId` derives a provable id over it and schedules
+            // the migration merge (§2.6), rather than keeping the legacy id.
             const derivedId = await initClientId();
-            expect(derivedId).toBe(coldId);
+            expect(derivedId).not.toBe(coldId);
+            expect(localStorage.getItem("frak-client-id")).toBe(derivedId);
+            expect(localStorage.getItem("frak-client-id-legacy")).toBe(coldId);
+
+            // Later synchronous reads see the derived id, so the iframe and
+            // every `x-frak-client-id` header agree from here on.
+            expect(getClientId()).toBe(derivedId);
         });
     });
 });

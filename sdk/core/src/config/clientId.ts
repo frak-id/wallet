@@ -17,6 +17,7 @@
  * (README §2.1 edge case) — never throw, never block.
  */
 
+import { migrateLegacyIdentity } from "../actions/migrateLegacyIdentity";
 import { ensureIdentityKey, generateUUID } from "../identity/sign";
 
 const CLIENT_ID_KEY = "frak-client-id";
@@ -47,14 +48,27 @@ let initPromise: Promise<string> | null = null;
  * the in-flight or resolved promise. Never throws: on any failure the
  * module cache simply stays unset and `getClientId()` falls back to the
  * cold synchronous path.
+ *
+ * When this visit migrated a pre-derivation client (README §2.6), the
+ * legacy id is folded into the new one here. The awaited part is only the
+ * local keygen/derivation; the merge itself is deliberately NOT awaited, so
+ * the caller can seed the iframe with the derived id immediately and the
+ * two backend round-trips stay off the connection-establishment path
+ * (README §2.5, constraint 3).
  */
 export async function initClientId(): Promise<string> {
     if (cachedClientId) return cachedClientId;
     if (initPromise) return initPromise;
 
     initPromise = ensureIdentityKey()
-        .then(({ clientId }) => {
+        .then(({ clientId, pendingLegacyId }) => {
             cachedClientId = clientId;
+            if (pendingLegacyId) {
+                void migrateLegacyIdentity({
+                    legacyId: pendingLegacyId,
+                    derivedId: clientId,
+                });
+            }
             return clientId;
         })
         .catch(() => coldClientId());

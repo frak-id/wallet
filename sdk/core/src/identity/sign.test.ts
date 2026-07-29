@@ -1,7 +1,12 @@
 import { p256 } from "@noble/curves/nist.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildProofMessage, decodeProof } from "./canonical";
-import { ensureIdentityKey, signProof } from "./sign";
+import {
+    clearPendingLegacyId,
+    ensureIdentityKey,
+    getPendingLegacyId,
+    signProof,
+} from "./sign";
 
 const MERCHANT_ID = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e";
 
@@ -46,14 +51,50 @@ describe("sign", () => {
             expect(localStorage.getItem("frak-client-id")).toBe(first.clientId);
         });
 
-        it("keeps a legacy id untouched when no key exists yet (§2.6 D6: no migration merge)", async () => {
+        it("derives over a legacy id and flags it for migration (§2.6)", async () => {
             localStorage.setItem("frak-client-id", "legacy-random-id");
 
             const result = await ensureIdentityKey();
 
-            expect(result.derived).toBe(false);
-            expect(result.clientId).toBe("legacy-random-id");
-            expect(localStorage.getItem("frak-client-key")).toBeNull();
+            // The id flips immediately, before the caller boots the iframe,
+            // so the listener is only ever seeded with the derived id.
+            expect(result.derived).toBe(true);
+            expect(result.clientId).not.toBe("legacy-random-id");
+            expect(localStorage.getItem("frak-client-id")).toBe(
+                result.clientId
+            );
+            expect(localStorage.getItem("frak-client-key")).not.toBeNull();
+
+            // The legacy id is durably marked so the merge retries until it
+            // confirms, rather than being orphaned by a failed first attempt.
+            expect(result.pendingLegacyId).toBe("legacy-random-id");
+            expect(localStorage.getItem("frak-client-id-legacy")).toBe(
+                "legacy-random-id"
+            );
+        });
+
+        it("re-reports an unconfirmed legacy id on later visits (§2.6 retry)", async () => {
+            localStorage.setItem("frak-client-id", "legacy-random-id");
+            const first = await ensureIdentityKey();
+
+            // Second visit: key is now on file, but the previous merge never
+            // confirmed, so the marker survives and must be surfaced again.
+            const second = await ensureIdentityKey();
+
+            expect(second.clientId).toBe(first.clientId);
+            expect(second.derived).toBe(true);
+            expect(second.pendingLegacyId).toBe("legacy-random-id");
+        });
+
+        it("stops re-reporting once the migration is cleared", async () => {
+            localStorage.setItem("frak-client-id", "legacy-random-id");
+            await ensureIdentityKey();
+
+            clearPendingLegacyId();
+
+            const after = await ensureIdentityKey();
+            expect(after.pendingLegacyId).toBeUndefined();
+            expect(getPendingLegacyId()).toBeUndefined();
         });
 
         it("regenerates both key and id when the stored key is corrupt", async () => {

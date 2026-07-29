@@ -43,6 +43,20 @@ excludes every old build. Anything it does *not* touch can be made mandatory imm
 > Reverted to **latch-gated** — see [`DUAL-ARM-PLAN.md`](./DUAL-ARM-PLAN.md) §0/D-A and
 > `DECISIONS.md` D9. `ROLLOUT-STEP-2`, the marker for the old mandatory regime, is gone
 > from live code.
+>
+> **These arms can become mandatory again once two things are true**, and the sequencing
+> matters:
+>
+> 1. the legacy→derived migration has been live long enough to drain the population that
+>    cannot sign (`DECISIONS.md` §3.1.1 — **shipped**; it runs on each client's next
+>    visit, so "drained" is a matter of elapsed time and return traffic, and is worth
+>    measuring rather than assuming);
+> 2. `TODO(merge-initiate-proof)` is closed — the listener's modal / embedded-wallet path
+>    still calls `/merge/initiate` with **no proof at all**, so those ids never latch.
+>    Enforcing before that is fixed would 403 that flow for *every* client, derived ones
+>    included, not just legacy ones.
+>
+> Do not flip these on the strength of (1) alone.
 
 Both of these never reach the Tauri binary, so they need no store wait — but "no store
  wait" means they *can* be enforced without a release, not that they are enforced

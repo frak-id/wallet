@@ -234,13 +234,13 @@ and Phase 4a enforcement is otherwise blocked on db-team lead time.
 | D3 | §3.3 per-code attempt limiting via the rate limiter | durable `attempts` column on `install_codes` | §1.3 — the in-memory store is per-pod; §5 leans on §3.3 as *the* interim mitigation, so it has to actually work |
 | D4 | §4.6 `proofSeen` boolean | `proof_seen_at` nullable timestamp | §2.5 — same cost, makes the §2.6 alarm investigable, matches table idiom |
 | D5 | §2.2 `frak-ensure-v1` window = 90 days | **30 days** | The 90-day justification is the install→forget→reopen funnel, which runs on the **wallet** arm — and that arm carries a *ticket*, not this proof, capped at the 7-day `DEFAULT_ENSURE_TTL_MS`. The SDK arm signs in place at call time, so a long window buys nothing and only extends bearer exposure. Windows are backend **policy**, not frozen wire format, so this stays revisable after native ships. |
-| D6 | §2.6 legacy→derived migration merge, in Phase 2 | **deferred out of phases 0–4a** | See §3.1 below |
+| D6 | §2.6 legacy→derived migration merge, in Phase 2 | deferred out of phases 0–4a, then **shipped after 4a with derive-before-boot ordering** | See §3.1 below |
 | D7 | §2.2 backend verifies via a shared SDK `verify.ts` | **verification lives only in the backend** (`IdentityProofService`) | The SDK never verifies anything, so shipping a verifier in it is dead weight on every merchant page and a wider public surface for no gain. What is genuinely shared — and what the golden fixtures pin — is the canonical byte layout and the derivation, which both sides must agree on to the byte. Signing is the SDK's job; verifying is the backend's. Also removes the need for the bundle-isolation test that existed only to keep `verify.ts` out of the browser build. |
 | D8 | §2.4 accepts the pure-JS fallback's bundle weight | **embed `@noble/curves`, do not stub it out of the CDN build** | See §3.3 below |
 | D9 | §7 Phase 4a: "a legacy id may be a merge target but never a merge source" | source arm is **latch-gated**, like the target arm (reverted from a brief unconditional detour — see §3.4) | See §3.4 below |
 | D10 | §5 install proof reaches `/identity/ensure` via a `generate`+`resolve` ticket exchange | **forwarded on the existing arm** as a `frak-install-v1` proof, no exchange, no extra round-trip | See §3.5 below |
 
-### 3.1 D6 — deferring the §2.6 migration merge
+### 3.1 D6 — deferring the §2.6 migration merge *(now shipped — see 3.1.1)*
 
 The plan has the SDK auto-run `merge/initiate` + `merge/execute` on every existing
 client's next visit, to fold their legacy id into the newly derived one. It then spends a
@@ -249,6 +249,10 @@ attack") and accepting the risk.
 
 **We ship derivation for new clients only** (no `frak-client-id` present). Existing legacy
 ids keep working untouched, as merge *targets*, exactly as today.
+
+> Superseded by §3.1.1 — derivation now also runs for existing clients, folding the legacy
+> id in via a background merge. The reasoning below is kept because it explains why the
+> migration was *not* shipped in Phase 2, which is still correct.
 
 Reasons, in order:
 
@@ -266,6 +270,64 @@ Reasons, in order:
 
 Not a scope cut for convenience — it removes code **and** improves the security posture.
 To revisit after Phase 4a; tracked here, not lost.
+
+### 3.1.1 D6 revisited — the migration ships, with different ordering
+
+Revisited as planned, once latch-gating landed. Every deferral reason above has either
+expired or was answered by a change in ordering:
+
+1. *"Adds attack surface before enforcement is live"* — **expired.** `/merge/initiate`'s
+   `sourceAnonymousId` arm now verifies a `frak-merge-v1` proof, so the migration's source
+   side is proven. It is no longer an unauthenticated-by-construction merge.
+2. *"The benefit is narrow"* — unchanged, and accepted. It buys continuity of one
+   merchant's attribution.
+3. *"Largest avoidable LoC block"* — **mostly dissolved by the new ordering** (below):
+   there is no next-page-load flip semantics and no id-desync case to handle. What remains
+   is one action file plus a retry marker. The conflicting-migration alarm is still not
+   built — §9.3 gives it no destination — so it stays out.
+4. *"Nothing later depends on it"* — **inverted.** Enforcing proofs across the SDK and
+   listener surface *does* now depend on it: until legacy ids are migrated, the population
+   that structurally cannot sign is every pre-derivation client, and enforcing against them
+   is what the dual-arm work exists to prevent. The migration is the prerequisite that
+   shrinks that population to ≈ 0.
+
+**Divergence from README §2.6: the id flips immediately, not on the next page load.**
+
+§2.6 defers the flip because `getClientId()` is synchronous while the merge is async, so
+flipping mid-session would desynchronise the SDK from the listener's `clientIdStore`
+(seeded from the `?clientId=` iframe param at load) and from any share link already
+rendered on the page.
+
+That constraint only exists if the merge has to finish before the flip. It does not:
+keygen and derivation are purely local (`localStorage` + WebCrypto, ~1–3 ms, no network) —
+only the merge needs the backend. So `ensureIdentityKey` derives over the legacy id
+*before* `createIframe` sets `iframe.src`, and the merge runs afterwards, unawaited. The
+listener is seeded with the derived id from its first line of code and never observes the
+legacy one. Nothing to reload, no desync, no next-page-load semantics.
+
+This was considered and rejected as a variant that flips the cache and reloads the iframe:
+`createIFrameLifecycleManager`'s `isConnectedDeferred` resolves once and never resets, so
+swapping `iframe.src` would leave `client.request()`'s connection gate open against a
+reloading frame; and a full teardown/recreate strands the client references held by
+`window.FrakSetup.client` and by merchant code. Deriving first avoids the entire problem.
+
+**Optimistic, with a durable retry marker.** The flip is not conditional on the merge
+succeeding. A failure leaves the legacy id *orphaned* — still resolving on the backend,
+just not yet linked — so the two histories stay split until a retry succeeds. The legacy
+id is written to `localStorage["frak-client-id-legacy"]` **before** the flip (so a crash
+between the two writes cannot lose it) and cleared only on a confirmed merge, or on a 4xx
+that retrying could never fix. 5xx and network errors keep the marker and retry next visit.
+
+Accepted risk, unchanged from §2.6 and unfixable: the merge proves `newId` but nothing
+about `legacyId`, so an attacker can run the identical valid migration against any
+harvested legacy id. First-come-first-served. Judged acceptable at current volumes — few
+live merchants, almost no sharing traffic.
+
+| File | Change |
+|---|---|
+| `sdk/core/src/identity/sign.ts` | derive over a stored legacy id instead of returning it untouched; write + expose the `frak-client-id-legacy` marker |
+| `sdk/core/src/actions/migrateLegacyIdentity.ts` | new — `initiate` (proven source) → `execute` (unproven legacy target), marker cleared only on confirmation |
+| `sdk/core/src/config/clientId.ts` | `initClientId` schedules the migration, deliberately unawaited |
 
 ### 3.3 D8 — `@noble/curves` ships in the CDN bundle
 
@@ -440,7 +502,12 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
   (`DUAL-ARM-PLAN.md` D-G) as scaffolding for what is a deploy-ordering problem, not a
   logic one. **Do not deploy to any environment before migration `0035` is confirmed
   applied there.** See `ROLLOUT.md` and the corrected `DB-MIGRATION-REQUEST.md`.
-- §2.6 migration merge (D6) — revisit after Phase 4a.
+- ✅ §2.6 migration merge (D6) — **shipped**, see §3.1.1. Enforcing proofs across the SDK
+  and listener surface is now unblocked on this, but still blocked on
+  `TODO(merge-initiate-proof)` (the listener modal / embedded-wallet path sends no proof).
+- The §2.6 conflicting-migration alarm is still **not built** — two different derived ids
+  racing to claim the same legacy id is the harvesting signal, but §9.3 gives it no
+  Alertmanager destination. Out of scope with the migration itself.
 - **No bundle-size regression guard.** Nothing fails CI if an eager `@noble/curves` import
   reaches an entry chunk; only manual inspection would catch it.
 - **`?fmt=` is still a search param.** README §4.2/§5 want it moved to a fragment, with the

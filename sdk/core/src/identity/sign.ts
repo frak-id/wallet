@@ -22,6 +22,13 @@ import type { ProofEnvelope, ProofOp } from "./types";
 
 const CLIENT_ID_KEY = "frak-client-id";
 const CLIENT_KEY_KEY = "frak-client-key";
+/**
+ * Set while a legacy id is waiting to be folded into the derived id that
+ * replaced it (README §2.6). Written in the same tick as the flip, cleared
+ * only once `/merge/execute` confirms — so a failed or interrupted merge
+ * retries on the next visit instead of silently orphaning the old id.
+ */
+const CLIENT_ID_LEGACY_KEY = "frak-client-id-legacy";
 
 /** A P-256 keypair, in the shape every signer implementation produces. */
 type Keypair = {
@@ -248,7 +255,34 @@ export type IdentityKeyMaterial = {
     clientId: string;
     /** `true` when `clientId` was cryptographically derived and can be proven. */
     derived: boolean;
+    /**
+     * The pre-derivation id this client used until now, present only on the
+     * visit that migrates it (README §2.6). The caller folds it into
+     * `clientId` with a merge; until that succeeds it stays in
+     * `localStorage` under `frak-client-id-legacy` and is re-reported on
+     * every subsequent visit.
+     */
+    pendingLegacyId?: string;
 };
+
+/**
+ * The legacy id still waiting to be merged, if any. Read on later visits to
+ * retry a migration whose merge never confirmed.
+ */
+export function getPendingLegacyId(): string | undefined {
+    if (typeof window === "undefined" || !window.localStorage) return undefined;
+    return localStorage.getItem(CLIENT_ID_LEGACY_KEY) ?? undefined;
+}
+
+/**
+ * Drop the pending-migration marker once the merge has been confirmed by the
+ * backend. Never called on a transient failure — that is what makes the
+ * migration retry rather than silently orphan the legacy id.
+ */
+export function clearPendingLegacyId(): void {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    localStorage.removeItem(CLIENT_ID_LEGACY_KEY);
+}
 
 /**
  * Mint a random, unprovable id and persist it as a legacy id (README §2.4,
@@ -298,27 +332,44 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
             if (storedId !== derivedId) {
                 localStorage.setItem(CLIENT_ID_KEY, derivedId);
             }
-            return { clientId: derivedId, derived: true };
-        }
-
-        // No key on file. A `storedId` here is a pre-existing legacy id
-        // (README §2.6) — it is left untouched. The migration merge that
-        // would fold it into a freshly derived id is explicitly deferred
-        // (DECISIONS §3.1, divergence D6): only clients with NO existing id
-        // get a derived one here.
-        if (storedId) {
-            return { clientId: storedId, derived: false };
+            // Re-report a legacy id whose merge never confirmed, so the
+            // caller retries it on this visit.
+            const pendingLegacyId = getPendingLegacyId();
+            return {
+                clientId: derivedId,
+                derived: true,
+                ...(pendingLegacyId && { pendingLegacyId }),
+            };
         }
 
         const keypair = await signer.generate();
         const derivedId = await deriveClientId(keypair.publicKey);
         const jwk = await keypair.exportJwk();
 
+        // No key but an existing id ⇒ this is a pre-derivation client being
+        // migrated (README §2.6). Derive its provable id NOW, before the
+        // caller boots the iframe, so the listener is seeded with the new id
+        // from its very first line of code and never has to be reloaded.
+        //
+        // The merge that folds `storedId` into `derivedId` runs afterwards,
+        // off the critical path — keygen is local (~1-3 ms) and needs no
+        // network, so only the merge does. Record the legacy id first: if
+        // the page dies between these writes the marker is already durable
+        // and the merge simply retries next visit. The reverse order could
+        // lose the legacy id entirely.
+        if (storedId) {
+            localStorage.setItem(CLIENT_ID_LEGACY_KEY, storedId);
+        }
+
         // Store key and id together (§2.3) — never one without the other.
         localStorage.setItem(CLIENT_KEY_KEY, JSON.stringify(jwk));
         localStorage.setItem(CLIENT_ID_KEY, derivedId);
 
-        return { clientId: derivedId, derived: true };
+        return {
+            clientId: derivedId,
+            derived: true,
+            ...(storedId && { pendingLegacyId: storedId }),
+        };
     } catch {
         // Keygen/import failed outright (corrupt JWK, unusable signer,
         // etc). Regenerate both from scratch rather than leaving a
