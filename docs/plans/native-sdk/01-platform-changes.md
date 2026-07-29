@@ -740,3 +740,125 @@ tracked in its phasing — listed here only so this plan's gate is explicit. See
 `apps/listener` requires **no changes**. The native SDK does not use the listener at
 all — the iframe exists to solve browser origin isolation, which does not apply to a
 native app.
+
+---
+
+## 6. Frontend status — what shipped, and three things to ratify
+
+Merged to `dev` as `2b6d3515f`. Every `apps/wallet` item in §5 is done except
+where noted below. Nothing in the merge changes behaviour for current consumers:
+no code sends the new params, and with them absent the page renders exactly as
+before.
+
+| # | Requirement | Status |
+|---|---|---|
+| 1.0 | `clientId` enforced under `native=1` | done |
+| 1.0 | Trap 2 — `attribution=null` vs omitted | done, pinned by test |
+| 1.0 | Trap 3 — the page never tracks shares | **unchanged — see below** |
+| 1.1 | `?native=1` chromeless mode | done |
+| 1.2 | `?returnScheme=` + `sid` + scheme validation | done |
+| 1.2b | `?confirmed=1` inbound channel | done |
+| 1.3 | Install CTA hands back to the SDK | done |
+| 1.4 | Seeded `?r=` | done |
+| 1.5 | `?sdkv=` accepted; unknown params dropped | done, pinned by test |
+| 2.1 | Deep-link install | code verified by reading; **no device pass yet** |
+| 2.2 | Autofocus the code field; no pasteboard read | done — see warning |
+| 2.3 | Preconnect | done |
+| 2.3 | Service worker cache | **dropped — see below** |
+
+### Trap 3 is discharged by an assumption, not by code
+
+§1.0 calls it "a hard requirement, not a detail", and it is still exactly as
+described: `sharing.tsx` wires only `onSuccess`, never `onShared`, and
+`handleCopy` fires only `trackEvent`. The listener does both
+(`apps/listener/.../SharingPage/index.tsx:167,186`).
+
+Nothing was changed, because §1.0's own resolution is that the native SDK owns
+100% of sharing tracking. That is a reasonable split — but it currently rests on
+the SDK author knowing he owns it. Worth an explicit confirmation rather than an
+assumption, since the failure mode is silent: shares that emit no
+`create_referral_link`, with no error anywhere.
+
+Note this is not a live defect today. Nothing in the repo navigates to the
+wallet's `/sharing` route — no internal link, no deep-link handler, no SDK
+reference — so the gap only becomes real when the native SDK starts driving this
+page.
+
+### `action=error` is a deviation from §1.2's table
+
+The result channel ships a fourth action the spec does not list:
+
+```text
+<scheme>://result?action=error&sid=<sid>
+```
+
+It fires when a native launch is rejected — `native=1` with no `clientId` — so
+the host can close its sheet instead of leaving it on a wallet-branded error
+page it cannot interpret.
+
+This knowingly breaks §1.2's "navigate only in response to a user gesture" rule:
+it fires from the route guard, before render. The reasoning is that the
+alternative is worse — a host that gets no callback has no way to distinguish a
+rejected launch from a slow one. Flagging it because it is a deliberate
+departure from a stated rule, and the SDK will need to treat `error` as a
+terminal outcome.
+
+A related case is still open: a host that sends a **malformed** `returnScheme`
+gets the scheme stripped, so there is no channel left to report on and the sheet
+is left on the wallet's own error page. That is the design accepting a dead end
+rather than guessing.
+
+### §2.3 was dropped
+
+Most of its stated value is already delivered by nginx, which serves hashed
+assets with `expires 1y, immutable` (`apps/wallet/nginx.conf:70-76`). What a
+service worker would add is caching the HTML shell — which the same config sets
+to `no-store` on purpose, commented "no etag to prevent stale content"
+(`nginx.conf:128-135`).
+
+The offline render also does not survive contact: `/sharing` fires two
+per-merchant queries through `authenticatedBackendApi`, both of which fail
+offline, leaving the shell with no reward and no attribution config. That is the
+gap `?r=` (§1.4) already fills.
+
+There is also a registration problem the section does not account for. The
+service worker is registered as a side effect of importing the notification
+adapter (`apps/wallet/app/module/notification/adapter/webAdapter.ts:56`), which
+happens on settings and notification screens. A native host landing directly on
+`/sharing` never imports it, so no service worker exists and nothing is cached.
+Making this work would mean registering a service worker on the sharing route
+and introducing the first `fetch` handler into the wallet's service worker,
+which today handles only push and notification events.
+
+Weighed against a second-visit-only, Android-only win, that is not worth it
+before the SDK exists.
+
+The preconnect half was worth doing and shipped separately. It could not go
+where this section implies, though: a hint added from `/sharing`, or from
+anywhere in application code, arrives too late to do anything. `main.tsx` is the
+entry module and the built HTML lists the vendor chunks beside it as
+`modulepreload`, so roughly a megabyte is already fetched and parsed before its
+first line runs — which is exactly the window a preconnect exists to use. It has
+to be emitted into `<head>` at build time, where the preload scanner finds it.
+
+Two origins are hinted, and they differ in CORS mode, which the attribute has to
+match or the connection cannot be reused: the backend is credentialed, while the
+RPC host is anonymous because viem's transport sends no credentials. The RPC
+hint is gated on `NEXUS_RPC_SECRET`, since without it that transport is never
+built and the connection would go unused.
+
+This helps the first presentation, which no cache can touch — the opposite of
+the service-worker half, and the reason it survived while the rest did not.
+
+### Still open, and not owned by the frontend
+
+- **§1.5's backend half** — the `x-frak-sdk-version` header and the
+  `resolveConfig` kill switch. Like `?sdkv=`, neither can be retrofitted once a
+  binary ships, and the kill switch is described here as the only lever that
+  works against a binary in the wild. This needs an owner.
+- **§2.1's device pass** — the deep-link path was verified by reading the code
+  (`deepLink.ts:137,220` route it; `/install` queues the `ensure` action), but
+  nobody has run it on a phone.
+- **§2.2 on iOS** — see the warning in that section. The autofocus shipped, but
+  the one-tap paste it was meant to enable does not exist on any shipping iOS
+  release.
