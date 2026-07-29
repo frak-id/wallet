@@ -46,20 +46,6 @@ export class FrakRpcError<T = undefined> extends Error {
 }
 
 /** @ignore */
-export class MethodNotFoundError extends FrakRpcError<{ method: string }> {
-    constructor(message: string, method: string) {
-        super(RpcErrorCodes.methodNotFound, message, { method });
-    }
-}
-
-/** @ignore */
-export class InternalError extends FrakRpcError {
-    constructor(message: string) {
-        super(RpcErrorCodes.internalError, message);
-    }
-}
-
-/** @ignore */
 export class ClientNotFound extends FrakRpcError {
     constructor() {
         super(RpcErrorCodes.clientNotConnected, "Client not found");

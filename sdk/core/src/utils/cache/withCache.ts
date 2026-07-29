@@ -105,33 +105,6 @@ export async function withCache<TData>(
 }
 
 /**
- * Get a cache handle for a specific key, useful for manual invalidation.
- *
- * @example
- * ```ts
- * // Invalidate merchant info cache after a mutation
- * getCache("frak_getMerchantInformation").clear();
- * ```
- */
-export function getCache(cacheKey: string) {
-    return {
-        /** Clear both the pending promise and the cached response */
-        clear: () => {
-            const { promiseCache, responseCache } = caches();
-            promiseCache.delete(cacheKey);
-            responseCache.delete(cacheKey);
-        },
-        /** Check if a non-expired response exists */
-        has: (cacheTime: number = DEFAULT_CACHE_TIME) => {
-            const { responseCache } = caches();
-            const cached = responseCache.get(cacheKey);
-            if (!cached) return false;
-            return Date.now() - cached.created < cacheTime;
-        },
-    };
-}
-
-/**
  * Clear all cached data (both pending promises and resolved responses).
  * Called automatically when the client is destroyed.
  */

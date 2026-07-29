@@ -21,7 +21,7 @@ export {
     redirectToExternalBrowser,
 } from "./browser/inAppBrowser";
 // Cache
-export { clearAllCache, getCache, withCache } from "./cache";
+export { clearAllCache, withCache } from "./cache";
 // Compression / encoding
 export { base64urlDecode, base64urlEncode } from "./compression/b64";
 export { compressJsonToB64 } from "./compression/compress";

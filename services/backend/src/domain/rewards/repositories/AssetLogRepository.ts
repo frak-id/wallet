@@ -31,8 +31,6 @@ import type {
     CancellationReason,
     CreateAssetLogParams,
     DetailedAssetLog,
-    InteractionType,
-    RecipientType,
 } from "../types";
 
 const DEFAULT_EXPIRATION_DAYS = 60;
@@ -73,23 +71,11 @@ export class AssetLogRepository {
         return new Date(Date.now() + lockupSeconds * 1000);
     }
 
-    async createBatch(
-        params: CreateAssetLogParams[]
-    ): Promise<AssetLogSelect[]> {
-        if (params.length === 0) return [];
-
-        return db
-            .insert(assetLogsTable)
-            .values(this.buildInserts(params))
-            .returning();
-    }
-
     /**
      * Pure mapping from public reward params to the row shape we persist.
      * Exposed so callers running inside a transaction (e.g.
      * `BatchRewardOrchestrator.processSingleInteraction`) can reuse the same
-     * derivation rules — expirations, lockup `available_at` — without going
-     * through `createBatch` and breaking the surrounding tx.
+     * derivation rules — expirations, lockup `available_at`.
      */
     buildInserts(params: CreateAssetLogParams[]): AssetLogInsert[] {
         return params.map((p) => ({
@@ -496,65 +482,6 @@ export class AssetLogRepository {
                 campaignRuleId: assetLogsTable.campaignRuleId,
                 amount: assetLogsTable.amount,
             });
-    }
-
-    async findByIdentityGroups(
-        identityGroupIds: string[],
-        options?: { status?: AssetStatus[] }
-    ): Promise<
-        {
-            id: string;
-            amount: string;
-            tokenAddress: Address | null;
-            status: AssetStatus;
-            recipientType: RecipientType;
-            createdAt: Date;
-            settledAt: Date | null;
-            onchainTxHash: Hex | null;
-            interactionType: InteractionType | null;
-            merchantId: string;
-            merchantName: string;
-            merchantDomain: string;
-        }[]
-    > {
-        const whereConditions = [
-            inArray(assetLogsTable.identityGroupId, identityGroupIds),
-            eq(assetLogsTable.assetType, "token"),
-            isNotNull(assetLogsTable.tokenAddress),
-        ];
-
-        if (options?.status && options.status.length > 0) {
-            whereConditions.push(
-                inArray(assetLogsTable.status, options.status)
-            );
-        }
-
-        return db
-            .select({
-                id: assetLogsTable.id,
-                amount: assetLogsTable.amount,
-                tokenAddress: assetLogsTable.tokenAddress,
-                status: assetLogsTable.status,
-                recipientType: assetLogsTable.recipientType,
-                createdAt: assetLogsTable.createdAt,
-                settledAt: assetLogsTable.settledAt,
-                onchainTxHash: assetLogsTable.onchainTxHash,
-                interactionType: interactionLogsTable.type,
-                merchantId: merchantsTable.id,
-                merchantName: merchantsTable.name,
-                merchantDomain: merchantsTable.domain,
-            })
-            .from(assetLogsTable)
-            .leftJoin(
-                interactionLogsTable,
-                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
-            )
-            .innerJoin(
-                merchantsTable,
-                eq(assetLogsTable.merchantId, merchantsTable.id)
-            )
-            .where(and(...whereConditions))
-            .orderBy(desc(assetLogsTable.createdAt));
     }
 
     async findDetailedByIdentityGroup(

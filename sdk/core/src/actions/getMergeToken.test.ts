@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initClientId } from "../config/clientId";
 import * as signModule from "../identity/sign";
 import type { FrakClient } from "../types";
-import { getCache } from "../utils/cache";
+import { clearAllCache } from "../utils/cache";
 import { getMergeToken } from "./getMergeToken";
 
 const MERCHANT_ID = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e";
@@ -61,7 +61,7 @@ describe("getMergeToken", () => {
     });
 
     it("does not sign again on a cache hit", async () => {
-        getCache("frak_getMergeToken").clear();
+        clearAllCache();
         await initClientId();
         const request = vi.fn().mockResolvedValue("merge-token");
         const client = makeClient(request, MERCHANT_ID);
@@ -81,6 +81,6 @@ describe("getMergeToken", () => {
         expect(signProofSpy).not.toHaveBeenCalled();
 
         signProofSpy.mockRestore();
-        getCache("frak_getMergeToken").clear();
+        clearAllCache();
     });
 });
