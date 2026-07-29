@@ -18,12 +18,13 @@ import {
     LogoFrakWithName,
     ShareIcon,
 } from "@frak-labs/design-system/icons";
+import { clsx } from "clsx";
 import { Minus, Plus } from "lucide-react";
 import { Toaster } from "sonner";
 import { ExternalLink } from "../../../common/component/ExternalLink";
 import { MerchantLogo } from "../MerchantLogo";
 import { PostShareConfirmation } from "../PostShareConfirmation";
-import { overlay } from "../shared.css";
+import { containerChromeless, overlay } from "../shared.css";
 import { RewardBreakdown } from "./RewardBreakdown";
 import * as styles from "./sharingPage.css";
 
@@ -103,6 +104,17 @@ export type SharingPageProps = {
      */
     showConfirmation: boolean;
     /**
+     * Suppress the page's own header and footer CTAs.
+     *
+     * For hosts that present this page inside their own chrome (a native
+     * bottom sheet with its own logo, close control and share buttons) and
+     * drive sharing through the OS share sheet instead of `onShare`/`onCopy`.
+     * Everything else — reward card, product cards, stepper, FAQ, legal — is
+     * unchanged, and the confirmation screen still renders, with its own
+     * chrome suppressed the same way.
+     */
+    chromeless?: boolean;
+    /**
      * Called when the user clicks the "Share" button.
      */
     onShare: () => void;
@@ -139,6 +151,53 @@ export type SharingPageProps = {
     onProductSelect?: (index: number) => void;
 };
 
+function PageHeader({
+    hidden,
+    appName,
+    logoUrl,
+    t,
+    onDismiss,
+}: {
+    hidden: boolean;
+    appName: string;
+    logoUrl?: string;
+    t: SharingPageProps["t"];
+    onDismiss: () => void;
+}) {
+    if (hidden) return null;
+    return (
+        <header className={styles.header}>
+            <Box display="flex" alignItems="center" gap="m">
+                <MerchantLogo
+                    src={logoUrl}
+                    alt={appName}
+                    className={styles.merchantLogo}
+                />
+                <LogoFrakWithName className={styles.logo} />
+            </Box>
+            <Button
+                variant="ghost"
+                size="none"
+                width="auto"
+                className={styles.dismissButton}
+                onClick={onDismiss}
+            >
+                {t("sdk.sharingPage.dismiss")}
+            </Button>
+        </header>
+    );
+}
+
+/** Split a step string at the first period into title + description */
+function splitStep(text: string) {
+    const dotIndex = text.indexOf(".");
+    if (dotIndex === -1) return { title: text, description: undefined };
+    return {
+        title: text.slice(0, dotIndex + 1),
+        description: text.slice(dotIndex + 1).trim() || undefined,
+    };
+}
+
 export function SharingPage({
     appName,
     logoUrl,
@@ -156,6 +215,7 @@ export function SharingPage({
     rewardBreakdown,
     canShare = true,
     showConfirmation,
+    chromeless = false,
     onShare,
     onCopy,
     onDismiss,
@@ -173,22 +233,13 @@ export function SharingPage({
                 appName={appName}
                 logoUrl={logoUrl}
                 t={t}
+                chromeless={chromeless}
                 onDismiss={onConfirmationDismiss}
                 onShareAgain={onShareAgain}
                 onInstall={onInstall}
             />
         );
     }
-
-    /** Split a step string at the first period into title + description */
-    const splitStep = (text: string) => {
-        const dotIndex = text.indexOf(".");
-        if (dotIndex === -1) return { title: text, description: undefined };
-        return {
-            title: text.slice(0, dotIndex + 1),
-            description: text.slice(dotIndex + 1).trim() || undefined,
-        };
-    };
 
     const step1 = splitStep(t("sdk.sharingPage.steps.1"));
     // Mention the minimum order value in step 2 when the campaign gates on one.
@@ -209,40 +260,36 @@ export function SharingPage({
               })
             : undefined;
 
+    // A host that owns the sheet owns dismissal too: an in-page backdrop
+    // dismiss it cannot observe would empty the sheet while the host keeps it
+    // open.
+    const backdropDismiss = chromeless ? undefined : onDismiss;
+
     return (
         <div
             className={overlay}
-            onClick={onDismiss}
+            onClick={backdropDismiss}
             onKeyDown={(e) => {
-                if (e.key === "Escape") onDismiss();
+                if (e.key === "Escape") backdropDismiss?.();
             }}
         >
             <div
-                className={styles.container}
+                className={clsx(
+                    styles.container,
+                    chromeless && containerChromeless
+                )}
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
             >
                 <Toaster position="top-center" />
 
-                <header className={styles.header}>
-                    <Box display="flex" alignItems="center" gap="m">
-                        <MerchantLogo
-                            src={logoUrl}
-                            alt={appName}
-                            className={styles.merchantLogo}
-                        />
-                        <LogoFrakWithName className={styles.logo} />
-                    </Box>
-                    <Button
-                        variant="ghost"
-                        size="none"
-                        width="auto"
-                        className={styles.dismissButton}
-                        onClick={onDismiss}
-                    >
-                        {t("sdk.sharingPage.dismiss")}
-                    </Button>
-                </header>
+                <PageHeader
+                    hidden={chromeless}
+                    appName={appName}
+                    logoUrl={logoUrl}
+                    t={t}
+                    onDismiss={onDismiss}
+                />
 
                 <main className={styles.main}>
                     <section className={styles.creditCard}>
@@ -434,32 +481,34 @@ export function SharingPage({
                     </nav>
                 </main>
 
-                <footer className={styles.footer}>
-                    {canShare && (
+                {!chromeless && (
+                    <footer className={styles.footer}>
+                        {canShare && (
+                            <Button
+                                variant="primary"
+                                size="large"
+                                fontSize="s"
+                                onClick={onShare}
+                                disabled={isSharing || !sharingLink}
+                                className={styles.shareButton}
+                            >
+                                {t("sharing.btn.share")}
+                                <ShareIcon width={16} height={16} />
+                            </Button>
+                        )}
                         <Button
-                            variant="primary"
+                            variant="secondary"
                             size="large"
                             fontSize="s"
-                            onClick={onShare}
-                            disabled={isSharing || !sharingLink}
-                            className={styles.shareButton}
+                            onClick={onCopy}
+                            disabled={!sharingLink}
+                            className={styles.copyButton}
                         >
-                            {t("sharing.btn.share")}
-                            <ShareIcon width={16} height={16} />
+                            {t("sharing.btn.copy")}
+                            <CopyIcon width={16} height={16} />
                         </Button>
-                    )}
-                    <Button
-                        variant="secondary"
-                        size="large"
-                        fontSize="s"
-                        onClick={onCopy}
-                        disabled={!sharingLink}
-                        className={styles.copyButton}
-                    >
-                        {t("sharing.btn.copy")}
-                        <CopyIcon width={16} height={16} />
-                    </Button>
-                </footer>
+                    </footer>
+                )}
             </div>
         </div>
     );

@@ -37,6 +37,16 @@ export type SharingEventMap = {
     sharing_link_started: SharingLinkProps;
     sharing_link_shared: SharingLinkProps;
     sharing_link_copied: SharingLinkProps;
-    sharing_page_viewed: { merchant_id?: string };
+    /**
+     * `sdk_version` and `native` are only present when a native host opened
+     * the page. They are what tells us which SDK builds are still in the
+     * field, so a page change can be weighed against what it would break in
+     * binaries that can no longer be updated.
+     */
+    sharing_page_viewed: {
+        merchant_id?: string;
+        sdk_version?: string;
+        native?: boolean;
+    };
     sharing_page_opened: { merchant_id?: string } | undefined;
 };
