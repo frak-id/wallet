@@ -11,6 +11,7 @@ export {
     useGetUserReferralStatus,
     useOpenSso,
     usePrepareSso,
+    usePrepareSsoUrl,
     useReferralInteraction,
     useSendTransactionAction,
     useSetupReferral,

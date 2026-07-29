@@ -26,7 +26,7 @@ import { signProof } from "../identity/sign";
 import type { FrakClient, OpenSsoParamsType } from "../types";
 import { decompressJsonFromB64 } from "../utils/compression/decompress";
 import type { CompressedSsoData } from "../utils/sso/sso";
-import { openSso } from "./openSso";
+import { openSso, ssoPopupFeatures, ssoPopupName } from "./openSso";
 
 function decodeOpenUrl(): CompressedSsoData {
     const call = vi.mocked(window.open).mock.calls[0];
@@ -76,6 +76,47 @@ describe("openSso", () => {
 
         const decoded = decodeOpenUrl();
         expect(decoded.pf).toBe("signed-proof");
+    });
+
+    describe("pre-built url form", () => {
+        it("opens the url without resolving ids or signing anything", async () => {
+            await openSso(mockClient, {
+                ssoUrl: "https://wallet.frak.id/sso?p=prebuilt",
+            });
+
+            // The whole point of this form: nothing is awaited before the
+            // popup opens, so no blocker heuristic can fire.
+            expect(signProof).not.toHaveBeenCalled();
+            expect(getClientId).not.toHaveBeenCalled();
+            expect(sdkConfigStore.resolveMerchantId).not.toHaveBeenCalled();
+            expect(window.open).toHaveBeenCalledWith(
+                "https://wallet.frak.id/sso?p=prebuilt",
+                ssoPopupName,
+                ssoPopupFeatures
+            );
+        });
+
+        it("still awaits completion over RPC, so the caller gets the wallet back", async () => {
+            vi.mocked(mockClient.request).mockResolvedValue({
+                wallet: "0xdeadbeef",
+            });
+
+            const result = await openSso(mockClient, {
+                ssoUrl: "https://wallet.frak.id/sso?p=prebuilt",
+            });
+
+            expect(result).toEqual({ wallet: "0xdeadbeef" });
+        });
+
+        it("throws the blocker error when the popup is refused", async () => {
+            vi.stubGlobal("open", vi.fn().mockReturnValue(null));
+
+            await expect(
+                openSso(mockClient, {
+                    ssoUrl: "https://wallet.frak.id/sso?p=prebuilt",
+                })
+            ).rejects.toThrow("Popup was blocked");
+        });
     });
 
     it("does not include a proof and does not throw when signProof resolves null (legacy no-key client)", async () => {

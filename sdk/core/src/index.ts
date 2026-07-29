@@ -73,8 +73,10 @@ export type {
     ModalStepMetadata,
     // RPC Modal generics
     ModalStepTypes,
+    OpenSsoArgsType,
     OpenSsoParamsType,
     OpenSsoReturnType,
+    OpenSsoUrlParamsType,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
     ResolvedPlacement,

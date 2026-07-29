@@ -7,6 +7,7 @@ export { getMergeToken } from "./getMergeToken";
 export { getUserReferralStatus } from "./getUserReferralStatus";
 export { openSso } from "./openSso";
 export { prepareSso } from "./prepareSso";
+export { prepareSsoUrl } from "./prepareSsoUrl";
 export {
     type ProcessReferralOptions,
     processReferral,

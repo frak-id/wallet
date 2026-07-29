@@ -1,4 +1,4 @@
-import type { OpenSsoParamsType, OpenSsoReturnType } from "@frak-labs/core-sdk";
+import type { OpenSsoArgsType, OpenSsoReturnType } from "@frak-labs/core-sdk";
 import { openSso } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
@@ -6,7 +6,7 @@ import { useFrakClient } from "./useFrakClient";
 
 /** @ignore */
 type MutationOptions = Omit<
-    UseMutationOptions<OpenSsoReturnType, FrakRpcError, OpenSsoParamsType>,
+    UseMutationOptions<OpenSsoReturnType, FrakRpcError, OpenSsoArgsType>,
     "mutationFn" | "mutationKey"
 >;
 
@@ -29,7 +29,9 @@ interface UseOpenSsoParams {
  *
  * @returns
  * The mutation hook wrapping the `openSso()` action
- * The `mutate` and `mutateAsync` argument is of type {@link @frak-labs/core-sdk!index.OpenSsoParamsType | `OpenSsoParamsType`}
+ * The `mutate` and `mutateAsync` argument is of type {@link @frak-labs/core-sdk!index.OpenSsoArgsType | `OpenSsoArgsType`}:
+ * either the full SSO params, or `{ ssoUrl }` from {@link usePrepareSsoUrl | `usePrepareSsoUrl()`}
+ * to open the popup without awaiting anything first.
  * The mutation doesn't output any value
  *
  * @see {@link @frak-labs/core-sdk!actions.openSso | `openSso()`} for more info about the underlying action
@@ -41,7 +43,7 @@ export function useOpenSso({ mutations }: UseOpenSsoParams = {}) {
     return useMutation({
         ...mutations,
         mutationKey: ["frak-sdk", "open-sso"],
-        mutationFn: async (params: OpenSsoParamsType) => {
+        mutationFn: async (params: OpenSsoArgsType) => {
             if (!client) {
                 throw new ClientNotFound();
             }
