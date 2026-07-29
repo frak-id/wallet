@@ -6,7 +6,6 @@ import { sessionStore } from "../../stores/sessionStore";
 import {
     type BasePairingState,
     classifyClose,
-    type OriginIdentityNode,
     type PairingSignatureFailure,
     type WsOriginMessage,
     type WsOriginRequest,
@@ -25,7 +24,6 @@ export type PairingWsEventListener = (
 type ConnectionParams =
     | {
           action: "initiate";
-          originNode?: OriginIdentityNode;
           /**
            * Optional WebAuthn credential-id allow-set the joining target
            * must match one of. Persisted on the pairing row server-side;
@@ -96,9 +94,7 @@ function serialiseConnectionParams(
     const out: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
         if (value === undefined || value === null) continue;
-        if (key === "originNode") {
-            out.originNode = btoa(JSON.stringify(value));
-        } else if (key === "authenticatorHints" && Array.isArray(value)) {
+        if (key === "authenticatorHints" && Array.isArray(value)) {
             if (value.length === 0) continue;
             out.authenticatorHints = value.join(",");
         } else if (typeof value === "string") {

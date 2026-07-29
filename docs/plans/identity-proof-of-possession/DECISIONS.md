@@ -88,9 +88,15 @@ are already touching. Folded into the same DDL request as `proof_seen_at`.
 
 ### 1.5 🔴 The auth routes are a fourth merge surface, and they carry no proof — UNRESOLVED
 
-> **Status: recorded, not fixed.** Found while asking why SSO transmits a `clientId` at
-> all. Deliberately left untouched — owner is analysing these by hand. The `clientId`
-> workstream continues independently; revisit this afterwards.
+> **Status: recorded, not fixed. Plan written — see `MERGE-SURFACE-CLEANUP.md` (C3).**
+> Found while asking why SSO transmits a `clientId` at all. Resolution is a new
+> `frak-sso-v1` proof op with a short (10 min) window, verified *opportunistically* — no
+> proof means no merge, never a 403, so login can never break.
+>
+> An earlier draft proposed deleting this merge as redundant with `/identity/ensure`. That
+> was **rejected**: the eager SSO merge carries a product capability — linking the reward
+> history of a referee who never created a wallet to the wallet they create via SSO, so a
+> merchant's "See my rewards" page works immediately.
 
 §1.1 above corrected the plan from one merge site to three. That audit swept `track/*`
 and `/track/purchase` only. It missed a fourth surface: **the wallet auth routes**.
@@ -159,6 +165,111 @@ test reproduces it yet. Treat the severity as argued, not demonstrated.
 
 Smaller adjacent finding: `useSsoLink.ts:47` passes `clientId ?? ""`, sending an
 empty-string id rather than omitting the field.
+
+### 1.6 🔴 Pairing WS `originNode` — a fifth merge surface, unauthenticated — UNRESOLVED
+
+> **Status: ✅ FIXED.** `originNode` deleted end-to-end (producers, transport, server
+> parsing, persistence, and the merge in `handleJoin`). `PairingOrchestrator` no longer
+> depends on `IdentityOrchestrator` at all, so even a legacy DB row that still carries an
+> `origin_node` value cannot trigger a merge. The `origin_node` column itself is left in
+> place — dropping it needs a db-team migration (`services/backend/AGENTS.md`).
+>
+> The link it used to make is still established afterwards, proof-gated, by
+> `/identity/ensure`. Plan: `MERGE-SURFACE-CLEANUP.md` (C2).
+
+**This is the most exposed of the merge surfaces found so far**, because unlike §1.5 it
+needs no wallet registration and the identity node is passed *directly* rather than
+inferred from a header.
+
+`GET /user/wallet/pairing/ws` (`api/user/wallet/pairing/ws.ts:44`) accepts an
+`originNode` query param: base64 JSON deserialised straight into an `IdentityNode` by
+`PairingOrchestrator.parseOriginNode` (`:119-125`) — a bare `JSON.parse` with **no
+signature, no ownership check, no `enforceLatchedProof`**. `handleInitiate` (`:139`)
+stores it verbatim on the pairing row.
+
+On a successful join, `PairingOrchestrator.ts:453-458` calls:
+
+```ts
+resolveAndAssociate([{ type: "wallet", value: wallet.address }, pairing.originNode])
+```
+
+Two distinct groups ⇒ `IdentityOrchestrator.ts:142` ⇒ `mergeGroups`. The attacker's own
+wallet is one node; a **victim's** `anonymous_fingerprint` (or `email`) is the other.
+
+Why the existing guards don't stop it:
+
+- **`checkWalletPriority`** (`IdentityWeightService.ts:187-200`) only fires when *both*
+  sides already carry a wallet. A forged fingerprint/email node has none, so the
+  conflict guard never triggers.
+- **`authenticatorHints` pinning** (`PairingOrchestrator.ts:399-406`) is opt-in and set
+  by the *initiator* — i.e. the attacker, who simply omits it.
+- **Rate limiting** is 10/min per IP (`ws.ts:12`), which bounds throughput, not the
+  attack.
+- `action=initiate` requires **no authentication at all**; only the later `join` needs a
+  valid wallet JWT, and *any* wallet works — notably the attacker's own.
+
+The legitimate producer confirms the shape: `SsoButton.tsx:213-222` builds `originNode`
+from `resolvingContext.clientId` client-side, with no proof attached.
+
+**Severity vs §1.5:** §1.5 requires registering a wallet with a planted header. This
+requires only opening a WebSocket with a chosen JSON blob, then joining with any wallet.
+**Not verified by exploit test** — derived from source, same caveat as §1.5.
+
+### 1.7 🟠 Webhook cart-attribute purchase attribution is last-writer-wins
+
+> **Status: ✅ FIXED.** `upsertWithItems` now wraps the conflict-update in
+> `coalesce(purchases.identity_group_id, <new>)`, making attribution first-writer-wins.
+> Plan: `MERGE-SURFACE-CLEANUP.md` (C1).
+
+§1.3 fixed two attribution repoints on `/track/purchase`, but a third entry point into
+the same class of write was not enumerated.
+
+`PurchaseWebhookOrchestrator.upsertWithCartAttributeIdentity`
+(`PurchaseWebhookOrchestrator.ts:160-183`) resolves the `_frak-client-id` Shopify cart
+attribute (`shopifyWebhook.ts:90`; Magento equivalent `magentoWebhook.ts:63`) to a group
+and writes it onto the purchase row via `PurchaseRepository.upsertWithItems`
+(`PurchaseRepository.ts:42-57`), whose `onConflictDoUpdate` includes:
+
+```ts
+...(identityGroupId ? { identityGroupId } : {})
+```
+
+No check that the row already carries a *different* `identityGroupId` — unlike the now-
+guarded `reconcileWithExistingPurchase` (§1.3). Shopify and Magento fire `orders/updated`
+repeatedly (capture, fulfilment, refund), so **every redelivery re-overwrites the
+attribution**, last-writer-wins.
+
+The webhook *envelope* is HMAC-verified, so this is not remotely forgeable. But the cart
+attribute *inside* it is written client-side by the storefront SDK at checkout, so it
+carries exactly the same no-proof weakness as the header — relayed through Shopify
+instead of sent directly.
+
+Bounded: it repoints one purchase row, it is not a graph merge, and it costs the attacker
+a real paid order. The fix is the §1.3 guard applied here — skip the overwrite when the
+row already has a non-null, different group.
+
+**Confirmed intact while sweeping:** both §1.3 fixes still hold — `merge` is hard-coded
+`false` at `purchase.ts:86`, and `PurchaseClaimRepository.upsert` (`:38-53`) still gates
+`onConflictDoUpdate` behind `rebindExisting`.
+
+### 1.8 ✅ Merge surfaces checked and found inert
+
+Recorded so the next sweep does not re-derive them:
+
+| Path | Why it cannot merge |
+|---|---|
+| `/track/purchase` → `claimPurchase` | `merge: false` hard-coded (`purchase.ts:86`); both merge branches guarded |
+| `/track/interaction`, `/merchant/referral-status` | `sdkIdentity.ts` uses `resolveForAttribution` only — never `resolveAndAssociate` |
+| Webhooks → `PurchaseWebhookOrchestrator.ts:177` | single-element node array ⇒ `IdentityOrchestrator.ts:118-124` short-circuits before `mergeGroups` (the *attribution write* is still an issue — §1.7) |
+| `RecoveryClaimOrchestrator.ts:155` | no `merchantId` ⇒ the `clientId && merchantId` guard at `IdentityOrchestrator.ts:204` never builds the node |
+| `/wallet/merge/{settle,preview}` | wallet↔wallet only; proof is a WebAuthn signature, no `clientId` enters |
+| `referrerClientId` on arrival | read-only group lookup (`ArrivalHandler.ts:160`), no write gated on it |
+| `ReferralService.registerReferral` | explicit first-referrer-wins (`ReferralService.ts:39-51`) |
+| `IdentityRepository.addNode` / `markProofSeen` | `onConflictDoNothing` / `isNull(proofSeenAt)` one-way latch |
+
+Also confirmed: `FrakClientIdHeaderSchema` is **not** applied globally — every route opts
+in explicitly (`commonApiSchemas.ts:24-27`). The ambient-attachment problem noted in §1.5
+is on the *client* (`backendClient.ts:35`), not the server.
 
 ## 2. Architecture decisions
 
@@ -603,6 +714,13 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
   `x-frak-client-id`, injectable via SSO's unsigned `cId`. Recorded and **left unfixed by
   agreement**; owner is analysing by hand. Blocks nothing in the `clientId` workstream,
   but must be resolved before proofs can be called mandatory across the surface.
+- ✅ **The pairing WS `originNode` merge** (§1.6) — **fixed**, deleted end-to-end.
+- ✅ **Webhook cart-attribute attribution** (§1.7) — **fixed**, first-writer-wins.
+- ⚠️ **`origin_node` column still exists** on `device_pairing`, now unused and never
+  written. Needs a db-team `DROP COLUMN` migration to finish the cleanup.
+- **The merge-surface enumeration is now believed complete** (§1.8 lists what was checked
+  and found inert). Three sweeps were needed to get here; treat any new
+  `resolveAndAssociate`/`associate` caller as security-relevant by default.
 - The §2.6 conflicting-migration alarm is still **not built** — two different derived ids
   racing to claim the same legacy id is the harvesting signal, but §9.3 gives it no
   Alertmanager destination. Out of scope with the migration itself.

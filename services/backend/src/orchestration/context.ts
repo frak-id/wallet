@@ -230,8 +230,7 @@ const pairingOrchestrator = new PairingOrchestrator(
     PairingContext.repositories.pairingSignature,
     AuthContext.repositories.authenticator,
     IdentityContext.repositories.walletBinding,
-    AuthContext.services.walletSdkSession,
-    identityOrchestrator
+    AuthContext.services.walletSdkSession
 );
 
 const walletMergeOrchestrator = new WalletMergeOrchestrator(

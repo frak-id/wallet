@@ -14,7 +14,6 @@ import { detachedPairingSessionStore } from "../../stores/detachedPairingSession
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
 import {
-    type OriginIdentityNode,
     type OriginPairingState,
     PairingNotReadyError,
     PairingSignatureError,
@@ -43,7 +42,6 @@ export type OnPairingSuccessCallback = () => void | Promise<void>;
  */
 export type InitiatePairingOptions = {
     onSuccess?: OnPairingSuccessCallback;
-    originNode?: OriginIdentityNode;
     /**
      * Pin the pairing to a set of WebAuthn credential ids. Backend rejects
      * any joiner whose credential is outside this set. Used by the
@@ -221,7 +219,6 @@ export class OriginPairingClient extends BasePairingClient<
         this.forceConnect(() =>
             this.connect({
                 action: "initiate",
-                originNode: options?.originNode,
                 authenticatorHints: options?.authenticatorHints,
             })
         );
