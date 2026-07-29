@@ -27,8 +27,8 @@ import { toast } from "sonner";
 import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
 import {
-    buildHostResultUrl,
     type HostResultAction,
+    sendHostResult,
 } from "@/module/common/utils/buildHostResultUrl";
 import { sanitizeRedirectUrl } from "@/module/common/utils/sanitizeRedirectUrl";
 import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
@@ -195,14 +195,13 @@ export const Route = createFileRoute("/sharing")({
 
         // Tell the host, so its sheet closes instead of hanging on a
         // wallet-branded error page it cannot interpret.
-        if (search.returnScheme) {
-            window.location.assign(
-                buildHostResultUrl({
-                    scheme: search.returnScheme,
-                    action: "error",
-                    sid: search.sid,
-                })
-            );
+        if (
+            sendHostResult({
+                scheme: search.returnScheme,
+                action: "error",
+                sid: search.sid,
+            })
+        ) {
             return;
         }
 
@@ -407,13 +406,8 @@ function WalletSharingPage() {
     // Hand an outcome back to the native host, which intercepts the navigation
     // inside its own web view.
     const returnToHost = useCallback(
-        (action: HostResultAction) => {
-            if (!returnScheme) return false;
-            window.location.assign(
-                buildHostResultUrl({ scheme: returnScheme, action, sid })
-            );
-            return true;
-        },
+        (action: HostResultAction) =>
+            sendHostResult({ scheme: returnScheme, action, sid }),
         [returnScheme, sid]
     );
 
