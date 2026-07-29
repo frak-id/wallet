@@ -92,7 +92,6 @@ export type PendingRegistration = {
     publicKey: { x: Hex; y: Hex; prefix: number };
     rawEncoded: string;
     email?: string;
-    merchantId?: string;
     userAgent: string;
     createdAt: number;
 };

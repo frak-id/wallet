@@ -55,9 +55,13 @@ export function useRegister(
         mutationKey: authKey.register,
         mutationFn: async (args?: UseRegisterArgs) => {
             const email = asString(args?.email);
-            // SSO-only, and `/sso` is the only writer of `ssoContext`, so it
-            // is read straight from the store rather than threaded through
-            // every caller — non-SSO register paths have no merchant.
+            // Both are SSO-only and `/sso` is their only writer, so they are
+            // read straight from the store rather than threaded through every
+            // caller. Read fresh at submit time rather than persisted onto
+            // `pendingRegistration`: `ssoContext` is in-memory, so a retry
+            // that survives a reload has no proof to send anyway, and a stale
+            // merchantId without its proof would just be dropped by the
+            // backend's `clientId && merchantId && proof` gate.
             const { merchantId: ssoMerchantId, proof } =
                 authenticationStore.getState().ssoContext ?? {};
             const merchantId = asString(ssoMerchantId);
@@ -67,7 +71,6 @@ export function useRegister(
             // after a backend submit failure.
             const pending = await getOrCreatePendingRegistration({
                 email,
-                merchantId,
                 excludeCredentialIds: previousAuthenticators?.map(
                     (cred) => cred.authenticatorId
                 ),
@@ -79,7 +82,7 @@ export function useRegister(
                     userAgent: pending.userAgent,
                     publicKey: pending.publicKey,
                     raw: pending.rawEncoded,
-                    merchantId: merchantId ?? pending.merchantId,
+                    merchantId,
                     email: email ?? pending.email,
                     proof,
                 });
@@ -171,7 +174,6 @@ const asString = (value: unknown): string | undefined =>
 
 async function getOrCreatePendingRegistration(args: {
     email?: string;
-    merchantId?: string;
     excludeCredentialIds?: string[];
 }): Promise<PendingRegistration> {
     const existing = authenticationStore.getState().pendingRegistration;
@@ -193,7 +195,6 @@ async function getOrCreatePendingRegistration(args: {
         },
         rawEncoded: btoa(JSON.stringify(raw)),
         email: args.email,
-        merchantId: args.merchantId,
         userAgent: navigator.userAgent,
         createdAt: Date.now(),
     };

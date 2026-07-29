@@ -383,7 +383,6 @@ describe("useRegister", () => {
             publicKey: { x: "0x1", y: "0x2", prefix: 4 },
             rawEncoded: "base64-raw",
             email: "pending@example.com",
-            merchantId: undefined,
             userAgent: "test-ua",
             createdAt: Date.now(),
         };
@@ -512,10 +511,7 @@ describe("useRegister", () => {
         });
 
         expect(authState.setPendingRegistration).toHaveBeenCalledWith(
-            expect.objectContaining({
-                email: undefined,
-                merchantId: undefined,
-            })
+            expect.objectContaining({ email: undefined })
         );
         expect(authenticatedWalletApi.auth.register.post).toHaveBeenCalledWith(
             expect.objectContaining({
