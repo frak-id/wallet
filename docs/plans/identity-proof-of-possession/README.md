@@ -3,12 +3,13 @@
 Bind every anonymous identity to a device-held P-256 keypair, so that only the device
 that owns an anonymous id can act on it.
 
-**Status:** planned, not started. **Blocks:** native SDK work
-([`../native-sdk/`](../native-sdk/)).
+**Status:** phases 0–4a shipped on this branch; 4b onwards remain. See
+[`DECISIONS.md`](./DECISIONS.md) for what was actually built and where it diverged from
+this plan, and [`ROLLOUT.md`](./ROLLOUT.md) for what still has to happen before proofs
+are mandatory. **Blocks:** native SDK work ([`../native-sdk/`](../native-sdk/)).
 
-> **Start here.** §3.9 and Phase 0 should begin immediately — the first closes the widest
-> hole with a backend-only change, the second freezes the wire format before the native
-> SDKs hardcode it into unpatchable binaries. Everything else can follow. See §7.
+> This document is the design rationale, kept as written for the "why". Where it
+> disagrees with `DECISIONS.md`, `DECISIONS.md` is current.
 
 **Contents:** §1 why · §2 design ([2.0](#20-where-the-key-lives-and-how-proofs-travel)
 key location · [2.1](#21-the-anonymous-id-is-derived-from-the-keypair) derivation ·
@@ -17,7 +18,7 @@ key location · [2.1](#21-the-anonymous-id-is-derived-from-the-keypair) derivati
 [2.4](#24-pure-js-fallback-is-required-not-optional) fallback ·
 [2.5](#25-performance) perf · [2.6](#26-migrating-existing-clients--and-why-legacy-ids-stay-broken-forever)
 migration) · §3 backend fixes (incl. **3.9 `track/*`**) · §4 what the SDK signs (incl.
-**4.6 `proofSeen` latch**) · §5 install flow · §6 wallet compatibility · §7 phasing ·
+**4.6 `proof_seen_at` latch**) · §5 install flow · §6 wallet compatibility · §7 phasing ·
 §8 cross-platform · §9 open questions
 
 **Constraints this plan is optimised against**, in order:
@@ -523,7 +524,7 @@ property that prevents bugs.
 > step 2) can leave a stale id beside a fresh key. On load, re-derive the id from the key
 > and compare; on mismatch the key is authoritative, so overwrite the stored id. Never
 > leave the pair inconsistent, or every later signature fails verification with no
-> diagnosis path. This matters more once §4.6's `proofSeen` latch exists: a latched id
+> diagnosis path. This matters more once §4.6's `proof_seen_at` latch exists: a latched id
 > whose key was lost is unusable as a merge source.
 
 ```
@@ -1001,15 +1002,15 @@ Deliberately, to protect constraint 3:
   would require a v3 wire format and break every published link for no gain, since the
   link is meant to be public.
 
-### 4.6 The `proofSeen` latch — how enforcement becomes per-identity
+### 4.6 The `proof_seen_at` latch — how enforcement becomes per-identity
 
 Enforcement has an ordering problem: a derived id and a legacy id are both just UUIDs, so
 the backend cannot tell them apart by inspection. "Require a proof" can only be a global
 flag day, gated on a coverage threshold §7 never defines, and until it flips, every new
 derived id is as claimable as a legacy one.
 
-Fix it with one boolean column on `identity_nodes`: `proofSeen`. Set it the first time
-that node presents a valid proof. Once latched, that id always requires a proof, in
+Fix it with one nullable timestamp column on `identity_nodes`: `proof_seen_at`. Set it
+the first time that node presents a valid proof. Once latched, that id always requires a proof, in
 either merge role, forever.
 
 This is not the registry §2.1 rejects. That was an id→pubkey mapping that had to exist
@@ -1340,7 +1341,7 @@ dependency rather than a scheduling one.
 - proof attached to `/identity/ensure` (SDK arm, §4.1) and `frak_getMergeToken` (§4.2)
 - backend verifies when present, never requires: derivation check and signature only, no
   table, no lookup
-- the `proofSeen` latch (§4.6): one column, written on first valid proof. Ship it with
+- the `proof_seen_at` latch (§4.6): one column, written on first valid proof. Ship it with
   Phase 2, not later — it is what stops the migration from doubling each existing user's
   exposed surface during the Phase 2→4 window.
 - telemetry: % of calls carrying a valid proof, split derived / legacy / keygen-failed;
@@ -1353,7 +1354,7 @@ dependency rather than a scheduling one.
 > `minVersion` for exactly this reason; the SDK has nothing.
 
 **Acceptance:** derived ids issued to new clients; migration merge succeeds for existing
-ones; `proofSeen` latches; ≥ one week of telemetry with the derived/legacy/failed split
+ones; `proof_seen_at` latches; ≥ one week of telemetry with the derived/legacy/failed split
 visible; kill switch tested.
 
 ### Phase 3 — install ticket, step 1 (starts as early as possible)

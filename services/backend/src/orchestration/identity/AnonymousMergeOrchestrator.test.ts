@@ -1,3 +1,4 @@
+import { HttpError } from "@backend-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { AnonymousMergeService } from "../../domain/identity/services/AnonymousMergeService";
@@ -32,8 +33,19 @@ function makeOrchestrator() {
         resolveAndAssociate: vi.fn(),
         associate: vi.fn(),
     };
+    const verify = vi.fn();
     const identityProofService = {
-        verify: vi.fn(),
+        verify,
+        // Mirrors the real service: verify, then 403 on failure.
+        verifyOrThrow: vi.fn(async (params: unknown) => {
+            const result = await verify(params);
+            if (!result?.valid) {
+                throw HttpError.forbidden(
+                    "PROOF_INVALID",
+                    "Identity proof failed verification"
+                );
+            }
+        }),
         hashMergeToken: vi.fn(),
     };
 

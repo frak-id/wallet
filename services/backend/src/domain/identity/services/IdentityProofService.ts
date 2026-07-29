@@ -1,4 +1,5 @@
 import { log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import {
     buildProofMessage,
     decodeProof,
@@ -102,10 +103,14 @@ export class IdentityProofService {
             result.valid ? "valid" : "invalid"
         );
         if (!result.valid) {
+            // Debug, not info: enforcing callers log their own, more
+            // specific rejection line, and the valid/invalid split is
+            // already a metric.
             log.debug(
                 {
                     op: params.op,
                     merchantId: params.merchantId,
+                    anonymousId: params.anonymousId,
                     reason: result.reason,
                 },
                 "Identity proof rejected"
@@ -113,6 +118,33 @@ export class IdentityProofService {
         }
 
         return result;
+    }
+
+    /**
+     * `verify`, but 403s instead of returning a result. Every enforcing
+     * caller wants the same two outcomes, so the error code stays identical
+     * across the ensure/merge-initiate/merge-execute paths. `context`
+     * names the call site, so a rejection stays attributable in the logs.
+     */
+    async verifyOrThrow(
+        params: ProofCheckParams & { context: string }
+    ): Promise<void> {
+        const result = await this.verify(params);
+        if (!result.valid) {
+            log.info(
+                {
+                    op: params.op,
+                    merchantId: params.merchantId,
+                    anonymousId: params.anonymousId,
+                    reason: result.reason,
+                },
+                `Identity proof rejected on ${params.context}`
+            );
+            throw HttpError.forbidden(
+                "PROOF_INVALID",
+                "Identity proof failed verification"
+            );
+        }
     }
 
     private async check(params: ProofCheckParams): Promise<ProofVerification> {

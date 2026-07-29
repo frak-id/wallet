@@ -16,10 +16,9 @@ import type {
 } from "@/module/pending-actions/types";
 
 /**
- * Stable error code the backend returns for a non-retryable ensure failure
- * (README §3.8): the anonymous id was already linked to a different wallet,
- * so retrying can never succeed. `ensure.ts` remaps its internal
- * `WALLET_CONFLICT` to this code before it reaches the client.
+ * The anonymous id is already linked to a different wallet, so retrying can
+ * never succeed. `ensure.ts` remaps its internal `WALLET_CONFLICT` to this
+ * code before it reaches the client.
  */
 const WALLET_ALREADY_LINKED = "WALLET_ALREADY_LINKED";
 
@@ -47,7 +46,7 @@ type ExecutePendingActionsArgs = {
  *   - Storing a new action (optional, e.g. from /install)
  *   - Draining ensure actions (fire-and-forget, kept on failure for retry —
  *     except a non-retryable WALLET_ALREADY_LINKED, which is dropped
- *     immediately; see README §3.8)
+ *     immediately; see docs/plans/identity-proof-of-possession/README.md §3.8)
  *   - Navigating to pending navigation target (if any)
  *
  * Returns `true` via mutation data if a navigation was triggered,
@@ -106,13 +105,8 @@ export function useExecutePendingActions(
                             context: { action_type: "ensure", source },
                         });
                         if (nonRetryable) {
-                            // Can never succeed — stop the 7-day retry loop
-                            // and tell the user, instead of a silent no-op
-                            // on every future app launch. The flag lives in a
-                            // module store, not local state: every caller
-                            // navigates away before this fire-and-forget
-                            // rejection lands, so component state would be
-                            // unmounted by the time it is set.
+                            // Stop the retry loop instead of silently
+                            // no-oping on every future app launch.
                             store.removeAction(action.id);
                             ensureConflictStore.getState().raise();
                         }
@@ -153,9 +147,8 @@ export function useExecutePendingActions(
 async function executeEnsure(
     action: Extract<PendingAction, { type: "ensure" }>
 ): Promise<void> {
-    // Resolution order on the backend is ticket -> proof+anonymousId -> bare
-    // anonymousId (README §5), so sending both is safe: an old-shape action
-    // with no ticket falls back to anonymousId exactly as today.
+    // The backend resolves ticket -> proof+anonymousId -> bare anonymousId,
+    // so an old-shape action with no ticket still works.
     const { error } = await authenticatedBackendApi.user.identity.ensure.post({
         merchantId: action.merchantId,
         anonymousId: action.anonymousId,

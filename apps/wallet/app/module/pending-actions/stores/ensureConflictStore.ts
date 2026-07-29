@@ -8,15 +8,13 @@ type EnsureConflictStore = {
 };
 
 /**
- * Signals that a pending `ensure` action failed with a non-retryable
- * WALLET_ALREADY_LINKED conflict (README §3.8).
+ * Signals that a pending `ensure` failed with a non-retryable
+ * `WALLET_ALREADY_LINKED` conflict.
  *
- * A module store rather than component state, because the ensure calls are
- * fire-and-forget and every caller of `useExecutePendingActions` navigates
- * away immediately — the rejection lands after the calling component has
- * unmounted. Deliberately not persisted: the user is told once, on the
- * launch where it happened, and the pending action is dropped so it cannot
- * recur.
+ * A module store rather than component state: the ensure calls are
+ * fire-and-forget and every caller navigates away before the rejection
+ * lands. Not persisted — the user is told once, on the launch where it
+ * happened.
  */
 export const ensureConflictStore = create<EnsureConflictStore>()((set) => ({
     raised: false,

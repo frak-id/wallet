@@ -794,9 +794,6 @@
             "merchantInfo": "Connecté à {{merchantName}}"
         }
     },
-    "pendingActions": {
-        "walletAlreadyLinked": "Ce lien de parrainage est déjà lié à un autre portefeuille. Tes autres gains et soldes ne sont pas affectés."
-    },
     "installCode": {
         "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ce code",
         "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",
@@ -808,6 +805,9 @@
         "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
         "download": "Télécharger l'app",
         "processing": "Configuration de ton porte-monnaie..."
+    },
+    "pendingActions": {
+        "walletAlreadyLinked": "Ce lien de parrainage est déjà lié à un autre porte-monnaie."
     },
     "onboarding": {
         "start": "Commencer",

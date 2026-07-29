@@ -715,7 +715,7 @@ export default interface Resources {
       }
     },
     "pendingActions": {
-      "walletAlreadyLinked": "This referral link is already linked to another wallet. Your other rewards and balances are unaffected."
+      "walletAlreadyLinked": "This referral link is already linked to another wallet."
     },
     "recoveryCode": {
       "codeLabel": "Recovery code",

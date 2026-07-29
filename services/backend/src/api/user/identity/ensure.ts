@@ -118,23 +118,14 @@ async function resolveSdkEnsureAnonymousId(params: {
         );
     }
 
-    const result = await IdentityContext.services.identityProof.verify({
+    await IdentityContext.services.identityProof.verifyOrThrow({
         op: "frak-ensure-v1",
+        context: "ensure (Phase 4a: enforced)",
         proof,
         merchantId,
         anonymousId,
         binding: new Uint8Array(0),
     });
-    if (!result.valid) {
-        log.info(
-            { merchantId, anonymousId, reason: result.reason },
-            "Identity proof rejected on ensure (Phase 4a: enforced)"
-        );
-        throw HttpError.forbidden(
-            "PROOF_INVALID",
-            "Identity proof failed verification"
-        );
-    }
 
     return anonymousId;
 }

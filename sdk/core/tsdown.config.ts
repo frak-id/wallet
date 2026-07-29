@@ -54,11 +54,9 @@ export default defineConfig([
             // entry below so it never bloats the self-contained browser bundle.
             rewards: "./src/rewards/index.ts",
             // Proof-of-possession primitives — published as the tree-shakeable
-            // `@frak-labs/core-sdk/identity` subpath. The backend imports the
-            // verify half of this straight from source (see
-            // docs/plans/identity-proof-of-possession/DECISIONS.md §2.1); it is
-            // deliberately NOT in the CDN IIFE entry below, so `verify.ts`
-            // never reaches the browser bundle — see bundle-isolation.test.ts.
+            // `@frak-labs/core-sdk/identity` subpath. Signer-only: verification
+            // lives in the backend's own IdentityProofService, which imports
+            // the canonical message layout from here (DECISIONS.md D7).
             identity: "./src/identity/index.ts",
         },
         format: ["esm", "cjs"],

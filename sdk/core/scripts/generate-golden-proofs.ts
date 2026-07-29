@@ -1,18 +1,17 @@
 /**
  * Generates `src/identity/fixtures/golden-proofs.json` — the frozen
- * cross-platform proof-of-possession fixtures (Phase 0, README §8).
+ * cross-platform proof-of-possession fixtures (Phase 0, docs/plans/identity-proof-of-possession/README.md §8).
  *
  * Re-runnable, but deliberately produces IDENTICAL output every time: the
  * private keys below are hardcoded test-only constants, not fresh
  * randomness. A fixture file regenerated with fresh randomness on each run
  * is a round-trip test, not a golden fixture — round-trip tests pass even
- * when two implementations are identically wrong (README §8).
+ * when two implementations are identically wrong.
  *
- * Run: `bun run scripts/generate-golden-proofs.ts` from `sdk/core/`.
+ * Run: `bun run fixtures:generate` from `sdk/core/`.
  *
  * Consumers of the resulting JSON (must never diverge, by construction):
  *  - `src/identity/canonical.test.ts` (this package)
- *  - `src/identity/verify.test.ts` (this package, added in a later commit)
  *  - `services/backend/src/domain/identity/services/IdentityProofService.test.ts`
  *    (imports the SAME file via `@frak-labs/core-sdk/identity/fixtures`)
  *  - native SDKs (Phase 6) read this same repo path; never copy it

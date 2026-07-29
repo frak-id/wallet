@@ -113,6 +113,7 @@
     "check-exports": "attw --pack --profile node16 .",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
+    "fixtures:generate": "bun scripts/generate-golden-proofs.ts",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "prepublish": "bun run lint && bun run build",

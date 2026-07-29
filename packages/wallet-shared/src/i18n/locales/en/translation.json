@@ -794,9 +794,6 @@
             "merchantInfo": "Connected to {{merchantName}}"
         }
     },
-    "pendingActions": {
-        "walletAlreadyLinked": "This referral link is already linked to another wallet. Your other rewards and balances are unaffected."
-    },
     "installCode": {
         "title": "Don't lose your {{ estimatedReward }}!\nCopy this code",
         "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
@@ -808,6 +805,9 @@
         "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
         "download": "Download the app",
         "processing": "Setting up your wallet..."
+    },
+    "pendingActions": {
+        "walletAlreadyLinked": "This referral link is already linked to another wallet."
     },
     "onboarding": {
         "start": "Get started",

@@ -1,14 +1,17 @@
+import { HttpError } from "@backend-utils";
 import { Elysia } from "elysia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
     mockVerifyTicket,
     mockProofVerify,
+    mockProofVerifyOrThrow,
     mockResolveAndAssociate,
     mockWalletVerify,
 } = vi.hoisted(() => ({
     mockVerifyTicket: vi.fn(),
     mockProofVerify: vi.fn(),
+    mockProofVerifyOrThrow: vi.fn(),
     mockResolveAndAssociate: vi.fn(),
     mockWalletVerify: vi.fn(),
 }));
@@ -21,6 +24,7 @@ vi.mock("../../../../src/domain/identity", () => ({
             },
             identityProof: {
                 verify: mockProofVerify,
+                verifyOrThrow: mockProofVerifyOrThrow,
             },
         },
     },
@@ -126,6 +130,17 @@ describe("POST /identity/ensure — the live Tauri binary's request shape", () =
     beforeEach(() => {
         mockVerifyTicket.mockReset();
         mockProofVerify.mockReset();
+        mockProofVerifyOrThrow.mockReset();
+        // Mirrors the real service: verify, then 403 on failure.
+        mockProofVerifyOrThrow.mockImplementation(async (params: unknown) => {
+            const result = await mockProofVerify(params);
+            if (!result?.valid) {
+                throw HttpError.forbidden(
+                    "PROOF_INVALID",
+                    "Identity proof failed verification"
+                );
+            }
+        });
         mockResolveAndAssociate.mockReset();
         mockWalletVerify.mockReset();
         mockResolveAndAssociate.mockResolvedValue({
@@ -170,6 +185,17 @@ describe("POST /identity/ensure — resolution order (README §5)", () => {
     beforeEach(() => {
         mockVerifyTicket.mockReset();
         mockProofVerify.mockReset();
+        mockProofVerifyOrThrow.mockReset();
+        // Mirrors the real service: verify, then 403 on failure.
+        mockProofVerifyOrThrow.mockImplementation(async (params: unknown) => {
+            const result = await mockProofVerify(params);
+            if (!result?.valid) {
+                throw HttpError.forbidden(
+                    "PROOF_INVALID",
+                    "Identity proof failed verification"
+                );
+            }
+        });
         mockResolveAndAssociate.mockReset();
         mockWalletVerify.mockReset();
         mockResolveAndAssociate.mockResolvedValue({
@@ -340,6 +366,17 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): proof man
     beforeEach(() => {
         mockVerifyTicket.mockReset();
         mockProofVerify.mockReset();
+        mockProofVerifyOrThrow.mockReset();
+        // Mirrors the real service: verify, then 403 on failure.
+        mockProofVerifyOrThrow.mockImplementation(async (params: unknown) => {
+            const result = await mockProofVerify(params);
+            if (!result?.valid) {
+                throw HttpError.forbidden(
+                    "PROOF_INVALID",
+                    "Identity proof failed verification"
+                );
+            }
+        });
         mockResolveAndAssociate.mockReset();
         mockWalletVerify.mockReset();
         mockResolveAndAssociate.mockResolvedValue({

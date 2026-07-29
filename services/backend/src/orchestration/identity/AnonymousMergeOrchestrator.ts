@@ -46,23 +46,14 @@ export class AnonymousMergeOrchestrator {
         const { anonymousId, merchantId, proof, binding } = params;
 
         if (proof) {
-            const result = await this.identityProofService.verify({
+            await this.identityProofService.verifyOrThrow({
                 op: "frak-merge-v1",
+                context: "merge execute (Phase 4a: enforced)",
                 proof,
                 merchantId,
                 anonymousId,
                 binding,
             });
-            if (!result.valid) {
-                log.info(
-                    { merchantId, anonymousId, reason: result.reason },
-                    "Identity proof rejected on merge (Phase 4a: enforced)"
-                );
-                throw HttpError.forbidden(
-                    "PROOF_INVALID",
-                    "Identity proof failed verification"
-                );
-            }
             return true;
         }
 
@@ -105,23 +96,14 @@ export class AnonymousMergeOrchestrator {
             );
         }
 
-        const result = await this.identityProofService.verify({
+        await this.identityProofService.verifyOrThrow({
             op: "frak-merge-v1",
+            context: "merge initiate (Phase 4a: mandatory)",
             proof,
             merchantId,
             anonymousId,
             binding: new Uint8Array(0),
         });
-        if (!result.valid) {
-            log.info(
-                { merchantId, anonymousId, reason: result.reason },
-                "Identity proof rejected on merge initiate (Phase 4a: mandatory)"
-            );
-            throw HttpError.forbidden(
-                "PROOF_INVALID",
-                "Identity proof failed verification"
-            );
-        }
     }
 
     /**

@@ -49,7 +49,7 @@ export namespace JwtContext {
         iss: "frak-identity",
     });
     /**
-     * Install ticket (README §5, "Ticket design") — minted unconditionally
+     * Install ticket (docs/plans/identity-proof-of-possession/README.md §5, "Ticket design") — minted unconditionally
      * by `install-code/resolve`, consumed by `/identity/ensure`. TTL is tied
      * to `INSTALL_TICKET_TTL_MS`, the single constant also imported by the
      * wallet's `pendingActionsStore.ts` (`DEFAULT_ENSURE_TTL_MS`), so the two
@@ -187,11 +187,11 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
     type JwtPayload = UnwrapSchema<Schema, Record<string, string | number>> &
         JWTPayloadSpec;
 
-    // When a context declares an audience, enforce it on verify. Relying on
-    // the payload schema alone is not enough: the JWT-spec claims are merged
-    // in as `aud: optional string`, which widens any `t.Literal` a schema
-    // declares — so a token minted under a different audience, with the same
-    // secret and payload shape, would otherwise verify.
+    // When a context declares an audience, enforce it on verify (below).
+    // Relying on the payload schema alone is not enough: the JWT-spec claims
+    // are merged in as `aud: optional string`, which widens any `t.Literal` a
+    // schema declares — so a token minted under a different audience, with
+    // the same secret and payload shape, would otherwise verify.
     const audience = payload.aud as string | string[] | undefined;
     const verifyOptions: JWTVerifyOptions = audience ? { audience } : {};
 
@@ -237,12 +237,6 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
             if (!jwt) return false;
 
             try {
-                // When a context declares an audience, enforce it here.
-                // Relying on the payload schema alone is not enough: the
-                // JWT-spec claims below are merged in as `aud: optional
-                // string`, which widens any `t.Literal` a schema declares,
-                // so a token minted under a different audience with the same
-                // secret and payload shape would otherwise verify.
                 const data = (
                     await jwtVerify<JwtPayload>(jwt, key, verifyOptions)
                 ).payload;
