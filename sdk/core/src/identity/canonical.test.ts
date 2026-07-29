@@ -31,14 +31,19 @@ const MERCHANT_ID = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e";
 const ANONYMOUS_ID = "256b1be3-2745-41d1-89d4-9121cc87bc45";
 
 describe("golden fixtures", () => {
-    it("has at least two distinct keypairs and covers all three ops", () => {
+    it("has at least two distinct keypairs and covers all four ops", () => {
         const privkeys = new Set(
             goldenProofs.fixtures.map((f) => f.privkeyHex)
         );
         const ops = new Set(goldenProofs.fixtures.map((f) => f.op));
         expect(privkeys.size).toBeGreaterThanOrEqual(2);
         expect(ops).toEqual(
-            new Set(["frak-merge-v1", "frak-ensure-v1", "frak-install-v1"])
+            new Set([
+                "frak-merge-v1",
+                "frak-ensure-v1",
+                "frak-install-v1",
+                "frak-sso-v1",
+            ])
         );
     });
 

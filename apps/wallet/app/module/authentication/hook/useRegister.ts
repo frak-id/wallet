@@ -69,6 +69,12 @@ export function useRegister(
                 ),
             });
 
+            // Read straight from the store rather than threading a new prop
+            // through every `useRegister` caller: the proof is a one-shot,
+            // session-scoped credential set solely by the /sso route, so a
+            // direct read here keeps it out of the merchantId-style prop
+            // chain that non-SSO register paths don't need to know about.
+            const proof = authenticationStore.getState().ssoContext?.proof;
             const { data, error: apiError } =
                 await authenticatedWalletApi.auth.register.post({
                     id: pending.credentialId,
@@ -77,6 +83,7 @@ export function useRegister(
                     raw: pending.rawEncoded,
                     merchantId: merchantId ?? pending.merchantId,
                     email: email ?? pending.email,
+                    proof,
                 });
             if (apiError) {
                 if (isPermanentHttpError(apiError)) {
@@ -89,6 +96,16 @@ export function useRegister(
             }
 
             authenticationStore.getState().setPendingRegistration(null);
+
+            // Single-use: clear immediately after the backend consumes it so
+            // it can't be replayed by a later login/register call within the
+            // same wallet session.
+            if (proof) {
+                authenticationStore.getState().setSsoContext({
+                    ...authenticationStore.getState().ssoContext,
+                    proof: undefined,
+                });
+            }
 
             const { token, sdkJwt, ...authentication } = data;
             const session = { ...authentication, token } as Session;

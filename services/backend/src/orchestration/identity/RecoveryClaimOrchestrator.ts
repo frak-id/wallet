@@ -28,7 +28,6 @@ type RegistrationInput = {
 export type RecoveryClaimParams = RegistrationInput & {
     /** Wallet the user just recovered on-chain (from the decrypted blob). */
     recoveredWallet: Address;
-    clientId?: string;
 };
 
 /**
@@ -154,7 +153,6 @@ export class RecoveryClaimOrchestrator {
         });
         await this.identityOrchestrator.linkWalletToFingerprint({
             walletAddress: recoveredWallet,
-            clientId: params.clientId,
         });
 
         // 5. Mint a session for the recovered wallet (explicit address,

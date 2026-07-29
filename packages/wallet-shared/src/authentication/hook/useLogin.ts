@@ -13,7 +13,10 @@ import {
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
 import { recoveryHintStorage } from "../../common/storage/recoveryHint";
-import { addLastAuthentication } from "../../stores/authenticationStore";
+import {
+    addLastAuthentication,
+    authenticationStore,
+} from "../../stores/authenticationStore";
 import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
@@ -131,14 +134,32 @@ export function useLogin(
             const encodedResponse = btoa(
                 JSON.stringify(authenticationResponse)
             );
+            // Read straight from the store rather than threading a new prop
+            // through every `useLogin` caller: the proof is a one-shot,
+            // session-scoped credential set solely by the /sso route, so a
+            // direct read here keeps it out of the merchantId-style prop
+            // chain that non-SSO login paths don't need to know about.
+            const proof = authenticationStore.getState().ssoContext?.proof;
             const { data, error } =
                 await authenticatedWalletApi.auth.login.post({
                     expectedChallenge: challenge,
                     authenticatorResponse: encodedResponse,
                     merchantId: args?.merchantId || undefined,
+                    proof,
                 });
             if (error) {
                 throw error;
+            }
+
+            // Single-use: clear immediately after the backend consumes it so
+            // it can't be replayed by a later login/register call within the
+            // same wallet session (ssoContext otherwise lives until the /sso
+            // flow overwrites or the tab closes).
+            if (proof) {
+                authenticationStore.getState().setSsoContext({
+                    ...authenticationStore.getState().ssoContext,
+                    proof: undefined,
+                });
             }
 
             const { token, sdkJwt, ...authentication } = data;

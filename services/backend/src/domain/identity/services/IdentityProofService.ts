@@ -27,6 +27,17 @@ const PROOF_WINDOW_SECONDS: Record<ProofOp, number> = {
     "frak-merge-v1": 2 * 60,
     "frak-ensure-v1": 30 * 24 * 60 * 60,
     "frak-install-v1": 30 * 24 * 60 * 60,
+    // `frak-sso-v1` travels in a URL (`?p=` blob) built entirely
+    // client-side, with no server round-trip to hand out a nonce — so the
+    // binding is empty and this window is the ONLY thing bounding replay of
+    // a captured URL. Unlike `frak-ensure-v1`, which rides a request body,
+    // a URL lands in browser history, referrer headers, and copied links.
+    // 10 minutes covers a passkey ceremony plus a retry. It only needs to
+    // outrun the legitimate user: `checkWalletPriority`
+    // (IdentityWeightService) throws WALLET_CONFLICT once both groups have
+    // wallets, so a replay only wins if it completes auth first — this
+    // window is what bounds that race.
+    "frak-sso-v1": 10 * 60,
 };
 
 /** Clock-skew allowance for a future-dated `ts` (README §2.2). */

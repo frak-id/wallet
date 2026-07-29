@@ -88,15 +88,24 @@ are already touching. Folded into the same DDL request as `proof_seen_at`.
 
 ### 1.5 🔴 The auth routes are a fourth merge surface, and they carry no proof — UNRESOLVED
 
-> **Status: recorded, not fixed. Plan written — see `MERGE-SURFACE-CLEANUP.md` (C3).**
-> Found while asking why SSO transmits a `clientId` at all. Resolution is a new
-> `frak-sso-v1` proof op with a short (10 min) window, verified *opportunistically* — no
-> proof means no merge, never a 403, so login can never break.
+> **Status: ✅ FIXED.** New `frak-sso-v1` op (10-minute window, empty binding). `openSso`
+> signs it; it rides the compressed SSO URL as `pf`, is stashed in the **in-memory**
+> `ssoContext` (never `clientIdStore`, which is persistent, TTL-less and replayed
+> ambiently), travels in the login/register body, and is verified in
+> `linkWalletToFingerprint` before the fingerprint node is built.
+>
+> **Opportunistic, never fatal**: valid ⇒ merge; invalid ⇒ no merge + warn; absent ⇒ no
+> merge, no error. Login can never break, so old Tauri binaries (which send no proof) keep
+> working and fall back to `/identity/ensure`. `markProofSeen` is gated on actual
+> verification. Plan: `MERGE-SURFACE-CLEANUP.md` (C3).
 >
 > An earlier draft proposed deleting this merge as redundant with `/identity/ensure`. That
 > was **rejected**: the eager SSO merge carries a product capability — linking the reward
 > history of a referee who never created a wallet to the wallet they create via SSO, so a
 > merchant's "See my rewards" page works immediately.
+>
+> `recover.ts` no longer reads `x-frak-client-id` at all — it never passed a `merchantId`,
+> so it never merged; removing it kills the latent hazard permanently.
 
 §1.1 above corrected the plan from one merge site to three. That audit swept `track/*`
 and `/track/purchase` only. It missed a fourth surface: **the wallet auth routes**.
@@ -709,11 +718,12 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
 - ✅ §2.6 migration merge (D6) — **shipped**, see §3.1.1. Enforcing proofs across the SDK
   and listener surface is now unblocked on this, but still blocked on
   `TODO(merge-initiate-proof)` (the listener modal / embedded-wallet path sends no proof).
-- 🔴 **The wallet auth routes merge without a proof** (§1.5) — `login`, `register` and
-  (inertly) `RecoveryClaimOrchestrator` reach `mergeGroups` off an unverified
-  `x-frak-client-id`, injectable via SSO's unsigned `cId`. Recorded and **left unfixed by
-  agreement**; owner is analysing by hand. Blocks nothing in the `clientId` workstream,
-  but must be resolved before proofs can be called mandatory across the surface.
+- ✅ **The wallet auth routes** (§1.5) — **fixed** via the `frak-sso-v1` proof.
+- ⚠️ **The `frak-sso-v1` 10-minute window is a reasoned guess, not measured.** It is the
+  only security-relevant tunable, and its failure mode is *silent*: an expired proof
+  degrades to no-merge with no error, so legitimate merges would simply stop happening.
+  Validate against real SSO funnel timings, and add a metric on expired `frak-sso-v1`
+  rejections before relying on it.
 - ✅ **The pairing WS `originNode` merge** (§1.6) — **fixed**, deleted end-to-end.
 - ✅ **Webhook cart-attribute attribution** (§1.7) — **fixed**, first-writer-wins.
 - ⚠️ **`origin_node` column still exists** on `device_pairing`, now unused and never

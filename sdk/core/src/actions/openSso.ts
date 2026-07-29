@@ -1,5 +1,6 @@
 import { getClientId, getClientIdAsync } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
+import { signProof } from "../identity/sign";
 import type {
     FrakClient,
     OpenSsoParamsType,
@@ -91,23 +92,43 @@ export async function openSso(
     }
 
     // Popup flow: Generate URL on SDK side and open synchronously
-    // This ensures window.open() is called in same tick as user gesture (no popup blocker)
-    // If client id not cached, get it in an async manner, it will trigger popup blocker, but if user reclick on it, all good
+    // window.open() is NOT called in the same tick as the user gesture here:
+    // getClientId() and resolveMerchantId() are both cache hits in the common
+    // case (the ids are usually already resolved by the time the SDK is
+    // interactive), so the popup still opens fast enough to avoid blockers.
+    // On a cold cache (getClientIdAsync awaiting derivation) the popup can be
+    // blocked; if so the user re-clicking works because the id is cached by
+    // then. Signing the proof below is one more cached-key operation (<1ms)
+    // and doesn't change this tradeoff.
     const clientId = getClientId() ?? (await getClientIdAsync());
+    const merchantId = (await sdkConfigStore.resolveMerchantId()) ?? "";
 
-    // Step 1: Generate or use provided SSO URL
+    // Step 1: Sign a proof-of-possession for clientId, if a key exists.
+    // Never blocks or throws SSO on failure (see signProof docs) — legacy
+    // pre-derivation clients have no key and simply proceed without a proof.
+    const proof =
+        clientId && merchantId
+            ? await signProof({
+                  op: "frak-sso-v1",
+                  merchantId,
+                  anonymousId: clientId,
+              })
+            : null;
+
+    // Step 2: Generate or use provided SSO URL
     const ssoUrl =
         args.ssoPopupUrl ??
         generateSsoUrl(
             walletUrl ?? "https://wallet.frak.id",
             args,
-            (await sdkConfigStore.resolveMerchantId()) ?? "",
+            merchantId,
             metadata.name,
             clientId,
-            customizations?.css
+            customizations?.css,
+            proof ?? undefined
         );
 
-    // Step 2: Open popup synchronously (critical for popup blocker prevention)
+    // Step 3: Open popup synchronously (critical for popup blocker prevention)
     const popup = window.open(ssoUrl, ssoPopupName, ssoPopupFeatures);
     if (!popup) {
         throw new Error(
@@ -116,7 +137,7 @@ export async function openSso(
     }
     popup.focus();
 
-    // Step 3: Wait for SSO completion via RPC
+    // Step 4: Wait for SSO completion via RPC
     // The wallet iframe will resolve this when SSO page sends sso_complete message
     const result = await client.request({
         method: "frak_openSso",

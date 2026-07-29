@@ -14,6 +14,8 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
     metadata: AppSpecificSsoMetadata;
     merchantId: string;
     clientId: string;
+    /** Proof-of-possession for `clientId`, see `signProof` (identity/sign.ts). */
+    proof?: string;
 };
 
 /**
@@ -26,6 +28,7 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
  * @param name - Application name
  * @param clientId - Client identifier for identity tracking
  * @param css - Optional custom CSS
+ * @param proof - Optional proof-of-possession for `clientId` (see `signProof`)
  * @returns Complete SSO URL ready to open in popup or redirect
  *
  * @example
@@ -45,7 +48,8 @@ export function generateSsoUrl(
     merchantId: string,
     name: string | undefined,
     clientId: string,
-    css?: string
+    css?: string,
+    proof?: string
 ): string {
     // Build full params with app-specific metadata
     const fullParams: FullSsoParams = {
@@ -60,6 +64,7 @@ export function generateSsoUrl(
             homepageLink: params.metadata?.homepageLink,
         },
         clientId,
+        proof,
     };
 
     // Compress params to minimal format
@@ -93,6 +98,7 @@ function ssoParamsToCompressed(params: FullSsoParams): CompressedSsoData {
             l: params.metadata?.logoUrl,
             h: params.metadata?.homepageLink,
         },
+        pf: params.proof,
     };
 }
 
@@ -119,4 +125,6 @@ export type CompressedSsoData = {
         l?: string;
         h?: string;
     };
+    // proof of possession for cId
+    pf?: string;
 };

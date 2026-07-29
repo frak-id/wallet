@@ -2,7 +2,6 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { WalletAuthResponseDto } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
-import { FrakClientIdHeaderSchema } from "../../../schemas";
 
 /**
  * Recovery passkey claim — called by the wallet-recovery flow AFTER the new
@@ -15,57 +14,49 @@ import { FrakClientIdHeaderSchema } from "../../../schemas";
  * on-chain readback: the binding + session are only granted once the
  * validator confirms the passkey really controls that wallet.
  */
-export const recoverRoutes = new Elysia()
-    .guard({
-        headers: FrakClientIdHeaderSchema,
-    })
-    .post(
-        "/recover",
-        async ({
-            headers,
-            body: { id, publicKey, raw, userAgent, wallet },
-        }) => {
-            const result =
-                await OrchestrationContext.orchestrators.recoveryClaim.claimRecoveredWallet(
-                    {
-                        id,
-                        publicKey,
-                        raw,
-                        userAgent,
-                        recoveredWallet: wallet,
-                        clientId: headers["x-frak-client-id"],
-                    }
-                );
+export const recoverRoutes = new Elysia().post(
+    "/recover",
+    async ({ body: { id, publicKey, raw, userAgent, wallet } }) => {
+        const result =
+            await OrchestrationContext.orchestrators.recoveryClaim.claimRecoveredWallet(
+                {
+                    id,
+                    publicKey,
+                    raw,
+                    userAgent,
+                    recoveredWallet: wallet,
+                }
+            );
 
-            if (result.status === "notAuthorized") {
-                return status(
-                    403,
-                    "Passkey is not registered on this wallet on-chain"
-                );
-            }
-            if (result.status === "conflict") {
-                return status(409, "Credential id conflict");
-            }
-
-            return result.session;
-        },
-        {
-            body: t.Object({
-                id: t.String(),
-                publicKey: t.Object({
-                    x: t.Hex(),
-                    y: t.Hex(),
-                    prefix: t.Number(),
-                }),
-                raw: t.String(),
-                userAgent: t.String(),
-                /** The wallet the user recovered (decrypted from their blob). */
-                wallet: t.Address(),
-            }),
-            response: {
-                403: t.String(),
-                409: t.String(),
-                200: WalletAuthResponseDto,
-            },
+        if (result.status === "notAuthorized") {
+            return status(
+                403,
+                "Passkey is not registered on this wallet on-chain"
+            );
         }
-    );
+        if (result.status === "conflict") {
+            return status(409, "Credential id conflict");
+        }
+
+        return result.session;
+    },
+    {
+        body: t.Object({
+            id: t.String(),
+            publicKey: t.Object({
+                x: t.Hex(),
+                y: t.Hex(),
+                prefix: t.Number(),
+            }),
+            raw: t.String(),
+            userAgent: t.String(),
+            /** The wallet the user recovered (decrypted from their blob). */
+            wallet: t.Address(),
+        }),
+        response: {
+            403: t.String(),
+            409: t.String(),
+            200: WalletAuthResponseDto,
+        },
+    }
+);

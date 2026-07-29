@@ -44,6 +44,20 @@
             "proof": "AQRv8DuUkkHOHa3UNRnmlg4KhbQaaaBcMoEDqivOFZTKFjxPdTpVvwHcU_bAsMfu54tAxv99JaluIoK5ic73HBRKAAAAAGVT8QDgPNa9zO5YGvC10Wolk3sYpG5536yW3pfTcppMVSSd8XOBOhV3iyVyjGuPEwb1jMNQaTTlKa1jVm89_kLjYL2A"
         },
         {
+            "description": "keypair 1, frak-sso-v1, empty binding",
+            "privkeyHex": "0101010101010101010101010101010101010101010101010101010101010101",
+            "pubkeyUncompressedHex": "046ff03b949241ce1dadd43519e6960e0a85b41a69a05c328103aa2bce1594ca163c4f753a55bf01dc53f6c0b0c7eee78b40c6ff7d25a96e2282b989cef71c144a",
+            "derivedClientId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "op": "frak-sso-v1",
+            "merchantId": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+            "anonymousId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "bindingHex": "",
+            "ts": 1700000000,
+            "canonicalMsgHex": "6672616b2d73736f2d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0e256b1be3274541d189d49121cc87bc450000000000000000000000000000000000000000000000000000000000000000000000006553f100",
+            "sigHex": "86e5fd1f6f0631c858b9b3020ae3145684a7461791f0d35a96c2d1428050cd232b41e7635ceff46579adb48fa82ed4f6c41de35be7b9ee9b9402bd0aaebaf20d",
+            "proof": "AQRv8DuUkkHOHa3UNRnmlg4KhbQaaaBcMoEDqivOFZTKFjxPdTpVvwHcU_bAsMfu54tAxv99JaluIoK5ic73HBRKAAAAAGVT8QCG5f0fbwYxyFi5swIK4xRWhKdGF5Hw01qWwtFCgFDNIytB52Nc7_Rlea20j6gu1PbEHeNb57num5QCvQquuvIN"
+        },
+        {
             "description": "keypair 2, frak-ensure-v1, uppercase merchantId parsed to the same 16 bytes as lowercase",
             "privkeyHex": "c8b3e2a11d4f4a6b8e2d7f3a1b5c9d0ee2a11d4f4a6b8e2d7f3a1b5c9d0e1234",
             "pubkeyUncompressedHex": "04fb7c870211687b2726920d4448188db956ef1cbd0841dcab1ddd6ce0761d80632bf72409beb90bbd91ef6349aa8046aa9b4c187922d6c9400cdb7b10748f6912",

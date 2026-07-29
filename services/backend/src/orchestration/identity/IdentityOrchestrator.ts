@@ -2,6 +2,7 @@ import { db, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { type Address, isAddressEqual } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import type { IdentityProofService } from "../../domain/identity/services/IdentityProofService";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
 import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
@@ -10,7 +11,8 @@ export class IdentityOrchestrator {
     constructor(
         private readonly identityRepository: IdentityRepository,
         private readonly weightService: IdentityWeightService,
-        private readonly mergeService: IdentityMergeService
+        private readonly mergeService: IdentityMergeService,
+        private readonly identityProofService: IdentityProofService
     ) {}
 
     async resolve(node: IdentityNode): Promise<ResolveResult> {
@@ -185,6 +187,14 @@ export class IdentityOrchestrator {
      * swallow any failure. Used by the auth routes after a successful login or
      * registration so an identity-graph hiccup never blocks the auth response.
      *
+     * `clientId` arrives via the UNVERIFIED `x-frak-client-id` header —
+     * forgeable through SSO's unsigned `cId` field — so the merge it would
+     * trigger is gated on a `frak-sso-v1` proof. Opportunistic, never fatal:
+     * a present-and-valid proof builds the node and merges as before; an
+     * absent or invalid proof just skips the merge (login/register still
+     * succeed — `/identity/ensure` is the proof-gated path that establishes
+     * the link later for a legacy caller with no proof to give).
+     *
      * When `email` is provided, attach it to the resolved wallet group as a
      * dedicated email identity node — unless that email already belongs to a
      * different group, in which case we log + skip (collisions are owned by
@@ -195,20 +205,55 @@ export class IdentityOrchestrator {
         clientId?: string;
         merchantId?: string;
         email?: string;
+        proof?: string;
     }): Promise<void> {
-        const { walletAddress, clientId, merchantId, email } = params;
+        const { walletAddress, clientId, merchantId, email, proof } = params;
         try {
             const nodes: IdentityNode[] = [
                 { type: "wallet", value: walletAddress },
             ];
-            if (clientId && merchantId) {
-                nodes.push({
+
+            let proofVerified = false;
+            if (clientId && merchantId && proof) {
+                const verification = await this.identityProofService.verify({
+                    op: "frak-sso-v1",
+                    proof,
+                    merchantId,
+                    anonymousId: clientId,
+                    binding: new Uint8Array(0),
+                });
+                proofVerified = verification.valid;
+                if (verification.valid) {
+                    nodes.push({
+                        type: "anonymous_fingerprint",
+                        value: clientId,
+                        merchantId,
+                    });
+                } else {
+                    log.warn(
+                        {
+                            merchantId,
+                            clientId,
+                            reason: verification.reason,
+                        },
+                        "Rejected SSO identity proof; skipping anonymous fingerprint merge at login"
+                    );
+                }
+            }
+
+            const result = await this.resolveAndAssociate(nodes);
+
+            if (proofVerified && clientId && merchantId) {
+                // 🔴 Gated on `proofVerified`, not unconditional: `markProofSeen`
+                // never clears, so latching an id that did not actually verify
+                // would permanently lock it out of ever proving itself (see
+                // latchedProof.ts).
+                await this.identityRepository.markProofSeen({
                     type: "anonymous_fingerprint",
                     value: clientId,
                     merchantId,
                 });
             }
-            const result = await this.resolveAndAssociate(nodes);
 
             if (email) {
                 const existing =

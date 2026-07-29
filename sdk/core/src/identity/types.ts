@@ -15,7 +15,11 @@
  * leaky channel (e.g. the install URL) from being replayed against a more
  * sensitive endpoint (e.g. merge).
  */
-export type ProofOp = "frak-merge-v1" | "frak-ensure-v1" | "frak-install-v1";
+export type ProofOp =
+    | "frak-merge-v1"
+    | "frak-ensure-v1"
+    | "frak-install-v1"
+    | "frak-sso-v1";
 
 /**
  * Decoded wire envelope, §2.3. `pk` and `sig` are raw bytes here — the

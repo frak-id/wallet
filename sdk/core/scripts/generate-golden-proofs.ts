@@ -144,6 +144,12 @@ async function main() {
             merchantId: MERCHANT_ID,
         }),
         buildFixture({
+            description: "keypair 1, frak-sso-v1, empty binding",
+            privkeyHex: key1,
+            op: "frak-sso-v1",
+            merchantId: MERCHANT_ID,
+        }),
+        buildFixture({
             description:
                 "keypair 2, frak-ensure-v1, uppercase merchantId parsed to the same 16 bytes as lowercase",
             privkeyHex: key2,

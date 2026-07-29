@@ -29,6 +29,7 @@
  *                    - `frak-merge-v1`   → SHA-256(mergeToken)
  *                    - `frak-ensure-v1`  → 32 zero bytes
  *                    - `frak-install-v1` → 32 zero bytes
+ *                    - `frak-sso-v1`     → 32 zero bytes (none)
  *   ts          := 8-byte unsigned big-endian, Unix SECONDS.
  *
  * Wire envelope (§2.3), 138 bytes before encoding:

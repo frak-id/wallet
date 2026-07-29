@@ -149,6 +149,33 @@ describe("ssoDataCompression", () => {
             expect(result.metadata.name).toBe("Test App");
         });
 
+        it("should map the compressed proof field to the full proof field", () => {
+            const compressed: CompressedSsoData = {
+                r: "https://example.com/callback",
+                m: "0x1234567890abcdef" as Hex,
+                md: { n: "App" },
+                cId: "client-123",
+                pf: "frak-sso-v1.deadbeef",
+            };
+
+            const result = compressedSsoToParams(compressed);
+
+            expect(result.proof).toBe("frak-sso-v1.deadbeef");
+        });
+
+        it("should leave proof undefined when absent (old-binary / non-SSO path)", () => {
+            const compressed: CompressedSsoData = {
+                r: "https://example.com/callback",
+                m: "0x1234567890abcdef" as Hex,
+                md: { n: "App" },
+                cId: "client-123",
+            };
+
+            const result = compressedSsoToParams(compressed);
+
+            expect(result.proof).toBeUndefined();
+        });
+
         it("should preserve exact values without transformation", () => {
             const compressed: CompressedSsoData = {
                 r: "https://example.com/very/long/callback/url?param1=value1&param2=value2",

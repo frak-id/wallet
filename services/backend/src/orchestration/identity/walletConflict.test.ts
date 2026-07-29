@@ -60,7 +60,8 @@ function makeOrchestrator() {
     const orchestrator = new IdentityOrchestrator(
         identityRepository as unknown as IdentityRepository,
         weightService as unknown as IdentityWeightService,
-        mergeService as unknown as IdentityMergeService
+        mergeService as unknown as IdentityMergeService,
+        { verify: vi.fn() } as never
     );
 
     return { orchestrator, identityRepository, weightService, mergeService };

@@ -103,6 +103,8 @@ type SsoContext = {
     directExit?: boolean;
     metadata?: AppSpecificSsoMetadata;
     id?: Hex;
+    /** Proof-of-possession for `clientId`, single-use — cleared once consumed by login/register. */
+    proof?: string;
 };
 
 type AppSpecificSsoMetadata = SsoMetadata & {

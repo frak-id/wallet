@@ -13,6 +13,8 @@ import { useRegister } from "./useRegister";
 type AuthState = {
     pendingRegistration: unknown;
     setPendingRegistration: ReturnType<typeof vi.fn>;
+    ssoContext?: { proof?: string } | null;
+    setSsoContext: ReturnType<typeof vi.fn>;
 };
 let authState: AuthState;
 
@@ -68,6 +70,8 @@ describe("useRegister", () => {
         authState = {
             pendingRegistration: null,
             setPendingRegistration: vi.fn(),
+            ssoContext: null,
+            setSsoContext: vi.fn(),
         };
     });
 
@@ -520,5 +524,87 @@ describe("useRegister", () => {
                 merchantId: undefined,
             })
         );
+    });
+
+    test("sends the ssoContext proof in the register body and clears it on success", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi, sessionStore } = await import(
+            "@frak-labs/wallet-shared"
+        );
+
+        authState.ssoContext = {
+            proof: "frak-sso-v1.deadbeef",
+        };
+
+        vi.mocked(WebAuthnP256.createCredential).mockResolvedValue({
+            id: "cred-id",
+            publicKey: { x: 1n, y: 2n, prefix: 4 },
+            raw: {},
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.register.post).mockResolvedValue({
+            data: { address: "0x123", token: "token", sdkJwt: "sdk" },
+            error: null,
+        } as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const { result } = renderHook(() => useRegister(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.register();
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(authenticatedWalletApi.auth.register.post).toHaveBeenCalledWith(
+            expect.objectContaining({ proof: "frak-sso-v1.deadbeef" })
+        );
+        expect(authState.setSsoContext).toHaveBeenCalledWith({
+            proof: undefined,
+        });
+    });
+
+    test("omits the proof and skips clearing when ssoContext has none (old-binary / non-SSO path)", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi, sessionStore } = await import(
+            "@frak-labs/wallet-shared"
+        );
+
+        vi.mocked(WebAuthnP256.createCredential).mockResolvedValue({
+            id: "cred-id",
+            publicKey: { x: 1n, y: 2n, prefix: 4 },
+            raw: {},
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.register.post).mockResolvedValue({
+            data: { address: "0x123", token: "token", sdkJwt: "sdk" },
+            error: null,
+        } as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const { result } = renderHook(() => useRegister(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.register();
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(authenticatedWalletApi.auth.register.post).toHaveBeenCalledWith(
+            expect.objectContaining({ proof: undefined })
+        );
+        expect(authState.setSsoContext).not.toHaveBeenCalled();
     });
 });

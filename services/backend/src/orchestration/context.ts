@@ -88,7 +88,8 @@ const identityMergeService = new IdentityMergeService(
 const identityOrchestrator = new IdentityOrchestrator(
     IdentityContext.repositories.identity,
     identityWeightService,
-    identityMergeService
+    identityMergeService,
+    IdentityContext.services.identityProof
 );
 
 const interactionContextBuilder = new InteractionContextBuilder(

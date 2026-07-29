@@ -20,6 +20,7 @@ export const loginRoutes = new Elysia()
                 wallet,
                 demoPkey,
                 merchantId,
+                proof,
             },
         }) => {
             // Rebuild the message that have been signed
@@ -64,6 +65,7 @@ export const loginRoutes = new Elysia()
                     walletAddress,
                     clientId: headers["x-frak-client-id"],
                     merchantId,
+                    proof,
                 }
             );
 
@@ -84,6 +86,9 @@ export const loginRoutes = new Elysia()
                 signature: t.Hex(),
                 demoPkey: t.Optional(t.Hex()),
                 merchantId: t.Optional(t.String({ format: "uuid" })),
+                // `frak-sso-v1` identity proof (see IdentityOrchestrator);
+                // gates the anonymous_fingerprint merge, never required.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 404: t.String(),
@@ -99,6 +104,7 @@ export const loginRoutes = new Elysia()
                 authenticatorResponse: rawAuthenticatorResponse,
                 expectedChallenge,
                 merchantId,
+                proof,
             },
         }) => {
             // Check if that's a valid webauthn signature
@@ -127,6 +133,7 @@ export const loginRoutes = new Elysia()
                     walletAddress: session.address,
                     clientId: headers["x-frak-client-id"],
                     merchantId,
+                    proof,
                 }
             );
 
@@ -137,6 +144,9 @@ export const loginRoutes = new Elysia()
                 expectedChallenge: t.Hex(),
                 authenticatorResponse: t.String(),
                 merchantId: t.Optional(t.String({ format: "uuid" })),
+                // `frak-sso-v1` identity proof (see IdentityOrchestrator);
+                // gates the anonymous_fingerprint merge, never required.
+                proof: t.Optional(t.String()),
             }),
             response: {
                 404: t.String(),
