@@ -64,22 +64,6 @@ function runWhenIdle(callback: () => void): void {
 }
 
 /**
- * Send a one-shot ping to the metrics server so we can count iframe loads.
- * Fire-and-forget — failures are silently dropped, the metrics endpoint
- * is best-effort. Deferred to idle so it never competes with the SDK's first
- * RPC + Ring 1 chunk fetches that fire right after `emitConnected()`.
- */
-function sendBootPing(): void {
-    runWhenIdle(() => {
-        void fetch("https://metrics.frak.id/ping", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ua: navigator.userAgent }),
-        });
-    });
-}
-
-/**
  * Reads `?preload=modal,sharing,wallet` from the iframe URL hash and
  * idle-warms the matching Ring 1 + Ring 2 chunks. Each display chunk
  * (Modal / Wallet / SharingPage's content via lazy-shared) bundles its
@@ -217,7 +201,6 @@ export function bootstrap(): { cleanup: () => void } {
     // are buffered until Ring 1 drains the queue.
     emitConnected();
 
-    sendBootPing();
     setupPreloadHints();
 
     // The iframe lives for the lifetime of the parent page, but expose a
