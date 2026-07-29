@@ -31,7 +31,11 @@ describe("sign", () => {
             expect(localStorage.getItem("frak-client-id")).toBe(
                 result.clientId
             );
-            expect(localStorage.getItem("frak-client-key")).toBeTruthy();
+            // Raw 32-byte private key, stored as 64 lowercase hex chars —
+            // no longer a JWK.
+            expect(localStorage.getItem("frak-client-key")).toMatch(
+                /^[0-9a-f]{64}$/
+            );
         });
 
         it("is deterministic across calls: same key produces the same derived id", async () => {
@@ -103,7 +107,8 @@ describe("sign", () => {
 
         it("clears a corrupt key and rethrows rather than minting an unprovable id", async () => {
             localStorage.setItem("frak-client-id", "some-id");
-            localStorage.setItem("frak-client-key", "not valid json");
+            // Not 64 hex chars — corrupt under the raw-hex storage format.
+            localStorage.setItem("frak-client-key", "not valid hex");
 
             await expect(ensureIdentityKey()).rejects.toThrow();
 
@@ -130,8 +135,9 @@ describe("sign", () => {
                 value: undefined,
                 configurable: true,
             });
-            // The signer is cached per module load, and the tests above
-            // already cached the WebCrypto one.
+            // The signer choice lives in a module-level promise, and the
+            // tests above already resolved it to WebCrypto. Force
+            // re-detection by resetting modules and re-importing.
             vi.resetModules();
 
             try {
@@ -140,7 +146,9 @@ describe("sign", () => {
                 );
                 const result = await freshEnsure();
 
-                expect(localStorage.getItem("frak-client-key")).toBeTruthy();
+                expect(localStorage.getItem("frak-client-key")).toMatch(
+                    /^[0-9a-f]{64}$/
+                );
                 expect(localStorage.getItem("frak-client-id")).toBe(
                     result.clientId
                 );
@@ -220,19 +228,17 @@ describe("sign", () => {
                 ts,
             });
 
+            // No low-S normalisation (docs/plans/identity-proof-of-possession/README.md
+            // §2.3): plain ECDSA verifiers accept both low- and high-S, so
+            // verification must pass with noble's strict low-S check
+            // disabled — asserting `s <= n/2` here would be wrong, since a
+            // valid signature is no longer guaranteed to satisfy it.
             expect(
                 p256.verify(decoded.sig, message, decoded.pk, {
                     prehash: true,
+                    lowS: false,
                 })
             ).toBe(true);
-
-            // Low-S normalisation (docs/plans/identity-proof-of-possession/README.md §2.3).
-            const s = BigInt(
-                `0x${Array.from(decoded.sig.slice(32), (b) =>
-                    b.toString(16).padStart(2, "0")
-                ).join("")}`
-            );
-            expect(s <= p256.Point.Fn.ORDER / 2n).toBe(true);
         });
 
         it("never throws when the merchantId is malformed", async () => {
@@ -247,68 +253,72 @@ describe("sign", () => {
             ).resolves.toBeNull();
         });
 
-        it("imports the keypair only once across multiple signProof calls (cached)", async () => {
-            const { clientId } = await ensureIdentityKey();
-            const importKeySpy = vi.spyOn(crypto.subtle, "importKey");
-
-            await signProof({
-                op: "frak-ensure-v1",
-                merchantId: MERCHANT_ID,
-                anonymousId: clientId,
+        it("signs via the pure-JS fallback when WebCrypto is unavailable", async () => {
+            // `webCryptoP256.isSupported()` caches its result inside
+            // `@noble/curves/webcrypto.js`'s own module scope, which
+            // `vi.resetModules()` does not reliably re-evaluate for an
+            // external package already loaded by an earlier test in this
+            // file. Force the fallback deterministically by mocking
+            // `isSupported` to resolve `false`, rather than by tearing down
+            // `crypto.subtle` — same effect `sign.ts` observes in a real
+            // non-secure-context browser (README §2.4), without depending on
+            // module-cache reset behaviour that only holds for local files.
+            vi.doMock("@noble/curves/webcrypto.js", async () => {
+                const actual = await vi.importActual<
+                    typeof import("@noble/curves/webcrypto.js")
+                >("@noble/curves/webcrypto.js");
+                return {
+                    p256: { ...actual.p256, isSupported: async () => false },
+                };
             });
-            await signProof({
-                op: "frak-merge-v1",
-                merchantId: MERCHANT_ID,
-                anonymousId: clientId,
-            });
-            await signProof({
-                op: "frak-ensure-v1",
-                merchantId: MERCHANT_ID,
-                anonymousId: clientId,
-            });
+            vi.resetModules();
 
-            // Importing a JWK is two calls (private key + public key). If the
-            // keypair weren't cached, three signProof calls would cost six.
-            expect(importKeySpy).toHaveBeenCalledTimes(2);
+            try {
+                const {
+                    ensureIdentityKey: freshEnsure,
+                    signProof: freshSignProof,
+                } = await import("./sign");
 
-            importKeySpy.mockRestore();
+                const { clientId } = await freshEnsure();
+                const ts = 1_700_000_000;
+                const proof = await freshSignProof({
+                    op: "frak-ensure-v1",
+                    merchantId: MERCHANT_ID,
+                    anonymousId: clientId,
+                    ts,
+                });
+
+                expect(proof).toBeTruthy();
+                const decoded = proof ? decodeProof(proof) : null;
+                expect(decoded).not.toBeNull();
+                if (!decoded) return;
+                expect(decoded.pk.length).toBe(65);
+                expect(decoded.sig.length).toBe(64);
+
+                const message = buildProofMessage({
+                    op: "frak-ensure-v1",
+                    merchantId: MERCHANT_ID,
+                    anonymousId: clientId,
+                    binding: new Uint8Array(0),
+                    ts,
+                });
+                expect(
+                    p256.verify(decoded.sig, message, decoded.pk, {
+                        prehash: true,
+                        lowS: false,
+                    })
+                ).toBe(true);
+            } finally {
+                vi.doUnmock("@noble/curves/webcrypto.js");
+            }
         });
 
-        it("re-imports the keypair after the stored JWK changes", async () => {
-            const { clientId: firstId } = await ensureIdentityKey();
-            await signProof({
-                op: "frak-ensure-v1",
-                merchantId: MERCHANT_ID,
-                anonymousId: firstId,
-            });
-
-            // Simulate another tab regenerating the key (or
-            // `ensureIdentityKey`'s corrupt-key catch): the stored JWK string
-            // changes underneath the cache.
-            localStorage.removeItem("frak-client-key");
-            localStorage.removeItem("frak-client-id");
-            const { clientId: secondId } = await ensureIdentityKey();
-            expect(secondId).not.toBe(firstId);
-
-            const importKeySpy = vi.spyOn(crypto.subtle, "importKey");
-
-            await signProof({
-                op: "frak-ensure-v1",
-                merchantId: MERCHANT_ID,
-                anonymousId: secondId,
-            });
-
-            expect(importKeySpy).toHaveBeenCalledTimes(2);
-
-            importKeySpy.mockRestore();
-        });
-
-        it("does not poison the cache when an import fails: a later valid call still succeeds", async () => {
+        it("does not poison later calls when the stored key is corrupt: a later valid call still succeeds", async () => {
             const { clientId } = await ensureIdentityKey();
 
-            // Corrupt the stored key so the next signProof's import fails.
-            const validKeyJson = localStorage.getItem("frak-client-key");
-            localStorage.setItem("frak-client-key", "not valid json");
+            // Corrupt the stored key so the next signProof's read fails.
+            const validKeyHex = localStorage.getItem("frak-client-key");
+            localStorage.setItem("frak-client-key", "not valid hex");
 
             const failed = await signProof({
                 op: "frak-ensure-v1",
@@ -318,8 +328,8 @@ describe("sign", () => {
             expect(failed).toBeNull();
 
             // Restore valid key material — must still work, not stay poisoned.
-            if (validKeyJson) {
-                localStorage.setItem("frak-client-key", validKeyJson);
+            if (validKeyHex) {
+                localStorage.setItem("frak-client-key", validKeyHex);
             }
             const recovered = await signProof({
                 op: "frak-ensure-v1",

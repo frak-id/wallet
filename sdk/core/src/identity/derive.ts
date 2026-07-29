@@ -1,34 +1,16 @@
 /**
- * Anonymous id derivation (README §2.1): `deriveClientId` hashes the
- * uncompressed public key with SHA-256 and hands the digest to
- * `deriveClientIdFromHash` (the pure, frozen part in `canonical.ts`).
+ * Anonymous id derivation (README §2.1): hash the uncompressed public key
+ * with SHA-256 and hand the digest to `deriveClientIdFromHash` (the pure,
+ * frozen part in `canonical.ts`).
  *
- * Uses WebCrypto when available (every browser, and native under Bun/Node)
- * and falls back to `@noble/curves`' bundled SHA-256 only when it isn't —
- * imported lazily so the common path never pays for the fallback chunk.
+ * Uses `@noble/hashes` unconditionally rather than WebCrypto: it is already
+ * in the bundle for the §2.4 signing fallback, it is synchronous, and it
+ * works in non-secure contexts where `crypto.subtle` is absent — so a second
+ * code path would buy nothing.
  */
 
+import { sha256 } from "@noble/hashes/sha2.js";
 import { deriveClientIdFromHash } from "./canonical";
-
-async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
-    if (typeof crypto !== "undefined" && crypto.subtle) {
-        try {
-            const digest = await crypto.subtle.digest(
-                "SHA-256",
-                bytes as BufferSource
-            );
-            return new Uint8Array(digest);
-        } catch {
-            // Some embedded browsers expose `crypto.subtle` but throw on
-            // use — fall through to the pure-JS path below.
-        }
-    }
-
-    // Lazy: only reached when WebCrypto is unavailable or unusable, e.g. a
-    // non-secure-context (plain HTTP) merchant site (README §2.4).
-    const { sha256: nobleSha256 } = await import("@noble/hashes/sha2.js");
-    return nobleSha256(bytes);
-}
 
 /**
  * Derive the anonymous client id from an uncompressed P-256 public key
@@ -37,6 +19,5 @@ async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
 export async function deriveClientId(
     pubkeyUncompressed: Uint8Array
 ): Promise<string> {
-    const hash = await sha256(pubkeyUncompressed);
-    return deriveClientIdFromHash(hash);
+    return deriveClientIdFromHash(sha256(pubkeyUncompressed));
 }

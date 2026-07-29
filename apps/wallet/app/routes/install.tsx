@@ -308,9 +308,9 @@ function InstallCodeView({
         // it reads today and silently ignores the extra key.
         //
         // Measured against the real `frak-install-v1` golden fixture (plan
-        // D-C): proof ~284 chars (base64url has no reserved chars, so
-        // encodeURIComponent is a no-op on it); full dual string ~387 chars
-        // raw, ~397 encoded as the referrer value — 39% of the Play
+        // D-C): proof ~184 chars (base64url has no reserved chars, so
+        // encodeURIComponent is a no-op on it); full dual string ~281 chars
+        // raw, ~281 encoded as the referrer value — 27% of the Play
         // referrer's ~1024-char cap. Comfortable; re-measure if more keys
         // are ever added here.
         const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}${

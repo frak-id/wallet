@@ -29,7 +29,12 @@ export type ProofEnvelope = {
     pk: Uint8Array;
     /** Unix seconds the proof was signed at. */
     ts: number;
-    /** Raw r‖s ECDSA signature, 64 bytes, low-S normalised. */
+    /**
+     * Raw r‖s ECDSA signature, 64 bytes. NOT low-S normalised: plain ECDSA
+     * verifiers accept either form, and the malleability low-S prevents is
+     * irrelevant here because the signature is never hashed into an
+     * identifier. See the byte layout in `canonical.ts`.
+     */
     sig: Uint8Array;
 };
 

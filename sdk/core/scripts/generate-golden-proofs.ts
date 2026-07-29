@@ -95,7 +95,7 @@ async function buildFixture(params: {
         ts,
     });
 
-    const sig = p256.sign(msg, privkey);
+    const sig = p256.sign(msg, privkey, { prehash: true });
 
     const proof = encodeProof({ v: 1, pk: pubkey, ts, sig });
 
@@ -145,7 +145,7 @@ async function main() {
         }),
         buildFixture({
             description:
-                "keypair 2, frak-ensure-v1, uppercase merchantId normalised to lowercase before signing",
+                "keypair 2, frak-ensure-v1, uppercase merchantId parsed to the same 16 bytes as lowercase",
             privkeyHex: key2,
             op: "frak-ensure-v1",
             merchantId: MERCHANT_ID.toUpperCase(),

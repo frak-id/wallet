@@ -14,7 +14,7 @@ are mandatory. **Blocks:** native SDK work ([`../native-sdk/`](../native-sdk/)).
 **Contents:** §1 why · §2 design ([2.0](#20-where-the-key-lives-and-how-proofs-travel)
 key location · [2.1](#21-the-anonymous-id-is-derived-from-the-keypair) derivation ·
 [2.2](#22-timestamped-signatures-no-challenge-round-trip) signatures + windows ·
-[2.3](#23-storage-extractable-key--jwk-in-localstorage) storage + **byte layout** ·
+[2.3](#23-storage-raw-key-in-localstorage) storage + **byte layout** ·
 [2.4](#24-pure-js-fallback-is-required-not-optional) fallback ·
 [2.5](#25-performance) perf · [2.6](#26-migrating-existing-clients--and-why-legacy-ids-stay-broken-forever)
 migration) · §3 backend fixes (incl. **3.9 `track/*`**) · §4 what the SDK signs (incl.
@@ -380,7 +380,7 @@ Rules:
 |---|---|
 | Domain-separate with an op-specific prefix (`frak-merge-v1`, `frak-ensure-v1`, `frak-install-v1`) | a merge proof must never be replayable as an ensure proof |
 | Bind every security-relevant param, not just `ts` | otherwise an observed signature is reused with a swapped `targetAnonymousId` |
-| Length-prefix every field | naive concatenation is ambiguous and forgeable |
+| Every field is fixed width, no length prefixes | a fixed layout is unambiguous by construction and simpler to port: a native implementation is a sequence of byte copies at constant offsets, not a parser |
 | Reject `ts` in the future beyond a small skew allowance | clock-skew abuse |
 
 Validity windows are per-operation, and deliberately not uniform. A blanket ±2 min window
@@ -496,15 +496,18 @@ Mostly no. Working through each path:
 Net: no Redis/KV replay cache anywhere. One less piece of infrastructure, and one less
 way for a retrying wallet to deadlock itself.
 
-### 2.3 Storage: extractable key + JWK in `localStorage`
+### 2.3 Storage: raw key in `localStorage`
 
-The key is generated `extractable: true` and stored as JWK in `localStorage`, next to
-the client id, **on the merchant origin**.
+The key is a raw 32-byte P-256 private key, stored as 64 lowercase hex characters in
+`localStorage`, next to the client id, **on the merchant origin**. Raw bytes rather than
+a `CryptoKey`/JWK: both signing backends in §2.4 take the same 32-byte secret directly,
+so there is nothing to translate between them and no extractability question to answer.
 
-**Why not IndexedDB + non-extractable.** A non-extractable `CryptoKey` cannot be
-exfiltrated even by XSS, which is strictly stronger — but it can only be persisted via
-IndexedDB structured clone, and IndexedDB is precisely what gets evicted in embedded
-in-app browsers, private mode, and under ITP. That would silently orphan identities.
+**Why not IndexedDB.** A non-extractable `CryptoKey` cannot be exfiltrated even by XSS,
+which is strictly stronger — but it can only be persisted via IndexedDB structured clone,
+and IndexedDB is precisely what gets evicted in embedded in-app browsers, private mode,
+and under ITP. That would silently orphan identities. A raw key in `localStorage` gives
+up that XSS-hardening in exchange for surviving there.
 
 The threat model here is remote attackers acting on publicly-guessable ids, not XSS on
 merchant pages. An attacker with XSS on the merchant page can already read the client id,
@@ -528,25 +531,26 @@ property that prevents bugs.
 > whose key was lost is unusable as a merge source.
 
 ```
-localStorage["frak-client-id"]  = "<uuid>"          // unchanged key name; now derived
-localStorage["frak-client-key"] = "<JWK JSON>"      // new
+localStorage["frak-client-id"]  = "<uuid>"                                  // unchanged key name; now derived
+localStorage["frak-client-key"] = "<64 lowercase hex chars, 32-byte secret>" // new
 ```
 
 **Wire format.** Proofs cross an RPC boundary, a URL fragment, and a Play referrer
-string. Serialise as a single base64url blob so every hop treats it as one opaque value:
+string. Serialise as a single base64url blob of the raw binary envelope so every hop
+treats it as one opaque value — no JSON, no double encoding:
 
 ```
-proof = base64url(JSON({ v: 1, pk, ts, sig }))
+proof = base64url(v ‖ pk ‖ ts ‖ sig)
 ```
 
-with `pk` and `sig` themselves base64url strings inside the JSON (JSON cannot hold raw
-bytes), and `ts` a JSON number: integer Unix seconds.
+where `v`, `pk`, `ts` and `sig` are concatenated as raw bytes per the layout below, and
+the whole 138-byte envelope is base64url'd exactly once.
 
-Length budget: pubkey 65 B and sig 64 B are base64url'd (→ 88 + 86 chars), wrapped in
-JSON, then base64url'd again — roughly ~300 bytes, since the encoding is applied twice.
-The Play referrer cap is ~1024 chars total and currently carries ~96 (`install.tsx:230`),
-so ~300 still fits, but it is now the binding constraint on that field, and any future
-addition must be measured against it.
+Length budget: 138 raw bytes base64url to 184 characters — measured against the golden
+fixtures in §8. The Play referrer cap is ~1024 chars total and currently carries ~96
+(`install.tsx:230`), so 184 fits comfortably, and single-encoding it (rather than the
+double-encoding an earlier draft of this doc used) is what keeps the margin wide as any
+future field is added.
 
 #### The exact signed byte layout — freeze this before native branches
 
@@ -554,29 +558,60 @@ addition must be measured against it.
 useless unless the bytes are pinned here. They are:
 
 ```
-msg := prefix ‖ field(merchantId) ‖ field(anonymousId) ‖ field(binding) ‖ uint64be(ts)
-
-prefix       := ASCII bytes of the op string, no length prefix, no separator
-                ("frak-merge-v1" | "frak-ensure-v1" | "frak-install-v1")
-field(x)     := uint16be(byteLength(x)) ‖ x
-uint16be     := 2-byte unsigned, big-endian
-uint64be(ts) := 8-byte unsigned, big-endian, Unix SECONDS (not ms), fixed width
-                — NOT length-prefixed, because its width is already fixed
+msg := op ‖ merchantId(16) ‖ anonymousId(16) ‖ binding(32) ‖ ts(8)
 ```
 
-- `merchantId` and `anonymousId` are the **UTF-8 bytes of the lowercase, hyphenated,
-  36-character UUID string** — not the 16 raw bytes. Lowercase is mandatory (Swift's
-  `UUID.uuidString` is uppercase; normalise before signing).
-- `binding` is op-specific and **always present**, zero-length where unused:
-  - `frak-merge-v1` → the 32 raw bytes of `SHA-256(mergeToken)`
-  - `frak-ensure-v1` → empty (`uint16be(0)`, no payload)
-  - `frak-install-v1` → empty (`uint16be(0)`, no payload)
+Every field is fixed width. There are no length prefixes anywhere in this layout, because
+every field's size is known at compile time — a native port is a sequence of byte copies
+at constant offsets, not a parser.
 
-  Keeping a zero-length field rather than omitting it means the field *count* never varies
-  by op, which is what stops a parser divergence between platforms.
-- `sig` is raw `r‖s`, 64 bytes, **low-S normalised**. Convert to/from DER at platform
-  boundaries.
-- `pk` is the **uncompressed** public key: 65 bytes, `0x04` prefix.
+- `op` is the ASCII bytes of the op string, no length prefix, no separator
+  (`"frak-merge-v1"` | `"frak-ensure-v1"` | `"frak-install-v1"`). Domain separation: a
+  signature produced for one op must never verify for another.
+- `merchantId` and `anonymousId` are each the UUID's **16 raw bytes** — parsed from the
+  hyphenated hex string, not its 36-character text form. Parsing rather than lowercasing
+  is what removes the cross-platform case hazard entirely rather than merely mitigating
+  it: `'A'` and `'a'` parse to the same nibble, so an uppercase `UUID.uuidString` from
+  Swift and a lowercase id from the web sign identical bytes. There is no lowercasing
+  step and no text encoding of either id anywhere in the message.
+- `binding` is op-specific and **always exactly 32 bytes**, zero-filled where unused:
+  - `frak-merge-v1` → the 32 raw bytes of `SHA-256(mergeToken)`
+  - `frak-ensure-v1` → 32 zero bytes
+  - `frak-install-v1` → 32 zero bytes
+
+  A fixed-width zero-filled slot rather than a variable-length field means the message
+  length never varies by op (beyond the op string itself), so there is no branch in the
+  message layout for a native port to get wrong.
+- `ts` is an 8-byte unsigned big-endian integer, Unix **seconds** (not ms), fixed width —
+  not length-prefixed, because its width is already fixed.
+
+Total message length is `len(op) + 72` bytes: 85 bytes for `frak-merge-v1`, 86 for
+`frak-ensure-v1`, 87 for `frak-install-v1`.
+
+The wire envelope wrapping the signature over this message is, similarly, fixed width —
+138 raw bytes before base64url:
+
+```
+envelope := v(1) ‖ pk(65) ‖ ts(8) ‖ sig(64)
+```
+
+- `v` is the envelope version, `1` today. It is the **first byte**, and it is the
+  extension mechanism: any future layout change (a longer id, a different curve) is
+  introduced by bumping it, so a decoder rejects an unknown version before it can
+  misinterpret anything that follows. There is no other versioning scheme and none is
+  needed — this single byte is where "we need a longer id" or similar gets absorbed later.
+- `pk` is the **uncompressed** public key: 65 bytes, `0x04` prefix. Deliberately not
+  compressed (33 bytes): a verifier can derive the id with a plain SHA-256 over these
+  bytes and `importKey("raw", …)`, with no point decompression and therefore no curve
+  library on the verifying side. Saving 32 bytes here would force a curve library into
+  every verifier, which is a worse trade than the bytes.
+- `sig` is raw `r‖s`, 64 bytes, **not low-S normalised**. Plain ECDSA verifiers
+  (WebCrypto, CryptoKit, Android's `Signature`) accept either form; low-S only matters
+  when a signature is hashed into an identifier (the concern in Bitcoin/Ethereum txids),
+  which never happens here — replay is bounded by the `ts` window (§2.2) and the §4.6
+  `proof_seen_at` latch, not by canonical signature form. Skipping normalisation also
+  removes the single fiddliest step to reimplement correctly on a third platform (bigint
+  negation over the curve order).
 
 This layout, plus the derivation in §2.1, is what the golden fixtures in §8 must lock
 down. It must be frozen before the native SDKs branch, because it cannot be changed
@@ -597,20 +632,26 @@ Fallback: `@noble/curves` P-256, well audited, already present in `apps/wallet` 
 devDependency (`package.json:93`), used only by test helpers today
 (`tests/helpers/webauthn/signature.ts`, `tests/helpers/mockedWebauthn.helper.ts`). Treat
 it as a new production dependency for `sdk/core`, whose current runtime deps are just
-`@frak-labs/frame-connector` and `@openpanel/web`. Import it lazily and only on failure,
-so the common path never pays for it:
+`@frak-labs/frame-connector` and `@openpanel/web`.
+
+`@noble/curves` ships both backends from one package, so this is a runtime choice
+between two exports of the same dependency rather than two separate implementations:
 
 ```ts
-async function getSigner(): Promise<Signer> {
-    if (await webCryptoAvailable()) return webCryptoSigner();
-    const { p256 } = await import("@noble/curves/nist.js");   // lazy chunk
-    return nobleSigner(p256);
+import { p256 as webCryptoP256 } from "@noble/curves/webcrypto.js";
+import { p256 as pureJsP256 } from "@noble/curves/nist.js";
+
+async function getSigner() {
+    return (await webCryptoP256.isSupported()) ? webCryptoP256 : pureJsP256;
 }
 ```
 
-Feature-detect by **attempting a real `generateKey`**, not by checking
-`typeof crypto.subtle` — some embedded browsers expose the object but throw on use.
-Cache the result.
+Feature-detect with `isSupported()`, which performs a real WebCrypto operation, not by
+checking `typeof crypto.subtle` — some embedded browsers expose the object but throw on
+use. Cache the result. Note that noble's WebCrypto wrapper defaults to PKCS8/SPKI key
+serialisation; since the stored key is raw bytes (§2.3), every call must pass
+`{ formatSec: "raw", formatPub: "raw" }` explicitly, or signing and verifying keys
+silently stop matching.
 
 Why the fallback is sufficient, and why there is no third tier: three APIs are relevant,
 and only some are gated on a secure context:
@@ -639,8 +680,17 @@ behaves exactly like a legacy id under enforcement (§2.6): usable as a merge **
 never as a merge **source**. This reuses the legacy arm that must exist regardless — no
 extra code path, no telemetry gate, no separate decision to make later.
 
-Note: `@noble/curves` adds roughly 10–14 KB gzipped to a **lazy** chunk, not the main
-bundle.
+Note: both `@noble/curves` imports above are **static**, not lazy — the pure-JS fallback
+is eagerly resident in the entry chunk of every build, not split into a chunk fetched
+only on failure. That is a real, deliberate cost, accepted for one reason: it replaces
+two full signer implementations (a WebCrypto path and a `@noble` path, each with their
+own key format and a hand-rolled low-S normaliser bridging the two) with one dependency
+used two ways, and the net result ships *fewer* bytes than the two-implementation design
+it replaces — the CDN IIFE bundle measured 41,378 bytes gzipped before this section's
+current design and 28,933 after (−12.4 KB); total published ESM output went from 14,077
+to 13,509 bytes gzipped. Do not read this as free: it is an eager-loading cost accepted
+because the total bundle is smaller and there is one code path instead of two, not because
+the weight disappeared.
 
 ### 2.5 Performance
 
@@ -1341,10 +1391,10 @@ real, not absent: Phase 3's `p` / `proof=` fields carry data that only Phase 2 c
 produce. Because the SDK and listener ship continuously (§6.3), this is a code-level
 dependency rather than a scheduling one.
 
-- P-256 keygen inside `createIframe`, JWK persistence, atomic with the client id
+- P-256 keygen inside `createIframe`, raw-key persistence, atomic with the client id
 - derived ids for new clients; migration merge for existing ones (§2.6), including the
   conflicting-migration alarm
-- `@noble/curves` lazy fallback
+- `@noble/curves` WebCrypto-primary / pure-JS-fallback signer
 - proof attached to `/identity/ensure` (SDK arm, §4.1) and `frak_getMergeToken` (§4.2)
 - backend verifies when present, never requires: derivation check and signature only, no
   table, no lookup
@@ -1471,29 +1521,43 @@ rather than a failed verification — it fails at account level, not at request 
 
 | | Web | Android | iOS |
 |---|---|---|---|
-| Keygen | WebCrypto → `@noble/curves` | `KeyPairGenerator("EC")` | CryptoKit `P256.Signing` |
-| Storage | `localStorage` (JWK) | `SharedPreferences` / Keystore | `UserDefaults` |
-| Hash | `crypto.subtle.digest` | `MessageDigest` | `SHA256` |
+| Keygen | `@noble/curves` pure-JS `randomSecretKey()` | `KeyPairGenerator("EC")` | CryptoKit `P256.Signing` |
+| Sign | WebCrypto → `@noble/curves` pure-JS fallback | `KeyPairGenerator("EC")` | CryptoKit `P256.Signing` |
+| Storage | `localStorage` (raw 32-byte key, hex) | `SharedPreferences` / Keystore | `UserDefaults` |
+| Hash | `@noble/hashes` SHA-256 | `MessageDigest` | `SHA256` |
+
+Keygen always goes through the pure-JS path: it is a one-off, local, ~1–3 ms operation
+(§2.5), so there is nothing to gain from a WebCrypto/pure-JS split there. The
+WebCrypto-vs-pure-JS choice in §2.4 applies to the **sign** operation, which runs on
+every proof and is where WebCrypto's native-code speed actually matters.
 
 Traps, all of which produce silent failure:
 
 - **Public key format.** Derivation must hash a fixed representation: uncompressed (65
   bytes, `0x04` prefix), never mixed. Hashing a compressed key yields a different id.
-- **Lowercase UUIDs.** Swift's `UUID.uuidString` is uppercase. Normalise to lowercase at
-  the derivation boundary and before signing (§2.3), since the signed message covers the
-  UUID string — an uppercase variant produces a different signature over the same
-  logical id. `frakContextV2Codec.ts:55` already handles uppercase input correctly
-  (`Number.parseInt(x, 16)` accepts it, and `UUID_RE` carries the `/i` flag), so this is
-  not a codec bug to chase; normalise anyway, for cross-platform determinism.
+- **UUID case.** Swift's `UUID.uuidString` is uppercase. §2.3's layout eliminates this as
+  a hazard rather than merely normalising around it: `merchantId` and `anonymousId` are
+  parsed into their 16 raw bytes before signing, never carried as text, so `'A'` and `'a'`
+  parse to the same nibble and an uppercase id signs identical bytes to its lowercase
+  form. There is no lowercasing step to port and nothing to get wrong here on a third
+  platform. `frakContextV2Codec.ts:55` handles the same class of input correctly for an
+  unrelated reason (`Number.parseInt(x, 16)` accepts uppercase, and `UUID_RE` carries the
+  `/i` flag) — not a codec bug to chase, just a separate mechanism arriving at the same
+  safety.
 - **RFC-4122 bit twiddling.** Version (`0x40` on byte 6) and variant (`0x80` on byte 8)
   must be applied identically, after truncation, on all three platforms.
 - **Signature encoding.** WebCrypto produces raw `r‖s` (64 bytes); most other stacks
   default to DER. Pick raw `r‖s`, convert at the boundaries, and test both directions.
-- **Low-S normalisation.** Some verifiers reject high-S signatures. Normalise on sign.
-- **Message concatenation.** Use the exact layout in §2.3: `uint16be` length prefixes,
-  `uint64be` seconds for `ts`, zero-length binding where unused. "Length-prefix every
-  field" as a principle is not implementable on its own; three teams would pick three
-  widths.
+- **Low-S is deliberately not normalised.** §2.3 signs plain ECDSA and accepts either
+  form; do not add low-S normalisation on any platform, or that platform's signatures
+  will only interoperate with a verifier that also happens to expect low-S — the shared
+  contract is "either form is valid," not "only low-S is valid."
+- **Message layout.** Use the exact fixed-width layout in §2.3: `op` as ASCII, `merchantId`
+  and `anonymousId` as 16 raw bytes each (parsed, never text), `binding` as a fixed
+  32-byte zero-filled slot, `uint64be` seconds for `ts`. There are no length prefixes
+  anywhere in this layout, and none should be added — every field's width is fixed and
+  known in advance on all three platforms, which is what removes the framing ambiguity a
+  length-prefix scheme would otherwise exist to resolve.
 
 Commit golden fixtures — `{privkey, pubkey_uncompressed, derived id, msg fields,
 canonical msg bytes, sig}` — as shared JSON and assert against them in all three test
@@ -1581,7 +1645,7 @@ outcome.
 
   > This does not cover revocation: rotation creates a clean identity, but does not
   > revoke the old one. The old id stays claimable-as-target forever, and the old key
-  > keeps working for whoever holds it. Combined with an extractable key in
+  > keeps working for whoever holds it. Combined with a raw key readable in
   > `localStorage` (§2.3), one moment of physical access on a shared or public computer is
   > a permanent compromise with no self-service remedy — a third threat category that
   > §2.3's threat model does not address, neither "remote attacker" nor "XSS". Accepted,

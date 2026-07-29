@@ -4,19 +4,50 @@
  * PURE module: no crypto import, no `crypto.subtle`, no `@noble/*`. This is
  * the single artifact the SDK signer and the backend verifier
  * (`IdentityProofService`) both build on, and the one native (Phase 6) must
- * reproduce byte-for-byte. Do
- * not change anything in this file without updating
- * `docs/plans/identity-proof-of-possession/README.md` §2.3 and regenerating
- * the golden fixtures — this layout is frozen before native SDKs branch.
+ * reproduce byte-for-byte. Do not change anything in this file without
+ * updating `docs/plans/identity-proof-of-possession/README.md` §2.3 and
+ * regenerating the golden fixtures.
  *
- * Byte layout (README §2.3):
+ * Everything here is FIXED WIDTH. There are no length prefixes, no JSON and
+ * no text encoding of ids, because every field has a size known at compile
+ * time. A native port is a sequence of byte copies at constant offsets
+ * rather than a parser.
  *
- *   msg := prefix ‖ field(merchantId) ‖ field(anonymousId) ‖ field(binding) ‖ uint64be(ts)
+ * Signed message (§2.3), `len(op) + 72` bytes:
  *
- *   prefix       := ASCII bytes of the op string, no length prefix, no separator
- *   field(x)     := uint16be(byteLength(x)) ‖ x
- *   uint64be(ts) := 8-byte unsigned, big-endian, Unix SECONDS, fixed width,
- *                   NOT length-prefixed (its width is already fixed)
+ *   msg := op ‖ merchantId(16) ‖ anonymousId(16) ‖ binding(32) ‖ ts(8)
+ *
+ *   op          := ASCII bytes of the op string, no length prefix. Domain
+ *                  separation: a signature for one op never verifies for
+ *                  another. Kept as text so a hexdump is self-describing.
+ *   merchantId  := the UUID's 16 raw bytes, NOT its 36-char text form. Text
+ *                  would re-introduce a case-normalisation hazard: Swift's
+ *                  `UUID.uuidString` is uppercase, so two platforms could
+ *                  sign different bytes for the same id (README §8).
+ *   binding     := op-specific, always exactly 32 bytes, zero-filled when
+ *                  unused:
+ *                    - `frak-merge-v1`   → SHA-256(mergeToken)
+ *                    - `frak-ensure-v1`  → 32 zero bytes
+ *                    - `frak-install-v1` → 32 zero bytes
+ *   ts          := 8-byte unsigned big-endian, Unix SECONDS.
+ *
+ * Wire envelope (§2.3), 138 bytes before encoding:
+ *
+ *   envelope := v(1) ‖ pk(65) ‖ ts(8) ‖ sig(64)
+ *   proof    := base64url(envelope), unpadded
+ *
+ *   v   := envelope version, 1 today. Bumping it is how any future layout
+ *          change (a longer id, a different curve) is introduced: the
+ *          version is the first byte, so a decoder rejects an unknown
+ *          layout before reading anything it would misinterpret.
+ *   pk  := uncompressed P-256 public key, 65 bytes, `0x04` prefix. Stays
+ *          uncompressed so a verifier can derive the id with a plain hash
+ *          and `importKey("raw", …)`, with no point decompression and
+ *          therefore no curve library.
+ *   sig := raw r‖s ECDSA, 64 bytes. NOT low-S normalised — see §2.3: plain
+ *          ECDSA verifiers (WebCrypto, CryptoKit, Android) accept both, and
+ *          the malleability low-S prevents is irrelevant here because the
+ *          signature is never hashed into an identifier.
  */
 
 import type { ProofEnvelope, ProofOp } from "./types";
@@ -24,21 +55,29 @@ import type { ProofEnvelope, ProofOp } from "./types";
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Byte widths of the fixed-size fields. */
+const UUID_BYTES = 16;
+const BINDING_BYTES = 32;
+const TS_BYTES = 8;
+const PUBKEY_BYTES = 65;
+const SIG_BYTES = 64;
+const ENVELOPE_BYTES = 1 + PUBKEY_BYTES + TS_BYTES + SIG_BYTES;
+
+/** Current envelope version. Bump to introduce a new layout. */
+const ENVELOPE_VERSION = 1;
+
 const textEncoder = new TextEncoder();
 
 /** Fields that make up the op-specific binding, before any signing happens. */
 export type ProofMessageParams = {
     op: ProofOp;
-    /** Lowercase or uppercase 36-char hyphenated UUID string; normalised here. */
+    /** 36-char hyphenated UUID, any case. */
     merchantId: string;
-    /** Lowercase or uppercase 36-char hyphenated UUID string; normalised here. */
+    /** 36-char hyphenated UUID, any case. */
     anonymousId: string;
     /**
-     * Op-specific binding, always present in the wire message, zero-length
-     * where unused (§2.3):
-     *  - `frak-merge-v1`   → 32 raw bytes of SHA-256(mergeToken)
-     *  - `frak-ensure-v1`  → empty
-     *  - `frak-install-v1` → empty
+     * Op-specific binding. Empty or 32 bytes; anything else is a bug and
+     * throws. Empty is written as 32 zero bytes.
      */
     binding: Uint8Array;
     /** Unix seconds. */
@@ -46,60 +85,41 @@ export type ProofMessageParams = {
 };
 
 /**
- * Normalise a UUID string to the canonical lowercase form the signed
- * message covers. Swift's `UUID.uuidString` is uppercase — an uppercase
- * variant of the same logical id must produce the same message bytes, or
- * cross-platform signatures silently diverge (README §8).
+ * The 16 raw bytes of a hyphenated UUID string.
+ *
+ * Parsing rather than lowercasing is what removes the cross-platform case
+ * hazard entirely: `A` and `a` parse to the same nibble, so the signed bytes
+ * cannot depend on the caller's formatting.
  */
-export function normalizeUuid(id: string): string {
-    return id.toLowerCase();
-}
-
-function assertUuid(value: string, label: string): string {
-    const normalized = normalizeUuid(value);
-    if (!UUID_RE.test(normalized)) {
+export function uuidToBytes(value: string, label: string): Uint8Array {
+    if (!UUID_RE.test(value)) {
         throw new Error(`${label} must be a UUID string, got: ${value}`);
     }
-    return normalized;
-}
-
-function writeUint16be(value: number): Uint8Array {
-    if (value < 0 || value > 0xffff) {
-        throw new Error(`uint16be overflow: ${value}`);
+    const hex = value.replace(/-/g, "");
+    const out = new Uint8Array(UUID_BYTES);
+    for (let i = 0; i < UUID_BYTES; i++) {
+        out[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
     }
-    return new Uint8Array([(value >>> 8) & 0xff, value & 0xff]);
+    return out;
 }
 
-function writeUint64be(value: number): Uint8Array {
+function writeUint64be(target: Uint8Array, offset: number, value: number) {
     if (!Number.isInteger(value) || value < 0) {
-        throw new Error(`uint64be must be a non-negative integer: ${value}`);
+        throw new Error(`ts must be a non-negative integer: ${value}`);
     }
-    const bytes = new Uint8Array(8);
     let remaining = BigInt(value);
-    for (let i = 7; i >= 0; i--) {
-        bytes[i] = Number(remaining & 0xffn);
+    for (let i = TS_BYTES - 1; i >= 0; i--) {
+        target[offset + i] = Number(remaining & 0xffn);
         remaining >>= 8n;
     }
-    return bytes;
 }
 
-/** `uint16be(byteLength(x)) ‖ x`, per §2.3. */
-function field(bytes: Uint8Array): Uint8Array {
-    const out = new Uint8Array(2 + bytes.length);
-    out.set(writeUint16be(bytes.length), 0);
-    out.set(bytes, 2);
-    return out;
-}
-
-function concatBytes(chunks: Uint8Array[]): Uint8Array {
-    const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-    const out = new Uint8Array(total);
-    let offset = 0;
-    for (const chunk of chunks) {
-        out.set(chunk, offset);
-        offset += chunk.length;
+function readUint64be(source: Uint8Array, offset: number): number {
+    let value = 0n;
+    for (let i = 0; i < TS_BYTES; i++) {
+        value = (value << 8n) | BigInt(source[offset + i]);
     }
-    return out;
+    return Number(value);
 }
 
 /**
@@ -107,16 +127,33 @@ function concatBytes(chunks: Uint8Array[]): Uint8Array {
  * see the module doc comment.
  */
 export function buildProofMessage(params: ProofMessageParams): Uint8Array {
-    const merchantId = assertUuid(params.merchantId, "merchantId");
-    const anonymousId = assertUuid(params.anonymousId, "anonymousId");
+    if (
+        params.binding.length !== 0 &&
+        params.binding.length !== BINDING_BYTES
+    ) {
+        throw new Error(
+            `binding must be empty or ${BINDING_BYTES} bytes, got ${params.binding.length}`
+        );
+    }
 
-    return concatBytes([
-        textEncoder.encode(params.op),
-        field(textEncoder.encode(merchantId)),
-        field(textEncoder.encode(anonymousId)),
-        field(params.binding),
-        writeUint64be(params.ts),
-    ]);
+    const op = textEncoder.encode(params.op);
+    const out = new Uint8Array(
+        op.length + UUID_BYTES * 2 + BINDING_BYTES + TS_BYTES
+    );
+
+    let offset = 0;
+    out.set(op, offset);
+    offset += op.length;
+    out.set(uuidToBytes(params.merchantId, "merchantId"), offset);
+    offset += UUID_BYTES;
+    out.set(uuidToBytes(params.anonymousId, "anonymousId"), offset);
+    offset += UUID_BYTES;
+    // Zero-filled by construction, so an empty binding needs no branch.
+    out.set(params.binding, offset);
+    offset += BINDING_BYTES;
+    writeUint64be(out, offset, params.ts);
+
+    return out;
 }
 
 /**
@@ -130,19 +167,17 @@ export function buildProofMessage(params: ProofMessageParams): Uint8Array {
  * digest and this function is the single place the RFC-4122 bits are set.
  */
 export function deriveClientIdFromHash(hash: Uint8Array): string {
-    if (hash.length < 16) {
+    if (hash.length < UUID_BYTES) {
         throw new Error(
-            `deriveClientIdFromHash requires at least 16 bytes, got ${hash.length}`
+            `deriveClientIdFromHash requires at least ${UUID_BYTES} bytes, got ${hash.length}`
         );
     }
-    const bytes = hash.slice(0, 16);
+    const bytes = hash.slice(0, UUID_BYTES);
     // RFC-4122 version 4 (bits set on byte 6) and variant (bits set on byte 8).
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
 
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(
-        ""
-    );
+    const hex = bytesToHex(bytes);
     return [
         hex.slice(0, 8),
         hex.slice(8, 12),
@@ -152,31 +187,21 @@ export function deriveClientIdFromHash(hash: Uint8Array): string {
     ].join("-");
 }
 
+function bytesToHex(bytes: Uint8Array): string {
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ---------------------------------------------------------------------------
-// base64url (no padding) — used both for raw byte fields inside the proof
-// envelope JSON and for the outer envelope encoding itself.
+// base64url (no padding) — the only encoding left on the wire.
 // ---------------------------------------------------------------------------
 
-function bytesToBase64(bytes: Uint8Array): string {
+export function bytesToBase64Url(bytes: Uint8Array): string {
     let binary = "";
     for (const byte of bytes) {
         binary += String.fromCharCode(byte);
     }
     // btoa is available in every browser and in Bun/Node >= 18.
-    return btoa(binary);
-}
-
-function base64ToBytes(base64: string): Uint8Array {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-}
-
-export function bytesToBase64Url(bytes: Uint8Array): string {
-    return bytesToBase64(bytes)
+    return btoa(binary)
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
         .replace(/=+$/, "");
@@ -188,75 +213,58 @@ export function base64UrlToBytes(value: string): Uint8Array {
         .replace(/-/g, "+")
         .replace(/_/g, "/")
         .padEnd(value.length + padLength, "=");
-    return base64ToBytes(base64);
-}
-
-function stringToBase64Url(value: string): string {
-    return bytesToBase64Url(textEncoder.encode(value));
-}
-
-function base64UrlToString(value: string): string {
-    return new TextDecoder().decode(base64UrlToBytes(value));
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
 }
 
 /**
- * Wire representation of a decoded envelope: `pk`/`sig` as base64url
- * strings (JSON cannot hold raw bytes), `ts` as a JSON number.
- */
-type ProofEnvelopeJson = {
-    v: 1;
-    pk: string;
-    ts: number;
-    sig: string;
-};
-
-/**
- * `proof = base64url(JSON({ v: 1, pk, ts, sig }))`, §2.3. Single opaque blob
- * so every hop (RPC payload, URL fragment, Play referrer string) treats it
- * as one value.
+ * `proof = base64url(v ‖ pk ‖ ts ‖ sig)`, §2.3. Single opaque blob so every
+ * hop (RPC payload, URL fragment, Play referrer string) treats it as one
+ * value.
  */
 export function encodeProof(envelope: ProofEnvelope): string {
-    const json: ProofEnvelopeJson = {
-        v: envelope.v,
-        pk: bytesToBase64Url(envelope.pk),
-        ts: envelope.ts,
-        sig: bytesToBase64Url(envelope.sig),
-    };
-    return stringToBase64Url(JSON.stringify(json));
+    if (envelope.pk.length !== PUBKEY_BYTES) {
+        throw new Error(
+            `pk must be ${PUBKEY_BYTES} bytes, got ${envelope.pk.length}`
+        );
+    }
+    if (envelope.sig.length !== SIG_BYTES) {
+        throw new Error(
+            `sig must be ${SIG_BYTES} bytes, got ${envelope.sig.length}`
+        );
+    }
+
+    const out = new Uint8Array(ENVELOPE_BYTES);
+    out[0] = envelope.v;
+    out.set(envelope.pk, 1);
+    writeUint64be(out, 1 + PUBKEY_BYTES, envelope.ts);
+    out.set(envelope.sig, 1 + PUBKEY_BYTES + TS_BYTES);
+
+    return bytesToBase64Url(out);
 }
 
 /**
  * Decode a wire proof string. Never throws — malformed input (bad base64,
- * bad JSON, wrong shape, wrong version) returns `null` so callers can
- * uniformly treat "no usable proof" the same way regardless of cause.
+ * wrong length, unknown version) returns `null` so callers can uniformly
+ * treat "no usable proof" the same way regardless of cause.
  */
 export function decodeProof(wire: string): ProofEnvelope | null {
     try {
-        const json = JSON.parse(base64UrlToString(wire)) as unknown;
-        if (!isProofEnvelopeJson(json)) {
-            return null;
-        }
+        const bytes = base64UrlToBytes(wire);
+        if (bytes.length !== ENVELOPE_BYTES) return null;
+        if (bytes[0] !== ENVELOPE_VERSION) return null;
+
         return {
-            v: 1,
-            pk: base64UrlToBytes(json.pk),
-            ts: json.ts,
-            sig: base64UrlToBytes(json.sig),
+            v: ENVELOPE_VERSION,
+            pk: bytes.slice(1, 1 + PUBKEY_BYTES),
+            ts: readUint64be(bytes, 1 + PUBKEY_BYTES),
+            sig: bytes.slice(1 + PUBKEY_BYTES + TS_BYTES),
         };
     } catch {
         return null;
     }
-}
-
-function isProofEnvelopeJson(value: unknown): value is ProofEnvelopeJson {
-    if (typeof value !== "object" || value === null) {
-        return false;
-    }
-    const candidate = value as Record<string, unknown>;
-    return (
-        candidate.v === 1 &&
-        typeof candidate.pk === "string" &&
-        typeof candidate.sig === "string" &&
-        typeof candidate.ts === "number" &&
-        Number.isFinite(candidate.ts)
-    );
 }

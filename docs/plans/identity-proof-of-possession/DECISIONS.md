@@ -179,7 +179,10 @@ sdk/core/src/identity/
 ├── canonical.ts   # PURE, no crypto. Byte layout, RFC-4122 twiddle, base64url,
 │                  # proof envelope encode/decode. THE frozen artifact.
 ├── derive.ts      # deriveClientId(pubkeyUncompressed) — SHA-256 + canonical
-├── sign.ts        # BROWSER ONLY — keygen, JWK persistence, signProof, @noble fallback
+├── sign.ts        # BROWSER ONLY — keygen, raw hex key persistence, signProof.
+│                  # @noble is not a conditional fallback module — sign.ts imports
+│                  # both @noble/curves/webcrypto.js (WebCrypto-backed) and
+│                  # @noble/curves/nist.js (pure JS) unconditionally and picks one at sign time.
 ├── verify.ts      # BACKEND ONLY — WebCrypto verify, never imports @noble
 ├── types.ts
 ├── index.ts
@@ -414,16 +417,28 @@ dynamic `import()` gets inlined. A first pass therefore aliased the fallback to 
 stub on the CDN target, keeping that bundle small at the cost of HTTP merchants silently
 degrading to an unprovable legacy id.
 
-**Reverted — the measurement was pointed at the wrong artifact.** The bundle merchants
-actually load is `@frak-labs/components`, which is ESM and *does* code-split: `@noble/curves`
-lands in its own lazy chunk (~13 KB gzip) fetched only by the non-secure-context clients
-that actually need it. Every plugin (PHP, Shopify, Magento, Prestashop) loads that path;
-core-sdk's IIFE is real but rarely used, and npm consumers are effectively nil today.
+**Superseded — the dual-signer abstraction that motivated a lazy split is gone.** An
+earlier revision of this decision argued the cost was acceptable because
+`@frak-labs/components` code-splits `@noble/curves` into its own lazy chunk (~13 KB gzip),
+fetched only by non-secure-context clients, while everyone else paid nothing. That
+reasoning no longer applies: `sign.ts` was rewritten to drop the bespoke
+`Signer`/`Keypair`/`getSigner`-probe/keypair-cache abstraction and instead import
+`@noble/curves/webcrypto.js` and `@noble/curves/nist.js` directly, both **statically**.
+Verified against the built ESM output — the published chunk now contains a plain
+`import{p256 as r}from"@noble/curves/webcrypto.js"`, not a `await import(...)`. `@noble/curves`
+now ships in the entry chunk for every consumer, secure context or not. There is no more
+lazy path to point to.
 
-So the cost is a lazy chunk on the path that matters, and unconditional weight only on the
-rarely-used one. §2.4 is explicit that the fallback is *required, not optional*: a dual-tier
-system where HTTP merchants keep getting unprovable ids preserves the exact hole this work
-exists to close. Weight on the minor path is the cheaper half of that trade.
+**Accepted anyway, on different grounds.** The eager load is a real, unconditional cost —
+not free, and this section previously implied it was. It is accepted because collapsing two
+independent signer implementations (a hand-rolled WebCrypto path and a hand-rolled noble
+path, reconciled through a JWK interchange format and a low-S normaliser) into one path that
+uses noble for both backends made the *total* bundle smaller, not larger, despite the eager
+import: the CDN/IIFE bundle went from 41,378 to 28,933 bytes gzip (−12.4 KB), and total dist
+ESM from 14,077 to 13,509 bytes gzip. One eager dependency outweighed two independent
+implementations. §2.4 remains the reason the fallback exists at all and is unconditional to
+begin with: a dual-tier system where HTTP merchants keep getting unprovable ids preserves
+the exact hole this work exists to close.
 
 ### 3.4 D9 — the merge source arm is latch-gated, not unconditional
 
@@ -591,8 +606,10 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
 - The §2.6 conflicting-migration alarm is still **not built** — two different derived ids
   racing to claim the same legacy id is the harvesting signal, but §9.3 gives it no
   Alertmanager destination. Out of scope with the migration itself.
-- **No bundle-size regression guard.** Nothing fails CI if an eager `@noble/curves` import
-  reaches an entry chunk; only manual inspection would catch it.
+- **No bundle-size regression guard.** An eager `@noble/curves` import in the entry chunk is
+  now the intended, shipped design (§3.3), not a hypothetical regression — but there is
+  still no CI check pinning the bundle size, so a future change that grows it further would
+  only be caught by manual inspection.
 - **`?fmt=` is still a search param.** README §4.2/§5 want it moved to a fragment, with the
   SDK accepting both before the wallet switches. Not started; it is the highest-leak merge
   surface since the URL is user-visible and shareable. Out of scope for the dual-arm

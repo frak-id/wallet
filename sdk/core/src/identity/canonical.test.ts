@@ -6,7 +6,7 @@ import {
     decodeProof,
     deriveClientIdFromHash,
     encodeProof,
-    normalizeUuid,
+    uuidToBytes,
 } from "./canonical";
 import goldenProofs from "./fixtures/golden-proofs.json";
 import type { ProofEnvelope } from "./types";
@@ -26,6 +26,9 @@ async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
     const digest = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
     return new Uint8Array(digest);
 }
+
+const MERCHANT_ID = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e";
+const ANONYMOUS_ID = "256b1be3-2745-41d1-89d4-9121cc87bc45";
 
 describe("golden fixtures", () => {
     it("has at least two distinct keypairs and covers all three ops", () => {
@@ -47,7 +50,7 @@ describe("golden fixtures", () => {
         expect(mergeFixture?.bindingHex).toHaveLength(64); // 32 bytes
     });
 
-    it("includes an uppercase merchantId input normalised to lowercase", () => {
+    it("includes an uppercase merchantId input parsed to the same bytes as lowercase", () => {
         const upperFixture = goldenProofs.fixtures.find((f) =>
             /[A-Z]/.test(f.merchantId)
         );
@@ -89,25 +92,46 @@ describe("golden fixtures", () => {
 });
 
 describe("buildProofMessage", () => {
-    it("length-prefixes merchantId and anonymousId with uint16be", () => {
+    it("produces a message of exactly op.length + 72 bytes (16+16+32+8, no length prefixes)", () => {
+        const op = "frak-ensure-v1";
         const msg = buildProofMessage({
-            op: "frak-ensure-v1",
-            merchantId: "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
-            anonymousId: "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            op,
+            merchantId: MERCHANT_ID,
+            anonymousId: ANONYMOUS_ID,
             binding: new Uint8Array(0),
             ts: 0,
         });
-        const prefixLen = "frak-ensure-v1".length;
-        // uint16be(36) === 0x0024
-        expect(msg[prefixLen]).toBe(0x00);
-        expect(msg[prefixLen + 1]).toBe(0x24);
+        expect(msg.length).toBe(op.length + 72);
     });
 
-    it("writes ts as an 8-byte big-endian unsigned integer, no length prefix", () => {
+    it("places the op ascii prefix, merchantId and anonymousId at their fixed offsets", () => {
+        const op = "frak-ensure-v1";
+        const msg = buildProofMessage({
+            op,
+            merchantId: MERCHANT_ID,
+            anonymousId: ANONYMOUS_ID,
+            binding: new Uint8Array(0),
+            ts: 0,
+        });
+
+        expect(new TextDecoder().decode(msg.slice(0, op.length))).toBe(op);
+
+        const merchantBytes = msg.slice(op.length, op.length + 16);
+        expect(Array.from(merchantBytes)).toEqual(
+            Array.from(uuidToBytes(MERCHANT_ID, "merchantId"))
+        );
+
+        const anonymousBytes = msg.slice(op.length + 16, op.length + 32);
+        expect(Array.from(anonymousBytes)).toEqual(
+            Array.from(uuidToBytes(ANONYMOUS_ID, "anonymousId"))
+        );
+    });
+
+    it("writes ts as an 8-byte big-endian unsigned integer at the tail, no length prefix", () => {
         const msg = buildProofMessage({
             op: "frak-ensure-v1",
-            merchantId: "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
-            anonymousId: "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            merchantId: MERCHANT_ID,
+            anonymousId: ANONYMOUS_ID,
             binding: new Uint8Array(0),
             ts: 1_700_000_000,
         });
@@ -115,31 +139,45 @@ describe("buildProofMessage", () => {
         expect(bytesToHex(tsBytes)).toBe("000000006553f100");
     });
 
-    it("writes a zero-length binding field for ensure/install (uint16be(0), no payload)", () => {
+    it("writes an empty binding as 32 zero bytes, immediately preceding ts", () => {
         const msg = buildProofMessage({
             op: "frak-install-v1",
-            merchantId: "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
-            anonymousId: "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            merchantId: MERCHANT_ID,
+            anonymousId: ANONYMOUS_ID,
             binding: new Uint8Array(0),
             ts: 0,
         });
-        // Binding field immediately precedes the 8-byte ts at the tail.
-        const bindingLenBytes = msg.slice(msg.length - 10, msg.length - 8);
-        expect(Array.from(bindingLenBytes)).toEqual([0, 0]);
+        // binding occupies the 32 bytes immediately before the trailing 8-byte ts.
+        const bindingBytes = msg.slice(msg.length - 40, msg.length - 8);
+        expect(bindingBytes.length).toBe(32);
+        expect(Array.from(bindingBytes)).toEqual(new Array(32).fill(0));
     });
 
-    it("normalises an uppercase UUID to lowercase before building the message", () => {
+    it("writes a real 32-byte binding verbatim at the same fixed offset", () => {
+        const binding = new Uint8Array(32).fill(0xab);
+        const msg = buildProofMessage({
+            op: "frak-merge-v1",
+            merchantId: MERCHANT_ID,
+            anonymousId: ANONYMOUS_ID,
+            binding,
+            ts: 0,
+        });
+        const bindingBytes = msg.slice(msg.length - 40, msg.length - 8);
+        expect(Array.from(bindingBytes)).toEqual(Array.from(binding));
+    });
+
+    it("produces identical bytes for uppercase and lowercase UUID input", () => {
         const lower = buildProofMessage({
             op: "frak-ensure-v1",
-            merchantId: "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
-            anonymousId: "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            merchantId: MERCHANT_ID,
+            anonymousId: ANONYMOUS_ID,
             binding: new Uint8Array(0),
             ts: 0,
         });
         const upper = buildProofMessage({
             op: "frak-ensure-v1",
-            merchantId: "9C8B3E2A-1D4F-4A6B-8E2D-7F3A1B5C9D0E",
-            anonymousId: "256B1BE3-2745-41D1-89D4-9121CC87BC45",
+            merchantId: MERCHANT_ID.toUpperCase(),
+            anonymousId: ANONYMOUS_ID.toUpperCase(),
             binding: new Uint8Array(0),
             ts: 0,
         });
@@ -151,18 +189,55 @@ describe("buildProofMessage", () => {
             buildProofMessage({
                 op: "frak-ensure-v1",
                 merchantId: "not-a-uuid",
-                anonymousId: "256b1be3-2745-41d1-89d4-9121cc87bc45",
+                anonymousId: ANONYMOUS_ID,
+                binding: new Uint8Array(0),
+                ts: 0,
+            })
+        ).toThrow();
+
+        expect(() =>
+            buildProofMessage({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: "also-not-a-uuid",
                 binding: new Uint8Array(0),
                 ts: 0,
             })
         ).toThrow();
     });
+
+    it.each([31, 33, 1, 16])(
+        "throws when binding is neither empty nor 32 bytes (got %i)",
+        (len) => {
+            expect(() =>
+                buildProofMessage({
+                    op: "frak-merge-v1",
+                    merchantId: MERCHANT_ID,
+                    anonymousId: ANONYMOUS_ID,
+                    binding: new Uint8Array(len),
+                    ts: 0,
+                })
+            ).toThrow();
+        }
+    );
 });
 
-describe("normalizeUuid", () => {
-    it("lowercases an uppercase UUID", () => {
-        expect(normalizeUuid("9C8B3E2A-1D4F-4A6B-8E2D-7F3A1B5C9D0E")).toBe(
-            "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e"
+describe("uuidToBytes", () => {
+    it("parses a UUID into 16 raw bytes", () => {
+        const bytes = uuidToBytes(MERCHANT_ID, "merchantId");
+        expect(bytes.length).toBe(16);
+        expect(bytesToHex(bytes)).toBe(MERCHANT_ID.replace(/-/g, ""));
+    });
+
+    it("produces identical bytes regardless of input case", () => {
+        const lower = uuidToBytes(MERCHANT_ID, "merchantId");
+        const upper = uuidToBytes(MERCHANT_ID.toUpperCase(), "merchantId");
+        expect(Array.from(lower)).toEqual(Array.from(upper));
+    });
+
+    it("throws with the given label on malformed input", () => {
+        expect(() => uuidToBytes("not-a-uuid", "someField")).toThrow(
+            /someField/
         );
     });
 });
@@ -224,35 +299,71 @@ describe("encodeProof / decodeProof", () => {
         );
     });
 
+    it("encodes exactly 138 raw bytes (1 version + 65 pk + 8 ts + 64 sig) before base64url", () => {
+        const envelope: ProofEnvelope = {
+            v: 1,
+            pk: new Uint8Array(65).fill(1),
+            ts: 0,
+            sig: new Uint8Array(64).fill(2),
+        };
+        const wire = encodeProof(envelope);
+        expect(base64UrlToBytes(wire).length).toBe(138);
+    });
+
+    it("throws when pk is not 65 bytes", () => {
+        expect(() =>
+            encodeProof({
+                v: 1,
+                pk: new Uint8Array(64),
+                ts: 0,
+                sig: new Uint8Array(64),
+            })
+        ).toThrow();
+        expect(() =>
+            encodeProof({
+                v: 1,
+                pk: new Uint8Array(66),
+                ts: 0,
+                sig: new Uint8Array(64),
+            })
+        ).toThrow();
+    });
+
+    it("throws when sig is not 64 bytes", () => {
+        expect(() =>
+            encodeProof({
+                v: 1,
+                pk: new Uint8Array(65),
+                ts: 0,
+                sig: new Uint8Array(63),
+            })
+        ).toThrow();
+        expect(() =>
+            encodeProof({
+                v: 1,
+                pk: new Uint8Array(65),
+                ts: 0,
+                sig: new Uint8Array(65),
+            })
+        ).toThrow();
+    });
+
     it.each([
         ["empty string", ""],
         ["not base64url", "!!!not-valid-base64!!!"],
         [
-            "valid base64url but not JSON",
-            bytesToBase64Url(new Uint8Array([1, 2, 3])),
-        ],
-        [
-            "valid JSON but wrong shape",
+            "correct-length garbage but wrong version byte",
             bytesToBase64Url(
-                new TextEncoder().encode(JSON.stringify({ foo: 1 }))
+                (() => {
+                    const b = new Uint8Array(138);
+                    b[0] = 2; // only version 1 is recognised
+                    return b;
+                })()
             ),
         ],
-        [
-            "valid JSON, missing sig",
-            bytesToBase64Url(
-                new TextEncoder().encode(
-                    JSON.stringify({ v: 1, pk: "abc", ts: 1 })
-                )
-            ),
-        ],
-        [
-            "wrong version",
-            bytesToBase64Url(
-                new TextEncoder().encode(
-                    JSON.stringify({ v: 2, pk: "abc", ts: 1, sig: "def" })
-                )
-            ),
-        ],
+        ["too-short byte payload", bytesToBase64Url(new Uint8Array(137))],
+        ["too-long byte payload", bytesToBase64Url(new Uint8Array(139))],
+        ["single arbitrary byte", bytesToBase64Url(new Uint8Array([1, 2, 3]))],
     ])("returns null, never throws, on: %s", (_label, garbage) => {
         expect(() => decodeProof(garbage)).not.toThrow();
         expect(decodeProof(garbage)).toBeNull();

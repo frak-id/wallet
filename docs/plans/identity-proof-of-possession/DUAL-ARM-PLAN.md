@@ -24,7 +24,7 @@ only if *every* caller is a current-generation SDK/listener. It is not the decis
 repo owner wants, and it is not true in the field:
 
 - the SDK returns `null` from `signProof` and sends **no proof** whenever there is no
-  stored key (`sdk/core/src/identity/sign.ts:367-378`) — i.e. **every legacy client**,
+  stored key (`sdk/core/src/identity/sign.ts:203-239`) — i.e. **every legacy client**,
   which is the entire pre-derivation population;
 - `DECISIONS.md` D6 deliberately ships derivation **for new clients only**, so legacy ids
   are never migrated and can *never* produce a proof;
@@ -118,7 +118,7 @@ This is strictly worse than the 403 it is meant to replace. See workstream **BE-
 
 ### 1.3 SDK / listener — already correct, dual-arm
 
-- `signProof` returns `null`, never throws, when no key (`sign.ts:367-378`). Callers treat
+- `signProof` returns `null`, never throws, when no key (`sign.ts:203-239`). Callers treat
   proofs as always-optional.
 - Proofs produced: ensure (`actions/ensureIdentity.ts:56-69`), merge-initiate with an
   empty binding (`actions/getMergeToken.ts:29-42`), and `sdkIdentity.proofs.{merge,install}`
@@ -279,15 +279,17 @@ Measured against the real fixture (`sdk/core/src/identity/fixtures/golden-proofs
 
 | Component | Chars |
 |---|---|
-| proof, raw | **284** |
-| proof, after `encodeURIComponent` | **284** (base64url has no reserved chars — the encode is a no-op) |
+| proof, raw | **184** |
+| proof, after `encodeURIComponent` | **184** (base64url has no reserved chars — the encode is a no-op) |
 | legacy pair `merchantId=…&anonymousId=…` | 96 |
-| **full dual string, raw** | **387** |
-| **full dual string, `encodeURIComponent`'d as the referrer value** | **397** |
+| **full dual string, raw** | **281** |
+| **full dual string, `encodeURIComponent`'d as the referrer value** | **281** (encode is a no-op on this combination too) |
 
-Against the ~1024-char Play cap that is **39 %** utilisation, comfortable. Recorded here
-because README §2.3 flags the referrer as "the binding constraint on that field, and any
-future addition must be measured against it" — this is that measurement.
+Against the ~1024-char Play cap that is **27 %** utilisation, comfortable — even more so
+than the figure this measurement originally replaced, since the proof shrank from a
+length-prefixed JSON envelope (284 chars) to a fixed-width binary one (184 chars). Recorded
+here because README §2.3 flags the referrer as "the binding constraint on that field, and
+any future addition must be measured against it" — this is that measurement.
 
 Producer `install.tsx:262-267`, consumer `useInstallReferrer.ts:47-56`. Existing keys are
 untouched and stay first in the string, so an old binary parsing with `URLSearchParams`
