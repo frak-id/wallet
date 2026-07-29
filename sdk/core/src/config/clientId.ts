@@ -17,21 +17,9 @@
  * (README §2.1 edge case) — never throw, never block.
  */
 
-import { ensureIdentityKey } from "../identity/sign";
+import { ensureIdentityKey, generateUUID } from "../identity/sign";
 
 const CLIENT_ID_KEY = "frak-client-id";
-
-function generateUUID(): string {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-        return crypto.randomUUID();
-    }
-    // Fallback for older browsers
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-}
 
 /** Cold-path fallback: today's synchronous, unprovable id (§2.1 edge case). */
 function coldClientId(): string {

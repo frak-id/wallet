@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initClientId } from "../config/clientId";
+import * as signModule from "../identity/sign";
 import type { FrakClient } from "../types";
+import { getCache } from "../utils/cache";
 import { getMergeToken } from "./getMergeToken";
 
 const MERCHANT_ID = "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e";
@@ -56,5 +58,29 @@ describe("getMergeToken", () => {
                 params: undefined,
             })
         );
+    });
+
+    it("does not sign again on a cache hit", async () => {
+        getCache("frak_getMergeToken").clear();
+        await initClientId();
+        const request = vi.fn().mockResolvedValue("merge-token");
+        const client = makeClient(request, MERCHANT_ID);
+
+        const first = await getMergeToken(client, { cacheTime: 30_000 });
+        expect(first).toBe("merge-token");
+        expect(request).toHaveBeenCalledTimes(1);
+
+        const signProofSpy = vi.spyOn(signModule, "signProof");
+
+        const second = await getMergeToken(client, { cacheTime: 30_000 });
+
+        expect(second).toBe("merge-token");
+        // Still just the one underlying rpc call from the cache miss above.
+        expect(request).toHaveBeenCalledTimes(1);
+        // A cache hit must short-circuit before the signing closure ever runs.
+        expect(signProofSpy).not.toHaveBeenCalled();
+
+        signProofSpy.mockRestore();
+        getCache("frak_getMergeToken").clear();
     });
 });

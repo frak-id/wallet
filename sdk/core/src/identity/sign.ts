@@ -40,6 +40,13 @@ type Signer = {
 
 let cachedSigner: Signer | null = null;
 
+// Cached alongside the raw JWK string that produced it, so a change to the
+// stored key (another tab clearing storage, `ensureIdentityKey` regenerating
+// after a corrupt-key catch) is detected by string comparison rather than
+// requiring a storage event listener.
+let cachedKeypair: Keypair | null = null;
+let cachedKeypairSource: string | null = null;
+
 /**
  * NIST P-256 (secp256r1) group order — a public, standardised constant, not
  * key material. Hardcoded so the WebCrypto success path never needs to
@@ -220,6 +227,22 @@ function hasEntropySource(): boolean {
     return typeof crypto !== "undefined" && !!crypto.getRandomValues;
 }
 
+/**
+ * Random UUID v4, preferring `crypto.randomUUID()` and falling back to a
+ * `crypto.getRandomValues`-free template for older/non-secure contexts.
+ * Shared with `config/clientId.ts`, which has the same fallback need.
+ */
+export function generateUUID(): string {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+}
+
 export type IdentityKeyMaterial = {
     /** The anonymous id — derived and provable, or a plain legacy id. */
     clientId: string;
@@ -233,14 +256,7 @@ export type IdentityKeyMaterial = {
  * separate code path, no extra decision to make later.
  */
 function legacyFallback(): IdentityKeyMaterial {
-    const clientId =
-        typeof crypto !== "undefined" && crypto.randomUUID
-            ? crypto.randomUUID()
-            : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-                  const r = (Math.random() * 16) | 0;
-                  const v = c === "x" ? r : (r & 0x3) | 0x8;
-                  return v.toString(16);
-              });
+    const clientId = generateUUID();
     if (typeof window !== "undefined" && window.localStorage) {
         localStorage.setItem(CLIENT_ID_KEY, clientId);
     }
@@ -313,6 +329,30 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
 }
 
 /**
+ * Resolve the `Keypair` for the currently stored JWK, reusing the cached one
+ * when `storedKeyJson` is unchanged. Two proofs are signed per handshake, so
+ * without this an ECDSA sign would pay for two redundant `importJwk` calls
+ * (four `crypto.subtle.importKey` calls on the WebCrypto path) every time.
+ *
+ * Only populates the cache once `importJwk` has resolved, so a failed
+ * import (malformed JWK) never poisons it — the next call with valid
+ * material still re-imports and succeeds.
+ */
+async function getCachedKeypair(storedKeyJson: string): Promise<Keypair> {
+    if (cachedKeypair && cachedKeypairSource === storedKeyJson) {
+        return cachedKeypair;
+    }
+
+    const signer = await getSigner();
+    const jwk = JSON.parse(storedKeyJson) as JsonWebKey;
+    const keypair = await signer.importJwk(jwk);
+
+    cachedKeypair = keypair;
+    cachedKeypairSource = storedKeyJson;
+    return keypair;
+}
+
+/**
  * Sign a proof-of-possession for the given op (README §2.2). Returns `null`
  * — never throws — when no key is available (legacy id) or signing fails
  * for any reason; callers must treat proofs as always-optional.
@@ -330,9 +370,7 @@ export async function signProof(params: {
     if (!storedKeyJson) return null;
 
     try {
-        const signer = await getSigner();
-        const jwk = JSON.parse(storedKeyJson) as JsonWebKey;
-        const keypair = await signer.importJwk(jwk);
+        const keypair = await getCachedKeypair(storedKeyJson);
 
         const ts = params.ts ?? Math.floor(Date.now() / 1000);
         const message = buildProofMessage({

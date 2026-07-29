@@ -190,5 +190,87 @@ describe("sign", () => {
                 })
             ).resolves.toBeNull();
         });
+
+        it("imports the keypair only once across multiple signProof calls (cached)", async () => {
+            const { clientId } = await ensureIdentityKey();
+            const importKeySpy = vi.spyOn(crypto.subtle, "importKey");
+
+            await signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: clientId,
+            });
+            await signProof({
+                op: "frak-merge-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: clientId,
+            });
+            await signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: clientId,
+            });
+
+            // Importing a JWK is two calls (private key + public key). If the
+            // keypair weren't cached, three signProof calls would cost six.
+            expect(importKeySpy).toHaveBeenCalledTimes(2);
+
+            importKeySpy.mockRestore();
+        });
+
+        it("re-imports the keypair after the stored JWK changes", async () => {
+            const { clientId: firstId } = await ensureIdentityKey();
+            await signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: firstId,
+            });
+
+            // Simulate another tab regenerating the key (or
+            // `ensureIdentityKey`'s corrupt-key catch): the stored JWK string
+            // changes underneath the cache.
+            localStorage.removeItem("frak-client-key");
+            localStorage.removeItem("frak-client-id");
+            const { clientId: secondId } = await ensureIdentityKey();
+            expect(secondId).not.toBe(firstId);
+
+            const importKeySpy = vi.spyOn(crypto.subtle, "importKey");
+
+            await signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: secondId,
+            });
+
+            expect(importKeySpy).toHaveBeenCalledTimes(2);
+
+            importKeySpy.mockRestore();
+        });
+
+        it("does not poison the cache when an import fails: a later valid call still succeeds", async () => {
+            const { clientId } = await ensureIdentityKey();
+
+            // Corrupt the stored key so the next signProof's import fails.
+            const validKeyJson = localStorage.getItem("frak-client-key");
+            localStorage.setItem("frak-client-key", "not valid json");
+
+            const failed = await signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: clientId,
+            });
+            expect(failed).toBeNull();
+
+            // Restore valid key material — must still work, not stay poisoned.
+            if (validKeyJson) {
+                localStorage.setItem("frak-client-key", validKeyJson);
+            }
+            const recovered = await signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: clientId,
+            });
+            expect(recovered).toBeTruthy();
+        });
     });
 });
