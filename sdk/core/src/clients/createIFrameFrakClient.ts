@@ -483,34 +483,54 @@ async function postConnectionSetup({
     // subsequent SDK event is merchant-attributed. We pass
     // `sdkAnonymousId` through so the listener can join SDK funnels.
     let mergeTokenConsumed = false;
-    const sendLifecycleConfig = async (resolved: SdkResolvedConfig) => {
+    // Sends are chained onto this so postMessage order always matches call
+    // order. `buildSdkIdentity` signs 0-2 proofs and its duration varies per
+    // call, so two fire-and-forget sends (cached-config, then fresh-config)
+    // can otherwise race and land out of order — the listener replaces its
+    // whole context on every message (last write wins), so a reordered
+    // cached send would silently revert the fresh one.
+    let sendChain: Promise<void> = Promise.resolve();
+    const sendLifecycleConfig = (resolved: SdkResolvedConfig) => {
+        // Token capture stays synchronous at call time so the first call
+        // still consumes it, regardless of how long a previous send's
+        // signing takes.
         const token = mergeTokenConsumed ? undefined : pendingMergeToken;
         mergeTokenConsumed = true;
 
         const sdkConfig = buildResolvedSdkConfig(resolved);
         const sdkAnonymousId = getClientId();
+        const sourceUrl = window.location.href;
 
         updateOpenPanelMerchantProps(openPanel, resolved);
 
-        rpcClient.sendLifecycle({
-            clientLifecycle: "resolved-config",
-            data: {
-                merchantId: resolved.merchantId,
-                domain: resolved.domain ?? "",
-                allowedDomains: resolved.allowedDomains ?? [],
-                sourceUrl: window.location.href,
-                ...(sdkAnonymousId && { sdkAnonymousId }),
-                ...(token && { pendingMergeToken: token }),
-                ...(sdkConfig && { sdkConfig }),
-                ...(sdkAnonymousId && {
-                    sdkIdentity: await buildSdkIdentity({
+        sendChain = sendChain
+            .then(async () => {
+                rpcClient.sendLifecycle({
+                    clientLifecycle: "resolved-config",
+                    data: {
                         merchantId: resolved.merchantId,
-                        anonymousId: sdkAnonymousId,
-                        pendingMergeToken: token,
-                    }),
-                }),
-            },
-        });
+                        domain: resolved.domain ?? "",
+                        allowedDomains: resolved.allowedDomains ?? [],
+                        sourceUrl,
+                        ...(sdkAnonymousId && { sdkAnonymousId }),
+                        ...(token && { pendingMergeToken: token }),
+                        ...(sdkConfig && { sdkConfig }),
+                        ...(sdkAnonymousId && {
+                            sdkIdentity: await buildSdkIdentity({
+                                merchantId: resolved.merchantId,
+                                anonymousId: sdkAnonymousId,
+                                pendingMergeToken: token,
+                            }),
+                        }),
+                    },
+                });
+            })
+            .catch((error) => {
+                // Swallow here (not just re-throw) so a failed send doesn't
+                // permanently stall the chain for later, unrelated sends.
+                console.error("Failed to send lifecycle config", error);
+            });
+        return sendChain;
     };
 
     // SWR: if we have cached data, send it to the iframe immediately.
