@@ -54,7 +54,7 @@ let initPromise: Promise<string> | null = null;
  * seed the iframe with the derived id immediately and the two backend
  * round-trips stay off the connection-establishment path (README §2.5).
  */
-export async function initClientId(): Promise<string> {
+export async function initClientId(walletUrl?: string): Promise<string> {
     if (cachedClientId) return cachedClientId;
     if (initPromise) return initPromise;
 
@@ -64,6 +64,7 @@ export async function initClientId(): Promise<string> {
             void migrateLegacyIdentity({
                 legacyId: pendingLegacyId,
                 derivedId: clientId,
+                walletUrl,
             });
         }
         return clientId;

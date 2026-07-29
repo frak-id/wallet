@@ -38,9 +38,11 @@ import { clearPendingLegacyId, signProof } from "../identity/sign";
 export async function migrateLegacyIdentity({
     legacyId,
     derivedId,
+    walletUrl,
 }: {
     legacyId: string;
     derivedId: string;
+    walletUrl?: string;
 }): Promise<void> {
     if (typeof window === "undefined") return;
     // A derivation that produced the id it is replacing would merge a group
@@ -69,7 +71,7 @@ export async function migrateLegacyIdentity({
         });
         if (!proof) return;
 
-        const backendUrl = getBackendUrl();
+        const backendUrl = getBackendUrl(walletUrl);
 
         const initiateResponse = await fetch(
             `${backendUrl}/user/identity/merge/initiate`,

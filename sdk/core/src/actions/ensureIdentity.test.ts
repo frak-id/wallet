@@ -62,4 +62,55 @@ describe("ensureIdentity", () => {
         expect(body.merchantId).toBe(MERCHANT_ID);
         expect(body).not.toHaveProperty("proof");
     });
+
+    it("derives the backend from walletUrl rather than defaulting to production", async () => {
+        await initClientId();
+
+        // Without this the global fallback is used, which only the components
+        // CDN bootstrap populates — every other integration would post a dev
+        // token to the production backend.
+        await ensureIdentity("interaction-token", "https://localhost:3000");
+
+        const [url] = fetchSpy.mock.calls[0] as [string];
+        expect(url).toBe("https://localhost:3030/user/identity/ensure");
+    });
+
+    it("only fires once per (merchant, clientId), even across wallets", async () => {
+        await initClientId();
+
+        await ensureIdentity("token-wallet-a");
+        await ensureIdentity("token-wallet-b");
+
+        // The second wallet is either already in the merged group or would be
+        // refused with WALLET_CONFLICT, so re-firing buys nothing.
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("fires again for a new clientId, which is a genuinely different merge", async () => {
+        await initClientId();
+        await ensureIdentity("interaction-token");
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+        // New key material => new derived id => unlatched.
+        localStorage.clear();
+        vi.resetModules();
+        const { initClientId: freshInit } = await import("../config/clientId");
+        const { ensureIdentity: freshEnsure } = await import(
+            "./ensureIdentity"
+        );
+        await freshInit();
+        await freshEnsure("interaction-token");
+
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not latch when the request fails, so a later attempt retries", async () => {
+        fetchSpy.mockResolvedValue({ ok: false });
+        await initClientId();
+
+        await ensureIdentity("interaction-token");
+        await ensureIdentity("interaction-token");
+
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
 });

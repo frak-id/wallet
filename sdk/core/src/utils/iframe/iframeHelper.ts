@@ -68,7 +68,7 @@ export async function createIframe({
     // that accessor is now nullable, and the listener URL must never carry
     // `clientId=undefined`. On failure the iframe is built without the param
     // and the listener falls back to its own persisted store.
-    const clientId = await initClientId().catch((error) => {
+    const clientId = await initClientId(walletUrl).catch((error) => {
         console.warn("[Frak SDK] Unable to derive a client id", error);
         return undefined;
     });

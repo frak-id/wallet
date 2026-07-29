@@ -15,10 +15,12 @@ const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
  *
  * The call is:
  * - **Idempotent** — if already linked, backend returns immediately
- * - **Deduplicated** — only fires once per browser session per merchant
+ * - **Deduplicated** — fires once per browser session per (merchant, clientId)
  * - **Fire-and-forget** — errors are logged but never thrown
  *
  * @param interactionToken - The SDK JWT from wallet status (x-wallet-sdk-auth)
+ * @param walletUrl - Without it the backend falls back to `window.FrakSetup`,
+ * which only the components CDN bootstrap sets.
  *
  * @example
  * ```ts
@@ -27,7 +29,10 @@ const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
  * await ensureIdentity("eyJhbGciOi...");
  * ```
  */
-export async function ensureIdentity(interactionToken: string): Promise<void> {
+export async function ensureIdentity(
+    interactionToken: string,
+    walletUrl?: string
+): Promise<void> {
     if (typeof window === "undefined") {
         return;
     }
@@ -44,13 +49,15 @@ export async function ensureIdentity(interactionToken: string): Promise<void> {
         return;
     }
 
-    const storageKey = `${ENSURE_STORAGE_PREFIX}${merchantId}`;
+    // Not keyed on the wallet: once a clientId is merged, a later wallet is
+    // either already in the group or refused with WALLET_CONFLICT.
+    const storageKey = `${ENSURE_STORAGE_PREFIX}${merchantId}-${clientId}`;
     if (window.sessionStorage.getItem(storageKey)) {
         return;
     }
 
     try {
-        const backendUrl = getBackendUrl();
+        const backendUrl = getBackendUrl(walletUrl);
         // Proof-of-possession (README §4.1), always optional: if it can't be
         // produced (legacy id, keygen failed), the call goes out exactly as
         // it does today. Signing is off the critical path — a single sign
