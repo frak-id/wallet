@@ -4,8 +4,6 @@
  */
 const MAX_LENGTH = 32;
 
-
-
 /**
  * The shape this field can take.
  *

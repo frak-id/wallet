@@ -1,4 +1,3 @@
-import { tablet } from "@frak-labs/design-system/breakpoints";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize, zIndex } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
