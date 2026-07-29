@@ -130,6 +130,31 @@ type SharingSearch = {
     r?: string;
 };
 
+/**
+ * Read a flag param regardless of how the router typed it.
+ *
+ * The router parses search values as JSON, so `?native=1` arrives as the
+ * number `1`, not the string `"1"`. A native host writes a plain URL and has
+ * no say in that, and a shipped binary can never be corrected, so every form
+ * a host might reasonably send has to mean the same thing.
+ */
+function readFlag(value: unknown): boolean {
+    return value === 1 || value === "1" || value === true || value === "true";
+}
+
+/**
+ * Read a param that is textual to a host but may not survive as a string.
+ *
+ * Same JSON parsing as above: a host that mints `sid` from a timestamp or a
+ * counter sends digits, which arrive as a number and would otherwise be
+ * dropped, silently costing every callback its session id.
+ */
+function readString(value: unknown): string | undefined {
+    if (typeof value === "string") return value;
+    if (typeof value === "number") return String(value);
+    return undefined;
+}
+
 export const Route = createFileRoute("/sharing")({
     validateSearch: (search: Record<string, unknown>): SharingSearch => ({
         merchantId:
@@ -153,11 +178,11 @@ export const Route = createFileRoute("/sharing")({
                 : undefined,
         redirectUrl: sanitizeRedirectUrl(search.redirectUrl),
         attribution: parseAttributionFromSearch(search),
-        native: search.native === "1" || search.native === true,
-        confirmed: search.confirmed === "1" || search.confirmed === true,
+        native: readFlag(search.native),
+        confirmed: readFlag(search.confirmed),
         returnScheme: sanitizeReturnScheme(search.returnScheme),
-        sid: typeof search.sid === "string" ? search.sid : undefined,
-        sdkv: typeof search.sdkv === "string" ? search.sdkv : undefined,
+        sid: readString(search.sid),
+        sdkv: readString(search.sdkv),
         r: sanitizeSeededReward(search.r),
     }),
     beforeLoad: ({ search }) => {
