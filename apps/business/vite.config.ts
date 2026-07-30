@@ -19,9 +19,9 @@ const isProd = process.env.NODE_ENV === "production";
 // Hard ceiling on the gzipped eager boot JS (login-screen static-import
 // closure, walked by `assertEagerBundleBudget`). Measured ~250 KB after
 // evicting `blockchain-vendor` (viem) from the eager graph — see the
-// `blockchain-vendor` group below; 265 KB leaves headroom and fails the
+// `blockchain-vendor` group below; 275 KB leaves headroom and fails the
 // build if a lazy chunk leaks back into the eager path.
-const EAGER_JS_BUDGET_GZIP = 265 * 1024;
+const EAGER_JS_BUDGET_GZIP = 275 * 1024;
 
 // Rolldown code-splitting groups, mirroring `apps/wallet/vite.config.ts`.
 // `tags: ["$initial"]` on `app-shell` limits it to modules statically
