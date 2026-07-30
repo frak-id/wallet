@@ -88,6 +88,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "tsdown": "^0.22.14",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
+    "rolldown": "~1.2.0",
     "@openpanel/web": "^1.4.1",
     "sst": "4.14.3",
     "@typescript/native": "npm:typescript@^7.0.2",
