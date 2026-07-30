@@ -2,7 +2,7 @@ import * as fsSync from "node:fs";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     assertEagerBundleBudget,
     collectEagerClosure,
@@ -134,6 +134,23 @@ describe("assertEagerBundleBudget", () => {
         expect(() => plugin.writeBundle({ dir })).toThrow(
             /Eager boot JS budget exceeded/
         );
+    });
+
+    it("logs but does not throw when over budget with enforce: false", () => {
+        writeEagerFixture(`console.log(${JSON.stringify("x".repeat(5000))});`);
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+        const plugin = assertEagerBundleBudget({
+            budgetGzip: 1,
+            enforce: false,
+        }) as unknown as WriteBundlePlugin;
+
+        expect(() => plugin.writeBundle({ dir })).not.toThrow();
+        expect(warn).toHaveBeenCalledWith(
+            expect.stringContaining("Eager boot JS budget exceeded")
+        );
+
+        warn.mockRestore();
     });
 
     it("runs the optional assertHtml hook before the budget check", () => {

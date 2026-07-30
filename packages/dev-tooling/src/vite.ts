@@ -206,6 +206,16 @@ export type AssertEagerBundleBudgetOptions = {
     /** Hard ceiling on the gzipped eager boot JS, in bytes. */
     budgetGzip: number;
     /**
+     * Whether going over `budgetGzip` fails the build. Defaults to `true`.
+     *
+     * Set to `false` for apps where an eager-size regression is a perf smell
+     * rather than an incident: the size and over-budget breakdown are still
+     * logged, but the build proceeds. Keeps the signal without turning every
+     * login-path feature into a blocked deploy that gets unblocked by raising
+     * the number (which makes the budget a moving line, not a ratchet).
+     */
+    enforce?: boolean;
+    /**
      * Optional hook run with the final boot `index.html` source before the
      * budget check, e.g. to assert no lazy-chunk CSS/JS leaked into the eager
      * HTML. Throw from this hook to fail the build with a custom message.
@@ -214,19 +224,20 @@ export type AssertEagerBundleBudgetOptions = {
 };
 
 /**
- * Build-time plugin factory: fail the build if the eager boot JS (the
- * transitive static-import closure from the entry, walked by
- * {@link collectEagerClosure}) exceeds `budgetGzip`.
+ * Build-time plugin factory: report the eager boot JS (the transitive
+ * static-import closure from the entry, walked by
+ * {@link collectEagerClosure}) against `budgetGzip`, failing the build when
+ * it goes over unless `enforce: false`.
  *
- * Shared between apps that gate their eager boot bundle in CI — each app
- * passes its own measured-plus-headroom budget. Extracted from the
- * listener's original inline `assert-eager-bundle-budget` plugin so the
- * closure-walk logic has one implementation.
+ * Shared between apps that watch their eager boot bundle — each app passes
+ * its own measured-plus-headroom budget. Extracted from the listener's
+ * original inline `assert-eager-bundle-budget` plugin so the closure-walk
+ * logic has one implementation.
  */
 export function assertEagerBundleBudget(
     options: AssertEagerBundleBudgetOptions
 ): Plugin {
-    const { budgetGzip, assertHtml } = options;
+    const { budgetGzip, assertHtml, enforce = true } = options;
     const scriptRe = /<script\b[^>]*\bsrc="[^"]*?(assets\/[^"]+\.js)"/g;
 
     return {
@@ -265,16 +276,22 @@ export function assertEagerBundleBudget(
             }
 
             const totalKb = (totalGzip / 1024).toFixed(2);
+            const overBudget = totalGzip > budgetGzip;
             console.log(
-                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${budgetGzip / 1024} KB)`
+                `\n[eager-budget] boot JS: ${totalKb} KB gz across ${eager.size} chunks (limit ${budgetGzip / 1024} KB)${
+                    overBudget && !enforce ? " — OVER BUDGET (warn-only)" : ""
+                }`
             );
-            if (totalGzip > budgetGzip) {
-                throw new Error(
-                    `Eager boot JS budget exceeded: ${totalKb} KB gz > ${budgetGzip / 1024} KB.\n${breakdown
-                        .sort()
-                        .join("\n")}`
-                );
+            if (!overBudget) return;
+
+            const detail = `Eager boot JS budget exceeded: ${totalKb} KB gz > ${budgetGzip / 1024} KB.\n${breakdown
+                .sort()
+                .join("\n")}`;
+            if (!enforce) {
+                console.warn(`[eager-budget] ${detail}`);
+                return;
             }
+            throw new Error(detail);
         },
     };
 }
