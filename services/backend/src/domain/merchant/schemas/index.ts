@@ -25,13 +25,32 @@ export type MerchantIdentity = {
     shopDomain?: string | null;
 };
 
+/**
+ * A merchant-supplied URL that ends up bound to an `href` / `src` in the
+ * wallet, listener or business app.
+ *
+ * Deliberately **not** `format: "uri"`. TypeBox's `uri` format only requires a
+ * `scheme:` followed by an opaque tail, so `javascript:alert(1)`,
+ * `data:text/html;...` and `vbscript:...` all pass it — verified by compiling
+ * the schema. Since these values are merchant-authored and rendered to end
+ * users, that is an XSS sink, and the format check gives false confidence.
+ *
+ * `^https://` is the whole point of this helper: an explicit scheme allowlist.
+ * Plain `http://` is excluded too — every consumer of these fields (media CDN,
+ * merchant homepage, PDP links) is https in practice, and mixed content would
+ * be blocked by the browser anyway.
+ *
+ * Render sites must still guard (defence in depth): stored rows predate this
+ * validation, and nothing stops a future writer bypassing the schema.
+ */
+const HttpsUrlSchema = (maxLength = 2048) =>
+    t.String({ pattern: "^https://", maxLength });
+
 export const ExplorerConfigSchema = t.Object({
-    heroImageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
+    heroImageUrl: t.Optional(HttpsUrlSchema()),
     // Up to 4 additional hero images. The wallet slider renders them after heroImageUrl.
-    heroImageUrls: t.Optional(
-        t.Array(t.String({ format: "uri", maxLength: 2048 }), { maxItems: 4 })
-    ),
-    logoUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
+    heroImageUrls: t.Optional(t.Array(HttpsUrlSchema(), { maxItems: 4 })),
+    logoUrl: t.Optional(HttpsUrlSchema()),
     description: t.Optional(t.String({ maxLength: 1000 })),
 });
 export type ExplorerConfig = Static<typeof ExplorerConfigSchema>;
@@ -94,7 +113,7 @@ const PostPurchaseComponentSchema = t.Object({
     ctaText: t.Optional(LocalizableStringSchema),
     ctaNoRewardText: t.Optional(LocalizableStringSchema),
     // Custom illustration replacing the built-in gift icon (icon media URL).
-    imageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
+    imageUrl: t.Optional(HttpsUrlSchema()),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
@@ -107,7 +126,7 @@ const BannerComponentSchema = t.Object({
     inappDescription: t.Optional(LocalizableStringSchema),
     inappCta: t.Optional(LocalizableStringSchema),
     // Custom illustration replacing the built-in gift icon (icon media URL).
-    imageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
+    imageUrl: t.Optional(HttpsUrlSchema()),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
@@ -234,12 +253,8 @@ export type MerchantResolveResponse = Static<
 
 export const SdkConfigSchema = t.Object({
     name: t.Optional(t.Union([t.String({ maxLength: 200 }), t.Null()])),
-    logoUrl: t.Optional(
-        t.Union([t.String({ format: "uri", maxLength: 2048 }), t.Null()])
-    ),
-    homepageLink: t.Optional(
-        t.Union([t.String({ format: "uri", maxLength: 2048 }), t.Null()])
-    ),
+    logoUrl: t.Optional(t.Union([HttpsUrlSchema(), t.Null()])),
+    homepageLink: t.Optional(t.Union([HttpsUrlSchema(), t.Null()])),
     currency: t.Optional(
         t.Union([
             t.Literal("eur"),
