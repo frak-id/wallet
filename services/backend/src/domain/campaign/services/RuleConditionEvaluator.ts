@@ -1,3 +1,4 @@
+import { SCALAR_OPERATORS } from "@frak-labs/core-sdk/rewards";
 import type {
     ConditionGroup,
     ConditionOperator,
@@ -36,9 +37,29 @@ function getNestedValue(obj: unknown, path: string): unknown {
     return current;
 }
 
+// A number, or a string that fully parses as a finite number. Campaign
+// condition values arrive from JSON where a numeric threshold is routinely
+// authored as a string (`"79.90"`), while the field it compares against is a
+// real number — so numeric intent must be recognised on either side.
+function asNumber(value: unknown): number | undefined {
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : undefined;
+    }
+    if (typeof value === "string" && value.trim() !== "") {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+}
+
 function compareValues(a: unknown, b: unknown): number {
-    if (typeof a === "number" && typeof b === "number") {
-        return a - b;
+    // Numeric comparison whenever BOTH sides are numeric, even if one is a
+    // numeric string: a lexicographic fallback here would rank "9" above "10"
+    // and make every price/quantity threshold silently wrong.
+    const numA = asNumber(a);
+    const numB = asNumber(b);
+    if (numA !== undefined && numB !== undefined) {
+        return numA - numB;
     }
     if (typeof a === "string" && typeof b === "string") {
         return a.localeCompare(b);
@@ -87,27 +108,17 @@ function evaluateArrayOperator(
     return operator === "in" ? includes : !includes;
 }
 
-// Arrays are only a valid operand for `in`/`not_in`. Comparison operators
-// would otherwise `String()`-coerce an array into a meaningless lexicographic
+// Arrays are only a valid operand for `in`/`not_in`. Scalar operators would
+// otherwise `String()`-coerce an array into a meaningless lexicographic
 // compare (and `neq` would be always-true), so fail closed: never match.
 // String operators already fail closed on non-string operands.
-const ARRAY_INVALID_OPERATORS = new Set([
-    "eq",
-    "neq",
-    "gt",
-    "gte",
-    "lt",
-    "lte",
-    "between",
-]);
-
 function hasInvalidArrayOperand(
     operator: ConditionOperator,
     conditionValue: unknown,
     conditionValueTo: unknown
 ): boolean {
     return (
-        ARRAY_INVALID_OPERATORS.has(operator) &&
+        SCALAR_OPERATORS.has(operator) &&
         (Array.isArray(conditionValue) || Array.isArray(conditionValueTo))
     );
 }

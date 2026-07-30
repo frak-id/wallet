@@ -166,9 +166,13 @@ export function PostPurchase({
         sharedBaseCss
     );
 
-    const [context, setContext] = useState<ResolvedPostPurchaseContext | null>(
-        null
-    );
+    // Raw RPC results, fetched exactly once. Kept separate from the resolved
+    // context so campaign selection can re-derive from `product` (which can
+    // change after the fetch) without re-issuing the network calls.
+    const [fetched, setFetched] = useState<{
+        referralStatus: UserReferralStatusType | null;
+        merchantInfo: GetMerchantInformationReturnType;
+    } | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
 
     // Fire-and-forget purchase tracking (fallback for Shopify pixel)
@@ -198,14 +202,7 @@ export function PostPurchase({
         ])
             .then(([referralStatus, merchantInfo]) => {
                 setHasFetched(true);
-                setContext(
-                    resolvePostPurchaseContext(
-                        referralStatus,
-                        merchantInfo,
-                        client.config.metadata?.currency,
-                        product
-                    )
-                );
+                setFetched({ referralStatus, merchantInfo });
             })
             .catch((e: unknown) => {
                 // Config errors are expected when SDK is not configured — stay hidden
@@ -219,10 +216,19 @@ export function PostPurchase({
                 // Transient errors: allow retry on next render
                 console.warn("[Frak] Post-purchase context error", e);
             });
-        // `product` intentionally excluded from deps below: this effect is
-        // gated by `hasFetched` (fetch-once), so it must not re-run when a
-        // memoized `product` object identity changes after the first fetch.
     }, [isPreview, isClientReady, hasFetched]);
+
+    // Campaign selection is derived, not fetched: a `product-*` attribute that
+    // lands (or changes) after the one-shot fetch still re-picks the campaign.
+    const context = useMemo(() => {
+        if (!fetched) return null;
+        return resolvePostPurchaseContext(
+            fetched.referralStatus,
+            fetched.merchantInfo,
+            window.FrakSetup?.client?.config?.metadata?.currency,
+            product
+        );
+    }, [fetched, product]);
 
     // Impression tracking fires once per (mount, variant) pair after the
     // variant is resolved — so preview-mode views, referrer, and referee

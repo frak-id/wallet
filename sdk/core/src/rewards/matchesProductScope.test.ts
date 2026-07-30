@@ -442,3 +442,83 @@ describe("matchesProductScope — parity with backend allowlist", () => {
         }
     });
 });
+
+describe("matchesProductScope — numeric comparison with string operands", () => {
+    // A campaign threshold authored as a JSON string, compared against a real
+    // numeric product field. A lexicographic fallback would rank "9" above
+    // "10" and silently invert every price/quantity gate.
+    it("compares a numeric-string condition value numerically, not lexicographically", () => {
+        const cheap: ProductScopeTarget = { unitPrice: 9 };
+        const pricey: ProductScopeTarget = { unitPrice: 10 };
+
+        // 9 > "10" must be false — lexicographically "9" > "10" is true.
+        expect(
+            matchesProductScope(
+                [{ field: "unitPrice", operator: "gt", value: "10" }],
+                cheap
+            )
+        ).toBe(false);
+        expect(
+            matchesProductScope(
+                [{ field: "unitPrice", operator: "gt", value: "10" }],
+                { unitPrice: 11 }
+            )
+        ).toBe(true);
+        expect(
+            matchesProductScope(
+                [{ field: "unitPrice", operator: "lt", value: "10" }],
+                cheap
+            )
+        ).toBe(true);
+        expect(
+            matchesProductScope(
+                [{ field: "unitPrice", operator: "gte", value: "10" }],
+                pricey
+            )
+        ).toBe(true);
+    });
+
+    it("handles decimal string thresholds", () => {
+        expect(
+            matchesProductScope(
+                [{ field: "unitPrice", operator: "gte", value: "79.90" }],
+                { unitPrice: 79.9 }
+            )
+        ).toBe(true);
+        expect(
+            matchesProductScope(
+                [{ field: "unitPrice", operator: "gt", value: "79.90" }],
+                { unitPrice: 79.9 }
+            )
+        ).toBe(false);
+    });
+
+    it("compares between bounds numerically when authored as strings", () => {
+        const scope: RuleConditions = [
+            {
+                field: "unitPrice",
+                operator: "between",
+                value: "9",
+                valueTo: "100",
+            },
+        ];
+        expect(matchesProductScope(scope, { unitPrice: 50 })).toBe(true);
+        // 200 is outside [9, 100]; lexicographically "200" < "9" would pass.
+        expect(matchesProductScope(scope, { unitPrice: 200 })).toBe(false);
+    });
+
+    it("still compares genuine text lexicographically", () => {
+        expect(
+            matchesProductScope(
+                [{ field: "name", operator: "gt", value: "A" }],
+                { name: "B" }
+            )
+        ).toBe(true);
+        expect(
+            matchesProductScope(
+                [{ field: "name", operator: "gt", value: "Z" }],
+                { name: "B" }
+            )
+        ).toBe(false);
+    });
+});

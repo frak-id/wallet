@@ -1,4 +1,5 @@
 import type { ConditionGroup, RuleCondition, RuleConditions } from "../types";
+import { SCALAR_OPERATORS, STRING_OPERATORS } from "./operators";
 
 /**
  * The subset of a purchase line item's fields a `productScope` can target.
@@ -29,8 +30,29 @@ function getField(
     return product[field as keyof ProductScopeTarget];
 }
 
+// A number, or a string that fully parses as a finite number. A campaign's
+// numeric threshold is routinely authored as a string in JSON (`"79.90"`),
+// and `product-price` always arrives as an HTML attribute string, so numeric
+// intent must be recognised on either side.
+function asNumber(value: string | number | boolean): number | undefined {
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : undefined;
+    }
+    if (typeof value === "string" && value.trim() !== "") {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+}
+
+// Mirrors the backend's `compareValues` ordering semantics: numeric whenever
+// both sides are numeric (even as strings), lexicographic only for genuine
+// text. A plain `String()` fallback would rank "9" above "10" and make every
+// price/quantity threshold silently wrong.
 function compare(a: string | number, b: string | number | boolean): number {
-    if (typeof a === "number" && typeof b === "number") return a - b;
+    const numA = asNumber(a);
+    const numB = asNumber(b);
+    if (numA !== undefined && numB !== undefined) return numA - numB;
     return String(a).localeCompare(String(b));
 }
 
@@ -97,17 +119,6 @@ function evaluateStringOperator(
     if (operator === "starts_with") return fieldValue.startsWith(value);
     return fieldValue.endsWith(value);
 }
-
-const SCALAR_OPERATORS = new Set([
-    "eq",
-    "neq",
-    "gt",
-    "gte",
-    "lt",
-    "lte",
-    "between",
-]);
-const STRING_OPERATORS = new Set(["contains", "starts_with", "ends_with"]);
 
 /**
  * Evaluate a single leaf condition against a product. Returns `undefined`

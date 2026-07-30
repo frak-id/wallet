@@ -234,3 +234,74 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
         expect(evaluator.evaluate([notInCondition], itemA)).toBe(true);
     });
 });
+
+describe("RuleConditionEvaluator — numeric comparison with string operands", () => {
+    // Campaign thresholds arrive from JSON where a number is routinely
+    // authored as a string ("10"), while the item field is a real number. A
+    // lexicographic fallback would rank "9" above "10" and silently invert
+    // every price/quantity gate.
+    const cheap = { unitPrice: 9, quantity: 9 };
+    const pricey = { unitPrice: 10, quantity: 10 };
+
+    it("compares a numeric-string condition value numerically", () => {
+        const gt: RuleCondition = {
+            field: "unitPrice",
+            operator: "gt",
+            value: "10",
+        };
+        expect(evaluator.evaluate([gt], cheap)).toBe(false);
+        expect(evaluator.evaluate([gt], { unitPrice: 11 })).toBe(true);
+
+        const lt: RuleCondition = {
+            field: "unitPrice",
+            operator: "lt",
+            value: "10",
+        };
+        expect(evaluator.evaluate([lt], cheap)).toBe(true);
+
+        const gte: RuleCondition = {
+            field: "unitPrice",
+            operator: "gte",
+            value: "10",
+        };
+        expect(evaluator.evaluate([gte], pricey)).toBe(true);
+    });
+
+    it("handles decimal string thresholds", () => {
+        const gte: RuleCondition = {
+            field: "unitPrice",
+            operator: "gte",
+            value: "79.90",
+        };
+        expect(evaluator.evaluate([gte], { unitPrice: 79.9 })).toBe(true);
+
+        const gt: RuleCondition = {
+            field: "unitPrice",
+            operator: "gt",
+            value: "79.90",
+        };
+        expect(evaluator.evaluate([gt], { unitPrice: 79.9 })).toBe(false);
+    });
+
+    it("compares between bounds numerically when authored as strings", () => {
+        const between: RuleCondition = {
+            field: "unitPrice",
+            operator: "between",
+            value: "9",
+            valueTo: "100",
+        };
+        expect(evaluator.evaluate([between], { unitPrice: 50 })).toBe(true);
+        // 200 is outside [9, 100]; lexicographically "200" < "9" would pass.
+        expect(evaluator.evaluate([between], { unitPrice: 200 })).toBe(false);
+    });
+
+    it("still compares genuine text lexicographically", () => {
+        const gt: RuleCondition = {
+            field: "name",
+            operator: "gt",
+            value: "A",
+        };
+        expect(evaluator.evaluate([gt], { name: "B" })).toBe(true);
+        expect(evaluator.evaluate([gt], { name: "0" })).toBe(false);
+    });
+});

@@ -22,6 +22,13 @@ export {
     type ProductScopeTarget,
 } from "./matchesProductScope";
 export {
+    ARRAY_OPERATORS,
+    EXISTENCE_OPERATORS,
+    NEGATIVE_OPERATORS,
+    SCALAR_OPERATORS,
+    STRING_OPERATORS,
+} from "./operators";
+export {
     type BestReward,
     type DisplayCampaign,
     formatBestReward,

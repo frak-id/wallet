@@ -1,4 +1,10 @@
 import { HttpError } from "@backend-utils";
+import {
+    ARRAY_OPERATORS,
+    NEGATIVE_OPERATORS,
+    SCALAR_OPERATORS,
+    STRING_OPERATORS,
+} from "@frak-labs/core-sdk/rewards";
 import type { CampaignRuleInsert, CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type { CampaignStatus } from "../schemas";
@@ -25,18 +31,6 @@ const PRODUCT_SCOPE_FIELDS = new Set([
     "totalPrice",
 ]);
 
-const SCALAR_ONLY_OPERATORS = new Set([
-    "eq",
-    "neq",
-    "gt",
-    "gte",
-    "lt",
-    "lte",
-    "between",
-]);
-const ARRAY_OPERATORS = new Set(["in", "not_in"]);
-const STRING_OPERATORS = new Set(["contains", "starts_with", "ends_with"]);
-
 // Pathologically deep/large nested ConditionGroups are a merchant-facing
 // footgun (and a recursion-depth risk), not a real use case.
 const PRODUCT_SCOPE_MAX_DEPTH = 5;
@@ -57,8 +51,6 @@ const PRODUCT_SCOPE_TIER_FIELDS = new Set([
 // exclusion in its basis. Any `logic: "none"` group counts as negative
 // (conservative: rejects contrived double negations, which should be
 // rewritten positively anyway).
-const NEGATIVE_OPERATORS = new Set(["neq", "not_in", "not_exists"]);
-
 function hasNegativePredicate(node: RuleCondition | ConditionGroup): boolean {
     if (isConditionGroup(node)) {
         if (node.logic === "none") return true;
@@ -133,7 +125,7 @@ function validateProductScopeCondition(
         return null;
     }
 
-    if (SCALAR_ONLY_OPERATORS.has(operator) && isArrayValue) {
+    if (SCALAR_OPERATORS.has(operator) && isArrayValue) {
         return `productScope operator '${operator}' cannot use an array value`;
     }
 
