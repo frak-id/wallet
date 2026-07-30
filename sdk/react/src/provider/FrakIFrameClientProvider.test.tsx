@@ -277,4 +277,47 @@ describe("FrakIFrameClientProvider", () => {
             );
         });
     });
+
+    test("keeps the live client out of a persister, but still persists the url", async ({
+        mockFrakConfig,
+        queryWrapper,
+    }) => {
+        const Wrapper = ({ children }: { children: ReactNode }) =>
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
+
+        // Shaped like a real client, so serialising it would drop `request` —
+        // the cause of `client.request is not a function` after a rehydrate.
+        vi.mocked(createIFrameFrakClient).mockResolvedValue({
+            config: mockFrakConfig,
+            request: () => Promise.resolve(),
+            waitForConnection: new Promise(() => {}),
+            waitForSetup: new Promise(() => {}),
+        } as unknown as FrakClient);
+
+        render(createElement(FrakIFrameClientProvider), {
+            wrapper: Wrapper,
+        });
+
+        await waitFor(() => {
+            expect(createIFrameFrakClient).toHaveBeenCalled();
+        });
+
+        // Mirrors the `shouldDehydrateQuery` predicate every app configures.
+        const queries = queryWrapper.client.getQueryCache().getAll();
+        const storableOf = (marker: string) => {
+            const query = queries.find((q) => q.queryKey[1] === marker);
+            expect(query).toBeDefined();
+            return (query?.meta?.storable as boolean) ?? true;
+        };
+
+        expect(storableOf("iframe-client")).toBe(false);
+        // A plain string, so the opt-out must not extend to it.
+        expect(storableOf("listener-url")).toBe(true);
+    });
 });

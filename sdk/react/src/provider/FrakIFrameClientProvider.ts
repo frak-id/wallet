@@ -84,6 +84,10 @@ export function FrakIFrameClientProvider({
             }),
         enabled: !!iframe,
         staleTime: Number.POSITIVE_INFINITY,
+        // A persister would serialise the client, dropping `request` and
+        // leaving a truthy, dead object that the infinite staleTime never
+        // refetches.
+        meta: { storable: false },
     });
 
     // Create the iframe that will be used to communicate with the wallet.
