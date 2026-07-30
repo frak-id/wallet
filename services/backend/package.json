@@ -16,6 +16,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
+    "openapi:generate": "bun run scripts/generate-openapi.ts",
+    "openapi:check": "bun run openapi:generate && git diff --exit-code user-openapi.json",
     "dev": "bun sst dev bun dev:watch",
     "dev:sandbox": "bun run dev:watch",
     "dev:env": "sst shell bun run scripts/envSetup.ts",
@@ -30,6 +32,7 @@
   "dependencies": {
     "@bogeychan/elysia-logger": "^0.1.10",
     "@elysiajs/cors": "^1.4.2",
+    "@elysiajs/openapi": "^1.4.15",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "@libsql/client": "^0.17.4",
