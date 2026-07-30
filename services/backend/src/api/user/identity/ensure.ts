@@ -175,7 +175,7 @@ async function resolveSdkEnsureAnonymousId(params: {
         context: "ensure SDK arm",
     });
 
-    // 🔴 Gated on `proofVerified`, not unconditional: latching an id that
+    // Gated on `proofVerified`, not unconditional: latching an id that
     // never actually proved possession (fail-open branch — legacy id, or a
     // derived id that has simply never signed yet) would be a one-way
     // corruption, permanently locking that id out of ever ensuring again

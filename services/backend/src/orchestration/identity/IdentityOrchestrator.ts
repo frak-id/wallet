@@ -244,7 +244,7 @@ export class IdentityOrchestrator {
             const result = await this.resolveAndAssociate(nodes);
 
             if (proofVerified && clientId && merchantId) {
-                // 🔴 Gated on `proofVerified`, not unconditional: `markProofSeen`
+                // Gated on `proofVerified`, not unconditional: `markProofSeen`
                 // never clears, so latching an id that did not actually verify
                 // would permanently lock it out of ever proving itself (see
                 // latchedProof.ts).
