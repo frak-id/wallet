@@ -398,4 +398,16 @@ export class MerchantRepository {
         });
         return result ?? null;
     }
+
+    /** Takes an already-normalized `platform:packageId` key. */
+    async findByAllowedPackageId(
+        packageKey: string
+    ): Promise<MerchantSelect | null> {
+        const result = await db.query.merchantsTable.findFirst({
+            where: arrayContains(merchantsTable.allowedPackageIds, [
+                packageKey,
+            ]),
+        });
+        return result ?? null;
+    }
 }

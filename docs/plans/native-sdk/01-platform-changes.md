@@ -852,10 +852,21 @@ the service-worker half, and the reason it survived while the rest did not.
 
 ### Still open, and not owned by the frontend
 
-- **§1.5's backend half** — the `x-frak-sdk-version` header and the
-  `resolveConfig` kill switch. Like `?sdkv=`, neither can be retrofitted once a
-  binary ships, and the kill switch is described here as the only lever that
-  works against a binary in the wild. This needs an owner.
+- **§1.5's backend half** — the `x-frak-sdk-version` header is now captured
+  (accepted on the shared header guard, `services/backend/src/infrastructure/macro/session.ts`;
+  logged via `customProps` in `services/backend/src/index.ts`) and it drives
+  nothing else, on purpose. The `resolveConfig` kill switch it was meant to
+  feed is **deliberately not shipped**: there is no write path for it today —
+  no merchant column, no admin UI, no env var — and the field it was specified
+  against (`MerchantResolveResponse.sdkConfig`) is per-merchant, while a bad
+  SDK release is a fleet-wide, version-scoped event; flipping it merchant by
+  merchant during an incident is the wrong shape for the lever. It also can't
+  be sized yet — the right predicate is "SDK version ≤ X on platform Y", which
+  needs a real version distribution from the header above before a schema can
+  be chosen. When it lands, it should be version-keyed and global (env var or
+  a small ops-owned table) and returned **top-level** on `MerchantResolveResponse`,
+  not inside the merchant-owned optional `sdkConfig` — a binary whose merchant
+  has no `sdkConfig` would otherwise never see it. This needs an owner.
 - **§2.1's device pass** — the deep-link path was verified by reading the code
   (`deepLink.ts:137,220` route it; `/install` queues the `ensure` action), but
   nobody has run it on a phone.
