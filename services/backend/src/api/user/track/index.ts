@@ -4,36 +4,19 @@ import { trackInteractionRoute } from "./interaction";
 import { trackPurchaseRoute } from "./purchase";
 
 /**
- * Rate limiting for `track/*` (README §3.6). Unlike every sibling identity
- * route, this API had no limiter at all — the first gap closed here.
+ * Two stacked rate-limit buckets: identity-keyed (`track:{merchantId}:{clientId}`,
+ * the primary defence once a caller identifies itself) and an IP-keyed
+ * catch-all for requests missing either field (`keyExtractor` returning
+ * `null` skips the limiter entirely rather than falling back to IP, so the
+ * catch-all is not redundant).
  *
- * Two buckets, stacked, keyed differently, `maxRequests` deliberately
- * unequal:
+ * `maxRequests` must differ between the two `rateLimitMiddleware` calls
+ * below: Elysia dedupes plugins by `name` + `seed`, and `seed` excludes
+ * `keyExtractor`, so identical configs collapse into one plugin and one
+ * bucket silently never runs. See `index.test.ts` for the regression test.
  *
- *  - identity-keyed, `track:{merchantId}:{clientId}` — the meaningful bucket
- *    once a caller identifies itself. CGNAT makes IP-only limiting both too
- *    harsh (many legitimate users behind one IP) and too weak (one attacker
- *    behind many IPs), so this is the primary defence once identity is known.
- *  - IP-keyed catch-all (the module default extractor) — covers requests
- *    that carry neither `x-frak-client-id` nor `merchantId`, which
- *    `trackClientKeyExtractor` deliberately returns `null` for.
- *
- * `keyExtractor` returning `null` SKIPS the limiter for that request instead
- * of falling back to IP (`rateLimiter.ts` — `if (key === null) return;`), so
- * the identity bucket alone would leave every header-less request completely
- * unlimited. The IP-keyed bucket below is what actually covers that case —
- * it is not redundant.
- *
- * Elysia dedupes plugins by `name` + `seed`, and `seed` is `finalConfig`
- * (`{ windowMs, maxRequests }`), which excludes `keyExtractor`. Two
- * `rateLimitMiddleware` instances with identical config therefore collapse
- * into a single plugin and one of the two buckets silently never runs — so
- * `maxRequests` below must differ between the two calls, not just look
- * different in source. See `index.test.ts` for the empirical regression
- * test covering exactly this.
- *
- * The store is in-memory per-pod (`rateLimiter.ts`), so with N replicas the
- * effective limit is N× the configured value here — same caveat as §3.3.
+ * The store is in-memory per-pod, so with N replicas the effective limit is
+ * N× the configured value here.
  */
 export function trackClientKeyExtractor(ctx: {
     headers: Record<string, string | undefined>;

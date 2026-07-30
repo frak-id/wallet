@@ -80,75 +80,52 @@ type SharingSearch = {
     /** Attribution overrides for the outbound sharing URL (UTMs, ref, via). */
     attribution?: AttributionParams | null;
     /**
-     * Set by a native host embedding this page in its own sheet.
-     *
-     * Drives two things: `clientId` becomes mandatory (the host owns the
-     * caller identity) and the page renders without its own chrome, since
-     * the host supplies a header and share controls of its own.
+     * Set by a native host embedding this page in its own sheet. Makes
+     * `clientId` mandatory (the host owns the caller identity) and renders
+     * the page without its own chrome.
      */
     native?: boolean;
     /**
-     * Open directly on the post-share confirmation screen.
-     *
-     * Under `native` the page's own share and copy buttons are hidden, and
-     * they are the only things that flip that screen on. The host reloads
-     * this URL with the flag once its share sheet completes, so the install
-     * step still happens.
+     * Open directly on the post-share confirmation screen. Under `native`
+     * this is how the host signals its own share sheet already completed.
      */
     confirmed?: boolean;
     /**
-     * Custom scheme a native host listens on for outcomes.
-     *
-     * The host cannot observe in-page navigation or React callbacks, and
-     * there is no JS bridge, so outcomes are handed back as a navigation to
-     * `<scheme>://result?action=…` that the host intercepts in its own web
-     * view. Validated shape, since the page navigates to whatever it carries.
+     * Custom scheme a native host listens on for outcomes, since it has no
+     * JS bridge: outcomes navigate to `<scheme>://result?action=…`, which
+     * the host intercepts in its own web view.
      */
     returnScheme?: string;
     /**
-     * Opaque single-use token minted by the host before it presents this
-     * page, echoed back on every outcome so the host can drop callbacks that
-     * do not belong to the active session.
+     * Opaque single-use token minted by the host, echoed back on every
+     * outcome so it can drop callbacks not belonging to the active session.
      */
     sid?: string;
     /**
-     * Version of the native SDK that opened this page.
-     *
-     * A shipped binary is immortal while this page ships continuously, so an
-     * old SDK must remain identifiable to be branched on or degraded. Read
-     * only for telemetry today; the value has to be accepted from v0.1 since
-     * binaries already in the field can never start sending it.
+     * Version of the native SDK that opened this page. Read only for
+     * telemetry today.
      */
     sdkv?: string;
     /**
-     * Already-formatted reward headline from a host's local cache, painted on
-     * the first frame in place of a skeleton and replaced as soon as the real
-     * query resolves.
-     *
-     * Untrusted display-only text: it never reaches the sharing link,
-     * tracking, or any identity decision.
+     * Already-formatted reward headline from a host's local cache, painted
+     * on the first frame and replaced once the real query resolves.
+     * Display-only: never reaches the sharing link or any identity decision.
      */
     r?: string;
 };
 
 /**
- * Read a flag param regardless of how the router typed it.
- *
- * The router parses search values as JSON, so `?native=1` arrives as the
- * number `1`, not the string `"1"`. A native host writes a plain URL and has
- * no say in that, and a shipped binary can never be corrected, so every form
- * a host might reasonably send has to mean the same thing.
+ * Read a flag param regardless of how the router typed it: the router parses
+ * search values as JSON, so `?native=1` arrives as the number `1`, not the
+ * string `"1"`.
  */
 function readFlag(value: unknown): boolean {
     return value === 1 || value === "1" || value === true || value === "true";
 }
 
 /**
- * Read a param that is textual to a host but may not survive as a string.
- *
- * Same JSON parsing as above: a host that mints `sid` from a timestamp or a
- * counter sends digits, which arrive as a number and would otherwise be
- * dropped, silently costing every callback its session id.
+ * Same JSON parsing as `readFlag`: a host that mints `sid` from a counter
+ * sends digits, which would otherwise arrive as a number and be dropped.
  */
 function readString(value: unknown): string | undefined {
     if (typeof value === "string") return value;
@@ -187,11 +164,8 @@ export const Route = createFileRoute("/sharing")({
         r: sanitizeSeededReward(search.r),
     }),
     beforeLoad: ({ search }) => {
-        // A native host owns the caller identity, so a missing `clientId` is a
-        // host integration bug, not a state to render: the page would come up
-        // with share and copy inert and no install link, saying nothing about
-        // why. Rejecting here keeps it out of the funnel numbers and away from
-        // the identity-resolution queries below.
+        // A native host owns the caller identity, so a missing `clientId` is
+        // a host integration bug, not a state to render.
         if (!(search.native && !search.clientId)) return;
 
         // Tell the host, so its sheet closes instead of hanging on a
@@ -278,14 +252,9 @@ function WalletSharingPage() {
         [rawT, estimatedReward, appName]
     );
 
-    // Whether this page may resolve a caller identity for itself.
-    //
-    // `clientIdStore` is a single global slot, not keyed by merchant, so it can
-    // hold an id belonging to a different merchant than the one being shared,
-    // and `checkoutToken` is a Shopify affordance. A native host states the
-    // identity outright, so either substitute would build `installUrl` — and
-    // the `ensure` that follows — against the wrong one, with no visible
-    // symptom. Both fallbacks below hang off this single value.
+    // A native host states the identity outright; `clientIdStore` (global,
+    // not merchant-keyed) and `checkoutToken` must not substitute for it, or
+    // `installUrl`/`ensure` would silently target the wrong identity.
     const mayResolveIdentity = !native;
 
     const immediateClientId = mayResolveIdentity
@@ -321,12 +290,10 @@ function WalletSharingPage() {
 
     // Compute the install URL pointing to the /install route.
     //
-    // No `#p=` proof here, unlike the listener's builder (README §4.4): this
-    // page's `clientId` arrives from a URL param, the wallet's own store, or
-    // a backend lookup by checkout token — never from the SDK keypair that
-    // could sign for it. There is nothing to sign with, so this arm stays a
-    // bare id and is covered by the §2.6 legacy population rather than by a
-    // proof.
+    // No `#p=` proof here, unlike the listener's builder: this page's
+    // `clientId` arrives from a URL param, the wallet's own store, or a
+    // backend lookup by checkout token — never from the SDK keypair that
+    // could sign for it. Nothing to sign with, so this arm stays a bare id.
     const installUrl = useMemo(() => {
         if (!(merchantId && clientId)) return null;
         return buildInstallUrl({ merchantId, clientId });
@@ -448,11 +415,9 @@ function WalletSharingPage() {
     };
 
     const handleInstall = useCallback(() => {
-        // The SDK owns the whole install step: it knows whether the wallet app
-        // is already installed, and two parts of the iOS path cannot run in a
-        // web view at all (pasteboard entries with an expiry, and the in-app
-        // App Store sheet). So the page hands back control instead of
-        // navigating to its own install route.
+        // The SDK owns the whole install step: parts of the iOS path (a
+        // timed pasteboard entry, the in-app App Store sheet) cannot run in
+        // a web view, so hand back control instead of navigating directly.
         if (returnToHost("install")) return;
         if (!installUrl) return;
         navigate({

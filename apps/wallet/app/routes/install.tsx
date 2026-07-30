@@ -48,12 +48,11 @@ export const Route = createFileRoute("/install")({
 /**
  * Parses the `frak-install-v1` proof from the URL fragment (`#p=...`).
  *
- * A fragment, not a search param, deliberately (README §2.2): it is never
- * sent to the server, never logged, never in a `Referer` header.
- * `validateSearch` only covers search params, so this is a separate read
- * path off `window.location.hash`. Must never throw — a missing, empty or
- * malformed fragment (or one carrying unrelated keys) all degrade silently
- * to "no proof", exactly as if the fragment were absent.
+ * A fragment, not a search param, deliberately: never sent to the server,
+ * never logged, never in a `Referer` header. `validateSearch` only covers
+ * search params, so this is a separate read off `window.location.hash`.
+ * Must never throw — any malformed/missing fragment degrades silently to
+ * "no proof".
  */
 export function parseInstallProofFragment(hash: string): string | undefined {
     const raw = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -74,13 +73,10 @@ export function parseInstallProofFragment(hash: string): string | undefined {
  */
 function InstallPage() {
     const search = Route.useSearch();
-    // frak-install-v1 proof, read once from the fragment (README §2.2 — not
-    // a search param, never sent to the server). Forwarded to BOTH
-    // `InstallCodeView` (to `generate`) and `InstallProcessing` (to
-    // `/identity/ensure`, DUAL-ARM-PLAN.md D-B/WS-3 W1) — every arm
-    // (legacy pair, ticket, proof) travels together, no platform branch:
-    // whether a proof is present is a property of the INPUT (was `#p=` in
-    // the URL?), not of which shell (web/Tauri) is running (plan D-F).
+    // frak-install-v1 proof, read once from the fragment (not a search
+    // param, never sent to the server). Forwarded to both InstallCodeView
+    // and InstallProcessing — whether a proof is present is a property of
+    // the input, not of which shell (web/Tauri) is running.
     const proof = useMemo(
         () => parseInstallProofFragment(window.location.hash),
         []
@@ -94,11 +90,8 @@ function InstallPage() {
         trackEvent("install_page_viewed", {
             merchant_id: search.m,
             has_anonymous_id: Boolean(search.a),
-            // Answers README §9.4 empirically (plan D-D): whether the `#p=`
-            // fragment survives the full install redirect chain, measured
-            // from production traffic instead of on-device testing. A drop
-            // here degrades to the legacy pair — attribution is preserved
-            // either way, so this is purely diagnostic.
+            // Whether the `#p=` fragment survived the redirect chain;
+            // purely diagnostic, attribution is preserved either way.
             has_install_proof: Boolean(proof),
             view: shouldShowCodeView ? "code" : "processing",
         });
@@ -123,13 +116,12 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Builds the ensure action for the direct-link / Tauri processing path
- * (DUAL-ARM-PLAN.md WS-3 W1). Exported for direct testing, mirroring
- * `parseInstallProofFragment`.
+ * Builds the ensure action for the direct-link / Tauri processing path.
+ * Exported for direct testing, mirroring `parseInstallProofFragment`.
  *
- * Every arm the caller has travels together: with `merchantId`/`anonymousId`
- * but no proof, this is byte-identical to the pre-existing bare action —
- * the fragment being stripped or absent degrades silently, never blocks.
+ * With merchantId/anonymousId but no proof, this is byte-identical to the
+ * pre-existing bare action — a missing fragment degrades silently, never
+ * blocks.
  */
 export function buildInstallProcessingEnsureAction(params: {
     merchantId?: string;

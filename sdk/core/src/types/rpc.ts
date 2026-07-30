@@ -191,11 +191,10 @@ export type IFrameRpcSchema = [
      * Returns the merge token string, or null if unavailable.
      * This is a one-shot request.
      *
-     * `proof` (README §2.2/§4.2) is a `frak-merge-v1` proof-of-possession
-     * binding `sourceAnonymousId`, produced on the merchant origin.
-     * Optional and purely additive: an old listener build reading
-     * `Parameters?: undefined` still works, since a missing param arrives
-     * as `undefined` in both directions.
+     * `proof` is a `frak-merge-v1` proof-of-possession binding
+     * `sourceAnonymousId`, produced on the merchant origin. Optional and
+     * additive: an old listener reading `Parameters?: undefined` still
+     * works, since a missing param arrives as `undefined` either way.
      */
     {
         Method: "frak_getMergeToken";

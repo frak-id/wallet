@@ -14,9 +14,9 @@ type ClaimPurchaseParams = {
     orderId: string;
     token: string;
     /**
-     * Whether identity groups may be merged while claiming this purchase
-     * (§3.9). Defaults to `true` for the trusted, server-to-server webhook
-     * path (`PurchaseWebhookOrchestrator`), where merging is correct and
+     * Whether identity groups may be merged while claiming this purchase.
+     * Defaults to `true` for the trusted, server-to-server webhook path
+     * (`PurchaseWebhookOrchestrator`), where merging is correct and
      * desirable. The SDK-facing `/track/purchase` route passes `false`: it
      * is reachable with an unauthenticated `x-frak-client-id`, so it must
      * only ever attribute to an existing group, never reassign one.
@@ -123,10 +123,10 @@ export class PurchaseLinkingOrchestrator {
             orderId: params.orderId,
             purchaseToken: normalizedToken,
             claimingIdentityGroupId: finalGroupId,
-            // §3.9: on the unauthenticated arm the first claim wins. The
-            // claim row is what the webhook later reads to attribute the
-            // purchase, so letting a later caller overwrite it is the same
-            // hijack as merging, one step earlier.
+            // On the unauthenticated arm the first claim wins: the claim row
+            // is what the webhook later reads to attribute the purchase, so
+            // letting a later caller overwrite it is the same hijack as
+            // merging, one step earlier.
             rebindExisting: merge,
         });
 
@@ -160,11 +160,11 @@ export class PurchaseLinkingOrchestrator {
             purchase.identityGroupId !== claimingGroupId
         ) {
             if (!merge) {
-                // §3.9: the purchase is already attributed to another group
-                // and this caller is unauthenticated. Neither merging the two
-                // groups nor repointing the row is safe — repointing would let
-                // a forged `x-frak-client-id` steal an existing purchase. Keep
-                // the stored attribution and record the interaction against it.
+                // The purchase is already attributed to another group and
+                // this caller is unauthenticated. Neither merging nor
+                // repointing is safe — repointing would let a forged
+                // `x-frak-client-id` steal an existing purchase. Keep the
+                // stored attribution and record the interaction against it.
                 log.warn(
                     {
                         purchaseId: purchase.id,
@@ -196,16 +196,11 @@ export class PurchaseLinkingOrchestrator {
             }
         }
 
-        // Persist the resolved identity group on the purchase row whenever
-        // it differs from what's currently stored. Covers two cases:
-        //   1. Webhook arrived first with no claim → row stored with NULL
-        //      identity_group_id; this is the late-claim's chance to attach
-        //      the user.
-        //   2. The merge above produced a new canonical group id that
-        //      supersedes the purchase's previous one.
-        //
-        // Swapped on the value we observed, so a concurrent claim that already
-        // attached its own group wins and we keep its attribution.
+        // Persist the resolved identity group on the purchase row whenever it
+        // differs from what's stored: either the webhook arrived first with
+        // no claim (NULL group), or the merge above produced a new canonical
+        // id. Swapped on the observed value, so a concurrent claim that
+        // already attached its own group wins.
         if (purchase.identityGroupId !== finalIdentityGroupId) {
             const storedGroupId =
                 await this.purchaseRepository.updateIdentityGroup(
@@ -228,10 +223,8 @@ export class PurchaseLinkingOrchestrator {
         }
 
         // Honour the persisted purchase status: a refund/cancel webhook may
-        // have arrived between the original webhook and this late SDK claim,
-        // in which case the stored purchase is already terminal. The
-        // interaction is still recorded (for audit + idempotency) but born
-        // cancelled so the reward calculator skips it.
+        // have landed between the original webhook and this late claim, so
+        // the interaction is recorded but born cancelled if already terminal.
         const isCancelled =
             purchase.status === "refunded" || purchase.status === "cancelled";
 

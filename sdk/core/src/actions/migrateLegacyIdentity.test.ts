@@ -52,7 +52,7 @@ describe("migrateLegacyIdentity", () => {
         expect(fetchSpy).toHaveBeenCalledTimes(2);
 
         // initiate: the SOURCE is the derived id, which is what the proof
-        // covers — the legacy id can never be proven (README §2.6).
+        // covers — the legacy id can never be proven.
         const [initiateUrl, initiateInit] = fetchSpy.mock.calls[0] as [
             string,
             RequestInit,

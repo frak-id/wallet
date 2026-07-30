@@ -102,8 +102,7 @@ describe("IdentityOrchestrator.resolveForAttribution", () => {
     it("a forged x-frak-client-id cannot move a victim's group: attribution stays on the caller's own anchor", async () => {
         // Simulates POST /user/track/interaction with a foreign clientId
         // (the victim's, harvested from a share link) and the attacker's own
-        // valid wallet JWT — the single-request variant of the headline
-        // attack (README §1). The victim's group must never be touched.
+        // valid wallet JWT. The victim's group must never be touched.
         ctx.identityRepository.findGroupByIdentity.mockImplementation(
             async ({ type }: { type: string }) =>
                 type === "wallet"
@@ -157,13 +156,12 @@ describe("IdentityOrchestrator.resolveForAttribution", () => {
 });
 
 /**
- * `linkWalletToFingerprint` — the login/register auth-route glue (STEP 2b of
- * identity-proof-of-possession). The `anonymous_fingerprint` merge it can
- * trigger is gated on a `frak-sso-v1` proof because `clientId` arrives via
- * the UNVERIFIED `x-frak-client-id` header, forgeable through SSO's
- * unsigned `cId` field. The gate must be OPPORTUNISTIC, never fatal: every
- * branch below still resolves without throwing, matching "login must never
- * break" (an absent or invalid proof only skips the merge).
+ * `linkWalletToFingerprint` — the login/register auth-route glue. The
+ * `anonymous_fingerprint` merge it can trigger is gated on a `frak-sso-v1`
+ * proof because `clientId` arrives via the UNVERIFIED `x-frak-client-id`
+ * header, forgeable through SSO's unsigned `cId` field. The gate is
+ * OPPORTUNISTIC, never fatal: an absent or invalid proof only skips the
+ * merge, login/register still succeed.
  */
 describe("IdentityOrchestrator.linkWalletToFingerprint — frak-sso-v1 gated merge", () => {
     beforeEach(() => {
@@ -283,11 +281,11 @@ describe("IdentityOrchestrator.linkWalletToFingerprint — frak-sso-v1 gated mer
     });
 
     it("real golden-fixture frak-sso-v1 proof (actual crypto, not mocked): the product capability survives", async () => {
-        // Uses the REAL IdentityProofService against the golden fixture the
-        // previous STEP 2a step added, rather than a mocked `.verify` — this
-        // is the one test in the file that proves the wiring (op name,
-        // empty binding, anonymousId=clientId) actually matches what the SDK
-        // signs, not just what this file's mocks assume it does.
+        // Uses the REAL IdentityProofService against the golden fixture,
+        // rather than a mocked `.verify` — this is the one test in the file
+        // that proves the wiring (op name, empty binding,
+        // anonymousId=clientId) actually matches what the SDK signs, not
+        // just what this file's mocks assume it does.
         const fixture = goldenProofs.fixtures.find(
             (f) => f.op === "frak-sso-v1"
         );

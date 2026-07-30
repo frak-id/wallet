@@ -12,20 +12,12 @@ const installCodeGenerateRoute = new Elysia()
         async ({ body }) => {
             const { merchantId, anonymousId, proof } = body;
 
-            // Verify and record telemetry when a proof is present, never
-            // require one. Reuses IdentityProofService — no second verifier.
-            //
-            // Stays permissive indefinitely, and NOT for the usual
-            // store-gating reason — the install page's code view is gated on
-            // `!IS_TAURI`, so the binary never reaches this route. It is
-            // reachable with no proof from the wallet's own sharing page,
-            // whose install link carries a `clientId` resolved from a URL
-            // param or a backend lookup rather than from a keypair that
-            // could sign for it (see `apps/wallet/app/routes/sharing.tsx`).
-            // That arm has nothing to sign with, so requiring a proof here
-            // would break it rather than secure it. The install flow's real
-            // protection is the ticket minted by `resolve` below, not this
-            // proof.
+            // Verify and log when a proof is present, never require one.
+            // Stays permissive indefinitely: this route is also reachable
+            // from the wallet's own sharing page, whose install link has no
+            // keypair to sign with (see `apps/wallet/app/routes/sharing.tsx`).
+            // The install flow's real protection is the ticket `resolve`
+            // mints below, not this proof.
             if (proof) {
                 await verifyProofUnenforced({
                     op: "frak-install-v1",
@@ -50,8 +42,8 @@ const installCodeGenerateRoute = new Elysia()
             body: t.Object({
                 merchantId: t.String({ format: "uuid" }),
                 anonymousId: t.String(),
-                // frak-install-v1 proof (README §4.4). Phase 2: optional,
-                // verified when present, never required.
+                // frak-install-v1 proof: optional, verified when present,
+                // never required.
                 proof: t.Optional(t.String()),
             }),
             response: {
@@ -99,8 +91,7 @@ const installCodeResolveRoute = new Elysia()
             }
 
             // Minted unconditionally from the row's anonymousId, regardless
-            // of whether `generate` carried a proof (README §5, "Why
-            // `resolve` mints the ticket unconditionally").
+            // of whether `generate` carried a proof.
             //
             // ROLLOUT-STEP-3: `anonymousId` stays in this response for old
             // binaries that ignore `ticket`. Drop it, and the dual-arm

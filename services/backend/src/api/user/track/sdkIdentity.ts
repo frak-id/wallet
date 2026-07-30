@@ -37,11 +37,8 @@ type SdkIdentityResult = SdkIdentitySuccess | SdkIdentityError;
 
 /**
  * Resolve the caller's wallet address from a `x-wallet-sdk-auth` JWT.
- *
- * §3.7: a raw hex address string used to be accepted directly, with no
- * proof of wallet identity at all. Reachable from `/track/purchase`,
- * `/track/interaction`, `/merchant/referral-status` — a signed
- * `JwtContext.walletSdk` token is now the only accepted form.
+ * A signed `JwtContext.walletSdk` token is the only accepted form —
+ * a raw hex address is never trusted as proof of wallet identity.
  */
 export async function resolveWalletAddress(
     walletSdkAuth: string
@@ -116,8 +113,8 @@ export async function resolveSdkIdentity(
         };
     }
 
-    // §3.9: never merge identity groups from an unauthenticated track/*
-    // call — attribute to the anchor group (wallet's, when present) only.
+    // Never merge identity groups from an unauthenticated track/* call —
+    // attribute to the anchor group (wallet's, when present) only.
     const { groupId } =
         await OrchestrationContext.orchestrators.identity.resolveForAttribution(
             identityNodes

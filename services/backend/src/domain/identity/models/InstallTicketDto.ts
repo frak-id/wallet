@@ -1,14 +1,11 @@
 import { t } from "@backend-utils";
 
 /**
- * JWT payload for the install ticket (README §5, "Ticket design").
- *
- * Minted unconditionally by `install-code/resolve` from the row's
- * `anonymousId` and consumed by `/identity/ensure`. The `aud` literal is
- * the cross-acceptance guard — `buildJwtContext.verify` only checks
- * signature + schema shape, not `iss` — so a token from any other context
- * sharing the same secret (e.g. `anonymousMerge`) fails this schema and
- * can never be replayed as an install ticket.
+ * JWT payload for the install ticket, minted by `install-code/resolve` and
+ * consumed by `/identity/ensure`. Fields must stay disjoint from other
+ * contexts sharing the same JWT secret (e.g. `anonymousMerge`): verification
+ * only checks signature + schema shape, not `iss`, so a mismatched shape is
+ * what stops cross-context replay.
  */
 export const InstallTicketDto = t.Object({
     aud: t.Literal("install-ticket"),

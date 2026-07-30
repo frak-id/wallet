@@ -162,7 +162,7 @@ export class IdentityOrchestrator {
     }
 
     /**
-     * Resolve nodes to a single attribution group WITHOUT merging (§3.9).
+     * Resolve nodes to a single attribution group WITHOUT merging.
      *
      * Precedence: the authenticated wallet's group when a wallet node is
      * present, else the anonymous fingerprint's. A forged `x-frak-client-id`
@@ -191,21 +191,18 @@ export class IdentityOrchestrator {
 
     /**
      * Anchor a wallet to its anonymous fingerprint (when both are known) and
-     * swallow any failure. Used by the auth routes after a successful login or
-     * registration so an identity-graph hiccup never blocks the auth response.
+     * swallow any failure — an identity-graph hiccup must never block login
+     * or register.
      *
-     * `clientId` arrives via the UNVERIFIED `x-frak-client-id` header —
-     * forgeable through SSO's unsigned `cId` field — so the merge it would
-     * trigger is gated on a `frak-sso-v1` proof. Opportunistic, never fatal:
-     * a present-and-valid proof builds the node and merges as before; an
-     * absent or invalid proof just skips the merge (login/register still
-     * succeed — `/identity/ensure` is the proof-gated path that establishes
-     * the link later for a legacy caller with no proof to give).
+     * `clientId` arrives via the UNVERIFIED `x-frak-client-id` header, so the
+     * merge is gated on a `frak-sso-v1` proof: a valid proof merges as
+     * before, an absent/invalid one just skips it (login/register still
+     * succeed — `/identity/ensure` covers the proof-gated link later for
+     * legacy callers).
      *
-     * When `email` is provided, attach it to the resolved wallet group as a
-     * dedicated email identity node — unless that email already belongs to a
-     * different group, in which case we log + skip (collisions are owned by
-     * the explicit wallet-merge flow, not by silent registration writes).
+     * When `email` is provided, attach it to the resolved wallet group
+     * unless it already belongs to a different group, in which case log +
+     * skip (collisions belong to the explicit wallet-merge flow).
      */
     async linkWalletToFingerprint(params: {
         walletAddress: Address;
@@ -252,9 +249,8 @@ export class IdentityOrchestrator {
 
             if (proofVerified && clientId && merchantId) {
                 // Gated on `proofVerified`, not unconditional: `markProofSeen`
-                // never clears, so latching an id that did not actually verify
-                // would permanently lock it out of ever proving itself (see
-                // latchedProof.ts).
+                // never clears, so latching an unverified id would lock it
+                // out of ever proving itself (see latchedProof.ts).
                 await this.identityRepository.markProofSeen({
                     type: "anonymous_fingerprint",
                     value: clientId,

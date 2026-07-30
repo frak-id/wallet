@@ -1,12 +1,11 @@
 /**
- * Anonymous id derivation (README §2.1): hash the uncompressed public key
- * with SHA-256 and hand the digest to `deriveClientIdFromHash` (the pure,
- * frozen part in `canonical.ts`).
+ * Anonymous id derivation: hash the uncompressed public key with SHA-256
+ * and hand the digest to `deriveClientIdFromHash` (the pure, frozen part
+ * in `canonical.ts`).
  *
  * Uses `@noble/hashes` unconditionally rather than WebCrypto: it is already
- * in the bundle for the §2.4 signing fallback, it is synchronous, and it
- * works in non-secure contexts where `crypto.subtle` is absent — so a second
- * code path would buy nothing.
+ * in the bundle for the signing fallback, it is synchronous, and it works
+ * in non-secure contexts where `crypto.subtle` is absent.
  */
 
 import { sha256 } from "@noble/hashes/sha2.js";

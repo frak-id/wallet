@@ -11,12 +11,11 @@ import { PurchasesContext } from "../../../domain/purchases/context";
  * Used by the Shopify post-purchase flow as a fallback when the
  * `_frak-client-id` cart attribute is missing.
  *
- * README §3.4: a second unauthenticated anonymousId oracle (narrower than
- * install-code/resolve since it additionally requires a valid
- * `checkoutToken`, but the same class of leak). Tightened from 30/min to
- * 10/min — the legitimate Shopify post-purchase fallback fires once per
- * real order, so this still leaves comfortable headroom while cutting
- * scan/enumeration throughput 3x. Same in-memory-per-pod caveat as §3.3.
+ * A second unauthenticated anonymousId oracle (narrower than
+ * install-code/resolve since it also requires a valid checkoutToken, but
+ * the same class of leak). Tightened from 30/min to 10/min — the
+ * legitimate fallback fires once per real order, so this still leaves
+ * headroom while cutting scan/enumeration throughput 3x.
  */
 export const orderClientRoute = new Elysia()
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
@@ -25,7 +24,6 @@ export const orderClientRoute = new Elysia()
         async ({ query }) => {
             const { merchantId, checkoutToken } = query;
 
-            // Resolve webhookId from merchantId
             const webhook =
                 await PurchasesContext.repositories.purchase.getWebhookByMerchantId(
                     merchantId
@@ -34,7 +32,6 @@ export const orderClientRoute = new Elysia()
                 return status(404, "Merchant not found");
             }
 
-            // Find the purchase by checkout token
             const purchase =
                 await PurchasesContext.repositories.purchase.findByMerchantAndCheckoutToken(
                     {
@@ -46,7 +43,6 @@ export const orderClientRoute = new Elysia()
                 return status(404, "Purchase not found");
             }
 
-            // Resolve the anonymous fingerprint (clientId) from the identity group
             const clientId =
                 await IdentityContext.repositories.identity.findAnonymousFingerprint(
                     {

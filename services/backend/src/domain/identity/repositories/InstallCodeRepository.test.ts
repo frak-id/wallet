@@ -7,13 +7,10 @@ import {
 
 /**
  * `findByCode` counts the attempt in the same UPDATE ... RETURNING as the
- * lookup (README §3.3), so the exhaustion check and the increment can't race
- * across concurrent guesses the way a read-then-write pair could. The global
- * `dbMock`'s `update` chain resolves whatever `__setUpdateResponse` returns
- * regardless of the `where` condition, so these tests exercise the
- * repository's row mapping and its "absent means null" contract, not the
- * generated SQL predicate itself (there is no in-repo precedent for
- * asserting on drizzle-generated SQL strings).
+ * lookup, so the exhaustion check and the increment can't race across
+ * concurrent guesses. The mock's `update` chain ignores the `where`
+ * condition, so these tests only exercise row mapping and the "absent
+ * means null" contract, not the generated SQL predicate itself.
  */
 describe("InstallCodeRepository.findByCode", () => {
     beforeEach(() => {

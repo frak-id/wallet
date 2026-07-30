@@ -5,31 +5,24 @@ import type { IdentityRepository } from "../../domain/identity/repositories/Iden
 import type { IdentityProofService } from "../../domain/identity/services/IdentityProofService";
 
 /**
- * Shared latch-gated proof policy (README §4.6, §7 Phase 4a; DECISIONS
- * §2.3; DUAL-ARM-PLAN.md WS-BE-1).
+ * Shared latch-gated proof policy: keeps legacy ids (no key, can never
+ * produce a proof) working while closing the hole for any id that HAS
+ * proven itself once.
  *
- * Used by every arm that must keep working for legacy ids — which have no
- * key and can never produce a proof — while still closing the hole for any
- * id that HAS proven itself once:
+ *   1. proof present → verify; invalid ⇒ 403 PROOF_INVALID, valid ⇒ allow.
+ *   2. proof absent  → read the node's latch; latched ⇒ 403 PROOF_REQUIRED,
+ *      otherwise allow (fail-open, matching pre-proof behaviour).
  *
- *   1. proof present  → verify; invalid ⇒ 403 PROOF_INVALID, valid ⇒ allow.
- *   2. proof absent   → read the node's latch; latched ⇒ 403 PROOF_REQUIRED,
- *      otherwise allow (legacy id, or a derived id that has simply never
- *      proven itself yet — fail-open, matching pre-proof behaviour).
+ * The latch read happens only on the proof-absent path — the proven path
+ * costs zero extra query.
  *
- * The latch read happens ONLY on the proof-absent path — the proven path
- * (the future steady state) costs zero extra query, verification being pure
- * CPU.
+ * Returns whether a valid proof was presented. Callers MUST NOT latch an id
+ * when this returns `false` — `markProofSeen` never clears, so that would
+ * permanently lock out an id that never proved possession.
  *
- * Returns whether a valid proof was presented, so the caller can decide
- * whether to (re-)write the latch. Callers MUST NOT latch an id when this
- * returns `false` — that would permanently lock out an id that never proved
- * possession (a one-way corruption, since `markProofSeen` never clears).
- *
- * Deliberately a standalone function, not a method on `IdentityProofService`:
- * DECISIONS §2.3 requires that service to stay pure and repository-free so
- * it remains trivially unit-testable with no DB mock. This function is the
- * one place that composes proof verification with the latch read.
+ * Standalone rather than a method on `IdentityProofService`, which stays
+ * pure and repository-free for unit-testability; this is the one place
+ * that composes proof verification with the latch read.
  */
 export async function enforceLatchedProof(params: {
     op: ProofOp;

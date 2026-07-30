@@ -41,7 +41,7 @@ describe("parseInstallProofFragment", () => {
     });
 });
 
-describe("buildInstallProcessingEnsureAction — WS-3 W1", () => {
+describe("buildInstallProcessingEnsureAction", () => {
     test("direct link WITH a proof: the ensure action carries merchantId, anonymousId AND proof", () => {
         const action = buildInstallProcessingEnsureAction({
             merchantId: "merchant-1",
@@ -88,20 +88,17 @@ describe("buildInstallProcessingEnsureAction — WS-3 W1", () => {
     });
 });
 
-describe("Play referrer string — literal-string dual-arm contract (DUAL-ARM-PLAN.md D-C)", () => {
+describe("Play referrer string — literal-string dual-arm contract", () => {
     test("a parser without proof support (pre-W3) still reads merchantId/anonymousId correctly and ignores proof", () => {
-        // Literal string this branch's `downloadUrl` builder produces —
-        // asserts an OLD `useInstallReferrer` (reading only two keys) still
-        // parses it correctly and simply never sees the third.
+        // Literal string the `downloadUrl` builder produces — an old
+        // parser reading only two keys still parses it correctly.
         const referrerData =
             "merchantId=merchant-1&anonymousId=anon-1&proof=install-proof-blob";
         const legacyParams = new URLSearchParams(referrerData);
 
         expect(legacyParams.get("merchantId")).toBe("merchant-1");
         expect(legacyParams.get("anonymousId")).toBe("anon-1");
-        // An old parser that never reads "proof" simply never calls .get("proof") —
-        // asserting it's still resolvable here shows the key doesn't corrupt
-        // the other two, which is the actual compatibility contract.
+        // Confirms the extra key doesn't corrupt the other two.
         expect(legacyParams.get("proof")).toBe("install-proof-blob");
     });
 

@@ -7,15 +7,13 @@ import { AnonymousMergeOrchestrator } from "./AnonymousMergeOrchestrator";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
 
 /**
- * `initiateMerge`'s `sourceAnonymousId` arm is LATCH-GATED
- * (DUAL-ARM-PLAN.md D-A, WS-BE-1 — reverts the ROLLOUT-STEP-2 unconditional
- * regime): a valid proof, when present, is verified; when absent, the id
- * is allowed unless it has previously latched. `executeMerge`'s
- * `targetAnonymousId` arm uses the identical policy (README §7 Phase 4a,
- * DECISIONS §3.4 D9): legacy ids, which can never produce a proof, must
- * keep working as merge sources AND targets until they first prove
- * themselves. The wallet-session arm of `initiateMerge` (no
- * `sourceAnonymousId`) is never gated at all.
+ * `initiateMerge`'s `sourceAnonymousId` arm is LATCH-GATED: a valid proof,
+ * when present, is verified; when absent, the id is allowed unless it has
+ * previously latched. `executeMerge`'s `targetAnonymousId` arm uses the
+ * identical policy: legacy ids, which can never produce a proof, must keep
+ * working as merge sources AND targets until they first prove themselves.
+ * The wallet-session arm of `initiateMerge` (no `sourceAnonymousId`) is
+ * never gated at all.
  */
 
 const MERCHANT_ID = "merchant-1";
@@ -72,7 +70,7 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
         vi.clearAllMocks();
     });
 
-    describe("initiateMerge — sourceAnonymousId branch (latch-gated, WS-BE-1)", () => {
+    describe("initiateMerge — sourceAnonymousId branch (latch-gated)", () => {
         it("allows an unlatched legacy/derived sourceAnonymousId with no proof at all", async () => {
             const ctx = makeOrchestrator();
             ctx.identityRepository.findNodeByIdentity.mockResolvedValue({
@@ -97,10 +95,9 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
                 ctx.identityOrchestrator.resolveAndAssociate
             ).toHaveBeenCalled();
             expect(ctx.identityProofService.verify).not.toHaveBeenCalled();
-            // 🔴 The critical assertion for WS-BE-1 change 2: no proof was ever
-            // presented (fail-open branch), so the latch must NOT be written.
-            // Writing it here would permanently lock this legacy id out of
-            // ever being a merge source again — a one-way corruption.
+            // No proof was presented (fail-open branch), so the latch must
+            // NOT be written — that would permanently lock this legacy id
+            // out of ever being a merge source again.
             expect(ctx.identityRepository.markProofSeen).not.toHaveBeenCalled();
         });
 
@@ -362,8 +359,8 @@ describe("AnonymousMergeOrchestrator — Phase 4a proof enforcement", () => {
             // Pairs with IdentityProofService's binding-mismatch test: that
             // one proves a wrong binding fails verification, this one proves
             // executeMerge actually feeds the token hash in. Wiring an empty
-            // binding here would silently defeat §2.2.1 while every other
-            // test kept passing.
+            // binding here would silently defeat this check while every
+            // other test kept passing.
             const ctx = makeOrchestrator();
             setupSuccessfulExecute(ctx);
             ctx.identityProofService.verify.mockResolvedValue({ valid: true });

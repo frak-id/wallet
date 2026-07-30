@@ -3,35 +3,19 @@ import { sdkConfigStore } from "../config/sdkConfigStore";
 import { clearPendingLegacyId, signProof } from "../identity/sign";
 
 /**
- * Fold a pre-derivation (legacy) anonymous id into the derived id that has
- * replaced it, so the user's history on this merchant survives the switch to
- * a provable identity (README §2.6).
+ * Fold a pre-derivation (legacy) anonymous id into the derived id that
+ * replaced it, so the user's history on this merchant survives the switch
+ * to a provable identity.
  *
- * Ordering, and why it is not the one the README describes:
+ * Flips the stored id *before* the iframe is created (derivation is purely
+ * local, no network) so the listener is seeded with the derived id
+ * directly and never observes the legacy one — no mid-session desync.
+ * Migration then runs here, off the critical path.
  *
- * README §2.6 flips the stored id only on the *next* page load, because
- * `getClientId()` is synchronous while the merge is async, and flipping
- * mid-session would desynchronise the SDK from the listener's
- * `clientIdStore` (seeded from the `?clientId=` iframe param at load) and
- * from any share link already rendered.
- *
- * We flip *before* the iframe is created instead. Key generation and
- * derivation are purely local (`localStorage` + WebCrypto, ~1-3 ms, no
- * network); only the merge needs the backend. So the derived id can be
- * minted first and the iframe seeded with it directly — the listener never
- * observes the legacy id, there is nothing to reload, and the desync the
- * README guards against cannot occur. Migration then runs here, off the
- * critical path.
- *
- * This is optimistic: the id flips whether or not the merge later succeeds.
- * A failure leaves the legacy id *orphaned*, not corrupted — it keeps
- * resolving on the backend, it simply is not linked to the new id yet, so
- * the two histories stay split until a retry succeeds. The marker in
- * `localStorage` is what makes that retry happen; it is cleared only on a
- * confirmed merge (or on a definitive rejection that retrying cannot fix).
- *
- * Both calls are additive to the existing merge endpoints rather than a new
- * one — hardening the surface instead of widening it.
+ * Optimistic: the id flips whether or not the merge later succeeds. A
+ * failure leaves the legacy id orphaned (still resolvable, just unlinked)
+ * until a retry succeeds — the `localStorage` marker drives that retry and
+ * is cleared only on confirmed merge or definitive rejection.
  *
  * Never throws, never blocks: any failure is left for the next visit.
  */
@@ -56,14 +40,11 @@ export async function migrateLegacyIdentity({
         const merchantId = await sdkConfigStore.resolveMerchantId();
         if (!merchantId) return;
 
-        // Proves possession of `derivedId`, the merge SOURCE. It proves
-        // nothing about `legacyId` and cannot — no key ever existed for it.
-        // README §2.6 ("the migration is itself the attack") establishes
-        // that this is unclosable and accepted: an attacker can run the
-        // identical, fully-valid migration against any harvested legacy id.
-        // Proof on the source side is still required by the backend's
-        // `/merge/initiate` arm, so a failure to sign aborts rather than
-        // sending a request that would 403.
+        // Proves possession of `derivedId` (the merge SOURCE) only —
+        // nothing about `legacyId`, since no key ever existed for it. That's
+        // accepted: an attacker can run the identical migration against any
+        // harvested legacy id. Still required by `/merge/initiate`, so a
+        // signing failure aborts rather than sending a request that 403s.
         const proof = await signProof({
             op: "frak-merge-v1",
             merchantId,
@@ -89,12 +70,10 @@ export async function migrateLegacyIdentity({
             }
         );
         if (!initiateResponse.ok) {
-            // 4xx here means this migration will never succeed as posed
-            // (e.g. the derived id is latched to a different key, or the
-            // proof is rejected outright). Retrying every visit would be a
-            // permanent no-op loop, so drop the marker and leave the legacy
-            // id resolvable-but-unlinked. 5xx / network errors fall through
-            // to the catch below and DO retry.
+            // 4xx: this migration can never succeed as posed (e.g. the
+            // derived id is latched to a different key), so drop the marker
+            // rather than loop forever. 5xx/network falls to the catch
+            // below and retries.
             if (initiateResponse.status < 500) clearPendingLegacyId();
             return;
         }
@@ -120,11 +99,9 @@ export async function migrateLegacyIdentity({
             }
         );
 
-        // Cleared only now: the legacy id is folded in and the marker has
-        // done its job. `mergeGroups` repoints the node and deletes the
-        // losing group row, never the node itself (README §2.6), so every
-        // already-published `fCtx` link carrying the legacy id keeps
-        // resolving.
+        // Cleared only now: the legacy id is folded in. `mergeGroups`
+        // repoints the node (never deletes it), so already-published
+        // `fCtx` links carrying the legacy id keep resolving.
         if (executeResponse.ok) {
             clearPendingLegacyId();
             return;

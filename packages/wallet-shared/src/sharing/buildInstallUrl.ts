@@ -1,13 +1,13 @@
 import { PLAY_STORE_URL } from "../common/utils/storeUrls";
 
 /**
- * Build the `/install` link (README §4.4).
+ * Build the `/install` link.
  *
- * `m`/`a` stay search params — they are non-sensitive routing info the
- * install-code backend already needs server-side. The `frak-install-v1`
- * proof is appended as a URL fragment (`#p=`), never a search param (§2.2):
- * fragments are not sent to servers, so this keeps the proof out of access
- * logs, `Referer` headers, and analytics auto-capture.
+ * `m`/`a` stay search params — non-sensitive routing info the install-code
+ * backend needs server-side. The `frak-install-v1` proof is appended as a
+ * URL fragment (`#p=`), never a search param: fragments aren't sent to
+ * servers, keeping the proof out of access logs, `Referer` headers, and
+ * analytics auto-capture.
  */
 export function buildInstallUrl({
     baseUrl = "",
@@ -26,18 +26,12 @@ export function buildInstallUrl({
 }
 
 /**
- * Build the Play Store URL carrying the install attribution as its referrer
- * (DUAL-ARM-PLAN.md D-C/WS-3 W2).
+ * Build the Play Store URL carrying the install attribution as its referrer.
  *
  * `proof` is additive and appended only when present; `merchantId` and
  * `anonymousId` keep their positions so a binary parsing the referrer with
- * `URLSearchParams` (pre-W3) reads exactly what it reads today and silently
- * ignores the extra key.
- *
- * Measured against the real `frak-install-v1` golden fixture (plan D-C): the
- * proof is ~184 chars (base64url has no reserved chars, so encoding is a
- * no-op on it) and the full dual string ~281, 27% of the Play referrer's
- * ~1024-char cap. Re-measure if more keys are ever added.
+ * `URLSearchParams` reads exactly what it reads today and silently ignores
+ * the extra key.
  */
 export function buildPlayStoreInstallUrl({
     merchantId,

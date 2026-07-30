@@ -1,15 +1,14 @@
 /**
- * Browser-side key material for identity proof-of-possession (README §2.3).
+ * Browser-side key material for identity proof-of-possession.
  *
  * The private key is 32 raw bytes, stored as hex in
  * `localStorage["frak-client-key"]` next to `localStorage["frak-client-id"]`.
  * Raw bytes rather than a JWK: both signing backends below take the same
  * 32-byte secret, so there is nothing to translate between them.
  *
- * WebCrypto signs when it is usable and `@noble/curves`' pure-JS
- * implementation signs when it is not (README §2.4). Both come from the same
- * package and agree byte-for-byte on the same key, so this is a one-line
- * choice rather than two implementations.
+ * WebCrypto signs when usable, `@noble/curves`' pure-JS implementation
+ * otherwise. Both come from the same package and agree byte-for-byte on the
+ * same key.
  */
 
 import { p256 as pureJsP256 } from "@noble/curves/nist.js";
@@ -27,9 +26,9 @@ const CLIENT_ID_KEY = "frak-client-id";
 const CLIENT_KEY_KEY = "frak-client-key";
 /**
  * Set while a legacy id is waiting to be folded into the derived id that
- * replaced it (README §2.6). Written in the same tick as the flip, cleared
- * only once `/merge/execute` confirms — so a failed or interrupted merge
- * retries on the next visit instead of silently orphaning the old id.
+ * replaced it. Written in the same tick as the flip, cleared only once
+ * `/merge/execute` confirms — so a failed merge retries next visit instead
+ * of orphaning the old id.
  */
 const CLIENT_ID_LEGACY_KEY = "frak-client-id-legacy";
 
@@ -41,12 +40,11 @@ const CLIENT_ID_LEGACY_KEY = "frak-client-id-legacy";
 const RAW_FORMATS = { formatSec: "raw", formatPub: "raw" } as const;
 
 /**
- * Sign with WebCrypto when it works, pure JS otherwise (README §2.4).
+ * Sign with WebCrypto when it works, pure JS otherwise.
  *
  * `isSupported()` performs a real WebCrypto operation rather than checking
  * `typeof crypto.subtle`, which is what makes it safe on embedded browsers
- * that expose the object but throw on use. Resolved once per page load: the
- * promise itself is cached, so concurrent callers share one probe.
+ * that expose the object but throw on use. The probe is cached per page load.
  */
 let signerPromise: Promise<typeof pureJsP256 | typeof webCryptoP256> | null =
     null;
@@ -85,10 +83,9 @@ export type IdentityKeyMaterial = {
     clientId: string;
     /**
      * The pre-derivation id this client used until now, present only on the
-     * visit that migrates it (README §2.6). The caller folds it into
-     * `clientId` with a merge; until that succeeds it stays in
-     * `localStorage` under `frak-client-id-legacy` and is re-reported on
-     * every subsequent visit.
+     * visit that migrates it. The caller folds it into `clientId` with a
+     * merge; until that succeeds it stays in `localStorage` under
+     * `frak-client-id-legacy` and is re-reported on every subsequent visit.
      */
     pendingLegacyId?: string;
 };
@@ -128,16 +125,15 @@ function loadPrivateKey(): Uint8Array | null {
 
 /**
  * Load the persisted key/id pair, generating a fresh key when neither
- * exists, and enforcing the §2.3 atomicity invariant: a stored id that
- * doesn't match its key is never trusted over the key. On mismatch or a
- * missing half, the key is authoritative and the id is rewritten from it;
- * if the key itself is unusable, both are regenerated together.
+ * exists. Enforces the atomicity invariant: a stored id that doesn't match
+ * its key is never trusted over the key. On mismatch or a missing half, the
+ * key is authoritative and the id is rewritten from it; if the key itself is
+ * unusable, both are regenerated together.
  *
- * **Throws** when no provable id can be produced. There is deliberately no
- * unprovable fallback (README §2.4): minting a random id here would recreate
- * the dual-tier system proof-of-possession exists to remove, and would give
- * attackers a downgrade target. Callers that must not throw use
- * `getClientId()` and handle `undefined`.
+ * **Throws** when no provable id can be produced. Deliberately no unprovable
+ * fallback — minting a random id would recreate the dual-tier system
+ * proof-of-possession removes, and give attackers a downgrade target.
+ * Callers that must not throw use `getClientId()` and handle `undefined`.
  */
 export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
     if (!hasLocalStorage()) {
@@ -164,8 +160,8 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         const derivedId = await deriveClientId(publicKeyFor(privateKey));
 
         if (existingKey) {
-            // §2.3 atomicity: the key is authoritative. A missing or
-            // mismatched stored id is silently corrected, never trusted.
+            // Atomicity: the key is authoritative. A missing or mismatched
+            // stored id is silently corrected, never trusted.
             if (storedId !== derivedId) {
                 localStorage.setItem(CLIENT_ID_KEY, derivedId);
             }
@@ -178,22 +174,18 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
             };
         }
 
-        // No key but an existing id ⇒ this is a pre-derivation client being
-        // migrated (README §2.6). Derive its provable id NOW, before the
-        // caller boots the iframe, so the listener is seeded with the new id
-        // from its very first line of code and never has to be reloaded.
-        //
-        // The merge that folds `storedId` into `derivedId` runs afterwards,
-        // off the critical path — keygen is local (~1-3 ms) and needs no
-        // network, so only the merge does. Record the legacy id first: if
-        // the page dies between these writes the marker is already durable
-        // and the merge simply retries next visit. The reverse order could
-        // lose the legacy id entirely.
+        // No key but an existing id ⇒ pre-derivation client being migrated.
+        // Derive its provable id NOW, before the caller boots the iframe, so
+        // the listener is seeded with the new id immediately. The merge that
+        // folds `storedId` into `derivedId` runs afterwards, off the
+        // critical path. Record the legacy id first: if the page dies
+        // between these writes, the marker is already durable and the merge
+        // retries next visit — the reverse order could lose it entirely.
         if (storedId) {
             localStorage.setItem(CLIENT_ID_LEGACY_KEY, storedId);
         }
 
-        // Store key and id together (§2.3) — never one without the other.
+        // Store key and id together — never one without the other.
         localStorage.setItem(CLIENT_KEY_KEY, bytesToHex(privateKey));
         localStorage.setItem(CLIENT_ID_KEY, derivedId);
 
@@ -212,9 +204,9 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
 }
 
 /**
- * Sign a proof-of-possession for the given op (README §2.2). Returns `null`
- * — never throws — when no key is available (legacy id) or signing fails
- * for any reason; callers must treat proofs as always-optional.
+ * Sign a proof-of-possession for the given op. Returns `null` — never
+ * throws — when no key is available (legacy id) or signing fails for any
+ * reason; callers must treat proofs as always-optional.
  */
 export async function signProof(params: {
     op: ProofOp;

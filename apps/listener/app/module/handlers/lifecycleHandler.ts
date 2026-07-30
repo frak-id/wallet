@@ -77,7 +77,6 @@ export const clientLifecycleHandler: LifecycleHandler<
         }
 
         case "sso-redirect-complete": {
-            // Handle SSO redirect completion from SDK
             await handleSsoRedirectComplete(data);
             return;
         }
@@ -112,12 +111,9 @@ const MODAL_CSS_LINK_ID = "frak-modal-css";
 
 /**
  * Validate a merchant-supplied stylesheet URL before injecting it as a
- * `<link rel="stylesheet">`. The link is attacker-influenceable (it rides in
- * on an unauthenticated `modal-css` lifecycle message), so we constrain it to
- * an absolute `https:` URL whose path ends in `.css` — matching the SDK
- * `customizations.css` contract (`${string}.css`). This rejects `javascript:`,
- * `data:`, `http:`, and protocol-relative (`//host`) vectors while still
- * letting merchants host their own CSS on any https origin.
+ * `<link>`. The link rides in on an unauthenticated `modal-css` message, so
+ * it's constrained to an absolute `https:` URL ending in `.css` — rejects
+ * `javascript:`, `data:`, `http:`, and protocol-relative vectors.
  */
 function isSafeCssLink(cssLink: unknown): cssLink is string {
     if (typeof cssLink !== "string") return false;
@@ -183,10 +179,9 @@ function isValidResolvedConfigPayload(data: unknown): data is {
 }
 
 /**
- * Safely pull a named proof off the untrusted `sdkIdentity` payload
- * (README §4.3/§4.4). `sdkIdentity` rides on `resolved-config` as `unknown`
- * on purpose — a malformed or partial value (old SDK, tampered message,
- * wrong type) must degrade to "no proof" rather than throw.
+ * Safely pull a named proof off the untrusted `sdkIdentity` payload.
+ * `sdkIdentity` arrives as `unknown` on purpose — a malformed or partial
+ * value must degrade to "no proof" rather than throw.
  */
 function extractSdkProof(
     sdkIdentity: unknown,
@@ -212,24 +207,16 @@ function extractSdkProvenId(sdkIdentity: unknown): string | undefined {
 }
 
 /**
- * Pick the merge target and the proof that covers it (README §4.3).
+ * Pick the merge target and the proof that covers it.
  *
- * The proof only verifies against the exact id it was signed over, so the
- * target must be that id. Where they cannot be reconciled the merge still
- * goes out, unproven — the legacy `(merchantId, anonymousId)` pair always
- * travels alongside whatever proof is available (DUAL-ARM-PLAN §0 decision
- * 1/2). The backend accepts an unproven target as long as it has never
- * latched (`proofSeenAt` unset) — true for every legacy id, and for any
- * derived id that hasn't signed yet — and 403s only once that id has
- * proven itself at least once (DUAL-ARM-PLAN D-A). This is strictly better
- * than sending a proof bound to a different id, which would always fail
- * verification and pollute the invalid-proof telemetry the rollout reads.
+ * A proof only verifies against the exact id it was signed over, so the
+ * target must be that id. When they can't be reconciled the merge still
+ * goes out unproven — the backend accepts an unproven target as long as it
+ * has never latched, and 403s only once that id has proven itself before.
  *
- * ROLLOUT-STEP-3: the `fallbackId ?? undefined` branch below — the
- * unproven-target fallback — is the site to delete once `minVersion`
- * excludes every binary that can still reach this path unproven
- * (DUAL-ARM-PLAN D-E item 14). Do not remove until then; every legacy
- * client depends on it to keep in-app-browser attribution working.
+ * ROLLOUT-STEP-3: delete the `fallbackId ?? undefined` fallback below once
+ * `minVersion` excludes every binary that can still reach this path
+ * unproven; legacy clients depend on it for in-app-browser attribution.
  */
 function resolveMergeTarget(
     sdkIdentity: unknown,
@@ -401,7 +388,6 @@ async function handleSsoRedirectComplete(data: {
             return;
         }
 
-        // Parse the SSO result
         const [session, sdkSession] = compressedParam;
         await processSsoCompletion(session, sdkSession);
     } catch (error) {

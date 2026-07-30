@@ -74,7 +74,7 @@ describe("resolveSdkIdentity (§3.9 — resolve-only, never merge)", () => {
         // Simulates POST /user/track/interaction with a foreign clientId
         // (the victim's, harvested from a share link) and the attacker's own
         // valid wallet JWT — the single-request variant of the headline
-        // attack (README §1).
+        // attack.
         vi.mocked(
             OrchestrationContext.orchestrators.identity.resolveForAttribution
         ).mockResolvedValue({ groupId: "attacker-group" });

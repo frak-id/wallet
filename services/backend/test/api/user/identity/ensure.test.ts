@@ -51,19 +51,12 @@ vi.mock("../../../../src/orchestration/context", () => ({
 }));
 
 /**
- * `ensure.ts`'s local `headers: t.Partial(t.Object({"x-frak-client-id":
- * ...}))` schema replaces (rather than merges with) the real
- * `sessionContext` plugin's `.guard({headers: {"x-wallet-auth", ...}})`
- * schema — Elysia only exposes properties declared in a route's own local
- * schema to handlers/macros, so the real `withWalletOrSdkAuthent` macro
- * never sees `x-wallet-auth`/`x-wallet-sdk-auth` on this route and always
- * 401s, independent of Phase 3 (reproduced against a clean `git stash` of
- * HEAD with a real signed JWT, no mocks). Pre-existing, out of scope here —
- * flagged separately. Worked around locally by reading the auth header off
- * `request` (unfiltered by any schema) instead of the schema-filtered
- * `headers`, exactly like `ensure.ts`'s own existing
- * `request.headers.get("x-frak-client-id")` fallback does for the same
- * reason.
+ * `ensure.ts`'s local `headers` schema replaces (rather than merges with)
+ * the real `sessionContext` plugin's schema, so the real
+ * `withWalletOrSdkAuthent` macro never sees the wallet-auth headers here
+ * and always 401s — pre-existing, out of scope. Worked around by reading
+ * the auth header off `request` directly, same as `ensure.ts` already does
+ * for `x-frak-client-id`.
  */
 vi.mock("@backend-infrastructure", () => {
     class UnauthorizedError extends Error {}
@@ -201,7 +194,7 @@ describe("POST /identity/ensure — the live Tauri binary's request shape", () =
     });
 });
 
-describe("POST /identity/ensure — resolution order (README §5)", () => {
+describe("POST /identity/ensure — resolution order", () => {
     beforeEach(() => {
         mockVerifyTicket.mockReset();
         mockProofVerify.mockReset();
@@ -248,9 +241,8 @@ describe("POST /identity/ensure — resolution order (README §5)", () => {
     it("proof + anonymousId arm: verifies as frak-install-v1, observes, never rejects on invalid proof", async () => {
         // The wallet arm can only ever receive a `frak-install-v1` proof (the
         // `#p=` / Play-referrer / pending-action one) — the wallet has no
-        // signing key and can never produce a `frak-ensure-v1` proof
-        // (DUAL-ARM-PLAN.md D-B). Asserting the op here is a regression
-        // guard against silently reverting to the dead `frak-ensure-v1` check.
+        // signing key and can never produce a `frak-ensure-v1` proof.
+        // Asserting the op here guards against reverting to that dead check.
         walletAuthed();
         mockProofVerify.mockResolvedValue({
             valid: false,
@@ -402,13 +394,11 @@ describe("POST /identity/ensure — resolution order (README §5)", () => {
 });
 
 /**
- * SDK arm (DUAL-ARM-PLAN.md D-A, WS-BE-1) — anonymousId arrives ONLY via
- * the `x-frak-client-id` header. LATCH-GATED, not unconditionally
- * mandatory as ROLLOUT-STEP-2 previously had it: a valid proof, when
- * present, is verified; when absent, the id is allowed unless it has
- * previously latched (mirrors `AnonymousMergeOrchestrator.enforceProof`).
- * The wallet arm (body `anonymousId` or `ticket`, covered above) must stay
- * untouched and permissive.
+ * SDK arm — anonymousId arrives ONLY via the `x-frak-client-id` header.
+ * LATCH-GATED: a valid proof, when present, is verified; when absent, the
+ * id is allowed unless it has previously latched (mirrors
+ * `AnonymousMergeOrchestrator.enforceProof`). The wallet arm (body
+ * `anonymousId` or `ticket`, covered above) stays untouched and permissive.
  */
 describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gated", () => {
     beforeEach(() => {
@@ -621,12 +611,10 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
 
 /**
  * The wallet arm's proof check against the REAL `IdentityProofService` and
- * the shared golden fixture (`sdk/core/src/identity/fixtures/golden-proofs.json`)
- * — not the mocked `verify`/`verifyOrThrow` used everywhere else in this
- * file. This is the regression guard for D-B/WS-BE-1 change 4: the wallet
- * arm must verify a `frak-install-v1` proof, not the `frak-ensure-v1` op it
- * used to (and could never actually satisfy, since the wallet holds no
- * signing key for that op).
+ * the shared golden fixture — not the mocked `verify`/`verifyOrThrow` used
+ * elsewhere in this file. Regression guard: the wallet arm must verify a
+ * `frak-install-v1` proof, not the `frak-ensure-v1` op it used to (and
+ * could never satisfy, since the wallet holds no signing key for that op).
  */
 describe("POST /identity/ensure — wallet arm verifies against the real IdentityProofService", () => {
     const installFixture = goldenProofs.fixtures.find(

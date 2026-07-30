@@ -1,6 +1,6 @@
 /**
  * Tests for prepareSsoUrl: the ahead-of-gesture URL builder that lets
- * openSso() skip every await before window.open (README §4.1).
+ * openSso() skip every await before window.open.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

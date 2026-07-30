@@ -69,7 +69,7 @@ describe("IdentityProofService", () => {
             expect(result).toEqual({ valid: true });
         });
 
-        it("rejects frak-ensure-v1 just past the 30-day window (not the README's 90 days — DECISIONS D5)", async () => {
+        it("rejects frak-ensure-v1 just past the 30-day window", async () => {
             vi.setSystemTime((ensureFixture.ts + 30 * 24 * 60 * 60 + 1) * 1000);
             const result = await service.verify({
                 op: "frak-ensure-v1",
@@ -153,11 +153,10 @@ describe("IdentityProofService", () => {
         });
 
         it("rejects a frak-merge-v1 proof presented with a different token's binding", async () => {
-            // The property the whole no-replay-cache argument rests on
-            // (README §2.2.1): a proof commits to one specific mergeToken, so
-            // capturing it buys nothing without that exact token. If the
-            // binding ever stopped entering the signed message, every other
-            // test here would still pass — this is the only one that fails.
+            // The no-replay-cache argument rests on this: a proof commits to
+            // one specific mergeToken, so capturing it buys nothing without
+            // that exact token. If the binding stopped entering the signed
+            // message, every other test here would still pass.
             const mergeFixture = goldenProofs.fixtures.find(
                 (f) => f.op === "frak-merge-v1"
             );
@@ -193,9 +192,8 @@ describe("IdentityProofService", () => {
             );
             if (!mergeFixture) throw new Error("fixture set must cover merge");
 
-            // The fixture's binding IS SHA-256 of some token; recompute the
-            // digest of an arbitrary string and confirm the shape/algorithm
-            // matches what verify() expects for frak-merge-v1 (32 raw bytes).
+            // Confirm the shape/algorithm matches what verify() expects for
+            // frak-merge-v1: 32 raw SHA-256 bytes.
             const digest = service.hashMergeToken("some-merge-token");
             expect(digest).toBeInstanceOf(Uint8Array);
             expect(digest.length).toBe(32);

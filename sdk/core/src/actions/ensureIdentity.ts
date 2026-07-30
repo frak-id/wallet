@@ -58,10 +58,9 @@ export async function ensureIdentity(
 
     try {
         const backendUrl = getBackendUrl(walletUrl);
-        // Proof-of-possession (README §4.1), always optional: if it can't be
-        // produced (legacy id, keygen failed), the call goes out exactly as
-        // it does today. Signing is off the critical path — a single sign
-        // is <1 ms and never blocks or throws.
+        // Proof is always optional: if it can't be produced (legacy id,
+        // keygen failed), the call goes out as before. Off the critical
+        // path — a single sign is <1 ms and never blocks or throws.
         const proof = await signProof({
             op: "frak-ensure-v1",
             merchantId,

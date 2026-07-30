@@ -10,21 +10,18 @@ import {
 
 /**
  * Finalise a wallet merge after the user has signed the `addPassKey` userOp
- * on-chain AND the frontend has confirmed the receipt landed. The endpoint
- * is idempotent — see `WalletMergeOrchestrator.settle` for the per-step
- * contract.
+ * on-chain AND the frontend has confirmed the receipt landed. Idempotent —
+ * see `WalletMergeOrchestrator.settle` for the per-step contract.
  *
  * The backend re-derives the merge state from the (wallet session, target
  * credential) pair so the client cannot tamper with the winner/loser
  * decision. The on-chain landed check is the validator readback at step 2,
- * which already proves the userOp was applied (no separate tx-hash needed).
+ * which already proves the userOp was applied.
  *
- * Session gate: any webauthn session (local OR distant) is accepted —
- * Phase 2 lets the desktop call this endpoint with a distant-webauthn JWT
- * when it tunnels signing through a paired mobile. The crypto proof is
- * identical (the userOp was still signed by the winner's passkey, the
- * loser-consent assertion was still produced by the loser's passkey).
- * Only ECDSA sessions stay excluded.
+ * Session gate: any webauthn session (local or distant) is accepted, since
+ * the desktop can tunnel signing through a paired mobile with a
+ * distant-webauthn JWT — the crypto proof is identical either way. Only
+ * ECDSA sessions stay excluded.
  */
 export const mergeSettleRoutes = new Elysia().use(sessionContext).post(
     "/settle",

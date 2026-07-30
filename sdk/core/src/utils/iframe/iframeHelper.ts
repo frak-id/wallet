@@ -58,16 +58,12 @@ export async function createIframe({
     const walletUrl =
         config?.walletUrl ?? walletBaseUrl ?? "https://wallet.frak.id";
 
-    // Key generation happens here, once ever per browser (README §2.1/§2.5):
-    // this is the critical-path call site, before `iframe.src` is assigned.
-    // `createIframe` is already async and already awaited by `setupClient`,
-    // so every other `getClientId()` call site runs after this resolves and
-    // reads the now-populated module cache.
-    //
-    // Use the resolved value directly rather than a follow-up `getClientId()`:
-    // that accessor is now nullable, and the listener URL must never carry
-    // `clientId=undefined`. On failure the iframe is built without the param
-    // and the listener falls back to its own persisted store.
+    // Key generation happens here, once ever per browser, before `iframe.src`
+    // is assigned — every other `getClientId()` call site runs after this
+    // resolves and reads the populated module cache. Uses the resolved value
+    // directly rather than a follow-up `getClientId()` call, since the
+    // listener URL must never carry `clientId=undefined`; on failure the
+    // iframe is built without the param and falls back to the persisted store.
     const clientId = await initClientId(walletUrl).catch((error) => {
         console.warn("[Frak SDK] Unable to derive a client id", error);
         return undefined;

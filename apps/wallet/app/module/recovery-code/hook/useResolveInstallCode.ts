@@ -11,9 +11,9 @@ type ResolveResult = {
     merchantId: string;
     anonymousId: string;
     merchant: { name: string; domain: string };
-    /** Install ticket (README §5). Optional here defensively — old
-     * backends or a rollback never send it, and the pending action must
-     * still be built from `anonymousId` alone in that case. */
+    /** Install ticket. Optional here defensively — old backends or a
+     * rollback never send it, and the pending action must still be built
+     * from `anonymousId` alone in that case. */
     ticket?: string;
 };
 
@@ -56,10 +56,9 @@ export function useResolveInstallCode(
             // carried when present; `anonymousId` stays populated so the
             // store remains readable by a rolled-back build.
             //
-            // No `proof` here (WS-3 W7, DUAL-ARM-PLAN.md): `install-code/resolve`
-            // never returns a `frak-install-v1` proof — the ticket, minted
-            // unconditionally from the code's row, is this path's credential
-            // (README §5). Nothing to forward.
+            // No `proof` here: `install-code/resolve` never returns a
+            // `frak-install-v1` proof — the ticket, minted unconditionally
+            // from the code's row, is this path's credential.
             pendingActionsStore.getState().addAction({
                 type: "ensure",
                 merchantId: data.merchantId,

@@ -69,31 +69,11 @@ export const identityNodesTable = pgTable(
         validationData:
             jsonb("validation_data").$type<PendingPurchaseValidation>(),
         createdAt: timestamp("created_at").defaultNow(),
-        // Soft-unlink marker. Stamped on the loser wallet identity node
-        // during a wallet merge so `getWalletForGroup` can deterministically
-        // resolve to the winner while keeping the loser->group mapping
-        // available for `findGroupByIdentity` (prevents stray references to
-        // the loser wallet from accidentally creating a new identity group).
+        // Soft-unlink marker on the loser wallet node after a merge; keeps the loser->group mapping resolvable by findGroupByIdentity.
         unlinkedAt: timestamp("unlinked_at"),
-        // Verification stamp for email nodes (`null` for unverified + every
-        // non-email type). With `unlinked_at` it encodes the email lifecycle:
-        // pending (both null) -> verified (set, null) -> legacy (unlinked set).
+        // Verification stamp for email nodes; with unlinked_at encodes pending -> verified -> legacy.
         verifiedAt: timestamp("verified_at"),
-        // One-way proof-of-possession latch (README §4.6). Stamped the first
-        // time this node presents a valid signature over its own id (§2.2).
-        // Once set, the id always requires a proof in either merge role,
-        // forever — an attacker cannot set it without the private key, and
-        // cannot clear it at all. `NULL` means "not latched" (legacy id, or
-        // a derived id that has simply never proven itself yet); both read
-        // as "proof required" is false, which is fail-open and matches
-        // today's pre-proof behaviour exactly.
-        //
-        // A timestamp rather than a boolean, at the same storage cost: it
-        // records *when* the id first latched, which is what makes the
-        // §2.6 conflicting-migration alarm (two different derived ids
-        // racing to claim the same legacy id) investigable rather than a
-        // bare yes/no. Matches this table's existing idiom — `unlinkedAt`
-        // and `verifiedAt` are both nullable timestamps for the same reason.
+        // One-way proof-of-possession latch: once set (valid signature seen over its own id), this id always requires a proof; NULL means not latched, fail-open to match pre-proof behaviour. Timestamp (not boolean) so a conflicting-migration race is investigable.
         proofSeenAt: timestamp("proof_seen_at"),
     },
     (table) => [
@@ -110,8 +90,8 @@ export const identityNodesTable = pgTable(
  *  - `merged`    — written by the wallet-merge flow when the previous active
  *                  binding for `(authenticator, chain)` gets repointed to a
  *                  winner wallet.
- *  - `recovery`  — reserved for the recovery flow refactor (Phase 3+); never
- *                  written by Phase 1 code paths.
+ *  - `recovery`  — reserved for the recovery flow refactor; not yet written
+ *                  by any current code path.
  */
 export type BindingReason = "initial" | "merged" | "recovery";
 
@@ -165,18 +145,7 @@ export const installCodesTable = pgTable(
         anonymousId: text("anonymous_id").notNull(),
         createdAt: timestamp("created_at").notNull().defaultNow(),
         expiresAt: timestamp("expires_at").notNull(),
-        // Durable per-code resolve-attempt counter (README §3.3). Caps
-        // hammering of a single already-minted code (e.g. one discovered via
-        // a screenshot or log leak) independently of source IP, and across
-        // pod replicas — unlike `rateLimitMiddleware`, which is in-memory
-        // per-pod and therefore N× too permissive behind N replicas.
-        // Mirrors `emailVerificationCodesTable.attempts` exactly.
-        //
-        // This does NOT cap enumeration of the ~887M-code keyspace (most
-        // guesses match zero rows, so there is no row to increment): that
-        // vector is still bounded only by the existing IP rate limit, the
-        // 72h code TTL, and keyspace-vs-realistic-volume math, until §3.2's
-        // ticket redesign removes the payoff for a lucky guess entirely.
+        // Durable per-code attempt counter; caps hammering of a minted code across pod replicas, unlike in-memory rateLimitMiddleware. Does not cap keyspace enumeration, still bounded by the IP rate limit + 72h TTL.
         attempts: integer("attempts").notNull().default(0),
     },
     (table) => [

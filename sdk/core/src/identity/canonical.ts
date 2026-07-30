@@ -3,17 +3,16 @@
  *
  * PURE module: no crypto import, no `crypto.subtle`, no `@noble/*`. This is
  * the single artifact the SDK signer and the backend verifier
- * (`IdentityProofService`) both build on, and the one native (Phase 6) must
- * reproduce byte-for-byte. Do not change anything in this file without
- * updating `docs/plans/identity-proof-of-possession/README.md` §2.3 and
- * regenerating the golden fixtures.
+ * (`IdentityProofService`) both build on, and any native port must
+ * reproduce byte-for-byte. Changing this file requires regenerating the
+ * golden fixtures.
  *
  * Everything here is FIXED WIDTH. There are no length prefixes, no JSON and
  * no text encoding of ids, because every field has a size known at compile
  * time. A native port is a sequence of byte copies at constant offsets
  * rather than a parser.
  *
- * Signed message (§2.3), `len(op) + 72` bytes:
+ * Signed message, `len(op) + 72` bytes:
  *
  *   msg := op ‖ merchantId(16) ‖ anonymousId(16) ‖ binding(32) ‖ ts(8)
  *
@@ -23,7 +22,7 @@
  *   merchantId  := the UUID's 16 raw bytes, NOT its 36-char text form. Text
  *                  would re-introduce a case-normalisation hazard: Swift's
  *                  `UUID.uuidString` is uppercase, so two platforms could
- *                  sign different bytes for the same id (README §8).
+ *                  sign different bytes for the same id.
  *   binding     := op-specific, always exactly 32 bytes, zero-filled when
  *                  unused:
  *                    - `frak-merge-v1`   → SHA-256(mergeToken)
@@ -32,7 +31,7 @@
  *                    - `frak-sso-v1`     → 32 zero bytes (none)
  *   ts          := 8-byte unsigned big-endian, Unix SECONDS.
  *
- * Wire envelope (§2.3), 138 bytes before encoding:
+ * Wire envelope, 138 bytes before encoding:
  *
  *   envelope := v(1) ‖ pk(65) ‖ ts(8) ‖ sig(64)
  *   proof    := base64url(envelope), unpadded
@@ -45,8 +44,8 @@
  *          uncompressed so a verifier can derive the id with a plain hash
  *          and `importKey("raw", …)`, with no point decompression and
  *          therefore no curve library.
- *   sig := raw r‖s ECDSA, 64 bytes. Low-S normalisation is NOT guaranteed —
- *          see §2.3: the pure-JS signer normalises, WebCrypto does not, and
+ *   sig := raw r‖s ECDSA, 64 bytes. Low-S normalisation is NOT guaranteed:
+ *          the pure-JS signer normalises, WebCrypto does not, and
  *          verifiers must accept both. Plain ECDSA verifiers (WebCrypto,
  *          CryptoKit, Android) do, and the malleability low-S prevents is
  *          irrelevant here because the signature is never hashed into an
@@ -156,9 +155,9 @@ export function buildProofMessage(params: ProofMessageParams): Uint8Array {
 
 /**
  * Derive the anonymous id from a SHA-256 digest of the uncompressed public
- * key (README §2.1). Takes the first 16 bytes, overwrites the RFC-4122
- * version (byte 6) and variant (byte 8) bits, and formats as a lowercase
- * hyphenated UUID string.
+ * key. Takes the first 16 bytes, overwrites the RFC-4122 version (byte 6)
+ * and variant (byte 8) bits, and formats as a lowercase hyphenated UUID
+ * string.
  *
  * `hash` must be the full SHA-256 digest (32 bytes); only the first 16 are
  * used. Truncation happens here so callers always pass the untruncated
@@ -226,9 +225,8 @@ export function base64UrlToBytes(value: string): Uint8Array {
 }
 
 /**
- * `proof = base64url(v ‖ pk ‖ ts ‖ sig)`, §2.3. Single opaque blob so every
- * hop (RPC payload, URL fragment, Play referrer string) treats it as one
- * value.
+ * `proof = base64url(v ‖ pk ‖ ts ‖ sig)`. Single opaque blob so every hop
+ * (RPC payload, URL fragment, Play referrer string) treats it as one value.
  */
 export function encodeProof(envelope: ProofEnvelope): string {
     if (envelope.pk.length !== PUBKEY_BYTES) {

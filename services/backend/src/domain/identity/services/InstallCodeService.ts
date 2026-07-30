@@ -51,10 +51,8 @@ export class InstallCodeService {
     }
 
     /**
-     * Mint an install ticket (README §5) unconditionally from a resolved
-     * install-code row. Not gated on whether `generate` carried a proof —
-     * see the README's "Why `resolve` mints the ticket unconditionally"
-     * blockquote.
+     * Mint an install ticket unconditionally from a resolved install-code
+     * row — not gated on whether `generate` carried a proof.
      */
     async mintTicket(params: {
         merchantId: string;
@@ -72,7 +70,7 @@ export class InstallCodeService {
      * Verify an install ticket, returning the identity it authenticates or
      * `null` when it is missing, expired, or scoped to a different
      * audience. Callers must reject on `null` rather than fall back to a
-     * different resolution arm — see README §5, "Rules from §5's table".
+     * different resolution arm.
      */
     async verifyTicket(ticket: string): Promise<{
         anonymousId: string;

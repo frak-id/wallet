@@ -6,11 +6,10 @@ import { installCodesTable } from "../db/schema";
 const CODE_TTL_HOURS = 72;
 
 /**
- * Max resolve attempts against a single install code (README §3.3). Caps
- * repeated hammering of one already-minted code independently of source
- * IP — durable across pod replicas, unlike `rateLimitMiddleware`'s
- * in-memory store. Does not bound enumeration of the ~887M-code keyspace;
- * see the doc comment on `installCodesTable.attempts`.
+ * Max resolve attempts against a single install code. Caps repeated
+ * hammering of one already-minted code independently of source IP —
+ * durable across pod replicas, unlike `rateLimitMiddleware`'s in-memory
+ * store. Does not bound enumeration of the ~887M-code keyspace.
  */
 export const MAX_RESOLVE_ATTEMPTS = 20;
 

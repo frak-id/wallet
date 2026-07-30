@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * `getClientId`/`initClientId` share a module-level cache by design (README
- * §2.1). Each test re-imports the module fresh via `vi.resetModules()` so a
- * populated cache from one test can never leak into the next, regardless of
- * run order.
+ * `getClientId`/`initClientId` share a module-level cache by design. Each
+ * test re-imports the module fresh via `vi.resetModules()` so a populated
+ * cache from one test can never leak into the next, regardless of run
+ * order.
  */
 async function freshClientIdModule() {
     vi.resetModules();
@@ -30,13 +30,11 @@ describe("clientId", () => {
                 await freshClientIdModule();
 
             expect(getClientId()).toBeUndefined();
-            // Crucially: nothing was persisted. The old cold path wrote an
-            // unprovable id here (README §2.4 — removed).
+            // Crucially: nothing was persisted.
             expect(localStorage.getItem("frak-client-id")).toBeNull();
 
-            // Drain the derivation the cold read scheduled: it writes to
-            // localStorage, and would otherwise land in the middle of a later
-            // test (after its `localStorage.clear()`).
+            // Drain the derivation the cold read scheduled — it writes to
+            // localStorage and would otherwise land mid a later test.
             await getClientIdAsync();
         });
 
@@ -58,9 +56,8 @@ describe("clientId", () => {
 
             expect(getClientId()).toBeUndefined();
 
-            // The cold read kicked off derivation; give it a turn to land.
-            // Capture inside the poll: reading again afterwards would be a
-            // separate call and could observe a different value.
+            // The cold read kicked off derivation; capture the value inside
+            // the poll — reading again afterwards could observe a different call.
             let derived: string | undefined;
             await vi.waitFor(() => {
                 derived = getClientId();
@@ -175,10 +172,8 @@ describe("clientId", () => {
             const firstError = await initClientId().catch((e) => e);
             const secondError = await initClientId().catch((e) => e);
 
-            // The SAME error instance proves the rejected promise was reused
-            // rather than keygen being retried. (`initClientId` is `async`, so
-            // it wraps the cached promise in a fresh one each call — comparing
-            // the promises themselves would always fail.)
+            // Same error instance proves the promise was reused, not
+            // re-derived (comparing the wrapper promises would always differ).
             expect(firstError).toBeInstanceOf(Error);
             expect(firstError).toBe(secondError);
         });

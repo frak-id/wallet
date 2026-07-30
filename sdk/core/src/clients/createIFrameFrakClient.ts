@@ -67,15 +67,10 @@ export async function createIFrameFrakClient({
         ? undefined
         : sdkConfigStore.resolve(config.domain, config.walletUrl, detectedLang);
 
-    // Resolved once, here, rather than read inside OpenPanel's `filter`
-    // callback below: that callback is a synchronous predicate returning
-    // `boolean` and cannot await, and `getClientId()` is now nullable.
-    //
-    // Deliberately awaited AFTER `configPromise` is kicked off, so derivation
-    // overlaps the merchant-config fetch instead of delaying it. Callers
-    // arriving via `setupClient` have already warmed the cache in
-    // `createIframe`, making this an immediate hit in the common case.
-    // Analytics must never block client creation, hence the catch.
+    // Resolved once, here, rather than inside OpenPanel's `filter` callback
+    // below (a sync predicate that can't await). Awaited after `configPromise`
+    // is kicked off, so derivation overlaps the merchant-config fetch instead
+    // of delaying it. Analytics must never block client creation, hence the catch.
     const resolvedClientId = await getClientIdAsync().catch(() => undefined);
 
     // Create lifecycle manager
@@ -344,21 +339,17 @@ async function hashMergeToken(token: string): Promise<Uint8Array | undefined> {
 }
 
 /**
- * Produce the two named, domain-separated proofs carried on `resolved-config`
- * (README §4.3). Never throws and never blocks the handshake: signing is a
- * single <1 ms ECDSA op per proof, and `signProof` itself already resolves
- * to `null` (never rejects) when no key is available.
+ * Produce the two named, domain-separated proofs carried on `resolved-config`.
+ * Never throws and never blocks the handshake: `signProof` resolves to
+ * `null` (never rejects) when no key is available.
  *
- * `merge` is only produced when a pending merge token exists, and is bound
- * to `SHA-256(mergeToken)` — it must be signed after the token is known,
- * which holds here since `pendingMergeToken` is read from the URL before
- * this runs.
+ * `merge` is only produced when a pending merge token exists, bound to
+ * `SHA-256(mergeToken)`, signed after the token is known.
  *
- * ROLLOUT-STEP-1 (C12): `proofs.install` is produced and travels on
- * `resolved-config`. The listener now forwards it into the `/install` URL
- * as a `#p=` fragment (README §4.4) — the wallet's install route still
- * needs to read it off that fragment and send it to the backend. Harmless
- * either way: old builds ignore unknown fields. See ROLLOUT.md.
+ * ROLLOUT-STEP-1: `proofs.install` travels on `resolved-config` and the
+ * listener forwards it into the `/install` URL as a `#p=` fragment — the
+ * wallet's install route still needs to read it and send it to the backend.
+ * See ROLLOUT.md.
  */
 async function buildSdkIdentity({
     merchantId,
@@ -376,8 +367,8 @@ async function buildSdkIdentity({
         ? await hashMergeToken(pendingMergeToken)
         : undefined;
     // No binding could be produced (e.g. no WebCrypto on an HTTP merchant
-    // page, §2.4) but a token is pending — omit the merge proof rather than
-    // sign over the wrong binding.
+    // page) but a token is pending — omit the merge proof rather than sign
+    // over the wrong binding.
     if (pendingMergeToken && !mergeBinding) {
         const install = await signProof({
             op: "frak-install-v1",
@@ -503,11 +494,10 @@ async function postConnectionSetup({
     // `sdkAnonymousId` through so the listener can join SDK funnels.
     let mergeTokenConsumed = false;
     // Sends are chained onto this so postMessage order always matches call
-    // order. `buildSdkIdentity` signs 0-2 proofs and its duration varies per
-    // call, so two fire-and-forget sends (cached-config, then fresh-config)
-    // can otherwise race and land out of order — the listener replaces its
-    // whole context on every message (last write wins), so a reordered
-    // cached send would silently revert the fresh one.
+    // order: `buildSdkIdentity`'s signing duration varies, so the two
+    // fire-and-forget sends (cached, then fresh) could otherwise race and
+    // land out of order, and the listener's last-write-wins would let a
+    // reordered cached send silently revert the fresh one.
     let sendChain: Promise<void> = Promise.resolve();
     const sendLifecycleConfig = (resolved: SdkResolvedConfig) => {
         // Token capture stays synchronous at call time so the first call
@@ -557,11 +547,10 @@ async function postConnectionSetup({
 
     // SWR: if we have cached data, send it to the iframe immediately.
     // Not awaited — signing must stay off the connection-establishment
-    // critical path (README §2.5). `contextSent` is resolved from the send's
-    // completion, NOT synchronously after firing it: `sendLifecycleConfig`
-    // awaits `buildSdkIdentity` before its `postMessage`, so resolving early
-    // releases RPC requests that then beat `resolved-config` to the listener,
-    // which rejects them with "No resolving context available".
+    // critical path. `contextSent` resolves from the send's completion, NOT
+    // synchronously after firing it: resolving early would release RPC
+    // requests that then beat `resolved-config` to the listener, which
+    // rejects them with "No resolving context available".
     if (sdkConfigStore.isResolved) {
         void sendLifecycleConfig(sdkConfigStore.getConfig()).then(
             contextSent.resolve

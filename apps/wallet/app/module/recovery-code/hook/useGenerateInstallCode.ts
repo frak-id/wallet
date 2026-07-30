@@ -15,7 +15,7 @@ export function useGenerateInstallCode({
 }: {
     merchantId?: string;
     anonymousId?: string;
-    /** frak-install-v1 proof (README §4.4), read from the `#p=` fragment. */
+    /** frak-install-v1 proof, read from the `#p=` fragment. */
     proof?: string;
 }) {
     return useQuery({

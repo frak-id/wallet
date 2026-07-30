@@ -33,10 +33,9 @@ export type InstallEventMap = {
     // ---------------------------------------------------------------------
     install_page_viewed: MerchantMaybe & {
         has_anonymous_id: boolean;
-        // Answers README §9.4 empirically (DUAL-ARM-PLAN.md D-D): whether the
-        // `#p=` install-proof fragment survived the redirect chain that led
-        // here, measured from production traffic. Purely diagnostic —
-        // attribution never depends on this being true.
+        // Whether the `#p=` install-proof fragment survived the redirect
+        // chain that led here. Purely diagnostic — attribution never
+        // depends on this being true.
         has_install_proof: boolean;
         view: InstallPageView;
     };
@@ -55,9 +54,9 @@ export type InstallEventMap = {
     install_store_clicked: MerchantMaybe & {
         store: InstallStore;
         has_referrer: boolean;
-        // Play referrer only (DUAL-ARM-PLAN.md D-C/WS-3 W2) — whether the
-        // referrer string being launched carries a frak-install-v1 proof
-        // alongside the legacy merchantId/anonymousId pair.
+        // Play referrer only — whether the referrer string being launched
+        // carries a frak-install-v1 proof alongside the legacy
+        // merchantId/anonymousId pair.
         has_referrer_proof: boolean;
     };
     install_page_dismissed: undefined;
@@ -107,10 +106,10 @@ export type InstallEventMap = {
     identity_ensure_failed: {
         source: InstallSource;
         error_type: string;
-        // True for a stable WALLET_ALREADY_LINKED conflict (README §3.8) —
-        // the anonymous id is already linked to a different wallet, so the
-        // action is dropped instead of retried on every future launch.
-        // Optional: only the pending-actions ensure path currently sets it.
+        // True for a stable WALLET_ALREADY_LINKED conflict — the anonymous
+        // id is already linked to a different wallet, so the action is
+        // dropped instead of retried on every future launch. Only the
+        // pending-actions ensure path currently sets it.
         non_retryable?: boolean;
     };
 };

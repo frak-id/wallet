@@ -73,8 +73,8 @@ describe("trackClientKeyExtractor", () => {
 
 /**
  * `keyExtractor` returning `null` skips the bucket entirely (does not fall
- * back to IP) — README/DECISIONS §1.2 trap 1. Verified directly against the
- * store: a `null` key must never be handed to `consume`.
+ * back to IP). Verified directly against the store: a `null` key must
+ * never be handed to `consume`.
  */
 describe("trackClientKeyExtractor — null means 'no bucket', not 'IP bucket'", () => {
     it("a caller with no identifying headers/body never touches the identity store", () => {
@@ -99,8 +99,8 @@ describe("trackClientKeyExtractor — null means 'no bucket', not 'IP bucket'", 
  * `finalConfig` — which excludes `keyExtractor`. Two stacked limiters with
  * identical `windowMs`/`maxRequests` therefore collapse into a single
  * plugin instance and one of the two `onBeforeHandle` hooks silently never
- * runs. This is trap 2 from DECISIONS.md §1.2, reproduced directly against
- * Elysia rather than asserted from reading the source.
+ * runs. Reproduced directly against Elysia rather than asserted from
+ * reading the source.
  */
 describe("Elysia plugin dedup — the reason the two track/* limiters must differ", () => {
     function fakeLimiter(
@@ -164,9 +164,9 @@ describe("Elysia plugin dedup — the reason the two track/* limiters must diffe
  * End-to-end: both `track/*` buckets actually fire independently over a
  * real request, keyed by the values `trackClientKeyExtractor` reads from a
  * real body/header pair. Confirms `body` is available at `onBeforeHandle`
- * time for a plugin composed *before* the route in the chain (trap 3) —
- * without this, `extractMerchantId` would always see `undefined` and the
- * identity bucket would silently degrade to "never limits anything".
+ * time for a plugin composed *before* the route in the chain — without
+ * this, `extractMerchantId` would always see `undefined` and the identity
+ * bucket would silently degrade to "never limits anything".
  */
 describe("trackApi rate limiting — both buckets fire on a real request", () => {
     it("hits the identity bucket exactly once per request with merchantId + clientId", async () => {
@@ -188,11 +188,8 @@ describe("trackApi rate limiting — both buckets fire on a real request", () =>
             );
 
         const res = await request();
-        // sdkIdentity resolution / interaction submission may fail against a
-        // real (unmocked) orchestrator in this unit-test context — the point
-        // here is only that the request reaches the handler chain (i.e. is
-        // not itself blocked by the limiter on the first call), not that the
-        // full interaction pipeline succeeds.
+        // The unmocked orchestrator may fail past this point — the point is
+        // only that the limiter doesn't block the first call.
         expect(res.status).not.toBe(429);
     });
 });

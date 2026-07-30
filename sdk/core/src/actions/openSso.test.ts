@@ -1,6 +1,6 @@
 /**
  * Tests for openSso action, focused on proof-of-possession minting for the
- * popup flow (README §4.1).
+ * popup flow.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

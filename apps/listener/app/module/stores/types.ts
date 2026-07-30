@@ -39,9 +39,9 @@ type IFrameResolvingContext = {
     sourceUrl: string;
     clientId?: string;
     /**
-     * `frak-install-v1` proof of possession for the SDK's anonymous id
-     * (README §4.4), forwarded from `resolved-config`. Carried as a URL
-     * fragment (`#p=`) on the install link, never a search param — §2.2.
+     * `frak-install-v1` proof of possession for the SDK's anonymous id,
+     * forwarded from `resolved-config`. Carried as a URL fragment (`#p=`)
+     * on the install link, never a search param.
      */
     installProof?: string;
 };

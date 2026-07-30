@@ -46,7 +46,7 @@ type ExecutePendingActionsArgs = {
  *   - Storing a new action (optional, e.g. from /install)
  *   - Draining ensure actions (fire-and-forget, kept on failure for retry —
  *     except a non-retryable WALLET_ALREADY_LINKED, which is dropped
- *     immediately; see docs/plans/identity-proof-of-possession/README.md §3.8)
+ *     immediately)
  *   - Navigating to pending navigation target (if any)
  *
  * Returns `true` via mutation data if a navigation was triggered,
@@ -147,11 +147,10 @@ export function useExecutePendingActions(
 async function executeEnsure(
     action: Extract<PendingAction, { type: "ensure" }>
 ): Promise<void> {
-    // Every arm the action carries travels together (DUAL-ARM-PLAN.md
-    // decision 1) — `merchantId`/`anonymousId` always sent, `ticket` and
-    // `proof` added on top when present. The backend's wallet arm already
-    // resolves ticket -> proof+anonymousId -> bare anonymousId (README §5),
-    // so an old-shape action with neither still works, ROLLOUT-STEP-3.
+    // `merchantId`/`anonymousId` always sent, `ticket` and `proof` added on
+    // top when present. The backend resolves ticket -> proof+anonymousId ->
+    // bare anonymousId, so an old-shape action with neither still works.
+    // ROLLOUT-STEP-3.
     const { error } = await authenticatedBackendApi.user.identity.ensure.post({
         merchantId: action.merchantId,
         anonymousId: action.anonymousId,

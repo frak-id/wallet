@@ -40,9 +40,9 @@ export class WalletMergeOrchestrator {
         private readonly webAuthNValidatorReader: WebAuthNValidatorReader,
         private readonly webAuthNService: WebAuthNService,
         private readonly walletSessionOrchestrator: WalletSessionOrchestrator,
-        // Used by Phase 2 (cross-device merge) to push `merge-completed`
-        // to both pairing topics after settlement. Same-device merges
-        // pass no `pairingId` and the broadcast step is skipped.
+        // Used by the cross-device merge flow to push `merge-completed` to
+        // both pairing topics after settlement. Same-device merges pass no
+        // `pairingId` and the broadcast step is skipped.
         private readonly pairingRouterOrchestrator: PairingRouterOrchestrator
     ) {}
 
@@ -188,18 +188,14 @@ export class WalletMergeOrchestrator {
 
     /**
      * Finalise a merge after the user has signed the `addPassKey` userOp.
-     * The frontend is responsible for waiting on the tx receipt (≥8
-     * confirmations) before invoking this endpoint, so the backend only
-     * needs to confirm the validator state reflects the merge (step 2).
+     * The frontend waits on the tx receipt (≥8 confirmations) before
+     * invoking this endpoint, so the backend only needs to confirm the
+     * validator state reflects the merge.
      *
-     * Steps 0-1 are pure reads. Step 2 wraps the binding repoint and the
-     * identity-graph merge in a single postgres transaction — both commit
-     * together or neither does. A retried `settle()` after a step 0-1
-     * failure runs from scratch (everything before step 2 is read-only);
-     * a retry after step 2 failed mid-transaction sees a fully rolled-back
-     * state and re-runs cleanly. The dual-DB choreography that earlier
-     * drafts spelled out is no longer necessary now that bindings live in
-     * postgres alongside the identity graph.
+     * The binding repoint and identity-graph merge run inside a single
+     * postgres transaction — both commit or neither does, so a retry after
+     * a mid-transaction failure sees a fully rolled-back state and re-runs
+     * cleanly.
      */
     async settle(params: {
         requesterWallet: Address;
@@ -214,16 +210,11 @@ export class WalletMergeOrchestrator {
          */
         pairingId?: string;
     }): Promise<MergeSettleResponse> {
-        // 0. Idempotent retry detection. A dropped HTTP response, a
-        //    post-commit publish failure, or any other client-side retry
-        //    must converge on the same success response rather than throw
-        //    `MERGE_SAME_WALLET` from `preview()` (both bindings now resolve
-        //    to the winner) or churn the binding history with redundant
-        //    repoints. The active bindings themselves are the cryptographic
-        //    proof the merge happened, so consent re-verification is
-        //    redundant on the retry path — the requester's JWT still proves
-        //    they own the credential, and the credential's binding is the
-        //    canonical record of the new wallet ownership.
+        // Idempotent retry detection: a dropped response or any client-side
+        // retry must converge on the same success rather than throw
+        // MERGE_SAME_WALLET or churn the binding history. The active
+        // bindings are themselves the proof the merge happened, so consent
+        // re-verification is redundant on the retry path.
         const settled = await this.detectSettledMerge({
             requesterWallet: params.requesterWallet,
             requesterAuthenticatorId: params.requesterAuthenticatorId,
@@ -238,14 +229,12 @@ export class WalletMergeOrchestrator {
             targetAuthenticatorId: params.targetAuthenticatorId,
         });
 
-        // 1. Verify the loser's webauthn consent. Done before any on-chain
-        //    reads so unauthenticated attempts are rejected cheaply. The
-        //    challenge is deterministic (`frak-merge-consent:{UTC hour}:
-        //    {winner}:{loser authid}`); we accept the current hour and the
-        //    two adjacent slots to absorb clock skew and flows that span an
-        //    hour boundary. No DB storage — the dual-biometric AND-gate
-        //    (loser consent + winner userOp verified at step 2) makes a replayable
-        //    challenge format acceptable for the threat model.
+        // Verify the loser's webauthn consent before any on-chain reads, so
+        // unauthenticated attempts are rejected cheaply. The challenge is
+        // deterministic (`frak-merge-consent:{UTC hour}:{winner}:{loser
+        // authid}`); the current hour ± one slot absorbs clock skew. No DB
+        // storage needed — the dual-biometric AND-gate (loser consent +
+        // winner userOp) makes a replayable challenge acceptable here.
         const consentChallenges = buildMergeConsentChallengeSlots({
             winner: preview.winner,
             loserAuthenticatorId: preview.loserAuthenticatorId,
@@ -262,11 +251,9 @@ export class WalletMergeOrchestrator {
             );
         }
 
-        // 2. Verify the on-chain validator now lists the loser passkey under
-        //    the winner wallet. The frontend has already waited on the tx
-        //    receipt with 8 confirmations before invoking this endpoint, so
-        //    a missing or mismatched pubkey here means either the userOp
-        //    never landed for this credential or the client raced ahead.
+        // Verify the on-chain validator now lists the loser passkey under
+        // the winner wallet. A missing/mismatched pubkey means the userOp
+        // never landed for this credential, or the client raced ahead.
         const onChainPubkey = await this.webAuthNValidatorReader.getPasskey({
             smartWallet: preview.winner,
             authenticatorId: preview.loserAuthenticatorId,
@@ -286,12 +273,10 @@ export class WalletMergeOrchestrator {
             );
         }
 
-        // 3. Repoint the loser's binding AND collapse the identity graphs in
-        //    a single postgres transaction. Email is stored as an identity
-        //    node on the wallet's identity group, so it moves with the loser
-        //    group during the merge. When both sides held a different email
-        //    `mergeGroups` reconciles them to a single active email on the
-        //    anchor (verified first, then most recent), retiring the rest.
+        // Repoint the loser's binding and collapse the identity graphs in a
+        // single transaction. Email is an identity node on the wallet's
+        // group, so it moves with the loser group; `mergeGroups` reconciles
+        // differing emails to a single active one on the anchor.
         const mergeResult = await db.transaction(async (tx) => {
             await this.walletBindingRepository.repointBinding({
                 credentialId: preview.loserAuthenticatorId,
@@ -306,13 +291,10 @@ export class WalletMergeOrchestrator {
                 tx,
             });
         });
-        // Evict caches AFTER the transaction commits. Doing this inside the
-        // transaction would let concurrent readers repopulate from
-        // pre-commit state.
-        //
+        // Evict caches after the transaction commits — doing it inside
+        // would let concurrent readers repopulate from pre-commit state.
         // `invalidateCachesForGroup` drops the `(groupId → wallet)` mapping
-        // for every absorbed group so callers holding a stale loserGroupId
-        // resolve to null instead of the now-soft-unlinked loser wallet.
+        // for every absorbed group so stale readers resolve to null.
         for (const absorbedGroupId of [
             ...mergeResult.mergedGroupIds,
             ...mergeResult.previouslyMergedGroupIds,
@@ -320,10 +302,9 @@ export class WalletMergeOrchestrator {
             this.identityRepository.invalidateCachesForGroup(absorbedGroupId);
             this.identityWeightService.invalidateWeight(absorbedGroupId);
         }
-        // The anchor group's weight changed (it just absorbed assets,
-        // referrals, and interactions from the loser side). Without an
-        // explicit invalidation, the 30s TTL would serve stale counts to
-        // any preview that races against a follow-up merge.
+        // The anchor group's weight changed (absorbed assets, referrals,
+        // interactions). Without invalidation, the 30s TTL would serve
+        // stale counts to a preview racing a follow-up merge.
         const winnerGroup = await this.identityRepository.findGroupByIdentity({
             type: "wallet",
             value: preview.winner,
@@ -331,14 +312,12 @@ export class WalletMergeOrchestrator {
         if (winnerGroup) {
             this.identityWeightService.invalidateWeight(winnerGroup.id);
         }
-        // Chain cache lives on `referralLinkRepository`; `mergeGroups` skips
-        // the auto-clear when an outer `tx` is supplied so we clear it here
-        // (the outer transaction is now committed).
+        // `mergeGroups` skips its auto-clear when an outer `tx` is supplied,
+        // so the referral chain cache is cleared here instead, post-commit.
         this.identityMergeService.clearReferralChainCache();
         // Merchant caches need the same post-commit eviction — the merge
-        // rewrote `owner_wallet` and `merchant_admins` for the touched
-        // merchants, and the repository's id/domain/productId LRUs still
-        // serve the pre-merge row otherwise (60-min TTL).
+        // rewrote `owner_wallet`/`merchant_admins`, and the repository's
+        // LRUs would otherwise serve the pre-merge row for up to 60 min.
         this.identityMergeService.invalidateMerchantCaches(
             mergeResult.affectedMerchantIds
         );
@@ -353,23 +332,14 @@ export class WalletMergeOrchestrator {
             "Wallet merge settled"
         );
 
-        // 4. Mint a fresh wallet session for the loser credential.
-        //    The credential's binding now points at the winner wallet
-        //    (step 3), but any JWT issued before settlement still
-        //    references the stale loser address — both the requester
-        //    (same-device, when they authenticated with the loser
-        //    credential) and the paired peer (cross-device, when the
-        //    peer device holds the loser credential) need a fresh JWT.
+        // Mint a fresh wallet session for the loser credential: its binding
+        // now points at the winner wallet, but any JWT issued before
+        // settlement still references the stale loser address.
         //
-        //    Same-device contract: returned in the HTTP response only
-        //    when the requester is the loser (their existing JWT no
-        //    longer resolves correctly).
-        //
-        //    Cross-device contract: minted whenever a pairing carried
-        //    the flow, so the orchestrator can push it on the loser's
-        //    pairing topic via `merge-completed`. The HTTP response
-        //    still only carries it when the requester is the loser, to
-        //    keep the same-device contract unchanged.
+        // Same-device: returned in the HTTP response only when the requester
+        // is the loser. Cross-device: minted whenever a pairing carried the
+        // flow and pushed via `merge-completed`; the HTTP response still
+        // only carries it when the requester is the loser.
         const requesterIsLoser =
             params.requesterAuthenticatorId === preview.loserAuthenticatorId;
         const needsLoserSession = requesterIsLoser || !!params.pairingId;
@@ -443,9 +413,8 @@ export class WalletMergeOrchestrator {
             return null;
         }
 
-        // Both bindings point to the same wallet — the merge has already
-        // settled. Reconstruct who the loser was so we can mint the right
-        // session and report a meaningful `loser` field.
+        // Both bindings point to the same wallet — already settled.
+        // Reconstruct the loser to mint the right session and report it.
         const winner = requesterActive.smartWalletAddress;
         const requesterIsLoser = !isAddressEqual(
             params.requesterWallet,
@@ -460,10 +429,9 @@ export class WalletMergeOrchestrator {
         if (!resolved) return null;
         const { loser, loserAuthenticatorId } = resolved;
 
-        // Mint the loser-side session when the requester is the loser (their
-        // JWT references the stale pre-merge address) or when a pairing
-        // carried the flow (peer device needs the fresh JWT pushed over the
-        // merge-completed topic).
+        // Mint the loser-side session when the requester is the loser (JWT
+        // references the stale pre-merge address) or a pairing carried the
+        // flow (peer device needs the fresh JWT pushed).
         const needsLoserSession = requesterIsLoser || !!params.pairingId;
         const loserSession = needsLoserSession
             ? await this.walletSessionOrchestrator.mintSessionForExplicitWallet(
@@ -474,10 +442,8 @@ export class WalletMergeOrchestrator {
               )
             : undefined;
 
-        // Re-broadcast merge-completed on retry so a loser device that
-        // missed the original event still picks up its fresh session.
-        // Cheap and idempotent on the loser side (applySession overrides
-        // any stale session).
+        // Re-broadcast on retry so a loser device that missed the original
+        // event still gets its fresh session; idempotent on the loser side.
         if (params.pairingId && loserSession) {
             await this.pairingRouterOrchestrator.broadcastMergeCompleted({
                 pairingId: params.pairingId,
@@ -512,17 +478,14 @@ export class WalletMergeOrchestrator {
      * history, used by `detectSettledMerge` to populate the idempotent
      * response.
      *
-     * When the requester is the loser (their JWT carries the pre-merge
-     * loser address), we cross-check the JWT's claimed wallet against the
-     * loser credential's own unlinked binding row. Without this check a
-     * captured pre-merge JWT could be replayed against any post-merge
-     * `/settle` to upgrade a stolen short-lived token into a long-lived
+     * When the requester is the loser, their JWT's claimed wallet is
+     * cross-checked against the loser credential's own unlinked binding row.
+     * Without this, a captured pre-merge JWT could be replayed against a
+     * post-merge `/settle` to upgrade a stolen token into a long-lived
      * winner-bound session without ever presenting the passkey.
      *
-     * Returns `null` when the state is ambiguous (no merged unlinked row
-     * on either side, or a mismatch between the requester's claim and the
-     * binding history); callers should fall through to the normal flow,
-     * which will surface the inconsistency with a clearer error.
+     * Returns `null` when the state is ambiguous; callers fall through to
+     * the normal flow, which surfaces the inconsistency with a clearer error.
      */
     private async resolveSettledLoser(params: {
         requesterIsLoser: boolean;

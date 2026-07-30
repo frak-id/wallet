@@ -18,8 +18,7 @@ describe("pendingActionsStore — dedupe key", () => {
             ticket: "ticket-b",
         });
 
-        // Same merchantId + anonymousId, but DIFFERENT tickets: per README §5
-        // ("tickets are per-resolve, not per-identity"), these are distinct
+        // Same merchantId + anonymousId, but different tickets: distinct
         // pending actions, not a dedupe collision.
         const actions = pendingActionsStore.getState().getValidActions();
         expect(actions).toHaveLength(2);
@@ -78,12 +77,10 @@ describe("pendingActionsStore — dedupe key", () => {
     });
 });
 
-describe("pendingActionsStore — version/migrate (README §5 step 1)", () => {
+describe("pendingActionsStore — version/migrate", () => {
     test("migrate never throws and preserves actions from an unversioned payload", async () => {
-        // Simulates a `frak_pending_actions_store` payload written by a
-        // build that predates the `version`/`migrate` addition — zustand's
-        // `persist` treats a missing `version` field as version 0 and
-        // always invokes `migrate`.
+        // A payload from before the `version`/`migrate` addition — zustand's
+        // `persist` treats a missing `version` as 0 and always invokes `migrate`.
         const persistedState = {
             actions: [
                 {

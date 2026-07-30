@@ -6,23 +6,18 @@ import type { IdentityWeightService } from "./IdentityWeightService";
 import type { GroupWeight } from "./types";
 
 /**
- * Regression tests for the two independent WALLET_CONFLICT throw sites
- * (README §9 open question 1, closed by §3.8):
+ * Regression tests for the two independent WALLET_CONFLICT throw sites:
  *
  *  - `associate()` — reached from `/merge/execute` via
  *    `AnonymousMergeOrchestrator.executeMerge`. Checks the two resolved
  *    weights inline.
- *  - `resolveAndAssociate()` — reached from `/identity/ensure` (and, before
- *    §3.9, from `track/*`). Internally delegates to
- *    `IdentityWeightService.determineAnchorFromMultiple` — a *different*
- *    throw site than the one `associate()` uses.
+ *  - `resolveAndAssociate()` — reached from `/identity/ensure`. Internally
+ *    delegates to `IdentityWeightService.determineAnchorFromMultiple` — a
+ *    *different* throw site than the one `associate()` uses.
  *
  * Both must refuse a merge between two groups holding two different
- * wallets. This is the guard that stops a hostile merge from reassigning a
- * victim's rewards once they finally connect their own wallet (README §1,
- * "the consequence that is worse than theft") — and, per §3.8, the backend
- * half of turning that refusal into a clean, non-retryable error instead of
- * a silent 7-day retry loop on the wallet.
+ * wallets, turning that refusal into a clean, non-retryable error instead
+ * of a silent 7-day retry loop on the wallet.
  */
 
 const WALLET_A = "0x1111111111111111111111111111111111111111" as const;

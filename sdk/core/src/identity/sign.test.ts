@@ -31,8 +31,7 @@ describe("sign", () => {
             expect(localStorage.getItem("frak-client-id")).toBe(
                 result.clientId
             );
-            // Raw 32-byte private key, stored as 64 lowercase hex chars —
-            // no longer a JWK.
+            // Raw 32-byte private key, stored as 64 lowercase hex chars.
             expect(localStorage.getItem("frak-client-key")).toMatch(
                 /^[0-9a-f]{64}$/
             );
@@ -193,9 +192,8 @@ describe("sign", () => {
         });
 
         it("embeds the public key matching the stored key, across key rotation", async () => {
-            // The pubkey is cached against the key it was derived from, so a
-            // rotated key must miss the cache rather than sign a proof that
-            // carries the previous identity's public key.
+            // The pubkey is cached against the key it was derived from — a
+            // rotated key must miss the cache, not sign with the old pubkey.
             const { clientId: firstId } = await ensureIdentityKey();
 
             const first = await signProof({
@@ -263,11 +261,9 @@ describe("sign", () => {
                 ts,
             });
 
-            // No low-S normalisation (docs/plans/identity-proof-of-possession/README.md
-            // §2.3): plain ECDSA verifiers accept both low- and high-S, so
-            // verification must pass with noble's strict low-S check
-            // disabled — asserting `s <= n/2` here would be wrong, since a
-            // valid signature is no longer guaranteed to satisfy it.
+            // No low-S normalisation: plain ECDSA verifiers accept both
+            // low- and high-S, so verification must pass with strict low-S
+            // disabled — asserting `s <= n/2` here would be wrong.
             expect(
                 p256.verify(decoded.sig, message, decoded.pk, {
                     prehash: true,
@@ -289,15 +285,11 @@ describe("sign", () => {
         });
 
         it("signs via the pure-JS fallback when WebCrypto is unavailable", async () => {
-            // `webCryptoP256.isSupported()` caches its result inside
-            // `@noble/curves/webcrypto.js`'s own module scope, which
-            // `vi.resetModules()` does not reliably re-evaluate for an
-            // external package already loaded by an earlier test in this
-            // file. Force the fallback deterministically by mocking
-            // `isSupported` to resolve `false`, rather than by tearing down
-            // `crypto.subtle` — same effect `sign.ts` observes in a real
-            // non-secure-context browser (README §2.4), without depending on
-            // module-cache reset behaviour that only holds for local files.
+            // `isSupported()` caches its result inside `@noble/curves`'s own
+            // module scope, which `vi.resetModules()` won't reliably
+            // re-evaluate for an already-loaded external package. Mock it to
+            // force the fallback deterministically instead of tearing down
+            // `crypto.subtle`.
             vi.doMock("@noble/curves/webcrypto.js", async () => {
                 const actual = await vi.importActual<
                     typeof import("@noble/curves/webcrypto.js")

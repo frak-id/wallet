@@ -11,36 +11,24 @@ import { sha256 } from "@oslojs/crypto/sha2";
 import { infraMetrics } from "../../../infrastructure/telemetry";
 
 /**
- * Per-op validity windows (README §2.2), seconds.
+ * Per-op validity windows, seconds. Backend policy, not the frozen wire
+ * format, so revisable independently of `canonical.ts`.
  *
- * `frak-ensure-v1` is 30 days here, NOT the 90 days the README table lists —
- * see `docs/plans/identity-proof-of-possession/DECISIONS.md` §3 divergence
- * D5. The 90-day justification is the install→forget→reopen funnel, which
- * runs on the wallet's ensure arm — and that arm carries a *ticket* (§5),
- * capped at the 7-day `DEFAULT_ENSURE_TTL_MS` pending-action TTL, not this
- * proof. The SDK arm signs in place at call time, so a long window here
- * buys nothing and only extends bearer exposure. This is backend policy,
- * not the frozen wire format, so it stays revisable independently of the
- * byte layout in `canonical.ts`.
+ * `frak-ensure-v1`/`frak-install-v1`: 30 days, long enough to cover the
+ * install→forget→reopen funnel. `frak-merge-v1`: 2 minutes, a live
+ * request-response window.
  */
 const PROOF_WINDOW_SECONDS: Record<ProofOp, number> = {
     "frak-merge-v1": 2 * 60,
     "frak-ensure-v1": 30 * 24 * 60 * 60,
     "frak-install-v1": 30 * 24 * 60 * 60,
-    // `frak-sso-v1` travels in a URL (`?p=` blob) built entirely
-    // client-side, with no server round-trip to hand out a nonce — so the
-    // binding is empty and this window is the ONLY thing bounding replay of
-    // a captured URL. Unlike `frak-ensure-v1`, which rides a request body,
-    // a URL lands in browser history, referrer headers, and copied links.
-    // 10 minutes covers a passkey ceremony plus a retry. It only needs to
-    // outrun the legitimate user: `checkWalletPriority`
-    // (IdentityWeightService) throws WALLET_CONFLICT once both groups have
-    // wallets, so a replay only wins if it completes auth first — this
-    // window is what bounds that race.
+    // `frak-sso-v1` travels in a URL with no server-issued nonce, so this
+    // window is the only thing bounding replay of a captured URL. 10
+    // minutes covers a passkey ceremony plus a retry.
     "frak-sso-v1": 10 * 60,
 };
 
-/** Clock-skew allowance for a future-dated `ts` (README §2.2). */
+/** Clock-skew allowance for a future-dated `ts`. */
 const MAX_FUTURE_SKEW_SECONDS = 60;
 
 export type ProofCheckParams = {
@@ -64,7 +52,7 @@ async function importPublicKey(pk: Uint8Array): Promise<CryptoKey> {
     );
 }
 
-/** Derive the anonymous id the public key claims, per §2.1. */
+/** Derive the anonymous id the public key claims. */
 async function deriveIdFromKey(pk: Uint8Array): Promise<string> {
     const digest = await crypto.subtle.digest("SHA-256", pk as BufferSource);
     return deriveClientIdFromHash(new Uint8Array(digest));
@@ -77,34 +65,21 @@ function isFresh(ts: number, now: number, windowSeconds: number): boolean {
 }
 
 /**
- * Verifies identity proof-of-possession signatures (README §2.1-§2.3).
- *
- * Stateless and pure: no repository, no cross-domain import. It answers one
- * question — "is this proof a valid signature, by the key that derives this
- * id, within this op's window?" — and nothing about identity-graph state
- * (the §4.6 `proofSeen` latch is a separate concern, read by the caller).
- *
- * Verification lives here rather than in the SDK because only the backend
- * ever verifies. The SDK contributes the frozen, shared halves — the
- * canonical byte layout and the derivation — which both sides must agree on
- * to the byte; signing is the SDK's job, verifying is ours.
+ * Verifies identity proof-of-possession signatures. Stateless and pure —
+ * answers only "is this a valid signature, by the key that derives this id,
+ * within this op's window?"; the `proofSeen` latch is a separate concern,
+ * read by the caller.
  *
  * WebCrypto only (native under Bun): every P-256 signature we accept was
- * produced against a curve WebCrypto implements, so there is no fallback
- * path and no reason to pull in `@noble/curves` server-side.
+ * produced against a curve WebCrypto implements.
  */
 export class IdentityProofService {
     /**
-     * Verify a proof, in the order §2.2 mandates:
-     *
-     *   1. derive id from `pk`  → must equal the claimed `anonymousId`
-     *   2. verify sig over the recomposed message
-     *   3. check `ts` against the op's window
-     *
-     * Step 1 is what makes a key registry unnecessary: the claimed id is
-     * self-authenticating against the embedded public key, so an attacker
-     * cannot submit an arbitrary `pk` and have it accepted for someone
-     * else's id.
+     * Derive id from `pk` (must equal claimed `anonymousId`), verify the
+     * signature, then check `ts` against the op's window. Deriving first is
+     * what makes a key registry unnecessary: the id is self-authenticating
+     * against the embedded key, so an attacker can't submit an arbitrary
+     * `pk` and have it accepted for someone else's id.
      */
     async verify(params: ProofCheckParams): Promise<ProofVerification> {
         const result = await this.check(params);
@@ -211,7 +186,7 @@ export class IdentityProofService {
         }
     }
 
-    /** Raw SHA-256 digest of a merge token, for the `frak-merge-v1` binding (§2.2). */
+    /** Raw SHA-256 digest of a merge token, for the `frak-merge-v1` binding. */
     hashMergeToken(mergeToken: string): Uint8Array {
         return sha256(new TextEncoder().encode(mergeToken));
     }

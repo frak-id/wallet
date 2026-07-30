@@ -3,10 +3,8 @@
  *
  * Imported by both the browser signer (`sign.ts`) and the backend verifier
  * (`IdentityProofService`), so it must stay a pure type module with no
- * runtime code and no crypto import.
- *
- * See `docs/plans/identity-proof-of-possession/README.md` §2.1-§2.3 for the
- * design this implements, and `canonical.ts` for the frozen byte layout.
+ * runtime code and no crypto import. See `canonical.ts` for the frozen
+ * byte layout.
  */
 
 /**
@@ -22,7 +20,7 @@ export type ProofOp =
     | "frak-sso-v1";
 
 /**
- * Decoded wire envelope, §2.3. `pk` and `sig` are raw bytes here — the
+ * Decoded wire envelope. `pk` and `sig` are raw bytes here — the
  * base64url/JSON encoding only exists on the wire, see `encodeProof` /
  * `decodeProof` in `canonical.ts`.
  */

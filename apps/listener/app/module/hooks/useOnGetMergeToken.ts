@@ -20,10 +20,9 @@ export function createGetMergeTokenHandler(): OnGetMergeToken {
         const { merchantId, clientId } = context;
         if (!clientId || !merchantId) return null;
 
-        // `params[0]` carries the SDK's frak-merge-v1 proof (README §4.2).
-        // Old SDKs send no params at all, so this is `undefined` for them —
-        // forwarded as `proof: undefined`, which the JSON body serialiser
-        // drops, leaving the request byte-identical to before.
+        // `params[0]` carries the SDK's frak-merge-v1 proof. Old SDKs send no
+        // params, so this is `undefined` and gets dropped by the body
+        // serialiser — request stays byte-identical to before.
         const proof = params?.[0];
         const { data } =
             await authenticatedBackendApi.user.identity.merge.initiate.post({

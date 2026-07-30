@@ -98,12 +98,11 @@ export class IdentityRepository {
     }
 
     /**
-     * Node-level lookup (README §4.6 latch). Unlike `findGroupByIdentity`, this
-     * returns the raw node — `proofSeenAt` lives on the node, not the group —
-     * so it cannot be answered by resolving to a group. Hits the same unique
-     * constraint `(identity_type, identity_value, merchant_id)`, no new index.
-     * Uncached: only ever called on the proof-absent path (README §7 Phase
-     * 4a — "zero extra query" is about the *proven* path, not this one).
+     * Node-level lookup for the proof-of-possession latch. Unlike
+     * `findGroupByIdentity`, returns the raw node since `proofSeenAt` lives
+     * on the node, not the group. Hits the same unique constraint
+     * `(identity_type, identity_value, merchant_id)`, no new index.
+     * Uncached: only called on the proof-absent path.
      */
     async findNodeByIdentity(params: {
         type: IdentityType;
@@ -124,12 +123,11 @@ export class IdentityRepository {
     }
 
     /**
-     * One-way proof-of-possession latch (README §4.6). Idempotent: only
-     * writes when `proofSeenAt` is still `NULL`, so it never overwrites or
-     * clears an existing stamp — an id that has ever proven itself stays
-     * latched forever. A no-op when the node doesn't exist yet (the caller
-     * may be proving a brand-new id whose node is created moments later by
-     * `resolveAndAssociate`; see `AnonymousMergeOrchestrator.initiateMerge`).
+     * One-way proof-of-possession latch. Idempotent: only writes when
+     * `proofSeenAt` is still `NULL`, so an id that has proven itself once
+     * stays latched forever. No-op when the node doesn't exist yet (the
+     * caller may be proving a brand-new id whose node is created moments
+     * later by `resolveAndAssociate`).
      */
     async markProofSeen(params: {
         type: IdentityType;
@@ -179,7 +177,7 @@ export class IdentityRepository {
         // Filter out soft-unlinked nodes (loser wallets from a prior
         // merge) so the resolution is deterministic. `ORDER BY createdAt`
         // gives a stable choice when a group legitimately holds multiple
-        // active wallets (e.g. multi-passkey accounts post-Phase-1).
+        // active wallets (e.g. multi-passkey accounts).
         const walletNode = await db.query.identityNodesTable.findFirst({
             where: and(
                 eq(identityNodesTable.groupId, groupId),

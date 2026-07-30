@@ -41,13 +41,11 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
             body: t.Object({
                 sourceAnonymousId: t.Optional(t.String()),
                 merchantId: t.String({ format: "uuid" }),
-                // frak-merge-v1 proof binding sourceAnonymousId (README §4.2).
-                // Latch-gated whenever sourceAnonymousId is supplied
-                // (DUAL-ARM-PLAN.md D-A, WS-BE-1 — reverts the previous
-                // unconditional-403 regime so legacy ids, which can never
-                // sign, keep working as merge sources until they first
-                // latch). The wallet-session arm (no sourceAnonymousId) is
-                // untouched.
+                // frak-merge-v1 proof binding sourceAnonymousId. Latch-gated
+                // whenever sourceAnonymousId is supplied — legacy ids, which
+                // can never sign, keep working as merge sources until they
+                // first latch. The wallet-session arm (no sourceAnonymousId)
+                // is untouched.
                 proof: t.Optional(t.String()),
             }),
             response: {
@@ -86,9 +84,9 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 targetAnonymousId: t.String(),
                 merchantId: t.String({ format: "uuid" }),
                 // frak-merge-v1 proof binding targetAnonymousId and
-                // SHA-256(mergeToken) (README §2.2, §4.3). Required only once
-                // targetAnonymousId has previously proven itself (Phase 4a
-                // latch); unlatched/legacy ids keep working without one.
+                // SHA-256(mergeToken). Required only once targetAnonymousId
+                // has previously proven itself (latch); unlatched/legacy ids
+                // keep working without one.
                 proof: t.Optional(t.String()),
             }),
             response: {

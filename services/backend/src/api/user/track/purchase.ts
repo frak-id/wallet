@@ -83,8 +83,8 @@ export const trackPurchaseRoute = new Elysia().post(
                     customerId,
                     orderId,
                     token: body.token,
-                    // §3.9: this route is reachable with an unauthenticated
-                    // x-frak-client-id — never merge identity groups from here.
+                    // Reachable with an unauthenticated x-frak-client-id —
+                    // never merge identity groups from here.
                     merge: false,
                 }
             );
