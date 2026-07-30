@@ -209,6 +209,8 @@ export {
     useUnredeemReferralCode,
 } from "./referral";
 export {
+    buildInstallUrl,
+    buildPlayStoreInstallUrl,
     buildSharingLink,
     CopyIcon,
     clearConfirmation,

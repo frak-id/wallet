@@ -10,6 +10,7 @@ import { CloseIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import {
     APP_STORE_URL,
     authenticatedBackendApi,
+    buildPlayStoreInstallUrl,
     CodeInput,
     ExternalLink,
     getSafeSession,
@@ -301,22 +302,11 @@ function InstallCodeView({
     const downloadUrl = useMemo(() => {
         if (!isAndroid) return APP_STORE_URL;
         if (!merchantId || !anonymousId) return PLAY_STORE_URL;
-        // Both arms travel in the referrer (DUAL-ARM-PLAN.md D-C/WS-3 W2):
-        // `proof` is additive, appended only when present, and the legacy
-        // `merchantId`/`anonymousId` keys keep their existing positions so a
-        // binary parsing with `URLSearchParams` (pre-W3) reads exactly what
-        // it reads today and silently ignores the extra key.
-        //
-        // Measured against the real `frak-install-v1` golden fixture (plan
-        // D-C): proof ~184 chars (base64url has no reserved chars, so
-        // encodeURIComponent is a no-op on it); full dual string ~281 chars
-        // raw, ~281 encoded as the referrer value — 27% of the Play
-        // referrer's ~1024-char cap. Comfortable; re-measure if more keys
-        // are ever added here.
-        const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}${
-            proof ? `&proof=${proof}` : ""
-        }`;
-        return `${PLAY_STORE_URL}&referrer=${encodeURIComponent(referrerData)}`;
+        return buildPlayStoreInstallUrl({
+            merchantId,
+            anonymousId,
+            installProof: proof,
+        });
     }, [merchantId, anonymousId, proof, isAndroid]);
 
     const handleCopy = useCallback(async () => {

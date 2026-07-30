@@ -1,8 +1,9 @@
-import { log, rateLimitMiddleware } from "@backend-infrastructure";
+import { rateLimitMiddleware } from "@backend-infrastructure";
 import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { IdentityContext } from "../../../domain/identity/context";
 import { MerchantContext } from "../../../domain/merchant/context";
+import { verifyProofUnenforced } from "../../../orchestration/identity/latchedProof";
 
 const installCodeGenerateRoute = new Elysia()
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
@@ -26,20 +27,14 @@ const installCodeGenerateRoute = new Elysia()
             // protection is the ticket minted by `resolve` below, not this
             // proof.
             if (proof) {
-                const proofResult =
-                    await IdentityContext.services.identityProof.verify({
-                        op: "frak-install-v1",
-                        proof,
-                        merchantId,
-                        anonymousId,
-                        binding: new Uint8Array(0),
-                    });
-                if (!proofResult.valid) {
-                    log.info(
-                        { merchantId, anonymousId, reason: proofResult.reason },
-                        "Install proof present but invalid (Phase 2: logged, not enforced)"
-                    );
-                }
+                await verifyProofUnenforced({
+                    op: "frak-install-v1",
+                    proof,
+                    merchantId,
+                    anonymousId,
+                    identityProofService:
+                        IdentityContext.services.identityProof,
+                });
             }
 
             const result = await IdentityContext.services.installCode.generate({

@@ -5,6 +5,7 @@ import type {
 } from "@frak-labs/core-sdk";
 import {
     authenticatedBackendApi,
+    buildInstallUrl,
     buildSharingLink,
     clearConfirmation,
     clientIdStore,
@@ -328,7 +329,7 @@ function WalletSharingPage() {
     // proof.
     const installUrl = useMemo(() => {
         if (!(merchantId && clientId)) return null;
-        return `/install?m=${encodeURIComponent(merchantId)}&a=${encodeURIComponent(clientId)}`;
+        return buildInstallUrl({ merchantId, clientId });
     }, [merchantId, clientId]);
 
     // Check sessionStorage for a recent confirmation. A host that completed a

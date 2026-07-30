@@ -6,6 +6,7 @@ import {
 } from "@frak-labs/wallet-shared/common";
 import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
 import {
+    buildInstallUrl,
     buildSharingLink,
     clearConfirmation,
     getSavedConfirmation,
@@ -19,7 +20,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useStore } from "zustand";
 import { useTrackSharing } from "@/module/hooks/useTrackSharing";
-import { buildInstallUrl } from "@/module/sharing/buildInstallUrl";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {

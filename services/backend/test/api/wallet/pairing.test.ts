@@ -594,8 +594,9 @@ describe("Wallet Pairing Management Routes API", () => {
  * merged onto the joiner's wallet via `identityOrchestrator.resolveAndAssociate`
  * in `handleJoin`. That merge path has been deleted end-to-end: the
  * orchestrator no longer takes an `IdentityOrchestrator` dependency at all,
- * so a legacy row that still has `originNode` set (pre-existing DB data,
- * since the column itself is left in place) can no longer trigger a merge.
+ * so a row that still has `originNode` set can no longer trigger a merge.
+ * The column has since been dropped too, so this now guards the pre-migration
+ * window and any environment whose drop migration has not landed yet.
  */
 describe("PairingOrchestrator handleJoin — no identity merge", () => {
     const joinerWallet = "0x1111111111111111111111111111111111111111";
@@ -657,8 +658,8 @@ describe("PairingOrchestrator handleJoin — no identity merge", () => {
             pairingCode: "123456",
             resolvedAt: null,
             authenticatorHints: null,
-            // Pre-existing DB data: column is intentionally left in the schema,
-            // but nothing should read or act on it anymore.
+            // A row shape only reachable before the drop migration lands;
+            // nothing should read or act on it either way.
             originNode: victimFingerprintNode,
         } as never);
 

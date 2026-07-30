@@ -1,3 +1,4 @@
+import { HttpError } from "@backend-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { JwtContextMock } from "../../../../test/mock/common";
 import type { InstallCodeRepository } from "../repositories/InstallCodeRepository";
@@ -18,6 +19,35 @@ describe("InstallCodeService", () => {
     beforeEach(() => {
         JwtContextMock.installTicket.sign.mockClear();
         JwtContextMock.installTicket.verify.mockClear();
+    });
+
+    describe("resolve", () => {
+        it("returns the merchantId/anonymousId for a valid code", async () => {
+            const { service, repository } = makeService();
+            repository.findByCode.mockResolvedValue({
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+            });
+
+            const result = await service.resolve({ code: "ABC123" });
+
+            expect(result).toEqual({
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+            });
+        });
+
+        it("throws CODE_NOT_FOUND when the code is expired, unknown, or attempt-exhausted", async () => {
+            const { service, repository } = makeService();
+            repository.findByCode.mockResolvedValue(null);
+
+            await expect(
+                service.resolve({ code: "ABC123" })
+            ).rejects.toBeInstanceOf(HttpError);
+            await expect(
+                service.resolve({ code: "ABC123" })
+            ).rejects.toMatchObject({ code: "CODE_NOT_FOUND", status: 404 });
+        });
     });
 
     describe("mintTicket", () => {

@@ -180,8 +180,9 @@ empty-string id rather than omitting the field.
 > **Status: ✅ FIXED.** `originNode` deleted end-to-end (producers, transport, server
 > parsing, persistence, and the merge in `handleJoin`). `PairingOrchestrator` no longer
 > depends on `IdentityOrchestrator` at all, so even a legacy DB row that still carries an
-> `origin_node` value cannot trigger a merge. The `origin_node` column itself is left in
-> place — dropping it needs a db-team migration (`services/backend/AGENTS.md`).
+> `origin_node` value cannot trigger a merge. The `origin_node` column has since been
+> dropped as well (`drizzle/local/0036`, `drizzle/dev/0040`); `prod` still needs its own
+> generated migration before this branch is promoted there.
 >
 > The link it used to make is still established afterwards, proof-gated, by
 > `/identity/ensure`. Plan: `MERGE-SURFACE-CLEANUP.md` (C2).
@@ -726,8 +727,9 @@ Conflict hotspots, each owned by a single worker: `sdkIdentity.ts` (C2+C3),
   rejections before relying on it.
 - ✅ **The pairing WS `originNode` merge** (§1.6) — **fixed**, deleted end-to-end.
 - ✅ **Webhook cart-attribute attribution** (§1.7) — **fixed**, first-writer-wins.
-- ⚠️ **`origin_node` column still exists** on `device_pairing`, now unused and never
-  written. Needs a db-team `DROP COLUMN` migration to finish the cleanup.
+- ✅ **`origin_node` column dropped** from `device_pairing` (`drizzle/local/0036`,
+  `drizzle/dev/0040`). The `prod` migration history still needs the equivalent generated
+  migration before this branch is deployed there.
 - **The merge-surface enumeration is now believed complete** (§1.8 lists what was checked
   and found inert). Three sweeps were needed to get here; treat any new
   `resolveAndAssociate`/`associate` caller as security-relevant by default.

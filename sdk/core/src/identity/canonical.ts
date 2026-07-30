@@ -45,10 +45,12 @@
  *          uncompressed so a verifier can derive the id with a plain hash
  *          and `importKey("raw", …)`, with no point decompression and
  *          therefore no curve library.
- *   sig := raw r‖s ECDSA, 64 bytes. NOT low-S normalised — see §2.3: plain
- *          ECDSA verifiers (WebCrypto, CryptoKit, Android) accept both, and
- *          the malleability low-S prevents is irrelevant here because the
- *          signature is never hashed into an identifier.
+ *   sig := raw r‖s ECDSA, 64 bytes. Low-S normalisation is NOT guaranteed —
+ *          see §2.3: the pure-JS signer normalises, WebCrypto does not, and
+ *          verifiers must accept both. Plain ECDSA verifiers (WebCrypto,
+ *          CryptoKit, Android) do, and the malleability low-S prevents is
+ *          irrelevant here because the signature is never hashed into an
+ *          identifier.
  */
 
 import type { ProofEnvelope, ProofOp } from "./types";
@@ -96,12 +98,7 @@ export function uuidToBytes(value: string, label: string): Uint8Array {
     if (!UUID_RE.test(value)) {
         throw new Error(`${label} must be a UUID string, got: ${value}`);
     }
-    const hex = value.replace(/-/g, "");
-    const out = new Uint8Array(UUID_BYTES);
-    for (let i = 0; i < UUID_BYTES; i++) {
-        out[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-    }
-    return out;
+    return hexToBytes(value.replace(/-/g, ""));
 }
 
 function writeUint64be(target: Uint8Array, offset: number, value: number) {
@@ -188,8 +185,14 @@ export function deriveClientIdFromHash(hash: Uint8Array): string {
     ].join("-");
 }
 
-function bytesToHex(bytes: Uint8Array): string {
+export function bytesToHex(bytes: Uint8Array): string {
     return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export function hexToBytes(hex: string): Uint8Array {
+    return Uint8Array.from(hex.match(/../g) ?? [], (byte) =>
+        Number.parseInt(byte, 16)
+    );
 }
 
 // ---------------------------------------------------------------------------

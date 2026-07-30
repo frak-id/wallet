@@ -14,7 +14,12 @@
 
 import { p256 as pureJsP256 } from "@noble/curves/nist.js";
 import { p256 as webCryptoP256 } from "@noble/curves/webcrypto.js";
-import { buildProofMessage, encodeProof } from "./canonical";
+import {
+    buildProofMessage,
+    bytesToHex,
+    encodeProof,
+    hexToBytes,
+} from "./canonical";
 import { deriveClientId } from "./derive";
 import type { ProofOp } from "./types";
 
@@ -54,13 +59,26 @@ function getSigner() {
     return signerPromise;
 }
 
-const toHex = (bytes: Uint8Array): string =>
-    Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+const hasLocalStorage = (): boolean =>
+    typeof window !== "undefined" && Boolean(window.localStorage);
 
-const fromHex = (hex: string): Uint8Array =>
-    Uint8Array.from(hex.match(/../g) ?? [], (byte) =>
-        Number.parseInt(byte, 16)
-    );
+/**
+ * Uncompressed public key for the stored private key.
+ *
+ * Deriving it is a full base-point multiplication, and every proof needs it,
+ * so it is cached against the key hex it came from — a rotated or cleared key
+ * misses and re-derives.
+ */
+let publicKeyCache: { keyHex: string; publicKey: Uint8Array } | null = null;
+
+function publicKeyFor(privateKey: Uint8Array): Uint8Array {
+    const keyHex = bytesToHex(privateKey);
+    if (publicKeyCache?.keyHex === keyHex) return publicKeyCache.publicKey;
+
+    const publicKey = pureJsP256.getPublicKey(privateKey, false);
+    publicKeyCache = { keyHex, publicKey };
+    return publicKey;
+}
 
 export type IdentityKeyMaterial = {
     /** The anonymous id. Always derived from the keypair, always provable. */
@@ -80,7 +98,7 @@ export type IdentityKeyMaterial = {
  * retry a migration whose merge never confirmed.
  */
 export function getPendingLegacyId(): string | undefined {
-    if (typeof window === "undefined" || !window.localStorage) return undefined;
+    if (!hasLocalStorage()) return undefined;
     return localStorage.getItem(CLIENT_ID_LEGACY_KEY) ?? undefined;
 }
 
@@ -90,7 +108,7 @@ export function getPendingLegacyId(): string | undefined {
  * migration retry rather than silently orphan the legacy id.
  */
 export function clearPendingLegacyId(): void {
-    if (typeof window === "undefined" || !window.localStorage) return;
+    if (!hasLocalStorage()) return;
     localStorage.removeItem(CLIENT_ID_LEGACY_KEY);
 }
 
@@ -105,7 +123,7 @@ function loadPrivateKey(): Uint8Array | null {
     if (!/^[0-9a-f]{64}$/i.test(stored)) {
         throw new Error("[Frak SDK] Corrupt client key");
     }
-    return fromHex(stored);
+    return hexToBytes(stored);
 }
 
 /**
@@ -122,7 +140,7 @@ function loadPrivateKey(): Uint8Array | null {
  * `getClientId()` and handle `undefined`.
  */
 export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
-    if (typeof window === "undefined" || !window.localStorage) {
+    if (!hasLocalStorage()) {
         throw new Error(
             "[Frak SDK] No window/localStorage available to derive a client id"
         );
@@ -143,9 +161,7 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
     try {
         const existingKey = loadPrivateKey();
         const privateKey = existingKey ?? pureJsP256.utils.randomSecretKey();
-        const derivedId = await deriveClientId(
-            pureJsP256.getPublicKey(privateKey, false)
-        );
+        const derivedId = await deriveClientId(publicKeyFor(privateKey));
 
         if (existingKey) {
             // §2.3 atomicity: the key is authoritative. A missing or
@@ -178,7 +194,7 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         }
 
         // Store key and id together (§2.3) — never one without the other.
-        localStorage.setItem(CLIENT_KEY_KEY, toHex(privateKey));
+        localStorage.setItem(CLIENT_KEY_KEY, bytesToHex(privateKey));
         localStorage.setItem(CLIENT_ID_KEY, derivedId);
 
         return {
@@ -190,6 +206,7 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         // the next visit regenerates cleanly, then rethrow — an unprovable id
         // is not an acceptable substitute.
         localStorage.removeItem(CLIENT_KEY_KEY);
+        publicKeyCache = null;
         throw error;
     }
 }
@@ -206,7 +223,7 @@ export async function signProof(params: {
     binding?: Uint8Array;
     ts?: number;
 }): Promise<string | null> {
-    if (typeof window === "undefined" || !window.localStorage) return null;
+    if (!hasLocalStorage()) return null;
 
     try {
         const privateKey = loadPrivateKey();
@@ -229,7 +246,7 @@ export async function signProof(params: {
 
         return encodeProof({
             v: 1,
-            pk: pureJsP256.getPublicKey(privateKey, false),
+            pk: publicKeyFor(privateKey),
             ts,
             sig,
         });

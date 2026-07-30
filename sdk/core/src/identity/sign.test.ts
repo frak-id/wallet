@@ -192,6 +192,41 @@ describe("sign", () => {
             expect(decoded?.v).toBe(1);
         });
 
+        it("embeds the public key matching the stored key, across key rotation", async () => {
+            // The pubkey is cached against the key it was derived from, so a
+            // rotated key must miss the cache rather than sign a proof that
+            // carries the previous identity's public key.
+            const { clientId: firstId } = await ensureIdentityKey();
+
+            const first = await signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: firstId,
+            });
+
+            localStorage.clear();
+            const { clientId: secondId } = await ensureIdentityKey();
+            const rotatedKey = localStorage.getItem("frak-client-key") ?? "";
+
+            const second = await signProof({
+                op: "frak-ensure-v1",
+                merchantId: MERCHANT_ID,
+                anonymousId: secondId,
+            });
+
+            const firstPk = first ? decodeProof(first)?.pk : null;
+            const secondPk = second ? decodeProof(second)?.pk : null;
+            expect(firstPk).not.toEqual(secondPk);
+            expect(secondPk).toEqual(
+                p256.getPublicKey(
+                    Uint8Array.from(rotatedKey.match(/../g) ?? [], (b) =>
+                        Number.parseInt(b, 16)
+                    ),
+                    false
+                )
+            );
+        });
+
         it("produces a proof for frak-merge-v1 with a binding", async () => {
             const { clientId } = await ensureIdentityKey();
             const binding = new Uint8Array(32).fill(7);

@@ -17,10 +17,10 @@
  *   would serialise as `"[object Promise]"`).
  *
  *   **Prefer `getClientIdAsync` for all internal use.** Every internal caller
- *   has been migrated to it; the one remaining sync read is `openSso`, which
- *   tries the cache first because it must reach `window.open()` in the same
- *   tick as the user gesture. Reading this accessor anywhere that *can* await
- *   silently trades correctness on a cold cache for nothing.
+ *   has been migrated to it; the one remaining sync read is `prepareSsoUrl`,
+ *   which tries the cache first to keep the common path free of an await.
+ *   Reading this accessor anywhere that *can* await silently trades
+ *   correctness on a cold cache for nothing.
  * - {@link getClientIdAsync} — awaits derivation. First caller generates,
  *   concurrent callers join the same in-flight work. Needs no `setupClient`.
  *

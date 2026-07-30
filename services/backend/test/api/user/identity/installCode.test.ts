@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { HttpError } from "../../../../src/utils/httpError";
 
 const {
     mockGenerate,
@@ -186,6 +187,32 @@ describe("Install Code Routes API", () => {
             const data = await response.json();
             expect(data.hasWallet).toBe(true);
             expect(data.ticket).toBe("minted-ticket");
+        });
+
+        it("returns 404 when the code is expired, unknown, or attempt-exhausted", async () => {
+            mockResolve.mockRejectedValue(
+                HttpError.notFound(
+                    "CODE_NOT_FOUND",
+                    "Invalid or expired install code"
+                )
+            );
+
+            const response = await installCodeRoutes.handle(
+                new Request("http://localhost/install-code/resolve", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: "ABC123" }),
+                })
+            );
+
+            expect(response.status).toBe(404);
+            const data = await response.json();
+            expect(data).toEqual({
+                success: false,
+                error: "Invalid or expired install code",
+                code: "CODE_NOT_FOUND",
+            });
+            expect(mockMintTicket).not.toHaveBeenCalled();
         });
     });
 });

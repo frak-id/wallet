@@ -1,3 +1,4 @@
+import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import type { ProofOp } from "@frak-labs/core-sdk/identity";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
@@ -77,4 +78,51 @@ export async function enforceLatchedProof(params: {
     // Unlatched — legacy id, or a derived id that has never proven itself
     // yet. Fail-open, matching today's pre-proof behaviour.
     return false;
+}
+
+/**
+ * Verify a proof for evidence only: log when it is invalid, never reject, and
+ * never require one in the first place.
+ *
+ * The permissive arms that stay open until ROLLOUT-STEP-3 (`/identity/ensure`'s
+ * wallet arm, `install-code/generate`) all need exactly this shape, and a proof
+ * can only add evidence there — it can never remove any, since the same arms
+ * accept a bare `anonymousId`.
+ *
+ * Returns whether a valid proof was presented. As with `enforceLatchedProof`,
+ * callers MUST NOT latch an id on a `false` return.
+ */
+export async function verifyProofUnenforced(params: {
+    op: ProofOp;
+    anonymousId: string;
+    merchantId: string;
+    proof: string;
+    binding?: Uint8Array;
+    identityProofService: IdentityProofService;
+}): Promise<boolean> {
+    const {
+        op,
+        anonymousId,
+        merchantId,
+        proof,
+        binding,
+        identityProofService,
+    } = params;
+
+    const result = await identityProofService.verify({
+        op,
+        proof,
+        merchantId,
+        anonymousId,
+        binding: binding ?? new Uint8Array(0),
+    });
+
+    if (!result.valid) {
+        log.info(
+            { op, merchantId, anonymousId, reason: result.reason },
+            "Identity proof present but invalid (verified, not enforced — ROLLOUT-STEP-3)"
+        );
+    }
+
+    return result.valid;
 }

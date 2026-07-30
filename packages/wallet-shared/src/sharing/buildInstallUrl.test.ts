@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildInstallUrl } from "./buildInstallUrl";
+import { buildInstallUrl, buildPlayStoreInstallUrl } from "./buildInstallUrl";
 
 describe("buildInstallUrl", () => {
     const args = {
@@ -51,6 +51,42 @@ describe("buildInstallUrl", () => {
 
         expect(url).toBe(
             "https://wallet.frak.id/install?m=merchant%20with%20space&a=client%26id"
+        );
+    });
+});
+
+describe("buildInstallUrl same-origin", () => {
+    test("omits the base when none is given", () => {
+        expect(
+            buildInstallUrl({ merchantId: "merchant-1", clientId: "client-1" })
+        ).toBe("/install?m=merchant-1&a=client-1");
+    });
+});
+
+describe("buildPlayStoreInstallUrl", () => {
+    const args = { merchantId: "merchant-1", anonymousId: "anon-1" };
+
+    test("carries merchantId and anonymousId in the referrer", () => {
+        const referrer = new URL(
+            buildPlayStoreInstallUrl(args)
+        ).searchParams.get("referrer");
+
+        expect(new URLSearchParams(referrer ?? "").get("merchantId")).toBe(
+            "merchant-1"
+        );
+        expect(new URLSearchParams(referrer ?? "").get("anonymousId")).toBe(
+            "anon-1"
+        );
+        expect(new URLSearchParams(referrer ?? "").has("proof")).toBe(false);
+    });
+
+    test("appends the proof without moving the legacy keys", () => {
+        const referrer = new URL(
+            buildPlayStoreInstallUrl({ ...args, installProof: "the-proof" })
+        ).searchParams.get("referrer");
+
+        expect(referrer).toBe(
+            "merchantId=merchant-1&anonymousId=anon-1&proof=the-proof"
         );
     });
 });
