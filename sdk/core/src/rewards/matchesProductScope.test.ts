@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { ConditionGroup, RuleCondition, RuleConditions } from "../types";
-import {
-    matchesProductScope,
-    type ProductScopeTarget,
-} from "./matchesProductScope";
+import type {
+    ConditionGroup,
+    ProductDetails,
+    RuleCondition,
+    RuleConditions,
+} from "../types";
+import { matchesProductScope } from "./matchesProductScope";
 
-const product: ProductScopeTarget = {
+const product: ProductDetails = {
     productId: "prod-1",
     sku: "SHOE-42",
     name: "Running Shoe",
@@ -405,8 +407,8 @@ describe("matchesProductScope — parity with backend allowlist", () => {
         "not_exists",
     ] as const;
 
-    it("ProductScopeTarget has exactly the backend's allowlisted fields", () => {
-        const target: Required<ProductScopeTarget> = {
+    it("ProductDetails has exactly the backend's allowlisted fields", () => {
+        const target: Required<ProductDetails> = {
             productId: "x",
             name: "x",
             sku: "x",
@@ -448,8 +450,8 @@ describe("matchesProductScope — numeric comparison with string operands", () =
     // numeric product field. A lexicographic fallback would rank "9" above
     // "10" and silently invert every price/quantity gate.
     it("compares a numeric-string condition value numerically, not lexicographically", () => {
-        const cheap: ProductScopeTarget = { unitPrice: 9 };
-        const pricey: ProductScopeTarget = { unitPrice: 10 };
+        const cheap: ProductDetails = { unitPrice: 9 };
+        const pricey: ProductDetails = { unitPrice: 10 };
 
         // 9 > "10" must be false — lexicographically "9" > "10" is true.
         expect(

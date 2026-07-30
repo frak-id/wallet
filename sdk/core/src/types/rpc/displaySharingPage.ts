@@ -1,12 +1,20 @@
 import type { InteractionTypeKey } from "../../constants/interactionTypes";
 import type { I18nConfig } from "../config";
+import type { ProductDetails } from "../product";
 import type { AttributionParams } from "../tracking";
 
 /**
- * Product information to display on the sharing page
+ * Product information to display on the sharing page.
+ *
+ * Extends {@link ProductDetails} so the same array a merchant surface passes
+ * in also carries the `productScope` fields (`productId` / `sku` / `name` /
+ * `quantity` / `unitPrice` / `totalPrice`) — reward selection
+ * (`selectDisplayCampaign` / `selectBestReward`) can consume it directly to
+ * advisorily prefer the campaign that matches whichever product the user
+ * has selected on the sharing page, without a second parallel array.
  * @group Sharing Page
  */
-export type SharingPageProduct = {
+export type SharingPageProduct = ProductDetails & {
     /**
      * The product title / name
      */

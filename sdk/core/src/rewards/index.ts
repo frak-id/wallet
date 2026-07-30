@@ -4,6 +4,7 @@
 // framework coupling — so it stays safe to ship inside the published SDK and
 // lets core-sdk consume its own reward logic without a dependency cycle.
 
+export type { ProductDetails } from "../types/product";
 export { extractMinPurchaseAmount, extractStartDate } from "./conditions";
 export {
     buildPercentageExample,
@@ -17,10 +18,7 @@ export {
     formatEstimatedReward,
     formatRewardOrHide,
 } from "./format";
-export {
-    matchesProductScope,
-    type ProductScopeTarget,
-} from "./matchesProductScope";
+export { matchesProductScope } from "./matchesProductScope";
 export {
     ARRAY_OPERATORS,
     EXISTENCE_OPERATORS,

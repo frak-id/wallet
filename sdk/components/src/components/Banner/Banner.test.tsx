@@ -9,6 +9,11 @@ const coreSdkMock = vi.hoisted(() => ({
     redirectToExternalBrowser: vi.fn(),
     trackEvent: vi.fn(),
     detectPageLanguage: () => "en" as const,
+    // Real pass-through (not a stub): Banner sanitizes `products` itself
+    // before handing it to the (mocked) `useReward`, so this needs real
+    // behavior rather than a `vi.fn()` that would swallow the input.
+    sanitizeProductDetailsList: (input: unknown) =>
+        Array.isArray(input) && input.length > 0 ? input : undefined,
     sdkConfigStore: {
         getConfig: () => ({ components: undefined }),
     },

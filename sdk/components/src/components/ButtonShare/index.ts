@@ -27,9 +27,7 @@ registerWebComponent(
         "clickAction",
         "noRewardText",
         "targetInteraction",
-        "productId",
-        "productSku",
-        "productPrice",
+        "products",
         "preview",
     ],
     {

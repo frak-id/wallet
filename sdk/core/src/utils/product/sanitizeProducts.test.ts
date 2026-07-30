@@ -1,11 +1,13 @@
-import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { describe, expect, it } from "vitest";
+import { compressJsonToB64 } from "../compression/compress";
 import {
     coerceProductCandidates,
     decodeProductsParam,
-    normalizeProductCandidate,
-    sanitizeProductList,
-} from "./sharingPageProducts";
+    normalizeProductDetails,
+    normalizeSharingProduct,
+    sanitizeProductDetailsList,
+    sanitizeSharingProducts,
+} from "./sanitizeProducts";
 
 describe("coerceProductCandidates", () => {
     describe("falsy / unsupported inputs", () => {
@@ -83,7 +85,167 @@ describe("coerceProductCandidates", () => {
     });
 });
 
-describe("normalizeProductCandidate", () => {
+describe("normalizeProductDetails", () => {
+    it("returns undefined for non-object candidates", () => {
+        expect(normalizeProductDetails(null)).toBeUndefined();
+        expect(normalizeProductDetails(undefined)).toBeUndefined();
+        expect(normalizeProductDetails("foo")).toBeUndefined();
+        expect(normalizeProductDetails(42)).toBeUndefined();
+        expect(normalizeProductDetails(true)).toBeUndefined();
+        expect(normalizeProductDetails([])).toBeUndefined();
+    });
+
+    it("returns undefined for an empty object", () => {
+        expect(normalizeProductDetails({})).toBeUndefined();
+    });
+
+    it("returns undefined when every field is junk (all-junk entry dropped)", () => {
+        expect(
+            normalizeProductDetails({
+                productId: "",
+                sku: "   ",
+                name: 42,
+                quantity: "not-a-number",
+                unitPrice: null,
+                totalPrice: {},
+            })
+        ).toBeUndefined();
+    });
+
+    describe("string fields (productId / sku / name)", () => {
+        it("keeps non-empty trimmed strings", () => {
+            expect(
+                normalizeProductDetails({
+                    productId: "  prod_123  ",
+                    sku: "SHOE-42",
+                    name: " Running Shoe ",
+                })
+            ).toEqual({
+                productId: "prod_123",
+                sku: "SHOE-42",
+                name: "Running Shoe",
+            });
+        });
+
+        it("drops empty / whitespace-only strings", () => {
+            expect(
+                normalizeProductDetails({ productId: "", sku: "   " })
+            ).toBeUndefined();
+        });
+
+        it("drops non-string values", () => {
+            expect(
+                normalizeProductDetails({ productId: 42, sku: null })
+            ).toBeUndefined();
+        });
+    });
+
+    describe("numeric fields (quantity / unitPrice / totalPrice)", () => {
+        it("accepts real numbers", () => {
+            expect(
+                normalizeProductDetails({
+                    quantity: 2,
+                    unitPrice: 79.9,
+                    totalPrice: 159.8,
+                })
+            ).toEqual({ quantity: 2, unitPrice: 79.9, totalPrice: 159.8 });
+        });
+
+        it("accepts numeric strings (HTML attribute / URL param surface)", () => {
+            expect(
+                normalizeProductDetails({
+                    quantity: "2",
+                    unitPrice: "79.90",
+                    totalPrice: "159.80",
+                })
+            ).toEqual({ quantity: 2, unitPrice: 79.9, totalPrice: 159.8 });
+        });
+
+        it("drops NaN / unparseable numeric strings", () => {
+            const result = normalizeProductDetails({
+                unitPrice: "not-a-price",
+                sku: "SHOE-42",
+            });
+            expect(result).toEqual({ sku: "SHOE-42" });
+            expect(result).not.toHaveProperty("unitPrice");
+        });
+
+        it("drops non-finite numbers", () => {
+            const result = normalizeProductDetails({
+                unitPrice: Number.NaN,
+                totalPrice: Number.POSITIVE_INFINITY,
+                sku: "SHOE-42",
+            });
+            expect(result).toEqual({ sku: "SHOE-42" });
+            expect(result).not.toHaveProperty("unitPrice");
+            expect(result).not.toHaveProperty("totalPrice");
+        });
+
+        it("drops empty numeric strings", () => {
+            const result = normalizeProductDetails({
+                quantity: "",
+                sku: "SHOE-42",
+            });
+            expect(result).toEqual({ sku: "SHOE-42" });
+            expect(result).not.toHaveProperty("quantity");
+        });
+    });
+
+    it("ignores unknown extra fields without crashing", () => {
+        expect(
+            normalizeProductDetails({
+                sku: "SHOE-42",
+                title: "irrelevant here",
+                foo: "bar",
+            })
+        ).toEqual({ sku: "SHOE-42" });
+    });
+});
+
+describe("sanitizeProductDetailsList", () => {
+    it("returns undefined for falsy / unsupported inputs", () => {
+        expect(sanitizeProductDetailsList(undefined)).toBeUndefined();
+        expect(sanitizeProductDetailsList(null)).toBeUndefined();
+        expect(sanitizeProductDetailsList("")).toBeUndefined();
+        expect(sanitizeProductDetailsList(42)).toBeUndefined();
+    });
+
+    it("returns undefined for an empty array", () => {
+        expect(sanitizeProductDetailsList([])).toBeUndefined();
+    });
+
+    it("returns undefined when every candidate is all-junk", () => {
+        expect(
+            sanitizeProductDetailsList([{}, { productId: "" }])
+        ).toBeUndefined();
+    });
+
+    it("does not require a title (unlike sanitizeSharingProducts)", () => {
+        expect(sanitizeProductDetailsList([{ sku: "SHOE-42" }])).toEqual([
+            { sku: "SHOE-42" },
+        ]);
+    });
+
+    it("accepts a JSON-stringified payload (HTML-attribute surface)", () => {
+        expect(
+            sanitizeProductDetailsList(
+                JSON.stringify([{ sku: "SHOE-42", unitPrice: "79.90" }])
+            )
+        ).toEqual([{ sku: "SHOE-42", unitPrice: 79.9 }]);
+    });
+
+    it("drops junk entries while keeping valid ones", () => {
+        expect(
+            sanitizeProductDetailsList([
+                { sku: "SHOE-42" },
+                {},
+                { productId: "prod_9" },
+            ])
+        ).toEqual([{ sku: "SHOE-42" }, { productId: "prod_9" }]);
+    });
+});
+
+describe("normalizeSharingProduct", () => {
     describe("rejects non-object / title-less candidates", () => {
         it.each([
             ["null", null],
@@ -93,52 +255,52 @@ describe("normalizeProductCandidate", () => {
             ["boolean", true],
             ["array", []],
         ] as const)("returns null for %s", (_label, value) => {
-            expect(normalizeProductCandidate(value)).toBeNull();
+            expect(normalizeSharingProduct(value)).toBeNull();
         });
 
         it("returns null for an empty object", () => {
-            expect(normalizeProductCandidate({})).toBeNull();
+            expect(normalizeSharingProduct({})).toBeNull();
         });
 
         it("returns null when title is missing", () => {
             expect(
-                normalizeProductCandidate({ imageUrl: "https://x.test" })
+                normalizeSharingProduct({ imageUrl: "https://x.test" })
             ).toBeNull();
         });
 
         it("returns null when title is the empty string", () => {
-            expect(normalizeProductCandidate({ title: "" })).toBeNull();
+            expect(normalizeSharingProduct({ title: "" })).toBeNull();
         });
 
         it("returns null when title is whitespace only", () => {
-            expect(normalizeProductCandidate({ title: "   " })).toBeNull();
-            expect(normalizeProductCandidate({ title: "\t\n" })).toBeNull();
+            expect(normalizeSharingProduct({ title: "   " })).toBeNull();
+            expect(normalizeSharingProduct({ title: "\t\n" })).toBeNull();
         });
 
         it("returns null when title is a non-string value", () => {
-            expect(normalizeProductCandidate({ title: 42 })).toBeNull();
-            expect(normalizeProductCandidate({ title: true })).toBeNull();
-            expect(normalizeProductCandidate({ title: null })).toBeNull();
-            expect(normalizeProductCandidate({ title: {} })).toBeNull();
+            expect(normalizeSharingProduct({ title: 42 })).toBeNull();
+            expect(normalizeSharingProduct({ title: true })).toBeNull();
+            expect(normalizeSharingProduct({ title: null })).toBeNull();
+            expect(normalizeSharingProduct({ title: {} })).toBeNull();
         });
     });
 
     describe("title handling", () => {
         it("keeps a plain string title verbatim", () => {
-            expect(normalizeProductCandidate({ title: "Hello" })).toEqual({
+            expect(normalizeSharingProduct({ title: "Hello" })).toEqual({
                 title: "Hello",
             });
         });
 
         it("trims surrounding whitespace from the title", () => {
-            expect(normalizeProductCandidate({ title: "  Hello  " })).toEqual({
+            expect(normalizeSharingProduct({ title: "  Hello  " })).toEqual({
                 title: "Hello",
             });
         });
 
         it("preserves internal whitespace and unicode", () => {
             expect(
-                normalizeProductCandidate({
+                normalizeSharingProduct({
                     title: "Babies camel cuir velours bout carré",
                 })
             ).toEqual({ title: "Babies camel cuir velours bout carré" });
@@ -150,7 +312,7 @@ describe("normalizeProductCandidate", () => {
             "keeps an http(s) URL: %s",
             (url) => {
                 expect(
-                    normalizeProductCandidate({ title: "x", imageUrl: url })
+                    normalizeSharingProduct({ title: "x", imageUrl: url })
                 ).toEqual({ title: "x", imageUrl: url });
             }
         );
@@ -166,7 +328,7 @@ describe("normalizeProductCandidate", () => {
             ["empty string", ""],
             ["garbage", "not a url"],
         ])("drops imageUrl with %s", (_label, url) => {
-            const result = normalizeProductCandidate({
+            const result = normalizeSharingProduct({
                 title: "x",
                 imageUrl: url,
             });
@@ -180,7 +342,7 @@ describe("normalizeProductCandidate", () => {
             ["array", ["https://example.com/img.jpg"]],
             ["object", { url: "https://example.com/img.jpg" }],
         ])("drops non-string imageUrl (%s)", (_label, value) => {
-            const result = normalizeProductCandidate({
+            const result = normalizeSharingProduct({
                 title: "x",
                 imageUrl: value,
             });
@@ -192,7 +354,7 @@ describe("normalizeProductCandidate", () => {
     describe("link gating", () => {
         it("keeps an https link", () => {
             expect(
-                normalizeProductCandidate({
+                normalizeSharingProduct({
                     title: "x",
                     link: "https://example.com/product/123",
                 })
@@ -209,7 +371,7 @@ describe("normalizeProductCandidate", () => {
             ["empty string", ""],
             ["garbage", "<a href"],
         ])("drops link with %s", (_label, value) => {
-            const result = normalizeProductCandidate({
+            const result = normalizeSharingProduct({
                 title: "x",
                 link: value,
             });
@@ -218,7 +380,7 @@ describe("normalizeProductCandidate", () => {
         });
 
         it("drops non-string link", () => {
-            const result = normalizeProductCandidate({
+            const result = normalizeSharingProduct({
                 title: "x",
                 link: 42,
             });
@@ -230,7 +392,7 @@ describe("normalizeProductCandidate", () => {
     describe("utmContent handling", () => {
         it("keeps a non-empty string utmContent verbatim", () => {
             expect(
-                normalizeProductCandidate({
+                normalizeSharingProduct({
                     title: "x",
                     utmContent: "summer-2024",
                 })
@@ -238,7 +400,7 @@ describe("normalizeProductCandidate", () => {
         });
 
         it("drops an empty utmContent", () => {
-            const result = normalizeProductCandidate({
+            const result = normalizeSharingProduct({
                 title: "x",
                 utmContent: "",
             });
@@ -247,7 +409,7 @@ describe("normalizeProductCandidate", () => {
         });
 
         it("drops a non-string utmContent", () => {
-            const result = normalizeProductCandidate({
+            const result = normalizeSharingProduct({
                 title: "x",
                 utmContent: 42,
             });
@@ -256,9 +418,45 @@ describe("normalizeProductCandidate", () => {
         });
     });
 
+    describe("ProductDetails scope fields", () => {
+        it("carries scope fields through alongside the display fields", () => {
+            expect(
+                normalizeSharingProduct({
+                    title: "Running Shoe",
+                    sku: "SHOE-42",
+                    productId: "prod_123",
+                    unitPrice: "79.90",
+                    quantity: 2,
+                })
+            ).toEqual({
+                title: "Running Shoe",
+                sku: "SHOE-42",
+                productId: "prod_123",
+                unitPrice: 79.9,
+                quantity: 2,
+            });
+        });
+
+        it("omits scope fields entirely when none are present (no empty keys)", () => {
+            const result = normalizeSharingProduct({ title: "x" });
+            expect(result).toEqual({ title: "x" });
+            expect(Object.keys(result ?? {})).toEqual(["title"]);
+        });
+
+        it("drops an unparseable unitPrice while keeping the title and other fields", () => {
+            const result = normalizeSharingProduct({
+                title: "x",
+                sku: "SHOE-42",
+                unitPrice: "garbage",
+            });
+            expect(result).toEqual({ title: "x", sku: "SHOE-42" });
+            expect(result).not.toHaveProperty("unitPrice");
+        });
+    });
+
     describe("integration", () => {
         it("keeps every valid optional field together", () => {
-            const result = normalizeProductCandidate({
+            const result = normalizeSharingProduct({
                 title: "Boots en cuir noir",
                 imageUrl: "https://cdn.example.com/boots.jpg",
                 link: "https://shop.example.com/boots",
@@ -273,10 +471,9 @@ describe("normalizeProductCandidate", () => {
         });
 
         it("ignores unknown extra fields without crashing", () => {
-            const result = normalizeProductCandidate({
+            const result = normalizeSharingProduct({
                 title: "x",
                 foo: "bar",
-                price: 42,
                 nested: { a: 1 },
             });
             expect(result).toEqual({ title: "x" });
@@ -284,7 +481,7 @@ describe("normalizeProductCandidate", () => {
 
         it("partial validity: keeps title + valid link, drops bad imageUrl", () => {
             expect(
-                normalizeProductCandidate({
+                normalizeSharingProduct({
                     title: "x",
                     imageUrl: "javascript:evil()",
                     link: "https://shop.example.com/x",
@@ -297,29 +494,32 @@ describe("normalizeProductCandidate", () => {
     });
 });
 
-describe("sanitizeProductList", () => {
+describe("sanitizeSharingProducts", () => {
     it("returns undefined for falsy / unsupported inputs", () => {
-        expect(sanitizeProductList(undefined)).toBeUndefined();
-        expect(sanitizeProductList(null)).toBeUndefined();
-        expect(sanitizeProductList("")).toBeUndefined();
-        expect(sanitizeProductList(42)).toBeUndefined();
-        expect(sanitizeProductList({ title: "x" })).toBeUndefined();
+        expect(sanitizeSharingProducts(undefined)).toBeUndefined();
+        expect(sanitizeSharingProducts(null)).toBeUndefined();
+        expect(sanitizeSharingProducts("")).toBeUndefined();
+        expect(sanitizeSharingProducts(42)).toBeUndefined();
+        expect(sanitizeSharingProducts({ title: "x" })).toBeUndefined();
     });
 
     it("returns undefined for an empty array", () => {
         // Caller intent: no products to display.
-        expect(sanitizeProductList([])).toBeUndefined();
+        expect(sanitizeSharingProducts([])).toBeUndefined();
     });
 
     it("returns undefined when every candidate is malformed", () => {
         expect(
-            sanitizeProductList([{ imageUrl: "https://x.test" }, { title: "" }])
+            sanitizeSharingProducts([
+                { imageUrl: "https://x.test" },
+                { title: "" },
+            ])
         ).toBeUndefined();
     });
 
     it("returns the sanitised entries when at least one is valid", () => {
         expect(
-            sanitizeProductList([
+            sanitizeSharingProducts([
                 { title: "Boots", link: "javascript:evil()" },
                 { title: "" },
                 { title: "Shoes", link: "https://shop.example.com/shoes" },
@@ -332,12 +532,20 @@ describe("sanitizeProductList", () => {
 
     it("accepts a JSON-stringified payload (HTML-attribute surface)", () => {
         expect(
-            sanitizeProductList(
+            sanitizeSharingProducts(
                 JSON.stringify([
                     { title: "x", imageUrl: "https://cdn.example.com/x.jpg" },
                 ])
             )
         ).toEqual([{ title: "x", imageUrl: "https://cdn.example.com/x.jpg" }]);
+    });
+
+    it("carries scope fields through for every entry", () => {
+        expect(
+            sanitizeSharingProducts([
+                { title: "Shoe", sku: "SHOE-42", unitPrice: "79.90" },
+            ])
+        ).toEqual([{ title: "Shoe", sku: "SHOE-42", unitPrice: 79.9 }]);
     });
 });
 
@@ -386,5 +594,14 @@ describe("decodeProductsParam", () => {
 
     it("returns undefined for a malformed / non-base64 input", () => {
         expect(decodeProductsParam("$$$ not-base64 $$$")).toBeUndefined();
+    });
+
+    it("decodes scope fields alongside display fields", () => {
+        const encoded = compressJsonToB64([
+            { title: "Shoe", sku: "SHOE-42", unitPrice: 79.9, quantity: 2 },
+        ]);
+        expect(decodeProductsParam(encoded)).toEqual([
+            { title: "Shoe", sku: "SHOE-42", unitPrice: 79.9, quantity: 2 },
+        ]);
     });
 });

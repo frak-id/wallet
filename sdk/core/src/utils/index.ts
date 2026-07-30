@@ -35,7 +35,6 @@ export { getSupportedLocale } from "./format/getSupportedLocale";
 
 // Language detection
 export { detectPageLanguage } from "./i18n/detectPageLanguage";
-
 // Iframe DOM helpers
 export {
     baseIframeProps,
@@ -43,6 +42,17 @@ export {
     createIframe,
     findIframeInOpener,
 } from "./iframe/iframeHelper";
+// Product list sanitization (sharing-page product cards + productScope
+// display hints) — shared by every surface that receives an untrusted
+// `products` payload (component HTML attributes, URL query params, RPC).
+export {
+    coerceProductCandidates,
+    decodeProductsParam,
+    normalizeProductDetails,
+    normalizeSharingProduct,
+    sanitizeProductDetailsList,
+    sanitizeSharingProducts,
+} from "./product/sanitizeProducts";
 
 // SSO URL builder
 export {

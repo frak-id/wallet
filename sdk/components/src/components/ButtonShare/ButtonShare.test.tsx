@@ -162,7 +162,8 @@ describe.sequential("ButtonShare", () => {
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
                 undefined,
-                undefined
+                undefined,
+                { products: undefined }
             );
         });
     });
@@ -198,7 +199,8 @@ describe.sequential("ButtonShare", () => {
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
                 undefined,
-                undefined
+                undefined,
+                { products: undefined }
             );
         });
         expect(embeddedWalletUtils.openEmbeddedWallet).not.toHaveBeenCalled();
@@ -245,7 +247,33 @@ describe.sequential("ButtonShare", () => {
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
                 "custom.customerMeeting",
-                undefined
+                undefined,
+                { products: undefined }
+            );
+        });
+    });
+
+    it("should forward the sanitized products array to openSharingPage on click", async () => {
+        // The same array used for (mocked) reward selection must also reach
+        // the sharing-page RPC — previously it was computed for the reward
+        // text and then dropped at the click boundary.
+        render(
+            <ButtonShare
+                products={[
+                    { title: "Boots", sku: "SHOE-42" },
+                    { title: "" /* dropped: no usable title */ },
+                ]}
+            />
+        );
+        const button = screen.getByRole("button");
+
+        fireEvent.click(button);
+
+        await waitFor(() => {
+            expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                undefined,
+                undefined,
+                { products: [{ title: "Boots", sku: "SHOE-42" }] }
             );
         });
     });

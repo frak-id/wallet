@@ -148,9 +148,21 @@ Per provider:
     "purchase_amount"` — its copy stays "% of basket".
 - `matchesProductScope(scope, product)` in `sdk/core/src/rewards` is an
   **advisory, fail-open** client-side matcher (display hints only; the
-  backend evaluator is the authority at reward time). Components accept
-  optional `product-id` / `product-sku` / `product-price` attributes so
-  product pages can prefer scope-matching campaigns.
+  backend evaluator is the authority at reward time). It evaluates one
+  `ProductDetails` — the SDK type mirroring the `PRODUCT_SCOPE_FIELDS`
+  allowlist above.
+- `selectDisplayCampaign` / `selectBestReward` take `products:
+  ProductDetails[]` and apply **any-match**: a scoped campaign matching none
+  of them is deprioritized below every campaign matching at least one, which
+  mirrors the evaluator (a purchase earns when any line item matches).
+  Omitting `products` reproduces unscoped ranking. The winner's matching
+  subset comes back as `matchedProducts`, so a surface can name the product
+  behind the reward.
+- `<frak-banner>` / `<frak-button-share>` / `<frak-post-purchase>` accept a
+  single `products` attribute (JSON-stringified for server-rendered
+  surfaces, whose HTML attributes always arrive as strings). Since
+  `SharingPageProduct extends ProductDetails`, the same array drives both the
+  sharing-page product cards and reward selection.
 
 ## Open questions
 

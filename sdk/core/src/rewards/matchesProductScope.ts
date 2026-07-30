@@ -1,21 +1,10 @@
-import type { ConditionGroup, RuleCondition, RuleConditions } from "../types";
+import type {
+    ConditionGroup,
+    ProductDetails,
+    RuleCondition,
+    RuleConditions,
+} from "../types";
 import { SCALAR_OPERATORS, STRING_OPERATORS } from "./operators";
-
-/**
- * The subset of a purchase line item's fields a `productScope` can target.
- * Mirrors the backend's allowlist exactly — see `PRODUCT_SCOPE_FIELDS` in
- * `services/backend/src/domain/campaign/services/CampaignManagementService.ts`.
- * Any campaign field outside this set cannot have been published (validated
- * server-side at publish time), so it never needs handling here.
- */
-export type ProductScopeTarget = {
-    productId?: string;
-    sku?: string;
-    name?: string;
-    quantity?: number;
-    unitPrice?: number;
-    totalPrice?: number;
-};
 
 function isConditionGroup(
     condition: RuleCondition | ConditionGroup
@@ -24,16 +13,17 @@ function isConditionGroup(
 }
 
 function getField(
-    product: ProductScopeTarget,
+    product: ProductDetails,
     field: string
 ): string | number | undefined {
-    return product[field as keyof ProductScopeTarget];
+    return product[field as keyof ProductDetails];
 }
 
 // A number, or a string that fully parses as a finite number. A campaign's
 // numeric threshold is routinely authored as a string in JSON (`"79.90"`),
-// and `product-price` always arrives as an HTML attribute string, so numeric
-// intent must be recognised on either side.
+// and a product's numeric fields routinely arrive as strings too (HTML
+// attributes, URL query params), so numeric intent must be recognised on
+// either side.
 function asNumber(value: string | number | boolean): number | undefined {
     if (typeof value === "number") {
         return Number.isFinite(value) ? value : undefined;
@@ -130,7 +120,7 @@ function evaluateStringOperator(
  */
 function evaluateCondition(
     condition: RuleCondition,
-    product: ProductScopeTarget
+    product: ProductDetails
 ): boolean | undefined {
     const fieldValue = getField(product, condition.field);
     const { operator, value, valueTo } = condition;
@@ -180,7 +170,7 @@ function evaluateCondition(
  */
 function evaluateNode(
     node: RuleCondition | ConditionGroup,
-    product: ProductScopeTarget
+    product: ProductDetails
 ): boolean {
     if (isConditionGroup(node)) {
         const results = node.conditions.map((child) =>
@@ -209,7 +199,7 @@ function evaluateNode(
  * (unknown operator, missing product field, a malformed operand) is treated
  * as a match, so this helper can never hide a reward the backend would
  * actually pay. It only supports the backend's allowlisted `productScope`
- * fields and operators (see `ProductScopeTarget` and
+ * fields and operators (see `ProductDetails` and
  * `CampaignManagementService.PRODUCT_SCOPE_FIELDS`); a `productScope` field
  * outside that allowlist cannot exist on a published campaign.
  *
@@ -219,7 +209,7 @@ function evaluateNode(
  */
 export function matchesProductScope(
     scope: RuleConditions | undefined,
-    product: ProductScopeTarget
+    product: ProductDetails
 ): boolean {
     if (!scope) return true;
     if (Array.isArray(scope)) {

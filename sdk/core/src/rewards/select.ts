@@ -3,6 +3,7 @@ import type {
     Currency,
     EstimatedReward,
     MerchantReward,
+    ProductDetails,
     TokenAmountType,
 } from "../types";
 import { formatAmount } from "../utils/format/formatAmount";
@@ -10,10 +11,7 @@ import { getCurrencyAmountKey } from "../utils/format/getCurrencyAmountKey";
 import { getSupportedCurrency } from "../utils/format/getSupportedCurrency";
 import { extractMinPurchaseAmount, extractStartDate } from "./conditions";
 import { formatRewardOrHide } from "./format";
-import {
-    matchesProductScope,
-    type ProductScopeTarget,
-} from "./matchesProductScope";
+import { matchesProductScope } from "./matchesProductScope";
 import { getRewardRank } from "./value";
 
 /** Reward side a surface cares about: the sharer (`referrer`) or the referred
@@ -24,6 +22,15 @@ export type DisplayCampaign = {
     campaign: MerchantReward;
     status: "live" | "upcoming";
     startsAt?: Date;
+    /**
+     * The subset of `options.products` that matched the winning campaign's
+     * `productScope`, when it is scoped and at least one product matched.
+     * `undefined` for an unscoped campaign (the reward applies to the whole
+     * basket, so no single product "drove" it) or when no products were
+     * supplied. Lets a surface name the product behind the reward ("earn 10 €
+     * on <product>") instead of just showing the number.
+     */
+    matchedProducts?: ProductDetails[];
 };
 
 export type SelectDisplayCampaignOptions = {
@@ -36,15 +43,19 @@ export type SelectDisplayCampaignOptions = {
     /** Reward side to rank campaigns by; defaults to `"referrer"`. */
     audience?: RewardAudience;
     /**
-     * The product currently on display, when known (e.g. a product page).
-     * Purely advisory (see {@link matchesProductScope}): when set, a
-     * `productScope`d campaign whose scope does **not** match this product is
-     * deprioritized below every campaign that does match (unscoped campaigns
-     * always count as matching). Ranking *among* matching campaigns is
-     * unchanged. Omit when the product isn't known — every campaign is then
-     * treated as matching, same as today.
+     * The products currently in view, when known (e.g. a product page's
+     * single product, a cart, or an order's line items). Purely advisory
+     * (see {@link matchesProductScope}): when set, a `productScope`d
+     * campaign that doesn't match **any** of these products (mirroring the
+     * backend, which pays out when any purchased line item matches) is
+     * deprioritized below every campaign that matches at least one
+     * (unscoped campaigns always count as matching). Ranking *among*
+     * matching campaigns is unchanged. Omit, or pass an empty array, when no
+     * product is known — every campaign is then treated as matching, same
+     * as today. A single-element array reproduces the previous
+     * single-product behavior exactly.
      */
-    product?: ProductScopeTarget;
+    products?: ProductDetails[];
 };
 
 function isExpired(campaign: MerchantReward, nowMs: number): boolean {
@@ -72,12 +83,38 @@ function campaignRank(
     return reward ? getRewardRank(reward, key) : 0;
 }
 
+/**
+ * The subset of `products` that matches `campaign`'s `productScope`, or
+ * `undefined` when the campaign is unscoped (matches everything, but there
+ * is no specific product to name) or no products were supplied.
+ */
+function matchedProductsFor(
+    campaign: MerchantReward,
+    products: ProductDetails[] | undefined
+): ProductDetails[] | undefined {
+    if (!products || products.length === 0) return undefined;
+    if (!campaign.productScope) return undefined;
+    const matched = products.filter((product) =>
+        matchesProductScope(campaign.productScope, product)
+    );
+    return matched.length > 0 ? matched : undefined;
+}
+
+/**
+ * Whether `campaign` counts as matching for ranking purposes: any-match
+ * against `products` (mirroring the backend, which pays out a purchase when
+ * *any* line item matches the scope), trivially true when unscoped or when
+ * no product context was supplied.
+ */
 function matchesProduct(
     campaign: MerchantReward,
-    product: ProductScopeTarget | undefined
+    products: ProductDetails[] | undefined
 ): boolean {
-    if (!product) return true;
-    return matchesProductScope(campaign.productScope, product);
+    if (!products || products.length === 0) return true;
+    if (!campaign.productScope) return true;
+    return products.some((product) =>
+        matchesProductScope(campaign.productScope, product)
+    );
 }
 
 /**
@@ -111,18 +148,22 @@ export function selectDisplayCampaign(
         // Product-matching campaigns are ranked first as a group; within each
         // group, the existing reward-value ranking applies unchanged. This only
         // ever moves a non-matching *scoped* campaign down — it never changes
-        // the winner when `options.product` is omitted, or among campaigns that
-        // already agree on whether they match.
+        // the winner when `options.products` is omitted/empty, or among
+        // campaigns that already agree on whether they match.
         const best = live.reduce((a, b) => {
-            const aMatches = matchesProduct(a, options.product);
-            const bMatches = matchesProduct(b, options.product);
+            const aMatches = matchesProduct(a, options.products);
+            const bMatches = matchesProduct(b, options.products);
             if (aMatches !== bMatches) return bMatches ? b : a;
             return campaignRank(b, key, audience) >
                 campaignRank(a, key, audience)
                 ? b
                 : a;
         });
-        return { campaign: best, status: "live" };
+        return {
+            campaign: best,
+            status: "live",
+            matchedProducts: matchedProductsFor(best, options.products),
+        };
     }
 
     const upcoming = active
@@ -136,13 +177,20 @@ export function selectDisplayCampaign(
         );
     if (upcoming.length === 0) return undefined;
 
-    const soonest = upcoming.reduce((a, b) =>
-        b.startsAt.getTime() < a.startsAt.getTime() ? b : a
-    );
+    // Same match-first grouping as the live branch, so a matching upcoming
+    // campaign isn't buried behind a sooner-starting one that doesn't apply
+    // to the product currently in view.
+    const soonest = upcoming.reduce((a, b) => {
+        const aMatches = matchesProduct(a.campaign, options.products);
+        const bMatches = matchesProduct(b.campaign, options.products);
+        if (aMatches !== bMatches) return bMatches ? b : a;
+        return b.startsAt.getTime() < a.startsAt.getTime() ? b : a;
+    });
     return {
         campaign: soonest.campaign,
         status: "upcoming",
         startsAt: soonest.startsAt,
+        matchedProducts: matchedProductsFor(soonest.campaign, options.products),
     };
 }
 
@@ -192,6 +240,12 @@ export type BestReward = {
      * suppression.
      */
     isProductScoped: boolean;
+    /**
+     * The subset of `options.products` that matched the winning campaign's
+     * `productScope`. See {@link DisplayCampaign.matchedProducts} — same
+     * semantics, just surfaced alongside the formatted reward.
+     */
+    matchedProducts?: ProductDetails[];
 };
 
 /**
@@ -238,6 +292,7 @@ export function selectBestReward(
         refereeReward: selected.campaign.referee,
         minPurchaseValue: minPurchase ?? undefined,
         isProductScoped: selected.campaign.productScope != null,
+        matchedProducts: selected.matchedProducts,
     };
 }
 

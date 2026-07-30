@@ -68,35 +68,23 @@ export type PostPurchaseProps = {
      */
     imageUrl?: string;
     /**
-     * Optional product cards forwarded to the sharing page when the user
-     * clicks the CTA. Accepts either a real {@link SharingPageProduct}
-     * array (when set imperatively via the JS property,
-     * `el.products = [...]`) or a JSON-stringified array (when set as an
-     * HTML attribute, `<frak-post-purchase products='[...]'>`). The HTML
-     * attribute path is required for server-rendered surfaces — e.g.
-     * WooCommerce / Magento plugins — because `preact-custom-element`
+     * Order line items, forwarded to the sharing page as product cards when
+     * the user clicks the CTA, and also used to advisorily prefer a
+     * campaign whose `productScope` matches at least one of them when
+     * picking the reward to advertise (e.g. a product-scoped campaign that
+     * earns more on one of the purchased items). Accepts either a real
+     * {@link SharingPageProduct} array (when set imperatively via the JS
+     * property, `el.products = [...]`) or a JSON-stringified array (when set
+     * as an HTML attribute, `<frak-post-purchase products='[...]'>`). The
+     * HTML attribute path is required for server-rendered surfaces — e.g.
+     * WooCommerce / PrestaShop plugins — because `preact-custom-element`
      * delivers attribute values as raw strings.
      *
      * Empty arrays / unparseable strings are treated as "no products" so
-     * the sharing page renders without the product card section.
+     * the sharing page renders without the product card section, and reward
+     * selection falls back to ignoring product scope.
      */
     products?: SharingPageProduct[] | string;
-    /**
-     * Identifiers of the single product this post-purchase card is about,
-     * when known, used to advisorily prefer a campaign whose `productScope`
-     * matches it when picking the reward to advertise. Purely a display
-     * hint — distinct from {@link products}, which is about the sharing-page
-     * product cards, not reward selection. Omit when not relevant.
-     */
-    productId?: string;
-    /** See {@link productId}. */
-    productSku?: string;
-    /**
-     * Numeric price of the product. Accepts a `string` too (HTML attribute
-     * binding always delivers strings); an unparseable value is dropped.
-     * See {@link productId}.
-     */
-    productPrice?: number | string;
     /**
      * When set, renders the card in preview mode (e.g. Shopify/WP editor).
      * Bypasses the client-ready / RPC gates that normally hide the card

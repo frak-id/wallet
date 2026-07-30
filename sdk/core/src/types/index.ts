@@ -22,6 +22,7 @@ export type {
     ClientLifecycleEvent,
     IFrameLifecycleEvent,
 } from "./lifecycle";
+export type { ProductDetails } from "./product";
 export type {
     MerchantConfigResponse,
     ResolvedPlacement,

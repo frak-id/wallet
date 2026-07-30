@@ -1,6 +1,8 @@
 import {
     isInAppBrowser,
+    type ProductDetails,
     redirectToExternalBrowser,
+    sanitizeProductDetailsList,
     trackEvent,
 } from "@frak-labs/core-sdk";
 import {
@@ -21,7 +23,6 @@ import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLang } from "@/hooks/useLang";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
-import { useProductScopeTarget } from "@/hooks/useProductScopeTarget";
 import { useReward } from "@/hooks/useReward";
 import { componentDefaults } from "@/i18n/defaults";
 import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
@@ -77,9 +78,7 @@ export function Banner({
     placement: placementId,
     classname = "",
     interaction,
-    productId,
-    productSku,
-    productPrice,
+    products,
     referralTitle: propReferralTitle,
     referralDescription: propReferralDescription,
     referralCta: propReferralCta,
@@ -132,12 +131,18 @@ export function Banner({
     // Fetch reward text the same way ButtonShare does — but for the *referee*
     // side: the referral banner is shown to a freshly-referred user, so it must
     // advertise what they earn on their purchases, not the sharer's reward.
-    const product = useProductScopeTarget(productId, productSku, productPrice);
+    // Sanitized once here (not via a shared hook) — same inline-useMemo
+    // pattern PostPurchase already used for its `products` prop. Banner never
+    // renders a product card, so only the scope fields are needed.
+    const parsedProducts = useMemo<ProductDetails[] | undefined>(
+        () => sanitizeProductDetailsList(products),
+        [products]
+    );
     const { reward } = useReward(
         mode === "referral" && isClientReady,
         interaction,
         "referee",
-        product
+        parsedProducts
     );
 
     // Pre-fetch merge token when in inapp mode so the click is instant

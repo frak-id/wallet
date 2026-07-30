@@ -1,4 +1,4 @@
-import type { InteractionTypeKey } from "@frak-labs/core-sdk";
+import type { InteractionTypeKey, ProductDetails } from "@frak-labs/core-sdk";
 
 /**
  * The props type for {@link Banner}.
@@ -19,20 +19,18 @@ export type BannerProps = {
      */
     interaction?: InteractionTypeKey;
     /**
-     * Identifiers of the product currently on display, used to advisorily
-     * prefer a campaign whose `productScope` matches this product when
-     * picking the reward to advertise. Purely a display hint — omit when the
-     * product isn't known or isn't relevant.
+     * Products currently in view (e.g. a product page's single product, or
+     * a cart), used to advisorily prefer a campaign whose `productScope`
+     * matches at least one of them when picking the reward to advertise.
+     * Purely a display hint — omit when no product is known or relevant.
+     *
+     * Accepts either a real {@link ProductDetails} array (when set
+     * imperatively via the JS property, `el.products = [...]`) or a
+     * JSON-stringified array (when set as an HTML attribute,
+     * `<frak-banner products='[...]'>`) — `preact-custom-element` delivers
+     * attribute values as raw strings.
      */
-    productId?: string;
-    /** See {@link productId}. */
-    productSku?: string;
-    /**
-     * Numeric price of the displayed product. Accepts a `string` too (HTML
-     * attribute binding always delivers strings); an unparseable value is
-     * dropped. See {@link productId}.
-     */
-    productPrice?: number | string;
+    products?: ProductDetails[] | string;
     /**
      * Override the referral banner title.
      */

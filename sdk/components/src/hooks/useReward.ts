@@ -1,7 +1,6 @@
-import type { InteractionTypeKey } from "@frak-labs/core-sdk";
+import type { InteractionTypeKey, ProductDetails } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 import {
-    type ProductScopeTarget,
     type RewardAudience,
     selectBestReward,
 } from "@frak-labs/core-sdk/rewards";
@@ -17,17 +16,17 @@ import { useEffect, useState } from "preact/hooks";
  * @param shouldUseReward - Whether to fetch the reward at all
  * @param targetInteraction - Optional filter by interaction type (e.g. "purchase")
  * @param audience - Reward side to display: `"referrer"` (default) or `"referee"`
- * @param product - The product currently on display, when known (e.g. a
- * product page). Purely advisory — see {@link ProductScopeTarget} and
+ * @param products - The products currently in view, when known (e.g. a
+ * product page's single product, or a cart). Purely advisory — see
  * `matchesProductScope` in `@frak-labs/core-sdk/rewards`; deprioritizes
- * non-matching `productScope`d campaigns, never changes anything when omitted.
+ * campaigns that don't match any of them, never changes anything when omitted.
  * @returns Object containing the formatted reward string, or undefined if unavailable
  */
 export function useReward(
     shouldUseReward: boolean,
     targetInteraction?: InteractionTypeKey,
     audience?: RewardAudience,
-    product?: ProductScopeTarget
+    products?: ProductDetails[]
 ) {
     const [reward, setReward] = useState<string | undefined>(undefined);
 
@@ -43,7 +42,7 @@ export function useReward(
                     currency: client.config.metadata?.currency,
                     targetInteraction,
                     audience,
-                    product,
+                    products,
                 });
                 // Percentage rewards carry no concrete amount to advertise
                 // on this surface, so we treat them as "no reward" — callers
@@ -55,7 +54,7 @@ export function useReward(
             .catch(() => {
                 // Silently swallow — reward text is non-critical
             });
-    }, [shouldUseReward, targetInteraction, audience, product]);
+    }, [shouldUseReward, targetInteraction, audience, products]);
 
     return { reward };
 }
