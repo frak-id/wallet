@@ -13,6 +13,15 @@ type ClaimPurchaseParams = {
     customerId: string;
     orderId: string;
     token: string;
+    /**
+     * Whether identity groups may be merged while claiming this purchase
+     * (§3.9). Defaults to `true` for the trusted, server-to-server webhook
+     * path (`PurchaseWebhookOrchestrator`), where merging is correct and
+     * desirable. The SDK-facing `/track/purchase` route passes `false`: it
+     * is reachable with an unauthenticated `x-frak-client-id`, so it must
+     * only ever attribute to an existing group, never reassign one.
+     */
+    merge?: boolean;
 };
 
 type ClaimPurchaseResult = {
@@ -75,11 +84,22 @@ export class PurchaseLinkingOrchestrator {
             params.token,
             params.orderId
         );
+        const merge = params.merge ?? true;
 
-        const { finalGroupId, merged } =
-            await this.identityOrchestrator.resolveAndAssociate(
-                params.identityNodes
-            );
+        let finalGroupId: string;
+        let merged: boolean;
+        if (merge) {
+            ({ finalGroupId, merged } =
+                await this.identityOrchestrator.resolveAndAssociate(
+                    params.identityNodes
+                ));
+        } else {
+            ({ groupId: finalGroupId } =
+                await this.identityOrchestrator.resolveForAttribution(
+                    params.identityNodes
+                ));
+            merged = false;
+        }
 
         const purchase = await this.purchaseRepository.findByOrderAndToken(
             params.orderId,
@@ -92,26 +112,35 @@ export class PurchaseLinkingOrchestrator {
                 purchase,
                 finalGroupId,
                 merged,
-                params.merchantId
+                params.merchantId,
+                merge
             );
         }
 
-        await this.purchaseClaimRepository.upsert({
+        const claim = await this.purchaseClaimRepository.upsert({
             merchantId: params.merchantId,
             customerId: params.customerId,
             orderId: params.orderId,
             purchaseToken: normalizedToken,
             claimingIdentityGroupId: finalGroupId,
+            // §3.9: on the unauthenticated arm the first claim wins. The
+            // claim row is what the webhook later reads to attribute the
+            // purchase, so letting a later caller overwrite it is the same
+            // hijack as merging, one step earlier.
+            rebindExisting: merge,
         });
 
         log.debug(
-            { identityGroupId: finalGroupId, orderId: params.orderId },
+            {
+                identityGroupId: claim.claimingIdentityGroupId,
+                orderId: params.orderId,
+            },
             "Created purchase claim, awaiting webhook validation"
         );
 
         return {
             success: true,
-            identityGroupId: finalGroupId,
+            identityGroupId: claim.claimingIdentityGroupId,
             pendingWebhook: true,
         };
     }
@@ -120,7 +149,8 @@ export class PurchaseLinkingOrchestrator {
         purchase: PurchaseSelect,
         claimingGroupId: string,
         alreadyMerged: boolean,
-        merchantId: string
+        merchantId: string,
+        merge: boolean
     ): Promise<ClaimPurchaseResult> {
         let finalIdentityGroupId = claimingGroupId;
         let merged = alreadyMerged;
@@ -129,23 +159,41 @@ export class PurchaseLinkingOrchestrator {
             purchase.identityGroupId &&
             purchase.identityGroupId !== claimingGroupId
         ) {
-            const { finalGroupId } = await this.identityOrchestrator.associate(
-                claimingGroupId,
-                purchase.identityGroupId
-            );
+            if (!merge) {
+                // §3.9: the purchase is already attributed to another group
+                // and this caller is unauthenticated. Neither merging the two
+                // groups nor repointing the row is safe — repointing would let
+                // a forged `x-frak-client-id` steal an existing purchase. Keep
+                // the stored attribution and record the interaction against it.
+                log.warn(
+                    {
+                        purchaseId: purchase.id,
+                        claimingGroupId,
+                        purchaseGroupId: purchase.identityGroupId,
+                    },
+                    "Unauthenticated purchase claim for an already-attributed purchase; keeping the stored group"
+                );
+                finalIdentityGroupId = purchase.identityGroupId;
+            } else {
+                const { finalGroupId } =
+                    await this.identityOrchestrator.associate(
+                        claimingGroupId,
+                        purchase.identityGroupId
+                    );
 
-            log.info(
-                {
-                    purchaseId: purchase.id,
-                    claimingGroupId,
-                    purchaseGroupId: purchase.identityGroupId,
-                    finalGroupId,
-                },
-                "Merged claiming group with purchase group"
-            );
+                log.info(
+                    {
+                        purchaseId: purchase.id,
+                        claimingGroupId,
+                        purchaseGroupId: purchase.identityGroupId,
+                        finalGroupId,
+                    },
+                    "Merged claiming group with purchase group"
+                );
 
-            finalIdentityGroupId = finalGroupId;
-            merged = true;
+                finalIdentityGroupId = finalGroupId;
+                merged = true;
+            }
         }
 
         // Persist the resolved identity group on the purchase row whenever

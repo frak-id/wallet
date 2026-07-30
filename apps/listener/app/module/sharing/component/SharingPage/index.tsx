@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useStore } from "zustand";
 import { useTrackSharing } from "@/module/hooks/useTrackSharing";
+import { buildInstallUrl } from "@/module/sharing/buildInstallUrl";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {
@@ -34,7 +35,7 @@ export { handleDisplaySharingPage } from "@/module/hooks/useDisplaySharingPageLi
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();
-    const { sourceUrl, merchantId } = useSafeResolvingContext();
+    const { sourceUrl, merchantId, installProof } = useSafeResolvingContext();
     const defaultAttribution = useStore(
         resolvingContextStore,
         (s) => s.backendSdkConfig?.attribution
@@ -65,9 +66,13 @@ export function ListenerSharingPage() {
     // Compute the install URL centrally
     const installUrl = useMemo(() => {
         if (!(merchantId && clientId)) return null;
-        const baseUrl = window.location.origin;
-        return `${baseUrl}/install?m=${encodeURIComponent(merchantId)}&a=${encodeURIComponent(clientId)}`;
-    }, [merchantId, clientId]);
+        return buildInstallUrl({
+            baseUrl: window.location.origin,
+            merchantId,
+            clientId,
+            installProof,
+        });
+    }, [merchantId, clientId, installProof]);
 
     // Check sessionStorage for a recent confirmation
     const [showConfirmation, setShowConfirmation] = useState(() =>

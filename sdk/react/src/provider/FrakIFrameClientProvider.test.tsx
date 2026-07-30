@@ -11,7 +11,13 @@ vi.mock("@frak-labs/core-sdk", async () => {
     );
     return {
         ...actual,
-        createIFrameFrakClient: vi.fn(),
+        // Async since the client now resolves the anonymous id before wiring
+        // analytics; default to a resolved client so tests that don't care
+        // about the client itself still mount the iframe.
+        createIFrameFrakClient: vi.fn(async () => ({}) as FrakClient),
+        // Deterministic: the real one needs WebCrypto and would make every
+        // assertion here depend on key generation.
+        getClientIdAsync: vi.fn(async () => "test-derived-client-id"),
     };
 });
 
@@ -24,30 +30,71 @@ import { FrakConfigProvider } from "./FrakConfigProvider";
 import { FrakIFrameClientProvider } from "./FrakIFrameClientProvider";
 
 describe("FrakIFrameClientProvider", () => {
-    test("should render iframe with correct src", ({ mockFrakConfig }) => {
+    test("should render iframe with correct src", async ({
+        mockFrakConfig,
+        queryWrapper,
+    }) => {
         const Wrapper = ({ children }: { children: ReactNode }) =>
-            createElement(
-                FrakConfigProvider,
-                { config: mockFrakConfig },
-                children
-            );
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
 
         render(createElement(FrakIFrameClientProvider), {
             wrapper: Wrapper,
         });
 
-        const iframe = document.querySelector("iframe");
-        expect(iframe).toBeDefined();
+        // The iframe mounts only once the anonymous id has been derived, so
+        // that its src can carry `clientId` on the very first load.
+        const iframe = await waitFor(() => {
+            const el = document.querySelector("iframe");
+            expect(el).not.toBeNull();
+            return el;
+        });
         expect(iframe?.src).toContain(`${mockFrakConfig.walletUrl}/listener`);
     });
 
-    test("should apply custom styles to iframe", ({ mockFrakConfig }) => {
+    test("should seed the listener URL with the derived clientId", async ({
+        mockFrakConfig,
+        queryWrapper,
+    }) => {
         const Wrapper = ({ children }: { children: ReactNode }) =>
-            createElement(
-                FrakConfigProvider,
-                { config: mockFrakConfig },
-                children
-            );
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
+
+        render(createElement(FrakIFrameClientProvider), {
+            wrapper: Wrapper,
+        });
+
+        // Regression: this provider used to omit `clientId` entirely, so the
+        // listener never received an SDK-seeded identity and silently fell
+        // back to its own persisted store.
+        await waitFor(() => {
+            const iframe = document.querySelector("iframe");
+            expect(iframe?.src).toContain("clientId=");
+        });
+    });
+
+    test("should apply custom styles to iframe", async ({
+        mockFrakConfig,
+        queryWrapper,
+    }) => {
+        const Wrapper = ({ children }: { children: ReactNode }) =>
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
 
         const customStyle = {
             width: "500px",
@@ -61,23 +108,28 @@ describe("FrakIFrameClientProvider", () => {
             }
         );
 
-        const iframe = document.querySelector("iframe");
-        expect(iframe?.style.width).toBe("500px");
-        expect(iframe?.style.height).toBe("600px");
+        await waitFor(() => {
+            const iframe = document.querySelector("iframe");
+            expect(iframe?.style.width).toBe("500px");
+            expect(iframe?.style.height).toBe("600px");
+        });
     });
 
     test("should create FrakClient when iframe ref is set", async ({
         mockFrakConfig,
+        queryWrapper,
     }) => {
         const Wrapper = ({ children }: { children: ReactNode }) =>
-            createElement(
-                FrakConfigProvider,
-                { config: mockFrakConfig },
-                children
-            );
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
 
         const mockClient = { config: mockFrakConfig } as FrakClient;
-        vi.mocked(createIFrameFrakClient).mockReturnValue(mockClient);
+        vi.mocked(createIFrameFrakClient).mockResolvedValue(mockClient);
 
         render(createElement(FrakIFrameClientProvider), {
             wrapper: Wrapper,
@@ -90,16 +142,19 @@ describe("FrakIFrameClientProvider", () => {
 
     test("should not recreate client if already exists", async ({
         mockFrakConfig,
+        queryWrapper,
     }) => {
         const Wrapper = ({ children }: { children: ReactNode }) =>
-            createElement(
-                FrakConfigProvider,
-                { config: mockFrakConfig },
-                children
-            );
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
 
         const mockClient = { config: mockFrakConfig } as FrakClient;
-        vi.mocked(createIFrameFrakClient).mockReturnValue(mockClient);
+        vi.mocked(createIFrameFrakClient).mockResolvedValue(mockClient);
 
         const { rerender } = render(createElement(FrakIFrameClientProvider), {
             wrapper: Wrapper,
@@ -116,13 +171,18 @@ describe("FrakIFrameClientProvider", () => {
         expect(createIFrameFrakClient).toHaveBeenCalledTimes(1);
     });
 
-    test("should render without children", ({ mockFrakConfig }) => {
+    test("should render without children", ({
+        mockFrakConfig,
+        queryWrapper,
+    }) => {
         const Wrapper = ({ children }: { children: ReactNode }) =>
-            createElement(
-                FrakConfigProvider,
-                { config: mockFrakConfig },
-                children
-            );
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
 
         const { container } = render(createElement(FrakIFrameClientProvider), {
             wrapper: Wrapper,
@@ -132,35 +192,43 @@ describe("FrakIFrameClientProvider", () => {
         expect(iframe).toBeDefined();
     });
 
-    test("should use baseIframeProps for iframe attributes", ({
+    test("should use baseIframeProps for iframe attributes", async ({
         mockFrakConfig,
+        queryWrapper,
     }) => {
         const Wrapper = ({ children }: { children: ReactNode }) =>
-            createElement(
-                FrakConfigProvider,
-                { config: mockFrakConfig },
-                children
-            );
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
 
         render(createElement(FrakIFrameClientProvider), {
             wrapper: Wrapper,
         });
 
-        const iframe = document.querySelector("iframe");
-        expect(iframe).toBeDefined();
-        // baseIframeProps should set these attributes
-        expect(iframe?.getAttribute("sandbox")).toBeDefined();
+        await waitFor(() => {
+            const iframe = document.querySelector("iframe");
+            expect(iframe).not.toBeNull();
+            // baseIframeProps should set these attributes
+            expect(iframe?.getAttribute("sandbox")).toBeDefined();
+        });
     });
 
     test("should handle iframe ref callback correctly", ({
         mockFrakConfig,
+        queryWrapper,
     }) => {
         const Wrapper = ({ children }: { children: ReactNode }) =>
-            createElement(
-                FrakConfigProvider,
-                { config: mockFrakConfig },
-                children
-            );
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
 
         const mockClient = { config: mockFrakConfig } as FrakClient;
         let callCount = 0;
@@ -180,16 +248,19 @@ describe("FrakIFrameClientProvider", () => {
 
     test("should pass config to createIFrameFrakClient", async ({
         mockFrakConfig,
+        queryWrapper,
     }) => {
         const Wrapper = ({ children }: { children: ReactNode }) =>
-            createElement(
-                FrakConfigProvider,
-                { config: mockFrakConfig },
-                children
-            );
+            queryWrapper.wrapper({
+                children: createElement(
+                    FrakConfigProvider,
+                    { config: mockFrakConfig },
+                    children
+                ),
+            });
 
         const mockClient = { config: mockFrakConfig } as FrakClient;
-        vi.mocked(createIFrameFrakClient).mockReturnValue(mockClient);
+        vi.mocked(createIFrameFrakClient).mockResolvedValue(mockClient);
 
         render(createElement(FrakIFrameClientProvider), {
             wrapper: Wrapper,

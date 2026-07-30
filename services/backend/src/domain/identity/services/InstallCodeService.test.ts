@@ -1,0 +1,73 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { JwtContextMock } from "../../../../test/mock/common";
+import type { InstallCodeRepository } from "../repositories/InstallCodeRepository";
+import { InstallCodeService } from "./InstallCodeService";
+
+function makeService() {
+    const repository = {
+        create: vi.fn(),
+        findByCode: vi.fn(),
+    };
+    const service = new InstallCodeService(
+        repository as unknown as InstallCodeRepository
+    );
+    return { service, repository };
+}
+
+describe("InstallCodeService", () => {
+    beforeEach(() => {
+        JwtContextMock.installTicket.sign.mockClear();
+        JwtContextMock.installTicket.verify.mockClear();
+    });
+
+    describe("mintTicket", () => {
+        it("signs a ticket from the resolved merchantId/anonymousId, unconditionally", async () => {
+            const { service } = makeService();
+            JwtContextMock.installTicket.sign.mockResolvedValueOnce(
+                "signed-ticket" as never
+            );
+
+            const ticket = await service.mintTicket({
+                merchantId: "merchant-1",
+                anonymousId: "anon-1",
+            });
+
+            expect(ticket).toBe("signed-ticket");
+            expect(JwtContextMock.installTicket.sign).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    sub: "anon-1",
+                    mid: "merchant-1",
+                })
+            );
+        });
+    });
+
+    describe("verifyTicket", () => {
+        it("returns the identity a valid ticket authenticates", async () => {
+            const { service } = makeService();
+            JwtContextMock.installTicket.verify.mockResolvedValueOnce({
+                sub: "anon-1",
+                mid: "merchant-1",
+                aud: "install-ticket",
+            } as never);
+
+            const result = await service.verifyTicket("valid-ticket");
+
+            expect(result).toEqual({
+                anonymousId: "anon-1",
+                merchantId: "merchant-1",
+            });
+        });
+
+        it("returns null for an invalid or expired ticket, rather than throwing", async () => {
+            const { service } = makeService();
+            JwtContextMock.installTicket.verify.mockResolvedValueOnce(
+                null as never
+            );
+
+            const result = await service.verifyTicket("bad-ticket");
+
+            expect(result).toBeNull();
+        });
+    });
+});

@@ -8,7 +8,7 @@ import {
 } from "../../tests/vitest-fixtures";
 
 vi.mock("../config/clientId", () => ({
-    getClientId: vi.fn().mockReturnValue("test-client-id"),
+    getClientIdAsync: vi.fn().mockResolvedValue("test-client-id"),
 }));
 
 vi.mock("../config/sdkConfigStore", () => ({
@@ -17,7 +17,7 @@ vi.mock("../config/sdkConfigStore", () => ({
     },
 }));
 
-import { getClientId } from "../config/clientId";
+import { getClientIdAsync } from "../config/clientId";
 import { sdkConfigStore } from "../config/sdkConfigStore";
 import { trackPurchaseStatus } from "./trackPurchaseStatus";
 
@@ -101,7 +101,7 @@ describe.sequential("trackPurchaseStatus", () => {
             clientId: "test-client-id",
         });
 
-        vi.mocked(getClientId).mockReturnValue("test-client-id");
+        vi.mocked(getClientIdAsync).mockResolvedValue("test-client-id");
         vi.mocked(sdkConfigStore.resolveMerchantId).mockResolvedValue(
             undefined
         );
@@ -406,7 +406,7 @@ describe.sequential("trackPurchaseStatus", () => {
                 merchantId: "merchant-1",
                 clientId: null,
             });
-            vi.mocked(getClientId).mockReturnValue("");
+            vi.mocked(getClientIdAsync).mockResolvedValue("");
             const callCountBefore = getTrackingRequests().length;
 
             await trackPurchaseStatus({
@@ -429,7 +429,7 @@ describe.sequential("trackPurchaseStatus", () => {
                 merchantId: "merchant-1",
                 clientId: null,
             });
-            vi.mocked(getClientId).mockReturnValue("");
+            vi.mocked(getClientIdAsync).mockResolvedValue("");
             const callCountBefore = getTrackingRequests().length;
 
             await trackPurchaseStatus({
@@ -475,7 +475,7 @@ describe.sequential("trackPurchaseStatus", () => {
 
     describe("network errors", () => {
         test("should handle fetch rejection", async () => {
-            vi.mocked(getClientId).mockReturnValue("test-client-id");
+            vi.mocked(getClientIdAsync).mockResolvedValue("test-client-id");
             setupStorage({
                 interactionToken: "token-123",
                 merchantId: null,

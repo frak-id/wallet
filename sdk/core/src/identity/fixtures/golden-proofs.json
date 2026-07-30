@@ -1,0 +1,89 @@
+{
+    "formatVersion": 1,
+    "fixtures": [
+        {
+            "description": "keypair 1, frak-ensure-v1, empty binding",
+            "privkeyHex": "0101010101010101010101010101010101010101010101010101010101010101",
+            "pubkeyUncompressedHex": "046ff03b949241ce1dadd43519e6960e0a85b41a69a05c328103aa2bce1594ca163c4f753a55bf01dc53f6c0b0c7eee78b40c6ff7d25a96e2282b989cef71c144a",
+            "derivedClientId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "op": "frak-ensure-v1",
+            "merchantId": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+            "anonymousId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "bindingHex": "",
+            "ts": 1700000000,
+            "canonicalMsgHex": "6672616b2d656e737572652d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0e256b1be3274541d189d49121cc87bc450000000000000000000000000000000000000000000000000000000000000000000000006553f100",
+            "sigHex": "f71411aa6f811a1afd72c728d1b4e08c480c90bcaa1f22d3b8894ef318e6f41043f670c2dccd1146d5339aafc2b3f772d4e960035096296b7049f689eb8de939",
+            "proof": "AQRv8DuUkkHOHa3UNRnmlg4KhbQaaaBcMoEDqivOFZTKFjxPdTpVvwHcU_bAsMfu54tAxv99JaluIoK5ic73HBRKAAAAAGVT8QD3FBGqb4EaGv1yxyjRtOCMSAyQvKofItO4iU7zGOb0EEP2cMLczRFG1TOar8Kz93LU6WADUJYpa3BJ9onrjek5"
+        },
+        {
+            "description": "keypair 1, frak-merge-v1, real 32-byte SHA-256(mergeToken) binding",
+            "privkeyHex": "0101010101010101010101010101010101010101010101010101010101010101",
+            "pubkeyUncompressedHex": "046ff03b949241ce1dadd43519e6960e0a85b41a69a05c328103aa2bce1594ca163c4f753a55bf01dc53f6c0b0c7eee78b40c6ff7d25a96e2282b989cef71c144a",
+            "derivedClientId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "op": "frak-merge-v1",
+            "merchantId": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+            "anonymousId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "bindingHex": "9c88d2adb2bf0e5a9c2cc2c60bdedfafcfc8bbe248b9a49cf338d4fe79a57f41",
+            "ts": 1700000000,
+            "canonicalMsgHex": "6672616b2d6d657267652d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0e256b1be3274541d189d49121cc87bc459c88d2adb2bf0e5a9c2cc2c60bdedfafcfc8bbe248b9a49cf338d4fe79a57f41000000006553f100",
+            "sigHex": "92a7c713dd76ebc2933dbc3745033041884284f438cd54f36e0432d22b7563a818b73e7297efba84a6fb77a52bd45558f1265a63fd464e60e86a4e7a4491fabb",
+            "proof": "AQRv8DuUkkHOHa3UNRnmlg4KhbQaaaBcMoEDqivOFZTKFjxPdTpVvwHcU_bAsMfu54tAxv99JaluIoK5ic73HBRKAAAAAGVT8QCSp8cT3XbrwpM9vDdFAzBBiEKE9DjNVPNuBDLSK3VjqBi3PnKX77qEpvt3pSvUVVjxJlpj_UZOYOhqTnpEkfq7"
+        },
+        {
+            "description": "keypair 1, frak-install-v1, empty binding",
+            "privkeyHex": "0101010101010101010101010101010101010101010101010101010101010101",
+            "pubkeyUncompressedHex": "046ff03b949241ce1dadd43519e6960e0a85b41a69a05c328103aa2bce1594ca163c4f753a55bf01dc53f6c0b0c7eee78b40c6ff7d25a96e2282b989cef71c144a",
+            "derivedClientId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "op": "frak-install-v1",
+            "merchantId": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+            "anonymousId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "bindingHex": "",
+            "ts": 1700000000,
+            "canonicalMsgHex": "6672616b2d696e7374616c6c2d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0e256b1be3274541d189d49121cc87bc450000000000000000000000000000000000000000000000000000000000000000000000006553f100",
+            "sigHex": "e03cd6bdccee581af0b5d16a25937b18a46e79dfac96de97d3729a4c55249df173813a15778b25728c6b8f1306f58cc3506934e529ad63566f3dfe42e360bd80",
+            "proof": "AQRv8DuUkkHOHa3UNRnmlg4KhbQaaaBcMoEDqivOFZTKFjxPdTpVvwHcU_bAsMfu54tAxv99JaluIoK5ic73HBRKAAAAAGVT8QDgPNa9zO5YGvC10Wolk3sYpG5536yW3pfTcppMVSSd8XOBOhV3iyVyjGuPEwb1jMNQaTTlKa1jVm89_kLjYL2A"
+        },
+        {
+            "description": "keypair 1, frak-sso-v1, empty binding",
+            "privkeyHex": "0101010101010101010101010101010101010101010101010101010101010101",
+            "pubkeyUncompressedHex": "046ff03b949241ce1dadd43519e6960e0a85b41a69a05c328103aa2bce1594ca163c4f753a55bf01dc53f6c0b0c7eee78b40c6ff7d25a96e2282b989cef71c144a",
+            "derivedClientId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "op": "frak-sso-v1",
+            "merchantId": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+            "anonymousId": "256b1be3-2745-41d1-89d4-9121cc87bc45",
+            "bindingHex": "",
+            "ts": 1700000000,
+            "canonicalMsgHex": "6672616b2d73736f2d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0e256b1be3274541d189d49121cc87bc450000000000000000000000000000000000000000000000000000000000000000000000006553f100",
+            "sigHex": "86e5fd1f6f0631c858b9b3020ae3145684a7461791f0d35a96c2d1428050cd232b41e7635ceff46579adb48fa82ed4f6c41de35be7b9ee9b9402bd0aaebaf20d",
+            "proof": "AQRv8DuUkkHOHa3UNRnmlg4KhbQaaaBcMoEDqivOFZTKFjxPdTpVvwHcU_bAsMfu54tAxv99JaluIoK5ic73HBRKAAAAAGVT8QCG5f0fbwYxyFi5swIK4xRWhKdGF5Hw01qWwtFCgFDNIytB52Nc7_Rlea20j6gu1PbEHeNb57num5QCvQquuvIN"
+        },
+        {
+            "description": "keypair 2, frak-ensure-v1, uppercase merchantId parsed to the same 16 bytes as lowercase",
+            "privkeyHex": "c8b3e2a11d4f4a6b8e2d7f3a1b5c9d0ee2a11d4f4a6b8e2d7f3a1b5c9d0e1234",
+            "pubkeyUncompressedHex": "04fb7c870211687b2726920d4448188db956ef1cbd0841dcab1ddd6ce0761d80632bf72409beb90bbd91ef6349aa8046aa9b4c187922d6c9400cdb7b10748f6912",
+            "derivedClientId": "b181eccf-ba6c-4066-baea-e4b5f01fb10b",
+            "op": "frak-ensure-v1",
+            "merchantId": "9C8B3E2A-1D4F-4A6B-8E2D-7F3A1B5C9D0E",
+            "anonymousId": "b181eccf-ba6c-4066-baea-e4b5f01fb10b",
+            "bindingHex": "",
+            "ts": 1700000000,
+            "canonicalMsgHex": "6672616b2d656e737572652d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0eb181eccfba6c4066baeae4b5f01fb10b0000000000000000000000000000000000000000000000000000000000000000000000006553f100",
+            "sigHex": "14f3278c001adf7265e291aa37d2c4bd777e901a35479a3fa00cf492ca7618be4bce3d7a021a40436d838d674546ea288b8a3c6634719086341514d83c6410c1",
+            "proof": "AQT7fIcCEWh7JyaSDURIGI25Vu8cvQhB3Ksd3Wzgdh2AYyv3JAm-uQu9ke9jSaqARqqbTBh5ItbJQAzbexB0j2kSAAAAAGVT8QAU8yeMABrfcmXikao30sS9d36QGjVHmj-gDPSSynYYvkvOPXoCGkBDbYONZ0VG6iiLijxmNHGQhjQVFNg8ZBDB"
+        },
+        {
+            "description": "keypair 2, frak-merge-v1, fixed ts at a different known value",
+            "privkeyHex": "c8b3e2a11d4f4a6b8e2d7f3a1b5c9d0ee2a11d4f4a6b8e2d7f3a1b5c9d0e1234",
+            "pubkeyUncompressedHex": "04fb7c870211687b2726920d4448188db956ef1cbd0841dcab1ddd6ce0761d80632bf72409beb90bbd91ef6349aa8046aa9b4c187922d6c9400cdb7b10748f6912",
+            "derivedClientId": "b181eccf-ba6c-4066-baea-e4b5f01fb10b",
+            "op": "frak-merge-v1",
+            "merchantId": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+            "anonymousId": "b181eccf-ba6c-4066-baea-e4b5f01fb10b",
+            "bindingHex": "9c88d2adb2bf0e5a9c2cc2c60bdedfafcfc8bbe248b9a49cf338d4fe79a57f41",
+            "ts": 1800000000,
+            "canonicalMsgHex": "6672616b2d6d657267652d76319c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0eb181eccfba6c4066baeae4b5f01fb10b9c88d2adb2bf0e5a9c2cc2c60bdedfafcfc8bbe248b9a49cf338d4fe79a57f41000000006b49d200",
+            "sigHex": "f388a8534fd89eb7f9b17c7f7f5fa24c7e65350b87b330eae0118f436eb0b5a54195a92cb84851bfda3af96590e69934bb3079afead2172fccbc0ed6ddc471fc",
+            "proof": "AQT7fIcCEWh7JyaSDURIGI25Vu8cvQhB3Ksd3Wzgdh2AYyv3JAm-uQu9ke9jSaqARqqbTBh5ItbJQAzbexB0j2kSAAAAAGtJ0gDziKhTT9iet_mxfH9_X6JMfmU1C4ezMOrgEY9DbrC1pUGVqSy4SFG_2jr5ZZDmmTS7MHmv6tIXL8y8DtbdxHH8"
+        }
+    ]
+}

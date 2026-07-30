@@ -1,3 +1,4 @@
+import { INSTALL_TICKET_TTL_MS } from "@frak-labs/app-essentials/constants/installTicket";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -6,7 +7,9 @@ import type {
 } from "@/module/pending-actions/types";
 
 const DEFAULT_NAV_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const DEFAULT_ENSURE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // One week
+// Shared with the install-ticket JWT the ensure action carries, so the two
+// can never expire out of step.
+const DEFAULT_ENSURE_TTL_MS = INSTALL_TICKET_TTL_MS;
 
 type PendingActionsState = {
     actions: PendingAction[];
@@ -28,10 +31,21 @@ const initialState: PendingActionsState = {
 /**
  * Deduplication key for an action — prevents duplicate entries
  * of the same type with the same parameters.
+ *
+ * Prefers the ticket when present: a ticket is per-`resolve` call, not
+ * per-identity (README §5 ticket design table), so two resolves for the
+ * same `anonymousId` (e.g. the user re-enters a code) are distinct pending
+ * actions rather than overwriting each other. Falls back to the legacy
+ * `anonymousId`-keyed form — tag kept for ROLLOUT-STEP-3: once the bare
+ * `anonymousId` arm is deleted this branch has no more actions to key.
  */
 function dedupeKey(action: PendingActionInput): string {
     switch (action.type) {
         case "ensure":
+            if (action.ticket) {
+                return `ensure:${action.merchantId}:${action.ticket}`;
+            }
+            // ROLLOUT-STEP-3: legacy anonymousId-keyed dedupe.
             return `ensure:${action.merchantId}:${action.anonymousId}`;
         case "navigation":
             return "navigation";
@@ -114,9 +128,39 @@ export const pendingActionsStore = create<PendingActionsStore>()(
         }),
         {
             name: "frak_pending_actions_store",
+            version: 1,
             partialize: (state) => ({
                 actions: state.actions,
             }),
+            /**
+             * README §5 step 1: add `version`/`migrate` now, while the
+             * migration is a no-op, so a future `version: 2` (dropping
+             * `anonymousId` per ROLLOUT-STEP-3) has a hook to land on.
+             *
+             * MUST NOT THROW. A store persisted by any build before this
+             * change has no `version` field at all — zustand's `persist`
+             * treats that as version `0` and always calls `migrate`, even
+             * though the persisted shape stays readable as-is: the only
+             * `PendingAction` change shipping alongside this bump is the
+             * OPTIONAL `proof` field, which an older payload simply omits,
+             * so no field-level migration is required here.
+             * The SAME store also backs `navigation` actions used by
+             * pairing and deep links (README §6.1); a thrown migration
+             * would corrupt rehydration for those too, not just `ensure`.
+             * A malformed or unrecognised `persistedState` degrades to the
+             * store's own `initialState` rather than throwing, so a
+             * corrupted payload just re-derives pending actions on the next
+             * real event instead of bricking the whole store.
+             */
+            migrate: (persistedState) => {
+                const state = persistedState as
+                    | Partial<PendingActionsState>
+                    | undefined;
+                if (!state || !Array.isArray(state.actions)) {
+                    return { actions: [] };
+                }
+                return { actions: state.actions };
+            },
         }
     )
 );

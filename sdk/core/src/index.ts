@@ -6,6 +6,7 @@ export { createIFrameFrakClient, setupClient } from "./clients";
 export {
     getBackendUrl,
     getClientId,
+    getClientIdAsync,
     sdkConfigStore,
 } from "./config";
 // Constants
@@ -72,8 +73,10 @@ export type {
     ModalStepMetadata,
     // RPC Modal generics
     ModalStepTypes,
+    OpenSsoArgsType,
     OpenSsoParamsType,
     OpenSsoReturnType,
+    OpenSsoUrlParamsType,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
     ResolvedPlacement,
@@ -109,6 +112,7 @@ export {
     base64urlDecode,
     base64urlEncode,
     baseIframeProps,
+    buildListenerUrl,
     type CompressedSsoData,
     clearAllCache,
     compressJsonToB64,

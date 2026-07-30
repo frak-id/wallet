@@ -165,7 +165,6 @@ export {
     isPairingSignatureError,
     LaunchPairing,
     type OnPairingSuccessCallback,
-    type OriginIdentityNode,
     type OriginPairingClient,
     OriginPairingState,
     PairingNotFoundError,

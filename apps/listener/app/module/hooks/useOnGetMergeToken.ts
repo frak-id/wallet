@@ -16,14 +16,20 @@ type OnGetMergeToken = RpcPromiseHandler<
  * to be linked when reopening the page in an external browser.
  */
 export function createGetMergeTokenHandler(): OnGetMergeToken {
-    return async (_params, context) => {
+    return async (params, context) => {
         const { merchantId, clientId } = context;
         if (!clientId || !merchantId) return null;
 
+        // `params[0]` carries the SDK's frak-merge-v1 proof (README §4.2).
+        // Old SDKs send no params at all, so this is `undefined` for them —
+        // forwarded as `proof: undefined`, which the JSON body serialiser
+        // drops, leaving the request byte-identical to before.
+        const proof = params?.[0];
         const { data } =
             await authenticatedBackendApi.user.identity.merge.initiate.post({
                 sourceAnonymousId: clientId,
                 merchantId,
+                proof,
             });
         return data?.mergeToken ?? null;
     };

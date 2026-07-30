@@ -11,9 +11,12 @@ import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
 export function useGenerateInstallCode({
     merchantId,
     anonymousId,
+    proof,
 }: {
     merchantId?: string;
     anonymousId?: string;
+    /** frak-install-v1 proof (README §4.4), read from the `#p=` fragment. */
+    proof?: string;
 }) {
     return useQuery({
         queryKey: installCodeKey.generate(merchantId, anonymousId),
@@ -22,7 +25,7 @@ export function useGenerateInstallCode({
 
             const { data, error } = await authenticatedBackendApi.user.identity[
                 "install-code"
-            ].generate.post({ merchantId, anonymousId });
+            ].generate.post({ merchantId, anonymousId, proof });
 
             if (error || !data) {
                 throw new Error("Failed to generate install code");

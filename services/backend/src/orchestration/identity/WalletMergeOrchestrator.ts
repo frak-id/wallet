@@ -12,8 +12,8 @@ import type { PairingRouterOrchestrator } from "../pairing/PairingRouterOrchestr
 import type { MergePreviewResponse, MergeSettleResponse } from "../schemas";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import {
-    computeTotalWeight,
     type IdentityWeightService,
+    pickHeavierWeight,
 } from "./IdentityWeightService";
 import type { WalletSessionOrchestrator } from "./WalletSessionOrchestrator";
 
@@ -132,8 +132,8 @@ export class WalletMergeOrchestrator {
         };
 
         const requesterWins = pickWinner(
-            { weight: requesterWeight, createdAt: requesterGroup.createdAt },
-            { weight: targetWeight, createdAt: targetGroup.createdAt }
+            { weight: requesterWeight },
+            { weight: targetWeight }
         );
 
         const winner = requesterWins ? requesterWallet : targetWallet;
@@ -557,23 +557,18 @@ export class WalletMergeOrchestrator {
 /**
  * Returns `true` when the requester side should win the merge.
  *
- * Total weight = `computeTotalWeight` (merchant roles count 10x; see
- * `IdentityWeightService`). Tiebreaker is the older `createdAt` (the wallet
- * that has existed longer keeps its primacy); deterministic fallback is
- * "requester wins" so the result is stable even for two groups created in
- * the same millisecond.
+ * Delegates to {@link pickHeavierWeight} — the same tie-break rule
+ * `IdentityWeightService` uses for anonymous-id/wallet merges (weighted
+ * total, merchant roles 10x, then a per-dimension priority order) — so a
+ * tie resolves identically regardless of which merge path decided it.
+ * `weight1` (the requester) wins any full tie, matching the previous
+ * deterministic fallback.
  */
-function pickWinner(
-    requester: { weight: MergeWeight; createdAt: Date | null },
-    target: { weight: MergeWeight; createdAt: Date | null }
+export function pickWinner(
+    requester: { weight: MergeWeight },
+    target: { weight: MergeWeight }
 ): boolean {
-    const requesterTotal = computeTotalWeight(requester.weight);
-    const targetTotal = computeTotalWeight(target.weight);
-    if (requesterTotal !== targetTotal) {
-        return requesterTotal > targetTotal;
-    }
-    if (requester.createdAt && target.createdAt) {
-        return requester.createdAt.getTime() <= target.createdAt.getTime();
-    }
-    return true;
+    return (
+        pickHeavierWeight(requester.weight, target.weight) === requester.weight
+    );
 }

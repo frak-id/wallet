@@ -13,7 +13,10 @@ import {
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
 import { recoveryHintStorage } from "../../common/storage/recoveryHint";
-import { addLastAuthentication } from "../../stores/authenticationStore";
+import {
+    addLastAuthentication,
+    authenticationStore,
+} from "../../stores/authenticationStore";
 import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
@@ -34,7 +37,6 @@ type UseLoginArgs = {
      * over `lastAuthentication.authenticatorId`.
      */
     allowedCredentialIds?: string[];
-    merchantId?: string;
     /**
      * When set, the freshly minted session is written to the tab-scoped
      * `detachedPairingSessionStore` under this pairing id instead of the
@@ -131,14 +133,33 @@ export function useLogin(
             const encodedResponse = btoa(
                 JSON.stringify(authenticationResponse)
             );
+            // Both of these are SSO-only, and `/sso` is the only writer of
+            // `ssoContext`, so they are read straight from the store instead
+            // of being threaded through every caller. Non-SSO login paths
+            // (reauth, pairing, email, onboarding) have no merchant and no
+            // proof, and shouldn't have to pass `undefined` for either.
+            const { merchantId, proof } =
+                authenticationStore.getState().ssoContext ?? {};
             const { data, error } =
                 await authenticatedWalletApi.auth.login.post({
                     expectedChallenge: challenge,
                     authenticatorResponse: encodedResponse,
-                    merchantId: args?.merchantId || undefined,
+                    merchantId: merchantId || undefined,
+                    proof,
                 });
             if (error) {
                 throw error;
+            }
+
+            // Single-use: clear immediately after the backend consumes it so
+            // it can't be replayed by a later login/register call within the
+            // same wallet session (ssoContext otherwise lives until the /sso
+            // flow overwrites or the tab closes).
+            if (proof) {
+                authenticationStore.getState().setSsoContext({
+                    ...authenticationStore.getState().ssoContext,
+                    proof: undefined,
+                });
             }
 
             const { token, sdkJwt, ...authentication } = data;

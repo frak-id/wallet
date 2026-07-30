@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
     type MerchantWebhook,
     merchantWebhooksTable,
@@ -52,7 +52,21 @@ export class PurchaseRepository {
                         ...(purchase.purchaseToken
                             ? { purchaseToken: purchase.purchaseToken }
                             : {}),
-                        ...(identityGroupId ? { identityGroupId } : {}),
+                        // First-writer-wins: Shopify/Magento redeliver `orders/updated`
+                        // repeatedly (capture, fulfilment, refund), and this
+                        // identityGroupId derives from a client-controlled
+                        // `_frak-client-id` cart attribute. Overwriting on every
+                        // redelivery would let an attacker who completes a real order
+                        // with a victim's clientId planted in the cart repoint
+                        // attribution after the fact. COALESCE keeps whatever the row
+                        // already has (a bare column reference here is the EXISTING
+                        // row, not `excluded`) and only fills it in when still NULL —
+                        // done in SQL so it can't race across concurrent deliveries.
+                        ...(identityGroupId
+                            ? {
+                                  identityGroupId: sql`coalesce(${purchasesTable.identityGroupId}, ${identityGroupId})`,
+                              }
+                            : {}),
                     },
                 })
                 .returning({ purchaseId: purchasesTable.id });

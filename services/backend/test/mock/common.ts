@@ -49,6 +49,10 @@ export const JwtContextMock = {
         sign: vi.fn(() => Promise.resolve("mock-anonymous-merge-token")),
         verify: vi.fn(() => Promise.resolve(null)),
     },
+    installTicket: {
+        sign: vi.fn(() => Promise.resolve("mock-install-ticket")),
+        verify: vi.fn(() => Promise.resolve(null)),
+    },
     businessInvitation: {
         sign: vi.fn(() => Promise.resolve("mock-business-invitation-token")),
         verify: vi.fn(() => Promise.resolve(null)),

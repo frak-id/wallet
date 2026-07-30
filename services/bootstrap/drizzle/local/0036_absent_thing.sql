@@ -1,0 +1,1 @@
+ALTER TABLE "device_pairing" DROP COLUMN "origin_node";

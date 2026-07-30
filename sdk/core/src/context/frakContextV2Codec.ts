@@ -176,22 +176,3 @@ export function decodeFrakContextV2(buf: Uint8Array): FrakContextV2 | null {
 
     return out;
 }
-
-/**
- * Quick length-based probe to tell V1 (20-byte wallet address) apart from a V2
- * binary payload. Exposed so the outer decoder can branch without re-parsing.
- */
-export function isV2BinaryLength(byteLength: number): boolean {
-    return (
-        byteLength ===
-            HEADER_BYTES + UUID_BYTES + TIMESTAMP_BYTES + UUID_BYTES ||
-        byteLength ===
-            HEADER_BYTES + UUID_BYTES + TIMESTAMP_BYTES + ADDRESS_BYTES ||
-        byteLength ===
-            HEADER_BYTES +
-                UUID_BYTES +
-                TIMESTAMP_BYTES +
-                UUID_BYTES +
-                ADDRESS_BYTES
-    );
-}

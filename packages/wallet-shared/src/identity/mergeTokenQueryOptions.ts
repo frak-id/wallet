@@ -34,6 +34,32 @@ export const mergeTokenKeys = {
  *
  * Consumers wrap this with `useQuery` and add their own `enabled` gate
  * (e.g. wallet-session presence) as needed.
+ *
+ * TODO(merge-initiate-proof): the `sourceAnonymousId` arm sends NO proof, so
+ * it can never latch and stays on the backend's fail-open path
+ * (`AnonymousMergeOrchestrator.enforceProof`). It must carry one before that
+ * arm is made unconditionally mandatory (ROLLOUT-STEP-3), or the listener's
+ * in-app-browser escape 403s outright.
+ *
+ * Deferred deliberately, not overlooked. The only consumers are the listener
+ * modal and the embedded wallet (`useGetMergeToken`), neither of which has a
+ * production merchant today; the embedded wallet is slated for deletion and
+ * the modal for internal dashboard use only. The wallet-app explorer arm
+ * omits `sourceAnonymousId` entirely and is authenticated by session, so it
+ * is unaffected.
+ *
+ * Two real constraints when this is picked up (see DUAL-ARM-PLAN.md D-B
+ * discussion):
+ *  1. The proof must be `frak-merge-v1` with an EMPTY binding, as
+ *     `sdk/core/src/actions/getMergeToken.ts` produces. Reusing
+ *     `sdkIdentity.proofs.merge` from `resolved-config` would 403 — that one
+ *     binds `SHA-256(mergeToken)`, for the `execute` side.
+ *  2. `frak-merge-v1`'s window is ±2 min, but a modal stays open for as long
+ *     as the user takes. A proof signed at open time is routinely expired by
+ *     the time the user clicks. Signing lazily is impossible (no
+ *     listener→SDK request channel, README §2.0), so this needs a wider
+ *     window for the empty-binding initiate case — backend policy, not
+ *     frozen wire format (DECISIONS D5).
  */
 export function mergeTokenQueryOptions(args: {
     merchantId: string | undefined;

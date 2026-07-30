@@ -52,7 +52,6 @@ export {
 // Types
 export type {
     BasePairingState,
-    OriginIdentityNode,
     // OriginPairingState type intentionally NOT re-exported — conflicts with the component above
     // (consume from `./types` directly when needed)
     TargetPairingIdState,

@@ -9,13 +9,11 @@ import { useMountedTimeout } from "@frak-labs/wallet-shared/common/hook/useMount
 import { ua } from "@frak-labs/wallet-shared/common/lib/ua";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import { getOriginPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
-import type { OriginIdentityNode } from "@frak-labs/wallet-shared/pairing/types";
 import {
     type ReactNode,
     type RefObject,
     useCallback,
     useEffect,
-    useMemo,
     useRef,
     useState,
 } from "react";
@@ -203,23 +201,12 @@ function MobileSsoButton({
     } = useMountedTimeout();
     const client = getOriginPairingClient();
     const clientState = useStore(client.store);
-    const resolvingContext = useStore(resolvingContextStore, (s) => s.context);
     const { emitRedirectWithFallback } = useDeepLinkFallback();
 
     // Track whether the page was hidden (native app opened)
     const didHideRef = useRef(false);
     // Monotonic counter to invalidate stale SSO redirect attempts
     const attemptIdRef = useRef(0);
-    const originNode = useMemo((): OriginIdentityNode | undefined => {
-        if (!resolvingContext?.clientId || !resolvingContext?.merchantId) {
-            return undefined;
-        }
-        return {
-            type: "anonymous_fingerprint",
-            value: resolvingContext.clientId,
-            merchantId: resolvingContext.merchantId,
-        };
-    }, [resolvingContext?.clientId, resolvingContext?.merchantId]);
 
     // Cancel SSO redirect when page goes hidden (app was opened)
     useEffect(() => {
@@ -263,7 +250,7 @@ function MobileSsoButton({
             // subscribes to the new one — the two sides then never meet, and
             // the latched `waiting` status blocks the correct deep link.
             client.softReset();
-            await client.initiatePairing({ originNode });
+            await client.initiatePairing();
         } catch {
             setStatus("idle");
             trackEvent("sso_failed", { reason: "pairing-init-failed" });

@@ -806,6 +806,9 @@
         "download": "Download the app",
         "processing": "Setting up your wallet..."
     },
+    "pendingActions": {
+        "walletAlreadyLinked": "This referral link is already linked to another wallet."
+    },
     "onboarding": {
         "start": "Get started",
         "continue": "Continue",

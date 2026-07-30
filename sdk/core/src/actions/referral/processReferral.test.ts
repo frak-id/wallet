@@ -26,7 +26,7 @@ vi.mock("../../context", () => ({
 }));
 
 vi.mock("../../config/clientId", () => ({
-    getClientId: vi.fn().mockReturnValue("test-client-id"),
+    getClientIdAsync: vi.fn().mockResolvedValue("test-client-id"),
 }));
 
 vi.mock("../../utils", () => ({
@@ -122,7 +122,7 @@ describe("processReferral", () => {
 
         it("should return 'self-referral' when v2 context has same clientId as current user", async () => {
             const clientIdMod = await import("../../config/clientId");
-            vi.mocked(clientIdMod.getClientId).mockReturnValue(
+            vi.mocked(clientIdMod.getClientIdAsync).mockResolvedValue(
                 "referrer-client-id"
             );
 
@@ -139,7 +139,7 @@ describe("processReferral", () => {
             });
 
             expect(result).toBe("self-referral");
-            vi.mocked(clientIdMod.getClientId).mockReturnValue(
+            vi.mocked(clientIdMod.getClientIdAsync).mockResolvedValue(
                 "test-client-id"
             );
         });
@@ -191,7 +191,7 @@ describe("processReferral", () => {
         it("should prefer wallet over clientId for self-referral when both are present", async () => {
             const clientIdMod = await import("../../config/clientId");
             // clientId does NOT match current user, but wallet does → still self-referral
-            vi.mocked(clientIdMod.getClientId).mockReturnValue(
+            vi.mocked(clientIdMod.getClientIdAsync).mockResolvedValue(
                 "some-other-client"
             );
 
@@ -209,7 +209,7 @@ describe("processReferral", () => {
             });
 
             expect(result).toBe("self-referral");
-            vi.mocked(clientIdMod.getClientId).mockReturnValue(
+            vi.mocked(clientIdMod.getClientIdAsync).mockResolvedValue(
                 "test-client-id"
             );
         });
@@ -271,7 +271,9 @@ describe("processReferral", () => {
             },
         });
 
-        expect(clientIdMod.getClientId()).toBe("test-client-id");
+        await expect(clientIdMod.getClientIdAsync()).resolves.toBe(
+            "test-client-id"
+        );
 
         expect(contextMod.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
             url: window.location.href,
@@ -311,7 +313,9 @@ describe("processReferral", () => {
     it("should emit wallet in replacement context when alwaysAppendUrl is true and user is connected", async () => {
         const clientIdMod = await import("../../config/clientId");
         const contextMod = await import("../../context");
-        vi.mocked(clientIdMod.getClientId).mockReturnValue(null as never);
+        vi.mocked(clientIdMod.getClientIdAsync).mockResolvedValue(
+            null as never
+        );
 
         const v2Context: FrakContextV2 = {
             v: 2,
@@ -336,13 +340,17 @@ describe("processReferral", () => {
             }),
         });
 
-        vi.mocked(clientIdMod.getClientId).mockReturnValue("test-client-id");
+        vi.mocked(clientIdMod.getClientIdAsync).mockResolvedValue(
+            "test-client-id"
+        );
     });
 
     it("should return null replacement context when both clientId and wallet are missing", async () => {
         const clientIdMod = await import("../../config/clientId");
         const contextMod = await import("../../context");
-        vi.mocked(clientIdMod.getClientId).mockReturnValue(null as never);
+        vi.mocked(clientIdMod.getClientIdAsync).mockResolvedValue(
+            null as never
+        );
 
         const v2Context: FrakContextV2 = {
             v: 2,
@@ -362,6 +370,8 @@ describe("processReferral", () => {
             context: null,
         });
 
-        vi.mocked(clientIdMod.getClientId).mockReturnValue("test-client-id");
+        vi.mocked(clientIdMod.getClientIdAsync).mockResolvedValue(
+            "test-client-id"
+        );
     });
 });

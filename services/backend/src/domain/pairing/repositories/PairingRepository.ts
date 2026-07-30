@@ -1,7 +1,6 @@
 import { db, log } from "@backend-infrastructure";
 import { eq, inArray } from "drizzle-orm";
 import type { Hex } from "viem";
-import type { IdentityNode } from "../../../orchestration/identity/types";
 import { pairingTable } from "../db/schema";
 
 const FLUSH_INTERVAL_MS = 60_000;
@@ -59,7 +58,6 @@ export class PairingRepository {
         pairingCode: string;
         originUserAgent: string;
         originName: string;
-        originNode: IdentityNode | undefined;
         authenticatorHints: string[] | null;
     }): Promise<void> {
         await db.insert(pairingTable).values({
@@ -67,7 +65,6 @@ export class PairingRepository {
             pairingCode: params.pairingCode,
             originUserAgent: params.originUserAgent,
             originName: params.originName,
-            originNode: params.originNode,
             authenticatorHints: params.authenticatorHints,
         });
     }

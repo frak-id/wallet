@@ -168,6 +168,7 @@ function isValidResolvedConfigPayload(data: unknown): data is {
     sourceUrl: string;
     pendingMergeToken?: string;
     sdkAnonymousId?: string;
+    sdkIdentity?: unknown;
     sdkConfig?: ResolvedSdkConfig;
 } {
     if (!data || typeof data !== "object") return false;
@@ -181,6 +182,70 @@ function isValidResolvedConfigPayload(data: unknown): data is {
     );
 }
 
+/**
+ * Safely pull a named proof off the untrusted `sdkIdentity` payload
+ * (README §4.3/§4.4). `sdkIdentity` rides on `resolved-config` as `unknown`
+ * on purpose — a malformed or partial value (old SDK, tampered message,
+ * wrong type) must degrade to "no proof" rather than throw.
+ */
+function extractSdkProof(
+    sdkIdentity: unknown,
+    key: "merge" | "install"
+): string | undefined {
+    if (!sdkIdentity || typeof sdkIdentity !== "object") return undefined;
+    const proofs = (sdkIdentity as Record<string, unknown>).proofs;
+    if (!proofs || typeof proofs !== "object") return undefined;
+    const proof = (proofs as Record<string, unknown>)[key];
+    return typeof proof === "string" ? proof : undefined;
+}
+
+/**
+ * The anonymous id `sdkIdentity`'s proofs are signed over. Read from
+ * `sdkIdentity` itself, NOT from the sibling top-level `sdkAnonymousId`
+ * field — they are separate keys on the same untrusted payload and a
+ * tampered message can set them to different values.
+ */
+function extractSdkProvenId(sdkIdentity: unknown): string | undefined {
+    if (!sdkIdentity || typeof sdkIdentity !== "object") return undefined;
+    const id = (sdkIdentity as Record<string, unknown>).anonymousId;
+    return typeof id === "string" ? id : undefined;
+}
+
+/**
+ * Pick the merge target and the proof that covers it (README §4.3).
+ *
+ * The proof only verifies against the exact id it was signed over, so the
+ * target must be that id. Where they cannot be reconciled the merge still
+ * goes out, unproven — the legacy `(merchantId, anonymousId)` pair always
+ * travels alongside whatever proof is available (DUAL-ARM-PLAN §0 decision
+ * 1/2). The backend accepts an unproven target as long as it has never
+ * latched (`proofSeenAt` unset) — true for every legacy id, and for any
+ * derived id that hasn't signed yet — and 403s only once that id has
+ * proven itself at least once (DUAL-ARM-PLAN D-A). This is strictly better
+ * than sending a proof bound to a different id, which would always fail
+ * verification and pollute the invalid-proof telemetry the rollout reads.
+ *
+ * ROLLOUT-STEP-3: the `fallbackId ?? undefined` branch below — the
+ * unproven-target fallback — is the site to delete once `minVersion`
+ * excludes every binary that can still reach this path unproven
+ * (DUAL-ARM-PLAN D-E item 14). Do not remove until then; every legacy
+ * client depends on it to keep in-app-browser attribution working.
+ */
+function resolveMergeTarget(
+    sdkIdentity: unknown,
+    fallbackId: string | null | undefined
+): { targetAnonymousId?: string; proof?: string } {
+    const provenId = extractSdkProvenId(sdkIdentity);
+    if (provenId) {
+        return {
+            targetAnonymousId: provenId,
+            proof: extractSdkProof(sdkIdentity, "merge"),
+        };
+    }
+    // ROLLOUT-STEP-3: unproven fallback — see the function doc above.
+    return { targetAnonymousId: fallbackId ?? undefined };
+}
+
 async function handleResolvedConfig(
     data: {
         merchantId: string;
@@ -189,6 +254,7 @@ async function handleResolvedConfig(
         sourceUrl: string;
         pendingMergeToken?: string;
         sdkAnonymousId?: string;
+        sdkIdentity?: unknown;
         sdkConfig?: ResolvedSdkConfig;
     },
     context: RpcRequestContext
@@ -228,11 +294,13 @@ async function handleResolvedConfig(
         );
     }
 
+    const installProof = extractSdkProof(data.sdkIdentity, "install");
     store.setContext({
         merchantId: data.merchantId,
         origin: parsedOrigin,
         sourceUrl: data.sourceUrl,
         ...(iframeClientId && { clientId: iframeClientId }),
+        ...(installProof && { installProof }),
     });
 
     // Stitch SDK ↔ listener funnels: if the SDK propagated its persistent
@@ -252,8 +320,10 @@ async function handleResolvedConfig(
         data.merchantId &&
         currentTrust === "verified"
     ) {
-        const targetAnonymousId =
-            iframeClientId ?? clientIdStore.getState().clientId;
+        const { targetAnonymousId, proof: mergeProof } = resolveMergeTarget(
+            data.sdkIdentity,
+            iframeClientId ?? clientIdStore.getState().clientId
+        );
         if (targetAnonymousId) {
             // `fmt` token is produced by the in-app-browser escape flow
             // (see `InAppBrowserToast`). Tagging the merge outcome with
@@ -268,6 +338,7 @@ async function handleResolvedConfig(
                     mergeToken: data.pendingMergeToken,
                     targetAnonymousId,
                     merchantId: data.merchantId,
+                    proof: mergeProof,
                 })
                 .then(({ error }) => {
                     if (error) {

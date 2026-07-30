@@ -88,7 +88,8 @@ const identityMergeService = new IdentityMergeService(
 const identityOrchestrator = new IdentityOrchestrator(
     IdentityContext.repositories.identity,
     identityWeightService,
-    identityMergeService
+    identityMergeService,
+    IdentityContext.services.identityProof
 );
 
 const interactionContextBuilder = new InteractionContextBuilder(
@@ -193,7 +194,8 @@ const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
 const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.anonymousMerge,
     IdentityContext.repositories.identity,
-    identityOrchestrator
+    identityOrchestrator,
+    IdentityContext.services.identityProof
 );
 
 const referralCodeRedemptionOrchestrator =
@@ -229,8 +231,7 @@ const pairingOrchestrator = new PairingOrchestrator(
     PairingContext.repositories.pairingSignature,
     AuthContext.repositories.authenticator,
     IdentityContext.repositories.walletBinding,
-    AuthContext.services.walletSdkSession,
-    identityOrchestrator
+    AuthContext.services.walletSdkSession
 );
 
 const walletMergeOrchestrator = new WalletMergeOrchestrator(

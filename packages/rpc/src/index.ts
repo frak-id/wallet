@@ -56,13 +56,7 @@
 export type { RpcClient, RpcClientConfig } from "./client";
 // Core client and listener
 export { createRpcClient } from "./client";
-export {
-    ClientNotFound,
-    FrakRpcError,
-    InternalError,
-    MethodNotFoundError,
-    RpcErrorCodes,
-} from "./error";
+export { ClientNotFound, FrakRpcError, RpcErrorCodes } from "./error";
 export type { RpcListener, RpcListenerConfig } from "./listener";
 export { createRpcListener } from "./listener";
 // Generic RPC Schema types

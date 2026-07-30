@@ -5,6 +5,15 @@ import { installCodesTable } from "../db/schema";
 
 const CODE_TTL_HOURS = 72;
 
+/**
+ * Max resolve attempts against a single install code (README §3.3). Caps
+ * repeated hammering of one already-minted code independently of source
+ * IP — durable across pod replicas, unlike `rateLimitMiddleware`'s
+ * in-memory store. Does not bound enumeration of the ~887M-code keyspace;
+ * see the doc comment on `installCodesTable.attempts`.
+ */
+export const MAX_RESOLVE_ATTEMPTS = 20;
+
 type InstallCodeSelect = typeof installCodesTable.$inferSelect;
 
 export class InstallCodeRepository {
@@ -28,6 +37,7 @@ export class InstallCodeRepository {
             anonymous_id: string;
             created_at: Date;
             expires_at: Date;
+            attempts: number;
         }>(sql`
             WITH candidates(code) AS (VALUES ${values})
             INSERT INTO install_codes (code, merchant_id, anonymous_id, expires_at)
@@ -55,16 +65,30 @@ export class InstallCodeRepository {
             anonymousId: row.anonymous_id,
             createdAt: row.created_at,
             expiresAt: row.expires_at,
+            attempts: row.attempts,
         };
     }
 
+    /**
+     * Resolve a code and atomically count the attempt against it in one
+     * round-trip (UPDATE … RETURNING, not read-then-write) so concurrent
+     * guesses can't race past `MAX_RESOLVE_ATTEMPTS`. Returns `null` once
+     * expired, not found, or exhausted — callers can't distinguish which,
+     * which is deliberate: a distinguishable "exhausted" response would leak
+     * that the code was real.
+     */
     async findByCode(code: string): Promise<InstallCodeSelect | null> {
-        const result = await db.query.installCodesTable.findFirst({
-            where: and(
-                eq(installCodesTable.code, code.toUpperCase()),
-                gt(installCodesTable.expiresAt, new Date())
-            ),
-        });
+        const [result] = await db
+            .update(installCodesTable)
+            .set({ attempts: sql`${installCodesTable.attempts} + 1` })
+            .where(
+                and(
+                    eq(installCodesTable.code, code.toUpperCase()),
+                    gt(installCodesTable.expiresAt, new Date()),
+                    lt(installCodesTable.attempts, MAX_RESOLVE_ATTEMPTS)
+                )
+            )
+            .returning();
         return result ?? null;
     }
 

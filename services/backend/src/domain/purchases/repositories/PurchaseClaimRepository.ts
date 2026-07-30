@@ -11,33 +11,56 @@ type ClaimKey = {
 };
 
 export class PurchaseClaimRepository {
+    /**
+     * Record the identity group claiming a purchase whose webhook hasn't
+     * landed yet.
+     *
+     * `rebindExisting` guards the unauthenticated arm (§3.9). The claim row
+     * decides which identity group the purchase is attributed to once the
+     * webhook arrives, so an unconditional overwrite lets whoever calls
+     * `/track/purchase` last take the purchase — the same attribution
+     * hijack the merge removal closes, one step earlier in the flow. The
+     * trusted webhook path keeps overwriting; the SDK path is
+     * first-claim-wins.
+     */
     async upsert(params: {
         merchantId: string;
         customerId: string;
         orderId: string;
         purchaseToken: string;
         claimingIdentityGroupId: string;
+        rebindExisting: boolean;
     }): Promise<PurchaseClaim> {
-        const [result] = await db
-            .insert(purchaseClaimsTable)
-            .values(params)
-            .onConflictDoUpdate({
-                target: [
-                    purchaseClaimsTable.merchantId,
-                    purchaseClaimsTable.orderId,
-                    purchaseClaimsTable.purchaseToken,
-                ],
-                set: {
-                    claimingIdentityGroupId: params.claimingIdentityGroupId,
-                    customerId: params.customerId,
-                },
-            })
-            .returning();
+        const { rebindExisting, ...values } = params;
+        const target = [
+            purchaseClaimsTable.merchantId,
+            purchaseClaimsTable.orderId,
+            purchaseClaimsTable.purchaseToken,
+        ];
 
-        if (!result) {
+        const insert = db.insert(purchaseClaimsTable).values(values);
+        const [result] = await (rebindExisting
+            ? insert.onConflictDoUpdate({
+                  target,
+                  set: {
+                      claimingIdentityGroupId: values.claimingIdentityGroupId,
+                      customerId: values.customerId,
+                  },
+              })
+            : insert.onConflictDoNothing({ target })
+        ).returning();
+
+        if (result) {
+            return result;
+        }
+
+        // Conflict with `onConflictDoNothing`: a claim already exists and
+        // keeps its original attribution.
+        const existing = await this.findByPurchaseKey(values);
+        if (!existing) {
             throw new Error("Failed to upsert purchase claim");
         }
-        return result;
+        return existing;
     }
 
     async findByPurchaseKey(key: ClaimKey): Promise<PurchaseClaim | null> {

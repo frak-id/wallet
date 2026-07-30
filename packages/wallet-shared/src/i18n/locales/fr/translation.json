@@ -806,6 +806,9 @@
         "download": "Télécharger l'app",
         "processing": "Configuration de ton porte-monnaie..."
     },
+    "pendingActions": {
+        "walletAlreadyLinked": "Ce lien de parrainage est déjà lié à un autre porte-monnaie."
+    },
     "onboarding": {
         "start": "Commencer",
         "continue": "Continuer",

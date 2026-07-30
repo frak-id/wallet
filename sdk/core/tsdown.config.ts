@@ -53,6 +53,11 @@ export default defineConfig([
             // `@frak-labs/core-sdk/rewards` subpath, kept out of the CDN IIFE
             // entry below so it never bloats the self-contained browser bundle.
             rewards: "./src/rewards/index.ts",
+            // Proof-of-possession primitives — published as the tree-shakeable
+            // `@frak-labs/core-sdk/identity` subpath. Signer-only: verification
+            // lives in the backend's own IdentityProofService, which imports
+            // the canonical message layout from here (DECISIONS.md D7).
+            identity: "./src/identity/index.ts",
         },
         format: ["esm", "cjs"],
         platform: "browser",
@@ -101,6 +106,12 @@ export default defineConfig([
         },
         define: buildDefine,
         plugins: [nodePolyfills()],
+        // @noble/curves (the §2.4 pure-JS signing fallback) is inlined here
+        // rather than stubbed out. The IIFE format cannot code-split, so it
+        // costs unconditional bundle weight — accepted deliberately: §2.4
+        // requires that HTTP merchants get a real, provable id rather than
+        // degrading to an unverifiable one, and a dual-tier system would
+        // preserve the exact hole this work closes.
         alias: { rrweb: rrwebStub },
     },
 ]);

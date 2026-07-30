@@ -1,3 +1,5 @@
+import { getClientIdAsync } from "../config/clientId";
+import { signProof } from "../identity/sign";
 import type { FrakClient } from "../types";
 import { withCache } from "../utils/cache";
 
@@ -21,10 +23,29 @@ export async function getMergeToken(
     options?: { cacheTime?: number }
 ): Promise<string | null> {
     return withCache(
-        () =>
-            client.request({
+        async () => {
+            // README §4.2: this proof binds `sourceAnonymousId` only — no
+            // merge token exists yet at `initiate` time, so the binding is
+            // empty, unlike the `execute`-side `frak-merge-v1` proof (§4.3),
+            // which binds SHA-256(mergeToken). Always optional: if it can't
+            // be produced (legacy id, keygen failed), the call goes out
+            // exactly as it does today. Signing lives inside this closure
+            // so a cache hit performs no crypto — `withCache` only invokes
+            // it on a miss (or to join an in-flight call).
+            const anonymousId = await getClientIdAsync().catch(() => undefined);
+            const proof = anonymousId
+                ? await signProof({
+                      op: "frak-merge-v1",
+                      merchantId: client.config.metadata.merchantId ?? "",
+                      anonymousId,
+                  })
+                : null;
+
+            return client.request({
                 method: "frak_getMergeToken",
-            }),
+                params: proof ? [proof] : undefined,
+            });
+        },
         {
             cacheKey: "frak_getMergeToken",
             cacheTime: options?.cacheTime,

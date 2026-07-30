@@ -36,7 +36,7 @@ export async function setupClient({
     }
 
     // Create our client
-    const client = createIFrameFrakClient({
+    const client = await createIFrameFrakClient({
         config: preparedConfig,
         iframe,
     });
