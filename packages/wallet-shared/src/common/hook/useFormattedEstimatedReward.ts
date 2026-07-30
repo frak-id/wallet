@@ -1,4 +1,8 @@
-import type { Currency, InteractionTypeKey } from "@frak-labs/core-sdk";
+import type {
+    Currency,
+    InteractionTypeKey,
+    ProductDetails,
+} from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
 import {
     estimatedRewardsQueryOptions,
@@ -18,11 +22,18 @@ export function useFormattedEstimatedReward({
     currency,
     targetInteraction,
     context,
+    products,
 }: {
     merchantId?: string;
     currency?: Currency;
     targetInteraction?: InteractionTypeKey;
     context?: string;
+    /**
+     * Advisory product context — see {@link selectFormattedReward}. Callers
+     * must pass a referentially stable array (memoised on whatever derives
+     * it), since a fresh array each render re-runs the `select`.
+     */
+    products?: ProductDetails[];
 }) {
     return useQuery({
         ...estimatedRewardsQueryOptions(merchantId),
@@ -30,6 +41,7 @@ export function useFormattedEstimatedReward({
             currency,
             targetInteraction,
             context,
+            products,
         }),
     });
 }

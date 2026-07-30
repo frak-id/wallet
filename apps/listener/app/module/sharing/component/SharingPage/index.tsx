@@ -1,6 +1,7 @@
-import type { SharingPageProduct } from "@frak-labs/core-sdk";
+import { sanitizeSharingProducts } from "@frak-labs/core-sdk";
 import {
     emitLifecycleEvent,
+    rewardProductsForSelection,
     trackEvent,
     useCopyToClipboardWithState,
 } from "@frak-labs/wallet-shared/common";
@@ -34,7 +35,7 @@ export { handleDisplaySharingPage } from "@/module/hooks/useDisplaySharingPageLi
 
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
-    const { t } = useListenerTranslation();
+    const { t: rawT } = useListenerTranslation();
     const { sourceUrl, merchantId, installProof } = useSafeResolvingContext();
     const defaultAttribution = useStore(
         resolvingContextStore,
@@ -43,6 +44,23 @@ export function ListenerSharingPage() {
     const backendCurrency = useStore(
         resolvingContextStore,
         (s) => s.backendSdkConfig?.currency
+    );
+
+    // Sanitized rather than cast: `params.products` is an unvalidated RPC
+    // payload, and its numeric scope fields (unitPrice / quantity) now feed
+    // campaign selection — a numeric string would otherwise compare wrong.
+    const products = useMemo(
+        () => sanitizeSharingProducts(currentRequest.params.products) ?? [],
+        [currentRequest.params.products]
+    );
+
+    // Product selection state — default to first product
+    const [selectedProductIndex, setSelectedProductIndex] = useState(0);
+
+    // Memoised so the query's `select` isn't re-run on every render.
+    const rewardProducts = useMemo(
+        () => rewardProductsForSelection(products, selectedProductIndex),
+        [products, selectedProductIndex]
     );
 
     // Fetch the reward here (rather than reading it from the UI context) so the
@@ -55,7 +73,26 @@ export function ListenerSharingPage() {
                 currentRequest.configMetadata?.currency ?? backendCurrency,
             targetInteraction: currentRequest.targetInteraction,
             context: currentRequest.i18n?.context,
+            products: rewardProducts,
         });
+
+    // The provider seeds `estimatedReward` as an i18n default variable from its
+    // own product-agnostic query — correct for every other listener surface,
+    // which shares one merchant-wide headline. This page ranks campaigns
+    // against the selected product, so the headline (rendered from
+    // `{{ estimatedReward }}`) has to come from the same selection as the
+    // scoped copy beside it, or the two contradict each other. Override it
+    // per call, falling back to the provider's value while our query loads.
+    const t = useCallback(
+        (key: string, options?: Record<string, unknown>) =>
+            rawT(key, {
+                ...options,
+                ...(reward?.formatted !== undefined && {
+                    estimatedReward: reward.formatted,
+                }),
+            }),
+        [rawT, reward?.formatted]
+    );
     const clientId = useStore(clientIdStore, (s) => s.clientId);
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
@@ -122,14 +159,6 @@ export function ListenerSharingPage() {
         hasResolvedRef.current = false;
         setShowConfirmation(false);
     };
-
-    const products = useMemo(
-        () => (currentRequest.params.products as SharingPageProduct[]) ?? [],
-        [currentRequest.params.products]
-    );
-
-    // Product selection state — default to first product
-    const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
     // Build the final sharing link with Frak context via shared helper.
     // Use the selected product's link if available, otherwise fall back to default.
