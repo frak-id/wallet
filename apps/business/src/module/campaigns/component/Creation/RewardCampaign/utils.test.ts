@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { CampaignDraft } from "@/stores/campaignStore";
+import {
+    type CampaignDraft,
+    getMinPurchaseAmount,
+} from "@/stores/campaignStore";
 import {
     DEFAULT_REWARD_FORM,
     draftToRewardForm,
@@ -363,5 +366,29 @@ describe("reward basis", () => {
         expect(isRewardFormValid(fixed, { requiresMatchedBasis: true })).toBe(
             false
         );
+    });
+});
+
+describe("non-purchase campaign", () => {
+    const referralDraft: CampaignDraft = {
+        ...baseDraft,
+        rule: { ...baseDraft.rule, trigger: "referral" },
+    };
+
+    // Both fields read a purchase; the step hides them off that trigger, so a
+    // stale form value must not sneak back into the rule.
+    it("saves no minimum purchase nor lockup", () => {
+        const values: RewardFormValues = {
+            ...DEFAULT_REWARD_FORM,
+            model: "fixed",
+            targetCpa: 10,
+            ambassadorAmount: 6,
+            refereeAmount: 2,
+            minPurchaseAmount: 50,
+            lockupDays: 7,
+        };
+        const draft = rewardFormToDraft(values, referralDraft);
+        expect(draft.rule.defaultLockupSeconds).toBe(0);
+        expect(getMinPurchaseAmount(draft.rule)).toBe(0);
     });
 });

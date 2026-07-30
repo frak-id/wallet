@@ -40,9 +40,10 @@ import { Trans, useTranslation } from "react-i18next";
 import { useCampaignCurrencyGlyph } from "@/module/campaigns/hook/useCampaignCurrencyGlyph";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Button } from "@/module/common/component/Button";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { InputNumber } from "@/module/forms/InputNumber";
-import { campaignStore } from "@/stores/campaignStore";
+import { campaignStore, isPurchaseCampaign } from "@/stores/campaignStore";
 import { DistributionBar } from "../DistributionBar";
 import { InfoBanner } from "../InfoBanner";
 import { WizardFieldCard } from "../WizardFieldCard";
@@ -1315,7 +1316,14 @@ export function RewardCampaign() {
     const saveCampaign = useSaveCampaign();
     const currencyGlyph = useCampaignCurrencyGlyph();
 
-    const defaultValues = useMemo(() => draftToRewardForm(draft), [draft]);
+    // Off a purchase there is no basket to compute on, so the fixed model is
+    // the only one that can pay out — preselect it and lock the choice.
+    const isPurchase = isPurchaseCampaign(draft.rule);
+
+    const defaultValues = useMemo(() => {
+        const values = draftToRewardForm(draft);
+        return isPurchase ? values : { ...values, model: "fixed" as const };
+    }, [draft, isPurchase]);
 
     const form = useForm<RewardFormValues>({
         values: defaultValues,
@@ -1400,39 +1408,56 @@ export function RewardCampaign() {
                                             value={field.value}
                                             onValueChange={field.onChange}
                                         >
-                                            {MODELS.map((m) => (
-                                                <label
-                                                    key={m.value}
-                                                    htmlFor={`model-${m.value}`}
-                                                    className={
-                                                        styles.modelOption
-                                                    }
-                                                >
-                                                    <RadioGroupItem
-                                                        id={`model-${m.value}`}
-                                                        value={m.value}
-                                                        size="l"
-                                                    />
-                                                    <span
-                                                        className={
-                                                            styles.modelMain
-                                                        }
+                                            {MODELS.map((m) => {
+                                                const disabled =
+                                                    !isPurchase &&
+                                                    m.value !== "fixed";
+                                                return (
+                                                    <Tooltip
+                                                        key={m.value}
+                                                        hidden={!disabled}
+                                                        content={t(
+                                                            "campaigns.create.reward.model.salesOnly"
+                                                        )}
                                                     >
-                                                        <Text
-                                                            variant="body"
-                                                            weight="medium"
+                                                        <label
+                                                            htmlFor={`model-${m.value}`}
+                                                            className={`${styles.modelOption}${disabled ? ` ${styles.modelOptionDisabled}` : ""}`}
                                                         >
-                                                            {t(m.titleKey)}
-                                                        </Text>
-                                                        <Text
-                                                            variant="bodySmall"
-                                                            color="secondary"
-                                                        >
-                                                            {t(m.descKey)}
-                                                        </Text>
-                                                    </span>
-                                                </label>
-                                            ))}
+                                                            <RadioGroupItem
+                                                                id={`model-${m.value}`}
+                                                                value={m.value}
+                                                                size="l"
+                                                                disabled={
+                                                                    disabled
+                                                                }
+                                                            />
+                                                            <span
+                                                                className={
+                                                                    styles.modelMain
+                                                                }
+                                                            >
+                                                                <Text
+                                                                    variant="body"
+                                                                    weight="medium"
+                                                                >
+                                                                    {t(
+                                                                        m.titleKey
+                                                                    )}
+                                                                </Text>
+                                                                <Text
+                                                                    variant="bodySmall"
+                                                                    color="secondary"
+                                                                >
+                                                                    {t(
+                                                                        m.descKey
+                                                                    )}
+                                                                </Text>
+                                                            </span>
+                                                        </label>
+                                                    </Tooltip>
+                                                );
+                                            })}
                                         </RadioGroup>
                                     )}
                                 />
@@ -1482,7 +1507,9 @@ export function RewardCampaign() {
                             </InfoBanner>
                         )}
 
-                        {model !== "tiered" && (
+                        {/* Minimum purchase and lockup both describe a
+                            purchase; neither has a meaning off that trigger. */}
+                        {isPurchase && model !== "tiered" && (
                             <WizardFieldCard
                                 space="xs"
                                 label={t(
@@ -1496,15 +1523,19 @@ export function RewardCampaign() {
                             </WizardFieldCard>
                         )}
 
-                        <WizardFieldCard
-                            space="xs"
-                            label={t("campaigns.create.reward.lockup.label")}
-                            description={t(
-                                "campaigns.create.reward.lockup.description"
-                            )}
-                        >
-                            <LockupField control={form.control} />
-                        </WizardFieldCard>
+                        {isPurchase && (
+                            <WizardFieldCard
+                                space="xs"
+                                label={t(
+                                    "campaigns.create.reward.lockup.label"
+                                )}
+                                description={t(
+                                    "campaigns.create.reward.lockup.description"
+                                )}
+                            >
+                                <LockupField control={form.control} />
+                            </WizardFieldCard>
+                        )}
                     </Stack>
                 </form>
             </WizardStep>

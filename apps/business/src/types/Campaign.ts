@@ -7,6 +7,7 @@ import type {
 export type {
     BudgetConfig,
     BudgetConfigItem,
+    CampaignGoal,
     CampaignMetadata,
     CampaignResponse as Campaign,
     CampaignRuleDefinition,

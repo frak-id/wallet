@@ -6,6 +6,7 @@ import {
 } from "@/tests/vitest-fixtures";
 import type { CampaignDraft } from "./campaignStore";
 import {
+    applyGoalTrigger,
     buildApiPayload,
     campaignToDraft,
     getMinPurchaseAmount,
@@ -17,6 +18,7 @@ import {
     setProductScope,
     setReferralOnly,
     setStartDate,
+    triggerForGoal,
 } from "./campaignStore";
 
 const REFERRAL_CONDITION = {
@@ -449,5 +451,79 @@ describe("product scope", () => {
                 ],
             })
         ).toBe(true);
+    });
+});
+
+describe("goal → trigger", () => {
+    test("only the sales goal is a purchase campaign", () => {
+        expect(triggerForGoal("sales")).toBe("purchase");
+        expect(triggerForGoal("traffic")).toBe("referral");
+        expect(triggerForGoal("registration")).toBe("custom");
+        // No goal yet ⇒ the draft's default trigger.
+        expect(triggerForGoal(undefined)).toBe("purchase");
+    });
+
+    test("a sales goal keeps the purchase-only config", () => {
+        const draft: CampaignDraft = {
+            ...mockCampaignDraft,
+            rule: setMinPurchaseAmount(
+                {
+                    ...mockCampaignDraft.rule,
+                    productScope: [
+                        { field: "sku", operator: "in", value: ["A"] },
+                    ],
+                },
+                20
+            ),
+        };
+        const next = applyGoalTrigger(draft, "sales");
+        expect(next.rule.trigger).toBe("purchase");
+        expect(next.rule.productScope).toBeDefined();
+        expect(getMinPurchaseAmount(next.rule)).toBe(20);
+    });
+
+    // Off a purchase there's no cart to scope, no basket to compute a
+    // percentage on, and no minimum purchase — the backend rejects the first
+    // and the rest can never match.
+    test("leaving sales drops the purchase-only config", () => {
+        const draft: CampaignDraft = {
+            ...mockCampaignDraft,
+            rule: setMinPurchaseAmount(
+                {
+                    ...mockCampaignDraft.rule,
+                    productScope: [
+                        { field: "sku", operator: "in", value: ["A"] },
+                    ],
+                    defaultLockupSeconds: 86400,
+                    rewards: [
+                        ...mockCampaignDraft.rule.rewards,
+                        {
+                            recipient: "referee",
+                            type: "token",
+                            amountType: "percentage",
+                            percent: 5,
+                            percentOf: "purchase_amount",
+                        },
+                    ],
+                },
+                20
+            ),
+        };
+
+        const next = applyGoalTrigger(draft, "traffic");
+
+        expect(next.metadata.goal).toBe("traffic");
+        expect(next.rule.trigger).toBe("referral");
+        expect(next.rule).not.toHaveProperty("productScope");
+        expect(next.rule.defaultLockupSeconds).toBe(0);
+        expect(getMinPurchaseAmount(next.rule)).toBe(0);
+        expect(next.rule.rewards).toHaveLength(1);
+        expect(next.rule.rewards[0].amountType).toBe("fixed");
+    });
+
+    test("referral-only stays untouched across a goal change", () => {
+        const next = applyGoalTrigger(mockCampaignDraft, "registration");
+        expect(next.rule.trigger).toBe("custom");
+        expect(getReferralOnly(next.rule)).toBe(true);
     });
 });

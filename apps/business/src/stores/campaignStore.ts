@@ -4,8 +4,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
     BudgetConfigItem,
+    CampaignGoal,
     CampaignMetadata,
     CampaignRuleDefinition,
+    CampaignTrigger,
     ConditionGroup,
     RewardChaining,
     RuleCondition,
@@ -142,6 +144,55 @@ function setCondition(
     const without = list.filter((c) => !match(c));
     const updated = next ? [...without, next] : without;
     return { ...rule, conditions: rebuild(updated) };
+}
+
+/**
+ * The interaction each goal rewards. Only `sales` is a purchase campaign —
+ * everything downstream (product scope, basket-based rewards, minimum
+ * purchase) hangs off that, so the goal is what decides it.
+ */
+const GOAL_TRIGGERS: Record<CampaignGoal, CampaignTrigger> = {
+    sales: "purchase",
+    awareness: "referral",
+    traffic: "referral",
+    registration: "custom",
+    retention: "custom",
+};
+
+export function triggerForGoal(goal: CampaignGoal | undefined) {
+    return goal ? GOAL_TRIGGERS[goal] : "purchase";
+}
+
+export function isPurchaseCampaign(rule: CampaignRuleDefinition): boolean {
+    return rule.trigger === "purchase";
+}
+
+/**
+ * Re-align the rule with a (possibly changed) goal. Leaving a purchase-only
+ * artefact behind — a product scope, a basket-relative reward, a minimum
+ * purchase — on a non-purchase trigger produces a rule the backend rejects at
+ * publish, or one that silently never matches.
+ */
+export function applyGoalTrigger(
+    draft: CampaignDraft,
+    goal: CampaignGoal | undefined
+): CampaignDraft {
+    const trigger = triggerForGoal(goal);
+    const metadata = { ...draft.metadata, goal };
+    if (trigger === "purchase") {
+        return { ...draft, metadata, rule: { ...draft.rule, trigger } };
+    }
+    const { productScope: _dropped, ...rest } = draft.rule;
+    let rule: CampaignRuleDefinition = {
+        ...rest,
+        trigger,
+        // Only a fixed reward has no basket to compute on; a percentage or
+        // tiered reward can't be evaluated without a purchase.
+        rewards: draft.rule.rewards.filter((r) => r.amountType === "fixed"),
+        defaultLockupSeconds: 0,
+    };
+    rule = setMinPurchaseAmount(rule, 0);
+    return { ...draft, metadata, rule };
 }
 
 export function getReferralOnly(rule: CampaignRuleDefinition): boolean {

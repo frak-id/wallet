@@ -785,16 +785,17 @@
                     }
                 },
                 "model": {
-                    "label": "Reward model",
                     "description": "How rewards are calculated for each successful referral",
                     "fixed": {
                         "title": "Fixed amount",
                         "description": "Set a fixed reward per conversion"
                     },
+                    "label": "Reward model",
                     "percentage": {
                         "title": "% of basket",
                         "description": "Reward scales with order value"
                     },
+                    "salesOnly": "Only available on Sales campaigns — other reward models need a purchase amount to compute on.",
                     "tiered": {
                         "title": "Tiered rewards",
                         "description": "Higher basket = higher reward"

@@ -29,6 +29,7 @@ import {
     type CampaignDraft,
     campaignStore,
     getStartDate,
+    isPurchaseCampaign,
 } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
 import { CampaignLaunched } from "./CampaignLaunched";
@@ -124,6 +125,7 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
     const startDate = formatIso(getStartDate(draft.rule));
     const endDate = formatIso(draft.expiresAt);
     const trigger = draft.rule.trigger;
+    const isPurchase = isPurchaseCampaign(draft.rule);
 
     const budget = draft.budgetConfig[0];
     const amount = budget?.amount ?? 0;
@@ -197,7 +199,7 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
                 )}
             </DetailRow>
 
-            <ProductScopeRow draft={draft} />
+            {isPurchase && <ProductScopeRow draft={draft} />}
 
             <DetailRow label={t("campaigns.create.validation.budgetPeriod")}>
                 <DetailValue>
@@ -237,17 +239,21 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
                 </DetailRow>
             )}
 
-            <DetailRow label={t("campaigns.create.validation.rewardLockup")}>
-                {reward.lockupDays ? (
-                    <DetailValue>
-                        {t("campaigns.create.validation.lockupValue", {
-                            count: Number(reward.lockupDays),
-                        })}
-                    </DetailValue>
-                ) : (
-                    <DetailValue muted>{EMPTY}</DetailValue>
-                )}
-            </DetailRow>
+            {isPurchase && (
+                <DetailRow
+                    label={t("campaigns.create.validation.rewardLockup")}
+                >
+                    {reward.lockupDays ? (
+                        <DetailValue>
+                            {t("campaigns.create.validation.lockupValue", {
+                                count: Number(reward.lockupDays),
+                            })}
+                        </DetailValue>
+                    ) : (
+                        <DetailValue muted>{EMPTY}</DetailValue>
+                    )}
+                </DetailRow>
+            )}
         </>
     );
 }

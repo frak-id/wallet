@@ -46,18 +46,36 @@ export const WIZARD_STEPS: WizardStepDef[] = [
     },
 ];
 
-const WIZARD_STEP_COUNT = WIZARD_STEPS.length;
-
-export function stepIndexOf(key: WizardStepKey): number {
-    return WIZARD_STEPS.findIndex((s) => s.key === key);
+/**
+ * The steps a campaign actually walks through. Product scoping is a
+ * purchase-only concept (the backend rejects `productScope` on any other
+ * trigger), so a traffic/registration campaign skips it entirely.
+ */
+export function wizardStepsFor(includeProducts: boolean): WizardStepDef[] {
+    return includeProducts
+        ? WIZARD_STEPS
+        : WIZARD_STEPS.filter((s) => s.key !== "products");
 }
 
-export function previousStep(index: number): WizardStepDef | undefined {
-    return index > 0 ? WIZARD_STEPS[index - 1] : undefined;
+export function stepIndexOf(
+    key: WizardStepKey,
+    steps: WizardStepDef[] = WIZARD_STEPS
+): number {
+    return steps.findIndex((s) => s.key === key);
 }
 
-export function isLastStep(index: number): boolean {
-    return index === WIZARD_STEP_COUNT - 1;
+export function previousStep(
+    index: number,
+    steps: WizardStepDef[] = WIZARD_STEPS
+): WizardStepDef | undefined {
+    return index > 0 ? steps[index - 1] : undefined;
+}
+
+export function isLastStep(
+    index: number,
+    steps: WizardStepDef[] = WIZARD_STEPS
+): boolean {
+    return index === steps.length - 1;
 }
 
 /**

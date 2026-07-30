@@ -7,6 +7,7 @@ import {
     getMinPurchaseAmount,
     getReferralOnly,
     isNegativeProductScope,
+    isPurchaseCampaign,
     setChaining,
     setMinPurchaseAmount,
     setReferralOnly,
@@ -477,10 +478,14 @@ export function rewardFormToDraft(
     values: RewardFormValues,
     draft: CampaignDraft
 ): CampaignDraft {
-    // Empty fields ("") save as 0.
-    const lockupDays = Number(values.lockupDays) || 0;
+    // Empty fields ("") save as 0. Both fields describe a purchase, so a
+    // non-purchase campaign saves neither (the step doesn't show them).
+    const isPurchase = isPurchaseCampaign(draft.rule);
+    const lockupDays = isPurchase ? Number(values.lockupDays) || 0 : 0;
     const minPurchase =
-        values.model === "tiered" ? 0 : Number(values.minPurchaseAmount) || 0;
+        !isPurchase || values.model === "tiered"
+            ? 0
+            : Number(values.minPurchaseAmount) || 0;
     // A matched basis without a scope is rejected at publish, and a negative
     // scope requires one. Normalise here so a stale form value (scope removed
     // after the basis was picked) can't produce an unpublishable rule.

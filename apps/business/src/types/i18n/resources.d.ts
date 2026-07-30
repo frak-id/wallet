@@ -446,6 +446,7 @@ export default interface Resources {
               "description": "Reward scales with order value",
               "title": "% of basket"
             },
+            "salesOnly": "Only available on Sales campaigns — other reward models need a purchase amount to compute on.",
             "tiered": {
               "description": "Higher basket = higher reward",
               "title": "Tiered rewards"

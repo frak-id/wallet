@@ -97,7 +97,10 @@ function ConfigContent({ campaign }: { campaign: Campaign }) {
     return (
         <Stack space="l">
             <TriggerSection trigger={rule.trigger} />
-            <ProductScopeSection productScope={rule.productScope} />
+            {/* A scope only exists on a purchase campaign. */}
+            {rule.trigger === "purchase" && (
+                <ProductScopeSection productScope={rule.productScope} />
+            )}
             <RewardsSection rewards={rule.rewards} currency={currency} />
             <ConditionsSection conditions={rule.conditions} />
             <LimitsSection rule={rule} />

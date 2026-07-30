@@ -785,16 +785,17 @@
                     }
                 },
                 "model": {
-                    "label": "Modèle de récompense",
                     "description": "Comment les récompenses sont calculées pour chaque parrainage réussi",
                     "fixed": {
                         "title": "Montant fixe",
                         "description": "Définir une récompense fixe par conversion"
                     },
+                    "label": "Modèle de récompense",
                     "percentage": {
                         "title": "% du panier",
                         "description": "La récompense évolue avec le montant de la commande"
                     },
+                    "salesOnly": "Disponible uniquement sur les campagnes Ventes — les autres modèles nécessitent un montant d’achat pour être calculés.",
                     "tiered": {
                         "title": "Récompenses par paliers",
                         "description": "Panier plus élevé = récompense plus élevée"
