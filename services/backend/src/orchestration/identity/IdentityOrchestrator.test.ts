@@ -346,3 +346,66 @@ describe("IdentityOrchestrator.linkWalletToFingerprint — frak-sso-v1 gated mer
         vi.useRealTimers();
     });
 });
+
+describe("IdentityOrchestrator merge cache invalidation", () => {
+    let ctx: ReturnType<typeof makeOrchestrator>;
+
+    beforeEach(() => {
+        ctx = makeOrchestrator();
+    });
+
+    it("associate invalidates the anchor's weight too, not just the loser's", async () => {
+        // The anchor absorbs the loser's assets, referrals and interactions, so
+        // its own cached weight is understated afterwards. Leaving it cached
+        // would feed stale counts to a follow-up merge's tie-break for the rest
+        // of the TTL.
+        ctx.weightService.getGroupWeight.mockImplementation(
+            async (groupId: string) => ({ groupId, wallet: null })
+        );
+        ctx.weightService.determineAnchor.mockReturnValue({
+            anchorGroupId: "anchor",
+            mergingGroupId: "loser",
+        });
+
+        const result = await ctx.orchestrator.associate("anchor", "loser");
+
+        expect(result).toEqual({ finalGroupId: "anchor", merged: true });
+        expect(ctx.weightService.invalidateWeight).toHaveBeenCalledWith(
+            "anchor"
+        );
+        expect(ctx.weightService.invalidateWeight).toHaveBeenCalledWith(
+            "loser"
+        );
+    });
+
+    it("resolveAndAssociate invalidates the anchor's weight too", async () => {
+        ctx.identityRepository.findGroupByIdentity
+            .mockResolvedValueOnce({ id: "anchor" })
+            .mockResolvedValueOnce({ id: "loser" });
+        ctx.weightService.getGroupWeight.mockImplementation(
+            async (groupId: string) => ({ groupId, wallet: null })
+        );
+        ctx.weightService.determineAnchorFromMultiple.mockReturnValue({
+            anchorGroupId: "anchor",
+            mergingGroupIds: ["loser"],
+        });
+
+        const nodes: IdentityNode[] = [
+            { type: "wallet", value: WALLET },
+            {
+                type: "anonymous_fingerprint",
+                value: "anon-1",
+                merchantId: VICTIM_MERCHANT,
+            },
+        ];
+        const result = await ctx.orchestrator.resolveAndAssociate(nodes);
+
+        expect(result).toEqual({ finalGroupId: "anchor", merged: true });
+        expect(ctx.weightService.invalidateWeight).toHaveBeenCalledWith(
+            "anchor"
+        );
+        expect(ctx.weightService.invalidateWeight).toHaveBeenCalledWith(
+            "loser"
+        );
+    });
+});

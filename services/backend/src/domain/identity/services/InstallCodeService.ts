@@ -13,8 +13,14 @@ export class InstallCodeService {
     }): Promise<{ code: string; expiresAt: Date }> {
         const installCode = await this.installCodeRepository.create(params);
 
+        // The code itself never goes to the logs: it is the credential that
+        // links an anonymousId to a wallet, and log readers are a far wider
+        // set than DB readers. Correlate on the anonymousId instead.
         log.info(
-            { merchantId: params.merchantId, code: installCode.code },
+            {
+                merchantId: params.merchantId,
+                anonymousId: params.anonymousId,
+            },
             "Install code generated"
         );
 

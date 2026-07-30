@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
     type MerchantWebhook,
     merchantWebhooksTable,
@@ -92,14 +92,49 @@ export class PurchaseRepository {
         });
     }
 
+    /**
+     * Repoint a purchase's attribution, compare-and-swap on the value the
+     * caller observed.
+     *
+     * Same first-writer-wins concern as `upsertWithItems`: `/track/purchase`
+     * is unauthenticated and reaches this through a late claim, so a plain
+     * `WHERE id = ?` would let two concurrent claims both read a NULL
+     * `identity_group_id` and both write, last one silently winning.
+     * Swapping on the observed value makes the DB arbitrate instead.
+     *
+     * @returns The row's attribution after the attempt: `identityGroupId` when
+     *   the swap landed, or whatever the winning writer stored when it didn't.
+     */
     async updateIdentityGroup(
         purchaseId: string,
-        identityGroupId: string
-    ): Promise<void> {
-        await db
+        identityGroupId: string,
+        expectedIdentityGroupId: string | null
+    ): Promise<string | null> {
+        const updated = await db
             .update(purchasesTable)
             .set({ identityGroupId, updatedAt: new Date() })
-            .where(eq(purchasesTable.id, purchaseId));
+            .where(
+                and(
+                    eq(purchasesTable.id, purchaseId),
+                    expectedIdentityGroupId === null
+                        ? isNull(purchasesTable.identityGroupId)
+                        : eq(
+                              purchasesTable.identityGroupId,
+                              expectedIdentityGroupId
+                          )
+                )
+            )
+            .returning({ identityGroupId: purchasesTable.identityGroupId });
+
+        if (updated.length > 0) {
+            return identityGroupId;
+        }
+
+        const current = await db.query.purchasesTable.findFirst({
+            where: eq(purchasesTable.id, purchaseId),
+            columns: { identityGroupId: true },
+        });
+        return current?.identityGroupId ?? null;
     }
 
     async getWebhookByMerchantId(

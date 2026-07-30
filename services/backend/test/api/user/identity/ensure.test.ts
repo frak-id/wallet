@@ -78,19 +78,27 @@ vi.mock("@backend-infrastructure", () => {
         .macro({
             withWalletOrSdkAuthent: {
                 async resolve({ request }: any) {
-                    // Mirrors the real macro: either credential resolves a
-                    // session. `ensure.ts` additionally reads
-                    // `x-wallet-sdk-auth` itself to tell the SDK arm from the
-                    // wallet arm, so both must be honoured here.
+                    // Mirrors the real macro, including the fall-through to
+                    // the SDK token when a wallet token is present but fails
+                    // verification, and the `walletSessionKind` it reports so
+                    // `ensure.ts` can tell the SDK arm from the wallet arm.
                     const walletAuth = request.headers.get("x-wallet-auth");
                     if (walletAuth) {
                         const session = await mockWalletVerify(walletAuth);
-                        if (session) return { walletSession: session };
+                        if (session)
+                            return {
+                                walletSession: session,
+                                walletSessionKind: "wallet",
+                            };
                     }
                     const sdkAuth = request.headers.get("x-wallet-sdk-auth");
                     if (sdkAuth) {
                         const session = await mockWalletVerify(sdkAuth);
-                        if (session) return { walletSession: session };
+                        if (session)
+                            return {
+                                walletSession: session,
+                                walletSessionKind: "sdk",
+                            };
                     }
                     throw new UnauthorizedError();
                 },
@@ -575,6 +583,35 @@ describe("POST /identity/ensure — SDK arm (x-frak-client-id header): latch-gat
         const response = await postEnsureViaHeader(
             { merchantId: MERCHANT_ID, anonymousId: "anon-body" },
             "anon-header"
+        );
+
+        expect(response.status).toBe(403);
+        expect(mockResolveAndAssociate).not.toHaveBeenCalled();
+    });
+
+    it("an SDK caller cannot dodge the arm with an unverifiable wallet token", async () => {
+        // `withWalletOrSdkAuthent` falls through to the SDK token when a
+        // wallet token is present but fails verification, so header presence
+        // alone must never pick the arm: a valid SDK token paired with a
+        // garbage `x-wallet-auth` would otherwise land on the permissive
+        // wallet arm and bypass the latch on someone else's proven id.
+        mockWalletVerify.mockResolvedValueOnce(undefined);
+        mockWalletVerify.mockResolvedValueOnce({ address: WALLET_ADDRESS });
+        mockFindNodeByIdentity.mockResolvedValue({ proofSeenAt: new Date() });
+
+        const response = await identityEnsureRoutes.handle(
+            new Request("http://localhost/ensure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-wallet-auth": "garbage-wallet-jwt",
+                    "x-wallet-sdk-auth": "valid-sdk-jwt",
+                },
+                body: JSON.stringify({
+                    merchantId: MERCHANT_ID,
+                    anonymousId: "victim-latched-id",
+                }),
+            })
         );
 
         expect(response.status).toBe(403);

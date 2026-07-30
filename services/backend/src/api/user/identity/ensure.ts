@@ -7,7 +7,10 @@ import { HttpError, t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { IdentityContext } from "../../../domain/identity";
 import { OrchestrationContext } from "../../../orchestration/context";
-import { enforceLatchedProof } from "../../../orchestration/identity/latchedProof";
+import {
+    enforceLatchedProof,
+    verifyProofUnenforced,
+} from "../../../orchestration/identity/latchedProof";
 import { buildIdentityNodes } from "../track/sdkIdentity";
 
 /**
@@ -128,23 +131,13 @@ async function resolveWalletEnsureAnonymousId(params: {
     // (`install-code/generate` + `resolve`, `ensure.ts`'s own ticket arm
     // above) before this route accepts it as sufficient on its own.
     if (proof) {
-        const result = await IdentityContext.services.identityProof.verify({
+        await verifyProofUnenforced({
             op: "frak-install-v1",
             proof,
             merchantId,
             anonymousId: bodyAnonymousId,
-            binding: new Uint8Array(0),
+            identityProofService: IdentityContext.services.identityProof,
         });
-        if (!result.valid) {
-            log.info(
-                {
-                    merchantId,
-                    anonymousId: bodyAnonymousId,
-                    reason: result.reason,
-                },
-                "Identity proof present but invalid (verified, not enforced — ROLLOUT-STEP-3)"
-            );
-        }
     }
 
     return bodyAnonymousId;
@@ -199,12 +192,17 @@ async function resolveSdkEnsureAnonymousId(params: {
  * LATCHED id dodge its proof requirement (DUAL-ARM-PLAN.md WS-BE-1) just by
  * moving its id into the body.
  *
- * But the test is the ABSENCE of a wallet credential, not the presence of
- * an SDK one. The wallet's shared API client attaches every token it holds
- * to every request, so a logged-in wallet sends `x-wallet-auth` AND
- * `x-wallet-sdk-auth` together; keying off the SDK token alone would route
- * the installed Tauri binary onto the mandatory arm and 403 it. A true SDK
- * caller — merchant page, no wallet session — only ever holds the SDK token.
+ * The test is which credential VERIFIED, reported by `withWalletOrSdkAuthent`
+ * as `walletSessionKind`. It must never be re-derived from raw header
+ * presence: that macro falls through to the SDK token when `x-wallet-auth`
+ * is present but fails verification, so a request carrying a valid SDK token
+ * plus a garbage wallet token would look like a wallet caller and land on the
+ * permissive wallet arm — bypassing the latch entirely.
+ *
+ * The wallet's shared API client attaches every token it holds to every
+ * request, so a logged-in wallet sends `x-wallet-auth` AND `x-wallet-sdk-auth`
+ * together and verifies as `wallet`. A true SDK caller — merchant page, no
+ * wallet session — only ever holds the SDK token and verifies as `sdk`.
  *
  * Within the wallet arm, README §5's resolution order still applies:
  * `ticket` → body `anonymousId` → header `anonymousId`.
@@ -287,7 +285,13 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .post(
         "",
-        async ({ headers, body, walletSession, request }) => {
+        async ({
+            headers,
+            body,
+            walletSession,
+            walletSessionKind,
+            request,
+        }) => {
             const {
                 merchantId,
                 anonymousId: bodyAnonymousId,
@@ -302,19 +306,9 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                 proof,
                 headerClientId: headers["x-frak-client-id"],
                 requestClientId: request.headers.get("x-frak-client-id"),
-                // An SDK caller is one holding an SDK token and NO wallet
-                // token. The wallet sends both at once, so the absence of
-                // `x-wallet-auth` is what identifies the SDK — see
-                // `resolveEnsureAnonymousId`.
-                isSdkCaller:
-                    Boolean(
-                        headers["x-wallet-sdk-auth"] ??
-                            request.headers.get("x-wallet-sdk-auth")
-                    ) &&
-                    !(
-                        headers["x-wallet-auth"] ??
-                        request.headers.get("x-wallet-auth")
-                    ),
+                // The credential that actually verified, not the headers that
+                // were merely sent — see `resolveEnsureAnonymousId`.
+                isSdkCaller: walletSessionKind === "sdk",
             });
 
             // Build identity nodes for both wallet and anonymous fingerprint

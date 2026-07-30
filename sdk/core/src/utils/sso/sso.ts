@@ -13,7 +13,8 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
 export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
     metadata: AppSpecificSsoMetadata;
     merchantId: string;
-    clientId: string;
+    /** Absent when the client could not derive a provable id (see `getClientIdAsync`). */
+    clientId?: string;
     /** Proof-of-possession for `clientId`, see `signProof` (identity/sign.ts). */
     proof?: string;
 };
@@ -26,7 +27,8 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
  * @param params - SSO parameters
  * @param merchantId - Merchant identifier
  * @param name - Application name
- * @param clientId - Client identifier for identity tracking
+ * @param clientId - Client identifier for identity tracking, omitted when the
+ *   client could not derive one
  * @param css - Optional custom CSS
  * @param proof - Optional proof-of-possession for `clientId` (see `signProof`)
  * @returns Complete SSO URL ready to open in popup or redirect
@@ -47,7 +49,7 @@ export function generateSsoUrl(
     params: PrepareSsoParamsType,
     merchantId: string,
     name: string | undefined,
-    clientId: string,
+    clientId: string | undefined,
     css?: string,
     proof?: string
 ): string {
@@ -108,8 +110,8 @@ function ssoParamsToCompressed(params: FullSsoParams): CompressedSsoData {
 export type CompressedSsoData = {
     // Potential id from backend
     id?: Hex;
-    // Client id
-    cId: string;
+    // Client id, absent when the client could not derive one
+    cId?: string;
     // redirect url
     r?: string;
     // direct exit

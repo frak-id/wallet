@@ -203,11 +203,28 @@ export class PurchaseLinkingOrchestrator {
         //      the user.
         //   2. The merge above produced a new canonical group id that
         //      supersedes the purchase's previous one.
+        //
+        // Swapped on the value we observed, so a concurrent claim that already
+        // attached its own group wins and we keep its attribution.
         if (purchase.identityGroupId !== finalIdentityGroupId) {
-            await this.purchaseRepository.updateIdentityGroup(
-                purchase.id,
-                finalIdentityGroupId
-            );
+            const storedGroupId =
+                await this.purchaseRepository.updateIdentityGroup(
+                    purchase.id,
+                    finalIdentityGroupId,
+                    purchase.identityGroupId ?? null
+                );
+            if (storedGroupId && storedGroupId !== finalIdentityGroupId) {
+                log.warn(
+                    {
+                        purchaseId: purchase.id,
+                        claimingGroupId,
+                        attemptedGroupId: finalIdentityGroupId,
+                        storedGroupId,
+                    },
+                    "Concurrent purchase claim already attributed this purchase; keeping the stored group"
+                );
+                finalIdentityGroupId = storedGroupId;
+            }
         }
 
         // Honour the persisted purchase status: a refund/cancel webhook may

@@ -7,20 +7,29 @@ import type {
 import { JwtContext } from "../external/jwt";
 import { AUTH_ERROR_HEADER, AuthErrorCode } from "./authError";
 
-type OptionalWalletSession =
-    | StaticWalletTokenDto
-    | StaticWalletSdkTokenDto
-    | undefined;
+type WalletSession = StaticWalletTokenDto | StaticWalletSdkTokenDto;
+
+type OptionalWalletSession = WalletSession | undefined;
+
+/**
+ * Which credential actually verified.
+ *
+ * Routes must never re-derive this from raw header presence: this resolver
+ * falls through to the SDK token when `x-wallet-auth` is present but fails
+ * verification, so "a wallet header was sent" does not imply "a wallet
+ * session was established".
+ */
+export type WalletSessionKind = "wallet" | "sdk";
 
 async function resolveWalletOrSdkSession(headers: {
     "x-wallet-auth"?: string;
     "x-wallet-sdk-auth"?: string;
-}): Promise<OptionalWalletSession> {
+}): Promise<{ session: WalletSession; kind: WalletSessionKind } | undefined> {
     const walletAuth = headers["x-wallet-auth"];
     if (walletAuth) {
         const walletAuthSession = await JwtContext.wallet.verify(walletAuth);
         if (walletAuthSession) {
-            return walletAuthSession;
+            return { session: walletAuthSession, kind: "wallet" };
         }
     }
 
@@ -29,7 +38,7 @@ async function resolveWalletOrSdkSession(headers: {
         const walletSdkAuthSession =
             await JwtContext.walletSdk.verify(walletSdkAuth);
         if (walletSdkAuthSession) {
-            return walletSdkAuthSession;
+            return { session: walletSdkAuthSession, kind: "sdk" };
         }
     }
 
@@ -77,9 +86,12 @@ export const sessionContext = new Elysia({
         },
         withWalletOrSdkAuthent: {
             async resolve({ headers, set }) {
-                const session = await resolveWalletOrSdkSession(headers);
-                if (session) {
-                    return { walletSession: session };
+                const resolved = await resolveWalletOrSdkSession(headers);
+                if (resolved) {
+                    return {
+                        walletSession: resolved.session,
+                        walletSessionKind: resolved.kind,
+                    };
                 }
 
                 // Neither credential resolved (wallet token absent/invalid AND
@@ -94,13 +106,16 @@ export const sessionContext = new Elysia({
             },
         },
         withOptionalWalletOrSdkAuthent: {
-            async resolve({
-                headers,
-            }): Promise<{ walletSession: OptionalWalletSession }> {
+            async resolve({ headers }): Promise<{
+                walletSession: OptionalWalletSession;
+                walletSessionKind: WalletSessionKind | undefined;
+            }> {
                 // No auth or invalid auth — return undefined session rather
                 // than 401 so the route can decide how to react.
+                const resolved = await resolveWalletOrSdkSession(headers);
                 return {
-                    walletSession: await resolveWalletOrSdkSession(headers),
+                    walletSession: resolved?.session,
+                    walletSessionKind: resolved?.kind,
                 };
             },
         },

@@ -101,6 +101,11 @@ export class IdentityOrchestrator {
             mergingGroupIds: [mergingGroupId],
         });
 
+        // The anchor is invalidated too: it just absorbed the loser's assets,
+        // referrals and interactions, so its cached weight is now understated
+        // for the rest of the 30s TTL — long enough to skew a follow-up merge's
+        // tie-break.
+        this.weightService.invalidateWeight(anchorGroupId);
         this.weightService.invalidateWeight(mergingGroupId);
         this.identityRepository.invalidateCachesForGroup(mergingGroupId);
 
@@ -146,6 +151,8 @@ export class IdentityOrchestrator {
             mergingGroupIds,
         });
 
+        // See `associate` — the anchor's own weight changed as well.
+        this.weightService.invalidateWeight(anchorGroupId);
         for (const groupId of mergingGroupIds) {
             this.weightService.invalidateWeight(groupId);
             this.identityRepository.invalidateCachesForGroup(groupId);

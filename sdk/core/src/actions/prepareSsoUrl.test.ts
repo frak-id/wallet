@@ -85,6 +85,35 @@ describe("prepareSsoUrl", () => {
         expect(decode(ssoUrl).pf).toBeUndefined();
     });
 
+    it("still builds a url when no provable id can be derived", async () => {
+        // `getClientIdAsync` rejects with no WebCrypto/localStorage. SSO must
+        // degrade to an unlinked login rather than reject the whole flow.
+        vi.mocked(getClientId).mockReturnValue(undefined);
+        vi.mocked(getClientIdAsync).mockRejectedValue(
+            new Error("no provable id")
+        );
+
+        const { ssoUrl } = await prepareSsoUrl(mockClient, {
+            directExit: true,
+        });
+
+        expect(decode(ssoUrl).cId).toBeUndefined();
+        expect(decode(ssoUrl).pf).toBeUndefined();
+        expect(signProof).not.toHaveBeenCalled();
+    });
+
+    it("openSso does not reject when no provable id can be derived", async () => {
+        vi.mocked(getClientId).mockReturnValue(undefined);
+        vi.mocked(getClientIdAsync).mockRejectedValue(
+            new Error("no provable id")
+        );
+
+        await expect(
+            openSso(mockClient, { directExit: true })
+        ).resolves.toBeDefined();
+        expect(window.open).toHaveBeenCalled();
+    });
+
     it("defaults directExit when no redirectUrl is given, so the popup closes itself", async () => {
         const withoutRedirect = await prepareSsoUrl(mockClient, {});
         expect(decode(withoutRedirect.ssoUrl).d).toBe(true);

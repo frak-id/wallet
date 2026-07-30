@@ -66,7 +66,12 @@ export async function prepareSsoUrl(
 ): Promise<PrepareSsoReturnType> {
     const { metadata, customizations, walletUrl } = client.config;
 
-    const clientId = getClientId() ?? (await getClientIdAsync());
+    // `getClientIdAsync` REJECTS when no provable id can be produced (no
+    // WebCrypto, no localStorage — e.g. Safari with all cookies blocked).
+    // SSO must still open in that case, minus the identity link, so this
+    // degrades like every other action rather than propagating.
+    const clientId =
+        getClientId() ?? (await getClientIdAsync().catch(() => undefined));
     const merchantId = (await sdkConfigStore.resolveMerchantId()) ?? "";
 
     // Proof of possession for clientId, when a key exists. Never blocks or
