@@ -2,9 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { getStep2Context, SharingPage, type SharingPageProps } from "./index";
 
-// Deterministic stand-in for the merchant-aware `t`: echoes the interpolated
-// context/values so assertions read against concrete text instead of raw
-// keys — same approach as RewardBreakdown.test.tsx.
+// Stand-in for the merchant-aware `t`: echoes the interpolated context/values
+// so assertions read against concrete text instead of raw keys.
 const t = (key: string, opts?: Record<string, unknown>): string => {
     switch (key) {
         case "sdk.sharingPage.card.tagline1":

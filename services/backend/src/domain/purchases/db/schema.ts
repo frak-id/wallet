@@ -68,8 +68,7 @@ export const purchaseItemsTable = pgTable(
         title: varchar("title").notNull(),
         imageUrl: varchar("image_url"),
         quantity: integer("quantity").notNull(),
-        // Optional product SKU for campaign product-scope matching; nullable
-        // since not every provider sends it.
+        // Nullable: not every provider sends a SKU.
         sku: varchar("sku"),
         createdAt: timestamp("created_at").defaultNow(),
     },

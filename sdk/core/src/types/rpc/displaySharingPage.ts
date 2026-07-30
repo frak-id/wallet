@@ -6,12 +6,8 @@ import type { AttributionParams } from "../tracking";
 /**
  * Product information to display on the sharing page.
  *
- * Extends {@link ProductDetails} so the same array a merchant surface passes
- * in also carries the `productScope` fields (`productId` / `sku` / `name` /
- * `quantity` / `unitPrice` / `totalPrice`) — reward selection
- * (`selectDisplayCampaign` / `selectBestReward`) can consume it directly to
- * advisorily prefer the campaign that matches whichever product the user
- * has selected on the sharing page, without a second parallel array.
+ * Extends {@link ProductDetails} so reward selection can consume the same array
+ * the product cards render from, without a second parallel array.
  * @group Sharing Page
  */
 export type SharingPageProduct = ProductDetails & {

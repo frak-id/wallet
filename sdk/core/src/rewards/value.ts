@@ -73,16 +73,13 @@ export function getRewardRank(
 }
 
 /**
- * Whether `reward`'s basis is the matched line items rather than the whole
- * basket — i.e. its percent/tiered value is computed over only the items a
- * campaign's `productScope` matched, not the full purchase.
+ * Whether `reward` is computed over the `productScope`-matched line items
+ * rather than the whole basket.
  *
- * This is distinct from a campaign merely *carrying* a `productScope`: a
- * scoped campaign can still pay a percentage of the whole basket (e.g.
- * `percentOf: "purchase_amount"`) when the scope is a pure eligibility gate
- * rather than the reward's basis. Surfaces that render "% of basket" vs "%
- * of eligible products" (and whether a basket-based worked example is valid)
- * must branch on this, not on the campaign-level scope flag.
+ * Distinct from a campaign merely *carrying* a `productScope`, which can still
+ * pay a percentage of the whole basket when the scope is a pure eligibility
+ * gate. Surfaces rendering "% of basket" vs "% of eligible products" must
+ * branch on this, not on the campaign-level scope flag.
  */
 export function isMatchedItemsBasis(reward: EstimatedReward): boolean {
     switch (reward.payoutType) {

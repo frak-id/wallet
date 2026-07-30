@@ -19,11 +19,8 @@ function getField(
     return product[field as keyof ProductDetails];
 }
 
-// A number, or a string that fully parses as a finite number. A campaign's
-// numeric threshold is routinely authored as a string in JSON (`"79.90"`),
-// and a product's numeric fields routinely arrive as strings too (HTML
-// attributes, URL query params), so numeric intent must be recognised on
-// either side.
+// Numeric thresholds are routinely authored as JSON strings (`"79.90"`), and
+// product fields arrive as strings too (HTML attributes, query params).
 function asNumber(value: string | number | boolean): number | undefined {
     if (typeof value === "number") {
         return Number.isFinite(value) ? value : undefined;
@@ -35,10 +32,9 @@ function asNumber(value: string | number | boolean): number | undefined {
     return undefined;
 }
 
-// Mirrors the backend's `compareValues` ordering semantics: numeric whenever
-// both sides are numeric (even as strings), lexicographic only for genuine
-// text. A plain `String()` fallback would rank "9" above "10" and make every
-// price/quantity threshold silently wrong.
+// Mirrors the backend's `compareValues`: numeric whenever both sides are
+// numeric, lexicographic only for genuine text. A `String()` fallback would
+// rank "9" above "10".
 function compare(a: string | number, b: string | number | boolean): number {
     const numA = asNumber(a);
     const numB = asNumber(b);
@@ -52,12 +48,8 @@ function evaluateArrayOperator(
     value: RuleCondition["value"]
 ): boolean | undefined {
     if (!Array.isArray(value)) return operator === "not_in";
-    // Missing field: non-evaluable, fail open (matches) — deliberate
-    // divergence from the backend, which hard-fails `in` to `false` (and
-    // `not_in` to `true`) here because it evaluates a complete purchase line
-    // item. Client-side absence just means the integrator didn't supply that
-    // field, not that it's actually missing, so we can't assert a match or
-    // non-match either way.
+    // Deliberate divergence from the backend, which hard-fails here: a missing
+    // field client-side only means the integrator didn't supply it.
     if (fieldValue === undefined) return undefined;
     const includes = value.includes(fieldValue);
     return operator === "in" ? includes : !includes;
@@ -111,12 +103,8 @@ function evaluateStringOperator(
 }
 
 /**
- * Evaluate a single leaf condition against a product. Returns `undefined`
- * (rather than `true`/`false`) when the condition cannot be meaningfully
- * evaluated on the client — an unknown operator, or an array operand on a
- * scalar/string operator that the backend would reject at publish time (so
- * seeing one here means the SDK's operator/field list has drifted from the
- * backend's). Callers fail OPEN on `undefined` — see module doc.
+ * Returns `undefined` when the condition cannot be meaningfully evaluated
+ * client-side (unknown operator, malformed operand). Callers fail OPEN on it.
  */
 function evaluateCondition(
     condition: RuleCondition,
@@ -132,10 +120,8 @@ function evaluateCondition(
         return evaluateArrayOperator(operator, fieldValue, value);
     }
 
-    // Every remaining operator is scalar-only; an array operand here is a
-    // condition the backend's evaluator would fail *closed* on (never
-    // matches). Advisory display fails *open* instead: treat it as
-    // non-evaluable rather than asserting a false negative.
+    // Remaining operators are scalar-only. The backend fails closed on an array
+    // operand here; advisory display fails open instead.
     if (Array.isArray(value) || fieldValue === undefined || value === null) {
         return undefined;
     }
@@ -156,17 +142,13 @@ function evaluateCondition(
         );
     }
 
-    // Unknown operator (backend added one the SDK doesn't know about yet) —
-    // non-evaluable, fail open.
+    // Unknown operator: non-evaluable, fail open.
     return undefined;
 }
 
 /**
- * Evaluate a condition or group against a product, failing open (`true`) for
- * any leaf that can't be meaningfully evaluated. A group only inherits its
- * children's non-evaluable leaves as "matches" — `all`/`any`/`none` still
- * combine the (failed-open) booleans normally, so one unknown leaf doesn't
- * silently force the whole group to match when siblings clearly don't.
+ * Evaluate a condition or group, failing open (`true`) for any non-evaluable
+ * leaf. `all`/`any`/`none` then combine the failed-open booleans normally.
  */
 function evaluateNode(
     node: RuleCondition | ConditionGroup,
@@ -179,7 +161,6 @@ function evaluateNode(
         if (node.logic === "all") return results.every(Boolean);
         if (node.logic === "any") return results.some(Boolean);
         if (node.logic === "none") return !results.some(Boolean);
-        // Unknown group logic — fail open.
         return true;
     }
     const result = evaluateCondition(node, product);
@@ -188,24 +169,15 @@ function evaluateNode(
 
 /**
  * Advisory client-side check of whether `product` matches a campaign's
- * `productScope`, for display purposes only.
+ * `productScope`.
  *
- * **This is a display hint, not an eligibility check.** The backend's
- * `RuleConditionEvaluator` (`services/backend/src/domain/campaign/services/RuleConditionEvaluator.ts`)
- * remains the sole authority on which line items actually earn a reward at
- * purchase time — this function only helps a merchant page decide which
- * campaign to *feature* on a product page, and never gates or blocks a
- * reward. It fails OPEN: any condition it cannot confidently evaluate
- * (unknown operator, missing product field, a malformed operand) is treated
- * as a match, so this helper can never hide a reward the backend would
- * actually pay. It only supports the backend's allowlisted `productScope`
- * fields and operators (see `ProductDetails` and
- * `CampaignManagementService.PRODUCT_SCOPE_FIELDS`); a `productScope` field
- * outside that allowlist cannot exist on a published campaign.
+ * **Display hint, not an eligibility check.** The backend's
+ * `RuleConditionEvaluator` remains the sole authority on what actually earns a
+ * reward. This fails OPEN: anything it can't confidently evaluate counts as a
+ * match, so it can never hide a reward the backend would pay.
  *
- * @param scope - A campaign's `productScope` (or `undefined` for an
- * unscoped campaign, which trivially matches every product).
- * @param product - The identifiers of the product currently on display.
+ * @param scope - A campaign's `productScope`; `undefined` matches everything.
+ * @param product - The product currently on display.
  */
 export function matchesProductScope(
     scope: RuleConditions | undefined,

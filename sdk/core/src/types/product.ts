@@ -1,12 +1,8 @@
 /**
- * The subset of a purchase line item's fields a campaign's `productScope`
- * can target, and that a merchant surface can supply about a product it
- * knows about (e.g. a product page, a cart, an order's line items).
+ * The purchase line item fields a campaign's `productScope` can target.
  *
- * Mirrors the backend's allowlist exactly — see `PRODUCT_SCOPE_FIELDS` in
- * `services/backend/src/domain/campaign/services/CampaignManagementService.ts`.
- * Any campaign field outside this set cannot have been published (validated
- * server-side at publish time), so it never needs handling on this side.
+ * Mirrors the backend's `PRODUCT_SCOPE_FIELDS` allowlist exactly — a campaign
+ * field outside this set cannot have been published.
  */
 export type ProductDetails = {
     productId?: string;

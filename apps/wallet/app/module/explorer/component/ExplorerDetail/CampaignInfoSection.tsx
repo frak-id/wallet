@@ -194,9 +194,8 @@ function RewardValue({
             </Text>
         );
     }
-    // No basket-based worked example when the reward's basis is the matched
-    // line items — `buildPercentageExample` assumes a whole-basket reference,
-    // which is wrong for a percent applied only to matched items.
+    // `buildPercentageExample` assumes a whole-basket reference, wrong for a
+    // percent applied only to matched items.
     const matchedItemsBasis = isMatchedItemsBasis(reward);
     const example = matchedItemsBasis
         ? undefined
@@ -279,9 +278,8 @@ function TierRow({
         );
     }
 
-    // No basket-based worked example when the reward's basis is the matched
-    // line items — `buildTierExample` assumes a whole-basket reference, which
-    // is wrong for a percent applied only to matched items.
+    // `buildTierExample` assumes a whole-basket reference, wrong for a percent
+    // applied only to matched items.
     const example = isMatchedItemsBasis
         ? undefined
         : buildTierExample(tier.percent, tier.minValue, tier.maxValue);

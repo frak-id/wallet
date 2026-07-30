@@ -277,8 +277,8 @@ describe("matchesProductScope — fail-open cases", () => {
     });
 
     it("missing product field with exists fails closed (correctly, not a fail-open case)", () => {
-        // `exists` can be evaluated even when the field is absent — this is a
-        // real "no" answer, not a non-evaluable condition.
+        // `exists` is evaluable on an absent field: a real "no", not a
+        // non-evaluable condition.
         expect(
             matchesProductScope(
                 [{ field: "sku", operator: "exists", value: null }],
@@ -367,19 +367,11 @@ describe("matchesProductScope — fail-open cases", () => {
     });
 });
 
-// Parity test: keeps this SDK subset honest against the backend's allowlist.
-// If either list changes, update both sides in the same PR.
-//
-// Backend source of truth:
-//  - fields:    services/backend/src/domain/campaign/services/CampaignManagementService.ts
-//               (PRODUCT_SCOPE_FIELDS)
-//  - operators: services/backend/src/domain/campaign/services/RuleConditionEvaluator.ts
-//               (evaluateOperator's exhaustive operator switch)
-//
-// These two lists are manually copied from the backend, not machine-checked
-// against it (no shared import across the SDK/backend boundary) — a backend
-// allowlist change requires updating `BACKEND_PRODUCT_SCOPE_FIELDS` /
-// `BACKEND_OPERATORS` below by hand.
+// Parity test against the backend's allowlists, copied by hand (no shared
+// import across the SDK/backend boundary):
+//  - fields:    `PRODUCT_SCOPE_FIELDS` in CampaignManagementService.ts
+//  - operators: `evaluateOperator`'s switch in RuleConditionEvaluator.ts
+// A backend change requires updating both lists in the same PR.
 describe("matchesProductScope — parity with backend allowlist", () => {
     const BACKEND_PRODUCT_SCOPE_FIELDS = [
         "productId",
@@ -434,21 +426,17 @@ describe("matchesProductScope — parity with backend allowlist", () => {
                     ...(operator === "between" ? { valueTo: "ZZZZ" } : {}),
                 },
             ];
-            // Doesn't assert the boolean outcome (depends on the operator's
-            // semantics) — just that evaluating it doesn't throw, i.e. every
-            // operator in this list has a corresponding `case` in
-            // `evaluateCondition` rather than silently falling through to the
-            // fail-open default (which would still be *safe* but would mean
-            // this SDK's operator table has drifted from the backend's).
+            // Asserts every operator has a `case` in `evaluateCondition`
+            // rather than falling through to the fail-open default, not the
+            // boolean outcome.
             expect(() => matchesProductScope(scope, product)).not.toThrow();
         }
     });
 });
 
 describe("matchesProductScope — numeric comparison with string operands", () => {
-    // A campaign threshold authored as a JSON string, compared against a real
-    // numeric product field. A lexicographic fallback would rank "9" above
-    // "10" and silently invert every price/quantity gate.
+    // A JSON-string threshold compared against a numeric product field: a
+    // lexicographic fallback would rank "9" above "10".
     it("compares a numeric-string condition value numerically, not lexicographically", () => {
         const cheap: ProductDetails = { unitPrice: 9 };
         const pricey: ProductDetails = { unitPrice: 10 };

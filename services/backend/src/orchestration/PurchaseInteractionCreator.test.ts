@@ -83,8 +83,7 @@ describe("PurchaseInteractionCreator", () => {
                 id: "interaction-1",
             } as never);
 
-            // Shape returned by PurchaseRepository.findItemsByPurchaseId
-            // (PurchaseItemSelect): sku is `string | null`, not `string | undefined`.
+            // PurchaseItemSelect shape: sku is `string | null`.
             await creator.create({
                 ...baseParams,
                 items: [

@@ -68,21 +68,12 @@ export type PostPurchaseProps = {
      */
     imageUrl?: string;
     /**
-     * Order line items, forwarded to the sharing page as product cards when
-     * the user clicks the CTA, and also used to advisorily prefer a
-     * campaign whose `productScope` matches at least one of them when
-     * picking the reward to advertise (e.g. a product-scoped campaign that
-     * earns more on one of the purchased items). Accepts either a real
-     * {@link SharingPageProduct} array (when set imperatively via the JS
-     * property, `el.products = [...]`) or a JSON-stringified array (when set
-     * as an HTML attribute, `<frak-post-purchase products='[...]'>`). The
-     * HTML attribute path is required for server-rendered surfaces — e.g.
-     * WooCommerce / PrestaShop plugins — because `preact-custom-element`
-     * delivers attribute values as raw strings.
+     * Order line items, forwarded to the sharing page as product cards on CTA
+     * click, and used to prefer a campaign whose `productScope` matches one of
+     * the purchased items when picking the reward to advertise.
      *
-     * Empty arrays / unparseable strings are treated as "no products" so
-     * the sharing page renders without the product card section, and reward
-     * selection falls back to ignoring product scope.
+     * Accepts a {@link SharingPageProduct} array (JS property) or a
+     * JSON-stringified array (HTML attribute, used by server-rendered plugins).
      */
     products?: SharingPageProduct[] | string;
     /**

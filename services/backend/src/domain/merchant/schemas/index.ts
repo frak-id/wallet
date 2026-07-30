@@ -26,22 +26,14 @@ export type MerchantIdentity = {
 };
 
 /**
- * A merchant-supplied URL that ends up bound to an `href` / `src` in the
- * wallet, listener or business app.
+ * A merchant-supplied URL bound to an `href` / `src` downstream.
  *
- * Deliberately **not** `format: "uri"`. TypeBox's `uri` format only requires a
- * `scheme:` followed by an opaque tail, so `javascript:alert(1)`,
- * `data:text/html;...` and `vbscript:...` all pass it — verified by compiling
- * the schema. Since these values are merchant-authored and rendered to end
- * users, that is an XSS sink, and the format check gives false confidence.
+ * Deliberately not `format: "uri"`: TypeBox's `uri` only requires a `scheme:`
+ * followed by an opaque tail, so `javascript:alert(1)` and `data:text/html;...`
+ * pass it. Plain `http://` is excluded too, since every consumer is https and
+ * mixed content would be blocked anyway.
  *
- * `^https://` is the whole point of this helper: an explicit scheme allowlist.
- * Plain `http://` is excluded too — every consumer of these fields (media CDN,
- * merchant homepage, PDP links) is https in practice, and mixed content would
- * be blocked by the browser anyway.
- *
- * Render sites must still guard (defence in depth): stored rows predate this
- * validation, and nothing stops a future writer bypassing the schema.
+ * Render sites must still guard: stored rows predate this validation.
  */
 const HttpsUrlSchema = (maxLength = 2048) =>
     t.String({ pattern: "^https://", maxLength });

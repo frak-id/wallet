@@ -2,19 +2,13 @@ const urlRegex =
     /^(https?:\/\/)?(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,})+\/?$/i;
 
 /**
- * Whether `value` is safe to bind to an `href` / `src` attribute — a
- * syntactically valid URL with an `http(s):` scheme.
+ * Whether `value` is safe to bind to an `href` / `src`: a valid URL with an
+ * `http(s):` scheme. Guards merchant-authored URLs at render time, since rows
+ * written before the backend's schema validation are still in the database.
  *
- * Guards the render side of every merchant-authored URL (merchant homepage,
- * logo, hero and component illustrations, campaign product links). A
- * `javascript:` / `data:` / `vbscript:` URL reaching an anchor is an XSS sink,
- * and the backend's schema validation is not sufficient on its own: rows
- * written before that validation existed are still in the database.
- *
- * Unlike {@link isValidUrl} this does **not** normalize, does not treat empty
- * as valid, and does not accept a scheme-less host — it answers "can I render
- * this exact string", not "did the user type something reasonable". Callers
- * render a fallback (plain text, no link) when it returns false.
+ * Unlike {@link isValidUrl} this does not normalize and rejects scheme-less
+ * hosts — it answers "can I render this exact string". Callers render plain
+ * text when it returns false.
  */
 export function isRenderableUrl(value: string | undefined | null): boolean {
     if (!value) return false;

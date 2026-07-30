@@ -158,9 +158,8 @@ export const CampaignRuleDefinitionSchema = t.Object({
     conditions: RuleConditionsSchema,
     /**
      * Optional per-item scope: the campaign only matches purchases with at
-     * least one line item satisfying these conditions (evaluated with the
-     * item, not the full context, as the root). Only meaningful for the
-     * `purchase` trigger. Absent = campaign behaves exactly as today.
+     * least one line item satisfying these conditions (evaluated with the item,
+     * not the full context, as the root). Only meaningful for `purchase`.
      */
     productScope: t.Optional(RuleConditionsSchema),
     rewards: t.Array(RewardDefinitionSchema),

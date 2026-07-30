@@ -47,8 +47,7 @@ export function ListenerSharingPage() {
     );
 
     // Sanitized rather than cast: `params.products` is an unvalidated RPC
-    // payload, and its numeric scope fields (unitPrice / quantity) now feed
-    // campaign selection — a numeric string would otherwise compare wrong.
+    // payload whose numeric scope fields now feed campaign selection.
     const products = useMemo(
         () => sanitizeSharingProducts(currentRequest.params.products) ?? [],
         [currentRequest.params.products]
@@ -76,13 +75,9 @@ export function ListenerSharingPage() {
             products: rewardProducts,
         });
 
-    // The provider seeds `estimatedReward` as an i18n default variable from its
-    // own product-agnostic query — correct for every other listener surface,
-    // which shares one merchant-wide headline. This page ranks campaigns
-    // against the selected product, so the headline (rendered from
-    // `{{ estimatedReward }}`) has to come from the same selection as the
-    // scoped copy beside it, or the two contradict each other. Override it
-    // per call, falling back to the provider's value while our query loads.
+    // The provider seeds `estimatedReward` from its own product-agnostic query.
+    // This page ranks against the selected product, so override the variable per
+    // call — otherwise the headline contradicts the scoped copy beside it.
     const t = useCallback(
         (key: string, options?: Record<string, unknown>) =>
             rawT(key, {

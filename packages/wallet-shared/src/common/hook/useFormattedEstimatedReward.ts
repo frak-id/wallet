@@ -29,9 +29,9 @@ export function useFormattedEstimatedReward({
     targetInteraction?: InteractionTypeKey;
     context?: string;
     /**
-     * Advisory product context — see {@link selectFormattedReward}. Callers
-     * must pass a referentially stable array (memoised on whatever derives
-     * it), since a fresh array each render re-runs the `select`.
+     * Advisory product context — see {@link selectFormattedReward}. Must be
+     * referentially stable, since a fresh array each render re-runs the
+     * `select`.
      */
     products?: ProductDetails[];
 }) {

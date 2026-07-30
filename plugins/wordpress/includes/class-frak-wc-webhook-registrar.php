@@ -454,11 +454,9 @@ class Frak_WC_Webhook_Registrar {
 	}
 
 	/**
-	 * Project line-item entries down to the DTO shape. Drops `meta_data`,
-	 * tax breakdowns, variation ids, parent names, and any other
-	 * field WC adds — none are read by the backend handler and `meta_data`
-	 * in particular is a free-form bag that other plugins frequently stuff
-	 * with PII (gift messages, custom-field input, etc.).
+	 * Project line-item entries down to the DTO shape. Drops every other field
+	 * WC adds: none are read by the backend handler, and `meta_data` in
+	 * particular is a free-form bag other plugins often stuff with PII.
 	 *
 	 * @param mixed $items Source `line_items` array (defensive — webhook payloads can be malformed).
 	 * @return array<int, array<string, mixed>>

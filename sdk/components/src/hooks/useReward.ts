@@ -16,10 +16,9 @@ import { useEffect, useState } from "preact/hooks";
  * @param shouldUseReward - Whether to fetch the reward at all
  * @param targetInteraction - Optional filter by interaction type (e.g. "purchase")
  * @param audience - Reward side to display: `"referrer"` (default) or `"referee"`
- * @param products - The products currently in view, when known (e.g. a
- * product page's single product, or a cart). Purely advisory — see
- * `matchesProductScope` in `@frak-labs/core-sdk/rewards`; deprioritizes
- * campaigns that don't match any of them, never changes anything when omitted.
+ * @param products - The products currently in view, when known. Purely
+ * advisory (see `matchesProductScope`): deprioritizes campaigns matching none
+ * of them, and changes nothing when omitted.
  * @returns Object containing the formatted reward string, or undefined if unavailable
  */
 export function useReward(

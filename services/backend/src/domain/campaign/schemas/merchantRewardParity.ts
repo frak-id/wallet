@@ -1,36 +1,15 @@
 // Compile-time-only parity check between the backend's `EstimatedRewardItem`
-// (services/backend/src/domain/campaign/schemas/index.ts, driven by the
-// runtime-validated `EstimatedRewardItemSchema`) and the SDK's published
-// `MerchantReward` (sdk/core/src/types/rpc/merchantInformation.ts) — the wire
-// contract of `GET /user/merchant/estimated-rewards`. Catches the exact class
-// of drift that motivated this file: a field added to one side (e.g.
-// `productScope`) and silently forgotten on the other.
+// and the SDK's published `MerchantReward` — the wire contract of
+// `GET /user/merchant/estimated-rewards`. Catches a field added to one side and
+// forgotten on the other. Nothing here runs; it is only typechecked.
 //
-// Zero runtime cost: nothing here is imported or executed, only typechecked.
-// Isolated in its own file (rather than inline in `schemas/index.ts`) so an
-// unbuilt `@frak-labs/core-sdk` workspace package only breaks this one file
-// locally; CI, where the SDK package is built, still typechecks the real
-// assertion.
+// Key names must match exactly: TS's structural `extends` has no excess-property
+// checking, so an extra *optional* field still `extends` in both directions.
+// Field types only need to be mutually assignable, tolerating deliberate
+// narrowing on the SDK side (e.g. `percentOf` is bare `string` on the backend).
 //
-// Two-part check:
-//   1. `_AssertNoKeysOnlyOnOneSide` — the two types expose exactly the same
-//      field names. Plain `A extends B` can't catch this alone: TS's
-//      structural `extends` has no excess-property checking, so a type with
-//      an extra *optional* field still `extends` one without it in both
-//      directions — verified empirically before relying on it here.
-//   2. `_AssertFieldsMutuallyAssignable` — per shared key, each side's field
-//      type is mutually assignable to the other's. This tolerates deliberate
-//      narrowing on one side only — e.g. `percentOf`/`tierField` are bare
-//      `string` on the backend's wire schema (`t.String()`, never enumerated
-//      at that layer) but a tighter, still backend-assignable union on the
-//      SDK — while still failing on a genuine shape mismatch (dropped union
-//      member, wrong primitive, changed optionality).
-//
-// `interactionTypeKey` is excluded from both checks: the backend types it as
-// bare `string` while the SDK's `InteractionTypeKey` is a closed union incl.
-// `` `custom.${string}` ``; the backend's actual runtime values
-// (`CampaignTrigger`) use bare `"custom"`, not `custom.${string}` — a
-// pre-existing mismatch, out of scope for this parity check.
+// `interactionTypeKey` is excluded: the backend types it as bare `string` while
+// the SDK uses a closed union — a pre-existing mismatch.
 import type { MerchantReward } from "@frak-labs/core-sdk";
 import type { EstimatedRewardItem } from "./index";
 

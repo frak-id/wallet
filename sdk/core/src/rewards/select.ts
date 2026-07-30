@@ -23,12 +23,9 @@ export type DisplayCampaign = {
     status: "live" | "upcoming";
     startsAt?: Date;
     /**
-     * The subset of `options.products` that matched the winning campaign's
-     * `productScope`, when it is scoped and at least one product matched.
-     * `undefined` for an unscoped campaign (the reward applies to the whole
-     * basket, so no single product "drove" it) or when no products were
-     * supplied. Lets a surface name the product behind the reward ("earn 10 €
-     * on <product>") instead of just showing the number.
+     * The subset of `options.products` matching the winning campaign's
+     * `productScope`. `undefined` for an unscoped campaign (no single product
+     * drove the reward) or when no products were supplied.
      */
     matchedProducts?: ProductDetails[];
 };
@@ -43,17 +40,10 @@ export type SelectDisplayCampaignOptions = {
     /** Reward side to rank campaigns by; defaults to `"referrer"`. */
     audience?: RewardAudience;
     /**
-     * The products currently in view, when known (e.g. a product page's
-     * single product, a cart, or an order's line items). Purely advisory
-     * (see {@link matchesProductScope}): when set, a `productScope`d
-     * campaign that doesn't match **any** of these products (mirroring the
-     * backend, which pays out when any purchased line item matches) is
-     * deprioritized below every campaign that matches at least one
-     * (unscoped campaigns always count as matching). Ranking *among*
-     * matching campaigns is unchanged. Omit, or pass an empty array, when no
-     * product is known — every campaign is then treated as matching, same
-     * as today. A single-element array reproduces the previous
-     * single-product behavior exactly.
+     * The products currently in view, when known (a product page, a cart, an
+     * order's line items). Purely advisory (see {@link matchesProductScope}): a
+     * scoped campaign matching none of them is ranked below every campaign that
+     * matches at least one. Ranking among matching campaigns is unchanged.
      */
     products?: ProductDetails[];
 };
@@ -83,11 +73,6 @@ function campaignRank(
     return reward ? getRewardRank(reward, key) : 0;
 }
 
-/**
- * The subset of `products` that matches `campaign`'s `productScope`, or
- * `undefined` when the campaign is unscoped (matches everything, but there
- * is no specific product to name) or no products were supplied.
- */
 function matchedProductsFor(
     campaign: MerchantReward,
     products: ProductDetails[] | undefined
@@ -101,10 +86,8 @@ function matchedProductsFor(
 }
 
 /**
- * Whether `campaign` counts as matching for ranking purposes: any-match
- * against `products` (mirroring the backend, which pays out a purchase when
- * *any* line item matches the scope), trivially true when unscoped or when
- * no product context was supplied.
+ * Any-match, mirroring the backend which pays out when *any* line item matches
+ * the scope. Trivially true when unscoped or without product context.
  */
 function matchesProduct(
     campaign: MerchantReward,
@@ -145,11 +128,8 @@ export function selectDisplayCampaign(
 
     const live = active.filter((campaign) => hasStarted(campaign, nowMs));
     if (live.length > 0) {
-        // Product-matching campaigns are ranked first as a group; within each
-        // group, the existing reward-value ranking applies unchanged. This only
-        // ever moves a non-matching *scoped* campaign down — it never changes
-        // the winner when `options.products` is omitted/empty, or among
-        // campaigns that already agree on whether they match.
+        // Product-matching campaigns rank first as a group; reward value
+        // decides within each group.
         const best = live.reduce((a, b) => {
             const aMatches = matchesProduct(a, options.products);
             const bMatches = matchesProduct(b, options.products);
@@ -177,9 +157,7 @@ export function selectDisplayCampaign(
         );
     if (upcoming.length === 0) return undefined;
 
-    // Same match-first grouping as the live branch, so a matching upcoming
-    // campaign isn't buried behind a sooner-starting one that doesn't apply
-    // to the product currently in view.
+    // Same match-first grouping as the live branch.
     const soonest = upcoming.reduce((a, b) => {
         const aMatches = matchesProduct(a.campaign, options.products);
         const bMatches = matchesProduct(b.campaign, options.products);
@@ -228,23 +206,13 @@ export type BestReward = {
      */
     minPurchaseValue?: number;
     /**
-     * Whether the selected campaign is gated to a `productScope` — it only
-     * pays out on purchases containing a matching line item. This is a
-     * *gate*, not the reward's basis: a product-gated campaign can still pay
-     * a percentage of the whole basket (e.g. `percentOf: "purchase_amount"`),
-     * so surfaces should use this flag only for gate-related copy (e.g. "on
-     * selected products only"). Whether the reward itself is computed over
-     * matched line items rather than the whole basket is a separate question
-     * — see {@link isMatchedItemsBasis}, which surfaces must use instead for
-     * "% of basket" vs "% of eligible products" copy and worked-example
-     * suppression.
+     * Whether the selected campaign is gated to a `productScope`. This is the
+     * *gate*, not the reward's basis — a product-gated campaign can still pay a
+     * percentage of the whole basket. Use only for gate copy ("on selected
+     * products only"); use {@link isMatchedItemsBasis} for basis copy.
      */
     isProductScoped: boolean;
-    /**
-     * The subset of `options.products` that matched the winning campaign's
-     * `productScope`. See {@link DisplayCampaign.matchedProducts} — same
-     * semantics, just surfaced alongside the formatted reward.
-     */
+    /** See {@link DisplayCampaign.matchedProducts}. */
     matchedProducts?: ProductDetails[];
 };
 

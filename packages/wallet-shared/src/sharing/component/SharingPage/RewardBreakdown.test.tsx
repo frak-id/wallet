@@ -197,9 +197,8 @@ describe("RewardBreakdown", () => {
     });
 
     it("renders basket copy WITH the worked example for a product-gated campaign whose reward is still a whole-basket percentage", () => {
-        // A campaign can carry a `productScope` (pure eligibility gate) while
-        // its reward is still `percentOf: "purchase_amount"` — the display
-        // split must follow the reward's basis, not the campaign-level gate.
+        // A campaign can carry a `productScope` while its reward is still
+        // `percentOf: "purchase_amount"`: the copy follows the reward's basis.
         render(
             <RewardBreakdown
                 referrer={{

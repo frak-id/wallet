@@ -59,10 +59,9 @@ import type { ButtonShareProps } from "./types";
  * ```
  *
  * @example
- * On a product page, pass the displayed product(s) so a `productScope`d
- * campaign matching one of them is advisorily preferred over a richer
- * campaign that doesn't apply, and so the sharing page (if opened) can
- * render product cards:
+ * On a product page, pass the displayed product(s) so a matching
+ * `productScope`d campaign is preferred and the sharing page can render product
+ * cards:
  * ```html
  * <frak-button-share text="Share and earn up to {REWARD}!" products='[{"title":"Shoes","sku":"SHOE-42","unitPrice":79.90}]'></frak-button-share>
  * ```
@@ -112,9 +111,8 @@ export function ButtonShare({
         [componentConfig?.clickAction, rawClickAction]
     );
     const { shouldRender, isHidden, isClientReady } = useClientReady();
-    // Sanitized once here (not via a shared hook) — same inline-useMemo
-    // pattern PostPurchase already used for its `products` prop. The array
-    // feeds both reward selection below and the sharing-page RPC on click.
+    // Sanitized once: the array feeds both reward selection below and the
+    // sharing-page RPC on click.
     const parsedProducts = useMemo<SharingPageProduct[] | undefined>(
         () => sanitizeSharingProducts(products),
         [products]
@@ -150,8 +148,7 @@ export function ButtonShare({
         // Anything else (legacy `share-modal` configs included) routes to
         // the full-page sharing UI — the modal-flow share path was retired
         // in favour of `displaySharingPage` so every share surface goes
-        // through the same UI. Forward the same product context used for the
-        // reward text above, so the sharing page can render product cards too.
+        // through the same UI.
         openSharingPage(resolvedTargetInteraction, placementId, {
             products: parsedProducts,
         });

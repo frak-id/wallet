@@ -50,10 +50,8 @@ export type PurchaseContext = {
     shippingCost?: number;
     taxAmount?: number;
     /**
-     * Sum of `totalPrice` over the items matched by the campaign's
-     * `productScope` (same `currency` as `amount`). Only set when the rule
-     * being evaluated carries a `productScope`; feeds `percentOf:
-     * "matched_items_amount"` and `tierField: "purchase.matchedAmount"`.
+     * Sum of `totalPrice` over the `productScope`-matched items (same
+     * `currency` as `amount`). Only set when the evaluated rule is scoped.
      */
     matchedAmount?: number;
     /** Sum of `quantity` over the `productScope`-matched items. */

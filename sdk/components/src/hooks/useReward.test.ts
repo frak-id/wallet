@@ -261,18 +261,9 @@ describe.sequential("useReward", () => {
     });
 
     it("should NOT refetch when re-rendered with the same `products` array reference", async () => {
-        // Guards the referential-stability contract components rely on:
-        // each of Banner/ButtonShare/PostPurchase sanitizes its raw `products`
-        // prop through a `useMemo` keyed on that raw prop, so the *sanitized*
-        // array passed to `useReward` only changes identity when the raw prop
-        // does. If that memoization were dropped (a fresh array literal on
-        // every render), this hook's effect — which lists `products` in its
-        // dep array — would refire on every parent re-render and hammer
-        // `getMerchantInformation`. This test fixes the array reference across
-        // rerenders to assert the hook itself behaves correctly given a
-        // stable reference; the component-level memoization is covered by
-        // `sanitizeSharingProducts`/`sanitizeProductDetailsList` each being
-        // called from inside a `useMemo` in the component source.
+        // The effect lists `products` in its dep array, so a fresh array each
+        // render would hammer `getMerchantInformation`. Components guarantee a
+        // stable reference by sanitizing inside a `useMemo`.
         vi.mocked(getMerchantInformation).mockResolvedValue({
             id: "merchant-1",
             onChainMetadata: { name: "Test", domain: "test.com" },
@@ -304,13 +295,12 @@ describe.sequential("useReward", () => {
             expect(getMerchantInformation).toHaveBeenCalledTimes(1);
         });
 
-        // Re-render with the exact same array reference (as a memoized
-        // component prop would produce) — must not trigger a second fetch.
+        // Same array reference — must not trigger a second fetch.
         rerender();
         rerender();
 
-        // No `waitFor` here on purpose: we're asserting the *absence* of an
-        // additional call, so give any errant effect a chance to fire first.
+        // No `waitFor`: asserting the absence of a call, so let any errant
+        // effect fire first.
         await new Promise((resolve) => setTimeout(resolve, 0));
         expect(getMerchantInformation).toHaveBeenCalledTimes(1);
     });
@@ -453,9 +443,8 @@ describe.sequential("useReward", () => {
             ],
         });
 
-        // Basket has two items; only the second ("SHOE-42") matches the poorer
-        // campaign's scope. Any-match must still prefer it over the richer
-        // campaign that matches neither basket item.
+        // Only the second item matches the poorer campaign's scope; any-match
+        // must still prefer it over the richer non-matching campaign.
         const { result } = renderHook(() =>
             useReward(true, undefined, undefined, [
                 { sku: "HAT-01" },

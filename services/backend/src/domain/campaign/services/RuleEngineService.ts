@@ -176,10 +176,8 @@ export class RuleEngineService {
     }
 
     // Evaluated with each item as the root object (`field: "productId"`, not
-    // `field: "purchase.items.productId"`). Returns the (possibly enriched)
-    // context when the scope is absent or at least one item matches, and
-    // `undefined` when a present scope matches no item (campaign shouldn't
-    // match — caller treats this as a `matched: false` result).
+    // `field: "purchase.items.productId"`). Returns `undefined` when a present
+    // scope matches no item, which the caller treats as `matched: false`.
     private applyProductScope(
         productScope: RuleConditions | undefined,
         context: RuleContext
@@ -229,9 +227,7 @@ export class RuleEngineService {
             return campaignResult();
         }
 
-        // productScope: the campaign only matches if at least one purchase
-        // line item satisfies the scope conditions. No purchase context (or
-        // no items) on a scoped campaign means it never matches — this also
+        // A scoped campaign without purchase items never matches — this also
         // covers non-purchase triggers, which never carry items.
         const scopedContext = this.applyProductScope(
             campaign.rule.productScope,

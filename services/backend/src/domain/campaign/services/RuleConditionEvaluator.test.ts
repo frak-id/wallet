@@ -107,8 +107,8 @@ describe("RuleConditionEvaluator.evaluate — item-level matching", () => {
     });
 
     it("negation under a matched-set filter yields the complement, not a cart-wide veto", () => {
-        // Mirrors how RuleEngineService uses evaluate per item: the
-        // matched set is every item satisfying the scope, independently.
+        // Mirrors RuleEngineService: the matched set is every item satisfying
+        // the scope, independently.
         const scope: RuleCondition[] = [
             { field: "productId", operator: "not_in", value: ["CHEAP"] },
         ];
@@ -166,13 +166,9 @@ describe("RuleConditionEvaluator.evaluate — unchanged behavior for RuleContext
 });
 
 describe("RuleConditionEvaluator — array operand guard on scalar/string operators", () => {
-    // Order-level `conditions` are not field-allowlisted the way productScope
-    // is, and RuleConditionValue accepts arrays, so a malformed payload could
-    // hand a scalar/string/comparison operator an array value. These operators
-    // must fail closed (never match) rather than silently misbehave: eq/neq
-    // via `===`/`!==` against an array (always false/true), or gt/lt/between
-    // via `compareValues`'s `String()` coercion into a meaningless
-    // lexicographic compare.
+    // Order-level `conditions` are not field-allowlisted, so a malformed
+    // payload can hand a scalar operator an array value. Those must fail closed
+    // rather than `===`/`String()`-coerce into a meaningless comparison.
     it("neq with an array value returns false, not true", () => {
         const condition: RuleCondition = {
             field: "productId",
@@ -236,10 +232,8 @@ describe("RuleConditionEvaluator — array operand guard on scalar/string operat
 });
 
 describe("RuleConditionEvaluator — numeric comparison with string operands", () => {
-    // Campaign thresholds arrive from JSON where a number is routinely
-    // authored as a string ("10"), while the item field is a real number. A
-    // lexicographic fallback would rank "9" above "10" and silently invert
-    // every price/quantity gate.
+    // Thresholds arrive from JSON as strings ("10") while the item field is a
+    // real number: a lexicographic fallback would rank "9" above "10".
     const cheap = { unitPrice: 9, quantity: 9 };
     const pricey = { unitPrice: 10, quantity: 10 };
 

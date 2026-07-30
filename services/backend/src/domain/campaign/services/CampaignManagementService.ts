@@ -18,10 +18,9 @@ import type {
 } from "../types";
 import { isConditionGroup } from "./RuleConditionEvaluator";
 
-// Item shape is a small closed set we plumb end-to-end, so productScope gets
-// an exact-match field allowlist. Order-level `conditions` are intentionally
-// NOT validated this way (RuleContext is open-ended and pre-dates this
-// feature) — this asymmetry is deliberate, not an oversight.
+// Item shape is a small closed set, so productScope gets an exact-match field
+// allowlist. Order-level `conditions` are deliberately NOT validated this way:
+// RuleContext is open-ended and pre-dates this feature.
 const PRODUCT_SCOPE_FIELDS = new Set([
     "productId",
     "name",
@@ -31,26 +30,21 @@ const PRODUCT_SCOPE_FIELDS = new Set([
     "totalPrice",
 ]);
 
-// Pathologically deep/large nested ConditionGroups are a merchant-facing
-// footgun (and a recursion-depth risk), not a real use case.
+// Guards against pathologically deep/large nested ConditionGroups.
 const PRODUCT_SCOPE_MAX_DEPTH = 5;
 const PRODUCT_SCOPE_MAX_NODES = 50;
 
-// Tier fields derived from the productScope-matched item set — meaningless
-// without a productScope on the rule.
+// Tier fields derived from the matched item set — meaningless without a
+// productScope on the rule.
 const PRODUCT_SCOPE_TIER_FIELDS = new Set([
     "purchase.matchedAmount",
     "purchase.matchedQuantity",
 ]);
 
-// A negated predicate selects the complement set, which is non-empty for
-// almost any realistic cart — the trigger gate becomes near-vacuous. A reward
-// without a matched-items basis would then pay in full on essentially every
-// cart (including ones dominated by the excluded product), which is a footgun,
-// not an intent. So negation is only allowed when every reward reflects the
-// exclusion in its basis. Any `logic: "none"` group counts as negative
-// (conservative: rejects contrived double negations, which should be
-// rewritten positively anyway).
+// A negated predicate selects the complement set, which matches almost any
+// cart — so a reward without a matched-items basis would pay in full on nearly
+// every purchase. Negation is only allowed when every reward reflects the
+// exclusion in its basis. Any `logic: "none"` group counts as negative.
 function hasNegativePredicate(node: RuleCondition | ConditionGroup): boolean {
     if (isConditionGroup(node)) {
         if (node.logic === "none") return true;

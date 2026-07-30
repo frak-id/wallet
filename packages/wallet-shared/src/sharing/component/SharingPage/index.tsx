@@ -80,10 +80,9 @@ export type SharingPageProps = {
      */
     minPurchaseAmount?: string;
     /**
-     * Whether the selected campaign carries a `productScope` — the reward
-     * only applies to purchases of selected products, not any purchase. When
-     * true, step 2 and the credit-card tagline mention "selected products"
-     * instead of implying every purchase qualifies.
+     * Whether the selected campaign carries a `productScope`. When true, step 2
+     * and the credit-card tagline mention "selected products" instead of
+     * implying every purchase qualifies.
      */
     isProductScoped?: boolean;
     /**
@@ -206,11 +205,8 @@ function splitStep(text: string) {
 }
 
 /**
- * Step 2's i18next context key: mentions the minimum order value and/or that
- * only selected products qualify, when the campaign gates on either.
- * i18next context strings don't compose (no `"min_product"` from two
- * separate context values), so the four combinations are enumerated here as
- * distinct context keys.
+ * Step 2's i18next context key. Contexts don't compose, so the four
+ * combinations are enumerated as distinct keys.
  */
 export function getStep2Context(
     isProductScoped: boolean,
@@ -224,9 +220,8 @@ export function getStep2Context(
 
 /**
  * The hero "credit card" showing the headline reward, its tagline, and the
- * merchant logo. Owns every reward-loading skeleton swap and the
- * tiered/product-scoped copy variants, so `SharingPage` itself stays a flat
- * layout shell.
+ * merchant logo. Owns the reward-loading skeletons and the tiered /
+ * product-scoped copy variants.
  */
 function RewardCard({
     appName,

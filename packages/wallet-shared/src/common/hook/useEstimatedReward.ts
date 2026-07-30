@@ -46,10 +46,9 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
  * The `"referred"` context marks the viewer as the referee, so their reward
  * side is shown instead of the referrer's.
  *
- * `products` is advisory product context: a campaign scoped to none of them
- * is ranked below every campaign that matches at least one, so a surface
- * showing a specific product advertises the reward that product actually
- * earns. Omitting it preserves the unscoped ranking.
+ * `products` is advisory product context: a campaign scoped to none of them is
+ * ranked below every campaign matching at least one. Omitting it preserves the
+ * unscoped ranking.
  */
 export function selectFormattedReward({
     currency,

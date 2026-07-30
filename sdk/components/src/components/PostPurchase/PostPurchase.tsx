@@ -77,11 +77,6 @@ function resolvePostPurchaseContext(
     const audience: RewardAudience = referralStatus?.isReferred
         ? "referee"
         : "referrer";
-    // Shared selector: the best live "purchase" campaign for the viewer's side,
-    // time-gated so an expired campaign is never advertised. Order line items
-    // are passed through as-is so a product-scoped campaign that earns more
-    // on one of the purchased items is preferred over a richer campaign that
-    // doesn't apply to this order.
     const selected = selectDisplayCampaign(merchantInfo.rewards, {
         targetInteraction: "purchase",
         currency,
@@ -155,20 +150,8 @@ export function PostPurchase({
     const placement = usePlacement(placementId);
     const lang = useLang();
 
-    // Parse + sanitize the `products` prop once, shared by reward selection
-    // AND the sharing-page click handler below. Surfaces that set the prop
-    // via the JS property (`el.products = [...]`) deliver a real array;
-    // surfaces that bind it as an HTML attribute (WP / PrestaShop
-    // server-render) deliver a JSON-stringified array. We treat both as
-    // untrusted public-API input: each entry is normalised to a
-    // {@link SharingPageProduct} with a non-empty string `title`, and
-    // `imageUrl` / `link` are kept only when they parse as `http(s)://` URLs
-    // — otherwise downstream `new URL(...)` calls in the sharing-page builder
-    // would crash, and a `javascript:` link would be a XSS sink in any
-    // consumer that binds the value to an `href`. Unparseable / empty
-    // payloads are silently dropped so the share still works without the
-    // product card section, and reward selection falls back to ignoring
-    // product scope.
+    // Sanitized once (untrusted public-API input), shared by reward selection
+    // and the sharing-page click handler below.
     const parsedProducts = useMemo<SharingPageProduct[] | undefined>(
         () => sanitizeSharingProducts(products),
         [products]
@@ -182,9 +165,8 @@ export function PostPurchase({
         sharedBaseCss
     );
 
-    // Raw RPC results, fetched exactly once. Kept separate from the resolved
-    // context so campaign selection can re-derive from `parsedProducts`
-    // (which can change after the fetch) without re-issuing the network calls.
+    // Kept separate from the resolved context so campaign selection can
+    // re-derive from `parsedProducts` without re-issuing the network calls.
     const [fetched, setFetched] = useState<{
         referralStatus: UserReferralStatusType | null;
         merchantInfo: GetMerchantInformationReturnType;
@@ -234,8 +216,8 @@ export function PostPurchase({
             });
     }, [isPreview, isClientReady, hasFetched]);
 
-    // Campaign selection is derived, not fetched: a `products` prop that
-    // lands (or changes) after the one-shot fetch still re-picks the campaign.
+    // Derived, not fetched: a `products` prop landing after the one-shot fetch
+    // still re-picks the campaign.
     const context = useMemo(() => {
         if (!fetched) return null;
         return resolvePostPurchaseContext(

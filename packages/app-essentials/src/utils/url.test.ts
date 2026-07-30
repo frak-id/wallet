@@ -69,8 +69,7 @@ describe("isRenderableUrl", () => {
         expect(isRenderableUrl("http://example.com")).toBe(true);
     });
 
-    // The whole reason this helper exists: the backend's historic
-    // `format: "uri"` validation accepts every one of these.
+    // The backend's historic `format: "uri"` validation accepts all of these.
     it("rejects script-bearing schemes", () => {
         expect(isRenderableUrl("javascript:alert(1)")).toBe(false);
         expect(isRenderableUrl("javascript:alert(document.cookie)")).toBe(
@@ -92,8 +91,8 @@ describe("isRenderableUrl", () => {
         expect(isRenderableUrl(null)).toBe(false);
         expect(isRenderableUrl("")).toBe(false);
         expect(isRenderableUrl("not a url")).toBe(false);
-        // Unlike `isValidUrl`, no normalization: a scheme-less host is not
-        // something we can safely render as-is.
+        // Unlike `isValidUrl`, no normalization: a scheme-less host can't be
+        // rendered as-is.
         expect(isRenderableUrl("example.com")).toBe(false);
     });
 });

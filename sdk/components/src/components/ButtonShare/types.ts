@@ -37,18 +37,12 @@ export type ButtonShareProps = {
      */
     targetInteraction?: InteractionTypeKey;
     /**
-     * Products currently in view (e.g. a product page's single product, or
-     * a cart), used both to advisorily prefer a campaign whose
-     * `productScope` matches at least one of them when picking the reward
-     * to advertise, and forwarded to the sharing page (when {@link clickAction}
-     * routes there) so it can render product cards. Purely a display hint
-     * for reward selection — omit when no product is known or relevant.
+     * Products currently in view, used to prefer a campaign whose
+     * `productScope` matches one of them when picking the reward to advertise,
+     * and forwarded to the sharing page so it can render product cards.
      *
-     * Accepts either a real {@link SharingPageProduct} array (when set
-     * imperatively via the JS property, `el.products = [...]`) or a
-     * JSON-stringified array (when set as an HTML attribute,
-     * `<frak-button-share products='[...]'>`) — `preact-custom-element`
-     * delivers attribute values as raw strings.
+     * Accepts a {@link SharingPageProduct} array (JS property) or a
+     * JSON-stringified array (HTML attribute).
      */
     products?: SharingPageProduct[] | string;
     /**

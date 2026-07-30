@@ -22,8 +22,7 @@ describe("ExternalLink", () => {
         }
     });
 
-    // These all pass the backend's historic `format: "uri"` validation, and
-    // merchant-authored URLs reach this component.
+    // These all pass the backend's historic `format: "uri"` validation.
     it("renders inert text instead of a link for script-bearing schemes", () => {
         for (const href of [
             "javascript:alert(1)",
@@ -34,7 +33,7 @@ describe("ExternalLink", () => {
                 <ExternalLink href={href}>label</ExternalLink>
             );
             expect(screen.queryByRole("link")).toBeNull();
-            // The label stays readable — only the navigation is dropped.
+            // Only the navigation is dropped; the label stays readable.
             expect(screen.getByText("label")).toBeInTheDocument();
             unmount();
         }

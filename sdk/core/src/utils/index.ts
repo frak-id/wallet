@@ -42,9 +42,7 @@ export {
     createIframe,
     findIframeInOpener,
 } from "./iframe/iframeHelper";
-// Product list sanitization (sharing-page product cards + productScope
-// display hints) — shared by every surface that receives an untrusted
-// `products` payload (component HTML attributes, URL query params, RPC).
+// Product list sanitization
 export {
     coerceProductCandidates,
     decodeProductsParam,

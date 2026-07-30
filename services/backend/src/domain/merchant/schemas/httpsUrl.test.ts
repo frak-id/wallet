@@ -2,17 +2,15 @@ import { getSchemaValidator } from "elysia";
 import { describe, expect, it } from "vitest";
 import { ExplorerConfigSchema, SdkConfigSchema } from "./index";
 
-// Elysia's own validator factory — the same code path that validates request
-// bodies at runtime, rather than a bare TypeBox check that might diverge.
+// Elysia's own validator factory: the same code path that validates request
+// bodies at runtime.
 const explorerConfig = getSchemaValidator(ExplorerConfigSchema, {});
 const sdkConfig = getSchemaValidator(SdkConfigSchema, {});
 
 /**
- * These URLs are merchant-authored and end up bound to `href` / `src` in the
- * wallet, listener and business app. They were previously validated with
- * `format: "uri"`, which accepts any `scheme:` followed by an opaque tail —
- * so every payload in the "rejects" cases below used to pass validation and
- * reach an anchor as a live XSS sink.
+ * These merchant-authored URLs were previously validated with `format: "uri"`,
+ * which accepts any `scheme:` — so every "rejects" payload below used to pass
+ * validation and reach an anchor as a live XSS sink.
  */
 describe("merchant URL schemas reject script-bearing schemes", () => {
     const dangerous = [
@@ -60,8 +58,8 @@ describe("merchant URL schemas reject script-bearing schemes", () => {
         ).toBe(true);
     });
 
-    // Plain http is excluded deliberately: every consumer of these fields is
-    // https in practice, and mixed content would be blocked by the browser.
+    // Every consumer of these fields is https, and mixed content would be
+    // blocked by the browser.
     it("rejects plain http", () => {
         expect(
             explorerConfig.Check({

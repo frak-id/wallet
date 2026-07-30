@@ -254,9 +254,8 @@ describe.sequential("ButtonShare", () => {
     });
 
     it("should forward the sanitized products array to openSharingPage on click", async () => {
-        // The same array used for (mocked) reward selection must also reach
-        // the sharing-page RPC — previously it was computed for the reward
-        // text and then dropped at the click boundary.
+        // The array used for reward selection must also reach the sharing-page
+        // RPC, not be dropped at the click boundary.
         render(
             <ButtonShare
                 products={[

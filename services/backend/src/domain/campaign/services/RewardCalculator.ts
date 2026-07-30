@@ -60,8 +60,8 @@ async function calculatePercentageReward(
 
     let fiatBase: number;
     if (reward.percentOf === "matched_items_amount") {
-        // Missing matchedAmount = the engine never ran the productScope gate
-        // (a wiring bug): hard error, never `defer`.
+        // Missing matchedAmount means the engine never ran the productScope
+        // gate (a wiring bug): hard error, never `defer`.
         if (context.purchase.matchedAmount === undefined) {
             return {
                 success: false,
@@ -76,9 +76,8 @@ async function calculatePercentageReward(
     // Order total is in fiat; convert to token units or a JPY/SEK order pays ~150x.
     const fiatAmount = (fiatBase * reward.percent) / 100;
 
-    // Hard-error on a zero/negative base before any pricing call, so an
-    // unpriceable currency/token can't turn a legitimate zero into an
-    // infinite-retry `defer`.
+    // Hard-error before any pricing call, so an unpriceable currency/token
+    // can't turn a legitimate zero into an infinite-retry `defer`.
     if (fiatAmount <= 0) {
         return {
             success: false,
@@ -139,9 +138,8 @@ async function resolveTierValue(
         return { value: rawValue };
     }
 
-    // Zero/negative fiat converts linearly to zero token value — skip the
-    // pricing call so an unpriceable currency/token can't cause an
-    // infinite-retry `defer`.
+    // Zero converts linearly to zero token value — skip the pricing call so an
+    // unpriceable currency/token can't cause an infinite-retry `defer`.
     if (rawValue <= 0) {
         return { value: rawValue };
     }

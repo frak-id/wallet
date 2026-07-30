@@ -5,9 +5,9 @@ import { openExternalUrl } from "../../utils/openExternalUrl";
 type Props = Omit<ComponentProps<"a">, "target" | "rel"> & { href: string };
 
 /**
- * Schemes this component is documented to open. Anything else — notably
- * `javascript:`, `data:` and `vbscript:` — is an XSS sink once bound to an
- * `href`, and several call sites pass merchant-authored URLs straight through.
+ * Anything else — notably `javascript:`, `data:` and `vbscript:` — is an XSS
+ * sink once bound to an `href`, and several call sites pass merchant-authored
+ * URLs straight through.
  */
 const ALLOWED_PROTOCOLS = new Set(["https:", "http:", "mailto:", "tel:"]);
 
@@ -15,8 +15,7 @@ function isAllowedHref(href: string): boolean {
     try {
         return ALLOWED_PROTOCOLS.has(new URL(href).protocol);
     } catch {
-        // Relative / malformed hrefs cannot carry a dangerous scheme, and some
-        // callers legitimately pass a bare path.
+        // Relative hrefs carry no scheme, and callers legitimately pass paths.
         return !/^[a-z][a-z0-9+.-]*:/i.test(href);
     }
 }
@@ -28,11 +27,9 @@ function isAllowedHref(href: string): boolean {
  * `getInvoke()` so the OS handles the scheme (system browser, mail composer,
  * dialer, …).
  *
- * A URL with any other scheme is rendered as inert text rather than a link:
- * the label stays visible, but nothing is clickable. Schemes are enforced here
- * rather than trusted from the caller because merchant-authored values reach
- * this component (SSO subtitle homepage link, campaign product links) and the
- * backend's historic `format: "uri"` validation accepted `javascript:`.
+ * A URL with any other scheme renders as inert text: the label stays visible,
+ * but nothing is clickable. Enforced here rather than trusted from the caller
+ * because merchant-authored values reach this component.
  */
 export function ExternalLink({ href, onClick, children, ...rest }: Props) {
     const handleClick = useCallback(

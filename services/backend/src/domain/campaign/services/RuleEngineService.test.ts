@@ -689,8 +689,7 @@ describe("RuleEngineService", () => {
     });
 
     describe("productScope", () => {
-        // Real evaluator here (not mocked) so the item-level filter/matched-set
-        // logic in evaluateSingleCampaign is exercised end to end.
+        // Not mocked, so the item-level matched-set logic is exercised.
         const realConditionEvaluator = new RuleConditionEvaluator();
 
         const purchaseContext = (

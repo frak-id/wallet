@@ -131,9 +131,7 @@ export function Banner({
     // Fetch reward text the same way ButtonShare does — but for the *referee*
     // side: the referral banner is shown to a freshly-referred user, so it must
     // advertise what they earn on their purchases, not the sharer's reward.
-    // Sanitized once here (not via a shared hook) — same inline-useMemo
-    // pattern PostPurchase already used for its `products` prop. Banner never
-    // renders a product card, so only the scope fields are needed.
+    // Banner never renders a product card, so only the scope fields are kept.
     const parsedProducts = useMemo<ProductDetails[] | undefined>(
         () => sanitizeProductDetailsList(products),
         [products]

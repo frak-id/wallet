@@ -8,8 +8,8 @@ import type {
 } from "../types";
 
 // Conditions are evaluated against either the full RuleContext (order-level
-// `conditions`) or a single purchase item (`productScope`), both walked by
-// the same dot-path logic.
+// `conditions`) or a single purchase item (`productScope`), both walked by the
+// same dot-path logic.
 type EvaluationTarget = RuleContext | PurchaseItem;
 
 type ConditionOrGroup = RuleCondition | ConditionGroup;
@@ -37,10 +37,9 @@ function getNestedValue(obj: unknown, path: string): unknown {
     return current;
 }
 
-// A number, or a string that fully parses as a finite number. Campaign
-// condition values arrive from JSON where a numeric threshold is routinely
+// Condition values arrive from JSON where a numeric threshold is routinely
 // authored as a string (`"79.90"`), while the field it compares against is a
-// real number — so numeric intent must be recognised on either side.
+// real number.
 function asNumber(value: unknown): number | undefined {
     if (typeof value === "number") {
         return Number.isFinite(value) ? value : undefined;
@@ -53,9 +52,8 @@ function asNumber(value: unknown): number | undefined {
 }
 
 function compareValues(a: unknown, b: unknown): number {
-    // Numeric comparison whenever BOTH sides are numeric, even if one is a
-    // numeric string: a lexicographic fallback here would rank "9" above "10"
-    // and make every price/quantity threshold silently wrong.
+    // Numeric whenever BOTH sides are numeric, even as strings: a lexicographic
+    // fallback would rank "9" above "10".
     const numA = asNumber(a);
     const numB = asNumber(b);
     if (numA !== undefined && numB !== undefined) {
@@ -108,10 +106,8 @@ function evaluateArrayOperator(
     return operator === "in" ? includes : !includes;
 }
 
-// Arrays are only a valid operand for `in`/`not_in`. Scalar operators would
-// otherwise `String()`-coerce an array into a meaningless lexicographic
-// compare (and `neq` would be always-true), so fail closed: never match.
-// String operators already fail closed on non-string operands.
+// Arrays are only a valid operand for `in`/`not_in`; scalar operators fail
+// closed rather than `String()`-coercing them into a meaningless compare.
 function hasInvalidArrayOperand(
     operator: ConditionOperator,
     conditionValue: unknown,
