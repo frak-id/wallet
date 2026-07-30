@@ -1,3 +1,4 @@
+import { NEGATIVE_OPERATORS } from "@frak-labs/core-sdk/rewards";
 import type { Address, Hex } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -205,6 +206,77 @@ export function setChaining(
             return { ...reward, chaining };
         }),
     };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Product scope                                                     */
+/*                                                                    */
+/*  `rule.productScope` gates a purchase campaign on cart contents,   */
+/*  evaluated per line item (root fields, no `purchase.` prefix). The */
+/*  wizard authors a single flat condition — the schema allows nested */
+/*  groups, so a scope the UI can't represent is read as "advanced"   */
+/*  and preserved untouched rather than flattened.                    */
+/* ------------------------------------------------------------------ */
+
+/** Backend `PRODUCT_SCOPE_FIELDS` allowlist (CampaignManagementService.ts:25). */
+export const PRODUCT_SCOPE_FIELDS = [
+    "productId",
+    "name",
+    "sku",
+    "quantity",
+    "unitPrice",
+    "totalPrice",
+] as const;
+
+export type ProductScopeField = (typeof PRODUCT_SCOPE_FIELDS)[number];
+
+/**
+ * The single condition the wizard edits, when the scope is shaped like one.
+ * `undefined` means either no scope, or a scope too complex for the form.
+ */
+export function getProductScopeCondition(
+    rule: CampaignRuleDefinition
+): RuleCondition | undefined {
+    const scope = rule.productScope;
+    if (!scope) return undefined;
+    // Only a flat array is editable. Unwrapping a group would drop its
+    // `logic`, and `none` inverts the whole scope — a single-condition
+    // `none` group would read as its own opposite and be saved back
+    // positively, silently reversing which products the campaign covers.
+    if (!Array.isArray(scope)) return undefined;
+    if (scope.length !== 1) return undefined;
+    const [only] = scope;
+    return only && "field" in only ? only : undefined;
+}
+
+export function setProductScope(
+    rule: CampaignRuleDefinition,
+    condition: RuleCondition | null
+): CampaignRuleDefinition {
+    if (!condition) {
+        const { productScope: _dropped, ...rest } = rule;
+        return rest;
+    }
+    return { ...rule, productScope: [condition] };
+}
+
+/**
+ * Whether the scope selects a complement set. Mirrors the backend's
+ * `productScopeHasNegation`, including its conservative `logic: "none"` rule;
+ * both read the operator set from the SDK so they can't drift.
+ */
+export function isNegativeProductScope(
+    scope: RuleConditions | undefined
+): boolean {
+    if (!scope) return false;
+    const isNegative = (node: RuleCondition | ConditionGroup): boolean => {
+        if ("logic" in node) {
+            return node.logic === "none" || node.conditions.some(isNegative);
+        }
+        return NEGATIVE_OPERATORS.has(node.operator);
+    };
+    const nodes = Array.isArray(scope) ? scope : [scope];
+    return nodes.some(isNegative);
 }
 
 export function getStartDate(rule: CampaignRuleDefinition): string | undefined {

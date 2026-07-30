@@ -281,6 +281,68 @@ export default interface Resources {
           },
           "required": "Select a goal"
         },
+        "products": {
+          "addValue": "Add a value",
+          "advanced": "This product targeting was set up outside the wizard. It is shown read-only and left unchanged.",
+          "field": {
+            "name": "Product name",
+            "productId": "Product ID",
+            "quantity": "Quantity",
+            "sku": "SKU",
+            "totalPrice": "Line total",
+            "unitPrice": "Unit price"
+          },
+          "fieldLabel": "Field",
+          "mode": {
+            "all": {
+              "description": "Any order triggers the campaign.",
+              "title": "All products"
+            },
+            "specific": {
+              "description": "Only orders containing a matching product trigger the campaign.",
+              "title": "Specific products"
+            }
+          },
+          "operator": {
+            "between": "is between",
+            "contains": "contains",
+            "eq": "equals",
+            "gt": "is greater than",
+            "gte": "is at least",
+            "in": "is one of",
+            "lt": "is less than",
+            "lte": "is at most",
+            "neq": "does not equal",
+            "not_in": "is not one of",
+            "starts_with": "starts with"
+          },
+          "operatorLabel": "Condition",
+          "placeholder": {
+            "name": "e.g. Eco Sneaker",
+            "productId": "e.g. prod-123",
+            "quantity": "e.g. 2",
+            "sku": "e.g. WIDGET-BLUE-S",
+            "totalPrice": "e.g. 99.80",
+            "unitPrice": "e.g. 49.90"
+          },
+          "predicate": {
+            "description": "Applied to each line item in the order.",
+            "label": "Matching rule"
+          },
+          "purchaseOnly": "Product targeting is only available on purchase-triggered campaigns.",
+          "removeValue": "Remove this value",
+          "saveError": "Could not save the product targeting. Check that your reward model is compatible with an exclusion.",
+          "scope": {
+            "description": "The campaign only triggers when the order contains a matching product.",
+            "label": "Products covered"
+          },
+          "valueAt": "Value {{index}}",
+          "valueToLabel": "Upper value",
+          "valueToPlaceholder": "e.g. 150",
+          "values": {
+            "label": "Value"
+          }
+        },
         "referralChain": {
           "cac": {
             "label": "CAC",
@@ -322,6 +384,20 @@ export default interface Resources {
           }
         },
         "reward": {
+          "basis": {
+            "basket": {
+              "description": "The reward is calculated on the full basket.",
+              "title": "Whole order total"
+            },
+            "description": "Which amount the reward is calculated on.",
+            "fixedNotAllowed": "A fixed reward cannot be used with exclusion-based product targeting. Pick a percentage or tiered reward, or express the targeting positively.",
+            "label": "Reward basis",
+            "lockedNote": "Your product targeting is an exclusion, so the reward must be calculated on the eligible products only.",
+            "matchedItems": {
+              "description": "The reward is calculated only on the targeted products.",
+              "title": "Eligible products only"
+            }
+          },
           "campaignType": {
             "description": "Who qualifies for a reward",
             "label": "Campaign type",
@@ -386,6 +462,7 @@ export default interface Resources {
             "refereePlaceholder": "E.g. 2",
             "refereeReward": "Referee reward"
           },
+          "saveError": "Could not save the reward. Check that it is compatible with the product targeting.",
           "tiered": {
             "addTier": "Add a tier",
             "basketRange": "Basket Range ({{glyph}})",
@@ -427,6 +504,11 @@ export default interface Resources {
             "hint": "What action triggers rewards",
             "label": "Goals",
             "subtitle": "The choice of your goal defines the event that generates the distribution of rewards."
+          },
+          "products": {
+            "hint": "Which products qualify",
+            "label": "Products",
+            "subtitle": "Choose which products trigger this campaign. By default the whole order qualifies."
           },
           "referralChain": {
             "hint": "Multi-level ambassador",
@@ -513,8 +595,12 @@ export default interface Resources {
           "goal": "Campaign goal",
           "lockupValue": "{{count}} days",
           "noEndDate": "No end date",
+          "products": "Products",
+          "productsAdvanced": "Custom selection",
+          "productsAll": "All products",
           "publishError": "Couldn’t publish the campaign. Please try again.",
           "referee": "Referee: {{value}}",
+          "rewardBasis": "Reward basis",
           "rewardLockup": "Reward lockup",
           "rewards": "Rewards",
           "schedule": "Schedule",
@@ -566,8 +652,14 @@ export default interface Resources {
             "title": "Limits & timing",
             "unlimited": "Unlimited"
           },
+          "productScope": {
+            "all": "All products — every qualifying order triggers the reward.",
+            "description": "The campaign only triggers when the order contains a matching product.",
+            "title": "Products covered"
+          },
           "rewards": {
             "base": {
+              "matched_items_amount": "the eligible products total",
               "purchase_amount": "the order total"
             },
             "bounds": "Between {{min}} and {{max}} {{currency}}",
@@ -586,6 +678,11 @@ export default interface Resources {
             "recipientHint": {
               "referee": "The new customer who was referred",
               "referrer": "The person who shared and brought in the customer"
+            },
+            "tierField": {
+              "purchase.amount": "the order total",
+              "purchase.matchedAmount": "the eligible products total",
+              "purchase.matchedQuantity": "the eligible products quantity"
             },
             "tierRow": "{{range}} → {{amount}} {{currency}}",
             "tiered": "Tiered by {{field}}",

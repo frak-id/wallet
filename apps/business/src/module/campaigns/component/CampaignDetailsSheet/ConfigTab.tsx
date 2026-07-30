@@ -36,7 +36,7 @@ import { formatDate } from "@/module/common/utils/formatDate";
 import { getNumberFormat } from "@/module/common/utils/intlCache";
 import { Input } from "@/module/forms/Input";
 import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
-import { getStartDate } from "@/stores/campaignStore";
+import { getStartDate, PRODUCT_SCOPE_FIELDS } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
 import type {
     BudgetConfigItem,
@@ -97,6 +97,7 @@ function ConfigContent({ campaign }: { campaign: Campaign }) {
     return (
         <Stack space="l">
             <TriggerSection trigger={rule.trigger} />
+            <ProductScopeSection productScope={rule.productScope} />
             <RewardsSection rewards={rule.rewards} currency={currency} />
             <ConditionsSection conditions={rule.conditions} />
             <LimitsSection rule={rule} />
@@ -340,7 +341,12 @@ function RewardValue({
         <Stack space="xs">
             <Text variant="body" weight="medium">
                 {t("campaigns.details.config.rewards.tiered", {
-                    field: reward.tierField,
+                    field: t(
+                        `campaigns.details.config.rewards.tierField.${reward.tierField}` as "campaigns.details.config.rewards.tierField.purchase.amount",
+                        // A rule authored outside the app can carry any tier
+                        // field; show it raw rather than a missing key.
+                        { defaultValue: reward.tierField }
+                    ),
                 })}
             </Text>
             <Stack space="xxs">
@@ -463,8 +469,12 @@ function isConditionsEmpty(conditions: RuleConditions): boolean {
     return conditions.conditions.length === 0;
 }
 
-function formatConditionValue(value: string | number | boolean | null): string {
+// `in`/`not_in` carry a list of operands; every other operator a single one.
+function formatConditionValue(
+    value: string | number | boolean | (string | number | boolean)[] | null
+): string {
     if (value === null) return "∅";
+    if (Array.isArray(value)) return value.map(formatConditionValue).join(", ");
     if (typeof value === "boolean") return value ? "true" : "false";
     return String(value);
 }
@@ -472,6 +482,9 @@ function formatConditionValue(value: string | number | boolean | null): string {
 function humanizeField(field: string): string {
     return field.replace(/\./g, " › ");
 }
+
+/** Scope fields with a translated label; anything else renders raw. */
+const PRODUCT_SCOPE_FIELD_KEYS = new Set<string>(PRODUCT_SCOPE_FIELDS);
 
 function ConditionChip({ condition }: { condition: RuleCondition }) {
     const { t } = useTranslation();
@@ -530,6 +543,110 @@ function ConditionGroupDisplay({ group }: { group: ConditionGroup }) {
                 )}
             </div>
         </Stack>
+    );
+}
+
+/* ------------------------------------------------------------------ */
+/* Product scope                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Which cart line items the campaign covers. Unlike order-level conditions,
+ * `productScope` fields are item-relative (`sku`, not `purchase.items.sku`),
+ * so they get their own translated field labels rather than the raw
+ * dot-path humanisation used for conditions.
+ */
+function ProductScopeChip({ condition }: { condition: RuleCondition }) {
+    const { t } = useTranslation();
+    const operator = operatorLabels[condition.operator] ?? condition.operator;
+    // Unknown fields can only come from a rule authored outside the app; fall
+    // back to the raw name rather than render a missing translation key.
+    const field = PRODUCT_SCOPE_FIELD_KEYS.has(condition.field)
+        ? t(
+              `campaigns.create.products.field.${condition.field}` as "campaigns.create.products.field.sku"
+          )
+        : condition.field;
+
+    let value = "";
+    if (condition.operator === "between") {
+        value = `${formatConditionValue(condition.value)} ${t(
+            "campaigns.details.config.conditions.and"
+        )} ${formatConditionValue(condition.valueTo ?? null)}`;
+    } else if (
+        condition.operator !== "exists" &&
+        condition.operator !== "not_exists"
+    ) {
+        value = formatConditionValue(condition.value);
+    }
+
+    return (
+        <Badge variant="neutral" size="small">
+            {field} {operator}
+            {value ? ` ${value}` : ""}
+        </Badge>
+    );
+}
+
+function ProductScopeNodes({ scope }: { scope: RuleConditions }) {
+    const { t } = useTranslation();
+    const nodes = Array.isArray(scope) ? scope : scope.conditions;
+
+    return (
+        <Stack space="xs">
+            {!Array.isArray(scope) && (
+                <Text variant="caption" color="tertiary">
+                    {scope.logic === "all"
+                        ? t("campaigns.details.config.conditions.all")
+                        : scope.logic === "any"
+                          ? t("campaigns.details.config.conditions.any")
+                          : t("campaigns.details.config.conditions.noneOf")}
+                </Text>
+            )}
+            <div className={styles.tagRow}>
+                {nodes.map((node, index) =>
+                    isConditionGroup(node) ? (
+                        <ProductScopeNodes
+                            key={`group-${node.logic}-${index}`}
+                            scope={node}
+                        />
+                    ) : (
+                        <ProductScopeChip
+                            key={`${node.field}-${index}`}
+                            condition={node}
+                        />
+                    )
+                )}
+            </div>
+        </Stack>
+    );
+}
+
+function ProductScopeSection({
+    productScope,
+}: {
+    productScope?: RuleConditions;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <Section title={t("campaigns.details.config.productScope.title")}>
+            <Card radius="m">
+                {!productScope || isConditionsEmpty(productScope) ? (
+                    <Text variant="bodySmall" color="secondary">
+                        {t("campaigns.details.config.productScope.all")}
+                    </Text>
+                ) : (
+                    <Stack space="s">
+                        <Text variant="bodySmall" color="secondary">
+                            {t(
+                                "campaigns.details.config.productScope.description"
+                            )}
+                        </Text>
+                        <ProductScopeNodes scope={productScope} />
+                    </Stack>
+                )}
+            </Card>
+        </Section>
     );
 }
 

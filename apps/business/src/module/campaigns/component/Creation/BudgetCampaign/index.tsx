@@ -511,7 +511,7 @@ export function BudgetCampaign() {
     async function onSubmit(values: BudgetFormValues) {
         const saved = await persist(values);
         navigate({
-            to: "/m/$merchantId/campaigns/draft/$campaignId/reward",
+            to: "/m/$merchantId/campaigns/draft/$campaignId/products",
             params: { merchantId, campaignId: saved.id },
         });
     }

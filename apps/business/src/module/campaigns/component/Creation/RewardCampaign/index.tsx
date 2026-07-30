@@ -47,6 +47,7 @@ import { DistributionBar } from "../DistributionBar";
 import { InfoBanner } from "../InfoBanner";
 import { WizardFieldCard } from "../WizardFieldCard";
 import { WizardStep } from "../WizardStep";
+import * as rows from "../wizardRows.css";
 import * as styles from "./reward.css";
 import {
     type CpaTierRow,
@@ -58,8 +59,10 @@ import {
     recalcCpaFromSplit,
     recalcSplitOnCpaChange,
     recommendedSplit,
+    requiresMatchedBasis,
     rewardFormToDraft,
     splitTargetCpa,
+    supportsMatchedBasis,
     tieredRangesOverlap,
 } from "./utils";
 
@@ -1206,6 +1209,69 @@ export function EligibilityField({
     );
 }
 
+/**
+ * Basis toggle for a product-scoped campaign: pay on the whole basket, or on
+ * the scoped items only. Locked to "eligible products" when the scope is
+ * negated — the backend requires it, so the choice isn't the merchant's.
+ * Exported for unit testing.
+ */
+export function RewardBasisField({
+    control,
+    locked,
+}: {
+    control: Control<RewardFormValues>;
+    locked: boolean;
+}) {
+    const { t } = useTranslation();
+    return (
+        <Stack space="m">
+            {locked && (
+                <InfoBanner>
+                    {t("campaigns.create.reward.basis.lockedNote")}
+                </InfoBanner>
+            )}
+            <Controller
+                control={control}
+                name="rewardBasis"
+                render={({ field }) => (
+                    <RadioGroup
+                        value={locked ? "matchedItems" : field.value}
+                        onValueChange={field.onChange}
+                        disabled={locked}
+                    >
+                        {(["basket", "matchedItems"] as const).map((basis) => (
+                            <label
+                                key={basis}
+                                htmlFor={`reward-basis-${basis}`}
+                                className={rows.optionRow}
+                            >
+                                <RadioGroupItem
+                                    id={`reward-basis-${basis}`}
+                                    value={basis}
+                                    size="l"
+                                    disabled={locked}
+                                />
+                                <span className={rows.optionMain}>
+                                    <Text variant="body" weight="medium">
+                                        {t(
+                                            `campaigns.create.reward.basis.${basis}.title`
+                                        )}
+                                    </Text>
+                                    <Text variant="bodySmall" color="secondary">
+                                        {t(
+                                            `campaigns.create.reward.basis.${basis}.description`
+                                        )}
+                                    </Text>
+                                </span>
+                            </label>
+                        ))}
+                    </RadioGroup>
+                )}
+            />
+        </Stack>
+    );
+}
+
 // Exported for unit testing.
 export function LockupField({
     control,
@@ -1258,11 +1324,18 @@ export function RewardCampaign() {
 
     const model = useWatch({ control: form.control, name: "model" });
 
+    // A scoped campaign can pay on the matched items; a negated scope must.
+    const isScoped = supportsMatchedBasis(draft);
+    const basisLocked = requiresMatchedBasis(draft);
+
     const watched = useWatch({ control: form.control });
-    const isValid = isRewardFormValid({
-        ...DEFAULT_REWARD_FORM,
-        ...watched,
-    } as RewardFormValues);
+    const isValid = isRewardFormValid(
+        {
+            ...DEFAULT_REWARD_FORM,
+            ...watched,
+        } as RewardFormValues,
+        { requiresMatchedBasis: basisLocked }
+    );
 
     async function persist(values: RewardFormValues) {
         const updated = rewardFormToDraft(values, { ...draft, merchantId });
@@ -1293,6 +1366,11 @@ export function RewardCampaign() {
             >
                 <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                     <Stack space="l">
+                        {saveCampaign.isError && (
+                            <InfoBanner tone="error">
+                                {t("campaigns.create.reward.saveError")}
+                            </InfoBanner>
+                        )}
                         <WizardFieldCard
                             space="xs"
                             label={t(
@@ -1380,6 +1458,29 @@ export function RewardCampaign() {
                                 )}
                             </Stack>
                         </WizardFieldCard>
+
+                        {isScoped && model && model !== "fixed" && (
+                            <WizardFieldCard
+                                space="xs"
+                                label={t("campaigns.create.reward.basis.label")}
+                                description={t(
+                                    "campaigns.create.reward.basis.description"
+                                )}
+                            >
+                                <RewardBasisField
+                                    control={form.control}
+                                    locked={basisLocked}
+                                />
+                            </WizardFieldCard>
+                        )}
+
+                        {basisLocked && model === "fixed" && (
+                            <InfoBanner tone="error">
+                                {t(
+                                    "campaigns.create.reward.basis.fixedNotAllowed"
+                                )}
+                            </InfoBanner>
+                        )}
 
                         {model !== "tiered" && (
                             <WizardFieldCard

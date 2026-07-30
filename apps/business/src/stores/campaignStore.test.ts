@@ -9,9 +9,12 @@ import {
     buildApiPayload,
     campaignToDraft,
     getMinPurchaseAmount,
+    getProductScopeCondition,
     getReferralOnly,
     getStartDate,
+    isNegativeProductScope,
     setMinPurchaseAmount,
+    setProductScope,
     setReferralOnly,
     setStartDate,
 } from "./campaignStore";
@@ -364,5 +367,87 @@ describe("campaignToDraft", () => {
         );
 
         expect(result.rewardToken).toBe(token);
+    });
+});
+
+describe("product scope", () => {
+    const withScope = (
+        productScope: CampaignDraft["rule"]["productScope"]
+    ) => ({
+        ...mockCampaignDraft.rule,
+        productScope,
+    });
+
+    test("reads a single flat condition", () => {
+        const condition = {
+            field: "sku",
+            operator: "in" as const,
+            value: ["A-S"],
+        };
+        expect(getProductScopeCondition(withScope([condition]))).toEqual(
+            condition
+        );
+    });
+
+    test("treats a multi-condition scope as uneditable", () => {
+        const rule = withScope([
+            { field: "sku", operator: "eq" as const, value: "A" },
+            { field: "quantity", operator: "gte" as const, value: 2 },
+        ]);
+        expect(getProductScopeCondition(rule)).toBeUndefined();
+    });
+
+    test("an absent scope reads as no condition", () => {
+        expect(
+            getProductScopeCondition(mockCampaignDraft.rule)
+        ).toBeUndefined();
+    });
+
+    // A group carries a `logic` the flat form can't express. Unwrapping a
+    // single-condition `none` group would read it as its own opposite and
+    // save it back positively, inverting which products the campaign covers.
+    test("never unwraps a group, so a `none` scope keeps its negation", () => {
+        const rule = withScope({
+            logic: "none" as const,
+            conditions: [
+                { field: "sku", operator: "eq" as const, value: "CHEAP" },
+            ],
+        });
+        expect(getProductScopeCondition(rule)).toBeUndefined();
+        expect(isNegativeProductScope(rule.productScope)).toBe(true);
+    });
+
+    test("setProductScope removes the key when cleared", () => {
+        const rule = withScope([
+            { field: "sku", operator: "eq" as const, value: "A" },
+        ]);
+        expect(setProductScope(rule, null)).not.toHaveProperty("productScope");
+    });
+
+    test("detects negation, including nested `none` groups", () => {
+        expect(isNegativeProductScope(undefined)).toBe(false);
+        expect(
+            isNegativeProductScope([
+                { field: "sku", operator: "in", value: ["A"] },
+            ])
+        ).toBe(false);
+        expect(
+            isNegativeProductScope([
+                { field: "sku", operator: "not_in", value: ["CHEAP"] },
+            ])
+        ).toBe(true);
+        expect(
+            isNegativeProductScope({
+                logic: "all",
+                conditions: [
+                    {
+                        logic: "none",
+                        conditions: [
+                            { field: "sku", operator: "eq", value: "CHEAP" },
+                        ],
+                    },
+                ],
+            })
+        ).toBe(true);
     });
 });

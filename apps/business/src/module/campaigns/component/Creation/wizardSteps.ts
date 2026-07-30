@@ -9,6 +9,7 @@ export type WizardStepKey =
     | "goals"
     | "territory"
     | "budget"
+    | "products"
     | "reward"
     | "referralChain"
     | "validation";
@@ -30,6 +31,10 @@ export const WIZARD_STEPS: WizardStepDef[] = [
         to: "/m/$merchantId/campaigns/draft/$campaignId/territory",
     },
     { key: "budget", to: "/m/$merchantId/campaigns/draft/$campaignId/budget" },
+    {
+        key: "products",
+        to: "/m/$merchantId/campaigns/draft/$campaignId/products",
+    },
     { key: "reward", to: "/m/$merchantId/campaigns/draft/$campaignId/reward" },
     {
         key: "referralChain",
@@ -80,6 +85,11 @@ const STEP_I18N = {
         label: "campaigns.create.steps.budget.label",
         hint: "campaigns.create.steps.budget.hint",
         subtitle: "campaigns.create.steps.budget.subtitle",
+    },
+    products: {
+        label: "campaigns.create.steps.products.label",
+        hint: "campaigns.create.steps.products.hint",
+        subtitle: "campaigns.create.steps.products.subtitle",
     },
     reward: {
         label: "campaigns.create.steps.reward.label",

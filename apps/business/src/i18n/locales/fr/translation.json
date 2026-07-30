@@ -40,7 +40,7 @@
                 "submit": "Continuer avec Shopify",
                 "invalidDomain": "Saisissez un domaine myshopify.com valide",
                 "label": "Domaine de la boutique Shopify",
-                "redirecting": "Connexion avec Shopify en cours\u2026"
+                "redirecting": "Connexion avec Shopify en cours…"
             },
             "or": "ou",
             "back": "Retour"
@@ -470,6 +470,11 @@
                     "hint": "Montant, période & dates",
                     "subtitle": "Définissez le budget et le calendrier de votre campagne. Frak prélève une commission de 20% sur le budget total."
                 },
+                "products": {
+                    "label": "Produits",
+                    "hint": "Produits concernés",
+                    "subtitle": "Choisissez les produits qui déclenchent cette campagne. Par défaut, toute la commande est éligible."
+                },
                 "reward": {
                     "label": "Configuration des récompenses",
                     "hint": "Modèle, valeur & distribution",
@@ -501,12 +506,16 @@
                 "startImmediately": "Démarrage immédiat",
                 "noEndDate": "Aucune date de fin",
                 "trigger": "Déclencheur",
+                "products": "Produits",
+                "productsAll": "Tous les produits",
+                "productsAdvanced": "Sélection personnalisée",
                 "budgetPeriod": "Période de budget",
                 "budgetAmount": "Montant du budget",
                 "budgetBreakdown": "Distribué : {{distributed}}{{currency}} · Frak : {{frak}}{{currency}}",
                 "targetCpa": "CPA cible",
                 "tieredTiers": "{{count}} paliers",
                 "rewards": "Récompenses",
+                "rewardBasis": "Base de calcul",
                 "ambassador": "Ambassadeur : {{value}}",
                 "referee": "Filleul : {{value}}",
                 "frak": "Frak : {{value}}",
@@ -704,6 +713,68 @@
                     "tableAmount": "Montant"
                 }
             },
+            "products": {
+                "scope": {
+                    "label": "Produits concernés",
+                    "description": "La campagne se déclenche uniquement si la commande contient un produit correspondant."
+                },
+                "mode": {
+                    "all": {
+                        "title": "Tous les produits",
+                        "description": "Toute commande déclenche la campagne."
+                    },
+                    "specific": {
+                        "title": "Produits spécifiques",
+                        "description": "Seules les commandes contenant un produit correspondant déclenchent la campagne."
+                    }
+                },
+                "predicate": {
+                    "label": "Règle de sélection",
+                    "description": "Appliquée à chaque ligne de la commande."
+                },
+                "field": {
+                    "productId": "ID produit",
+                    "name": "Nom du produit",
+                    "sku": "SKU",
+                    "quantity": "Quantité",
+                    "unitPrice": "Prix unitaire",
+                    "totalPrice": "Prix total de la ligne"
+                },
+                "operator": {
+                    "in": "fait partie de",
+                    "not_in": "ne fait pas partie de",
+                    "eq": "est égal à",
+                    "neq": "est différent de",
+                    "starts_with": "commence par",
+                    "contains": "contient",
+                    "gte": "est supérieur ou égal à",
+                    "lte": "est inférieur ou égal à",
+                    "gt": "est supérieur à",
+                    "lt": "est inférieur à",
+                    "between": "est compris entre"
+                },
+                "placeholder": {
+                    "productId": "Ex. prod-123",
+                    "name": "Ex. Chaussure Eco",
+                    "sku": "Ex. WIDGET-BLEU-S",
+                    "quantity": "Ex. 2",
+                    "unitPrice": "Ex. 49.90",
+                    "totalPrice": "Ex. 99.80"
+                },
+                "values": {
+                    "label": "Valeur"
+                },
+                "valueAt": "Valeur {{index}}",
+                "valueToLabel": "Valeur maximale",
+                "valueToPlaceholder": "Ex. 150",
+                "addValue": "Ajouter une valeur",
+                "removeValue": "Supprimer cette valeur",
+                "advanced": "Ce ciblage produit a été configuré en dehors de l’assistant. Il est affiché en lecture seule et reste inchangé.",
+                "purchaseOnly": "Le ciblage produit n’est disponible que pour les campagnes déclenchées par un achat.",
+                "fieldLabel": "Critère",
+                "operatorLabel": "Condition",
+                "saveError": "Impossible d’enregistrer le ciblage produit. Vérifiez que votre modèle de récompense est compatible avec une exclusion."
+            },
             "reward": {
                 "campaignType": {
                     "label": "Type de campagne",
@@ -728,6 +799,20 @@
                         "title": "Récompenses par paliers",
                         "description": "Panier plus élevé = récompense plus élevée"
                     }
+                },
+                "basis": {
+                    "label": "Base de calcul",
+                    "description": "Sur quel montant la récompense est calculée.",
+                    "basket": {
+                        "title": "Montant total de la commande",
+                        "description": "La récompense est calculée sur l’ensemble du panier."
+                    },
+                    "matchedItems": {
+                        "title": "Produits éligibles uniquement",
+                        "description": "La récompense est calculée uniquement sur les produits ciblés."
+                    },
+                    "lockedNote": "Votre ciblage produit est une exclusion : la récompense doit porter uniquement sur les produits éligibles.",
+                    "fixedNotAllowed": "Une récompense fixe n’est pas compatible avec un ciblage produit par exclusion. Choisissez un pourcentage ou des paliers, ou exprimez le ciblage de façon positive."
                 },
                 "value": {
                     "label": "Valeur de la récompense",
@@ -793,7 +878,8 @@
                     "referral": "Parrainage",
                     "create_referral_link": "Lien de parrainage créé",
                     "custom": "Personnalisé"
-                }
+                },
+                "saveError": "Impossible d’enregistrer la récompense. Vérifiez sa compatibilité avec le ciblage produit."
             }
         },
         "tabs": {
@@ -944,6 +1030,11 @@
                     "create_referral_link": "Un utilisateur crée un lien de partage",
                     "custom": "Une interaction personnalisée est suivie"
                 },
+                "productScope": {
+                    "title": "Produits concernés",
+                    "all": "Tous les produits — toute commande éligible déclenche la récompense.",
+                    "description": "La campagne se déclenche uniquement si la commande contient un produit correspondant."
+                },
                 "rewards": {
                     "title": "Récompenses",
                     "empty": "Aucune récompense configurée pour le moment.",
@@ -958,12 +1049,18 @@
                     "fixed": "{{amount}} {{currency}}",
                     "percentage": "{{percent}} % de {{base}}",
                     "base": {
-                        "purchase_amount": "le montant total de la commande"
+                        "purchase_amount": "le montant total de la commande",
+                        "matched_items_amount": "le montant des produits éligibles"
                     },
                     "bounds": "Entre {{min}} et {{max}} {{currency}}",
                     "boundsMin": "Au moins {{min}} {{currency}}",
                     "boundsMax": "Jusqu'à {{max}} {{currency}}",
                     "tiered": "Par paliers selon {{field}}",
+                    "tierField": {
+                        "purchase.amount": "le montant de la commande",
+                        "purchase.matchedAmount": "le montant des produits éligibles",
+                        "purchase.matchedQuantity": "la quantité de produits éligibles"
+                    },
                     "tierRow": "{{range}} → {{amount}} {{currency}}",
                     "chaining": "Récompenses multi-niveaux",
                     "chainingDetail": "{{decay}} % de déperdition par niveau · jusqu'à {{depth}} niveaux",

@@ -6,6 +6,7 @@ import {
     getChaining,
     getMinPurchaseAmount,
     getReferralOnly,
+    isNegativeProductScope,
     setChaining,
     setMinPurchaseAmount,
     setReferralOnly,
@@ -17,6 +18,19 @@ import type {
 
 export type RewardModel = "fixed" | "percentage" | "tiered";
 type TierUnit = "percent" | "amount";
+
+/**
+ * What a percentage/tiered reward is computed on:
+ * - `basket` → the whole order (`purchase_amount` / `purchase.amount`)
+ * - `matchedItems` → only the scoped line items (`matched_items_amount` /
+ *   `purchase.matchedAmount`)
+ *
+ * Only meaningful with a `productScope`; the backend rejects a matched basis
+ * without one, and requires it on every reward when the scope is negative.
+ * Fixed rewards have no basis — they pay in full whenever the scope gate
+ * passes.
+ */
+export type RewardBasis = "basket" | "matchedItems";
 
 /**
  * A recipient reward tier (Ambassador/Referee). Just the reward amount — its
@@ -55,10 +69,30 @@ export type RewardFormValues = {
     globalCpaTiers: CpaTierRow[];
     ambassadorTiers: TierRow[];
     refereeTiers: TierRow[];
+    /**
+     * Basis for percentage/tiered rewards. Ignored by the fixed model, which
+     * has no basis to compute on.
+     */
+    rewardBasis: RewardBasis;
     /** Shared eligibility + lockup. `""` = left empty (saved as 0). */
     minPurchaseAmount: number | "";
     lockupDays: number | "";
 };
+
+/**
+ * Whether the draft's scope forces a matched-items basis. A negated scope
+ * selects the complement set, which matches nearly any cart — so the backend
+ * only accepts it when every reward reflects the exclusion in its basis
+ * (`CampaignManagementService.validateRuleDefinition`).
+ */
+export function requiresMatchedBasis(draft: CampaignDraft): boolean {
+    return isNegativeProductScope(draft.rule.productScope);
+}
+
+/** A basis choice only exists on a scoped campaign. */
+export function supportsMatchedBasis(draft: CampaignDraft): boolean {
+    return !!draft.rule.productScope;
+}
 
 const FRAK_COMMISSION_PERCENT = 20;
 /** Share of the Target CPA that reaches users (the rest is Frak's commission). */
@@ -89,6 +123,7 @@ export const DEFAULT_REWARD_FORM: RewardFormValues = {
     globalCpaTiers: [emptyCpaTier("percent")],
     ambassadorTiers: [emptyTier()],
     refereeTiers: [emptyTier()],
+    rewardBasis: "basket",
     minPurchaseAmount: "",
     lockupDays: "",
 };
@@ -171,85 +206,126 @@ function recipientTiersToBackend(cpaTiers: CpaTierRow[], rewards: TierRow[]) {
     });
 }
 
+/** The campaign's pending currency; left off so the backend fills the default. */
+type TokenPatch = { token?: Hex };
+
+/** Zero amounts are dropped — the backend rejects a non-positive reward. */
+function fixedRewards(
+    values: RewardFormValues,
+    token: TokenPatch
+): RewardDefinition[] {
+    const rewards: RewardDefinition[] = [];
+    if (values.ambassadorAmount > 0) {
+        rewards.push({
+            recipient: "referrer",
+            type: "token",
+            amountType: "fixed",
+            amount: values.ambassadorAmount,
+            ...token,
+        });
+    }
+    if (values.refereeAmount > 0) {
+        rewards.push({
+            recipient: "referee",
+            type: "token",
+            amountType: "fixed",
+            amount: values.refereeAmount,
+            ...token,
+        });
+    }
+    return rewards;
+}
+
+function percentageRewards(
+    values: RewardFormValues,
+    token: TokenPatch
+): RewardDefinition[] {
+    const percentOf =
+        values.rewardBasis === "matchedItems"
+            ? ("matched_items_amount" as const)
+            : ("purchase_amount" as const);
+    const rewards: RewardDefinition[] = [];
+    if (values.ambassadorPercent > 0) {
+        rewards.push({
+            recipient: "referrer",
+            type: "token",
+            amountType: "percentage",
+            percent: values.ambassadorPercent,
+            percentOf,
+            ...token,
+        });
+    }
+    if (values.refereePercent > 0) {
+        rewards.push({
+            recipient: "referee",
+            type: "token",
+            amountType: "percentage",
+            percent: values.refereePercent,
+            percentOf,
+            ...token,
+        });
+    }
+    return rewards;
+}
+
+/**
+ * Each recipient persists a tiered reward; the basket ranges/units come from
+ * the shared Global CPA tiers, the amounts from the recipient.
+ */
+function tieredRewards(
+    values: RewardFormValues,
+    token: TokenPatch
+): RewardDefinition[] {
+    if (values.globalCpaTiers.length === 0) return [];
+    // Percent tiers only accept `purchase.amount` or `purchase.matchedAmount`,
+    // so the matched basis maps to the amount tier field (never
+    // `matchedQuantity`, which the wizard's basket-range model can't express).
+    const tierField =
+        values.rewardBasis === "matchedItems"
+            ? ("purchase.matchedAmount" as const)
+            : ("purchase.amount" as const);
+    return [
+        {
+            recipient: "referrer",
+            type: "token",
+            amountType: "tiered",
+            tierField,
+            tiers: recipientTiersToBackend(
+                values.globalCpaTiers,
+                values.ambassadorTiers
+            ),
+            ...token,
+        },
+        {
+            recipient: "referee",
+            type: "token",
+            amountType: "tiered",
+            tierField,
+            tiers: recipientTiersToBackend(
+                values.globalCpaTiers,
+                values.refereeTiers
+            ),
+            ...token,
+        },
+    ];
+}
+
 /** Build the backend reward list from the form. */
 function rewardsFromForm(
     values: RewardFormValues,
     rewardToken?: Hex
 ): RewardDefinition[] {
-    // Apply the campaign's pending currency; left off so the backend fills the
-    // merchant default.
-    const token = rewardToken ? { token: rewardToken } : {};
-    const rewards: RewardDefinition[] = [];
-
-    if (values.model === "fixed") {
-        if (values.ambassadorAmount > 0) {
-            rewards.push({
-                recipient: "referrer",
-                type: "token",
-                amountType: "fixed",
-                amount: values.ambassadorAmount,
-                ...token,
-            });
-        }
-        if (values.refereeAmount > 0) {
-            rewards.push({
-                recipient: "referee",
-                type: "token",
-                amountType: "fixed",
-                amount: values.refereeAmount,
-                ...token,
-            });
-        }
-    } else if (values.model === "percentage") {
-        if (values.ambassadorPercent > 0) {
-            rewards.push({
-                recipient: "referrer",
-                type: "token",
-                amountType: "percentage",
-                percent: values.ambassadorPercent,
-                percentOf: "purchase_amount",
-                ...token,
-            });
-        }
-        if (values.refereePercent > 0) {
-            rewards.push({
-                recipient: "referee",
-                type: "token",
-                amountType: "percentage",
-                percent: values.refereePercent,
-                percentOf: "purchase_amount",
-                ...token,
-            });
-        }
-    } else if (values.model === "tiered") {
-        // Each recipient persists a tiered reward; the basket ranges/units come
-        // from the shared Global CPA tiers, the amounts from the recipient.
-        if (values.globalCpaTiers.length > 0) {
-            rewards.push({
-                recipient: "referrer",
-                type: "token",
-                amountType: "tiered",
-                tierField: "purchase.amount",
-                tiers: recipientTiersToBackend(
-                    values.globalCpaTiers,
-                    values.ambassadorTiers
-                ),
-                ...token,
-            });
-            rewards.push({
-                recipient: "referee",
-                type: "token",
-                amountType: "tiered",
-                tierField: "purchase.amount",
-                tiers: recipientTiersToBackend(
-                    values.globalCpaTiers,
-                    values.refereeTiers
-                ),
-                ...token,
-            });
-        }
+    const token: TokenPatch = rewardToken ? { token: rewardToken } : {};
+    switch (values.model) {
+        case "fixed":
+            return fixedRewards(values, token);
+        case "percentage":
+            return percentageRewards(values, token);
+        case "tiered":
+            return tieredRewards(values, token);
+        default:
+            return [];
     }
-    return rewards;
 }
 
 type BackendTier = {
@@ -268,6 +344,33 @@ const tierReward = (tier: BackendTier) =>
  * persisted (ambassador) tiers and its CPA is re-derived from the split
  * (CPA = pool / 80%, mirroring `targetCpa`).
  */
+/**
+ * Read the persisted basis off a reward definition. Any matched-items marker
+ * on either recipient means the campaign pays on the scoped items — the two
+ * recipients are always written together, so they never disagree.
+ */
+function rewardBasisOf(
+    referrer?: RewardDefinition,
+    referee?: RewardDefinition
+): RewardBasis {
+    const isMatched = (reward?: RewardDefinition) => {
+        if (!reward) return false;
+        if (reward.amountType === "percentage") {
+            return reward.percentOf === "matched_items_amount";
+        }
+        if (reward.amountType === "tiered") {
+            return (
+                reward.tierField === "purchase.matchedAmount" ||
+                reward.tierField === "purchase.matchedQuantity"
+            );
+        }
+        return false;
+    };
+    return isMatched(referrer) || isMatched(referee)
+        ? "matchedItems"
+        : "basket";
+}
+
 function tieredDraftToForm(
     rule: CampaignRuleDefinition,
     referrer?: RewardDefinition,
@@ -299,6 +402,7 @@ function tieredDraftToForm(
         ...DEFAULT_REWARD_FORM,
         referralOnly: getReferralOnly(rule),
         model: "tiered",
+        rewardBasis: rewardBasisOf(referrer, referee),
         globalCpaTiers: globalCpaTiers.length
             ? globalCpaTiers
             : DEFAULT_REWARD_FORM.globalCpaTiers,
@@ -351,6 +455,7 @@ export function draftToRewardForm(draft: CampaignDraft): RewardFormValues {
         ...DEFAULT_REWARD_FORM,
         referralOnly: getReferralOnly(rule),
         model,
+        rewardBasis: rewardBasisOf(referrer, referee),
         targetCpa: amountPool > 0 ? roundTo(amountPool / REWARDS_SHARE) : 0,
         ambassadorAmount,
         refereeAmount,
@@ -376,9 +481,20 @@ export function rewardFormToDraft(
     const lockupDays = Number(values.lockupDays) || 0;
     const minPurchase =
         values.model === "tiered" ? 0 : Number(values.minPurchaseAmount) || 0;
+    // A matched basis without a scope is rejected at publish, and a negative
+    // scope requires one. Normalise here so a stale form value (scope removed
+    // after the basis was picked) can't produce an unpublishable rule.
+    const normalised: RewardFormValues = {
+        ...values,
+        rewardBasis: !supportsMatchedBasis(draft)
+            ? "basket"
+            : requiresMatchedBasis(draft)
+              ? "matchedItems"
+              : values.rewardBasis,
+    };
     let rule: CampaignRuleDefinition = {
         ...draft.rule,
-        rewards: rewardsFromForm(values, draft.rewardToken),
+        rewards: rewardsFromForm(normalised, draft.rewardToken),
         defaultLockupSeconds: lockupDays * REWARD_LOCKUP.SECONDS_PER_DAY,
     };
     rule = setReferralOnly(rule, values.referralOnly);
@@ -462,8 +578,18 @@ function tieredSplitValid(values: RewardFormValues): boolean {
  * Continue gating. Fixed/% require a positive Target CPA whose pool is fully
  * allocated (Ambassador + Referee + Frak commission = Target CPA). Tiered
  * applies the same rule to every tier (complete range, CPA > 0, split = 80%).
+ *
+ * `requiresMatchedBasis` additionally rules out the fixed model: a fixed
+ * reward has no basis to reflect an exclusion in, so the backend rejects it
+ * on a negated scope. Gate it here rather than let publish fail.
  */
-export function isRewardFormValid(values: RewardFormValues): boolean {
+export function isRewardFormValid(
+    values: RewardFormValues,
+    options?: { requiresMatchedBasis?: boolean }
+): boolean {
+    if (options?.requiresMatchedBasis && values.model === "fixed") {
+        return false;
+    }
     if (values.model === "fixed") {
         return (
             values.targetCpa > 0 &&
