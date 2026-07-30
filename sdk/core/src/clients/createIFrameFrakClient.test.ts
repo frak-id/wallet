@@ -173,6 +173,52 @@ describe("createIFrameFrakClient - sendLifecycleConfig ordering", () => {
         expect(secondCall.data.merchantId).toBe("fresh-merchant");
     });
 
+    test("holds RPC requests until the first resolved-config is actually posted", async () => {
+        const { createRpcClient } = await import("@frak-labs/frame-connector");
+
+        // Records how many `resolved-config` events had been posted at the
+        // moment the gate let a request through. Must never be 0 — that is
+        // exactly the "No resolving context available" boot failure.
+        let sendsWhenReleased: number | undefined;
+        // The probe is attached from inside the `createRpcClient` mock, i.e.
+        // synchronously before `postConnectionSetup` can run. Attaching it
+        // afterwards (via `waitFor`) would let the first send land during the
+        // polling delay and mask the bug.
+        vi.mocked(createRpcClient).mockImplementation((config: any) => {
+            const gate = config.middleware?.[0];
+            void gate?.onRequest?.({}, {}).then(() => {
+                sendsWhenReleased = resolvedConfigCalls().length;
+            });
+            return {
+                sendLifecycle,
+                request: vi.fn(),
+                listen: vi.fn(),
+                cleanup: vi.fn(),
+            } as any;
+        });
+
+        const { createIFrameFrakClient } = await import(
+            "./createIFrameFrakClient"
+        );
+
+        void createIFrameFrakClient({
+            config: baseConfig(),
+            iframe: makeIframe(),
+        });
+        await vi.waitFor(() => expect(resolveFreshConfig).toBeDefined());
+
+        resolveFreshConfig({
+            merchantId: "fresh-merchant",
+            domain: "fresh.example.com",
+            allowedDomains: [],
+        });
+
+        await vi.waitFor(() => expect(sendsWhenReleased).toBeDefined(), {
+            timeout: 1000,
+        });
+        expect(sendsWhenReleased).toBeGreaterThan(0);
+    });
+
     test("only the first sendLifecycleConfig call carries the pending merge token", async () => {
         Object.defineProperty(window, "location", {
             value: new URL("https://merchant.example.com/?fmt=merge-token-123"),

@@ -557,19 +557,24 @@ async function postConnectionSetup({
 
     // SWR: if we have cached data, send it to the iframe immediately.
     // Not awaited — signing must stay off the connection-establishment
-    // critical path (README §2.5); `contextSent` resolves as soon as the
-    // event is queued for sending, same as before this proof was added.
+    // critical path (README §2.5). `contextSent` is resolved from the send's
+    // completion, NOT synchronously after firing it: `sendLifecycleConfig`
+    // awaits `buildSdkIdentity` before its `postMessage`, so resolving early
+    // releases RPC requests that then beat `resolved-config` to the listener,
+    // which rejects them with "No resolving context available".
     if (sdkConfigStore.isResolved) {
-        void sendLifecycleConfig(sdkConfigStore.getConfig());
-        contextSent.resolve();
+        void sendLifecycleConfig(sdkConfigStore.getConfig()).then(
+            contextSent.resolve
+        );
     }
 
     // If a fetch is running (stale/missing cache), wait for fresh data and update
     if (configPromise) {
         const merchantConfig = await configPromise;
         mergeAndSetConfig(merchantConfig);
-        void sendLifecycleConfig(sdkConfigStore.getConfig());
-        contextSent.resolve();
+        void sendLifecycleConfig(sdkConfigStore.getConfig()).then(
+            contextSent.resolve
+        );
     }
 
     // Push raw CSS if needed
