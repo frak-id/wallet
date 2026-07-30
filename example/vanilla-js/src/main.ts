@@ -21,7 +21,8 @@ function log(
 function updateClientIdDisplay() {
     const display = document.getElementById("current-client-id");
     if (display) {
-        display.textContent = getClientId();
+        // Synchronous accessor: undefined until the P-256 derivation resolves.
+        display.textContent = getClientId() ?? "(deriving…)";
     }
 }
 

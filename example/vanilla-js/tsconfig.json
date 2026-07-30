@@ -12,7 +12,6 @@
     "customConditions": ["development"],
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "incremental": true,
     "verbatimModuleSyntax": true
   },
   "include": ["**/*.ts"],
