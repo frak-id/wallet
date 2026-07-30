@@ -1,11 +1,9 @@
 import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import type { Address } from "viem";
 import { OrchestrationContext } from "../../../orchestration/context";
 import {
-    buildIdentityNodes,
-    resolveWalletAddress,
+    resolveSdkIdentityNodes,
     sdkIdentityHeaderSchema,
 } from "./sdkIdentity";
 
@@ -19,8 +17,6 @@ const purchaseBodySchema = t.Object({
 export const trackPurchaseRoute = new Elysia().post(
     "/purchase",
     async ({ headers, body }) => {
-        const clientId = headers["x-frak-client-id"];
-        const walletSdkAuth = headers["x-wallet-sdk-auth"];
         const merchantId = body.merchantId;
 
         const customerId =
@@ -32,36 +28,19 @@ export const trackPurchaseRoute = new Elysia().post(
                 ? body.orderId
                 : body.orderId.toString();
 
-        let walletAddress: Address | undefined;
-        if (walletSdkAuth) {
-            const resolved = await resolveWalletAddress(walletSdkAuth);
-            if (!resolved) {
-                return status(401, {
-                    success: false,
-                    error: "Invalid wallet SDK JWT",
-                });
-            }
-            walletAddress = resolved;
-        }
-
-        const identityNodes = buildIdentityNodes({
-            walletAddress,
-            clientId,
+        const identityResult = await resolveSdkIdentityNodes({
+            headers,
             merchantId,
         });
 
-        if (identityNodes.length === 0) {
-            if (clientId && !merchantId) {
-                return status(400, {
-                    success: false,
-                    error: "merchantId required when using x-frak-client-id",
-                });
-            }
-            return status(401, {
+        if (!identityResult.success) {
+            return status(identityResult.statusCode, {
                 success: false,
-                error: "x-frak-client-id or x-wallet-sdk-auth header required",
+                error: identityResult.error,
             });
         }
+
+        const { identityNodes } = identityResult;
 
         if (!merchantId) {
             return status(400, {

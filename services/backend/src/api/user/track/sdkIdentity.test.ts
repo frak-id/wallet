@@ -134,7 +134,7 @@ describe("resolveSdkIdentity (§3.9 — resolve-only, never merge)", () => {
         ]);
     });
 
-    it("rejects an invalid wallet SDK JWT before ever resolving identity", async () => {
+    it("rejects an invalid wallet SDK JWT when it is the only identity offered", async () => {
         JwtContextMock.walletSdk.verify.mockResolvedValue(null as never);
 
         const result = await resolveSdkIdentity({
@@ -150,6 +150,52 @@ describe("resolveSdkIdentity (§3.9 — resolve-only, never merge)", () => {
         expect(
             OrchestrationContext.orchestrators.identity.resolveForAttribution
         ).not.toHaveBeenCalled();
+    });
+
+    it("falls back to the anonymous identity when the wallet JWT is expired", async () => {
+        // The SDK caches the wallet-status token client-side (1 day TTL), so a
+        // stale x-wallet-sdk-auth alongside a good x-frak-client-id is routine
+        // and must not 401 the whole interaction.
+        vi.mocked(
+            OrchestrationContext.orchestrators.identity.resolveForAttribution
+        ).mockResolvedValue({ groupId: "anon-group" });
+        JwtContextMock.walletSdk.verify.mockResolvedValue(null as never);
+
+        const result = await resolveSdkIdentity({
+            headers: {
+                "x-frak-client-id": VICTIM_CLIENT_ID,
+                "x-wallet-sdk-auth": "an-expired-jwt",
+            },
+            merchantId: MERCHANT_ID,
+        });
+
+        expect(result).toEqual({
+            success: true,
+            identityGroupId: "anon-group",
+            walletAddress: undefined,
+        });
+        // The unverified wallet must not leak into the identity nodes.
+        expect(
+            OrchestrationContext.orchestrators.identity.resolveForAttribution
+        ).toHaveBeenCalledWith([
+            {
+                type: "anonymous_fingerprint",
+                value: VICTIM_CLIENT_ID,
+                merchantId: MERCHANT_ID,
+            },
+        ]);
+    });
+
+    it("still returns 400 for a clientId with no merchantId when the JWT is absent", async () => {
+        const result = await resolveSdkIdentity({
+            headers: { "x-frak-client-id": VICTIM_CLIENT_ID },
+        });
+
+        expect(result).toEqual({
+            success: false,
+            error: "merchantId required when using x-frak-client-id",
+            statusCode: 400,
+        });
     });
 });
 
