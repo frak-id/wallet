@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",
-    "@radix-ui/react-alert-dialog": "^1.1.23",
+    "@radix-ui/react-alert-dialog": "catalog:",
     "@radix-ui/react-checkbox": "^1.3.11",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-popover": "^1.1.23",
@@ -32,7 +32,7 @@
     "@radix-ui/react-switch": "^1.3.7",
     "@radix-ui/react-tabs": "^1.1.21",
     "@radix-ui/react-tooltip": "^1.2.16",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "catalog:",
     "@tinymomentum/liquid-glass-react": "^1.0.6",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/recipes": "catalog:",

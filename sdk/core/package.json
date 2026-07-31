@@ -124,7 +124,7 @@
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
-    "@noble/curves": "^2.2.0",
+    "@noble/curves": "catalog:",
     "@noble/hashes": "^2.2.0",
     "@openpanel/web": "catalog:"
   },
