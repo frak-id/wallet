@@ -65,6 +65,7 @@
     "@frak-labs/design-system": "workspace:*",
     "@openpanel/web": "catalog:",
     "@tanstack/react-query": "catalog:",
+    "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
     "@vanilla-extract/css": "catalog:",
     "clsx": "catalog:",

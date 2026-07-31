@@ -5,8 +5,6 @@
     "": {
       "name": "frak-wallet",
       "dependencies": {
-        "@tauri-apps/api": "^2.11.1",
-        "@tinymomentum/liquid-glass-react": "^1.0.6",
         "caniuse-lite": "^1.0.30001806",
         "vite": "catalog:",
       },
@@ -492,6 +490,7 @@
         "@frak-labs/design-system": "workspace:*",
         "@openpanel/web": "catalog:",
         "@tanstack/react-query": "catalog:",
+        "@tauri-apps/api": "^2.11.1",
         "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
         "@vanilla-extract/css": "catalog:",
         "clsx": "catalog:",
