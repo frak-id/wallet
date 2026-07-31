@@ -1,0 +1,12 @@
+{
+    "name": "@frak-labs-example/native-android",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "start": "./scripts/run.sh run",
+        "build": "./scripts/run.sh build",
+        "logs": "./scripts/run.sh logs",
+        "lint": "./scripts/run.sh lint",
+        "format": "./scripts/run.sh format"
+    }
+}

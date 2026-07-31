@@ -1,0 +1,20 @@
+# ktlint configuration for the Android example app.
+#
+# Scoped to this folder rather than the repo root: biome owns TS/JS formatting
+# monorepo-wide and `example/native-android` is excluded from it, so the two
+# never overlap.
+root = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+insert_final_newline = true
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+
+# `@Composable` functions are PascalCase by convention — that is the Compose
+# naming rule, not a violation of Kotlin's. ktlint's standard function-naming
+# rule does not know about Compose, so exempt annotated declarations rather
+# than turning the rule off for the whole source set.
+ktlint_function_naming_ignore_when_annotated_with = Composable

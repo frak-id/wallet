@@ -53,8 +53,14 @@ const config: KnipConfig = {
             project: "src/**/*.{ts,tsx}",
         },
     },
-    // Ignore legacy SDK from knip
-    ignoreWorkspaces: ["sdk/legacy"],
+    // Ignore legacy SDK from knip, plus the native example apps: they are Gradle
+    // and Xcode projects whose package.json only dispatches to `scripts/run.sh`,
+    // so there is no JS/TS graph for knip to analyse.
+    ignoreWorkspaces: [
+        "sdk/legacy",
+        "example/native-android",
+        "example/native-ios",
+    ],
 };
 
 export default config;

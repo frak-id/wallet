@@ -12,6 +12,7 @@ Frak Wallet is a Web3 infrastructure monorepo for seamless referral tracking and
 ## Common Development Commands
 
 ### Building and Development
+
 ```bash
 # Start development server (SST + TanStack Router)
 bun dev
@@ -27,6 +28,7 @@ bun run clean
 ```
 
 ### Code Quality and Testing
+
 ```bash
 # Format code (Biome)
 bun run format
@@ -42,6 +44,11 @@ bun run typecheck
 
 # Dead code elimination
 bun run knip
+
+# Native (Kotlin + Swift) — NOT covered by biome/typecheck above
+bun run --filter '*/native-*' lint              # both platforms
+bun run --cwd example/native-android lint      # ktlint, via the Gradle plugin
+bun run --cwd example/native-ios lint          # swift-format, from the Xcode toolchain
 
 # E2E tests with Playwright (wallet app)
 cd apps/wallet
@@ -72,6 +79,7 @@ bun run test:watch            # Run in watch mode
 ```
 
 **Testing Strategy**:
+
 - **Framework**: Vitest 4.0 with Projects API (workspace mode)
   - 10 test projects: wallet, listener, business, shopify, wallet-shared, ui, core-sdk, react-sdk, components, backend
   - Frontend projects use jsdom environment; backend uses Node environment
@@ -90,6 +98,7 @@ bun run test:watch            # Run in watch mode
   - Target: 40% code coverage
 
 **Test Configuration Architecture**:
+
 - `vitest.config.ts` - Root workspace config (Vitest 4.0 Projects API)
 - `packages/test-foundation/src/vitest.shared.ts` - Shared config with performance optimizations (pool config, plugin helpers)
 - `packages/test-foundation/src/index.ts` - Centralized test utilities barrel export (@frak-labs/test-foundation)
@@ -105,6 +114,7 @@ bun run test:watch            # Run in watch mode
 - `services/backend/test/mock/` - Backend mock modules (viem.ts, webauthn.ts, common.ts)
 
 ### Deployment
+
 ```bash
 # Deploy to development (AWS)
 bun run deploy
@@ -121,6 +131,7 @@ bun run deploy-gcp:prod
 ```
 
 ### Package Management
+
 ```bash
 # Update dependencies across workspaces
 bun run update:deps
@@ -135,6 +146,7 @@ bun run changeset:release
 ## Architecture Overview
 
 ### Monorepo Structure
+
 - **`apps/`** - Frontend applications
   - `wallet/` - TanStack Router user wallet (SSR disabled, module-based architecture)
   - `business/` - TanStack Router business dashboard (SPA, nginx in production)
@@ -187,16 +199,20 @@ bun run changeset:release
 - **`services/backend/`** - Elysia.js backend with domain-driven structure
 - **`infra/`** - SST v3 (AWS) and Pulumi (GCP) infrastructure
 - **`example/`** - Integration examples
+  - `native-android/`, `native-ios/` - Native SDK test harnesses (Kotlin/Compose, Swift/SwiftUI). Workspace members with a `private` `package.json` that owns `start`/`build`/`lint`/`format` — the Gradle and Xcode builds run through `scripts/run.sh`, not through Bun. Run with `bun run --cwd example/native-{android,ios} start`
 
 ### Key Technologies
+
 - **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, vanilla-extract, TanStack Router
 - **Styling**: vanilla-extract (CSS-in-TS) via the design-system package; Lightning CSS processes all Vite apps (wallet, listener, business)
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
 - **Tooling**: Biome (4-space, double quotes), Changesets (linked packages), Knip, tsdown, Playwright
+- **Native tooling**: ktlint (Kotlin) and swift-format (Swift), scoped to `example/native-*` via `.editorconfig` and `.swift-format`. Biome cannot parse either language, so those paths are excluded in `biome.json` and the standard quality gate skips them — see the native commands under Code Quality above
 
 ### Development Principles
+
 - Use TypeScript for all code; prefer types over interfaces
 - Functional and declarative programming patterns; avoid classes
 - Use absolute imports with `@/...` paths (configured via tsconfig paths)
@@ -215,6 +231,7 @@ bun run changeset:release
 ### Package-Specific Commands
 
 **Wallet App (`apps/wallet/`)**:
+
 ```bash
 cd apps/wallet
 bun run dev          # Development (builds service worker first, then starts SST dev)
@@ -225,6 +242,7 @@ bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 ```
 
 **Business Dashboard (`apps/business/`)**:
+
 ```bash
 cd apps/business
 bun run dev          # SST dev + Vite (port 3001)
@@ -234,6 +252,7 @@ bun run test         # Run Vitest tests
 ```
 
 **State Management**:
+
 - All frontend apps use Zustand for global state management
 - Business stores located in `apps/business/src/stores/`
 - Stores use persist middleware for localStorage synchronization
@@ -241,6 +260,7 @@ bun run test         # Run Vitest tests
 - Avoid subscribing to entire store: `const store = useStore()` causes unnecessary re-renders
 
 **Backend (`services/backend/`)**:
+
 ```bash
 cd services/backend
 bun run dev          # Development with SST (runs dev:watch)
@@ -253,6 +273,7 @@ bun db:migrate       # Run migrations
 ```
 
 **SDK Development**:
+
 ```bash
 # Build all SDK packages (rpc → core → legacy → react → components)
 bun run build:sdk
@@ -288,6 +309,7 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
   - Used by: `core` (NPM + IIFE), `react` (NPM), `components` (NPM + ESM with splitting), `legacy` (IIFE), `rpc` (NPM)
 
 **Key capabilities**:
+
 - **Multiple output directories**: Array of configs with different `outDir` per format
 - **Code splitting**: ESM format with `outputOptions` for dynamic chunk naming (`[name].[hash].js`)
 - **Format flexibility**: IIFE with `globalName` for browser globals (FrakSDK, NexusSDK)
@@ -298,18 +320,21 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 ## Important Notes
 
 ### Critical Workflows
+
 - **Always use `bun`** as the package manager (never npm, pnpm, or yarn)
 - **Service Worker**: Wallet app requires service worker build before dev/build (`bun run build:sw`)
 - **TanStack Router**: Run typegen before typechecking wallet app
 - **Drizzle ORM**: Database schemas located in `src/domain/*/db/schema.ts` pattern
 
 ### Code Quality
+
 - Run `bun run typecheck` before committing changes
 - Use Biome for formatting: `bun run format` (4-space indent, double quotes, semicolons)
 - Performance is mandatory - codebase handles very high workloads
 - Cognitive complexity limit: 16 (enforced by Biome)
 
 ### Architecture Details
+
 - **Workspace Exports**: Packages use `development` condition to point to source (`src/index.ts`) in monorepo, `import`/`require` for built files
 - **Linked Packages**: Changesets links `@frak-labs/frame-connector`, `@frak-labs/core-sdk`, `@frak-labs/react-sdk` for synchronized versioning
 - **SST Stages**: Development uses `$dev` flag, production deploys to `dev`/`prod` (AWS) or `gcp-staging`/`gcp-production` (GCP backend only)
@@ -325,6 +350,7 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 **Trigger:** For complex development tasks (feature implementation, cross-cutting changes, bug fixes spanning multiple areas, architecture reviews), use the `frak-orchestrator` skill. For code quality checks, use the `code-quality` skill. Simple questions can be answered directly.
 
 **Change Log:**
+
 | Date | Change | Target | Reason |
 |------|--------|--------|--------|
 | 2026-04-09 | Initial build | All | Harness setup with 6 agents + 2 skills |

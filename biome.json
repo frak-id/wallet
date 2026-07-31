@@ -20,6 +20,10 @@
             "!**/routeTree.gen.ts",
             "!**/types/i18n/resources.d.ts",
             "!**/src-tauri/gen",
+            "!sdk/android",
+            "!sdk/ios",
+            "!example/native-android",
+            "!example/native-ios",
             "!**/src-tauri/plugins/**/schema.json",
             "!plugins",
             "!apps/shopify/**/shopify.d.ts"
