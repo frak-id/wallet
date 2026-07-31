@@ -20,10 +20,12 @@
  * - business-unit: Business dashboard (TanStack Router SPA)
  * - shopify-unit: Shopify embedded app (React Router v7)
  * - wallet-shared-unit: Shared wallet utilities package
- * - ui-unit: Radix-based UI component library
+ * - design-system-unit: Radix-based UI component library
+ * - app-essentials-unit: Blockchain config, ABIs and shared essentials
+ * - dev-tooling-unit: Development tooling package (Node environment)
  * - core-sdk-unit: Core SDK (framework-agnostic)
  * - react-sdk-unit: React SDK (hooks and providers)
- * - components-unit: Web Components (Preact)
+ * - components-sdk-unit: Web Components (Preact)
  * - backend-unit: Elysia backend service (Node environment)
  * - ui-preview-unit: Embedded preview widgets package
  */
