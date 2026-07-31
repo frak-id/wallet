@@ -1,4 +1,7 @@
-import type { AffiliateBrandInfo } from "@frak-labs/backend-elysia/api/schemas";
+import type {
+    AffiliateBrandInfo,
+    AllowedPackageId,
+} from "@frak-labs/backend-elysia/api/schemas";
 import { queryOptions } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
@@ -35,6 +38,7 @@ export type MerchantData = {
     createdAt: string | null;
     role: MerchantRole;
     allowedDomains: string[];
+    allowedPackageIds: AllowedPackageId[];
     isAffiliate?: boolean;
     affiliate?: AffiliateBrandInfo | null;
 };
@@ -88,6 +92,7 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
                 createdAt: data.createdAt,
                 role: data.role,
                 allowedDomains: data.allowedDomains ?? [],
+                allowedPackageIds: data.allowedPackageIds ?? [],
                 affiliate: data.affiliate ?? null,
             };
         },

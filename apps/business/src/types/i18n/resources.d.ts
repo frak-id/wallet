@@ -1382,7 +1382,9 @@ export default interface Resources {
       },
       "domains": {
         "add": "Add domain",
+        "addError": "Failed to add the domain. Please try again.",
         "additionalLabel": "Additional domain",
+        "claimed": "This domain is already registered to another merchant. Contact <support>hello@frak-labs.com</support> to resolve it.",
         "description": "Additional domains authorized to access this merchant (e.g. Shopify myshopify.com domains).",
         "empty": "No additional domains yet.",
         "invalid": "Invalid domain format",
@@ -1438,6 +1440,27 @@ export default interface Resources {
       "newsletter": {
         "description": "Paste this link into your newsletter or any marketing email. When a customer clicks it, your storefront opens with the Frak sharing modal, pre-filled with your current campaign rewards, so they can share and earn in one tap.",
         "title": "Newsletter sharing link"
+      },
+      "packageIds": {
+        "add": "Add app",
+        "addError": "Failed to add the app. Please try again.",
+        "additionalLabel": "Package id",
+        "claimed": "This app is already registered to another merchant. Contact <support>hello@frak-labs.com</support> to resolve it.",
+        "description": "Mobile apps authorized to resolve this merchant through the native SDK.",
+        "empty": "No apps yet.",
+        "invalid": "Invalid package id format",
+        "manage": "Manage apps",
+        "placeholder": {
+          "android": "e.g. com.example.myapp",
+          "ios": "e.g. 57DZ6Z2235.com.example.MyApp"
+        },
+        "platform": {
+          "android": "Android",
+          "ios": "iOS"
+        },
+        "platformLabel": "Platform",
+        "remove": "Remove",
+        "title": "Allowed apps"
       },
       "purchaseTracker": {
         "description": "Track purchases from your store to power campaigns and distribute rewards.",

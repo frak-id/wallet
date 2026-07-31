@@ -1,3 +1,5 @@
+import { isValidPackageId } from "@frak-labs/app-essentials";
+import type { AllowedPackageId } from "@frak-labs/backend-elysia/api/schemas";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
@@ -8,54 +10,45 @@ import {
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button as BusinessButton } from "@/module/common/component/Button";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { SheetCloseToolbar } from "@/module/common/component/SheetCloseToolbar";
 import { useDiscardGuard } from "@/module/common/hook/useDiscardGuard";
 import {
-    useAddAllowedDomain,
-    useRemoveAllowedDomain,
-} from "@/module/merchant/hook/useAllowedDomains";
+    useAddAllowedPackageId,
+    useRemoveAllowedPackageId,
+} from "@/module/merchant/hook/useAllowedPackageIds";
 import { AllowedListErrorMessage } from "../AllowedListError";
-import * as styles from "../allowed-list-sheet.css";
+import * as sharedStyles from "../allowed-list-sheet.css";
+import * as styles from "./allowed-package-ids-sheet.css";
 
-const domainRegex =
-    /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+const platforms = ["android", "ios"] as const;
 
-function normalizeDomain(raw: string): string {
-    return raw
-        .toLowerCase()
-        .trim()
-        .replace(/^https?:\/\//, "")
-        .replace(/\/$/, "")
-        .replace(/:\d+$/, "")
-        .replace(/^www\./, "");
-}
-
-export function AllowedDomainsSheet({
+export function AllowedPackageIdsSheet({
     merchantId,
-    allowedDomains,
+    allowedPackageIds,
 }: {
     merchantId: string;
-    allowedDomains: string[];
+    allowedPackageIds: AllowedPackageId[];
 }) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [rawInput, setRawInput] = useState("");
+    const [platform, setPlatform] =
+        useState<AllowedPackageId["platform"]>("android");
 
     const {
-        mutate: addDomain,
+        mutate: addPackageId,
         isPending: isAdding,
         error: addError,
         reset: resetAddError,
-    } = useAddAllowedDomain({ merchantId });
-    const { mutate: removeDomain, isPending: isRemoving } =
-        useRemoveAllowedDomain({ merchantId });
+    } = useAddAllowedPackageId({ merchantId });
+    const { mutate: removePackageId, isPending: isRemoving } =
+        useRemoveAllowedPackageId({ merchantId });
 
-    const normalized = useMemo(() => normalizeDomain(rawInput), [rawInput]);
-    const isValid = normalized.length > 0 && domainRegex.test(normalized);
+    const isValid = isValidPackageId(rawInput);
 
     const { guard, dialogProps } = useDiscardGuard({
         isDirty: rawInput.trim().length > 0,
@@ -64,9 +57,10 @@ export function AllowedDomainsSheet({
 
     function handleAdd() {
         if (!isValid) return;
-        addDomain(normalized, {
-            onSuccess: () => setRawInput(""),
-        });
+        addPackageId(
+            { packageId: rawInput.trim().toLowerCase(), platform },
+            { onSuccess: () => setRawInput("") }
+        );
     }
 
     function requestClose() {
@@ -86,7 +80,7 @@ export function AllowedDomainsSheet({
         >
             <SheetTrigger asChild>
                 <BusinessButton variant="secondary" size="small">
-                    {t("merchantEdit.domains.manage")}
+                    {t("merchantEdit.packageIds.manage")}
                 </BusinessButton>
             </SheetTrigger>
             <SheetContent
@@ -107,34 +101,51 @@ export function AllowedDomainsSheet({
                     size="large"
                     onClose={requestClose}
                     closeLabel={t("merchantEdit.close")}
-                    title={t("merchantEdit.domains.title")}
-                    subtitle={t("merchantEdit.domains.description")}
+                    title={t("merchantEdit.packageIds.title")}
+                    subtitle={t("merchantEdit.packageIds.description")}
                 />
 
                 <Stack space="l" padding="l">
-                    {allowedDomains.length > 0 && (
-                        <Stack space="m" padding="m" className={styles.card}>
-                            <Stack as="ul" space="none" className={styles.list}>
-                                {allowedDomains.map((domain) => (
+                    {allowedPackageIds.length > 0 && (
+                        <Stack
+                            space="m"
+                            padding="m"
+                            className={sharedStyles.card}
+                        >
+                            <Stack
+                                as="ul"
+                                space="none"
+                                className={sharedStyles.list}
+                            >
+                                {allowedPackageIds.map((entry) => (
                                     <Inline
                                         as="li"
                                         wrap={false}
                                         space="s"
                                         alignY="center"
-                                        key={domain}
-                                        className={styles.item}
+                                        key={`${entry.platform}:${entry.packageId}`}
+                                        className={sharedStyles.item}
                                     >
-                                        <span className={styles.itemText}>
-                                            {domain}
+                                        <span className={styles.platformBadge}>
+                                            {t(
+                                                `merchantEdit.packageIds.platform.${entry.platform}`
+                                            )}
+                                        </span>
+                                        <span className={sharedStyles.itemText}>
+                                            {entry.packageId}
                                         </span>
                                         <Button
                                             variant="destructive"
                                             size="small"
                                             width="auto"
-                                            onClick={() => removeDomain(domain)}
+                                            onClick={() =>
+                                                removePackageId(entry)
+                                            }
                                             disabled={isRemoving}
                                         >
-                                            {t("merchantEdit.domains.remove")}
+                                            {t(
+                                                "merchantEdit.packageIds.remove"
+                                            )}
                                         </Button>
                                     </Inline>
                                 ))}
@@ -142,15 +153,48 @@ export function AllowedDomainsSheet({
                         </Stack>
                     )}
 
-                    <Stack space="m" padding="m" className={styles.card}>
+                    <Stack space="m" padding="m" className={sharedStyles.card}>
                         <Stack space="xs">
                             <Text
                                 variant="bodySmall"
                                 weight="medium"
                                 color="secondary"
-                                className={styles.inputLabel}
+                                className={sharedStyles.inputLabel}
                             >
-                                {t("merchantEdit.domains.additionalLabel")}
+                                {t("merchantEdit.packageIds.platformLabel")}
+                            </Text>
+                            <Inline
+                                space="s"
+                                className={sharedStyles.inputLabel}
+                            >
+                                {platforms.map((option) => (
+                                    <Button
+                                        key={option}
+                                        variant={
+                                            platform === option
+                                                ? "primary"
+                                                : "secondary"
+                                        }
+                                        size="small"
+                                        width="auto"
+                                        onClick={() => setPlatform(option)}
+                                    >
+                                        {t(
+                                            `merchantEdit.packageIds.platform.${option}`
+                                        )}
+                                    </Button>
+                                ))}
+                            </Inline>
+                        </Stack>
+
+                        <Stack space="xs">
+                            <Text
+                                variant="bodySmall"
+                                weight="medium"
+                                color="secondary"
+                                className={sharedStyles.inputLabel}
+                            >
+                                {t("merchantEdit.packageIds.additionalLabel")}
                             </Text>
                             <Input
                                 variant="bare"
@@ -162,7 +206,7 @@ export function AllowedDomainsSheet({
                                     resetAddError();
                                 }}
                                 placeholder={t(
-                                    "merchantEdit.domains.placeholder"
+                                    `merchantEdit.packageIds.placeholder.${platform}`
                                 )}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") handleAdd();
@@ -170,15 +214,15 @@ export function AllowedDomainsSheet({
                             />
                             {rawInput.trim() && !isValid && (
                                 <Text variant="caption" color="error">
-                                    {t("merchantEdit.domains.invalid")}
+                                    {t("merchantEdit.packageIds.invalid")}
                                 </Text>
                             )}
                             {addError && (
                                 <AllowedListErrorMessage
                                     error={addError}
-                                    claimedCode="DOMAIN_ALREADY_CLAIMED"
-                                    claimedKey="merchantEdit.domains.claimed"
-                                    fallbackKey="merchantEdit.domains.addError"
+                                    claimedCode="PACKAGE_ID_ALREADY_CLAIMED"
+                                    claimedKey="merchantEdit.packageIds.claimed"
+                                    fallbackKey="merchantEdit.packageIds.addError"
                                 />
                             )}
                         </Stack>
@@ -192,7 +236,7 @@ export function AllowedDomainsSheet({
                                 disabled={!isValid || isAdding}
                                 loading={isAdding}
                             >
-                                {t("merchantEdit.domains.add")}
+                                {t("merchantEdit.packageIds.add")}
                             </Button>
                         </Inline>
                     </Stack>

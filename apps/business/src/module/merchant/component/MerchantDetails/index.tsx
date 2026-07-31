@@ -2,7 +2,7 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckCircleFilledIcon } from "@frak-labs/design-system/icons";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DiscardChangesDialog } from "@/module/common/component/DiscardChangesDialog";
 import { EditCard } from "@/module/common/component/EditCard";
@@ -19,6 +19,7 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
 import { useReadOnlyMerchant } from "@/module/merchant/hook/useReadOnlyMerchant";
 import { AllowedDomainsSheet } from "../AllowedDomainsSheet";
+import { AllowedPackageIdsSheet } from "../AllowedPackageIdsSheet";
 import { SaveFooter } from "../Customize/SaveFooter";
 import { MerchantEditSheet } from "../MerchantEditSheet";
 import { PurchaseTrackerSheet } from "../PurchaseTrackerSheet";
@@ -27,7 +28,7 @@ import { ExplorerSettings } from "./ExplorerSettings";
 import * as styles from "./merchant-summary.css";
 import { NewsletterShareLink } from "./NewsletterShareLink";
 
-const DOMAIN_PREVIEW_COUNT = 3;
+const PREVIEW_COUNT = 3;
 
 export function MerchantDetails({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
@@ -142,48 +143,44 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                         </EditCard>
                     )}
                     {merchant && (
-                        <EditCard
+                        <PreviewListCard
                             title={t("merchantEdit.domains.title")}
                             description={t("merchantEdit.domains.description")}
+                            emptyLabel={t("merchantEdit.domains.empty")}
+                            items={merchant.allowedDomains.map((domain) => ({
+                                key: domain,
+                                label: domain,
+                            }))}
                         >
-                            {merchant.allowedDomains.length > 0 ? (
-                                <Inline space="xs">
-                                    {merchant.allowedDomains
-                                        .slice(0, DOMAIN_PREVIEW_COUNT)
-                                        .map((domain) => (
-                                            <span
-                                                key={domain}
-                                                className={styles.domainTag}
-                                            >
-                                                {domain}
-                                            </span>
-                                        ))}
-                                    {merchant.allowedDomains.length >
-                                        DOMAIN_PREVIEW_COUNT && (
-                                        <span className={styles.domainTag}>
-                                            {t("merchantEdit.domains.more", {
-                                                count:
-                                                    merchant.allowedDomains
-                                                        .length -
-                                                    DOMAIN_PREVIEW_COUNT,
-                                            })}
-                                        </span>
-                                    )}
-                                </Inline>
-                            ) : (
-                                <p className={styles.cellsEmpty}>
-                                    {t("merchantEdit.domains.empty")}
-                                </p>
-                            )}
                             {!isReadOnly && (
-                                <Inline space="s">
-                                    <AllowedDomainsSheet
-                                        merchantId={merchantId}
-                                        allowedDomains={merchant.allowedDomains}
-                                    />
-                                </Inline>
+                                <AllowedDomainsSheet
+                                    merchantId={merchantId}
+                                    allowedDomains={merchant.allowedDomains}
+                                />
                             )}
-                        </EditCard>
+                        </PreviewListCard>
+                    )}
+                    {merchant && (
+                        <PreviewListCard
+                            title={t("merchantEdit.packageIds.title")}
+                            description={t(
+                                "merchantEdit.packageIds.description"
+                            )}
+                            emptyLabel={t("merchantEdit.packageIds.empty")}
+                            items={merchant.allowedPackageIds.map((entry) => ({
+                                key: `${entry.platform}:${entry.packageId}`,
+                                label: entry.packageId,
+                            }))}
+                        >
+                            {!isReadOnly && (
+                                <AllowedPackageIdsSheet
+                                    merchantId={merchantId}
+                                    allowedPackageIds={
+                                        merchant.allowedPackageIds
+                                    }
+                                />
+                            )}
+                        </PreviewListCard>
                     )}
                     <NewsletterShareLink merchantId={merchantId} />
                     {!isReadOnly && (
@@ -210,6 +207,50 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
             )}
             <DiscardChangesDialog {...discardDialogProps} />
         </CustomizeSaveProvider>
+    );
+}
+
+/**
+ * Card showing the first few entries of an allow-list, with a "+N more" tag
+ * once it overflows. `children` is the manage control, omitted when read-only.
+ */
+function PreviewListCard({
+    title,
+    description,
+    emptyLabel,
+    items,
+    children,
+}: {
+    title: string;
+    description: string;
+    emptyLabel: string;
+    items: { key: string; label: string }[];
+    children?: ReactNode;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <EditCard title={title} description={description}>
+            {items.length > 0 ? (
+                <Inline space="xs">
+                    {items.slice(0, PREVIEW_COUNT).map((item) => (
+                        <span key={item.key} className={styles.domainTag}>
+                            {item.label}
+                        </span>
+                    ))}
+                    {items.length > PREVIEW_COUNT && (
+                        <span className={styles.domainTag}>
+                            {t("merchantEdit.domains.more", {
+                                count: items.length - PREVIEW_COUNT,
+                            })}
+                        </span>
+                    )}
+                </Inline>
+            ) : (
+                <p className={styles.cellsEmpty}>{emptyLabel}</p>
+            )}
+            {children && <Inline space="s">{children}</Inline>}
+        </EditCard>
     );
 }
 

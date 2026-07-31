@@ -392,6 +392,30 @@ export class MerchantRepository {
         });
     }
 
+    /** Takes an already-normalized `platform:packageId` key. */
+    async addAllowedPackageId(
+        id: string,
+        packageKey: string
+    ): Promise<MerchantSelect | null> {
+        return this.applyUpdate(id, {
+            allowedPackageIds: sql`array_append(
+                    array_remove(${merchantsTable.allowedPackageIds}, ${packageKey}),
+                    ${packageKey}
+                )`,
+            updatedAt: new Date(),
+        });
+    }
+
+    async setAllowedPackageIds(
+        id: string,
+        packageKeys: string[]
+    ): Promise<MerchantSelect | null> {
+        return this.applyUpdate(id, {
+            allowedPackageIds: packageKeys,
+            updatedAt: new Date(),
+        });
+    }
+
     async findByAllowedDomain(domain: string): Promise<MerchantSelect | null> {
         const result = await db.query.merchantsTable.findFirst({
             where: arrayContains(merchantsTable.allowedDomains, [domain]),

@@ -1715,8 +1715,31 @@
             "placeholder": "e.g. mystore.myshopify.com",
             "add": "Add domain",
             "invalid": "Invalid domain format",
+            "claimed": "This domain is already registered to another merchant. Contact <support>hello@frak-labs.com</support> to resolve it.",
+            "addError": "Failed to add the domain. Please try again.",
             "remove": "Remove",
             "more": "+{{count}} more"
+        },
+        "packageIds": {
+            "title": "Allowed apps",
+            "description": "Mobile apps authorized to resolve this merchant through the native SDK.",
+            "empty": "No apps yet.",
+            "manage": "Manage apps",
+            "platformLabel": "Platform",
+            "platform": {
+                "android": "Android",
+                "ios": "iOS"
+            },
+            "additionalLabel": "Package id",
+            "placeholder": {
+                "android": "e.g. com.example.myapp",
+                "ios": "e.g. 57DZ6Z2235.com.example.MyApp"
+            },
+            "add": "Add app",
+            "invalid": "Invalid package id format",
+            "claimed": "This app is already registered to another merchant. Contact <support>hello@frak-labs.com</support> to resolve it.",
+            "addError": "Failed to add the app. Please try again.",
+            "remove": "Remove"
         },
         "newsletter": {
             "title": "Newsletter sharing link",

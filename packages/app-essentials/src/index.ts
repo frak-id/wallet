@@ -26,8 +26,10 @@ export {
     isRunningInProd,
     isRunningLocally,
     isValidEmail,
+    isValidPackageId,
     isValidUrl,
     normalizeUrl,
+    PACKAGE_ID_REGEX,
     roundTo,
     validateUrl,
 } from "./utils";

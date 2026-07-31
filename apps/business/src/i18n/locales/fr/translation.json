@@ -1715,8 +1715,31 @@
             "placeholder": "ex. mastore.myshopify.com",
             "add": "Ajouter le domaine",
             "invalid": "Format de domaine invalide",
+            "claimed": "Ce domaine est déjà enregistré auprès d'un autre marchand. Contactez <support>hello@frak-labs.com</support> pour le débloquer.",
+            "addError": "Échec de l'ajout du domaine. Veuillez réessayer.",
             "remove": "Supprimer",
             "more": "+{{count}} autres"
+        },
+        "packageIds": {
+            "title": "Applications autorisées",
+            "description": "Applications mobiles autorisées à résoudre ce marchand via le SDK natif.",
+            "empty": "Aucune application pour l'instant.",
+            "manage": "Gérer les applications",
+            "platformLabel": "Plateforme",
+            "platform": {
+                "android": "Android",
+                "ios": "iOS"
+            },
+            "additionalLabel": "Identifiant de package",
+            "placeholder": {
+                "android": "ex. com.exemple.monapp",
+                "ios": "ex. 57DZ6Z2235.com.exemple.MonApp"
+            },
+            "add": "Ajouter l'application",
+            "invalid": "Format d'identifiant de package invalide",
+            "claimed": "Cette application est déjà enregistrée auprès d'un autre marchand. Contactez <support>hello@frak-labs.com</support> pour la débloquer.",
+            "addError": "Échec de l'ajout de l'application. Veuillez réessayer.",
+            "remove": "Supprimer"
         },
         "newsletter": {
             "title": "Lien de partage newsletter",
