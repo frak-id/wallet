@@ -1,6 +1,7 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Navigate } from "@tanstack/react-router";
 import { EditPageLayout } from "@/module/merchant/component/EditPageLayout";
+import { MerchantDetailsCard } from "@/module/merchant/component/MerchantDetailsCard";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { AffiliateConfigPanel } from "./AffiliateConfigPanel";
 
@@ -28,6 +29,7 @@ export function AffiliatePage({ merchantId }: { merchantId: string }) {
 
     return (
         <EditPageLayout merchantId={merchantId} page="affiliate">
+            <MerchantDetailsCard merchantId={merchantId} />
             <AffiliateConfigPanel affiliate={merchant.affiliate} />
         </EditPageLayout>
     );

@@ -285,8 +285,27 @@ export type EstimatedRewardItem = Omit<
     "conditions" | "productScope"
 > & { conditions: RuleConditions; productScope?: RuleConditions };
 
+// Mirrors `BestReward` (sdk/core/src/rewards/select.ts), minus `campaignId`
+// which the native SDK has no use for.
+const BestRewardSchema = t.Object({
+    formatted: t.String(),
+    payoutType: t.Union([
+        FixedEstimatedRewardSchema.properties.payoutType,
+        PercentageEstimatedRewardSchema.properties.payoutType,
+        TieredEstimatedRewardSchema.properties.payoutType,
+    ]),
+    minPurchaseAmount: t.Optional(t.String()),
+    lockupDurationDays: t.Optional(t.Number()),
+    referrerReward: t.Optional(EstimatedRewardSchema),
+    refereeReward: t.Optional(EstimatedRewardSchema),
+    minPurchaseValue: t.Optional(t.Number()),
+});
+
 export const EstimatedRewardsResultSchema = t.Object({
     rewards: t.Array(EstimatedRewardItemSchema),
+    // Absent means "nothing worth showing", not an error — an unknown
+    // merchantId also yields `{ rewards: [] }` here rather than a 404.
+    best: t.Optional(BestRewardSchema),
 });
 export type EstimatedRewardsResult = Static<
     typeof EstimatedRewardsResultSchema

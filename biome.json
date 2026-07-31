@@ -18,6 +18,7 @@
             "!**/package.json",
             "!example/vanilla-js/index.html",
             "!**/routeTree.gen.ts",
+            "!services/backend/user-openapi.json",
             "!**/types/i18n/resources.d.ts",
             "!**/src-tauri/gen",
             "!sdk/android",

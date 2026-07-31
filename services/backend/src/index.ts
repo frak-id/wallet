@@ -61,6 +61,8 @@ const app = new Elysia({
             // Shopify loader that forwards `x-request-id`).
             customProps: (ctx) => ({
                 reqId: ctx.request.headers.get("x-request-id") ?? undefined,
+                sdkVersion:
+                    ctx.request.headers.get("x-frak-sdk-version") ?? undefined,
             }),
         })
     )

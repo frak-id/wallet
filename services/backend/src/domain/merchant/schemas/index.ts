@@ -38,6 +38,9 @@ export type MerchantIdentity = {
 const HttpsUrlSchema = (maxLength = 2048) =>
     t.String({ pattern: "^https://", maxLength });
 
+export type Platform = "android" | "ios";
+export const PlatformSchema = t.Union([t.Literal("android"), t.Literal("ios")]);
+
 export const ExplorerConfigSchema = t.Object({
     heroImageUrl: t.Optional(HttpsUrlSchema()),
     // Up to 4 additional hero images. The wallet slider renders them after heroImageUrl.

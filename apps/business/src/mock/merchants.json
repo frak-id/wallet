@@ -12,7 +12,8 @@
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
             "role": "owner",
-            "allowedDomains": []
+            "allowedDomains": [],
+            "allowedPackageIds": []
         },
         {
             "id": "22222222-2222-2222-2222-222222222222",
@@ -26,7 +27,8 @@
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
             "role": "owner",
-            "allowedDomains": []
+            "allowedDomains": [],
+            "allowedPackageIds": []
         },
         {
             "id": "33333333-3333-3333-3333-333333333333",
@@ -40,7 +42,8 @@
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
             "role": "owner",
-            "allowedDomains": []
+            "allowedDomains": [],
+            "allowedPackageIds": []
         },
         {
             "id": "55555555-5555-5555-5555-555555555555",
@@ -54,7 +57,8 @@
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
             "role": "owner",
-            "allowedDomains": []
+            "allowedDomains": [],
+            "allowedPackageIds": []
         }
     ],
     "adminOf": [
@@ -70,7 +74,8 @@
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
             "role": "admin",
-            "allowedDomains": []
+            "allowedDomains": [],
+            "allowedPackageIds": []
         }
     ]
 }

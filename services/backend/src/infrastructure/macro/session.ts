@@ -63,6 +63,9 @@ export const sessionContext = new Elysia({
         headers: t.Object({
             "x-wallet-auth": t.Optional(t.String()),
             "x-wallet-sdk-auth": t.Optional(t.String()),
+            // Logged only, no consumer yet: a shipped binary can't be
+            // retrofitted, so v0.1 has to send it to ever be measurable.
+            "x-frak-sdk-version": t.Optional(t.String()),
         }),
     })
     .macro({

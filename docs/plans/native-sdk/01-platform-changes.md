@@ -61,6 +61,7 @@ header (merchant logo, close button) and its own footer (Share / Copy buttons wi
 `UIActivityViewController` / `Intent.ACTION_SEND`).
 
 When `native=1`:
+
 - hide the page header (`MerchantLogo` + Frak logo + dismiss)
 - hide the sharing-screen footer CTAs (Share / Copy)
 - keep everything else: reward credit card, product cards, how-it-works stepper, FAQ,
@@ -141,6 +142,26 @@ wallet-origin page into an arbitrary scheme launcher (`?returnScheme=some-bankin
 Validate server/route-side against a strict shape — `^frak-[a-z0-9._-]{1,60}$` — and
 navigate only in response to a user gesture.
 
+(The `frak-` prefix is worth a second look: the section above retracts
+the `frak-<merchantId>` scheme design and explains that no OS
+registration is needed, so the prefix no longer distinguishes anything.
+It is implemented as written; if it is now vestigial, this is the line to
+change.)
+
+#### `?returnScheme=` is native-only
+
+The channel exists because a native host intercepts the navigation in its
+own web view. Nothing intercepts it anywhere else, so in a plain browser
+the navigation is a silent no-op and **every outcome becomes a dead
+end**: install, dismiss and share-again all stop responding, with no
+error.
+
+This is deliberate — a fallback timer would have to guess whether the
+host is slow or absent, and guessing wrong either double-fires an outcome
+or overrides a host that was about to handle it. A native integrator must
+therefore never send `returnScheme` on a URL that can be opened outside
+the SDK's web view.
+
 ### 1.2b `?confirmed=1` — inbound native → web channel **[BLOCKING]**
 
 The outbound channel above has a matching inbound gap that breaks the whole install
@@ -180,6 +201,7 @@ Frak app installed?
 ```
 
 Two steps in the iOS path **must** be native and cannot live in the web view:
+
 - writing the install code to `UIPasteboard` with an `expirationDate` — the web
   clipboard API offers no expiry control
 - presenting `SKStoreProductViewController` (in-app App Store) — impossible from JS
@@ -188,15 +210,28 @@ So the page hands back control; the SDK does the rest.
 
 ### 1.4 Seeded initial state **[ENHANCEMENT — high value]**
 
-Optional params letting the SDK pass locally-cached values so the page paints real
-content on first frame instead of a skeleton:
+One optional param letting the SDK pass a locally-cached value so the
+page paints real content on first frame instead of a skeleton:
 
 ```
-?r=<preformatted reward>&n=<appName>&l=<logoUrl>
+?r=<preformatted reward>
 ```
 
-The page renders these immediately, then revalidates via its normal
+The page renders it immediately, then revalidates via its normal
 `useFormattedEstimatedReward` query and reconciles.
+
+The other two seeded values, `appName` and `logoUrl`, are already in the
+§1.0 param contract and are sent under those names. An earlier draft of
+this section also listed them as `n=` and `l=`; that would give one value
+two spellings and two precedence rules, so only `r` is new here.
+
+The reward is **untrusted display text**, so the route matches it against
+the shape the reward formatter actually produces — digits plus a currency
+symbol or percent — rather than filtering characters. Every supported
+currency (eur, usd, gbp) formats with a symbol and no letters, and the
+"up to" qualifier is added by the page from its own translations. A
+looser check accepts short prose (`1 free iPhone`, `50% off scam`), which
+would put attacker copy inside the merchant's sheet.
 
 This is the single biggest perceived-performance win: it removes a full network
 round-trip from the critical path (today the page mounts, *then* fetches the reward,
@@ -258,23 +293,66 @@ sending the user to the App Store. On first launch, the wallet should **autofocu
 code input**.
 
 Critically: **do not read the pasteboard programmatically.** Calling
-`UIPasteboard.general.string` triggers the "pasted from…" banner and a permission
-prompt. Focusing the field is enough — iOS surfaces clipboard content in the keyboard
-suggestion bar automatically, with no read, no banner, no prompt. One tap for the user.
+`UIPasteboard.general.string` triggers a blocking "Allow Paste" alert on
+iOS 16+ (an informational banner on iOS 14–15).
 
-If presence detection is genuinely needed, use `UIPasteboard.detectPatterns(for:)`,
-which checks without reading.
+If presence detection is genuinely needed, use
+`UIPasteboard.detectPatterns(for:)`, which returns a match/no-match per
+pattern without a prompt. Its sibling `detectValues(for:)` **does** prompt —
+Apple's docs are explicit that returning actual values triggers the same
+notification as a direct read.
 
 Concretely:
-- autofocus the `CodeInput` when arriving at the install-code entry with no code in
-  the URL
-- ensure the input's `textContentType` / `inputMode` does not suppress the keyboard
-  suggestion bar
+
+- autofocus the `CodeInput` when arriving at the install-code entry with no
+  code in the URL
+
+> ⚠️ **The one-tap paste this section assumes does not exist on shipping
+> iOS.**
+>
+> "Focusing the field is enough — iOS surfaces clipboard content in the
+> keyboard suggestion bar automatically" does not hold on any GA release:
+>
+> - **`autocomplete="one-time-code"` is SMS-only.** It hooks Security Code
+>   AutoFill, which parses codes out of incoming Messages (iOS 12+) or
+>   iCloud Keychain's own TOTP generator (iOS 15+). A code the SDK *writes
+>   to the pasteboard* does not feed it, and Apple documents no pasteboard
+>   path into that suggestion.
+> - **The generic "paste candidate" chip is iOS 27.** A QuickType chip that
+>   previews clipboard content on focus and inserts it in one tap appears in
+>   Apple's iOS 27 release notes (Keyboard section, bug entry "Unlocalized
+>   text can appear for paste candidates"). It is absent from iOS 26 and
+>   earlier, so on today's install base the behaviour is simply not there.
+>
+> On shipping iOS the user must long-press the field and choose Paste.
+> Autofocus still helps — field focused, keyboard up, one less tap — but it
+> is not the one-tap flow described above, and the iOS install step should
+> not be costed as if it were.
+>
+> Apple's prompt-free one-tap affordance is **`UIPasteControl`** (iOS 16+):
+> a system-rendered button the user taps, no alert and no banner. It needs
+> native UI so it cannot live in the web view — which fits this plan, since
+> §1.3 already hands the whole install step to the SDK.
+>
+> **The wider point: the industry does not carry tokens across an install
+> this way.** Pasteboard matching was a growth-hack that iOS 14's banner
+> exposed (TikTok, LinkedIn, Reddit, 2020) and iOS 16's modal closed. Branch
+> still ships it as NativeLink with the prompt as a disclosed cost. Firebase
+> Dynamic Links shut down in August 2025. Probabilistic fingerprint matching
+> is dead post-ATT. What production apps do — Venmo, Cash App, Signal,
+> WalletConnect-style pairing — is a universal link when the app is present
+> and **explicit manual code or QR entry** when it is not, redeemed
+> server-side against an authenticated account. For a wallet the clipboard
+> is also a known clipper-malware surface, which is its own argument.
+>
+> Verify on a device before designing around any of this, and treat manual
+> entry as the flow rather than the fallback.
 
 ### 2.3 Service worker caching for `/sharing` **[ENHANCEMENT — Android only]**
 
 The wallet already builds a custom service worker (`apps/wallet/vite.config.ts`,
 `mode === "sw"`). Caching the `/sharing` shell gives:
+
 - near-instant repeat presentations
 - a usable offline render when combined with §1.4 seeded params
 
@@ -444,7 +522,7 @@ to hand-copy a `merchantId` into their build config is exactly the kind of setup
 that kills adoption. `merchantId` remains supported as an explicit override and as the
 fallback when package resolution fails.
 
-**Design rule: a merchant app is an additional identity _route_ to an existing
+**Design rule: a merchant app is an additional identity *route* to an existing
 merchant, never a new merchant.** Apps map to the merchant their domain already
 identifies.
 
@@ -519,11 +597,13 @@ convenience, not a gate.**
 1. **Android — genuinely verifiable.** Query Google's Digital Asset Links API rather
    than fetching the file yourself; it is the same verifier the OS uses and handles
    redirects, caching, and `include` chasing:
+
    ```
    GET https://digitalassetlinks.googleapis.com/v1/statements:list
          ?source.web.site=https://<domain>
          &relation=delegate_permission/common.handle_all_urls
    ```
+
    On a match, append `android:<package_name>` to `allowed_package_ids`.
 2. **iOS — weaker by construction.** Fetch `/.well-known/apple-app-site-association`
    and read `applinks.details[].appID`. This proves only that the domain *claims* the
@@ -660,3 +740,136 @@ tracked in its phasing — listed here only so this plan's gate is explicit. See
 `apps/listener` requires **no changes**. The native SDK does not use the listener at
 all — the iframe exists to solve browser origin isolation, which does not apply to a
 native app.
+
+---
+
+## 6. Frontend status — what shipped, and three things to ratify
+
+Merged to `dev` as `2b6d3515f`. Every `apps/wallet` item in §5 is done except
+where noted below. Nothing in the merge changes behaviour for current consumers:
+no code sends the new params, and with them absent the page renders exactly as
+before.
+
+| # | Requirement | Status |
+|---|---|---|
+| 1.0 | `clientId` enforced under `native=1` | done |
+| 1.0 | Trap 2 — `attribution=null` vs omitted | done, pinned by test |
+| 1.0 | Trap 3 — the page never tracks shares | **unchanged — see below** |
+| 1.1 | `?native=1` chromeless mode | done |
+| 1.2 | `?returnScheme=` + `sid` + scheme validation | done |
+| 1.2b | `?confirmed=1` inbound channel | done |
+| 1.3 | Install CTA hands back to the SDK | done |
+| 1.4 | Seeded `?r=` | done |
+| 1.5 | `?sdkv=` accepted; unknown params dropped | done, pinned by test |
+| 2.1 | Deep-link install | code verified by reading; **no device pass yet** |
+| 2.2 | Autofocus the code field; no pasteboard read | done — see warning |
+| 2.3 | Preconnect | done |
+| 2.3 | Service worker cache | **dropped — see below** |
+
+### Trap 3 is discharged by an assumption, not by code
+
+§1.0 calls it "a hard requirement, not a detail", and it is still exactly as
+described: `sharing.tsx` wires only `onSuccess`, never `onShared`, and
+`handleCopy` fires only `trackEvent`. The listener does both
+(`apps/listener/.../SharingPage/index.tsx:167,186`).
+
+Nothing was changed, because §1.0's own resolution is that the native SDK owns
+100% of sharing tracking. That is a reasonable split — but it currently rests on
+the SDK author knowing he owns it. Worth an explicit confirmation rather than an
+assumption, since the failure mode is silent: shares that emit no
+`create_referral_link`, with no error anywhere.
+
+Note this is not a live defect today. Nothing in the repo navigates to the
+wallet's `/sharing` route — no internal link, no deep-link handler, no SDK
+reference — so the gap only becomes real when the native SDK starts driving this
+page.
+
+### `action=error` is a deviation from §1.2's table
+
+The result channel ships a fourth action the spec does not list:
+
+```text
+<scheme>://result?action=error&sid=<sid>
+```
+
+It fires when a native launch is rejected — `native=1` with no `clientId` — so
+the host can close its sheet instead of leaving it on a wallet-branded error
+page it cannot interpret.
+
+This knowingly breaks §1.2's "navigate only in response to a user gesture" rule:
+it fires from the route guard, before render. The reasoning is that the
+alternative is worse — a host that gets no callback has no way to distinguish a
+rejected launch from a slow one. Flagging it because it is a deliberate
+departure from a stated rule, and the SDK will need to treat `error` as a
+terminal outcome.
+
+A related case is still open: a host that sends a **malformed** `returnScheme`
+gets the scheme stripped, so there is no channel left to report on and the sheet
+is left on the wallet's own error page. That is the design accepting a dead end
+rather than guessing.
+
+### §2.3 was dropped
+
+Most of its stated value is already delivered by nginx, which serves hashed
+assets with `expires 1y, immutable` (`apps/wallet/nginx.conf:70-76`). What a
+service worker would add is caching the HTML shell — which the same config sets
+to `no-store` on purpose, commented "no etag to prevent stale content"
+(`nginx.conf:128-135`).
+
+The offline render also does not survive contact: `/sharing` fires two
+per-merchant queries through `authenticatedBackendApi`, both of which fail
+offline, leaving the shell with no reward and no attribution config. That is the
+gap `?r=` (§1.4) already fills.
+
+There is also a registration problem the section does not account for. The
+service worker is registered as a side effect of importing the notification
+adapter (`apps/wallet/app/module/notification/adapter/webAdapter.ts:56`), which
+happens on settings and notification screens. A native host landing directly on
+`/sharing` never imports it, so no service worker exists and nothing is cached.
+Making this work would mean registering a service worker on the sharing route
+and introducing the first `fetch` handler into the wallet's service worker,
+which today handles only push and notification events.
+
+Weighed against a second-visit-only, Android-only win, that is not worth it
+before the SDK exists.
+
+The preconnect half was worth doing and shipped separately. It could not go
+where this section implies, though: a hint added from `/sharing`, or from
+anywhere in application code, arrives too late to do anything. `main.tsx` is the
+entry module and the built HTML lists the vendor chunks beside it as
+`modulepreload`, so roughly a megabyte is already fetched and parsed before its
+first line runs — which is exactly the window a preconnect exists to use. It has
+to be emitted into `<head>` at build time, where the preload scanner finds it.
+
+Two origins are hinted, and they differ in CORS mode, which the attribute has to
+match or the connection cannot be reused: the backend is credentialed, while the
+RPC host is anonymous because viem's transport sends no credentials. The RPC
+hint is gated on `NEXUS_RPC_SECRET`, since without it that transport is never
+built and the connection would go unused.
+
+This helps the first presentation, which no cache can touch — the opposite of
+the service-worker half, and the reason it survived while the rest did not.
+
+### Still open, and not owned by the frontend
+
+- **§1.5's backend half** — the `x-frak-sdk-version` header is now captured
+  (accepted on the shared header guard, `services/backend/src/infrastructure/macro/session.ts`;
+  logged via `customProps` in `services/backend/src/index.ts`) and it drives
+  nothing else, on purpose. The `resolveConfig` kill switch it was meant to
+  feed is **deliberately not shipped**: there is no write path for it today —
+  no merchant column, no admin UI, no env var — and the field it was specified
+  against (`MerchantResolveResponse.sdkConfig`) is per-merchant, while a bad
+  SDK release is a fleet-wide, version-scoped event; flipping it merchant by
+  merchant during an incident is the wrong shape for the lever. It also can't
+  be sized yet — the right predicate is "SDK version ≤ X on platform Y", which
+  needs a real version distribution from the header above before a schema can
+  be chosen. When it lands, it should be version-keyed and global (env var or
+  a small ops-owned table) and returned **top-level** on `MerchantResolveResponse`,
+  not inside the merchant-owned optional `sdkConfig` — a binary whose merchant
+  has no `sdkConfig` would otherwise never see it. This needs an owner.
+- **§2.1's device pass** — the deep-link path was verified by reading the code
+  (`deepLink.ts:137,220` route it; `/install` queues the `ensure` action), but
+  nobody has run it on a phone.
+- **§2.2 on iOS** — see the warning in that section. The autofocus shipped, but
+  the one-tap paste it was meant to enable does not exist on any shipping iOS
+  release.

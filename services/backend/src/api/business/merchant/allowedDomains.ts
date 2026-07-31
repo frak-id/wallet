@@ -25,6 +25,23 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 );
             }
 
+            // Resolution picks the first merchant holding the domain (primary
+            // `domain` first, then `allowedDomains`), so letting two claim one
+            // domain would make its resolve result arbitrary.
+            const owner =
+                (await MerchantContext.repositories.merchant.findByDomain(
+                    domain
+                )) ??
+                (await MerchantContext.repositories.merchant.findByAllowedDomain(
+                    domain
+                ));
+            if (owner && owner.id !== merchantId) {
+                throw HttpError.conflict(
+                    "DOMAIN_ALREADY_CLAIMED",
+                    `Domain "${domain}" is already claimed by another merchant`
+                );
+            }
+
             const updated =
                 await MerchantContext.repositories.merchant.addAllowedDomain(
                     merchantId,
@@ -50,6 +67,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
+                409: t.ErrorResponse,
             },
         }
     )
@@ -64,8 +82,22 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 return status(404, "Merchant not found");
             }
 
+            // Entries are stored normalized, so the raw body has to go through
+            // the same normalization or removing "www.example.com" silently
+            // no-ops. Invalid input cannot match anything, so drop the 400 and
+            // let the filter be a no-op.
+            let normalized: string;
+            try {
+                normalized =
+                    MerchantContext.repositories.dnsCheck.getNormalizedDomain(
+                        domain
+                    );
+            } catch {
+                normalized = domain;
+            }
+
             const filtered = (merchant.allowedDomains ?? []).filter(
-                (d) => d !== domain
+                (d) => d !== normalized && d !== domain
             );
 
             await MerchantContext.repositories.merchant.setAllowedDomains(
