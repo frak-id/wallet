@@ -25,6 +25,7 @@
  * - react-sdk-unit: React SDK (hooks and providers)
  * - components-unit: Web Components (Preact)
  * - backend-unit: Elysia backend service (Node environment)
+ * - ui-preview-unit: Embedded preview widgets package
  */
 import { defineConfig } from "vitest/config";
 
