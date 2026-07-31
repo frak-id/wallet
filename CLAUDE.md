@@ -84,7 +84,7 @@ bun run test:watch            # Run in watch mode
   - 10 test projects: wallet, listener, business, shopify, wallet-shared, ui, core-sdk, react-sdk, components, backend
   - Frontend projects use jsdom environment; backend uses Node environment
   - Run from root with `bun run test` to execute all projects in parallel
-- **E2E Tests**: Comprehensive Playwright tests (19 specs) covering user flows
+- **E2E Tests**: Comprehensive Playwright tests (13 specs) covering user flows
   - Authentication and registration
   - Pairing flows
   - Wallet operations
