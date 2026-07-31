@@ -1426,6 +1426,10 @@ export default interface Resources {
         "logo": "Logo",
         "or": "or",
         "previewDisabledHint": "Enable the Explorer",
+        "readOnly": {
+          "listed": "Listed",
+          "notListed": "Not listed"
+        },
         "removeImage": "Remove image",
         "restrictions": {
           "hero": "PNG, JPEG, WebP, SVG, GIF - Min 800×450px - Ratio 4:3 to 2:1 (Max 10MB)",
@@ -1516,8 +1520,9 @@ export default interface Resources {
       "saveError": "Some changes could not be saved. Check the fields and try again.",
       "tabs": {
         "affiliate": "Affiliate settings",
-        "explorer": "Explorer App settings",
-        "identity": "Customize SDK Identity",
+        "explorer": "Explorer App",
+        "identity": "Identity & SDK",
+        "integration": "Integration",
         "team": "Manage your team"
       },
       "team": {

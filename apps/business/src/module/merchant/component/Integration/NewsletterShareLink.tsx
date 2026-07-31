@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { EditCard } from "@/module/common/component/EditCard";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
-import * as styles from "./merchant-summary.css";
+import * as styles from "./integration.css";
 
 function buildShareUrl(domain: string): string {
     return `https://${domain}/?frakAction=share`;

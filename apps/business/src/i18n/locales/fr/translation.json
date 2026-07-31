@@ -1686,9 +1686,10 @@
         "title": "Modifier",
         "close": "Fermer",
         "tabs": {
-            "identity": "Personnaliser l'identité SDK",
+            "identity": "Identité & SDK",
             "affiliate": "Réglages d'affiliation",
-            "explorer": "Réglages de l'app Explorer",
+            "integration": "Intégration",
+            "explorer": "App Explorer",
             "team": "Gérer votre équipe"
         },
         "saveAll": "Sauvegarder les modifications",
@@ -1773,7 +1774,11 @@
                 "fileRejected": "Ce fichier a été refusé — vérifiez les conditions ci-dessus.",
                 "uploadFailed": "Échec de l'envoi"
             },
-            "descriptionPlaceholder": "Description du marchand..."
+            "descriptionPlaceholder": "Description du marchand...",
+            "readOnly": {
+                "listed": "Listé",
+                "notListed": "Non listé"
+            }
         },
         "purchaseTracker": {
             "title": "Suivi des achats",

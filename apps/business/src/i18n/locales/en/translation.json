@@ -1686,9 +1686,10 @@
         "title": "Edit",
         "close": "Close",
         "tabs": {
-            "identity": "Customize SDK Identity",
+            "identity": "Identity & SDK",
             "affiliate": "Affiliate settings",
-            "explorer": "Explorer App settings",
+            "integration": "Integration",
+            "explorer": "Explorer App",
             "team": "Manage your team"
         },
         "saveAll": "Save all changes",
@@ -1773,7 +1774,11 @@
                 "fileRejected": "This file was rejected — check the requirements above.",
                 "uploadFailed": "Upload failed"
             },
-            "descriptionPlaceholder": "Merchant description..."
+            "descriptionPlaceholder": "Merchant description...",
+            "readOnly": {
+                "listed": "Listed",
+                "notListed": "Not listed"
+            }
         },
         "purchaseTracker": {
             "title": "Purchase tracker",

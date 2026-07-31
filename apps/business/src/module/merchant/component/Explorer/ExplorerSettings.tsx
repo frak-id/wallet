@@ -28,7 +28,7 @@ import { MultiHeroImagesField } from "@/module/merchant/component/MultiHeroImage
 import { useCustomizeSection } from "@/module/merchant/component/saveRegistry";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import * as styles from "./merchant-details.css";
+import * as styles from "./explorer.css";
 
 type ExplorerFormValues = {
     enabled: boolean;

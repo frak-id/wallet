@@ -2,10 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
 import { MerchantNotFoundError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { MerchantIntegration } from "@/module/merchant/component/Integration";
+import { ExplorerPage } from "@/module/merchant/component/Explorer";
 import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";
 
-export const Route = createFileRoute("/_restricted/m/$merchantId/merchant/")({
+export const Route = createFileRoute(
+    "/_restricted/m/$merchantId/merchant/explorer"
+)({
     staticData: { shell: "bare" },
     loader: ({ params }) => {
         const demoMode = isDemoMode();
@@ -13,11 +15,11 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/merchant/")({
             merchantQueryOptions(params.merchantId, demoMode)
         );
     },
-    component: MerchantPage,
+    component: MerchantExplorerPage,
     errorComponent: MerchantNotFoundError,
 });
 
-function MerchantPage() {
+function MerchantExplorerPage() {
     const { merchantId } = Route.useParams();
-    return <MerchantIntegration merchantId={merchantId} />;
+    return <ExplorerPage merchantId={merchantId} />;
 }
