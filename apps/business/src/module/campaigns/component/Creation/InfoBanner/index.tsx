@@ -20,7 +20,12 @@ type InfoBannerProps = {
 export function InfoBanner({ tone = "info", children }: InfoBannerProps) {
     const isError = tone === "error";
     return (
-        <div className={isError ? styles.bannerError : styles.banner}>
+        // Error banners appear in response to a failed action, so they must be
+        // announced rather than silently added to the page.
+        <div
+            role={isError ? "alert" : undefined}
+            className={isError ? styles.bannerError : styles.banner}
+        >
             {isError ? (
                 <ExclamationFilledIcon
                     width={20}

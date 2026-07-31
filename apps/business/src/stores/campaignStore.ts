@@ -1,10 +1,13 @@
+import { NEGATIVE_OPERATORS } from "@frak-labs/core-sdk/rewards";
 import type { Address, Hex } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
     BudgetConfigItem,
+    CampaignGoal,
     CampaignMetadata,
     CampaignRuleDefinition,
+    CampaignTrigger,
     ConditionGroup,
     RewardChaining,
     RuleCondition,
@@ -143,6 +146,55 @@ function setCondition(
     return { ...rule, conditions: rebuild(updated) };
 }
 
+/**
+ * The interaction each goal rewards. Only `sales` is a purchase campaign —
+ * everything downstream (product scope, basket-based rewards, minimum
+ * purchase) hangs off that, so the goal is what decides it.
+ */
+const GOAL_TRIGGERS: Record<CampaignGoal, CampaignTrigger> = {
+    sales: "purchase",
+    awareness: "referral",
+    traffic: "referral",
+    registration: "custom",
+    retention: "custom",
+};
+
+export function triggerForGoal(goal: CampaignGoal | undefined) {
+    return goal ? GOAL_TRIGGERS[goal] : "purchase";
+}
+
+export function isPurchaseCampaign(rule: CampaignRuleDefinition): boolean {
+    return rule.trigger === "purchase";
+}
+
+/**
+ * Re-align the rule with a (possibly changed) goal. Leaving a purchase-only
+ * artefact behind — a product scope, a basket-relative reward, a minimum
+ * purchase — on a non-purchase trigger produces a rule the backend rejects at
+ * publish, or one that silently never matches.
+ */
+export function applyGoalTrigger(
+    draft: CampaignDraft,
+    goal: CampaignGoal | undefined
+): CampaignDraft {
+    const trigger = triggerForGoal(goal);
+    const metadata = { ...draft.metadata, goal };
+    if (trigger === "purchase") {
+        return { ...draft, metadata, rule: { ...draft.rule, trigger } };
+    }
+    const { productScope: _dropped, ...rest } = draft.rule;
+    let rule: CampaignRuleDefinition = {
+        ...rest,
+        trigger,
+        // Only a fixed reward has no basket to compute on; a percentage or
+        // tiered reward can't be evaluated without a purchase.
+        rewards: draft.rule.rewards.filter((r) => r.amountType === "fixed"),
+        defaultLockupSeconds: 0,
+    };
+    rule = setMinPurchaseAmount(rule, 0);
+    return { ...draft, metadata, rule };
+}
+
 export function getReferralOnly(rule: CampaignRuleDefinition): boolean {
     return topLevelConditions(rule.conditions).list.some(
         (c) => c.field === REFERRAL_FIELD && c.operator === "exists"
@@ -205,6 +257,77 @@ export function setChaining(
             return { ...reward, chaining };
         }),
     };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Product scope                                                     */
+/*                                                                    */
+/*  `rule.productScope` gates a purchase campaign on cart contents,   */
+/*  evaluated per line item (root fields, no `purchase.` prefix). The */
+/*  wizard authors a single flat condition — the schema allows nested */
+/*  groups, so a scope the UI can't represent is read as "advanced"   */
+/*  and preserved untouched rather than flattened.                    */
+/* ------------------------------------------------------------------ */
+
+/** Backend `PRODUCT_SCOPE_FIELDS` allowlist (CampaignManagementService.ts:25). */
+export const PRODUCT_SCOPE_FIELDS = [
+    "productId",
+    "name",
+    "sku",
+    "quantity",
+    "unitPrice",
+    "totalPrice",
+] as const;
+
+export type ProductScopeField = (typeof PRODUCT_SCOPE_FIELDS)[number];
+
+/**
+ * The single condition the wizard edits, when the scope is shaped like one.
+ * `undefined` means either no scope, or a scope too complex for the form.
+ */
+export function getProductScopeCondition(
+    rule: CampaignRuleDefinition
+): RuleCondition | undefined {
+    const scope = rule.productScope;
+    if (!scope) return undefined;
+    // Only a flat array is editable. Unwrapping a group would drop its
+    // `logic`, and `none` inverts the whole scope — a single-condition
+    // `none` group would read as its own opposite and be saved back
+    // positively, silently reversing which products the campaign covers.
+    if (!Array.isArray(scope)) return undefined;
+    if (scope.length !== 1) return undefined;
+    const [only] = scope;
+    return only && "field" in only ? only : undefined;
+}
+
+export function setProductScope(
+    rule: CampaignRuleDefinition,
+    condition: RuleCondition | null
+): CampaignRuleDefinition {
+    if (!condition) {
+        const { productScope: _dropped, ...rest } = rule;
+        return rest;
+    }
+    return { ...rule, productScope: [condition] };
+}
+
+/**
+ * Whether the scope selects a complement set. Mirrors the backend's
+ * `productScopeHasNegation`, including its conservative `logic: "none"` rule;
+ * both read the operator set from the SDK so they can't drift.
+ */
+export function isNegativeProductScope(
+    scope: RuleConditions | undefined
+): boolean {
+    if (!scope) return false;
+    const isNegative = (node: RuleCondition | ConditionGroup): boolean => {
+        if ("logic" in node) {
+            return node.logic === "none" || node.conditions.some(isNegative);
+        }
+        return NEGATIVE_OPERATORS.has(node.operator);
+    };
+    const nodes = Array.isArray(scope) ? scope : [scope];
+    return nodes.some(isNegative);
 }
 
 export function getStartDate(rule: CampaignRuleDefinition): string | undefined {

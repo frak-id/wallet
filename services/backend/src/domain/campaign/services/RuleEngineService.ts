@@ -9,11 +9,35 @@ import type {
     EvaluationResult,
     ReferralChainFetcher,
     ReferralChainMember,
+    RuleConditions,
     RuleContext,
     TimeContext,
 } from "../types";
 import type { RewardCalculator } from "./RewardCalculator";
+import { roundAmount } from "./RewardCalculator";
 import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
+
+type SingleCampaignResult = {
+    matched: boolean;
+    rewards: CalculatedReward[];
+    budgetExceeded: boolean;
+    errors: string[];
+    deferForUnpriceableReward: boolean;
+    deferReason?: string;
+};
+
+function campaignResult(
+    overrides: Partial<SingleCampaignResult> = {}
+): SingleCampaignResult {
+    return {
+        matched: false,
+        rewards: [],
+        budgetExceeded: false,
+        errors: [],
+        deferForUnpriceableReward: false,
+        ...overrides,
+    };
+}
 
 type EvaluateRulesParams = {
     merchantId: string;
@@ -151,6 +175,40 @@ export class RuleEngineService {
         };
     }
 
+    // Evaluated with each item as the root object (`field: "productId"`, not
+    // `field: "purchase.items.productId"`). Returns `undefined` when a present
+    // scope matches no item, which the caller treats as `matched: false`.
+    private applyProductScope(
+        productScope: RuleConditions | undefined,
+        context: RuleContext
+    ): RuleContext | undefined {
+        if (!productScope) return context;
+
+        const { purchase } = context;
+        if (!purchase) return undefined;
+
+        const matchedItems = purchase.items.filter((item) =>
+            this.conditionEvaluator.evaluate(productScope, item)
+        );
+        if (matchedItems.length === 0) {
+            return undefined;
+        }
+
+        return {
+            ...context,
+            purchase: {
+                ...purchase,
+                matchedAmount: roundAmount(
+                    matchedItems.reduce((sum, item) => sum + item.totalPrice, 0)
+                ),
+                matchedQuantity: matchedItems.reduce(
+                    (sum, item) => sum + item.quantity,
+                    0
+                ),
+            },
+        };
+    }
+
     private async evaluateSingleCampaign(
         campaign: CampaignRuleSelect,
         context: RuleContext,
@@ -159,27 +217,24 @@ export class RuleEngineService {
         campaignRefereeCounts: Map<string, number> | undefined,
         fetchReferralChain?: ReferralChainFetcher,
         merchantDefaultToken?: Address
-    ): Promise<{
-        matched: boolean;
-        rewards: CalculatedReward[];
-        budgetExceeded: boolean;
-        errors: string[];
-        deferForUnpriceableReward: boolean;
-        deferReason?: string;
-    }> {
+    ): Promise<SingleCampaignResult> {
         const conditionsMatch = this.conditionEvaluator.evaluate(
             campaign.rule.conditions,
             context
         );
 
         if (!conditionsMatch) {
-            return {
-                matched: false,
-                rewards: [],
-                budgetExceeded: false,
-                errors: [],
-                deferForUnpriceableReward: false,
-            };
+            return campaignResult();
+        }
+
+        // A scoped campaign without purchase items never matches — this also
+        // covers non-purchase triggers, which never carry items.
+        const scopedContext = this.applyProductScope(
+            campaign.rule.productScope,
+            context
+        );
+        if (!scopedContext) {
+            return campaignResult();
         }
 
         // Check merchant-wide per-user cap (across all campaigns for this merchant)
@@ -198,13 +253,7 @@ export class RuleEngineService {
                 },
                 "Merchant-wide per-user reward cap reached"
             );
-            return {
-                matched: true,
-                rewards: [],
-                budgetExceeded: false,
-                errors: [],
-                deferForUnpriceableReward: false,
-            };
+            return campaignResult({ matched: true });
         }
 
         // Check per-campaign per-user cap (only if explicitly set)
@@ -222,13 +271,7 @@ export class RuleEngineService {
                     },
                     "Per-campaign per-user reward cap reached"
                 );
-                return {
-                    matched: true,
-                    rewards: [],
-                    budgetExceeded: false,
-                    errors: [],
-                    deferForUnpriceableReward: false,
-                };
+                return campaignResult({ matched: true });
             }
         }
 
@@ -253,7 +296,7 @@ export class RuleEngineService {
         const { calculated, errors, deferForUnpriceableReward, deferReason } =
             await this.rewardCalculator.calculateAll(
                 campaign.rule.rewards,
-                context,
+                scopedContext,
                 campaign.id,
                 referralChain,
                 campaign.rule.pendingRewardExpirationDays,
@@ -264,24 +307,16 @@ export class RuleEngineService {
         // Unpriceable reward: bail before consuming budget so the
         // orchestrator can leave the interaction unprocessed for a later retry.
         if (deferForUnpriceableReward) {
-            return {
+            return campaignResult({
                 matched: true,
-                rewards: [],
-                budgetExceeded: false,
                 errors,
                 deferForUnpriceableReward: true,
                 deferReason,
-            };
+            });
         }
 
         if (calculated.length === 0) {
-            return {
-                matched: true,
-                rewards: [],
-                budgetExceeded: false,
-                errors,
-                deferForUnpriceableReward: false,
-            };
+            return campaignResult({ matched: true, errors });
         }
 
         const totalAmount = calculated.reduce((sum, r) => sum + r.amount, 0);
@@ -300,13 +335,11 @@ export class RuleEngineService {
                 },
                 "Budget exceeded for campaign"
             );
-            return {
+            return campaignResult({
                 matched: true,
-                rewards: [],
                 budgetExceeded: true,
                 errors,
-                deferForUnpriceableReward: false,
-            };
+            });
         }
 
         log.debug(
@@ -319,12 +352,10 @@ export class RuleEngineService {
             "Campaign rules evaluated successfully"
         );
 
-        return {
+        return campaignResult({
             matched: true,
             rewards: calculated,
-            budgetExceeded: false,
             errors,
-            deferForUnpriceableReward: false,
-        };
+        });
     }
 }

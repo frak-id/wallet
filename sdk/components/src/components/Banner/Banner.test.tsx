@@ -9,6 +9,10 @@ const coreSdkMock = vi.hoisted(() => ({
     redirectToExternalBrowser: vi.fn(),
     trackEvent: vi.fn(),
     detectPageLanguage: () => "en" as const,
+    // Not stubbed: Banner sanitizes `products` before handing them to the
+    // (mocked) `useReward`, so the real behavior is needed here.
+    sanitizeProductDetailsList: (input: unknown) =>
+        Array.isArray(input) && input.length > 0 ? input : undefined,
     sdkConfigStore: {
         getConfig: () => ({ components: undefined }),
     },
@@ -389,7 +393,8 @@ describe.sequential("Banner", () => {
         expect(useRewardHook.useReward).toHaveBeenCalledWith(
             true,
             "referral",
-            "referee"
+            "referee",
+            undefined
         );
     });
 
@@ -402,10 +407,11 @@ describe.sequential("Banner", () => {
             expect(container.querySelector(".frak-banner")).toBeInTheDocument();
         });
 
-        expect(useRewardHook.useReward).toHaveBeenCalledWith(
+        expect(useRewardHook.useReward).toHaveBeenLastCalledWith(
             true,
             undefined,
-            "referee"
+            "referee",
+            undefined
         );
     });
 });

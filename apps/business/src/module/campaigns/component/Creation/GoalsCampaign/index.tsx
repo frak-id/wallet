@@ -17,7 +17,11 @@ import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
+import {
+    applyGoalTrigger,
+    type CampaignDraft,
+    campaignStore,
+} from "@/stores/campaignStore";
 import { shouldShowError } from "../fieldError";
 import { InfoBanner } from "../InfoBanner";
 import { WizardStep } from "../WizardStep";
@@ -62,8 +66,13 @@ export function GoalsCampaign() {
         mode: "onChange",
     });
 
+    // The goal picks the trigger, and the trigger decides which later steps
+    // and reward models exist — so it's resolved here, on save.
+    const withTrigger = (values: CampaignDraft) =>
+        applyGoalTrigger({ ...values, merchantId }, values.metadata.goal);
+
     async function onSubmit(values: CampaignDraft) {
-        const saved = await saveCampaign.mutateAsync({ ...values, merchantId });
+        const saved = await saveCampaign.mutateAsync(withTrigger(values));
         navigate({
             to: "/m/$merchantId/campaigns/draft/$campaignId/territory",
             params: { merchantId, campaignId: saved.id },
@@ -71,7 +80,7 @@ export function GoalsCampaign() {
     }
 
     const handleSaveDraft = form.handleSubmit(async (values: CampaignDraft) => {
-        await saveCampaign.mutateAsync({ ...values, merchantId });
+        await saveCampaign.mutateAsync(withTrigger(values));
     });
 
     return (

@@ -40,7 +40,7 @@
                 "submit": "Continue with Shopify",
                 "invalidDomain": "Enter a valid myshopify.com domain",
                 "label": "Shopify store domain",
-                "redirecting": "Signing you in with Shopify\u2026"
+                "redirecting": "Signing you in with Shopify…"
             },
             "or": "or",
             "back": "Back"
@@ -470,6 +470,11 @@
                     "hint": "Amount, period & dates",
                     "subtitle": "Set your campaign budget and timeline. Frak takes a 20% commission on the total budget."
                 },
+                "products": {
+                    "label": "Products",
+                    "hint": "Which products qualify",
+                    "subtitle": "Choose which products trigger this campaign. By default the whole order qualifies."
+                },
                 "reward": {
                     "label": "Reward setup",
                     "hint": "Model, value & distribution",
@@ -501,12 +506,16 @@
                 "startImmediately": "Start immediately",
                 "noEndDate": "No end date",
                 "trigger": "Trigger",
+                "products": "Products",
+                "productsAll": "All products",
+                "productsAdvanced": "Custom selection",
                 "budgetPeriod": "Budget period",
                 "budgetAmount": "Budget amount",
                 "budgetBreakdown": "Distributed: {{distributed}}{{currency}} · Frak: {{frak}}{{currency}}",
                 "targetCpa": "Target CPA",
                 "tieredTiers": "{{count}} tiers",
                 "rewards": "Rewards",
+                "rewardBasis": "Reward basis",
                 "ambassador": "Ambassador: {{value}}",
                 "referee": "Referee: {{value}}",
                 "frak": "Frak: {{value}}",
@@ -704,6 +713,68 @@
                     "tableAmount": "Amount"
                 }
             },
+            "products": {
+                "scope": {
+                    "label": "Products covered",
+                    "description": "The campaign only triggers when the order contains a matching product."
+                },
+                "mode": {
+                    "all": {
+                        "title": "All products",
+                        "description": "Any order triggers the campaign."
+                    },
+                    "specific": {
+                        "title": "Specific products",
+                        "description": "Only orders containing a matching product trigger the campaign."
+                    }
+                },
+                "predicate": {
+                    "label": "Matching rule",
+                    "description": "Applied to each line item in the order."
+                },
+                "field": {
+                    "productId": "Product ID",
+                    "name": "Product name",
+                    "sku": "SKU",
+                    "quantity": "Quantity",
+                    "unitPrice": "Unit price",
+                    "totalPrice": "Line total"
+                },
+                "operator": {
+                    "in": "is one of",
+                    "not_in": "is not one of",
+                    "eq": "equals",
+                    "neq": "does not equal",
+                    "starts_with": "starts with",
+                    "contains": "contains",
+                    "gte": "is at least",
+                    "lte": "is at most",
+                    "gt": "is greater than",
+                    "lt": "is less than",
+                    "between": "is between"
+                },
+                "placeholder": {
+                    "productId": "e.g. prod-123",
+                    "name": "e.g. Eco Sneaker",
+                    "sku": "e.g. WIDGET-BLUE-S",
+                    "quantity": "e.g. 2",
+                    "unitPrice": "e.g. 49.90",
+                    "totalPrice": "e.g. 99.80"
+                },
+                "values": {
+                    "label": "Value"
+                },
+                "valueAt": "Value {{index}}",
+                "valueToLabel": "Upper value",
+                "valueToPlaceholder": "e.g. 150",
+                "addValue": "Add a value",
+                "removeValue": "Remove this value",
+                "advanced": "This product targeting was set up outside the wizard. It is shown read-only and left unchanged.",
+                "purchaseOnly": "Product targeting is only available on purchase-triggered campaigns.",
+                "fieldLabel": "Field",
+                "operatorLabel": "Condition",
+                "saveError": "Could not save the product targeting. Check that your reward model is compatible with an exclusion."
+            },
             "reward": {
                 "campaignType": {
                     "label": "Campaign type",
@@ -714,20 +785,35 @@
                     }
                 },
                 "model": {
-                    "label": "Reward model",
                     "description": "How rewards are calculated for each successful referral",
                     "fixed": {
                         "title": "Fixed amount",
                         "description": "Set a fixed reward per conversion"
                     },
+                    "label": "Reward model",
                     "percentage": {
                         "title": "% of basket",
                         "description": "Reward scales with order value"
                     },
+                    "salesOnly": "Only available on Sales campaigns — other reward models need a purchase amount to compute on.",
                     "tiered": {
                         "title": "Tiered rewards",
                         "description": "Higher basket = higher reward"
                     }
+                },
+                "basis": {
+                    "label": "Reward basis",
+                    "description": "Which amount the reward is calculated on.",
+                    "basket": {
+                        "title": "Whole order total",
+                        "description": "The reward is calculated on the full basket."
+                    },
+                    "matchedItems": {
+                        "title": "Eligible products only",
+                        "description": "The reward is calculated only on the targeted products."
+                    },
+                    "lockedNote": "Your product targeting is an exclusion, so the reward must be calculated on the eligible products only.",
+                    "fixedNotAllowed": "A fixed reward cannot be used with exclusion-based product targeting. Pick a percentage or tiered reward, or express the targeting positively."
                 },
                 "value": {
                     "label": "Reward value",
@@ -793,7 +879,8 @@
                     "referral": "Referral",
                     "create_referral_link": "Referral link created",
                     "custom": "Custom"
-                }
+                },
+                "saveError": "Could not save the reward. Check that it is compatible with the product targeting."
             }
         },
         "tabs": {
@@ -944,6 +1031,11 @@
                     "create_referral_link": "A user creates a sharing link",
                     "custom": "A custom interaction is tracked"
                 },
+                "productScope": {
+                    "title": "Products covered",
+                    "all": "All products — every qualifying order triggers the reward.",
+                    "description": "The campaign only triggers when the order contains a matching product."
+                },
                 "rewards": {
                     "title": "Rewards",
                     "empty": "No rewards configured yet.",
@@ -958,12 +1050,18 @@
                     "fixed": "{{amount}} {{currency}}",
                     "percentage": "{{percent}}% of {{base}}",
                     "base": {
-                        "purchase_amount": "the order total"
+                        "purchase_amount": "the order total",
+                        "matched_items_amount": "the eligible products total"
                     },
                     "bounds": "Between {{min}} and {{max}} {{currency}}",
                     "boundsMin": "At least {{min}} {{currency}}",
                     "boundsMax": "Up to {{max}} {{currency}}",
                     "tiered": "Tiered by {{field}}",
+                    "tierField": {
+                        "purchase.amount": "the order total",
+                        "purchase.matchedAmount": "the eligible products total",
+                        "purchase.matchedQuantity": "the eligible products quantity"
+                    },
                     "tierRow": "{{range}} → {{amount}} {{currency}}",
                     "chaining": "Multi-level rewards",
                     "chainingDetail": "{{decay}}% decay per level · up to {{depth}} levels",

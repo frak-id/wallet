@@ -73,8 +73,9 @@ class WebhookSenderTest extends TestCase
                             "productId" => "777",
                             "quantity" => 2,
                             "price" => "74.995",
-                            "name" => "sku-777",
+                            "name" => "Test Product",
                             "title" => "Test Product",
+                            "sku" => "sku-777",
                         ]],
                         "clientId" => "client-abc",
                     ];

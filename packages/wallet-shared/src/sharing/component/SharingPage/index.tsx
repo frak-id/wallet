@@ -80,6 +80,12 @@ export type SharingPageProps = {
      */
     minPurchaseAmount?: string;
     /**
+     * Whether the selected campaign carries a `productScope`. When true, step 2
+     * and the credit-card tagline mention "selected products" instead of
+     * implying every purchase qualifies.
+     */
+    isProductScoped?: boolean;
+    /**
      * Whole-day lockup applied before a reward settles. When set, step 3 adds a
      * line stating when earnings become available.
      */
@@ -198,6 +204,114 @@ function splitStep(text: string) {
     };
 }
 
+/**
+ * Step 2's i18next context key. Contexts don't compose, so the four
+ * combinations are enumerated as distinct keys.
+ */
+export function getStep2Context(
+    isProductScoped: boolean,
+    minPurchaseAmount: string | undefined
+): "min" | "product" | "min_product" | undefined {
+    if (isProductScoped) {
+        return minPurchaseAmount ? "min_product" : "product";
+    }
+    return minPurchaseAmount ? "min" : undefined;
+}
+
+/**
+ * The hero "credit card" showing the headline reward, its tagline, and the
+ * merchant logo. Owns the reward-loading skeletons and the tiered /
+ * product-scoped copy variants.
+ */
+function RewardCard({
+    appName,
+    logoUrl,
+    t,
+    isRewardLoading,
+    isTiered,
+    isProductScoped,
+}: {
+    appName: string;
+    logoUrl?: string;
+    t: SharingPageProps["t"];
+    isRewardLoading: boolean;
+    isTiered: boolean;
+    isProductScoped: boolean;
+}) {
+    return (
+        <section className={styles.creditCard}>
+            <CardBackground className={styles.creditCardBg} />
+            <div className={styles.creditCardContent}>
+                <div className={styles.creditCardTop}>
+                    <div className={styles.creditCardAmountColumn}>
+                        {isTiered && !isRewardLoading && (
+                            <span className={styles.creditCardUpTo}>
+                                {t("sdk.sharingPage.card.upTo")}
+                            </span>
+                        )}
+                        <span className={styles.creditCardAmount}>
+                            {isRewardLoading ? (
+                                <Skeleton
+                                    variant="rect"
+                                    width={90}
+                                    height={36}
+                                />
+                            ) : (
+                                <CreditCardAmount
+                                    amount={t("sdk.sharingPage.card.amount")}
+                                />
+                            )}
+                        </span>
+                    </div>
+                    <span className={styles.creditCardLabel}>
+                        {t("sdk.sharingPage.card.label")}
+                    </span>
+                </div>
+                <div className={styles.creditCardBottom}>
+                    <span className={styles.creditCardBottomText}>
+                        <CardTagline
+                            isRewardLoading={isRewardLoading}
+                            text={t(
+                                "sdk.sharingPage.card.tagline1",
+                                isTiered ? { context: "tiered" } : undefined
+                            )}
+                        />
+                        <br />
+                        <CardTagline
+                            isRewardLoading={isRewardLoading}
+                            text={t(
+                                "sdk.sharingPage.card.tagline2",
+                                isProductScoped
+                                    ? { context: "product" }
+                                    : undefined
+                            )}
+                        />
+                    </span>
+                    <MerchantLogo
+                        src={logoUrl}
+                        alt={appName}
+                        className={styles.creditCardLogo}
+                    />
+                </div>
+            </div>
+        </section>
+    );
+}
+
+/** A single credit-card tagline line, skeletonized while the reward loads. */
+function CardTagline({
+    isRewardLoading,
+    text,
+}: {
+    isRewardLoading: boolean;
+    text: string;
+}) {
+    if (isRewardLoading) {
+        return <Skeleton variant="text" width={70} height={14} />;
+    }
+    return <>{text}</>;
+}
+
 export function SharingPage({
     appName,
     logoUrl,
@@ -211,6 +325,7 @@ export function SharingPage({
     isRewardLoading = false,
     rewardType,
     minPurchaseAmount,
+    isProductScoped = false,
     lockupDurationDays,
     rewardBreakdown,
     canShare = true,
@@ -242,12 +357,12 @@ export function SharingPage({
     }
 
     const step1 = splitStep(t("sdk.sharingPage.steps.1"));
-    // Mention the minimum order value in step 2 when the campaign gates on one.
+    const step2Context = getStep2Context(isProductScoped, minPurchaseAmount);
     const step2 = splitStep(
         t(
             "sdk.sharingPage.steps.2",
-            minPurchaseAmount
-                ? { context: "min", minAmount: minPurchaseAmount }
+            step2Context
+                ? { context: step2Context, minAmount: minPurchaseAmount }
                 : undefined
         )
     );
@@ -292,63 +407,14 @@ export function SharingPage({
                 />
 
                 <main className={styles.main}>
-                    <section className={styles.creditCard}>
-                        <CardBackground className={styles.creditCardBg} />
-                        <div className={styles.creditCardContent}>
-                            <div className={styles.creditCardTop}>
-                                <div className={styles.creditCardAmountColumn}>
-                                    {isTiered && !isRewardLoading && (
-                                        <span className={styles.creditCardUpTo}>
-                                            {t("sdk.sharingPage.card.upTo")}
-                                        </span>
-                                    )}
-                                    <span className={styles.creditCardAmount}>
-                                        {isRewardLoading ? (
-                                            <Skeleton
-                                                variant="rect"
-                                                width={90}
-                                                height={36}
-                                            />
-                                        ) : (
-                                            <CreditCardAmount
-                                                amount={t(
-                                                    "sdk.sharingPage.card.amount"
-                                                )}
-                                            />
-                                        )}
-                                    </span>
-                                </div>
-                                <span className={styles.creditCardLabel}>
-                                    {t("sdk.sharingPage.card.label")}
-                                </span>
-                            </div>
-                            <div className={styles.creditCardBottom}>
-                                <span className={styles.creditCardBottomText}>
-                                    {isRewardLoading ? (
-                                        <Skeleton
-                                            variant="text"
-                                            width={70}
-                                            height={14}
-                                        />
-                                    ) : (
-                                        t(
-                                            "sdk.sharingPage.card.tagline1",
-                                            isTiered
-                                                ? { context: "tiered" }
-                                                : undefined
-                                        )
-                                    )}
-                                    <br />
-                                    {t("sdk.sharingPage.card.tagline2")}
-                                </span>
-                                <MerchantLogo
-                                    src={logoUrl}
-                                    alt={appName}
-                                    className={styles.creditCardLogo}
-                                />
-                            </div>
-                        </div>
-                    </section>
+                    <RewardCard
+                        appName={appName}
+                        logoUrl={logoUrl}
+                        t={t}
+                        isRewardLoading={isRewardLoading}
+                        isTiered={isTiered}
+                        isProductScoped={isProductScoped}
+                    />
 
                     <section className={styles.rewardCard}>
                         <Text as="h2" variant="heading2">

@@ -23,6 +23,7 @@ registerWebComponent(
         "placement",
         "classname",
         "interaction",
+        "products",
         "referralTitle",
         "referralDescription",
         "referralCta",

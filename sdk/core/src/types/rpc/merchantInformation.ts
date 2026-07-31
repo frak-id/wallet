@@ -42,7 +42,15 @@ export type EstimatedReward =
     | {
           payoutType: "percentage";
           percent: number;
-          percentOf: string;
+          /**
+           * Basis the percent is applied to: the whole order, or the sum of the
+           * line items matched by {@link MerchantReward.productScope}. Kept open
+           * so a future basis doesn't require an SDK release.
+           */
+          percentOf:
+              | "purchase_amount"
+              | "matched_items_amount"
+              | (string & Record<never, never>);
           maxAmount?: TokenAmountType;
           minAmount?: TokenAmountType;
       }
@@ -96,13 +104,16 @@ export type RuleField =
 /**
  * A single leaf rule condition. Compares the value found at {@link RuleField}
  * in the evaluation context against `value` (and `valueTo` for `between`).
+ *
+ * The array variant of `value`/`valueTo` is only meaningful with `in`/`not_in`;
+ * every other operator treats an array operand as a non-match.
  * @group RPC Schema
  */
 export type RuleCondition = {
     field: RuleField;
     operator: ConditionOperator;
-    value: string | number | boolean | null;
-    valueTo?: string | number | boolean | null;
+    value: string | number | boolean | null | (string | number | boolean)[];
+    valueTo?: string | number | boolean | null | (string | number | boolean)[];
 };
 
 /**
@@ -126,9 +137,8 @@ export type RuleConditions = RuleCondition[] | ConditionGroup;
 /**
  * A reward offer exposed by a merchant campaign.
  *
- * Mirrors the backend `EstimatedRewardItem` one-to-one — a static parity
- * assertion on the backend keeps its runtime-validated schema in lockstep with
- * this published contract.
+ * Mirrors the backend `EstimatedRewardItem` one-to-one, enforced by
+ * `schemas/merchantRewardParity.ts`.
  * @group RPC Schema
  */
 export type MerchantReward = {
@@ -146,6 +156,12 @@ export type MerchantReward = {
     referee?: EstimatedReward;
     /** Raw gating rules — inspect to derive start date, minimum purchase, … */
     conditions: RuleConditions;
+    /**
+     * Per-item scope: when set, this reward only applies to purchases with at
+     * least one line item matching these conditions. Absent means it applies to
+     * the whole basket.
+     */
+    productScope?: RuleConditions;
     /** Seconds a reward stays locked before settlement. */
     defaultLockupSeconds?: number;
     /** Days before a pending reward expires. */

@@ -58,6 +58,7 @@ export const magentoWebhook = new Elysia()
                         title: item.title,
                         quantity: item.quantity,
                         imageUrl: item.image ?? null,
+                        sku: item.sku,
                     })),
                     merchantId: resolved.merchantId,
                     clientId: webhookData.clientId,

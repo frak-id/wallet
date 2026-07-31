@@ -71,3 +71,26 @@ export function getRewardRank(
     if (value > 0) return value;
     return maxRewardPercent(reward) * PERCENT_ONLY_RANK_WEIGHT;
 }
+
+/**
+ * Whether `reward` is computed over the `productScope`-matched line items
+ * rather than the whole basket.
+ *
+ * Distinct from a campaign merely *carrying* a `productScope`, which can still
+ * pay a percentage of the whole basket when the scope is a pure eligibility
+ * gate. Surfaces rendering "% of basket" vs "% of eligible products" must
+ * branch on this, not on the campaign-level scope flag.
+ */
+export function isMatchedItemsBasis(reward: EstimatedReward): boolean {
+    switch (reward.payoutType) {
+        case "percentage":
+            return reward.percentOf === "matched_items_amount";
+        case "tiered":
+            return (
+                reward.tierField === "purchase.matchedAmount" ||
+                reward.tierField === "purchase.matchedQuantity"
+            );
+        case "fixed":
+            return false;
+    }
+}

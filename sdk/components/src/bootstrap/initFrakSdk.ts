@@ -1,5 +1,6 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
 import {
+    decodeProductsParam,
     deleteQueryParamCaseInsensitive,
     type FrakWalletSdkConfig,
     getQueryParamCaseInsensitive,
@@ -10,7 +11,6 @@ import {
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { openSharingPage } from "../actions/sharingPage";
 import { detectListenerPreloads } from "../utils/dom/detectListenerPreloads";
-import { decodeProductsParam } from "../utils/sharingPageProducts";
 import { dispatchClientReadyEvent } from "./clientReady";
 
 /**

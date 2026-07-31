@@ -16,6 +16,7 @@ export type WooCommerceOrderUpdateWebhookDto = Readonly<{
         quantity: number; // The quantity of the product
         price: number; // The price of the product
         name: string; // The name of the product
+        sku?: string; // The SKU of the product
         image: {
             id?: string;
             src?: string;

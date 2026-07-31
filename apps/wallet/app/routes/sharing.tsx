@@ -11,6 +11,7 @@ import {
     clientIdStore,
     getSavedConfirmation,
     openExternalUrl,
+    rewardProductsForSelection,
     SharingPage,
     saveConfirmation,
     sessionStore,
@@ -214,9 +215,16 @@ function WalletSharingPage() {
     // Product selection state — default to first product
     const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
+    // Memoised so the query's `select` isn't re-run on every render.
+    const rewardProducts = useMemo(
+        () => rewardProductsForSelection(products, selectedProductIndex),
+        [products, selectedProductIndex]
+    );
+
     const { data: reward, isLoading: isRewardLoading } =
         useFormattedEstimatedReward({
             merchantId,
+            products: rewardProducts,
         });
     // Paint the host's cached headline until the real one arrives, so the page
     // opens on content instead of a skeleton. The query still runs and takes
@@ -440,6 +448,7 @@ function WalletSharingPage() {
             isRewardLoading={isRewardLoading && !seededReward}
             rewardType={reward?.payoutType}
             minPurchaseAmount={reward?.minPurchaseAmount}
+            isProductScoped={reward?.isProductScoped}
             lockupDurationDays={reward?.lockupDurationDays}
             rewardBreakdown={{
                 referrer: reward?.referrerReward,

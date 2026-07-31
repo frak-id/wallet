@@ -55,6 +55,12 @@ export type CustomWebhookDto = Readonly<{
          */
         title: string;
         /**
+         * The SKU of the product, if you have one
+         *  - Optional
+         *  - Used for SKU-based campaign product-scope matching
+         */
+        sku?: string;
+        /**
          * A potential image URL for the product
          */
         image?: string;

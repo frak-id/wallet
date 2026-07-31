@@ -1,4 +1,10 @@
 import { HttpError } from "@backend-utils";
+import {
+    ARRAY_OPERATORS,
+    NEGATIVE_OPERATORS,
+    SCALAR_OPERATORS,
+    STRING_OPERATORS,
+} from "@frak-labs/core-sdk/rewards";
 import type { CampaignRuleInsert, CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type { CampaignStatus } from "../schemas";
@@ -7,8 +13,141 @@ import type {
     CampaignRuleDefinition,
     ConditionGroup,
     RuleCondition,
+    RuleConditions,
     TieredRewardDefinition,
 } from "../types";
+import { isConditionGroup } from "./RuleConditionEvaluator";
+
+// Item shape is a small closed set, so productScope gets an exact-match field
+// allowlist. Order-level `conditions` are deliberately NOT validated this way:
+// RuleContext is open-ended and pre-dates this feature.
+const PRODUCT_SCOPE_FIELDS = new Set([
+    "productId",
+    "name",
+    "sku",
+    "quantity",
+    "unitPrice",
+    "totalPrice",
+]);
+
+// Guards against pathologically deep/large nested ConditionGroups.
+const PRODUCT_SCOPE_MAX_DEPTH = 5;
+const PRODUCT_SCOPE_MAX_NODES = 50;
+
+// Tier fields derived from the matched item set — meaningless without a
+// productScope on the rule.
+const PRODUCT_SCOPE_TIER_FIELDS = new Set([
+    "purchase.matchedAmount",
+    "purchase.matchedQuantity",
+]);
+
+// A negated predicate selects the complement set, which matches almost any
+// cart — so a reward without a matched-items basis would pay in full on nearly
+// every purchase. Negation is only allowed when every reward reflects the
+// exclusion in its basis. Any `logic: "none"` group counts as negative.
+function hasNegativePredicate(node: RuleCondition | ConditionGroup): boolean {
+    if (isConditionGroup(node)) {
+        if (node.logic === "none") return true;
+        return node.conditions.some(hasNegativePredicate);
+    }
+    return NEGATIVE_OPERATORS.has(node.operator);
+}
+
+function productScopeHasNegation(productScope: RuleConditions): boolean {
+    const nodes = Array.isArray(productScope) ? productScope : [productScope];
+    return nodes.some(hasNegativePredicate);
+}
+
+function isMatchedBasisReward(
+    reward: CampaignRuleDefinition["rewards"][0]
+): boolean {
+    switch (reward.amountType) {
+        case "percentage":
+            return reward.percentOf === "matched_items_amount";
+        case "tiered":
+            return PRODUCT_SCOPE_TIER_FIELDS.has(reward.tierField);
+        default:
+            return false;
+    }
+}
+
+function validateProductScopeNode(
+    node: RuleCondition | ConditionGroup,
+    depth: number,
+    nodeCounter: { count: number }
+): string | null {
+    nodeCounter.count++;
+    if (nodeCounter.count > PRODUCT_SCOPE_MAX_NODES) {
+        return "productScope has too many conditions (max 50)";
+    }
+    if (depth > PRODUCT_SCOPE_MAX_DEPTH) {
+        return "productScope is nested too deeply (max depth 5)";
+    }
+
+    if (isConditionGroup(node)) {
+        for (const child of node.conditions) {
+            const error = validateProductScopeNode(
+                child,
+                depth + 1,
+                nodeCounter
+            );
+            if (error) return error;
+        }
+        return null;
+    }
+
+    return validateProductScopeCondition(node);
+}
+
+function validateProductScopeCondition(
+    condition: RuleCondition
+): string | null {
+    if (!PRODUCT_SCOPE_FIELDS.has(condition.field)) {
+        return `productScope field '${condition.field}' is not allowed`;
+    }
+
+    const { operator, value } = condition;
+    const isArrayValue = Array.isArray(value);
+
+    if (ARRAY_OPERATORS.has(operator)) {
+        if (!isArrayValue) {
+            return `productScope operator '${operator}' requires an array value`;
+        }
+        if (value.length === 0) {
+            return `productScope operator '${operator}' cannot use an empty array`;
+        }
+        return null;
+    }
+
+    if (SCALAR_OPERATORS.has(operator) && isArrayValue) {
+        return `productScope operator '${operator}' cannot use an array value`;
+    }
+
+    if (STRING_OPERATORS.has(operator) && typeof value !== "string") {
+        return `productScope operator '${operator}' requires a string value`;
+    }
+
+    if (operator === "between") {
+        if (condition.valueTo === undefined) {
+            return "productScope 'between' requires valueTo";
+        }
+        if (Array.isArray(condition.valueTo)) {
+            return "productScope operator 'between' cannot use an array valueTo";
+        }
+    }
+
+    return null;
+}
+
+function validateProductScope(productScope: RuleConditions): string | null {
+    const nodeCounter = { count: 0 };
+    const nodes = Array.isArray(productScope) ? productScope : [productScope];
+    for (const node of nodes) {
+        const error = validateProductScopeNode(node, 1, nodeCounter);
+        if (error) return error;
+    }
+    return null;
+}
 
 // The business app encodes a campaign start as a `time.timestamp >= <unix s>`
 // top-level rule condition (mirrors `extractStartDate` in the SDK). It is the
@@ -391,8 +530,23 @@ export class CampaignManagementService {
             return "Rule must have at least one reward";
         }
 
+        if (rule.productScope) {
+            if (rule.trigger !== "purchase") {
+                return "productScope is only valid on the purchase trigger";
+            }
+            const scopeError = validateProductScope(rule.productScope);
+            if (scopeError) return scopeError;
+
+            if (
+                productScopeHasNegation(rule.productScope) &&
+                !rule.rewards.every(isMatchedBasisReward)
+            ) {
+                return "productScope with a negative predicate (neq, not_in, not_exists, logic 'none') requires every reward to use a matched-items basis (percentOf matched_items_amount, or tierField purchase.matchedAmount/purchase.matchedQuantity); to gate a flat reward on product presence, express the scope positively (eq, in, contains)";
+            }
+        }
+
         for (const reward of rule.rewards) {
-            const error = this.validateReward(reward);
+            const error = this.validateReward(reward, rule);
             if (error) return error;
         }
 
@@ -400,17 +554,19 @@ export class CampaignManagementService {
     }
 
     private validateReward(
-        reward: CampaignRuleDefinition["rewards"][0]
+        reward: CampaignRuleDefinition["rewards"][0],
+        rule: CampaignRuleDefinition
     ): string | null {
         if (!reward.recipient) return "Each reward must have a recipient";
         if (!reward.type) return "Each reward must have a type";
         if (!reward.amountType) return "Each reward must have an amount type";
 
-        return this.validateRewardAmount(reward);
+        return this.validateRewardAmount(reward, rule);
     }
 
     private validateRewardAmount(
-        reward: CampaignRuleDefinition["rewards"][0]
+        reward: CampaignRuleDefinition["rewards"][0],
+        rule: CampaignRuleDefinition
     ): string | null {
         switch (reward.amountType) {
             case "fixed":
@@ -426,10 +582,22 @@ export class CampaignManagementService {
                 ) {
                     return "Percentage reward must have percent between 0 and 100";
                 }
+                if (
+                    reward.percentOf === "matched_items_amount" &&
+                    !rule.productScope
+                ) {
+                    return "percentOf matched_items_amount requires a productScope";
+                }
                 break;
             case "tiered":
                 if (!reward.tiers || reward.tiers.length === 0) {
                     return "Tiered reward must have at least one tier";
+                }
+                if (
+                    PRODUCT_SCOPE_TIER_FIELDS.has(reward.tierField) &&
+                    !rule.productScope
+                ) {
+                    return `tierField ${reward.tierField} requires a productScope`;
                 }
                 return this.validateTiers(reward);
         }
@@ -459,8 +627,12 @@ export class CampaignManagementService {
         if (hasPercent && (tier.percent <= 0 || tier.percent > 100)) {
             return "Tier percent must be between 0 and 100";
         }
-        if (hasPercent && tierField !== "purchase.amount") {
-            return "Percent tiers require tierField purchase.amount";
+        if (
+            hasPercent &&
+            tierField !== "purchase.amount" &&
+            tierField !== "purchase.matchedAmount"
+        ) {
+            return "Percent tiers require tierField purchase.amount or purchase.matchedAmount";
         }
         if (tier.maxValue !== undefined && tier.minValue >= tier.maxValue) {
             return "Tier minValue must be lower than maxValue";

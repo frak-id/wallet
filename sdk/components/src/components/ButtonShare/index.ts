@@ -27,6 +27,7 @@ registerWebComponent(
         "clickAction",
         "noRewardText",
         "targetInteraction",
+        "products",
         "preview",
     ],
     {

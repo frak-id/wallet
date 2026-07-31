@@ -1,4 +1,4 @@
-import type { InteractionTypeKey } from "@frak-labs/core-sdk";
+import type { InteractionTypeKey, ProductDetails } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 import {
     type RewardAudience,
@@ -16,12 +16,16 @@ import { useEffect, useState } from "preact/hooks";
  * @param shouldUseReward - Whether to fetch the reward at all
  * @param targetInteraction - Optional filter by interaction type (e.g. "purchase")
  * @param audience - Reward side to display: `"referrer"` (default) or `"referee"`
+ * @param products - The products currently in view, when known. Purely
+ * advisory (see `matchesProductScope`): deprioritizes campaigns matching none
+ * of them, and changes nothing when omitted.
  * @returns Object containing the formatted reward string, or undefined if unavailable
  */
 export function useReward(
     shouldUseReward: boolean,
     targetInteraction?: InteractionTypeKey,
-    audience?: RewardAudience
+    audience?: RewardAudience,
+    products?: ProductDetails[]
 ) {
     const [reward, setReward] = useState<string | undefined>(undefined);
 
@@ -37,6 +41,7 @@ export function useReward(
                     currency: client.config.metadata?.currency,
                     targetInteraction,
                     audience,
+                    products,
                 });
                 // Percentage rewards carry no concrete amount to advertise
                 // on this surface, so we treat them as "no reward" — callers
@@ -48,7 +53,7 @@ export function useReward(
             .catch(() => {
                 // Silently swallow — reward text is non-critical
             });
-    }, [shouldUseReward, targetInteraction, audience]);
+    }, [shouldUseReward, targetInteraction, audience, products]);
 
     return { reward };
 }

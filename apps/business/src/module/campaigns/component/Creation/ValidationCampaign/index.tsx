@@ -8,6 +8,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
+    editableScopeCondition,
+    isAdvancedScope,
+} from "@/module/campaigns/component/Creation/ProductsCampaign/utils";
+import {
     draftToRewardForm,
     splitTargetCpa,
 } from "@/module/campaigns/component/Creation/RewardCampaign/utils";
@@ -25,6 +29,7 @@ import {
     type CampaignDraft,
     campaignStore,
     getStartDate,
+    isPurchaseCampaign,
 } from "@/stores/campaignStore";
 import { InfoBanner } from "../InfoBanner";
 import { CampaignLaunched } from "./CampaignLaunched";
@@ -120,6 +125,7 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
     const startDate = formatIso(getStartDate(draft.rule));
     const endDate = formatIso(draft.expiresAt);
     const trigger = draft.rule.trigger;
+    const isPurchase = isPurchaseCampaign(draft.rule);
 
     const budget = draft.budgetConfig[0];
     const amount = budget?.amount ?? 0;
@@ -193,6 +199,8 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
                 )}
             </DetailRow>
 
+            {isPurchase && <ProductScopeRow draft={draft} />}
+
             <DetailRow label={t("campaigns.create.validation.budgetPeriod")}>
                 <DetailValue>
                     {t(`campaigns.create.budget.period.${period}`)}
@@ -220,18 +228,93 @@ function DetailRows({ draft }: { draft: CampaignDraft }) {
 
             <RewardRows reward={reward} currencyGlyph={currencyGlyph} />
 
-            <DetailRow label={t("campaigns.create.validation.rewardLockup")}>
-                {reward.lockupDays ? (
+            {/* Basis only exists for computed rewards on a scoped campaign. */}
+            {draft.rule.productScope && reward.model !== "fixed" && (
+                <DetailRow label={t("campaigns.create.validation.rewardBasis")}>
                     <DetailValue>
-                        {t("campaigns.create.validation.lockupValue", {
-                            count: Number(reward.lockupDays),
-                        })}
+                        {t(
+                            `campaigns.create.reward.basis.${reward.rewardBasis}.title` as "campaigns.create.reward.basis.basket.title"
+                        )}
                     </DetailValue>
-                ) : (
-                    <DetailValue muted>{EMPTY}</DetailValue>
-                )}
-            </DetailRow>
+                </DetailRow>
+            )}
+
+            {isPurchase && (
+                <DetailRow
+                    label={t("campaigns.create.validation.rewardLockup")}
+                >
+                    {reward.lockupDays ? (
+                        <DetailValue>
+                            {t("campaigns.create.validation.lockupValue", {
+                                count: Number(reward.lockupDays),
+                            })}
+                        </DetailValue>
+                    ) : (
+                        <DetailValue muted>{EMPTY}</DetailValue>
+                    )}
+                </DetailRow>
+            )}
         </>
+    );
+}
+
+/**
+ * Which products the campaign covers. A scope the wizard can't represent
+ * (nested groups, or an operator it doesn't offer) reads as a generic "custom
+ * selection" rather than being misreported as something simpler.
+ */
+function ProductScopeRow({ draft }: { draft: CampaignDraft }) {
+    const { t } = useTranslation();
+    const condition = editableScopeCondition(draft);
+    const label = t("campaigns.create.validation.products");
+
+    if (isAdvancedScope(draft)) {
+        return (
+            <DetailRow label={label}>
+                <DetailValue>
+                    {t("campaigns.create.validation.productsAdvanced")}
+                </DetailValue>
+            </DetailRow>
+        );
+    }
+
+    if (!condition) {
+        return (
+            <DetailRow label={label}>
+                <DetailValue>
+                    {t("campaigns.create.validation.productsAll")}
+                </DetailValue>
+            </DetailRow>
+        );
+    }
+
+    const values = Array.isArray(condition.value)
+        ? condition.value.join(", ")
+        : String(condition.value ?? "");
+    const detail =
+        condition.operator === "between"
+            ? `${values} – ${condition.valueTo ?? ""}`
+            : values;
+
+    return (
+        <DetailRow label={label} tall>
+            <Stack space="xxs" align="right">
+                <DetailValue>
+                    {t(
+                        `campaigns.create.products.field.${condition.field}` as "campaigns.create.products.field.sku",
+                        { defaultValue: condition.field }
+                    )}
+                    {" · "}
+                    {t(
+                        `campaigns.create.products.operator.${condition.operator}` as "campaigns.create.products.operator.in",
+                        { defaultValue: condition.operator }
+                    )}
+                </DetailValue>
+                <Text variant="caption" weight="medium" color="tertiary">
+                    {detail}
+                </Text>
+            </Stack>
+        </DetailRow>
     );
 }
 

@@ -1,4 +1,7 @@
-import type { InteractionTypeKey } from "@frak-labs/core-sdk";
+import type {
+    InteractionTypeKey,
+    SharingPageProduct,
+} from "@frak-labs/core-sdk";
 
 /**
  * The props type for {@link ButtonShare}.
@@ -33,6 +36,15 @@ export type ButtonShareProps = {
      * Target interaction behind this sharing action (will be used to get the right reward to display)
      */
     targetInteraction?: InteractionTypeKey;
+    /**
+     * Products currently in view, used to prefer a campaign whose
+     * `productScope` matches one of them when picking the reward to advertise,
+     * and forwarded to the sharing page so it can render product cards.
+     *
+     * Accepts a {@link SharingPageProduct} array (JS property) or a
+     * JSON-stringified array (HTML attribute).
+     */
+    products?: SharingPageProduct[] | string;
     /**
      * Which UI to open on click.
      *

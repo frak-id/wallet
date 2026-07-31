@@ -6,11 +6,13 @@ vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+import * as rows from "../wizardRows.css";
 import {
     CpaReveal,
     EligibilityField,
     LockupField,
     RecipientBox,
+    RewardBasisField,
     TierField,
 } from "./index";
 import * as styles from "./reward.css";
@@ -270,5 +272,64 @@ describe("TierField (visual label column)", () => {
         expect(unpadded.firstElementChild?.className.split(" ")).not.toContain(
             styles.tierPadded
         );
+    });
+});
+
+/**
+ * The basis toggle is only rendered for a product-scoped campaign, and is
+ * forced (not merely defaulted) to the matched-items basis when the scope is
+ * negated — the backend rejects any other combination.
+ */
+function BasisHarness({ locked }: { locked: boolean }) {
+    const form = useForm<RewardFormValues>({
+        defaultValues: DEFAULT_REWARD_FORM,
+    });
+    return (
+        <form>
+            <RewardBasisField control={form.control} locked={locked} />
+        </form>
+    );
+}
+
+describe("RewardBasisField", () => {
+    it("offers both bases, defaulting to the basket", () => {
+        render(<BasisHarness locked={false} />);
+
+        const basket = screen.getByRole("radio", {
+            name: /basis.basket.title/,
+        });
+        expect(basket).toBeChecked();
+        expect(basket).not.toBeDisabled();
+        expect(
+            screen.getByRole("radio", { name: /basis.matchedItems.title/ })
+        ).not.toBeDisabled();
+    });
+
+    it("lays the radio out before the text, not split apart", () => {
+        // `referralRow` is space-between (text left, switch right). Reusing it
+        // for a radio-first row would push the radio and its label to opposite
+        // edges.
+        const { container } = render(<BasisHarness locked={false} />);
+
+        const row = container.querySelector("label");
+        expect(row?.className.split(" ")).toContain(rows.optionRow);
+        expect(row?.className.split(" ")).not.toContain(styles.referralRow);
+    });
+
+    it("locks onto the matched-items basis for a negated scope", () => {
+        render(<BasisHarness locked={true} />);
+
+        const matched = screen.getByRole("radio", {
+            name: /basis.matchedItems.title/,
+        });
+        expect(matched).toBeChecked();
+        expect(matched).toBeDisabled();
+        expect(
+            screen.getByRole("radio", { name: /basis.basket.title/ })
+        ).toBeDisabled();
+        // The merchant is told why the choice is not theirs.
+        expect(
+            screen.getByText("campaigns.create.reward.basis.lockedNote")
+        ).toBeInTheDocument();
     });
 });

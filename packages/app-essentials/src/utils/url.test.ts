@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isValidUrl, normalizeUrl, validateUrl } from "./url";
+import { isRenderableUrl, isValidUrl, normalizeUrl, validateUrl } from "./url";
 
 describe("normalizeUrl", () => {
     it("leaves empty untouched", () => {
@@ -60,6 +60,40 @@ describe("isValidUrl", () => {
 
     it("rejects an unparseable URL", () => {
         expect(isValidUrl("not a url")).toBe(false);
+    });
+});
+
+describe("isRenderableUrl", () => {
+    it("accepts http(s) URLs", () => {
+        expect(isRenderableUrl("https://example.com/a.png")).toBe(true);
+        expect(isRenderableUrl("http://example.com")).toBe(true);
+    });
+
+    // The backend's historic `format: "uri"` validation accepts all of these.
+    it("rejects script-bearing schemes", () => {
+        expect(isRenderableUrl("javascript:alert(1)")).toBe(false);
+        expect(isRenderableUrl("javascript:alert(document.cookie)")).toBe(
+            false
+        );
+        expect(isRenderableUrl("data:text/html;base64,PHNjcmlwdD4=")).toBe(
+            false
+        );
+        expect(isRenderableUrl("vbscript:msgbox(1)")).toBe(false);
+    });
+
+    it("rejects other non-renderable schemes", () => {
+        expect(isRenderableUrl("ftp://example.com")).toBe(false);
+        expect(isRenderableUrl("mailto:foo@example.com")).toBe(false);
+    });
+
+    it("rejects empty, nullish and unparseable values", () => {
+        expect(isRenderableUrl(undefined)).toBe(false);
+        expect(isRenderableUrl(null)).toBe(false);
+        expect(isRenderableUrl("")).toBe(false);
+        expect(isRenderableUrl("not a url")).toBe(false);
+        // Unlike `isValidUrl`, no normalization: a scheme-less host can't be
+        // rendered as-is.
+        expect(isRenderableUrl("example.com")).toBe(false);
     });
 });
 

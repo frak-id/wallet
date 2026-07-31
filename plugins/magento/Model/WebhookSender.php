@@ -95,8 +95,9 @@ class WebhookSender
                 "productId" => (string) $item->getProductId(),
                 "quantity" => (int) $item->getQtyOrdered(),
                 "price" => (string) $item->getPrice(),
-                "name" => (string) $item->getSku(),
+                "name" => (string) $item->getName(),
                 "title" => (string) $item->getName(),
+                "sku" => (string) $item->getSku(),
             ];
         }
 

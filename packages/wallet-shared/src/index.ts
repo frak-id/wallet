@@ -118,6 +118,7 @@ export {
     recordError,
     recoveryHintStorage,
     resolveApiErrorKey,
+    rewardProductsForSelection,
     rewardsKey,
     SDK_RENEW_BEFORE_MS,
     type SharingEventMap,

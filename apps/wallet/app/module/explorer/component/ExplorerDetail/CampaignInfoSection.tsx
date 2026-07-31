@@ -3,6 +3,7 @@ import { formatAmount } from "@frak-labs/core-sdk";
 import {
     buildPercentageExample,
     buildTierExample,
+    isMatchedItemsBasis,
     type RewardExample,
 } from "@frak-labs/core-sdk/rewards";
 import { Badge } from "@frak-labs/design-system/components/Badge";
@@ -137,6 +138,13 @@ function CampaignInfoCard({ view }: { view: CampaignView }) {
                         }
                     />
                 )}
+                {view.hasProductScope && (
+                    <InfoRow
+                        labelVariant="bodySmall"
+                        labelColor="secondary"
+                        label={t("explorer.detail.productScopeNote")}
+                    />
+                )}
             </InfoCard>
         </Stack>
     );
@@ -186,7 +194,12 @@ function RewardValue({
             </Text>
         );
     }
-    const example = buildPercentageExample(reward, minPurchase);
+    // `buildPercentageExample` assumes a whole-basket reference, wrong for a
+    // percent applied only to matched items.
+    const matchedItemsBasis = isMatchedItemsBasis(reward);
+    const example = matchedItemsBasis
+        ? undefined
+        : buildPercentageExample(reward, minPurchase);
     return (
         <Stack space="xxs" align="right">
             <Text
@@ -195,9 +208,12 @@ function RewardValue({
                 className={styles.infoValue}
             >
                 <CoinsIcon width={16} height={16} />{" "}
-                {t("explorer.detail.percentOfBasket", {
-                    percent: reward.percent,
-                })}
+                {t(
+                    matchedItemsBasis
+                        ? "explorer.detail.percentOfEligible"
+                        : "explorer.detail.percentOfBasket",
+                    { percent: reward.percent }
+                )}
             </Text>
             {example && <ExampleText example={example} />}
         </Stack>
@@ -212,6 +228,7 @@ function TieredRewardBlock({
     reward: TieredReward;
 }) {
     const { t } = useTranslation();
+    const matchedItemsBasis = isMatchedItemsBasis(reward);
     return (
         <Box paddingX="m" paddingY="s" className={styles.tierBlock}>
             <Spread space="s">
@@ -222,14 +239,24 @@ function TieredRewardBlock({
             </Spread>
             <Stack space="xs">
                 {reward.tiers.map((tier) => (
-                    <TierRow key={tierKey(tier)} tier={tier} />
+                    <TierRow
+                        key={tierKey(tier)}
+                        tier={tier}
+                        isMatchedItemsBasis={matchedItemsBasis}
+                    />
                 ))}
             </Stack>
         </Box>
     );
 }
 
-function TierRow({ tier }: { tier: RewardTier }) {
+function TierRow({
+    tier,
+    isMatchedItemsBasis,
+}: {
+    tier: RewardTier;
+    isMatchedItemsBasis: boolean;
+}) {
     const { t } = useTranslation();
     const range =
         tier.maxValue == null
@@ -251,11 +278,11 @@ function TierRow({ tier }: { tier: RewardTier }) {
         );
     }
 
-    const example = buildTierExample(
-        tier.percent,
-        tier.minValue,
-        tier.maxValue
-    );
+    // `buildTierExample` assumes a whole-basket reference, wrong for a percent
+    // applied only to matched items.
+    const example = isMatchedItemsBasis
+        ? undefined
+        : buildTierExample(tier.percent, tier.minValue, tier.maxValue);
     return (
         <Spread align="top" space="m">
             <Text variant="bodySmall" color="secondary">
@@ -263,9 +290,12 @@ function TierRow({ tier }: { tier: RewardTier }) {
             </Text>
             <Stack space="xxs" align="right">
                 <Text variant="bodySmall" weight="medium">
-                    {t("explorer.detail.percentOfBasket", {
-                        percent: tier.percent,
-                    })}
+                    {t(
+                        isMatchedItemsBasis
+                            ? "explorer.detail.percentOfEligible"
+                            : "explorer.detail.percentOfBasket",
+                        { percent: tier.percent }
+                    )}
                 </Text>
                 {example && <ExampleText example={example} />}
             </Stack>

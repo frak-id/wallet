@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EstimatedReward } from "../types";
-import { getRewardRank, getRewardValue } from "./value";
+import { getRewardRank, getRewardValue, isMatchedItemsBasis } from "./value";
 
 const amount = (eur: number) => ({
     amount: eur,
@@ -85,5 +85,58 @@ describe("getRewardRank", () => {
         expect(
             getRewardRank(uncappedPercentage(20), "eurAmount")
         ).toBeGreaterThan(getRewardRank(uncappedPercentage(5), "eurAmount"));
+    });
+});
+
+describe("isMatchedItemsBasis", () => {
+    it("is false for a fixed reward", () => {
+        expect(isMatchedItemsBasis(fixed(5))).toBe(false);
+    });
+
+    it("is false for a percentage of the whole purchase", () => {
+        expect(
+            isMatchedItemsBasis({
+                payoutType: "percentage",
+                percent: 10,
+                percentOf: "purchase_amount",
+            })
+        ).toBe(false);
+    });
+
+    it("is true for a percentage of the matched line items", () => {
+        expect(
+            isMatchedItemsBasis({
+                payoutType: "percentage",
+                percent: 10,
+                percentOf: "matched_items_amount",
+            })
+        ).toBe(true);
+    });
+
+    it("is false for a tiered reward keyed on a non-matched field", () => {
+        expect(
+            isMatchedItemsBasis({
+                payoutType: "tiered",
+                tierField: "purchase.amount",
+                tiers: [],
+            })
+        ).toBe(false);
+    });
+
+    it("is true for a tiered reward keyed on the matched amount or quantity", () => {
+        expect(
+            isMatchedItemsBasis({
+                payoutType: "tiered",
+                tierField: "purchase.matchedAmount",
+                tiers: [],
+            })
+        ).toBe(true);
+        expect(
+            isMatchedItemsBasis({
+                payoutType: "tiered",
+                tierField: "purchase.matchedQuantity",
+                tiers: [],
+            })
+        ).toBe(true);
     });
 });

@@ -1,13 +1,20 @@
+import { SCALAR_OPERATORS } from "@frak-labs/core-sdk/rewards";
 import type {
     ConditionGroup,
     ConditionOperator,
+    PurchaseItem,
     RuleCondition,
     RuleContext,
 } from "../types";
 
+// Conditions are evaluated against either the full RuleContext (order-level
+// `conditions`) or a single purchase item (`productScope`), both walked by the
+// same dot-path logic.
+type EvaluationTarget = RuleContext | PurchaseItem;
+
 type ConditionOrGroup = RuleCondition | ConditionGroup;
 
-function isConditionGroup(
+export function isConditionGroup(
     condition: ConditionOrGroup
 ): condition is ConditionGroup {
     return "logic" in condition && "conditions" in condition;
@@ -30,9 +37,27 @@ function getNestedValue(obj: unknown, path: string): unknown {
     return current;
 }
 
+// Condition values arrive from JSON where a numeric threshold is routinely
+// authored as a string (`"79.90"`), while the field it compares against is a
+// real number.
+function asNumber(value: unknown): number | undefined {
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : undefined;
+    }
+    if (typeof value === "string" && value.trim() !== "") {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+}
+
 function compareValues(a: unknown, b: unknown): number {
-    if (typeof a === "number" && typeof b === "number") {
-        return a - b;
+    // Numeric whenever BOTH sides are numeric, even as strings: a lexicographic
+    // fallback would rank "9" above "10".
+    const numA = asNumber(a);
+    const numB = asNumber(b);
+    if (numA !== undefined && numB !== undefined) {
+        return numA - numB;
     }
     if (typeof a === "string" && typeof b === "string") {
         return a.localeCompare(b);
@@ -79,6 +104,19 @@ function evaluateArrayOperator(
     }
     const includes = conditionValue.includes(fieldValue);
     return operator === "in" ? includes : !includes;
+}
+
+// Arrays are only a valid operand for `in`/`not_in`; scalar operators fail
+// closed rather than `String()`-coercing them into a meaningless compare.
+function hasInvalidArrayOperand(
+    operator: ConditionOperator,
+    conditionValue: unknown,
+    conditionValueTo: unknown
+): boolean {
+    return (
+        SCALAR_OPERATORS.has(operator) &&
+        (Array.isArray(conditionValue) || Array.isArray(conditionValueTo))
+    );
 }
 
 function evaluateOperator(
@@ -128,9 +166,19 @@ function evaluateOperator(
 
 function evaluateSingleCondition(
     condition: RuleCondition,
-    context: RuleContext
+    target: EvaluationTarget
 ): boolean {
-    const fieldValue = getNestedValue(context, condition.field);
+    if (
+        hasInvalidArrayOperand(
+            condition.operator,
+            condition.value,
+            condition.valueTo
+        )
+    ) {
+        return false;
+    }
+
+    const fieldValue = getNestedValue(target, condition.field);
     return evaluateOperator(
         condition.operator,
         fieldValue,
@@ -141,12 +189,12 @@ function evaluateSingleCondition(
 
 function evaluateConditionGroup(
     group: ConditionGroup,
-    context: RuleContext
+    target: EvaluationTarget
 ): boolean {
     const results = group.conditions.map((c) =>
         isConditionGroup(c)
-            ? evaluateConditionGroup(c, context)
-            : evaluateSingleCondition(c, context)
+            ? evaluateConditionGroup(c, target)
+            : evaluateSingleCondition(c, target)
     );
 
     if (group.logic === "all") return results.every(Boolean);
@@ -156,14 +204,18 @@ function evaluateConditionGroup(
 }
 
 export class RuleConditionEvaluator {
+    /**
+     * Evaluate a condition set against the full `RuleContext` (order-level
+     * `conditions`) or a single purchase item (`productScope`).
+     */
     evaluate(
         conditions: RuleCondition[] | ConditionGroup,
-        context: RuleContext
+        target: EvaluationTarget
     ): boolean {
         if (Array.isArray(conditions)) {
-            return conditions.every((c) => evaluateSingleCondition(c, context));
+            return conditions.every((c) => evaluateSingleCondition(c, target));
         }
-        return evaluateConditionGroup(conditions, context);
+        return evaluateConditionGroup(conditions, target);
     }
 
     getFieldValue(context: RuleContext, field: string): unknown {

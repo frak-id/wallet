@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **Order webhooks now forward each line item's product Reference as `sku`.** `FrakOrderResolver::getWebhookPayload()` adds an optional `sku` key to every item in the `POST /ext/merchant/{id}/webhook/custom` payload, sourced from `order_detail.product_reference` (stable at purchase time, unaffected by later edits to the product's Reference) and only included when non-empty. Enables the Frak backend's product-scoped campaigns to match rewards on SKU.
+
 ## [1.0.8] - 2026-06-02
 
 ### Fixed

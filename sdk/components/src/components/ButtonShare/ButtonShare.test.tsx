@@ -145,7 +145,12 @@ describe.sequential("ButtonShare", () => {
         render(<ButtonShare text="Share and earn!" />);
         const button = screen.getByRole("button");
         expect(button).toHaveTextContent("Share and earn!");
-        expect(useRewardHook.useReward).toHaveBeenCalledWith(false, undefined);
+        expect(useRewardHook.useReward).toHaveBeenCalledWith(
+            false,
+            undefined,
+            undefined,
+            undefined
+        );
     });
 
     it("should call openSharingPage on click by default", async () => {
@@ -157,7 +162,8 @@ describe.sequential("ButtonShare", () => {
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
                 undefined,
-                undefined
+                undefined,
+                { products: undefined }
             );
         });
     });
@@ -193,7 +199,8 @@ describe.sequential("ButtonShare", () => {
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
                 undefined,
-                undefined
+                undefined,
+                { products: undefined }
             );
         });
         expect(embeddedWalletUtils.openEmbeddedWallet).not.toHaveBeenCalled();
@@ -225,7 +232,9 @@ describe.sequential("ButtonShare", () => {
 
         expect(useRewardHook.useReward).toHaveBeenCalledWith(
             true,
-            "custom.customerMeeting"
+            "custom.customerMeeting",
+            undefined,
+            undefined
         );
     });
 
@@ -238,7 +247,32 @@ describe.sequential("ButtonShare", () => {
         await waitFor(() => {
             expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
                 "custom.customerMeeting",
-                undefined
+                undefined,
+                { products: undefined }
+            );
+        });
+    });
+
+    it("should forward the sanitized products array to openSharingPage on click", async () => {
+        // The array used for reward selection must also reach the sharing-page
+        // RPC, not be dropped at the click boundary.
+        render(
+            <ButtonShare
+                products={[
+                    { title: "Boots", sku: "SHOE-42" },
+                    { title: "" /* dropped: no usable title */ },
+                ]}
+            />
+        );
+        const button = screen.getByRole("button");
+
+        fireEvent.click(button);
+
+        await waitFor(() => {
+            expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                undefined,
+                undefined,
+                { products: [{ title: "Boots", sku: "SHOE-42" }] }
             );
         });
     });

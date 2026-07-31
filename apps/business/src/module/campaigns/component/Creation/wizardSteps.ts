@@ -9,6 +9,7 @@ export type WizardStepKey =
     | "goals"
     | "territory"
     | "budget"
+    | "products"
     | "reward"
     | "referralChain"
     | "validation";
@@ -30,6 +31,10 @@ export const WIZARD_STEPS: WizardStepDef[] = [
         to: "/m/$merchantId/campaigns/draft/$campaignId/territory",
     },
     { key: "budget", to: "/m/$merchantId/campaigns/draft/$campaignId/budget" },
+    {
+        key: "products",
+        to: "/m/$merchantId/campaigns/draft/$campaignId/products",
+    },
     { key: "reward", to: "/m/$merchantId/campaigns/draft/$campaignId/reward" },
     {
         key: "referralChain",
@@ -41,18 +46,36 @@ export const WIZARD_STEPS: WizardStepDef[] = [
     },
 ];
 
-const WIZARD_STEP_COUNT = WIZARD_STEPS.length;
-
-export function stepIndexOf(key: WizardStepKey): number {
-    return WIZARD_STEPS.findIndex((s) => s.key === key);
+/**
+ * The steps a campaign actually walks through. Product scoping is a
+ * purchase-only concept (the backend rejects `productScope` on any other
+ * trigger), so a traffic/registration campaign skips it entirely.
+ */
+export function wizardStepsFor(includeProducts: boolean): WizardStepDef[] {
+    return includeProducts
+        ? WIZARD_STEPS
+        : WIZARD_STEPS.filter((s) => s.key !== "products");
 }
 
-export function previousStep(index: number): WizardStepDef | undefined {
-    return index > 0 ? WIZARD_STEPS[index - 1] : undefined;
+export function stepIndexOf(
+    key: WizardStepKey,
+    steps: WizardStepDef[] = WIZARD_STEPS
+): number {
+    return steps.findIndex((s) => s.key === key);
 }
 
-export function isLastStep(index: number): boolean {
-    return index === WIZARD_STEP_COUNT - 1;
+export function previousStep(
+    index: number,
+    steps: WizardStepDef[] = WIZARD_STEPS
+): WizardStepDef | undefined {
+    return index > 0 ? steps[index - 1] : undefined;
+}
+
+export function isLastStep(
+    index: number,
+    steps: WizardStepDef[] = WIZARD_STEPS
+): boolean {
+    return index === steps.length - 1;
 }
 
 /**
@@ -80,6 +103,11 @@ const STEP_I18N = {
         label: "campaigns.create.steps.budget.label",
         hint: "campaigns.create.steps.budget.hint",
         subtitle: "campaigns.create.steps.budget.subtitle",
+    },
+    products: {
+        label: "campaigns.create.steps.products.label",
+        hint: "campaigns.create.steps.products.hint",
+        subtitle: "campaigns.create.steps.products.subtitle",
     },
     reward: {
         label: "campaigns.create.steps.reward.label",
