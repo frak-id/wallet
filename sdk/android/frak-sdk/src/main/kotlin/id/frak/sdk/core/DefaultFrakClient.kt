@@ -5,11 +5,15 @@ import id.frak.sdk.config.ConfigStore
 import id.frak.sdk.config.FrakResolvedConfig
 import id.frak.sdk.config.KeyValueStore
 import id.frak.sdk.config.MerchantQuery
+import id.frak.sdk.identity.AnonymousIdStore
 import id.frak.sdk.net.HttpClient
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.RewardAudience
 import id.frak.sdk.rewards.RewardRepository
+import id.frak.sdk.sharing.FrakContext
+import id.frak.sdk.sharing.SharingLinkBuilder
+import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -20,6 +24,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * The real [FrakClient].
@@ -31,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 internal class DefaultFrakClient(
     private val config: FrakConfig,
     store: KeyValueStore,
+    private val identity: AnonymousIdStore,
     private val logger: FrakLogger,
     private val ioDispatcher: CoroutineDispatcher = defaultIoDispatcher(),
     // Overridable so tests can substitute a fake transport underneath; production
@@ -58,6 +64,18 @@ internal class DefaultFrakClient(
     private val configState = MutableStateFlow<FrakResolvedConfig?>(null)
 
     override val configUpdates: StateFlow<FrakResolvedConfig?> = configState.asStateFlow()
+
+    override val anonymousId: String?
+        get() = identity.anonymousId()
+
+    override fun resetAnonymousId(): Unit = identity.reset()
+
+    init {
+        // Reading the keystore is storage I/O, and `anonymousId` is a property a
+        // merchant will read from the main thread. Resolving it here means that
+        // read is a field access by the time anything can reach it.
+        scope.launch { identity.anonymousId() }
+    }
 
     // Disk and decode work is kept off the caller's dispatcher (typically
     // Dispatchers.Main) narrowly, at the point that actually does it: the
@@ -91,6 +109,36 @@ internal class DefaultFrakClient(
     ): BestReward? =
         frakCall {
             fetchRewards(targetInteraction, audience, forceRefresh).best
+        }
+
+    override suspend fun buildSharingLink(request: SharingRequest): String? =
+        frakCall {
+            val clientId = identity.anonymousId() ?: return@frakCall null
+            // Tolerated rather than propagated: this method is specified as
+            // nullable and never-throwing, and a resolve failure means the same
+            // thing to a caller as no identity — there is no link to hand back.
+            val resolved = runCatching { resolveConfig() }.getOrNull()
+            val merchantId = config.merchantId ?: resolved?.merchantId ?: return@frakCall null
+            val product = request.products.firstOrNull()
+            val baseUrl =
+                request.link
+                    ?: product?.link
+                    ?: resolved?.sdkConfig?.homepageLink
+                    ?: config.metadata.homepageLink
+                    ?: return@frakCall null
+
+            SharingLinkBuilder.build(
+                baseUrl = baseUrl,
+                context =
+                    FrakContext.V2(
+                        merchantId = merchantId,
+                        timestamp = System.currentTimeMillis() / 1000,
+                        clientId = clientId,
+                    ),
+                attribution = request.attribution,
+                defaults = resolved?.sdkConfig?.attribution,
+                productUtmContent = product?.utmContent,
+            )
         }
 
     /**

@@ -1,6 +1,8 @@
 package id.frak.sdk.core
 
-import id.frak.sdk.config.KeyValueStore
+import id.frak.sdk.config.InMemoryKeyValueStore
+import id.frak.sdk.identity.AnonymousIdStore
+import id.frak.sdk.identity.FakeDeviceKeyStore
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
@@ -20,7 +22,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultFrakClientTest {
     private val transport = FakeHttpTransport()
-    private val store = InMemoryStore()
+    private val store = InMemoryKeyValueStore()
 
     @Test
     fun `a repeat resolve with an unchanged in-memory cache does not re-emit`() =
@@ -105,27 +107,18 @@ class DefaultFrakClientTest {
         DefaultFrakClient(
             config = FrakConfig(merchantId = MERCHANT_ID),
             store = store,
+            identity =
+                AnonymousIdStore(
+                    keyStore = FakeDeviceKeyStore(),
+                    store = InMemoryKeyValueStore(),
+                    logger = FrakLogger(FrakLogLevel.NONE),
+                    merchantMarker = MERCHANT_ID,
+                    trackingEnabled = true,
+                ),
             logger = FrakLogger(FrakLogLevel.NONE),
             ioDispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler),
             http = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), transport::open),
         )
-
-    private class InMemoryStore : KeyValueStore {
-        private val values = HashMap<String, String>()
-
-        override fun getString(key: String): String? = values[key]
-
-        override fun putString(
-            key: String,
-            value: String,
-        ) {
-            values[key] = value
-        }
-
-        override fun remove(key: String) {
-            values.remove(key)
-        }
-    }
 
     private companion object {
         const val MERCHANT_ID = "b3d5e5b8-9b1a-4c0e-8f5a-1a2b3c4d5e6f"

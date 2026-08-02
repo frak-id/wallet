@@ -36,7 +36,7 @@ import java.io.IOException
 class ConfigStoreTest {
     private val query = MerchantQuery.from(FrakConfig(merchantId = MERCHANT_ID))
     private var clock = 0L
-    private val store = InMemoryStore()
+    private val store = InMemoryKeyValueStore()
     private val transport = FakeHttpTransport()
 
     private fun newStore(scope: TestScope) =
@@ -241,7 +241,9 @@ class ConfigStoreTest {
                 MerchantQuery.from(
                     FrakConfig(
                         merchantId = MERCHANT_ID,
-                        metadata = id.frak.sdk.core.FrakMetadata(lang = id.frak.sdk.core.FrakLanguage.FR),
+                        metadata =
+                            id.frak.sdk.core
+                                .FrakMetadata(lang = id.frak.sdk.core.FrakLanguage.FR),
                     ),
                 )
             transport.respond(200, BODY.replace("Acme", "Acme FR"))
@@ -278,7 +280,11 @@ class ConfigStoreTest {
             transport.respond(200, BODY)
             configStore.resolve(query, forceRefresh = false)
 
-            val url = transport.requests.first().url.toString()
+            val url =
+                transport.requests
+                    .first()
+                    .url
+                    .toString()
             assertTrue("merchantId is sent, was: $url", url.contains("merchantId=$MERCHANT_ID"))
             // The backend distinguishes an absent parameter from an empty one:
             // `?lang=` would be a 422 while omitting it is fine.
@@ -325,31 +331,6 @@ class ConfigStoreTest {
                 store.getStringCalls,
             )
         }
-
-    /** [KeyValueStore] with no platform underneath, so cache behaviour is testable at all. */
-    private class InMemoryStore : KeyValueStore {
-        private val values = HashMap<String, String>()
-
-        /** Counts reads, so a test can pin how many times disk was actually touched. */
-        var getStringCalls = 0
-            private set
-
-        override fun getString(key: String): String? {
-            getStringCalls++
-            return values[key]
-        }
-
-        override fun putString(
-            key: String,
-            value: String,
-        ) {
-            values[key] = value
-        }
-
-        override fun remove(key: String) {
-            values.remove(key)
-        }
-    }
 
     private companion object {
         const val MERCHANT_ID = "b3d5e5b8-9b1a-4c0e-8f5a-1a2b3c4d5e6f"

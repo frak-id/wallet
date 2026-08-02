@@ -6,6 +6,10 @@ import id.frak.sdk.core.DefaultFrakClient
 import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.identity.AndroidKeystoreDeviceKeyStore
+import id.frak.sdk.identity.AnonymousIdStore
+import id.frak.sdk.sharing.FrakContext
+import id.frak.sdk.sharing.SharingLinkBuilder
 
 /**
  * Entry point. Call [initialize] once, then use [client].
@@ -65,6 +69,16 @@ public object Frak {
                 DefaultFrakClient(
                     config = effective,
                     store = SharedPreferencesStore(context),
+                    identity =
+                        AnonymousIdStore(
+                            keyStore = AndroidKeystoreDeviceKeyStore(),
+                            // A separate prefs file from the config cache: a corrupt
+                            // write to the hot one must not take the identity with it.
+                            store = SharedPreferencesStore(context, IDENTITY_FILE_NAME),
+                            logger = logger,
+                            merchantMarker = effective.merchantId ?: effective.packageId.orEmpty(),
+                            trackingEnabled = effective.trackingEnabled,
+                        ),
                     logger = logger,
                 )
             logger.info("Frak ${FrakSdkVersion.CURRENT} initialized.")
@@ -85,6 +99,20 @@ public object Frak {
     public val isInitialized: Boolean
         get() = instance != null
 
+    /**
+     * Reads the referral context out of an inbound link, or null when it
+     * carries none.
+     *
+     * Pure and static: it needs no SDK instance, no network and no identity, so
+     * a merchant's router can call it before [initialize] has run to decide
+     * whether a link is one of ours at all.
+     *
+     * Note that this only *decodes*. Acting on the context — arrival tracking,
+     * and the self-referral guard that must precede it — is a separate step.
+     */
+    @JvmStatic
+    public fun parseReferralLink(url: String): FrakContext? = SharingLinkBuilder.parse(url)
+
     // Fills in packageId from the Context when the merchant left it null (the
     // expected case); skipped once a merchantId is set, since packageId would
     // be inert at the backend anyway.
@@ -97,4 +125,7 @@ public object Frak {
     internal fun resetForTesting() {
         synchronized(this) { instance = null }
     }
+
+    /** Matches the `path` in `frak_data_extraction_rules.xml`. */
+    private const val IDENTITY_FILE_NAME = "id.frak.sdk"
 }

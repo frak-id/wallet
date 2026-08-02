@@ -22,6 +22,7 @@ import id.frak.sdk.rewards.EstimatedReward
 import id.frak.sdk.rewards.RewardAudience
 import id.frak.sdk.rewards.RewardTier
 import id.frak.sdk.rewards.TokenAmount
+import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -195,5 +196,11 @@ class PublicSurfaceTest {
             audience: RewardAudience?,
             forceRefresh: Boolean,
         ): BestReward? = reward
+
+        override val anonymousId: String? = "256b1be3-2745-41d1-89d4-9121cc87bc45"
+
+        override fun resetAnonymousId() = Unit
+
+        override suspend fun buildSharingLink(request: SharingRequest): String? = null
     }
 }

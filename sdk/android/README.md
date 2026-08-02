@@ -4,9 +4,9 @@ Gradle multi-module **library** project for the Frak native Android SDK. Not an
 app: there is nothing to install and nothing to launch, so no command here ever
 needs a device or an emulator.
 
-> ⚠️ **Partial. Config and rewards work; nothing else exists yet.**
+> ⚠️ **Partial. Config, rewards, identity and share links work; nothing else exists yet.**
 >
-> What is implemented and tested (114 JVM unit tests — `grep -rhoP '^\s*@Test\b' frak-sdk/src/test --include=*.kt | wc -l`):
+> What is implemented and tested (151 JVM unit tests — `grep -rhoP '^\s*@Test\b' frak-sdk/src/test --include=*.kt | wc -l`):
 >
 > | Package | What is there |
 > | --- | --- |
@@ -14,9 +14,14 @@ needs a device or an emulator.
 > | `net` | `HttpClient` over `HttpURLConnection`, `JsonReader` |
 > | `config` | `ConfigStore` (SWR), `MerchantQuery`, `KeyValueStore`, `SingleFlight`, `Backoff` |
 > | `rewards` | models, decoder and `RewardRepository` for `estimated-rewards` |
+> | `identity` | `AnonymousIdStore`, the P-256 keystore keypair, and `ProofCodec` (id derivation + the proof envelope) |
+> | `sharing` | `FrakContextCodec` (the `fCtx` v2 binary layout), `SharingLinkBuilder`, attribution merging |
 >
 > Public surface: `Frak.initialize` / `Frak.client`, `FrakClient.resolveConfig`,
-> `configUpdates`, `campaigns` and `bestReward`, `FrakLogSink`, and the ten public
+> `configUpdates`, `campaigns`, `bestReward`, `anonymousId`, `resetAnonymousId`,
+> `buildSharingLink` and `Frak.parseReferralLink`, plus `FrakContext`,
+> `SharingRequest`, `SharingProduct` and `AttributionParams`,
+> `FrakLogSink`, and the ten public
 > config model types: `FrakResolvedConfig`, `ResolvedSdkConfig`, `ResolvedPlacement`,
 > `ResolvedComponents`, `ButtonShareConfig`, `ButtonWalletConfig`, `OpenInAppConfig`,
 > `PostPurchaseConfig`, `BannerConfig` and `AttributionDefaults`.
@@ -24,11 +29,11 @@ needs a device or an emulator.
 > A merchant can route SDK diagnostics into their own logging by setting `FrakConfig.logSink`
 > (a `fun interface`, so a lambda works) — see "Logging" below.
 >
-> **Not implemented**: anonymous identity (P-256 keypair, `x-frak-client-id`),
-> interaction and purchase tracking, the durable offline queue, the FrakContext v2
-> codec and `buildSharingLink`, inbound `fCtx` handling and the self-referral
+> **Not implemented**: sending `x-frak-client-id` on the wire (nothing calls an
+> id-keyed endpoint yet), interaction and purchase tracking, the durable offline
+> queue, inbound `fCtx` handling and the self-referral
 > guard, the sharing sheet, the install flow, and the 4-tier copy precedence.
-> `identity/`, `tracking/`, `sharing/` and `applink/` are still empty packages.
+> `tracking/` and `applink/` are still empty packages.
 >
 > The full resolve response *is* decoded — placements, component copy,
 > translations, attribution — and the whole tree is `public`, not just the
@@ -184,7 +189,7 @@ package per row:
 | --- | --- |
 | `core/` | `FrakConfig`, the `FrakClient` facade, `FrakError` |
 | `net/` | `HttpURLConnection` transport, JSON only, injects `x-frak-client-id` |
-| `identity/` | `AnonymousIdStore` — P-256 keypair in Keystore, lowercase derived id |
+| `identity/` | `AnonymousIdStore`, `ProofCodec` — P-256 keypair in Keystore, lowercase derived id |
 | `config/` | Dual SWR cache (config + bare merchantId), `PlacementResolver` 4-tier copy |
 | `rewards/` | `RewardRepository`, `RewardSelector`, `RewardFormatter` |
 | `tracking/` | `InteractionTracker`, `PurchaseTracker`, durable offline queue |
@@ -206,8 +211,9 @@ Elsewhere:
 - `frak-sdk/src/main/res/xml/frak_data_extraction_rules.xml` — excludes the SDK's
   `id.frak.sdk.xml` SharedPreferences from **both** `<cloud-backup>` and
   `<device-transfer>` (02 §4). Both blocks matter: cloud-backup alone still lets a
-  device-to-device transfer clone the anonymous id, resurrecting an identity that
-  is supposed to die with the install.
+  device-to-device transfer clone whatever is in there. It is a thinner file than
+  02 §4 assumes — see "Anonymous identity" below — but the exclusion stays,
+  because the merchant marker it holds is what triggers regeneration.
 - `frak-sdk/consumer-rules.pro`, `frak-sdk-ui/consumer-rules.pro` — R8 rules that
   ship *inside* the AAR, so merchants paste nothing into their own config
   (03 §5.4). Empty today; rules land alongside the code that needs them.
@@ -233,6 +239,48 @@ Tabs cannot implement this design (02 §3): a Custom Tab is a separate browser
 Activity, so it cannot sit in a bottom sheet, cannot carry native buttons, and
 cannot lose the browser toolbar. The transport is an embedded `WebView`, which is
 a platform class and needs no dependency.
+
+## Anonymous identity
+
+One P-256 keypair per app installation, and an id derived from it:
+
+```text
+clientId = uuid_from(SHA-256(pubkey_uncompressed)[0..16])   // RFC-4122 bits set
+```
+
+`ProofCodec` is the Kotlin half of a frozen wire format whose other halves are
+`sdk/core/src/identity/canonical.ts` and the backend verifier. All three are
+pinned to `sdk/core/src/identity/fixtures/golden-proofs.json`, which is what
+makes "we ported it correctly" a test result rather than a claim.
+
+**The keypair lives in `AndroidKeyStore`, not in SharedPreferences** — a
+deliberate departure from the storage row in 02 §4, which predates the choice of
+key home. Both properties that row wants are stronger there: the private key is
+non-exportable, so only this device can mint a proof for this id, and keystore
+entries are destroyed with the app, so the id dies with the install. Nothing
+about it can be backed up or device-transferred, so no `data_extraction_rules`
+entry could cover it even in principle.
+
+**The id is never persisted.** It is re-derived from the key on every cold start
+and memoised. 02 §4 requires key and id to be generated atomically, because a
+surviving key with a lost id silently fails derivation — deriving on demand
+means there is no second write to lose. `id.frak.sdk.xml` therefore holds one
+value: which merchant the key was minted under, so a `merchantId` that changes
+under an existing install regenerates the identity instead of carrying the old
+one across.
+
+**There is no unprovable fallback.** Keystore generation genuinely fails on some
+devices; when it does, `anonymousId` is null and the SDK behaves as though
+tracking were off. Minting a random id instead would recreate exactly the
+unprovable tier that
+[`docs/plans/identity-proof-of-possession/`](../../docs/plans/identity-proof-of-possession/)
+exists to remove, and would hand an attacker a downgrade target.
+
+`AndroidKeystoreDeviceKeyStore` is the one class the JVM suite cannot reach —
+there is no `AndroidKeyStore` provider off-device — which is why it contains no
+logic at all. Everything it would otherwise do lives in `JcaDeviceKey` and
+`ProofCodec`, both driven in tests by real JDK-generated P-256 keys against the
+same `java.security` interfaces the platform provider implements.
 
 ## Logging
 

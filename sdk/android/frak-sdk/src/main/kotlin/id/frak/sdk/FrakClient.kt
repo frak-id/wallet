@@ -5,6 +5,7 @@ import id.frak.sdk.core.FrakError
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.RewardAudience
+import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -77,4 +78,44 @@ public interface FrakClient {
         audience: RewardAudience? = null,
         forceRefresh: Boolean = false,
     ): BestReward?
+
+    /**
+     * This installation's anonymous id, or null when [id.frak.sdk.core.FrakConfig.trackingEnabled]
+     * is false or the device refused to produce key material.
+     *
+     * Derived from a P-256 keypair held in the platform keystore, so it is
+     * self-authenticating and dies with the app. Scoped to one installation:
+     * a reinstall is a new user, exactly as clearing site data is on the web.
+     *
+     * The first read touches the keystore, and therefore storage; later reads
+     * do not. [Frak.initialize] warms it in the background, so a read from the
+     * main thread is almost always already resolved.
+     */
+    public val anonymousId: String?
+
+    /**
+     * Destroys the keypair, so the next read of [anonymousId] mints a new
+     * identity. For GDPR erasure requests.
+     *
+     * Everything already attributed to the old id stays with it — this severs
+     * the device from that id, it does not delete history.
+     */
+    public fun resetAnonymousId()
+
+    /**
+     * Builds a share link for [request]: the merchant's URL, carrying who
+     * shared it and the attribution parameters that follow from that.
+     *
+     * Null when there is no identity to build from — tracking off, or a device
+     * that refused to produce key material — and null rather than throwing
+     * because "nothing to share with" is an expected state, not a failure.
+     *
+     * Issues no network request of its own. It does read the resolved config,
+     * for the merchant id when only a package id was configured and for the
+     * merchant's attribution defaults, which is a cache hit in every case but
+     * the first; a cold cache that cannot be filled yields null rather than an
+     * unattributed link. Offline sharing therefore works: the link is correct,
+     * only the reward pitch is missing.
+     */
+    public suspend fun buildSharingLink(request: SharingRequest): String?
 }
