@@ -94,14 +94,21 @@ someone else's frozen binary.
 
 ## Publishing
 
-Distribution is **Maven Central via the Central Publisher Portal**, not the
+Distribution **will be** Maven Central via the Central Publisher Portal, not the
 decommissioned OSSRH endpoints — see
 `docs/plans/native-sdk/03-implementation-strategy.md` §3.2.
 
-The POM is Central-valid today. `buildSrc/src/main/kotlin/frak-publish.gradle.kts`
+**It is not wired yet, deliberately.** `frak-publish.gradle.kts` declares
+`publications` and signing but no `repositories { maven { … } }` and no Portal
+plugin, so the only publish path that works today is `publishToMavenLocal`. The
+Portal transport (and CI) lands once the first local and dev-environment tests
+have exercised the SDK on a real device — publishing an artifact nothing has run
+is how you burn a version number.
+
+The POM *contents* are Central-valid today. `buildSrc/src/main/kotlin/frak-publish.gradle.kts`
 is a convention plugin applied by both modules, so they cannot drift apart on
 licence, developers or SCM — every field Central requires is there, plus the
-sources and javadoc jars it checks for. Verify with:
+sources and javadoc jars it checks for. Only the transport is missing. Verify with:
 
 ```bash
 bun run --cwd sdk/android publishLocal
@@ -114,19 +121,20 @@ cat ~/.m2/repository/id/frak/frak-sdk/0.0.1/frak-sdk-0.0.1.pom
 skipped and the build still succeeds — so nobody needs a private key to build,
 and there is no flag that could accidentally publish unsigned to Central.
 
-Two things are still outstanding, both needing a human rather than code: claiming
-the `id.frak` namespace (a TXT record on the `frak.id` apex — we own the Route 53
-zone) and generating the real GPG key. Neither has a queue: Portal verification is
-automated and same-day.
+Still outstanding, all needing a human rather than code: claiming the `id.frak`
+namespace (a TXT record on the `frak.id` apex — we own the Route 53 zone),
+generating the real GPG key, and wiring the Portal repository itself. Neither of
+the first two has a queue: Portal verification is automated and same-day.
 
-> **Open question — the licence.** The POM declares GPL-3.0, matching the
-> monorepo `LICENSE` and the published JS SDKs. That is a defensible choice for a
-> CDN bundle a merchant loads at runtime; it is a much bigger ask for a native
-> artifact a merchant **statically links into their proprietary app**, where the
-> copyleft reading is aggressive and most merchant legal teams will simply refuse.
-> Every comparable SDK (Branch, AppsFlyer, Adjust) ships permissive — MIT or
-> Apache-2.0. This needs a deliberate decision before the first publish, because
-> relicensing after merchants have integrated is far harder than choosing now.
+> **The licence is settled: Apache-2.0** (`sdk/android/LICENSE`), and the POM
+> declares it. This subtree is deliberately *not* the monorepo's GPL-3.0. GPL is
+> defensible for a CDN bundle a merchant loads at runtime; it is a much bigger ask
+> for a native artifact a merchant **statically links into their proprietary app**,
+> where the copyleft reading is aggressive and most merchant legal teams will
+> simply refuse. Every comparable SDK (Branch, AppsFlyer, Adjust) ships permissive.
+> Apache-2.0 over MIT for the explicit patent grant — the identity
+> proof-of-possession scheme is exactly the kind of thing a bare MIT licence leaves
+> unaddressed — and for its trademark clause.
 
 ## Binary compatibility
 
@@ -167,19 +175,21 @@ has no `check` task and `./gradlew check` never lints the root
 
 ## What each directory is for
 
-`frak-sdk/src/main/kotlin/id/frak/sdk/` mirrors 02 §2's module layout table, one
-package per row:
+`frak-sdk/src/main/kotlin/id/frak/sdk/` follows 02 §2's module layout table, one
+package per row. The types below are **the ones that exist**, not the plan's names
+for them — several of 02's proposed types were folded into others during
+implementation and never existed as declarations:
 
-| Package | Lands there |
+| Package | Contains |
 | --- | --- |
-| `core/` | `FrakConfig`, the `FrakClient` facade, `FrakError` |
-| `net/` | `HttpURLConnection` transport, JSON only, plus query-string editing |
-| `identity/` | `AnonymousIdStore`, `ProofCodec` — P-256 keypair in Keystore, lowercase derived id |
-| `config/` | Dual SWR cache (config + bare merchantId), `PlacementResolver` 4-tier copy |
-| `rewards/` | `RewardRepository`, `RewardSelector`, `RewardFormatter` |
-| `tracking/` | `InteractionTracker`, `PurchaseTracker`, durable offline queue |
-| `sharing/` | `FrakContextCodec` (V2 binary), `AttributionMerger`, `LinkBuilder` — the `Presenter` lives in `frak-sdk-ui` |
-| `applink/` | `DeepLinkBuilder`, `InstallRedirector`, `AppInstalledProbe` |
+| `core/` | `FrakConfig`, `FrakEnvironment`, `DefaultFrakClient`, `FrakError`, `FrakResult`, `FrakLogger`, `Base64Url` |
+| `net/` | `HttpClient` (`HttpURLConnection`), `JsonReader`, `UrlQuery`, `PercentEncoding` |
+| `identity/` | `AnonymousIdStore`, `ProofCodec`, `DeviceKey`, `AndroidKeystoreDeviceKeyStore` — P-256 keypair in Keystore, lowercase derived id |
+| `config/` | `ConfigStore` (SWR cache), `FrakResolvedConfig`, `ResolvedConfigDecoder`, `MerchantQuery`, `SingleFlight`, `Backoff`, `KeyValueStore`. **No `PlacementResolver`**: the 4-tier copy precedence is not implemented (see "Not implemented" above) |
+| `rewards/` | `RewardRepository`, `Rewards`, `RewardsDecoder`. **No `RewardSelector`/`RewardFormatter`**: the backend returns pre-formatted values via `formatted=1`, so neither was needed |
+| `tracking/` | `InteractionTracker`, `Interaction`, `EventQueue` (durable offline queue). **No separate `PurchaseTracker`**: purchases are one more `InteractionTracker` entry point |
+| `sharing/` | `FrakContextCodec` (V2 binary), `FrakContext`, `SharingLinkBuilder`, `AttributionParams` (holds `mergeAttribution`), `SharingRequest` — the sheet lives in `frak-sdk-ui` |
+| `applink/` | `InstallLinks`, `ReferralArrival`, `AppLauncher`, `DeepLinkObserver`. **No `DeepLinkBuilder`/`InstallRedirector`/`AppInstalledProbe`** as declared types |
 
 The layout is deliberately symmetric with `sdk/ios/`. A merchant shipping both
 apps must not have to learn two mental models.
@@ -196,9 +206,16 @@ Elsewhere:
   to JDK 17 (see the module's build script) because Robolectric's bundled ASM
   cannot instrument newer bytecode.
 - `frak-sdk/src/test/kotlin/id/frak/sdk/fixtures/` — the golden-fixture loader.
-  One shared cross-platform corpus (FrakContext v2 codec, the signed byte layout,
-  reward formatting) that Kotlin, Swift and TypeScript all assert against. This is
-  the named alternative to a shared native core — 03 §1.6.
+  The shared cross-platform corpus is the named alternative to a shared native core
+  — 03 §1.6. **Two of its three parts are actually asserted here**: the FrakContext
+  v2 codec (`golden-context.json`) and the signed byte layout (`golden-proofs.json`),
+  both on Kotlin, Swift and TypeScript. `golden-rewards.json` is **declared by
+  `GoldenFixtures.REWARDS` and loaded by no test on either native platform** — it is
+  asserted by TypeScript only. Most of its 67 vectors cover reward selection and
+  currency formatting that neither native SDK implements (the backend returns
+  pre-formatted values), but its 16 `format-amount` vectors are a real
+  decode-fidelity contract and are currently hand-copied into
+  `RewardsDecoderTest.kt` instead. Wire them or drop the constant.
 - `frak-sdk/src/main/res/xml/frak_data_extraction_rules.xml` — excludes the SDK's
   `id.frak.sdk.xml` SharedPreferences from **both** `<cloud-backup>` and
   `<device-transfer>` (02 §4). Both blocks matter: cloud-backup alone still lets a
@@ -534,9 +551,11 @@ be retrofitted into a build already on users' phones. Keep `CURRENT` in step wit
 the `version` in each `build.gradle.kts`.
 
 It is an `object` with three members rather than a bare top-level const so that
-it mirrors Swift's `FrakSdkVersion` exactly. 02 §9 makes cross-platform symmetry
-a hard requirement, and the golden-fixture corpus cannot catch a symbol that
-exists on one platform only.
+it mirrors Swift's `FrakSDKVersion` — note the casing: Swift uses `SDK`, Kotlin
+uses `Sdk`, following each language's convention. The three member values are
+identical; only the type name differs. 02 §9 makes cross-platform symmetry a hard
+requirement, and the golden-fixture corpus cannot catch a symbol that exists on
+one platform only.
 
 ## Toolchain
 

@@ -1,8 +1,17 @@
 # Frak Native SDK — iOS
 
 SwiftPM **library** package for the Frak iOS SDK. Two products, `FrakSDK` and
-`FrakSDKUI`, targeting iOS 15+ and Swift 5.9+, clean under Swift 6 strict
-concurrency.
+`FrakSDKUI`, targeting iOS 15+. **Licensed Apache-2.0** (`sdk/ios/LICENSE`), not the
+monorepo's GPL-3.0: merchants statically link this into closed-source App Store
+binaries, and the patent grant covers the identity proof-of-possession scheme.
+
+> ⚠️ **Swift 6 strict concurrency is verified in one configuration no merchant
+> compiles.** `Package.swift` is `swift-tools-version: 5.9` and declares no
+> `swiftSettings`, so Swift 6 language mode exists only as `-swift-version 6` inside
+> `scripts/run.sh`. A merchant consuming this package gets Swift 5 mode with minimal
+> concurrency checking, and the sources already use Swift 6.0-only syntax
+> (`isolated (any Actor)? = #isolation`, `nonisolated(unsafe)`). Moving the flag into
+> `Package.swift` at tools-version 6.0 is tracked in the audit docs.
 
 > ⚠️ **The MVP surface is implemented. None of it has run on a device.**
 >
@@ -67,9 +76,17 @@ referrer with `merchantId`, `anonymousId` and a signed proof, so the link surviv
 round trip. iOS has no counterpart, so `openFrakApp()` links the identity only on the
 deep-link path — when the wallet is already installed. A user who installs from the store
 arrives unlinked until the install-code + pasteboard + `SKStoreProductViewController` flow
-of `02` §6 exists. `ProofCodec` and `AnonymousIdStore.signProof` ship regardless, pinned
-to the golden corpus: a released binary cannot be retrofitted, so the signing half has to
-be in the store build before the backend half is enforced.
+of `02` §6 exists. `ProofCodec` and `AnonymousIdStore.signProof` are compiled into the
+binary regardless and pinned to the golden corpus: a released binary cannot be
+retrofitted, so the signing half has to be in the store build before the backend half
+is enforced.
+
+> Be precise about what that means today: **`signProof` has no production caller on
+> iOS.** It is referenced only by tests. `InstallLinks.deepLink` emits
+> `<scheme>://install?m=&a=` — an unauthenticated assertion of an anonymous id — where
+> Android mints and attaches a proof. The store-fallback gap is forced by the platform;
+> the *deep-link* gap is not, and could carry a proof today. Until it does, the Secure
+> Enclave is buying 16 bytes of UUID entropy that `SecRandomCopyBytes` would also give.
 
 ### Two smaller notes
 
@@ -296,8 +313,8 @@ alongside the XCFramework work.
 
 That day has arrived, so stage 2 is no longer sufficient on its own. `FrakSDK` has one
 platform-conditional seam — `SystemAppLauncher`, which is a `false`-returning stub where
-there is no `UIKit`, and which nothing tests directly. `FrakSDKUI` has six: everything
-touching UIKit sits behind `#if canImport(UIKit)`, so on the host that target reduces to
+there is no `UIKit`, and which nothing tests directly. `FrakSDKUI` has five (six across
+the package): everything touching UIKit sits behind `#if canImport(UIKit)`, so on the host that target reduces to
 `SharingPageURL` and `SharingResult`. The sheet, the web view, the state machine and the
 native share are type-checked by stage 1 and **executed by neither** — the
 xcodebuild-on-simulator path above is what finally runs them.
@@ -307,10 +324,18 @@ macOS/Catalyst dylib and cannot be linked for `arm64-apple-ios15.0-simulator` fr
 SwiftPM at all, so an XCTest suite could not clear stage 1.
 
 `Tests/FrakSDKTests/Fixtures/` is where the golden-fixture loader lands (`03` §1.6):
-one committed language-agnostic corpus covering the FrakContext v2 codec, reward
-selection and formatting, and the signed byte layout for `merge`/`ensure`/`install`,
-generated from the TypeScript suites and asserted identically from Swift, Kotlin and
-TS. One corpus, not three.
+one committed language-agnostic corpus generated from the TypeScript suites. One
+corpus, not three.
+
+**Two of its three parts are asserted from Swift**: the FrakContext v2 codec
+(`golden-context.json`) and the signed byte layout for `merge`/`ensure`/`install`
+(`golden-proofs.json`), both identically from Swift, Kotlin and TS.
+`golden-rewards.json` is **declared by `GoldenFixtures.rewards` and loaded by no
+test — on either native platform.** Most of its 67 vectors cover reward selection and
+currency formatting that neither native SDK implements (the backend returns
+pre-formatted values via `formatted=1`), but its 16 `format-amount` vectors are a real
+decode-fidelity contract, and they are currently hand-copied into
+`RewardsDecoderTests.swift` as literals instead. Wire them or drop the constant.
 
 ### `swift format` owns this folder, not biome
 
@@ -346,14 +371,35 @@ It declares:
   which the install handoff deliberately links to the user's Frak identity.
 - `NSPrivacyCollectedDataTypePurchaseHistory`, linked — `trackPurchase` transmits the
   merchant's customer and order identifiers plus a checkout token.
+- `NSPrivacyCollectedDataTypeProductInteraction`, linked — `track(_:)` posts `arrival`,
+  `sharing` and `custom` interactions. This is the SDK's headline feature and was the
+  most conspicuous omission when the file declared only the two types above.
+- `NSPrivacyCollectedDataTypeUserID`, linked — `trackPurchase(customerId:)` takes the
+  merchant's own customer identifier. Distinct from the Device ID: declaring it only as
+  Purchase History under-declares the identifier itself, and under-declaring is the
+  rejection.
 - `NSPrivacyAccessedAPICategoryUserDefaults` with reason `CA92.1`, for the merchant
   config cache and the anonymous id (`02` §4). Nothing else the SDK touches is a
-  required-reason API. Verify `CA92.1` against Apple's live reason list before release;
-  `02` §5.1 notes `C56D.1` may be the better fit.
+  required-reason API — no file timestamps, disk space, boot time or active keyboards,
+  and neither WebKit nor `UIPasteboard` is in a category. **`CA92.1` is settled**: it
+  covers an SDK reading/writing UserDefaults in the app's own container on the app's
+  behalf. `C56D.1`, floated in `02` §5.1, is for an SDK exposing a UserDefaults
+  *wrapper API for the app to call* — this SDK exposes none, so it would be wrong.
 
-`FrakSDKUI` carries no manifest of its own. Correct while it ships as SPM source — it
-depends on `FrakSDK`, so the resource rides along — and something that must be revisited
-the moment the XCFramework path exists, where each binary needs its own.
+**`Interaction.custom(_:data:)` is the merchant's own declaration responsibility.** It
+carries an arbitrary `[String: String]` that the SDK durably persists and transmits; a
+merchant who puts an email or a user id in there makes this manifest incomplete for
+*their* binary, and ITMS-91053 lands on their upload. Say so in integration docs.
+
+**`FrakSDKUI` ships its own manifest** (`Sources/FrakSDKUI/PrivacyInfo.xcprivacy`,
+wired as a `.copy` resource). It is a separately consumable `.library` product, so an
+absent file there is not "inherits `FrakSDK`'s" — Apple aggregates per binary, and it
+would be a hole in the merchant's privacy report. It declares the subset the module is
+itself responsible for: `DeviceID` and `ProductInteraction` (`SharingPageURL.build`
+puts `clientId` and `merchantId` in the page URL; the sheet reports the share outcome),
+plus an **explicit empty** `NSPrivacyAccessedAPITypes` — an empty array is a
+declaration, an absent file is not. `UIPasteboard` in `NativeShare` is not a
+required-reason category.
 
 One known failure mode to validate before shipping (`03` §3.1): AppsFlyer's manifest
 failed to bundle correctly in the *static* SPM variant (their issue #281). Propagation

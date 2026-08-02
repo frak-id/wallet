@@ -40,7 +40,11 @@ let package = Package(
             dependencies: ["FrakSDK"],
             path: "Sources/FrakSDKUI",
             resources: [
-                .process("Resources")
+                // `.copy`, never `.process`: the manifest must land at the resource-bundle
+                // root unmodified for Apple's aggregation to see it. FrakSDKUI ships its
+                // own because it is a separately consumable `.library` product.
+                .copy("PrivacyInfo.xcprivacy"),
+                .process("Resources"),
             ]
         ),
         .testTarget(

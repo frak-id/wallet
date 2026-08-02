@@ -56,9 +56,21 @@ originally written; this section is the delta.
   reads and moved dispatch outside `frakCall`'s error boundary. Reverted; the narrow `withContext`
   inside `ConfigStore` was already sufficient.
 
-**Unchanged** — everything else, including all six ship blockers in §1 other than B1 and B2:
-B3 (nothing builds/tests/publishes in CI), B4 (iOS toolchain floor), B5 (strict concurrency not
-enabled for consumers), B6 (GPL-3.0), and all of §2 security/privacy, §4, and most of §5–§7.
+**Unchanged at the time this section was written** — everything else, including all six ship
+blockers in §1 other than B1 and B2: B3 (nothing builds/tests/publishes in CI), B4 (iOS toolchain
+floor), B5 (strict concurrency not enabled for consumers), B6 (GPL-3.0), and all of §2
+security/privacy, §4, and most of §5–§7.
+
+> **Superseded by [`07-audit-round-2.md`](./07-audit-round-2.md).** A second full audit
+> re-verified all 55 findings below against the tree at `51d923ded`: **7 fixed, 10 partially,
+> 37 untouched**. Read `07` §0 for why that ratio matters more than any individual entry — the
+> short version is that most of these findings are *shared design holes faithfully copied to both
+> platforms*, so per-platform review keeps missing them.
+>
+> Closed since, and marked inline below: **B6** (licence — Apache-2.0), and the privacy-manifest
+> half of §2. **B3 is now a deliberate deferral rather than an open blocker**: publishing and CI
+> land once the first local and dev-environment tests have exercised the SDKs on a device, and
+> the docs that claimed otherwise have been corrected.
 
 §3 concurrency: **C1 and C2 are now fixed [verified]** — the iOS `SingleFlight` was rewritten to match
 its Kotlin twin's guarantees. Waiters no longer `await task.value` (which ignores the awaiter's
@@ -179,7 +191,16 @@ IO-thread fetch behind it.
 `readPersisted`/`writePersisted` suspend so the guarantee cannot be lost by a new call
 site. Do the I/O and decode outside the mutex; take the lock only to publish the `Entry`.
 
-### B3 — Nothing builds, tests, lints, or publishes either SDK
+### B3 — Nothing builds, tests, lints, or publishes either SDK — **DEFERRED, not open**
+
+> **Reclassified.** The facts below still hold: no CI job builds either SDK and there is no
+> Maven Central Portal transport (only `publishToMavenLocal`) or XCFramework path. That is now
+> a **sequencing decision rather than an unaddressed blocker** — CI and publishing land once
+> the first local and dev-environment tests have exercised the SDKs on a device, because
+> publishing an artifact nothing has run is how you burn a version number. What *was* wrong and
+> is now fixed is the documentation: `sdk/AGENTS.md`, both native READMEs and the plan README
+> claimed a Portal target, an `apiDump` command and "green" results that did not exist. They now
+> say plainly what is wired, what is not, and why. Original finding below.
 
 - **CI:** `.github/workflows/apps.yaml:8` triggers on `sdk/**` but its only job runs
   `bun run build:sdk`, whose directory list is `(core legacy react components)`. No
@@ -228,7 +249,13 @@ while `:51` stores `private let redirectDelegate = NoRedirectDelegate()`, a
 Swift 6 and is invisible today. The one `HTTPClient` value is shared across two actors
 (`DefaultFrakClient.swift:22-24`).
 
-### B6 — Licensing: GPL-3.0 on a statically-linked mobile SDK
+### B6 — Licensing: GPL-3.0 on a statically-linked mobile SDK — **FIXED**
+
+> **Resolved: Apache-2.0.** `sdk/android/LICENSE` and `sdk/ios/LICENSE` now carry the full
+> Apache-2.0 text, and `frak-publish.gradle.kts` declares it in the POM. The native SDK
+> subtree deliberately diverges from the monorepo's GPL-3.0; the rest of the repo is
+> unaffected. Apache-2.0 rather than MIT for the explicit patent grant — which covers the
+> identity proof-of-possession scheme — and the trademark clause. Original finding below.
 
 `LICENSE` is GPLv3; `sdk/ios/` has no LICENSE of its own; `frak-publish.gradle.kts:48`
 hardcodes GPL-3.0 into the POM. `android/README.md:82-89` already flags this as an open

@@ -12,7 +12,7 @@ Native Android (Kotlin) and iOS (Swift) SDKs mirroring the capabilities of
 | [`03-implementation-strategy.md`](./03-implementation-strategy.md) | How we build and ship it: two native codebases vs a shared core, distribution, React Native, monorepo integration, and the v0.1 POC scope |
 | [`04-golden-fixtures.md`](./04-golden-fixtures.md) | The cross-platform conformance corpus: what it covers, the envelope, regeneration, how Kotlin and Swift consume it, and the ICU/invisible-character hazard |
 | [`05-audit-findings.md`](./05-audit-findings.md) | Audit of the Android + iOS core SDKs: ship blockers, security/privacy, concurrency, networking, ABI, DX, tests |
-| [`06-abi-decisions.md`](./06-abi-decisions.md) | **Open** ABI questions, now blocking the first publish rather than the dump (which is committed): the `$default` constructor freeze, `@InternalFrakApi` vs promotion, iOS's now-public `init(from:)` |
+| [`06-abi-decisions.md`](./06-abi-decisions.md) | **Open** ABI questions blocking the first publish: the `$default` constructor freeze, `@InternalFrakApi` vs promotion, iOS's now-public `init(from:)`. Note there is **no committed `.api` dump** — BCV was wired and then deliberately removed while the shape is unfrozen; it returns before the first publish |
 
 ## Scope (MVP)
 
@@ -131,9 +131,16 @@ and codebase-gap passes; findings folded into `01` and `02`.
 
 | | State |
 |---|---|
-| `sdk/android/` | Gradle multi-module library, `:frak-sdk` + `:frak-sdk-ui`, `explicitApi()`, consumer R8 rules, scoped `<queries>`, backup-exclusion resource. `assembleRelease` / `ktlintCheck` / `test` / `publishToMavenLocal` green. |
-| `sdk/ios/` | SwiftPM package, `FrakSDK` + `FrakSDKUI`, real `PrivacyInfo.xcprivacy`. `build` / `test` / `lint` green at an explicit iOS-simulator triple under Swift 6. |
+| `sdk/android/` | Gradle multi-module library, `:frak-sdk` + `:frak-sdk-ui`, `explicitApi()`, consumer R8 rules, scoped `<queries>`, backup-exclusion resource. `assembleRelease` / `ktlintCheck` / `test` / `publishToMavenLocal` last passed on a maintainer's machine — see the caveat below. |
+| `sdk/ios/` | SwiftPM package, `FrakSDK` + `FrakSDKUI`, real `PrivacyInfo.xcprivacy` on **both** targets. `build` / `test` / `lint` last passed on a maintainer's machine at an explicit iOS-simulator triple with `-swift-version 6`. |
 | Monorepo wiring | `biome.json` exclusions (already present), `knip.ts` `ignoreWorkspaces`, `.changeset` `ignore`, `.gitignore` build outputs, `AGENTS.md` + `sdk/AGENTS.md`. |
+
+> ⚠️ **"Green" here means "a human ran it once", not "a gate enforces it".** No CI job
+> builds, tests or lints either SDK, so none of these results is reproducible on demand
+> and none is re-checked on a change. The stale outputs under `sdk/android/**/build/`
+> are from an *older tree* — they contain a test file that no longer exists — and are
+> not evidence of the current state. CI and publishing land together, once the first
+> local and dev-environment tests have exercised the SDKs on a device.
 
 **Both platforms now implement the MVP surface.** Identity (a hardware-held P-256
 keypair and the proof envelope), the FrakContext v2 codec and local link building,
@@ -162,17 +169,25 @@ each other. **Nothing has run on a device on either platform**, and no CI job
 builds or tests either SDK — every claim rests on JVM unit tests and a release
 build run by hand.
 
-Two decisions this surfaced and did not settle: the Android dex budget had to be
-raised from the 150 KB `02` §1.2 states to 256 KB once the surface was complete,
-and the licence question below is still open.
+One decision this surfaced and did not settle: the Android dex budget had to be
+raised from the 150 KB `02` §1.2 states to 256 KB once the surface was complete.
+
+**The licence is settled: Apache-2.0** for the native SDKs only
+(`sdk/{android,ios}/LICENSE`), deliberately diverging from the monorepo's GPL-3.0.
+GPL is defensible for a CDN bundle loaded at runtime; it is a much bigger ask for an
+artifact a merchant statically links into a proprietary store binary, and merchant
+legal teams would refuse. Apache-2.0 over MIT for the explicit patent grant — which
+covers the identity proof-of-possession scheme — and the trademark clause.
 
 The OpenAPI export (`03` §7 item 2) is **done for the MVP surface** — four defects
 found and fixed in `b8142a96e` and `3578e5c92`, from a missing document envelope to three
 of six MVP routes declaring no response schema at all.
 
-Still open before the POC loop (`03` §7): Maven Central Portal namespace verification, and
-the reward-formatting corpus — `golden-rewards.json` exists but no Swift suite loads it, so
-iOS reward formatting is still asserted against hand-written JSON rather than the corpus.
+Still open before the POC loop (`03` §7): Maven Central Portal namespace verification
+and the Portal transport itself (only `publishToMavenLocal` is wired), CI for both
+SDKs, and the reward-formatting corpus — `golden-rewards.json` exists but **neither**
+the Swift nor the Kotlin suite loads it, so reward decoding is asserted against
+hand-written literals rather than the corpus on both platforms.
 
 `03-implementation-strategy.md` adds the build-and-ship decisions the first two
 documents leave open (code sharing, distribution, React Native, monorepo integration)

@@ -44,7 +44,11 @@ bun run test --project core-sdk-unit
 bun run test --project react-sdk-unit
 ```
 
-## Native SDKs (`android/`, `ios/`) — scaffolding
+## Native SDKs (`android/`, `ios/`) — pre-release
+
+**Licensed Apache-2.0, not the monorepo's GPL-3.0** (`sdk/{android,ios}/LICENSE`). Merchants
+statically link these into closed-source store binaries, and the patent grant covers the identity
+proof-of-possession scheme. The rest of the repo is unaffected.
 
 Two artifacts per platform so a merchant taking only tracking never pulls in a web view:
 
@@ -52,28 +56,34 @@ Two artifacts per platform so a merchant taking only tracking never pulls in a w
 | --- | --- | --- |
 | Core (UI-free) | `id.frak:frak-sdk` (`:frak-sdk`) | `FrakSDK` |
 | UI (web view) | `id.frak:frak-sdk-ui` (`:frak-sdk-ui`) | `FrakSDKUI` |
-| Build | Gradle 8.14.3, AGP 8.11.0, Kotlin 2.0.21 → language level 1.9 | SwiftPM, tools-version 5.9 |
-| Minimum | `minSdk 24`, `explicitApi()` on | iOS 15, Swift 6 strict concurrency |
-| Registry | Maven Central **Portal** (not OSSRH — decommissioned) | SPM only (**no CocoaPods**) |
+| Build | Gradle 9.5.0, AGP 9.1.1, Kotlin 2.4.10 → language/API level 2.2, JVM target 17, `compileSdk 36` | SwiftPM, tools-version 5.9 |
+| Minimum | `minSdk 24`, `explicitApi()` on | iOS 15 |
+| Registry | Maven Central **Portal** (not OSSRH — decommissioned) — *target, not yet wired* | SPM only (**no CocoaPods**) |
 
 - **Both platforms now implement the MVP surface.** Android: `core/`, `net/`, `config/`, `rewards/`, `identity/`, `sharing/`, `tracking/`, `applink/`, and the Compose sharing sheet in `frak-sdk-ui`. iOS: the same folders, plus the SwiftUI `.frakSharingSheet` in `FrakSDKUI`. **Nothing on either platform has run on a device**, and no CI job builds either. See `sdk/{android,ios}/README.md` for what is actually implemented and tested.
+- **Publishing and CI are deliberately deferred.** There is no Maven Central Portal repository wired in `frak-publish.gradle.kts` (only `publishToMavenLocal`), no XCFramework path (`bun run --cwd sdk/ios xcframework` exits 1), and no CI job that builds, tests or lints either SDK. That is a sequencing decision, not an oversight: both come once the first local and dev-environment tests have actually exercised the SDKs on a device. Until then every `build`/`test`/`check` result is a local run by hand.
 - **Three deliberate iOS divergences**, each forced by the platform rather than chosen: the anonymous id is held in `UserDefaults` (`02` §4 rejects Keychain, which survives uninstall), in its own `id.frak.sdk.identity` suite so a corrupt write to the config cache cannot take it with it, with the Secure Enclave's wrapped key blob alongside it; `DeepLinkHandling` has no `.automatic` case, because a library cannot observe a host's `Scene`/`AppDelegate` URL callbacks the way it can Android's `ActivityLifecycleCallbacks`; and the install fallback is a plain App Store URL, because iOS has no counterpart to Play's install referrer — the identity handoff only completes when the wallet is already installed, until the install-code flow of `02` §6 exists.
 - **The two wire formats are pinned to golden fixtures, not to each other.** The identity proof layout and the FrakContext v2 codec are asserted against `sdk/core/src/{identity,context}/fixtures/` on every platform. A port that does not assert against the corpus has not been ported.
-- **The Android dex budget is 256 KB, not the 150 KB `02 §1.2` states.** Raised deliberately once the MVP surface landed; see the note in `sdk/android/gradle.properties`. Still an open product decision.
-- **Zero third-party runtime deps**, budget < 150 KB. `kotlinx-coroutines-core` is the single exception, and it is `api` because `suspend`/`StateFlow` are in the public surface.
+- **The Android dex budget is 256 KB per artifact**, not the 150 KB `02 §1.2` states. Raised deliberately once the MVP surface landed (212 KB over 179 classes); see the note in `sdk/android/gradle.properties`. Still an open product decision. Note the check only measures each module's own `classes.jar`, so it is currently meaningful for `:frak-sdk` and vacuous for `:frak-sdk-ui`.
+- **`:frak-sdk` has zero third-party runtime deps.** `kotlinx-coroutines-core` is the single exception, and it is `api` because `suspend`/`StateFlow` are in the public surface. **`:frak-sdk-ui` does not have this property** — it ships Compose (`compose-bom`, `ui`, `foundation`, `material3`), which is the price of the sheet and the reason the two artifacts are split. On iOS both targets are genuinely dependency-free: `Package.swift` declares no `dependencies` at all.
 - **`explicitApi()` on Android is deliberate**: a merchant's binary freezes at store submission, so an accidentally-public helper is one we are stuck supporting forever.
 - **`Presenter` lives in the UI artifact, not `sharing/`** — `buildSharingLink()` is 100% local and must stay callable without the web view.
 - **No exported activity, no intent filter in the SDK manifest** (02 §6.1): inbound `fCtx` is wired through `FrakConfig.deepLink`, so the merchant's own router keeps owning their links.
-- **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the *merchant's* upload, not ours.
+- **`PrivacyInfo.xcprivacy` is a hard gate**: ITMS-91053 lands on the *merchant's* upload, not ours. **Both iOS targets ship one** — `FrakSDKUI` is a separately consumable `.library`, so an absent manifest there would be a hole in the merchant's privacy report rather than an inheritance from `FrakSDK`. Declared: `DeviceID`, `PurchaseHistory`, `ProductInteraction`, `UserID` on the core; `DeviceID` + `ProductInteraction` on the UI; `UserDefaults`/`CA92.1` as the only required-reason API, on the core only.
 
 ```bash
 bun run --cwd sdk/android build   # assembleRelease — no device, this is a library
 bun run --cwd sdk/android test    # JVM unit tests
-bun run --cwd sdk/android check   # full check: ktlint, tests, Android Lint, version drift, dex budget, apiCheck
-bun run --cwd sdk/android apiDump # regenerate the BCV API dump
+bun run --cwd sdk/android check   # ktlint, tests, Android Lint, version drift, dex budget
 bun run --cwd sdk/ios build       # swift build at an explicit iOS-simulator triple
+bun run --cwd sdk/ios test        # two stages: compile at the iOS triple, then run on the host
 bun run --filter '*/native-*' lint   # ktlint + swift-format across SDKs and harnesses
 ```
+
+There is **no `apiCheck`/`apiDump`**: binary-compatibility-validator was wired and then deliberately
+removed while the public shape is unfrozen (`06-abi-decisions.md`), and no `.api` dump is committed.
+It returns before the first publish — `explicitApi()` catches a newly-public symbol but not a
+breaking change to an existing one.
 
 ## See Also
 

@@ -34,8 +34,11 @@ afterEvaluate {
 
                     licenses {
                         license {
-                            name.set("GNU General Public License v3.0")
-                            url.set("https://www.gnu.org/licenses/gpl-3.0.txt")
+                            // Apache-2.0, not the monorepo's GPL-3.0: merchants statically link
+                            // this into closed-source store binaries, and the patent grant covers
+                            // the identity proof-of-possession scheme. See sdk/android/LICENSE.
+                            name.set("The Apache License, Version 2.0")
+                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
 
