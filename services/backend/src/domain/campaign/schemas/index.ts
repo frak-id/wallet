@@ -54,7 +54,15 @@ export const RuleConditionSchema = t.Object({
 });
 export type RuleCondition = Static<typeof RuleConditionSchema>;
 
-// Recursive schema - t.Recursive required for self-referential ConditionGroup
+// Recursive schema - t.Recursive required for self-referential ConditionGroup.
+// The `$id` is a full JSON pointer on purpose: TypeBox emits the self-reference
+// verbatim as `{ $ref: <$id> }`, so a bare `"ConditionGroup"` leaks into the
+// OpenAPI document as a dangling ref that codegen cannot resolve. Using the
+// pointer makes every emitted ref target `components.schemas.ConditionGroup`,
+// which `scripts/generate-openapi.ts` registers as an Elysia model.
+// Runtime validation is unaffected: TypeBox resolves recursion via the `$id`
+// string identity, whatever that string happens to be.
+export const CONDITION_GROUP_SCHEMA_ID = "ConditionGroup";
 export const ConditionGroupSchema: TSchema = t.Recursive(
     (Self) =>
         t.Object({
@@ -65,7 +73,7 @@ export const ConditionGroupSchema: TSchema = t.Recursive(
             ]),
             conditions: t.Array(t.Union([RuleConditionSchema, Self])),
         }),
-    { $id: "ConditionGroup" }
+    { $id: `#/components/schemas/${CONDITION_GROUP_SCHEMA_ID}` }
 );
 
 export type ConditionGroup = {
