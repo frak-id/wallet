@@ -1,0 +1,507 @@
+{
+	"formatVersion": 1,
+	"fixtures": [
+		{
+			"name": "c-only",
+			"description": "clientId only, no wallet — 37 bytes, header 0x12 (v2 | has_c)",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400,
+				"c": "550e8400-e29b-41d4-a716-446655440001"
+			},
+			"expected": {
+				"byteLength": 37,
+				"hex": "12550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a716446655440001",
+				"base64url": "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ",
+				"base64urlLength": 50,
+				"decoded": {
+					"v": 2,
+					"m": "550e8400-e29b-41d4-a716-446655440000",
+					"t": 1709654400,
+					"c": "550e8400-e29b-41d4-a716-446655440001"
+				}
+			}
+		},
+		{
+			"name": "w-only",
+			"description": "wallet only, no clientId — 41 bytes, header 0x22 (v2 | has_w)",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400,
+				"w": "0x1234567890123456789012345678901234567890"
+			},
+			"expected": {
+				"byteLength": 41,
+				"hex": "22550e8400e29b41d4a71644665544000065e741801234567890123456789012345678901234567890",
+				"base64url": "IlUOhADim0HUpxZEZlVEAABl50GAEjRWeJASNFZ4kBI0VniQEjRWeJA",
+				"base64urlLength": 55,
+				"decoded": {
+					"v": 2,
+					"m": "550e8400-e29b-41d4-a716-446655440000",
+					"t": 1709654400,
+					"w": "0x1234567890123456789012345678901234567890"
+				}
+			}
+		},
+		{
+			"name": "c-and-w",
+			"description": "clientId and wallet both present — 57 bytes, header 0x32 (v2 | has_c | has_w)",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400,
+				"c": "550e8400-e29b-41d4-a716-446655440001",
+				"w": "0x1234567890123456789012345678901234567890"
+			},
+			"expected": {
+				"byteLength": 57,
+				"hex": "32550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a7164466554400011234567890123456789012345678901234567890",
+				"base64url": "MlUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAARI0VniQEjRWeJASNFZ4kBI0VniQ",
+				"base64urlLength": 76,
+				"decoded": {
+					"v": 2,
+					"m": "550e8400-e29b-41d4-a716-446655440000",
+					"t": 1709654400,
+					"c": "550e8400-e29b-41d4-a716-446655440001",
+					"w": "0x1234567890123456789012345678901234567890"
+				}
+			}
+		},
+		{
+			"name": "empty-client-string-treated-as-absent",
+			"description": "c is the empty string, which the encoder treats as ABSENT rather than as an invalid UUID — it falls back to the wallet-only 41-byte layout and the decoded context has no \"c\" key at all",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400,
+				"c": "",
+				"w": "0x1234567890123456789012345678901234567890"
+			},
+			"expected": {
+				"byteLength": 41,
+				"hex": "22550e8400e29b41d4a71644665544000065e741801234567890123456789012345678901234567890",
+				"base64url": "IlUOhADim0HUpxZEZlVEAABl50GAEjRWeJASNFZ4kBI0VniQEjRWeJA",
+				"base64urlLength": 55,
+				"decoded": {
+					"v": 2,
+					"m": "550e8400-e29b-41d4-a716-446655440000",
+					"t": 1709654400,
+					"w": "0x1234567890123456789012345678901234567890"
+				}
+			}
+		},
+		{
+			"name": "timestamp-zero",
+			"description": "timestamp 0 (Unix epoch, uint32 lower bound) — the four timestamp bytes are 00000000",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 0,
+				"c": "550e8400-e29b-41d4-a716-446655440001"
+			},
+			"expected": {
+				"byteLength": 37,
+				"hex": "12550e8400e29b41d4a71644665544000000000000550e8400e29b41d4a716446655440001",
+				"base64url": "ElUOhADim0HUpxZEZlVEAAAAAAAAVQ6EAOKbQdSnFkRmVUQAAQ",
+				"base64urlLength": 50,
+				"decoded": {
+					"v": 2,
+					"m": "550e8400-e29b-41d4-a716-446655440000",
+					"t": 0,
+					"c": "550e8400-e29b-41d4-a716-446655440001"
+				}
+			}
+		},
+		{
+			"name": "timestamp-uint32-max",
+			"description": "timestamp 4294967295 (0xffffffff, uint32 upper bound) — VERIFIED ACCEPTED: the guard is t > 0xffffffff, so the boundary itself is inclusive and the four timestamp bytes are ffffffff",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 4294967295,
+				"c": "550e8400-e29b-41d4-a716-446655440001",
+				"w": "0x1234567890123456789012345678901234567890"
+			},
+			"expected": {
+				"byteLength": 57,
+				"hex": "32550e8400e29b41d4a716446655440000ffffffff550e8400e29b41d4a7164466554400011234567890123456789012345678901234567890",
+				"base64url": "MlUOhADim0HUpxZEZlVEAAD_____VQ6EAOKbQdSnFkRmVUQAARI0VniQEjRWeJASNFZ4kBI0VniQ",
+				"base64urlLength": 76,
+				"decoded": {
+					"v": 2,
+					"m": "550e8400-e29b-41d4-a716-446655440000",
+					"t": 4294967295,
+					"c": "550e8400-e29b-41d4-a716-446655440001",
+					"w": "0x1234567890123456789012345678901234567890"
+				}
+			}
+		},
+		{
+			"name": "timestamp-big-endian-byte-order",
+			"description": "timestamp 16909060 (0x01020304) — asserts BIG-endian byte order explicitly: the bytes must read 01020304, not 04030201",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+				"t": 16909060,
+				"c": "550e8400-e29b-41d4-a716-446655440001"
+			},
+			"expected": {
+				"byteLength": 37,
+				"hex": "129c8b3e2a1d4f4a6b8e2d7f3a1b5c9d0e01020304550e8400e29b41d4a716446655440001",
+				"base64url": "EpyLPiodT0prji1_OhtcnQ4BAgMEVQ6EAOKbQdSnFkRmVUQAAQ",
+				"base64urlLength": 50,
+				"decoded": {
+					"v": 2,
+					"m": "9c8b3e2a-1d4f-4a6b-8e2d-7f3a1b5c9d0e",
+					"t": 16909060,
+					"c": "550e8400-e29b-41d4-a716-446655440001"
+				}
+			}
+		},
+		{
+			"name": "uppercase-uuid-normalised",
+			"description": "UPPERCASE merchant and client UUIDs — the codec NORMALISES rather than rejects: its UUID regex is case-insensitive, so these bytes are byte-identical to the lowercase c-only fixture at the same timestamp, and decode always emits lower-case canonical 8-4-4-4-12 form",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "550E8400-E29B-41D4-A716-446655440000",
+				"t": 1709654400,
+				"c": "550E8400-E29B-41D4-A716-446655440001"
+			},
+			"expected": {
+				"byteLength": 37,
+				"hex": "12550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a716446655440001",
+				"base64url": "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ",
+				"base64urlLength": 50,
+				"decoded": {
+					"v": 2,
+					"m": "550e8400-e29b-41d4-a716-446655440000",
+					"t": 1709654400,
+					"c": "550e8400-e29b-41d4-a716-446655440001"
+				}
+			}
+		},
+		{
+			"name": "mixed-case-wallet-normalised",
+			"description": "mixed-case (EIP-55-looking) wallet address — accepted without checksum validation and normalised to lower-case hex on decode",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400,
+				"w": "0xAbCdEf0123456789012345678901234567890123"
+			},
+			"expected": {
+				"byteLength": 41,
+				"hex": "22550e8400e29b41d4a71644665544000065e74180abcdef0123456789012345678901234567890123",
+				"base64url": "IlUOhADim0HUpxZEZlVEAABl50GAq83vASNFZ4kBI0VniQEjRWeJASM",
+				"base64urlLength": 55,
+				"decoded": {
+					"v": 2,
+					"m": "550e8400-e29b-41d4-a716-446655440000",
+					"t": 1709654400,
+					"w": "0xabcdef0123456789012345678901234567890123"
+				}
+			}
+		},
+		{
+			"name": "all-zero-fields",
+			"description": "all-zero merchant UUID, timestamp 0 and all-zero client UUID — every payload byte after the header is 00, which catches implementations that skip writing zero fields",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "00000000-0000-0000-0000-000000000000",
+				"t": 0,
+				"c": "00000000-0000-0000-0000-000000000000"
+			},
+			"expected": {
+				"byteLength": 37,
+				"hex": "12000000000000000000000000000000000000000000000000000000000000000000000000",
+				"base64url": "EgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+				"base64urlLength": 50,
+				"decoded": {
+					"v": 2,
+					"m": "00000000-0000-0000-0000-000000000000",
+					"t": 0,
+					"c": "00000000-0000-0000-0000-000000000000"
+				}
+			}
+		},
+		{
+			"name": "all-ones-fields",
+			"description": "all-ff UUIDs, uint32-max timestamp and all-ff wallet — every payload byte after the header is ff, the maximal 57-byte payload",
+			"kind": "encode",
+			"input": {
+				"v": 2,
+				"m": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+				"t": 4294967295,
+				"c": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+				"w": "0xffffffffffffffffffffffffffffffffffffffff"
+			},
+			"expected": {
+				"byteLength": 57,
+				"hex": "32ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+				"base64url": "Mv__________________________________________________________________________",
+				"base64urlLength": 76,
+				"decoded": {
+					"v": 2,
+					"m": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+					"t": 4294967295,
+					"c": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+					"w": "0xffffffffffffffffffffffffffffffffffffffff"
+				}
+			}
+		},
+		{
+			"name": "reject-encode-merchant-not-uuid",
+			"description": "merchant id is not a UUID",
+			"kind": "reject",
+			"direction": "encode",
+			"reason": "m fails the RFC-4122 shape check",
+			"input": {
+				"v": 2,
+				"m": "not-a-uuid",
+				"t": 1709654400,
+				"c": "550e8400-e29b-41d4-a716-446655440001"
+			},
+			"expected": null
+		},
+		{
+			"name": "reject-encode-client-not-uuid",
+			"description": "client id is a non-empty string but not a UUID",
+			"kind": "reject",
+			"direction": "encode",
+			"reason": "c is present (non-empty) but fails the UUID shape check",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400,
+				"c": "not-a-uuid"
+			},
+			"expected": null
+		},
+		{
+			"name": "reject-encode-wallet-malformed",
+			"description": "wallet address is not 0x + 40 hex characters",
+			"kind": "reject",
+			"direction": "encode",
+			"reason": "w fails isAddress and, with no c, the context has no identifier",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400,
+				"w": "0xnot-a-wallet"
+			},
+			"expected": null
+		},
+		{
+			"name": "reject-encode-wallet-too-short",
+			"description": "wallet address is valid hex but only 39 characters long",
+			"kind": "reject",
+			"direction": "encode",
+			"reason": "w is the right shape but the wrong length",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400,
+				"w": "0x123456789012345678901234567890123456789"
+			},
+			"expected": null
+		},
+		{
+			"name": "reject-encode-missing-both-c-and-w",
+			"description": "neither clientId nor wallet is present",
+			"kind": "reject",
+			"direction": "encode",
+			"reason": "a V2 context MUST carry at least one identifier",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1709654400
+			},
+			"expected": null
+		},
+		{
+			"name": "reject-encode-timestamp-negative",
+			"description": "timestamp is -1, below the uint32 range",
+			"kind": "reject",
+			"direction": "encode",
+			"reason": "t < 0",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": -1,
+				"c": "550e8400-e29b-41d4-a716-446655440001"
+			},
+			"expected": null
+		},
+		{
+			"name": "reject-encode-timestamp-overflow",
+			"description": "timestamp is 4294967296 (0x100000000), one past the uint32 range",
+			"kind": "reject",
+			"direction": "encode",
+			"reason": "t > 0xffffffff — note that 4294967295 is ACCEPTED, see timestamp-uint32-max",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 4294967296,
+				"c": "550e8400-e29b-41d4-a716-446655440001"
+			},
+			"expected": null
+		},
+		{
+			"name": "reject-encode-timestamp-fractional",
+			"description": "timestamp is 1.5, not an integer",
+			"kind": "reject",
+			"direction": "encode",
+			"reason": "t fails the integer check",
+			"input": {
+				"v": 2,
+				"m": "550e8400-e29b-41d4-a716-446655440000",
+				"t": 1.5,
+				"c": "550e8400-e29b-41d4-a716-446655440001"
+			},
+			"expected": null
+		},
+		{
+			"name": "reject-decode-empty-buffer",
+			"description": "zero-length buffer",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "shorter than the 21-byte header+merchant+timestamp minimum",
+			"inputHex": "",
+			"expected": null,
+			"decompressesTo": null
+		},
+		{
+			"name": "reject-decode-truncated-below-minimum",
+			"description": "the first 20 bytes of a valid c-only payload — below the fixed-field minimum",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "buffer shorter than header + merchant UUID + timestamp",
+			"inputHex": "12550e8400e29b41d4a71644665544000065e741",
+			"expected": null,
+			"decompressesTo": {
+				"r": "0x12550e8400e29b41d4a71644665544000065e741"
+			}
+		},
+		{
+			"name": "reject-decode-truncated-one-byte-short",
+			"description": "a valid 37-byte c-only payload with its last byte removed (36 bytes)",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "length disagrees with the length implied by the header flags",
+			"inputHex": "12550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a7164466554400",
+			"expected": null,
+			"decompressesTo": null
+		},
+		{
+			"name": "reject-decode-one-byte-too-long",
+			"description": "a valid 37-byte c-only payload with one extra trailing 00 byte (38 bytes)",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "length disagrees with the header flags; trailing junk is not tolerated",
+			"inputHex": "12550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a71644665544000100",
+			"expected": null,
+			"decompressesTo": null
+		},
+		{
+			"name": "reject-decode-wrong-version-nibble",
+			"description": "a valid c-only payload whose header version nibble is 3 instead of 2 (0x12 -> 0x13)",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "version nibble is not 2 — guards against future formats",
+			"inputHex": "13550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a716446655440001",
+			"expected": null,
+			"decompressesTo": null
+		},
+		{
+			"name": "reject-decode-version-nibble-v1",
+			"description": "a valid c-only payload whose header version nibble is 1 (0x12 -> 0x11)",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "V1 has no header byte at all, so a V2-shaped buffer claiming v1 is malformed",
+			"inputHex": "11550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a716446655440001",
+			"expected": null,
+			"decompressesTo": null
+		},
+		{
+			"name": "reject-decode-reserved-bits-set",
+			"description": "a valid c-only payload with reserved header bit 7 set (0x12 -> 0x92)",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "reserved bits 6-7 must be 0",
+			"inputHex": "92550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a716446655440001",
+			"expected": null,
+			"decompressesTo": null
+		},
+		{
+			"name": "reject-decode-no-flags-set",
+			"description": "a 37-byte payload whose header has both has_c and has_w cleared (0x12 -> 0x02)",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "a V2 payload must set at least one of has_c / has_w",
+			"inputHex": "02550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a716446655440001",
+			"expected": null,
+			"decompressesTo": null
+		},
+		{
+			"name": "reject-decode-flags-disagree-with-length",
+			"description": "a 37-byte (c-only-sized) payload whose header claims has_w instead of has_c (0x12 -> 0x22)",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "flags imply 41 bytes but the buffer is 37 — the length check catches header/payload mismatch",
+			"inputHex": "22550e8400e29b41d4a71644665544000065e74180550e8400e29b41d4a716446655440001",
+			"expected": null,
+			"decompressesTo": null
+		},
+		{
+			"name": "reject-decode-v1-length-buffer",
+			"description": "a bare 20-byte V1 wallet-address payload — the V2 decoder MUST refuse it while the outer length-based decompressor reads it as a V1 context (see decompressesTo). This is the V1-vs-V2 disambiguation: V1 is exactly 20 bytes, V2 is 37/41/57, so the two sets never overlap",
+			"kind": "reject",
+			"direction": "decode",
+			"reason": "20 bytes is the V1 layout, below the V2 minimum",
+			"inputHex": "1234567890123456789012345678901234567890",
+			"expected": null,
+			"decompressesTo": {
+				"r": "0x1234567890123456789012345678901234567890"
+			}
+		},
+		{
+			"name": "reject-decompress-malformed-base64url",
+			"description": "a string containing characters outside the base64url alphabet",
+			"kind": "reject",
+			"direction": "decompress",
+			"reason": "base64url decoding fails; decompress catches and returns nil",
+			"inputBase64url": "!!!not base64!!!",
+			"expected": null
+		},
+		{
+			"name": "reject-decompress-valid-b64-wrong-length",
+			"description": "well-formed base64url that decodes to 8 bytes — neither the V1 20-byte length nor any V2 length",
+			"kind": "reject",
+			"direction": "decompress",
+			"reason": "decoded byte length matches no known layout",
+			"inputBase64url": "AAAAAAAAAAA",
+			"expected": null
+		},
+		{
+			"name": "reject-decompress-empty-string",
+			"description": "the empty string",
+			"kind": "reject",
+			"direction": "decompress",
+			"reason": "empty input short-circuits to nil before decoding",
+			"inputBase64url": "",
+			"expected": null
+		}
+	]
+}
