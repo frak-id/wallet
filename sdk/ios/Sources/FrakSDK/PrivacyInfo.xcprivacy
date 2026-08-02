@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  HARD SHIPPING GATE — see 02-native-sdk-overview.md §5.1.
+
+  Since 1 May 2024, an SDK using a required-reason API must declare it in a privacy
+  manifest or App Store Connect rejects the upload with ITMS-91053 (Missing API
+  declaration). That rejection lands on the MERCHANT's upload, not ours: shipping this
+  file wrong or absent breaks every integrator's release, which is the worst possible
+  first impression. This file is therefore correct from day one, before any SDK
+  behaviour exists to need it.
+
+  Known failure mode to validate before release (03-implementation-strategy.md §3.1):
+  AppsFlyer's manifest failed to bundle correctly in the *static* SPM variant (their
+  issue #281). Propagation must be checked against a real consumer app, not just a
+  local `swift build`.
+-->
+<plist version="1.0">
+<dict>
+    <!--
+      No tracking as defined by App Tracking Transparency. The ATT question itself is
+      02 §12 open question 1 and needs a legal decision before iOS ships; if that
+      decision changes, this key and NSPrivacyTrackingDomains change with it.
+    -->
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+    <!--
+      TODO(02 §5.1): declare data collection accurately once the identity module
+      lands. The anonymous id is collected and linked to a user identity, so this
+      array will need an NSPrivacyCollectedDataType entry. Empty today because the
+      SDK is scaffolding and collects nothing — declared rather than omitted so the
+      shape is already here.
+    -->
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+    <!--
+      UserDefaults is one of the five required-reason categories, and this SDK stores
+      the anonymous id there (02 §4, and the storage row of the §5 dependency table).
+      Declared ahead of the code that uses it: an under-declared manifest is a
+      merchant-facing rejection, an over-declared one is not.
+
+      CA92.1 = access scoped to the app itself. Verify against Apple's live reason
+      list before release — 02 §5.1 notes C56D.1 (SDK reads/writes only its own
+      namespace) may be the better fit and is what many third-party SDKs ship.
+    -->
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

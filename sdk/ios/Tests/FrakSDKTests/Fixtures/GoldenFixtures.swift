@@ -1,26 +1,13 @@
 import Foundation
 
-/// Loads the cross-platform golden fixture corpus from `sdk/core`.
-///
-/// See `docs/plans/native-sdk/04-golden-fixtures.md`. The corpus is the named
-/// alternative to a shared core (`03-implementation-strategy.md` §1.6): three concerns
-/// must be byte-identical across TypeScript, Kotlin and Swift, and the vectors — not
-/// any one implementation — are the contract.
-///
-/// There is no dependency question on this side. `JSONSerialization` is in Foundation,
-/// so the corpus is parsed with nothing added to `Package.swift`, whose `dependencies`
-/// is deliberately absent rather than empty.
-///
-/// `JSONSerialization` rather than `JSONDecoder`, deliberately: only the *envelope* is
-/// a contract between the corpus authors and this loader. Payload fields differ per
-/// concern and evolve independently, so `Codable` structs here would make every payload
-/// change a change to this file. Entries are handed back as `[String: Any]` and each
-/// conformance suite reads the keys it owns.
+/// Loads the cross-platform golden fixture corpus from `sdk/core`. `JSONSerialization`
+/// rather than `Codable`: only the envelope is a contract between the corpus authors
+/// and this loader, payload fields evolve independently per concern, and `Codable`
+/// structs here would make every payload change a change to this file. Entries are
+/// handed back as `[String: Any]`.
 enum GoldenFixtures {
-    /// The envelope version every fixture file in the corpus declares.
-    ///
-    /// A bump means the *envelope* changed shape and every loader needs attention — not
-    /// that a payload gained a field, which is routine and needs no bump.
+    /// A bump means the envelope changed shape; a payload gaining a field is routine
+    /// and needs no bump.
     static let expectedFormatVersion = 1
 
     /// Identity: the signed byte layout for `merge`/`ensure`/`install`/`sso`.
@@ -41,36 +28,21 @@ enum GoldenFixtures {
 
         var count: Int { entries.count }
 
-        /// The entry whose `name` is `name`, or `nil`.
-        ///
-        /// `name` is the payload-level unique id used by the context and rewards
-        /// corpora. `golden-proofs.json` predates the convention and carries only
-        /// `description`; read `entries` directly for that file.
+        /// `name` is the payload-level id used by the context and rewards corpora;
+        /// `golden-proofs.json` predates it and carries only `description`.
         func named(_ name: String) -> [String: Any]? {
             entries.first { $0["name"] as? String == name }
         }
     }
 
-    /// Raised when the corpus is missing or malformed.
-    ///
-    /// A dedicated error type rather than a bare `String` so a suite cannot catch this
+    /// A dedicated error type rather than a bare `String`, so a suite cannot catch this
     /// by accident while meaning to catch something else.
     struct CorpusError: Error, CustomStringConvertible {
         let description: String
     }
 
-    /// Loads and validates one fixture file.
-    ///
-    /// Throws — loudly and specifically — when the file is absent. A fixture suite that
-    /// silently passes when the corpus is missing is worse than no suite: it reports the
-    /// same green as a real run while asserting nothing, so a corpus deleted by a bad
-    /// merge looks exactly like a corpus that passes.
-    ///
-    /// - Parameter repoRelativePath: one of `identityProofs`, `contextCodec`, `rewards`.
-    /// - Returns: the validated envelope, with payloads left opaque.
-    /// - Throws: `CorpusError` when the repo root cannot be found, the file is missing,
-    ///   the JSON is malformed, the `formatVersion` is unexpected, or `fixtures` is
-    ///   absent or empty.
+    /// Loads and validates one fixture file, throwing `CorpusError` loudly and
+    /// specifically rather than passing silently when the corpus is missing.
     static func load(_ repoRelativePath: String) throws -> Corpus {
         let root = try repoRoot()
         let url = root.appendingPathComponent(repoRelativePath)
@@ -89,8 +61,7 @@ enum GoldenFixtures {
                       bun run --cwd sdk/core fixtures:generate:context   # codec
                       bun run --cwd sdk/core fixtures:generate:rewards   # rewards
 
-                    This is a hard failure by design. \
-                    See docs/plans/native-sdk/04-golden-fixtures.md.
+                    This is a hard failure by design.
                     """
             )
         }
@@ -149,8 +120,6 @@ enum GoldenFixtures {
             )
         }
 
-        // An empty array parses cleanly and asserts nothing — the same silent-pass
-        // failure as a missing file, one step further in.
         guard !fixtures.isEmpty else {
             throw CorpusError(
                 description: """
@@ -173,16 +142,11 @@ enum GoldenFixtures {
         return Corpus(path: repoRelativePath, formatVersion: formatVersion, entries: entries)
     }
 
-    /// Walks up from this source file to the repository root.
-    ///
-    /// The corpus lives in `sdk/core`, outside the Swift package, so `Bundle.module` and
-    /// SwiftPM resources cannot reach it. The walk starts at `#filePath` rather than the
-    /// working directory: `swift test` inherits whatever directory the caller happened to
-    /// be in, while `#filePath` is baked in at compile time and is correct regardless.
-    ///
-    /// The root is identified by `sdk/core` plus a repo marker together. `sdk/core` alone
-    /// would match a stray directory; `.git` alone breaks in a worktree or a CI checkout
-    /// that trims it.
+    /// Walks up from this source file to the repository root, starting at `#filePath`
+    /// rather than the working directory (which `swift test` inherits arbitrarily).
+    /// Requires both `sdk/core` and a repo marker (`.git`/`package.json`): `sdk/core`
+    /// alone could match a stray directory, and `.git` alone breaks in a trimmed
+    /// checkout.
     static func repoRoot(from filePath: String = #filePath) throws -> URL {
         let fileManager = FileManager.default
         var directory = URL(fileURLWithPath: filePath).deletingLastPathComponent()
