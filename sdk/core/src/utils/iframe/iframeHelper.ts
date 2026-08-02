@@ -1,5 +1,9 @@
-import { getBackendUrl } from "../../config/backendUrl";
 import { initClientId } from "../../config/clientId";
+import {
+    getBackendUrl,
+    getWalletUrl,
+    setEnvironment,
+} from "../../config/environment";
 import type { FrakWalletSdkConfig, ListenerPreloadOption } from "../../types";
 
 /**
@@ -26,14 +30,11 @@ export const baseIframeProps = {
 /**
  * Create the Frak iframe
  * @param args
- * @param args.walletBaseUrl - Use `config.walletUrl` instead. Will be removed in future versions.
- * @param args.config - The configuration object containing iframe options, including the replacement for `walletBaseUrl`.
+ * @param args.config - The configuration object containing iframe options.
  */
 export async function createIframe({
-    walletBaseUrl,
     config,
 }: {
-    walletBaseUrl?: string;
     config?: FrakWalletSdkConfig;
 }): Promise<HTMLIFrameElement | undefined> {
     // Check if the iframe is already created
@@ -54,9 +55,11 @@ export async function createIframe({
 
     changeIframeVisibility({ iframe, isVisible: false });
 
+    // Publish the environment before anything reads it back: this is the
+    // earliest point in the setup path, and `initClientId` below already
+    // needs the backend origin.
     // Set src BEFORE appending to DOM to avoid about:blank load event
-    const walletUrl =
-        config?.walletUrl ?? walletBaseUrl ?? "https://wallet.frak.id";
+    const walletUrl = setEnvironment(config?.env).wallet;
 
     // Key generation happens here, once ever per browser, before `iframe.src`
     // is assigned — every other `getClientId()` call site runs after this
@@ -64,7 +67,7 @@ export async function createIframe({
     // directly rather than a follow-up `getClientId()` call, since the
     // listener URL must never carry `clientId=undefined`; on failure the
     // iframe is built without the param and falls back to the persisted store.
-    const clientId = await initClientId(walletUrl).catch((error) => {
+    const clientId = await initClientId().catch((error) => {
         console.warn("[Frak SDK] Unable to derive a client id", error);
         return undefined;
     });
@@ -72,7 +75,7 @@ export async function createIframe({
     // Preconnect to the wallet + backend origins so the handshake doesn't pay
     // for a cold DNS/TLS round-trip on partner sites that didn't warm them.
     preconnect(walletUrl);
-    preconnect(getBackendUrl(walletUrl));
+    preconnect(getBackendUrl());
 
     iframe.src = buildListenerUrl({
         walletUrl,
@@ -104,11 +107,11 @@ export async function createIframe({
  *    doesn't pay for warm-ups that nobody asked for.
  */
 export function buildListenerUrl({
-    walletUrl,
+    walletUrl = getWalletUrl(),
     clientId,
     preload,
 }: {
-    walletUrl: string;
+    walletUrl?: string;
     clientId?: string;
     preload?: ListenerPreloadOption[];
 }): string {

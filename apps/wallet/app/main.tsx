@@ -1,5 +1,6 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { setEnvironment } from "@frak-labs/core-sdk";
 import {
     defaultNS,
     fallbackLng,
@@ -26,6 +27,14 @@ import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
+
+// The wallet embeds a few core-SDK helpers (in-app-browser escape) that reach
+// the backend through the SDK's environment singleton. Nothing sets it here —
+// this app isn't an SDK integration — so publish this build's own origins.
+setEnvironment({
+    wallet: window.location.origin,
+    backend: process.env.BACKEND_URL ?? "https://backend.frak.id",
+});
 
 // Initialise analytics (OpenPanel + crashlytics globals) once at bootstrap.
 // Side-effect was previously triggered by importing the analytics module;

@@ -7,7 +7,10 @@ export {
     getBackendUrl,
     getClientId,
     getClientIdAsync,
+    getEnvironment,
+    type ResolvedEnvironment,
     sdkConfigStore,
+    setEnvironment,
 } from "./config";
 // Constants
 export { DEEP_LINK_SCHEME } from "./constants";
@@ -46,6 +49,7 @@ export type {
     FrakContext,
     FrakContextV1,
     FrakContextV2,
+    FrakEnvironment,
     FrakLifecycleEvent,
     // Config
     FrakWalletSdkConfig,

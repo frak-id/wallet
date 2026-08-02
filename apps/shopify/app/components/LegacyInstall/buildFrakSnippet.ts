@@ -1,3 +1,5 @@
+import type { FrakEnvironment } from "@frak-labs/core-sdk";
+
 /**
  * Generates a copy-paste-ready snippet for merchants on non-OS-2.0 themes.
  * Mirrors listener.liquid but without any {{ shop.metafields ... }} reads.
@@ -11,17 +13,17 @@
  * quotes (so it can't break the string literal) AND `<` (so a value can never
  * terminate the <script> element early, e.g. a stray `</script>`).
  */
-function js(value: string): string {
+function js(value: unknown): string {
     return JSON.stringify(value).replace(/</g, "\\u003c");
 }
 
 export function buildFrakSnippet({
     merchantId,
-    walletUrl,
+    env,
     componentsUrl,
 }: {
     merchantId: string;
-    walletUrl: string;
+    env: FrakEnvironment;
     componentsUrl: string;
 }): string {
     return `<!-- Frak SDK -->
@@ -29,7 +31,7 @@ export function buildFrakSnippet({
 <script type="text/javascript">
   window.FrakSetup = {
     config: {
-      walletUrl: ${js(walletUrl)},
+      env: ${js(env)},
       metadata: {
         // Merchant ID from Frak dashboard (avoids domain-based lookup)
         merchantId: ${js(merchantId)},

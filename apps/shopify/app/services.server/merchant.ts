@@ -1,20 +1,22 @@
 import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
 import { backendApi } from "../utils/backendApi";
+import { configuredOrigins } from "./frakEnv";
 import { levelForStatus, log, setRequestContext } from "./logger";
 import {
     buildShareButtonHtml,
     buildShareUrl,
+    getBackendUrlMetafield,
     getComponentsUrlMetafield,
     getMerchantIdMetafield,
     getShareButtonHtmlMetafield,
     getShareUrlMetafield,
     getWalletUrlMetafield,
     writeComponentsUrlMetafield,
+    writeEnvMetafields,
     writeMerchantIdMetafield,
     writeShareButtonHtmlMetafield,
     writeShareUrlMetafield,
-    writeWalletUrlMetafield,
 } from "./metafields";
 import { shopInfo } from "./shop";
 
@@ -41,7 +43,7 @@ const merchantInfoCache = new LRUCache<string, MerchantResolveResponse>({
     ttl: 5 * 60_000,
 });
 
-const walletUrlSyncedShops = new LRUCache<string, boolean>({
+const envSyncedShops = new LRUCache<string, boolean>({
     max: 512,
     ttl: 30 * 60_000,
 });
@@ -261,31 +263,48 @@ async function fetchMerchantFromBackend(
 }
 
 /**
- * Ensure the wallet URL metafield matches the current environment.
+ * Ensure the wallet + backend URL metafields match the current environment.
+ * They're the two halves of the SDK's `env`, so they're read, compared and
+ * written as one — a shop holding one from stage A and the other from stage B
+ * sends storefront traffic to the wrong backend.
  * Uses an in-memory cache to avoid redundant GraphQL calls.
  */
-export async function ensureWalletUrlMetafield(
+export async function ensureEnvMetafields(
     context: AuthenticatedContext
 ): Promise<void> {
-    const expectedUrl = process.env.FRAK_WALLET_URL ?? "";
-    if (!expectedUrl) return;
+    // Deliberately the un-defaulted origins: an unconfigured deployment must
+    // not stamp production onto every shop it touches.
+    const { wallet: expectedWalletUrl, backend: expectedBackendUrl } =
+        configuredOrigins();
+    if (!expectedWalletUrl || !expectedBackendUrl) return;
 
     const shop = await shopInfo(context);
     const cacheKey = shop.normalizedDomain;
 
-    if (walletUrlSyncedShops.get(cacheKey)) return;
+    if (envSyncedShops.get(cacheKey)) return;
 
     try {
-        const current = await getWalletUrlMetafield(context);
-        if (current === expectedUrl) {
-            walletUrlSyncedShops.set(cacheKey, true);
-            return;
-        }
+        const [currentWallet, currentBackend] = await Promise.all([
+            getWalletUrlMetafield(context),
+            getBackendUrlMetafield(context),
+        ]);
 
-        await writeWalletUrlMetafield(context, expectedUrl);
-        walletUrlSyncedShops.set(cacheKey, true);
+        if (
+            currentWallet !== expectedWalletUrl ||
+            currentBackend !== expectedBackendUrl
+        ) {
+            // Both keys in one mutation: a partial write would leave the shop
+            // with a cross-stage pair until the next admin visit.
+            await writeEnvMetafields(context, {
+                walletUrl: expectedWalletUrl,
+                backendUrl: expectedBackendUrl,
+            });
+        }
+        // Only on success — a throw above leaves the shop unmarked so the next
+        // admin load retries.
+        envSyncedShops.set(cacheKey, true);
     } catch (error) {
-        log.error({ err: error }, "walletUrl metafield sync failed");
+        log.error({ err: error }, "env metafield sync failed");
     }
 }
 
@@ -331,7 +350,7 @@ export async function ensureComponentsUrlMetafield(
  * `sdk/components/src/bootstrap/initFrakSdk.ts#handleActionQueryParam`).
  *
  * Idempotent and cached per shop for 30 min, same pattern as
- * `ensureWalletUrlMetafield` and `ensureComponentsUrlMetafield`.
+ * `ensureEnvMetafields` and `ensureComponentsUrlMetafield`.
  */
 export async function ensureKlaviyoShareMetafields(
     context: AuthenticatedContext

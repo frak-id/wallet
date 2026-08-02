@@ -13,11 +13,10 @@ describe("frakWalletSdkConfig", () => {
         expect(typeof frakWalletSdkConfig).toBe("object");
     });
 
-    test("should have walletUrl property", async () => {
+    test("should have an env property", async () => {
         const { frakWalletSdkConfig } = await import("./frakWallet");
 
-        expect(frakWalletSdkConfig).toHaveProperty("walletUrl");
-        expect(typeof frakWalletSdkConfig.walletUrl).toBe("string");
+        expect(frakWalletSdkConfig).toHaveProperty("env");
     });
 
     test("should have metadata with name", async () => {
@@ -51,10 +50,30 @@ describe("frakWalletSdkConfig", () => {
         );
     });
 
-    test("should use production wallet URL when not running locally", async () => {
-        const { frakWalletSdkConfig } = await import("./frakWallet");
+    test("should use the production stage when nothing is injected", async () => {
+        vi.stubEnv("FRAK_WALLET_URL", "");
+        vi.stubEnv("BACKEND_URL", "");
+        vi.resetModules();
 
-        // When not running locally and no env var, should use production URL
-        expect(frakWalletSdkConfig.walletUrl).toMatch(/https:\/\//);
+        // No injected origins and not running locally: the named preset,
+        // rather than a hardcoded pair that could drift from the SDK's.
+        const { frakWalletSdkConfig } = await import("./frakWallet");
+        expect(frakWalletSdkConfig.env).toBe("prod");
+
+        vi.unstubAllEnvs();
+    });
+
+    test("should pair the injected origins when both are present", async () => {
+        vi.stubEnv("FRAK_WALLET_URL", "https://wallet.sandbox.frak.id");
+        vi.stubEnv("BACKEND_URL", "https://backend.sandbox.frak.id");
+        vi.resetModules();
+
+        const { frakWalletSdkConfig } = await import("./frakWallet");
+        expect(frakWalletSdkConfig.env).toEqual({
+            wallet: "https://wallet.sandbox.frak.id",
+            backend: "https://backend.sandbox.frak.id",
+        });
+
+        vi.unstubAllEnvs();
     });
 });

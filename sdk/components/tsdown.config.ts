@@ -283,9 +283,6 @@ export default defineConfig([
         // how the registration calls were dropped from this bundle before.
         // `assertComponentRegistrations` fails the build if that regresses.
         define: {
-            "process.env.BACKEND_URL": JSON.stringify(
-                process.env.BACKEND_URL || "https://backend.frak.id"
-            ),
             "process.env.BUILD_TIMESTAMP": JSON.stringify(Date.now()),
             "process.env.CDN_TAG": JSON.stringify(
                 process.env.CDN_TAG || "latest"

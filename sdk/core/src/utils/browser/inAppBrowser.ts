@@ -1,3 +1,5 @@
+import { getBackendUrl } from "../../config/environment";
+
 /**
  * Check if the current device runs iOS (including iPadOS 13+).
  */
@@ -68,6 +70,6 @@ export function redirectToExternalBrowser(targetUrl: string): void {
     } else if (isIOS && targetUrl.startsWith("http://")) {
         window.location.href = `x-safari-http://${targetUrl.slice(7)}`;
     } else {
-        window.location.href = `${process.env.BACKEND_URL}/common/social?u=${encodeURIComponent(targetUrl)}`;
+        window.location.href = `${getBackendUrl()}/common/social?u=${encodeURIComponent(targetUrl)}`;
     }
 }

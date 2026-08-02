@@ -142,10 +142,8 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         );
     }
 
-    // `crypto.getRandomValues` is not secure-context gated and has shipped
-    // since IE11, so this is effectively unreachable in a real browser. It
-    // stays because keygen throws without it, and a clear error here beats
-    // that failure surfacing from inside the curve implementation.
+    // Effectively unreachable in a real browser, but keygen throws without
+    // it, and a clear error here beats that surfacing from inside the curve implementation.
     if (typeof crypto === "undefined" || !crypto.getRandomValues) {
         throw new Error(
             "[Frak SDK] crypto.getRandomValues unavailable, cannot derive a client id"
@@ -175,12 +173,10 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
         }
 
         // No key but an existing id ⇒ pre-derivation client being migrated.
-        // Derive its provable id NOW, before the caller boots the iframe, so
-        // the listener is seeded with the new id immediately. The merge that
-        // folds `storedId` into `derivedId` runs afterwards, off the
-        // critical path. Record the legacy id first: if the page dies
-        // between these writes, the marker is already durable and the merge
-        // retries next visit — the reverse order could lose it entirely.
+        // Derive its provable id now, before the caller boots the iframe.
+        // Record the legacy id first: if the page dies between these writes,
+        // the marker is durable and the merge retries next visit — the
+        // reverse order could lose it entirely.
         if (storedId) {
             localStorage.setItem(CLIENT_ID_LEGACY_KEY, storedId);
         }
@@ -194,9 +190,8 @@ export async function ensureIdentityKey(): Promise<IdentityKeyMaterial> {
             ...(storedId && { pendingLegacyId: storedId }),
         };
     } catch (error) {
-        // Keygen failed outright, or the stored key was unusable. Clear it so
-        // the next visit regenerates cleanly, then rethrow — an unprovable id
-        // is not an acceptable substitute.
+        // Keygen failed, or the stored key was unusable. Clear it so the
+        // next visit regenerates cleanly, then rethrow.
         localStorage.removeItem(CLIENT_KEY_KEY);
         publicKeyCache = null;
         throw error;

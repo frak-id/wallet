@@ -1,5 +1,10 @@
-import type { FrakWalletSdkConfig } from "@frak-labs/core-sdk";
-import { createContext, createElement, type PropsWithChildren } from "react";
+import { type FrakWalletSdkConfig, setEnvironment } from "@frak-labs/core-sdk";
+import {
+    createContext,
+    createElement,
+    type PropsWithChildren,
+    useState,
+} from "react";
 
 /**
  * The context that will keep the Frak Wallet SDK configuration
@@ -35,12 +40,21 @@ export function FrakConfigProvider(
     parameters: PropsWithChildren<FrakConfigProviderProps>
 ) {
     const { children, config } = parameters;
+
+    // Publish the wallet/backend origins as early as the config exists — core
+    // actions read them from the singleton, and some (`trackPurchaseStatus`)
+    // can fire without ever touching the iframe client. It cannot be an
+    // effect: children's own effects and queries run first and would read the
+    // wrong stage. A state initializer is the next-earliest hook, and unlike a
+    // bare call in the render body it runs once per provider rather than on
+    // every render.
+    useState(() => setEnvironment(config.env));
+
     return createElement(
         FrakConfigContext.Provider,
         {
             value: {
                 ...config,
-                walletUrl: config.walletUrl ?? "https://wallet.frak.id",
                 domain:
                     config.domain ??
                     (typeof window !== "undefined"

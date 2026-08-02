@@ -1,11 +1,27 @@
-export async function detectWalletUrl(
+/**
+ * Structural copy of `@frak-labs/core-sdk`'s `FrakEnvironment`, which is the
+ * source of truth. Not imported: this directory is shared between two example
+ * apps without being a workspace package of its own, so it resolves no
+ * dependencies.
+ */
+type FrakEnvironment = "prod" | "dev" | { wallet: string; backend: string };
+
+/**
+ * Resolve the `env` to hand to the Frak SDK.
+ *
+ * Remote runs just name a stage. Local runs probe the wallet dev server
+ * (Tauri on http:3010, browser on https:3000) and pair whatever answers with
+ * the local backend on :3030.
+ */
+export async function detectFrakEnv(
     useLocal: boolean,
-    remoteUrl = "https://wallet-dev.frak.id"
-): Promise<string> {
+    remoteEnv: FrakEnvironment = "dev"
+): Promise<FrakEnvironment> {
     if (!useLocal) {
-        return remoteUrl;
+        return remoteEnv;
     }
 
+    const localBackend = "https://localhost:3030";
     const cacheKey = "frak-wallet-url";
 
     const probe = (url: string) =>
@@ -36,7 +52,7 @@ export async function detectWalletUrl(
         try {
             await probe(cached);
             console.log("[Frak SDK] Using cached wallet URL:", cached);
-            return cached;
+            return { wallet: cached, backend: localBackend };
         } catch {
             localStorage.removeItem(cacheKey);
         }
@@ -49,12 +65,12 @@ export async function detectWalletUrl(
             await probe(url);
             localStorage.setItem(cacheKey, url);
             console.log("[Frak SDK] Detected wallet URL:", url);
-            return url;
+            return { wallet: url, backend: localBackend };
         } catch {}
     }
 
     console.warn(
         "[Frak SDK] Could not detect local wallet server. Falling back to https://localhost:3000. Make sure wallet dev server is running."
     );
-    return "https://localhost:3000";
+    return { wallet: "https://localhost:3000", backend: localBackend };
 }
