@@ -1,0 +1,5 @@
+/* French, matching the hosted page's own `fr` bundle. */
+"frak.sharing.title" = "Partagez et gagnez";
+"frak.sharing.share" = "Partager";
+"frak.sharing.copy" = "Copier le lien";
+"frak.sharing.copied" = "Lien copié";

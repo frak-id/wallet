@@ -1,0 +1,10 @@
+/* The sheet's native chrome. Everything else the user reads comes from the hosted page,
+   which owns ~45 i18n keys and the tier maths behind them.
+
+   Keys are prefixed `frak.` because they are read out of this SDK's own bundle, and a
+   prefix keeps them legible next to the merchant's when both appear in a diff. Add a
+   locale by adding an .lproj here; the sheet follows the device language. */
+"frak.sharing.title" = "Share and earn";
+"frak.sharing.share" = "Share";
+"frak.sharing.copy" = "Copy link";
+"frak.sharing.copied" = "Link copied";

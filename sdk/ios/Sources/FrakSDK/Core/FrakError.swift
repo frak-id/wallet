@@ -14,6 +14,8 @@ public enum FrakError: Error, Sendable {
     case trackingDisabled
     /// No merchant could be identified for this app.
     case merchantResolutionFailed(reason: String)
+    /// A sharing sheet was presented while one was already up.
+    case alreadyPresenting
 }
 
 extension FrakError: LocalizedError {
@@ -38,6 +40,8 @@ extension FrakError: LocalizedError {
             return "Frak tracking is disabled by configuration; no network request was issued."
         case .merchantResolutionFailed(let reason):
             return "Frak could not resolve a merchant: \(reason)"
+        case .alreadyPresenting:
+            return "A Frak sharing sheet is already presented."
         }
     }
 }
