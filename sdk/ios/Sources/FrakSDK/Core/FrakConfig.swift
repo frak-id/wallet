@@ -1,4 +1,3 @@
-/// Currency a reward is advertised in. The raw value is the wire value sent to the backend.
 public enum FrakCurrency: String, Sendable, CaseIterable, Decodable, Hashable {
     case eur
     case usd
@@ -10,11 +9,7 @@ public enum FrakLanguage: String, Sendable, CaseIterable, Decodable, Hashable {
     case fr
 }
 
-/// How verbose the SDK is. Default is `.none` — silent unless raised for debugging.
-///
-/// Also gates `FrakConfig.logSink`: the level is applied first, so `.none` delivers
-/// nothing to a configured sink either, and lowering this reduces the sink's volume
-/// exactly as it reduces `os.Logger`'s.
+// Default .none is silent. Also gates FrakConfig.logSink, same as os.Logger.
 public enum FrakLogLevel: Int, Sendable, Hashable, Comparable {
     case none
     case error
@@ -27,17 +22,20 @@ public enum FrakLogLevel: Int, Sendable, Hashable, Comparable {
     }
 }
 
+public enum DeepLinkHandling: Sendable, Hashable {
+    // Merchant calls FrakClient.handleReferralLink(_:) from onOpenURL or their own router.
+    // Only mode iOS offers: no counterpart to Android's ActivityLifecycleCallbacks.
+    case manual
+    case disabled
+}
+
 /// Static merchant-supplied facts about the app, fixed at build time.
 public struct FrakMetadata: Sendable, Hashable {
-    /// Display name of the merchant, used where the SDK renders copy locally.
     public let name: String?
-    /// Currency every reward amount is advertised in.
     public let currency: FrakCurrency
-    /// Language for merchant copy. Nil means "let the backend decide".
+    // Nil means "let the backend decide".
     public let lang: FrakLanguage?
-    /// Merchant logo URL, used as the native sheet header in a later increment.
     public let logoURL: String?
-    /// Merchant homepage, used in locally-rendered copy.
     public let homepageLink: String?
 
     public init(
@@ -57,61 +55,64 @@ public struct FrakMetadata: Sendable, Hashable {
 
 /// Everything the SDK needs to start, supplied once to `Frak.initialize(_:)`.
 public struct FrakConfig: Sendable, Hashable {
-    /// Server-issued merchant UUID. Optional — when nil, resolved from `bundleId` instead.
+    // Optional: when nil, resolved from bundleId instead.
     public let merchantId: String?
-    /// Bundle id of the host app, as registered in the merchant's `allowed_package_ids`.
-    /// Nil reads it from `Bundle.main.bundleIdentifier` at `Frak.initialize(_:)`.
+    // Nil reads Bundle.main.bundleIdentifier at Frak.initialize(_:).
     public let bundleId: String?
     public let metadata: FrakMetadata
-    /// The stage the SDK talks to. Merchants never set this; it exists for
-    /// Frak's own dev and local builds.
+    // Merchants never set this; for Frak's own dev/local builds.
     public let env: FrakEnvironment
-    /// Master switch. When false, the SDK generates no anonymous id and issues no network request.
+    public let deepLink: DeepLinkHandling
+    // When false, generates no anonymous id and issues no network request.
     public let trackingEnabled: Bool
-    /// How verbose the SDK is. Also gates `logSink` — see `FrakLogLevel`.
     public let logLevel: FrakLogLevel
-    /// Receives SDK diagnostics that pass `logLevel`, instead of `os.Logger`. Nil (the
-    /// default) keeps diagnostics in `os.Logger`, as before this existed.
+    // Nil (default) keeps diagnostics in os.Logger.
     public let logSink: (any FrakLogSink)?
+    // Warms an offscreen WKWebView ahead of the share tap. Off by default (extra JS heap).
+    public let preloadSharing: Bool
 
     public init(
         merchantId: String? = nil,
         bundleId: String? = nil,
         metadata: FrakMetadata = FrakMetadata(),
         env: FrakEnvironment = .production,
+        deepLink: DeepLinkHandling = .manual,
         trackingEnabled: Bool = true,
         logLevel: FrakLogLevel = .none,
-        logSink: (any FrakLogSink)? = nil
+        logSink: (any FrakLogSink)? = nil,
+        preloadSharing: Bool = false
     ) {
         self.merchantId = merchantId
         self.bundleId = bundleId
         self.metadata = metadata
         self.env = env
+        self.deepLink = deepLink
         self.trackingEnabled = trackingEnabled
         self.logLevel = logLevel
         self.logSink = logSink
+        self.preloadSharing = preloadSharing
     }
 
-    /// Returns a copy with `bundleId` replaced.
     func withBundleId(_ bundleId: String) -> FrakConfig {
         FrakConfig(
             merchantId: merchantId,
             bundleId: bundleId,
             metadata: metadata,
             env: env,
+            deepLink: deepLink,
             trackingEnabled: trackingEnabled,
             logLevel: logLevel,
-            logSink: logSink
+            logSink: logSink,
+            preloadSharing: preloadSharing
         )
     }
 
-    // `logSink` is an existential over a protocol that only requires `Sendable`, so it
-    // cannot itself be Hashable — synthesis would fail to compile. Equality and hashing
-    // are defined over every other field instead; the sink is a routing seam, not a
-    // value to compare configs by.
+    // logSink can't be Hashable (existential over Sendable-only protocol), so it's
+    // excluded from equality/hashing below.
     public static func == (lhs: FrakConfig, rhs: FrakConfig) -> Bool {
         lhs.merchantId == rhs.merchantId && lhs.bundleId == rhs.bundleId && lhs.metadata == rhs.metadata
-            && lhs.env == rhs.env && lhs.trackingEnabled == rhs.trackingEnabled && lhs.logLevel == rhs.logLevel
+            && lhs.env == rhs.env && lhs.deepLink == rhs.deepLink && lhs.trackingEnabled == rhs.trackingEnabled
+            && lhs.logLevel == rhs.logLevel && lhs.preloadSharing == rhs.preloadSharing
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -119,7 +120,9 @@ public struct FrakConfig: Sendable, Hashable {
         hasher.combine(bundleId)
         hasher.combine(metadata)
         hasher.combine(env)
+        hasher.combine(deepLink)
         hasher.combine(trackingEnabled)
         hasher.combine(logLevel)
+        hasher.combine(preloadSharing)
     }
 }

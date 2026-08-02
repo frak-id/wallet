@@ -40,6 +40,34 @@ private struct FakeFrakClient: FrakClient {
     ) async throws -> BestReward? {
         reward
     }
+
+    var environment: FrakEnvironment { .production }
+
+    var anonymousId: String? { "256b1be3-2745-41d1-89d4-9121cc87bc45" }
+
+    func resetAnonymousId() {}
+
+    func buildSharingLink(_ request: SharingRequest) async -> String? {
+        request.link
+    }
+
+    func track(_ interaction: Interaction) async -> Result<Void, FrakError> {
+        .success(())
+    }
+
+    func trackPurchase(customerId: String, orderId: String, token: String) async -> Result<Void, FrakError> {
+        .success(())
+    }
+
+    func handleReferralLink(_ url: String) async -> Bool {
+        Frak.parseReferralLink(url) != nil
+    }
+
+    func isFrakAppInstalled() async -> Bool { false }
+
+    func openFrakApp() async -> OpenAppResult { .failed }
+
+    func installURL() async -> String? { nil }
 }
 
 /// A hand-written fake, the way a merchant would write one — no mocking framework.
@@ -176,5 +204,56 @@ struct PublicSurfaceTests {
         #expect(try await fake.campaigns() == [campaign])
         #expect(try await fake.bestReward() == best)
         #expect(await fake.currentConfig == config)
+        #expect(fake.anonymousId != nil)
+        #expect(await fake.openFrakApp() == .failed)
+    }
+
+    @Test("the sharing and tracking inputs are constructible outside the module")
+    func sharingAndTrackingInputsAreConstructibleOutsideTheModule() {
+        let request = SharingRequest(
+            link: "https://acme.example/p",
+            products: [
+                SharingProduct(
+                    title: "Kettle",
+                    link: "https://acme.example/p/1",
+                    imageURL: "https://acme.example/p/1.png",
+                    utmContent: "sku-42"
+                )
+            ],
+            attribution: AttributionParams(utmSource: "ios-app"),
+            targetInteraction: "purchase",
+            placement: "product-page"
+        )
+
+        #expect(request.products.first?.utmContent == "sku-42")
+        #expect(request.attribution?.utmSource == "ios-app")
+        #expect(Interaction.sharing() == Interaction.sharing())
+        #expect(Interaction.custom("newsletter", data: ["id": "1"]) != Interaction.custom("newsletter"))
+    }
+
+    @Test("a referral link decodes without an initialized SDK")
+    func referralLinksDecodeWithoutInitialization() throws {
+        let context = try #require(
+            Frak.parseReferralLink(
+                "https://acme.example/p?fCtx=ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
+            )
+        )
+        guard case .v2(let v2) = context else {
+            Issue.record("expected a v2 context")
+            return
+        }
+        #expect(v2.merchantId == "550e8400-e29b-41d4-a716-446655440000")
+        #expect(v2.clientId == "550e8400-e29b-41d4-a716-446655440001")
+        #expect(v2.timestamp == 1_709_654_400)
+        #expect(Frak.parseReferralLink("https://acme.example/p") == nil)
+    }
+
+    @Test("deep-link handling and preloading are stateable on FrakConfig")
+    func deepLinkAndPreloadAreStateable() {
+        let config = FrakConfig(merchantId: "m1", deepLink: .disabled, preloadSharing: true)
+        #expect(config.deepLink == .disabled)
+        #expect(config.preloadSharing)
+        #expect(FrakConfig().deepLink == .manual)
+        #expect(!FrakConfig().preloadSharing)
     }
 }

@@ -12,6 +12,10 @@ final class UserDefaultsStore: KeyValueStore, @unchecked Sendable {
     /// Matches the reason declared in `PrivacyInfo.xcprivacy`.
     static let suiteName = "id.frak.sdk.config"
 
+    /// A separate suite for the identity: a corrupt write to the hot one must not take the
+    /// anonymous id with it.
+    static let identitySuiteName = "id.frak.sdk.identity"
+
     // UserDefaults is documented thread-safe; it predates the Sendable annotation.
     private let defaults: UserDefaults
 

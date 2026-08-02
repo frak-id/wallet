@@ -7,27 +7,20 @@ import Foundation
 ///
 /// let reward = try await Frak.client.bestReward(targetInteraction: "purchase")
 /// ```
-///
-/// A namespace rather than an instance the merchant holds — a native app maps to
-/// exactly one merchant.
 public enum Frak {
     private static let lock = NSLock()
-    // Guarded by `lock`, not by the compiler: every access below takes it first.
     nonisolated(unsafe) private static var instance: (any FrakClient)?
+    // Kept alongside the client so preloadSharing can be read without widening FrakClient.
+    nonisolated(unsafe) private static var configuration: FrakConfig?
 
-    /// Starts the SDK. Non-blocking, does no I/O, and never throws.
-    ///
-    /// A second call is a no-op and logs a warning; the first configuration wins.
+    // Non-blocking, no I/O, never throws. Second call is a no-op (first config wins).
     public static func initialize(_ config: FrakConfig) {
         let logger = FrakLogger(level: config.logLevel, sink: config.logSink)
         let effective = config.withBundleIdFromMainBundle()
         let missingIdentity = effective.merchantId == nil && effective.bundleId == nil
 
-        // Nothing below may call out to merchant code (the logger) while `lock` is held:
-        // a sink that reads `Frak.isInitialized` or `Frak.client` would deadlock against
-        // itself on the calling thread. The critical section only decides what happened;
-        // every log line it implies is emitted from the switch below, after the lock is
-        // released.
+        // Logging must not happen while `lock` is held (a sink reading Frak.client would
+        // deadlock); the switch below emits every log line after the lock is released.
         enum Outcome {
             case alreadyInitialized
             case missingStore
@@ -42,11 +35,28 @@ public enum Frak {
                 return .alreadyInitialized
             }
 
-            guard let store = UserDefaultsStore() else {
+            guard let store = UserDefaultsStore(),
+                let identityStore = UserDefaultsStore(suiteName: UserDefaultsStore.identitySuiteName)
+            else {
                 return .missingStore
             }
 
-            instance = DefaultFrakClient(config: effective, store: store, logger: logger)
+            instance = DefaultFrakClient(
+                config: effective,
+                store: store,
+                identity: AnonymousIdStore(
+                    keyStore: PersistedDeviceKeyStore(store: identityStore),
+                    store: identityStore,
+                    logger: logger,
+                    // App scope == merchant scope; regenerated if this ever changes.
+                    merchantMarker: effective.merchantId ?? effective.bundleId ?? "",
+                    trackingEnabled: effective.trackingEnabled
+                ),
+                queue: EventQueue(fileURL: EventQueue.defaultFileURL(logger: logger), logger: logger),
+                launcher: SystemAppLauncher(),
+                logger: logger
+            )
+            configuration = effective
             return .initialized
         }()
 
@@ -72,9 +82,6 @@ public enum Frak {
         }
     }
 
-    /// The client.
-    ///
-    /// - Throws: `FrakError.notInitialized` when `initialize(_:)` has not run.
     public static var client: any FrakClient {
         get throws {
             lock.lock()
@@ -84,23 +91,39 @@ public enum Frak {
         }
     }
 
-    /// Whether `initialize(_:)` has run. For merchants guarding optional integrations.
+    // Pure/static: works before initialize(_:) has run. Decode-only — arrival tracking
+    // and the self-referral guard are FrakClient.handleReferralLink(_:).
+    public static func parseReferralLink(_ url: String) -> FrakContext? {
+        SharingLinkBuilder.parse(url)
+    }
+
+    public static func parseReferralLink(_ url: URL) -> FrakContext? {
+        SharingLinkBuilder.parse(url.absoluteString)
+    }
+
+    // Mirrors FrakConfig.preloadSharing for FrakSDKUI. Lives here (not FrakClient) so
+    // growing it doesn't break merchant hand-written fakes of that protocol.
+    public static var preloadSharing: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return configuration?.preloadSharing ?? false
+    }
+
     public static var isInitialized: Bool {
         lock.lock()
         defer { lock.unlock() }
         return instance != nil
     }
 
-    /// Drops the client, for tests.
     static func resetForTesting() {
         lock.lock()
         defer { lock.unlock() }
         instance = nil
+        configuration = nil
     }
 }
 
 extension FrakConfig {
-    /// Fills in `bundleId` from `Bundle.main` when the merchant left both nil.
     fileprivate func withBundleIdFromMainBundle() -> FrakConfig {
         guard merchantId == nil, bundleId == nil, let bundleId = Bundle.main.bundleIdentifier else {
             return self

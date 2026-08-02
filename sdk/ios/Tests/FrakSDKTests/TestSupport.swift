@@ -65,3 +65,28 @@ final class Counter: @unchecked Sendable {
         return count
     }
 }
+
+extension URLRequest {
+    /// The request body as `URLProtocol` actually sees it: `URLSession` moves `httpBody`
+    /// into `httpBodyStream` before a protocol handler runs, so reading `httpBody` alone
+    /// silently returns nil for every POST.
+    var stubBody: Data {
+        if let httpBody { return httpBody }
+        guard let stream = httpBodyStream else { return Data() }
+        stream.open()
+        defer { stream.close() }
+        var data = Data()
+        var buffer = [UInt8](repeating: 0, count: 4096)
+        while stream.hasBytesAvailable {
+            let read = stream.read(&buffer, maxLength: buffer.count)
+            guard read > 0 else { break }
+            data.append(buffer, count: read)
+        }
+        return data
+    }
+
+    /// The body parsed as a JSON object, for asserting on what was sent.
+    var stubJSON: [String: Any] {
+        (try? JSONSerialization.jsonObject(with: stubBody)) as? [String: Any] ?? [:]
+    }
+}

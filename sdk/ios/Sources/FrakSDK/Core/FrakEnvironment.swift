@@ -1,27 +1,12 @@
 import Foundation
 
-/// The Frak stage the SDK talks to.
-///
-/// Both origins are always stated together — the backend is never guessed from
-/// the wallet origin. A `.custom` pair covers local development and any sandbox
-/// the named stages don't know about.
-///
-/// Mirrors the JS SDK's `FrakEnvironment` (`"prod" | "dev" | { wallet, backend }`).
-/// The value travels with `FrakConfig`, so unlike the JS SDK's `environment.ts`
-/// there is no process-wide singleton here — native has no equivalent of the
-/// two-bundles-on-one-page problem that forces one.
+// Backend is never guessed from the wallet origin; both stated together.
 public enum FrakEnvironment: Sendable, Hashable {
-    /// Production. The default, and what every shipped app should use.
     case production
-    /// Frak's own dev stage. Not for merchant builds.
     case development
-    /// An explicit origin pair, for local development — typically
-    /// `.custom(wallet: "https://localhost:3000", backend: "https://localhost:3030")`.
-    /// A local backend serves self-signed HTTPS, so it needs an ATS exception
-    /// to work on device.
+    // Local backend serves self-signed HTTPS; needs an ATS exception on device.
     case custom(wallet: String, backend: String)
 
-    /// Wallet origin: hosts the SSO and sharing pages. No trailing slash.
     public var wallet: String {
         switch self {
         case .production: "https://wallet.frak.id"
@@ -30,7 +15,6 @@ public enum FrakEnvironment: Sendable, Hashable {
         }
     }
 
-    /// Backend origin: hosts the REST API. No trailing slash.
     public var backend: String {
         switch self {
         case .production: "https://backend.frak.id"
@@ -39,8 +23,16 @@ public enum FrakEnvironment: Sendable, Hashable {
         }
     }
 
-    /// Origins are concatenated with paths verbatim by `HTTPClient`, so a
-    /// pasted `https://host/` would produce `https://host//user/…`.
+    // Probed to decide whether install can deep link vs. go to the App Store;
+    // merchant must list this in LSApplicationQueriesSchemes.
+    public var walletScheme: String {
+        switch self {
+        case .production: "frakwallet"
+        case .development, .custom: "frakwallet-dev"
+        }
+    }
+
+    // HTTPClient concatenates origin + path verbatim; avoids a double slash.
     private static func withoutTrailingSlash(_ origin: String) -> String {
         origin.hasSuffix("/") ? String(origin.dropLast()) : origin
     }

@@ -1,39 +1,65 @@
-/// Everything the SDK can do, as one facade.
-///
-/// Obtained from `Frak.client`. A protocol rather than the implementation type so
-/// merchant tests can substitute a fake without a mocking framework.
+import Foundation
+
+/// Everything the SDK can do, as one facade. Obtained from `Frak.client`.
 public protocol FrakClient: Sendable {
-    /// The last successfully resolved config, or nil before the first resolve.
     var currentConfig: FrakResolvedConfig? { get async }
 
-    /// A multicast stream of every resolved config, replaying the latest value to a
-    /// new subscriber.
+    // Multicast, replays latest value to new subscribers.
     var configUpdates: AsyncStream<FrakResolvedConfig> { get async }
 
-    /// Resolves the merchant this app belongs to, from a stale-while-revalidate cache.
-    /// Failure backoff still applies even under `forceRefresh`. Throws
-    /// `FrakError.merchantResolutionFailed` when no merchant matches this app.
+    var environment: FrakEnvironment { get }
+
+    // Nil when tracking is disabled or the device refused key material.
+    // Derived from a platform-held P-256 keypair: self-authenticating, dies with the app.
+    var anonymousId: String? { get }
+
+    // Destroys the keypair (next anonymousId read mints a new one) and purges the queue.
+    // For GDPR erasure; does not delete history already attributed to the old id.
+    func resetAnonymousId()
+
+    // Stale-while-revalidate cache; forceRefresh still respects failure backoff.
     func resolveConfig(forceRefresh: Bool) async throws -> FrakResolvedConfig
 
-    /// Active campaigns for this merchant, highest priority first. An empty list is a
-    /// normal "between campaigns" state — use `resolveConfig` to diagnose an unknown
-    /// merchant.
     func campaigns(forceRefresh: Bool) async throws -> [Campaign]
 
-    /// The single reward worth advertising, formatted by the server. Currency comes
-    /// from `FrakMetadata`, never the caller and never the device locale.
     func bestReward(
         targetInteraction: String?,
         audience: RewardAudience?,
         forceRefresh: Bool
     ) async throws -> BestReward?
+
+    // Nil (not throw) when there's no identity to build from. No network request of its own.
+    func buildSharingLink(_ request: SharingRequest) async -> String?
+
+    // Succeeds once durable, not once delivered.
+    @discardableResult
+    func track(_ interaction: Interaction) async -> Result<Void, FrakError>
+
+    @discardableResult
+    func trackPurchase(customerId: String, orderId: String, token: String) async -> Result<Void, FrakError>
+
+    /// - Returns: whether the link carried a Frak referral context. Not a "stop routing"
+    ///   signal — still navigate to the URL either way.
+    @discardableResult
+    func handleReferralLink(_ url: String) async -> Bool
+
+    // Requires FrakConfig.env's walletScheme in LSApplicationQueriesSchemes to answer true.
+    func isFrakAppInstalled() async -> Bool
+
+    func openFrakApp() async -> OpenAppResult
+
+    // No network request, no identity carried (no Play-style install referrer on iOS).
+    func installURL() async -> String?
+}
+
+public enum OpenAppResult: Sendable, Hashable {
+    case openedApp
+    case openedStore
+    case failed
 }
 
 extension FrakClient {
-    // Protocol requirements can't carry default arguments, so the cache-first calls
-    // live here. Each signature differs from its requirement on purpose: an overload
-    // that matched would satisfy the protocol itself, and a conformer that forgot the
-    // method would recurse forever instead of failing to compile.
+    // Protocol requirements can't carry default args; overloads live here instead.
 
     public func resolveConfig() async throws -> FrakResolvedConfig {
         try await resolveConfig(forceRefresh: false)
@@ -48,5 +74,10 @@ extension FrakClient {
         audience: RewardAudience? = nil
     ) async throws -> BestReward? {
         try await bestReward(targetInteraction: targetInteraction, audience: audience, forceRefresh: false)
+    }
+
+    @discardableResult
+    public func handleReferralLink(_ url: URL) async -> Bool {
+        await handleReferralLink(url.absoluteString)
     }
 }

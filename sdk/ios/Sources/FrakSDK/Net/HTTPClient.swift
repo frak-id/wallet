@@ -75,6 +75,36 @@ struct HTTPClient: Sendable {
         }
     }
 
+    /// Issues a POST and returns the raw response, successful or not.
+    ///
+    /// No transport-level retry, unlike `get`: a POST is not safe to replay blindly.
+    /// Retrying is the caller's decision, and the tracking queue makes it with an
+    /// idempotency key the backend can dedupe on.
+    func post(_ path: String, body: Data, headers: [String: String] = [:]) async throws -> Response {
+        var request = try buildRequest(path: path, query: [:])
+        request.httpMethod = "POST"
+        request.httpBody = body
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        for (name, value) in headers {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
+        do {
+            return try await Deadline.run(seconds: overallDeadlineSeconds) {
+                try await self.attempt(request)
+            }
+        } catch is Deadline.Exceeded {
+            throw FrakError.network(underlying: Deadline.Exceeded())
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as FrakError {
+            throw error
+        } catch {
+            throw FrakError.network(underlying: error)
+        }
+    }
+
     private func performWithRetry(_ request: URLRequest) async throws -> Response {
         do {
             return try await attempt(request)

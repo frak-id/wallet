@@ -14,14 +14,30 @@ struct FrakClientTests {
 
     private func makeClient(
         config: FrakConfig = FrakConfig(merchantId: FrakClientTests.merchantId),
+        launcher: FakeAppLauncher = FakeAppLauncher(),
         respond: @escaping @Sendable (URLRequest) throws -> StubResponse
     ) -> DefaultFrakClient {
         let (session, host) = StubURLProtocol.makeSession()
         StubURLProtocol.handle(host: host, respond)
+        let logger = FrakLogger(level: .none)
         return DefaultFrakClient(
             config: config,
             store: InMemoryKeyValueStore(),
-            logger: FrakLogger(level: .none),
+            identity: AnonymousIdStore(
+                keyStore: FakeDeviceKeyStore(),
+                store: InMemoryKeyValueStore(),
+                logger: logger,
+                merchantMarker: config.merchantId ?? "",
+                trackingEnabled: config.trackingEnabled
+            ),
+            queue: EventQueue(
+                fileURL: FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString, isDirectory: true)
+                    .appendingPathComponent(EventQueue.fileName),
+                logger: logger
+            ),
+            launcher: launcher,
+            logger: logger,
             session: session,
             backendURL: "https://\(host)"
         )
@@ -196,5 +212,124 @@ struct FrakClientTests {
         _ = try await client.campaigns()
         _ = try await client.bestReward()
         _ = try await client.bestReward(targetInteraction: "purchase")
+    }
+
+    @Test("buildSharingLink attaches this installation's identity and the merchant's defaults")
+    func buildSharingLinkAttachesTheIdentity() async throws {
+        let client = makeClient { _ in
+            StubResponse(
+                status: 200,
+                body: #"{"merchantId":"\#(Self.merchantId)","name":"Acme","domain":"acme.example","#
+                    + #""sdkConfig":{"attribution":{"utmMedium":"referral"}}}"#
+            )
+        }
+
+        let link = try #require(await client.buildSharingLink(SharingRequest(link: "https://acme.example/p")))
+        #expect(link.hasPrefix("https://acme.example/p?fCtx="))
+        #expect(link.contains("utm_source=frak"))
+        #expect(link.contains("utm_medium=referral"))
+
+        let context = try #require(Frak.parseReferralLink(link))
+        guard case .v2(let v2) = context else {
+            Issue.record("expected a v2 context")
+            return
+        }
+        #expect(v2.merchantId == Self.merchantId)
+        #expect(v2.clientId == client.anonymousId)
+    }
+
+    @Test("buildSharingLink yields nil with no base url to build from")
+    func buildSharingLinkNeedsABaseURL() async {
+        let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
+        let link = await client.buildSharingLink(SharingRequest())
+        #expect(link == nil)
+    }
+
+    @Test("track refuses up front when tracking is disabled")
+    func trackRefusesWhenTrackingIsDisabled() async {
+        let client = makeClient(config: FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)) { _ in
+            StubResponse(status: 200, body: Self.resolveBody)
+        }
+
+        let result = await client.track(.sharing())
+        guard case .failure(.trackingDisabled) = result else {
+            Issue.record("expected a trackingDisabled failure, got \(result)")
+            return
+        }
+    }
+
+    @Test("handleReferralLink reports whether a link carried a context, and ignores our own")
+    func handleReferralLinkAppliesTheSelfReferralGuard() async throws {
+        let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
+
+        let withoutContext = await client.handleReferralLink("https://acme.example/p")
+        #expect(!withoutContext)
+
+        let ownId = try #require(client.anonymousId)
+        let own = try #require(
+            SharingLinkBuilder.build(
+                baseURL: "https://acme.example/p",
+                context: FrakContext.V2(merchantId: Self.merchantId, timestamp: 1, clientId: ownId),
+                attribution: nil,
+                defaults: nil
+            )
+        )
+        // True — the link is ours — but nothing is tracked: a user cannot refer themselves.
+        let handled = await client.handleReferralLink(own)
+        #expect(handled)
+    }
+
+    @Test("handleReferralLink does nothing at all when deep linking is disabled")
+    func handleReferralLinkHonoursDisabled() async throws {
+        let client = makeClient(config: FrakConfig(merchantId: Self.merchantId, deepLink: .disabled)) { _ in
+            StubResponse(status: 200, body: Self.resolveBody)
+        }
+        let link = try #require(
+            SharingLinkBuilder.build(
+                baseURL: "https://acme.example/p",
+                context: FrakContext.V2(merchantId: Self.merchantId, timestamp: 1, clientId: Self.merchantId),
+                attribution: nil,
+                defaults: nil
+            )
+        )
+        let handled = await client.handleReferralLink(link)
+        #expect(!handled)
+    }
+
+    @Test("openFrakApp deep links when the wallet is there, and falls back to the store when it is not")
+    func openFrakAppPrefersTheDeepLink() async throws {
+        let installed = FakeAppLauncher(openableSchemes: ["frakwallet"])
+        let client = makeClient(launcher: installed) { _ in StubResponse(status: 200, body: Self.resolveBody) }
+
+        let opened = await client.openFrakApp()
+        #expect(opened == .openedApp)
+        #expect(installed.opened.first?.hasPrefix("frakwallet://install?m=\(Self.merchantId)") == true)
+
+        let absent = FakeAppLauncher()
+        let withoutWallet = makeClient(launcher: absent) { _ in StubResponse(status: 200, body: Self.resolveBody) }
+        let fellBack = await withoutWallet.openFrakApp()
+        #expect(fellBack == .openedStore)
+        #expect(absent.opened == ["https://apps.apple.com/app/id6740261164"])
+    }
+
+    @Test("openFrakApp fails when nothing will handle either url")
+    func openFrakAppFailsWhenNothingOpens() async {
+        let refuses = FakeAppLauncher(opensSucceed: false)
+        let client = makeClient(launcher: refuses) { _ in StubResponse(status: 200, body: Self.resolveBody) }
+        let opened = await client.openFrakApp()
+        #expect(opened == .failed)
+    }
+
+    @Test("installURL needs an identity to link")
+    func installURLNeedsAnIdentity() async {
+        let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
+        let url = await client.installURL()
+        #expect(url == "https://apps.apple.com/app/id6740261164")
+
+        let untracked = makeClient(config: FrakConfig(merchantId: Self.merchantId, trackingEnabled: false)) { _ in
+            StubResponse(status: 200, body: Self.resolveBody)
+        }
+        let withoutIdentity = await untracked.installURL()
+        #expect(withoutIdentity == nil)
     }
 }
