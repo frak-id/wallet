@@ -4,9 +4,9 @@ Gradle multi-module **library** project for the Frak native Android SDK. Not an
 app: there is nothing to install and nothing to launch, so no command here ever
 needs a device or an emulator.
 
-> ⚠️ **Partial. Everything but the sharing sheet works; `frak-sdk-ui` is still empty.**
+> ⚠️ **The MVP surface is implemented. Nothing has run on a device.**
 >
-> What is implemented and tested (178 JVM unit tests — `grep -rhoP '^\s*@Test\b' frak-sdk/src/test --include=*.kt | wc -l`):
+> What is implemented and tested (209 JVM unit tests — `grep -rc '@Test' frak-sdk*/src/test -r --include=*.kt | awk -F: '{s+=$2} END {print s}'`):
 >
 > | Package | What is there |
 > | --- | --- |
@@ -18,6 +18,7 @@ needs a device or an emulator.
 > | `sharing` | `FrakContextCodec` (the `fCtx` v2 binary layout), `SharingLinkBuilder`, attribution merging |
 > | `tracking` | `InteractionTracker`, `EventQueue` (durable JSONL, FIFO, bounded) |
 > | `applink` | inbound `fCtx` handling with the self-referral guard, the wallet deep link and the Play install referrer |
+> | `ui` (`frak-sdk-ui`) | the Compose sharing sheet, its hardened web view, and the native share/copy footer |
 >
 > Public surface: `Frak.initialize` / `Frak.client`, `FrakClient.resolveConfig`,
 > `configUpdates`, `campaigns`, `bestReward`, `anonymousId`, `resetAnonymousId`,
@@ -33,9 +34,20 @@ needs a device or an emulator.
 > A merchant can route SDK diagnostics into their own logging by setting `FrakConfig.logSink`
 > (a `fun interface`, so a lambda works) — see "Logging" below.
 >
-> **Not implemented**: the sharing sheet — `frak-sdk-ui` still has no Kotlin
-> sources — and the 4-tier copy precedence. `referralStatus` and the analytics
-> event stream are also absent.
+> **Not implemented**: the 4-tier copy precedence (`FrakClient.copy`),
+> `referralStatus`, and the analytics event stream.
+>
+> **Untested on a device.** Every claim here rests on JVM unit tests and a
+> release build. The sheet has never actually been presented: the Compose surface
+> and the `?confirmed=1` reload are still covered only by the parts of them that
+> are pure logic.
+>
+> The sheet's *sequencing* is no longer in that category. `SharingSheetStateTest`
+> and `SharingWebViewClientTest` run under Robolectric — a real Android runtime on
+> the JVM — so tier 3's fallback, the 1.5s latency budget, tier 2's cache-only
+> retry and the web view's origin pinning are exercised against real `Context`,
+> `Intent` and `WebView` behaviour rather than asserted in prose. Each of the five
+> bugs fixed in that area has a test that was confirmed to fail without the fix.
 >
 > The full resolve response *is* decoded — placements, component copy,
 > translations, attribution — and the whole tree is `public`, not just the
@@ -69,7 +81,11 @@ Two, so a merchant taking only tracking never pulls in a web view
 | `frak-sdk-ui` | `id.frak:frak-sdk-ui` | `id.frak.sdk.ui` | The sharing sheet. Depends on core. |
 
 `minSdk 24`, Java/JVM target 17, and the Kotlin language and API levels are pinned
-to **1.9** so merchants still on Kotlin 1.9 can consume the artifacts (02 §2).
+to **2.2** (02 §2). This was 1.9 until the Kotlin 2.4 upgrade: 2.4 dropped
+`-language-version=1.9` together with the K1 compiler, so the old "merchants on
+Kotlin 1.9 can consume this" guarantee is no longer expressible. 2.2 rather than
+the lowest 2.4 still accepts (2.0) because 2.0 and 2.1 are themselves already
+deprecated and will go the same way.
 
 Both modules run with `kotlin { explicitApi() }`: every public symbol needs an
 explicit visibility modifier and an explicit return type. Adding a helper without
@@ -112,75 +128,42 @@ automated and same-day.
 > Apache-2.0. This needs a deliberate decision before the first publish, because
 > relicensing after merchants have integrated is far harder than choosing now.
 
-## Binary Compatibility Validator
+## Binary compatibility
 
-Both modules run [kotlinx-binary-compatibility-validator](https://github.com/Kotlin/binary-compatibility-validator)
-(BCV), wired once in `buildSrc/src/main/kotlin/frak-publish.gradle.kts` so
-`:frak-sdk` and `:frak-sdk-ui` cannot drift on this any more than they can on
-POM metadata. `explicitApi()` (above) only forces you to *write* `public`; it
-says nothing about whether a change just *changed* something public. BCV is
-what catches that: it dumps every public symbol's JVM descriptor into
-`frak-sdk/api/frak-sdk.api` and `frak-sdk-ui/api/frak-sdk-ui.api`, committed to
-git, and `apiCheck` — part of `check`, wired next to `checkSdkVersionMatchesArtifact`
-and `checkDexSizeBudget` — fails the build if the live public surface disagrees
-with the committed dump.
+There is **no binary-compatibility gate right now.** kotlinx-binary-compatibility-validator
+(BCV) was wired into `buildSrc/src/main/kotlin/frak-publish.gradle.kts` and then
+removed, along with the `api/*.api` dumps it generated.
 
-`check` is more than those three gates: for an AGP library module it also runs
-`ktlintCheck`, the `test` task (JVM unit tests) and Android Lint. Android Lint
-has never been executed in this project — there is no JDK in this environment
-and no CI job runs it either — so its first run may surface pre-existing
-findings unrelated to whatever change triggered it; that is not a BCV problem.
-Also, `check` here is scoped to this Gradle build: ktlint is applied to
-`subprojects {}` only, so the root project has no `check` task and
-`./gradlew check` never lints the root `build.gradle.kts`/`settings.gradle.kts`
-— only the repo-root `bun run lint` does. `check` is therefore not a superset
-of `lint`.
+The reason is ordering, not doubt about the tool. Committing a dump *ratifies*
+the public shape: from then on `apiCheck` enforces it, and changing it is a
+breaking release rather than an edit. That shape is still undecided — see
+[`docs/plans/native-sdk/06-abi-decisions.md`](../../docs/plans/native-sdk/06-abi-decisions.md),
+specifically:
 
-No `ignoredPackages` and no `nonPublicMarkers`: `id.frak.sdk.**` public API
-*is* the contract this SDK is built around, and this codebase has no
-internal-marker annotation to configure BCV against.
+- **Q1** — Kotlin default arguments generate a synthetic `$default` constructor
+  bridge whose signature encodes the parameter count, so every public type built
+  that way is frozen on arrival: it cannot gain a field without `NoSuchMethodError`
+  in a merchant binary that is already in the store. Builders or internal
+  constructors plus additive factories are the only additively-evolvable shape.
+- **Q2** — whether to keep promoting types straight to fully-public, or gate the
+  ones that exist only for `:frak-sdk-ui` behind a `@RequiresOptIn`
+  `@InternalFrakApi` wired into BCV's `nonPublicMarkers`, so they link across the
+  module boundary without being frozen. `id.frak.sdk.net.PercentEncoding` is the
+  current example of a symbol that is public purely because a second Gradle module
+  needs it.
 
-**When a public API change is intentional:**
+Freezing the surface first and deciding its shape afterwards is backwards, so the
+gate comes back — with the dumps, and with whatever Q1/Q2 conclude — before the
+first publish. Until then `explicitApi()` is the only enforcement: it makes you
+*write* `public`, but says nothing about whether a change altered something already
+public.
 
-```bash
-bun run --cwd sdk/android apiDump   # or: ANDROID_HOME=... ./gradlew apiDump (needs the SDK, see below)
-git status sdk/android/frak-sdk/api sdk/android/frak-sdk-ui/api
-git add sdk/android/frak-sdk/api sdk/android/frak-sdk-ui/api
-```
-
-`frak-sdk-ui/src/main/kotlin/id/frak/sdk/ui/` currently has no Kotlin sources
-(just a `.gitkeep`), so it has no public API yet. Whether `apiDump` writes an
-empty `frak-sdk-ui/api/frak-sdk-ui.api` or writes nothing at all for a module
-with no public symbols has not been verified in this environment (no
-JDK/Gradle available) — check what `git status`/`git add` actually report
-rather than assuming either outcome. If no file was produced, that is
-expected; do not hand-write one.
-
-Review the diff like a changelog — every line is a promise to a merchant's
-frozen binary — then commit it alongside the code change.
-
-**An `apiCheck` failure you cannot explain from your own change is an
-accidental ABI break, not a tooling problem.** Find what widened or narrowed
-the public surface and either revert it or make it deliberate with an
-`apiDump`.
-
-> ⚠️ **The dump has not been generated yet.** `frak-sdk/api/frak-sdk.api` does
-> not exist in this checkout, and it is unverified whether `frak-sdk-ui`'s
-> dump ever will (see above) — this environment has no JDK/Gradle to produce
-> either. Before this can merge, someone with a JDK must run:
->
-> ```bash
-> bun run --cwd sdk/android apiDump
-> git status sdk/android/frak-sdk/api sdk/android/frak-sdk-ui/api
-> git add sdk/android/frak-sdk/api sdk/android/frak-sdk-ui/api
-> git commit -m "Add BCV API dumps"
-> ```
->
-> `git add` may report "pathspec did not match any files" for
-> `frak-sdk-ui/api` if no dump was written — that is fine given `frak-sdk-ui`
-> has no public API yet, not a failure to fix. Review the generated file(s) by
-> hand once, since this is the *first* dump — there is no prior version to
-> diff against.
+`check` still runs `ktlintCheck`, the `test` task (JVM unit tests), Android Lint,
+`checkSdkVersionMatchesArtifact` and `checkDexSizeBudget`. Note it is scoped to
+this Gradle build: ktlint is applied to `subprojects {}` only, so the root project
+has no `check` task and `./gradlew check` never lints the root
+`build.gradle.kts`/`settings.gradle.kts` — only the repo-root `bun run lint` does.
+`check` is therefore not a superset of `lint`.
 
 ## What each directory is for
 
@@ -190,7 +173,7 @@ package per row:
 | Package | Lands there |
 | --- | --- |
 | `core/` | `FrakConfig`, the `FrakClient` facade, `FrakError` |
-| `net/` | `HttpURLConnection` transport, JSON only, injects `x-frak-client-id` |
+| `net/` | `HttpURLConnection` transport, JSON only, plus query-string editing |
 | `identity/` | `AnonymousIdStore`, `ProofCodec` — P-256 keypair in Keystore, lowercase derived id |
 | `config/` | Dual SWR cache (config + bare merchantId), `PlacementResolver` 4-tier copy |
 | `rewards/` | `RewardRepository`, `RewardSelector`, `RewardFormatter` |
@@ -206,6 +189,12 @@ Elsewhere:
 - `frak-sdk/src/test/kotlin/id/frak/sdk/` — JVM unit tests, mirroring the main
   packages. Tier 1 of the three-tier test plan in 03 §5.4: logic tests on cheap
   runners, no device.
+- `frak-sdk-ui/src/test/kotlin/id/frak/sdk/ui/` — the sheet's tests, under
+  Robolectric. Separate from the core module's on purpose: `:frak-sdk` is
+  deliberately free of framework types and must stay provable without an Android
+  runtime, so Robolectric is scoped to this module alone. These tests are pinned
+  to JDK 17 (see the module's build script) because Robolectric's bundled ASM
+  cannot instrument newer bytecode.
 - `frak-sdk/src/test/kotlin/id/frak/sdk/fixtures/` — the golden-fixture loader.
   One shared cross-platform corpus (FrakContext v2 codec, the signed byte layout,
   reward formatting) that Kotlin, Swift and TypeScript all assert against. This is
@@ -242,6 +231,114 @@ Activity, so it cannot sit in a bottom sheet, cannot carry native buttons, and
 cannot lose the browser toolbar. The transport is an embedded `WebView`, which is
 a platform class and needs no dependency.
 
+## The sharing sheet
+
+Native chrome around the hosted `/sharing` page, in `frak-sdk-ui`. The split
+follows 02 §1.3: what the user can feel is native — the sheet animates in
+immediately and the footer opens the real OS share sheet, with their own apps
+and contacts — while the reward card, product cards and FAQ come from the page
+that already serves three other consumers. Forking that natively would gate
+every copy change on a merchant's app-store release cycle.
+
+```kotlin
+val sharing = rememberFrakSharingLauncher { result ->
+    // InstallStarted is informational — the SDK already handled it end to end.
+}
+Button(onClick = { sharing.launch(SharingRequest(products = listOf(product))) }) { Text(cta) }
+```
+
+Three things in there are load-bearing and easy to lose:
+
+- **`&confirmed=1`.** Under `native=1` the page's own share controls are hidden,
+  so after a share the page has no way to know it happened. Without the reload
+  the user shares and the page just sits there — no confirmation, no install
+  call to action, no wallet. The funnel dies silently.
+- **The interaction is queued before the OS share sheet opens.** Android will
+  kill a host app while that sheet is foregrounded, so anything recorded on the
+  way back is lost in the field.
+- **No JavaScript bridge.** State goes in as query parameters and comes out as
+  an intercepted navigation to `frak-<packageId>://result`. That is what lets
+  this module skip the origin checks the `apps/listener` postMessage layer
+  needed — adding a bridge later means re-deriving all of them. The web view is
+  also origin-pinned by scheme, host and port (a prefix match would accept
+  `wallet.frak.id.attacker.example`), file access is off, mixed content is
+  blocked, and links out open in the system browser where the user can see whose
+  URL they are on.
+
+The return scheme is derived from the host's package id and must match the
+wallet's `^frak-[a-z0-9._-]{1,60}$`; a scheme it rejects means every callback is
+dropped with no error anywhere, so it is sanitised and tested against that exact
+pattern.
+
+There is no image loader, so the sheet header is text. Loading the merchant's
+logo natively would mean a third-party dependency, and the budget in 02 §5 does
+not have room for one — the page renders the logo instead, from `logoUrl`.
+
+### Offline behaviour (01 §4's three tiers)
+
+- **Tier 1 (online)** is the page as designed.
+- **Tier 2 (warm cache)** is the platform HTTP cache: `WebSettings.cacheMode`
+  is `LOAD_DEFAULT`, so an in-date cached response paints without a round trip
+  and a stale one revalidates in the background — the same behaviour any
+  browser tab gets. On top of that, a failed main-frame load gets **one**
+  cache-only retry (`LOAD_CACHE_ONLY`) before falling through to tier 3, so a
+  previously-visited sheet can still paint with no network at all.
+  **What this does NOT cover:** 02 §7 lever 4 also names a service worker
+  caching the `/sharing` shell, so a sheet the device has *never* visited
+  before still has something to show offline. That needs a `fetch` handler
+  registered wallet-side, and `apps/wallet/app/service-worker.ts` has none —
+  it exists only for push notifications (`install`/`activate`/`push`/
+  `notificationclick`). Nothing on the SDK side can substitute for a
+  wallet-side gap; it is not attempted here, and the first-ever-offline-visit
+  case is a real, currently-open gap rather than a solved one.
+- **Tier 3 (page unreachable)** fires the native OS share sheet directly with
+  the locally-built link, tracked exactly as a normal share. It triggers on a
+  main-frame transport error, a main-frame HTTP error, or 02 §7's latency
+  budget (1.5s, timed from the moment the sheet starts preparing, not from
+  when a page candidate exists — the budget has to cover
+  `buildSharingLink`/`resolveConfig` too, both network-bound). Critically,
+  tier 3 does not need [`resolveConfig`](../../sdk/android/frak-sdk/src/main/kotlin/id/frak/sdk/config/ConfigStore.kt)
+  to succeed: `buildSharingLink` is 100% local computation, and `ConfigStore`
+  serves any *persisted* config however stale, so `resolveConfig` only ever
+  throws with nothing cached at all for this install — a first launch
+  offline. Even then, the share still fires; only the reward pitch (which
+  needs the resolved config for currency and copy) is lost, and the chooser
+  falls back to no title rather than the merchant's name.
+
+Known gaps:
+
+- The web view is recreated on a configuration change. 02 §6.2 asks for it to
+  survive rotation, which needs a retained holder Compose cannot express for a
+  `View`.
+- **Warm web view (02 §7 lever 2) is implemented, opt-in, default off.**
+  `FrakConfig.preloadSharing` gates an offscreen `WebView` created and
+  `loadUrl()`ed against the wallet origin's `/sharing` route as soon as
+  `rememberFrakSharingLauncher` enters composition (the share surface
+  appearing), and destroyed when it leaves. It cannot preload the exact page
+  URL — `merchantId`/`clientId`/`sessionId` are not known until the sheet
+  actually presents — so what it saves is the connection (DNS/TCP/TLS) and
+  the on-device `WebView` engine being warm, plus a cache hit on the JS bundle
+  where the platform HTTP cache allows it; not reused by the sheet itself
+  (see `WarmSharingWebView`'s doc for why). Untested on a device, same as the
+  rest of the sheet — and unlike the sheet's sequencing, the warm path has no
+  Robolectric coverage either: what it saves is wall-clock connection setup,
+  which a JVM test cannot observe.
+- Service-worker shell caching (02 §7 lever 4's other half) is unavailable —
+  see "Offline behaviour" above.
+- **Not the non-persistent data store 02 §7 asks for.** Android has no
+  per-`WebView` data store — only a process-wide directory chosen once, before
+  any `WebView` exists, which a library cannot take from its host. Third-party
+  cookies are off, but first-party wallet cookies and DOM storage outlive the
+  sheet in the app's shared directory, and clearing them is an app-global API
+  that would delete the merchant's own.
+- The install proof does not ride the wallet deep link. `/install` reads it from
+  a URL fragment, and the wallet's own deep-link router rebuilds the route from
+  search params only, so a fragment would be dropped. Only the Play Store arm
+  carries a proof today.
+- An inbound link handled automatically is marked consumed with an intent extra,
+  which does not survive process death. A cold start from a restored intent
+  re-tracks the same arrival.
+
 ## The event queue
 
 Tracked events are durable before they are sent, not after. An event recorded
@@ -259,7 +356,7 @@ What is pinned, because JSONL is weakest exactly here:
 
 | Concern | Behaviour |
 | --- | --- |
-| Idempotency | stamped once at enqueue, written into the body on the shapes whose schema carries one. Never re-stamped per attempt. |
+| Idempotency | stamped once at enqueue, written into the body on the shapes whose schema carries one — `sharing` and `custom`. Never re-stamped per attempt. `arrival` and `purchase` have no such field and no header is read, so those rely on the backend's own reconciliation. |
 | Timestamps | capture time, not flush time, so an event sent hours later still lands in the right attribution window. |
 | Ordering | strict FIFO. A failure stops the drain rather than skipping past it. |
 | Torn tail | a kill mid-write leaves a partial last line; unreadable rows are discarded, the rest survive. |
@@ -267,9 +364,9 @@ What is pinned, because JSONL is weakest exactly here:
 | Bounds | 1000 events / 14 days, oldest dropped first. |
 | Poison | evicted after 3 permanent 4xx, so one rejected event cannot block the queue forever. |
 | Backoff | the shared `Backoff` — exponential, jittered, `Retry-After`-aware. 429 and 5xx back off without dropping. |
-| `resetAnonymousId` | purges the queue; an event captured under a dead id would re-link the identity the user asked to be forgotten. |
+| `resetAnonymousId` | purges the queue, and the drain independently drops any event whose captured id is no longer the current one — the purge can race a flush, so the guarantee cannot rest on it alone. |
 
-Two gaps to know about:
+Three gaps to know about:
 
 - **Single writer, not enforced.** A merchant initialising the SDK from a second
   process (`:remote`) would corrupt both this file and the SharedPreferences.
@@ -278,6 +375,10 @@ Two gaps to know about:
   `track`. A connectivity callback needs `ACCESS_NETWORK_STATE`, which a library
   must not force onto its host, so a device that comes back online mid-session
   drains on the next tracked event rather than immediately.
+- **Enqueue needs a merchant id.** The body carries one, so `track` resolves the
+  merchant first. With `FrakConfig.merchantId` set — the documented integration
+  — that is local. With only a package id and a cache that has never been
+  filled, an offline `track` fails instead of queueing.
 
 ## Anonymous identity
 
@@ -375,8 +476,7 @@ bun run --cwd sdk/android test          # JVM unit tests
 bun run --cwd sdk/android lint          # ktlint check
 bun run --cwd sdk/android format        # ktlint auto-format in place
 bun run --cwd sdk/android size          # release dex size vs the budget
-bun run --cwd sdk/android check         # full check: ktlint, tests, Android Lint, version drift, dex budget, apiCheck
-bun run --cwd sdk/android apiDump       # regenerate the BCV API dump
+bun run --cwd sdk/android check         # full check: ktlint, tests, Android Lint, version drift, dex budget
 bun run --cwd sdk/android publishLocal  # publishToMavenLocal (~/.m2)
 ```
 
@@ -440,13 +540,21 @@ exists on one platform only.
 
 ## Toolchain
 
-Versions live in `gradle/libs.versions.toml`. Notable: AGP 8.11.0, Kotlin 2.0.21
-(compiling *to* language level 1.9), ktlint plugin 12.1.1 with engine 1.2.1,
-Compose BOM 2024.02.01.
+Versions live in `gradle/libs.versions.toml`. Notable: AGP 9.1.1, Kotlin 2.4.10
+(compiling *to* language level 2.2), ktlint plugin 14.2.0 with engine 1.8.0,
+Compose BOM 2026.06.01.
 
-The Gradle wrapper is **8.14.3**, not the 8.7 that `example/native-android` uses.
-This folder is built on a Java 24 host and Gradle only gained Java 24 support in
-the 8.14 line; on 8.7 the daemon aborts before any build logic runs.
+Kotlin is compiled by **AGP's built-in Kotlin support**, not the
+`org.jetbrains.kotlin.android` plugin, which AGP 9.0 made redundant and which now
+fails outright if applied alongside it. Compiler settings therefore live in
+`kotlin { compilerOptions {} }` rather than the removed `android { kotlinOptions {} }`.
+The Compose compiler plugin is separate and is still applied explicitly.
+
+The Gradle wrapper is **9.5.0**, not the newest 9.6.x. That is the ceiling of the
+range Kotlin Gradle plugin 2.4.10 declares fully supported (7.6.3–9.5.0); AGP 9.1
+requires at least 9.3.1, so 9.5.0 satisfies both without leaving either matrix.
+The launching JDK no longer constrains this — Gradle 9.x runs on any JVM from 17
+to 26.
 
 `gradle.properties` turns off the AGP build features this project has no use for
 (`buildConfig`, `aidl`, `renderscript`, `resValues`, `shaders`). Each one left on

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French, matching the hosted page's own `fr` bundle. -->
+<resources>
+    <string name="frak_sharing_title">Partagez et gagnez</string>
+    <string name="frak_sharing_share">Partager</string>
+    <string name="frak_sharing_copy">Copier le lien</string>
+    <string name="frak_sharing_copied">Lien copié</string>
+    <string name="frak_sharing_close">Fermer</string>
+</resources>

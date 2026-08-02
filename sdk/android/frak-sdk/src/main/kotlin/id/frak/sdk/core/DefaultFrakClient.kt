@@ -34,13 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * The real [FrakClient].
- *
- * Wiring, plus the one invariant that cannot live in any single component:
- * every public entry point lets only [FrakError] and `CancellationException`
- * escape. See [frakCall].
- */
+/** The real [FrakClient]. Every public entry point lets only [FrakError]/`CancellationException` escape, see [frakCall]. */
 internal class DefaultFrakClient(
     private val config: FrakConfig,
     store: KeyValueStore,
@@ -49,16 +43,9 @@ internal class DefaultFrakClient(
     private val launcher: AppLauncher,
     private val logger: FrakLogger,
     private val ioDispatcher: CoroutineDispatcher = defaultIoDispatcher(),
-    // Overridable so tests can substitute a fake transport underneath; production
-    // always takes the default.
     http: HttpClient = HttpClient(baseUrl = config.env.backend, ioDispatcher = ioDispatcher),
 ) : FrakClient {
-    /**
-     * The SDK's own scope, so background work outlives the caller that started
-     * it. `SupervisorJob` isolates a failed revalidation from the rest of the
-     * scope; the exception handler stops anything from escaping to the
-     * process-wide default handler (never crash the host).
-     */
+    /** Outlives the caller that started the work. SupervisorJob isolates a failed revalidation. */
     private val scope =
         CoroutineScope(
             SupervisorJob() +
@@ -70,48 +57,38 @@ internal class DefaultFrakClient(
 
     private val configStore = ConfigStore(http, store, logger, scope, ioDispatcher)
     private val rewards = RewardRepository(http, logger, scope)
-    private val tracker = InteractionTracker(queue, http, logger)
+    private val tracker = InteractionTracker(queue, http, logger, currentClientId = { identity.anonymousId() })
 
     private val configState = MutableStateFlow<FrakResolvedConfig?>(null)
 
     override val configUpdates: StateFlow<FrakResolvedConfig?> = configState.asStateFlow()
+
+    override val environment: FrakEnvironment get() = config.env
+
+    /** Read by `Frak.preloadSharing`. Not on [FrakClient] itself: that would break every hand-written fake. */
+    internal val preloadSharing: Boolean get() = config.preloadSharing
 
     override val anonymousId: String?
         get() = identity.anonymousId()
 
     override fun resetAnonymousId() {
         identity.reset()
-        // Purged, not left behind: an event captured under a dead id would
-        // re-link the identity the user just asked to be forgotten.
+        // Purge is best-effort cleanup; the guarantee is the flush loop dropping events
+        // whose captured id no longer matches current.
         scope.launch { tracker.purge() }
     }
 
     init {
-        // Reading the keystore is storage I/O, and `anonymousId` is a property a
-        // merchant will read from the main thread. Resolving it here means that
-        // read is a field access by the time anything can reach it.
+        // Warms the keystore read here so a later main-thread `anonymousId` read is a field access.
         scope.launch {
             identity.anonymousId()
-            // Anything a previous session queued and could not send. Nothing
-            // else triggers a drain: the SDK holds no connectivity callback,
-            // since that needs ACCESS_NETWORK_STATE, a permission a library
-            // must not force onto its host.
             tracker.flush()
         }
     }
 
-    // Disk and decode work is kept off the caller's dispatcher (typically
-    // Dispatchers.Main) narrowly, at the point that actually does it: the
-    // withContext(ioDispatcher) inside ConfigStore's readPersisted/
-    // writePersisted, and the SDK's own scope (also on ioDispatcher) that
-    // SingleFlight runs fetch/decode on. Wrapping resolveConfig, campaigns
-    // and bestReward below themselves in withContext(ioDispatcher) was
-    // tried and reverted: it starved a 2-slot pool shared with a blocking
-    // HttpClient.perform() — a pure cache hit that touches no I/O at all
-    // would queue behind two hung requests — and it moved dispatch outside
-    // frakCall's error boundary, letting whatever withContext itself throws
-    // (e.g. a RejectedExecutionException from a shut-down dispatcher) escape
-    // unwrapped, violating the invariant every entry point promises.
+    // resolveConfig/campaigns/bestReward deliberately do NOT wrap themselves in
+    // withContext(ioDispatcher): tried and reverted, since it starved the 2-slot pool shared
+    // with blocking HttpClient.perform() and moved dispatch outside frakCall's error boundary.
     override suspend fun resolveConfig(forceRefresh: Boolean): FrakResolvedConfig =
         frakCall {
             requireTrackingEnabled()
@@ -137,10 +114,14 @@ internal class DefaultFrakClient(
     override suspend fun buildSharingLink(request: SharingRequest): String? =
         frakCall {
             val clientId = identity.anonymousId() ?: return@frakCall null
-            // Tolerated rather than propagated: this method is specified as
-            // nullable and never-throwing, and a resolve failure means the same
-            // thing to a caller as no identity — there is no link to hand back.
-            val resolved = runCatching { resolveConfig() }.getOrNull()
+            // catch (FrakError), never runCatching: this suspends, and runCatching would also
+            // swallow a caller's CancellationException, which frakCall must never let happen.
+            val resolved =
+                try {
+                    resolveConfig()
+                } catch (unavailable: FrakError) {
+                    null
+                }
             val merchantId = config.merchantId ?: resolved?.merchantId ?: return@frakCall null
             val product = request.products.firstOrNull()
             val baseUrl =
@@ -180,14 +161,7 @@ internal class DefaultFrakClient(
             FrakResult.Success(Unit)
         }
 
-    /**
-     * Fire-and-forget [handleReferralLink], on the SDK's own scope.
-     *
-     * The automatic deep-link observer is a lifecycle callback and cannot
-     * suspend; handing it a scope of its own would leak one per link and put
-     * the work outside the supervisor that stops a failure reaching the host's
-     * crash handler.
-     */
+    /** Fire-and-forget, for the deep-link observer callback which cannot suspend. */
     internal fun handleReferralLinkInBackground(url: String) {
         scope.launch { handleReferralLink(url) }
     }
@@ -213,10 +187,8 @@ internal class DefaultFrakClient(
             val link = installIdentity() ?: return@frakCall OpenAppResult.Failed
             val (merchantId, anonymousId) = link
 
-            // Attempted rather than gated on the probe: `isInstalled` can be
-            // false for reasons that have nothing to do with the app being
-            // absent, and startActivity is not gated by it. Trusting the probe
-            // would turn a visibility quirk into a dead feature.
+            // Attempted rather than gated on the probe: isInstalled can be false for reasons
+            // unrelated to the app being absent.
             if (isFrakAppInstalled() &&
                 launcher.open(InstallLinks.deepLink(config.env.walletScheme, merchantId, anonymousId))
             ) {
@@ -237,7 +209,13 @@ internal class DefaultFrakClient(
     private suspend fun installIdentity(): Pair<String, String>? {
         val anonymousId = identity.anonymousId() ?: return null
         val merchantId =
-            config.merchantId ?: runCatching { resolveConfig() }.getOrNull()?.merchantId ?: return null
+            config.merchantId
+                ?: try {
+                    resolveConfig().merchantId
+                } catch (unavailable: FrakError) {
+                    null
+                }
+                ?: return null
         return merchantId to anonymousId
     }
 
@@ -249,19 +227,10 @@ internal class DefaultFrakClient(
             packageId = config.env.walletPackageId,
             merchantId = merchantId,
             anonymousId = anonymousId,
-            // Additive: a wallet build that predates proofs ignores the key, and
-            // a device that cannot sign simply omits it.
             installProof = identity.signProof(ProofOp.Install, merchantId),
         )
 
-    /**
-     * Resolves the merchant an event belongs to, then runs [block].
-     *
-     * Failure here is only ever a reason that will not resolve itself —
-     * tracking off, or no merchant to attribute to. Everything transient is the
-     * queue's problem, not the caller's, which is why nothing about
-     * connectivity can reach this return value.
-     */
+    /** Only ever fails for a reason that won't resolve itself; connectivity is the queue's problem. */
     private suspend inline fun trackingCall(block: (merchantId: String) -> FrakResult<Unit>): FrakResult<Unit> =
         try {
             requireTrackingEnabled()
@@ -270,12 +239,7 @@ internal class DefaultFrakClient(
             FrakResult.Failure(known)
         }
 
-    /**
-     * Resolves the merchant, then reads its rewards. Sequencing resolve first
-     * means a typo'd merchant id surfaces as
-     * [FrakError.MerchantResolutionFailed] rather than a permanently empty
-     * reward list; it is nearly always a cache hit.
-     */
+    /** Resolve first so a typo'd merchant id surfaces as [FrakError.MerchantResolutionFailed]. */
     private suspend fun fetchRewards(
         targetInteraction: String?,
         audience: RewardAudience?,
@@ -288,31 +252,20 @@ internal class DefaultFrakClient(
         forceRefresh = forceRefresh,
     )
 
-    // When tracking is off, no id is generated and no network is issued —
-    // including for resolveConfig, which is itself a request on the user's
-    // behalf carrying their IP.
     private fun requireTrackingEnabled() {
         if (!config.trackingEnabled) throw FrakError.TrackingDisabled
     }
 }
 
 /**
- * Caps the SDK's share of the shared IO pool. `Dispatchers.IO` defaults to 64
- * threads shared with the host app; without a cap, a burst of SDK work could
- * starve the merchant's own disk I/O.
+ * Caps the SDK's share of the shared IO pool so a burst doesn't starve the host's own disk I/O.
+ * `internal`, not private: [id.frak.sdk.Frak] must hand the EventQueue this exact same instance,
+ * not a second independent `limitedParallelism(2)` budget.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-private fun defaultIoDispatcher(): CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
+internal fun defaultIoDispatcher(): CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
 
-/**
- * Runs [block] and normalises whatever escapes, so only [FrakError] leaves
- * the SDK.
- *
- * The `CancellationException` arm must come first and must rethrow untouched:
- * a catch-all that swallows it breaks structured concurrency — the parent
- * never learns the child cancelled, `withTimeout` silently stops working, and
- * scope teardown leaks.
- */
+/** Normalises whatever escapes so only [FrakError] leaves the SDK. `CancellationException` rethrows untouched. */
 internal inline fun <T> frakCall(block: () -> T): T =
     try {
         block()
@@ -321,8 +274,5 @@ internal inline fun <T> frakCall(block: () -> T): T =
     } catch (known: FrakError) {
         throw known
     } catch (unexpected: Throwable) {
-        // Anything reaching here is a bug rather than a condition. Wrapped
-        // rather than propagated so a merchant's `catch (e: FrakError)` cannot
-        // be bypassed by something we failed to anticipate.
         throw FrakError.Decoding("unexpected failure: ${unexpected.message}", unexpected)
     }

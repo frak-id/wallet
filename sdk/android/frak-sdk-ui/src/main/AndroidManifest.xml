@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Intentionally minimal.
+
+  No permissions: INTERNET and the `<queries>` for the wallet packages are
+  declared once by `frak-sdk`, and this module takes an `api` dependency on it,
+  so the manifest merger folds them in from there. Repeating them here would be
+  two places to keep in sync for no gain.
+
+  No activity either. The sharing sheet is a Compose surface the merchant hosts
+  in their own activity, and 02 §6.1 rules out an SDK-declared redirect-catcher
+  activity outright.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+</manifest>

@@ -63,7 +63,13 @@ class PublicSurfaceTest {
         assertEquals(reward, campaign.referrer)
         assertEquals("fixed", best.payoutType)
         assertEquals("m1", config.merchantId)
-        assertEquals("Share", config.sdkConfig?.components?.buttonShare?.text)
+        assertEquals(
+            "Share",
+            config.sdkConfig
+                ?.components
+                ?.buttonShare
+                ?.text,
+        )
     }
 
     @Test
@@ -220,5 +226,7 @@ class PublicSurfaceTest {
         override suspend fun openFrakApp(): OpenAppResult = OpenAppResult.Failed
 
         override suspend fun installUrl(): String? = null
+
+        override val environment: FrakEnvironment = FrakEnvironment.Production
     }
 }
