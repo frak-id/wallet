@@ -18,6 +18,8 @@
         "@frak-labs-example/vanilla-js",
         "@frak-labs-example/native-android",
         "@frak-labs-example/native-ios",
+        "@frak-labs-sdk/native-android",
+        "@frak-labs-sdk/native-ios",
         "@frak-labs/nexus-wallet",
         "@frak-labs/nexus-business",
         "@frak-labs/nexus-listener",
