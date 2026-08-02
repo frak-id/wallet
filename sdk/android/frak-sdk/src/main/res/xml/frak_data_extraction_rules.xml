@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Keeps the SDK's anonymous identity from surviving a device migration.
+
+  02-native-sdk-overview.md §4: the anonymous id is derived from a device-held
+  P-256 keypair and is scoped to one app installation. Carrying it to a new
+  device resurrects a "fresh" user's identity — the exact behaviour that makes
+  Keychain unusable on iOS, and the reason it is rejected there.
+
+  BOTH blocks are required for BOTH files. `<cloud-backup>` alone still lets a
+  device-to-device transfer — the standard new-phone flow — clone them verbatim.
+
+  Two files, deliberately. `id.frak.sdk.xml` holds the anonymous identity;
+  `id.frak.sdk.config.xml` is the resolved-config cache, written on every
+  successful resolve. Keeping the hot one away from the identity slot means a
+  corrupt write cannot take the identity with it. The config cache is excluded
+  for a milder reason than the identity — it is merchant data keyed to an install
+  and cheap to refetch, so carrying a stale copy onto a new device buys nothing
+  and risks serving config resolved under a different identity.
+
+  Note that this file being present is NOT sufficient. `android:dataExtractionRules`
+  is a singular attribute on `<application>`, and Gradle's manifest merger does
+  not union rules files: if the merchant declares their own, the SDK's is dropped
+  or the build fails pending `tools:replace`. So this ships as a resource to
+  reference or copy, documented as an integration step, and backed by a
+  debug-build runtime assertion that warns when the prefs files are not excluded.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude
+            domain="sharedpref"
+            path="id.frak.sdk.xml" />
+        <exclude
+            domain="sharedpref"
+            path="id.frak.sdk.config.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude
+            domain="sharedpref"
+            path="id.frak.sdk.xml" />
+        <exclude
+            domain="sharedpref"
+            path="id.frak.sdk.config.xml" />
+    </device-transfer>
+</data-extraction-rules>

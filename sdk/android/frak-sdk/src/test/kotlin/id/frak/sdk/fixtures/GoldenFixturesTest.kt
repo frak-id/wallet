@@ -4,18 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Proves the loader mechanism works, nothing more.
- *
- * This asserts against `golden-proofs.json` because it is the one corpus file
- * that exists today. There are deliberately no assertions about SDK behaviour
- * here: none of the identity, codec or reward code exists yet, and a test
- * asserting against absent behaviour would be theatre. What must be verified now
- * is that the corpus can be *found and parsed from a Gradle test JVM* — the part
- * that is environment-dependent and would otherwise be discovered later.
- *
- * The conformance suites land with the code they cover.
- */
+/** Proves the loader mechanism finds and parses the corpus from a Gradle test JVM. Nothing more. */
 class GoldenFixturesTest {
     @Test
     fun `identity corpus loads, declares the expected envelope, and is non-empty`() {
@@ -28,9 +17,7 @@ class GoldenFixturesTest {
         )
         assertTrue("corpus should not be empty", corpus.size > 0)
 
-        // Every entry is an object carrying the human label the identity corpus
-        // uses. Asserting one payload key keeps this honest: it proves entries
-        // were really parsed rather than counted as opaque blobs.
+        // Asserting one payload key proves entries were really parsed, not just counted.
         for (entry in corpus.entries) {
             assertTrue(
                 "every fixture carries a description",
@@ -39,11 +26,6 @@ class GoldenFixturesTest {
         }
     }
 
-    /**
-     * The failure path is the whole point of the loader, so it is tested rather
-     * than assumed. If this regressed, every future conformance suite would go
-     * green against a corpus that was not there.
-     */
     @Test
     fun `a missing corpus fails loudly rather than skipping`() {
         val error =
