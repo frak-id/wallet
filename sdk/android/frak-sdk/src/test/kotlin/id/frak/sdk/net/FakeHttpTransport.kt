@@ -8,9 +8,11 @@ internal const val FAKE_BASE_URL = "https://backend.example"
 
 internal class RecordedRequest(
     val url: URL,
+    val method: String,
     val headers: Map<String, String>,
     val instanceFollowRedirects: Boolean,
     val useCaches: Boolean,
+    val body: String?,
 )
 
 /**
@@ -26,6 +28,9 @@ internal class FakeHttpTransport {
     private var retryAfter: String? = null
     private var failure: IOException? = null
 
+    /** Scripted statuses, consumed one per request; the last one repeats. */
+    private var statuses = ArrayDeque<Int>()
+
     fun respond(
         status: Int,
         body: String,
@@ -37,14 +42,24 @@ internal class FakeHttpTransport {
         this.failure = null
     }
 
+    /** Answers each request with the next status, repeating the last once exhausted. */
+    fun respondEach(vararg statuses: Int) {
+        this.statuses = ArrayDeque(statuses.toList())
+        this.body = ""
+        this.failure = null
+    }
+
     fun fail(error: IOException) {
         failure = error
     }
 
     fun open(url: URL): HttpURLConnection = Connection(url)
 
-    private inner class Connection(url: URL) : HttpURLConnection(url) {
+    private inner class Connection(
+        url: URL,
+    ) : HttpURLConnection(url) {
         private val sent = HashMap<String, String>()
+        private val written = java.io.ByteArrayOutputStream()
 
         override fun setRequestProperty(
             key: String,
@@ -62,10 +77,23 @@ internal class FakeHttpTransport {
         override fun getResponseCode(): Int {
             // instanceFollowRedirects/useCaches are protected fields on HttpURLConnection, not
             // properties with an overridable setter — only readable from inside a subclass.
-            requests += RecordedRequest(url, sent.toMap(), instanceFollowRedirects, useCaches)
+            requests +=
+                RecordedRequest(
+                    url = url,
+                    method = requestMethod,
+                    headers = sent.toMap(),
+                    instanceFollowRedirects = instanceFollowRedirects,
+                    useCaches = useCaches,
+                    body = if (doOutput) written.toString(Charsets.UTF_8.name()) else null,
+                )
             failure?.let { throw it }
+            if (statuses.isNotEmpty()) {
+                status = if (statuses.size == 1) statuses.first() else statuses.removeFirst()
+            }
             return status
         }
+
+        override fun getOutputStream() = written
 
         override fun getInputStream() =
             if (status in 200..399) body.byteInputStream() else throw IOException("no input stream")

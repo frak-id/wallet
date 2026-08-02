@@ -47,33 +47,67 @@ internal class HttpClient(
     suspend fun get(
         path: String,
         query: Map<String, String?> = emptyMap(),
+        headers: Map<String, String> = emptyMap(),
     ): Response {
         val url = URL(buildUrl(path, query))
         // Deadline wraps both attempts; inside attempt() it would give the retry
         // its own fresh window, doubling the worst-case wait.
-        return try {
-            withTimeout(OVERALL_DEADLINE_MILLIS) {
+        return withDeadline {
+            try {
+                attempt(url, headers, null)
+            } catch (retryable: IOException) {
+                // One retry: a pooled connection closed server-side while idle
+                // fails on next use with "unexpected end of stream", indistinguishable
+                // from a real failure. Safe only because this is GET-only.
                 try {
-                    attempt(url)
-                } catch (retryable: IOException) {
-                    // One retry: a pooled connection closed server-side while idle
-                    // fails on next use with "unexpected end of stream", indistinguishable
-                    // from a real failure. Safe only because this is GET-only.
-                    try {
-                        attempt(url)
-                    } catch (failed: IOException) {
-                        failed.addSuppressed(retryable)
-                        throw FrakError.Network(failed)
-                    }
+                    attempt(url, headers, null)
+                } catch (failed: IOException) {
+                    failed.addSuppressed(retryable)
+                    throw FrakError.Network(failed)
                 }
             }
-        } catch (expired: TimeoutCancellationException) {
-            // Caught outside withTimeout so it covers either attempt. Only this
-            // subtype is mapped: a real CancellationException must propagate untouched,
-            // or the caller's scope would look cancelled instead of timed out.
-            throw FrakError.Network(expired)
         }
     }
+
+    /**
+     * Issues a POST with a JSON body. Same contract as [get] on statuses and
+     * failures, with one difference: **no retry**.
+     *
+     * The retry in [get] exists for a pooled connection the server closed while
+     * idle, which fails on next use indistinguishably from a real failure. That
+     * is only safe when a duplicate request costs nothing. A POST here writes a
+     * tracked event, and the transport cannot tell a connection that died before
+     * the request was read from one that died after — so retrying is the caller's
+     * decision, made with an idempotency key, not the transport's.
+     */
+    suspend fun post(
+        path: String,
+        body: String,
+        headers: Map<String, String> = emptyMap(),
+    ): Response {
+        val url = URL(baseUrl + path)
+        return withDeadline {
+            try {
+                attempt(url, headers, body)
+            } catch (failed: IOException) {
+                throw FrakError.Network(failed)
+            }
+        }
+    }
+
+    /**
+     * Wall-clock ceiling for a whole request, mapping only the timeout to
+     * [FrakError.Network]. Caught outside `withTimeout` so it covers every
+     * attempt inside, and only this subtype is mapped: a real
+     * `CancellationException` must propagate untouched, or the caller's scope
+     * would look cancelled instead of timed out.
+     */
+    private suspend fun withDeadline(block: suspend () -> Response): Response =
+        try {
+            withTimeout(OVERALL_DEADLINE_MILLIS) { block() }
+        } catch (expired: TimeoutCancellationException) {
+            throw FrakError.Network(expired)
+        }
 
     /**
      * Runs the connection on [ioDispatcher] as a child coroutine so cancellation
@@ -82,10 +116,14 @@ internal class HttpClient(
      * invokeOnCompletion doesn't fire either. Without this, a flaky network
      * exhausts the SDK's IO dispatcher and every later call hangs.
      */
-    private suspend fun attempt(url: URL): Response =
+    private suspend fun attempt(
+        url: URL,
+        headers: Map<String, String>,
+        body: String?,
+    ): Response =
         coroutineScope {
             val connection = open(url)
-            val work = async(ioDispatcher) { connection.perform() }
+            val work = async(ioDispatcher) { connection.perform(headers, body) }
             try {
                 work.await()
             } catch (cancelled: CancellationException) {
@@ -98,8 +136,11 @@ internal class HttpClient(
             // returns the connection to the pool.
         }
 
-    private fun HttpURLConnection.perform(): Response {
-        requestMethod = "GET"
+    private fun HttpURLConnection.perform(
+        headers: Map<String, String>,
+        body: String?,
+    ): Response {
+        requestMethod = if (body == null) "GET" else "POST"
         connectTimeout = CONNECT_TIMEOUT_MILLIS
         readTimeout = READ_TIMEOUT_MILLIS
         // Every URL here is ours, so a redirect means misconfiguration, not something to follow.
@@ -107,6 +148,18 @@ internal class HttpClient(
         useCaches = false
         setRequestProperty("Accept", "application/json")
         setRequestProperty(FrakSdkVersion.HEADER_NAME, FrakSdkVersion.CURRENT)
+        headers.forEach { (name, value) -> setRequestProperty(name, value) }
+
+        if (body != null) {
+            setRequestProperty("Content-Type", "application/json")
+            doOutput = true
+            val bytes = body.toByteArray(Charsets.UTF_8)
+            // Fixed length rather than chunked: the bodies here are small, and
+            // chunked transfer-encoding makes HttpURLConnection buffer nothing,
+            // so a retry could not replay it even if we wanted one.
+            setFixedLengthStreamingMode(bytes.size)
+            outputStream.use { it.write(bytes) }
+        }
 
         val status = responseCode
         // Error bodies (carrying our `code` field) are on errorStream, not inputStream.

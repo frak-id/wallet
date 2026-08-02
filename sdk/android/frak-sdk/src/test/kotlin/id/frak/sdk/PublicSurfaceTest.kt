@@ -16,6 +16,7 @@ import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogSink
+import id.frak.sdk.core.FrakResult
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.EstimatedReward
@@ -23,6 +24,7 @@ import id.frak.sdk.rewards.RewardAudience
 import id.frak.sdk.rewards.RewardTier
 import id.frak.sdk.rewards.TokenAmount
 import id.frak.sdk.sharing.SharingRequest
+import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -202,5 +204,21 @@ class PublicSurfaceTest {
         override fun resetAnonymousId() = Unit
 
         override suspend fun buildSharingLink(request: SharingRequest): String? = null
+
+        override suspend fun track(interaction: Interaction): FrakResult<Unit> = FrakResult.Success(Unit)
+
+        override suspend fun trackPurchase(
+            customerId: String,
+            orderId: String,
+            token: String,
+        ): FrakResult<Unit> = FrakResult.Success(Unit)
+
+        override suspend fun handleReferralLink(url: String): Boolean = false
+
+        override fun isFrakAppInstalled(): Boolean = false
+
+        override suspend fun openFrakApp(): OpenAppResult = OpenAppResult.Failed
+
+        override suspend fun installUrl(): String? = null
     }
 }

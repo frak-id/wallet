@@ -2,10 +2,12 @@ package id.frak.sdk
 
 import id.frak.sdk.config.FrakResolvedConfig
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.FrakResult
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.RewardAudience
 import id.frak.sdk.sharing.SharingRequest
+import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -118,4 +120,89 @@ public interface FrakClient {
      * only the reward pitch is missing.
      */
     public suspend fun buildSharingLink(request: SharingRequest): String?
+
+    /**
+     * Records an [Interaction] and tries to send it.
+     *
+     * Succeeds once the event is durable, not once it is delivered. The
+     * distinction matters: an event recorded only on a successful response is
+     * lost to every tunnel, every airplane-mode moment, and every process kill
+     * — and Android will kill a host app while the OS share sheet is
+     * foregrounded, which is exactly when a `sharing` event is in flight.
+     * Queued events are sent oldest-first on the next opportunity.
+     *
+     * Returns [FrakResult.Failure] only for reasons that will not resolve
+     * themselves: tracking disabled, or no merchant to attribute to.
+     */
+    public suspend fun track(interaction: Interaction): FrakResult<Unit>
+
+    /**
+     * Records a purchase, so a campaign that pays out on one can.
+     *
+     * Same enqueue-then-send contract as [track] — call it as soon as the order
+     * is confirmed rather than waiting for a screen that the user may never
+     * reach.
+     *
+     * @param customerId the merchant's own customer identifier.
+     * @param orderId the merchant's own order identifier.
+     * @param token the checkout token the backend reconciles the purchase with.
+     */
+    public suspend fun trackPurchase(
+        customerId: String,
+        orderId: String,
+        token: String,
+    ): FrakResult<Unit>
+
+    /**
+     * Handles an inbound link: decodes its referral context, applies the
+     * self-referral guard, and tracks the arrival.
+     *
+     * Called for you under [id.frak.sdk.core.DeepLinkHandling.Automatic]. Under
+     * `Manual`, call it from your router.
+     *
+     * @return whether the link carried a Frak referral context. **This is not a
+     *   "stop routing" signal.** A share link is the merchant's own product URL
+     *   with an `fCtx` appended, so the merchant must still navigate to it —
+     *   treating true as consumed would break every link the SDK is supposed to
+     *   make work.
+     */
+    public suspend fun handleReferralLink(url: String): Boolean
+
+    /** Whether the Frak wallet app for the configured environment is installed. */
+    public fun isFrakAppInstalled(): Boolean
+
+    /**
+     * Links this installation's anonymous id to the user's Frak wallet, opening
+     * the app when it is there and the Play Store listing when it is not.
+     *
+     * This is the install step of the sharing flow, and the SDK owns it end to
+     * end. A merchant should not call it from a `SharingResult.InstallStarted`
+     * callback — that result reports the step the SDK already performed.
+     *
+     * The store path carries a Play install referrer, so the link survives the
+     * round-trip and the wallet completes it on first launch.
+     */
+    public suspend fun openFrakApp(): OpenAppResult
+
+    /**
+     * The Play Store URL that links this installation, for a merchant
+     * rendering their own install call to action. Null when there is no
+     * identity or no merchant to link.
+     */
+    public suspend fun installUrl(): String?
+}
+
+/** What [FrakClient.openFrakApp] managed to do. */
+public enum class OpenAppResult {
+    /** The wallet app was already installed and took the deep link. */
+    OpenedApp,
+
+    /** The wallet app was absent; the store listing was opened instead. */
+    OpenedStore,
+
+    /**
+     * Nothing opened — no identity to link, no merchant to link it to, or no
+     * activity willing to handle either URL.
+     */
+    Failed,
 }

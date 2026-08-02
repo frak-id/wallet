@@ -1,15 +1,22 @@
 package id.frak.sdk
 
+import android.app.Application
 import android.content.Context
+import id.frak.sdk.applink.AndroidAppLauncher
+import id.frak.sdk.applink.DeepLinkObserver
 import id.frak.sdk.config.SharedPreferencesStore
+import id.frak.sdk.core.DeepLinkHandling
 import id.frak.sdk.core.DefaultFrakClient
 import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.core.defaultIoDispatcher
 import id.frak.sdk.identity.AndroidKeystoreDeviceKeyStore
 import id.frak.sdk.identity.AnonymousIdStore
 import id.frak.sdk.sharing.FrakContext
 import id.frak.sdk.sharing.SharingLinkBuilder
+import id.frak.sdk.tracking.EventQueue
+import java.io.File
 
 /**
  * Entry point. Call [initialize] once, then use [client].
@@ -27,24 +34,12 @@ import id.frak.sdk.sharing.SharingLinkBuilder
  * // anywhere afterwards
  * val reward = Frak.client.bestReward(targetInteraction = "purchase")
  * ```
- *
- * A singleton rather than an instance the merchant holds, matching the JS SDK
- * and both iOS and Android convention. A native app maps to exactly one
- * merchant, so there is no second instance to want.
  */
 public object Frak {
     @Volatile
-    private var instance: FrakClient? = null
+    private var instance: DefaultFrakClient? = null
 
-    /**
-     * Starts the SDK. Non-blocking, does no I/O, and never throws.
-     *
-     * A second call is a no-op and logs a warning; the first configuration
-     * wins rather than the last, since swapping config underneath in-flight
-     * work would be worse than rejecting the second call.
-     *
-     * @param context any [Context]; only the application context is retained.
-     */
+    /** Non-blocking, does no I/O, never throws. Second call is a no-op; first config wins. */
     @JvmStatic
     public fun initialize(
         context: Context,
@@ -56,7 +51,6 @@ public object Frak {
             return
         }
         synchronized(this) {
-            // fast path without the lock
             if (instance != null) return
             val effective = config.withPackageIdFrom(context)
             if (effective.merchantId == null && effective.packageId == null) {
@@ -65,31 +59,38 @@ public object Frak {
                         "Every SDK call will fail with MerchantResolutionFailed.",
                 )
             }
+            // Shared by queue and client: two limitedParallelism(2) views would double the IO budget.
+            val ioDispatcher = defaultIoDispatcher()
             instance =
                 DefaultFrakClient(
                     config = effective,
                     store = SharedPreferencesStore(context),
+                    // noBackupFilesDir: queued events must never be replayed from a backup/transfer.
+                    queue =
+                        EventQueue(
+                            file = File(context.noBackupFilesDir, EVENT_QUEUE_FILE_NAME),
+                            logger = logger,
+                            ioDispatcher = ioDispatcher,
+                        ),
                     identity =
                         AnonymousIdStore(
                             keyStore = AndroidKeystoreDeviceKeyStore(),
-                            // A separate prefs file from the config cache: a corrupt
-                            // write to the hot one must not take the identity with it.
+                            // Separate prefs file: a corrupt write to the config cache must not take identity with it.
                             store = SharedPreferencesStore(context, IDENTITY_FILE_NAME),
                             logger = logger,
                             merchantMarker = effective.merchantId ?: effective.packageId.orEmpty(),
                             trackingEnabled = effective.trackingEnabled,
                         ),
+                    launcher = AndroidAppLauncher(context),
                     logger = logger,
+                    ioDispatcher = ioDispatcher,
                 )
+            registerDeepLinkObserver(context, effective, logger)
             logger.info("Frak ${FrakSdkVersion.CURRENT} initialized.")
         }
     }
 
-    /**
-     * The client.
-     *
-     * @throws FrakError.NotInitialized when [initialize] has not run.
-     */
+    /** @throws FrakError.NotInitialized when [initialize] has not run. */
     @JvmStatic
     public val client: FrakClient
         get() = instance ?: throw FrakError.NotInitialized
@@ -99,23 +100,36 @@ public object Frak {
     public val isInitialized: Boolean
         get() = instance != null
 
-    /**
-     * Reads the referral context out of an inbound link, or null when it
-     * carries none.
-     *
-     * Pure and static: it needs no SDK instance, no network and no identity, so
-     * a merchant's router can call it before [initialize] has run to decide
-     * whether a link is one of ours at all.
-     *
-     * Note that this only *decodes*. Acting on the context — arrival tracking,
-     * and the self-referral guard that must precede it — is a separate step.
-     */
+    /** Mirrors [FrakConfig.preloadSharing] for `:frak-sdk-ui`. False before [initialize] has run. */
+    @JvmStatic
+    public val preloadSharing: Boolean
+        get() = instance?.preloadSharing ?: false
+
+    /** Pure and static; callable before [initialize]. Only decodes — does not track arrival. */
     @JvmStatic
     public fun parseReferralLink(url: String): FrakContext? = SharingLinkBuilder.parse(url)
 
-    // Fills in packageId from the Context when the merchant left it null (the
-    // expected case); skipped once a merchantId is set, since packageId would
-    // be inert at the backend anyway.
+    /** Needs an `Application` to observe lifecycles; falls back to manual routing otherwise. */
+    private fun registerDeepLinkObserver(
+        context: Context,
+        config: FrakConfig,
+        logger: FrakLogger,
+    ) {
+        if (config.deepLink != DeepLinkHandling.Automatic) return
+        val application = context.applicationContext as? Application
+        if (application == null) {
+            logger.error(
+                "DeepLinkHandling.Automatic needs an Application context. " +
+                    "Inbound referral links will be ignored; call handleReferralLink from your own router.",
+            )
+            return
+        }
+        application.registerActivityLifecycleCallbacks(
+            // Client owns the guard/tracking; this only reports that a link was seen.
+            DeepLinkObserver { url -> instance?.handleReferralLinkInBackground(url) },
+        )
+    }
+
     private fun FrakConfig.withPackageIdFrom(context: Context): FrakConfig {
         if (merchantId != null || packageId != null) return this
         return withPackageId(context.packageName)
@@ -128,4 +142,6 @@ public object Frak {
 
     /** Matches the `path` in `frak_data_extraction_rules.xml`. */
     private const val IDENTITY_FILE_NAME = "id.frak.sdk"
+
+    private const val EVENT_QUEUE_FILE_NAME = "frak-events.jsonl"
 }

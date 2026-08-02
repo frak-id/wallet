@@ -4,9 +4,9 @@ Gradle multi-module **library** project for the Frak native Android SDK. Not an
 app: there is nothing to install and nothing to launch, so no command here ever
 needs a device or an emulator.
 
-> ⚠️ **Partial. Config, rewards, identity and share links work; nothing else exists yet.**
+> ⚠️ **Partial. Everything but the sharing sheet works; `frak-sdk-ui` is still empty.**
 >
-> What is implemented and tested (151 JVM unit tests — `grep -rhoP '^\s*@Test\b' frak-sdk/src/test --include=*.kt | wc -l`):
+> What is implemented and tested (178 JVM unit tests — `grep -rhoP '^\s*@Test\b' frak-sdk/src/test --include=*.kt | wc -l`):
 >
 > | Package | What is there |
 > | --- | --- |
@@ -16,11 +16,15 @@ needs a device or an emulator.
 > | `rewards` | models, decoder and `RewardRepository` for `estimated-rewards` |
 > | `identity` | `AnonymousIdStore`, the P-256 keystore keypair, and `ProofCodec` (id derivation + the proof envelope) |
 > | `sharing` | `FrakContextCodec` (the `fCtx` v2 binary layout), `SharingLinkBuilder`, attribution merging |
+> | `tracking` | `InteractionTracker`, `EventQueue` (durable JSONL, FIFO, bounded) |
+> | `applink` | inbound `fCtx` handling with the self-referral guard, the wallet deep link and the Play install referrer |
 >
 > Public surface: `Frak.initialize` / `Frak.client`, `FrakClient.resolveConfig`,
 > `configUpdates`, `campaigns`, `bestReward`, `anonymousId`, `resetAnonymousId`,
-> `buildSharingLink` and `Frak.parseReferralLink`, plus `FrakContext`,
-> `SharingRequest`, `SharingProduct` and `AttributionParams`,
+> `buildSharingLink`, `track`, `trackPurchase`, `handleReferralLink`,
+> `isFrakAppInstalled`, `openFrakApp`, `installUrl` and `Frak.parseReferralLink`,
+> plus `FrakContext`, `SharingRequest`, `SharingProduct`, `AttributionParams`,
+> `Interaction`, `FrakResult`, `OpenAppResult` and `DeepLinkHandling`,
 > `FrakLogSink`, and the ten public
 > config model types: `FrakResolvedConfig`, `ResolvedSdkConfig`, `ResolvedPlacement`,
 > `ResolvedComponents`, `ButtonShareConfig`, `ButtonWalletConfig`, `OpenInAppConfig`,
@@ -29,11 +33,9 @@ needs a device or an emulator.
 > A merchant can route SDK diagnostics into their own logging by setting `FrakConfig.logSink`
 > (a `fun interface`, so a lambda works) — see "Logging" below.
 >
-> **Not implemented**: sending `x-frak-client-id` on the wire (nothing calls an
-> id-keyed endpoint yet), interaction and purchase tracking, the durable offline
-> queue, inbound `fCtx` handling and the self-referral
-> guard, the sharing sheet, the install flow, and the 4-tier copy precedence.
-> `tracking/` and `applink/` are still empty packages.
+> **Not implemented**: the sharing sheet — `frak-sdk-ui` still has no Kotlin
+> sources — and the 4-tier copy precedence. `referralStatus` and the analytics
+> event stream are also absent.
 >
 > The full resolve response *is* decoded — placements, component copy,
 > translations, attribution — and the whole tree is `public`, not just the
@@ -225,10 +227,10 @@ Two absences in `frak-sdk/src/main/AndroidManifest.xml` are load-bearing:
 - **No exported activity and no intent filter.** 02 §6.1 forbids a
   redirect-catcher activity — inbound `fCtx` handling is meant to go through
   the SDK's own deep-link entry point rather than a manifest-declared filter,
-  so the merchant's own activity keeps owning the intent. That entry point is
-  not yet implemented: there is no `FrakConfig.deepLink` (or equivalent) in
-  `core/FrakConfig.kt` today, only the lower-level `applink/` package
-  (`DeepLinkBuilder`, `InstallRedirector`, `AppInstalledProbe`).
+  so the merchant's own activity keeps owning the intent. `FrakConfig.deepLink`
+  is that entry point: `Automatic` registers `ActivityLifecycleCallbacks`
+  covering cold *and* warm start, `Manual` leaves it to
+  `FrakClient.handleReferralLink`.
 - **No permission beyond `INTERNET`.** A library manifest merges into the host
   app; anything added here is a permission the merchant never asked for and has
   to justify on their store listing. The `<queries>` entries cover both
@@ -239,6 +241,43 @@ Tabs cannot implement this design (02 §3): a Custom Tab is a separate browser
 Activity, so it cannot sit in a bottom sheet, cannot carry native buttons, and
 cannot lose the browser toolbar. The transport is an embedded `WebView`, which is
 a platform class and needs no dependency.
+
+## The event queue
+
+Tracked events are durable before they are sent, not after. An event recorded
+only on a successful response is lost to every tunnel and every process kill —
+and Android will kill a host app while the OS share sheet is foregrounded, which
+is exactly when a `sharing` event is in flight. So `track` and `trackPurchase`
+return once the event is on disk; delivery happens behind them, oldest first.
+
+The store is an append-only JSONL file, compacted on flush (02 §7.1). It lives
+in `noBackupFilesDir`, so the platform keeps it out of cloud backup and device
+transfer without depending on a rules file a merchant can override — queued
+events must never be replayed from someone else's device.
+
+What is pinned, because JSONL is weakest exactly here:
+
+| Concern | Behaviour |
+| --- | --- |
+| Idempotency | stamped once at enqueue, written into the body on the shapes whose schema carries one. Never re-stamped per attempt. |
+| Timestamps | capture time, not flush time, so an event sent hours later still lands in the right attribution window. |
+| Ordering | strict FIFO. A failure stops the drain rather than skipping past it. |
+| Torn tail | a kill mid-write leaves a partial last line; unreadable rows are discarded, the rest survive. |
+| Compaction | temp file plus rename, never in place. |
+| Bounds | 1000 events / 14 days, oldest dropped first. |
+| Poison | evicted after 3 permanent 4xx, so one rejected event cannot block the queue forever. |
+| Backoff | the shared `Backoff` — exponential, jittered, `Retry-After`-aware. 429 and 5xx back off without dropping. |
+| `resetAnonymousId` | purges the queue; an event captured under a dead id would re-link the identity the user asked to be forgotten. |
+
+Two gaps to know about:
+
+- **Single writer, not enforced.** A merchant initialising the SDK from a second
+  process (`:remote`) would corrupt both this file and the SharedPreferences.
+  02 §7.1 asks for a debug-build assertion; there is none yet.
+- **No flush on reconnect.** The queue drains on `initialize` and after each
+  `track`. A connectivity callback needs `ACCESS_NETWORK_STATE`, which a library
+  must not force onto its host, so a device that comes back online mid-session
+  drains on the next tracked event rather than immediately.
 
 ## Anonymous identity
 
