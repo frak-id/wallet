@@ -59,8 +59,15 @@ Two artifacts per platform, so a merchant taking only tracking never pulls in a 
 | Core | `id.frak:frak-sdk` | `FrakSDK` |
 | UI | `id.frak:frak-sdk-ui` | `FrakSDKUI` |
 | Distribution | Maven Central | SPM + CocoaPods |
-| Minimum | `minSdk 24`, Kotlin 1.9+ | iOS 15, Swift 5.9+ (Swift 6 strict-concurrency clean) |
+| Minimum | `minSdk 24`, Kotlin 2.2+ | iOS 15, Swift 5.9+ (Swift 6 strict-concurrency clean) |
 | Namespace | `id.frak.sdk` | module `FrakSDK` |
+
+> The Android Kotlin minimum was **1.9** until the toolchain moved to Kotlin 2.4.
+> Kotlin 2.4 removed `-language-version=1.9` along with the K1 compiler, so an
+> artifact consumable by a 1.9 compiler can no longer be produced. 2.2 is the
+> lowest floor worth committing to — 2.4 still accepts 2.0 and 2.1, but both are
+> already deprecated. Nothing had been published when this changed, so no existing
+> merchant was affected.
 
 Core is UI-free and headlessly testable. UI carries the sharing sheet.
 
@@ -140,8 +147,11 @@ This makes identity self-authenticating and closes the merge vulnerability descr
 [`../identity-proof-of-possession/`](../identity-proof-of-possession/). Native has **no
 legacy ids**, so it is cryptographic-only — no trust-on-first-use path, unlike web.
 
-Sensitive calls (merge/ensure) carry `{pubkey, ts, sig}` with a ±2 min window. Never
-signed on `track/*` — signing stays off the hot path.
+Sensitive calls carry an opaque `proof` blob (`v ‖ pk ‖ ts ‖ sig`, base64url). The
+validity window is **per op, not global** — ±2 min for `merge`, 90 days for `ensure`,
+30 days for `install` — because an install proof is minted on the sharer's device and
+consumed days later on another one. Never signed on `track/*`; signing stays off the
+hot path.
 
 **Ship this in v0.1 even if backend enforcement lands later.** A released binary cannot
 be retrofitted; enforcement then becomes a pure backend flip with no version skew.
@@ -157,12 +167,13 @@ silently fails derivation.
 >
 > That silent normalisation is exactly what makes this dangerous. The break happens
 > upstream, wherever an uppercase `uuidString` meets a lowercased decoded value as a
-> *string*: cache keys, storage keys, `merchantId` equality checks, the self-referral
-> guard in §6.1, and the signed-payload UUIDs in the identity plan
-> ([`../identity-proof-of-possession/README.md`](../identity-proof-of-possession/README.md)
-> §2.3), which are signed as UTF-8 bytes of the lowercase string — where case *does*
-> change the signature. Normalise once at the Swift boundary rather than at each call
-> site.
+> *string*: cache keys, storage keys, `merchantId` equality checks, and the self-referral
+> guard in §6.1. Normalise once at the Swift boundary rather than at each call site.
+>
+> The one place it *cannot* bite is the identity signing layout, which took the same
+> hazard seriously and removed it — `sdk/core/src/identity/canonical.ts` signs UUIDs as
+> their raw 16 bytes, never their 36-character text form, precisely so two platforms
+> cannot sign different bytes for the same id.
 
 | | Storage | Uninstall |
 |---|---|---|
@@ -208,11 +219,12 @@ pending event queue so nothing is emitted under a dead id), `setTrackingEnabled(
 
 ### Linking to the wallet
 
-> ⚠️ **The merge path below is blocked on a security fix.** `merge/initiate` /
-> `merge/execute` are currently exploitable for reward theft — see
-> [`../identity-proof-of-possession/`](../identity-proof-of-possession/). The `ensure`
-> path is unaffected and is the MVP mechanism; **do not ship the `?fmt=` merge flow until
-> that plan's enforcement phase lands**.
+> ⚠️ **The merge path below waits on enforcement, not on a fix.**
+> [`../identity-proof-of-possession/`](../identity-proof-of-possession/) shipped, but
+> `merge/execute` is latch-gated rather than mandatory: a present proof is verified, an
+> absent one is accepted unless that id has latched before. Until `ROLLOUT-STEP-3` flips
+> the wallet arms — gated on the store binary being live — **do not ship the `?fmt=`
+> merge flow**. The `ensure` path is unaffected and is the MVP mechanism.
 
 When the Frak app is installed, the anonymous id can be linked to the user's wallet with
 **no backend changes** — the plumbing already exists:
@@ -441,14 +453,17 @@ Design notes:
   is a nice accelerant when it fires — **never the primary mechanism**.
 - **Manual code entry remains the floor**, and given the point above it is the real
   path, not the fallback. The existing 6-char / 31-symbol code is adequate as a UX
-  primitive; see [`../identity-proof-of-possession/`](../identity-proof-of-possession/)
-  §3.2 and §5 for its security problem and the ticket replacement.
+  primitive; its security problem — an unauthenticated `anonymousId` oracle — was closed
+  by [`../identity-proof-of-possession/`](../identity-proof-of-possession/), which added
+  an atomically-enforced attempt cap and replaced the leaked id with a short-lived
+  ticket.
 - **The SDK signs at `generate`, not at `resolve`.** The SDK holds the private key; the
   Frak wallet app that later resolves the code is a different app on a possibly
   different device and cannot produce that signature. `resolve` therefore returns an
   opaque **ticket** rather than the `anonymousId`, and the wallet drains the ticket
-  against `ensure` post-auth. Full design:
-  [`../identity-proof-of-possession/`](../identity-proof-of-possession/) §3a.
+  against `ensure` post-auth. Note that `install-code/generate` itself stays permissive
+  — the wallet's own sharing page reaches it with a `clientId` it cannot sign for, so a
+  required proof would break the arm rather than secure it; the ticket is the protection.
 
 Net: iOS goes from "read a 6-digit code off a web page and type it" to "tap Get, tap the
 suggestion". Still short of Android's Install Referrer, but no longer painful. **No
@@ -698,7 +713,7 @@ that needs Universal/App Link registration too.
 ```swift
 // ── Setup ─────────────────────────────────────────────────────────
 FrakConfig(merchantId:, bundleId:, metadata:, attribution:, deepLink:,
-           walletURL:, i18nOverrides:, preloadSharing:, logLevel:, trackingEnabled:)
+           env:, i18nOverrides:, preloadSharing:, logLevel:, trackingEnabled:)
 // merchantId optional — resolved from bundleId when omitted (01 §3.5)
 // deepLink: .automatic (default) | .manual | .disabled   — see §6.1
 Frak.initialize(_:)                     // non-blocking, no I/O, never throws
@@ -924,9 +939,18 @@ await Frak.client.trackPurchase(customerId: order.customerId,
 - iOS `PrivacyInfo.xcprivacy`; Android backup exclusion (both blocks)
 - version pinning: `?sdkv=`, `x-frak-sdk-version`, kill switch
 
-Gated on platform changes 1.0, 1.1, 1.2, 1.2b, 1.3, 1.5, 2.2, 3.7, 3.8.
-**Security items 3.2, 3.3, 3.4 and 3.6 must land before any public release** — 3.2 is a
-live vulnerability today.
+Gated on platform changes 1.0, 1.1, 1.2, 1.2b, 1.3, 1.5 and 2.2 — all shipped, see
+`01-platform-changes.md` §6.
+
+**The identity gate is discharged.**
+[`../identity-proof-of-possession/`](../identity-proof-of-possession/) shipped, taking
+with it the `merge`/`track` reward-theft chain, the raw-hex-address bypass, the
+`anonymousId` oracles behind `install-code/resolve` and `order-client`, `track/*` rate
+limiting, and `WALLET_CONFLICT` handling on `ensure`. What remains there is enforcement
+rather than a fix — making the wallet arms mandatory once the store binary is live,
+tracked as `ROLLOUT-STEP-3` in that plan's `ROLLOUT.md`. The one security item still
+owned by this plan before public release is `01` §3.3's rate limits on
+`merchant/resolve` and `estimated-rewards`, which are native-specific.
 
 ### v0.2
 

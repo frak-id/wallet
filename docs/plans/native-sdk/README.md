@@ -10,6 +10,9 @@ Native Android (Kotlin) and iOS (Swift) SDKs mirroring the capabilities of
 | [`01-platform-changes.md`](./01-platform-changes.md) | Changes required in `apps/wallet`, `apps/listener`, `services/backend` before/alongside native work |
 | [`02-native-sdk-overview.md`](./02-native-sdk-overview.md) | What we build natively, philosophy, architecture, API surface, phasing |
 | [`03-implementation-strategy.md`](./03-implementation-strategy.md) | How we build and ship it: two native codebases vs a shared core, distribution, React Native, monorepo integration, and the v0.1 POC scope |
+| [`04-golden-fixtures.md`](./04-golden-fixtures.md) | The cross-platform conformance corpus: what it covers, the envelope, regeneration, how Kotlin and Swift consume it, and the ICU/invisible-character hazard |
+| [`05-audit-findings.md`](./05-audit-findings.md) | Audit of the Android + iOS core SDKs: ship blockers, security/privacy, concurrency, networking, ABI, DX, tests |
+| [`06-abi-decisions.md`](./06-abi-decisions.md) | **Open** ABI questions, now blocking the first publish rather than the dump (which is committed): the `$default` constructor freeze, `@InternalFrakApi` vs promotion, iOS's now-public `init(from:)` |
 
 ## Scope (MVP)
 
@@ -30,29 +33,38 @@ identity will be verified manually — no SEB domain currently publishes usable
 well-known files, so auto-verification cannot be the launch path. See
 [`01-platform-changes.md`](./01-platform-changes.md) §3.5.
 
-## ⚠️ Prerequisite: identity proof-of-possession
+## Prerequisite: identity proof-of-possession — shipped
 
 A security review during planning found a **live, exploitable reward-theft
-vulnerability in production today**, independent of native: `POST /user/identity/merge/execute`
-has no authentication at all, and `merge/initiate` mints a merge token for any
-`sourceAnonymousId` a caller names — an id that every share link publishes in clear.
-Worse than the theft, a hostile merge **permanently locks the victim out** of ever
-linking their wallet for that merchant (`WALLET_CONFLICT`).
+vulnerability in production**, independent of native: `POST /user/identity/merge/execute`
+had no authentication at all, `merge/initiate` minted a merge token for any
+`sourceAnonymousId` a caller named — an id that every share link publishes in clear —
+and `POST /user/track/interaction` reached the same place in a single request. Worse
+than the theft, a hostile merge **permanently locked the victim out** of ever linking
+their wallet for that merchant (`WALLET_CONFLICT`).
 
-**This is being fixed first, before any native work.** The plan lives in
-[`../identity-proof-of-possession/`](../identity-proof-of-possession/): anonymous ids
-become derived from a device-held P-256 keypair, and sensitive operations carry a
-timestamped signature.
+**It was fixed first, before any native work.** The plan lives in
+[`../identity-proof-of-possession/`](../identity-proof-of-possession/) and has shipped:
+anonymous ids are derived from a device-held P-256 keypair, sensitive operations carry a
+timestamped signature, `track/*` is resolve-only and rate-limited, the install code is
+exchanged for an opaque ticket, and the unauthenticated pairing merge is gone.
 
-We do it now because we currently have almost no shares and no active users — the
-legacy-id population that cannot be retrofitted is nearly empty. That window closes as
-we grow.
+We did it then because we had almost no shares and no active users — the legacy-id
+population that cannot be retrofitted was nearly empty. That window closes as we grow.
+
+**What remains is enforcement, not the fix.** The wallet-facing arms are still
+permissive, gated on the store binary being live and `minVersion` excluding older builds
+— tracked as `ROLLOUT-STEP-3` in
+[`../identity-proof-of-possession/ROLLOUT.md`](../identity-proof-of-possession/ROLLOUT.md).
+It does not block the POC; see `03` §6.1b.
 
 Native consequences:
 
 - native v0.1 ships key derivation + signing from day one (no legacy native ids, so
-  native is cryptographic-only — no trust-on-first-use path)
-- the `?fmt=` merge flow stays unsupported until the fix lands
+  native is cryptographic-only — no trust-on-first-use path). The frozen layout and its
+  golden fixtures live at `sdk/core/src/identity/canonical.ts` and
+  `sdk/core/src/identity/fixtures/` — that is what a native port reproduces
+- the `?fmt=` merge flow stays unsupported until enforcement lands
 - see [`01-platform-changes.md`](./01-platform-changes.md) §3.2 for the attack chain
 
 ## Core architectural decision
@@ -112,8 +124,55 @@ and the SDK — not the merchant — must own the install step end to end.
 
 ## Status
 
-Planning. No implementation yet. Reviewed by architecture, security, platform-research
+Planning, plus scaffolding. Reviewed by architecture, security, platform-research
 and codebase-gap passes; findings folded into `01` and `02`.
+
+**Landed so far** — `03` §7 item 5, commit `1e56f0c32`, the ground for the POC:
+
+| | State |
+|---|---|
+| `sdk/android/` | Gradle multi-module library, `:frak-sdk` + `:frak-sdk-ui`, `explicitApi()`, consumer R8 rules, scoped `<queries>`, backup-exclusion resource. `assembleRelease` / `ktlintCheck` / `test` / `publishToMavenLocal` green. |
+| `sdk/ios/` | SwiftPM package, `FrakSDK` + `FrakSDKUI`, real `PrivacyInfo.xcprivacy`. `build` / `test` / `lint` green at an explicit iOS-simulator triple under Swift 6. |
+| Monorepo wiring | `biome.json` exclusions (already present), `knip.ts` `ignoreWorkspaces`, `.changeset` `ignore`, `.gitignore` build outputs, `AGENTS.md` + `sdk/AGENTS.md`. |
+
+**Both platforms now implement the MVP surface.** Identity (a hardware-held P-256
+keypair and the proof envelope), the FrakContext v2 codec and local link building,
+interaction and purchase tracking over a durable queue, inbound `fCtx` handling with
+the self-referral guard, the install handoff, and the sharing sheet — Compose in
+`frak-sdk-ui`, SwiftUI in `FrakSDKUI`.
+
+Three places where iOS could not mirror Android, each forced rather than chosen:
+
+| | Android | iOS |
+| --- | --- | --- |
+| Identity storage | `SharedPreferences`, backup-excluded | `UserDefaults` (§4 rejects Keychain), key in the Secure Enclave |
+| Inbound links | `DeepLinkHandling.Automatic` via `ActivityLifecycleCallbacks` | `.manual` only — a library cannot observe a host's `Scene`/`AppDelegate` |
+| Install fallback | Play Store URL carrying an install referrer, proof included | plain App Store URL, **carrying nothing** |
+
+The last one is the one with product consequence: on iOS the identity handoff
+completes only when the wallet is already installed and the deep link fires. A user
+who installs from the store arrives unlinked until the install-code + pasteboard +
+`SKStoreProductViewController` flow of `02` §6 is built. `ProofCodec` and
+`signProof` ship anyway, asserted against the corpus — a released binary cannot be
+retrofitted, so the signing half has to be in the store build before the backend
+half is enforced.
+
+Both wire formats are asserted against the golden corpus rather than against
+each other. **Nothing has run on a device on either platform**, and no CI job
+builds or tests either SDK — every claim rests on JVM unit tests and a release
+build run by hand.
+
+Two decisions this surfaced and did not settle: the Android dex budget had to be
+raised from the 150 KB `02` §1.2 states to 256 KB once the surface was complete,
+and the licence question below is still open.
+
+The OpenAPI export (`03` §7 item 2) is **done for the MVP surface** — four defects
+found and fixed in `b8142a96e` and `3578e5c92`, from a missing document envelope to three
+of six MVP routes declaring no response schema at all.
+
+Still open before the POC loop (`03` §7): Maven Central Portal namespace verification, and
+the reward-formatting corpus — `golden-rewards.json` exists but no Swift suite loads it, so
+iOS reward formatting is still asserted against hand-written JSON rather than the corpus.
 
 `03-implementation-strategy.md` adds the build-and-ship decisions the first two
 documents leave open (code sharing, distribution, React Native, monorepo integration)
@@ -127,6 +186,8 @@ under `example/native-{android,ios}/` — which are not a demo but the only way 
 native SDK at all. See `03` §6.
 
 **The POC is internal only.** No merchant integrates it, Moulinex included; they get the
-hardened MVP. That is what makes the §6.1 cuts safe, and it splits the security
-checklist: `3.2` and `3.6` still block because they are live production vulnerabilities,
-while `3.3` and `3.4` move to before public release (`03` §6.1b).
+hardened MVP. That is what makes the §6.1 cuts safe. The security checklist it used to
+split has largely closed itself: the identity plan shipped, so `track/*` is resolve-only
+and the raw-address bypass is gone. What is left is `merge/execute` enforcement — which
+waits on a store rollout regardless and does not block, a decision recorded in
+`03` §6.1b — plus rate limiting the two native-specific config endpoints (`01` §3.3).

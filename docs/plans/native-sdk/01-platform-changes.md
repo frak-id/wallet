@@ -278,11 +278,10 @@ call `POST /user/identity/merge/initiate` **with no session at all** (the route 
 pass `?fmt=<mergeToken>` on the deep link for the wallet to `merge/execute`. Same
 mechanism as the existing web in-app-browser escape flow.
 
-> ⚠️ **Do not ship this path yet.** That "no session at all" property is exactly the
-> vulnerability described in §3.2 — it lets anyone mint a merge token for an anonymous
-> id they do not own, and every share link publishes those ids in clear. The `ensure`
-> path above is unaffected and is the MVP mechanism. Revisit once the identity plan's
-> enforcement phase lands.
+> ⚠️ **Do not ship this path yet.** The identity fix landed (§3.2) but is permissive:
+> `merge/execute` accepts an unproven id that has never latched, so that "no session at
+> all" property is still reachable. The `ensure` path above is unaffected and is the MVP
+> mechanism. Revisit when `ROLLOUT-STEP-3` makes the wallet arms mandatory.
 
 ### 2.2 iOS: focus the install-code field on first launch **[BLOCKING for iOS]**
 
@@ -434,32 +433,39 @@ device locale** — `eur→fr-FR`, `usd→en-US`, `gbp→en-GB`, with
 > reversed), and it predated the `track/*` single-request variant entirely. **One source
 > of truth.**
 
-What native needs to know, and nothing more:
+What native needs to know, and nothing more — **all of it shipped**:
 
-| Concern | Where |
+| Concern | State |
 |---|---|
-| Unauthenticated identity merge → reward theft + permanent wallet lockout | identity plan §1 |
-| The same attack in **one request** via `POST /user/track/interaction` | identity plan §1, fix in §3.9 |
-| `install-code/resolve` leaking `anonymousId`; the opaque-ticket replacement | identity plan §3.2, §5 |
-| `GET /identity/order-client` — second `anonymousId` oracle | identity plan §3.4 |
-| Raw-hex-address bypass in `sdkIdentity.ts` | identity plan §3.7 |
-| Unverified purchase / arrival claims | identity plan §3.5 |
-| P-256 derived ids + timestamped proofs | identity plan §2 |
+| Unauthenticated identity merge → reward theft + permanent wallet lockout | proof-gated, latched per identity |
+| The same attack in **one request** via `POST /user/track/interaction` | closed — `track/*` is resolve-only and rate-limited |
+| `install-code/resolve` leaking `anonymousId` | replaced by an opaque ticket, with an atomic attempt cap |
+| `GET /identity/order-client` — second `anonymousId` oracle | tightened to 10/min |
+| Raw-hex-address bypass in `sdkIdentity.ts` | closed |
+| Unverified purchase / arrival claims | webhook purchase attribution is first-writer-wins |
+| P-256 derived ids + timestamped proofs | shipped, frozen at `sdk/core/src/identity/canonical.ts` |
 
-Two consequences that bind this plan:
+Three consequences that bind this plan:
 
-1. **The `?fmt=` merge path in §2.1 is not shippable** until the identity plan's
-   enforcement phase lands. The `ensure` path is unaffected and is the MVP mechanism.
+1. **The `?fmt=` merge path in §2.1 is still not shippable.** The fix shipped
+   permissively: `merge/execute` verifies a proof when one is present but accepts an
+   absent one unless that id has latched before. Enforcement is `ROLLOUT-STEP-3` in the
+   identity plan's [`ROLLOUT.md`](../identity-proof-of-possession/ROLLOUT.md), gated on
+   the wallet's store binary. The `ensure` path is unaffected and is the MVP mechanism.
 2. **Native v0.1 must ship key derivation and signing from day one.** A released binary
    cannot be retrofitted, so this is not deferrable to v0.2 even though enforcement lands
    later. There are no legacy native ids, so native is cryptographic-only — no
    trust-on-first-use path. See
    [`02-native-sdk-overview.md`](./02-native-sdk-overview.md) §4.
+3. **It does not block the POC.** Recorded as a decision in
+   [`03-implementation-strategy.md`](./03-implementation-strategy.md) §6.1b: enforcement
+   waits on a prod deploy plus an app rollout regardless, and the POC does not exercise
+   merge.
 
 ### 3.3 Rate limiting on SDK-facing endpoints **[SECURITY — before public release]**
 
-The identity plan owns the tracking-endpoint limits (its §3.6, and note `trackApi` has
-**no** rate limiting at all today). Two config/discovery endpoints are native-specific
+The identity plan owns the tracking-endpoint limits and has shipped them — `track/*` had
+**none at all** before it. Two config/discovery endpoints are native-specific
 and belong here:
 
 | Endpoint | File |
@@ -661,11 +667,21 @@ confirming ownership out-of-band. Auto-verification is worth building for self-s
 later, and Moulinex is a good regression fixture precisely because it exercises both
 traps.
 
-### 3.6 OpenAPI / schema export **[ENHANCEMENT — cheap, high leverage]**
+### 3.6 OpenAPI / schema export **[ENHANCEMENT — high leverage, not cheap]**
 
-Every backend route already uses typed Elysia `t.*` schemas. Exporting an OpenAPI
-artifact enables Kotlin/Swift model codegen and kills the entire wire-format
-duplication class in one move. Low cost, disproportionate payoff — worth doing early.
+Every backend route already uses typed Elysia `t.*` schemas, so exporting an OpenAPI
+artifact enables Kotlin/Swift model codegen and kills the entire wire-format duplication
+class in one move. The payoff is real and worth doing early.
+
+**The "low cost" half of this was wrong.** Generating a spec
+(`scripts/generate-openapi.ts` → `user-openapi.json`) was indeed cheap. Making it
+*usable* was not: as first committed it declared no `openapi`, `info` or `servers` root
+key, three of the six MVP routes carried no response schema, it `$ref`d schemas
+`components.schemas` never defined, and it declared a version whose JSON Schema dialect
+it did not emit. All four are fixed; the six MVP routes are structurally clean.
+
+The cost was in the hardening, not the export — and the trap is that a spec which
+generates cleanly still looks finished. See `03-implementation-strategy.md` §7.
 
 ---
 
@@ -699,15 +715,15 @@ need, so it doubles as the migration beachhead if we later go native (see
 ### Must land before **any** native release (security)
 
 All owned by [`../identity-proof-of-possession/`](../identity-proof-of-possession/) and
-tracked in its phasing — listed here only so this plan's gate is explicit. See §3.2.
+listed here only so this plan's gate is explicit. See §3.2.
 
-| Item | Identity plan |
+| Item | State |
 |---|---|
-| Make `track/*` resolve-only (the one-request attack) | §3.9 — ship first |
-| Handle `WALLET_CONFLICT` on `ensure`, backend **and** client | §3.8 |
-| Install-code ticket instead of `anonymousId` | §3.2, §5 |
-| Proof-of-possession on the merge endpoints | §2, §4 |
-| Remove raw-address identity bypass | §3.7 |
+| Make `track/*` resolve-only (the one-request attack) | shipped |
+| Handle `WALLET_CONFLICT` on `ensure`, backend **and** client | shipped |
+| Install-code ticket instead of `anonymousId` | shipped |
+| Remove raw-address identity bypass | shipped |
+| Proof-of-possession on the merge endpoints | shipped, **permissive** — mandatory at `ROLLOUT-STEP-3`, gated on the store binary |
 
 | # | Change | Where |
 |---|---|---|
@@ -734,7 +750,7 @@ tracked in its phasing — listed here only so this plan's gate is explicit. See
 |---|---|---|---|
 | 3.1 | Pre-formatted rewards (`?formatted=1`) | `services/backend` | high — kills worst drift risk |
 | 1.4 | Seeded initial state params | `apps/wallet` `/sharing` | high — biggest perf win |
-| 3.6 | OpenAPI export | `services/backend` | high — cheap, kills wire duplication |
+| 3.6 | OpenAPI export | `services/backend` | high — kills wire duplication, but the committed spec needs real hardening first (`03` §7 item 2) |
 | 2.3 | Service worker cache + preconnect (**Android only**) | `apps/wallet` | medium |
 
 `apps/listener` requires **no changes**. The native SDK does not use the listener at

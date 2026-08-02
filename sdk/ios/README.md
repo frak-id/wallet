@@ -4,48 +4,91 @@ SwiftPM **library** package for the Frak iOS SDK. Two products, `FrakSDK` and
 `FrakSDKUI`, targeting iOS 15+ and Swift 5.9+, clean under Swift 6 strict
 concurrency.
 
-> ⚠️ **Partial. Config and rewards work; nothing else exists yet.**
+> ⚠️ **The MVP surface is implemented. None of it has run on a device.**
 >
-> What is implemented and tested (135 Swift Testing tests, counted from `@Test` under
+> What is implemented and tested (238 Swift Testing tests, counted from `@Test` under
 > `sdk/ios/Tests`):
 >
 > | Folder | What is there |
 > | --- | --- |
-> | `Core` | `FrakConfig`, `FrakLogSink`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger` |
-> | `Net` | `HTTPClient` over `URLSession`, `JSONDecoding` |
+> | `Core` | `FrakConfig`, `FrakLogSink`, `FrakEnvironment`, `FrakMetadata`, `FrakError`, `FrakLogger`, `Base64URL`, `Hex` |
+> | `Net` | `HTTPClient` over `URLSession` (GET + POST), `JSONDecoding`, `URLQuery`, `PercentEncoding` |
 > | `Config` | `ConfigStore` (SWR, actor-isolated), `MerchantQuery`, `KeyValueStore`, `SingleFlight`, `Backoff` |
 > | `Rewards` | models, decoder and `RewardRepository` for `estimated-rewards` |
+> | `Identity` | `DeviceKey` (Secure Enclave P-256), `ProofCodec`, `AnonymousIdStore` |
+> | `Sharing` | `FrakContext`, `FrakContextCodec` (v2 binary), attribution merge, `SharingLinkBuilder` |
+> | `Tracking` | `Interaction`, `EventQueue` (durable JSONL), `InteractionTracker` |
+> | `AppLink` | `AppLauncher`, `InstallLinks`, `ReferralArrival` |
+> | `FrakSDKUI` | `.frakSharingSheet` — `WKWebView` in a SwiftUI sheet, native share/copy, three-tier fallback |
 > | (root) | `Frak`, `FrakClient`, `DefaultFrakClient` |
 >
-> Public surface: `Frak.initialize` / `Frak.client`, `FrakConfig` (including
-> `FrakConfig.logSink: (any FrakLogSink)?`, so a merchant can route SDK diagnostics into
-> their own logging instead of `os.Logger`), plus `FrakClient.resolveConfig`,
-> `configUpdates`, `campaigns`, `bestReward`, and the full `FrakResolvedConfig` /
-> `ResolvedSdkConfig` model tree.
+> Both wire formats are asserted against `sdk/core/src/{identity,context}/fixtures/`,
+> not against themselves.
 >
-> **Not implemented**: anonymous identity (Secure Enclave keypair,
-> `x-frak-client-id`), interaction and purchase tracking, the durable offline
-> queue, the FrakContext v2 codec and `buildSharingLink`, inbound `fCtx` handling
-> and the self-referral guard, the sharing sheet, the install flow, and the
-> 4-tier copy precedence. `Identity/`, `Tracking/`, `Sharing/` and `AppLink/` are
-> still empty folders.
+> **Not implemented**: the 4-tier copy precedence (`copy(placement:component:)`), the
+> install-code + pasteboard + `SKStoreProductViewController` handoff (see below), and
+> the XCFramework distribution path (`scripts/run.sh xcframework` exits 1 with the
+> intended outline).
 >
-> The full resolve response *is* decoded, and the whole `sdkConfig` tree —
-> `ResolvedSdkConfig` and its nested placement, component and attribution types — is
-> `public`: the sharing sheet that reads it lives in `FrakSDKUI`, a separate SwiftPM
-> target that only sees `public`, so "internal until there is a reader" cannot work
-> here. Still absent from the public surface: `css` (no native use), `productId`
-> (legacy) and `allowedDomains` (browser-only origin check) — see
-> `FrakResolvedConfig`'s doc comment.
->
-> Known divergence from Kotlin: `ResolvedSdkConfig.init(from:)` forgives at the
-> `components` block, not at each nested leaf, so one wrong-typed leaf drops the whole
-> block. Now user-visible since `sdkConfig` is public, but fixing it is a decoding
-> behaviour change out of scope here and tracked separately — see the disabled test in
-> `ResolvedConfigDecoderTests`.
->
-> `example/native-ios` still talks to a type-only stub. Wiring it to this package
-> is the next step.
+> **No CI builds this.** Every claim above rests on the suites, and the suites are only
+> *executed* on the host toolchain — see "Two stages" in `scripts/run.sh`.
+
+### Where iOS deliberately diverges from the Kotlin twin
+
+Three, each forced by the platform rather than chosen. They are the parts of a port
+worth reading before the code.
+
+**1. The identity lives in `UserDefaults`, not the Keychain** (`02` §4). Keychain items
+survive uninstall, which would resurrect a "fresh" user's anonymous id across a
+delete–reinstall cycle — a persistent cross-install identifier, inconsistent with both
+Android (where the SDK's preferences are wiped) and the web (where clearing site data
+resets the id). What is stored is a key *reference*: on a device with a Secure Enclave,
+the blob is the enclave's own wrapped representation, useless to anything but that chip.
+`PersistedDeviceKeyStore` falls back to a software `P256.Signing.PrivateKey` where there
+is no enclave, which in practice means the simulator.
+
+**2. `DeepLinkHandling` has no `.automatic`.** Android's SDK registers
+`ActivityLifecycleCallbacks` and reads inbound intents itself. iOS has no equivalent:
+inbound URLs land on the host's own `App`, `Scene` or `AppDelegate`, none of which a
+library can observe without being wired in. So `.manual` is the default and the only
+working mode — call `handleReferralLink(_:)` from `onOpenURL`, or from your router:
+
+```swift
+.onOpenURL { url in
+    Task { await (try? Frak.client)?.handleReferralLink(url) }   // then navigate to it anyway
+}
+```
+
+The return value says whether the link carried an `fCtx`. It is **not** a "stop routing"
+signal: a share link is the merchant's own product URL with a parameter appended.
+
+**3. The install fallback carries nothing.** Android hands the Play Store an install
+referrer with `merchantId`, `anonymousId` and a signed proof, so the link survives the
+round trip. iOS has no counterpart, so `openFrakApp()` links the identity only on the
+deep-link path — when the wallet is already installed. A user who installs from the store
+arrives unlinked until the install-code + pasteboard + `SKStoreProductViewController` flow
+of `02` §6 exists. `ProofCodec` and `AnonymousIdStore.signProof` ship regardless, pinned
+to the golden corpus: a released binary cannot be retrofitted, so the signing half has to
+be in the store build before the backend half is enforced.
+
+### Two smaller notes
+
+The full resolve response *is* decoded, and the whole `sdkConfig` tree —
+`ResolvedSdkConfig` and its nested placement, component and attribution types — is
+`public`: the sharing sheet that reads it lives in `FrakSDKUI`, a separate SwiftPM
+target that only sees `public`, so "internal until there is a reader" cannot work
+here. Still absent from the public surface: `css` (no native use), `productId`
+(legacy) and `allowedDomains` (browser-only origin check) — see
+`FrakResolvedConfig`'s doc comment.
+
+Known divergence from Kotlin: `ResolvedSdkConfig.init(from:)` forgives at the
+`components` block, not at each nested leaf, so one wrong-typed leaf drops the whole
+block. Now user-visible since `sdkConfig` is public, but fixing it is a decoding
+behaviour change out of scope here and tracked separately — see the disabled test in
+`ResolvedConfigDecoderTests`.
+
+`example/native-ios` still talks to a type-only stub. Wiring it to this package
+is the next step.
 
 Design docs: [`docs/plans/native-sdk/`](../../docs/plans/native-sdk/) —
 `01-platform-changes.md`, `02-native-sdk-overview.md`,
@@ -58,17 +101,33 @@ Package.swift                            iOS-only, two library products, four ta
 Sources/FrakSDK/
   FrakSDKVersion.swift                   version string, header/query param names
   PrivacyInfo.xcprivacy                  real and correct — a hard shipping gate
-  Core/                                  FrakConfig, FrakLogSink, FrakEnvironment, FrakError, FrakLogger
-  Net/                                   HTTPClient, JSONDecoding
-  Config/                                ConfigStore, MerchantQuery, Backoff, SingleFlight
+  Core/                                  FrakConfig, FrakLogSink, FrakEnvironment, FrakError, FrakLogger, FrakCall, Base64URL, Hex
+  Net/                                   HTTPClient, Deadline, JSONDecoding, URLQuery, PercentEncoding
+  Config/                                ConfigStore, MerchantQuery, KeyValueStore, FrakResolvedConfig, Backoff, SingleFlight
   Rewards/                               reward models, decoder, RewardRepository
+  Identity/                              DeviceKey, ProofCodec, AnonymousIdStore
+  Sharing/                               FrakContext, FrakContextCodec, SharingRequest, SharingLinkBuilder
+  Tracking/                              Interaction, EventQueue, InteractionTracker
+  AppLink/                               AppLauncher, InstallLinks, ReferralArrival
   Frak.swift, FrakClient.swift, DefaultFrakClient.swift
-  Identity/ Tracking/ Sharing/ AppLink/  empty, one .gitkeep each
-Sources/FrakSDKUI/FrakSDKUI.swift        empty namespace, placeholder
-Tests/FrakSDKTests/                      one suite per source file + Fixtures/
-Tests/FrakSDKUITests/                    proves FrakSDKUI links against FrakSDK
+Sources/FrakSDKUI/
+  FrakSharingSheet.swift                 the .frakSharingSheet modifier and its sheet
+  SharingSheetModel.swift                the sequencing: deadline, tiers, outcomes
+  SharingWebView.swift                   hardened WKWebView + navigation-interception policy
+  SharingPageURL.swift                   the hosted /sharing URL and the return scheme
+  NativeShare.swift                      UIActivityViewController and the pasteboard
+  WarmSharingWebView.swift               opt-in offscreen warm-up
+  SharingResult.swift                    the outcome type and its significance ranking
+  Resources/{en,fr}.lproj                the sheet's native chrome, four keys
+Tests/FrakSDKTests/                      roughly one suite per source file + Fixtures/
+Tests/FrakSDKUITests/                    SharingPageURL and the outcome ranking
 scripts/run.sh                           build / test / lint / format / xcframework
 ```
+
+Everything in `FrakSDKUI` that touches UIKit sits behind `#if canImport(UIKit)`, so the
+target still compiles for the macOS host that `swift test`'s second stage runs on. On that
+host it reduces to `SharingPageURL` and `SharingResult`; the rest is type-checked by stage
+one against the iOS-simulator triple and executed by neither.
 
 ## `FrakSDK` vs `FrakSDKUI`
 
@@ -103,6 +162,9 @@ Splitting them into real targets would give enforced boundaries at the cost of
 `public` on every cross-folder call and a larger `.xcframework` matrix. Not worth it
 for an SDK this size — but it is the reason a folder cannot be relied on to hide
 anything.
+
+These are the plan's names for what belongs in each folder, not the Swift type names —
+several were folded together or renamed on the way in. The tree above is the inventory.
 
 | Folder | What lands there (`02` §2) |
 | --- | --- |
@@ -230,8 +292,15 @@ Stage 1 cannot run the suites: SwiftPM's test runner is a macOS process and refu
 `dlopen` an iOS-simulator bundle. Executing on a real simulator needs
 `xcodebuild test -destination 'platform=iOS Simulator,…'`, which needs a generated
 Xcode project — the gap the example harness fills with XcodeGen. That is deferred
-alongside the XCFramework work. The package has no platform-conditional code today, so
-host and iOS execution cannot diverge; the day it does, stage 2 stops being sufficient.
+alongside the XCFramework work.
+
+That day has arrived, so stage 2 is no longer sufficient on its own. `FrakSDK` has one
+platform-conditional seam — `SystemAppLauncher`, which is a `false`-returning stub where
+there is no `UIKit`, and which nothing tests directly. `FrakSDKUI` has six: everything
+touching UIKit sits behind `#if canImport(UIKit)`, so on the host that target reduces to
+`SharingPageURL` and `SharingResult`. The sheet, the web view, the state machine and the
+native share are type-checked by stage 1 and **executed by neither** — the
+xcodebuild-on-simulator path above is what finally runs them.
 
 The suites use **Swift Testing, not XCTest** — XCTest's Swift overlay is a zippered
 macOS/Catalyst dylib and cannot be linked for `arm64-apple-ios15.0-simulator` from
@@ -259,20 +328,32 @@ the repo's ban on `as any` / `!` in TypeScript.
 
 ## `PrivacyInfo.xcprivacy` is a hard gate
 
-`Sources/FrakSDK/PrivacyInfo.xcprivacy` is real and correct today, before any code
-needs it. Since 1 May 2024, an SDK using a *required-reason API* must declare it in a
-privacy manifest or App Store Connect rejects the upload with **ITMS-91053**.
+`Sources/FrakSDK/PrivacyInfo.xcprivacy` is real and kept current with what the code
+actually does. Since 1 May 2024, an SDK using a *required-reason API* must declare it in
+a privacy manifest or App Store Connect rejects the upload with **ITMS-91053**.
 
 **That rejection lands on the merchant's upload, not ours.** Getting this wrong breaks
 every integrator's release — the worst possible first impression, and the reason the
 file is already here.
 
-It declares `NSPrivacyTracking` false, an empty `NSPrivacyCollectedDataTypes` (with a
-TODO: the anonymous id is collected and linked to a user identity once the identity
-module lands, `02` §5.1), and `NSPrivacyAccessedAPICategoryUserDefaults` with reason
-`CA92.1` — the SDK stores the anonymous id in `UserDefaults` (`02` §4). Verify `CA92.1`
-against Apple's live reason list before release; `02` §5.1 notes `C56D.1` may be the
-better fit.
+It declares:
+
+- `NSPrivacyTracking` false, with no tracking domains. Nothing the SDK sends is joined
+  with data from another company's app or site, and none of it reaches a data broker.
+  The ATT decision itself is `02` §12 question 1 and is still open; if it changes, this
+  key and the per-type `Tracking` flags change with it.
+- `NSPrivacyCollectedDataTypeDeviceID`, linked and not for tracking — the anonymous id,
+  which the install handoff deliberately links to the user's Frak identity.
+- `NSPrivacyCollectedDataTypePurchaseHistory`, linked — `trackPurchase` transmits the
+  merchant's customer and order identifiers plus a checkout token.
+- `NSPrivacyAccessedAPICategoryUserDefaults` with reason `CA92.1`, for the merchant
+  config cache and the anonymous id (`02` §4). Nothing else the SDK touches is a
+  required-reason API. Verify `CA92.1` against Apple's live reason list before release;
+  `02` §5.1 notes `C56D.1` may be the better fit.
+
+`FrakSDKUI` carries no manifest of its own. Correct while it ships as SPM source — it
+depends on `FrakSDK`, so the resource rides along — and something that must be revisited
+the moment the XCFramework path exists, where each binary needs its own.
 
 One known failure mode to validate before shipping (`03` §3.1): AppsFlyer's manifest
 failed to bundle correctly in the *static* SPM variant (their issue #281). Propagation

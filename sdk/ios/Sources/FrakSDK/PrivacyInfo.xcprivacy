@@ -7,8 +7,7 @@
   manifest or App Store Connect rejects the upload with ITMS-91053 (Missing API
   declaration). That rejection lands on the MERCHANT's upload, not ours: shipping this
   file wrong or absent breaks every integrator's release, which is the worst possible
-  first impression. This file is therefore correct from day one, before any SDK
-  behaviour exists to need it.
+  first impression.
 
   Known failure mode to validate before release (03-implementation-strategy.md §3.1):
   AppsFlyer's manifest failed to bundle correctly in the *static* SPM variant (their
@@ -18,28 +17,67 @@
 <plist version="1.0">
 <dict>
     <!--
-      No tracking as defined by App Tracking Transparency. The ATT question itself is
-      02 §12 open question 1 and needs a legal decision before iOS ships; if that
-      decision changes, this key and NSPrivacyTrackingDomains change with it.
+      No tracking as defined by App Tracking Transparency: nothing here is joined with
+      data from other companies' apps or sites, and no data goes to a data broker. The
+      ATT question itself is 02 §12 open question 1 and needs a legal decision before
+      iOS ships; if that decision changes, this key, NSPrivacyTrackingDomains, and the
+      NSPrivacyCollectedDataTypeTracking flags below all change with it.
     -->
     <key>NSPrivacyTracking</key>
     <false/>
     <key>NSPrivacyTrackingDomains</key>
     <array/>
-    <!--
-      TODO(02 §5.1): declare data collection accurately once the identity module
-      lands. The anonymous id is collected and linked to a user identity, so this
-      array will need an NSPrivacyCollectedDataType entry. Empty today because the
-      SDK is scaffolding and collects nothing — declared rather than omitted so the
-      shape is already here.
-    -->
     <key>NSPrivacyCollectedDataTypes</key>
-    <array/>
+    <array>
+        <!--
+          The anonymous id. Apple's "Device ID" covers any identifier scoped to a
+          particular device, browser or app installation, which is exactly what this
+          is: derived from a P-256 keypair the platform holds, one per installation,
+          gone on uninstall (02 §4).
+
+          Linked, because the whole point of the install handoff is that the wallet
+          links this id to the user's Frak identity. Declaring it unlinked would be
+          false the moment `openFrakApp()` succeeds.
+        -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeDeviceID</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+                <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+            </array>
+        </dict>
+        <!--
+          `trackPurchase(customerId:orderId:token:)` transmits the merchant's own
+          customer and order identifiers plus a checkout token, so a payout can be
+          reconciled. That is purchase history under Apple's taxonomy even though no
+          amount or line item is sent. Over-declaring is not a rejection;
+          under-declaring is.
+        -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypePurchaseHistory</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+    </array>
     <!--
       UserDefaults is one of the five required-reason categories, and this SDK stores
-      the anonymous id there (02 §4, and the storage row of the §5 dependency table).
-      Declared ahead of the code that uses it: an under-declared manifest is a
-      merchant-facing rejection, an over-declared one is not.
+      both the resolved merchant config and the anonymous id there (02 §4, and the
+      storage row of the §5 dependency table). Nothing else the SDK touches is a
+      required-reason API: the event queue is an ordinary file whose timestamps are
+      never read, and neither WebKit nor UIPasteboard is in a category.
 
       CA92.1 = access scoped to the app itself. Verify against Apple's live reason
       list before release — 02 §5.1 notes C56D.1 (SDK reads/writes only its own

@@ -152,14 +152,20 @@ computation with no platform API dependency:
 - **FrakContext v2 codec** — big-endian `uint32`, unpadded base64url, lowercase-only
   UUIDs, length-based version disambiguation (`02-native-sdk-overview.md` §8.1)
 - **Reward selection and currency formatting** (§8.2)
-- **The signed byte layout for `merge`/`ensure`/`install`** — `uint16be` length-prefixed
-  fields, `uint64be` Unix seconds, lowercase 36-character UUID strings as UTF-8 rather
-  than raw bytes, and a deliberately zero-length `binding` field so the field *count*
-  never varies by op ([`../identity-proof-of-possession/README.md`](../identity-proof-of-possession/README.md) §2.3)
+- **The signed byte layout for `merge`/`ensure`/`install`/`sso`** — fixed width
+  throughout, with no length prefixes and no text encoding of ids: `op ‖ merchantId(16)
+  ‖ anonymousId(16) ‖ binding(32) ‖ ts(8)`, UUIDs as their raw 16 bytes rather than their
+  36-character text form, `ts` as `uint64be` Unix seconds, and a `binding` field that is
+  always exactly 32 bytes — zero-filled when the op does not use it — so the layout never
+  varies by op
+  ([`../identity-proof-of-possession/README.md`](../identity-proof-of-possession/README.md))
 
-The third arrived from the identity work rather than from native, and its Phase 0 makes
-the same call this section does — freeze the format, commit fixtures, and note that **no
-golden fixtures exist anywhere in this repo today**. Both efforts need the same
+The third arrived from the identity work rather than from native, and it made the same
+call this section does — freeze the format, commit fixtures. It has since shipped:
+`sdk/core/src/identity/canonical.ts` is the frozen module, deliberately crypto-free so
+the SDK signer and the backend verifier build on one artifact, with golden fixtures under
+`sdk/core/src/identity/fixtures/`. **That is the only fixture corpus in this repo today**
+— the codec and reward-formatting vectors still do not exist. Both efforts need the same
 mechanism; see §7 for how they sequence together.
 
 The formatting risk is real, not theoretical: iOS and Android produce *different output
@@ -267,11 +273,45 @@ macOS dependency manager**, with the CLI auto-migrating Xcode projects.
 **Ship SPM only.** Adding CocoaPods support now means building a publishing path into a
 registry that closes within months of our own launch.
 
+**SPM has no registry, no candidacy and no lead time.** SE-0292 and SE-0391 shipped the
+registry *client* and protocol spec; no public registry was ever launched. Swift Package
+Index joined Apple in June 2026 and stated an intent to build one, but there is nothing
+to register with. Resolution is a git URL plus a tag — publishing is `git tag`. The Swift
+Package Index is a search and compatibility index, worth listing on and free, but it is
+never in the resolution path.
+
 Distribute the iOS SDK as a **binary XCFramework** referenced from `Package.swift` via
 `.binaryTarget` with a remote zip and checksum — the pattern AppsFlyer uses. Note one
 known failure mode: AppsFlyer's `PrivacyInfo.xcprivacy` failed to bundle correctly in
 the *static* SPM variant (their issue #281), so validate manifest propagation against a
 real consumer app, not just a local build.
+
+Three constraints are one-way doors, so they are decided before v1 rather than
+discovered:
+
+- **Signing identity.** Xcode records the signing identity on a merchant's *first*
+  integration and hard-errors if it later changes or vanishes — *"not signed with the
+  expected identity and may have been compromised."* Shipping unsigned is equally sticky:
+  Xcode records "unsigned" as the expected state, so adding a signature later is a
+  breaking change every consumer must manually accept, and a revoked certificate is a
+  hard build failure for them. Signing is **not mandatory** for an SDK absent from
+  Apple's list, but the choice must be made once, up front, with one stable team
+  identity. Sign with **Apple Distribution** — not Developer ID, which is for Mac apps
+  shipped outside the App Store.
+- **Binary URLs are immutable.** SwiftPM pins `(url, checksum)` per tag. Never re-upload
+  a changed zip to a live URL, never delete or retag a published release. Zip output is
+  not deterministic, so the checksum must be computed from the exact uploaded bytes, in
+  CI. The `.xcframework` sits at the **zip root**, and the target name must match the
+  module name. SwiftPM hard-rejects non-`https` URLs.
+- **Apple's SDK list covers repackagers.** We are absent from the ~80-entry
+  commonly-used-SDK list (§3.3), but it explicitly extends to *"any SDKs that repackage
+  those on the list"*. Our zero-third-party-dependency rule (`02` §1.2) is what keeps us
+  outside it; vendoring Firebase or Alamofire would pull us in.
+
+Note our signature does **not** survive into the merchant's shipped app: dynamic
+frameworks are re-signed with their identity at build, and App Store Connect re-signs the
+bundle again. The signature is verified at *integration* time, which is exactly where
+supply-chain tampering would matter.
 
 ### 3.2 Maven Central — Central Publisher Portal, not OSSRH
 
@@ -286,9 +326,44 @@ Sonatype ships a "Portal OSSRH Staging API" compatibility shim so legacy Gradle 
 built against the old endpoints keep working, but it is explicitly a migration aid.
 Target the native Portal API.
 
-**Budget this as real setup work.** Namespace verification, GPG signing, and the Portal
-publishing flow are the specific "we have never shipped a distributed library" gap
-identified in §2 above.
+**The lead time this document assumed is gone.** Namespace verification was a
+human-reviewed JIRA ticket under OSSRH; `issues.sonatype.org` was retired in January 2024
+and the Portal flow is automated. Sonatype's own wording: *"If you have set up your DNS
+TXT record correctly, it should only take a few minutes for us to verify your
+namespace."* Account signup is self-service with no approval step. **Budget half a day
+end to end, not a queue** — and the long pole is our own Gradle and GPG config, not
+anything on Sonatype's side.
+
+Verified against the live registries: **`id.frak` is unclaimed** (`search.maven.org`
+`g:id.frak` returns 0; `repo1.maven.org/maven2/id/frak/` 404s) with no OSSRH-legacy
+conflict, and **`frak.id` is on Route 53** — apex TXT records already exist there, so the
+verification record is one we can write today.
+
+| Requirement | Detail |
+|---|---|
+| Namespace proof | a second **apex** TXT on `frak.id` holding a Portal-issued key. Not `_sonatype`, not a subdomain. Copy the key from the Portal UI — the `OSSRH-XXYYZZ` example still in Sonatype's own FAQ is a leftover from the dead JIRA flow |
+| GPG | public key pushed to `keyserver.ubuntu.com`, `keys.openpgp.org`, `pgp.mit.edu`. Sign with a **primary** key, not a sub-key, which Maven/Nexus cannot verify |
+| POM | `name`, `description`, `url`, ≥1 `licenses`, ≥1 `developers`, `scm` connection/developerConnection/url. The SCM URL need not be reachable — a placeholder is explicitly allowed |
+| Javadoc jar | required by **presence only**. The validator checks the file and its signature exist; it never opens it. Sonatype explicitly sanctions an empty placeholder, which is what Kotlin projects ship |
+| Checksums | `md5` + `sha1` mandatory, `sha256`/`sha512` optional. `.asc` files need none |
+
+One trap worth naming: clicking **Verify** before the TXT has propagated makes Sonatype's
+resolver cache the `NXDOMAIN`, and you then wait out the TTL rather than retrying. `dig`
+first, click second.
+
+**Nothing here is a reason to start early.** Claim the namespace when there is an artifact
+worth publishing.
+
+> **Open — the licence, and it is not a formality.** The monorepo is **GPL-3.0**, and the
+> published JS SDKs carry it. That is defensible for a CDN bundle a merchant's page loads
+> at runtime. It is a different proposition for a native artifact a merchant **statically
+> links into a proprietary app**: the aggressive reading of copyleft reaches their whole
+> binary, and most merchant legal teams will decline rather than litigate the nuance.
+> Branch, AppsFlyer and Adjust all ship permissive (MIT or Apache-2.0).
+>
+> This blocks the first publish, not the POC — but it wants deciding early, because
+> relicensing after merchants have integrated needs every contributor's agreement and
+> leaves already-shipped binaries under the old terms.
 
 ### 3.3 What is confirmed
 
@@ -499,15 +574,23 @@ merge-gating.
 `01-platform-changes.md` §3.6 lists OpenAPI export as an enhancement. **It should be
 sequenced first, before either native SDK starts.**
 
-The backend has no machine-readable spec today. `services/backend/src/index.ts` exports
-Eden Treaty types (`export type App = typeof app`), which are TypeScript-only structural
-inference over the Elysia route tree — unusable from Kotlin or Swift. But every route
-already uses Elysia `t.*` (TypeBox) schemas, and TypeBox is JSON-Schema-compatible.
-Adding `@elysiajs/swagger` yields a spec that generates Kotlin *and* Swift models from
-one source.
+A spec now exists — `@elysiajs/openapi` feeding `scripts/generate-openapi.ts`, committed
+as `services/backend/user-openapi.json` — but it is not yet a document a generator can
+consume. §7 item 2 lists what is missing: no `openapi`/`info`/`servers` root keys, three
+of six MVP routes with no response schema, and `$ref`s pointing at schemas
+`components.schemas` does not define. **Getting it generated was the cheap part; getting
+it correct is not.**
+
+The underlying premise still holds. Every route already uses Elysia `t.*` (TypeBox)
+schemas and TypeBox is JSON-Schema-compatible, so one hardened spec generates Kotlin
+*and* Swift models from one source. The alternative is what `services/backend/src/index.ts`
+exports today — Eden Treaty types (`export type App = typeof app`), TypeScript-only
+structural inference over the route tree, unusable from Kotlin or Swift.
 
 Wire-format duplication is the largest drift category between two hand-written SDKs.
-This removes it structurally rather than by discipline.
+A complete spec removes it structurally rather than by discipline; a partial one removes
+it for the routes it covers and silently leaves the rest to hand-writing, which is the
+worse of the two failure modes because it looks solved.
 
 The division of labor is the industry pattern: **codegen owns the mechanical boundary,
 humans own the developer-facing API.** Signal does this deliberately in `libsignal` —
@@ -583,28 +666,39 @@ the POC binary is the first one that exists.
 ### 6.1b What internal-only does and does not relax
 
 The security items split, because they were never all gating the same thing. `01` §3.2
-now delegates identity security wholesale to
-[`../identity-proof-of-possession/`](../identity-proof-of-possession/README.md), so the
-item numbers below are that plan's §3, not `01`'s.
+delegates identity security wholesale to
+[`../identity-proof-of-possession/`](../identity-proof-of-possession/README.md) — which
+has since **shipped, permissively**. What survives is one enforcement flip, tracked as
+`ROLLOUT-STEP-3` in that plan's
+[`ROLLOUT.md`](../identity-proof-of-possession/ROLLOUT.md) and gated on the wallet's
+store binary being live. The concerns below are named and pointed at files rather than
+numbered, because the numbered list they used to reference no longer exists.
 
-| Item | Internal POC | Why |
+| Concern | State | Bearing on the POC |
 |---|---|---|
-| identity `3.9` — make `track/*` resolve-only | **still blocking** | the one-request variant of the headline attack. Backend-only, no SDK dependency, and the widest hole open today |
-| identity `3.1` — authenticate `merge/execute` | **still blocking** | no session macro at all today. `01` §3.2 already defers the `?fmt=` merge path until enforcement lands, so the POC cannot exercise merge regardless |
-| identity `3.7` — raw-hex-address bypass | **still blocking** | any address string is accepted as proof of wallet identity, reachable from `/track/*`, which the POC does exercise |
-| identity `3.2`/`3.3`/`3.4` — install-code ticket, attempt limiting, `order-client` | can follow | all are `anonymousId` harvesting oracles. Internal testers holding their own ids is not an exposure |
-| `01` §3.3 — rate limiting SDK endpoints | can follow | protects against abuse at volume; a handful of internal devices generate none |
+| **`track/*` resolve-only** — the one-request variant of the headline attack (`src/api/user/track/sdkIdentity.ts:164-169`) | **fixed** | resolves through `resolveForAttribution`, commented *"Never merge identity groups from an unauthenticated track/\* call"*. `IdentityOrchestrator.ts:176-186` resolves the anchor node and never calls `mergeGroups`; `track/purchase.ts:65-67` passes `merge: false`, honoured at both merge sites in `PurchaseLinkingOrchestrator`. Pinned by `sdkIdentity.test.ts:73-106` |
+| **Raw-hex-address identity bypass** (`sdkIdentity.ts`) | **fixed** | one residual, worth knowing and not a blocker: `ArrivalHandler.ts:150-155` still looks up an unverified raw-hex `referrerWallet` straight from the request body via `findGroupByIdentity`. It is a read-only lookup — it creates no node and performs no merge |
+| **Authenticate `merge/execute`** (`src/api/user/identity/merge.ts:63-104`) | **open** | the route enables no auth macro at all. `enforceLatchedProof` (`src/orchestration/identity/latchedProof.ts:64-73`) is deliberately fail-open: a present proof is verified, an absent one 403s only if that specific node already has `proofSeenAt`, and a never-latched id is accepted unproven. Closing it is `ROLLOUT-STEP-3`, whose prerequisites are listed in the identity plan's `ROLLOUT.md`. **Does not block — see below** |
+| **`anonymousId` harvesting oracles** — install-code ticket, atomic attempt cap, `order-client` | **shipped** | listed under §3 of the identity plan's README. They were never a POC exposure regardless: internal testers hold their own ids |
+| `01` §3.3 — rate limiting `merchant/resolve` + `estimated-rewards` | open | can follow. Protects against abuse at volume; a handful of internal devices generate none |
 
-The three that stay blocking are blocking because they are **already exploitable in
-production**, not because of anything the POC does. Internal scope cannot relax them.
-Note `3.7` in particular: it is reachable from `/track/interaction`, which is squarely
-inside the §6.1 loop, so the POC would be exercising a live bypass rather than merely
-coexisting with one.
+> **Decided: `merge/execute` enforcement does not block the POC.** It waits on a prod
+> deployment plus an app rollout no matter what we do — that is the entire premise of the
+> latch, which cannot flip until the store binary is live and `minVersion` excludes older
+> builds. POC work starts without it, and by the time the POC is finished the app should
+> be live and the rollout done. `01` §3.2 already defers the `?fmt=` merge path until
+> enforcement lands, so the POC does not exercise merge in any case.
+
+The two that were blocking are closed, and they were blocking because they were **already
+exploitable in production** — not because of anything the POC does. Internal scope never
+relaxed them; shipping the identity plan did. `track/interaction` in particular sits
+squarely inside the §6.1 loop, so until it went resolve-only the POC would have been
+exercising a live bypass rather than merely coexisting with one.
 
 What internal-only genuinely buys: no merchant app-store review cycle, no merchant
 release coordination, no support burden from a half-built SDK, and freedom to make
 breaking API changes between POC and MVP without a deprecation window (§5.3) — which is
-worth more than the two deferred security items.
+worth more than any of the deferrals above.
 
 ### 6.2 Example apps are the harness, not a demo
 
@@ -659,23 +753,46 @@ stays in `02-native-sdk-overview.md` §11.
 
 | # | Item | Why first |
 |---|---|---|
-| 1 | Identity plan §3.9, §3.1, §3.7 | live production vulnerabilities, independent of native. The rest of the identity §3 list follows before public release — see §6.1b |
-| 2 | OpenAPI export (`01` §3.6) | generates models for both SDKs; cheap; blocks nothing else |
-| 3 | Golden fixture corpus — codec, signing layout, reward formatting | the shared contract that replaces a shared core (§1.6); **shared with identity Phase 0**, see below |
-| 4 | Maven Central Portal namespace + GPG signing | lead time on namespace verification; the real "never done this" gap (§3.2) |
+| 1 | Identity proof-of-possession | **largely done** — derivation, signing, verification and the latch shipped; `track/*` is resolve-only and the raw-address bypass is closed. What remains is the `ROLLOUT-STEP-3` enforcement flip, which does not block (§6.1b) |
+| 2 | OpenAPI export (`01` §3.6) | generates models for both SDKs. **Done for the MVP surface** — see below |
+| 3 | Golden fixture corpus — codec, signing layout, reward formatting | the shared contract that replaces a shared core (§1.6). The signing layout half already exists — see below |
+| 4 | ~~Maven Central Portal namespace + GPG signing~~ | **moved out of this list.** The lead time it was sequenced for no longer exists — Portal verification is automated and same-day (§3.2). Claim the namespace when there is an artifact to publish. What *does* belong before v1 is the **iOS signing-identity decision** (§3.1), which is a one-way door |
 
-Item 3 is the same work as **Phase 0 of
-[`../identity-proof-of-possession/`](../identity-proof-of-possession/README.md)**, which
-freezes the signed byte layout and commits fixtures for it. Whoever starts first should
-own the corpus, its generator, and the per-platform loader for all three concerns rather
-than building a second one — a native-only fixture set and an identity-only fixture set
-would need reconciling later, and a released binary cannot be retrofitted (§5.3).
+**Item 2 was not the cheap one this list originally called it.** A spec already existed —
+`services/backend/user-openapi.json`, generated by `scripts/generate-openapi.ts` — and it
+looked solved, which is exactly the failure mode §5.5 warns about. Four defects, all
+fixed in `b8142a96e` and `3578e5c92`:
+
+| Defect | Consequence | Fix |
+|---|---|---|
+| no `openapi` / `info` / `servers` root key | no generator reads the file as an OpenAPI document at all | envelope added, `info.version` read from `package.json` |
+| `merchant/referral-status`, `track/interaction`, `track/purchase` declared no `response` | codegen models zero response bytes for half the MVP surface — including `isDuplicate`, the idempotency signal, and `isReferred`, the only field referral-status exists to return | per-status schemas derived from every handler code path |
+| dangling `$ref: "ConditionGroup"` — bare name, no definition | resolution crash in most generators | `$id` changed to a full JSON pointer, definition registered via an Elysia model |
+| document declared `3.0.3` while emitting 3.1 JSON Schema | 160 `const` keywords illegal under the declared version; a real validator reported 315 problems, most of them phantom | declared `3.1.0`, which is what the generator actually emits |
+
+Two lessons worth carrying: Elysia **strips undeclared response properties** rather than
+merely leaving them undocumented, so an incomplete `response` schema is a wire-format bug
+and not just a docs gap; and `@elysiajs/openapi` hardcodes `3.0.3` in its own source while
+emitting 3.1 constructs, so the library's self-report is not evidence.
+
+What remains is on the `wallet/*` surface no native SDK consumes — `anyOf` arms carrying
+`type: "Date"` from a TypeBox leak, missing operation summaries, undeclared security. The
+six MVP routes are structurally clean. Re-check with
+`bunx @redocly/cli lint services/backend/user-openapi.json` before trusting a generator.
+
+Item 3's signing half is already **frozen and committed** —
+`sdk/core/src/identity/canonical.ts` with fixtures under
+`sdk/core/src/identity/fixtures/`, which the backend verifier tests against. That is the
+contract a native implementation ports to. What is still missing is the codec and
+reward-formatting half. Fold both into that same corpus with one generator and one loader
+per platform rather than inventing a second one — two fixture sets would need reconciling
+later, and a released binary cannot be retrofitted (§5.3).
 
 ### The POC (§6)
 
 | # | Item |
 |---|---|
-| 5 | `sdk/android/` + `sdk/ios/` placement, `biome.json` and `knip.ts` exclusions (§5.2) |
+| 5 | `sdk/android/` + `sdk/ios/` placement, `biome.json` and `knip.ts` exclusions (§5.2) — **done**, commit `1e56f0c32`: both projects scaffold green, with `FrakSdkVersion` as the only real source file |
 | 6 | `example/native-android/` + `example/native-ios/` — the only way to run the SDK (§6.2) |
 | 7 | The §6.1 loop on both platforms, with §6.1's cuts applied |
 | 8 | Fixture assertions wired into both native suites, proven by a deliberate injected failure (§6.3 q5) |
@@ -688,7 +805,7 @@ This is the first stage a merchant sees, so it is where "before public release" 
 
 | # | Item |
 |---|---|
-| 10 | Security items deferred from the POC — identity §3.2/§3.3/§3.4 and `01` §3.3 (§6.1b) |
+| 10 | `ROLLOUT-STEP-3` — the identity enforcement flip, once the store binary is live (§6.1b) — plus `01` §3.3's rate limits |
 | 11 | Independent versioning outside the Changesets linked group (§5.3) |
 | 12 | Library-artifact CI jobs, reusing existing runners and secrets (§5.4) |
 
