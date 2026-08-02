@@ -194,6 +194,24 @@ class ConfigStoreTest {
         }
 
     @Test
+    fun `backing off with nothing cached fails instead of dialling again`() =
+        runTest {
+            val configStore = newStore(this)
+            transport.fail(IOException("no route to host"))
+            runCatching { configStore.resolve(query, forceRefresh = false) }
+            val afterFirst = transport.requests.size
+
+            // First-launch-offline: the backoff is armed and there is no cache to fall back on.
+            // Serving that by dialling anyway makes a retry loop one real request per call.
+            repeat(3) {
+                val failure = runCatching { configStore.resolve(query, forceRefresh = false) }.exceptionOrNull()
+                assertTrue("expected Network, got $failure", failure is FrakError.Network)
+            }
+
+            assertEquals(afterFirst, transport.requests.size)
+        }
+
+    @Test
     fun `the config survives a cold start through persistence`() =
         runTest {
             transport.respond(200, BODY)

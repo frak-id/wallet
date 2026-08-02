@@ -4,33 +4,8 @@
     import SwiftUI
     import UIKit
 
-    /// The share, resolved once before anything can be shown.
-    ///
-    /// `link` is built by `FrakClient.buildSharingLink`, which is entirely local and works on
-    /// a cold cache with no network. `pageURL` is the part that needs the network and can
-    /// legitimately be absent while `link` is not — a session with no page is not a broken
-    /// session, it is what the native-share fallback fires from.
-    struct SharingSession {
-        let walletOrigin: String
-        let returnScheme: String
-        /// The share link itself. Usable even when `pageURL` is not.
-        let link: String
-        let shareTitle: String?
-        private let pageURL: String?
-
-        init(walletOrigin: String, returnScheme: String, link: String, shareTitle: String?, pageURL: String?) {
-            self.walletOrigin = walletOrigin
-            self.returnScheme = returnScheme
-            self.link = link
-            self.shareTitle = shareTitle
-            self.pageURL = pageURL
-        }
-
-        /// Nil when the hosted page could not be resolved — see the type's doc.
-        func url(confirmed: Bool) -> URL? {
-            pageURL.flatMap { URL(string: confirmed ? $0 + "&confirmed=1" : $0) }
-        }
-    }
+    // `SharingSession` and `sharingDecision` live in SharingSheetLogic.swift, outside this
+    // file's `#if canImport(UIKit)`, so they stay reachable from a macOS test host.
 
     /// The sheet's behaviour, kept out of the view.
     ///
@@ -86,6 +61,12 @@
         }
 
         func release() {
+            // Deliberately does NOT set `closed`, and does not cancel `prepare`. `.onDisappear`
+            // also fires when `UIActivityViewController` covers the sheet, and both `share` and
+            // the tier-3 fallback suspend across exactly that window — suppressing outcomes here
+            // would report `.dismissed` for a share that succeeded. Audit §6's late-`report`
+            // concern needs a signal that distinguishes "covered" from "dismissed", which cannot
+            // be settled without a device.
             deadline?.cancel()
             deadline = nil
             webView?.stop()
@@ -118,7 +99,19 @@
 
         /// The web view gave up, tier-2 retry included.
         func onPageUnavailable() {
-            guard let session else { return }
+            // Same predicate as the deadline: `pageLoaded` matters because a content-process crash
+            // after the page painted arrives here too, and a chooser on top of a sheet the user is
+            // using would be a share they never asked for. `deadlineExpired: true` because there
+            // is no page left to spend the budget on either way.
+            guard
+                case .nativeShare(let session) = sharingDecision(
+                    session: session,
+                    deadlineExpired: true,
+                    pageLoaded: pageLoaded,
+                    fellBack: fellBack,
+                    closed: closed
+                )
+            else { return }
             Task { await fallBack(to: session) }
         }
 
@@ -142,6 +135,9 @@
         }
 
         func openExternally(_ url: URL) {
+            // The page chooses this URL. Anything but http(s) is an app-to-app launch the
+            // merchant never sanctioned, reaching whatever handler is registered on the device.
+            guard url.scheme == "https" || url.scheme == "http" else { return }
             Task { _ = await UIApplication.shared.open(url) }
         }
 
@@ -163,9 +159,23 @@
             }
 
             session = built
-            // Either the budget is already gone, or there is no page to spend it on.
-            guard !deadlineExpired, let url = built.url(confirmed: false) else {
-                await fallBack(to: built)
+            // Either the budget is already gone, or there is no page to spend it on. `closed`
+            // matters here too: the sheet can reach a terminal outcome while `build` is still
+            // suspended, and a web view built after that would never be seen.
+            let url: URL
+            switch sharingDecision(
+                session: built,
+                deadlineExpired: deadlineExpired,
+                pageLoaded: pageLoaded,
+                fellBack: fellBack,
+                closed: closed
+            ) {
+            case .showPage(let pageURL):
+                url = pageURL
+            case .nativeShare(let session):
+                await fallBack(to: session)
+                return
+            case .doNothing:
                 return
             }
 
@@ -250,13 +260,23 @@
         }
 
         private func onDeadline() {
-            guard !pageLoaded, !closed else { return }
-            guard let session else {
-                // `prepare` is still running; it will fall back when it returns.
+            switch sharingDecision(
+                session: session,
+                deadlineExpired: true,
+                pageLoaded: pageLoaded,
+                fellBack: fellBack,
+                closed: closed
+            ) {
+            case .nativeShare(let session):
+                Task { await fallBack(to: session) }
+            case .doNothing:
+                // Includes "`prepare` has not built a session yet": it falls back itself when it
+                // returns and reads `deadlineExpired`, rather than racing this.
                 deadlineExpired = true
+            case .showPage:
+                // Unreachable: `deadlineExpired: true` above never yields a page.
                 return
             }
-            Task { await fallBack(to: session) }
         }
 
         /// Tier 3: skip the page entirely and open the OS share sheet on the local link.

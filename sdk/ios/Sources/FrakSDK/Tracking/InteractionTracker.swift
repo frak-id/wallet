@@ -25,8 +25,9 @@ actor InteractionTracker {
     private let newKey: @Sendable () -> String
 
     private var backoff: Backoff
-    private var isDraining = false
-    private var drainRequested = false
+    private var drainTask: Task<Void, Never>?
+    /// Set when the queue changes under a running drain, so it loops once more.
+    private var drainAgain = false
 
     init(
         queue: EventQueue,
@@ -50,7 +51,7 @@ actor InteractionTracker {
         let key = idempotencyKey(for: interaction)
         let body = interactionBody(merchantId: merchantId, interaction: interaction, idempotencyKey: key)
         await enqueue(path: Self.interactionPath, body: body, clientId: clientId, idempotencyKey: key)
-        await flush()
+        detachDrain()
     }
 
     func trackPurchase(
@@ -69,7 +70,13 @@ actor InteractionTracker {
             "token": token,
         ])
         await enqueue(path: Self.purchasePath, body: body, clientId: clientId, idempotencyKey: newKey())
-        await flush()
+        detachDrain()
+    }
+
+    /// Starts a drain without waiting for it: `track` is durable once enqueued, and a caller
+    /// on a button handler must not block on a whole backlog.
+    private func detachDrain() {
+        _ = scheduleDrain()
     }
 
     /// Drops every queued event. An event captured under an id the user asked to be
@@ -78,19 +85,29 @@ actor InteractionTracker {
         await queue.clear()
     }
 
-    /// Drains the queue, once. A drain already under way is not joined but noted: it will
-    /// run again when it finishes, so nothing enqueued mid-drain waits for the next event.
+    /// Drains the queue. Awaiting this awaits the drain, including one already under way.
     func flush() async {
-        if isDraining {
-            drainRequested = true
-            return
+        await scheduleDrain().value
+    }
+
+    /// Returns the drain covering everything enqueued so far. A drain already under way is
+    /// reused rather than followed by a second full pass: it re-reads the file, so noting that
+    /// the queue changed is enough. Awaiting the returned task therefore awaits a pass that
+    /// includes the caller's own event.
+    private func scheduleDrain() -> Task<Void, Never> {
+        if let inFlight = drainTask {
+            drainAgain = true
+            return inFlight
         }
-        isDraining = true
-        defer { isDraining = false }
-        repeat {
-            drainRequested = false
-            await drain()
-        } while drainRequested
+        let task = Task {
+            repeat {
+                self.drainAgain = false
+                await self.drain()
+            } while self.drainAgain
+            self.drainTask = nil
+        }
+        drainTask = task
+        return task
     }
 
     private func drain() async {
@@ -98,8 +115,10 @@ actor InteractionTracker {
 
         let pending = await queue.read(now: now())
         guard !pending.isEmpty else {
-            // Nothing to send, but expired rows may still be on disk.
-            await queue.replace([])
+            // Nothing to send, but expired rows may still be on disk. `reconcile` rather than
+            // `replace([])`: read and write must be one hop, or a `track` appending between them
+            // is read by neither and erased by the second.
+            await queue.reconcile(delivered: [], retried: [:], now: now())
             return
         }
 
@@ -127,9 +146,9 @@ actor InteractionTracker {
                 break
             } catch {
                 // Cancellation, and nothing else — `HTTPClient` maps every transport failure to
-                // a `FrakError`. Returning rather than breaking skips the reconcile below: a
-                // cancelled drain must leave the file exactly as it found it, since events it
-                // did deliver would otherwise be compacted away on a task nobody is waiting on.
+                // a `FrakError`. Returning rather than breaking skips the reconcile below, so a
+                // cancelled drain leaves the file exactly as it found it: re-sending a delivered
+                // event is recoverable server-side, compacting away an undelivered one is not.
                 return
             }
 

@@ -6,7 +6,9 @@ import id.frak.sdk.core.FrakLogger
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
@@ -33,13 +35,20 @@ class InteractionTrackerTest {
     private lateinit var file: File
     private lateinit var queue: EventQueue
 
-    private fun tracker(): InteractionTracker {
+    /**
+     * A [TestScope] extension so the tracker's detached drains share this test's scheduler and
+     * run eagerly under [UnconfinedTestDispatcher] — `track` no longer awaits its own flush.
+     */
+    private fun TestScope.tracker(): InteractionTracker {
         file = File(folder.root, "frak-events.jsonl")
-        queue = EventQueue(file, FrakLogger(FrakLogLevel.NONE, null), UnconfinedTestDispatcher())
+        queue = EventQueue(file, FrakLogger(FrakLogLevel.NONE, null), UnconfinedTestDispatcher(testScheduler))
         return InteractionTracker(
             queue = queue,
-            http = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(), transport::open),
+            http = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), transport::open),
             logger = FrakLogger(FrakLogLevel.NONE, null),
+            // Parented to backgroundScope so runTest cancels any drain still in flight at the end
+            // of a test instead of leaking it; Unconfined so the drain runs before track returns.
+            scope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler)),
             currentClientId = { currentClientId },
             now = { now },
             newKey = { "key-${keys++}" },

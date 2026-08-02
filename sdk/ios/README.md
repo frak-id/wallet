@@ -15,7 +15,7 @@ binaries, and the patent grant covers the identity proof-of-possession scheme.
 
 > ⚠️ **The MVP surface is implemented. None of it has run on a device.**
 >
-> What is implemented and tested (238 Swift Testing tests, counted from `@Test` under
+> What is implemented and tested (257 Swift Testing tests, counted from `@Test` under
 > `sdk/ios/Tests`):
 >
 > | Folder | What is there |
@@ -55,6 +55,13 @@ resets the id). What is stored is a key *reference*: on a device with a Secure E
 the blob is the enclave's own wrapped representation, useless to anything but that chip.
 `PersistedDeviceKeyStore` falls back to a software `P256.Signing.PrivateKey` where there
 is no enclave, which in practice means the simulator.
+
+That suite is included in device backups, so a restore carries the blob to a phone whose
+enclave cannot unwrap it. Stored material this device cannot use is therefore replaced
+rather than treated as fatal — the id it derived is already unrecoverable at that point,
+and refusing to remint would leave the install with no id at all. Nothing is cleared
+before a replacement exists: the enclave also refuses before a device's first unlock, and
+a read that fails for a passing reason must not cost the user a healthy key.
 
 **2. `DeepLinkHandling` has no `.automatic`.** Android's SDK registers
 `ActivityLifecycleCallbacks` and reads inbound intents itself. iOS has no equivalent:
@@ -130,6 +137,7 @@ Sources/FrakSDK/
 Sources/FrakSDKUI/
   FrakSharingSheet.swift                 the .frakSharingSheet modifier and its sheet
   SharingSheetModel.swift                the sequencing: deadline, tiers, outcomes
+  SharingSheetLogic.swift                SharingSession + the tier predicate, outside the UIKit #if
   SharingWebView.swift                   hardened WKWebView + navigation-interception policy
   SharingPageURL.swift                   the hosted /sharing URL and the return scheme
   NativeShare.swift                      UIActivityViewController and the pasteboard
@@ -137,7 +145,9 @@ Sources/FrakSDKUI/
   SharingResult.swift                    the outcome type and its significance ranking
   Resources/{en,fr}.lproj                the sheet's native chrome, four keys
 Tests/FrakSDKTests/                      roughly one suite per source file + Fixtures/
-Tests/FrakSDKUITests/                    SharingPageURL and the outcome ranking
+Tests/FrakSDKUITests/                    SharingPageURL, the outcome ranking, the tier predicate.
+                                         SharingSheetModel and SharingWebView have no executed
+                                         coverage: neither compiles on the macOS test host.
 scripts/run.sh                           build / test / lint / format / xcframework
 ```
 

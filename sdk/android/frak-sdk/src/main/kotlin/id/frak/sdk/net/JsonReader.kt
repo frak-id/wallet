@@ -79,17 +79,6 @@ internal object JsonReader {
         }
     }
 
-    /** Strings of the array at [key], skipping every non-string entry. */
-    fun stringArray(
-        source: JSONObject,
-        key: String,
-    ): List<String> {
-        val array = source.opt(key) as? JSONArray ?: return emptyList()
-        return (0 until array.length()).mapNotNull { index ->
-            (array.opt(index) as? String)?.takeIf { it.isNotEmpty() }
-        }
-    }
-
     /** Every `String`-valued entry of the object at [key]. Non-string values are dropped, not coerced. */
     fun stringMap(
         source: JSONObject,

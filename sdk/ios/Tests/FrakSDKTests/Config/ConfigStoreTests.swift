@@ -189,6 +189,25 @@ struct ConfigStoreTests {
         }
     }
 
+    @Test("backing off with nothing cached fails instead of dialling again")
+    func backingOffWithEmptyCacheDoesNotDial() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let store = makeStore(clock: clock, log: log) { _ in throw URLError(.notConnectedToInternet) }
+        _ = try? await store.resolve(query(), forceRefresh: false)
+        let afterFirst = log.count
+
+        // First-launch-offline: the backoff is armed and there is no cache to fall back on.
+        // Serving that by dialling anyway makes a retry loop one real request per call.
+        for _ in 0..<3 {
+            await #expect(throws: FrakError.self) {
+                _ = try await store.resolve(query(), forceRefresh: false)
+            }
+        }
+
+        #expect(log.count == afterFirst)
+    }
+
     @Test("the config survives a cold start through persistence")
     func configSurvivesColdStart() async throws {
         let clock = Clock()

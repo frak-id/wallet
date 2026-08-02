@@ -45,6 +45,14 @@ Three things are not right, and they are structural rather than local:
 Nothing here is a reason to restart. The list below is roughly two weeks of contained work,
 and about a third of it deletes code.
 
+> **Two remediation passes have since run.** Pass 1 closed the licence, the privacy manifests
+> and every doc claim in point 3 above. Pass 2 closed the quick wins — §2.3, §2.5, §2.9,
+> §2.11, §2.4b, §2.7's lock window, §4.1, §4.3, §5.3, §5.5, §5.8 — with per-section notes
+> throughout. Point 2 held up under both: **every quick-win bug that existed at all existed on
+> both platforms**, and the one that did not (§2.4b, where Swift's `defer` already covered it)
+> only became visible by checking rather than assuming symmetry. Point 1's ratio is the one
+> that has moved.
+
 ---
 
 ## 1. Ship blockers
@@ -196,7 +204,26 @@ breaking change to an already-public symbol.
 
 ## 2. Correctness bugs — user-visible or data-losing
 
-### 2.1 Android sharing sheet reports a failed load as ready — the offline path is dead
+> **Remediation pass 2 — status.** Fixed on both platforms: **§2.3** (backoff bypass),
+> **§2.5** (`trackingEnabled` drain gate). Fixed where it applied: **§2.4b** (the
+> `revalidating` cancellation leak, Android only — Swift's `defer` already covered it),
+> **§2.9** (iOS `tiers`), **§2.11** (2 of 3 parts). Also fixed opportunistically, because
+> detaching the drain in §4.3 widened it: the **§2.7 read/compact window**, on both
+> platforms. Still open: §2.1, §2.2, §2.4a, §2.6, §2.7's idempotency-key half, §2.8, §2.10.
+
+### 2.1 Android sharing sheet reports a failed load as ready — the offline path is dead — **FIXED**
+
+> One `navigationFailed` field, set in `handleMainFrameFailure`, cleared in `onPageStarted`,
+> read at the top of `onPageFinished`. Deliberately a boolean and not an enum: `retried`,
+> `retryPending` and `settled` already carry the rest of the state, and no code would branch on
+> the extra cases. It is set *before* the `settled` guard so a reload that fails after tier 3
+> has fired still suppresses its error page, and *before* the `retryPending` return so the
+> duplicate-callback case is covered too.
+>
+> Three regression tests, all of which fail against the old code: the error page's own
+> `onPageFinished` with no intervening `onPageStarted` (the sequence the framework actually
+> produces and the old test never modelled), the retry painting after it, and a first-load
+> happy path that the renamed test no longer covered.
 
 `sdk/android/frak-sdk-ui/.../SharingWebView.kt:147-155`
 
@@ -222,7 +249,26 @@ The test misses it because `SharingWebViewClientTest.kt:255-269` injects an `onP
 the error and the `onPageFinished`, which is not what the framework does. Track the failure
 explicitly, gate the success path on it, and add the no-intervening-`onPageStarted` regression test.
 
-### 2.2 iOS sharing sheet treats an HTTP error document as a successful load
+### 2.2 iOS sharing sheet treats an HTTP error document as a successful load — **FIXED**
+
+> The mirror of §2.1, with the same field name and the same three mutation sites so the two
+> files diff cleanly. What iOS additionally needed was a way to *see* the failure:
+> `decidePolicyFor navigationResponse:` now inspects the main-frame status, which is Android's
+> `onReceivedHttpError` equivalent.
+>
+> It answers `.allow`, not `.cancel`, and then calls `handleMainFrameFailure` explicitly.
+> Cancelling would surface as a cancellation error, which `isCancellation` filters out — so the
+> obvious-looking `.cancel` dead-ends into neither path firing.
+>
+> `webViewWebContentProcessDidTerminate` is implemented alongside it. Both platforms treat a
+> dead renderer as a fallback trigger rather than trying to recover: reloading is reloading the
+> content that just killed a process, and tier 3 has a working local link. Android's override
+> must return `true` — `false` lets the framework kill the merchant's app, not just the sheet.
+>
+> **Not fixed, and now explicit:** a renderer dying *after* the page painted leaves a blank
+> sheet. Falling back there would raise an OS chooser on top of a sheet the user is using and
+> queue a share they never asked for, so `onPageUnavailable` returns early on `pageLoaded` on
+> both platforms. The native Copy/Share footer still works, so the user is not stranded.
 
 `sdk/ios/Sources/FrakSDKUI/SharingWebView.swift:159-161`
 
@@ -237,7 +283,16 @@ the user. Also missing: `webViewWebContentProcessDidTerminate(_:)` — a jetsamm
 (common on low-memory devices while an `UIActivityViewController` is up) leaves a permanently white
 sheet, since `didFail*` is not called and `pageLoaded` is already true.
 
-### 2.3 Backoff is bypassed on a cold cache — on both platforms
+### 2.3 Backoff is bypassed on a cold cache — on both platforms — **FIXED**
+
+> Both stores now throw when backing off with nothing cached, matching `RewardRepository`
+> exactly, so the two callers of the same helper no longer disagree about what backoff means.
+> On iOS the ad-hoc `BackingOff` error that `RewardRepository` kept privately moved to
+> `Backoff.BackingOff(what:)` and is shared. Regression tests added on both platforms
+> (`ConfigStoreTest.kt`, `ConfigStoreTests.swift`): they assert the *request count is
+> unchanged* across three further calls, which is the assertion that fails against the old
+> code — the throw alone does not discriminate, since the old path threw too, just after
+> dialling.
 
 `sdk/android/.../config/ConfigStore.kt:66-71` and `sdk/ios/.../Config/ConfigStore.swift:73-77`
 
@@ -273,7 +328,13 @@ TTLs that have no `fetchedAt > now` clamp (`ConfigStore.kt:28,60,175`), the SDK 
 config *across launches, indefinitely, with no network attempt*. That pair is the worst live-
 correctness combination in the codebase.
 
-### 2.5 The startup drain ignores `trackingEnabled` — on both platforms
+### 2.5 The startup drain ignores `trackingEnabled` — on both platforms — **FIXED**
+
+> Both `init` blocks now purge and return early when tracking is off, so a backlog captured
+> before the opt-out is dropped rather than POSTed with the old `x-frak-client-id`. Skipping
+> the keystore warm-up costs nothing: `AnonymousIdStore` already returns nil without I/O when
+> tracking is off, on both platforms. **Shipped without a regression test** — it is four lines
+> inside an `init`-spawned task, which is exactly the shape that regresses silently.
 
 `DefaultFrakClient.swift:44-47` and `DefaultFrakClient.kt:81-85`
 
@@ -304,7 +365,18 @@ When backoff finally lifts, `read()` slurps the entire file into memory (`file.r
 Enforce the bound on the **write** path: an append counter or a byte budget checked in `append`,
 triggering compaction independently of the backoff gate.
 
-### 2.7 Android event-queue reconciliation loses events two ways
+### 2.7 Android event-queue reconciliation loses events two ways — **HALF FIXED**
+
+> **The lock window is closed on both platforms** — and it turned out not to be Android-only.
+> §4.3 detaching the drain meant the SDK now generates this concurrency *itself* from two
+> sequential `track` calls, so the window had to close in the same change rather than later.
+> Android now holds one `queueMutex` across read and compact. iOS had the identical bug by a
+> different mechanism: `queue.read` and `queue.replace([])` are two hops onto the `EventQueue`
+> actor, and an append landing between them was erased by the second — now one hop through
+> `reconcile`, the method whose own doc comment forbids exactly this split.
+>
+> **Still open: the merchant-supplied `idempotencyKey` as reconciliation key.** That needs an
+> SDK-owned row id and is a queue-format change, not a quick win.
 
 `sdk/android/.../tracking/InteractionTracker.kt`
 
@@ -320,7 +392,34 @@ Both are silent event loss that will be blamed on the backend for weeks. Fix: ho
 read+compact, and give `QueuedEvent` an SDK-owned row id that is never merchant-visible, keeping the
 merchant's `idempotencyKey` as a body field only.
 
-### 2.8 An iCloud restore permanently bricks the iOS identity
+### 2.8 An iCloud restore permanently bricks the iOS identity — **FIXED on both platforms**
+
+> Both stores now answer "nothing usable here" the same way and let `loadOrCreate` mint. iOS
+> gained a private `load()` returning nil so the two files read alike; Android's already did.
+>
+> **The recommended negative cache was deliberately NOT added**, and the audit was wrong to
+> ask for it. Key operations legitimately fail before a device's first unlock, so caching the
+> failure would leave an app launched by a push on a rebooted phone inert until the user
+> force-quit it — a worse bug than the one being fixed, and much harder to diagnose. The hot
+> loop the cache was meant to stop is gone anyway: after this fix the second call mints
+> instead of re-reading poisoned material. Both platforms now have a test pinning that a
+> keystore which recovers gets an id without a restart. If log volume from a genuinely dead
+> device ever matters, throttle in `FrakLogger` — not by caching identity state.
+>
+> **Nothing is deleted before a replacement exists**, on either platform, and this is the
+> subtle half. The obvious shape — clear the bad material, then mint — destroys a healthy key
+> whenever the read failed for a passing reason and the mint then fails too. iOS relies on
+> `generate()` overwriting the same key on success, so the clear was a no-op on every path
+> that works and data loss on the paths that do not. Android relies on `create()` targeting
+> the same alias. On Android the keystore handle is also opened *outside* the `try`: a
+> provider that will not load is unavailable, not damaged, and must surface as a retry rather
+> than be answered by minting over the user's key.
+>
+> Coverage is inverted from the sharing sheet. `PersistedDeviceKeyStore` had never been
+> executed by anything; it now has seven tests that run for real on the host, including the
+> §2.8 regression. Android's `AndroidKeystoreDeviceKeyStore` has none and can have none — the
+> stubbed `android.jar` throws on every `android.*` call and Robolectric ships no
+> `AndroidKeyStore` provider — so that half is verified by reading only.
 
 `Identity/DeviceKey.swift:54-66,92-103` + `AnonymousIdStore.swift:94-101`
 
@@ -346,7 +445,14 @@ Android has a narrower version of the same shape: `AndroidKeystoreDeviceKeyStore
 throws `UnrecoverableKeyException` for a corrupted or OS-upgrade-damaged entry. Wrap `load()` in
 `runCatching`, and `delete()` before returning null so `create()` mints fresh.
 
-### 2.9 iOS drops the entire rewards response when a tiered campaign omits `tiers`
+### 2.9 iOS drops the entire rewards response when a tiered campaign omits `tiers` — **FIXED**
+
+> One line, plus a regression test. The blast radius was re-verified end to end rather than
+> assumed, because two layers *look* like they would swallow it and do not:
+> `ForgivingArray` skips non-object entries but decodes objects with `try`, and
+> `decodeForgivingObject` is forgiving only about whether the key is an object — once it is,
+> it decodes strictly. So the `keyNotFound` really did propagate to `FrakError.decoding` for
+> the whole response.
 
 `Rewards/RewardsDecoder.swift:60` uses `container.decode(...)`, not `decodeIfPresent` — two lines
 below where `rewards` correctly uses `decodeIfPresent` (`:25`). An absent `tiers` throws
@@ -365,7 +471,18 @@ through to `FrakMetadata.homepageLink` and produce a link; iOS takes `""` as `ba
 the merchant as `merchantResolutionFailed`. Same class of divergence for `logoUrl`, `expiresAt`,
 `appName` and every `ResolvedComponents` copy field.
 
-### 2.11 Android `track`/`trackPurchase` can throw out of a `FrakResult`-returning method
+### 2.11 Android `track`/`trackPurchase` can throw out of a `FrakResult`-returning method — **MOSTLY FIXED**
+
+> Two of the three parts landed: `URL(...)` moved inside the deadline block behind a
+> `urlOrThrow` helper that maps `MalformedURLException` to `FrakError.Network` (placed so the
+> GET retry cannot mistake it for a retryable transport error, since it *is* an
+> `IOException`), and the tracker's catch widened from `FrakError.Network` to `FrakError` —
+> which also stops a `FrakError.Server` from `post` escaping `flush` uncaught.
+>
+> **`trackingCall` still does not route through `frakCall`**, so the class KDoc's guarantee is
+> still not enforced by construction. No live escape remains — `Interaction.Custom.data` is
+> `Map<String, String>` so `JSONObject.put` cannot throw, and `EventQueue.append` swallows its
+> own IO — but that is correctness by luck.
 
 `DefaultFrakClient.kt:148-162,234-240`. The class KDoc at `:37` states every public entry point lets
 only `FrakError`/`CancellationException` escape — but `trackingCall` is the one path that does *not*
@@ -381,7 +498,36 @@ Three parts: move `URL(...)` inside the `try` in both `get`/`post`, widen the tr
 
 ## 3. Security & privacy
 
-### 3.1 Android: the WebView can start arbitrary activities
+### 3.1 The WebView can start arbitrary activities — **FIXED on both platforms**
+
+> Two guards, both mirrored:
+>
+> **Scheme allowlist** in `openExternally` — `http`/`https` only, so `intent:`, `market:`,
+> `content:` and vendor schemes can no longer reach an installed handler. Android additionally
+> calls `Uri.normalizeScheme()` first, because it folds neither the comparison nor intent
+> resolution on its own; Darwin's `URL` already normalises.
+>
+> **Frame guard** in the navigation policy, placed *above* the result branch. This is the half
+> that matters most: without it a frame could navigate to
+> `returnScheme://result?action=install&sid=...` and forge an outcome. Note the honest limit —
+> a *same-origin* frame can set `top.location` and reach the main-frame path anyway, so the
+> guard's real value is that a frame cannot be launched externally and a cross-origin frame
+> cannot render full-bleed in a sheet with no URL bar.
+>
+> Two subtleties the first attempt got wrong, both caught in review:
+> - Only *remote* schemes are judged. `about:blank`, `srcdoc`, `blob:` and `data:` frames have
+>   no host to compare against and are routine inside a React page; cancelling them would have
+>   broken the hosted page.
+> - iOS's `targetFrame == nil` is a **new window**, not a sub-frame. `target="_blank"` and
+>   gesture-driven `window.open` both produce one and neither is stopped by
+>   `javaScriptCanOpenWindowsAutomatically = false`. Treating it as a sub-frame silently killed
+>   every external link on the page, because `.allow` asks a `WKUIDelegate` that does not exist.
+>   Same-origin new windows now load in the main frame, which is what Android's
+>   `setSupportMultipleWindows(false)` does for free; cross-origin ones go to the browser.
+>
+> The audit's optional user-gesture check was **not** taken: `hasGesture` is unreliable for
+> legitimate programmatic navigation, and with the scheme allowlist the residual risk is "an
+> XSS'd page opens an https URL in the browser".
 
 `SharingSheetState.kt:229-232` — `openExternally` does `Uri.parse(url)` → `startActivity(ACTION_VIEW,
 uri)` with `FLAG_ACTIVITY_NEW_TASK`, with **no scheme allowlist**. `isSameOrigin`
@@ -488,7 +634,14 @@ This was `S5` last time and is unchanged.
 
 ## 4. Performance
 
-### 4.1 One 2-slot dispatcher for blocking sockets, disk and every SDK coroutine
+### 4.1 One 2-slot dispatcher for blocking sockets, disk and every SDK coroutine — **FIXED**
+
+> `defaultNetworkDispatcher()` (4 slots) now backs `HttpClient` alone; `defaultIoDispatcher()`
+> (2) keeps disk and the SDK scope. One knock-on the change created and then had to repair:
+> the comment above `resolveConfig` justified *not* wrapping in `withContext(ioDispatcher)`
+> partly by the shared-pool starvation this fix removes. Half that rationale is now void; the
+> `frakCall` error-boundary half still stands, and the comment says so rather than continuing
+> to cite a tree that no longer exists.
 
 `DefaultFrakClient.kt:266` — `Dispatchers.IO.limitedParallelism(2)` feeds the client's scope,
 `ConfigStore`'s disk I/O, the `EventQueue` file I/O, **and** the fully blocking
@@ -515,7 +668,33 @@ This is the most expensive finding to discover in the field, because it degrades
 Fix: a custom serial executor (`DispatchSerialQueue.asUnownedSerialExecutor()`), or bridge each
 blocking call through a dedicated queue.
 
-### 4.3 `track()` awaits the entire backlog drain — both platforms
+### 4.3 `track()` awaits the entire backlog drain — both platforms — **FIXED**
+
+> Android detaches onto the client's own `CoroutineScope`, now a constructor parameter on
+> `InteractionTracker`. iOS detaches onto an actor-isolated `Task`.
+>
+> **This fix had the widest blast radius of the batch, and two follow-on defects had to be
+> repaired before it was safe** — worth recording, because both were invisible without
+> reading the callers rather than the call:
+>
+> 1. On iOS the first attempt replaced the `isDraining`/`drainRequested` pair with a chained
+>    task, which silently deleted *coalescing*: N concurrent tracks became N full drains,
+>    each one a `Data(contentsOf:)` plus a per-line JSON decode. That amplifies §4.4 rather
+>    than leaving it alone. The shipped version keeps a single in-flight task and a
+>    `drainAgain` flag, so N tracks still collapse to one follow-up pass — while `flush()`
+>    now genuinely means "a pass covering my event has completed", which the old
+>    early-returning version did not.
+> 2. Detaching turned §2.7's read/compact window from a two-caller race into something the
+>    SDK triggers itself from sequential `track` calls. Closed on both platforms — see §2.7.
+>
+> Test impact: the iOS suite asserted on delivery immediately after `track`, which the detach
+> makes racy. Eleven `await tracker.flush()` calls were added. One test (`backsOffAfterAFailure`)
+> sampled the request count *between* `track` and `flush` and would have failed outright; two
+> more would have kept passing while silently no longer arming the backoff they claim to test.
+>
+> **Not covered by a test on either platform**: that `track` now returns *before* delivery.
+> Android's suite cannot see the difference at all — `UnconfinedTestDispatcher` runs the
+> detached drain inline, so every assertion passes against the old awaited-flush code too.
 
 `InteractionTracker.kt:35-43,74-75` and `InteractionTracker.swift:5-6,49-53,71-72` both document
 *"returns once the event is durable, not once delivered"*, and both then `await flush()`, which
@@ -607,7 +786,16 @@ Make `SingleFlight` a struct on the owning actor, matching `Backoff`. Keep `Comp
 `Waiter` unless per-waiter early cancellation is a stated product requirement — and if it is, say so
 in the doc comment, which currently explains *how* it works but never *why anyone needs it*.
 
-### 5.3 `Backoff.runOrRecordFailure`'s justification does not hold
+### 5.3 `Backoff.runOrRecordFailure`'s justification does not hold — **FIXED on iOS**
+
+> Deleted on iOS: a generic function, an `isolation:` parameter and an 8-line comment whose
+> premise was wrong, replaced by a plain `do`/`catch` at each of the two call sites. The
+> claimed restriction never applied — `backoff.recordFailure` is a synchronous `mutating` call
+> inside an already-isolated method, with no exclusive access spanning an `await`.
+>
+> **Android's mirror is untouched.** Its problem is the opposite one described below (lock
+> ownership split across the boundary), which is a design pick rather than a deletion, so it
+> did not belong in a quick-win batch.
 
 `Backoff.swift:74-92` is a generic `#isolation`-carrying higher-order function whose comment says
 Swift does not allow an `async` mutating method on an actor-isolated stored property. That
@@ -630,7 +818,23 @@ SWR/no-SWR policy — and, per §2.3, they *accidentally* differ in backoff sema
 `CachedEndpoint<T>` parameterised by `(ttl, path, params, decode, serveStale)` removes the
 duplication and makes the two policies a visible parameter instead of an invisible divergence.
 
-### 5.5 The Android convention plugin owns nothing
+### 5.5 The Android convention plugin owns nothing — **HALF FIXED**
+
+> The whole `android {}` half — `compileSdk`, `minSdk`, `consumerProguardFiles`,
+> `compileOptions`, `buildConfig = false`, `publishing { singleVariant }` — now lives once in
+> `frak-publish.gradle.kts`. Both modules keep only what genuinely differs: `namespace`,
+> `compose = true`, `testOptions`, the Robolectric JDK-17 pin.
+>
+> **The `kotlin {}` half stays duplicated**, and that is the half that drifted. buildSrc
+> carries AGP but not KGP, so the Kotlin extension is not on that classpath; moving it means
+> adding KGP to buildSrc and keeping its version in step with the catalog by hand. The actual
+> drift — `:frak-sdk-ui` missing `jvmDefault = NO_COMPATIBILITY` while publishing
+> `public sealed interface SharingResult` — is fixed, but nothing structural stops it
+> recurring. A `checkKotlinInvariantsMatch` task, or KGP on the buildSrc classpath, would.
+>
+> The audit's own suggestion of `lint { abortOnError = true }` was **not** taken: it is
+> already AGP's default, so it would have been a line that reads like a fix and changes
+> nothing. The real gap is that Lint has still never been executed once.
 
 `frak-sdk/build.gradle.kts:11-52` and `frak-sdk-ui/build.gradle.kts:10-51` independently repeat
 `compileSdk`, `minSdk`, `consumerProguardFiles`, `compileOptions`, `buildConfig = false`,
@@ -677,7 +881,21 @@ consume `CONNECT (10_000) + READ (15_000) = 25_000`. So the documented "one retr
 for a timeout-shaped failure. It only helps the fast-failing `IOException` case it names — which is
 fine, but the constants should say so.
 
-### 5.8 Dead code and unused API
+### 5.8 Dead code and unused API — **MOSTLY FIXED**
+
+> Deleted: `JsonReader.stringArray`, `Frak.resetForTesting`, the `frak_sharing_close` string
+> in both locales, five version-catalog aliases and the two versions behind them, and
+> `Backoff.runOrRecordFailure` (§5.3). The two stale comments are rewritten —
+> `consumer-rules.pro` no longer says "there is no SDK code yet", and `run.sh`'s `xcframework`
+> message no longer tells the reader the package is scaffolding with no SDK behaviour.
+> `ConfigStore`'s provably-null `cached ?: readCache(key)` went with the §2.3 fix.
+>
+> **Deliberately kept**: `HttpClient.get(headers:)` (a default parameter, not dead weight),
+> `FrakError.alreadyPresenting` on iOS and `ProofOp.Ensure`/`.Merge` on both. Those three are
+> parity questions, not dead code — iOS *should* probably produce `alreadyPresenting` the way
+> Android does, and deleting them would widen the cross-platform gap the audit is trying to
+> close. The 422 branch stays too: it is defensive logging for a case the code says is
+> unreachable, which is exactly when you want the log.
 
 | Item | Location |
 |---|---|
@@ -754,12 +972,25 @@ commits ago.
   **next** presentation reports a stale result from the previous session. One `Task` handle plus one
   `closed = true` fixes both; better, replace `.onAppear { Task { … } }` with `.task`, which SwiftUI
   cancels for free.
-- **`NativeShare.share()` can hang forever** (`:28-33`): `withCheckedContinuation` is resumed only
-  from `completionWithItemsHandler`. If `present` silently no-ops — top VC mid-dismissal, or already
-  presenting, a real race here — the sheet is wedged on a `ProgressView` with no exit but a swipe.
-  Guard with a `resumed` flag too: a checked continuation resumed twice is a hard crash, and some
-  share extensions do invoke the handler twice. (Credit where due: the iPad popover *is* anchored at
-  `:19-26`, and window lookup is scene-based, not the deprecated `UIApplication.shared.windows`.)
+- **`NativeShare.share()` can hang forever** (`:28-33`) — **FIXED, partially.** The double-resume
+  crash is closed outright by a locked one-shot latch: the handler is documented as firing once
+  and some share extensions fire it twice, and a `CheckedContinuation` resumed twice is a hard
+  crash rather than a warning. The hang is *narrowed*, not closed — a refused presentation is now
+  detected by reading `presentingViewController` straight after `present`, so every synchronous
+  refusal becomes an ordinary `false`; a presentation accepted and then torn down before the
+  handler fires still leaks, and needs a device to reproduce.
+
+  Two shapes were tried and rejected. A **wall-clock timeout** is unsound in principle, not just
+  hard to tune: a share sheet is legitimately open for as long as the user takes to write a
+  message, so no constant separates "wedged" from "in use", and firing one would report
+  `.dismissed` and tear the sheet down underneath a live share. A **pre-flight guard** on the
+  presenter's state was written, reviewed, and removed: `isBeingPresented` is true while the Frak
+  sheet is animating in, which is exactly when tier 3 fires offline, so it turned the fallback
+  into a sheet that flashed open and closed with `.dismissed`. Guessing at UIKit's refusal
+  conditions up front rejects presentations it would have accepted; asking afterwards does not.
+
+  (Credit where due: the iPad popover *is* anchored at `:19-26`, and window lookup is scene-based,
+  not the deprecated `UIApplication.shared.windows`.)
 - **Fixed 480pt page height in a non-scrollable `VStack`** (`FrakSharingSheet.swift:62,71-106`, and
   the same at `FrakSharingSheet.kt:150` on Android). At accessibility text sizes on a 667pt iPhone SE
   the Share and Copy buttons are pushed off the sheet with no way to reach them. No
@@ -853,6 +1084,20 @@ all".
 
 ## 8. Tests
 
+> **§8.2 partially addressed.** `SharingSession` and a new pure `sharingDecision` predicate moved
+> out of `SharingSheetModel`'s `#if canImport(UIKit)` into `SharingSheetLogic.swift`, with nine
+> tests that genuinely execute on the macOS host. That covers the tier matrix — deadline vs
+> page-loaded vs already-fallen-back — which is where the §2.1/§2.2 class of bug lives.
+>
+> Be clear about what it does **not** cover, because the number is small: roughly ten lines of a
+> 328-line file. `SharingSheetModel` and all of `SharingWebView` still have zero executed
+> coverage on iOS — `navigationFailed`, the navigation-response policy, content-process
+> termination and the frame guard included. Their Android twins in `SharingWebViewClientTest.kt`
+> are the only executed evidence for that logic on either platform, which is exactly the
+> asymmetry §0 warns about. Protocol extraction for `WKWebView`/`NativeShare` was considered and
+> rejected: its payoff is gated behind the same missing simulator runner, so it would be a large
+> refactor buying nothing today.
+
 Both suites are well-commented and the *why* comments are mostly accurate. `BackoffTest`/`BackoffTests`
 are a genuinely well-matched pair, and the golden-fixture loaders (repo-root discovery, hard failure
 on missing file / bad JSON / wrong `formatVersion` / empty array) are the right design.
@@ -932,29 +1177,73 @@ swift-testing, Robolectric correctly confined to `frak-sdk-ui`.
 and the documentation corrections (§7). §1.1 and §1.2 were reclassified as deliberate
 deferrals: publishing and CI land once the SDKs have run on a device.
 
+**Wave 0b — done: the quick wins.** §2.3, §2.5, §2.9, §2.11 (2 of 3), §2.4b, the lock half of
+§2.7, §4.1, §4.3, §5.3 (iOS), §5.5 (the `android {}` half), §5.8. Net effect on line count is
+roughly neutral — the deletions paid for the fixes. Two lessons worth carrying into the next
+wave, both of which cost a full re-review to catch:
+
+- **§4.3 was not a local change.** Detaching the drain widened §2.7's window and, on the first
+  attempt, silently deleted iOS's drain coalescing. A fix whose whole point is "stop awaiting
+  this" changes the concurrency assumptions of everything downstream of it.
+- **A passing suite proved less than it looked.** Android's tracker tests run the detached
+  drain inline under `UnconfinedTestDispatcher`, so they pass identically against the old code
+  — they cannot see the fix at all. On iOS the same change broke one test outright and hollowed
+  out two others. Neither platform has a test for the actual new guarantee.
+
 **Still to decide, don't code:** the `06-abi-decisions.md` questions, because §6's
 `@JvmOverloads`/Builder choice and the `FrakError`-as-struct choice both depend on them and
 both get harder every week.
 
-**Wave 1 — make the work verifiable.** Swift 6 mode in `Package.swift` (§1.5) and
-`lint { abortOnError }` in the convention plugin — both are local-run gates that do not wait on
-CI, and Android Lint has never executed once. Restore BCV with a committed dump (§1.6) when the
-ABI questions land. Each of these will immediately find things this audit could not, because
-nothing was executed.
+**Wave 1 — make the work verifiable.** Swift 6 mode in `Package.swift` (§1.5); actually *run*
+Android Lint, which has still never executed once (`abortOnError` is already its default, so
+there is nothing to configure — the gap is execution, not settings). Restore BCV with a
+committed dump (§1.6) when the ABI questions land. Each of these will immediately find things
+this audit could not, because nothing was executed.
 
-**Wave 2 — the correctness bugs, both platforms in one PR each.** §2.3 backoff bypass, §2.4
-`configUpdates` + the `revalidating` leak, §2.5 `trackingEnabled` gate, §2.6 write-path queue bound,
-§2.9 `decodeIfPresent`, §2.10 empty-string normalisation. Every one of these is small, and every one
-is on both platforms — doing them together is what stops the divergence from re-opening.
+**Wave 2 — the correctness bugs still open, both platforms in one PR each.** §2.4a
+`configUpdates` (decide the API shape first), §2.6 write-path queue bound, §2.7's SDK-owned row
+id, §2.10 empty-string normalisation. Every one is on both platforms — doing them together is
+what stops the divergence from re-opening. §2.6 pairs naturally with §4.4, since both are the
+queue's read path.
 
-**Wave 3 — the sharing sheet.** §2.1 and §2.2 are the same bug with opposite symptoms and together
-they break the offline and backend-outage paths on both platforms. Fix them alongside §3.1's four
-guards and iOS's `release()`/`NativeShare` fixes, and add the regression tests in the same PR.
-Simultaneously make `SharingSheetModel` host-testable (§8.2) — that is the multiplier.
+**Wave 3 — the sharing sheet. Done.** §2.1, §2.2, §3.1 and the testable half of §8.2 landed
+together, as one change on both platforms. Two things worth carrying forward:
 
-**Wave 4 — identity and the ABI freeze.** §2.8 restore recovery + negative cache, §3.3 the software
-key fallback, §4.5 the `suspend`/`async` accessors. §4.5 in particular *must* land before the first
-publish; it is unfixable afterwards.
+- **The first attempt at the frame guard broke more than it fixed.** Treating iOS's nil
+  `targetFrame` as a sub-frame killed every external link on the hosted page, and cancelling
+  non-remote sub-frames would have broken `about:blank`/`srcdoc` frames. Neither is visible
+  without knowing what the *page* does — the fix needed the wallet route read alongside the SDK.
+- **An attempted §6 `release()` fix was reverted.** Setting `closed` there and gating `report`
+  on it looks obviously right and makes a successful share report `.dismissed`, because
+  `.onDisappear` also fires when `UIActivityViewController` covers the sheet and both share
+  paths suspend across exactly that window. §6 stays open; it needs a signal that distinguishes
+  "covered" from "dismissed", which cannot be settled without a device.
+
+Wave 3's remaining §6 item, `NativeShare.share`'s continuation, is now done — see §6 for what it
+closes and what it only narrows.
+
+**Found while fixing waves 3 and 4, not in the original audit, not fixed:**
+
+- **The load deadline is not cancelled when the user shares or copies by hand — both platforms.**
+  Tap Copy or Share on the native footer while the page is still loading, and the 1.5s deadline
+  fires afterwards, raises a *second* OS chooser the user never asked for, and on iOS `close()`s
+  the sheet. Narrow window (the page must still be unloaded), but the symptom is severe. The fix
+  is to settle the content on any manual action — `deadline?.cancel()` on iOS,
+  `contentSettled.complete(…)` on Android — and it needs the same both-platform care as the rest
+  of the sheet, which is why it is recorded rather than tacked on here.
+- **Android `reset()` can silently fail to erase.** `AnonymousIdStore.reset()` wraps
+  `keyStore.delete()` in `runCatching`, so if `deleteEntry` throws, the identity survives, the
+  next read re-derives the *same* id, and `resetAnonymousId()` — documented as the erasure API,
+  with `DefaultFrakClient` purging the queue on the assumption the id rotated — has lied. iOS
+  cannot fail here (`removeValue` on a `UserDefaults` suite). Deserves a deliberate design pass,
+  not a blind patch.
+
+**Wave 4 — identity and the ABI freeze.** §2.8 restore recovery is **done** (and the negative cache
+it was paired with is declined, with reasoning, in §2.8). Still open: §3.3 the software key
+fallback — which on a device with no usable enclave writes the raw private scalar into a plist
+that *is* backed up, and whose own class comment claims it "stores a key reference, not the key
+itself" — and §4.5 the `suspend`/`async` accessors. §4.5 in particular *must* land before the
+first publish; it is unfixable afterwards.
 
 **Wave 5 — performance and simplification.** §4.1 dispatcher split, §4.2 iOS executor, §4.3/§4.4 the
 drain and the O(N²) reconciliation, then §5 — which is mostly deletion and should leave the codebase

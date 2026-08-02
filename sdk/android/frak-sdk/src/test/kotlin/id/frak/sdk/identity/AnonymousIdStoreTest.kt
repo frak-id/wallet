@@ -5,6 +5,7 @@ import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -40,6 +41,22 @@ class AnonymousIdStoreTest {
         val subject = store(FakeDeviceKeyStore(failOnCreate = true))
         assertNull(subject.anonymousId())
         assertNull(subject.signProof(ProofOp.Ensure, MERCHANT_ID))
+    }
+
+    /**
+     * Pins the decision not to cache the failure. A keystore can refuse for reasons that pass —
+     * it is unavailable across parts of an OS upgrade — so caching would turn a transient
+     * refusal into an install that never tracks again.
+     */
+    @Test
+    fun `a keystore that recovers gets an id, without a restart`() {
+        val keyStore = FakeDeviceKeyStore(failOnCreate = true)
+        val subject = store(keyStore)
+        assertNull(subject.anonymousId())
+
+        keyStore.failOnCreate = false
+
+        assertNotNull(subject.anonymousId())
     }
 
     @Test

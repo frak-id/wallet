@@ -9,10 +9,25 @@ final class FakeDeviceKeyStore: DeviceKeyStore, @unchecked Sendable {
     private let lock = NSLock()
     private var key: DeviceKey?
     private var mints = 0
-    private let refuses: Bool
+    private var refuses: Bool
 
     init(failOnCreate: Bool = false) {
         self.refuses = failOnCreate
+    }
+
+    /// Settable, so a test can model a keystore that refuses once and then recovers. Whether
+    /// the second call succeeds is the whole question behind not caching the failure.
+    var failOnCreate: Bool {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return refuses
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            refuses = newValue
+        }
     }
 
     var creations: Int {

@@ -37,6 +37,9 @@
         private var retryPending = false
         /// `onLoadFailed` is called at most once.
         private var settled = false
+        /// Set when the in-flight main-frame navigation fails or returns an HTTP error, so the
+        /// `didFinish` WebKit still delivers for the error document is not read as a load.
+        private var navigationFailed = false
 
         init(
             walletOrigin: String,
@@ -96,7 +99,11 @@
         }
 
         private func handleMainFrameFailure() {
-            guard !settled, !retryPending else { return }
+            // Before the `settled` guard: a reload that fails after tier 3 has already fired still
+            // gets an error document, whose `didFinish` must not report readiness.
+            navigationFailed = true
+            guard !settled else { return }
+            guard !retryPending else { return }
             guard !retried, let requested else {
                 settled = true
                 onLoadFailed()
@@ -130,6 +137,30 @@
                 return
             }
 
+            // A sub-frame must not be launched externally — that would let an embedded frame yank
+            // the user out of the sheet — and a cross-origin one is cancelled rather than
+            // rendered, since a full-bleed foreign frame in a sheet with no URL bar is exactly the
+            // indistinguishability the origin pinning exists to prevent. Only remote schemes are
+            // judged: `about:blank`, `srcdoc`, `blob:` and `data:` frames have no host to compare
+            // and are routine inside a React page.
+            if let frame = navigationAction.targetFrame, !frame.isMainFrame {
+                let remote = url.scheme == "https" || url.scheme == "http"
+                decisionHandler(remote && !isSameOrigin(url) ? .cancel : .allow)
+                return
+            }
+
+            // A nil `targetFrame` is a *new window*, not a sub-frame: `target="_blank"` and
+            // gesture-driven `window.open` both produce one, and neither is stopped by
+            // `javaScriptCanOpenWindowsAutomatically = false`. With no `WKUIDelegate`, `.allow`
+            // would drop it silently. Android has no such case — setSupportMultipleWindows(false)
+            // loads it in the current frame — so do the same here, and let a foreign one fall
+            // through to the browser below.
+            if navigationAction.targetFrame == nil, isSameOrigin(url) {
+                webView.load(navigationAction.request)
+                decisionHandler(.cancel)
+                return
+            }
+
             if url.scheme == returnScheme, url.host == SharingPageURL.resultHost {
                 // A result from a sheet the user already closed carries a stale session id.
                 if queryValue(url, "sid") == sessionId,
@@ -154,9 +185,33 @@
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             retryPending = false
+            navigationFailed = false
+        }
+
+        /// Android's `onReceivedHttpError` equivalent. Without this the main-frame status code is
+        /// never inspected, and a 5xx that returns a body reaches `didFinish` as a normal load.
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationResponse: WKNavigationResponse,
+            decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+        ) {
+            guard navigationResponse.isForMainFrame,
+                let http = navigationResponse.response as? HTTPURLResponse,
+                !(200..<400).contains(http.statusCode)
+            else {
+                decisionHandler(.allow)
+                return
+            }
+            // `.allow`, not `.cancel`: cancelling surfaces as a cancellation error, which
+            // `isCancellation` filters out, so neither path would fire. Letting WebKit finish
+            // normally keeps one route in — this call — and `navigationFailed` suppresses the
+            // `didFinish` that follows.
+            decisionHandler(.allow)
+            handleMainFrameFailure()
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            guard !navigationFailed else { return }
             onPageReady()
         }
 
@@ -172,6 +227,14 @@
         ) {
             guard !isCancellation(error) else { return }
             handleMainFrameFailure()
+        }
+
+        /// A jetsammed content process leaves a blank view and fires nothing else. Recovery would
+        /// mean reloading the content that just killed a process; tier 3 has a working local link.
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            guard !settled else { return }
+            settled = true
+            onLoadFailed()
         }
     }
 

@@ -91,12 +91,16 @@
                 }
 
                 HStack(spacing: 12) {
-                    Button { Task { await model.copy() } } label: {
+                    Button {
+                        Task { await model.copy() }
+                    } label: {
                         Text("frak.sharing.copy", bundle: .module).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
 
-                    Button { Task { await model.share() } } label: {
+                    Button {
+                        Task { await model.share() }
+                    } label: {
                         Text("frak.sharing.share", bundle: .module).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)

@@ -25,11 +25,31 @@
                 popover.permittedArrowDirections = []
             }
 
+            let latch = ResumeLatch()
             return await withCheckedContinuation { continuation in
                 controller.completionWithItemsHandler = { _, completed, _, _ in
+                    guard latch.claim() else { return }
                     continuation.resume(returning: completed)
                 }
                 presenter.present(controller, animated: true)
+                // A refused presentation — the presenter is already presenting, or is being
+                // dismissed, or its view left the window — is reported only to the console. The
+                // completion handler never fires, so without this the continuation would never
+                // resume and the sheet would sit on its spinner with no way out but a swipe.
+                //
+                // Asked after the fact rather than before: the conditions UIKit actually refuses
+                // on are not all knowable up front, and guessing at them pre-emptively rejects
+                // presentations it would have accepted — a presenter still animating IN is fine,
+                // which is exactly the state tier 3 fires in. `present` establishes
+                // `presentingViewController` when it accepts, so nil here is a refusal and not a
+                // slow start. A wall-clock timeout could not do this job: a share sheet is
+                // legitimately open for as long as the user takes to write the message.
+                //
+                // Narrows the hang rather than closing it — a presentation accepted and then torn
+                // down before the handler fires still leaks. That needs a device to reproduce.
+                if controller.presentingViewController == nil, latch.claim() {
+                    continuation.resume(returning: false)
+                }
             }
         }
 
@@ -51,6 +71,25 @@
                 top = presented
             }
             return top
+        }
+    }
+
+    /// One-shot claim on a continuation.
+    ///
+    /// `completionWithItemsHandler` is documented as fired once, and some share extensions fire
+    /// it twice anyway. A `CheckedContinuation` resumed twice is a hard crash, not a warning, so
+    /// the second call has to be dropped. Locked rather than relying on main-thread delivery:
+    /// the crash it prevents is unrecoverable, and the extension calling back is not our code.
+    private final class ResumeLatch: @unchecked Sendable {
+        private let lock = NSLock()
+        private var claimed = false
+
+        func claim() -> Bool {
+            lock.lock()
+            defer { lock.unlock() }
+            if claimed { return false }
+            claimed = true
+            return true
         }
     }
 

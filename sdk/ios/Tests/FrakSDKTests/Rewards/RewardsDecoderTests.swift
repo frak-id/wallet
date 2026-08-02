@@ -94,6 +94,26 @@ struct RewardsDecoderTests {
         #expect(tiers[1].maxValue == nil)
     }
 
+    @Test("a tiered campaign missing tiers survives instead of failing the whole response")
+    func tieredWithoutTiersKeepsTheResponse() throws {
+        let response = """
+            {"rewards":[{
+              "campaignId":"c1","name":"Summer","interactionTypeKey":"purchase","conditions":[],
+              "referrer":{"payoutType":"tiered","tierField":"purchase_amount"}
+            }]}
+            """
+
+        // `tiers` absent is a backend shape, not a client error: Android answers with an
+        // empty list, and a throw here would drop every campaign in the response.
+        let campaigns = try RewardsDecoder.decode(Data(response.utf8)).campaigns
+        let referrer = try #require(campaigns.first?.referrer)
+        guard case .tiered(_, let tiers) = referrer else {
+            Issue.record("expected .tiered")
+            return
+        }
+        #expect(tiers.isEmpty)
+    }
+
     @Test("an unknown payout type degrades to .unknown rather than dropping the campaign")
     func unknownPayoutTypeDegrades() throws {
         let body = """

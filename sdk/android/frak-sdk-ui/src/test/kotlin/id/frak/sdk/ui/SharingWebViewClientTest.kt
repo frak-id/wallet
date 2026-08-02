@@ -2,6 +2,7 @@ package id.frak.sdk.ui
 
 import android.content.Context
 import android.net.Uri
+import android.webkit.FakeRenderProcessGoneDetail
 import android.webkit.FakeWebResourceError
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -12,7 +13,6 @@ import android.webkit.WebViewClient
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -253,7 +253,19 @@ class SharingWebViewClientTest {
     }
 
     @Test
-    fun `a successful load reports readiness and unpins the cache`() {
+    fun `a first load that finishes reports readiness`() {
+        val (view, h) = harness()
+        val url = "$WALLET_ORIGIN/sharing?x=1"
+
+        view.client.onPageStarted(view, url, null)
+        view.client.onPageFinished(view, url)
+
+        assertEquals(1, h.pageReadyCount)
+        assertEquals(0, h.loadFailedCount)
+    }
+
+    @Test
+    fun `a retry that starts and finishes reports readiness and unpins the cache`() {
         val (view, h) = harness()
         val url = "$WALLET_ORIGIN/sharing?x=1"
         view.client.onPageStarted(view, url, null)
@@ -264,7 +276,93 @@ class SharingWebViewClientTest {
 
         assertEquals(1, h.pageReadyCount)
         assertEquals(WebSettings.LOAD_DEFAULT, view.settings.cacheMode)
-        assertNotNull(view.client)
+    }
+
+    @Test
+    fun `the error page's own onPageFinished is not a successful load`() {
+        val (view, h) = harness()
+        val url = "$WALLET_ORIGIN/sharing"
+        view.client.onPageStarted(view, url, null)
+        view.client.onReceivedError(view, request(url), error())
+
+        // What the framework actually does: `onPageFinished` for its internal error page, in the
+        // same load cycle as the failure and with no `onPageStarted` in between. Reading it as a
+        // load cancels the deadline that drives tier 3 and unpins the cache before the retry's
+        // posted navigation dispatches.
+        view.client.onPageFinished(view, url)
+
+        assertEquals(0, h.pageReadyCount)
+        assertEquals(WebSettings.LOAD_CACHE_ONLY, view.settings.cacheMode)
+    }
+
+    @Test
+    fun `the cache retry still paints after the error page finishes`() {
+        val (view, h) = harness()
+        val url = "$WALLET_ORIGIN/sharing"
+        view.client.onPageStarted(view, url, null)
+        view.client.onReceivedError(view, request(url), error())
+        view.client.onPageFinished(view, url) // error page
+
+        view.client.onPageStarted(view, url, null) // retry dispatches
+        view.client.onPageFinished(view, url)
+
+        assertEquals(1, h.pageReadyCount)
+        assertEquals(0, h.loadFailedCount)
+        assertEquals(WebSettings.LOAD_DEFAULT, view.settings.cacheMode)
+    }
+
+    @Test
+    fun `a renderer crash falls through to tier 3 without killing the host`() {
+        val (view, h) = harness()
+        view.client.onPageStarted(view, "$WALLET_ORIGIN/sharing", null)
+
+        val handled = view.client.onRenderProcessGone(view, FakeRenderProcessGoneDetail())
+
+        // False here lets the framework kill the merchant's app, not just the sheet.
+        assertTrue(handled)
+        assertEquals(1, h.loadFailedCount)
+    }
+
+    @Test
+    fun `a same-origin sub-frame is left to the web view`() {
+        val (view, h) = harness()
+
+        val overridden =
+            view.client.shouldOverrideUrlLoading(view, request("$WALLET_ORIGIN/embed", mainFrame = false))
+
+        assertFalse(overridden)
+        assertTrue(h.externalUrls.isEmpty())
+    }
+
+    @Test
+    fun `a cross-origin sub-frame is cancelled, not launched externally`() {
+        val (view, h) = harness()
+
+        val overridden =
+            view.client.shouldOverrideUrlLoading(view, request("https://ads.example/x", mainFrame = false))
+
+        // Cancelled, because a full-bleed foreign frame in a sheet with no URL bar is what the
+        // origin pinning exists to stop — but not handed to `onOpenExternal`, which would yank
+        // the user out of the sheet on an iframe's say-so.
+        assertTrue(overridden)
+        assertTrue(h.externalUrls.isEmpty())
+    }
+
+    @Test
+    fun `a sub-frame cannot forge a page result`() {
+        val (view, h) = harness()
+
+        // A same-origin iframe can read the real `sid` off `location.search`, so the sid guard
+        // alone does not make the result channel trustworthy — the frame check does.
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request(
+                "$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}?action=install&sid=$SESSION_ID",
+                mainFrame = false,
+            ),
+        )
+
+        assertTrue(h.actions.isEmpty())
     }
 
     private companion object {

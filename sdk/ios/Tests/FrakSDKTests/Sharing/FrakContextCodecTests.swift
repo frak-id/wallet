@@ -95,7 +95,8 @@ struct FrakContextCodecTests {
                 )
                 #expect(FrakContextCodec.encode(context) == nil, "\(name)")
             case "decode":
-                let bytes = try #require(Hex.decode(try #require(entry["inputHex"] as? String)))
+                let inputHex = try #require(entry["inputHex"] as? String)
+                let bytes = try #require(Hex.decode(inputHex))
                 #expect(FrakContextCodec.decode(bytes) == nil, "\(name)")
             case "decompress":
                 let wire = try #require(entry["inputBase64url"] as? String)
@@ -111,7 +112,8 @@ struct FrakContextCodecTests {
     @Test("reads a v1 payload the v2 decoder refuses")
     func readsAV1Payload() throws {
         let fixture = try #require(try Self.corpus().named("reject-decode-v1-length-buffer"))
-        let bytes = try #require(Hex.decode(try #require(fixture["inputHex"] as? String)))
+        let inputHex = try #require(fixture["inputHex"] as? String)
+        let bytes = try #require(Hex.decode(inputHex))
         let wallet = try #require((fixture["decompressesTo"] as? [String: Any])?["r"] as? String)
 
         #expect(FrakContextCodec.decode(bytes) == nil)

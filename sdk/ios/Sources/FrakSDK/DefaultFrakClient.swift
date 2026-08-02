@@ -41,7 +41,13 @@ actor DefaultFrakClient: FrakClient {
         // Then drain whatever a previous session queued and could not send — nothing else
         // triggers a drain, since the SDK holds no connectivity callback.
         let tracker = self.tracker
+        let trackingEnabled = config.trackingEnabled
         Task {
+            guard trackingEnabled else {
+                // Events captured before the merchant turned tracking off must not be sent now.
+                await tracker.purge()
+                return
+            }
             _ = identity.anonymousId()
             await tracker.flush()
         }

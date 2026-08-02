@@ -88,9 +88,10 @@ struct HTTPClient: Sendable {
         for (name, value) in headers {
             request.setValue(value, forHTTPHeaderField: name)
         }
+        let finalRequest = request
         do {
             return try await Deadline.run(seconds: overallDeadlineSeconds) {
-                try await self.attempt(request)
+                try await self.attempt(finalRequest)
             }
         } catch is Deadline.Exceeded {
             throw FrakError.network(underlying: Deadline.Exceeded())

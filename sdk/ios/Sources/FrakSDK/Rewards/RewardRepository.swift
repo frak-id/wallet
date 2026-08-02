@@ -21,12 +21,6 @@ actor RewardRepository {
     private var backoff = Backoff()
     private var cache: [String: Entry] = [:]
 
-    /// Distinguishes refusing to dial (backing off) from an actual lost connection, so a
-    /// merchant catching `.network` isn't handed a misleading cause.
-    private struct BackingOff: Error, LocalizedError {
-        var errorDescription: String? { "backing off after repeated reward fetch failures" }
-    }
-
     init(http: HTTPClient, logger: FrakLogger, now: @escaping @Sendable () -> Date = { Date() }) {
         self.http = http
         self.logger = logger
@@ -49,7 +43,7 @@ actor RewardRepository {
         }
 
         if backoff.isBackingOff(key) {
-            throw FrakError.network(underlying: BackingOff())
+            throw FrakError.network(underlying: Backoff.BackingOff(what: "reward fetch"))
         }
 
         return try await singleFlight.run(key) {
@@ -70,8 +64,9 @@ actor RewardRepository {
         targetInteraction: String?,
         audience: RewardAudience?
     ) async throws -> EstimatedRewardsResult {
-        let response = try await Backoff.runOrRecordFailure {
-            try await self.http.get(
+        let response: HTTPClient.Response
+        do {
+            response = try await http.get(
                 Self.rewardsPath,
                 query: [
                     "merchantId": merchantId,
@@ -83,8 +78,9 @@ actor RewardRepository {
                     "audience": audience?.rawValue,
                 ]
             )
-        } onFailure: { error in
-            self.backoff.recordFailure(key, from: error)
+        } catch let error as FrakError {
+            backoff.recordFailure(key, from: error)
+            throw error
         }
 
         if !response.isSuccess {

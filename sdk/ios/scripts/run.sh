@@ -155,8 +155,8 @@ do_xcframework() {
 	die "xcframework is not implemented.
 
 XCFramework assembly and .binaryTarget distribution are 03-implementation-strategy.md
-§3.1 work and have not been built yet. There is also nothing to ship inside it: this
-package is scaffolding, no SDK behaviour exists.
+§3.1 work, deferred until the SDK has run on a device. Source distribution via SwiftPM
+works today.
 
 The intended xcodebuild archive / -create-xcframework outline is in the comments above
 do_xcframework() in $0."

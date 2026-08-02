@@ -71,6 +71,13 @@ security/privacy, §4, and most of §5–§7.
 > half of §2. **B3 is now a deliberate deferral rather than an open blocker**: publishing and CI
 > land once the first local and dev-environment tests have exercised the SDKs on a device, and
 > the docs that claimed otherwise have been corrected.
+>
+> A second remediation pass then took the quick wins from `07` — the cold-cache backoff bypass,
+> the `trackingEnabled` startup drain, the iOS `tiers` decode, the `URL()` escape hatch, the
+> shared network dispatcher, the detached tracking drain, the event-queue read/compact window,
+> and a round of deletions. **`C8` (shared 2-slot dispatcher) is fixed**; `D3`'s transport-seam
+> half and the `A1` BCV dump remain open. See `07` §2, §4 and §5 for what landed and what the
+> two follow-on defects it caused were.
 
 §3 concurrency: **C1 and C2 are now fixed [verified]** — the iOS `SingleFlight` was rewritten to match
 its Kotlin twin's guarantees. Waiters no longer `await task.value` (which ignores the awaiter's
@@ -499,7 +506,10 @@ retains no handle and pins `ConfigStore → HTTPClient → URLSession` for up to
 backgrounding or client teardown. For an SDK embedded in someone else's app, "no way to
 stop me" is a real hazard, and it makes S6's consent story unimplementable.
 
-### C8 — The 2-slot dispatcher runs both blocking socket reads and the entire SDK scope
+### C8 — The 2-slot dispatcher runs both blocking socket reads and the entire SDK scope — **FIXED**
+
+> `HttpClient` now gets its own `defaultNetworkDispatcher()` (4 slots); `defaultIoDispatcher()`
+> (2) keeps disk and the SDK scope. See `07` §4.1.
 
 `android/.../core/DefaultFrakClient.kt:116` — `Dispatchers.IO.limitedParallelism(2)` is
 passed to both the SDK `CoroutineScope` (`:49`) and every `HttpClient` (`:38`). Two

@@ -4,36 +4,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     id("com.android.library")
-    // Shared POM, PGP signing, version-drift check across both artifacts.
+    // Shared POM, PGP signing, and the android {} config both artifacts must agree on.
     id("frak-publish")
 }
 
 android {
     namespace = "id.frak.sdk"
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 24
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        // SDK version lives in FrakSdkVersion.kt as a reviewable constant instead.
-        buildConfig = false
-    }
-
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-            // Central requires a javadoc artifact to exist but never opens it; near-empty jar is fine.
-            withJavadocJar()
-        }
-    }
 }
 
 kotlin {

@@ -125,6 +125,8 @@ struct InteractionTrackerTests {
         fixture.clock.current = Date(timeIntervalSince1970: 1_709_654_400)
 
         await fixture.tracker.track(merchantId: Self.merchantId, clientId: Self.clientId, interaction: .sharing())
+        // track detaches its drain; flush awaits it, including one already under way.
+        await fixture.tracker.flush()
 
         let request = try #require(fixture.backend.requests.last)
         #expect(fixture.backend.requests.count == 1)
@@ -149,6 +151,7 @@ struct InteractionTrackerTests {
         fixture.backend.respond(nil)
 
         await fixture.tracker.track(merchantId: Self.merchantId, clientId: Self.clientId, interaction: .sharing())
+        await fixture.tracker.flush()
         let queued = await fixture.pending()
         #expect(queued.count == 1)
 
@@ -171,6 +174,9 @@ struct InteractionTrackerTests {
             clientId: Self.clientId,
             interaction: .custom("second")
         )
+        // Both detached drains must settle before the clock moves, or the backoff this test
+        // advances past was never armed.
+        await fixture.tracker.flush()
 
         fixture.advancePastBackoff()
         fixture.backend.respondEach([StubResponse(status: 200, body: "{}"), StubResponse(status: 503, body: "")])
@@ -188,6 +194,7 @@ struct InteractionTrackerTests {
         let fixture = Fixture()
         fixture.backend.respond(StubResponse(status: 503, body: ""))
         await fixture.tracker.track(merchantId: Self.merchantId, clientId: Self.clientId, interaction: .sharing())
+        await fixture.tracker.flush()
 
         let attempts = fixture.backend.requests.count
         await fixture.tracker.flush()
@@ -214,6 +221,7 @@ struct InteractionTrackerTests {
             clientId: Self.clientId,
             interaction: .custom("healthy")
         )
+        await fixture.tracker.flush()
 
         for _ in 0..<3 {
             fixture.advancePastBackoff()
@@ -230,6 +238,7 @@ struct InteractionTrackerTests {
         let fixture = Fixture()
         fixture.backend.respond(nil)
         await fixture.tracker.track(merchantId: Self.merchantId, clientId: Self.clientId, interaction: .sharing())
+        await fixture.tracker.flush()
 
         fixture.identity = Self.otherClientId
         fixture.advancePastBackoff()
@@ -247,6 +256,7 @@ struct InteractionTrackerTests {
         let fixture = Fixture()
         fixture.backend.respond(nil)
         await fixture.tracker.track(merchantId: Self.merchantId, clientId: Self.clientId, interaction: .sharing())
+        await fixture.tracker.flush()
 
         fixture.clock.current.addTimeInterval(EventQueue.maxAge + 1)
         await fixture.tracker.flush()
@@ -260,6 +270,7 @@ struct InteractionTrackerTests {
         let fixture = Fixture()
         fixture.backend.respond(nil)
         await fixture.tracker.track(merchantId: Self.merchantId, clientId: Self.clientId, interaction: .sharing())
+        await fixture.tracker.flush()
 
         await fixture.tracker.purge()
 
@@ -277,6 +288,7 @@ struct InteractionTrackerTests {
             orderId: "order-1",
             token: "tok-1"
         )
+        await fixture.tracker.flush()
 
         let request = try #require(fixture.backend.requests.last)
         #expect(request.url?.path == "/user/track/purchase")
@@ -295,6 +307,7 @@ struct InteractionTrackerTests {
             clientId: Self.clientId,
             interaction: .arrival(referrerClientId: Self.clientId, referralTimestamp: 1_709_654_000)
         )
+        await fixture.tracker.flush()
 
         let body = try #require(fixture.backend.requests.last).stubJSON
         #expect(body["type"] as? String == "arrival")
@@ -308,6 +321,7 @@ struct InteractionTrackerTests {
     func omitsTheHeaderWithoutAnIdentity() async throws {
         let fixture = Fixture(clientId: nil)
         await fixture.tracker.track(merchantId: Self.merchantId, clientId: nil, interaction: .sharing())
+        await fixture.tracker.flush()
 
         let request = try #require(fixture.backend.requests.last)
         #expect(request.value(forHTTPHeaderField: "x-frak-client-id") == nil)

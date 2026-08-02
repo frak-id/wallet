@@ -69,9 +69,11 @@ actor ConfigStore {
         }
 
         // Backing off, so dialling again would only reproduce the same failure. Any
-        // cached copy beats that, including under forceRefresh.
-        if backoff.isBackingOff(key), let fallback = readCache(key) {
-            return fallback.config
+        // cached copy beats that, including under forceRefresh. With none, fail rather
+        // than let a retry loop become a flood.
+        if backoff.isBackingOff(key) {
+            if let fallback = readCache(key) { return fallback.config }
+            throw FrakError.network(underlying: Backoff.BackingOff(what: "merchant config fetch"))
         }
 
         return try await singleFlight.run(key) { try await self.fetch(key, query: query) }
@@ -86,10 +88,12 @@ actor ConfigStore {
     }
 
     private func fetch(_ key: String, query: MerchantQuery) async throws -> FrakResolvedConfig {
-        let response = try await Backoff.runOrRecordFailure {
-            try await self.http.get(Self.resolvePath, query: query.parameters)
-        } onFailure: { error in
-            self.backoff.recordFailure(key, from: error)
+        let response: HTTPClient.Response
+        do {
+            response = try await http.get(Self.resolvePath, query: query.parameters)
+        } catch let error as FrakError {
+            backoff.recordFailure(key, from: error)
+            throw error
         }
 
         if !response.isSuccess {

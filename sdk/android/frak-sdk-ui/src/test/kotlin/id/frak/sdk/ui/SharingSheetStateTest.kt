@@ -1,5 +1,6 @@
 package id.frak.sdk.ui
 
+import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import id.frak.sdk.Frak
@@ -22,6 +23,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.io.IOException
 
@@ -229,6 +231,39 @@ class SharingSheetStateTest {
 
             assertEquals(1, client.openFrakAppCount)
             assertEquals(SharingResult.InstallStarted, result)
+        }
+
+    @Test
+    fun `a renderer crash after the page loaded does not raise a chooser`() =
+        runTest {
+            val client = FakeFrakClient()
+            var finishedCount = 0
+            val state = newState(client) { finishedCount++ }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.onPageReady()
+
+            // The user is mid-interaction. A chooser now would be a share they never asked for.
+            state.onPageUnavailable()
+            advanceUntilIdle()
+
+            assertEquals("no attribution for a share the user did not make", 0, client.trackCount)
+            assertEquals("nothing reported", 0, finishedCount)
+        }
+
+    /** Paired deliberately: a guard that blocks everything would pass the negative case alone. */
+    @Test
+    fun `only http external urls leave the sheet`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val state = newState(FakeFrakClient())
+
+            state.openExternally("intent://scan/#Intent;scheme=zxing;end")
+            assertNull("a vendor scheme reaches whatever activity registered it", shadowOf(app).nextStartedActivity)
+
+            state.openExternally("https://merchant.example/product")
+            assertNotNull("an ordinary link still opens", shadowOf(app).nextStartedActivity)
         }
 
     private fun TestScope.launchDeadline(state: SharingSheetState) =

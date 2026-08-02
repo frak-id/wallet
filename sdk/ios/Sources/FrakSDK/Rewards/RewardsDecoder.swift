@@ -57,7 +57,7 @@ extension EstimatedReward: Decodable {
         case "tiered":
             self = .tiered(
                 tierField: try container.decode(String.self, forKey: .tierField),
-                tiers: try container.decode(ForgivingArray<RewardTier>.self, forKey: .tiers).elements
+                tiers: try container.decodeIfPresent(ForgivingArray<RewardTier>.self, forKey: .tiers)?.elements ?? []
             )
         default:
             self = .unknown(payoutType: payoutType)

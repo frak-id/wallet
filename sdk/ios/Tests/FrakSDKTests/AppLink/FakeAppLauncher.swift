@@ -26,12 +26,17 @@ final class FakeAppLauncher: AppLauncher, @unchecked Sendable {
     }
 
     func canOpen(_ url: String) async -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
+        // `openable` is immutable, so no lock is needed — and `NSLock` is unavailable
+        // from an async context under Swift 6.
         return openable.contains { url.hasPrefix($0 + "://") }
     }
 
     func open(_ url: String) async -> Bool {
+        return record(url)
+    }
+
+    /// Synchronous so the lock is taken outside any async context.
+    private func record(_ url: String) -> Bool {
         lock.lock()
         defer { lock.unlock() }
         guard opensSucceed else { return false }

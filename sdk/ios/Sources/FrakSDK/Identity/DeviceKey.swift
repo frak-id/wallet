@@ -51,18 +51,31 @@ struct PersistedDeviceKeyStore: DeviceKeyStore {
         self.store = store
     }
 
-    // Throws (never regenerates) when key material is present but unusable, since
-    // regenerating would irrecoverably rotate the anonymous id.
+    // Stored material this device cannot use is replaced. It reads like the destructive choice
+    // and is the opposite: an iCloud restore carries the blob to a new phone but not the Secure
+    // Enclave key that wraps it, so the id that blob derived is already unrecoverable. Refusing
+    // to regenerate does not preserve it — it just leaves the install with no id at all,
+    // permanently, which is how tracking, sharing links and the install handoff all go inert
+    // after a restore.
+    //
+    // Unusable is not graded — a bad base64 string, an unknown backing tag and a blob the
+    // enclave rejects take the same remedy — but the old material is deliberately NOT cleared
+    // here. `generate()` overwrites it on success, so a clear would be a no-op on every path
+    // that works, and on the paths that do not it would destroy a healthy key: the enclave also
+    // refuses before the device's first unlock, which is a background launch away.
     func loadOrCreate() throws -> DeviceKey {
-        if let stored = store.string(forKey: Self.storageKey) {
-            guard let blob = Base64URL.decode(stored) else {
-                throw InvalidProofInput(description: "stored key material is not base64url")
-            }
-            return try Self.restore(blob)
-        }
+        if let key = load() { return key }
         let (key, blob) = try Self.generate()
         store.set(Base64URL.encode(blob), forKey: Self.storageKey)
         return key
+    }
+
+    /// Nil both when there is nothing stored and when what is stored cannot be used here, so
+    /// `loadOrCreate` mints either way. The Android twin has the same shape for the same reason.
+    private func load() -> DeviceKey? {
+        guard let stored = store.string(forKey: Self.storageKey) else { return nil }
+        guard let blob = Base64URL.decode(stored) else { return nil }
+        return try? Self.restore(blob)
     }
 
     func delete() {

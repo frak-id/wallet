@@ -8,6 +8,7 @@ import id.frak.sdk.net.HttpClient.Companion.toServerError
 import id.frak.sdk.net.JsonReader
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -63,9 +64,11 @@ internal class ConfigStore(
             return cached.config
         }
 
-        // Backing off: any cached copy beats retrying, including under forceRefresh.
+        // Backing off: any cached copy beats retrying, including under forceRefresh. With no cached
+        // copy there is nothing to serve, so fail rather than let a retry loop become a flood.
         if (mutex.withLock { backoff.isBackingOff(key) }) {
-            (cached ?: readCache(key))?.let { return it.config }
+            readCache(key)?.let { return it.config }
+            throw FrakError.Network(IllegalStateException("backing off after repeated merchant config fetch failures"))
         }
 
         return singleFlight.run(key) { fetch(key, query) }
@@ -158,7 +161,9 @@ internal class ConfigStore(
                 // Swallowed by design: nobody is waiting on this, caller already has an answer.
                 logger.debug("Frak background config revalidation failed: ${failure.message}")
             } finally {
-                mutex.withLock { revalidating.remove(key) }
+                // NonCancellable: a cancelled revalidation must still release the key, or no
+                // further revalidation is ever started for it.
+                withContext(NonCancellable) { mutex.withLock { revalidating.remove(key) } }
             }
         }
     }

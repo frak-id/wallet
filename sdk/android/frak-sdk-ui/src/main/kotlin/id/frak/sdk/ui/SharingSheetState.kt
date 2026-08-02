@@ -114,8 +114,10 @@ internal class SharingSheetState(
             when {
                 // Budget already expired while this was resolving; onLoadDeadline had no session yet to fall back with.
                 deadlineExpired -> fallBackOrFail(built)
+
                 // build() already hit tier 3 itself (cold cache, no network) — no page will ever arrive.
                 built != null && !built.hasPage -> fallBackOrFail(built)
+
                 else -> session = built
             }
         }
@@ -207,6 +209,10 @@ internal class SharingSheetState(
 
     /** A broken or unreachable page must never be shown; same fallback [onLoadDeadline] uses. */
     fun onPageUnavailable() {
+        // A renderer crash after the page painted arrives here too. Falling back then would raise
+        // an OS chooser on top of a sheet the user is using, and queue a share they never asked
+        // for. A blank sheet they can dismiss is the smaller failure.
+        if (pageLoaded) return
         val active = session ?: return
         fallBackOrFail(active)
     }
@@ -214,6 +220,9 @@ internal class SharingSheetState(
     /** [active].link is 100% local; its presence, not the page's, decides whether this session can still share. */
     private fun fallBackOrFail(active: SharingSession?) {
         if (fallbackFired) return // deadline and page failure are independent triggers that both fire offline
+        // Already reported: `finish` is a no-op by then, but NativeShare would still raise a
+        // chooser for a sheet the user has closed.
+        if (finished) return
         fallbackFired = true
         if (active == null) {
             failure?.let(::fail)
@@ -227,7 +236,13 @@ internal class SharingSheetState(
     }
 
     fun openExternally(url: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // normalizeScheme, not just a lowercased comparison: Android does not fold `HTTPS:` for
+        // intent resolution either, so the guard and the launch must see the same value.
+        val parsed = Uri.parse(url).normalizeScheme()
+        // The page chooses this URL. Anything but http(s) is an app-to-app launch the merchant
+        // never sanctioned — `intent:` and vendor schemes reach arbitrary installed activities.
+        if (parsed.scheme != "https" && parsed.scheme != "http") return
+        val intent = Intent(Intent.ACTION_VIEW, parsed).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }
     }
 

@@ -5,6 +5,8 @@ import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
 import id.frak.sdk.net.HttpClient
 import id.frak.sdk.net.HttpClient.Companion.toServerError
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
@@ -19,6 +21,8 @@ internal class InteractionTracker(
     private val queue: EventQueue,
     private val http: HttpClient,
     private val logger: FrakLogger,
+    /** Drains run here, not on the caller: [track] must not block on the whole backlog. */
+    private val scope: CoroutineScope,
     /** The id events are currently captured under, read fresh so a reset is visible mid-drain. */
     private val currentClientId: () -> String?,
     private val now: () -> Long = System::currentTimeMillis,
@@ -31,7 +35,7 @@ internal class InteractionTracker(
     /** One drain at a time. A second concurrent flush would reorder the queue it is draining. */
     private val flushMutex = Mutex()
 
-    /** Returns success once the event is durable, not once delivered. */
+    /** Returns once the event is durable, not once delivered: the drain is detached onto [scope]. */
     suspend fun track(
         merchantId: String,
         clientId: String?,
@@ -39,7 +43,7 @@ internal class InteractionTracker(
     ) {
         val key = (interaction as? Interaction.Custom)?.idempotencyKey ?: newKey()
         enqueue(INTERACTION_PATH, interactionBody(merchantId, interaction, key), clientId, key)
-        flush()
+        scope.launch { flush() }
     }
 
     /** Same contract as [track]. Idempotency key never reaches the wire; backend dedupes on `(orderId, token)`. */
@@ -57,7 +61,7 @@ internal class InteractionTracker(
                 .put("orderId", orderId)
                 .put("token", token)
         enqueue(PURCHASE_PATH, body, clientId, newKey())
-        flush()
+        scope.launch { flush() }
     }
 
     /** Called on anonymous id reset: an event captured under the dead id must never be emitted. */
@@ -75,12 +79,17 @@ internal class InteractionTracker(
         flushMutex.withLock {
             if (backoff.isBackingOff(BACKOFF_KEY)) return
 
-            val pending = queueMutex.withLock { queue.read(now()) }
-            if (pending.isEmpty()) {
-                // Empty read over an existing file means every row expired/unreadable; compact it.
-                queueMutex.withLock { queue.replace(emptyList()) }
-                return
-            }
+            // One lock across read and compact: releasing between them lets an `enqueue` land in
+            // the window and be deleted by `replace(emptyList())`. Now that `track` detaches its
+            // drain, the SDK creates that concurrency itself from two sequential `track` calls.
+            val pending =
+                queueMutex.withLock {
+                    val rows = queue.read(now())
+                    // Empty read over an existing file means every row expired/unreadable; compact it.
+                    if (rows.isEmpty()) queue.replace(emptyList())
+                    rows
+                }
+            if (pending.isEmpty()) return
 
             val currentClientId = currentClientId()
             val delivered = mutableSetOf<String>()
@@ -96,8 +105,8 @@ internal class InteractionTracker(
                 val response =
                     try {
                         http.post(event.path, event.body.toString(), headersFor(event))
-                    } catch (offline: FrakError.Network) {
-                        backoff.recordFailure(BACKOFF_KEY, offline)
+                    } catch (failure: FrakError) {
+                        backoff.recordFailure(BACKOFF_KEY, failure)
                         break
                     }
 

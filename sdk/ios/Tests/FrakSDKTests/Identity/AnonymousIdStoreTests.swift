@@ -54,6 +54,20 @@ struct AnonymousIdStoreTests {
         #expect(store.signProof(.ensure, merchantId: Self.merchantId) == nil)
     }
 
+    /// Pins the decision not to cache the failure. A keystore can refuse for reasons that pass:
+    /// key operations are unavailable before the device's first unlock, so an app launched by a
+    /// push on a rebooted phone would otherwise be stuck inert until the user force-quit it.
+    @Test("a keystore that recovers gets an id, without a restart")
+    func recoversAfterATransientRefusal() {
+        let keyStore = FakeDeviceKeyStore(failOnCreate: true)
+        let store = makeStore(keyStore: keyStore)
+        #expect(store.anonymousId() == nil)
+
+        keyStore.failOnCreate = false
+
+        #expect(store.anonymousId() != nil)
+    }
+
     @Test("reset mints a new identity")
     func resetMintsANewIdentity() {
         let keyStore = FakeDeviceKeyStore()

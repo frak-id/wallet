@@ -11,8 +11,11 @@
 # The rule of thumb for what belongs here: anything R8 cannot see is reachable.
 # Reflection, serialization, JNI, and types named only from a string.
 #
-# Empty on purpose today — there is no SDK code yet. Rules land alongside the
-# code that needs them, not in advance. Expected future entries:
+# Empty on purpose: nothing here is reached by reflection or JNI, and no type is named
+# only from a string, so R8 can trace every entry point from the public API. The one
+# serialization surface is FrakError's `readResolve` on its `object` arms, and nothing in
+# the SDK serializes one. Rules land alongside
+# the code that needs them. Expected future entries:
 #
 #   - the public API surface, so merchant code compiled against it keeps
 #     resolving after minification

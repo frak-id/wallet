@@ -10,6 +10,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.MalformedURLException
 import java.net.URL
 
 /** GET/POST over [HttpURLConnection] (no OkHttp, zero runtime deps). See inline comments for footguns. */
@@ -32,9 +33,11 @@ internal class HttpClient(
         query: Map<String, String?> = emptyMap(),
         headers: Map<String, String> = emptyMap(),
     ): Response {
-        val url = URL(buildUrl(path, query))
         // Deadline wraps both attempts, else the retry would get its own fresh window.
         return withDeadline {
+            // Inside the deadline block so a malformed FrakEnvironment.Custom origin surfaces as
+            // FrakError.Network, not a raw MalformedURLException out of a FrakResult method.
+            val url = urlOrThrow(buildUrl(path, query))
             try {
                 attempt(url, headers, null)
             } catch (retryable: IOException) {
@@ -55,16 +58,15 @@ internal class HttpClient(
         path: String,
         body: String,
         headers: Map<String, String> = emptyMap(),
-    ): Response {
-        val url = URL(baseUrl + path)
-        return withDeadline {
+    ): Response =
+        withDeadline {
+            val url = urlOrThrow(baseUrl + path)
             try {
                 attempt(url, headers, body)
             } catch (failed: IOException) {
                 throw FrakError.Network(failed)
             }
         }
-    }
 
     /** Only [TimeoutCancellationException] is mapped; a real `CancellationException` propagates untouched. */
     private suspend fun withDeadline(block: suspend () -> Response): Response =
@@ -127,6 +129,13 @@ internal class HttpClient(
             ?.trim()
             ?.toLongOrNull()
             ?.coerceIn(1L, MAX_RETRY_AFTER_SECONDS)
+
+    private fun urlOrThrow(spec: String): URL =
+        try {
+            URL(spec)
+        } catch (malformed: MalformedURLException) {
+            throw FrakError.Network(malformed)
+        }
 
     /** Builds the request URL. Values are percent-encoded; keys are compile-time constants and are not. */
     private fun buildUrl(

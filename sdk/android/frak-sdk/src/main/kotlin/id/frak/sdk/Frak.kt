@@ -135,11 +135,6 @@ public object Frak {
         return withPackageId(context.packageName)
     }
 
-    /** Drops the client, for tests. Internal so merchants cannot re-initialize at runtime. */
-    internal fun resetForTesting() {
-        synchronized(this) { instance = null }
-    }
-
     /** Matches the `path` in `frak_data_extraction_rules.xml`. */
     private const val IDENTITY_FILE_NAME = "id.frak.sdk"
 

@@ -13,6 +13,38 @@ plugins {
 val sdkVersion: String =
     providers.gradleProperty("frak.sdk.version").get()
 
+// Everything both artifacts must agree on. Kept here rather than in each module because the
+// two ship in lockstep: a value that differs between them is a bug, not a choice.
+//
+// The `kotlin { }` half (explicitApi, jvmTarget, api/languageVersion, jvmDefault) stays in the
+// modules: buildSrc carries AGP but not KGP, so the Kotlin extension is not on this classpath.
+android {
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk = 24
+        consumerProguardFiles("consumer-rules.pro")
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        // SDK version lives in FrakSdkVersion.kt as a reviewable constant instead.
+        buildConfig = false
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            // Central requires a javadoc artifact to exist but never opens it; near-empty jar is fine.
+            withJavadocJar()
+        }
+    }
+}
+
 // afterEvaluate required: AGP registers the `release` component only after its own evaluation.
 afterEvaluate {
     extensions.configure<PublishingExtension> {

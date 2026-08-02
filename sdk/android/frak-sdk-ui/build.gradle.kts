@@ -1,28 +1,17 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     id("com.android.library") // AGP 9.0 compiles Kotlin itself; no `kotlin.android` plugin needed.
     alias(libs.plugins.kotlin.compose)
-    id("frak-publish") // shared POM/signing, see buildSrc/src/main/kotlin/frak-publish.gradle.kts
+    id("frak-publish") // shared POM/signing + shared android {}, see buildSrc/src/main/kotlin/frak-publish.gradle.kts
 }
 
 android {
     namespace = "id.frak.sdk.ui"
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 24
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
 
     buildFeatures {
-        buildConfig = false
         compose = true
     }
 
@@ -30,13 +19,6 @@ android {
         unitTests {
             // Robolectric needs this to read res/AndroidManifest.xml at test startup.
             isIncludeAndroidResources = true
-        }
-    }
-
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-            withJavadocJar() // Central requires the artifact to exist; content isn't validated
         }
     }
 }
@@ -48,6 +30,10 @@ kotlin {
         jvmTarget = JvmTarget.JVM_17
         apiVersion = KotlinVersion.KOTLIN_2_2
         languageVersion = KotlinVersion.KOTLIN_2_2
+
+        // Same guarantee as :frak-sdk. This module publishes `public sealed interface
+        // SharingResult`, so it needs it at least as much.
+        jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
     }
 }
 

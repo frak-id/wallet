@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.webkit.CookieManager
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -109,10 +110,29 @@ private class SharingWebViewClient(
     /** Set once [onLoadFailed] fires, so it fires at most once per client instance. */
     private var settled = false
 
+    /**
+     * Set when the in-flight main-frame navigation reports an error. Android then fires
+     * [onPageFinished] for its own error page, which without this reads as a successful load:
+     * it would undo the cache-only pinning and cancel the deadline that drives tier 3.
+     */
+    private var navigationFailed = false
+
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
     ): Boolean {
+        // A sub-frame must not be launched externally — that would let an embedded frame yank the
+        // user out of the sheet — and a cross-origin one is cancelled rather than rendered, since
+        // a full-bleed foreign frame in a sheet with no URL bar is exactly the indistinguishability
+        // the origin pinning exists to prevent. Only remote schemes are judged: `about:blank`,
+        // `blob:` and `data:` frames have no host to compare and are routine inside a React page.
+        // `target="_blank"` never arrives here as a sub-frame — setSupportMultipleWindows(false)
+        // folds it into the main frame, which is the behaviour iOS has to reproduce by hand.
+        if (!request.isForMainFrame) {
+            val remote = request.url.scheme == "https" || request.url.scheme == "http"
+            return remote && !isSameOrigin(request.url)
+        }
+
         val url = request.url
 
         if (url.scheme == returnScheme && url.host == SharingPageUrl.RESULT_HOST) {
@@ -142,12 +162,16 @@ private class SharingWebViewClient(
     ) {
         pendingMainFrameUrl = url
         retryPending = false
+        navigationFailed = false
     }
 
     override fun onPageFinished(
         view: WebView,
         url: String,
     ) {
+        // Android delivers this for its own error page too, in the same load cycle as the
+        // failure. Reporting readiness here is what kills the tier-3 fallback.
+        if (navigationFailed) return
         // `retried` is NOT reset: one retry per client for the sheet's whole lifetime.
         pendingMainFrameUrl = null
         view.settings.cacheMode = WebSettings.LOAD_DEFAULT // undo handleMainFrameFailure's cache-only mode
@@ -173,6 +197,9 @@ private class SharingWebViewClient(
 
     /** One cache-only retry so a live-but-erroring or offline-but-visited-before load can still paint. */
     private fun handleMainFrameFailure(view: WebView) {
+        // Before the `settled` guard: a reload that fails after tier 3 has already fired still
+        // gets an error page, whose onPageFinished must not report readiness.
+        navigationFailed = true
         if (settled) return
         val url = pendingMainFrameUrl
         // Duplicate callback for the failure that already triggered the retry.
@@ -194,5 +221,19 @@ private class SharingWebViewClient(
         retryPending = true
         view.settings.cacheMode = WebSettings.LOAD_CACHE_ONLY
         view.loadUrl(url)
+    }
+
+    override fun onRenderProcessGone(
+        view: WebView,
+        detail: RenderProcessGoneDetail,
+    ): Boolean {
+        // MUST return true. Returning false lets the framework kill the host app, not just
+        // the sheet. Recovery would mean reloading the content that just crashed a process;
+        // tier 3 already has a working locally-built link.
+        if (!settled) {
+            settled = true
+            onLoadFailed()
+        }
+        return true
     }
 }

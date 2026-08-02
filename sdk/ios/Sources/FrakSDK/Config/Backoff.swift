@@ -6,6 +6,13 @@ import Foundation
 /// A plain struct, held as isolated state inside an owning actor rather than being
 /// an actor itself.
 struct Backoff {
+    /// Distinguishes refusing to dial from an actual lost connection, so a merchant
+    /// catching `.network` isn't handed a misleading cause.
+    struct BackingOff: Error, LocalizedError {
+        let what: String
+        var errorDescription: String? { "backing off after repeated \(what) failures" }
+    }
+
     private struct Entry {
         let failureCount: Int
         let retryAt: Date
@@ -65,27 +72,6 @@ struct Backoff {
     mutating func recordFailureAndThrow(_ key: String, _ error: FrakError) throws -> Never {
         recordFailure(key, from: error)
         throw error
-    }
-
-    /// Runs `request`, recording a failure and rethrowing on `FrakError`.
-    ///
-    /// A free function rather than an instance method: Swift does not allow an `async`
-    /// mutating method to be called on an actor-isolated stored property, since the
-    /// exclusive access it needs would have to span the `await`. `onFailure` is invoked
-    /// synchronously in the `catch`, so it is safe for a caller to mutate its own
-    /// actor-isolated `Backoff` from there. Inherits the caller's isolation via
-    /// `#isolation`, so passing it the caller's own actor-isolated closures needs no hop.
-    static func runOrRecordFailure<T>(
-        isolation: isolated (any Actor)? = #isolation,
-        _ request: () async throws -> T,
-        onFailure: (FrakError) -> Void
-    ) async throws -> T {
-        do {
-            return try await request()
-        } catch let error as FrakError {
-            onFailure(error)
-            throw error
-        }
     }
 
     private func jitter(_ delay: TimeInterval) -> TimeInterval {

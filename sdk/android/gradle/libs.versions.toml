@@ -27,12 +27,6 @@ coroutines = "1.11.0"
 # The BOM pins every `androidx.compose.*` artifact, so those are declared without
 # versions below and can never drift apart.
 compose-bom = "2026.06.01"
-# CEILING, not "latest". androidx artifacts declare a `minCompileSdk` in their AAR
-# metadata, and AGP fails the build when the consumer compiles against less than
-# that. core 1.19.0 requires compileSdk 37; both modules here are on 36, so 1.18.0
-# is the newest that resolves. Raising this means raising compileSdk first.
-androidx-core = "1.18.0"
-androidx-annotation = "1.10.0"
 
 junit = "4.13.2"
 # TEST-ONLY. Parses the golden fixture corpus in `sdk/core` from the Kotlin test
@@ -70,16 +64,11 @@ androidx-test-core = "1.7.0"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
-kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 
-androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
-androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
 
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-ui = { module = "androidx.compose.ui:ui" }
-compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
 

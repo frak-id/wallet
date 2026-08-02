@@ -6,7 +6,7 @@ needs a device or an emulator.
 
 > ⚠️ **The MVP surface is implemented. Nothing has run on a device.**
 >
-> What is implemented and tested (209 JVM unit tests — `grep -rc '@Test' frak-sdk*/src/test -r --include=*.kt | awk -F: '{s+=$2} END {print s}'`):
+> What is implemented and tested (220 JVM unit tests — `grep -rc '@Test' frak-sdk*/src/test -r --include=*.kt | awk -F: '{s+=$2} END {print s}'`):
 >
 > | Package | What is there |
 > | --- | --- |
@@ -378,7 +378,7 @@ What is pinned, because JSONL is weakest exactly here:
 | Ordering | strict FIFO. A failure stops the drain rather than skipping past it. |
 | Torn tail | a kill mid-write leaves a partial last line; unreadable rows are discarded, the rest survive. |
 | Compaction | temp file plus rename, never in place. |
-| Bounds | 1000 events / 14 days, oldest dropped first. |
+| Bounds | 1000 events / 14 days, oldest dropped first — but enforced on **read**, so the file still grows unbounded while backoff is armed and nothing drains it. See `07-audit-round-2.md` §2.6. |
 | Poison | evicted after 3 permanent 4xx, so one rejected event cannot block the queue forever. |
 | Backoff | the shared `Backoff` — exponential, jittered, `Retry-After`-aware. 429 and 5xx back off without dropping. |
 | `resetAnonymousId` | purges the queue, and the drain independently drops any event whose captured id is no longer the current one — the purge can race a flush, so the guarantee cannot rest on it alone. |
@@ -434,10 +434,17 @@ unprovable tier that
 exists to remove, and would hand an attacker a downgrade target.
 
 `AndroidKeystoreDeviceKeyStore` is the one class the JVM suite cannot reach —
-there is no `AndroidKeyStore` provider off-device — which is why it contains no
-logic at all. Everything it would otherwise do lives in `JcaDeviceKey` and
-`ProofCodec`, both driven in tests by real JDK-generated P-256 keys against the
-same `java.security` interfaces the platform provider implements.
+there is no `AndroidKeyStore` provider off-device — so it is kept as close to
+empty as the job allows. Everything that can live elsewhere does, in
+`JcaDeviceKey` and `ProofCodec`, both driven in tests by real JDK-generated P-256
+keys against the same `java.security` interfaces the platform provider
+implements.
+
+What could not be moved out is damaged-entry recovery: `getKey` throws rather
+than returning null for an entry an OS upgrade left unreadable, and that throw
+used to escape `loadOrCreate`, leaving the install with no identity for its
+lifetime. `load` now answers null for it so `create` mints a replacement. That
+path has no executed coverage on any machine short of a device.
 
 ## Logging
 

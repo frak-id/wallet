@@ -43,7 +43,7 @@ internal class DefaultFrakClient(
     private val launcher: AppLauncher,
     private val logger: FrakLogger,
     private val ioDispatcher: CoroutineDispatcher = defaultIoDispatcher(),
-    http: HttpClient = HttpClient(baseUrl = config.env.backend, ioDispatcher = ioDispatcher),
+    http: HttpClient = HttpClient(baseUrl = config.env.backend, ioDispatcher = defaultNetworkDispatcher()),
 ) : FrakClient {
     /** Outlives the caller that started the work. SupervisorJob isolates a failed revalidation. */
     private val scope =
@@ -57,7 +57,8 @@ internal class DefaultFrakClient(
 
     private val configStore = ConfigStore(http, store, logger, scope, ioDispatcher)
     private val rewards = RewardRepository(http, logger, scope)
-    private val tracker = InteractionTracker(queue, http, logger, currentClientId = { identity.anonymousId() })
+    private val tracker =
+        InteractionTracker(queue, http, logger, scope, currentClientId = { identity.anonymousId() })
 
     private val configState = MutableStateFlow<FrakResolvedConfig?>(null)
 
@@ -79,16 +80,22 @@ internal class DefaultFrakClient(
     }
 
     init {
-        // Warms the keystore read here so a later main-thread `anonymousId` read is a field access.
         scope.launch {
+            if (!config.trackingEnabled) {
+                // Events captured before the merchant turned tracking off must not be sent now.
+                tracker.purge()
+                return@launch
+            }
+            // Warms the keystore read here so a later main-thread `anonymousId` read is a field access.
             identity.anonymousId()
             tracker.flush()
         }
     }
 
     // resolveConfig/campaigns/bestReward deliberately do NOT wrap themselves in
-    // withContext(ioDispatcher): tried and reverted, since it starved the 2-slot pool shared
-    // with blocking HttpClient.perform() and moved dispatch outside frakCall's error boundary.
+    // withContext(ioDispatcher): tried and reverted, since it moved dispatch outside frakCall's
+    // error boundary. The pool-starvation half of that reasoning is now handled by giving
+    // HttpClient its own dispatcher; this half still stands on its own.
     override suspend fun resolveConfig(forceRefresh: Boolean): FrakResolvedConfig =
         frakCall {
             requireTrackingEnabled()
@@ -264,6 +271,14 @@ internal class DefaultFrakClient(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun defaultIoDispatcher(): CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
+
+/**
+ * Separate budget for [HttpClient], whose `perform()` blocks its thread for the whole request
+ * (up to a 20s deadline). Sharing one budget with disk I/O means two concurrent requests stall
+ * every cache read and queue flush until they finish.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+internal fun defaultNetworkDispatcher(): CoroutineDispatcher = Dispatchers.IO.limitedParallelism(4)
 
 /** Normalises whatever escapes so only [FrakError] leaves the SDK. `CancellationException` rethrows untouched. */
 internal inline fun <T> frakCall(block: () -> T): T =
