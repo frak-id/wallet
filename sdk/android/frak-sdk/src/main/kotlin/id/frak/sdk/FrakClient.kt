@@ -60,6 +60,25 @@ public interface FrakClient {
     public suspend fun openFrakApp(): OpenAppResult
 
     public suspend fun installUrl(): String?
+
+    /**
+     * The wallet's hosted install page for this device, or null without an identity or a
+     * merchant to resolve.
+     *
+     * Not the store listing — that is [installUrl]. This page shows the install code that
+     * carries attribution across an install, plus the store link, and it carries a freshly
+     * minted `frak-install-v1` proof. The sharing sheet navigates to it in place, so the user
+     * never leaves the merchant app to reach it.
+     *
+     * Defaulted, so adding it does not break a merchant's hand-written fake — the reason
+     * `preloadSharing` was pulled back off this interface (`06-abi-decisions.md`). Only
+     * [id.frak.sdk.core.DefaultFrakClient] can mint the proof this carries, so a substitute has
+     * nothing useful to return and the sheet takes the store handoff.
+     */
+    public suspend fun installPageUrl(
+        returnScheme: String,
+        sessionId: String,
+    ): String? = null
 }
 
 public enum class OpenAppResult {

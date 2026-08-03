@@ -3,11 +3,39 @@
     import WebKit
 
     /// What the hosted page can tell the host.
-    enum SharingPageAction: String {
+    ///
+    /// `code` carries a value, which every other action deliberately does not. That is
+    /// permitted only because this navigation is cancelled below and never reaches the OS —
+    /// `01-platform-changes.md` §1.2 states the condition. Anything else wanting a payload
+    /// has to re-check it.
+    enum SharingPageAction: Equatable {
         case install
         case dismiss
         case shareAgain
         case error
+        case code(value: String, expiresAt: Date?)
+
+        /// Unknown actions are nil, not a failure: the page can ship a new one before the
+        /// SDK that reads it, and a no-op is the forward-compatible answer.
+        static func from(action: String, value: String?, exp: String?) -> SharingPageAction? {
+            switch action {
+            case "install": return .install
+            case "dismiss": return .dismiss
+            case "shareAgain": return .shareAgain
+            case "error": return .error
+            case "code":
+                // A code action with no code is not one; treat it as unknown.
+                guard let value, !value.isEmpty else { return nil }
+                // `Int64`, not `Double`: Kotlin's `toLongOrNull` rejects "NaN"/"inf" and this
+                // has to agree with it, or the same wire value yields a different pasteboard
+                // expiry per platform.
+                let expiresAt = exp.flatMap(Int64.init).map {
+                    Date(timeIntervalSince1970: TimeInterval($0))
+                }
+                return .code(value: value, expiresAt: expiresAt)
+            default: return nil
+            }
+        }
     }
 
     /// The web view the sheet loads the hosted page in, and the navigation policy that is
@@ -145,6 +173,15 @@
             // and are routine inside a React page.
             if let frame = navigationAction.targetFrame, !frame.isMainFrame {
                 let remote = url.scheme == "https" || url.scheme == "http"
+                // The return scheme is cancelled outright from a sub-frame, never merely left
+                // unhandled. It carries a capability value (`action=code`), and
+                // `01-platform-changes.md` §1.2 permits that only while this navigation
+                // provably never reaches the OS — resting that on WebKit declining to launch
+                // an unregistered scheme would make the guarantee someone else's to keep.
+                if url.scheme == returnScheme {
+                    decisionHandler(.cancel)
+                    return
+                }
                 decisionHandler(remote && !isSameOrigin(url) ? .cancel : .allow)
                 return
             }
@@ -164,7 +201,12 @@
             if url.scheme == returnScheme, url.host == SharingPageURL.resultHost {
                 // A result from a sheet the user already closed carries a stale session id.
                 if queryValue(url, "sid") == sessionId,
-                    let action = queryValue(url, "action").flatMap(SharingPageAction.init(rawValue:))
+                    let name = queryValue(url, "action"),
+                    let action = SharingPageAction.from(
+                        action: name,
+                        value: queryValue(url, "value"),
+                        exp: queryValue(url, "exp")
+                    )
                 {
                     onAction(action)
                 }

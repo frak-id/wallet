@@ -4,8 +4,10 @@ import FrakSDK
 public enum SharingResult: Sendable {
     case shared(link: String)
     case copied(link: String)
-    /// The SDK sent the user to the wallet or the App Store. **Informational only** — the
-    /// install step already happened, so do not call `openFrakApp()` in response.
+    /// The user asked to install and the sheet took them to the wallet's install page (or, with
+    /// no identity to hand it, to the store). **Informational only** — the sheet owns the step
+    /// from here, so do not call `openFrakApp()` in response. It does not mean anything was
+    /// installed: the user may still have swiped the sheet away.
     case installStarted
     case dismissed
     case failed(FrakError)

@@ -194,11 +194,11 @@ internal class DefaultFrakClient(
             val link = installIdentity() ?: return@frakCall OpenAppResult.Failed
             val (merchantId, anonymousId) = link
 
-            // Attempted rather than gated on the probe: isInstalled can be false for reasons
-            // unrelated to the app being absent.
-            if (isFrakAppInstalled() &&
-                launcher.open(InstallLinks.deepLink(config.env.walletScheme, merchantId, anonymousId))
-            ) {
+            // Attempted rather than gated on the probe: `isInstalled` can be false for reasons
+            // unrelated to the app being absent, and `startActivity` already reports whether
+            // anything took the intent. Mirrors iOS, where the probe is the weaker signal by a
+            // wider margin — there it needs a merchant-side plist entry the SDK cannot inject.
+            if (launcher.open(InstallLinks.deepLink(config.env.walletScheme, merchantId, anonymousId))) {
                 return@frakCall OpenAppResult.OpenedApp
             }
 
@@ -210,6 +210,25 @@ internal class DefaultFrakClient(
         frakCall {
             val (merchantId, anonymousId) = installIdentity() ?: return@frakCall null
             storeUrl(merchantId, anonymousId)
+        }
+
+    override suspend fun installPageUrl(
+        returnScheme: String,
+        sessionId: String,
+    ): String? =
+        frakCall {
+            val (merchantId, anonymousId) = installIdentity() ?: return@frakCall null
+            // Minted here rather than when the sheet opens: most sessions never reach the
+            // install step, a keystore signature can fail for reasons that have nothing to do
+            // with sharing, and the backend's 30-day window runs from this timestamp.
+            InstallLinks.installPage(
+                walletOrigin = config.env.wallet,
+                merchantId = merchantId,
+                anonymousId = anonymousId,
+                returnScheme = returnScheme,
+                sessionId = sessionId,
+                proof = identity.signProof(ProofOp.Install, merchantId),
+            )
         }
 
     /** The merchant/anonymous-id pair an install link needs, or null when either is missing. */

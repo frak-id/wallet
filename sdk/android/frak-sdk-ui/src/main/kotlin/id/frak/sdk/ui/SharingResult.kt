@@ -15,7 +15,12 @@ public sealed interface SharingResult {
         public val link: String,
     ) : SharingResult
 
-    /** Informational only — do not call [id.frak.sdk.FrakClient.openFrakApp] again in response. */
+    /**
+     * The user asked to install and the sheet took them to the wallet's install page (or, with
+     * no identity to hand it, to the store). Informational only — the sheet owns the step from
+     * here, so do not call [id.frak.sdk.FrakClient.openFrakApp] again in response. It does not
+     * mean anything was installed: the user may still have dismissed the sheet.
+     */
     public object InstallStarted : SharingResult
 
     public object Dismissed : SharingResult

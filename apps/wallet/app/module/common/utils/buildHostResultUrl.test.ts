@@ -44,6 +44,53 @@ describe("buildHostResultUrl", () => {
     });
 });
 
+describe("buildHostResultUrl — the code action", () => {
+    it("carries the value and its expiry", () => {
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "code",
+                sid: "s1",
+                value: "ABC234",
+                expiresAt: 1_700_000_000,
+            })
+        ).toBe(
+            "frak-acme://result?action=code&sid=s1&value=ABC234&exp=1700000000"
+        );
+    });
+
+    it("escapes a value so it cannot inject extra params", () => {
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "code",
+                value: "A&action=install",
+            })
+        ).toBe("frak-acme://result?action=code&value=A%26action%3Dinstall");
+    });
+
+    it("omits the expiry when there is none", () => {
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "code",
+                value: "ABC234",
+            })
+        ).toBe("frak-acme://result?action=code&value=ABC234");
+    });
+
+    it("never puts a value on any other action", () => {
+        // Only `code` has the exception in 01 §1.2; nothing else may carry a capability.
+        expect(
+            buildHostResultUrl({
+                scheme: "frak-acme",
+                action: "install",
+                value: "ABC234",
+            })
+        ).toBe("frak-acme://result?action=install");
+    });
+});
+
 describe("sendHostResult", () => {
     let assign: ReturnType<typeof vi.fn>;
 
@@ -81,6 +128,36 @@ describe("sendHostResult", () => {
         sendHostResult({ scheme: "frak-acme", action: "dismiss" });
 
         expect(assign).toHaveBeenCalledTimes(2);
+    });
+
+    it("lets a regenerated code through, but not the same one twice", () => {
+        // The code is refetchable, and a pasteboard holding a code the page is no longer
+        // showing is worse than none. Dedupe is per value, not per action.
+        expect(
+            sendHostResult({
+                scheme: "frak-acme",
+                action: "code",
+                value: "AAA111",
+            })
+        ).toBe(true);
+        expect(assign).toHaveBeenCalledTimes(1);
+
+        sendHostResult({
+            scheme: "frak-acme",
+            action: "code",
+            value: "AAA111",
+        });
+        expect(assign).toHaveBeenCalledTimes(1);
+
+        sendHostResult({
+            scheme: "frak-acme",
+            action: "code",
+            value: "BBB222",
+        });
+        expect(assign).toHaveBeenCalledTimes(2);
+        expect(assign).toHaveBeenLastCalledWith(
+            "frak-acme://result?action=code&value=BBB222"
+        );
     });
 
     it("reports no host to hand off to, so callers keep their web behaviour", () => {

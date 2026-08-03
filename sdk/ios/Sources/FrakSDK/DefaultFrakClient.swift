@@ -198,14 +198,17 @@ actor DefaultFrakClient: FrakClient {
         guard let install = await installIdentity() else { return .failed }
 
         // Attempted rather than gated on the probe: `canOpenURL` answers false when the
-        // merchant forgot `LSApplicationQueriesSchemes`, and `open(_:)` is not gated by it.
-        // Trusting the probe would turn a plist omission into a dead feature.
+        // merchant forgot `LSApplicationQueriesSchemes` — which the SDK cannot inject, iOS
+        // having no manifest merger — and `open(_:)` is not gated by that list. Trusting the
+        // probe would turn one missed line of integration docs into a wallet that is
+        // installed and never opens. `open` already answers false for an unhandled scheme,
+        // so the store fallback below is reached either way.
         let deepLink = InstallLinks.deepLink(
             scheme: config.env.walletScheme,
             merchantId: install.merchantId,
             anonymousId: install.anonymousId
         )
-        if await isFrakAppInstalled(), await launcher.open(deepLink) {
+        if await launcher.open(deepLink) {
             return .openedApp
         }
 
@@ -217,6 +220,22 @@ actor DefaultFrakClient: FrakClient {
         // id, an App Store URL carries nothing, so resolving one would be a network round trip
         // for a constant.
         identity.anonymousId() == nil ? nil : InstallLinks.appStore()
+    }
+
+    func installPageURL(returnScheme: String, sessionId: String) async -> String? {
+        guard let install = await installIdentity() else { return nil }
+        // Minted here rather than when the sheet opens: most sessions never reach the install
+        // step, an enclave signature can fail for reasons that have nothing to do with
+        // sharing, and the backend's 30-day window runs from this timestamp.
+        let proof = identity.signProof(.install, merchantId: install.merchantId)
+        return InstallLinks.installPage(
+            walletOrigin: config.env.wallet,
+            merchantId: install.merchantId,
+            anonymousId: install.anonymousId,
+            returnScheme: returnScheme,
+            sessionId: sessionId,
+            proof: proof
+        )
     }
 
     /// The merchant/anonymous-id pair an install link needs, or nil when either is missing.

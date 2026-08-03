@@ -27,6 +27,8 @@ import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
+import { sendHostResult } from "@/module/common/utils/buildHostResultUrl";
+import { sanitizeReturnScheme } from "@/module/common/utils/sanitizeReturnScheme";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { useGenerateInstallCode } from "@/module/recovery-code/hook/useGenerateInstallCode";
@@ -37,6 +39,10 @@ type InstallSearch = {
     a?: string;
     /** `frak-install-v1` proof, when a fragment could not carry it. See `resolveInstallProof`. */
     p?: string;
+    /** Native host's result scheme. Present only when the SDK's web view loaded this page. */
+    returnScheme?: string;
+    /** The host's correlation token, echoed back with any result. */
+    sid?: string;
 };
 
 export const Route = createFileRoute("/install")({
@@ -44,6 +50,10 @@ export const Route = createFileRoute("/install")({
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
         p: typeof search.p === "string" ? search.p : undefined,
+        // Sanitised, not just read: the page navigates to whatever scheme this carries, so an
+        // unvalidated value turns a wallet-origin page into an arbitrary scheme launcher.
+        returnScheme: sanitizeReturnScheme(search.returnScheme),
+        sid: typeof search.sid === "string" ? search.sid : undefined,
     }),
     component: InstallPage,
 });
@@ -95,7 +105,7 @@ export function resolveInstallProof(
  *   Everything else      → Processing screen (fire ensure or store for post-auth)
  */
 function InstallPage() {
-    const { m, a, p } = Route.useSearch();
+    const { m, a, p, returnScheme, sid } = Route.useSearch();
     // frak-install-v1 proof, read once. Forwarded to both InstallCodeView and
     // InstallProcessing — whether a proof is present is a property of the input,
     // not of which shell (web/Tauri) is running.
@@ -120,7 +130,15 @@ function InstallPage() {
     }, [m, a, proof, shouldShowCodeView]);
 
     if (shouldShowCodeView) {
-        return <InstallCodeView m={m} a={a} proof={proof} />;
+        return (
+            <InstallCodeView
+                m={m}
+                a={a}
+                proof={proof}
+                returnScheme={returnScheme}
+                sid={sid}
+            />
+        );
     }
 
     // Tauri (any auth) or web + logged in → processing
@@ -259,6 +277,8 @@ function InstallCodeView({
     m: merchantId,
     a: anonymousId,
     proof,
+    returnScheme,
+    sid,
 }: InstallSearch & { proof?: string }) {
     const { t: rawT } = useTranslation();
     const [copied, setCopied] = useState(false);
@@ -312,6 +332,38 @@ function InstallCodeView({
         }
     }, [codeQueryStatus, error, merchantId]);
 
+    /**
+     * Hands the code to the native host so it can write a pasteboard entry with an expiry and
+     * `localOnly`, neither of which this page can set. No-op in a browser, where `returnScheme`
+     * is absent.
+     *
+     * Called from a user gesture only, never an effect. `01-platform-changes.md` §1.2 requires
+     * it — this is the one action carrying a capability value — and it also stops a browser
+     * from being driven into a mint/prompt loop: `assign()` to a custom scheme raises the OS
+     * "open in app?" sheet, whose blur and refocus would retrigger any effect keyed on a
+     * refetched code.
+     */
+    const handOverCode = useCallback(() => {
+        if (!data?.code) return;
+        const expiresAt = new Date(data.expiresAt).getTime();
+        sendHostResult({
+            scheme: returnScheme,
+            action: "code",
+            sid,
+            value: data.code,
+            expiresAt: Number.isFinite(expiresAt)
+                ? Math.floor(expiresAt / 1000)
+                : undefined,
+        });
+    }, [data?.code, data?.expiresAt, returnScheme, sid]);
+
+    // A native host presents this page inside its own sheet, which already carries a title, a
+    // drag handle and a scrim to dismiss with. The page's own header would be a second set of
+    // chrome inside the first, and its close button calls `window.close()`, which a web view
+    // does not honour — so it would read as a dead control. `returnScheme` is the only marker
+    // of a host: it is what the host mints for the page to answer on.
+    const chromeless = Boolean(returnScheme);
+
     const isAndroid = useMemo(() => /android/i.test(navigator.userAgent), []);
     const downloadUrl = useMemo(() => {
         if (!isAndroid) return APP_STORE_URL;
@@ -326,35 +378,40 @@ function InstallCodeView({
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
         await navigator.clipboard.writeText(data.code);
+        // The host's write supersedes this one where there is a host: same code, but marked
+        // sensitive and given an expiry.
+        handOverCode();
         trackEvent("install_code_copied", { merchant_id: merchantId });
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    }, [data?.code, merchantId]);
+    }, [data?.code, merchantId, handOverCode]);
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <Box display="flex" alignItems="center" gap="m">
-                    {merchantInfo?.logoUrl && (
-                        <img
-                            {...mediaSrcSet(merchantInfo.logoUrl)}
-                            alt={merchantInfo.name}
-                            className={styles.merchantLogo}
-                        />
-                    )}
-                    <LogoFrakWithName className={styles.logo} />
-                </Box>
-                <button
-                    type="button"
-                    className={styles.dismissButton}
-                    onClick={() => {
-                        trackEvent("install_page_dismissed");
-                        window.close();
-                    }}
-                >
-                    <CloseIcon width={24} height={24} />
-                </button>
-            </header>
+            {!chromeless && (
+                <header className={styles.header}>
+                    <Box display="flex" alignItems="center" gap="m">
+                        {merchantInfo?.logoUrl && (
+                            <img
+                                {...mediaSrcSet(merchantInfo.logoUrl)}
+                                alt={merchantInfo.name}
+                                className={styles.merchantLogo}
+                            />
+                        )}
+                        <LogoFrakWithName className={styles.logo} />
+                    </Box>
+                    <button
+                        type="button"
+                        className={styles.dismissButton}
+                        onClick={() => {
+                            trackEvent("install_page_dismissed");
+                            window.close();
+                        }}
+                    >
+                        <CloseIcon width={24} height={24} />
+                    </button>
+                </header>
+            )}
 
             <main className={styles.main}>
                 <section className={styles.heroSection}>
@@ -435,6 +492,9 @@ function InstallCodeView({
                     href={downloadUrl}
                     className={styles.downloadButton}
                     onClick={() => {
+                        // Last gesture before the user leaves for the store, so the code is on
+                        // the pasteboard even if they never tapped copy.
+                        handOverCode();
                         trackEvent("install_store_clicked", {
                             store: isAndroid ? "play_store" : "app_store",
                             has_referrer:

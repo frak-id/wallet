@@ -90,23 +90,27 @@
                         .padding(.top, 8)
                 }
 
-                HStack(spacing: 12) {
-                    Button {
-                        Task { await model.copy() }
-                    } label: {
-                        Text("frak.sharing.copy", bundle: .module).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
+                // Hidden on the install page: both act on the product link and reload
+                // `/sharing`, which would discard the install page and the proof minted for it.
+                if !model.showingInstallPage {
+                    HStack(spacing: 12) {
+                        Button {
+                            Task { await model.copy() }
+                        } label: {
+                            Text("frak.sharing.copy", bundle: .module).frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
 
-                    Button {
-                        Task { await model.share() }
-                    } label: {
-                        Text("frak.sharing.share", bundle: .module).frame(maxWidth: .infinity)
+                        Button {
+                            Task { await model.share() }
+                        } label: {
+                            Text("frak.sharing.share", bundle: .module).frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .disabled(model.webView == nil)
+                    .padding(16)
                 }
-                .disabled(model.webView == nil)
-                .padding(16)
             }
             .onAppear {
                 // Bound here rather than at construction so they are the current closures,

@@ -227,6 +227,10 @@ class PublicSurfaceTest {
 
         override suspend fun installUrl(): String? = null
 
+        // `installPageUrl()` is deliberately absent: this fake exists to prove a merchant can
+        // write one against the public surface, so it is also the regression test for that
+        // member being defaulted rather than abstract.
+
         override val environment: FrakEnvironment = FrakEnvironment.Production
     }
 }

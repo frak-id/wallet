@@ -61,17 +61,24 @@ internal class SharingSheetState(
     var failure: FrakError? by mutableStateOf(null)
         private set
 
+    /**
+     * The sheet has left the sharing page for the wallet's install page. The footer's
+     * Copy/Share act on the *product* link and reload `/sharing`, which would throw away the
+     * install page and the proof minted for it, so they are hidden past this point.
+     */
+    var showingInstallPage: Boolean by mutableStateOf(false)
+        private set
+
     private var best: SharingResult? = null
     private var webView: WebView? = null
     private var finished = false
     private var pageLoaded = false
 
     /**
-     * Tier-3 commits once. [finished] can't stand in: it's set only after `track()`
-     * suspends and the chooser is raised, so two fallbacks racing that window both
-     * pass it. The deadline and a main-frame error genuinely race (both fire when
-     * offline), and without this guard both interactions get queued and two
-     * choosers stack on the user.
+     * Tier-3 commits once. [finished] can't stand in: it's set only after the chooser has
+     * been raised and the share attributed, so two fallbacks racing that window both pass
+     * it. The deadline and a main-frame error genuinely race (both fire when offline), and
+     * without this guard both interactions get queued and two choosers stack on the user.
      */
     private var fallbackFired = false
 
@@ -160,15 +167,23 @@ internal class SharingSheetState(
         }
     }
 
-    /** Interaction is awaited before the chooser opens (not launched alongside): Android may kill the host while it's foregrounded. */
+    /** Raises the chooser, then attributes the share. See the body for why that order. */
     fun share() {
         val active = session ?: return
         scope.launch {
-            track()
             // Nothing took the intent.
             if (!NativeShare.share(context, active.link, active.shareTitle)) {
                 return@launch
             }
+            // After the chooser, never before it. This is the reward-bearing interaction, not
+            // an analytics event, so recording it on intent pays out for anyone who opened the
+            // chooser and backed out. The web splits the two: `sharing_link_started` fires
+            // before, `onShared` wires the interaction after. This is the half that pays.
+            //
+            // Optimistic on Android, honestly so: this flag means "the chooser launched", not
+            // "the user shared". The wallet's own share plugin has the same asymmetry. It
+            // becomes exact for free if `ActivityResultLauncher` ever lands.
+            track()
             confirm(SharingResult.Shared(active.link))
         }
     }
@@ -177,6 +192,9 @@ internal class SharingSheetState(
     fun copy() {
         val active = session ?: return
         scope.launch {
+            // Before, unlike `share()`, and deliberately: a copy has no chooser and no
+            // completion to wait on, so there is no cancellation to avoid counting. Matches the
+            // web, where `handleCopy` calls `trackSharing()` outright.
             track()
             if (NativeShare.copy(context, active.link)) onCopyConfirmed()
             confirm(SharingResult.Copied(active.link))
@@ -186,15 +204,41 @@ internal class SharingSheetState(
     fun onPageAction(action: SharingPageAction) {
         when (action) {
             SharingPageAction.Install -> {
-                // Reported only after the open is attempted; finishing first could tear this scope down mid-call.
                 scope.launch {
-                    client().openFrakApp()
-                    finish(SharingResult.InstallStarted)
+                    val active = client()
+                    // The sheet stays open and navigates to the wallet's install page rather
+                    // than handing the user to the store. That page owns the decision — install
+                    // code, store link, or straight into an installed wallet — and keeping it
+                    // here is what makes the flow identical on both platforms, even though only
+                    // iOS strictly needs the install code to preserve attribution.
+                    val current = session ?: return@launch
+                    val page = active.installPageUrl(current.returnScheme, sessionId)
+                    if (page == null) {
+                        // No identity or no merchant, so nothing to hand the install page. The
+                        // store handoff is the honest fallback, and it closes the sheet.
+                        // Reported only after the open is attempted; finishing first could tear
+                        // this scope down mid-call.
+                        active.openFrakApp()
+                        finish(SharingResult.InstallStarted)
+                        return@launch
+                    }
+                    webView?.loadUrl(page)
+                    showingInstallPage = true
+                    record(SharingResult.InstallStarted)
                 }
             }
 
             SharingPageAction.ShareAgain -> {
-                session?.url(confirmed = false)?.let { webView?.loadUrl(it) }
+                session?.url(confirmed = false)?.let {
+                    showingInstallPage = false
+                    webView?.loadUrl(it)
+                }
+            }
+
+            is SharingPageAction.Code -> {
+                // The page owns generating and displaying it; the SDK owns the clipboard,
+                // because the sensitive flag is not something the page can set.
+                NativeShare.copyInstallCode(context, action.value, action.expiresAtSeconds)
             }
 
             SharingPageAction.Dismiss -> {
@@ -209,6 +253,14 @@ internal class SharingSheetState(
 
     /** A broken or unreachable page must never be shown; same fallback [onLoadDeadline] uses. */
     fun onPageUnavailable() {
+        // The install page failed rather than the sharing page. Tier 3 is not the answer — the
+        // user already shared — but the footer was hidden for it, so hiding it further would
+        // leave an error page with no controls at all. Put it back; Copy/Share reload the
+        // sharing page, which is the only recovery there is from here.
+        if (showingInstallPage) {
+            showingInstallPage = false
+            return
+        }
         // A renderer crash after the page painted arrives here too. Falling back then would raise
         // an OS chooser on top of a sheet the user is using, and queue a share they never asked
         // for. A blank sheet they can dismiss is the smaller failure.
@@ -229,12 +281,22 @@ internal class SharingSheetState(
             return
         }
         scope.launch {
-            track()
+            // Same rule as `share()`: the interaction pays out, so it follows the chooser
+            // rather than announcing it.
             val shared = NativeShare.share(context, active.link, active.shareTitle)
+            if (shared) track()
             finish(if (shared) SharingResult.Shared(active.link) else SharingResult.Dismissed)
         }
     }
 
+    /**
+     * No `SKOverlay` counterpart, unlike iOS: Play always foregrounds the Play app and Android
+     * offers no in-place install. It does not matter here — the install page's download button
+     * carries `merchantId`, `anonymousId` and the proof in the Play referrer, so attribution
+     * survives the trip deterministically. That referrer is built by the page
+     * (`buildPlayStoreInstallUrl`) from the `#p=` fragment this sheet navigated to, so it is
+     * load-bearing across the SDK/page boundary rather than something the SDK still owns.
+     */
     fun openExternally(url: String) {
         // normalizeScheme, not just a lowercased comparison: Android does not fold `HTTPS:` for
         // intent resolution either, so the guard and the launch must see the same value.

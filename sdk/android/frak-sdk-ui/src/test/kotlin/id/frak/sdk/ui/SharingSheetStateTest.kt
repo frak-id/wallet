@@ -1,7 +1,9 @@
 package id.frak.sdk.ui
 
 import android.app.Application
+import android.content.ClipboardManager
 import android.content.Context
+import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import id.frak.sdk.Frak
 import id.frak.sdk.core.FrakConfig
@@ -217,9 +219,91 @@ class SharingSheetStateTest {
 
     /** The install action is the SDK's own step; the merchant hears about it once it ran. */
     @Test
-    fun `the install action opens the wallet before reporting`() =
+    fun `the install action keeps the sheet open on the wallet's install page`() =
         runTest {
             val client = FakeFrakClient()
+            var result: SharingResult? = null
+            val state = newState(client) { result = it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            // Attached so the navigation itself is observable: without it the assertion below
+            // passes for an implementation that asks for the URL and then drops it, which is
+            // the whole behaviour under test.
+            val view = WebView(context)
+            state.attach(view)
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            assertEquals(
+                "the sheet must land on the url the client minted",
+                client.installPage,
+                shadowOf(view).lastLoadedUrl,
+            )
+            // The store handoff is what this replaces: the install page owns that decision now.
+            assertEquals("the sheet must not hand off to the store", 0, client.openFrakAppCount)
+            assertEquals("the install page must be asked for", 1, client.installPageUrlCount)
+            assertEquals(
+                "the sheet stays open until the user leaves it",
+                null,
+                result,
+            )
+            assertEquals(
+                "the footer must not stay live over the install page",
+                true,
+                state.showingInstallPage,
+            )
+        }
+
+    @Test
+    fun `a code from the install page reaches the clipboard`() =
+        runTest {
+            val client = FakeFrakClient()
+            val state = newState(client) {}
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+
+            state.onPageAction(SharingPageAction.Code("ABC234", 1_700_000_000L))
+            advanceUntilIdle()
+
+            val clipboard = context.getSystemService(ClipboardManager::class.java)
+            assertEquals(
+                "the SDK owns the clipboard write, because the page cannot mark it sensitive",
+                "ABC234",
+                clipboard.primaryClip
+                    ?.getItemAt(0)
+                    ?.text
+                    ?.toString(),
+            )
+        }
+
+    @Test
+    fun `the install page is asked for with this session's return channel`() =
+        runTest {
+            val client = FakeFrakClient()
+            val state = newState(client) {}
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+
+            // Without these the page has nowhere to send the code back to, and the pasteboard
+            // write never happens.
+            val args = client.installPageArgs
+            assertNotNull("the return channel must reach the client", args)
+            assertEquals(SharingPageUrl.returnScheme(context.packageName), args?.first)
+            assertEquals("test-session", args?.second)
+        }
+
+    @Test
+    fun `an install with no identity still falls back to the store`() =
+        runTest {
+            val client = FakeFrakClient()
+            client.installPage = null
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
@@ -229,8 +313,14 @@ class SharingSheetStateTest {
             state.onPageAction(SharingPageAction.Install)
             advanceUntilIdle()
 
+            // Nothing to hand the install page, so the old handoff is the honest answer.
             assertEquals(1, client.openFrakAppCount)
             assertEquals(SharingResult.InstallStarted, result)
+            assertEquals(
+                "the footer must stay live when there is no install page to show",
+                false,
+                state.showingInstallPage,
+            )
         }
 
     @Test

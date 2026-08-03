@@ -2,8 +2,14 @@ package id.frak.sdk.applink
 
 /** [AppLauncher] with no `PackageManager` underneath, recording what was opened. */
 internal class FakeAppLauncher(
+    /** What [isInstalled] reports. Independent of [openableSchemes]: the probe and the launch
+     * are separate signals, and the whole point of not gating one on the other is that they
+     * can disagree. */
     var installedPackages: Set<String> = emptySet(),
-    /** Whether an open succeeds — a device with nothing willing to handle the URL. */
+    /** Schemes something on the device handles, so `startActivity` finds a target. `http` and
+     * `https` always resolve — a device always has a browser. */
+    var openableSchemes: Set<String> = emptySet(),
+    /** Whether an open succeeds at all — a device with nothing willing to handle the URL. */
     var canOpen: Boolean = true,
 ) : AppLauncher {
     val opened: MutableList<String> = mutableListOf()
@@ -12,7 +18,13 @@ internal class FakeAppLauncher(
 
     override fun open(url: String): Boolean {
         if (!canOpen) return false
+        if (!handles(url)) return false
         opened += url
         return true
     }
+
+    private fun handles(url: String): Boolean =
+        url.startsWith("http://") ||
+            url.startsWith("https://") ||
+            openableSchemes.any { url.startsWith("$it://") }
 }

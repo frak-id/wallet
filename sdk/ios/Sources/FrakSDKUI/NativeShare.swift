@@ -1,5 +1,7 @@
 #if canImport(UIKit)
+    import Foundation
     import UIKit
+    import UniformTypeIdentifiers
 
     /// The OS share sheet and the pasteboard — the two things the hosted page cannot do itself.
     @MainActor
@@ -57,6 +59,22 @@
         /// so the sheet still owes the user its own confirmation.
         static func copy(_ link: String) {
             UIPasteboard.general.string = link
+        }
+
+        /// Puts the install code where the wallet's six-character field will offer it.
+        ///
+        /// `localOnly` is not optional: without it Universal Clipboard syncs the code to the
+        /// user's Mac and iPad. `expirationDate` keeps it from outliving the code itself, which
+        /// the backend gives 72 hours.
+        ///
+        /// A short code is also why this is worth doing at all — iOS surfaces one in the
+        /// QuickType bar, and the user tapping that suggestion *is* the consent, with no
+        /// permission prompt. Reading a URL back would need a programmatic pasteboard read on
+        /// launch, which does prompt.
+        static func copyInstallCode(_ code: String, expiresAt: Date?) {
+            var options: [UIPasteboard.OptionsKey: Any] = [.localOnly: true]
+            if let expiresAt { options[.expirationDate] = expiresAt }
+            UIPasteboard.general.setItems([[UTType.utf8PlainText.identifier: code]], options: options)
         }
 
         /// The view controller anything the SDK presents has to come from. Walks past whatever

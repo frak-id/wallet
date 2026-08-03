@@ -13,6 +13,8 @@ Native Android (Kotlin) and iOS (Swift) SDKs mirroring the capabilities of
 | [`04-golden-fixtures.md`](./04-golden-fixtures.md) | The cross-platform conformance corpus: what it covers, the envelope, regeneration, how Kotlin and Swift consume it, and the ICU/invisible-character hazard |
 | [`05-audit-findings.md`](./05-audit-findings.md) | Audit of the Android + iOS core SDKs: ship blockers, security/privacy, concurrency, networking, ABI, DX, tests |
 | [`06-abi-decisions.md`](./06-abi-decisions.md) | **Open** ABI questions blocking the first publish: the `$default` constructor freeze, `@InternalFrakApi` vs promotion, iOS's now-public `init(from:)`. Note there is **no committed `.api` dump** — BCV was wired and then deliberately removed while the shape is unfrozen; it returns before the first publish |
+| [`07-audit-round-2.md`](./07-audit-round-2.md) | Second audit of both SDKs after the first remediation pass: ship blockers, correctness, security, performance, simplification, tests. Findings are annotated in place as they are fixed |
+| [`08-install-flow.md`](./08-install-flow.md) | **Design.** The step after a share: install-code handoff, `SKOverlay`, when the `frak-install-v1` proof is minted, and the `returnToHost` contract. Blocks rollout 3 — iOS emits no proof today, so it stops working when proofs become mandatory |
 
 ## Scope (MVP)
 

@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -141,7 +142,7 @@ class DefaultFrakClientTest {
         }
 
     @Test
-    fun `deep links to the wallet when it is installed and to the store when it is not`() =
+    fun `deep links to the wallet when something handles the scheme, and to the store when nothing does`() =
         runTest {
             val client = newClient(testScheduler)
             transport.respond(200, BODY)
@@ -152,9 +153,66 @@ class DefaultFrakClientTest {
             assertEquals(true, launcher.opened.single().contains("referrer=merchantId%3D$MERCHANT_ID"))
 
             launcher.opened.clear()
-            launcher.installedPackages = setOf(FrakEnvironment.Production.walletPackageId)
+            launcher.openableSchemes = setOf(FrakEnvironment.Production.walletScheme)
             assertEquals(OpenAppResult.OpenedApp, client.openFrakApp())
             assertEquals(true, launcher.opened.single().startsWith("frakwallet://install?m=$MERCHANT_ID"))
+        }
+
+    @Test
+    fun `opens the wallet on a launch that works even when the probe says it is absent`() =
+        runTest {
+            // The deep link is attempted, never gated on `isInstalled`: the probe can answer
+            // false for reasons unrelated to the app being there, and `startActivity` is the
+            // authoritative answer. iOS has the same rule for a sharper reason — there the
+            // probe needs a merchant-side plist entry the SDK cannot inject.
+            val client = newClient(testScheduler)
+            transport.respond(200, BODY)
+            advanceUntilIdle()
+
+            launcher.installedPackages = emptySet()
+            launcher.openableSchemes = setOf(FrakEnvironment.Production.walletScheme)
+
+            assertEquals(false, client.isFrakAppInstalled())
+            assertEquals(OpenAppResult.OpenedApp, client.openFrakApp())
+            assertEquals(true, launcher.opened.single().startsWith("frakwallet://install?m=$MERCHANT_ID"))
+        }
+
+    @Test
+    fun `the install page url carries the identity and a proof, with the proof in the fragment`() =
+        runTest {
+            val client = newClient(testScheduler)
+            transport.respond(200, BODY)
+            advanceUntilIdle()
+
+            val page = client.installPageUrl(RETURN_SCHEME, SESSION_ID)
+            val anonymousId = client.anonymousId
+
+            assertEquals(
+                true,
+                page?.startsWith(
+                    "https://wallet.frak.id/install?m=$MERCHANT_ID&a=$anonymousId" +
+                        "&returnScheme=frak-com.acme.app&sid=session-1",
+                ),
+            )
+            // The fragment, never a search param: it is never sent to a server, never logged
+            // and never in a `Referer`, and the sheet loads this URL directly so it survives.
+            // Non-empty, not merely present: an empty `#p=` would satisfy `contains`.
+            assertEquals(true, (page?.substringAfter("#p=")?.length ?: 0) > 0)
+            assertEquals(false, page?.contains("&p="))
+        }
+
+    @Test
+    fun `the install page url needs an identity, like every other install link`() =
+        runTest {
+            val client =
+                newClient(
+                    testScheduler,
+                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                )
+            advanceUntilIdle()
+
+            // Null here is what drives the sheet's store-handoff fallback.
+            assertNull(client.installPageUrl(RETURN_SCHEME, SESSION_ID))
         }
 
     @Test
@@ -208,7 +266,9 @@ class DefaultFrakClientTest {
                     store = InMemoryKeyValueStore(),
                     logger = FrakLogger(FrakLogLevel.NONE),
                     merchantMarker = MERCHANT_ID,
-                    trackingEnabled = true,
+                    // Wired from the config, as `Frak.initialize` does: a hardcoded `true` here
+                    // makes `trackingEnabled = false` untestable through the client.
+                    trackingEnabled = config.trackingEnabled,
                 ),
             launcher = launcher,
             logger = FrakLogger(FrakLogLevel.NONE),
@@ -218,6 +278,8 @@ class DefaultFrakClientTest {
 
     private companion object {
         const val MERCHANT_ID = "b3d5e5b8-9b1a-4c0e-8f5a-1a2b3c4d5e6f"
+        const val RETURN_SCHEME = "frak-com.acme.app"
+        const val SESSION_ID = "session-1"
         const val BODY = """{"merchantId":"$MERCHANT_ID","name":"Acme","domain":"acme.example"}"""
         const val FOREIGN_CLIENT_ID = "550e8400-e29b-41d4-a716-446655440001"
 

@@ -578,7 +578,14 @@ In practice this is simulator-only on iOS 15+ devices — but nothing in the cod
 `#if targetEnvironment(simulator)` and no assertion, so any device where the SEP is unavailable or
 generation fails silently downgrades. Gate the branch on the simulator and throw on device.
 
-### 3.4 iOS: `signProof` has zero production callers
+### 3.4 iOS: `signProof` has zero production callers — **superseded by [`08-install-flow.md`](./08-install-flow.md)**
+
+> Confirmed, and the framing was too soft. This is not dead code to justify or delete: the
+> `frak-install-v1` proof becomes **mandatory** at the backend's ROLLOUT-STEP-3, at which point an
+> iOS SDK that emits no proof anywhere stops working rather than degrading. Android is only
+> better by degree — it mints one for the Play referrer and nowhere else. The deep link carries no
+> proof on *either* platform, and could not carry one today even if it did: `deepLink.ts`
+> forwards only `m` and `a`, dropping the fragment `/install` reads its proof from.
 
 `grep -rn "signProof" sdk/ios/Sources/` matches only its own definition
 (`AnonymousIdStore.swift:57`). The entire signing half — `DeviceKey.sign`, `ProofCodec.message`,
@@ -1237,6 +1244,21 @@ closes and what it only narrows.
   with `DefaultFrakClient` purging the queue on the assumption the id rotated — has lied. iOS
   cannot fail here (`removeValue` on a `UserDefaults` suite). Deserves a deliberate design pass,
   not a blind patch.
+- **The sharing interaction is recorded on intent, not on success — both platforms.**
+  `SharingSheetModel.share()` and the tier-3 `fallBack()` both `track(.sharing())` *before* the OS
+  chooser opens, so a user who opens the chooser and cancels has recorded a share. That matters
+  because this is the reward-bearing interaction, not an analytics event. The web splits the two:
+  `useShareLink` fires `sharing_link_started` before the chooser for intent, and `onShared` — wired
+  to the backend interaction in the listener's `SharingPage` — only on success. Native has no such
+  split and fires the paying one on intent. `copy()` is already correct on both platforms and must
+  stay as it is: a copy has no completion to wait for. Full analysis and the Android
+  `ActivityResultLauncher` caveat in [`08-install-flow.md`](./08-install-flow.md) §3 W5.
+
+The install flow those last findings sit in is specified end to end in
+[`08-install-flow.md`](./08-install-flow.md), which also supersedes §3.4's "iOS `signProof` has zero
+production callers": the primitive is complete and correct on both platforms, and it is the one call
+site that is missing — on iOS entirely, and on Android everywhere except the Play referrer. That is
+a rollout-3 blocker rather than dead code.
 
 **Wave 4 — identity and the ABI freeze.** §2.8 restore recovery is **done** (and the negative cache
 it was paired with is declined, with reasoning, in §2.8). Still open: §3.3 the software key

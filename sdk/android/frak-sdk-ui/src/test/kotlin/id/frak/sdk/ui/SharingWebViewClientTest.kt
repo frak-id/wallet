@@ -142,6 +142,69 @@ class SharingWebViewClientTest {
         assertEquals(listOf(SharingPageAction.Dismiss), h.actions)
     }
 
+    @Test
+    fun `a code action carries its value and expiry`() {
+        val (view, h) = harness()
+        val handled =
+            view.client.shouldOverrideUrlLoading(
+                view,
+                request(
+                    "$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}" +
+                        "?action=code&value=ABC234&exp=1700000000&sid=$SESSION_ID",
+                ),
+            )
+
+        assertTrue(handled)
+        assertEquals(listOf(SharingPageAction.Code("ABC234", 1_700_000_000L)), h.actions)
+    }
+
+    @Test
+    fun `a code action with no code is not one`() {
+        val (view, h) = harness()
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request("$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}?action=code&sid=$SESSION_ID"),
+        )
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request("$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}?action=code&value=&sid=$SESSION_ID"),
+        )
+
+        assertTrue("a value-less code action must be ignored, not crash", h.actions.isEmpty())
+    }
+
+    @Test
+    fun `a code action with an unparseable expiry still delivers the code`() {
+        val (view, h) = harness()
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request(
+                "$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}" +
+                    "?action=code&value=ABC234&exp=not-a-number&sid=$SESSION_ID",
+            ),
+        )
+
+        // The code is the point; the expiry is a hint Android cannot enforce anyway.
+        assertEquals(listOf(SharingPageAction.Code("ABC234", null)), h.actions)
+    }
+
+    @Test
+    fun `a sub-frame cannot hand the host an install code`() {
+        val (view, h) = harness()
+        view.client.shouldOverrideUrlLoading(
+            view,
+            request(
+                "$RETURN_SCHEME://${SharingPageUrl.RESULT_HOST}" +
+                    "?action=code&value=ABC234&sid=$SESSION_ID",
+                mainFrame = false,
+            ),
+        )
+
+        // The capability-value exception in 01 §1.2 rests on this: an embedded frame must not
+        // reach the dispatch at all.
+        assertTrue(h.actions.isEmpty())
+    }
+
     /**
      * The page keeps navigating for a moment after teardown. Acting on a result
      * from a sheet the user already closed would reopen a flow they left.

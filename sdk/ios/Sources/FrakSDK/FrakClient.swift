@@ -50,6 +50,19 @@ public protocol FrakClient: Sendable {
 
     // No network request, no identity carried (no Play-style install referrer on iOS).
     func installURL() async -> String?
+
+    /// The wallet's hosted install page for this device, or nil without an identity or a
+    /// merchant to resolve.
+    ///
+    /// Not the store listing — that is `installURL()`. This page shows the install code that
+    /// carries attribution across an install, plus the store link, and it carries a freshly
+    /// minted `frak-install-v1` proof. The sharing sheet navigates to it in place, so the user
+    /// never leaves the merchant app to reach it.
+    ///
+    /// Defaulted, so adding it does not break a merchant's hand-written fake — the reason
+    /// `preloadSharing` was pulled back off this protocol (`06-abi-decisions.md`). A fake that
+    /// ignores it returns nil, and the sheet takes the store handoff.
+    func installPageURL(returnScheme: String, sessionId: String) async -> String?
 }
 
 public enum OpenAppResult: Sendable, Hashable {
@@ -60,6 +73,10 @@ public enum OpenAppResult: Sendable, Hashable {
 
 extension FrakClient {
     // Protocol requirements can't carry default args; overloads live here instead.
+
+    /// Nothing to hand an install page. Only `DefaultFrakClient` can mint the proof this
+    /// carries, so a substitute has nothing useful to return.
+    public func installPageURL(returnScheme: String, sessionId: String) async -> String? { nil }
 
     public func resolveConfig() async throws -> FrakResolvedConfig {
         try await resolveConfig(forceRefresh: false)

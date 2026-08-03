@@ -126,21 +126,25 @@ internal fun FrakSharingSheet(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedButton(
-                    enabled = session != null,
-                    onClick = state::copy,
-                    modifier = Modifier.weight(1f),
-                ) { Text(stringResource(R.string.frak_sharing_copy)) }
+            // Hidden on the install page: both act on the product link and reload `/sharing`,
+            // which would discard the install page and the proof minted for it.
+            if (!state.showingInstallPage) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    OutlinedButton(
+                        enabled = session != null,
+                        onClick = state::copy,
+                        modifier = Modifier.weight(1f),
+                    ) { Text(stringResource(R.string.frak_sharing_copy)) }
 
-                Button(
-                    enabled = session != null,
-                    onClick = state::share,
-                    modifier = Modifier.weight(1f),
-                ) { Text(stringResource(R.string.frak_sharing_share)) }
+                    Button(
+                        enabled = session != null,
+                        onClick = state::share,
+                        modifier = Modifier.weight(1f),
+                    ) { Text(stringResource(R.string.frak_sharing_share)) }
+                }
             }
         }
     }

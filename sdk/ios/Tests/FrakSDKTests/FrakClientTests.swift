@@ -312,12 +312,66 @@ struct FrakClientTests {
         #expect(absent.opened == ["https://apps.apple.com/app/id6740261164"])
     }
 
+    @Test("openFrakApp opens the wallet even when the merchant never declared the scheme")
+    func openFrakAppIgnoresARefusingProbe() async {
+        // `canOpenURL` answers false unless the merchant listed the wallet scheme in
+        // `LSApplicationQueriesSchemes`, which the SDK cannot inject. Gating the deep link
+        // on the probe turned that omission into a wallet that is installed and never
+        // opens; `open` is not gated by that list, so attempting it is the whole fix.
+        let silentProbe = FakeAppLauncher(openableSchemes: ["frakwallet"], probeAnswers: false)
+        let client = makeClient(launcher: silentProbe) { _ in
+            StubResponse(status: 200, body: Self.resolveBody)
+        }
+
+        #expect(await client.isFrakAppInstalled() == false)
+
+        let opened = await client.openFrakApp()
+        #expect(opened == .openedApp)
+        #expect(silentProbe.opened.first?.hasPrefix("frakwallet://install?m=") == true)
+    }
+
     @Test("openFrakApp fails when nothing will handle either url")
     func openFrakAppFailsWhenNothingOpens() async {
         let refuses = FakeAppLauncher(opensSucceed: false)
         let client = makeClient(launcher: refuses) { _ in StubResponse(status: 200, body: Self.resolveBody) }
         let opened = await client.openFrakApp()
         #expect(opened == .failed)
+    }
+
+    @Test("installPageURL carries the identity and a proof, with the proof in the fragment")
+    func installPageURLCarriesAProof() async throws {
+        let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
+
+        // Through the existential on purpose: `installPageURL()` has a protocol-extension
+        // default returning nil, so if the requirement ever stops being witnessed by the actor
+        // the extension silently wins and the install flow dies. A concrete-typed call would
+        // not see that.
+        let erased: any FrakClient = client
+        let page = try #require(
+            await erased.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
+        )
+        let anonymousId = try #require(client.anonymousId)
+
+        let expected =
+            "https://wallet.frak.id/install?m=\(Self.merchantId)&a=\(anonymousId)"
+            + "&returnScheme=frak-com.acme.app&sid=session-1"
+        #expect(page.hasPrefix(expected))
+
+        // The fragment, never a search param: it is never sent to a server, never logged and
+        // never in a `Referer`, and the sheet loads this URL directly so it survives.
+        let fragment = try #require(page.split(separator: "#", maxSplits: 1).last)
+        #expect(fragment.hasPrefix("p="))
+        #expect(fragment.count > "p=".count)
+        #expect(!page.contains("&p="))
+    }
+
+    @Test("installPageURL needs an identity, like every other install link")
+    func installPageURLNeedsAnIdentity() async {
+        let config = FrakConfig(merchantId: FrakClientTests.merchantId, trackingEnabled: false)
+        let client = makeClient(config: config) { _ in StubResponse(status: 200, body: Self.resolveBody) }
+
+        let erased: any FrakClient = client
+        #expect(await erased.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "s1") == nil)
     }
 
     @Test("installURL needs an identity to link")

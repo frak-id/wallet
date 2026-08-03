@@ -95,6 +95,13 @@ When `returnScheme=<scheme>` is present, the route navigates to:
 | `install` | Install CTA on `PostShareConfirmation` | `sid` (correlation token) |
 | `dismiss` | user dismisses from within the page | `sid` |
 | `shareAgain` | "share again" link | `sid` |
+| `code` | Copy or Download tapped on `/install` | `sid`, `value`, `exp` |
+
+`code` is the one row emitted by `/install` rather than `/sharing`. That route accepts
+`returnScheme` and `sid` for exactly this, validating `returnScheme` with the same
+`sanitizeReturnScheme` the sharing route uses. It is also the one action carrying a
+capability value, so the user-gesture rule below is load-bearing for it rather than
+advisory: it fires from the Copy and Download buttons, never from an effect.
 
 `shared` and `copied` are **not** signalled this way — the native layer owns those
 buttons and already knows. They are listed here only to make the boundary explicit.
@@ -127,10 +134,29 @@ Any web page the device visits can navigate to `<scheme>://result?action=install
 if a redirect-catcher Activity is exported, any installed app can fire the same intent.
 Therefore:
 
-- **Never put a capability value on the return URL.** No install code, no anonymous id,
-  no token. The URL carries only `action` plus `sid`, an opaque single-use correlation
-  token the SDK mints *before* presenting the web view and passes in as `?sid=`. The SDK
-  drops any callback whose `sid` doesn't match the active session.
+- **Never put a capability value on the return URL unless the channel is provably
+  intra-web-view.** The default carries only `action` plus `sid`, an opaque single-use
+  correlation token the SDK mints *before* presenting the web view and passes in as
+  `?sid=`. The SDK drops any callback whose `sid` doesn't match the active session.
+
+  **The exception, and its condition.** A value may ride this channel when the navigation
+  is cancelled inside the SDK's own web view and therefore never reaches the OS —
+  `decisionHandler(.cancel)` on iOS, `return true` from `shouldOverrideUrlLoading` on
+  Android. Under that condition there is no scheme-squatting app in the picture: the URL
+  is a signalling convention between the host and a page it already origin-pinned, not an
+  app-to-app launch. Both SDKs satisfy it today, and the sub-frame guard runs *above* the
+  return-scheme branch on both, so an embedded iframe cannot reach the dispatch either.
+
+  This is what `action=code` relies on to hand the install code to the SDK, which needs it
+  to write a pasteboard entry with an expiry and `localOnly` — options the page cannot set
+  (`08-install-flow.md` §5). Nothing else may use it without re-checking the condition.
+
+  **The condition is a property of the code, not a promise.** It fails the moment a
+  `returnScheme` reaches a page loaded anywhere but the SDK's web view, where
+  `window.location.assign` becomes a real OS-routed launch. That is already forbidden
+  below, but it was previously only a UX rule; with a capability value on the channel it
+  is a security rule. Any fallback path that routes this scheme through the OS must drop
+  the value first.
 - Act only when a sharing session is genuinely active; ignore otherwise.
 - Treat unknown `action` values as no-ops (forward compatibility — see §1.5).
 - Prefer intercepting in-web-view over relying on the OS to route the scheme.
@@ -161,6 +187,11 @@ host is slow or absent, and guessing wrong either double-fires an outcome
 or overrides a host that was about to handle it. A native integrator must
 therefore never send `returnScheme` on a URL that can be opened outside
 the SDK's web view.
+
+Since `action=code` began carrying the install code, that rule is
+load-bearing for more than UX: outside the SDK's web view the navigation
+is handed to the OS, and the code becomes readable by any app registering
+the scheme. See the capability-value exception above.
 
 ### 1.2b `?confirmed=1` — inbound native → web channel **[BLOCKING]**
 

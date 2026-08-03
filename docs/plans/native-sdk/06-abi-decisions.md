@@ -69,6 +69,26 @@ review that caught it had to prove it from the diff:
   wall on upgrade.
 - `Frak` is an `object`. Nobody can implement it, so adding to it is purely additive.
 
+**A third instance, resolved differently: `installPageURL()` / `installPageUrl()`.**
+The install flow (`08-install-flow.md`) needs the sharing sheet to reach a freshly minted
+`frak-install-v1` proof, and the sheet lives in the second module, so it can only see
+`public` API. The same shape as `preloadSharing` — except this one genuinely needs the
+*client instance*, so moving it to the `Frak` object would cost the sheet its injectable
+fake and with it every test it has.
+
+It landed **with a default body** (`= null` in Kotlin, a protocol-extension `nil` on iOS),
+which removes the specific objection that got `preloadSharing` reverted: the break is no
+longer unconditional and compile-time for every implementer, because there is nothing an
+implementer must write. Both hand-written `FakeFrakClient`s deliberately do **not**
+override it, so they are the regression test for the default staying in place.
+
+What this does not fix is Q2: it is public purely because a second module needs it, its
+only two call sites are `SharingSheetModel.swift` and `SharingSheetState.kt`, and it is now
+the third symbol in that category alongside `PercentEncoding` and `environment` (the first is
+a type rather than a member, but the question is the same). Fold it into whatever Q2
+concludes. It also brings `FrakClient` to 15 members in Kotlin and 16 in Swift, which `07`'s
+count of "four new members" no longer reflects.
+
 **`environment` is still on `FrakClient`.** It is the same hazard, already shipped, and it
 is what made the interface look like the natural home for `preloadSharing` in the first
 place. Moving it to `Frak` is cheap right now — BCV is unwired and nothing is published —
@@ -220,7 +240,7 @@ signature is the thing that would have to change — so it is cheaper before pub
 | Q | Decision | Who / when |
 | --- | --- | --- |
 | Q1 — `$default` freeze | *open* — now also covers the sharing and tracking types | |
-| Q2 — `@InternalFrakApi` vs promote | *open* | |
+| Q2 — `@InternalFrakApi` vs promote | *open* | now three members in scope: `PercentEncoding`, `environment`, `installPageUrl` |
 | Q3 — public `init(from:)` on iOS | *open* | |
 | Q4 — `FrakLogSink` divergence | *open* | |
 

@@ -84,5 +84,26 @@ internal class FakeFrakClient : FrakClient {
 
     override suspend fun installUrl(): String? = null
 
+    /** Null models "no identity or no merchant", which is the store-handoff fallback path. */
+    var installPage: String? =
+        "https://wallet.example/install?m=b7c2e1a4-1111-4111-8111-111111111111" +
+            "&a=a3f1c0de-0000-4000-8000-000000000000#p=proof"
+
+    var installPageUrlCount: Int = 0
+        private set
+
+    /** What the sheet asked for, so a test can prove the channel params reached the client. */
+    var installPageArgs: Pair<String, String>? = null
+        private set
+
+    override suspend fun installPageUrl(
+        returnScheme: String,
+        sessionId: String,
+    ): String? {
+        installPageUrlCount++
+        installPageArgs = returnScheme to sessionId
+        return installPage
+    }
+
     override val environment: FrakEnvironment = FrakEnvironment.Production
 }

@@ -34,5 +34,9 @@ export function useGenerateInstallCode({
             return data;
         },
         enabled: !!merchantId && !!anonymousId,
+        // Each generate mints a NEW row — there is no upsert on (merchantId, anonymousId) — so
+        // a refetch would leave the page showing one code while the pasteboard holds another,
+        // and would burn rate-limit budget on every window refocus. One code per visit.
+        staleTime: Number.POSITIVE_INFINITY,
     });
 }

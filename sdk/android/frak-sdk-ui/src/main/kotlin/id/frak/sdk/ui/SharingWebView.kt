@@ -13,21 +13,51 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 
-/** What the hosted page told the host. Mirrors the wallet's `HostResultAction`. */
-internal enum class SharingPageAction {
-    Install,
-    Dismiss,
-    ShareAgain,
-    Error,
-    ;
+/**
+ * What the hosted page told the host. Mirrors the wallet's `HostResultAction`.
+ *
+ * [Code] carries a value, which every other action deliberately does not. That is permitted
+ * only because this navigation is consumed by [SharingWebViewClient.shouldOverrideUrlLoading]
+ * and never reaches the OS — `01-platform-changes.md` §1.2 states the condition. Anything else
+ * wanting a payload has to re-check it.
+ */
+internal sealed interface SharingPageAction {
+    data object Install : SharingPageAction
+
+    data object Dismiss : SharingPageAction
+
+    data object ShareAgain : SharingPageAction
+
+    data object Error : SharingPageAction
+
+    data class Code(
+        val value: String,
+        /** Epoch seconds, or null when the page sent none. */
+        val expiresAtSeconds: Long?,
+    ) : SharingPageAction
 
     companion object {
-        fun fromWire(value: String?): SharingPageAction? =
-            when (value) {
+        /**
+         * Unknown actions are null, not a failure: the page can ship a new one before the SDK
+         * that reads it, and a no-op is the forward-compatible answer.
+         */
+        fun fromWire(
+            action: String?,
+            value: String? = null,
+            exp: String? = null,
+        ): SharingPageAction? =
+            when (action) {
                 "install" -> Install
+
                 "dismiss" -> Dismiss
+
                 "shareAgain" -> ShareAgain
+
                 "error" -> Error
+
+                // A code action with no code is not one; treat it as unknown.
+                "code" -> value?.takeIf { it.isNotEmpty() }?.let { Code(it, exp?.toLongOrNull()) }
+
                 else -> null
             }
     }
@@ -138,7 +168,12 @@ private class SharingWebViewClient(
         if (url.scheme == returnScheme && url.host == SharingPageUrl.RESULT_HOST) {
             // `sid` guards against a result from a sheet the user already closed.
             if (url.getQueryParameter("sid") == sessionId) {
-                SharingPageAction.fromWire(url.getQueryParameter("action"))?.let(onAction)
+                SharingPageAction
+                    .fromWire(
+                        action = url.getQueryParameter("action"),
+                        value = url.getQueryParameter("value"),
+                        exp = url.getQueryParameter("exp"),
+                    )?.let(onAction)
             }
             return true
         }

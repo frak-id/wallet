@@ -23,7 +23,7 @@ needs a device or an emulator.
 > Public surface: `Frak.initialize` / `Frak.client`, `FrakClient.resolveConfig`,
 > `configUpdates`, `campaigns`, `bestReward`, `anonymousId`, `resetAnonymousId`,
 > `buildSharingLink`, `track`, `trackPurchase`, `handleReferralLink`,
-> `isFrakAppInstalled`, `openFrakApp`, `installUrl` and `Frak.parseReferralLink`,
+> `isFrakAppInstalled`, `openFrakApp`, `installUrl`/`installPageUrl` and `Frak.parseReferralLink`,
 > plus `FrakContext`, `SharingRequest`, `SharingProduct`, `AttributionParams`,
 > `Interaction`, `FrakResult`, `OpenAppResult` and `DeepLinkHandling`,
 > `FrakLogSink`, and the ten public

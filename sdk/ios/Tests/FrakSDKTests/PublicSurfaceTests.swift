@@ -68,6 +68,10 @@ private struct FakeFrakClient: FrakClient {
     func openFrakApp() async -> OpenAppResult { .failed }
 
     func installURL() async -> String? { nil }
+
+    // `installPageURL()` is deliberately absent: this fake exists to prove a merchant can write
+    // one against the public surface, so it is also the regression test for that member being
+    // defaulted rather than abstract.
 }
 
 /// A hand-written fake, the way a merchant would write one — no mocking framework.
