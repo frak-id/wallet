@@ -36,6 +36,22 @@ struct HTTPClientTests {
         _ = try await client.get("/path", query: ["present": "a b+c", "absent": nil])
     }
 
+    @Test("percent-encodes characters URLComponents would leave unescaped in a query value (N2)")
+    func percentEncodesReservedCharactersUrlComponentsWouldLeaveAlone() async throws {
+        // `!`, `$`, `&`, `=` are all in URLComponents' own "allowed" set for a query value, so
+        // components.percentEncodedQuery used to leave them unescaped — wrong here, since one of
+        // these appearing inside a *value* (not as the query's own delimiter) would otherwise
+        // parse as a second parameter or a literal `=`. PercentEncoding's RFC 3986 unreserved-only
+        // allowlist (matching the Android twin exactly) escapes all of them.
+        let client = makeClient { request in
+            let url = try #require(request.url?.absoluteString)
+            #expect(url.contains("tricky=a%21b%24c%26d%3De"))
+            return StubResponse(status: 200, body: "{}")
+        }
+
+        _ = try await client.get("/path", query: ["tricky": "a!b$c&d=e"])
+    }
+
     @Test("returns non-2xx responses rather than throwing")
     func nonSuccessIsReturnedNotThrown() async throws {
         let client = makeClient { _ in StubResponse(status: 404, body: "not found") }
@@ -106,6 +122,71 @@ struct HTTPClientTests {
         }
     }
 
+    @Test("a non-transient URLError, like a certificate trust failure, is not retried (N6)")
+    func nonTransientFailureIsNotRetried() async throws {
+        let attempts = Counter()
+        let client = makeClient { _ in
+            attempts.increment()
+            throw URLError(.serverCertificateUntrusted)
+        }
+
+        await #expect(throws: FrakError.self) {
+            _ = try await client.get("/untrusted")
+        }
+        #expect(attempts.value == 1)
+    }
+
+    @Test("a body at the size cap is read in full")
+    func bodyAtCapIsReadInFull() async throws {
+        let body = String(repeating: "x", count: Int(HTTPClient.maxResponseBodyBytes))
+        let client = makeClient { _ in StubResponse(status: 200, body: body) }
+
+        let response = try await client.get("/x")
+
+        #expect(response.body.count == body.utf8.count)
+    }
+
+    @Test("a Content-Length over the cap is rejected before the body is trusted")
+    func contentLengthOverCapIsRejected() async throws {
+        // The real body is small; only the advertised header lies. Proves the pre-check runs off
+        // Content-Length alone.
+        let client = makeClient { _ in
+            StubResponse(
+                status: 200,
+                body: "{}",
+                headers: ["Content-Length": String(HTTPClient.maxResponseBodyBytes + 1)]
+            )
+        }
+
+        // #expect(throws: FrakError.self) alone would also pass if URLSession itself rejected the
+        // lying Content-Length as a transport error (a well-known outcome for a header/body
+        // mismatch) — exactly the failure mode this test exists to exclude. Unwrap and assert the
+        // underlying error to prove the cap, not URLSession, is what rejected it.
+        do {
+            _ = try await client.get("/x")
+            Issue.record("expected the request to throw")
+        } catch let FrakError.network(underlying) {
+            #expect(underlying is ResponseTooLargeError, "expected ResponseTooLargeError, got \(underlying)")
+        } catch {
+            Issue.record("expected FrakError.network, got \(error)")
+        }
+    }
+
+    @Test("a body over the cap with no advertised Content-Length is rejected, not truncated")
+    func bodyOverCapWithNoContentLengthIsRejected() async throws {
+        let oversized = String(repeating: "x", count: Int(HTTPClient.maxResponseBodyBytes) + 1)
+        let client = makeClient { _ in StubResponse(status: 200, body: oversized) }
+
+        do {
+            _ = try await client.get("/x")
+            Issue.record("expected the request to throw")
+        } catch let FrakError.network(underlying) {
+            #expect(underlying is ResponseTooLargeError, "expected ResponseTooLargeError, got \(underlying)")
+        } catch {
+            Issue.record("expected FrakError.network, got \(error)")
+        }
+    }
+
     @Test("URLError.cancelled surfaces as CancellationError and is not retried")
     func cancellationIsNotRetried() async throws {
         let attempts = Counter()
@@ -140,7 +221,9 @@ struct HTTPClientTests {
             }
             throw StubHangs()
         }
-        let client = HTTPClient(baseURL: "https://\(host)", session: session, overallDeadlineSeconds: 0.2)
+        // Comfortably above the retry's 100-300ms jittered delay (N6) so the second attempt is
+        // never starved by the delay itself, while still well under the 1s assertion below.
+        let client = HTTPClient(baseURL: "https://\(host)", session: session, overallDeadlineSeconds: 0.5)
 
         let start = Date()
         await #expect(throws: FrakError.self) {

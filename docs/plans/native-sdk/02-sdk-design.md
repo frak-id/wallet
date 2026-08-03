@@ -99,9 +99,13 @@ and the web. Same reasoning as Firebase's app-instance id.
 `<device-transfer>`; excluding only the former lets the standard new-phone transfer clone
 the id — exactly the resurrection the iOS decision rejects. Worse,
 `android:dataExtractionRules` is a **singular** attribute, so the manifest merger does not
-union it: a host app with its own rules file drops ours. It must be documented as an
-integration step, and a debug-build assertion should warn when the SDK's prefs file is not
-excluded. *Today the SDK's rules file is referenced by nothing — `06-open-findings.md` S3.*
+union it: a host app with its own rules file makes the merge **fail outright** (a build
+error, not a silent drop) unless the merchant adds `tools:replace` themselves — a library
+cannot apply `tools:replace` to its own consumer's manifest. It must be documented as an
+integration step (see `sdk/android/README.md`'s "Backup and device-transfer exclusion"), and
+a debug-build assertion should warn when the SDK's prefs files are not excluded. *Today
+neither the SDK's rules file nor its API 24-30 counterpart is referenced by anything —
+`06-open-findings.md` S3.*
 
 > Swift's `UUID.uuidString` is **uppercase**; normalise once at the boundary. The codec
 > itself is safe — it accepts either case and emits lowercase — so the break lands
@@ -242,7 +246,7 @@ weakest:
 | Bounds | cap by count **and** age, drop oldest — *currently enforced on read only, `06` 2.6* |
 | Poison messages | evict after N permanent 4xx, or one rejected event blocks the FIFO forever |
 | Backoff | exponential **with jitter**, honouring `Retry-After`. Without jitter a regional blip synchronises a merchant-wide flush stampede into the new rate limits |
-| Erasure | `resetAnonymousId()` purges the queue — never emit under a dead id |
+| Erasure | `resetAnonymousId()` purges the queue on iOS unconditionally; on Android only once the keystore delete is confirmed — a throwing delete leaves the old identity in place, and purging anyway would discard events about to be re-sent under an id that never rotated (`06` 4fp). Never emit under a dead id either way |
 
 ### 5.4 Never derive merchant identity client-side
 

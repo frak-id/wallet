@@ -8,6 +8,7 @@ import id.frak.sdk.config.SharedPreferencesStore
 import id.frak.sdk.core.DeepLinkHandling
 import id.frak.sdk.core.DefaultFrakClient
 import id.frak.sdk.core.FrakConfig
+import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
 import id.frak.sdk.core.defaultIoDispatcher
@@ -62,6 +63,9 @@ public object Frak {
                         "Every SDK call will fail with MerchantResolutionFailed.",
                 )
             }
+            (effective.env as? FrakEnvironment.Custom)?.rejectionReason?.let { reason ->
+                logger.error("FrakEnvironment.Custom: $reason Requests will fail with FrakError.Network.")
+            }
             // Shared by queue and client: two limitedParallelism(2) views would double the IO budget.
             val ioDispatcher = defaultIoDispatcher()
             val newCore =
@@ -98,7 +102,12 @@ public object Frak {
     /** @throws FrakError.NotInitialized when [initialize] has not run. */
     @JvmStatic
     public val client: FrakClient
-        get() = instance ?: throw FrakError.NotInitialized
+        get() = instance ?: throw FrakError.NotInitialized()
+
+    /** Same as [client], but null instead of throwing (A6): for a call site that would just null-check anyway. */
+    @JvmStatic
+    public val clientOrNull: FrakClient?
+        get() = instance
 
     /** Whether [initialize] has run. For merchants guarding optional integrations. */
     @JvmStatic

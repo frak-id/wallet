@@ -43,6 +43,22 @@ final class RequestLog: @unchecked Sendable {
     var urls: [String] {
         all.compactMap { $0.url?.absoluteString }
     }
+
+    /// Waits until the log holds at least `target` requests, or the timeout expires.
+    ///
+    /// `track` is durable-then-detached: it returns once the event is on disk and the drain
+    /// runs in its own task, so a delivery assertion made straight after the call reads the log
+    /// before the request has been made. Only the tracker's own suite can `flush()`; through the
+    /// client the drain is unreachable, so waiting for the effect is the only way to assert it.
+    /// `Date`/`Task.sleep(nanoseconds:)` rather than `ContinuousClock`/`Duration`, which are
+    /// iOS 16 and would not compile at this package's iOS 15 deployment target.
+    func wait(forCount target: Int, timeoutSeconds: TimeInterval = 2) async -> Bool {
+        let deadline = Date().addingTimeInterval(timeoutSeconds)
+        while count < target, Date() < deadline {
+            try? await Task.sleep(nanoseconds: 5_000_000)
+        }
+        return count >= target
+    }
 }
 
 /// Lock-protected counter, for stub handlers that vary their response by call, or

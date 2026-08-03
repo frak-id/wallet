@@ -46,6 +46,29 @@ struct ConfigStoreTests {
         #expect(log.count == 1)
     }
 
+    @Test("a cache fetched in the future relative to now is treated as stale, not fresh forever")
+    func futureDatedCacheIsTreatedAsStale() async throws {
+        // A clock stepped backward after the fetch, or a corrupted/tampered persisted fetchedAt,
+        // must not pin the entry as fresh forever (N7): now().timeIntervalSince(fetchedAt)
+        // negative is still "less than freshTTL" if only the upper bound is checked.
+        let clock = Clock()
+        clock.current = Date(timeIntervalSince1970: 10_000)
+        let log = RequestLog()
+        let renamedBody = Self.body.replacingOccurrences(of: "Acme", with: "Acme Renamed")
+        let callCount = Counter()
+        let store = makeStore(clock: clock, log: log) { _ in
+            let count = callCount.increment()
+            return StubResponse(status: 200, body: count == 1 ? Self.body : renamedBody)
+        }
+        _ = try await store.resolve(query(), forceRefresh: false)
+
+        clock.current = Date(timeIntervalSince1970: 0)  // stepped backward: fetchedAt is now in the future
+        _ = try await store.resolve(query(), forceRefresh: false)
+
+        try await Task.sleep(nanoseconds: 100_000_000)
+        #expect(log.count == 2, "a future-dated entry must revalidate, not read as fresh")
+    }
+
     @Test("a stale cache is served immediately and revalidated in the background")
     func staleCacheServedAndRevalidated() async throws {
         let clock = Clock()

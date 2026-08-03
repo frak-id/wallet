@@ -9,7 +9,27 @@ public class TokenAmount(
     public val eurAmount: Double,
     public val usdAmount: Double,
     public val gbpAmount: Double,
-)
+) {
+    override fun toString(): String =
+        "TokenAmount(amount=$amount, eurAmount=$eurAmount, usdAmount=$usdAmount, gbpAmount=$gbpAmount)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TokenAmount) return false
+        return amount == other.amount &&
+            eurAmount == other.eurAmount &&
+            usdAmount == other.usdAmount &&
+            gbpAmount == other.gbpAmount
+    }
+
+    override fun hashCode(): Int {
+        var result = amount.hashCode()
+        result = 31 * result + eurAmount.hashCode()
+        result = 31 * result + usdAmount.hashCode()
+        result = 31 * result + gbpAmount.hashCode()
+        return result
+    }
+}
 
 /** One band of a tiered reward. Null `maxValue` means no upper bound (not a sentinel). */
 public sealed class RewardTier {
@@ -20,20 +40,61 @@ public sealed class RewardTier {
         override val minValue: Double,
         override val maxValue: Double?,
         public val amount: TokenAmount,
-    ) : RewardTier()
+    ) : RewardTier() {
+        override fun toString(): String = "RewardTier.Amount(minValue=$minValue, maxValue=$maxValue, amount=$amount)"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Amount) return false
+            return minValue == other.minValue && maxValue == other.maxValue && amount == other.amount
+        }
+
+        override fun hashCode(): Int {
+            var result = minValue.hashCode()
+            result = 31 * result + (maxValue?.hashCode() ?: 0)
+            result = 31 * result + amount.hashCode()
+            return result
+        }
+    }
 
     public class Percentage(
         override val minValue: Double,
         override val maxValue: Double?,
         public val percent: Double,
-    ) : RewardTier()
+    ) : RewardTier() {
+        override fun toString(): String =
+            "RewardTier.Percentage(minValue=$minValue, maxValue=$maxValue, percent=$percent)"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Percentage) return false
+            return minValue == other.minValue && maxValue == other.maxValue && percent == other.percent
+        }
+
+        override fun hashCode(): Int {
+            var result = minValue.hashCode()
+            result = 31 * result + (maxValue?.hashCode() ?: 0)
+            result = 31 * result + percent.hashCode()
+            return result
+        }
+    }
 }
 
 /** What a campaign pays out. [Percentage] has no concrete amount so it's suppressed from display. */
 public sealed class EstimatedReward {
     public class Fixed(
         public val amount: TokenAmount,
-    ) : EstimatedReward()
+    ) : EstimatedReward() {
+        override fun toString(): String = "EstimatedReward.Fixed(amount=$amount)"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Fixed) return false
+            return amount == other.amount
+        }
+
+        override fun hashCode(): Int = amount.hashCode()
+    }
 
     public class Percentage(
         public val percent: Double,
@@ -41,17 +102,58 @@ public sealed class EstimatedReward {
         public val percentOf: String,
         public val maxAmount: TokenAmount?,
         public val minAmount: TokenAmount?,
-    ) : EstimatedReward()
+    ) : EstimatedReward() {
+        override fun toString(): String =
+            "EstimatedReward.Percentage(percent=$percent, percentOf=$percentOf, " +
+                "maxAmount=$maxAmount, minAmount=$minAmount)"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Percentage) return false
+            return percent == other.percent &&
+                percentOf == other.percentOf &&
+                maxAmount == other.maxAmount &&
+                minAmount == other.minAmount
+        }
+
+        override fun hashCode(): Int {
+            var result = percent.hashCode()
+            result = 31 * result + percentOf.hashCode()
+            result = 31 * result + (maxAmount?.hashCode() ?: 0)
+            result = 31 * result + (minAmount?.hashCode() ?: 0)
+            return result
+        }
+    }
 
     public class Tiered(
         public val tierField: String,
         public val tiers: List<RewardTier>,
-    ) : EstimatedReward()
+    ) : EstimatedReward() {
+        override fun toString(): String = "EstimatedReward.Tiered(tierField=$tierField, tiers=$tiers)"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Tiered) return false
+            return tierField == other.tierField && tiers == other.tiers
+        }
+
+        override fun hashCode(): Int = 31 * tierField.hashCode() + tiers.hashCode()
+    }
 
     /** A payout type newer than this binary. Never rendered, never dropped. */
     public class Unknown(
         public val payoutType: String,
-    ) : EstimatedReward()
+    ) : EstimatedReward() {
+        override fun toString(): String = "EstimatedReward.Unknown(payoutType=$payoutType)"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Unknown) return false
+            return payoutType == other.payoutType
+        }
+
+        override fun hashCode(): Int = payoutType.hashCode()
+    }
 }
 
 /** One active campaign. Arrives sorted by priority descending; do not re-sort. */
@@ -69,7 +171,37 @@ public class Campaign(
     public val maxRewardsPerUser: Double?,
     /** ISO-8601 expiry, or null for a campaign that never expires. */
     public val expiresAt: String?,
-)
+) {
+    override fun toString(): String =
+        "Campaign(campaignId=$campaignId, name=$name, interactionTypeKey=$interactionTypeKey, " +
+            "referrer=$referrer, referee=$referee, defaultLockupSeconds=$defaultLockupSeconds, " +
+            "maxRewardsPerUser=$maxRewardsPerUser, expiresAt=$expiresAt)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Campaign) return false
+        return campaignId == other.campaignId &&
+            name == other.name &&
+            interactionTypeKey == other.interactionTypeKey &&
+            referrer == other.referrer &&
+            referee == other.referee &&
+            defaultLockupSeconds == other.defaultLockupSeconds &&
+            maxRewardsPerUser == other.maxRewardsPerUser &&
+            expiresAt == other.expiresAt
+    }
+
+    override fun hashCode(): Int {
+        var result = campaignId.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + interactionTypeKey.hashCode()
+        result = 31 * result + (referrer?.hashCode() ?: 0)
+        result = 31 * result + (referee?.hashCode() ?: 0)
+        result = 31 * result + (defaultLockupSeconds?.hashCode() ?: 0)
+        result = 31 * result + (maxRewardsPerUser?.hashCode() ?: 0)
+        result = 31 * result + (expiresAt?.hashCode() ?: 0)
+        return result
+    }
+}
 
 /**
  * The single reward worth advertising, formatted server-side. [formatted] contains a
@@ -90,7 +222,35 @@ public class BestReward(
     public val isProductScoped: Boolean = false,
     /** The subset of the requested products matching the winning campaign's scope; null for an unscoped winner or when none were requested. */
     public val matchedProducts: List<ProductDetails>? = null,
-)
+) {
+    override fun toString(): String =
+        "BestReward(formatted=$formatted, payoutType=$payoutType, minPurchaseAmount=$minPurchaseAmount, " +
+            "minPurchaseValue=$minPurchaseValue, lockupDurationDays=$lockupDurationDays, " +
+            "isProductScoped=$isProductScoped, matchedProducts=$matchedProducts)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BestReward) return false
+        return formatted == other.formatted &&
+            payoutType == other.payoutType &&
+            minPurchaseAmount == other.minPurchaseAmount &&
+            minPurchaseValue == other.minPurchaseValue &&
+            lockupDurationDays == other.lockupDurationDays &&
+            isProductScoped == other.isProductScoped &&
+            matchedProducts == other.matchedProducts
+    }
+
+    override fun hashCode(): Int {
+        var result = formatted.hashCode()
+        result = 31 * result + payoutType.hashCode()
+        result = 31 * result + (minPurchaseAmount?.hashCode() ?: 0)
+        result = 31 * result + (minPurchaseValue?.hashCode() ?: 0)
+        result = 31 * result + (lockupDurationDays?.hashCode() ?: 0)
+        result = 31 * result + isProductScoped.hashCode()
+        result = 31 * result + (matchedProducts?.hashCode() ?: 0)
+        return result
+    }
+}
 
 /** Who a reward is being estimated for: sharer ([REFERRER]) or arriving referee ([REFEREE]). */
 public enum class RewardAudience(

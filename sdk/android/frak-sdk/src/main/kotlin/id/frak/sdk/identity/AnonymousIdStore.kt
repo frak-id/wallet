@@ -48,15 +48,25 @@ internal class AnonymousIdStore(
         }
     }
 
-    /** Destroys the keypair; caller is responsible for purging anything already queued under the dead id. */
-    fun reset() {
+    /**
+     * Destroys the keypair; caller is responsible for purging anything already queued under the
+     * dead id — but only when this returns true. `identity` is cleared from the in-memory cache
+     * either way, but that alone does not rotate the id: a throwing `deleteEntry` leaves the entry
+     * itself alive in the keystore, so the very next [anonymousId] call falls through to [load],
+     * which reads that same surviving key back and re-derives the *same* id, undoing the reset.
+     * Returning false lets the caller keep queued events under the id they were actually captured
+     * under, rather than purge them on the assumption a rotation happened that did not.
+     */
+    fun reset(): Boolean =
         synchronized(this) {
             identity = null
-            runCatching { keyStore.delete() }
-                .onFailure { logger.warn("Could not destroy the identity keypair", it) }
-            store.remove(MERCHANT_MARKER_KEY)
+            val erased =
+                runCatching { keyStore.delete() }
+                    .onFailure { logger.error("Could not destroy the identity keypair; anonymousId was not reset", it) }
+                    .isSuccess
+            if (erased) store.remove(MERCHANT_MARKER_KEY)
+            erased
         }
-    }
 
     private fun current(): Identity? {
         if (!trackingEnabled) return null

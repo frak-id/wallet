@@ -136,14 +136,16 @@ actor EventQueue {
         do {
             try createDirectory()
             let line = try Self.encoder.encode(event) + Data("\n".utf8)
-            if FileManager.default.fileExists(atPath: fileURL.path) {
+            let isNewFile = !FileManager.default.fileExists(atPath: fileURL.path)
+            if isNewFile {
+                try line.write(to: fileURL, options: .atomic)
+            } else {
                 let handle = try FileHandle(forWritingTo: fileURL)
                 defer { try? handle.close() }
                 try handle.seekToEnd()
                 try handle.write(contentsOf: line)
-            } else {
-                try line.write(to: fileURL, options: .atomic)
             }
+            if isNewFile { applyProtection() }
         } catch {
             logger.warn("Could not enqueue an event", error)
         }
@@ -163,6 +165,7 @@ actor EventQueue {
                 out += try Self.encoder.encode(event) + Data("\n".utf8)
             }
             try out.write(to: fileURL, options: .atomic)
+            applyProtection()
         } catch {
             logger.warn("Could not compact the event queue", error)
         }
@@ -196,5 +199,30 @@ actor EventQueue {
             at: fileURL.deletingLastPathComponent(),
             withIntermediateDirectories: true
         )
+    }
+
+    /// Readable only once the device has been unlocked at least once since boot, then stays
+    /// readable — appropriate for a background queue that must be writable while the device is
+    /// locked (an interaction can be tracked from a locked-screen share sheet) but must never be
+    /// readable straight off a stolen, powered-off device. Best-effort: a failure here still
+    /// leaves the write that just succeeded, so it is never escalated past a warning.
+    ///
+    /// `NSFileProtectionKey`/`FileProtectionType` are `API_UNAVAILABLE(macos)` — this package
+    /// declares `.macOS(.v12)` as a genuine shipping platform (see `Package.swift`), and
+    /// `swift build`/`swift test` on a Mac builds that triple, so an unconditional reference
+    /// here fails the only build this package gets. No-op on macOS: there is no shipping
+    /// product on that platform (see `Package.swift`'s header comment) and no equivalent
+    /// protection-class API to fall back to, so there is nothing to do instead.
+    private func applyProtection() {
+        #if canImport(UIKit)
+            do {
+                try FileManager.default.setAttributes(
+                    [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+                    ofItemAtPath: fileURL.path
+                )
+            } catch {
+                logger.warn("Could not set the event queue's file protection class", error)
+            }
+        #endif
     }
 }

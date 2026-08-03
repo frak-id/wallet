@@ -23,6 +23,22 @@ struct InstallLinksTests {
         )
     }
 
+    /// `?p=`, not the `#p=` `installPage` uses: the wallet's deep-link router navigates in-app,
+    /// so a fragment is gone before `/install` renders. `routeResolvers.install` forwards the
+    /// search param for exactly this reason, and iOS has no install referrer to fall back on.
+    @Test("carries the install proof as a search param the deep-link router forwards")
+    func carriesTheInstallProof() {
+        #expect(
+            InstallLinks.deepLink(
+                scheme: "frakwallet",
+                merchantId: Self.merchantId,
+                anonymousId: Self.clientId,
+                installProof: "AQR-_x"
+            )
+                == "frakwallet://install?m=\(Self.merchantId)&a=\(Self.clientId)&p=AQR-_x"
+        )
+    }
+
     @Test("points at the wallet's App Store listing")
     func pointsAtTheAppStoreListing() {
         #expect(InstallLinks.appStore() == "https://apps.apple.com/app/id6740261164")

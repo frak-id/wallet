@@ -88,6 +88,19 @@ class ResolvedConfigDecoderTest {
     }
 
     @Test
+    fun `an empty optional string reads as absent, not as an empty string (finding 2-10)`() {
+        val body =
+            """
+            {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",
+             "allowedDomains":[],"sdkConfig":{"logoUrl":"","homepageLink":""}}
+            """.trimIndent()
+
+        val config = ResolvedConfigDecoder.decode(body)
+        assertEquals(null, config.sdkConfig?.logoUrl)
+        assertEquals(null, config.sdkConfig?.homepageLink)
+    }
+
+    @Test
     fun `a missing required field is a decoding error naming it`() {
         val body = """{"productId":"0x00","name":"Acme","domain":"acme.example","allowedDomains":[]}"""
 

@@ -4,9 +4,11 @@ import id.frak.sdk.config.InMemoryKeyValueStore
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogger
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AnonymousIdStoreTest {
@@ -65,9 +67,25 @@ class AnonymousIdStoreTest {
         val subject = store(keyStore)
 
         val before = subject.anonymousId()
-        subject.resetAndRead()
+        assertTrue(subject.resetAndRead())
         assertNotEquals(before, subject.anonymousId())
         assertEquals(2, keyStore.creations)
+    }
+
+    /** Pins 4fp: a throwing keystore delete must not be mistaken for a successful rotation. */
+    @Test
+    fun `a keystore delete that throws leaves the identity unchanged and reports failure`() {
+        val keyStore = FakeDeviceKeyStore(failOnDelete = true)
+        val subject = store(keyStore)
+
+        val before = subject.anonymousId()
+        assertFalse(subject.resetAndRead())
+        assertEquals(
+            "the old key material is still in the keystore, so the same id is re-derived",
+            before,
+            subject.anonymousId(),
+        )
+        assertEquals(1, keyStore.creations)
     }
 
     @Test
@@ -100,9 +118,10 @@ class AnonymousIdStoreTest {
         assertEquals(184, proof?.length)
     }
 
-    private fun AnonymousIdStore.resetAndRead() {
-        reset()
+    private fun AnonymousIdStore.resetAndRead(): Boolean {
+        val erased = reset()
         anonymousId()
+        return erased
     }
 
     private companion object {

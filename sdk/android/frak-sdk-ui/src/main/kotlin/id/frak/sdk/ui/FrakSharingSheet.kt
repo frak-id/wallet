@@ -5,8 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -46,6 +47,7 @@ import java.util.UUID
 @Composable
 internal fun FrakSharingSheet(
     request: SharingRequest,
+    heightFraction: Float,
     onFinished: (SharingResult) -> Unit,
 ) {
     val context = LocalContext.current
@@ -93,14 +95,21 @@ internal fun FrakSharingSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         val session = state.session
-        Column(modifier = Modifier.fillMaxWidth()) {
+        // A fraction of what the sheet is allowed to be, not a fixed dp: the hosted page is a
+        // full-page React app (reward card, product cards, stepper, FAQ) whose first screenful
+        // is taller than the 480dp this used to reserve, so the sheet opened clipped on every
+        // device. The page box below takes what is left after the title and footer via
+        // `weight(1f)`, so those never push it off the bottom either.
+        Column(
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(clampSharingHeightFraction(heightFraction)),
+        ) {
             Text(
                 text = stringResource(R.string.frak_sharing_title),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
 
             Box(
-                modifier = Modifier.fillMaxWidth().height(PAGE_HEIGHT),
+                modifier = Modifier.fillMaxWidth().weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
                 if (session == null) {
@@ -109,7 +118,7 @@ internal fun FrakSharingSheet(
                     CircularProgressIndicator()
                 } else {
                     AndroidView(
-                        modifier = Modifier.fillMaxWidth().height(PAGE_HEIGHT),
+                        modifier = Modifier.fillMaxSize(),
                         factory = { viewContext ->
                             createSharingWebView(
                                 context = viewContext,
@@ -127,8 +136,11 @@ internal fun FrakSharingSheet(
             }
 
             // Hidden on the install page: both act on the product link and reload `/sharing`,
-            // which would discard the install page and the proof minted for it.
-            if (!state.showingInstallPage) {
+            // which would discard the install page and the proof minted for it. Hidden on the
+            // confirmation screen for a different reason: the user has already shared, the page
+            // now offers its own "share again"/install controls, and a live Copy/Share under
+            // them reads as though the share had not registered.
+            if (!state.showingInstallPage && !state.showingConfirmation) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -149,9 +161,6 @@ internal fun FrakSharingSheet(
         }
     }
 }
-
-/** Height of the hosted page inside the sheet. */
-private val PAGE_HEIGHT = 480.dp
 
 /**
  * 03 §3's fallback threshold: "> 1.5s → skip the page, fire the native share

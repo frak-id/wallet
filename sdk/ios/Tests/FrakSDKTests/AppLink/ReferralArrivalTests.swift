@@ -7,6 +7,7 @@ struct ReferralArrivalTests {
     private static let merchantId = "550e8400-e29b-41d4-a716-446655440000"
     private static let clientId = "256b1be3-2745-41d1-89d4-9121cc87bc45"
     private static let otherClientId = "550e8400-e29b-41d4-a716-446655440001"
+    private static let otherMerchantId = "550e8400-e29b-41d4-a716-446655440002"
     private static let wallet = "0x1234567890123456789012345678901234567890"
     private static let timestamp: Int64 = 1_709_654_400
 
@@ -15,7 +16,7 @@ struct ReferralArrivalTests {
         let own = FrakContext.v2(
             FrakContext.V2(merchantId: Self.merchantId, timestamp: Self.timestamp, clientId: Self.clientId)
         )
-        #expect(ReferralArrival.isSelfReferral(own, anonymousId: Self.clientId))
+        #expect(ReferralArrival.shouldIgnoreArrival(own, anonymousId: Self.clientId))
     }
 
     @Test("treats someone else's link as a referral")
@@ -23,7 +24,7 @@ struct ReferralArrivalTests {
         let other = FrakContext.v2(
             FrakContext.V2(merchantId: Self.merchantId, timestamp: Self.timestamp, clientId: Self.otherClientId)
         )
-        #expect(!ReferralArrival.isSelfReferral(other, anonymousId: Self.clientId))
+        #expect(!ReferralArrival.shouldIgnoreArrival(other, anonymousId: Self.clientId))
     }
 
     @Test("cannot self-refer with no identity, or from a v1 link")
@@ -31,8 +32,26 @@ struct ReferralArrivalTests {
         let context = FrakContext.v2(
             FrakContext.V2(merchantId: Self.merchantId, timestamp: Self.timestamp, clientId: Self.clientId)
         )
-        #expect(!ReferralArrival.isSelfReferral(context, anonymousId: nil))
-        #expect(!ReferralArrival.isSelfReferral(.v1(wallet: Self.wallet), anonymousId: Self.clientId))
+        #expect(!ReferralArrival.shouldIgnoreArrival(context, anonymousId: nil))
+        #expect(!ReferralArrival.shouldIgnoreArrival(.v1(wallet: Self.wallet), anonymousId: Self.clientId))
+    }
+
+    @Test("ignores a v2 link minted for a different merchant, even from another device")
+    func ignoresAForeignMerchantLink() {
+        let foreign = FrakContext.v2(
+            FrakContext.V2(merchantId: Self.otherMerchantId, timestamp: Self.timestamp, clientId: Self.otherClientId)
+        )
+        #expect(
+            ReferralArrival.shouldIgnoreArrival(foreign, anonymousId: Self.clientId, ownMerchantId: Self.merchantId)
+        )
+    }
+
+    @Test("lets a v2 link through when this SDK instance has not resolved its own merchant yet")
+    func letsALinkThroughWithNoKnownOwnMerchant() {
+        let other = FrakContext.v2(
+            FrakContext.V2(merchantId: Self.otherMerchantId, timestamp: Self.timestamp, clientId: Self.otherClientId)
+        )
+        #expect(!ReferralArrival.shouldIgnoreArrival(other, anonymousId: Self.clientId, ownMerchantId: nil))
     }
 
     @Test("carries every field a v2 context knows into the arrival")

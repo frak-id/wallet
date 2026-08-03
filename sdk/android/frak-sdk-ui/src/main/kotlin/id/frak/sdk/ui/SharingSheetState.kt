@@ -87,6 +87,15 @@ internal class SharingSheetState(
     var showingInstallPage: Boolean by mutableStateOf(false)
         private set
 
+    /**
+     * The page is on its post-share confirmation screen, either because this sheet reloaded it
+     * with `&confirmed=1` or because the page restored a saved confirmation of its own. The
+     * footer is hidden there: the share already happened, and the confirmation screen carries
+     * its own "share again" and install controls.
+     */
+    var showingConfirmation: Boolean by mutableStateOf(false)
+        private set
+
     private var best: SharingResult? = null
     private var webView: WebView? = null
     private var finished = false
@@ -117,7 +126,7 @@ internal class SharingSheetState(
     fun prepare(request: SharingRequest) {
         scope.launch {
             if (!Frak.isInitialized) {
-                failure = FrakError.NotInitialized
+                failure = FrakError.NotInitialized()
                 resolved.complete(Unit)
                 return@launch
             }
@@ -248,6 +257,9 @@ internal class SharingSheetState(
             SharingPageAction.ShareAgain -> {
                 session?.url(confirmed = false)?.let {
                     showingInstallPage = false
+                    // The page left its confirmation screen, so the footer belongs back: this
+                    // reload is the user asking to share a second time.
+                    showingConfirmation = false
                     webView?.loadUrl(it)
                 }
             }
@@ -307,12 +319,17 @@ internal class SharingSheetState(
     }
 
     /**
-     * No `SKOverlay` counterpart, unlike iOS: Play always foregrounds the Play app and Android
-     * offers no in-place install. It does not matter here — the install page's download button
-     * carries `merchantId`, `anonymousId` and the proof in the Play referrer, so attribution
-     * survives the trip deterministically. That referrer is built by the page
-     * (`buildPlayStoreInstallUrl`) from the `#p=` fragment this sheet navigated to, so it is
-     * load-bearing across the SDK/page boundary rather than something the SDK still owns.
+     * Where the page's own outbound links go.
+     *
+     * The Play listing for the wallet is the exception, and the reason this is not a bare
+     * `startActivity`: the install page's download button points at the store unconditionally,
+     * so a user who already has the wallet installed was being sent to its store page instead of
+     * into it. [openFrakApp] is the deep-link-first answer the no-install-page branch of
+     * [onPageAction] already uses — it tries `frakwallet://install?m=&a=` first and only reaches
+     * the store if nothing took that intent, where the referrer it builds carries the same
+     * `merchantId`/`anonymousId` pair the page's own referrer would have. Attribution survives
+     * either way; what changes is that an installed wallet gets the handoff directly, and can
+     * merge the anonymous id into the wallet on `/install` without a store round trip.
      */
     fun openExternally(url: String) {
         // normalizeScheme, not just a lowercased comparison: Android does not fold `HTTPS:` for
@@ -321,9 +338,22 @@ internal class SharingSheetState(
         // The page chooses this URL. Anything but http(s) is an app-to-app launch the merchant
         // never sanctioned — `intent:` and vendor schemes reach arbitrary installed activities.
         if (parsed.scheme != "https" && parsed.scheme != "http") return
+        if (isWalletStoreListing(parsed)) {
+            scope.launch { openFrakApp() }
+            return
+        }
         val intent = Intent(Intent.ACTION_VIEW, parsed).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }
     }
+
+    /**
+     * The Play listing for *this environment's* wallet, and nothing else: a merchant's own app,
+     * or any other listing the page might link to, still opens Play as asked. The package id is
+     * read off the URL rather than assumed, since dev and production ship different ones.
+     */
+    private fun isWalletStoreListing(url: Uri): Boolean =
+        url.host.equals(PLAY_STORE_HOST, ignoreCase = true) &&
+            url.getQueryParameter("id") == environment().walletPackageId
 
     /** The user swiped or tapped away. Reports whatever the session achieved. */
     fun dismiss() = finish(SharingResult.Dismissed)
@@ -339,7 +369,11 @@ internal class SharingSheetState(
     /** `&confirmed=1` is load-bearing: under `native=1` the page hides its own share controls without this reload. */
     private fun confirm(result: SharingResult) {
         record(result)
-        session?.url(confirmed = true)?.let { webView?.loadUrl(it) } // null under tier 3 (no page)
+        val confirmedUrl = session?.url(confirmed = true) ?: return // null under tier 3 (no page)
+        // Set alongside the navigation rather than on page load: the footer has to go at the
+        // moment the share lands, not a network round trip later.
+        showingConfirmation = true
+        webView?.loadUrl(confirmedUrl)
     }
 
     private fun record(result: SharingResult) {
@@ -460,5 +494,8 @@ internal class SharingSheetState(
     private companion object {
         /** How long the reward seed may delay the sheet. Past this the page fetches it itself. */
         const val SEED_TIMEOUT_MILLIS = 150L
+
+        /** Host of the store listing the install page links to (`buildPlayStoreInstallUrl`). */
+        const val PLAY_STORE_HOST = "play.google.com"
     }
 }

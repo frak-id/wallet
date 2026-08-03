@@ -181,6 +181,30 @@ struct FrakClientTests {
         #expect(log.urls.contains { $0.contains("currency=usd") })
     }
 
+    @Test("campaigns forceRefresh also forces the config resolve, not just the rewards fetch (D6)")
+    func campaignsForceRefreshAlsoForcesConfigResolve() async throws {
+        let log = RequestLog()
+        let client = makeClient { request in
+            log.record(request)
+            if request.url?.path.contains("resolve") == true {
+                return StubResponse(status: 200, body: Self.resolveBody)
+            }
+            return StubResponse(status: 200, body: Self.rewardsBody)
+        }
+
+        _ = try await client.campaigns(forceRefresh: false)
+        let resolveCallsAfterFirst = log.all.filter { $0.url?.path.contains("resolve") == true }.count
+
+        _ = try await client.campaigns(forceRefresh: true)
+        let resolveCallsAfterForced = log.all.filter { $0.url?.path.contains("resolve") == true }.count
+
+        #expect(resolveCallsAfterFirst == 1, "the first call should resolve once")
+        #expect(
+            resolveCallsAfterForced == 2,
+            "forceRefresh: true must bypass the config cache too, not just the rewards cache"
+        )
+    }
+
     @Test("trackingEnabled false throws trackingDisabled without a network call")
     func trackingDisabledThrowsWithoutNetworkCall() async throws {
         let log = RequestLog()
@@ -275,6 +299,75 @@ struct FrakClientTests {
         // True — the link is ours — but nothing is tracked: a user cannot refer themselves.
         let handled = await client.handleReferralLink(own)
         #expect(handled)
+    }
+
+    @Test("handleReferralLink ignores a v2 arrival minted for a different merchant")
+    func handleReferralLinkRejectsAForeignMerchant() async throws {
+        let requests = RequestLog()
+        let client = makeClient { request in
+            requests.record(request)
+            let isResolve = request.url?.path == "/user/merchant/resolve"
+            return StubResponse(status: 200, body: isResolve ? Self.resolveBody : "{}")
+        }
+        _ = try? await client.resolveConfig()  // populates latestConfig, mirroring the Android fixture's settled state
+        let before = requests.count
+
+        let foreignMerchantId = "550e8400-e29b-41d4-a716-446655440002"
+        let foreignLink = try #require(
+            SharingLinkBuilder.build(
+                baseURL: "https://acme.example/p",
+                context: FrakContext.V2(
+                    merchantId: foreignMerchantId,
+                    timestamp: 1,
+                    clientId: "550e8400-e29b-41d4-a716-446655440001"
+                ),
+                attribution: nil,
+                defaults: nil
+            )
+        )
+
+        let handled = await client.handleReferralLink(foreignLink)
+        #expect(handled)
+        #expect(requests.count == before, "a foreign-merchant context must not be tracked as this merchant's arrival")
+    }
+
+    @Test("handleReferralLink tracks a v2 arrival when only the configured merchant id's case or whitespace differs")
+    func handleReferralLinkToleratesMerchantIdCasing() async throws {
+        // The odd casing/whitespace has to live on the config side: FrakContextCodec rejects any
+        // merchantId that isn't a canonical lowercase UUID, so a link can never carry one — only
+        // FrakConfig.merchantId is free-typed and unvalidated. The link below carries the
+        // canonical Self.merchantId with a different clientId (a different device, same
+        // merchant), so the only variable under test is settings.merchantId vs
+        // context.merchantId, which is exactly what ReferralArrival.sameMerchant normalises.
+        // Without that normalisation this link would be dropped as a foreign-merchant arrival,
+        // so the assertion below fails if the trim/case-fold is removed.
+        let requests = RequestLog()
+        let client = makeClient(config: FrakConfig(merchantId: " \(Self.merchantId.uppercased()) ")) { request in
+            requests.record(request)
+            return StubResponse(status: 200, body: "{}")
+        }
+        let before = requests.count
+
+        let sameMerchantDifferentCase = try #require(
+            SharingLinkBuilder.build(
+                baseURL: "https://acme.example/p",
+                context: FrakContext.V2(
+                    merchantId: Self.merchantId,
+                    timestamp: 1,
+                    clientId: "550e8400-e29b-41d4-a716-446655440001"
+                ),
+                attribution: nil,
+                defaults: nil
+            )
+        )
+
+        let handled = await client.handleReferralLink(sameMerchantDifferentCase)
+        #expect(handled)
+        let tracked = await requests.wait(forCount: before + 1)
+        #expect(
+            tracked,
+            "a case/whitespace difference in the merchant id must not be mistaken for a foreign merchant"
+        )
     }
 
     @Test("handleReferralLink does nothing at all when deep linking is disabled")

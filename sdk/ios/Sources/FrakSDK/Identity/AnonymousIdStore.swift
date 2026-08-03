@@ -83,6 +83,15 @@ final class AnonymousIdStore: @unchecked Sendable {
 
     /// Destroys the keypair, so the next read mints a new identity. Everything already
     /// attributed to the old id stays with it — this severs the device from that id.
+    ///
+    /// No `Bool` return here, unlike the Android twin (see 4fp in `06-open-findings.md`): Android
+    /// guards against a throwing keystore `deleteEntry` leaving the old key alive and silently
+    /// undoing the reset. `DeviceKeyStore.delete()` is non-throwing by protocol (`DeviceKey.swift`)
+    /// and its one production conformance, `PersistedDeviceKeyStore`, is a `KeyValueStore.removeValue`
+    /// call — itself non-throwing by protocol, backed by `UserDefaults` removal, never the Keychain
+    /// or Secure Enclave (deletion only ever drops the stored key *reference*; the Secure Enclave
+    /// path is exercised on generation, not on delete). There is nothing this call can fail to do,
+    /// so there is nothing for a caller to check — unlike Android, this asymmetry is deliberate.
     func reset() {
         lock.lock()
         defer { lock.unlock() }

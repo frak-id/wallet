@@ -62,6 +62,8 @@ actor DefaultFrakClient {
     }
 
     nonisolated func resetAnonymousId() {
+        // Unconditional, unlike the Android twin: identity.reset() cannot fail here (see its
+        // doc), so there is no erasure outcome to check before purging.
         identity.reset()
         // Purged, not left behind: an event captured under a dead id would re-link the
         // identity the user just asked to be forgotten. Best-effort cleanup — the guarantee
@@ -188,8 +190,14 @@ actor DefaultFrakClient {
     func handleReferralLink(_ url: String) async -> Bool {
         guard settings.deepLink != .disabled, let context = SharingLinkBuilder.parse(url) else { return false }
 
-        if ReferralArrival.isSelfReferral(context, anonymousId: identity.anonymousId()) {
-            logger.info("Ignoring a referral link this device produced.")
+        let ownMerchantId = settings.merchantId ?? latestConfig?.merchantId
+        let ignore = ReferralArrival.shouldIgnoreArrival(
+            context,
+            anonymousId: identity.anonymousId(),
+            ownMerchantId: ownMerchantId
+        )
+        if ignore {
+            logger.info("Ignoring a self- or foreign-merchant referral link.")
             return true
         }
 
@@ -213,7 +221,12 @@ actor DefaultFrakClient {
         let deepLink = InstallLinks.deepLink(
             scheme: settings.env.walletScheme,
             merchantId: install.merchantId,
-            anonymousId: install.anonymousId
+            anonymousId: install.anonymousId,
+            // The App Store fallback below carries nothing — iOS has no Play-style install
+            // referrer — so this link is the only place attribution can ride on an
+            // already-installed device. Null when the enclave cannot sign, which `/install`
+            // degrades past rather than blocks on.
+            installProof: identity.signProof(.install, merchantId: install.merchantId)
         )
         if await launcher.open(deepLink) {
             return .openedApp
@@ -292,13 +305,17 @@ actor DefaultFrakClient {
     /// Resolves the merchant, then reads its rewards. Sequencing resolve first means a
     /// bad merchant id surfaces as `merchantResolutionFailed` rather than a
     /// permanently empty reward list; it is nearly always a cache hit.
+    ///
+    /// `forceRefresh` forwards to the config resolve too (D6): a caller asking to bypass the
+    /// rewards cache almost certainly also wants a fresh merchant id/currency, not a stale one
+    /// served alongside freshly-fetched rewards.
     private func fetchRewards(
         targetInteraction: String?,
         audience: RewardAudience?,
         products: [ProductDetails]?,
         forceRefresh: Bool
     ) async throws -> EstimatedRewardsResult {
-        let resolved = try await resolveConfig(forceRefresh: false)
+        let resolved = try await resolveConfig(forceRefresh: forceRefresh)
         return try await rewards.fetch(
             merchantId: resolved.merchantId,
             currency: settings.metadata.currency,

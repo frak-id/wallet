@@ -18,12 +18,18 @@
   and cheap to refetch, so carrying a stale copy onto a new device buys nothing
   and risks serving config resolved under a different identity.
 
+  This is API 31+ only (`android:dataExtractionRules`). `frak_full_backup_content.xml` is
+  the same exclusion list for API 24-30 (`android:fullBackupContent`) — both are required to
+  cover the SDK's minSdk 24 floor.
+
   Note that this file being present is NOT sufficient. `android:dataExtractionRules`
   is a singular attribute on `<application>`, and Gradle's manifest merger does
-  not union rules files: if the merchant declares their own, the SDK's is dropped
-  or the build fails pending `tools:replace`. So this ships as a resource to
-  reference or copy, documented as an integration step, and backed by a
-  debug-build runtime assertion that warns when the prefs files are not excluded.
+  not union rules files: if the merchant declares their own, the build fails
+  outright (merger conflict, not a silent drop) pending `tools:replace` — a
+  library cannot apply `tools:replace` to its own consumer. So this ships as a
+  resource to reference or copy; see "Backup and device-transfer exclusion" in
+  the SDK's README for the required `<application>` snippet. Backed by a
+  debug-build runtime assertion once there is code to assert.
 -->
 <data-extraction-rules>
     <cloud-backup>

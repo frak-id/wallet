@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.view.MotionEvent
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.webkit.CookieManager
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceError
@@ -70,7 +73,7 @@ internal sealed interface SharingPageAction {
  * never-before-visited sheet (wallet's worker only handles push, not fetch);
  * [SharingWebViewClient] covers the previously-visited case via a cache-only retry.
  */
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
 @Suppress("LongParameterList")
 internal fun createSharingWebView(
     context: Context,
@@ -83,6 +86,15 @@ internal fun createSharingWebView(
     onOpenExternal: (String) -> Unit,
 ): WebView =
     WebView(context).apply {
+        // MATCH_PARENT, explicitly. A view handed to Compose's `AndroidView` with no layout
+        // params is measured `wrap_content`, and a wrap-content WebView reports a viewport
+        // height of 0 to Blink: `vh`, `dvh`, `svh` and `lvh` all resolve to 0 while
+        // `documentElement.clientHeight` still reads the real height. The hosted page sizes its
+        // scroll container with `height: 100dvh`, so that collapsed the whole
+        // `html > body > #root > container` chain to zero — which is why the page painted in
+        // fragments and could not be scrolled at all: its scroller had `clientHeight: 0`.
+        layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+
         settings.javaScriptEnabled = true // page is a React app; rest of this bounds what it can reach
         settings.domStorageEnabled = true
         settings.allowFileAccess = false
@@ -93,6 +105,26 @@ internal fun createSharingWebView(
         settings.setGeolocationEnabled(false)
         settings.cacheMode = WebSettings.LOAD_DEFAULT // explicit default: revalidate cached responses
 
+        // NORMAL, not the inherited `NARROW_COLUMNS` default. That default is deprecated, is
+        // documented as only for pre-KitKat, and reflows content to the view width on its own
+        // heuristics — which a responsive page laid out for a phone viewport does not want, and
+        // which shows up as text sized and wrapped unlike anywhere else the same page runs.
+        // NORMAL is the "no rendering changes" option the WebView docs recommend.
+        settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
+
+        // The page scrolls itself (reward card, product cards, stepper, FAQ), and it lives
+        // inside a ModalBottomSheet whose drag gesture would otherwise swallow every vertical
+        // drag before the web content saw it — the sheet is not a scroll container Compose can
+        // hand off to, so it treats the whole drag as its own. Claiming the gesture only while
+        // the content actually has somewhere to go leaves swipe-to-dismiss working on a page
+        // short enough not to scroll, and the scrim and the drag handle work regardless.
+        setOnTouchListener { view, event ->
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                val scrollable = view.canScrollVertically(-1) || view.canScrollVertically(1)
+                view.parent?.requestDisallowInterceptTouchEvent(scrollable)
+            }
+            false // the WebView still handles the event itself
+        }
         // Third-party cookies off. Android has no per-WebView data store (only a
         // process-wide dir set once via setDataDirectorySuffix before any WebView
         // exists), so first-party wallet cookies do outlive the sheet; clearing on

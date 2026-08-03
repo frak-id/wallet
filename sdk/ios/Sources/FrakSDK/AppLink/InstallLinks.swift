@@ -3,8 +3,28 @@ enum InstallLinks {
     private static let appStoreURL = "https://apps.apple.com/app/id6740261164"
 
     /// Links this installation's anonymous id to the user's wallet.
-    static func deepLink(scheme: String, merchantId: String, anonymousId: String) -> String {
-        "\(scheme)://install?m=\(PercentEncoding.encode(merchantId))&a=\(PercentEncoding.encode(anonymousId))"
+    ///
+    /// `installProof` rides as a search param, not the `#p=` fragment `installPage` uses. A
+    /// fragment cannot survive this hop: the wallet's deep-link router calls `navigate`, so
+    /// `window.location.hash` is already empty by the time `/install` renders — its
+    /// `routeResolvers.install` forwards `?p=` for exactly that reason. What the fragment buys
+    /// (never sent to a server, never logged, never in a `Referer`) is not lost either: a
+    /// custom-scheme URL is handed to the OS and never leaves the device.
+    ///
+    /// Load-bearing here in a way it is not on Android: there the Play referrer carries
+    /// attribution across an install, and iOS has no equivalent, so on an already-installed
+    /// device this is the only carrier the proof has.
+    static func deepLink(
+        scheme: String,
+        merchantId: String,
+        anonymousId: String,
+        installProof: String? = nil
+    ) -> String {
+        let url =
+            "\(scheme)://install?m=\(PercentEncoding.encode(merchantId))"
+            + "&a=\(PercentEncoding.encode(anonymousId))"
+        guard let installProof else { return url }
+        return url + "&p=" + PercentEncoding.encode(installProof)
     }
 
     // No identity carried: iOS has no Play-style install referrer.

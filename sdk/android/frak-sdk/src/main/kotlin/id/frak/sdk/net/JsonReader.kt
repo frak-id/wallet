@@ -48,6 +48,43 @@ internal object JsonReader {
         context: String,
     ): Double = double(source, key) ?: throw FrakError.Decoding("$context is missing the required field \"$key\"")
 
+    /**
+     * Required, finite number at [key] (N1): a wire value of `NaN`/`Infinity` is technically
+     * parseable — `org.json` accepts those literals, and a numeric literal that overflows a
+     * `Double` (e.g. `1e999`) silently becomes `Infinity` on both `org.json` and AOSP's parser —
+     * but neither is ever a legitimate monetary amount, and every arithmetic/formatting consumer
+     * downstream assumes finiteness silently.
+     */
+    fun requireFiniteDouble(
+        source: JSONObject,
+        key: String,
+        context: String,
+    ): Double {
+        val value = requireDouble(source, key, context)
+        if (!value.isFinite()) {
+            throw FrakError.Decoding("$context has a non-finite value for \"$key\": $value")
+        }
+        return value
+    }
+
+    /**
+     * Optional counterpart to [requireFiniteDouble] (N1): absent still reads as `null`, but a
+     * *present* `NaN`/`Infinity` value throws rather than silently carrying a non-finite number
+     * into display or comparison arithmetic — the same justification as [requireFiniteDouble],
+     * just for a field the wire is allowed to omit.
+     */
+    fun finiteDouble(
+        source: JSONObject,
+        key: String,
+        context: String,
+    ): Double? {
+        val value = double(source, key) ?: return null
+        if (!value.isFinite()) {
+            throw FrakError.Decoding("$context has a non-finite value for \"$key\": $value")
+        }
+        return value
+    }
+
     /** Boolean at [key], or null. Not coerced from `"true"` or `1`. */
     fun boolean(
         source: JSONObject,

@@ -81,6 +81,9 @@ public enum Frak {
                         + "Every SDK call will fail with merchantResolutionFailed."
                 )
             }
+            if let reason = effective.env.customOriginRejectionReason {
+                logger.error("FrakEnvironment.custom: \(reason) Requests will fail with FrakError.network.")
+            }
             logger.info("Frak \(FrakSDKVersion.current) initialized.")
         }
     }
@@ -92,6 +95,15 @@ public enum Frak {
             guard let instance else { throw FrakError.notInitialized }
             return instance
         }
+    }
+
+    /// Same as `client`, but nil instead of throwing (A6): for a call site that would just
+    /// `try?` it anyway. `client` itself already composes with `try?`; this exists for parity
+    /// with the Android surface, and for a call site that reads better without `try?`.
+    public static var clientOrNull: FrakClient? {
+        lock.lock()
+        defer { lock.unlock() }
+        return instance
     }
 
     // Pure/static: works before initialize(_:) has run. Decode-only — arrival tracking

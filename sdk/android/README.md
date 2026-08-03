@@ -217,12 +217,17 @@ Elsewhere:
   pre-formatted values), but its 16 `format-amount` vectors are a real
   decode-fidelity contract and are currently hand-copied into
   `RewardsDecoderTest.kt` instead. Wire them or drop the constant.
-- `frak-sdk/src/main/res/xml/frak_data_extraction_rules.xml` — excludes the SDK's
-  `id.frak.sdk.xml` SharedPreferences from **both** `<cloud-backup>` and
-  `<device-transfer>` (02 §3). Both blocks matter: cloud-backup alone still lets a
-  device-to-device transfer clone whatever is in there. It is a thinner file than
-  02 §3 assumes — see "Anonymous identity" below — but the exclusion stays,
-  because the merchant marker it holds is what triggers regeneration.
+- `frak-sdk/src/main/res/xml/frak_data_extraction_rules.xml` (API 31+) and
+  `frak_full_backup_content.xml` (API 24-30) — exclude the SDK's two
+  SharedPreferences files, `id.frak.sdk.xml` (identity) and
+  `id.frak.sdk.config.xml` (resolved-config cache), from **both**
+  `<cloud-backup>` and `<device-transfer>` (02 §3). Both blocks matter:
+  cloud-backup alone still lets a device-to-device transfer clone whatever is
+  in there. `id.frak.sdk.xml` is a thinner file than 02 §3 assumes — see
+  "Anonymous identity" below — but the exclusion stays, because the merchant
+  marker it holds is what triggers regeneration. **Neither file does anything
+  until the merchant wires it into their own `<application>` tag** — see
+  "Backup and device-transfer exclusion" below.
 - `frak-sdk/consumer-rules.pro`, `frak-sdk-ui/consumer-rules.pro` — R8 rules that
   ship *inside* the AAR, so merchants paste nothing into their own config
   (05 §4). Empty today; rules land alongside the code that needs them.
@@ -382,7 +387,7 @@ What is pinned, because JSONL is weakest exactly here:
 | Bounds | 1000 events / 14 days, oldest dropped first — but enforced on **read**, so the file still grows unbounded while backoff is armed and nothing drains it. See `06-open-findings.md` §3.2. |
 | Poison | evicted after 3 permanent 4xx, so one rejected event cannot block the queue forever. |
 | Backoff | the shared `Backoff` — exponential, jittered, `Retry-After`-aware. 429 and 5xx back off without dropping. |
-| `resetAnonymousId` | purges the queue, and the drain independently drops any event whose captured id is no longer the current one — the purge can race a flush, so the guarantee cannot rest on it alone. |
+| `resetAnonymousId` | purges the queue **only when the keystore delete actually succeeded** — a throwing `deleteEntry` leaves the old identity in place and the queue untouched, rather than purging on the assumption a rotation happened that did not. When it does purge, the drain independently drops any event whose captured id is no longer the current one — the purge can race a flush, so the guarantee cannot rest on it alone. |
 
 Three gaps to know about:
 
@@ -446,6 +451,44 @@ than returning null for an entry an OS upgrade left unreadable, and that throw
 used to escape `loadOrCreate`, leaving the install with no identity for its
 lifetime. `load` now answers null for it so `create` mints a replacement. That
 path has no executed coverage on any machine short of a device.
+
+## Backup and device-transfer exclusion
+
+**This is a required integration step, not optional hardening.** Without it, the
+SDK's identity and resolved-config `SharedPreferences` files are included in
+Android's Auto Backup (cloud) and in the standard new-phone device-transfer flow,
+unmodified. A restored or transferred device would carry another installation's
+anonymous id and merchant marker straight in — the exact resurrection
+`data_extraction_rules.xml`'s header and 02 §3 exist to prevent.
+
+The SDK ships two resource files but cannot wire either into its own manifest:
+`android:dataExtractionRules` (API 31+) and `android:fullBackupContent` (API
+24-30) are both **singular attributes** on `<application>`, and Gradle's
+manifest merger does not union them. If the SDK declared one and the merchant
+app also declared one, the merge fails outright — a build error, not a silent
+drop — unless the merchant adds `tools:replace` themselves; a library cannot
+apply `tools:replace` to its own consumer's manifest. There is no "only if the
+merchant hasn't set one" declaration available from the library side. So both
+files ship as plain resources, and the merchant adds this to their own
+`<application>` tag:
+
+```xml
+<application
+    android:dataExtractionRules="@xml/frak_data_extraction_rules"
+    android:fullBackupContent="@xml/frak_full_backup_content">
+```
+
+If the merchant already has their own rules file for either attribute, merge
+the SDK's two `<exclude>` entries into it instead of replacing the reference:
+`frak_data_extraction_rules.xml`'s `<cloud-backup>`/`<device-transfer>` schema
+supports `<include>` of another rules file's contents; the legacy
+`fullBackupContent` schema has no `<include>` element, so its two `<exclude>`
+entries need copying in by hand. Either way, `tools:replace` on `<application>`
+is needed if both the SDK's file and the merchant's own are referenced by the
+same attribute.
+
+There is no build-time or runtime check that a merchant has done this — a
+debug-build assertion is planned but not implemented (`06-open-findings.md` S3).
 
 ## Logging
 

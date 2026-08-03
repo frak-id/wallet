@@ -5,12 +5,28 @@ import id.frak.sdk.net.UrlQuery
 
 /** The two URLs that link this installation's anonymous id to a Frak wallet. */
 internal object InstallLinks {
-    /** `<scheme>://install?m=&a=`. Wallet performs `POST /user/identity/ensure`, which needs a wallet session. */
+    /**
+     * `<scheme>://install?m=&a=&p=`. Wallet performs `POST /user/identity/ensure`, which needs a
+     * wallet session.
+     *
+     * [installProof] rides as a search param, not the `#p=` fragment the hosted install page
+     * uses. A fragment cannot survive this hop: the wallet's deep-link router calls `navigate`,
+     * so `window.location.hash` is already empty by the time `/install` renders — its
+     * `routeResolvers.install` forwards `?p=` for exactly that reason. The trade-off a fragment
+     * buys (never sent to a server, never logged, never in a `Referer`) is not lost here
+     * either, since a custom-scheme URL is handed to the OS and never leaves the device.
+     */
     fun deepLink(
         scheme: String,
         merchantId: String,
         anonymousId: String,
-    ): String = "$scheme://install?m=${PercentEncoding.encode(merchantId)}&a=${PercentEncoding.encode(anonymousId)}"
+        installProof: String? = null,
+    ): String {
+        val url =
+            "$scheme://install?m=${PercentEncoding.encode(merchantId)}" +
+                "&a=${PercentEncoding.encode(anonymousId)}"
+        return if (installProof == null) url else "$url&p=${PercentEncoding.encode(installProof)}"
+    }
 
     /**
      * Play Store listing with an install referrer carrying the same pair. Referrer is a

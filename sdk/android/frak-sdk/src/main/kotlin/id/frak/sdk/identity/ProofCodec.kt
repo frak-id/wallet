@@ -1,6 +1,7 @@
 package id.frak.sdk.identity
 
 import id.frak.sdk.core.Base64Url
+import id.frak.sdk.core.Uuid
 
 /** Domain-separated proof operations: a signature for one op must never verify for another. */
 internal enum class ProofOp(
@@ -33,34 +34,17 @@ internal object ProofCodec {
     /** Raw `r‖s` ECDSA; low-S normalisation not guaranteed. */
     const val SIG_BYTES: Int = 64
 
-    private val UUID_REGEX =
-        Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
     /** Parses (not lowercases) so signed bytes never depend on the caller's case formatting. */
     fun uuidToBytes(
         value: String,
         label: String,
-    ): ByteArray {
-        require(UUID_REGEX.matches(value)) { "$label must be a UUID string, got: $value" }
-        val hex = value.replace("-", "")
-        return ByteArray(UUID_BYTES) { index ->
-            hex.substring(index * 2, index * 2 + 2).toInt(16).toByte()
-        }
-    }
+    ): ByteArray = Uuid.toBytes(value, label)
 
     /** Formats 16 raw bytes as a lowercase hyphenated UUID. */
     fun bytesToUuid(
         bytes: ByteArray,
         offset: Int = 0,
-    ): String {
-        val hex = StringBuilder(32)
-        for (index in 0 until UUID_BYTES) {
-            val byte = bytes[offset + index].toInt() and 0xFF
-            hex.append(HEX[byte ushr 4]).append(HEX[byte and 0xF])
-        }
-        return "${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-" +
-            "${hex.substring(16, 20)}-${hex.substring(20, 32)}"
-    }
+    ): String = Uuid.fromBytes(bytes, offset)
 
     /** First 16 bytes of the SHA-256 digest, RFC-4122 version/variant bits overwritten. */
     fun deriveClientIdFromHash(hash: ByteArray): String {
@@ -128,6 +112,4 @@ internal object ProofCodec {
             target[offset + index] = (value ushr ((TS_BYTES - 1 - index) * 8) and 0xFF).toByte()
         }
     }
-
-    private const val HEX = "0123456789abcdef"
 }

@@ -2,6 +2,7 @@ package id.frak.sdk.core
 
 import id.frak.sdk.OpenAppResult
 import id.frak.sdk.applink.FakeAppLauncher
+import id.frak.sdk.config.ConfigStore
 import id.frak.sdk.config.InMemoryKeyValueStore
 import id.frak.sdk.identity.AnonymousIdStore
 import id.frak.sdk.identity.FakeDeviceKeyStore
@@ -12,6 +13,7 @@ import id.frak.sdk.sharing.FrakContext
 import id.frak.sdk.sharing.SharingLinkBuilder
 import id.frak.sdk.sharing.SharingRequest
 import id.frak.sdk.tracking.EventQueue
+import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -19,6 +21,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -56,6 +59,28 @@ class DefaultFrakClientTest {
 
             collector.cancel()
             assertEquals("a same-reference cache hit must not re-emit", listOf(null, "Acme"), emissions)
+        }
+
+    @Test
+    fun `campaigns forceRefresh also forces the config resolve, not just the rewards fetch (D6)`() =
+        runTest {
+            val client = newClient(testScheduler)
+            transport.respond(200, BODY)
+
+            client.campaigns(forceRefresh = false)
+            val resolvesAfterFirst = transport.requests.count { it.url.path == ConfigStore.RESOLVE_PATH }
+
+            // The rewards fetch that follows the second resolve will fail to decode BODY as a
+            // rewards response — irrelevant here, only the resolve call count is under test.
+            runCatching { client.campaigns(forceRefresh = true) }
+            val resolvesAfterForced = transport.requests.count { it.url.path == ConfigStore.RESOLVE_PATH }
+
+            assertEquals("the first call should resolve once", 1, resolvesAfterFirst)
+            assertEquals(
+                "forceRefresh = true must bypass the config cache too, not just the rewards cache",
+                2,
+                resolvesAfterForced,
+            )
         }
 
     @Test
@@ -132,6 +157,48 @@ class DefaultFrakClientTest {
         }
 
     @Test
+    fun `ignores a v2 arrival minted for a different merchant`() =
+        runTest {
+            val client = newClient(testScheduler)
+            transport.respond(200, """{"success":true}""")
+            advanceUntilIdle()
+
+            val posts = { transport.requests.count { it.method == "POST" } }
+            val before = posts()
+
+            assertEquals(true, client.handleReferralLink(foreignMerchantLink()))
+            advanceUntilIdle()
+            assertEquals("a foreign-merchant context must not be tracked as this merchant's arrival", before, posts())
+        }
+
+    @Test
+    fun `tracks a v2 arrival when only the configured merchant id's case or whitespace differs`() =
+        runTest {
+            // The odd casing/whitespace has to live on the config side: FrakContextCodec
+            // rejects any merchantId that isn't a canonical lowercase UUID, so a link can never
+            // carry one — only FrakConfig.merchantId is free-typed and unvalidated. foreignLink()
+            // already carries the canonical MERCHANT_ID from a different device, so the only
+            // variable under test is settings.merchantId vs context.merchantId, which is exactly
+            // what ReferralArrival.sameMerchant normalises. Without that normalisation this link
+            // would be dropped as a foreign-merchant arrival, so the assertion below fails if the
+            // trim/case-fold is removed.
+            val client = newClient(testScheduler, config = FrakConfig(merchantId = " ${MERCHANT_ID.uppercase()} "))
+            transport.respond(200, """{"success":true}""")
+            advanceUntilIdle()
+
+            val posts = { transport.requests.count { it.method == "POST" } }
+            val before = posts()
+
+            assertEquals(true, client.handleReferralLink(foreignLink()))
+            advanceUntilIdle()
+            assertEquals(
+                "a case/whitespace difference in the merchant id must not be mistaken for a foreign merchant",
+                before + 1,
+                posts(),
+            )
+        }
+
+    @Test
     fun `ignores a link carrying no referral context`() =
         runTest {
             val client = newClient(testScheduler)
@@ -173,6 +240,18 @@ class DefaultFrakClientTest {
             launcher.openableSchemes = setOf(FrakEnvironment.Production.walletScheme)
             assertEquals(OpenAppResult.OpenedApp, client.openFrakApp())
             assertEquals(true, launcher.opened.single().startsWith("frakwallet://install?m=$MERCHANT_ID"))
+            // The proof matters more on this arm than on the store one: an installed wallet
+            // lands on `/install` with no Play referrer to read it from, so this is the only
+            // carrier there is. Non-empty, not merely present — an empty `&p=` would satisfy
+            // `contains` while proving nothing reached the wallet, and `substringAfter` needs the
+            // empty missing-delimiter value or it answers the whole URL when there is no `&p=`.
+            assertEquals(
+                true,
+                launcher.opened
+                    .single()
+                    .substringAfter("&p=", "")
+                    .isNotEmpty(),
+            )
         }
 
     @Test
@@ -230,6 +309,30 @@ class DefaultFrakClientTest {
 
             // Null here is what drives the sheet's store-handoff fallback.
             assertNull(client.installPageUrl(RETURN_SCHEME, SESSION_ID))
+        }
+
+    @Test
+    fun `track reports TrackingDisabled, a fresh instance each time, without a network call (A8)`() =
+        runTest {
+            val client =
+                newClient(
+                    testScheduler,
+                    config = FrakConfig(merchantId = MERCHANT_ID, trackingEnabled = false),
+                )
+
+            val first = client.track(Interaction.Custom("first"))
+            val second = client.track(Interaction.Custom("second"))
+
+            val firstError = (first as FrakResult.Failure).error
+            val secondError = (second as FrakResult.Failure).error
+            assertTrue("expected TrackingDisabled, got $firstError", firstError is FrakError.TrackingDisabled)
+            assertTrue("expected TrackingDisabled, got $secondError", secondError is FrakError.TrackingDisabled)
+            // A8: not the same singleton instance — each throw site must capture its own stack trace.
+            assertTrue(
+                "each TrackingDisabled must be its own instance, not a shared singleton",
+                firstError !== secondError,
+            )
+            assertEquals("no request should have been made", 0, transport.requests.size)
         }
 
     @Test
@@ -299,12 +402,22 @@ class DefaultFrakClientTest {
         const val SESSION_ID = "session-1"
         const val BODY = """{"merchantId":"$MERCHANT_ID","name":"Acme","domain":"acme.example"}"""
         const val FOREIGN_CLIENT_ID = "550e8400-e29b-41d4-a716-446655440001"
+        const val FOREIGN_MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440002"
 
         /** A share link from another device: same merchant, a client id this one cannot own. */
         fun foreignLink(): String =
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",
                 context = FrakContext.V2(MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
+                attribution = null,
+                defaults = null,
+            )!!
+
+        /** A share link minted for a different merchant entirely (a v2 context; see 3.2's open V1 half). */
+        fun foreignMerchantLink(): String =
+            SharingLinkBuilder.build(
+                baseUrl = "https://acme.example/p",
+                context = FrakContext.V2(FOREIGN_MERCHANT_ID, 1_709_654_400, clientId = FOREIGN_CLIENT_ID),
                 attribution = null,
                 defaults = null,
             )!!

@@ -73,10 +73,14 @@ internal class DefaultFrakClient(
         get() = identity.anonymousId()
 
     fun resetAnonymousId() {
-        identity.reset()
-        // Purge is best-effort cleanup; the guarantee is the flush loop dropping events
-        // whose captured id no longer matches current.
-        scope.launch { tracker.purge() }
+        // Only purge on a confirmed erasure: a throwing keystore delete leaves the old identity
+        // in place (AnonymousIdStore.reset), and purging anyway would discard queued events that
+        // are about to be re-sent under an id that never actually rotated — permanent data loss
+        // for a GDPR erasure that silently failed. Purge itself stays best-effort cleanup; the
+        // guarantee is the flush loop dropping events whose captured id no longer matches current.
+        if (identity.reset()) {
+            scope.launch { tracker.purge() }
+        }
     }
 
     init {
@@ -186,8 +190,9 @@ internal class DefaultFrakClient(
         if (settings.deepLink == DeepLinkHandling.Disabled) return false
         val context = SharingLinkBuilder.parse(url) ?: return false
 
-        if (ReferralArrival.isSelfReferral(context, identity.anonymousId())) {
-            logger.info("Ignoring a referral link this device produced.")
+        val ownMerchantId = settings.merchantId ?: configState.value?.merchantId
+        if (ReferralArrival.shouldIgnoreArrival(context, identity.anonymousId(), ownMerchantId)) {
+            logger.info("Ignoring a self- or foreign-merchant referral link.")
             return true
         }
 
@@ -208,15 +213,29 @@ internal class DefaultFrakClient(
             val link = installIdentity() ?: return@frakCall OpenAppResult.Failed
             val (merchantId, anonymousId) = link
 
+            // Minted once, for whichever arm takes it. The deep link needs it as much as the
+            // store referrer does: an installed wallet lands on `/install` with no referrer to
+            // read, so without the proof here the app-installed path is the only one that
+            // reaches `ensure` unproven. Null when the keystore cannot sign, which both arms
+            // already degrade past rather than block on.
+            val proof = identity.signProof(ProofOp.Install, merchantId)
+
             // Attempted rather than gated on the probe: `isInstalled` can be false for reasons
             // unrelated to the app being absent, and `startActivity` already reports whether
             // anything took the intent. Mirrors iOS, where the probe is the weaker signal by a
             // wider margin — there it needs a merchant-side plist entry the SDK cannot inject.
-            if (launcher.open(InstallLinks.deepLink(settings.env.walletScheme, merchantId, anonymousId))) {
+            val deepLink =
+                InstallLinks.deepLink(
+                    scheme = settings.env.walletScheme,
+                    merchantId = merchantId,
+                    anonymousId = anonymousId,
+                    installProof = proof,
+                )
+            if (launcher.open(deepLink)) {
                 return@frakCall OpenAppResult.OpenedApp
             }
 
-            val store = storeUrl(merchantId, anonymousId)
+            val store = storeUrl(merchantId, anonymousId, proof)
             if (launcher.open(store)) OpenAppResult.OpenedStore else OpenAppResult.Failed
         }
 
@@ -259,34 +278,54 @@ internal class DefaultFrakClient(
         return merchantId to anonymousId
     }
 
+    /** [installProof] defaulted so [installUrl], which has no second arm to share one with, still mints its own. */
     private fun storeUrl(
         merchantId: String,
         anonymousId: String,
+        installProof: String? = identity.signProof(ProofOp.Install, merchantId),
     ): String =
         InstallLinks.playStore(
             packageId = settings.env.walletPackageId,
             merchantId = merchantId,
             anonymousId = anonymousId,
-            installProof = identity.signProof(ProofOp.Install, merchantId),
+            installProof = installProof,
         )
 
-    /** Only ever fails for a reason that won't resolve itself; connectivity is the queue's problem. */
+    /**
+     * Only ever fails for a reason that won't resolve itself; connectivity is the queue's
+     * problem.
+     *
+     * Routed through [frakCall] (2.11): a bare `catch (known: FrakError)` here left an
+     * unexpected `Throwable` — a genuine SDK bug inside [block], not a [FrakError] — to escape
+     * uncaught instead of coming back as [FrakResult.Failure] the way every other public entry
+     * point normalises it. `frakCall` itself always rethrows rather than returning, so the
+     * catch here still does the [FrakResult] conversion; only the exception *normalisation* is
+     * shared now.
+     */
     private suspend inline fun trackingCall(block: (merchantId: String) -> FrakResult<Unit>): FrakResult<Unit> =
         try {
-            requireTrackingEnabled()
-            block(settings.merchantId ?: resolveConfig().merchantId)
+            frakCall {
+                requireTrackingEnabled()
+                block(settings.merchantId ?: resolveConfig().merchantId)
+            }
         } catch (known: FrakError) {
             FrakResult.Failure(known)
         }
 
-    /** Resolve first so a typo'd merchant id surfaces as [FrakError.MerchantResolutionFailed]. */
+    /**
+     * Resolve first so a typo'd merchant id surfaces as [FrakError.MerchantResolutionFailed].
+     *
+     * [forceRefresh] forwards to the config resolve too (D6): a caller asking to bypass the
+     * rewards cache almost certainly also wants a fresh merchant id/currency, not a stale one
+     * served alongside freshly-fetched rewards.
+     */
     private suspend fun fetchRewards(
         targetInteraction: String?,
         audience: RewardAudience?,
         forceRefresh: Boolean,
         products: List<ProductDetails>? = null,
     ) = rewards.fetch(
-        merchantId = resolveConfig(forceRefresh = false).merchantId,
+        merchantId = resolveConfig(forceRefresh = forceRefresh).merchantId,
         currency = settings.metadata.currency,
         targetInteraction = targetInteraction,
         audience = audience,
@@ -295,7 +334,7 @@ internal class DefaultFrakClient(
     )
 
     private fun requireTrackingEnabled() {
-        if (!settings.trackingEnabled) throw FrakError.TrackingDisabled
+        if (!settings.trackingEnabled) throw FrakError.TrackingDisabled()
     }
 }
 

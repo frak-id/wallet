@@ -20,7 +20,7 @@ public class FrakSharingLauncher internal constructor(
     /** A second call while one is up reports [FrakError.AlreadyPresenting] rather than queueing or replacing. */
     public fun launch(request: SharingRequest) {
         if (active != null) {
-            onResult.value(SharingResult.Failed(FrakError.AlreadyPresenting))
+            onResult.value(SharingResult.Failed(FrakError.AlreadyPresenting()))
             return
         }
         active = request
@@ -33,16 +33,29 @@ public class FrakSharingLauncher internal constructor(
     }
 }
 
-/** Remembers a [FrakSharingLauncher] and hosts its sheet. */
+/**
+ * Remembers a [FrakSharingLauncher] and hosts its sheet.
+ *
+ * [heightFraction] is the share of the screen the sheet takes, clamped to `0.3..1.0`. A
+ * merchant whose page is shorter (no products, no FAQ) can trim it; the default leaves the
+ * hosted page its whole first screenful.
+ */
 @Composable
-public fun rememberFrakSharingLauncher(onResult: (SharingResult) -> Unit = {}): FrakSharingLauncher {
+public fun rememberFrakSharingLauncher(
+    heightFraction: Float = FrakSharingDefaults.HEIGHT_FRACTION,
+    onResult: (SharingResult) -> Unit = {},
+): FrakSharingLauncher {
     val currentOnResult = rememberUpdatedState(onResult) // always calls the current lambda, not the captured one
     val launcher = remember { FrakSharingLauncher(currentOnResult) }
 
     WarmSharingWebView() // this composable IS the share surface becoming visible
 
     launcher.active?.let { request ->
-        FrakSharingSheet(request = request, onFinished = launcher::finish)
+        FrakSharingSheet(
+            request = request,
+            heightFraction = heightFraction,
+            onFinished = launcher::finish,
+        )
     }
 
     return launcher

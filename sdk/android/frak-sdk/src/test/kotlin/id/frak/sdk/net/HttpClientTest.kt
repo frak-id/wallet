@@ -9,6 +9,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -37,8 +38,9 @@ class HttpClientTest {
                 newClient { url ->
                     attempts++
                     // A pooled connection the server closed while idle fails on
-                    // the *next* use exactly like this.
-                    if (attempts == 1) throw IOException("unexpected end of stream")
+                    // the *next* use exactly like this — a transient EOFException, one of the
+                    // exception types HttpClient.isTransient treats as worth retrying (N6).
+                    if (attempts == 1) throw java.io.EOFException("unexpected end of stream")
                     transport.respond(200, "{}")
                     transport.open(url)
                 }
@@ -54,7 +56,9 @@ class HttpClientTest {
             val client =
                 newClient {
                     attempts++
-                    throw IOException("no route to host")
+                    // A SocketException subtype: still transient (N6) and worth retrying once,
+                    // just persistently unlucky both times in this test.
+                    throw java.net.NoRouteToHostException("no route to host")
                 }
 
             val failure = runCatching { client.get("/x") }.exceptionOrNull()
@@ -64,6 +68,66 @@ class HttpClientTest {
             assertTrue(
                 "the first failure is preserved for diagnosis",
                 failure?.cause?.suppressed?.isNotEmpty() == true,
+            )
+        }
+
+    @Test
+    fun `a non-transient IOException, like an SSL trust failure, is not retried`() =
+        runTest {
+            var attempts = 0
+            val client =
+                newClient {
+                    attempts++
+                    // Not in HttpClient.isTransient's allowlist: a trust failure will just fail
+                    // identically again, so retrying it only burns the deadline's budget (N6).
+                    throw javax.net.ssl.SSLHandshakeException("PKIX path building failed")
+                }
+
+            val failure = runCatching { client.get("/x") }.exceptionOrNull()
+
+            assertTrue("expected Network, got $failure", failure is FrakError.Network)
+            assertEquals("never retried", 1, attempts)
+        }
+
+    @Test
+    fun `a DNS lookup failure is retried, matching iOS's cannotFindHost-dnsLookupFailed`() =
+        runTest {
+            var attempts = 0
+            val client =
+                newClient { url ->
+                    attempts++
+                    // UnknownHostException is a plain IOException, not a SocketException subtype
+                    // — needs its own arm in isTransient, or this silently stops being retried (N6).
+                    if (attempts == 1) throw java.net.UnknownHostException("backend.frak.id")
+                    transport.respond(200, "{}")
+                    transport.open(url)
+                }
+
+            client.get("/x")
+
+            assertEquals("retried once", 2, attempts)
+        }
+
+    @Test
+    fun `the retry is delayed, not immediate`() =
+        runTest {
+            var attempts = 0
+            val client =
+                newClient { url ->
+                    attempts++
+                    if (attempts == 1) throw java.io.EOFException("unexpected end of stream")
+                    transport.respond(200, "{}")
+                    transport.open(url)
+                }
+
+            client.get("/x")
+
+            // The virtual clock only advances past a delay() once one is scheduled and run, so
+            // this proves the 100-300ms jittered delay (N6) actually executed, not just that time
+            // could have passed.
+            assertTrue(
+                "expected a jittered 100-300ms delay before the retry, was ${currentTime}ms",
+                currentTime in 100..300,
             )
         }
 
@@ -210,6 +274,19 @@ class HttpClientTest {
         }
 
     @Test
+    fun `204, 205 and 304 are read as an empty body rather than misread as a transport failure`() =
+        runTest {
+            for (status in listOf(204, 205, 304)) {
+                transport.respond(status, "")
+
+                val response = newClient().get("/x")
+
+                assertEquals("status $status", status, response.status)
+                assertEquals("status $status has no body", "", response.body)
+            }
+        }
+
+    @Test
     fun `an implausible Retry-After is clamped`() =
         runTest {
             transport.respond(429, "Too Many Requests", retryAfter = "99999999")
@@ -226,6 +303,48 @@ class HttpClientTest {
             // seconds unconditionally, so a date form means something unexpected
             // is in the path and the backoff falls back to its own schedule.
             assertEquals(null, newClient().get("/x").retryAfterSeconds)
+        }
+
+    @Test
+    fun `a body at the size cap is read in full`() =
+        runTest {
+            val body = "x".repeat(HttpClient.MAX_RESPONSE_BODY_BYTES.toInt())
+            transport.respond(200, body)
+
+            assertEquals(body.length, newClient().get("/x").body.length)
+        }
+
+    @Test
+    fun `a Content-Length over the cap is rejected before the stream is read`() =
+        runTest {
+            // The real body is small; only the advertised header lies. Proves the pre-check runs
+            // off Content-Length alone and does not need to read anything to reject.
+            transport.respond(200, "{}", declaredContentLength = HttpClient.MAX_RESPONSE_BODY_BYTES + 1)
+
+            val failure = runCatching { newClient().get("/x") }.exceptionOrNull()
+
+            assertTrue("expected Network, got $failure", failure is FrakError.Network)
+            assertTrue(
+                "expected ResponseTooLargeException, got ${failure?.cause}",
+                failure?.cause is ResponseTooLargeException,
+            )
+        }
+
+    @Test
+    fun `a body over the cap with no advertised Content-Length is rejected during the read, not truncated`() =
+        runTest {
+            val oversized = "x".repeat(HttpClient.MAX_RESPONSE_BODY_BYTES.toInt() + 1)
+            // declaredContentLength = -1 stands in for "absent", exactly what HttpURLConnection
+            // reports when a server sends no Content-Length header (e.g. chunked transfer).
+            transport.respond(200, oversized, declaredContentLength = -1)
+
+            val failure = runCatching { newClient().get("/x") }.exceptionOrNull()
+
+            assertTrue("expected Network, got $failure", failure is FrakError.Network)
+            assertTrue(
+                "expected ResponseTooLargeException, got ${failure?.cause}",
+                failure?.cause is ResponseTooLargeException,
+            )
         }
 
     private fun kotlinx.coroutines.test.TestScope.newClient(open: (URL) -> HttpURLConnection = transport::open) =

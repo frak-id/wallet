@@ -9,6 +9,15 @@ actor ConfigStore {
     /// Served without a network call.
     static let freshTTL: TimeInterval = 5 * 60
 
+    /// A `fetchedAt` in the future — the clock stepped backward since the fetch, or a
+    /// corrupted/tampered persisted value — must never read as fresh:
+    /// `now().timeIntervalSince(fetchedAt)` would be negative, which is always less than
+    /// `freshTTL`, pinning the entry as fresh forever (N7).
+    private static func isFresh(_ fetchedAt: Date, now: Date) -> Bool {
+        let elapsed = now.timeIntervalSince(fetchedAt)
+        return elapsed >= 0 && elapsed < freshTTL
+    }
+
     static let resolvePath = "/user/merchant/resolve"
 
     private static let storageKey = "resolved-config"
@@ -60,7 +69,7 @@ actor ConfigStore {
 
         let cached = forceRefresh ? nil : readCache(key)
         if let cached {
-            if now().timeIntervalSince(cached.fetchedAt) < Self.freshTTL {
+            if Self.isFresh(cached.fetchedAt, now: now()) {
                 return cached.config
             }
             // Stale: hand back what we have and refresh behind the caller's back.
@@ -114,7 +123,8 @@ actor ConfigStore {
         if response.status == Self.httpNotFound {
             return .merchantResolutionFailed(
                 reason: "the backend has no merchant registered for this app. "
-                    + "Check FrakConfig.merchantId, or that this bundle id is in the merchant's allowed package ids."
+                    + "Check FrakConfig.merchantId, or that this bundle id is in the merchant's "
+                    + "allowed package ids."
             )
         }
         let code = JSONDecoding.errorCode(in: response.body)
@@ -124,8 +134,9 @@ actor ConfigStore {
             logger.error("Frak sent a bundleId with no platform. This is an SDK bug — please report it.")
         }
         if response.status == Self.httpUnprocessable {
-            let text = String(decoding: response.body, as: UTF8.self)
-            logger.error("Frak sent a request the backend rejected as malformed: \(text.prefix(200))")
+            // Never log response.body here: it is backend-controlled and may echo request content.
+            let bodyBytes = response.body.count
+            logger.error("Frak sent a request the backend rejected as malformed (status 422, body \(bodyBytes) bytes)")
         }
         return response.toServerError()
     }

@@ -8,12 +8,19 @@ public sealed class FrakError(
     message: String,
     cause: Throwable? = null,
 ) : Exception(message, cause) {
-    /** Client method reached before [id.frak.sdk.Frak.initialize]. Always a programmer error. */
-    public object NotInitialized : FrakError(
-        "Frak is not initialized. Call Frak.initialize(context, config) before using the client.",
-    ) {
-        private fun readResolve(): Any = NotInitialized
-    }
+    /**
+     * Client method reached before [id.frak.sdk.Frak.initialize]. Always a programmer error.
+     *
+     * A plain `class`, not a Kotlin `object` (A8): `Exception.fillInStackTrace()` runs once, at
+     * construction. A singleton's stack trace is therefore captured the first time it is ever
+     * touched — typically class init — and every later `throw FrakError.NotInitialized` reports
+     * *that* call site, not the real one. A fresh instance per throw is the only way to get a
+     * trace that points at the actual bug.
+     */
+    public class NotInitialized :
+        FrakError(
+            "Frak is not initialized. Call Frak.initialize(context, config) before using the client.",
+        )
 
     /** DNS failure, no connectivity, TLS failure, timeout. [cause] carries the underlying [java.io.IOException]. */
     public class Network(
@@ -42,19 +49,23 @@ public sealed class FrakError(
         cause: Throwable? = null,
     ) : FrakError("Frak could not decode a backend response: $message", cause)
 
-    /** Network call made while [FrakConfig.trackingEnabled] is false. */
-    public object TrackingDisabled : FrakError(
-        "Frak tracking is disabled by configuration; no network request was issued.",
-    ) {
-        private fun readResolve(): Any = TrackingDisabled
-    }
+    /**
+     * Network call made while [FrakConfig.trackingEnabled] is false. See [NotInitialized]'s doc:
+     * not an `object`, for the same stack-trace reason (A8).
+     */
+    public class TrackingDisabled :
+        FrakError(
+            "Frak tracking is disabled by configuration; no network request was issued.",
+        )
 
-    /** [id.frak.sdk.ui.FrakSharingLauncher.launch] called while a sheet is already up. */
-    public object AlreadyPresenting : FrakError(
-        "A Frak sharing sheet is already presented.",
-    ) {
-        private fun readResolve(): Any = AlreadyPresenting
-    }
+    /**
+     * [id.frak.sdk.ui.FrakSharingLauncher.launch] called while a sheet is already up. See
+     * [NotInitialized]'s doc: not an `object`, for the same stack-trace reason (A8).
+     */
+    public class AlreadyPresenting :
+        FrakError(
+            "A Frak sharing sheet is already presented.",
+        )
 
     /** No merchant identified: bad `packageId`, or config has neither `merchantId` nor `packageId`. */
     public class MerchantResolutionFailed(

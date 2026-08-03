@@ -67,6 +67,25 @@ class ConfigStoreTest {
         }
 
     @Test
+    fun `a cache fetched in the future relative to now is treated as stale, not fresh forever`() =
+        runTest {
+            // A clock stepped backward after the fetch, or a corrupted/tampered persisted
+            // fetchedAtMillis, must not pin the entry as fresh forever (N7): now() - fetchedAtMillis
+            // negative is still "less than FRESH_TTL_MILLIS" if only the upper bound is checked.
+            val configStore = newStore(this)
+            clock = 10_000L
+            transport.respond(200, BODY)
+            configStore.resolve(query, forceRefresh = false)
+
+            clock = 0L // stepped backward: fetchedAtMillis (10_000) is now in the future
+            transport.respond(200, BODY.replace("Acme", "Acme Renamed"))
+            configStore.resolve(query, forceRefresh = false)
+            testScheduler.advanceUntilIdle()
+
+            assertEquals("a future-dated entry must revalidate, not read as fresh", 2, transport.requests.size)
+        }
+
+    @Test
     fun `a stale cache is served immediately and revalidated in the background`() =
         runTest {
             val configStore = newStore(this)

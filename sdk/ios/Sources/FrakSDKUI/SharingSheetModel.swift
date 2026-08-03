@@ -33,6 +33,11 @@
         /// Copy/Share act on the *product* link and reload `/sharing`, which would throw away
         /// the install page and the proof minted for it, so they are hidden past this point.
         @Published private(set) var showingInstallPage = false
+        /// The page is on its post-share confirmation screen, either because this sheet reloaded
+        /// it with `&confirmed=1` or because the page restored a saved confirmation of its own.
+        /// The footer is hidden there: the share already happened, and the confirmation screen
+        /// carries its own "share again" and install controls.
+        @Published private(set) var showingConfirmation = false
         @Published private(set) var copyConfirmed = false
 
         /// Every outcome as it happens; the caller keeps the most significant.
@@ -211,6 +216,9 @@
             case .shareAgain:
                 if let url = session?.url(confirmed: false) {
                     showingInstallPage = false
+                    // The page left its confirmation screen, so the footer belongs back: this
+                    // reload is the user asking to share a second time.
+                    showingConfirmation = false
                     webView?.load(url)
                 }
             case .code(let value, let expiresAt):
@@ -233,7 +241,18 @@
             // from the device's real state — which is also a better answer than
             // `canOpenURL`, since it needs no `LSApplicationQueriesSchemes` entry from the
             // merchant. Anything else genuinely belongs in the browser.
-            if isWalletAppStoreListing(url), presentAppStoreOverlay() { return }
+            if isWalletAppStoreListing(url) {
+                if presentAppStoreOverlay() { return }
+                // No foreground-active scene to host the overlay (e.g. the app is
+                // backgrounding). Falling through to `UIApplication.shared.open(url)` here
+                // would send an owner of an already-installed wallet to that wallet's own
+                // store page instead of into it. `openFrakApp()` is the same deep-link-first,
+                // store-fallback answer the install action already uses a few lines up this
+                // file when there is no install page to hand the user to — it tries the
+                // wallet's own scheme first and only reaches the store if that fails.
+                Task { _ = await openFrakApp() }
+                return
+            }
             Task { _ = await UIApplication.shared.open(url) }
         }
 
@@ -436,9 +455,11 @@
         /// `native=1` its own controls are hidden.
         private func confirm(_ result: SharingResult) {
             report(result)
-            if let url = session?.url(confirmed: true) {
-                webView?.load(url)
-            }
+            guard let url = session?.url(confirmed: true) else { return }
+            // Set alongside the navigation rather than on page load: the footer has to go at the
+            // moment the share lands, not a network round trip later.
+            showingConfirmation = true
+            webView?.load(url)
         }
 
         private func report(_ result: SharingResult) {

@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import FrakSDK
 
@@ -117,4 +118,30 @@ private func sharingPageJSONNumber(_ value: Double) -> NSDecimalNumber? {
     var text = value.description
     if text.hasSuffix(".0") { text.removeLast(2) }
     return NSDecimalNumber(string: text)
+}
+
+/// Tunable defaults for `View.frakSharingSheet(isPresented:request:heightFraction:onResult:)`.
+public enum FrakSharingDefaults {
+    /// The default fraction of the screen the sharing sheet takes — the hosted page plus the
+    /// native chrome around it (title above, Copy/Share footer below).
+    ///
+    /// Mirrors `FrakSharingDefaults.HEIGHT_FRACTION` on Android — keep both in step.
+    public static let heightFraction: CGFloat = 0.85
+}
+
+/// The range a caller-supplied `heightFraction` is clamped into, defensively: below it the
+/// hosted page — a full-page React app with its own header and FAQ — would be clipped to
+/// something unusably small; above it the sheet could be pushed taller than the screen.
+let sharingHeightFractionRange: ClosedRange<CGFloat> = 0.3...1.0
+
+/// Clamps a merchant-supplied `heightFraction` into `sharingHeightFractionRange`.
+///
+/// A non-finite input (NaN, ±infinity — reachable if a caller computes the fraction) answers
+/// the default rather than propagating into a `.frame(height:)` SwiftUI would refuse to lay
+/// out; `ClosedRange.contains`/`min`/`max` all treat NaN as out of range without signalling it,
+/// so this is checked explicitly. Lives outside `#if canImport(UIKit)`, like `sharingDecision`,
+/// so the clamp itself is exercised on the macOS test host.
+func clampedSharingHeightFraction(_ fraction: CGFloat) -> CGFloat {
+    guard fraction.isFinite else { return FrakSharingDefaults.heightFraction }
+    return min(max(fraction, sharingHeightFractionRange.lowerBound), sharingHeightFractionRange.upperBound)
 }

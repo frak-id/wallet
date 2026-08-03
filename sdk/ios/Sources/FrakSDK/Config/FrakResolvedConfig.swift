@@ -106,9 +106,13 @@ public struct ResolvedSdkConfig: Decodable, Sendable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         // A wrong-typed or unrecognised optional field reads as nil rather than failing
         // the whole decode (forward compatibility): a missing logo beats a bricked config.
-        name = try? container.decodeIfPresent(String.self, forKey: .name)
-        logoURL = try? container.decodeIfPresent(String.self, forKey: .logoURL)
-        homepageLink = try? container.decodeIfPresent(String.self, forKey: .homepageLink)
+        // Empty strings normalise to nil (2.10): the Android twin's JsonReader.string does the
+        // same (`.takeIf { it.isNotEmpty() }`) for every optional string field on the wire, and
+        // an unnormalised empty string here would otherwise decode successfully on iOS while
+        // becoming null on Android for the identical response.
+        name = (try? container.decodeIfPresent(String.self, forKey: .name))?.nonEmpty
+        logoURL = (try? container.decodeIfPresent(String.self, forKey: .logoURL))?.nonEmpty
+        homepageLink = (try? container.decodeIfPresent(String.self, forKey: .homepageLink))?.nonEmpty
         hidden = (try? container.decodeIfPresent(Bool.self, forKey: .hidden)) ?? false
         translations = (try? container.decodeIfPresent([String: String].self, forKey: .translations)) ?? [:]
         placements =
@@ -153,7 +157,7 @@ public struct ResolvedPlacement: Decodable, Sendable, Hashable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         components = try? container.decodeIfPresent(ResolvedComponents.self, forKey: .components)
-        targetInteraction = try? container.decodeIfPresent(String.self, forKey: .targetInteraction)
+        targetInteraction = (try? container.decodeIfPresent(String.self, forKey: .targetInteraction))?.nonEmpty
         translations = (try? container.decodeIfPresent([String: String].self, forKey: .translations)) ?? [:]
     }
 }
@@ -316,4 +320,11 @@ public struct AttributionDefaults: Decodable, Sendable, Hashable {
         self.via = via
         self.ref = ref
     }
+}
+
+extension String {
+    /// nil for an empty string, self otherwise. Used by this file's hand-written forgiving
+    /// decoders (2.10) to match the Android twin's `JsonReader.string`, which normalises the
+    /// same way for every optional string field on the wire.
+    fileprivate var nonEmpty: String? { isEmpty ? nil : self }
 }

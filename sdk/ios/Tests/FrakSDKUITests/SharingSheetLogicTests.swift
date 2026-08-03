@@ -230,3 +230,39 @@ extension SharingPageProductsJSONTests {
         #expect(!json.contains("-0"))
     }
 }
+
+/// The defensive clamp on a merchant-supplied `heightFraction`, run on the macOS test host
+/// since `clampedSharingHeightFraction` sits outside `SharingSheetModel`'s `#if
+/// canImport(UIKit)` for exactly that reason.
+@Suite("clampedSharingHeightFraction")
+struct ClampedSharingHeightFractionTests {
+    @Test("a value already inside the range is left untouched")
+    func withinRangePassesThrough() {
+        #expect(clampedSharingHeightFraction(0.7) == 0.7)
+        #expect(clampedSharingHeightFraction(0.3) == 0.3)
+        #expect(clampedSharingHeightFraction(1.0) == 1.0)
+    }
+
+    @Test("a value below the floor is raised to it")
+    func belowFloorIsRaised() {
+        #expect(clampedSharingHeightFraction(0.0) == 0.3)
+        #expect(clampedSharingHeightFraction(-1.0) == 0.3)
+    }
+
+    @Test("a value above the ceiling is lowered to it")
+    func aboveCeilingIsLowered() {
+        #expect(clampedSharingHeightFraction(2.0) == 1.0)
+    }
+
+    @Test("a non-finite value falls back to the default rather than propagating")
+    func nonFiniteFallsBackToDefault() {
+        #expect(clampedSharingHeightFraction(.nan) == FrakSharingDefaults.heightFraction)
+        #expect(clampedSharingHeightFraction(.infinity) == FrakSharingDefaults.heightFraction)
+        #expect(clampedSharingHeightFraction(-.infinity) == FrakSharingDefaults.heightFraction)
+    }
+
+    @Test("the public default itself is inside the clamp's own range")
+    func defaultIsWithinRange() {
+        #expect(clampedSharingHeightFraction(FrakSharingDefaults.heightFraction) == FrakSharingDefaults.heightFraction)
+    }
+}

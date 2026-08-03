@@ -27,6 +27,7 @@ internal class FakeHttpTransport {
     private var body = ""
     private var retryAfter: String? = null
     private var failure: IOException? = null
+    private var declaredContentLength: Long? = null
 
     /** Scripted statuses, consumed one per request; the last one repeats. */
     private var statuses = ArrayDeque<Int>()
@@ -35,11 +36,15 @@ internal class FakeHttpTransport {
         status: Int,
         body: String,
         retryAfter: String? = null,
+        /** Null means "derive it from [body]", the truthful default. Set explicitly to simulate a
+         *  lying or absent Content-Length header without actually allocating an oversized body. */
+        declaredContentLength: Long? = null,
     ) {
         this.status = status
         this.body = body
         this.retryAfter = retryAfter
         this.failure = null
+        this.declaredContentLength = declaredContentLength
     }
 
     /** Answers each request with the next status, repeating the last once exhausted. */
@@ -47,6 +52,7 @@ internal class FakeHttpTransport {
         this.statuses = ArrayDeque(statuses.toList())
         this.body = ""
         this.failure = null
+        this.declaredContentLength = null
     }
 
     fun fail(error: IOException) {
@@ -95,12 +101,30 @@ internal class FakeHttpTransport {
 
         override fun getOutputStream() = written
 
+        // The real HttpURLConnection throws for 204/205/304 rather than returning an empty
+        // stream — they never carry a body by spec — which is exactly the shape HttpClient's N5
+        // short-circuit exists to avoid touching.
         override fun getInputStream() =
-            if (status in 200..399) body.byteInputStream() else throw IOException("no input stream")
+            when {
+                status == 204 || status == 205 || status == 304 -> {
+                    throw IOException("no input stream, status $status never carries a body")
+                }
+
+                status in 200..399 -> {
+                    body.byteInputStream()
+                }
+
+                else -> {
+                    throw IOException("no input stream")
+                }
+            }
 
         override fun getErrorStream() = if (status in 200..399) null else body.byteInputStream()
 
         override fun getHeaderField(name: String): String? =
             if (name.equals("Retry-After", ignoreCase = true)) retryAfter else null
+
+        override fun getContentLengthLong(): Long =
+            declaredContentLength ?: body.toByteArray(Charsets.UTF_8).size.toLong()
     }
 }

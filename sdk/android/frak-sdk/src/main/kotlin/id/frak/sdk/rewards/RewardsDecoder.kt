@@ -36,8 +36,8 @@ internal object RewardsDecoder {
             interactionTypeKey = JsonReader.requireString(source, "interactionTypeKey", CONTEXT),
             referrer = JsonReader.obj(source, "referrer")?.let(::decodeReward),
             referee = JsonReader.obj(source, "referee")?.let(::decodeReward),
-            defaultLockupSeconds = JsonReader.double(source, "defaultLockupSeconds"),
-            maxRewardsPerUser = JsonReader.double(source, "maxRewardsPerUser"),
+            defaultLockupSeconds = JsonReader.finiteDouble(source, "defaultLockupSeconds", CONTEXT),
+            maxRewardsPerUser = JsonReader.finiteDouble(source, "maxRewardsPerUser", CONTEXT),
             // Explicit JSON null and absent both mean "no expiry" here.
             expiresAt = JsonReader.string(source, "expiresAt"),
         )
@@ -56,7 +56,7 @@ internal object RewardsDecoder {
 
             "percentage" -> {
                 EstimatedReward.Percentage(
-                    percent = JsonReader.requireDouble(source, "percent", CONTEXT),
+                    percent = JsonReader.requireFiniteDouble(source, "percent", CONTEXT),
                     percentOf = JsonReader.requireString(source, "percentOf", CONTEXT),
                     maxAmount = JsonReader.obj(source, "maxAmount")?.let(::decodeTokenAmount),
                     minAmount = JsonReader.obj(source, "minAmount")?.let(::decodeTokenAmount),
@@ -79,21 +79,23 @@ internal object RewardsDecoder {
     // No discriminator field on a tier; presence of `percent` is the
     // discriminator, matching the producer.
     private fun decodeTier(source: JSONObject): RewardTier {
-        val minValue = JsonReader.requireDouble(source, "minValue", CONTEXT)
-        val maxValue = JsonReader.double(source, "maxValue")
-        val percent = JsonReader.double(source, "percent")
+        val minValue = JsonReader.requireFiniteDouble(source, "minValue", CONTEXT)
+        val maxValue = JsonReader.finiteDouble(source, "maxValue", CONTEXT)
+        val percent = JsonReader.finiteDouble(source, "percent", CONTEXT)
         percent?.let { return RewardTier.Percentage(minValue, maxValue, it) }
 
         val amount = decodeTokenAmount(JsonReader.requireObject(source, "amount", CONTEXT))
         return RewardTier.Amount(minValue, maxValue, amount)
     }
 
+    // requireFiniteDouble, not requireDouble (N1): a NaN/Infinity amount is parseable JSON but
+    // never a legitimate monetary value, and every downstream consumer assumes finiteness.
     private fun decodeTokenAmount(source: JSONObject): TokenAmount =
         TokenAmount(
-            amount = JsonReader.requireDouble(source, "amount", CONTEXT),
-            eurAmount = JsonReader.requireDouble(source, "eurAmount", CONTEXT),
-            usdAmount = JsonReader.requireDouble(source, "usdAmount", CONTEXT),
-            gbpAmount = JsonReader.requireDouble(source, "gbpAmount", CONTEXT),
+            amount = JsonReader.requireFiniteDouble(source, "amount", CONTEXT),
+            eurAmount = JsonReader.requireFiniteDouble(source, "eurAmount", CONTEXT),
+            usdAmount = JsonReader.requireFiniteDouble(source, "usdAmount", CONTEXT),
+            gbpAmount = JsonReader.requireFiniteDouble(source, "gbpAmount", CONTEXT),
         )
 
     private fun decodeBest(source: JSONObject): BestReward =
@@ -101,8 +103,8 @@ internal object RewardsDecoder {
             formatted = JsonReader.requireString(source, "formatted", CONTEXT),
             payoutType = JsonReader.requireString(source, "payoutType", CONTEXT),
             minPurchaseAmount = JsonReader.string(source, "minPurchaseAmount"),
-            minPurchaseValue = JsonReader.double(source, "minPurchaseValue"),
-            lockupDurationDays = JsonReader.double(source, "lockupDurationDays"),
+            minPurchaseValue = JsonReader.finiteDouble(source, "minPurchaseValue", CONTEXT),
+            lockupDurationDays = JsonReader.finiteDouble(source, "lockupDurationDays", CONTEXT),
             // Both absent on a backend older than this field; default to the unscoped shape
             // rather than failing decode over two fields nothing yet depended on.
             isProductScoped = JsonReader.boolean(source, "isProductScoped") ?: false,
@@ -120,8 +122,8 @@ internal object RewardsDecoder {
             productId = JsonReader.string(source, "productId"),
             sku = JsonReader.string(source, "sku"),
             name = JsonReader.string(source, "name"),
-            quantity = JsonReader.double(source, "quantity"),
-            unitPrice = JsonReader.double(source, "unitPrice"),
-            totalPrice = JsonReader.double(source, "totalPrice"),
+            quantity = JsonReader.finiteDouble(source, "quantity", CONTEXT),
+            unitPrice = JsonReader.finiteDouble(source, "unitPrice", CONTEXT),
+            totalPrice = JsonReader.finiteDouble(source, "totalPrice", CONTEXT),
         )
 }

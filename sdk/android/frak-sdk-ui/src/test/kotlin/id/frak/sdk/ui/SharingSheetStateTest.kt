@@ -503,6 +503,64 @@ class SharingSheetStateTest {
             assertNotNull("an ordinary link still opens", shadowOf(app).nextStartedActivity)
         }
 
+    /**
+     * The install page's download button points at the store unconditionally, so without this a
+     * user who already has the wallet installed lands on its Play listing instead of in it.
+     */
+    @Test
+    fun `the wallet's own store listing goes through the app handoff instead of Play`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.openExternally(
+                "https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=merchantId%3Dm",
+            )
+            advanceUntilIdle()
+
+            assertEquals("the deep link must be tried first", 1, client.openFrakAppCount)
+            assertNull("Play must not be opened over the handoff", shadowOf(app).nextStartedActivity)
+        }
+
+    /** Paired with the above: the interception is for the wallet's listing, not for Play at large. */
+    @Test
+    fun `another app's store listing still opens Play`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.openExternally("https://play.google.com/store/apps/details?id=com.merchant.app")
+            advanceUntilIdle()
+
+            assertEquals("not the wallet, so no handoff", 0, client.openFrakAppCount)
+            assertNotNull("a merchant's own listing still opens", shadowOf(app).nextStartedActivity)
+        }
+
+    @Test
+    fun `the footer goes once the share lands, and comes back on share again`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.share()
+            advanceUntilIdle()
+
+            // The page is on its confirmation screen now, with its own share-again and install
+            // controls; a live Copy/Share under them reads as though the share had not landed.
+            assertEquals("the footer must go with the share", true, state.showingConfirmation)
+
+            state.onPageAction(SharingPageAction.ShareAgain)
+            advanceUntilIdle()
+
+            assertEquals("share again puts the footer back", false, state.showingConfirmation)
+        }
+
     private fun TestScope.launchDeadline(state: SharingSheetState) =
         launch { state.awaitLoadDeadline(SHEET_LOAD_DEADLINE_MILLIS) }
 

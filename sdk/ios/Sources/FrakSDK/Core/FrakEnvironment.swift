@@ -4,14 +4,44 @@ import Foundation
 public enum FrakEnvironment: Sendable, Hashable {
     case production
     case development
-    // Local backend serves self-signed HTTPS; needs an ATS exception on device.
-    case custom(wallet: String, backend: String)
+    // `wallet`/`backend` must be `https://`, or `http://` to a loopback/private-network host —
+    // see `CustomOrigin.rejectionReason` for the exact allowlist. That carve-out matches this
+    // case's own documented local-dev workflow (see `custom(wallet:backend:walletScheme:)`
+    // below) and the platform's own default: iOS ATS already blocks plain http to anything else,
+    // so rejecting loopback http here too would just override a merchant's deliberate,
+    // platform-sanctioned ATS exception for no gain. `file:`/`data:`/`javascript:`/anything else
+    // is always rejected: `wallet` loads directly into a WebView for the sharing sheet
+    // (WarmSharingWebView), where file: is a local-file-disclosure vector, not just a
+    // cleartext-transport one — and unlike cleartext, nothing in the platform blocks that.
+    //
+    // Not validated eagerly: matching FrakConfig ("never validated at construction"), a rejected
+    // origin does not throw here. Unlike FrakConfig though, there is no typed error to surface it
+    // as yet — FrakError has no configuration-specific arm (06-open-findings.md A4), so a
+    // rejected origin is swapped for an unreachable placeholder and surfaces only as a generic
+    // FrakError.network (DNS failure) on first use, which names no rule and no offending origin.
+    // Frak.initialize logs the rejection at .error, with the offending origin and the rule, since
+    // it is the one place a configured logger (and the merchant's own FrakLogSink) actually
+    // exists; a typed FrakError.invalidConfiguration-shaped arm is the real fix and belongs with
+    // the A4 error-taxonomy work, not here.
+    //
+    // Swift enum cases cannot carry default argument values (SE-0155 was returned for revision,
+    // never implemented) — the wallet:backend: convenience below is the 2-argument entry point;
+    // this case always carries all three.
+    case custom(wallet: String, backend: String, walletScheme: String)
+
+    /// Local backend serves self-signed HTTPS; needs an ATS exception on device. `walletScheme`
+    /// defaults to Frak's own dev wallet, which is almost never right for a merchant's stub
+    /// server: use `custom(wallet:backend:walletScheme:)` to override it, or a custom install
+    /// ends up probing for (and deep-linking into) Frak's internal dev app.
+    public static func custom(wallet: String, backend: String) -> FrakEnvironment {
+        .custom(wallet: wallet, backend: backend, walletScheme: "frakwallet-dev")
+    }
 
     public var wallet: String {
         switch self {
         case .production: "https://wallet.frak.id"
         case .development: "https://wallet-dev.frak.id"
-        case .custom(let wallet, _): Self.withoutTrailingSlash(wallet)
+        case .custom(let wallet, _, _): CustomOrigin.sanitize(wallet)
         }
     }
 
@@ -19,7 +49,7 @@ public enum FrakEnvironment: Sendable, Hashable {
         switch self {
         case .production: "https://backend.frak.id"
         case .development: "https://backend.gcp-dev.frak.id"
-        case .custom(_, let backend): Self.withoutTrailingSlash(backend)
+        case .custom(_, let backend, _): CustomOrigin.sanitize(backend)
         }
     }
 
@@ -28,12 +58,79 @@ public enum FrakEnvironment: Sendable, Hashable {
     public var walletScheme: String {
         switch self {
         case .production: "frakwallet"
-        case .development, .custom: "frakwallet-dev"
+        case .development: "frakwallet-dev"
+        case .custom(_, _, let walletScheme): walletScheme
         }
     }
 
-    // HTTPClient concatenates origin + path verbatim; avoids a double slash.
-    private static func withoutTrailingSlash(_ origin: String) -> String {
-        origin.hasSuffix("/") ? String(origin.dropLast()) : origin
+    /// `nil` when neither origin of a `.custom` case was rejected; the rejection message
+    /// (naming the offending origin and the rule) otherwise. `Frak.initialize` logs this at
+    /// `.error` — see the `.custom` case doc for why the rejection itself is silent here.
+    var customOriginRejectionReason: String? {
+        guard case .custom(let wallet, let backend, _) = self else { return nil }
+        return [CustomOrigin.rejectionReason(wallet), CustomOrigin.rejectionReason(backend)]
+            .compactMap { $0 }
+            .joined(separator: " ")
+            .nilIfEmpty
+    }
+}
+
+extension String {
+    fileprivate var nilIfEmpty: String? { isEmpty ? nil : self }
+}
+
+/// The `.custom` origin allowlist, plus the placeholder substitution for a rejected origin. See
+/// `FrakEnvironment.custom`'s doc for the rationale.
+enum CustomOrigin {
+    private static let placeholder = "https://frak-sdk-invalid-custom-origin.invalid"
+
+    /// `nil` when `origin` is accepted as-is (besides trailing-slash trimming).
+    static func rejectionReason(_ origin: String) -> String? {
+        // URLComponents (not manual string-splitting) so an IPv6 host in brackets, e.g.
+        // "http://[::1]:3000", parses its port correctly instead of the ":" inside "[::1]"
+        // being mistaken for the host:port separator.
+        let components = URLComponents(string: origin)
+        let scheme = (components?.scheme ?? "").lowercased()
+        let host = components?.host ?? ""
+
+        if scheme == "https" { return nil }
+        if scheme == "http", isLoopbackOrPrivateHost(String(host)) { return nil }
+        if scheme == "http" {
+            return
+                "\"\(origin)\" uses http:// to a non-local host \"\(host)\". Only https://, or "
+                + "http:// to a loopback/private-network host (localhost, 127.0.0.0/8, ::1, "
+                + "10.0.2.2, 10.0.3.2, *.local, or an RFC 1918 range), is allowed."
+        }
+        return
+            "\"\(origin)\" uses an unsupported scheme \"\(scheme.isEmpty ? "(none)" : scheme)\". "
+            + "Only https://, or http:// to a loopback/private-network host, is allowed."
+    }
+
+    /// Accepted as-is (trailing slash trimmed) if `origin` passes; a fixed placeholder otherwise.
+    static func sanitize(_ origin: String) -> String {
+        guard rejectionReason(origin) == nil else { return placeholder }
+        return origin.hasSuffix("/") ? String(origin.dropLast()) : origin
+    }
+
+    private static func isLoopbackOrPrivateHost(_ host: String) -> Bool {
+        guard !host.isEmpty else { return false }
+        if host.caseInsensitiveCompare("localhost") == .orderedSame { return true }
+        if host.lowercased().hasSuffix(".local") { return true }
+        if host == "::1" || host == "[::1]" { return true }
+        if host == "10.0.2.2" || host == "10.0.3.2" { return true }
+        return isIPv4PrivateOrLoopback(host)
+    }
+
+    private static func isIPv4PrivateOrLoopback(_ host: String) -> Bool {
+        let parts = host.split(separator: ".")
+        guard parts.count == 4 else { return false }
+        let octets = parts.compactMap { Int($0) }
+        guard octets.count == 4, octets.allSatisfy({ (0...255).contains($0) }) else { return false }
+        let (a, b) = (octets[0], octets[1])
+        if a == 127 { return true }  // 127.0.0.0/8
+        if a == 10 { return true }  // 10.0.0.0/8
+        if a == 172, (16...31).contains(b) { return true }  // 172.16.0.0/12
+        if a == 192, b == 168 { return true }  // 192.168.0.0/16
+        return false
     }
 }

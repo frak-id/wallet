@@ -115,6 +115,18 @@ struct ResolvedConfigDecoderTests {
         #expect(config.lang == .en)
     }
 
+    @Test("an empty optional string reads as absent, not as an empty string (2.10)")
+    func emptyOptionalStringReadsAsAbsent() throws {
+        let body = """
+            {"merchantId":"m","productId":"0x00","name":"Acme","domain":"acme.example",
+             "allowedDomains":[],"sdkConfig":{"logoUrl":"","homepageLink":""}}
+            """
+
+        let config = try ResolvedConfigDecoder.decode(Data(body.utf8))
+        #expect(config.sdkConfig?.logoURL == nil)
+        #expect(config.sdkConfig?.homepageLink == nil)
+    }
+
     @Test("a missing required field is a decoding error naming it")
     func missingRequiredFieldNamesItself() {
         let body = #"{"productId":"0x00","name":"Acme","domain":"acme.example","allowedDomains":[]}"#

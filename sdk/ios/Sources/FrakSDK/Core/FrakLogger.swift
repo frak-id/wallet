@@ -53,16 +53,21 @@ struct FrakLogger: Sendable {
             return
         }
 
+        // .private: message is a caller-formatted string that can carry identifiers (e.g. the
+        // anonymous id, a declared Linked DeviceID in the privacy manifest) — os.Logger has no
+        // way to redact part of an already-assembled String, so the whole line is redacted
+        // rather than widening the merchant's privacy envelope. A merchant-supplied FrakLogSink
+        // (above) is unaffected and still receives the raw message.
         let suffix = resolvedError.map { ": \($0.localizedDescription)" } ?? ""
         switch messageLevel {
         case .error:
-            logger.error("\(message, privacy: .public)\(suffix, privacy: .public)")
+            logger.error("\(message, privacy: .private)\(suffix, privacy: .private)")
         case .warn:
-            logger.warning("\(message, privacy: .public)\(suffix, privacy: .public)")
+            logger.warning("\(message, privacy: .private)\(suffix, privacy: .private)")
         case .info:
-            logger.info("\(message, privacy: .public)")
+            logger.info("\(message, privacy: .private)")
         case .debug:
-            logger.debug("\(message, privacy: .public)")
+            logger.debug("\(message, privacy: .private)")
         case .none:
             break
         }

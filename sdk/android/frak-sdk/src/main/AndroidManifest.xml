@@ -41,12 +41,16 @@
       merchant's router for their own links, and an exported component is
       attack surface we would be adding to every integrator's app.
 
-      `frak_data_extraction_rules.xml` is NOT referenced from here either: on
-      `<application>`, `android:dataExtractionRules` is a singular attribute and
-      the merger does not union it, so declaring it would either be dropped or
-      break the build of any merchant with their own rules file, pending
-      `tools:replace` (02 §3). It ships as a resource for merchants to reference
-      or copy, plus a debug-build runtime assertion once there is code to assert.
+      `frak_data_extraction_rules.xml` and `frak_full_backup_content.xml` are NOT referenced
+      from here either: on `<application>`, both `android:dataExtractionRules` (API 31+) and
+      `android:fullBackupContent` (API 24-30) are singular attributes, and the manifest
+      merger does not union them — a library cannot safely set either on behalf of its
+      consumer (a differing merchant value is a build error, not a silent drop). Both ship
+      as plain resources instead. **This is a required merchant integration step; see
+      "Backup and device-transfer exclusion" in the SDK's README for the `<application>`
+      snippet and the `tools:replace` guidance** — without it neither file does anything,
+      which is S3 in `06-open-findings.md`. Plus a debug-build runtime assertion once there
+      is code to assert.
     -->
 
 </manifest>

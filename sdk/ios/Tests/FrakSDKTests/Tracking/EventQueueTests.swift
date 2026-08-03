@@ -108,4 +108,30 @@ struct EventQueueTests {
         #expect(read.count == 1)
         #expect(read.first?.failures == 1)
     }
+
+    // `.protectionKey`/`FileProtectionType` are `API_UNAVAILABLE(macos)`, and this test target
+    // builds for the macOS triple on the only host this package is ever verified on (see
+    // `EventQueue.applyProtection()`'s doc comment). There is nothing to assert on macOS since
+    // `applyProtection()` is a no-op there.
+    #if canImport(UIKit)
+        @Test("protects the file so it is unreadable before first unlock (S3)")
+        func protectsTheFile() async throws {
+            let (queue, fileURL) = makeQueue()
+            await queue.append(event("a"))
+
+            let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+            #expect(attributes[.protectionKey] as? FileProtectionType == .completeUntilFirstUserAuthentication)
+        }
+
+        @Test("keeps the file protected after a compaction")
+        func protectsTheFileAfterCompaction() async throws {
+            let (queue, fileURL) = makeQueue()
+            await queue.append(event("a"))
+            await queue.append(event("b"))
+            await queue.replace(await queue.read(now: Self.now))
+
+            let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+            #expect(attributes[.protectionKey] as? FileProtectionType == .completeUntilFirstUserAuthentication)
+        }
+    #endif
 }

@@ -43,6 +43,17 @@ internal class ConfigStore(
 
     private var memory: Entry? = null
 
+    /**
+     * A [fetchedAtMillis] in the future — the clock stepped backward since the fetch, or a
+     * corrupted/tampered persisted value — must never read as fresh: `now() - fetchedAtMillis`
+     * would be negative, which is always less than [FRESH_TTL_MILLIS], pinning the entry as fresh
+     * forever (N7).
+     */
+    private fun isFresh(fetchedAtMillis: Long): Boolean {
+        val elapsed = now() - fetchedAtMillis
+        return elapsed in 0 until FRESH_TTL_MILLIS
+    }
+
     /** Negative-cached so a repeated miss never re-reads disk for the process lifetime. */
     private val hydrationAttempted = HashSet<String>()
 
@@ -58,7 +69,7 @@ internal class ConfigStore(
 
         val cached = if (!forceRefresh) readCache(key) else null
         if (cached != null) {
-            if (now() - cached.fetchedAtMillis < FRESH_TTL_MILLIS) return cached.config
+            if (isFresh(cached.fetchedAtMillis)) return cached.config
             // Stale: refresh on the SDK's own scope so a caller going away doesn't cancel it.
             revalidateInBackground(key, query)
             return cached.config
@@ -130,7 +141,8 @@ internal class ConfigStore(
         if (response.status == HTTP_NOT_FOUND) {
             return FrakError.MerchantResolutionFailed(
                 "the backend has no merchant registered for this app. " +
-                    "Check FrakConfig.merchantId, or that this package id is in the merchant's allowed package ids.",
+                    "Check FrakConfig.merchantId, or that this package id is in the merchant's " +
+                    "allowed package ids.",
             )
         }
         val code = JsonReader.errorCodeOrNull(response.body)
@@ -139,7 +151,9 @@ internal class ConfigStore(
             logger.error("Frak sent a packageId with no platform. This is an SDK bug — please report it.")
         }
         if (response.status == HTTP_UNPROCESSABLE) {
-            logger.error("Frak sent a request the backend rejected as malformed: ${response.body.take(200)}")
+            // Never log response.body here: it is backend-controlled and may echo request content.
+            val bodyChars = response.body.length
+            logger.error("Frak sent a request the backend rejected as malformed (status 422, body $bodyChars chars)")
         }
         return response.toServerError()
     }

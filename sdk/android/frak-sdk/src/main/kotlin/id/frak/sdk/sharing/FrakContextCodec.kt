@@ -1,6 +1,8 @@
 package id.frak.sdk.sharing
 
 import id.frak.sdk.core.Base64Url
+import id.frak.sdk.core.Hex
+import id.frak.sdk.core.Uuid
 
 /**
  * The `fCtx` binary codec.
@@ -30,8 +32,9 @@ internal object FrakContextCodec {
 
     private const val MAX_TIMESTAMP = 0xFFFF_FFFFL
 
-    private val UUID_REGEX =
-        Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+    // Shared with the identity proof layout (5.6/8.6) via core.Uuid: both codecs read/write raw
+    // UUID bytes, but neither codec depends on the other — see core/Uuid.kt.
+    private val UUID_REGEX = Uuid.REGEX
 
     /** Shape only, no EIP-55 checksum: every consumer treats addresses case-insensitively. */
     private val ADDRESS_REGEX = Regex("^0x[0-9a-fA-F]{40}$")
@@ -61,7 +64,7 @@ internal object FrakContextCodec {
                     (if (wallet != null) FLAG_HAS_W else 0)
             ).toByte()
 
-        writeHex(context.merchantId.replace("-", ""), out, offset)
+        Hex.writeInto(context.merchantId.replace("-", ""), out, offset)
         offset += UUID_BYTES
 
         for (index in 0 until TIMESTAMP_BYTES) {
@@ -70,11 +73,11 @@ internal object FrakContextCodec {
         offset += TIMESTAMP_BYTES
 
         if (clientId != null) {
-            writeHex(clientId.replace("-", ""), out, offset)
+            Hex.writeInto(clientId.replace("-", ""), out, offset)
             offset += UUID_BYTES
         }
         if (wallet != null) {
-            writeHex(wallet.substring(2), out, offset)
+            Hex.writeInto(wallet.substring(2), out, offset)
         }
 
         return out
@@ -117,7 +120,7 @@ internal object FrakContextCodec {
 
         var wallet: String? = null
         if (hasWallet) {
-            wallet = "0x" + readHex(bytes, offset, ADDRESS_BYTES)
+            wallet = "0x" + Hex.encode(bytes, offset, ADDRESS_BYTES)
         }
 
         return FrakContext.V2(merchantId, timestamp, clientId, wallet)
@@ -130,41 +133,14 @@ internal object FrakContextCodec {
     fun decompress(value: String): FrakContext? {
         if (value.isEmpty()) return null
         val bytes = Base64Url.decodeOrNull(value) ?: return null
-        if (bytes.size == V1_BYTES) return FrakContext.V1("0x" + readHex(bytes, 0, ADDRESS_BYTES))
+        if (bytes.size == V1_BYTES) return FrakContext.V1("0x" + Hex.encode(bytes, 0, ADDRESS_BYTES))
         return decode(bytes)
     }
 
-    private fun writeHex(
-        hex: String,
-        out: ByteArray,
-        offset: Int,
-    ) {
-        for (index in 0 until hex.length / 2) {
-            out[offset + index] = hex.substring(index * 2, index * 2 + 2).toInt(16).toByte()
-        }
-    }
-
-    private fun readHex(
-        bytes: ByteArray,
-        offset: Int,
-        length: Int,
-    ): String {
-        val out = StringBuilder(length * 2)
-        for (index in 0 until length) {
-            val byte = bytes[offset + index].toInt() and 0xFF
-            out.append(HEX[byte ushr 4]).append(HEX[byte and 0xF])
-        }
-        return out.toString()
-    }
-
+    // Shared with the identity proof layout (5.6/8.6) via core.Uuid: both codecs format the same
+    // 16 raw bytes as a lowercase hyphenated UUID, but neither codec depends on the other.
     private fun readUuid(
         bytes: ByteArray,
         offset: Int,
-    ): String {
-        val hex = readHex(bytes, offset, UUID_BYTES)
-        return "${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-" +
-            "${hex.substring(16, 20)}-${hex.substring(20, 32)}"
-    }
-
-    private const val HEX = "0123456789abcdef"
+    ): String = Uuid.fromBytes(bytes, offset)
 }

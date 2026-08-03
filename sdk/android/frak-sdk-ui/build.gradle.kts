@@ -11,6 +11,12 @@ plugins {
 android {
     namespace = "id.frak.sdk.ui"
 
+    // Every resource here is already named frak_* by convention (see values/strings.xml's own
+    // comment on why: unprefixed merges into the host app's namespace and can collide). This
+    // makes that convention a lint failure (ResourceName) instead of a reviewer's memory, for
+    // whichever resource is added next.
+    resourcePrefix = "frak_"
+
     buildFeatures {
         compose = true
     }
