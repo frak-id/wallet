@@ -54,9 +54,10 @@ export function buildHostResultUrl({
  * Outcomes already handed to the host, so none is sent twice.
  *
  * Keyed by action *and* value: every other action is terminal and fires once, but the
- * install code is refetchable (`useGenerateInstallCode` sets no `staleTime`), and a second,
- * different code must reach the host or the pasteboard keeps one the page is no longer
- * showing. A repeat of the *same* code is still suppressed.
+ * install code can change across a remount (`useGenerateInstallCode` mints a new row per
+ * fetch, which is why it pins `staleTime: Infinity`), and a second, different code must
+ * reach the host or the pasteboard keeps one the page is no longer showing. A repeat of the
+ * *same* code is still suppressed.
  */
 const sentActions = new Set<string>();
 

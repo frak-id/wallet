@@ -31,7 +31,7 @@ die() {
 # `-swift-version 6` is passed here rather than declared in Package.swift because
 # `.swiftLanguageMode` is a tools-version 6.0 API and this manifest is 5.9, and the
 # 5.9 alternative (`.unsafeFlags`) would make the package unusable as a versioned
-# SwiftPM dependency. Swift 6 strict concurrency is a hard requirement (02 §2).
+# SwiftPM dependency. Swift 6 strict concurrency is enforced here, not in the manifest (02 §2, 06 §1).
 # Sets IOS_FLAGS. Assigns a global rather than echoing, because macOS ships bash 3.2 —
 # no namerefs, and no way to return an array.
 set_ios_flags() {
@@ -111,7 +111,7 @@ do_format() {
 }
 
 # NOT IMPLEMENTED. XCFramework assembly and `.binaryTarget` distribution are
-# 03-implementation-strategy.md §3.1 work: the shipped artifact is a signed binary
+# 05-build-and-release.md §3 work: the shipped artifact is a signed binary
 # XCFramework referenced from a consumer's Package.swift by remote zip + checksum.
 # None of that exists yet, and there is no SDK behaviour to put inside it.
 #
@@ -138,13 +138,13 @@ do_format() {
 #
 #   3. Sign it — `codesign --timestamp -s "<Apple Distribution cert>"`. Frak is not on
 #      Apple's commonly-used third-party SDK list so signing is not yet mandatory, but
-#      02 §5.1 calls it the right call regardless.
+#      02 §4 calls it the right call regardless.
 #
 #   4. Zip, checksum with `swift package compute-checksum`, publish, and reference from
 #      a distribution manifest via `.binaryTarget(name:url:checksum:)`.
 #
 #   5. Verify PrivacyInfo.xcprivacy actually propagates into a REAL consumer app, not
-#      just a local build — 03 §3.1 records AppsFlyer's issue #281, where the manifest
+#      just a local build — 05 §3 records AppsFlyer's issue #281, where the manifest
 #      failed to bundle in the static SPM variant.
 #
 # Repeat all of the above for FrakSDKUI.
@@ -154,7 +154,7 @@ do_format() {
 do_xcframework() {
 	die "xcframework is not implemented.
 
-XCFramework assembly and .binaryTarget distribution are 03-implementation-strategy.md
+XCFramework assembly and .binaryTarget distribution are 05-build-and-release.md
 §3.1 work, deferred until the SDK has run on a device. Source distribution via SwiftPM
 works today.
 
@@ -175,7 +175,7 @@ xcframework) do_xcframework ;;
 	echo "  test        - swift test, same triple"
 	echo "  lint        - swift-format lint (strict), no simulator"
 	echo "  format      - swift-format rewrite in place"
-	echo "  xcframework - NOT IMPLEMENTED (03 §3.1) — exits 1 with the intended outline"
+	echo "  xcframework - NOT IMPLEMENTED (05 §3) — exits 1 with the intended outline"
 	exit 1
 	;;
 esac

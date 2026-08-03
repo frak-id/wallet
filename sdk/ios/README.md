@@ -47,7 +47,7 @@ binaries, and the patent grant covers the identity proof-of-possession scheme.
 Three, each forced by the platform rather than chosen. They are the parts of a port
 worth reading before the code.
 
-**1. The identity lives in `UserDefaults`, not the Keychain** (`02` §4). Keychain items
+**1. The identity lives in `UserDefaults`, not the Keychain** (`02` §3). Keychain items
 survive uninstall, which would resurrect a "fresh" user's anonymous id across a
 delete–reinstall cycle — a persistent cross-install identifier, inconsistent with both
 Android (where the SDK's preferences are wiped) and the web (where clearing site data
@@ -82,8 +82,8 @@ signal: a share link is the merchant's own product URL with a parameter appended
 referrer with `merchantId`, `anonymousId` and a signed proof, so the link survives the
 round trip. iOS has no counterpart, so `openFrakApp()` links the identity only on the
 deep-link path — when the wallet is already installed. A user who installs from the store
-arrives unlinked until the install-code + pasteboard + `SKStoreProductViewController` flow
-of `02` §6 exists. `ProofCodec` and `AnonymousIdStore.signProof` are compiled into the
+arrives unlinked until the install-code + pasteboard + install-code flow
+of `03` §4 exists. `ProofCodec` and `AnonymousIdStore.signProof` are compiled into the
 binary regardless and pinned to the golden corpus: a released binary cannot be
 retrofitted, so the signing half has to be in the store build before the backend half
 is enforced.
@@ -115,8 +115,8 @@ behaviour change out of scope here and tracked separately — see the disabled t
 is the next step.
 
 Design docs: [`docs/plans/native-sdk/`](../../docs/plans/native-sdk/) —
-`01-platform-changes.md`, `02-native-sdk-overview.md`,
-`03-implementation-strategy.md`. Section references throughout this file point there.
+`01-platform-changes.md`, `02-sdk-design.md`,
+`05-build-and-release.md`. Section references throughout this file point there.
 
 ## What exists
 
@@ -163,13 +163,13 @@ Two artifacts, so **a merchant taking only tracking never pulls in a web view**
 and headlessly testable. `FrakSDKUI` depends on `FrakSDK`; the dependency never runs
 the other way.
 
-`03` §3.3 notes this split is more disciplined than the incumbents — none of Branch,
+`05` §3 notes this split is more disciplined than the incumbents — none of Branch,
 AppsFlyer, Adjust, Singular or Kochava ships one, because none of them has a UI
 surface. Ours is correct precisely because the UI artifact carries a WebView.
 
 ### Zero third-party dependencies
 
-A hard rule (`02` §1.2, §5): `URLSession`, `Codable`, native `async`/`await`,
+A hard rule (`02` §1, §4): `URLSession`, `Codable`, native `async`/`await`,
 `Foundation.UUID`, `NumberFormatter`, `WebKit`, `UserDefaults` — all platform. No
 Alamofire, no Combine wrappers, no DI framework, no analytics SDK. `Package.swift`
 declares no `dependencies` at all, and nothing may be added there without revisiting
@@ -198,7 +198,7 @@ several were folded together or renamed on the way in. The tree above is the inv
 | `Core/` | `FrakConfig`, `FrakLogSink`, the `FrakClient` facade, `FrakError` |
 | `Net/` | `URLSession` transport, JSON only, injects `x-frak-client-id` |
 | `Identity/` | `AnonymousIdStore` — device-held P-256 keypair, lowercase canonical form |
-| `Config/` | dual SWR cache (config + bare `merchantId`), `PlacementResolver` (4-tier copy, `02` §8.2b) |
+| `Config/` | dual SWR cache (config + bare `merchantId`), `PlacementResolver` (4-tier copy, `02` §5.1) |
 | `Rewards/` | `RewardRepository`, `RewardSelector`, `RewardFormatter` |
 | `Tracking/` | `InteractionTracker`, `PurchaseTracker`, durable offline JSONL queue |
 | `Sharing/` | `FrakContextCodec` (V2 binary), `AttributionMerger`, `LinkBuilder` — the `Presenter` lives in `FrakSDKUI` |
@@ -300,7 +300,7 @@ how every other package in the monorepo declares its own `build` / `lint` / `for
 ### `swift build` under Swift 6 IS the typecheck
 
 There is no separate `tsc`-equivalent step. Swift 6 strict concurrency is a hard
-requirement (`02` §2: "Swift 6 strict-concurrency clean"), so a green build is the
+requirement of this package's own build script, so a green build is the
 typecheck, the concurrency check, and the data-race check at once:
 
 ```bash
@@ -324,7 +324,8 @@ where APIs the SDK uses (`Logger`, `URLSession.data(for:delegate:)`) do not exis
 tools-version 5.9; the 5.9 alternatives are `.unsafeFlags`, which SwiftPM refuses in a
 resolved dependency and would make this package unconsumable, or
 `.enableUpcomingFeature`, which flips individual proposals rather than the language
-mode. Tools-version 5.9 is the floor from `02` §2, so the flag stays in `run.sh` until
+mode. Tools-version 5.9 is the floor from `02` §2 — and the mismatch with the Swift 6
+syntax already in the sources is `06` §1 — so the flag stays in `run.sh` until
 the floor moves.
 
 ### `swift test` runs on the host, on purpose
@@ -353,7 +354,7 @@ The suites use **Swift Testing, not XCTest** — XCTest's Swift overlay is a zip
 macOS/Catalyst dylib and cannot be linked for `arm64-apple-ios15.0-simulator` from
 SwiftPM at all, so an XCTest suite could not clear stage 1.
 
-`Tests/FrakSDKTests/Fixtures/` is where the golden-fixture loader lands (`03` §1.6):
+`Tests/FrakSDKTests/Fixtures/` is where the golden-fixture loader lands (`04` §1):
 one committed language-agnostic corpus generated from the TypeScript suites. One
 corpus, not three.
 
@@ -395,7 +396,7 @@ It declares:
 
 - `NSPrivacyTracking` false, with no tracking domains. Nothing the SDK sends is joined
   with data from another company's app or site, and none of it reaches a data broker.
-  The ATT decision itself is `02` §12 question 1 and is still open; if it changes, this
+  The ATT decision itself is `02` §8 question 1 and is still open; if it changes, this
   key and the per-type `Tracking` flags change with it.
 - `NSPrivacyCollectedDataTypeDeviceID`, linked and not for tracking — the anonymous id,
   which the install handoff deliberately links to the user's Frak identity.
@@ -409,11 +410,11 @@ It declares:
   Purchase History under-declares the identifier itself, and under-declaring is the
   rejection.
 - `NSPrivacyAccessedAPICategoryUserDefaults` with reason `CA92.1`, for the merchant
-  config cache and the anonymous id (`02` §4). Nothing else the SDK touches is a
+  config cache and the anonymous id (`02` §3). Nothing else the SDK touches is a
   required-reason API — no file timestamps, disk space, boot time or active keyboards,
   and neither WebKit nor `UIPasteboard` is in a category. **`CA92.1` is settled**: it
   covers an SDK reading/writing UserDefaults in the app's own container on the app's
-  behalf. `C56D.1`, floated in `02` §5.1, is for an SDK exposing a UserDefaults
+  behalf. `C56D.1`, floated in `02` §4, is for an SDK exposing a UserDefaults
   *wrapper API for the app to call* — this SDK exposes none, so it would be wrong.
 
 **`Interaction.custom(_:data:)` is the merchant's own declaration responsibility.** It
@@ -431,13 +432,13 @@ plus an **explicit empty** `NSPrivacyAccessedAPITypes` — an empty array is a
 declaration, an absent file is not. `UIPasteboard` in `NativeShare` is not a
 required-reason category.
 
-One known failure mode to validate before shipping (`03` §3.1): AppsFlyer's manifest
+One known failure mode to validate before shipping (`05` §3): AppsFlyer's manifest
 failed to bundle correctly in the *static* SPM variant (their issue #281). Propagation
 must be checked against a real consumer app, not a local build.
 
 ## Distribution: SPM only, CocoaPods deliberately not supported
 
-**CocoaPods is not supported and will not be** (`03` §3.1). It has been in
+**CocoaPods is not supported and will not be** (`05` §3). It has been in
 self-declared maintenance mode since 2024 and its trunk — the publish server — goes
 **fully read-only on 2 December 2026**. After that date no new pods or new versions can
 be published. Adding CocoaPods support now means building a publishing path into a
@@ -447,7 +448,7 @@ registry that closes within months of our own launch. Flutter is the bellwether:
 The shipped artifact will be a **signed binary XCFramework**, referenced from a
 consumer's `Package.swift` via `.binaryTarget` with a remote zip and checksum — the
 pattern AppsFlyer uses. Signing is not currently mandatory (Frak is absent from
-Apple's commonly-used third-party SDK list) but `02` §5.1 and `03` §3.3 both call it
+Apple's commonly-used third-party SDK list) but `02` §4 and `05` §3 both call it
 the right move: it is cheap, it is a supply-chain signal, and joining that list later
 would make it required.
 
@@ -462,7 +463,7 @@ in the comments above `do_xcframework()` in `scripts/run.sh`.
 names — it publishes nothing to npm (`private: true`) and Bun installs nothing for it.
 Versioning stays **outside** the Changesets linked group that ties
 `@frak-labs/frame-connector`, `@frak-labs/core-sdk` and `@frak-labs/react-sdk`
-together (`03` §5.3): the iOS SDK's version is the one in
+together (`05` §4): the iOS SDK's version is the one in
 `Sources/FrakSDK/FrakSDKVersion.swift`, which feeds the `x-frak-sdk-version` header and
-the `?sdkv=` query parameter (`01` §1.5), and it must not move because a web package
+the `?sdkv=` query parameter (`01` §5), and it must not move because a web package
 bumped.

@@ -42,7 +42,7 @@
 
         private let sessionId = UUID().uuidString.lowercased()
         // Individually injected, not `() -> FrakClient`: FrakClient carries no substitutable
-        // abstraction (09-api-shape.md), so the seam is the handful of members this sheet
+        // abstraction (02-sdk-design.md), so the seam is the handful of members this sheet
         // actually calls, not all of them. Defaulted to `Frak.client`'s namespaces, resolved
         // lazily since Frak.initialize may not have run when this is constructed.
         private let buildSharingLink: @Sendable (SharingRequest) async -> String?

@@ -6,6 +6,6 @@
 #
 # The example app itself needs no keep rules — Compose and Kotlin ship their own
 # consumer rules. When the real Frak SDK lands it should ship *its* consumer
-# rules in the artifact (`03-implementation-strategy.md` §5.4 lists consumer
+# rules in the artifact (`05-build-and-release.md` §4 lists consumer
 # ProGuard/R8 rule verification as a CI job), not require merchants to paste
 # rules in here.

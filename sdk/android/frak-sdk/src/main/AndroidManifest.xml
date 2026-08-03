@@ -13,7 +13,7 @@
       prod package makes a locally-built dev wallet undetectable — exactly the
       build a POC runs against.
 
-      Shipping this from the SDK is the point (02 §3): the manifest merger folds
+      Shipping this from the SDK is the point (02 §4): the manifest merger folds
       it into every merchant app, so `AppInstalledProbe` works without the
       merchant knowing the wallet's package ids.
     -->
@@ -33,7 +33,7 @@
       No <application> block, and deliberately no exported activity and no
       intent filter.
 
-      02 §6.1 forbids a redirect-catcher activity: inbound `fCtx` handling is
+      02 §5.5 forbids a redirect-catcher activity: inbound `fCtx` handling is
       wired through `FrakConfig.deepLink` (Automatic via
       ActivityLifecycleCallbacks covering cold *and* warm start, or Manual via
       `handleReferralLink(url)`), so the merchant's own activity keeps owning
@@ -45,7 +45,7 @@
       `<application>`, `android:dataExtractionRules` is a singular attribute and
       the merger does not union it, so declaring it would either be dropped or
       break the build of any merchant with their own rules file, pending
-      `tools:replace` (02 §4). It ships as a resource for merchants to reference
+      `tools:replace` (02 §3). It ships as a resource for merchants to reference
       or copy, plus a debug-build runtime assertion once there is code to assert.
     -->
 

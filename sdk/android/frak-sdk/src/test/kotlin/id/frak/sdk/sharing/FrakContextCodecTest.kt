@@ -14,7 +14,7 @@ import org.junit.Test
  * The `fCtx` codec against the shared corpus.
  *
  * Every assertion here is one the TypeScript codec makes too, on the same
- * vectors. 02 §8.1 calls this the highest silent-divergence risk in the port —
+ * vectors. 04 §1 calls this the highest silent-divergence risk in the port —
  * a wrong byte order or a tolerated near-miss length produces links that look
  * valid and attribute to nobody — so the corpus, not this file, is the
  * authority: an `encode` fixture is checked byte-for-byte and a `reject`

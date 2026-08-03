@@ -32,12 +32,12 @@ import java.util.UUID
 /**
  * The sharing sheet: native chrome around the hosted `/sharing` page.
  *
- * The split is deliberate (02 §1.3). What the user can feel is native — the
+ * The split is deliberate (02 §1). What the user can feel is native — the
  * sheet animates in immediately, and the footer opens the real OS share sheet
  * with their own apps and contacts, which a web page cannot reach. The reward
  * card, product cards and FAQ come from the page that already serves three
  * other consumers and is iterated on continuously; forking it natively would
- * gate every copy change on a merchant's app-store release cycle (02 §6).
+ * gate every copy change on a merchant's app-store release cycle (03 §1).
  *
  * Presented through [rememberFrakSharingLauncher] rather than directly, so
  * re-entrancy and result aggregation have one owner.
@@ -76,7 +76,7 @@ internal fun FrakSharingSheet(
         state.failure?.let(state::fail)
     }
 
-    // 02 §7's latency gate, keyed on `request`/`sessionId` (constant for this
+    // 03 §3's latency gate, keyed on `request`/`sessionId` (constant for this
     // sheet's lifetime) rather than `state.session`: the budget has to cover
     // `prepare()` itself — `buildSharingLink`/`resolveConfig` are both
     // network-bound and run *before* a session exists — not just the page's
@@ -154,7 +154,7 @@ internal fun FrakSharingSheet(
 private val PAGE_HEIGHT = 480.dp
 
 /**
- * 02 §7's fallback threshold: "> 1.5s → skip the page, fire the native share
+ * 03 §3's fallback threshold: "> 1.5s → skip the page, fire the native share
  * sheet directly". Taken as written rather than the p95 target doubled — the
  * previous 2s here was that doubling, but it was also timed from the wrong
  * point (see `awaitLoadDeadline`'s use above), so there is no longer a reason

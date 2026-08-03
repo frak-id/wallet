@@ -24,7 +24,7 @@ needs a device or an emulator.
 > `anonymousId`, `resetAnonymousId`, and five namespaces — `config` (`resolve`, `updates`),
 > `rewards` (`campaigns`, `best`), `sharing` (`buildLink`), `tracking` (`track`, `purchase`),
 > `appLink` (`handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installUrl`,
-> `installPageUrl`) — see `docs/plans/native-sdk/09-api-shape.md`. Plus `Frak.parseReferralLink`,
+> `installPageUrl`) — see `docs/plans/native-sdk/02-sdk-design.md`. Plus `Frak.parseReferralLink`,
 > plus `FrakContext`, `SharingRequest`, `SharingProduct`, `AttributionParams`,
 > `Interaction`, `FrakResult`, `OpenAppResult` and `DeepLinkHandling`,
 > `FrakLogSink`, and the ten public
@@ -59,7 +59,7 @@ needs a device or an emulator.
 > None of these types are `data class`es: a published `copy()`/`componentN()`
 > would enter the ABI and could never be removed, so every one is a plain class
 > with hand-written `equals`/`hashCode`/`toString` and constructor defaults
-> instead (`docs/plans/native-sdk/03-implementation-strategy.md` §5.3). That
+> instead (`docs/plans/native-sdk/05-build-and-release.md` §4). That
 > alone does **not** make these types able to gain a field later: every
 > constructor is public with default arguments, which Kotlin compiles to a
 > full-arity `<init>` plus a synthetic `<init>(..., int mask, DefaultConstructorMarker)`
@@ -74,7 +74,7 @@ needs a device or an emulator.
 ## Artifacts
 
 Two, so a merchant taking only tracking never pulls in a web view
-(`docs/plans/native-sdk/02-native-sdk-overview.md` §2):
+(`docs/plans/native-sdk/02-sdk-design.md` §2):
 
 | Module | Coordinate | Namespace | Contents |
 | --- | --- | --- | --- |
@@ -97,7 +97,7 @@ someone else's frozen binary.
 
 Distribution **will be** Maven Central via the Central Publisher Portal, not the
 decommissioned OSSRH endpoints — see
-`docs/plans/native-sdk/03-implementation-strategy.md` §3.2.
+`docs/plans/native-sdk/05-build-and-release.md` §3.
 
 **It is not wired yet, deliberately.** `frak-publish.gradle.kts` declares
 `publications` and signing but no `repositories { maven { … } }` and no Portal
@@ -146,7 +146,7 @@ removed, along with the `api/*.api` dumps it generated.
 The reason is ordering, not doubt about the tool. Committing a dump *ratifies*
 the public shape: from then on `apiCheck` enforces it, and changing it is a
 breaking release rather than an edit. That shape is still undecided — see
-[`docs/plans/native-sdk/06-abi-decisions.md`](../../docs/plans/native-sdk/06-abi-decisions.md),
+[`docs/plans/native-sdk/05-build-and-release.md`](../../docs/plans/native-sdk/05-build-and-release.md) §5,
 specifically:
 
 - **Q1** — Kotlin default arguments generate a synthetic `$default` constructor
@@ -198,7 +198,7 @@ apps must not have to learn two mental models.
 Elsewhere:
 
 - `frak-sdk/src/test/kotlin/id/frak/sdk/` — JVM unit tests, mirroring the main
-  packages. Tier 1 of the three-tier test plan in 03 §5.4: logic tests on cheap
+  packages. Tier 1 of the three-tier test plan in 05 §4: logic tests on cheap
   runners, no device.
 - `frak-sdk-ui/src/test/kotlin/id/frak/sdk/ui/` — the sheet's tests, under
   Robolectric. Separate from the core module's on purpose: `:frak-sdk` is
@@ -208,7 +208,7 @@ Elsewhere:
   cannot instrument newer bytecode.
 - `frak-sdk/src/test/kotlin/id/frak/sdk/fixtures/` — the golden-fixture loader.
   The shared cross-platform corpus is the named alternative to a shared native core
-  — 03 §1.6. **Two of its three parts are actually asserted here**: the FrakContext
+  — 04 §1. **Two of its three parts are actually asserted here**: the FrakContext
   v2 codec (`golden-context.json`) and the signed byte layout (`golden-proofs.json`),
   both on Kotlin, Swift and TypeScript. `golden-rewards.json` is **declared by
   `GoldenFixtures.REWARDS` and loaded by no test on either native platform** — it is
@@ -219,19 +219,19 @@ Elsewhere:
   `RewardsDecoderTest.kt` instead. Wire them or drop the constant.
 - `frak-sdk/src/main/res/xml/frak_data_extraction_rules.xml` — excludes the SDK's
   `id.frak.sdk.xml` SharedPreferences from **both** `<cloud-backup>` and
-  `<device-transfer>` (02 §4). Both blocks matter: cloud-backup alone still lets a
+  `<device-transfer>` (02 §3). Both blocks matter: cloud-backup alone still lets a
   device-to-device transfer clone whatever is in there. It is a thinner file than
-  02 §4 assumes — see "Anonymous identity" below — but the exclusion stays,
+  02 §3 assumes — see "Anonymous identity" below — but the exclusion stays,
   because the merchant marker it holds is what triggers regeneration.
 - `frak-sdk/consumer-rules.pro`, `frak-sdk-ui/consumer-rules.pro` — R8 rules that
   ship *inside* the AAR, so merchants paste nothing into their own config
-  (03 §5.4). Empty today; rules land alongside the code that needs them.
+  (05 §4). Empty today; rules land alongside the code that needs them.
 - `frak-sdk-ui/src/main/kotlin/id/frak/sdk/ui/` — the Compose sharing sheet and
   its View/Activity fallback.
 
 Two absences in `frak-sdk/src/main/AndroidManifest.xml` are load-bearing:
 
-- **No exported activity and no intent filter.** 02 §6.1 forbids a
+- **No exported activity and no intent filter.** 02 §5.5 forbids a
   redirect-catcher activity — inbound `fCtx` handling is meant to go through
   the SDK's own deep-link entry point rather than a manifest-declared filter,
   so the merchant's own activity keeps owning the intent. `FrakConfig.deepLink`
@@ -244,7 +244,7 @@ Two absences in `frak-sdk/src/main/AndroidManifest.xml` are load-bearing:
   `id.frak.wallet` and `id.frak.wallet.dev` and are never `QUERY_ALL_PACKAGES`.
 
 `frak-sdk-ui` deliberately has **no `androidx.browser` dependency**. Chrome Custom
-Tabs cannot implement this design (02 §3): a Custom Tab is a separate browser
+Tabs cannot implement this design (03 §3): a Custom Tab is a separate browser
 Activity, so it cannot sit in a bottom sheet, cannot carry native buttons, and
 cannot lose the browser toolbar. The transport is an embedded `WebView`, which is
 a platform class and needs no dependency.
@@ -252,7 +252,7 @@ a platform class and needs no dependency.
 ## The sharing sheet
 
 Native chrome around the hosted `/sharing` page, in `frak-sdk-ui`. The split
-follows 02 §1.3: what the user can feel is native — the sheet animates in
+follows 02 §1: what the user can feel is native — the sheet animates in
 immediately and the footer opens the real OS share sheet, with their own apps
 and contacts — while the reward card, product cards and FAQ come from the page
 that already serves three other consumers. Forking that natively would gate
@@ -289,7 +289,7 @@ dropped with no error anywhere, so it is sanitised and tested against that exact
 pattern.
 
 There is no image loader, so the sheet header is text. Loading the merchant's
-logo natively would mean a third-party dependency, and the budget in 02 §5 does
+logo natively would mean a third-party dependency, and the budget in 02 §2 does
 not have room for one — the page renders the logo instead, from `logoUrl`.
 
 ### Offline behaviour (01 §4's three tiers)
@@ -301,7 +301,7 @@ not have room for one — the page renders the logo instead, from `logoUrl`.
   browser tab gets. On top of that, a failed main-frame load gets **one**
   cache-only retry (`LOAD_CACHE_ONLY`) before falling through to tier 3, so a
   previously-visited sheet can still paint with no network at all.
-  **What this does NOT cover:** 02 §7 lever 4 also names a service worker
+  **What this does NOT cover:** 03 §3 lever 4 also names a service worker
   caching the `/sharing` shell, so a sheet the device has *never* visited
   before still has something to show offline. That needs a `fetch` handler
   registered wallet-side, and `apps/wallet/app/service-worker.ts` has none —
@@ -311,7 +311,7 @@ not have room for one — the page renders the logo instead, from `logoUrl`.
   case is a real, currently-open gap rather than a solved one.
 - **Tier 3 (page unreachable)** fires the native OS share sheet directly with
   the locally-built link, tracked exactly as a normal share. It triggers on a
-  main-frame transport error, a main-frame HTTP error, or 02 §7's latency
+  main-frame transport error, a main-frame HTTP error, or 03 §3's latency
   budget (1.5s, timed from the moment the sheet starts preparing, not from
   when a page candidate exists — the budget has to cover
   `buildSharingLink`/`resolveConfig` too, both network-bound). Critically,
@@ -325,10 +325,10 @@ not have room for one — the page renders the logo instead, from `logoUrl`.
 
 Known gaps:
 
-- The web view is recreated on a configuration change. 02 §6.2 asks for it to
+- The web view is recreated on a configuration change. 03 §1 asks for it to
   survive rotation, which needs a retained holder Compose cannot express for a
   `View`.
-- **Warm web view (02 §7 lever 2) is implemented, opt-in, default off.**
+- **Warm web view (03 §3 lever 2) is implemented, opt-in, default off.**
   `FrakConfig.preloadSharing` gates an offscreen `WebView` created and
   `loadUrl()`ed against the wallet origin's `/sharing` route as soon as
   `rememberFrakSharingLauncher` enters composition (the share surface
@@ -341,9 +341,9 @@ Known gaps:
   rest of the sheet — and unlike the sheet's sequencing, the warm path has no
   Robolectric coverage either: what it saves is wall-clock connection setup,
   which a JVM test cannot observe.
-- Service-worker shell caching (02 §7 lever 4's other half) is unavailable —
+- Service-worker shell caching (03 §3 lever 4's other half) is unavailable —
   see "Offline behaviour" above.
-- **Not the non-persistent data store 02 §7 asks for.** Android has no
+- **Not the non-persistent data store 03 §2 asks for.** Android has no
   per-`WebView` data store — only a process-wide directory chosen once, before
   any `WebView` exists, which a library cannot take from its host. Third-party
   cookies are off, but first-party wallet cookies and DOM storage outlive the
@@ -365,7 +365,7 @@ and Android will kill a host app while the OS share sheet is foregrounded, which
 is exactly when a `sharing` event is in flight. So `track` and `trackPurchase`
 return once the event is on disk; delivery happens behind them, oldest first.
 
-The store is an append-only JSONL file, compacted on flush (02 §7.1). It lives
+The store is an append-only JSONL file, compacted on flush (02 §5.3). It lives
 in `noBackupFilesDir`, so the platform keeps it out of cloud backup and device
 transfer without depending on a rules file a merchant can override — queued
 events must never be replayed from someone else's device.
@@ -379,7 +379,7 @@ What is pinned, because JSONL is weakest exactly here:
 | Ordering | strict FIFO. A failure stops the drain rather than skipping past it. |
 | Torn tail | a kill mid-write leaves a partial last line; unreadable rows are discarded, the rest survive. |
 | Compaction | temp file plus rename, never in place. |
-| Bounds | 1000 events / 14 days, oldest dropped first — but enforced on **read**, so the file still grows unbounded while backoff is armed and nothing drains it. See `07-audit-round-2.md` §2.6. |
+| Bounds | 1000 events / 14 days, oldest dropped first — but enforced on **read**, so the file still grows unbounded while backoff is armed and nothing drains it. See `06-open-findings.md` §3.2. |
 | Poison | evicted after 3 permanent 4xx, so one rejected event cannot block the queue forever. |
 | Backoff | the shared `Backoff` — exponential, jittered, `Retry-After`-aware. 429 and 5xx back off without dropping. |
 | `resetAnonymousId` | purges the queue, and the drain independently drops any event whose captured id is no longer the current one — the purge can race a flush, so the guarantee cannot rest on it alone. |
@@ -388,7 +388,7 @@ Three gaps to know about:
 
 - **Single writer, not enforced.** A merchant initialising the SDK from a second
   process (`:remote`) would corrupt both this file and the SharedPreferences.
-  02 §7.1 asks for a debug-build assertion; there is none yet.
+  02 §5.3 asks for a debug-build assertion; there is none yet.
 - **No flush on reconnect.** The queue drains on `initialize` and after each
   `track`. A connectivity callback needs `ACCESS_NETWORK_STATE`, which a library
   must not force onto its host, so a device that comes back online mid-session
@@ -412,7 +412,7 @@ pinned to `sdk/core/src/identity/fixtures/golden-proofs.json`, which is what
 makes "we ported it correctly" a test result rather than a claim.
 
 **The keypair lives in `AndroidKeyStore`, not in SharedPreferences** — a
-deliberate departure from the storage row in 02 §4, which predates the choice of
+deliberate departure from the storage row in 02 §3, which predates the choice of
 key home. Both properties that row wants are stronger there: the private key is
 non-exportable, so only this device can mint a proof for this id, and keystore
 entries are destroyed with the app, so the id dies with the install. Nothing
@@ -420,7 +420,7 @@ about it can be backed up or device-transferred, so no `data_extraction_rules`
 entry could cover it even in principle.
 
 **The id is never persisted.** It is re-derived from the key on every cold start
-and memoised. 02 §4 requires key and id to be generated atomically, because a
+and memoised. 02 §3 requires key and id to be generated atomically, because a
 surviving key with a lost id silently fails derivation — deriving on demand
 means there is no second write to lose. `id.frak.sdk.xml` therefore holds one
 value: which merchant the key was minted under, so a `merchantId` that changes
@@ -509,7 +509,7 @@ Or `cd sdk/android` and run `bun run build`, `bun run lint`, and so on. The
 commands are owned by this folder's `package.json` rather than aliased at the
 repo root, matching how every other package in the monorepo declares its own
 `build` / `lint` / `format`. Note that `bun run build:sdk` at the root still means
-"build the JS SDKs" and does not touch this folder (03 §5.2).
+"build the JS SDKs" and does not touch this folder (05 §4).
 
 Everything funnels through `scripts/run.sh`, which resolves the Android SDK and
 exports `ANDROID_HOME` before invoking Gradle — without that export Gradle fails
@@ -554,14 +554,14 @@ never collide with biome. Two settings are deliberate:
 `FrakSdkVersion` is not cosmetic. `CURRENT` feeds the `x-frak-sdk-version`
 header on every API call and the `?sdkv=` param on every `/sharing` URL — the two
 halves of the pin between a frozen binary and the continuously-deployed hosted
-page (01 §1.5). Both are marked BLOCKING for v0.1 precisely because neither can
+page (01 §5). Both are marked BLOCKING for v0.1 precisely because neither can
 be retrofitted into a build already on users' phones. Keep `CURRENT` in step with
 the `version` in each `build.gradle.kts`.
 
 It is an `object` with three members rather than a bare top-level const so that
 it mirrors Swift's `FrakSDKVersion` — note the casing: Swift uses `SDK`, Kotlin
 uses `Sdk`, following each language's convention. The three member values are
-identical; only the type name differs. 02 §9 makes cross-platform symmetry a hard
+identical; only the type name differs. 02 §6 makes cross-platform symmetry a hard
 requirement, and the golden-fixture corpus cannot catch a symbol that exists on
 one platform only.
 

@@ -20,7 +20,7 @@
 #
 # No binary-compatibility gate here. BCV was wired and then removed: committing
 # an api/*.api dump ratifies the public shape, and that shape is still undecided
-# (docs/plans/native-sdk/06-abi-decisions.md Q1/Q2). It comes back, with the
+# (docs/plans/native-sdk/05-build-and-release.md §5). It comes back, with the
 # dump, once those are settled and before the first publish.
 #
 # `check` also runs Android Lint (an AGP-provided `check` dependency, not
@@ -122,7 +122,7 @@ do_publish_local() {
 	# Publishes id.frak:frak-sdk / id.frak:frak-sdk-ui into the local ~/.m2
 	# repository, which is how a merchant app (or `example/native-android`) can
 	# consume an unreleased build via `mavenLocal()`. Maven Central publishing
-	# is a separate, credentialed flow — see docs/plans/native-sdk/03 §3.2.
+	# is a separate, credentialed flow — see docs/plans/native-sdk/05-build-and-release.md §3.
 	log "Publishing to mavenLocal (~/.m2/repository/id/frak)..."
 	./gradlew publishToMavenLocal
 }

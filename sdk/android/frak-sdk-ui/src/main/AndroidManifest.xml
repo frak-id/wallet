@@ -8,7 +8,7 @@
   two places to keep in sync for no gain.
 
   No activity either. The sharing sheet is a Compose surface the merchant hosts
-  in their own activity, and 02 §6.1 rules out an SDK-declared redirect-catcher
+  in their own activity, and 02 §5.5 rules out an SDK-declared redirect-catcher
   activity outright.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">

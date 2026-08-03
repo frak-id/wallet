@@ -20,6 +20,6 @@ dependencyResolutionManagement {
 rootProject.name = "frak-android-sdk"
 
 // Two artifacts, so a merchant taking only tracking never pulls in a web view
-// (02-native-sdk-overview.md §2).
+// (02-sdk-design.md §2).
 include(":frak-sdk")
 include(":frak-sdk-ui")

@@ -8,7 +8,7 @@ import id.frak.sdk.core.FrakEnvironment
  *
  * A concrete class, not an interface: adding a member here is additive on both
  * platforms, where adding a member to an interface is an unconditional compile break
- * for every implementer (`09-api-shape.md`). There is no supported way for a merchant
+ * for every implementer (`02-sdk-design.md`). There is no supported way for a merchant
  * to substitute a fake; point [id.frak.sdk.core.FrakEnvironment.Custom] at a stub
  * server instead and exercise the real client.
  *

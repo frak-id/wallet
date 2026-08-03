@@ -3,7 +3,7 @@
 # Every coordinate the build resolves is declared here, so a version bump is a
 # one-line diff in one file rather than a grep across module scripts.
 #
-# Reminder on the dependency budget (02-native-sdk-overview.md §5): the hard rule
+# Reminder on the dependency budget (02-sdk-design.md §4): the hard rule
 # is ZERO third-party runtime dependencies. `kotlinx-coroutines` and AndroidX /
 # Compose are first-party to Kotlin and Google respectively and are the only
 # things allowed near `api`/`implementation`. Anything else belongs in

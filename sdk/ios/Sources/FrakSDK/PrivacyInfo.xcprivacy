@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  HARD SHIPPING GATE — see 02-native-sdk-overview.md §5.1.
+  HARD SHIPPING GATE — see 02-sdk-design.md §4.
 
   Since 1 May 2024, an SDK using a required-reason API must declare it in a privacy
   manifest or App Store Connect rejects the upload with ITMS-91053 (Missing API
@@ -9,7 +9,7 @@
   file wrong or absent breaks every integrator's release, which is the worst possible
   first impression.
 
-  Known failure mode to validate before release (03-implementation-strategy.md §3.1):
+  Known failure mode to validate before release (05-build-and-release.md §3):
   AppsFlyer's manifest failed to bundle correctly in the *static* SPM variant (their
   issue #281). Propagation must be checked against a real consumer app, not just a
   local `swift build`.
@@ -19,7 +19,7 @@
     <!--
       No tracking as defined by App Tracking Transparency: nothing here is joined with
       data from other companies' apps or sites, and no data goes to a data broker. The
-      ATT question itself is 02 §12 open question 1 and needs a legal decision before
+      ATT question itself is 02 §8 open question 1 and needs a legal decision before
       iOS ships; if that decision changes, this key, NSPrivacyTrackingDomains, and the
       NSPrivacyCollectedDataTypeTracking flags below all change with it.
     -->
@@ -33,7 +33,7 @@
           The anonymous id. Apple's "Device ID" covers any identifier scoped to a
           particular device, browser or app installation, which is exactly what this
           is: derived from a P-256 keypair the platform holds, one per installation,
-          gone on uninstall (02 §4).
+          gone on uninstall (02 §3).
 
           Linked, because the whole point of the install handoff is that the wallet
           links this id to the user's Frak identity. Declaring it unlinked would be
@@ -115,14 +115,14 @@
     </array>
     <!--
       UserDefaults is one of the five required-reason categories, and this SDK stores
-      both the resolved merchant config and the anonymous id there (02 §4, and the
-      storage row of the §5 dependency table). Nothing else the SDK touches is a
+      both the resolved merchant config and the anonymous id there (02 §3, and the
+      storage row of the §4 dependency table). Nothing else the SDK touches is a
       required-reason API: the event queue is an ordinary file whose timestamps are
       never read, and neither WebKit nor UIPasteboard is in a category.
 
       CA92.1 is the right code and this is settled: it covers a third-party SDK reading
       or writing UserDefaults in the app's own container, on the app's behalf, which is
-      what this SDK does. C56D.1 — floated as an alternative in 02 §5.1 — is for an SDK
+      what this SDK does. C56D.1 — floated as an alternative in 02 §4 — is for an SDK
       that exposes a UserDefaults *wrapper API for the app itself to call*. This SDK
       exposes no such API, so C56D.1 would be the wrong declaration.
     -->

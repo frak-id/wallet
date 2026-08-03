@@ -13,7 +13,7 @@ import kotlinx.coroutines.CompletableDeferred
 
 /**
  * Backs [SharingSheetState]'s injected functions for tests. Not a [id.frak.sdk.FrakClient]
- * fake: `FrakClient` carries no substitutable abstraction (09-api-shape.md) — this only
+ * fake: `FrakClient` carries no substitutable abstraction (02-sdk-design.md) — this only
  * stands in for the handful of members the sheet actually calls.
  */
 internal class FakeSharingClient {

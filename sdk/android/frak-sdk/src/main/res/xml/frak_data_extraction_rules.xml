@@ -2,7 +2,7 @@
 <!--
   Keeps the SDK's anonymous identity from surviving a device migration.
 
-  02-native-sdk-overview.md §4: the anonymous id is derived from a device-held
+  02-sdk-design.md §3: the anonymous id is derived from a device-held
   P-256 keypair and is scoped to one app installation. Carrying it to a new
   device resurrects a "fresh" user's identity — the exact behaviour that makes
   Keychain unusable on iOS, and the reason it is rejected there.

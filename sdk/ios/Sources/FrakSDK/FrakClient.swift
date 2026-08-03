@@ -4,7 +4,7 @@ import Foundation
 ///
 /// A concrete class, not a protocol: adding a member here is additive on both platforms,
 /// where adding a requirement to a protocol invalidates every witness table built before
-/// it (`09-api-shape.md`). There is no supported way for a merchant to substitute a fake;
+/// it (`02-sdk-design.md`). There is no supported way for a merchant to substitute a fake;
 /// point `FrakEnvironment.custom(wallet:backend:)` at a stub server instead and exercise
 /// the real client.
 ///

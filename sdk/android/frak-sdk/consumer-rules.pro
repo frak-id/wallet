@@ -3,7 +3,7 @@
 # These rules ship INSIDE the AAR (wired via `consumerProguardFiles` in
 # build.gradle.kts). R8 reads them out of the artifact and merges them into the
 # merchant app's configuration automatically, so a merchant pastes NOTHING into
-# their own `proguard-rules.pro` — see 03-implementation-strategy.md §5.4, which
+# their own `proguard-rules.pro` — see 05-build-and-release.md §4, which
 # lists "consumer ProGuard/R8 rule verification" as its own CI job precisely
 # because a missing rule here surfaces only in a minified release build, in
 # someone else's app, after they shipped.
