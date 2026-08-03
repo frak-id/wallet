@@ -51,7 +51,7 @@ internal class RewardRepository(
      *   trigger. Open on the wire; an unrecognised value simply matches
      *   nothing, so it degrades to "no best reward" rather than erroring.
      * @param products advisory product context for selection; see
-     *   [id.frak.sdk.FrakClient.bestReward].
+     *   [id.frak.sdk.RewardsApi.best].
      */
     suspend fun fetch(
         merchantId: String,

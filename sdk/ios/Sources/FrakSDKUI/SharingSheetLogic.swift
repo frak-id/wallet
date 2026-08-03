@@ -3,7 +3,7 @@ import FrakSDK
 
 /// The share, resolved once before anything can be shown.
 ///
-/// `link` is built by `FrakClient.buildSharingLink`, which is entirely local and works on
+/// `link` is built by `FrakClient.sharing.buildLink`, which is entirely local and works on
 /// a cold cache with no network. `pageURL` is the part that needs the network and can
 /// legitimately be absent while `link` is not — a session with no page is not a broken
 /// session, it is what the native-share fallback fires from.

@@ -95,7 +95,7 @@ public enum Frak {
     }
 
     // Pure/static: works before initialize(_:) has run. Decode-only — arrival tracking
-    // and the self-referral guard are FrakClient.handleReferralLink(_:).
+    // and the self-referral guard are FrakClient.appLink.handleReferral(_:).
     public static func parseReferralLink(_ url: String) -> FrakContext? {
         SharingLinkBuilder.parse(url)
     }

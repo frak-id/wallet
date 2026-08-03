@@ -13,6 +13,13 @@ plugins {
 val sdkVersion: String =
     providers.gradleProperty("frak.sdk.version").get()
 
+// Composite-build dependency substitution (`includeBuild("…/sdk/android")`) matches on
+// `project.group`, not the `MavenPublication`'s `groupId` below — without this, a consumer
+// doing that falls through to "cannot resolve id.frak:frak-sdk from Maven Central" instead of
+// being substituted locally. The publication keeps its own explicit `groupId` too, so the
+// published POM stays pinned even if this ever needs to diverge.
+group = "id.frak"
+
 // Everything both artifacts must agree on. Kept here rather than in each module because the
 // two ship in lockstep: a value that differs between them is a bug, not a choice.
 //

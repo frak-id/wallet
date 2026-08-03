@@ -174,19 +174,32 @@ internal class DefaultFrakClient(
         scope.launch { handleReferralLink(url) }
     }
 
-    suspend fun handleReferralLink(url: String): Boolean =
-        frakCall {
-            if (settings.deepLink == DeepLinkHandling.Disabled) return@frakCall false
-            val context = SharingLinkBuilder.parse(url) ?: return@frakCall false
+    /**
+     * Never throws, unlike every other public entry point: the return value only answers "was
+     * this a referral link", and arrival tracking is fire-and-forget telemetry that must not
+     * take a merchant's URL routing down with it. Mirrors the Swift twin, which discards
+     * [track]'s `Result` for the same reason. Deliberately not [frakCall]-wrapped: that would
+     * turn a future unexpected [Throwable] into a thrown [FrakError], the exact asymmetry this
+     * guards against.
+     */
+    suspend fun handleReferralLink(url: String): Boolean {
+        if (settings.deepLink == DeepLinkHandling.Disabled) return false
+        val context = SharingLinkBuilder.parse(url) ?: return false
 
-            if (ReferralArrival.isSelfReferral(context, identity.anonymousId())) {
-                logger.info("Ignoring a referral link this device produced.")
-                return@frakCall true
-            }
-
-            track(ReferralArrival.arrivalFrom(context))
-            true
+        if (ReferralArrival.isSelfReferral(context, identity.anonymousId())) {
+            logger.info("Ignoring a referral link this device produced.")
+            return true
         }
+
+        try {
+            track(ReferralArrival.arrivalFrom(context))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (unexpected: Throwable) {
+            logger.error("Referral arrival tracking failed", unexpected)
+        }
+        return true
+    }
 
     fun isFrakAppInstalled(): Boolean = launcher.isInstalled(settings.env.walletPackageId)
 

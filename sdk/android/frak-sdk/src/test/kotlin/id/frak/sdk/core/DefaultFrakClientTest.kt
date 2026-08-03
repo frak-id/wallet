@@ -142,6 +142,23 @@ class DefaultFrakClientTest {
         }
 
     @Test
+    fun `a tracking failure never escapes handleReferralLink, mirroring the Swift twin`() =
+        runTest {
+            // No merchantId configured: the arrival's trackingCall must resolve one over the
+            // network, and that resolve is made to fail below — this is the failure handleReferral
+            // must swallow, exactly like iOS discarding track's Result.
+            val client =
+                newClient(testScheduler, config = FrakConfig(packageId = "com.acme.app"))
+            transport.fail(java.io.IOException("network down"))
+
+            assertEquals(
+                "a tracking/network failure must not throw out of handleReferral",
+                true,
+                client.handleReferralLink(foreignLink()),
+            )
+        }
+
+    @Test
     fun `deep links to the wallet when something handles the scheme, and to the store when nothing does`() =
         runTest {
             val client = newClient(testScheduler)

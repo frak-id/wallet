@@ -15,6 +15,15 @@ options:
     iOS: "15.0"
   createIntermediateGroups: true
 
+# Local path package for the real SDK, mirroring Package.swift's dependency.
+# XcodeGen and SwiftPM resolve path-dependency identity independently
+# (SwiftPM from the target's `package:` argument in Package.swift, XcodeGen
+# from this `packages:` key), so both spots need to agree with what's on disk
+# at ../../sdk/ios rather than with the manifest's declared `name: "FrakSDK"`.
+packages:
+  FrakSDK:
+    path: ../../sdk/ios
+
 targets:
   FrakExampleiOSApp:
     type: application
@@ -23,6 +32,11 @@ targets:
       - path: Sources/FrakExampleiOSApp
         excludes:
           - Info.plist
+    dependencies:
+      - package: FrakSDK
+        product: FrakSDK
+      - package: FrakSDK
+        product: FrakSDKUI
     settings:
       base:
         # Point at the checked-in plist rather than XcodeGen's `info:` block,

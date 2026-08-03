@@ -38,9 +38,20 @@ public fun interface FrakLogSink {
 
 /** How inbound links carrying an `fCtx` reach the SDK. */
 public enum class DeepLinkHandling {
+    /**
+     * The SDK watches host activities itself (see [id.frak.sdk.applink.DeepLinkObserver]) and
+     * calls [id.frak.sdk.AppLinkApi.handleReferral] for every inbound `Intent`, including the
+     * one delivered to `onCreate`/`onNewIntent`. Calling `handleReferral` yourself for a URL
+     * that already arrived that way tracks the same arrival twice: the observer only guards
+     * against re-firing on its *own* re-delivery (an `Intent` extra marks an intent already
+     * consumed), not against a merchant's manual call for the same URL.
+     *
+     * Android-only: iOS has no equivalent lifecycle hook to observe, and only offers `Manual`/
+     * `Disabled`.
+     */
     Automatic,
 
-    /** Merchant calls [id.frak.sdk.FrakClient.handleReferralLink] from their own router. */
+    /** Merchant calls [id.frak.sdk.AppLinkApi.handleReferral] from their own router. */
     Manual,
 
     Disabled,

@@ -66,5 +66,13 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
+    // Coordinates, not a project(...) reference: this is what a merchant actually writes. The
+    // `../../sdk/android` includeBuild in settings.gradle.kts intercepts these two coordinates
+    // and substitutes the source modules, so this line resolves against a local build today and
+    // will resolve unchanged against Maven Central once frak-sdk/frak-sdk-ui are published —
+    // this app's dependency declaration doesn't need to know which is happening.
+    implementation("id.frak:frak-sdk:0.0.1")
+    implementation("id.frak:frak-sdk-ui:0.0.1")
+
     testImplementation("junit:junit:4.13.2")
 }

@@ -1,12 +1,21 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-// `scripts/run.sh` always passes an explicit iOS-simulator triple, but `.macOS(.v12)`
-// is still declared: `swift test`'s second stage runs the compiled tests directly on
-// the host toolchain, and without a macOS floor that falls back to a deployment
-// target too old for APIs like `Logger`. Swift 6 language mode isn't set here because
-// `.swiftLanguageMode(_:)` needs tools-version 6.0; `scripts/run.sh` passes
-// `-swift-version 6` at build/test time instead. See the README for details.
+// `.macOS(.v12)` is declared because shipping code in `Sources/FrakSDK` genuinely needs
+// it — not a `swift test` host-stage quirk. Two APIs set the floor: `FrakLogger`'s
+// `os.Logger` (Core/FrakLogger.swift, needs macOS 11) and `HTTPClient`'s
+// `URLSession.data(for:delegate:)` (Net/HTTPClient.swift, needs macOS 12, the higher of
+// the two and therefore the actual floor). Verified with `swiftc -typecheck -target
+// arm64-apple-macosx<N>` on each API in isolation: `Logger` typechecks at 11.0 and fails
+// at 10.15; `data(for:delegate:)` typechecks at 12.0 and fails at 11.0. Do not lower this
+// without re-verifying both. Gating both behind `@available` to drop `.macOS` from
+// `platforms:` entirely was evaluated and rejected: it would need a parallel pre-12
+// fallback implementation of both networking (pre-async `URLSession` completion handlers)
+// and logging (`os_log`'s C API, to keep structured `privacy: .public` redaction),
+// duplicating two subsystems for a platform this SDK doesn't ship a product on.
+// Swift 6 language mode isn't set here because `.swiftLanguageMode(_:)` needs
+// tools-version 6.0; `scripts/run.sh` passes `-swift-version 6` at build/test time
+// instead. See the README for details.
 let package = Package(
     name: "FrakSDK",
     // Required for the localized `.lproj` resources FrakSDKUI ships.

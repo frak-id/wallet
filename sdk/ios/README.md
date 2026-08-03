@@ -262,6 +262,26 @@ writer do not have:
 `FrakLogger`, the internal wrapper both routes go through, stays non-public — `FrakLogSink`
 is the seam merchants get, not that type.
 
+## Calling `Frak.client`
+
+`Frak.client` is throwing-synchronous (`get throws`, not `async`) — it only has to check
+whether `initialize(_:)` has run — while every namespace member on `FrakClient`
+(`rewards.best`, `config.resolve`, `sharing.buildLink`, …) is `async`. Swift has no syntax
+for "throw synchronously, then await" in one expression, so `try await Frak.client.rewards
+.best(...)` does not compile: `client` has to be resolved first.
+
+The recommended idiom, local to whatever type needs it:
+
+```swift
+private func client() -> FrakClient? { try? Frak.client }
+```
+
+then `await client()?.rewards.best(...)`, `try await client()?.config.resolve()`, etc. This
+is deliberately **not** a second public accessor on `Frak` or `FrakClient` — two public
+spellings of the same thing would be frozen forever by the same source-compat guarantees
+as the sealed `FrakClient` namespace, and an `async` `Frak.client` would break symmetry
+with the synchronous Kotlin equivalent. Write the three lines above per call site instead.
+
 ## Building, testing, linting
 
 From the repo root, or `cd sdk/ios` and drop the `--cwd`:

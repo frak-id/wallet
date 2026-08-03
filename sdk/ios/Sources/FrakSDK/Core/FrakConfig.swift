@@ -23,8 +23,15 @@ public enum FrakLogLevel: Int, Sendable, Hashable, Comparable {
 }
 
 public enum DeepLinkHandling: Sendable, Hashable {
-    // Merchant calls FrakClient.handleReferralLink(_:) from onOpenURL or their own router.
-    // Only mode iOS offers: no counterpart to Android's ActivityLifecycleCallbacks.
+    // Merchant calls FrakClient.appLink.handleReferral(_:) from onOpenURL or their own router.
+    //
+    // The only mode iOS offers. Android additionally has an `.automatic` mode backed by
+    // `ActivityLifecycleCallbacks`, which lets its SDK observe every Activity's incoming
+    // Intent and self-route referral links without merchant code. iOS has no equivalent
+    // hook: nothing lets a library install itself in front of the app's own URL routing,
+    // so this SDK cannot intercept `onOpenURL`/`onContinueUserActivity` on the merchant's
+    // behalf. `.manual` — the merchant forwarding URLs from their own `onOpenURL` — is
+    // therefore mandatory on iOS, not just the default.
     case manual
     case disabled
 }

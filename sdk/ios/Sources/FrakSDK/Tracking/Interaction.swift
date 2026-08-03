@@ -14,7 +14,7 @@ public struct Interaction: Sendable, Hashable {
 
     let kind: Kind
 
-    // Built for you by FrakClient.handleReferralLink.
+    // Built for you by FrakClient.appLink.handleReferral(_:).
     public static func arrival(
         referrerWallet: String? = nil,
         referrerClientId: String? = nil,

@@ -16,6 +16,7 @@ Native Android (Kotlin) and iOS (Swift) SDKs mirroring the capabilities of
 | [`07-audit-round-2.md`](./07-audit-round-2.md) | Second audit of both SDKs after the first remediation pass: ship blockers, correctness, security, performance, simplification, tests. Findings are annotated in place as they are fixed |
 | [`08-install-flow.md`](./08-install-flow.md) | **Design.** The step after a share: install-code handoff, `SKOverlay`, when the `frak-install-v1` proof is minted, and the `returnToHost` contract. Blocks rollout 3 — iOS emits no proof today, so it stops working when proofs become mandatory |
 | [`09-api-shape.md`](./09-api-shape.md) | **Decision.** `FrakClient` stops being an interface and its members split into five domain namespaces. Resolves the `FrakClient`-growth hazard `06` recorded but left open; shares `06`'s deadline, and lands before the BCV dump is committed |
+| [`10-example-rewiring.md`](./10-example-rewiring.md) | **Findings.** Both example apps rewired off their stubs onto the real SDK, closing `09` §8 and `05` D2. Confirms two-level namespacing reads well; finds eight contract defects in the members inside those namespaces — five fixed, three (`O1`–`O3`) still needing a decision before the ABI freeze |
 
 ## Scope (MVP)
 

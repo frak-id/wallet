@@ -7,7 +7,7 @@ package id.frak.sdk.core
  * would silently never match.
  *
  * Standalone rather than folded into [id.frak.sdk.sharing.SharingProduct]: reward
- * selection ([id.frak.sdk.FrakClient.bestReward]) needs scope-only products with no
+ * selection ([id.frak.sdk.RewardsApi.best]) needs scope-only products with no
  * `title`, so a merchant with just an order's line items (no display copy) can still
  * ask "what would this basket earn".
  *

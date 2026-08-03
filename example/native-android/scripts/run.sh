@@ -113,14 +113,16 @@ do_run() {
 
 	log "Running. Streaming SDK logs (Ctrl-C to stop)..."
 	adb logcat -c 2>/dev/null || true
-	adb logcat -s FrakSDK
+	# Tag comes from FrakLogger's TAG constant in :frak-sdk, not the deleted example stub.
+	adb logcat -s Frak
 }
 
 do_logs() {
 	resolve_sdk
 	require_adb
 	device_online || die "No device attached."
-	adb logcat -s FrakSDK
+	# Tag comes from FrakLogger's TAG constant in :frak-sdk, not the deleted example stub.
+	adb logcat -s Frak
 }
 
 # ktlint comes from the Gradle plugin, so these need no `brew install` — the

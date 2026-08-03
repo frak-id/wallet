@@ -4,39 +4,38 @@ Minimal iOS test harness and merchant example app for the Frak Native SDK. A
 native SDK cannot be exercised without an app to host it — there is no equivalent
 of opening a page against `sdk/core` — so this app is how the SDK gets run at all.
 
-> ⚠️ **Scaffolding — the real iOS SDK does not exist yet.**
-> `Sources/FrakExampleiOSApp/SDK/FrakSDK.swift` is a type-only stand-in: every call
-> logs and returns. Nothing is shared, tracked, or decoded. This app therefore
-> **cannot yet answer any of the POC questions** the native SDK plan poses. Once
-> `sdk/ios/` ships, delete that file and depend on the real artifact — the views
-> should not need changes.
->
-> The stub deliberately implements **nothing**. An earlier revision prototyped
-> anonymous-id persistence, `fCtx` parsing and the self-referral guard here; that
-> was removed because it is real SDK behaviour written twice in two languages with
-> nothing asserting the two agreed, and none of it survives into the real SDK —
-> which derives a keypair rather than persisting a UUID, and whose invariants are
-> pinned by the shared golden-fixture corpus.
+> This app depends on the real SDK at `../../sdk/ios` (products `FrakSDK` and
+> `FrakSDKUI`, wired as a local SwiftPM path dependency in `Package.swift` and as
+> an XcodeGen `packages:` entry in `project.yml`). It exercises the real,
+> asynchronous, throwing client against the Frak **development** backend
+> (`env: .development`, i.e. `backend.gcp-dev.frak.id`), configured with a real
+> merchant id (`0a799880-ba54-4276-a734-db8721911bab`) — every network call
+> (`config.resolve()`, `rewards.best(...)`, `tracking.purchase(...)`, the sharing
+> sheet) is expected to succeed. That merchant must have this app's bundle id,
+> `id.frak.example.ios`, on its allow list — a `MerchantResolutionFailed` error
+> or a validation error from the backend is the symptom when it does not. The
+> app still logs any failure legibly rather than fabricating a success.
 
 ## Overview
 
 What this app shows, using SwiftUI:
 
-- **SDK Configuration**: Initializes `FrakClient` with `FrakConfig(merchantId: "...", deepLink: .automatic)`
-- **Product Screen**: Renders product information and a "Share & Earn {REWARD}" button triggering `presentSharing(...)`
-- **Order Confirmation**: Hands completed purchases to `trackPurchase(...)`
-- **Deep Link Handling**: `CFBundleURLTypes` registration delivers inbound URLs to `.onOpenURL`, which passes them to `handleReferralLink(_:)`
-- **Privacy Manifest**: Ships an empty `PrivacyInfo.xcprivacy` — the harness accesses no required-reason API and collects nothing, because there is no SDK behind it. Declared empty rather than omitted so the file is correct on the day the real SDK lands
+- **SDK Configuration**: `Frak.initialize(FrakConfig(merchantId: "...", metadata:, env: .development, deepLink: .manual, logLevel: .info))` in the `App`'s `init()` — synchronous, non-throwing. `.development` points at `wallet-dev.frak.id` / `backend.gcp-dev.frak.id` and expects the DEV wallet app (`id.frak.wallet.dev`, scheme `frakwallet-dev`) rather than the production one, so `appLink.isFrakAppInstalled()` reports false unless the dev wallet build is installed on the simulator or device
+- **Product Catalog**: Renders a single headline reward for the whole visible catalog, looked up **once** via `client.rewards.best(targetInteraction:products:)` and rendered from `BestReward.formatted` (or a clearly-labelled fallback when the lookup fails); per the doc comment on `RewardsAPI.best`, this is one call for the whole listing, not one per row — each product row just has a plain "Share Product" button
+- **Sharing**: The `.frakSharingSheet(isPresented:request:onResult:)` view modifier from `FrakSDKUI` — there is no `FrakShareButton`; every `SharingResult` case (`.shared`, `.copied`, `.installStarted`, `.dismissed`, `.failed`) is logged
+- **Order Confirmation**: Hands completed purchases to `client.tracking.purchase(customerId:orderId:token:)`, logging the `Result`
+- **Deep Link Handling**: `CFBundleURLTypes` registration delivers inbound URLs to `.onOpenURL`, which routes them to `client.appLink.handleReferral(_:)`. This is mandatory on iOS, not optional: `DeepLinkHandling` here has only `.manual` and `.disabled` — no `.automatic` the way Android has, because iOS has no app-wide interception hook equivalent to `ActivityLifecycleCallbacks`. The deep-link simulator button funnels through the same code path as a real inbound URL, matching Android's simulator (which dispatches a real Intent)
+- **Startup diagnostics**: logs `appLink.isFrakAppInstalled()` and `config.resolve()` results on launch
+- **Privacy Manifest**: Ships `PrivacyInfo.xcprivacy`; the real SDK ships its own manifests for `FrakSDK` and `FrakSDKUI`
 - **Info.plist Setup**: Declares `LSApplicationQueriesSchemes` containing `frakwallet` and `frakwallet-dev` for app detection
-- **Design tokens**: `UI/FrakTokens.swift` mirrors `packages/design-system/src/tokens.css.ts`, so the harness renders in Frak brand colours
-
-The URL scheme registration and the `.onOpenURL` delivery path are real and are
-what this app usefully proves today. Everything behind `FrakClient` is not.
+- **Design tokens**: `UI/FrakTokens.swift` mirrors `packages/design-system/src/tokens.css.ts`, so the harness renders in Frak brand colours — this is the merchant's own styling, not SDK-provided
 
 The app consumes the SDK through its **public API only**, exactly as a merchant
 would — an example app reaching past the public surface stops being a test of the
 thing being shipped. Product fixtures and the order total are identical to the
-Android harness so a divergence between the two shows up in review.
+Android harness so a divergence between the two shows up in review (reward
+amounts are no longer part of that fixture: they come from a live, catalog-wide
+`rewards.best(...)` call instead of a hardcoded number).
 
 ## Running on a simulator
 
@@ -81,9 +80,9 @@ xcrun simctl openurl booted "merchantapp://product?fCtx=test_referral_token_ios_
 ```
 
 iOS shows an *"Open in …?"* confirmation the first time a scheme is opened from
-outside the app — accept it, and the handler runs. The URL is logged verbatim —
-parsing `fCtx` is the SDK's job, and there is no SDK yet. What this confirms is
-that the scheme is registered and the URL reaches `.onOpenURL`.
+outside the app — accept it, and the handler runs. The URL is passed to
+`client.appLink.handleReferral(_:)`, which decodes `fCtx` and reports whether it
+carried a Frak referral context; both the raw URL and that result are logged.
 
 ## Formatting and linting
 

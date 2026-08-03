@@ -249,12 +249,12 @@ would be to seal and skip the split.
 
 ## 8. Still open
 
-- **The example apps do not call this API, and this work did not rewire them.** An earlier
-  draft of this section said that rewiring belonged in this work; it didn't happen —
-  `05-audit-findings.md` D2's finding stands unchanged. Both harnesses are still hand-written
-  stubs whose shape does not match the shipped SDK (`presentSharing` with a completion
-  handler, `PurchaseDetails`). There is still no evidence that two-level namespacing reads
-  well in a merchant's code. Tracked as follow-up, not silently dropped.
+- **~~The example apps do not call this API.~~ Done — see `10-example-rewiring.md`.** Both
+  harnesses now compile against the real SDK, and the Android APK genuinely contains
+  `id.frak.sdk.{Config,Rewards,Sharing,Tracking,AppLink}Api`. The verdict on the question this
+  bullet was written to answer: **two-level namespacing reads well.** What the exercise found
+  instead is that the members *inside* the namespaces have inconsistent contracts. `10` records
+  eight findings, five fixed and three left open.
 - **`bestReward` is seeded into the iOS sheet and not the Android one**, and Android tracks
   `Interaction.Sharing()` where iOS does not. Surfaced while cataloguing the UI's use of the
   client. Pre-existing, out of scope here, needs its own fix.
