@@ -36,6 +36,7 @@ private struct FakeFrakClient: FrakClient {
     func bestReward(
         targetInteraction: String?,
         audience: RewardAudience?,
+        products: [ProductDetails]?,
         forceRefresh: Bool
     ) async throws -> BestReward? {
         reward
@@ -106,6 +107,12 @@ struct PublicSurfaceTests {
             referrer: reward
         )
         let best = BestReward(formatted: "10\u{00a0}€", payoutType: "fixed")
+        let scopedBest = BestReward(
+            formatted: "10\u{00a0}€",
+            payoutType: "fixed",
+            isProductScoped: true,
+            matchedProducts: [ProductDetails(sku: "SHOE-42")]
+        )
         let config = FrakResolvedConfig(
             merchantId: "m1",
             name: "Acme",
@@ -117,6 +124,11 @@ struct PublicSurfaceTests {
         #expect(tier.minValue == 0)
         #expect(campaign.referrer == reward)
         #expect(best.payoutType == "fixed")
+        // Defaults preserve the pre-scoping shape for a merchant who never passes products.
+        #expect(best.isProductScoped == false)
+        #expect(best.matchedProducts == nil)
+        #expect(scopedBest.isProductScoped)
+        #expect(scopedBest.matchedProducts == [ProductDetails(sku: "SHOE-42")])
         #expect(config.merchantId == "m1")
     }
 
@@ -207,6 +219,7 @@ struct PublicSurfaceTests {
         #expect(try await fake.resolveConfig() == config)
         #expect(try await fake.campaigns() == [campaign])
         #expect(try await fake.bestReward() == best)
+        #expect(try await fake.bestReward(products: [ProductDetails(sku: "SHOE-42")]) == best)
         #expect(await fake.currentConfig == config)
         #expect(fake.anonymousId != nil)
         #expect(await fake.openFrakApp() == .failed)
@@ -221,7 +234,8 @@ struct PublicSurfaceTests {
                     title: "Kettle",
                     link: "https://acme.example/p/1",
                     imageURL: "https://acme.example/p/1.png",
-                    utmContent: "sku-42"
+                    utmContent: "sku-42",
+                    details: ProductDetails(productId: "p1", sku: "sku-42", quantity: 1, unitPrice: 79.9)
                 )
             ],
             attribution: AttributionParams(utmSource: "ios-app"),
@@ -230,6 +244,7 @@ struct PublicSurfaceTests {
         )
 
         #expect(request.products.first?.utmContent == "sku-42")
+        #expect(request.products.first?.details?.unitPrice == 79.9)
         #expect(request.attribution?.utmSource == "ios-app")
         #expect(Interaction.sharing() == Interaction.sharing())
         #expect(Interaction.custom("newsletter", data: ["id": "1"]) != Interaction.custom("newsletter"))

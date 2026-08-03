@@ -8,6 +8,9 @@ import androidx.test.core.app.ApplicationProvider
 import id.frak.sdk.Frak
 import id.frak.sdk.core.FrakConfig
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.ProductDetails
+import id.frak.sdk.rewards.BestReward
+import id.frak.sdk.sharing.SharingProduct
 import id.frak.sdk.sharing.SharingRequest
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,6 +74,143 @@ class SharingSheetStateTest {
             assertNotNull("expected a session", session)
             assertTrue("a resolved config must yield a page", session!!.hasPage)
             assertNull(state.failure)
+        }
+
+    @Test
+    fun `product scope fields reach the page url alongside the display fields`() =
+        runTest {
+            val client = FakeFrakClient()
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products =
+                        listOf(
+                            SharingProduct(
+                                title = "Kettle",
+                                link = "https://acme.example/kettle",
+                                details =
+                                    ProductDetails(
+                                        sku = "SHOE-42",
+                                        quantity = 2.0,
+                                        unitPrice = 79.9,
+                                    ),
+                            ),
+                        ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val url = requireNotNull(state.session?.url(confirmed = false))
+            // The wallet route forwards this same `products=` value straight into reward
+            // selection (rewardProductsForSelection -> selectBestReward): a product-scoped
+            // campaign is only ranked correctly if these fields actually reach the wire.
+            assertTrue("was: $url", url.contains("sku%22%3A%22SHOE-42%22"))
+            assertTrue("was: $url", url.contains("quantity%22%3A2"))
+            assertTrue("was: $url", url.contains("unitPrice%22%3A79.9"))
+            // Display fields must still be present alongside the scope fields.
+            assertTrue("was: $url", url.contains("title%22%3A%22Kettle%22"))
+        }
+
+    @Test
+    fun `a product with no scope details omits the six scope keys but keeps the display fields`() =
+        runTest {
+            val client = FakeFrakClient()
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products = listOf(SharingProduct(title = "Kettle", link = "https://acme.example/kettle")),
+                ),
+            )
+            advanceUntilIdle()
+
+            val url = requireNotNull(state.session?.url(confirmed = false))
+            assertTrue("was: $url", url.contains("title%22%3A%22Kettle%22"))
+            assertTrue("no scope details supplied, was: $url", !url.contains("sku"))
+            assertTrue("no scope details supplied, was: $url", !url.contains("quantity"))
+        }
+
+    /**
+     * `JSONObject.put` throws outright on a non-finite number ("JSON does not allow non-finite
+     * numbers"), and this runs inside the sheet's `launch`, so the throw would surface as a crash
+     * rather than a missing product card. A price that is not a number carries no scope meaning.
+     */
+    @Test
+    fun `a non-finite price is dropped instead of throwing out of the sheet`() =
+        runTest {
+            val client = FakeFrakClient()
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products =
+                        listOf(
+                            SharingProduct(
+                                title = "Kettle",
+                                link = "https://acme.example/kettle",
+                                details =
+                                    ProductDetails(
+                                        quantity = Double.NaN,
+                                        unitPrice = Double.POSITIVE_INFINITY,
+                                        totalPrice = 12.5,
+                                    ),
+                            ),
+                        ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val url = requireNotNull(state.session?.url(confirmed = false))
+            assertTrue("was: $url", !url.contains("quantity"))
+            assertTrue("was: $url", !url.contains("unitPrice"))
+            // The usable field on the same product survives, as does the card itself.
+            assertTrue("was: $url", url.contains("totalPrice%22%3A12.5"))
+            assertTrue("was: $url", url.contains("title%22%3A%22Kettle%22"))
+        }
+
+    @Test
+    fun `the seeded reward call is scoped to the request's product details`() =
+        runTest {
+            val client = FakeFrakClient()
+            client.bestReward = BestReward(formatted = "5\u00a0\u20ac", payoutType = "fixed", null, null, null)
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products =
+                        listOf(
+                            SharingProduct(
+                                title = "Kettle",
+                                link = "https://acme.example/kettle",
+                                details = ProductDetails(sku = "SHOE-42"),
+                            ),
+                            // No details: the seed must drop this one, not pass a null entry through.
+                            SharingProduct(title = "Mug", link = "https://acme.example/mug"),
+                        ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val passed = requireNotNull(client.lastBestRewardProducts)
+            assertEquals(1, passed.size)
+            assertEquals("SHOE-42", passed.first().sku)
+        }
+
+    @Test
+    fun `the seeded reward call passes null products when nothing carries scope details`() =
+        runTest {
+            val client = FakeFrakClient()
+            val state = newState(client)
+
+            state.prepare(
+                SharingRequest(
+                    products = listOf(SharingProduct(title = "Kettle", link = "https://acme.example/kettle")),
+                ),
+            )
+            advanceUntilIdle()
+
+            assertNull(client.lastBestRewardProducts)
         }
 
     /** Regression: a failed config resolve must not discard the local link. */

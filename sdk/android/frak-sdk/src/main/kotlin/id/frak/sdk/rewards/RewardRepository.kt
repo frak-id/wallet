@@ -2,9 +2,11 @@ package id.frak.sdk.rewards
 
 import id.frak.sdk.config.Backoff
 import id.frak.sdk.config.SingleFlight
+import id.frak.sdk.core.Base64Url
 import id.frak.sdk.core.FrakCurrency
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakLogger
+import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.net.HttpClient
 import id.frak.sdk.net.HttpClient.Companion.toServerError
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +30,13 @@ internal class RewardRepository(
     private val mutex = Mutex()
     private val cache = HashMap<String, Entry>()
 
+    /**
+     * Test-only window onto the cache's size. The products string makes the key space
+     * caller-controlled, so "the map stays bounded" is a property worth asserting rather than
+     * trusting.
+     */
+    suspend fun cachedEntryCount(): Int = mutex.withLock { cache.size }
+
     private class Entry(
         val result: EstimatedRewardsResult,
         val fetchedAtMillis: Long,
@@ -41,6 +50,8 @@ internal class RewardRepository(
      * @param targetInteraction narrows selection to campaigns with this
      *   trigger. Open on the wire; an unrecognised value simply matches
      *   nothing, so it degrades to "no best reward" rather than erroring.
+     * @param products advisory product context for selection; see
+     *   [id.frak.sdk.FrakClient.bestReward].
      */
     suspend fun fetch(
         merchantId: String,
@@ -48,8 +59,15 @@ internal class RewardRepository(
         targetInteraction: String?,
         audience: RewardAudience?,
         forceRefresh: Boolean,
+        products: List<ProductDetails>? = null,
     ): EstimatedRewardsResult {
-        val key = cacheKey(merchantId, currency, targetInteraction, audience)
+        val encodedProducts = encodeProducts(products)
+        val key = cacheKey(merchantId, currency, targetInteraction, audience, encodedProducts)
+        // Deliberately products-free. Backoff is a statement about the backend's health, not
+        // about one product set: folding products in would mint a fresh key with a zero failure
+        // count on every product page, so a failing backend would be re-dialled instead of
+        // backed off. This is the key the repository used before products existed.
+        val backoffKey = cacheKey(merchantId, currency, targetInteraction, audience, null)
 
         if (!forceRefresh) {
             mutex
@@ -58,24 +76,26 @@ internal class RewardRepository(
                 }?.let { return it.result }
         }
 
-        if (mutex.withLock { backoff.isBackingOff(key) }) {
+        if (mutex.withLock { backoff.isBackingOff(backoffKey) }) {
             throw FrakError.Network(IllegalStateException("backing off after repeated reward fetch failures"))
         }
 
         return singleFlight.run(key) {
-            request(key, merchantId, currency, targetInteraction, audience)
+            request(key, backoffKey, merchantId, currency, targetInteraction, audience, encodedProducts)
         }
     }
 
     private suspend fun request(
         key: String,
+        backoffKey: String,
         merchantId: String,
         currency: FrakCurrency,
         targetInteraction: String?,
         audience: RewardAudience?,
+        encodedProducts: String?,
     ): EstimatedRewardsResult {
         val response =
-            backoff.runOrRecordFailure(mutex, key) {
+            backoff.runOrRecordFailure(mutex, backoffKey) {
                 http.get(
                     REWARDS_PATH,
                     mapOf(
@@ -87,12 +107,13 @@ internal class RewardRepository(
                         "currency" to currency.wireValue,
                         "targetInteraction" to targetInteraction,
                         "audience" to audience?.wireValue,
+                        "products" to encodedProducts,
                     ),
                 )
             }
 
         if (!response.isSuccess) {
-            backoff.recordFailureAndThrow(mutex, key, response.toServerError())
+            backoff.recordFailureAndThrow(mutex, backoffKey, response.toServerError())
         }
 
         val result = RewardsDecoder.decode(response.body)
@@ -109,31 +130,164 @@ internal class RewardRepository(
         }
 
         mutex.withLock {
-            backoff.recordSuccess(key)
+            backoff.recordSuccess(backoffKey)
+            // Sweep before inserting: `products` put a caller-controlled, up-to-4KB string in
+            // the key, so the map is no longer bounded by the handful of
+            // merchant/currency/audience combinations it used to hold. An entry past its TTL
+            // can never be served again, so dropping expired entries here bounds the map to
+            // what was actually asked for inside one TTL window rather than letting a browsed
+            // catalogue accumulate for the process's life.
+            val cutoff = now() - CACHE_TTL_MILLIS
+            cache.values.removeAll { it.fetchedAtMillis <= cutoff }
             cache[key] = Entry(result, now())
         }
         return result
     }
 
     // Every query parameter is in the key: `best` is selected server-side from
-    // the query, so two calls differing only in audience return genuinely
-    // different answers.
+    // the query, so two calls differing only in audience (or products) return
+    // genuinely different answers.
     private fun cacheKey(
         merchantId: String,
         currency: FrakCurrency,
         targetInteraction: String?,
         audience: RewardAudience?,
+        encodedProducts: String?,
     ): String =
         buildString {
             append(merchantId).append(':')
             append(currency.wireValue).append(':')
             append(targetInteraction.orEmpty()).append(':')
-            append(audience?.wireValue.orEmpty())
+            append(audience?.wireValue.orEmpty()).append(':')
+            append(encodedProducts.orEmpty())
+        }
+
+    /**
+     * `base64url(utf8(JSON.stringify(products)))` — byte-identical scheme to `sdk/core`'s
+     * `compressJsonToB64` (it is not compression, just a URL-safe transport encoding), so the
+     * backend's single decoder serves every SDK. Null fields and products carrying no scope
+     * field at all are dropped: this parameter feeds reward selection, not rendering, and an
+     * empty object would only make the payload larger for no benefit.
+     *
+     * Built as a string directly rather than via [JSONObject]: this `org.json` backs
+     * [JSONObject] with a plain `HashMap`, so its iteration — and therefore `toString()`—
+     * order is unspecified and JVM-dependent, not insertion order. The backend parses JSON,
+     * so wire order is not a requirement, but a fixed alphabetical order keeps the encoded
+     * string (and the cache key built from it) deterministic across JVMs and reviewable
+     * byte-for-byte against the iOS encoder.
+     *
+     * Returns null (parameter omitted) for an empty/all-empty list, or when the encoded string
+     * would exceed [MAX_ENCODED_PRODUCTS_LENGTH] — advisory display degrades to unscoped
+     * selection rather than ever failing the call over this.
+     */
+    private fun encodeProducts(products: List<ProductDetails>?): String? {
+        if (products.isNullOrEmpty()) return null
+
+        val entries =
+            products.mapNotNull { product ->
+                val fields =
+                    buildList {
+                        product.name?.let { add("name" to it.jsonQuoted()) }
+                        product.productId?.let { add("productId" to it.jsonQuoted()) }
+                        // `takeIf { it.isFinite() }`: NaN/Infinity have no JSON literal, and
+                        // emitting the bare `toString()` would put `NaN` in the payload and make
+                        // the whole thing unparseable. Dropping the field lands where
+                        // `JSON.stringify` does — it writes `null`, which the backend's
+                        // `sanitizeProductDetailsList` discards anyway.
+                        product.quantity?.takeIf { it.isFinite() }?.let { add("quantity" to it.jsonNumber()) }
+                        product.sku?.let { add("sku" to it.jsonQuoted()) }
+                        product.totalPrice?.takeIf { it.isFinite() }?.let { add("totalPrice" to it.jsonNumber()) }
+                        product.unitPrice?.takeIf { it.isFinite() }?.let { add("unitPrice" to it.jsonNumber()) }
+                    }
+                fields.takeIf { it.isNotEmpty() }
+            }
+        if (entries.isEmpty()) return null
+
+        val json =
+            entries.joinToString(separator = ",", prefix = "[", postfix = "]") { fields ->
+                fields.joinToString(separator = ",", prefix = "{", postfix = "}") { (key, value) -> "\"$key\":$value" }
+            }
+
+        val encoded = Base64Url.encode(json.toByteArray(Charsets.UTF_8))
+        if (encoded.length > MAX_ENCODED_PRODUCTS_LENGTH) {
+            logger.warn(
+                "Frak: bestReward(products=...) payload exceeds $MAX_ENCODED_PRODUCTS_LENGTH " +
+                    "encoded characters and was dropped; selection falls back to unscoped.",
+            )
+            return null
+        }
+        return encoded
+    }
+
+    // JSONObject/JSONArray are avoided for the wire string itself (see encodeProducts); these
+    // two are the minimal quoting this closed, controlled field set needs. Not a general-purpose
+    // JSON writer — ProductDetails only ever carries a String or a Double here.
+    private fun String.jsonQuoted(): String =
+        buildString {
+            append('"')
+            for (char in this@jsonQuoted) {
+                when (char) {
+                    '"' -> {
+                        append("\\\"")
+                    }
+
+                    '\\' -> {
+                        append("\\\\")
+                    }
+
+                    // RFC 8259 §7: a raw control character inside a string is invalid JSON, and
+                    // merchant catalogue data does carry stray newlines and tabs. Emitting one
+                    // would make the whole `products` payload unparseable, so the backend would
+                    // drop the entire basket's scope context over a single bad character.
+                    '\n' -> {
+                        append("\\n")
+                    }
+
+                    '\r' -> {
+                        append("\\r")
+                    }
+
+                    '\t' -> {
+                        append("\\t")
+                    }
+
+                    '\b' -> {
+                        append("\\b")
+                    }
+
+                    '\u000C' -> {
+                        append("\\f")
+                    }
+
+                    else -> {
+                        if (char < ' ') {
+                            append("\\u%04x".format(char.code))
+                        } else {
+                            append(char)
+                        }
+                    }
+                }
+            }
+            append('"')
+        }
+
+    // Matches JSON.stringify/org.json's own numberToString: an integral Double must not gain a
+    // trailing ".0" — the golden vectors and every sibling-platform decoder assert on this.
+    private fun Double.jsonNumber(): String =
+        if (this == Math.floor(this) &&
+            !isInfinite()
+        ) {
+            toLong().toString()
+        } else {
+            toString()
         }
 
     companion object {
         const val REWARDS_PATH: String = "/user/merchant/estimated-rewards"
         const val CACHE_TTL_MILLIS: Long = 30_000
         private const val FORMATTED = "1"
+
+        /** Matches the backend's `PRODUCTS_PARAM_MAX_LENGTH`, which ignores a longer param. */
+        const val MAX_ENCODED_PRODUCTS_LENGTH: Int = 8192
     }
 }

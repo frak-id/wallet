@@ -143,6 +143,54 @@ class RewardsDecoderTest {
     }
 
     @Test
+    fun `isProductScoped and matchedProducts default to false and null on a backend that omits them`() {
+        // FORMATTED_RESPONSE predates product scoping entirely — pins that an older backend
+        // response still decodes to the unscoped shape rather than failing.
+        val best = requireNotNull(RewardsDecoder.decode(FORMATTED_RESPONSE).best)
+
+        assertEquals(false, best.isProductScoped)
+        assertNull(best.matchedProducts)
+    }
+
+    @Test
+    fun `best decodes isProductScoped and matchedProducts when the backend sends them`() {
+        val body =
+            """
+            {"rewards":[],"best":{
+              "formatted":"12\u00a0€","payoutType":"fixed","isProductScoped":true,
+              "matchedProducts":[{"sku":"SHOE-42","quantity":2,"unitPrice":79.9}]
+            }}
+            """.trimIndent()
+
+        val best = requireNotNull(RewardsDecoder.decode(body).best)
+
+        assertEquals(true, best.isProductScoped)
+        val matched = requireNotNull(best.matchedProducts)
+        assertEquals(1, matched.size)
+        assertEquals("SHOE-42", matched.first().sku)
+        assertEquals(2.0, matched.first().quantity)
+        assertEquals(79.9, matched.first().unitPrice)
+        // Fields absent on the wire stay null rather than becoming empty strings/zero.
+        assertNull(matched.first().productId)
+        assertNull(matched.first().name)
+        assertNull(matched.first().totalPrice)
+    }
+
+    @Test
+    fun `an empty matchedProducts array decodes to null, matching the unscoped case`() {
+        val body =
+            """
+            {"rewards":[],"best":{
+              "formatted":"12\u00a0€","payoutType":"fixed","isProductScoped":false,"matchedProducts":[]
+            }}
+            """.trimIndent()
+
+        val best = requireNotNull(RewardsDecoder.decode(body).best)
+
+        assertNull(best.matchedProducts)
+    }
+
+    @Test
     fun `a non-expiring campaign decodes expiresAt as null`() {
         // The backend sends an explicit JSON null here rather than omitting it.
         assertNull(

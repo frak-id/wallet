@@ -40,6 +40,13 @@ struct RewardsDecoderTests {
         }}
         """
 
+    private static let productScopedResponse = """
+        {"rewards":[],"best":{
+          "formatted":"12\u{00a0}€","payoutType":"fixed","isProductScoped":true,
+          "matchedProducts":[{"sku":"SHOE-42","name":"Sneakers"}]
+        }}
+        """
+
     @Test("decodes a fixed reward")
     func decodesFixedReward() throws {
         let result = try RewardsDecoder.decode(Data(Self.fixedResponse.utf8))
@@ -176,6 +183,43 @@ struct RewardsDecoderTests {
         #expect(best.minPurchaseAmount == "10\u{00a0}€")
         #expect(best.minPurchaseValue == 10.0)
         #expect(best.lockupDurationDays == 7.0)
+    }
+
+    @Test("isProductScoped and matchedProducts decode when the backend sends them")
+    func decodesProductScopedFields() throws {
+        let best = try #require(try RewardsDecoder.decode(Data(Self.productScopedResponse.utf8)).best)
+
+        #expect(best.isProductScoped)
+        #expect(best.matchedProducts == [ProductDetails(sku: "SHOE-42", name: "Sneakers")])
+    }
+
+    @Test("isProductScoped defaults to false and matchedProducts to nil on a backend that predates them")
+    func productScopedFieldsDefaultOnAnOlderBackend() throws {
+        let best = try #require(try RewardsDecoder.decode(Data(Self.formattedResponse.utf8)).best)
+
+        #expect(best.isProductScoped == false)
+        #expect(best.matchedProducts == nil)
+    }
+
+    @Test("a wrong-typed isProductScoped degrades to false rather than failing decode")
+    func wrongTypedIsProductScopedDegradesToFalse() throws {
+        let body = #"{"rewards":[],"best":{"formatted":"12€","payoutType":"fixed","isProductScoped":"yes"}}"#
+
+        let best = try #require(try RewardsDecoder.decode(Data(body.utf8)).best)
+
+        #expect(best.isProductScoped == false)
+    }
+
+    @Test("a malformed entry inside matchedProducts is skipped, the rest survive")
+    func malformedMatchedProductEntryIsSkipped() throws {
+        let body = """
+            {"rewards":[],"best":{"formatted":"12€","payoutType":"fixed",
+             "matchedProducts":[42,{"sku":"SHOE-42"}]}}
+            """
+
+        let best = try #require(try RewardsDecoder.decode(Data(body.utf8)).best)
+
+        #expect(best.matchedProducts == [ProductDetails(sku: "SHOE-42")])
     }
 
     @Test("a non-expiring campaign decodes expiresAt as nil")
@@ -321,5 +365,38 @@ struct RewardsDecoderTests {
         }
         #expect(amount.eurAmount == 0.0)
         #expect(amount.amount == 100.0)
+    }
+}
+
+extension RewardsDecoderTests {
+    /// The synthesized `Decodable` throws on a present-but-wrong-typed value even for an
+    /// `Optional` property, so one reshaped field inside `matchedProducts` used to fail the whole
+    /// response — losing `rewards` along with `best`. Kotlin's `JsonReader` never could.
+    @Test("a wrong-typed field inside matchedProducts costs that field, not the whole response")
+    func matchedProductsFieldIsForgiving() throws {
+        let body = """
+            {"rewards":[{"campaignId":"c","name":"N","interactionTypeKey":"purchase","conditions":[]}],
+             "best":{"formatted":"5 €","payoutType":"fixed","isProductScoped":true,
+             "matchedProducts":[{"sku":"SHOE-42","quantity":"not-a-number"}]}}
+            """
+
+        let result = try RewardsDecoder.decode(Data(body.utf8))
+
+        // The campaign list survives, which is the part that used to be lost.
+        #expect(result.campaigns.count == 1)
+        let matched = try #require(result.best?.matchedProducts?.first)
+        #expect(matched.sku == "SHOE-42")
+        #expect(matched.quantity == nil)
+    }
+
+    /// Mirrors Kotlin's `ifEmpty { null }`: "the winner is unscoped" must be one value, not two.
+    @Test("an empty matchedProducts array decodes to nil, matching the absent case")
+    func emptyMatchedProductsIsNil() throws {
+        let body = """
+            {"rewards":[],"best":{"formatted":"5 €","payoutType":"fixed","isProductScoped":false,
+             "matchedProducts":[]}}
+            """
+
+        #expect(try RewardsDecoder.decode(Data(body.utf8)).best?.matchedProducts == nil)
     }
 }

@@ -17,6 +17,7 @@ import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogSink
 import id.frak.sdk.core.FrakResult
+import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.EstimatedReward
@@ -162,6 +163,8 @@ class PublicSurfaceTest {
             minPurchaseAmount = null,
             minPurchaseValue = null,
             lockupDurationDays = null,
+            isProductScoped = true,
+            matchedProducts = listOf(ProductDetails(sku = "SHOE-42")),
         )
 
     private fun sdkConfig(): ResolvedSdkConfig =
@@ -203,6 +206,7 @@ class PublicSurfaceTest {
             targetInteraction: String?,
             audience: RewardAudience?,
             forceRefresh: Boolean,
+            products: List<ProductDetails>?,
         ): BestReward? = reward
 
         override val anonymousId: String? = "256b1be3-2745-41d1-89d4-9121cc87bc45"

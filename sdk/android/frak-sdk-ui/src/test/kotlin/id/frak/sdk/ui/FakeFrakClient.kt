@@ -6,6 +6,7 @@ import id.frak.sdk.config.FrakResolvedConfig
 import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakResult
+import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.RewardAudience
@@ -35,6 +36,13 @@ internal class FakeFrakClient : FrakClient {
     var openFrakAppCount = 0
         private set
 
+    /** `null` best reward by default; set to observe the sheet's seeded-reward call. */
+    var bestReward: BestReward? = null
+
+    /** The `products` argument the sheet last passed to [bestReward], for assertions. */
+    var lastBestRewardProducts: List<ProductDetails>? = null
+        private set
+
     private val resolved =
         FrakResolvedConfig(
             merchantId = "b7c2e1a4-1111-4111-8111-111111111111",
@@ -56,7 +64,11 @@ internal class FakeFrakClient : FrakClient {
         targetInteraction: String?,
         audience: RewardAudience?,
         forceRefresh: Boolean,
-    ): BestReward? = null
+        products: List<ProductDetails>?,
+    ): BestReward? {
+        lastBestRewardProducts = products
+        return bestReward
+    }
 
     override fun resetAnonymousId() = Unit
 

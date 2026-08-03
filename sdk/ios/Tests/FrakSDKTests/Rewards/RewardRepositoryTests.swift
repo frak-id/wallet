@@ -33,6 +33,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
 
@@ -51,6 +52,7 @@ struct RewardRepositoryTests {
             currency: .gbp,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
 
@@ -69,6 +71,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
 
@@ -88,12 +91,105 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: "purchase",
             audience: .referrer,
+            products: nil,
             forceRefresh: false
         )
 
         let url = try #require(log.all.first?.url?.absoluteString)
         #expect(url.contains("targetInteraction=purchase"))
         #expect(url.contains("audience=referrer"))
+    }
+
+    @Test("products are sent as the base64url-encoded scope fields")
+    func productsAreSentEncoded() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let repository = makeRepository(clock: clock, log: log) { _ in StubResponse(status: 200, body: Self.empty) }
+
+        _ = try await repository.fetch(
+            merchantId: Self.merchantId,
+            currency: .eur,
+            targetInteraction: nil,
+            audience: nil,
+            products: [ProductDetails(sku: "SHOE-42")],
+            forceRefresh: false
+        )
+
+        let url = try #require(log.all.first?.url?.absoluteString)
+        // W3sic2t1IjoiU0hPRS00MiJ9XQ decodes to [{"sku":"SHOE-42"}] — same golden vector as
+        // ProductDetailsQueryEncoderTests, pinned again here to prove it actually reaches the wire.
+        #expect(url.contains("products=W3sic2t1IjoiU0hPRS00MiJ9XQ"))
+    }
+
+    @Test("an absent products parameter is omitted, not sent empty")
+    func absentProductsParameterIsOmitted() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let repository = makeRepository(clock: clock, log: log) { _ in StubResponse(status: 200, body: Self.empty) }
+
+        _ = try await repository.fetch(
+            merchantId: Self.merchantId,
+            currency: .eur,
+            targetInteraction: nil,
+            audience: nil,
+            products: nil,
+            forceRefresh: false
+        )
+
+        let url = try #require(log.all.first?.url?.absoluteString)
+        #expect(!url.contains("products"))
+    }
+
+    @Test("queries differing only in products do not share a cache entry")
+    func queriesDifferingInProductsDoNotShareCache() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let repository = makeRepository(clock: clock, log: log) { _ in StubResponse(status: 200, body: Self.empty) }
+
+        _ = try await repository.fetch(
+            merchantId: Self.merchantId,
+            currency: .eur,
+            targetInteraction: nil,
+            audience: nil,
+            products: [ProductDetails(sku: "SHOE-42")],
+            forceRefresh: false
+        )
+        _ = try await repository.fetch(
+            merchantId: Self.merchantId,
+            currency: .eur,
+            targetInteraction: nil,
+            audience: nil,
+            products: [ProductDetails(sku: "SHIRT-1")],
+            forceRefresh: false
+        )
+
+        #expect(log.count == 2)
+    }
+
+    @Test("a repeat with the same products within the cache window does not dial")
+    func repeatWithSameProductsDoesNotDial() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let repository = makeRepository(clock: clock, log: log) { _ in StubResponse(status: 200, body: Self.empty) }
+
+        _ = try await repository.fetch(
+            merchantId: Self.merchantId,
+            currency: .eur,
+            targetInteraction: nil,
+            audience: nil,
+            products: [ProductDetails(sku: "SHOE-42")],
+            forceRefresh: false
+        )
+        _ = try await repository.fetch(
+            merchantId: Self.merchantId,
+            currency: .eur,
+            targetInteraction: nil,
+            audience: nil,
+            products: [ProductDetails(sku: "SHOE-42")],
+            forceRefresh: false
+        )
+
+        #expect(log.count == 1)
     }
 
     @Test("an unknown merchant returns an empty list rather than an error")
@@ -107,6 +203,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
 
@@ -125,6 +222,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
         clock.current.addTimeInterval(RewardRepository.cacheTTL - 1)
@@ -133,6 +231,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
 
@@ -150,6 +249,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
         clock.current.addTimeInterval(RewardRepository.cacheTTL)
@@ -158,6 +258,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
 
@@ -175,6 +276,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: .referrer,
+            products: nil,
             forceRefresh: false
         )
         _ = try await repository.fetch(
@@ -182,6 +284,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: .referee,
+            products: nil,
             forceRefresh: false
         )
 
@@ -199,6 +302,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
         async let b = repository.fetch(
@@ -206,6 +310,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: false
         )
         _ = try await (a, b)
@@ -225,6 +330,7 @@ struct RewardRepositoryTests {
                 currency: .eur,
                 targetInteraction: nil,
                 audience: nil,
+                products: nil,
                 forceRefresh: false
             )
         }
@@ -241,6 +347,7 @@ struct RewardRepositoryTests {
             currency: .eur,
             targetInteraction: nil,
             audience: nil,
+            products: nil,
             forceRefresh: true
         )
 
@@ -251,6 +358,7 @@ struct RewardRepositoryTests {
                 currency: .eur,
                 targetInteraction: nil,
                 audience: nil,
+                products: nil,
                 forceRefresh: true
             )
         } catch let error as FrakError {
@@ -263,5 +371,75 @@ struct RewardRepositoryTests {
             return
         }
         #expect(underlying.localizedDescription.contains("backing off"))
+    }
+
+    /// Backoff must not be keyed by products. It was, briefly: because the products string is
+    /// part of the cache key, folding it into the backoff key too meant every product page
+    /// minted a fresh key with a zero failure count, so a merchant browsing a catalogue would
+    /// hammer a failing backend once per product instead of backing off.
+    @Test("a backed-off backend stays backed off for a different product set")
+    func backoffIgnoresProducts() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let repository = makeRepository(clock: clock, log: log) { _ in StubResponse(status: 500, body: "") }
+
+        _ = try? await repository.fetch(
+            merchantId: Self.merchantId,
+            currency: .eur,
+            targetInteraction: nil,
+            audience: nil,
+            products: [ProductDetails(sku: "SHOE-42")],
+            forceRefresh: true
+        )
+        let afterFirstFailure = log.all.count
+
+        var thrown: FrakError?
+        do {
+            _ = try await repository.fetch(
+                merchantId: Self.merchantId,
+                currency: .eur,
+                targetInteraction: nil,
+                audience: nil,
+                products: [ProductDetails(sku: "SHIRT-1")],
+                forceRefresh: true
+            )
+        } catch let error as FrakError {
+            thrown = error
+        }
+
+        let error = try #require(thrown)
+        guard case .network(let underlying) = error else {
+            Issue.record("expected .network")
+            return
+        }
+        #expect(underlying.localizedDescription.contains("backing off"))
+        // The point of the backoff: the second product set never reached the network.
+        #expect(log.all.count == afterFirstFailure)
+    }
+
+    /// The cache key carries an up-to-4KB caller-controlled products string, so entries must not
+    /// accumulate for the process's lifetime the way a merchant/currency-keyed map safely could.
+    @Test("expired entries are swept, so browsing a catalogue cannot grow the cache forever")
+    func expiredEntriesAreSwept() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let repository = makeRepository(clock: clock, log: log) { _ in
+            StubResponse(status: 200, body: Self.empty)
+        }
+
+        for index in 0..<5 {
+            _ = try await repository.fetch(
+                merchantId: Self.merchantId,
+                currency: .eur,
+                targetInteraction: nil,
+                audience: nil,
+                products: [ProductDetails(sku: "SKU-\(index)")],
+                forceRefresh: false
+            )
+            // Past the 30s TTL, so every previous entry is dead by the next insert.
+            clock.current.addTimeInterval(RewardRepository.cacheTTL + 1)
+        }
+
+        #expect(await repository.cachedEntryCount == 1)
     }
 }

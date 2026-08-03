@@ -4,6 +4,7 @@ import id.frak.sdk.config.FrakResolvedConfig
 import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakError
 import id.frak.sdk.core.FrakResult
+import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.RewardAudience
@@ -22,11 +23,18 @@ public interface FrakClient {
     /** Active campaigns for this merchant, highest priority first. */
     public suspend fun campaigns(forceRefresh: Boolean = false): List<Campaign>
 
-    /** Reward worth advertising, formatted server-side; null when nothing matches. */
+    /**
+     * Reward worth advertising, formatted server-side; null when nothing matches.
+     *
+     * @param products the products currently in view (a product page, a cart, an order's
+     *   line items), when known. Advisory: a campaign scoped to none of them is ranked below
+     *   every campaign matching at least one. Omitting it preserves the unscoped ranking.
+     */
     public suspend fun bestReward(
         targetInteraction: String? = null,
         audience: RewardAudience? = null,
         forceRefresh: Boolean = false,
+        products: List<ProductDetails>? = null,
     ): BestReward?
 
     /** The stage this client talks to. Merchants never set it directly, see [id.frak.sdk.core.FrakConfig.env]. */

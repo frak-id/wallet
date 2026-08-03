@@ -1,5 +1,7 @@
 package id.frak.sdk.rewards
 
+import id.frak.sdk.core.ProductDetails
+
 /** A reward amount in raw token units and each fiat currency the backend prices. */
 public class TokenAmount(
     /** Non-zero even when every fiat field is zero (fiat is `0` when unpriced, not worthless). */
@@ -80,6 +82,14 @@ public class BestReward(
     public val minPurchaseAmount: String?,
     public val minPurchaseValue: Double?,
     public val lockupDurationDays: Double?,
+    /**
+     * Whether the selected campaign is gated to a `productScope`. This is the *gate*, not
+     * the reward's basis — a product-gated campaign can still pay a percentage of the whole
+     * basket. Defaults false so a backend older than this field still decodes.
+     */
+    public val isProductScoped: Boolean = false,
+    /** The subset of the requested products matching the winning campaign's scope; null for an unscoped winner or when none were requested. */
+    public val matchedProducts: List<ProductDetails>? = null,
 )
 
 /** Who a reward is being estimated for: sharer ([REFERRER]) or arriving referee ([REFEREE]). */

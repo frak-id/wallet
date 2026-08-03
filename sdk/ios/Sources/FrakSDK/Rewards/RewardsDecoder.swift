@@ -111,9 +111,14 @@ extension Campaign {
 
 /// Same contract as `Campaign`: `formatted` and `payoutType` are the display contract and
 /// stay required; the supporting detail fields degrade to nil.
+///
+/// `isProductScoped` / `matchedProducts` degrade to `false` / `nil` rather than failing decode
+/// when absent, so a backend that predates product scoping still decodes cleanly — not just a
+/// reshaped field, but one that may not exist on the wire at all yet.
 extension BestReward {
     private enum CodingKeys: String, CodingKey {
-        case formatted, payoutType, minPurchaseAmount, minPurchaseValue, lockupDurationDays
+        case formatted, payoutType, minPurchaseAmount, minPurchaseValue, lockupDurationDays, isProductScoped,
+            matchedProducts
     }
 
     public init(from decoder: any Decoder) throws {
@@ -123,5 +128,35 @@ extension BestReward {
         minPurchaseAmount = container.decodeForgiving(String.self, forKey: .minPurchaseAmount)
         minPurchaseValue = container.decodeForgiving(Double.self, forKey: .minPurchaseValue)
         lockupDurationDays = container.decodeForgiving(Double.self, forKey: .lockupDurationDays)
+        isProductScoped = container.decodeForgiving(Bool.self, forKey: .isProductScoped) ?? false
+        // Empty folds to nil, so "the winner is unscoped" is one value rather than two a caller
+        // has to remember to check. Matches Kotlin's `ifEmpty { null }`.
+        let matched = try container.decodeIfPresent(
+            ForgivingArray<ProductDetails>.self,
+            forKey: .matchedProducts
+        )?.elements
+        matchedProducts = (matched?.isEmpty ?? true) ? nil : matched
+    }
+}
+
+/// Every field forgiving: `matchedProducts` is advisory display context, so one reshaped value
+/// inside it must cost that value, not the campaign list it arrived with. The synthesized
+/// `Decodable` would throw instead — an `Optional` property only defaults to nil when the key is
+/// absent, not when it is present with the wrong type.
+extension ProductDetails: Decodable {
+    private enum CodingKeys: String, CodingKey {
+        case productId, sku, name, quantity, unitPrice, totalPrice
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            productId: container.decodeForgiving(String.self, forKey: .productId),
+            sku: container.decodeForgiving(String.self, forKey: .sku),
+            name: container.decodeForgiving(String.self, forKey: .name),
+            quantity: container.decodeForgiving(Double.self, forKey: .quantity),
+            unitPrice: container.decodeForgiving(Double.self, forKey: .unitPrice),
+            totalPrice: container.decodeForgiving(Double.self, forKey: .totalPrice)
+        )
     }
 }

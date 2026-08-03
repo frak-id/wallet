@@ -326,7 +326,7 @@
                     appName: name,
                     logoURL: request.logoURL ?? config.sdkConfig?.logoURL,
                     link: request.link ?? request.products.first?.link,
-                    products: Self.productsJSON(request.products),
+                    products: sharingPageProductsJSON(request.products),
                     seededReward: await seededReward(client: client, request: request)
                 )
             )
@@ -337,9 +337,12 @@
         private func seededReward(client: any FrakClient, request: SharingRequest) async -> String? {
             let timeout = Self.seedTimeout
             let targetInteraction = request.targetInteraction
+            // Scoped the same way the page's own selection will be, so the seed the user sees
+            // for the first frame cannot show a different reward than the one the page settles on.
+            let products = request.products.compactMap(\.details)
             return await withTaskGroup(of: String?.self) { group in
                 group.addTask {
-                    try? await client.bestReward(targetInteraction: targetInteraction)?.formatted
+                    try? await client.bestReward(targetInteraction: targetInteraction, products: products)?.formatted
                 }
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
@@ -420,23 +423,7 @@
             deadline = nil
         }
 
-        /// The page's router parses search values as JSON. Nil rather than `[]`, because the
-        /// page skips the card section on an absent value and renders an empty one on `[]`.
-        private static func productsJSON(_ products: [SharingProduct]) -> String? {
-            guard !products.isEmpty else { return nil }
-            let array = products.map { product -> [String: Any] in
-                let fields: [String: Any?] = [
-                    "title": product.title,
-                    "link": product.link,
-                    "imageUrl": product.imageURL,
-                    "utmContent": product.utmContent,
-                ]
-                return fields.compactMapValues { $0 }
-            }
-            guard let data = try? JSONSerialization.data(withJSONObject: array, options: [.sortedKeys]) else {
-                return nil
-            }
-            return String(data: data, encoding: .utf8)
-        }
+        // `productsJSON` lives in SharingSheetLogic.swift, outside this file's
+        // `#if canImport(UIKit)`, so the macOS test host can pin what reaches the page.
     }
 #endif

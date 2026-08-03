@@ -22,9 +22,13 @@ public protocol FrakClient: Sendable {
 
     func campaigns(forceRefresh: Bool) async throws -> [Campaign]
 
+    // products is advisory context (a product page, a cart, an order's line items). A
+    // campaign scoped to none of them is deprioritized server-side; omitting it preserves
+    // the unscoped ranking.
     func bestReward(
         targetInteraction: String?,
         audience: RewardAudience?,
+        products: [ProductDetails]?,
         forceRefresh: Bool
     ) async throws -> BestReward?
 
@@ -88,9 +92,15 @@ extension FrakClient {
 
     public func bestReward(
         targetInteraction: String? = nil,
-        audience: RewardAudience? = nil
+        audience: RewardAudience? = nil,
+        products: [ProductDetails]? = nil
     ) async throws -> BestReward? {
-        try await bestReward(targetInteraction: targetInteraction, audience: audience, forceRefresh: false)
+        try await bestReward(
+            targetInteraction: targetInteraction,
+            audience: audience,
+            products: products,
+            forceRefresh: false
+        )
     }
 
     @discardableResult

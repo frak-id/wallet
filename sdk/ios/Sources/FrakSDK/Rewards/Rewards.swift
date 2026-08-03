@@ -100,19 +100,30 @@ public struct BestReward: Sendable, Decodable, Hashable {
     public let minPurchaseAmount: String?
     public let minPurchaseValue: Double?
     public let lockupDurationDays: Double?
+    /// Whether the selected campaign is gated to a `productScope`. The gate, not the reward's
+    /// basis — a product-gated campaign can still pay a percentage of the whole basket.
+    /// Defaults to `false` so a backend that predates this field still decodes.
+    public let isProductScoped: Bool
+    /// The subset of the products this call supplied that matched the winning campaign's
+    /// scope. `nil` for an unscoped winner, or when no products were supplied.
+    public let matchedProducts: [ProductDetails]?
 
     public init(
         formatted: String,
         payoutType: String,
         minPurchaseAmount: String? = nil,
         minPurchaseValue: Double? = nil,
-        lockupDurationDays: Double? = nil
+        lockupDurationDays: Double? = nil,
+        isProductScoped: Bool = false,
+        matchedProducts: [ProductDetails]? = nil
     ) {
         self.formatted = formatted
         self.payoutType = payoutType
         self.minPurchaseAmount = minPurchaseAmount
         self.minPurchaseValue = minPurchaseValue
         self.lockupDurationDays = lockupDurationDays
+        self.isProductScoped = isProductScoped
+        self.matchedProducts = matchedProducts
     }
 }
 

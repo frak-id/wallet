@@ -293,6 +293,18 @@ export type EstimatedRewardItem = Omit<
     "conditions" | "productScope"
 > & { conditions: RuleConditions; productScope?: RuleConditions };
 
+// Mirrors `ProductDetails` (sdk/core/src/types/product.ts) field-for-field: the set of
+// purchase line-item fields a campaign's `productScope` can target. Every field is
+// optional on both sides of the wire — a caller supplies whatever it knows.
+const ProductDetailsSchema = t.Object({
+    productId: t.Optional(t.String()),
+    sku: t.Optional(t.String()),
+    name: t.Optional(t.String()),
+    quantity: t.Optional(t.Number()),
+    unitPrice: t.Optional(t.Number()),
+    totalPrice: t.Optional(t.Number()),
+});
+
 // Mirrors `BestReward` (sdk/core/src/rewards/select.ts), minus `campaignId`
 // which the native SDK has no use for.
 const BestRewardSchema = t.Object({
@@ -307,6 +319,12 @@ const BestRewardSchema = t.Object({
     referrerReward: t.Optional(EstimatedRewardSchema),
     refereeReward: t.Optional(EstimatedRewardSchema),
     minPurchaseValue: t.Optional(t.Number()),
+    // The gate, not the reward's basis — a product-gated campaign can still pay a
+    // percentage of the whole basket. See `BestReward.isProductScoped` in sdk/core.
+    isProductScoped: t.Boolean(),
+    // The subset of the caller's `products` that matched the winning campaign's scope.
+    // Absent for an unscoped winner or when the caller supplied no products.
+    matchedProducts: t.Optional(t.Array(ProductDetailsSchema)),
 });
 
 export const EstimatedRewardsResultSchema = t.Object({

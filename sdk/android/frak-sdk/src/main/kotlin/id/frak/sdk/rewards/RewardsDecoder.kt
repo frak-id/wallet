@@ -1,5 +1,6 @@
 package id.frak.sdk.rewards
 
+import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.net.JsonReader
 import org.json.JSONObject
 
@@ -102,5 +103,25 @@ internal object RewardsDecoder {
             minPurchaseAmount = JsonReader.string(source, "minPurchaseAmount"),
             minPurchaseValue = JsonReader.double(source, "minPurchaseValue"),
             lockupDurationDays = JsonReader.double(source, "lockupDurationDays"),
+            // Both absent on a backend older than this field; default to the unscoped shape
+            // rather than failing decode over two fields nothing yet depended on.
+            isProductScoped = JsonReader.boolean(source, "isProductScoped") ?: false,
+            matchedProducts =
+                JsonReader
+                    .objectArray(
+                        source,
+                        "matchedProducts",
+                        ::decodeProductDetails,
+                    ).ifEmpty { null },
+        )
+
+    private fun decodeProductDetails(source: JSONObject): ProductDetails =
+        ProductDetails(
+            productId = JsonReader.string(source, "productId"),
+            sku = JsonReader.string(source, "sku"),
+            name = JsonReader.string(source, "name"),
+            quantity = JsonReader.double(source, "quantity"),
+            unitPrice = JsonReader.double(source, "unitPrice"),
+            totalPrice = JsonReader.double(source, "totalPrice"),
         )
 }

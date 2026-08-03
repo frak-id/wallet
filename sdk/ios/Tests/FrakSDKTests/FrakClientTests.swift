@@ -176,7 +176,7 @@ struct FrakClientTests {
             return StubResponse(status: 200, body: Self.rewardsBody)
         }
 
-        _ = try await client.bestReward(targetInteraction: nil, audience: nil, forceRefresh: false)
+        _ = try await client.bestReward(targetInteraction: nil, audience: nil, products: nil, forceRefresh: false)
 
         #expect(log.urls.contains { $0.contains("currency=usd") })
     }

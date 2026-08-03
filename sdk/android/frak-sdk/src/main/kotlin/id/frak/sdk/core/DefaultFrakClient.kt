@@ -113,9 +113,10 @@ internal class DefaultFrakClient(
         targetInteraction: String?,
         audience: RewardAudience?,
         forceRefresh: Boolean,
+        products: List<ProductDetails>?,
     ): BestReward? =
         frakCall {
-            fetchRewards(targetInteraction, audience, forceRefresh).best
+            fetchRewards(targetInteraction, audience, forceRefresh, products).best
         }
 
     override suspend fun buildSharingLink(request: SharingRequest): String? =
@@ -270,12 +271,14 @@ internal class DefaultFrakClient(
         targetInteraction: String?,
         audience: RewardAudience?,
         forceRefresh: Boolean,
+        products: List<ProductDetails>? = null,
     ) = rewards.fetch(
         merchantId = resolveConfig(forceRefresh = false).merchantId,
         currency = config.metadata.currency,
         targetInteraction = targetInteraction,
         audience = audience,
         forceRefresh = forceRefresh,
+        products = products,
     )
 
     private fun requireTrackingEnabled() {

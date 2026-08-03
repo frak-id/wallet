@@ -107,19 +107,26 @@ actor DefaultFrakClient: FrakClient {
 
     func campaigns(forceRefresh: Bool) async throws -> [Campaign] {
         try await frakCall {
-            try await fetchRewards(targetInteraction: nil, audience: nil, forceRefresh: forceRefresh).campaigns
+            try await fetchRewards(
+                targetInteraction: nil,
+                audience: nil,
+                products: nil,
+                forceRefresh: forceRefresh
+            ).campaigns
         }
     }
 
     func bestReward(
         targetInteraction: String?,
         audience: RewardAudience?,
+        products: [ProductDetails]?,
         forceRefresh: Bool
     ) async throws -> BestReward? {
         try await frakCall {
             try await fetchRewards(
                 targetInteraction: targetInteraction,
                 audience: audience,
+                products: products,
                 forceRefresh: forceRefresh
             ).best
         }
@@ -288,6 +295,7 @@ actor DefaultFrakClient: FrakClient {
     private func fetchRewards(
         targetInteraction: String?,
         audience: RewardAudience?,
+        products: [ProductDetails]?,
         forceRefresh: Bool
     ) async throws -> EstimatedRewardsResult {
         let resolved = try await resolveConfig(forceRefresh: false)
@@ -296,6 +304,7 @@ actor DefaultFrakClient: FrakClient {
             currency: config.metadata.currency,
             targetInteraction: targetInteraction,
             audience: audience,
+            products: products,
             forceRefresh: forceRefresh
         )
     }

@@ -371,10 +371,17 @@ internal class SharingSheetState(
         // Seeded from the reward cache so the page paints a headline on first frame; bounded so
         // a cold cache can't turn it into a delay. `catch (FrakError)` not `runCatching`, which
         // would swallow this composition's own CancellationException on mid-seed teardown.
+        // Scoped the same way the page's own selection will be, so the seed and the page
+        // never briefly disagree on a product-gated campaign.
+        val scopedProducts = request.products.mapNotNull { it.details }.ifEmpty { null }
         val seededReward =
             withTimeoutOrNull(SEED_TIMEOUT_MILLIS) {
                 try {
-                    client.bestReward(targetInteraction = request.targetInteraction)?.formatted
+                    client
+                        .bestReward(
+                            targetInteraction = request.targetInteraction,
+                            products = scopedProducts,
+                        )?.formatted
                 } catch (unavailable: FrakError) {
                     null
                 }
@@ -401,21 +408,44 @@ internal class SharingSheetState(
         )
     }
 
-    /** Null rather than `[]` when empty: page skips the card section on absent, renders empty on `[]`. */
+    /**
+     * Null rather than `[]` when empty: page skips the card section on absent, renders empty
+     * on `[]`. Flattens [SharingProduct.details]' six scope fields alongside the display
+     * fields — the page forwards this same object straight into reward selection
+     * (`rewardProductsForSelection` → `selectBestReward`), so a product-scoped campaign is
+     * only ranked correctly if the scope fields actually reach the wire here. Mirrored in
+     * `SharingSheetModel.productsJSON` on iOS; keep both in step.
+     */
     private fun productsJson(request: SharingRequest): String? {
         if (request.products.isEmpty()) return null
         val array = JSONArray()
         for (product in request.products) {
-            array.put(
+            val entry =
                 JSONObject()
                     .put("title", product.title)
                     .put("link", product.link)
                     .put("imageUrl", product.imageUrl)
-                    .put("utmContent", product.utmContent),
-            )
+                    .put("utmContent", product.utmContent)
+            product.details?.let { details ->
+                entry.put("productId", details.productId)
+                entry.put("sku", details.sku)
+                entry.put("name", details.name)
+                // `finiteOrNull`: `JSONObject.put` throws on NaN/Infinity ("JSON does not allow
+                // non-finite numbers"), and this runs inside the sheet's `launch`, where the
+                // throw would surface as a crash rather than a missing product card. A price
+                // that is not a number carries no scope meaning, so it is dropped like any
+                // other absent field.
+                entry.put("quantity", details.quantity.finiteOrNull())
+                entry.put("unitPrice", details.unitPrice.finiteOrNull())
+                entry.put("totalPrice", details.totalPrice.finiteOrNull())
+            }
+            array.put(entry)
         }
         return array.toString()
     }
+
+    /** Null for NaN/Infinity, which [JSONObject.put] rejects outright. */
+    private fun Double?.finiteOrNull(): Double? = this?.takeIf { it.isFinite() }
 
     private companion object {
         /** How long the reward seed may delay the sheet. Past this the page fetches it itself. */

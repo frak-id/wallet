@@ -36,12 +36,22 @@ public struct SharingProduct: Sendable, Hashable {
     public let imageURL: String?
     /// Highest-priority source for `utm_content`.
     public let utmContent: String?
+    /// Scope fields a campaign's `productScope` can target. Composed rather than flattened
+    /// so `bestReward(products:)` can take scope-only products with no `title` at all.
+    public let details: ProductDetails?
 
-    public init(title: String, link: String, imageURL: String? = nil, utmContent: String? = nil) {
+    public init(
+        title: String,
+        link: String,
+        imageURL: String? = nil,
+        utmContent: String? = nil,
+        details: ProductDetails? = nil
+    ) {
         self.title = title
         self.link = link
         self.imageURL = imageURL
         self.utmContent = utmContent
+        self.details = details
     }
 }
 

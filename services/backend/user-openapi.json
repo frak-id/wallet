@@ -1422,6 +1422,14 @@
                 "referee"
               ]
             }
+          },
+          {
+            "name": "products",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2494,7 +2502,8 @@
                       "type": "object",
                       "required": [
                         "formatted",
-                        "payoutType"
+                        "payoutType",
+                        "isProductScoped"
                       ],
                       "properties": {
                         "formatted": {
@@ -2888,6 +2897,35 @@
                         },
                         "minPurchaseValue": {
                           "type": "number"
+                        },
+                        "isProductScoped": {
+                          "type": "boolean"
+                        },
+                        "matchedProducts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "productId": {
+                                "type": "string"
+                              },
+                              "sku": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "quantity": {
+                                "type": "number"
+                              },
+                              "unitPrice": {
+                                "type": "number"
+                              },
+                              "totalPrice": {
+                                "type": "number"
+                              }
+                            }
+                          }
                         }
                       }
                     }
