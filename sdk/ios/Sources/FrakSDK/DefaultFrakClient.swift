@@ -1,7 +1,7 @@
 import Foundation
 
-actor DefaultFrakClient: FrakClient {
-    private let config: FrakConfig
+actor DefaultFrakClient {
+    private let settings: FrakConfig
     private let identity: AnonymousIdStore
     private let launcher: any AppLauncher
     private let logger: FrakLogger
@@ -13,7 +13,7 @@ actor DefaultFrakClient: FrakClient {
     private var subscribers: [UUID: AsyncStream<FrakResolvedConfig>.Continuation] = [:]
 
     init(
-        config: FrakConfig,
+        settings: FrakConfig,
         store: KeyValueStore,
         identity: AnonymousIdStore,
         queue: EventQueue,
@@ -22,11 +22,11 @@ actor DefaultFrakClient: FrakClient {
         session: URLSession = HTTPClient.defaultSession,
         backendURL: String? = nil
     ) {
-        self.config = config
+        self.settings = settings
         self.identity = identity
         self.launcher = launcher
         self.logger = logger
-        let http = HTTPClient(baseURL: backendURL ?? config.env.backend, session: session)
+        let http = HTTPClient(baseURL: backendURL ?? settings.env.backend, session: session)
         self.configStore = ConfigStore(http: http, store: store, logger: logger)
         self.rewards = RewardRepository(http: http, logger: logger)
         self.tracker = InteractionTracker(
@@ -41,7 +41,7 @@ actor DefaultFrakClient: FrakClient {
         // Then drain whatever a previous session queued and could not send — nothing else
         // triggers a drain, since the SDK holds no connectivity callback.
         let tracker = self.tracker
-        let trackingEnabled = config.trackingEnabled
+        let trackingEnabled = settings.trackingEnabled
         Task {
             guard trackingEnabled else {
                 // Events captured before the merchant turned tracking off must not be sent now.
@@ -54,7 +54,7 @@ actor DefaultFrakClient: FrakClient {
     }
 
     nonisolated var environment: FrakEnvironment {
-        config.env
+        settings.env
     }
 
     nonisolated var anonymousId: String? {
@@ -87,10 +87,10 @@ actor DefaultFrakClient: FrakClient {
         }
     }
 
-    func resolveConfig(forceRefresh: Bool) async throws -> FrakResolvedConfig {
+    func resolveConfig(forceRefresh: Bool = false) async throws -> FrakResolvedConfig {
         try await frakCall {
             try requireTrackingEnabled()
-            let query = try MerchantQuery.from(config)
+            let query = try MerchantQuery.from(settings)
             let resolved = try await configStore.resolve(query, forceRefresh: forceRefresh)
             // Dedupe, mirroring the Kotlin twin's StateFlow: a cache-hit resolve that
             // returns the same config every subscriber already has must not re-emit.
@@ -105,7 +105,7 @@ actor DefaultFrakClient: FrakClient {
         }
     }
 
-    func campaigns(forceRefresh: Bool) async throws -> [Campaign] {
+    func campaigns(forceRefresh: Bool = false) async throws -> [Campaign] {
         try await frakCall {
             try await fetchRewards(
                 targetInteraction: nil,
@@ -117,10 +117,10 @@ actor DefaultFrakClient: FrakClient {
     }
 
     func bestReward(
-        targetInteraction: String?,
-        audience: RewardAudience?,
-        products: [ProductDetails]?,
-        forceRefresh: Bool
+        targetInteraction: String? = nil,
+        audience: RewardAudience? = nil,
+        forceRefresh: Bool = false,
+        products: [ProductDetails]? = nil
     ) async throws -> BestReward? {
         try await frakCall {
             try await fetchRewards(
@@ -137,12 +137,12 @@ actor DefaultFrakClient: FrakClient {
         let resolved = await availableConfig()
         guard !Task.isCancelled else { return nil }
 
-        guard let merchantId = config.merchantId ?? resolved?.merchantId else { return nil }
+        guard let merchantId = settings.merchantId ?? resolved?.merchantId else { return nil }
         let product = request.products.first
         // A cold cache that cannot be filled yields nil rather than an unattributed link.
         guard
             let baseURL = request.link ?? product?.link ?? resolved?.sdkConfig?.homepageLink
-                ?? config.metadata.homepageLink
+                ?? settings.metadata.homepageLink
         else {
             return nil
         }
@@ -186,7 +186,7 @@ actor DefaultFrakClient: FrakClient {
 
     @discardableResult
     func handleReferralLink(_ url: String) async -> Bool {
-        guard config.deepLink != .disabled, let context = SharingLinkBuilder.parse(url) else { return false }
+        guard settings.deepLink != .disabled, let context = SharingLinkBuilder.parse(url) else { return false }
 
         if ReferralArrival.isSelfReferral(context, anonymousId: identity.anonymousId()) {
             logger.info("Ignoring a referral link this device produced.")
@@ -198,7 +198,7 @@ actor DefaultFrakClient: FrakClient {
     }
 
     func isFrakAppInstalled() async -> Bool {
-        await launcher.canOpen("\(config.env.walletScheme)://")
+        await launcher.canOpen("\(settings.env.walletScheme)://")
     }
 
     func openFrakApp() async -> OpenAppResult {
@@ -211,7 +211,7 @@ actor DefaultFrakClient: FrakClient {
         // installed and never opens. `open` already answers false for an unhandled scheme,
         // so the store fallback below is reached either way.
         let deepLink = InstallLinks.deepLink(
-            scheme: config.env.walletScheme,
+            scheme: settings.env.walletScheme,
             merchantId: install.merchantId,
             anonymousId: install.anonymousId
         )
@@ -236,7 +236,7 @@ actor DefaultFrakClient: FrakClient {
         // sharing, and the backend's 30-day window runs from this timestamp.
         let proof = identity.signProof(.install, merchantId: install.merchantId)
         return InstallLinks.installPage(
-            walletOrigin: config.env.wallet,
+            walletOrigin: settings.env.wallet,
             merchantId: install.merchantId,
             anonymousId: install.anonymousId,
             returnScheme: returnScheme,
@@ -249,7 +249,7 @@ actor DefaultFrakClient: FrakClient {
     private func installIdentity() async -> (merchantId: String, anonymousId: String)? {
         guard let anonymousId = identity.anonymousId() else { return nil }
         let resolved = await availableConfig()
-        guard !Task.isCancelled, let merchantId = config.merchantId ?? resolved?.merchantId else { return nil }
+        guard !Task.isCancelled, let merchantId = settings.merchantId ?? resolved?.merchantId else { return nil }
         return (merchantId, anonymousId)
     }
 
@@ -268,9 +268,9 @@ actor DefaultFrakClient: FrakClient {
     /// merchant to attribute to. Everything transient is the queue's problem, not the
     /// caller's, which is why nothing about connectivity can reach this return value.
     private func trackingCall(_ body: (String) async -> Void) async -> Result<Void, FrakError> {
-        guard config.trackingEnabled else { return .failure(.trackingDisabled) }
+        guard settings.trackingEnabled else { return .failure(.trackingDisabled) }
         let merchantId: String
-        if let configured = config.merchantId {
+        if let configured = settings.merchantId {
             merchantId = configured
         } else {
             do {
@@ -301,7 +301,7 @@ actor DefaultFrakClient: FrakClient {
         let resolved = try await resolveConfig(forceRefresh: false)
         return try await rewards.fetch(
             merchantId: resolved.merchantId,
-            currency: config.metadata.currency,
+            currency: settings.metadata.currency,
             targetInteraction: targetInteraction,
             audience: audience,
             products: products,
@@ -316,6 +316,6 @@ actor DefaultFrakClient: FrakClient {
     // When tracking is off, no id is generated and no network is issued — including
     // for resolveConfig, which is itself a request on the user's behalf.
     private func requireTrackingEnabled() throws {
-        guard config.trackingEnabled else { throw FrakError.trackingDisabled }
+        guard settings.trackingEnabled else { throw FrakError.trackingDisabled }
     }
 }

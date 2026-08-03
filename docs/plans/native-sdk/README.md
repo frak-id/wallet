@@ -15,6 +15,7 @@ Native Android (Kotlin) and iOS (Swift) SDKs mirroring the capabilities of
 | [`06-abi-decisions.md`](./06-abi-decisions.md) | **Open** ABI questions blocking the first publish: the `$default` constructor freeze, `@InternalFrakApi` vs promotion, iOS's now-public `init(from:)`. Note there is **no committed `.api` dump** — BCV was wired and then deliberately removed while the shape is unfrozen; it returns before the first publish |
 | [`07-audit-round-2.md`](./07-audit-round-2.md) | Second audit of both SDKs after the first remediation pass: ship blockers, correctness, security, performance, simplification, tests. Findings are annotated in place as they are fixed |
 | [`08-install-flow.md`](./08-install-flow.md) | **Design.** The step after a share: install-code handoff, `SKOverlay`, when the `frak-install-v1` proof is minted, and the `returnToHost` contract. Blocks rollout 3 — iOS emits no proof today, so it stops working when proofs become mandatory |
+| [`09-api-shape.md`](./09-api-shape.md) | **Decision.** `FrakClient` stops being an interface and its members split into five domain namespaces. Resolves the `FrakClient`-growth hazard `06` recorded but left open; shares `06`'s deadline, and lands before the BCV dump is committed |
 
 ## Scope (MVP)
 

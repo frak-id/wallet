@@ -25,8 +25,9 @@ integration complaint. Therefore:
 
 - **zero third-party runtime dependencies** (see §5)
 - < 150 KB per platform, no transitive bloat
-- no background threads at rest, no work on `Application.onCreate` / `App.init`
-- `initialize()` is non-blocking, performs **no I/O**, and **never throws**
+- `initialize()` itself is non-blocking, performs **no I/O**, and **never throws** — it does
+  launch one background task, draining whatever the event queue held from a previous
+  session, because nothing else ever triggers that drain (`09-api-shape.md` §5)
 - never crashes the host: every public entry point degrades to a no-op or a typed error
 - no analytics vendor SDK, no IDFA/AAID — which merchants will ask about, but note this
   does **not** by itself settle the ATT question; see §12.1
@@ -710,6 +711,28 @@ that needs Universal/App Link registration too.
 
 ## 9. API surface
 
+> The shape below predates `09-api-shape.md`: it still reads as flat `client.method()`.
+> As shipped, every member listed here lives under one of five namespaces on `FrakClient`
+> — `config`, `rewards`, `sharing`, `tracking`, `appLink` — for example
+> `client.rewards.best(...)`, not `client.bestReward(...)`. `environment`, `anonymousId`
+> and `resetAnonymousId` are the only members still on the root. See `09` for the mapping
+> and the rationale.
+>
+> This section predates more than the namespace split, and was never fully implemented
+> for v0.1: `copy`/`ResolvedCopy`, `referralStatus`/`ReferralStatus`, `InteractionType`,
+> `FrakComponent`, `presentSharing` as an imperative call, and `openFrakApp`'s `path`/
+> `fallback` parameters do not exist in the shipped SDK — the real sharing UI is
+> `rememberFrakSharingLauncher`/`FrakShareButton` (Kotlin) and `.frakSharingSheet`
+> (Swift), and `openFrakApp()`/`isFrakAppInstalled()` take no parameters on either
+> platform. `isFrakAppInstalled()` is `async` on Swift and plain-`fun` synchronous on
+> Kotlin — a real platform divergence, not a doc slip, and neither is `@MainActor`.
+> `config.current` (iOS-only, a synchronous snapshot of the
+> latest resolved config, since `AsyncStream` has no `.value`) is real and shipped but
+> missing from the code block and naming map below. Treat this section as describing
+> *intent*, not the shipped contract; `sdk/android/README.md` and `sdk/ios/README.md`
+> list what actually ships. The Threading and network table further down carries the
+> same flat-spelling and not-yet-shipped caveats.
+
 ```swift
 // ── Setup ─────────────────────────────────────────────────────────
 FrakConfig(merchantId:, bundleId:, metadata:, attribution:, deepLink:,
@@ -803,21 +826,26 @@ build their own UI with numbers identical to web.
 | `FrakWalletSdkConfig` | `FrakConfig` | `FrakConfig` |
 | `config.domain` | `FrakConfig.packageId` | `FrakConfig.bundleId` |
 | `getClientId()` | `client.anonymousId` | `client.anonymousId` |
-| `sdkConfigStore.resolve()` | `client.resolveConfig()` | `client.resolveConfig(forceRefresh:)` |
-| `getMerchantInformation()` | `client.campaigns()` | `client.campaigns(forceRefresh:)` |
+| `sdkConfigStore.resolve()` | `client.config.resolve()` | `client.config.resolve(forceRefresh:)` |
+| — (no equivalent; `StateFlow.value`) | `client.config.updates.value` | `client.config.current` (`AsyncStream` has no synchronous "latest value") |
+| `getMerchantInformation()` | `client.rewards.campaigns()` | `client.rewards.campaigns(forceRefresh:)` |
 | `MerchantReward` | `Campaign` | `Campaign` |
-| `selectBestReward()` | `client.bestReward()` | `client.bestReward(…)` |
+| `selectBestReward()` | `client.rewards.best(targetInteraction:audience:forceRefresh:products:)` | `client.rewards.best(targetInteraction:audience:forceRefresh:products:)` |
 | `formatAmount()` | `FrakFormat.amount()` | `FrakFormat.amount(_:currency:)` |
-| `sendInteraction()` | `client.track(interaction)` | `client.track(_:)` |
-| `trackPurchaseStatus()` | `client.trackPurchase()` | `client.trackPurchase(customerId:orderId:token:)` |
+| `sendInteraction()` | `client.tracking.track(interaction)` | `client.tracking.track(_:)` |
+| `trackPurchaseStatus()` | `client.tracking.purchase()` | `client.tracking.purchase(customerId:orderId:token:)` |
 | `displaySharingPage()` | `client.presentSharing(activity, request)` | `client.presentSharing(from:request:)` |
-| `buildSharingLink()` | `client.buildSharingLink()` | `client.buildSharingLink(request:)` |
+| `buildSharingLink()` | `client.sharing.buildLink()` | `client.sharing.buildLink(request)` (unlabeled first param) |
 | `FrakContextManager.parse()` | `Frak.parseReferralLink()` | `Frak.parseReferralLink(_:)` |
-| `openFrakWalletApp()` | `client.openFrakApp()` | `client.openFrakApp(path:fallback:)` |
+| `openFrakWalletApp()` | `client.appLink.openFrakApp()` | `client.appLink.openFrakApp(path:fallback:)` |
 | `FrakRpcError` | `FrakError` (sealed) | `FrakError` (enum, typed throws) |
 | `<frak-button-share>` | `FrakShareButton` (Compose) | `FrakShareButton` (SwiftUI) |
 
 ### Threading and network
+
+> Same caveat as §9's banner: `presentSharing`/`copy` are not shipped, and
+> `openFrakApp`/`isFrakAppInstalled` take no parameters and are not main-thread-bound
+> on either platform.
 
 | Member | Nullable | Thread | Network |
 |---|---|---|---|
@@ -841,6 +869,10 @@ build their own UI with numbers identical to web.
 
 ## 10. Integration sketch
 
+> Same caveat as §9: namespaced spelling per `09-api-shape.md` (`frak.rewards.best(...)`,
+> not `frak.bestReward(...)`), and `copy`/`FrakComponent`/`InteractionType` below are not
+> shipped — see the §9 banner.
+
 ### Android
 
 ```kotlin
@@ -853,7 +885,7 @@ Frak.initialize(this, FrakConfig(
 ))
 
 // Product screen
-val reward = frak.bestReward(targetInteraction = InteractionType.Purchase)
+val reward = frak.rewards.best(targetInteraction = InteractionType.Purchase)
 val cta    = frak.copy(placement = "product-page",
                        component = FrakComponent.SHARE_BUTTON)["text"]  // {REWARD} substituted
 
@@ -874,11 +906,11 @@ Button(onClick = { sharing.launch(SharingRequest(
 )) }) { Text(cta ?: "Share") }
 
 // Order confirmation
-frak.trackPurchase(order.customerId, order.id, order.checkoutToken)
+frak.tracking.purchase(order.customerId, order.id, order.checkoutToken)
 
 // Deep links: nothing to wire with DeepLinkHandling.Automatic (the default).
 // With .manual, from your router:
-//   if (frak.handleReferralLink(uri.toString())) return
+//   if (frak.appLink.handleReferral(uri.toString())) return
 ```
 
 ### iOS
@@ -894,7 +926,7 @@ Frak.initialize(FrakConfig(
 
 // Product screen
 .task {
-    reward = try? await Frak.client.bestReward(targetInteraction: .purchase)
+    reward = try? await Frak.client.rewards.best(targetInteraction: .purchase)
     cta = (try? await Frak.client.copy(placement: "product-page",
                                        component: .shareButton))?["text"]
 }
@@ -907,12 +939,12 @@ Frak.initialize(FrakConfig(
 }
 
 // Order confirmation
-await Frak.client.trackPurchase(customerId: order.customerId,
-                                orderId: order.id,
-                                token: order.checkoutToken)
+await Frak.client.tracking.purchase(customerId: order.customerId,
+                                    orderId: order.id,
+                                    token: order.checkoutToken)
 
 // Deep links: handled automatically by default.
-// With .manual: .onOpenURL { url in Task { await Frak.client.handleReferralLink(url) } }
+// With .manual: .onOpenURL { url in Task { await Frak.client.appLink.handleReferral(url) } }
 ```
 
 ---

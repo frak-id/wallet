@@ -36,15 +36,15 @@ import kotlinx.coroutines.launch
 
 /** The real [FrakClient]. Every public entry point lets only [FrakError]/`CancellationException` escape, see [frakCall]. */
 internal class DefaultFrakClient(
-    private val config: FrakConfig,
+    private val settings: FrakConfig,
     store: KeyValueStore,
     queue: EventQueue,
     private val identity: AnonymousIdStore,
     private val launcher: AppLauncher,
     private val logger: FrakLogger,
     private val ioDispatcher: CoroutineDispatcher = defaultIoDispatcher(),
-    http: HttpClient = HttpClient(baseUrl = config.env.backend, ioDispatcher = defaultNetworkDispatcher()),
-) : FrakClient {
+    http: HttpClient = HttpClient(baseUrl = settings.env.backend, ioDispatcher = defaultNetworkDispatcher()),
+) {
     /** Outlives the caller that started the work. SupervisorJob isolates a failed revalidation. */
     private val scope =
         CoroutineScope(
@@ -62,17 +62,17 @@ internal class DefaultFrakClient(
 
     private val configState = MutableStateFlow<FrakResolvedConfig?>(null)
 
-    override val configUpdates: StateFlow<FrakResolvedConfig?> = configState.asStateFlow()
+    val configUpdates: StateFlow<FrakResolvedConfig?> = configState.asStateFlow()
 
-    override val environment: FrakEnvironment get() = config.env
+    val environment: FrakEnvironment get() = settings.env
 
     /** Read by `Frak.preloadSharing`. Not on [FrakClient] itself: that would break every hand-written fake. */
-    internal val preloadSharing: Boolean get() = config.preloadSharing
+    internal val preloadSharing: Boolean get() = settings.preloadSharing
 
-    override val anonymousId: String?
+    val anonymousId: String?
         get() = identity.anonymousId()
 
-    override fun resetAnonymousId() {
+    fun resetAnonymousId() {
         identity.reset()
         // Purge is best-effort cleanup; the guarantee is the flush loop dropping events
         // whose captured id no longer matches current.
@@ -81,7 +81,7 @@ internal class DefaultFrakClient(
 
     init {
         scope.launch {
-            if (!config.trackingEnabled) {
+            if (!settings.trackingEnabled) {
                 // Events captured before the merchant turned tracking off must not be sent now.
                 tracker.purge()
                 return@launch
@@ -96,30 +96,30 @@ internal class DefaultFrakClient(
     // withContext(ioDispatcher): tried and reverted, since it moved dispatch outside frakCall's
     // error boundary. The pool-starvation half of that reasoning is now handled by giving
     // HttpClient its own dispatcher; this half still stands on its own.
-    override suspend fun resolveConfig(forceRefresh: Boolean): FrakResolvedConfig =
+    suspend fun resolveConfig(forceRefresh: Boolean = false): FrakResolvedConfig =
         frakCall {
             requireTrackingEnabled()
-            val resolved = configStore.resolve(MerchantQuery.from(config), forceRefresh)
+            val resolved = configStore.resolve(MerchantQuery.from(settings), forceRefresh)
             configState.value = resolved
             resolved
         }
 
-    override suspend fun campaigns(forceRefresh: Boolean): List<Campaign> =
+    suspend fun campaigns(forceRefresh: Boolean = false): List<Campaign> =
         frakCall {
             fetchRewards(null, null, forceRefresh).campaigns
         }
 
-    override suspend fun bestReward(
-        targetInteraction: String?,
-        audience: RewardAudience?,
-        forceRefresh: Boolean,
-        products: List<ProductDetails>?,
+    suspend fun bestReward(
+        targetInteraction: String? = null,
+        audience: RewardAudience? = null,
+        forceRefresh: Boolean = false,
+        products: List<ProductDetails>? = null,
     ): BestReward? =
         frakCall {
             fetchRewards(targetInteraction, audience, forceRefresh, products).best
         }
 
-    override suspend fun buildSharingLink(request: SharingRequest): String? =
+    suspend fun buildSharingLink(request: SharingRequest): String? =
         frakCall {
             val clientId = identity.anonymousId() ?: return@frakCall null
             // catch (FrakError), never runCatching: this suspends, and runCatching would also
@@ -130,13 +130,13 @@ internal class DefaultFrakClient(
                 } catch (unavailable: FrakError) {
                     null
                 }
-            val merchantId = config.merchantId ?: resolved?.merchantId ?: return@frakCall null
+            val merchantId = settings.merchantId ?: resolved?.merchantId ?: return@frakCall null
             val product = request.products.firstOrNull()
             val baseUrl =
                 request.link
                     ?: product?.link
                     ?: resolved?.sdkConfig?.homepageLink
-                    ?: config.metadata.homepageLink
+                    ?: settings.metadata.homepageLink
                     ?: return@frakCall null
 
             SharingLinkBuilder.build(
@@ -153,13 +153,13 @@ internal class DefaultFrakClient(
             )
         }
 
-    override suspend fun track(interaction: Interaction): FrakResult<Unit> =
+    suspend fun track(interaction: Interaction): FrakResult<Unit> =
         trackingCall { merchantId ->
             tracker.track(merchantId, identity.anonymousId(), interaction)
             FrakResult.Success(Unit)
         }
 
-    override suspend fun trackPurchase(
+    suspend fun trackPurchase(
         customerId: String,
         orderId: String,
         token: String,
@@ -174,9 +174,9 @@ internal class DefaultFrakClient(
         scope.launch { handleReferralLink(url) }
     }
 
-    override suspend fun handleReferralLink(url: String): Boolean =
+    suspend fun handleReferralLink(url: String): Boolean =
         frakCall {
-            if (config.deepLink == DeepLinkHandling.Disabled) return@frakCall false
+            if (settings.deepLink == DeepLinkHandling.Disabled) return@frakCall false
             val context = SharingLinkBuilder.parse(url) ?: return@frakCall false
 
             if (ReferralArrival.isSelfReferral(context, identity.anonymousId())) {
@@ -188,9 +188,9 @@ internal class DefaultFrakClient(
             true
         }
 
-    override fun isFrakAppInstalled(): Boolean = launcher.isInstalled(config.env.walletPackageId)
+    fun isFrakAppInstalled(): Boolean = launcher.isInstalled(settings.env.walletPackageId)
 
-    override suspend fun openFrakApp(): OpenAppResult =
+    suspend fun openFrakApp(): OpenAppResult =
         frakCall {
             val link = installIdentity() ?: return@frakCall OpenAppResult.Failed
             val (merchantId, anonymousId) = link
@@ -199,7 +199,7 @@ internal class DefaultFrakClient(
             // unrelated to the app being absent, and `startActivity` already reports whether
             // anything took the intent. Mirrors iOS, where the probe is the weaker signal by a
             // wider margin — there it needs a merchant-side plist entry the SDK cannot inject.
-            if (launcher.open(InstallLinks.deepLink(config.env.walletScheme, merchantId, anonymousId))) {
+            if (launcher.open(InstallLinks.deepLink(settings.env.walletScheme, merchantId, anonymousId))) {
                 return@frakCall OpenAppResult.OpenedApp
             }
 
@@ -207,13 +207,13 @@ internal class DefaultFrakClient(
             if (launcher.open(store)) OpenAppResult.OpenedStore else OpenAppResult.Failed
         }
 
-    override suspend fun installUrl(): String? =
+    suspend fun installUrl(): String? =
         frakCall {
             val (merchantId, anonymousId) = installIdentity() ?: return@frakCall null
             storeUrl(merchantId, anonymousId)
         }
 
-    override suspend fun installPageUrl(
+    suspend fun installPageUrl(
         returnScheme: String,
         sessionId: String,
     ): String? =
@@ -223,7 +223,7 @@ internal class DefaultFrakClient(
             // install step, a keystore signature can fail for reasons that have nothing to do
             // with sharing, and the backend's 30-day window runs from this timestamp.
             InstallLinks.installPage(
-                walletOrigin = config.env.wallet,
+                walletOrigin = settings.env.wallet,
                 merchantId = merchantId,
                 anonymousId = anonymousId,
                 returnScheme = returnScheme,
@@ -236,7 +236,7 @@ internal class DefaultFrakClient(
     private suspend fun installIdentity(): Pair<String, String>? {
         val anonymousId = identity.anonymousId() ?: return null
         val merchantId =
-            config.merchantId
+            settings.merchantId
                 ?: try {
                     resolveConfig().merchantId
                 } catch (unavailable: FrakError) {
@@ -251,7 +251,7 @@ internal class DefaultFrakClient(
         anonymousId: String,
     ): String =
         InstallLinks.playStore(
-            packageId = config.env.walletPackageId,
+            packageId = settings.env.walletPackageId,
             merchantId = merchantId,
             anonymousId = anonymousId,
             installProof = identity.signProof(ProofOp.Install, merchantId),
@@ -261,7 +261,7 @@ internal class DefaultFrakClient(
     private suspend inline fun trackingCall(block: (merchantId: String) -> FrakResult<Unit>): FrakResult<Unit> =
         try {
             requireTrackingEnabled()
-            block(config.merchantId ?: resolveConfig().merchantId)
+            block(settings.merchantId ?: resolveConfig().merchantId)
         } catch (known: FrakError) {
             FrakResult.Failure(known)
         }
@@ -274,7 +274,7 @@ internal class DefaultFrakClient(
         products: List<ProductDetails>? = null,
     ) = rewards.fetch(
         merchantId = resolveConfig(forceRefresh = false).merchantId,
-        currency = config.metadata.currency,
+        currency = settings.metadata.currency,
         targetInteraction = targetInteraction,
         audience = audience,
         forceRefresh = forceRefresh,
@@ -282,7 +282,7 @@ internal class DefaultFrakClient(
     )
 
     private fun requireTrackingEnabled() {
-        if (!config.trackingEnabled) throw FrakError.TrackingDisabled
+        if (!settings.trackingEnabled) throw FrakError.TrackingDisabled
     }
 }
 

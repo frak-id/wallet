@@ -5,11 +5,12 @@ import Foundation
 /// ```swift
 /// Frak.initialize(FrakConfig(merchantId: "...", metadata: FrakMetadata(name: "Acme")))
 ///
-/// let reward = try await Frak.client.bestReward(targetInteraction: "purchase")
+/// let reward = try await Frak.client.rewards.best(targetInteraction: "purchase")
 /// ```
 public enum Frak {
     private static let lock = NSLock()
-    nonisolated(unsafe) private static var instance: (any FrakClient)?
+    nonisolated(unsafe) private static var core: DefaultFrakClient?
+    nonisolated(unsafe) private static var instance: FrakClient?
     // Kept alongside the client so preloadSharing can be read without widening FrakClient.
     nonisolated(unsafe) private static var configuration: FrakConfig?
 
@@ -41,8 +42,8 @@ public enum Frak {
                 return .missingStore
             }
 
-            instance = DefaultFrakClient(
-                config: effective,
+            let newCore = DefaultFrakClient(
+                settings: effective,
                 store: store,
                 identity: AnonymousIdStore(
                     keyStore: PersistedDeviceKeyStore(store: identityStore),
@@ -56,6 +57,8 @@ public enum Frak {
                 launcher: SystemAppLauncher(),
                 logger: logger
             )
+            core = newCore
+            instance = FrakClient(core: newCore)
             configuration = effective
             return .initialized
         }()
@@ -82,7 +85,7 @@ public enum Frak {
         }
     }
 
-    public static var client: any FrakClient {
+    public static var client: FrakClient {
         get throws {
             lock.lock()
             defer { lock.unlock() }
@@ -102,7 +105,7 @@ public enum Frak {
     }
 
     // Mirrors FrakConfig.preloadSharing for FrakSDKUI. Lives here (not FrakClient) so
-    // growing it doesn't break merchant hand-written fakes of that protocol.
+    // :frak-sdk-ui can read one flag without widening the client's public surface.
     public static var preloadSharing: Bool {
         lock.lock()
         defer { lock.unlock() }
@@ -118,6 +121,7 @@ public enum Frak {
     static func resetForTesting() {
         lock.lock()
         defer { lock.unlock() }
+        core = nil
         instance = nil
         configuration = nil
     }

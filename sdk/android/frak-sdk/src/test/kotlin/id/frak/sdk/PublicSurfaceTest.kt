@@ -16,26 +16,18 @@ import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakLanguage
 import id.frak.sdk.core.FrakLogLevel
 import id.frak.sdk.core.FrakLogSink
-import id.frak.sdk.core.FrakResult
 import id.frak.sdk.core.ProductDetails
 import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.rewards.Campaign
 import id.frak.sdk.rewards.EstimatedReward
-import id.frak.sdk.rewards.RewardAudience
 import id.frak.sdk.rewards.RewardTier
 import id.frak.sdk.rewards.TokenAmount
-import id.frak.sdk.sharing.SharingRequest
-import id.frak.sdk.tracking.Interaction
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Proves a merchant can construct every public reward/config model and write a fake
- * [FrakClient] with no mocking framework, matching [FrakClient]'s own doc comment.
+ * Proves a merchant can construct every public reward/config model, matching this
+ * package's model classes.
  *
  * Deliberately references only public API. Unlike Swift's `@testable`, a same-module
  * Kotlin test source set has friend access to `internal` by default, so this file's
@@ -131,19 +123,6 @@ class PublicSurfaceTest {
         assertEquals(listOf(FrakLogLevel.INFO to "merchant-routed"), received)
     }
 
-    @Test
-    fun `a merchant can substitute a fake FrakClient without a mocking framework`() =
-        runTest {
-            val config = FrakResolvedConfig(merchantId = "m1", name = "Acme", domain = "acme.example")
-            val campaignList = listOf(campaign())
-            val best = bestReward()
-            val fake: FrakClient = FakeFrakClient(config, campaignList, best)
-
-            assertEquals(config, fake.resolveConfig())
-            assertEquals(campaignList, fake.campaigns())
-            assertEquals(best, fake.bestReward())
-        }
-
     private fun campaign(referrer: EstimatedReward? = null): Campaign =
         Campaign(
             campaignId = "c1",
@@ -190,51 +169,4 @@ class PublicSurfaceTest {
                 ),
             attribution = AttributionDefaults(utmSource = "acme-web"),
         )
-
-    private class FakeFrakClient(
-        private val config: FrakResolvedConfig,
-        private val campaignList: List<Campaign>,
-        private val reward: BestReward?,
-    ) : FrakClient {
-        override val configUpdates: StateFlow<FrakResolvedConfig?> = MutableStateFlow(config).asStateFlow()
-
-        override suspend fun resolveConfig(forceRefresh: Boolean): FrakResolvedConfig = config
-
-        override suspend fun campaigns(forceRefresh: Boolean): List<Campaign> = campaignList
-
-        override suspend fun bestReward(
-            targetInteraction: String?,
-            audience: RewardAudience?,
-            forceRefresh: Boolean,
-            products: List<ProductDetails>?,
-        ): BestReward? = reward
-
-        override val anonymousId: String? = "256b1be3-2745-41d1-89d4-9121cc87bc45"
-
-        override fun resetAnonymousId() = Unit
-
-        override suspend fun buildSharingLink(request: SharingRequest): String? = null
-
-        override suspend fun track(interaction: Interaction): FrakResult<Unit> = FrakResult.Success(Unit)
-
-        override suspend fun trackPurchase(
-            customerId: String,
-            orderId: String,
-            token: String,
-        ): FrakResult<Unit> = FrakResult.Success(Unit)
-
-        override suspend fun handleReferralLink(url: String): Boolean = false
-
-        override fun isFrakAppInstalled(): Boolean = false
-
-        override suspend fun openFrakApp(): OpenAppResult = OpenAppResult.Failed
-
-        override suspend fun installUrl(): String? = null
-
-        // `installPageUrl()` is deliberately absent: this fake exists to prove a merchant can
-        // write one against the public surface, so it is also the regression test for that
-        // member being defaulted rather than abstract.
-
-        override val environment: FrakEnvironment = FrakEnvironment.Production
-    }
 }

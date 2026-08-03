@@ -67,11 +67,11 @@ a read that fails for a passing reason must not cost the user a healthy key.
 `ActivityLifecycleCallbacks` and reads inbound intents itself. iOS has no equivalent:
 inbound URLs land on the host's own `App`, `Scene` or `AppDelegate`, none of which a
 library can observe without being wired in. So `.manual` is the default and the only
-working mode — call `handleReferralLink(_:)` from `onOpenURL`, or from your router:
+working mode — call `appLink.handleReferral(_:)` from `onOpenURL`, or from your router:
 
 ```swift
 .onOpenURL { url in
-    Task { await (try? Frak.client)?.handleReferralLink(url) }   // then navigate to it anyway
+    Task { await (try? Frak.client)?.appLink.handleReferral(url) }   // then navigate to it anyway
 }
 ```
 

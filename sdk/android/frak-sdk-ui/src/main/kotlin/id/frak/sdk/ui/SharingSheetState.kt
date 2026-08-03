@@ -9,8 +9,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import id.frak.sdk.Frak
-import id.frak.sdk.FrakClient
+import id.frak.sdk.OpenAppResult
+import id.frak.sdk.config.FrakResolvedConfig
+import id.frak.sdk.core.FrakEnvironment
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.FrakResult
+import id.frak.sdk.core.ProductDetails
+import id.frak.sdk.rewards.BestReward
 import id.frak.sdk.sharing.SharingRequest
 import id.frak.sdk.tracking.Interaction
 import kotlinx.coroutines.CancellationException
@@ -23,8 +28,8 @@ import org.json.JSONObject
 
 /**
  * The share, resolved once before anything can be shown. [link] is 100% local
- * ([FrakClient.buildSharingLink]) and survives a cold cache/no network; [pageUrl]
- * needs the network and can legitimately be null — that's the tier-3 fallback
+ * ([id.frak.sdk.SharingApi.buildLink]) and survives a cold cache/no network;
+ * [pageUrl] needs the network and can legitimately be null — that's the tier-3 fallback
  * (native share sheet, no page), not a broken session.
  */
 internal class SharingSession(
@@ -51,9 +56,22 @@ internal class SharingSheetState(
     private val sessionId: String,
     private val onFinished: (SharingResult) -> Unit,
     private val onCopyConfirmed: () -> Unit,
-    // Overridable for tests without touching the process-global `Frak` singleton;
-    // resolved lazily since Frak.initialize may not have run when this is constructed.
-    private val client: () -> FrakClient = { Frak.client },
+    // Individually injected, not `() -> FrakClient`: FrakClient carries no substitutable
+    // abstraction (09-api-shape.md), so the seam is the handful of members this sheet
+    // actually calls, not all of them. Defaulted to `Frak.client`'s namespaces, resolved
+    // lazily since Frak.initialize may not have run when this is constructed.
+    private val buildSharingLink: suspend (SharingRequest) -> String? = { Frak.client.sharing.buildLink(it) },
+    private val anonymousId: () -> String? = { Frak.client.anonymousId },
+    private val environment: () -> FrakEnvironment = { Frak.client.environment },
+    private val resolveConfig: suspend () -> FrakResolvedConfig = { Frak.client.config.resolve() },
+    private val bestReward: suspend (String?, List<ProductDetails>?) -> BestReward? =
+        { targetInteraction, products ->
+            Frak.client.rewards.best(targetInteraction = targetInteraction, products = products)
+        },
+    private val track: suspend (Interaction) -> FrakResult<Unit> = { Frak.client.tracking.track(it) },
+    private val installPageUrl: suspend (String, String) -> String? =
+        { returnScheme, sid -> Frak.client.appLink.installPageUrl(returnScheme, sid) },
+    private val openFrakApp: suspend () -> OpenAppResult = { Frak.client.appLink.openFrakApp() },
 ) {
     var session: SharingSession? by mutableStateOf(null)
         private set
@@ -107,7 +125,7 @@ internal class SharingSheetState(
             // instead of leaving a spinner forever; CancellationException rethrows untouched.
             val built =
                 try {
-                    build(client(), request)
+                    build(request)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (unexpected: Throwable) {
@@ -205,20 +223,19 @@ internal class SharingSheetState(
         when (action) {
             SharingPageAction.Install -> {
                 scope.launch {
-                    val active = client()
                     // The sheet stays open and navigates to the wallet's install page rather
                     // than handing the user to the store. That page owns the decision — install
                     // code, store link, or straight into an installed wallet — and keeping it
                     // here is what makes the flow identical on both platforms, even though only
                     // iOS strictly needs the install code to preserve attribution.
                     val current = session ?: return@launch
-                    val page = active.installPageUrl(current.returnScheme, sessionId)
+                    val page = installPageUrl(current.returnScheme, sessionId)
                     if (page == null) {
                         // No identity or no merchant, so nothing to hand the install page. The
                         // store handoff is the honest fallback, and it closes the sheet.
                         // Reported only after the open is attempted; finishing first could tear
                         // this scope down mid-call.
-                        active.openFrakApp()
+                        openFrakApp()
                         finish(SharingResult.InstallStarted)
                         return@launch
                     }
@@ -316,7 +333,7 @@ internal class SharingSheetState(
 
     /** Suspends until the event is durable. See [share]. */
     private suspend fun track() {
-        client().track(Interaction.Sharing())
+        track(Interaction.Sharing())
     }
 
     /** `&confirmed=1` is load-bearing: under `native=1` the page hides its own share controls without this reload. */
@@ -340,22 +357,19 @@ internal class SharingSheetState(
     }
 
     /** Null only when there's nothing to share (no identity/merchant); a later resolveConfig failure still returns a no-page session, never null. */
-    private suspend fun build(
-        client: FrakClient,
-        request: SharingRequest,
-    ): SharingSession? {
-        val link = client.buildSharingLink(request)
-        val clientId = client.anonymousId
+    private suspend fun build(request: SharingRequest): SharingSession? {
+        val link = buildSharingLink(request)
+        val clientId = anonymousId()
         if (link == null || clientId == null) {
             failure = FrakError.MerchantResolutionFailed("no anonymous id or merchant to build a sharing link from")
             return null
         }
 
-        val walletOrigin = client.environment.wallet
+        val walletOrigin = environment().wallet
         val packageId = context.packageName
         val config =
             try {
-                client.resolveConfig()
+                resolveConfig()
             } catch (resolveFailed: FrakError) {
                 // Tier 3: link stands on its own. `failure` deliberately NOT set —
                 // this is a no-page session, not a failed one.
@@ -377,11 +391,7 @@ internal class SharingSheetState(
         val seededReward =
             withTimeoutOrNull(SEED_TIMEOUT_MILLIS) {
                 try {
-                    client
-                        .bestReward(
-                            targetInteraction = request.targetInteraction,
-                            products = scopedProducts,
-                        )?.formatted
+                    bestReward(request.targetInteraction, scopedProducts)?.formatted
                 } catch (unavailable: FrakError) {
                     null
                 }

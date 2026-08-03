@@ -32,12 +32,15 @@ import java.io.File
  * )
  *
  * // anywhere afterwards
- * val reward = Frak.client.bestReward(targetInteraction = "purchase")
+ * val reward = Frak.client.rewards.best(targetInteraction = "purchase")
  * ```
  */
 public object Frak {
     @Volatile
-    private var instance: DefaultFrakClient? = null
+    private var core: DefaultFrakClient? = null
+
+    @Volatile
+    private var instance: FrakClient? = null
 
     /** Non-blocking, does no I/O, never throws. Second call is a no-op; first config wins. */
     @JvmStatic
@@ -46,12 +49,12 @@ public object Frak {
         config: FrakConfig,
     ) {
         val logger = FrakLogger(config.logLevel, config.logSink)
-        if (instance != null) {
+        if (core != null) {
             logger.warn("Frak.initialize was called more than once. The first configuration is kept.")
             return
         }
         synchronized(this) {
-            if (instance != null) return
+            if (core != null) return
             val effective = config.withPackageIdFrom(context)
             if (effective.merchantId == null && effective.packageId == null) {
                 logger.error(
@@ -61,9 +64,9 @@ public object Frak {
             }
             // Shared by queue and client: two limitedParallelism(2) views would double the IO budget.
             val ioDispatcher = defaultIoDispatcher()
-            instance =
+            val newCore =
                 DefaultFrakClient(
-                    config = effective,
+                    settings = effective,
                     store = SharedPreferencesStore(context),
                     // noBackupFilesDir: queued events must never be replayed from a backup/transfer.
                     queue =
@@ -85,6 +88,8 @@ public object Frak {
                     logger = logger,
                     ioDispatcher = ioDispatcher,
                 )
+            core = newCore
+            instance = FrakClient(newCore)
             registerDeepLinkObserver(context, effective, logger)
             logger.info("Frak ${FrakSdkVersion.CURRENT} initialized.")
         }
@@ -103,7 +108,7 @@ public object Frak {
     /** Mirrors [FrakConfig.preloadSharing] for `:frak-sdk-ui`. False before [initialize] has run. */
     @JvmStatic
     public val preloadSharing: Boolean
-        get() = instance?.preloadSharing ?: false
+        get() = core?.preloadSharing ?: false
 
     /** Pure and static; callable before [initialize]. Only decodes — does not track arrival. */
     @JvmStatic
@@ -126,7 +131,7 @@ public object Frak {
         }
         application.registerActivityLifecycleCallbacks(
             // Client owns the guard/tracking; this only reports that a link was seen.
-            DeepLinkObserver { url -> instance?.handleReferralLinkInBackground(url) },
+            DeepLinkObserver { url -> core?.handleReferralLinkInBackground(url) },
         )
     }
 

@@ -21,7 +21,7 @@ struct FrakClientTests {
         StubURLProtocol.handle(host: host, respond)
         let logger = FrakLogger(level: .none)
         return DefaultFrakClient(
-            config: config,
+            settings: config,
             store: InMemoryKeyValueStore(),
             identity: AnonymousIdStore(
                 keyStore: FakeDeviceKeyStore(),
@@ -176,7 +176,7 @@ struct FrakClientTests {
             return StubResponse(status: 200, body: Self.rewardsBody)
         }
 
-        _ = try await client.bestReward(targetInteraction: nil, audience: nil, products: nil, forceRefresh: false)
+        _ = try await client.bestReward(targetInteraction: nil, audience: nil, forceRefresh: false, products: nil)
 
         #expect(log.urls.contains { $0.contains("currency=usd") })
     }
@@ -196,18 +196,16 @@ struct FrakClientTests {
         #expect(log.all.isEmpty)
     }
 
-    @Test("the three facade methods have usable defaults through any FrakClient")
-    func facadeMethodsHaveDefaultsThroughTheProtocol() async throws {
-        let client: any FrakClient = makeClient { request in
+    @Test("resolveConfig, campaigns and bestReward have usable defaults")
+    func facadeMethodsHaveUsableDefaults() async throws {
+        let client = makeClient { request in
             if request.url?.path.contains("resolve") == true {
                 return StubResponse(status: 200, body: Self.resolveBody)
             }
             return StubResponse(status: 200, body: Self.rewardsBody)
         }
 
-        // Only compiles if the protocol extension's defaults apply to
-        // `any FrakClient`, not just the concrete type. The last call is the one
-        // `Frak`'s own documentation shows.
+        // The last call is the one `Frak`'s own documentation shows.
         _ = try await client.resolveConfig()
         _ = try await client.campaigns()
         _ = try await client.bestReward()
@@ -342,13 +340,8 @@ struct FrakClientTests {
     func installPageURLCarriesAProof() async throws {
         let client = makeClient { _ in StubResponse(status: 200, body: Self.resolveBody) }
 
-        // Through the existential on purpose: `installPageURL()` has a protocol-extension
-        // default returning nil, so if the requirement ever stops being witnessed by the actor
-        // the extension silently wins and the install flow dies. A concrete-typed call would
-        // not see that.
-        let erased: any FrakClient = client
         let page = try #require(
-            await erased.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
+            await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
         )
         let anonymousId = try #require(client.anonymousId)
 
@@ -370,8 +363,7 @@ struct FrakClientTests {
         let config = FrakConfig(merchantId: FrakClientTests.merchantId, trackingEnabled: false)
         let client = makeClient(config: config) { _ in StubResponse(status: 200, body: Self.resolveBody) }
 
-        let erased: any FrakClient = client
-        #expect(await erased.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "s1") == nil)
+        #expect(await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "s1") == nil)
     }
 
     @Test("installURL needs an identity to link")

@@ -41,7 +41,18 @@
         var onClose: (() -> Void)?
 
         private let sessionId = UUID().uuidString.lowercased()
-        private let client: () -> (any FrakClient)?
+        // Individually injected, not `() -> FrakClient`: FrakClient carries no substitutable
+        // abstraction (09-api-shape.md), so the seam is the handful of members this sheet
+        // actually calls, not all of them. Defaulted to `Frak.client`'s namespaces, resolved
+        // lazily since Frak.initialize may not have run when this is constructed.
+        private let buildSharingLink: @Sendable (SharingRequest) async -> String?
+        private let anonymousId: @Sendable () -> String?
+        private let environment: @Sendable () -> FrakEnvironment
+        private let resolveConfig: @Sendable () async throws -> FrakResolvedConfig
+        private let bestReward: @Sendable (String?, [ProductDetails]) async -> BestReward?
+        private let track: @Sendable (Interaction) async -> Result<Void, FrakError>
+        private let installPageURL: @Sendable (String, String) async -> String?
+        private let openFrakApp: @Sendable () async -> OpenAppResult
 
         private var session: SharingSession?
         private var deadline: Task<Void, Never>?
@@ -54,8 +65,39 @@
         private var fellBack = false
         private var deadlineExpired = false
 
-        init(client: @escaping () -> (any FrakClient)? = { try? Frak.client }) {
-            self.client = client
+        init(
+            buildSharingLink: @escaping @Sendable (SharingRequest) async -> String? = {
+                await (try? Frak.client)?.sharing.buildLink($0)
+            },
+            anonymousId: @escaping @Sendable () -> String? = { try? Frak.client.anonymousId },
+            // Only read from `build(_:)`, reached after `prepare` has confirmed `Frak.isInitialized`.
+            environment: @escaping @Sendable () -> FrakEnvironment = { (try? Frak.client)?.environment ?? .production },
+            resolveConfig: @escaping @Sendable () async throws -> FrakResolvedConfig = {
+                try await Frak.client.config.resolve()
+            },
+            bestReward: @escaping @Sendable (String?, [ProductDetails]) async -> BestReward? = {
+                targetInteraction,
+                products in
+                try? await (try? Frak.client)?.rewards.best(targetInteraction: targetInteraction, products: products)
+            },
+            track: @escaping @Sendable (Interaction) async -> Result<Void, FrakError> = {
+                await (try? Frak.client)?.tracking.track($0) ?? .failure(.notInitialized)
+            },
+            installPageURL: @escaping @Sendable (String, String) async -> String? = { returnScheme, sessionId in
+                await (try? Frak.client)?.appLink.installPageURL(returnScheme: returnScheme, sessionId: sessionId)
+            },
+            openFrakApp: @escaping @Sendable () async -> OpenAppResult = {
+                await (try? Frak.client)?.appLink.openFrakApp() ?? .failed
+            }
+        ) {
+            self.buildSharingLink = buildSharingLink
+            self.anonymousId = anonymousId
+            self.environment = environment
+            self.resolveConfig = resolveConfig
+            self.bestReward = bestReward
+            self.track = track
+            self.installPageURL = installPageURL
+            self.openFrakApp = openFrakApp
         }
 
         /// Idempotent: `onAppear` can fire more than once for the same presentation, and a
@@ -145,22 +187,19 @@
             switch action {
             case .install:
                 Task {
-                    guard let client = client(), let session else { return }
+                    guard let session else { return }
                     // The sheet stays open and navigates to the wallet's install page, rather
                     // than handing the user to the store. That page owns the decision — install
                     // code, store link, or straight into an installed wallet — and it is the
                     // only route by which an iOS user's attribution survives an install, there
                     // being no App Store equivalent of the Play referrer.
                     guard
-                        let page = await client.installPageURL(
-                            returnScheme: session.returnScheme,
-                            sessionId: sessionId
-                        ),
+                        let page = await installPageURL(session.returnScheme, sessionId),
                         let url = URL(string: page)
                     else {
                         // No identity or no merchant, so nothing to hand the install page. The
                         // store handoff is the honest fallback, and it closes the sheet.
-                        _ = await client.openFrakApp()
+                        _ = await openFrakApp()
                         report(.installStarted)
                         close()
                         return
@@ -234,14 +273,14 @@
         }
 
         private func prepare(_ request: SharingRequest) async {
-            guard let client = client() else {
+            guard Frak.isInitialized else {
                 fail(.notInitialized)
                 return
             }
 
             let built: SharingSession
             do {
-                built = try await build(client: client, request: request)
+                built = try await build(request)
             } catch let error as FrakError {
                 fail(error)
                 return
@@ -284,21 +323,21 @@
             self.webView = webView
         }
 
-        private func build(client: any FrakClient, request: SharingRequest) async throws -> SharingSession {
-            guard let link = await client.buildSharingLink(request), let clientId = client.anonymousId else {
+        private func build(_ request: SharingRequest) async throws -> SharingSession {
+            guard let link = await buildSharingLink(request), let clientId = anonymousId() else {
                 // The one failure the fallback cannot help with: there is no link to share.
                 throw FrakError.merchantResolutionFailed(
                     reason: "no anonymous id or merchant to build a sharing link from"
                 )
             }
 
-            let walletOrigin = client.environment.wallet
+            let walletOrigin = environment().wallet
             let bundleId = Bundle.main.bundleIdentifier ?? ""
             let returnScheme = SharingPageURL.returnScheme(bundleId: bundleId)
 
             let config: FrakResolvedConfig
             do {
-                config = try await client.resolveConfig()
+                config = try await resolveConfig()
             } catch is FrakError {
                 // No page, but the link is already built. Not a failure — this is the input
                 // the native-share fallback fires from, immediately.
@@ -327,14 +366,14 @@
                     logoURL: request.logoURL ?? config.sdkConfig?.logoURL,
                     link: request.link ?? request.products.first?.link,
                     products: sharingPageProductsJSON(request.products),
-                    seededReward: await seededReward(client: client, request: request)
+                    seededReward: await seededReward(request)
                 )
             )
         }
 
         /// A cached headline for the first frame, or nothing. Bounded, because the page is
         /// worth more than the headline on it.
-        private func seededReward(client: any FrakClient, request: SharingRequest) async -> String? {
+        private func seededReward(_ request: SharingRequest) async -> String? {
             let timeout = Self.seedTimeout
             let targetInteraction = request.targetInteraction
             // Scoped the same way the page's own selection will be, so the seed the user sees
@@ -342,7 +381,7 @@
             let products = request.products.compactMap(\.details)
             return await withTaskGroup(of: String?.self) { group in
                 group.addTask {
-                    try? await client.bestReward(targetInteraction: targetInteraction, products: products)?.formatted
+                    await self.bestReward(targetInteraction, products)?.formatted
                 }
                 group.addTask {
                     try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
@@ -389,7 +428,7 @@
         }
 
         private func trackSharing() async {
-            _ = await client()?.track(.sharing())
+            _ = await track(.sharing())
         }
 
         /// Records an outcome the sheet stays open after, and reloads the page onto its

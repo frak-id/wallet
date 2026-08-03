@@ -20,10 +20,11 @@ needs a device or an emulator.
 > | `applink` | inbound `fCtx` handling with the self-referral guard, the wallet deep link and the Play install referrer |
 > | `ui` (`frak-sdk-ui`) | the Compose sharing sheet, its hardened web view, and the native share/copy footer |
 >
-> Public surface: `Frak.initialize` / `Frak.client`, `FrakClient.resolveConfig`,
-> `configUpdates`, `campaigns`, `bestReward`, `anonymousId`, `resetAnonymousId`,
-> `buildSharingLink`, `track`, `trackPurchase`, `handleReferralLink`,
-> `isFrakAppInstalled`, `openFrakApp`, `installUrl`/`installPageUrl` and `Frak.parseReferralLink`,
+> Public surface: `Frak.initialize` / `Frak.client`, `FrakClient.environment`,
+> `anonymousId`, `resetAnonymousId`, and five namespaces — `config` (`resolve`, `updates`),
+> `rewards` (`campaigns`, `best`), `sharing` (`buildLink`), `tracking` (`track`, `purchase`),
+> `appLink` (`handleReferral`, `isFrakAppInstalled`, `openFrakApp`, `installUrl`,
+> `installPageUrl`) — see `docs/plans/native-sdk/09-api-shape.md`. Plus `Frak.parseReferralLink`,
 > plus `FrakContext`, `SharingRequest`, `SharingProduct`, `AttributionParams`,
 > `Interaction`, `FrakResult`, `OpenAppResult` and `DeepLinkHandling`,
 > `FrakLogSink`, and the ten public
@@ -236,7 +237,7 @@ Two absences in `frak-sdk/src/main/AndroidManifest.xml` are load-bearing:
   so the merchant's own activity keeps owning the intent. `FrakConfig.deepLink`
   is that entry point: `Automatic` registers `ActivityLifecycleCallbacks`
   covering cold *and* warm start, `Manual` leaves it to
-  `FrakClient.handleReferralLink`.
+  `FrakClient.appLink.handleReferral`.
 - **No permission beyond `INTERNET`.** A library manifest merges into the host
   app; anything added here is a permission the merchant never asked for and has
   to justify on their store listing. The `<queries>` entries cover both

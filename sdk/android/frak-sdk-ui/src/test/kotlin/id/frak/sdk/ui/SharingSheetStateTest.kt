@@ -50,7 +50,7 @@ class SharingSheetStateTest {
     }
 
     private fun TestScope.newState(
-        client: FakeFrakClient,
+        client: FakeSharingClient,
         onFinished: (SharingResult) -> Unit = {},
     ) = SharingSheetState(
         scope = this,
@@ -58,13 +58,20 @@ class SharingSheetStateTest {
         sessionId = "test-session",
         onFinished = onFinished,
         onCopyConfirmed = {},
-        client = { client },
+        buildSharingLink = client::buildSharingLink,
+        anonymousId = { client.anonymousId },
+        environment = { client.environment },
+        resolveConfig = client::resolveConfig,
+        bestReward = client::bestReward,
+        track = client::track,
+        installPageUrl = client::installPageUrl,
+        openFrakApp = client::openFrakApp,
     )
 
     @Test
     fun `a resolved config produces a session with a page to show`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val state = newState(client)
 
             state.prepare(SharingRequest())
@@ -79,7 +86,7 @@ class SharingSheetStateTest {
     @Test
     fun `product scope fields reach the page url alongside the display fields`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val state = newState(client)
 
             state.prepare(
@@ -115,7 +122,7 @@ class SharingSheetStateTest {
     @Test
     fun `a product with no scope details omits the six scope keys but keeps the display fields`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val state = newState(client)
 
             state.prepare(
@@ -139,7 +146,7 @@ class SharingSheetStateTest {
     @Test
     fun `a non-finite price is dropped instead of throwing out of the sheet`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val state = newState(client)
 
             state.prepare(
@@ -172,7 +179,7 @@ class SharingSheetStateTest {
     @Test
     fun `the seeded reward call is scoped to the request's product details`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             client.bestReward = BestReward(formatted = "5\u00a0\u20ac", payoutType = "fixed", null, null, null)
             val state = newState(client)
 
@@ -200,7 +207,7 @@ class SharingSheetStateTest {
     @Test
     fun `the seeded reward call passes null products when nothing carries scope details`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val state = newState(client)
 
             state.prepare(
@@ -217,7 +224,7 @@ class SharingSheetStateTest {
     @Test
     fun `a failed config resolve still shares, from the local link`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             client.resolveFailure = FrakError.Network(IOException("offline"))
             var result: SharingResult? = null
             val state = newState(client) { result = it }
@@ -235,7 +242,7 @@ class SharingSheetStateTest {
     @Test
     fun `no link means Failed, not a silent tier 3`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             client.link = null
             var result: SharingResult? = null
             val state = newState(client) { result = it }
@@ -253,7 +260,7 @@ class SharingSheetStateTest {
     @Test
     fun `a fast build followed by a page that never loads still hits the deadline`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
@@ -273,7 +280,7 @@ class SharingSheetStateTest {
     @Test
     fun `a build slower than the budget falls back once it finally returns`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val resolveGate = CompletableDeferred<Unit>()
             client.resolveGate = resolveGate
             var result: SharingResult? = null
@@ -299,7 +306,7 @@ class SharingSheetStateTest {
     @Test
     fun `a page that loads in time is left alone`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
@@ -321,7 +328,7 @@ class SharingSheetStateTest {
     @Test
     fun `the deadline and a page error together still fall back only once`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             var finishedCount = 0
             val state = newState(client) { finishedCount++ }
 
@@ -340,7 +347,7 @@ class SharingSheetStateTest {
     @Test
     fun `only the most significant outcome is reported, once`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val results = mutableListOf<SharingResult>()
             val state = newState(client) { results += it }
 
@@ -361,7 +368,7 @@ class SharingSheetStateTest {
     @Test
     fun `the install action keeps the sheet open on the wallet's install page`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             var result: SharingResult? = null
             val state = newState(client) { result = it }
 
@@ -400,7 +407,7 @@ class SharingSheetStateTest {
     @Test
     fun `a code from the install page reaches the clipboard`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val state = newState(client) {}
 
             state.prepare(SharingRequest())
@@ -423,7 +430,7 @@ class SharingSheetStateTest {
     @Test
     fun `the install page is asked for with this session's return channel`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             val state = newState(client) {}
 
             state.prepare(SharingRequest())
@@ -442,7 +449,7 @@ class SharingSheetStateTest {
     @Test
     fun `an install with no identity still falls back to the store`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             client.installPage = null
             var result: SharingResult? = null
             val state = newState(client) { result = it }
@@ -466,7 +473,7 @@ class SharingSheetStateTest {
     @Test
     fun `a renderer crash after the page loaded does not raise a chooser`() =
         runTest {
-            val client = FakeFrakClient()
+            val client = FakeSharingClient()
             var finishedCount = 0
             val state = newState(client) { finishedCount++ }
 
@@ -487,7 +494,7 @@ class SharingSheetStateTest {
     fun `only http external urls leave the sheet`() =
         runTest {
             val app = ApplicationProvider.getApplicationContext<Application>()
-            val state = newState(FakeFrakClient())
+            val state = newState(FakeSharingClient())
 
             state.openExternally("intent://scan/#Intent;scheme=zxing;end")
             assertNull("a vendor scheme reaches whatever activity registered it", shadowOf(app).nextStartedActivity)

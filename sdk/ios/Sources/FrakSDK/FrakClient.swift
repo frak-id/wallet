@@ -1,110 +1,56 @@
 import Foundation
 
-/// Everything the SDK can do, as one facade. Obtained from `Frak.client`.
-public protocol FrakClient: Sendable {
-    var currentConfig: FrakResolvedConfig? { get async }
+/// Everything the SDK can do. Obtained from `Frak.client`.
+///
+/// A concrete class, not a protocol: adding a member here is additive on both platforms,
+/// where adding a requirement to a protocol invalidates every witness table built before
+/// it (`09-api-shape.md`). There is no supported way for a merchant to substitute a fake;
+/// point `FrakEnvironment.custom(wallet:backend:)` at a stub server instead and exercise
+/// the real client.
+///
+/// Capabilities are grouped into five namespaces — ``config``, ``rewards``, ``sharing``,
+/// ``tracking``, ``appLink`` — rather than kept flat, so the wallet-session cluster (SSO,
+/// embedded wallet, pairing) can land as a new namespace without touching this one.
+public final class FrakClient: Sendable {
+    let core: DefaultFrakClient
 
-    // Multicast, replays latest value to new subscribers.
-    var configUpdates: AsyncStream<FrakResolvedConfig> { get async }
+    init(core: DefaultFrakClient) {
+        self.core = core
+        self.config = ConfigAPI(core: core)
+        self.rewards = RewardsAPI(core: core)
+        self.sharing = SharingAPI(core: core)
+        self.tracking = TrackingAPI(core: core)
+        self.appLink = AppLinkAPI(core: core)
+    }
 
-    var environment: FrakEnvironment { get }
+    /// The stage this client talks to. Merchants never set it directly, see `FrakConfig.env`.
+    public nonisolated var environment: FrakEnvironment { core.environment }
 
-    // Nil when tracking is disabled or the device refused key material.
-    // Derived from a platform-held P-256 keypair: self-authenticating, dies with the app.
-    var anonymousId: String? { get }
+    /// Nil when tracking is disabled or the device refused key material.
+    public nonisolated var anonymousId: String? { core.anonymousId }
 
-    // Destroys the keypair (next anonymousId read mints a new one) and purges the queue.
-    // For GDPR erasure; does not delete history already attributed to the old id.
-    func resetAnonymousId()
+    /// Destroys the keypair (next `anonymousId` read mints a new one) and purges the queue.
+    /// For GDPR erasure; does not delete history already attributed to the old id.
+    public nonisolated func resetAnonymousId() { core.resetAnonymousId() }
 
-    // Stale-while-revalidate cache; forceRefresh still respects failure backoff.
-    func resolveConfig(forceRefresh: Bool) async throws -> FrakResolvedConfig
+    /// Config resolution and its live stream.
+    public let config: ConfigAPI
 
-    func campaigns(forceRefresh: Bool) async throws -> [Campaign]
+    /// Campaigns and the single best reward to advertise.
+    public let rewards: RewardsAPI
 
-    // products is advisory context (a product page, a cart, an order's line items). A
-    // campaign scoped to none of them is deprioritized server-side; omitting it preserves
-    // the unscoped ranking.
-    func bestReward(
-        targetInteraction: String?,
-        audience: RewardAudience?,
-        products: [ProductDetails]?,
-        forceRefresh: Bool
-    ) async throws -> BestReward?
+    /// Share link construction.
+    public let sharing: SharingAPI
 
-    // Nil (not throw) when there's no identity to build from. No network request of its own.
-    func buildSharingLink(_ request: SharingRequest) async -> String?
+    /// Interaction and purchase tracking.
+    public let tracking: TrackingAPI
 
-    // Succeeds once durable, not once delivered.
-    @discardableResult
-    func track(_ interaction: Interaction) async -> Result<Void, FrakError>
-
-    @discardableResult
-    func trackPurchase(customerId: String, orderId: String, token: String) async -> Result<Void, FrakError>
-
-    /// - Returns: whether the link carried a Frak referral context. Not a "stop routing"
-    ///   signal — still navigate to the URL either way.
-    @discardableResult
-    func handleReferralLink(_ url: String) async -> Bool
-
-    // Requires FrakConfig.env's walletScheme in LSApplicationQueriesSchemes to answer true.
-    func isFrakAppInstalled() async -> Bool
-
-    func openFrakApp() async -> OpenAppResult
-
-    // No network request, no identity carried (no Play-style install referrer on iOS).
-    func installURL() async -> String?
-
-    /// The wallet's hosted install page for this device, or nil without an identity or a
-    /// merchant to resolve.
-    ///
-    /// Not the store listing — that is `installURL()`. This page shows the install code that
-    /// carries attribution across an install, plus the store link, and it carries a freshly
-    /// minted `frak-install-v1` proof. The sharing sheet navigates to it in place, so the user
-    /// never leaves the merchant app to reach it.
-    ///
-    /// Defaulted, so adding it does not break a merchant's hand-written fake — the reason
-    /// `preloadSharing` was pulled back off this protocol (`06-abi-decisions.md`). A fake that
-    /// ignores it returns nil, and the sheet takes the store handoff.
-    func installPageURL(returnScheme: String, sessionId: String) async -> String?
+    /// Inbound referral links and the wallet app handoff.
+    public let appLink: AppLinkAPI
 }
 
 public enum OpenAppResult: Sendable, Hashable {
     case openedApp
     case openedStore
     case failed
-}
-
-extension FrakClient {
-    // Protocol requirements can't carry default args; overloads live here instead.
-
-    /// Nothing to hand an install page. Only `DefaultFrakClient` can mint the proof this
-    /// carries, so a substitute has nothing useful to return.
-    public func installPageURL(returnScheme: String, sessionId: String) async -> String? { nil }
-
-    public func resolveConfig() async throws -> FrakResolvedConfig {
-        try await resolveConfig(forceRefresh: false)
-    }
-
-    public func campaigns() async throws -> [Campaign] {
-        try await campaigns(forceRefresh: false)
-    }
-
-    public func bestReward(
-        targetInteraction: String? = nil,
-        audience: RewardAudience? = nil,
-        products: [ProductDetails]? = nil
-    ) async throws -> BestReward? {
-        try await bestReward(
-            targetInteraction: targetInteraction,
-            audience: audience,
-            products: products,
-            forceRefresh: false
-        )
-    }
-
-    @discardableResult
-    public func handleReferralLink(_ url: URL) async -> Bool {
-        await handleReferralLink(url.absoluteString)
-    }
 }

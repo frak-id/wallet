@@ -5,76 +5,6 @@ import Foundation
 import FrakSDK
 import Testing
 
-/// A hand-written fake, the way a merchant would write one — no mocking framework,
-/// matching `FrakClient`'s own doc comment.
-private struct FakeFrakClient: FrakClient {
-    let config: FrakResolvedConfig
-    let campaignList: [Campaign]
-    let reward: BestReward?
-
-    var currentConfig: FrakResolvedConfig? {
-        get async { config }
-    }
-
-    var configUpdates: AsyncStream<FrakResolvedConfig> {
-        get async {
-            AsyncStream { continuation in
-                continuation.yield(config)
-                continuation.finish()
-            }
-        }
-    }
-
-    func resolveConfig(forceRefresh: Bool) async throws -> FrakResolvedConfig {
-        config
-    }
-
-    func campaigns(forceRefresh: Bool) async throws -> [Campaign] {
-        campaignList
-    }
-
-    func bestReward(
-        targetInteraction: String?,
-        audience: RewardAudience?,
-        products: [ProductDetails]?,
-        forceRefresh: Bool
-    ) async throws -> BestReward? {
-        reward
-    }
-
-    var environment: FrakEnvironment { .production }
-
-    var anonymousId: String? { "256b1be3-2745-41d1-89d4-9121cc87bc45" }
-
-    func resetAnonymousId() {}
-
-    func buildSharingLink(_ request: SharingRequest) async -> String? {
-        request.link
-    }
-
-    func track(_ interaction: Interaction) async -> Result<Void, FrakError> {
-        .success(())
-    }
-
-    func trackPurchase(customerId: String, orderId: String, token: String) async -> Result<Void, FrakError> {
-        .success(())
-    }
-
-    func handleReferralLink(_ url: String) async -> Bool {
-        Frak.parseReferralLink(url) != nil
-    }
-
-    func isFrakAppInstalled() async -> Bool { false }
-
-    func openFrakApp() async -> OpenAppResult { .failed }
-
-    func installURL() async -> String? { nil }
-
-    // `installPageURL()` is deliberately absent: this fake exists to prove a merchant can write
-    // one against the public surface, so it is also the regression test for that member being
-    // defaulted rather than abstract.
-}
-
 /// A hand-written fake, the way a merchant would write one — no mocking framework.
 private final class RecordingLogSink: FrakLogSink, @unchecked Sendable {
     private let lock = NSLock()
@@ -207,22 +137,6 @@ struct PublicSurfaceTests {
         #expect(local.wallet == "https://localhost:3000")
         #expect(local.backend == "https://localhost:3030")
         #expect(FrakConfig(env: local).env == local)
-    }
-
-    @Test("a merchant can substitute a fake FrakClient without a mocking framework")
-    func fakeClientConformsWithoutMockingFramework() async throws {
-        let config = FrakResolvedConfig(merchantId: "m1", name: "Acme", domain: "acme.example")
-        let campaign = Campaign(campaignId: "c1", name: "Summer", interactionTypeKey: "purchase")
-        let best = BestReward(formatted: "10\u{00a0}€", payoutType: "fixed")
-        let fake: any FrakClient = FakeFrakClient(config: config, campaignList: [campaign], reward: best)
-
-        #expect(try await fake.resolveConfig() == config)
-        #expect(try await fake.campaigns() == [campaign])
-        #expect(try await fake.bestReward() == best)
-        #expect(try await fake.bestReward(products: [ProductDetails(sku: "SHOE-42")]) == best)
-        #expect(await fake.currentConfig == config)
-        #expect(fake.anonymousId != nil)
-        #expect(await fake.openFrakApp() == .failed)
     }
 
     @Test("the sharing and tracking inputs are constructible outside the module")

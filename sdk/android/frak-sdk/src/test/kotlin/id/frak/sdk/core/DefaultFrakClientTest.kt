@@ -252,7 +252,7 @@ class DefaultFrakClientTest {
         config: FrakConfig = FrakConfig(merchantId = MERCHANT_ID),
     ): DefaultFrakClient =
         DefaultFrakClient(
-            config = config,
+            settings = config,
             store = store,
             queue =
                 EventQueue(

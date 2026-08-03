@@ -47,7 +47,12 @@ question `sdk/android/scripts/run.sh` used to carry as a TODO.
 > Q1: the tree keeps growing while the freeze question stays open, and appending correctly
 > only avoids the *worse* variant of the trap, not the trap itself.
 
-### A distinct hazard the same change surfaced: growing `FrakClient`
+### A distinct hazard the same change surfaced: growing `FrakClient` — resolved, see `09-api-shape.md`
+
+`FrakClient` stopped being an interface/protocol and became a sealed concrete class with
+five domain namespaces (`config`, `rewards`, `sharing`, `tracking`, `appLink`). Adding a
+member is now additive on both platforms; nothing below is a live hazard any more, kept
+for the record of how the growth problem was found.
 
 `preloadSharing` was first added as a member on the `FrakClient` **interface**, next to
 `environment`, because `:frak-sdk-ui` can only see `public` API. That was reverted before
@@ -82,19 +87,18 @@ longer unconditional and compile-time for every implementer, because there is no
 implementer must write. Both hand-written `FakeFrakClient`s deliberately do **not**
 override it, so they are the regression test for the default staying in place.
 
-What this does not fix is Q2: it is public purely because a second module needs it, its
-only two call sites are `SharingSheetModel.swift` and `SharingSheetState.kt`, and it is now
-the third symbol in that category alongside `PercentEncoding` and `environment` (the first is
-a type rather than a member, but the question is the same). Fold it into whatever Q2
-concludes. It also brings `FrakClient` to 15 members in Kotlin and 16 in Swift, which `07`'s
-count of "four new members" no longer reflects.
+What this does not fix is Q2: `installPageUrl`/`installPageURL` is public purely because a
+second module needs it, in the same category as `PercentEncoding` and `environment` (the
+first is a type rather than a member, but the question is the same). Fold it into whatever
+Q2 concludes. (Its default body was removed when `FrakClient` was sealed below — there is
+no more implementer for it to protect.)
 
-**`environment` is still on `FrakClient`.** It is the same hazard, already shipped, and it
-is what made the interface look like the natural home for `preloadSharing` in the first
-place. Moving it to `Frak` is cheap right now — BCV is unwired and nothing is published —
-and expensive later. Fold that into whatever Q2 concludes about which symbols exist only
-for `:frak-sdk-ui`; `PercentEncoding` and `environment` are the same question wearing
-different clothes.
+**`environment` stayed on the root `FrakClient`, deliberately, not moved to `Frak`.**
+Sealing (below) removed the reason this was worth avoiding: adding a member to the class
+is additive, so there is no longer a growth hazard to duck by relocating it. `anonymousId`
+and `resetAnonymousId` stayed alongside it for the same reason — three members do not earn
+a sixth namespace.
+
 ---
 
 ## Q1 — Accept the `$default` constructor freeze, or move to builders?
@@ -239,6 +243,7 @@ signature is the thing that would have to change — so it is cheaper before pub
 
 | Q | Decision | Who / when |
 | --- | --- | --- |
+| `FrakClient` growth hazard | **resolved** — sealed to a concrete class, split into 5 namespaces | `09-api-shape.md` |
 | Q1 — `$default` freeze | *open* — now also covers the sharing and tracking types | |
 | Q2 — `@InternalFrakApi` vs promote | *open* | now three members in scope: `PercentEncoding`, `environment`, `installPageUrl` |
 | Q3 — public `init(from:)` on iOS | *open* | |
