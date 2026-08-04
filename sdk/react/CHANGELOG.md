@@ -1,5 +1,57 @@
 # @frak-labs/react-sdk
 
+## 1.3.0
+
+### Minor Changes
+
+- [#287](https://github.com/frak-id/wallet/pull/287) [`47c25a0`](https://github.com/frak-id/wallet/commit/47c25a069fa524e692b0eec6fe71265cd92b01d1) Thanks [@KONFeature](https://github.com/KONFeature)! - Every anonymous client id is now derived from a P-256 keypair and provable. The random, unprovable fallback id is gone.
+
+  **BREAKING** — three public signatures changed, because derivation is inherently async:
+
+  - `getClientId()` now returns `string | undefined` instead of `string`. It stays synchronous (it is exposed at runtime on `window.FrakSetup.core`, and consumers such as the Shopify cart-attribute snippet call it inside a sync function), but it returns `undefined` until derivation completes rather than minting an id on the spot. On a cold read it schedules derivation in the background so a later call succeeds.
+  - `createIFrameFrakClient()` now returns `Promise<FrakClient>`.
+  - `processReferral()` is now `async` and returns `Promise<ReferralState>`.
+
+  New `getClientIdAsync(): Promise<string>` awaits derivation, joining any in-flight work. **Prefer it everywhere an `await` is possible** — it is the only accessor that is correct on a cold cache. It needs no `setupClient` call. It rejects rather than resolving an unprovable id.
+
+  Also exported: `buildListenerUrl()`, so both iframe creators share one URL builder.
+
+  Other fixes:
+
+  - `FrakIFrameClientProvider` (React) never passed `clientId` to the listener iframe, so the listener silently fell back to its own persisted store instead of the SDK-seeded identity. It now seeds the URL via `buildListenerUrl`.
+  - `createIFrameFrakClient` resolves the anonymous id once, after the merchant-config fetch is already in flight, so derivation overlaps the network call rather than delaying it.
+  - The Shopify snippets listened for a `frakClientReady` event that was renamed to `frak:client` in `6e9006605`; both now listen for the current name.
+
+  Migration: replace `getClientId()` with `await getClientIdAsync()` wherever you can await. If you must stay synchronous, handle `undefined` — note that on a first-ever visit both `getClientId()` and `localStorage.getItem('frak-client-id')` are now empty until derivation finishes.
+
+- [#287](https://github.com/frak-id/wallet/pull/287) [`a8cd523`](https://github.com/frak-id/wallet/commit/a8cd5239d5ccb5dd81568ff036bb40bbd4ef6f1a) Thanks [@KONFeature](https://github.com/KONFeature)! - Add `prepareSsoUrl()` to open the SSO popup without hitting popup blockers.
+
+  `openSso()` has to resolve the client and merchant ids and sign a proof before it can build the URL, so `window.open()` no longer runs in the same tick as the click. Those are usually cache hits, but a cold cache can get the popup blocked.
+
+  `prepareSsoUrl()` does that work ahead of time and returns just the URL. `openSso()` now also accepts `{ ssoUrl }`, which it opens immediately — nothing is awaited first, so no blocker heuristic can fire.
+
+  ```ts
+  const { ssoUrl } = await prepareSsoUrl(client, { metadata });
+  // ...later, directly in the click handler:
+  await openSso(client, { ssoUrl });
+  ```
+
+  React gets `usePrepareSsoUrl()`, and `useOpenSso()` accepts either form.
+
+  Existing `openSso(client, params)` calls are unaffected.
+
+  Note the URL embeds a proof valid for 10 minutes. Past that SSO still opens and the user still logs in; only the anonymous-to-wallet identity link is dropped.
+
+### Patch Changes
+
+- [#287](https://github.com/frak-id/wallet/pull/287) [`692768a`](https://github.com/frak-id/wallet/commit/692768a5050ab6532d4b99f4da1d19d1377a48c7) Thanks [@KONFeature](https://github.com/KONFeature)! - Fix `client.request is not a function` in `FrakIFrameClientProvider` when the app persists its react-query cache.
+
+  The client is held in a `useQuery`, so a persister wrote it to storage. Serialising drops `request` and flattens the connection promises, and the infinite `staleTime` meant the dead object was never refetched — so every consumer (`useSiweAuthenticate`, `useOpenSso`, …) threw on the second page load. The query now opts out of persistence via `meta.storable`, the convention app-level `shouldDehydrateQuery` predicates already read. The listener URL stays persisted.
+
+- Updated dependencies [[`e3976ce`](https://github.com/frak-id/wallet/commit/e3976ce2b9af1f1f7a13e9999d63032a748e5d77), [`47c25a0`](https://github.com/frak-id/wallet/commit/47c25a069fa524e692b0eec6fe71265cd92b01d1), [`a8cd523`](https://github.com/frak-id/wallet/commit/a8cd5239d5ccb5dd81568ff036bb40bbd4ef6f1a), [`d35e17b`](https://github.com/frak-id/wallet/commit/d35e17be398f74793f643f2ff7cc73b8a2c0df39), [`833c5a2`](https://github.com/frak-id/wallet/commit/833c5a23d1cf6f8e2390693faca691de181cce4e), [`26c3402`](https://github.com/frak-id/wallet/commit/26c34023a0acbcc507827f185a63130ecb748935)]:
+  - @frak-labs/core-sdk@1.3.0
+  - @frak-labs/frame-connector@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes

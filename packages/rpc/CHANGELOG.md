@@ -1,5 +1,16 @@
 # @frak-labs/frame-connector
 
+## 1.3.0
+
+### Patch Changes
+
+- [#287](https://github.com/frak-id/wallet/pull/287) [`e3976ce`](https://github.com/frak-id/wallet/commit/e3976ce2b9af1f1f7a13e9999d63032a748e5d77) Thanks [@KONFeature](https://github.com/KONFeature)! - Removed dead public exports found to have zero callers anywhere in the monorepo, backend, or test suites:
+
+  - `@frak-labs/core-sdk`: `getCache()` (the SDK-wide `withCache` layer is invalidated via `clearAllCache()`, which remains; no caller ever needed per-key invalidation).
+  - `@frak-labs/frame-connector`: `MethodNotFoundError`, `InternalError` (RPC error sites construct `FrakRpcError` directly instead; `FrakRpcError` and `ClientNotFound` are unaffected).
+
+  **BREAKING** if you imported either of these directly — nothing in this repo did.
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,58 @@
 # @frak-labs/components
 
+## 1.1.0
+
+### Minor Changes
+
+- [#287](https://github.com/frak-id/wallet/pull/287) [`d35e17b`](https://github.com/frak-id/wallet/commit/d35e17be398f74793f643f2ff7cc73b8a2c0df39) Thanks [@KONFeature](https://github.com/KONFeature)! - Advisory client-side `productScope` matching and product-aware reward display, for merchant surfaces that know which products are in view (a product page, a cart, or an order's line items).
+
+  - New `ProductDetails` type (`@frak-labs/core-sdk`, also re-exported from `@frak-labs/core-sdk/rewards`): the set of purchase line-item fields a campaign's `productScope` can target — `productId`, `sku`, `name`, `quantity`, `unitPrice`, `totalPrice`. Mirrors the backend's allowlist exactly.
+  - New `matchesProductScope(scope, product)` in `@frak-labs/core-sdk/rewards`: an advisory (display-hint only, never eligibility-gating), fail-open evaluator for those fields. The backend's `RuleConditionEvaluator` remains the sole authority on which purchases actually earn a reward.
+  - `selectDisplayCampaign` / `selectBestReward` accept an optional `products: ProductDetails[]`. A `productScope`d campaign that matches **none** of them is deprioritized below every campaign that matches at least one — any-match, mirroring the backend, which pays out when any purchased line item matches. Ranking among matching campaigns is unchanged, and omitting `products` (or passing an empty array) reproduces the exact previous behavior. Both the live and the upcoming-campaign paths apply this.
+  - `DisplayCampaign` and `BestReward` gain `matchedProducts?: ProductDetails[]` — the subset that matched the winning campaign's scope, so a surface can name the product behind the reward ("earn 10 € on <product>") instead of only showing the number. Left `undefined` for an unscoped winner, since no single product drove it.
+  - `SharingPageProduct` now extends `ProductDetails`, so one array drives both the sharing-page product cards and reward selection, and the scope fields survive the RPC boundary.
+  - New product sanitizers in `@frak-labs/core-sdk`: `sanitizeSharingProducts`, `sanitizeProductDetailsList`, `normalizeSharingProduct`, `normalizeProductDetails`, `coerceProductCandidates`, `decodeProductsParam`. They accept both a real array and a JSON-stringified one (server-rendered surfaces bind props as HTML attributes, which arrive as raw strings), coerce numeric fields from strings, and keep `imageUrl` / `link` only when they parse as `http(s)://` URLs.
+  - New `isMatchedItemsBasis(reward)` in `@frak-labs/core-sdk/rewards`: whether a reward's value is computed over the `productScope`-matched line items (`percentOf: "matched_items_amount"`, or a `purchase.matchedAmount` / `purchase.matchedQuantity` `tierField`) rather than the whole basket. Distinct from a campaign merely carrying a `productScope` — a scoped campaign can still pay a percentage of the whole basket. Reward surfaces use it to render "% of eligible products" instead of "% of basket", and to suppress the basket-based worked example, which is meaningless on a matched-items basis.
+  - The operator classification sets (`SCALAR_OPERATORS`, `ARRAY_OPERATORS`, `STRING_OPERATORS`, `EXISTENCE_OPERATORS`, `NEGATIVE_OPERATORS`) are now exported from `@frak-labs/core-sdk/rewards` as the single source of truth for which operand shape each `ConditionOperator` takes.
+  - Numeric `productScope` comparisons (`gt`/`gte`/`lt`/`lte`/`between`) now compare numerically whenever both operands are numeric, including when one is a numeric string (`"79.90"`, or a price bound to an HTML attribute). Previously these fell back to a lexicographic compare, which ranked `"9"` above `"10"`.
+  - `<frak-banner>`, `<frak-button-share>` and `<frak-post-purchase>` gain a single `products` attribute (and matching JSX prop) that feeds reward selection. `<frak-button-share>` and `<frak-post-purchase>` also forward it to the sharing page for product cards; `<frak-button-share>` previously dropped its product context at the click boundary.
+
+### Patch Changes
+
+- [#287](https://github.com/frak-id/wallet/pull/287) [`85edcc6`](https://github.com/frak-id/wallet/commit/85edcc6e58daf2cb9208ab0608fc7fd81077fb82) Thanks [@KONFeature](https://github.com/KONFeature)! - Fix every web component silently rendering nothing when loaded via the CDN bundle.
+
+  `sideEffects: false` in the package manifest was a lie: each `src/components/*/index.ts` exists _only_ for its `registerWebComponent()` call, and `loader.ts` imports those modules purely for that side effect. Rolldown took the manifest at its word and dropped the call from all five `cdn/*` component chunks, so `customElements.define` never ran. The elements stayed `:not(:defined)`, which the loader's own FOUCE rule hides with `display: none !important` — so the components were absent rather than visibly broken.
+
+  Scope: the CDN bundle only, which is the documented merchant integration path (`cdn/loader.js`). The NPM `dist/` output was never affected — each component is its own Rolldown entrypoint there, and an entrypoint's side effects are never shaken — which is why `example/vanilla-js` (importing `dist/*.js` directly) kept working throughout.
+
+  `sideEffects` is now an allowlist. The `**/components/*/index.ts`, `**/bootstrap/loader.ts` and `**/components.ts` entries are what fix this build; the `./dist/*.js` entries protect _downstream_ bundlers, which resolve `@frak-labs/components/buttonShare` to `./dist/buttonShare.js` and match `sideEffects` against that path — they were never needed for our own output.
+
+  A `writeBundle` guard (`assertComponentRegistrations` in `tsdown.config.ts`) now fails the build when a component's registration is missing from the emitted chunks, so this cannot regress silently. No unit test can cover it: the suite runs against `src`, where the side effect is always intact.
+
+- [#287](https://github.com/frak-id/wallet/pull/287) [`47c25a0`](https://github.com/frak-id/wallet/commit/47c25a069fa524e692b0eec6fe71265cd92b01d1) Thanks [@KONFeature](https://github.com/KONFeature)! - Every anonymous client id is now derived from a P-256 keypair and provable. The random, unprovable fallback id is gone.
+
+  **BREAKING** — three public signatures changed, because derivation is inherently async:
+
+  - `getClientId()` now returns `string | undefined` instead of `string`. It stays synchronous (it is exposed at runtime on `window.FrakSetup.core`, and consumers such as the Shopify cart-attribute snippet call it inside a sync function), but it returns `undefined` until derivation completes rather than minting an id on the spot. On a cold read it schedules derivation in the background so a later call succeeds.
+  - `createIFrameFrakClient()` now returns `Promise<FrakClient>`.
+  - `processReferral()` is now `async` and returns `Promise<ReferralState>`.
+
+  New `getClientIdAsync(): Promise<string>` awaits derivation, joining any in-flight work. **Prefer it everywhere an `await` is possible** — it is the only accessor that is correct on a cold cache. It needs no `setupClient` call. It rejects rather than resolving an unprovable id.
+
+  Also exported: `buildListenerUrl()`, so both iframe creators share one URL builder.
+
+  Other fixes:
+
+  - `FrakIFrameClientProvider` (React) never passed `clientId` to the listener iframe, so the listener silently fell back to its own persisted store instead of the SDK-seeded identity. It now seeds the URL via `buildListenerUrl`.
+  - `createIFrameFrakClient` resolves the anonymous id once, after the merchant-config fetch is already in flight, so derivation overlaps the network call rather than delaying it.
+  - The Shopify snippets listened for a `frakClientReady` event that was renamed to `frak:client` in `6e9006605`; both now listen for the current name.
+
+  Migration: replace `getClientId()` with `await getClientIdAsync()` wherever you can await. If you must stay synchronous, handle `undefined` — note that on a first-ever visit both `getClientId()` and `localStorage.getItem('frak-client-id')` are now empty until derivation finishes.
+
+- Updated dependencies [[`e3976ce`](https://github.com/frak-id/wallet/commit/e3976ce2b9af1f1f7a13e9999d63032a748e5d77), [`47c25a0`](https://github.com/frak-id/wallet/commit/47c25a069fa524e692b0eec6fe71265cd92b01d1), [`a8cd523`](https://github.com/frak-id/wallet/commit/a8cd5239d5ccb5dd81568ff036bb40bbd4ef6f1a), [`d35e17b`](https://github.com/frak-id/wallet/commit/d35e17be398f74793f643f2ff7cc73b8a2c0df39), [`833c5a2`](https://github.com/frak-id/wallet/commit/833c5a23d1cf6f8e2390693faca691de181cce4e), [`26c3402`](https://github.com/frak-id/wallet/commit/26c34023a0acbcc507827f185a63130ecb748935)]:
+  - @frak-labs/core-sdk@1.3.0
+  - @frak-labs/frame-connector@1.3.0
+
 ## 1.0.13
 
 ### Patch Changes
