@@ -1,5 +1,9 @@
 import type { FrakClient, SharingPageProduct } from "@frak-labs/core-sdk";
-import { compressJsonToB64, getClientId } from "@frak-labs/core-sdk";
+import {
+    compressJsonToB64,
+    getClientId,
+    getClientIdAsync,
+} from "@frak-labs/core-sdk";
 import { displayModal, displaySharingPage } from "@frak-labs/core-sdk/actions";
 
 function log(
@@ -18,11 +22,17 @@ function log(
     statusBox.scrollTop = statusBox.scrollHeight;
 }
 
-function updateClientIdDisplay() {
+async function updateClientIdDisplay() {
     const display = document.getElementById("current-client-id");
-    if (display) {
-        // Synchronous accessor: undefined until the P-256 derivation resolves.
-        display.textContent = getClientId() ?? "(deriving…)";
+    if (!display) return;
+
+    // Derivation is async (P-256 keygen), so show a placeholder while it runs.
+    display.textContent = getClientId() ?? "(deriving…)";
+    try {
+        display.textContent = await getClientIdAsync();
+    } catch (e) {
+        display.textContent = "(derivation failed)";
+        log(`Client ID derivation failed: ${e}`, "error");
     }
 }
 
@@ -269,7 +279,7 @@ async function init() {
         ]);
     }
 
-    updateClientIdDisplay();
+    void updateClientIdDisplay();
     checkForMergeToken();
     bindTestButtons();
 
