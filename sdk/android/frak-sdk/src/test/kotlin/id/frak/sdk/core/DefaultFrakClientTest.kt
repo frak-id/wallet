@@ -281,7 +281,7 @@ class DefaultFrakClientTest {
             advanceUntilIdle()
 
             val page = client.installPageUrl(RETURN_SCHEME, SESSION_ID)
-            val anonymousId = client.anonymousId
+            val anonymousId = client.anonymousId()
 
             assertEquals(
                 true,
@@ -389,6 +389,7 @@ class DefaultFrakClientTest {
                     // Wired from the config, as `Frak.initialize` does: a hardcoded `true` here
                     // makes `trackingEnabled = false` untestable through the client.
                     trackingEnabled = config.trackingEnabled,
+                    ioDispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler),
                 ),
             launcher = launcher,
             logger = FrakLogger(FrakLogLevel.NONE),

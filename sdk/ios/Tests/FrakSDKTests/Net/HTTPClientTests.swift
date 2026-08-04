@@ -3,14 +3,37 @@ import Testing
 
 @testable import FrakSDK
 
+/// Records every line a `FrakLogger` handed to this sink, in order. Local to this file rather
+/// than reusing `Core/FrakLoggerTests.swift`'s private `RecordingSink`, since that file is out of
+/// this change's scope.
+private final class RecordingLogSink: FrakLogSink, @unchecked Sendable {
+    private let lock = NSLock()
+    private var captured: [String] = []
+
+    func log(level: FrakLogLevel, message: String, error: (any Error)?) {
+        lock.lock()
+        defer { lock.unlock() }
+        captured.append(message)
+    }
+
+    var messages: [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        return captured
+    }
+}
+
 @Suite("HTTPClient")
 struct HTTPClientTests {
     /// Builds a client on its own uniquely-hosted stub session, and registers `handler`
     /// against that host. Each test gets isolated state, so parallel tests never race.
-    private func makeClient(_ handler: @escaping @Sendable (URLRequest) throws -> StubResponse) -> HTTPClient {
+    private func makeClient(
+        logger: FrakLogger? = nil,
+        _ handler: @escaping @Sendable (URLRequest) throws -> StubResponse
+    ) -> HTTPClient {
         let (session, host) = StubURLProtocol.makeSession()
         StubURLProtocol.handle(host: host, handler)
-        return HTTPClient(baseURL: "https://\(host)", session: session)
+        return HTTPClient(baseURL: "https://\(host)", session: session, logger: logger)
     }
 
     @Test("sends the sdk-version and Accept headers")
@@ -174,6 +197,11 @@ struct HTTPClientTests {
 
     @Test("a body over the cap with no advertised Content-Length is rejected, not truncated")
     func bodyOverCapWithNoContentLengthIsRejected() async throws {
+        // No Content-Length header at all (not even a lying one): StubURLProtocol's
+        // HTTPURLResponse only carries whatever headers the stub supplies. iOS uses
+        // session.data(for:), which buffers the whole body before this check runs — unlike
+        // Android's readBytesUpTo, this is a post-buffer rejection, not a bounded-memory
+        // streaming abort. See the comment on HTTPClient.attemptUnlogged (S5, partial).
         let oversized = String(repeating: "x", count: Int(HTTPClient.maxResponseBodyBytes) + 1)
         let client = makeClient { _ in StubResponse(status: 200, body: oversized) }
 
@@ -249,6 +277,55 @@ struct HTTPClientTests {
 
         await #expect(throws: CancellationError.self) {
             _ = try await task.value
+        }
+    }
+
+    @Test("a request is logged at debug level without the query string or header values (D3)")
+    func requestIsLoggedWithoutQueryOrHeaders() async throws {
+        let sink = RecordingLogSink()
+        let logger = FrakLogger(level: .debug, sink: sink)
+        let client = makeClient(logger: logger) { _ in StubResponse(status: 200, body: "{}") }
+
+        _ = try await client.get("/user/merchant/resolve", query: ["merchantId": "super-secret-merchant-id"])
+
+        #expect(sink.messages.count == 1)
+        let line = try #require(sink.messages.first)
+        #expect(line.contains("/user/merchant/resolve"))
+        #expect(line.contains("200"))
+        #expect(!line.contains("super-secret-merchant-id"), "the query string must never be logged")
+    }
+
+    @Test("nothing is logged when no logger is configured (D3)")
+    func nothingLoggedWithoutConfiguredLogger() async throws {
+        // makeClient's default logger is nil; get() must behave identically to every other test
+        // in this suite, none of which configure one.
+        let client = makeClient { _ in StubResponse(status: 200, body: "{}") }
+
+        let response = try await client.get("/x")
+
+        #expect(response.status == 200)
+    }
+
+    @Test("a failed attempt is logged too, without a status (D3)")
+    func failedAttemptIsLoggedWithoutStatus() async throws {
+        let sink = RecordingLogSink()
+        let logger = FrakLogger(level: .debug, sink: sink)
+        let attempts = Counter()
+        let client = makeClient(logger: logger) { _ in
+            attempts.increment()
+            throw URLError(.networkConnectionLost)
+        }
+
+        // .networkConnectionLost is transient (N6): the original attempt and its retry both fail
+        // and are each logged once, so two lines are expected, not one.
+        await #expect(throws: FrakError.self) {
+            _ = try await client.get("/x")
+        }
+
+        #expect(attempts.value == 2)
+        #expect(sink.messages.count == 2)
+        for line in sink.messages {
+            #expect(line.contains("error"), "a failed attempt must log 'error' in place of a status: \(line)")
         }
     }
 }

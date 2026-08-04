@@ -15,6 +15,15 @@ struct QueuedEvent: Codable, Sendable, Hashable {
     let capturedAt: Date
     /// How many times the backend has permanently rejected this event.
     let failures: Int
+    /// SDK-owned, monotonically increasing, assigned once by `EventQueue` at enqueue and never
+    /// by a caller (2.7). Reconciliation after a flush deletes by this id, not by
+    /// `idempotencyKey`: a caller-suppliable `Interaction.custom(idempotencyKey:)` is not
+    /// guaranteed unique, so two distinct queued rows could collide on it and a reconcile would
+    /// then delete the wrong one, or both. `rowId` is never sent on the wire — see
+    /// `InteractionTracker.interactionBody` — so it carries no backend meaning; it exists purely
+    /// so this file can tell its own rows apart. `nil` only for a row an old-format file wrote
+    /// before this field existed; see `EventQueue`'s migration note.
+    let rowId: Int64?
 
     // Short keys: this file is appended to on every interaction and is the SDK's only
     // unbounded on-disk footprint.
@@ -25,15 +34,40 @@ struct QueuedEvent: Codable, Sendable, Hashable {
         case clientId = "c"
         case capturedAt = "t"
         case failures = "f"
+        case rowId = "r"
     }
 
-    init(idempotencyKey: String, path: String, body: String, clientId: String?, capturedAt: Date, failures: Int = 0) {
+    init(
+        idempotencyKey: String,
+        path: String,
+        body: String,
+        clientId: String?,
+        capturedAt: Date,
+        failures: Int = 0,
+        rowId: Int64? = nil
+    ) {
         self.idempotencyKey = idempotencyKey
         self.path = path
         self.body = body
         self.clientId = clientId
         self.capturedAt = capturedAt
         self.failures = failures
+        self.rowId = rowId
+    }
+
+    // Explicit rather than the synthesised memberwise decode: `"r"` is absent on every row an
+    // old-format file wrote, and `decodeIfPresent` is how that reads as `nil` instead of failing
+    // the whole row (which `mapCompact`-ing `try? decoder.decode` in `EventQueue.read` would turn
+    // into silently dropping a pre-migration event rather than migrating it).
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        idempotencyKey = try container.decode(String.self, forKey: .idempotencyKey)
+        path = try container.decode(String.self, forKey: .path)
+        body = try container.decode(String.self, forKey: .body)
+        clientId = try container.decodeIfPresent(String.self, forKey: .clientId)
+        capturedAt = try container.decode(Date.self, forKey: .capturedAt)
+        failures = try container.decode(Int.self, forKey: .failures)
+        rowId = try container.decodeIfPresent(Int64.self, forKey: .rowId)
     }
 
     func withFailure() -> QueuedEvent {
@@ -43,7 +77,21 @@ struct QueuedEvent: Codable, Sendable, Hashable {
             body: body,
             clientId: clientId,
             capturedAt: capturedAt,
-            failures: failures + 1
+            failures: failures + 1,
+            rowId: rowId
+        )
+    }
+
+    /// Used only by `EventQueue`, to stamp the real id after enqueue or to migrate an old-format row.
+    func withRowId(_ newRowId: Int64) -> QueuedEvent {
+        QueuedEvent(
+            idempotencyKey: idempotencyKey,
+            path: path,
+            body: body,
+            clientId: clientId,
+            capturedAt: capturedAt,
+            failures: failures,
+            rowId: newRowId
         )
     }
 }
@@ -56,6 +104,17 @@ struct QueuedEvent: Codable, Sendable, Hashable {
 /// event is in flight.
 ///
 /// One line per event so a kill mid-write costs the torn tail and nothing before it.
+///
+/// `rowId` (2.7): every row gets an SDK-owned, monotonically increasing id, assigned here, never
+/// by `InteractionTracker`. `nextRowId` is seeded lazily from the highest `rowId` this file has
+/// ever held, so ids stay monotonic across a process restart without a separate counter file to
+/// keep in sync with the queue itself.
+///
+/// Migration: a file written before this field existed has no `"r"` key on any row.
+/// `QueuedEvent`'s decoder reads a missing key as `nil`, and the first `read` of such a file
+/// assigns fresh ids in on-disk (oldest-first) order and rewrites the file through `replace` so
+/// the assignment is durable immediately, not deferred to the next flush. No row and no event is
+/// ever dropped for predating this field.
 actor EventQueue {
     /// Past this, an event is too old to attribute anything.
     static let maxAge: TimeInterval = 14 * 24 * 60 * 60
@@ -79,6 +138,18 @@ actor EventQueue {
 
     private let fileURL: URL
     private let logger: FrakLogger
+    /// Next id to hand out to a NEWLY APPENDED row. `nil` means "not yet seeded from disk";
+    /// `seedRowIdIfNeeded` resolves that on the first `read` or `append`, whichever happens
+    /// first for this instance. Seeded above `nextMigrationRowId`'s reserved block — see
+    /// `seedRowIdIfNeeded`.
+    private var nextRowId: Int64?
+
+    /// Next id to hand out to a row an old-format file wrote with no `"r"` field, drawn from the
+    /// BOTTOM of the block `seedRowIdIfNeeded` reserves. Migration and fresh appends must draw
+    /// from disjoint counters: both starting from `nextRowId` would have `seedRowIdIfNeeded`'s
+    /// reservation go unused and hand every migrated row an id ABOVE a row appended before the
+    /// file was ever read, inverting "the newest row carries the highest id".
+    private var nextMigrationRowId: Int64?
 
     init(fileURL: URL, logger: FrakLogger) {
         self.fileURL = fileURL
@@ -111,31 +182,87 @@ actor EventQueue {
         }
     }
 
+    /// The result of a read together with whether any rewrite it triggered actually landed on
+    /// disk. `durable == false` only when `events` reflects ids/trims that exist nowhere but
+    /// this call — `reconcile` must not compact the file against a non-durable read, since an
+    /// empty-looking result would NOT mean the queue is empty; see `reconcile`'s doc.
+    private struct ReadOutcome {
+        let events: [QueuedEvent]
+        let durable: Bool
+    }
+
     /// Every event still worth sending, oldest first. Expired and over-cap rows are dropped
     /// here rather than on write, so one pass enforces both bounds.
     func read(now: Date) -> [QueuedEvent] {
-        guard FileManager.default.fileExists(atPath: fileURL.path) else { return [] }
+        readWithOutcome(now: now).events
+    }
+
+    private func readWithOutcome(now: Date) -> ReadOutcome {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            return ReadOutcome(events: [], durable: true)
+        }
         guard let data = try? Data(contentsOf: fileURL) else {
             // Present but unreadable. Left alone it would make tracking permanently and
             // silently inert, since every later read returns the same nothing.
             logger.warn("Could not read the event queue; dropping it.")
             delete()
-            return []
+            return ReadOutcome(events: [], durable: true)
         }
-        let events =
+        let decoded =
             String(decoding: data, as: UTF8.self)
             .split(separator: "\n")
             // A truncated last line is expected after a kill, not a corruption to report.
             .compactMap { try? Self.decoder.decode(QueuedEvent.self, from: Data($0.utf8)) }
-            .filter { now.timeIntervalSince($0.capturedAt) <= Self.maxAge }
-        return events.count > Self.maxEvents ? Array(events.suffix(Self.maxEvents)) : events
+        seedRowIdIfNeeded(from: decoded)
+
+        // Captured before the migration map runs: if the rewrite below fails to persist, the
+        // counter must roll back to exactly this value, or a second migration pass over the
+        // still-un-migrated file draws from ABOVE this reservation and overruns into ids
+        // `nextRowId` already handed to a fresh append — two live rows can then share one id,
+        // and `reconcile` would delete whichever one it wasn't meant to.
+        let migrationStart = nextMigrationRowId
+        var migratedAny = false
+        let migrated = decoded.map { event -> QueuedEvent in
+            guard event.rowId == nil else { return event }
+            migratedAny = true
+            return event.withRowId(takeNextMigrationRowId())
+        }
+
+        let events = migrated.filter { now.timeIntervalSince($0.capturedAt) <= Self.maxAge }
+        let bounded = events.count > Self.maxEvents ? Array(events.suffix(Self.maxEvents)) : events
+
+        // Migration and the age/count bound both want a rewrite; do it once. A file with no
+        // migrated rows and nothing to trim is left untouched, so a steady-state flush that
+        // calls read() without a following replace() still costs only the one read.
+        if migratedAny || bounded.count != decoded.count {
+            // A migration id is only real once it is durable. If the rewrite fails, the ids just
+            // assigned exist nowhere but this call — a later read (after a process restart, or a
+            // second read winning a race) will never reproduce them, since seedRowIdIfNeeded is
+            // idempotent and the next read starts migration over from the un-rewritten file.
+            //
+            // This must NOT be signalled by returning an empty events array: `read` (the public
+            // API) always returns `bounded` regardless, and durability is reported out-of-band
+            // via `ReadOutcome.durable` so that `reconcile` — the one caller that would
+            // otherwise treat "empty" as "queue is empty" and delete the file — can refuse to
+            // compact on a failed rewrite instead. Overloading emptiness to mean "non-durable"
+            // would make ANY routine trim whose rewrite fails destroy every row on the next
+            // flush, not just the one-time migration — a write failure must be strictly less
+            // bad than the bug it replaces.
+            let durable = replace(bounded)
+            if !durable { nextMigrationRowId = migrationStart }
+            return ReadOutcome(events: bounded, durable: durable)
+        }
+
+        return ReadOutcome(events: bounded, durable: true)
     }
 
     /// A failed append is a lost event, never a crash: nothing a merchant called is failing.
     func append(_ event: QueuedEvent) {
         do {
+            if nextRowId == nil { seedRowIdIfNeeded(from: readExistingForSeed()) }
+            let stamped = event.withRowId(takeNextRowId())
             try createDirectory()
-            let line = try Self.encoder.encode(event) + Data("\n".utf8)
+            let line = try Self.encoder.encode(stamped) + Data("\n".utf8)
             let isNewFile = !FileManager.default.fileExists(atPath: fileURL.path)
             if isNewFile {
                 try line.write(to: fileURL, options: .atomic)
@@ -151,12 +278,63 @@ actor EventQueue {
         }
     }
 
+    /// Best-effort peek at the file for seeding `nextRowId` from `append`, without `read`'s bounds/migration logic.
+    private func readExistingForSeed() -> [QueuedEvent] {
+        guard FileManager.default.fileExists(atPath: fileURL.path), let data = try? Data(contentsOf: fileURL) else {
+            return []
+        }
+        return
+            String(decoding: data, as: UTF8.self)
+            .split(separator: "\n")
+            .compactMap { try? Self.decoder.decode(QueuedEvent.self, from: Data($0.utf8)) }
+    }
+
+    /// Idempotent: a second caller finding `nextRowId` already seeded does nothing.
+    ///
+    /// Reserves one id per row still awaiting migration (2.7), not just past the highest already
+    /// stamped: `append` can seed from here before `read` has ever run over an old-format file,
+    /// in which case every row in `existing` is nil. `nextMigrationRowId` takes the BOTTOM of
+    /// that reservation (`highest + 1`) and `nextRowId` the id immediately above the whole block
+    /// (`highest + 1 + unmigrated`) — two separate counters, so a fresh append draws from
+    /// strictly above every id migration will ever hand out, and the newest row is guaranteed to
+    /// carry the *highest* id rather than merely a non-colliding one.
+    private func seedRowIdIfNeeded(from existing: [QueuedEvent]) {
+        guard nextRowId == nil else { return }
+        let highest = existing.compactMap(\.rowId).max() ?? -1
+        // count(where:) is @available(SwiftStdlib 6.0) — iOS 18/macOS 15, above this package's
+        // iOS 15/macOS 12 floor (Package.swift). filter(_:).count compiles on the actual floor.
+        let unmigrated = existing.filter { $0.rowId == nil }.count
+        nextMigrationRowId = highest + 1
+        nextRowId = highest + 1 + Int64(unmigrated)
+    }
+
+    /// `seedRowIdIfNeeded` must always run first on any path that reaches here; every caller does.
+    private func takeNextRowId() -> Int64 {
+        let id = nextRowId ?? 0
+        nextRowId = id + 1
+        return id
+    }
+
+    /// `seedRowIdIfNeeded` must always run first on any path that reaches here; `read` does.
+    private func takeNextMigrationRowId() -> Int64 {
+        let id = nextMigrationRowId ?? 0
+        nextMigrationRowId = id + 1
+        return id
+    }
+
     /// Rewrites the queue to exactly `events`. Atomic: a kill mid-write leaves the previous
     /// file intact rather than a half-queue.
-    func replace(_ events: [QueuedEvent]) {
+    /// Returns whether the file now genuinely holds `events` — false on any failure to write, so
+    /// a caller relying on the write's durability (the migration pass in `read`) can refuse to
+    /// trust ids that never made it to disk.
+    @discardableResult
+    func replace(_ events: [QueuedEvent]) -> Bool {
         guard !events.isEmpty else {
-            delete()
-            return
+            // Not unconditionally true: a failed delete (permissions, a locked handle) must be
+            // reported as non-durable, the same as a failed rewrite — otherwise a caller believes
+            // stale rows are gone when the file, and every row in it, is still on disk.
+            let stillExists = FileManager.default.fileExists(atPath: fileURL.path)
+            return !stillExists || delete()
         }
         do {
             try createDirectory()
@@ -166,8 +344,10 @@ actor EventQueue {
             }
             try out.write(to: fileURL, options: .atomic)
             applyProtection()
+            return true
         } catch {
             logger.warn("Could not compact the event queue", error)
+            return false
         }
     }
 
@@ -180,16 +360,45 @@ actor EventQueue {
     /// Not `read` then `replace` from the caller: those are two hops, and an event appended
     /// between them would be read by neither and erased by the second. That window is the one
     /// place a durable queue must not have one.
-    func reconcile(delivered: Set<String>, retried: [String: QueuedEvent], now: Date) {
+    ///
+    /// Keyed on `rowId`, not `idempotencyKey` (2.7): a caller-suppliable idempotency key is not
+    /// guaranteed unique, so two distinct queued rows could collide on it and this would then
+    /// reconcile the wrong one, or both. Every row `read` returns has already been migrated to a
+    /// non-nil `rowId`; a `nil` here is unreachable, and is treated as "keep, unmodified" rather
+    /// than trusted to match a `delivered`/`retried` entry it cannot actually correspond to.
+    ///
+    /// Refuses to compact when the read it started from was not durable (a migration/trim
+    /// rewrite that failed to persist, see `readWithOutcome`): `delivered`/`retried` are keyed
+    /// on ids the caller derived from that read, and writing back would either drop rows whose
+    /// ids never made it to disk, or — the data-loss case this exists to prevent — write an
+    /// empty file when the true queue is not empty at all, just unreadable-with-durable-ids this
+    /// pass.
+    func reconcile(delivered: Set<Int64>, retried: [Int64: QueuedEvent], now: Date) {
+        let outcome = readWithOutcome(now: now)
+        guard outcome.durable else { return }
         replace(
-            read(now: now)
-                .filter { !delivered.contains($0.idempotencyKey) }
-                .map { retried[$0.idempotencyKey] ?? $0 }
+            outcome.events
+                .filter { event in
+                    guard let rowId = event.rowId else { return true }
+                    return !delivered.contains(rowId)
+                }
+                .map { event in
+                    guard let rowId = event.rowId else { return event }
+                    return retried[rowId] ?? event
+                }
         )
     }
 
-    private func delete() {
-        try? FileManager.default.removeItem(at: fileURL)
+    /// Returns whether the file is gone afterwards, so callers relying on delete's durability
+    /// (`replace`'s empty-events path) can tell a genuine removal from a swallowed failure.
+    @discardableResult
+    private func delete() -> Bool {
+        do {
+            try FileManager.default.removeItem(at: fileURL)
+            return true
+        } catch {
+            return !FileManager.default.fileExists(atPath: fileURL.path)
+        }
     }
 
     /// `Data.write(to:)` does not create intermediate directories, and the queue is handed a

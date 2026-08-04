@@ -23,8 +23,13 @@ internal class InteractionTracker(
     private val logger: FrakLogger,
     /** Drains run here, not on the caller: [track] must not block on the whole backlog. */
     private val scope: CoroutineScope,
-    /** The id events are currently captured under, read fresh so a reset is visible mid-drain. */
-    private val currentClientId: () -> String?,
+    /**
+     * The id events are currently captured under, read fresh so a reset is visible mid-drain.
+     * Suspending (4.5): [id.frak.sdk.identity.AnonymousIdStore.anonymousId] awaits eager
+     * generation rather than blocking, so this drain loop no longer calls a blocking keystore
+     * read from inside itself.
+     */
+    private val currentClientId: suspend () -> String?,
     private val now: () -> Long = System::currentTimeMillis,
     private val newKey: () -> String = { UUID.randomUUID().toString() },
     private val backoff: Backoff = Backoff(now),
@@ -79,26 +84,27 @@ internal class InteractionTracker(
         flushMutex.withLock {
             if (backoff.isBackingOff(BACKOFF_KEY)) return
 
-            // One lock across read and compact: releasing between them lets an `enqueue` land in
-            // the window and be deleted by `replace(emptyList())`. Now that `track` detaches its
-            // drain, the SDK creates that concurrency itself from two sequential `track` calls.
-            val pending =
-                queueMutex.withLock {
-                    val rows = queue.read(now())
-                    // Empty read over an existing file means every row expired/unreadable; compact it.
-                    if (rows.isEmpty()) queue.replace(emptyList())
-                    rows
-                }
-            if (pending.isEmpty()) return
+            val pending = queueMutex.withLock { queue.read(now()) }
+            if (pending.isEmpty()) {
+                // Nothing to send, but expired/unreadable rows may still be on disk. `reconcile`,
+                // not a bare `replace(emptyList())`: that call relied on an unstated invariant
+                // (a non-durable read is never empty, per EventQueue.readLocked's contract) to
+                // avoid wiping a queue whose migration ids hadn't actually persisted — fragile,
+                // and one edit away from reopening 2.7's critical bug. `reconcile` already refuses
+                // to compact a non-durable read, so it is safe unconditionally and matches the
+                // iOS actor twin exactly.
+                queueMutex.withLock { queue.reconcile(emptySet(), emptyMap(), now()) }
+                return
+            }
 
             val currentClientId = currentClientId()
-            val delivered = mutableSetOf<String>()
-            val retried = mutableMapOf<String, QueuedEvent>()
+            val delivered = mutableSetOf<Long>()
+            val retried = mutableMapOf<Long, QueuedEvent>()
 
             for (event in pending) {
                 // Dropped even if purge and this drain raced: event carries the id it was captured under.
                 if (event.clientId != null && currentClientId != null && event.clientId != currentClientId) {
-                    delivered += event.idempotencyKey
+                    delivered += event.rowId
                     continue
                 }
 
@@ -112,7 +118,7 @@ internal class InteractionTracker(
 
                 if (response.isSuccess) {
                     backoff.recordSuccess(BACKOFF_KEY)
-                    delivered += event.idempotencyKey
+                    delivered += event.rowId
                     continue
                 }
 
@@ -125,20 +131,23 @@ internal class InteractionTracker(
                 val failed = event.withFailure()
                 if (failed.failures >= MAX_FAILURES) {
                     logger.warn("Dropping an event the backend keeps rejecting (HTTP ${response.status}).")
-                    delivered += event.idempotencyKey
+                    delivered += event.rowId
                 } else {
-                    retried[event.idempotencyKey] = failed
+                    retried[event.rowId] = failed
                 }
                 break
             }
 
+            // queue.reconcile, not a read()-then-replace() from here (2.7/6): those would be two
+            // separate suspending hops on ioDispatcher — genuinely multi-threaded — and an event
+            // appended between them would be read by neither and erased by the second. queueMutex
+            // wraps every call site in this file today so that specific window can't open yet, but
+            // EventQueue's own doc says "single writer only" while providing no internal
+            // serialisation of its own; keeping read+write inside one EventQueue-owned hop, the way
+            // the iOS actor twin already does, means that stays true regardless of what future
+            // caller reaches EventQueue next.
             queueMutex.withLock {
-                queue.replace(
-                    queue
-                        .read(now())
-                        .filterNot { it.idempotencyKey in delivered }
-                        .map { retried[it.idempotencyKey] ?: it },
-                )
+                queue.reconcile(delivered, retried, now())
             }
         }
     }
@@ -150,7 +159,9 @@ internal class InteractionTracker(
         idempotencyKey: String,
     ) {
         queueMutex.withLock {
-            queue.append(QueuedEvent(idempotencyKey, path, body, clientId, now()))
+            // MISSING_ROW_ID: EventQueue.append assigns and persists the real id; nothing
+            // upstream of it, including this call site, is allowed to choose one (2.7).
+            queue.append(QueuedEvent(idempotencyKey, path, body, clientId, now(), rowId = EventQueue.MISSING_ROW_ID))
         }
     }
 

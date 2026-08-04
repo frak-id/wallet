@@ -9,9 +9,6 @@ actor DefaultFrakClient {
     private let rewards: RewardRepository
     private let tracker: InteractionTracker
 
-    private var latestConfig: FrakResolvedConfig?
-    private var subscribers: [UUID: AsyncStream<FrakResolvedConfig>.Continuation] = [:]
-
     init(
         settings: FrakConfig,
         store: KeyValueStore,
@@ -26,29 +23,28 @@ actor DefaultFrakClient {
         self.identity = identity
         self.launcher = launcher
         self.logger = logger
-        let http = HTTPClient(baseURL: backendURL ?? settings.env.backend, session: session)
+        let http = HTTPClient(baseURL: backendURL ?? settings.env.backend, session: session, logger: logger)
         self.configStore = ConfigStore(http: http, store: store, logger: logger)
         self.rewards = RewardRepository(http: http, logger: logger)
         self.tracker = InteractionTracker(
             queue: queue,
             http: http,
             logger: logger,
-            currentClientId: { identity.anonymousId() }
+            currentClientId: { await identity.anonymousId() }
         )
 
-        // Reading the keystore is storage I/O and `anonymousId` is a property a merchant
-        // will read from the main thread; resolving it now makes that read a field access.
-        // Then drain whatever a previous session queued and could not send — nothing else
-        // triggers a drain, since the SDK holds no connectivity callback.
+        // 4.5: mints the keypair now, off whichever thread this init runs on. Then drain
+        // whatever a previous session queued and could not send — nothing else triggers a
+        // drain, since the SDK holds no connectivity callback.
         let tracker = self.tracker
         let trackingEnabled = settings.trackingEnabled
         Task {
+            await identity.startEagerGeneration()
             guard trackingEnabled else {
                 // Events captured before the merchant turned tracking off must not be sent now.
                 await tracker.purge()
                 return
             }
-            _ = identity.anonymousId()
             await tracker.flush()
         }
     }
@@ -57,53 +53,49 @@ actor DefaultFrakClient {
         settings.env
     }
 
-    nonisolated var anonymousId: String? {
-        identity.anonymousId()
+    /// 4.5: async, not a synchronous property — the first read used to mint a keypair on
+    /// whatever thread called it. `identity`'s own eager generation (started in `init`) means a
+    /// caller here usually awaits an already-completed result.
+    var anonymousId: String? {
+        get async { await identity.anonymousId() }
     }
 
-    nonisolated func resetAnonymousId() {
-        // Unconditional, unlike the Android twin: identity.reset() cannot fail here (see its
-        // doc), so there is no erasure outcome to check before purging.
-        identity.reset()
+    /// 4fp: `Bool`, matching the Android twin — false means the platform keystore refused to
+    /// erase the key, the old identity is still live, and the id did NOT rotate. This platform's
+    /// `identity.reset()` cannot itself fail (see its doc) and always returns true; the value
+    /// exists so a merchant writing shared cross-platform erasure logic has one contract to check.
+    @discardableResult
+    func resetAnonymousId() async -> Bool {
+        let erased = await identity.reset()
         // Purged, not left behind: an event captured under a dead id would re-link the
         // identity the user just asked to be forgotten. Best-effort cleanup — the guarantee
         // comes from the drain loop, which drops any event whose captured id is stale.
         let tracker = self.tracker
         Task { await tracker.purge() }
+        return erased
     }
 
+    /// C3: `ConfigStore` owns the stream now — `fetch` is its one publish point, foreground or
+    /// background alike. This forwards it unchanged. `nil` when `FrakConfig` carries neither a
+    /// `merchantId` nor a `packageId` (see `MerchantQuery.from`): a config that cannot identify a
+    /// merchant at all cannot be hydrated from disk either, so that case degrades to `nil` exactly
+    /// like a genuine cache miss would.
     var currentConfig: FrakResolvedConfig? {
-        latestConfig
+        get async {
+            guard let query = try? MerchantQuery.from(settings) else { return nil }
+            return await configStore.currentConfig(query)
+        }
     }
 
     var configUpdates: AsyncStream<FrakResolvedConfig> {
-        AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
-            let id = UUID()
-            if let latestConfig {
-                continuation.yield(latestConfig)
-            }
-            subscribers[id] = continuation
-            continuation.onTermination = { [weak self] _ in
-                Task { await self?.removeSubscriber(id) }
-            }
-        }
+        get async { await configStore.updates }
     }
 
     func resolveConfig(forceRefresh: Bool = false) async throws -> FrakResolvedConfig {
         try await frakCall {
             try requireTrackingEnabled()
             let query = try MerchantQuery.from(settings)
-            let resolved = try await configStore.resolve(query, forceRefresh: forceRefresh)
-            // Dedupe, mirroring the Kotlin twin's StateFlow: a cache-hit resolve that
-            // returns the same config every subscriber already has must not re-emit.
-            let changed = resolved != latestConfig
-            latestConfig = resolved
-            if changed {
-                for continuation in subscribers.values {
-                    continuation.yield(resolved)
-                }
-            }
-            return resolved
+            return try await configStore.resolve(query, forceRefresh: forceRefresh)
         }
     }
 
@@ -135,7 +127,7 @@ actor DefaultFrakClient {
     }
 
     func buildSharingLink(_ request: SharingRequest) async -> String? {
-        guard let clientId = identity.anonymousId() else { return nil }
+        guard let clientId = await identity.anonymousId() else { return nil }
         let resolved = await availableConfig()
         guard !Task.isCancelled else { return nil }
 
@@ -167,7 +159,7 @@ actor DefaultFrakClient {
         await trackingCall { merchantId in
             await tracker.track(
                 merchantId: merchantId,
-                clientId: identity.anonymousId(),
+                clientId: await identity.anonymousId(),
                 interaction: interaction
             )
         }
@@ -178,7 +170,7 @@ actor DefaultFrakClient {
         await trackingCall { merchantId in
             await tracker.trackPurchase(
                 merchantId: merchantId,
-                clientId: identity.anonymousId(),
+                clientId: await identity.anonymousId(),
                 customerId: customerId,
                 orderId: orderId,
                 token: token
@@ -190,10 +182,18 @@ actor DefaultFrakClient {
     func handleReferralLink(_ url: String) async -> Bool {
         guard settings.deepLink != .disabled, let context = SharingLinkBuilder.parse(url) else { return false }
 
-        let ownMerchantId = settings.merchantId ?? latestConfig?.merchantId
+        // 3.2: currentConfig now hydrates from disk on demand (see its doc) rather than only
+        // reading whatever memory already held, so a warm start reached via this very deep link
+        // — before anything has called resolveConfig() — can still resolve a merchant id. Only
+        // reached when settings.merchantId is unset, so a merchant who did set it never pays for
+        // the disk read.
+        var ownMerchantId = settings.merchantId
+        if ownMerchantId == nil, let query = try? MerchantQuery.from(settings) {
+            ownMerchantId = await configStore.currentConfig(query)?.merchantId
+        }
         let ignore = ReferralArrival.shouldIgnoreArrival(
             context,
-            anonymousId: identity.anonymousId(),
+            anonymousId: await identity.anonymousId(),
             ownMerchantId: ownMerchantId
         )
         if ignore {
@@ -226,7 +226,7 @@ actor DefaultFrakClient {
             // referrer — so this link is the only place attribution can ride on an
             // already-installed device. Null when the enclave cannot sign, which `/install`
             // degrades past rather than blocks on.
-            installProof: identity.signProof(.install, merchantId: install.merchantId)
+            installProof: await identity.signProof(.install, merchantId: install.merchantId)
         )
         if await launcher.open(deepLink) {
             return .openedApp
@@ -239,7 +239,7 @@ actor DefaultFrakClient {
         // Only the identity gate, unlike the Kotlin twin: a Play referrer carries the merchant
         // id, an App Store URL carries nothing, so resolving one would be a network round trip
         // for a constant.
-        identity.anonymousId() == nil ? nil : InstallLinks.appStore()
+        await identity.anonymousId() == nil ? nil : InstallLinks.appStore()
     }
 
     func installPageURL(returnScheme: String, sessionId: String) async -> String? {
@@ -247,7 +247,7 @@ actor DefaultFrakClient {
         // Minted here rather than when the sheet opens: most sessions never reach the install
         // step, an enclave signature can fail for reasons that have nothing to do with
         // sharing, and the backend's 30-day window runs from this timestamp.
-        let proof = identity.signProof(.install, merchantId: install.merchantId)
+        let proof = await identity.signProof(.install, merchantId: install.merchantId)
         return InstallLinks.installPage(
             walletOrigin: settings.env.wallet,
             merchantId: install.merchantId,
@@ -260,7 +260,7 @@ actor DefaultFrakClient {
 
     /// The merchant/anonymous-id pair an install link needs, or nil when either is missing.
     private func installIdentity() async -> (merchantId: String, anonymousId: String)? {
-        guard let anonymousId = identity.anonymousId() else { return nil }
+        guard let anonymousId = await identity.anonymousId() else { return nil }
         let resolved = await availableConfig()
         guard !Task.isCancelled, let merchantId = settings.merchantId ?? resolved?.merchantId else { return nil }
         return (merchantId, anonymousId)
@@ -324,10 +324,6 @@ actor DefaultFrakClient {
             products: products,
             forceRefresh: forceRefresh
         )
-    }
-
-    private func removeSubscriber(_ id: UUID) {
-        subscribers.removeValue(forKey: id)
     }
 
     // When tracking is off, no id is generated and no network is issued — including

@@ -197,6 +197,48 @@ class InteractionTrackerTest {
         }
 
     @Test
+    fun `flush survives a failed migration rewrite instead of wiping the queue (2-7,critical)`() =
+        runTest {
+            val tracker = tracker()
+
+            // A pre-2.7 file: every current field except "r", which never existed. Written
+            // directly, bypassing append/track, exactly like an install upgrading in place.
+            file.parentFile?.mkdirs()
+            listOf("old-a" to now - 1, "old-b" to now).forEach { (key, capturedAt) ->
+                file.appendText(
+                    JSONObject()
+                        .put("k", key)
+                        .put("p", "/user/track/interaction")
+                        .put("b", JSONObject().put("type", "sharing").put("merchantId", MERCHANT_ID))
+                        .put("c", CLIENT_ID)
+                        .put("t", capturedAt)
+                        .put("f", 0)
+                        .toString() + "\n",
+                )
+            }
+
+            // Forces EventQueue.replaceLocked's write to fail during the migration read inside
+            // flush: the temp path is occupied by a directory, so temp.writeText throws.
+            // The directory must be NON-EMPTY: replaceLocked's failure path runs
+            // runCatching { temp.delete() }, and File.delete() succeeds on an empty directory —
+            // which would clear the obstruction after the first rewrite and let the reconcile's
+            // second rewrite succeed, compacting the queue away and hiding the regression.
+            val tempPath = File(file.parentFile, file.name + ".tmp")
+            tempPath.mkdirs()
+            File(tempPath, "occupied").writeText("x")
+
+            transport.respond(200, """{"success":true}""")
+            tracker.flush()
+
+            tempPath.deleteRecursively()
+            // This is the exact regression the fix closes: EventQueue.read signalling its
+            // failed migration rewrite by returning an empty list, InteractionTracker.flush
+            // reading that as "nothing queued" and calling queue.replace(emptyList()), which
+            // deletes a file that in truth still holds two events. Both must survive.
+            assertEquals(listOf("old-a", "old-b"), queue.read(now).map { it.idempotencyKey })
+        }
+
+    @Test
     fun `posts a purchase with the merchant and checkout token`() =
         runTest {
             transport.respond(200, """{"success":true,"identityGroupId":"g"}""")

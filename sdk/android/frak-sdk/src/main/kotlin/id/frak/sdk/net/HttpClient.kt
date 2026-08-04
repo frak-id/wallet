@@ -2,6 +2,7 @@ package id.frak.sdk.net
 
 import id.frak.sdk.FrakSdkVersion
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.FrakLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.TimeoutCancellationException
@@ -36,6 +37,11 @@ internal class HttpClient(
     private val baseUrl: String,
     private val ioDispatcher: CoroutineDispatcher,
     private val open: (URL) -> HttpURLConnection = { it.openConnection() as HttpURLConnection },
+    // D3: request logging is self-contained here rather than threaded through from
+    // DefaultFrakClient, since this class is constructed as one of DefaultFrakClient's own
+    // constructor-parameter defaults, before that init body has assembled anything. Defaults to
+    // null — silent — until a caller passes one in.
+    private val logger: FrakLogger? = null,
 ) {
     data class Response(
         val status: Int,
@@ -122,6 +128,42 @@ internal class HttpClient(
 
     /** Runs as a child coroutine so cancellation can reach a blocked socket read via disconnect(). */
     private suspend fun attempt(
+        url: URL,
+        headers: Map<String, String>,
+        body: String?,
+    ): Response {
+        val method = if (body == null) "GET" else "POST"
+        val startMillis = System.currentTimeMillis()
+        return try {
+            val response = attemptUnlogged(url, headers, body)
+            logResult(method, url, response.status, startMillis)
+            response
+        } catch (thrown: Exception) {
+            // Exception, not Throwable: a JVM Error (e.g. OutOfMemoryError) should propagate exactly
+            // as it did before this wrapper existed, not be intercepted for a log line.
+            logResult(method, url, status = null, startMillis)
+            throw thrown
+        }
+    }
+
+    /**
+     * D3: DEBUG-level only, symmetric with iOS's `HTTPClient`. Logs method, host, path and
+     * status/duration — never the query string (S1/S2: a merchant id or the anonymous id can ride
+     * in it, e.g. `campaigns?anonymousId=…`) and never a header value (an auth token lives there).
+     */
+    private fun logResult(
+        method: String,
+        url: URL,
+        status: Int?,
+        startMillis: Long,
+    ) {
+        if (logger == null) return
+        val durationMillis = System.currentTimeMillis() - startMillis
+        val statusText = status?.toString() ?: "error"
+        logger.debug("Frak $method ${url.host}${url.path} -> $statusText (${durationMillis}ms)")
+    }
+
+    private suspend fun attemptUnlogged(
         url: URL,
         headers: Map<String, String>,
         body: String?,

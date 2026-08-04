@@ -22,11 +22,17 @@ public class FrakClient internal constructor(
     /** The stage this client talks to. Merchants never set it directly, see [id.frak.sdk.core.FrakConfig.env]. */
     public val environment: FrakEnvironment get() = core.environment
 
-    /** Anonymous id, or null when tracking disabled or device refused key material. */
-    public val anonymousId: String? get() = core.anonymousId
+    /** Anonymous id, or null when tracking is disabled or the device refused key material. */
+    public suspend fun anonymousId(): String? = core.anonymousId()
 
-    /** Destroys the keypair so [anonymousId] mints a new identity. For GDPR erasure; does not delete history. */
-    public fun resetAnonymousId(): Unit = core.resetAnonymousId()
+    /**
+     * Destroys the keypair so the next [anonymousId] mints a new identity. For GDPR erasure; does
+     * not delete history already attributed to the old id.
+     *
+     * @return false when the platform keystore refused to erase the key — the old identity is
+     *   still live and the id did NOT rotate. Callers with a legal erasure obligation must check.
+     */
+    public suspend fun resetAnonymousId(): Boolean = core.resetAnonymousId()
 
     /** Config resolution and its live stream. */
     public val config: ConfigApi = ConfigApi(core)

@@ -90,6 +90,39 @@ struct ConfigStoreTests {
         #expect(try await store.resolve(query(), forceRefresh: false).name == "Acme Renamed")
     }
 
+    /// C3: `updates` is this actor's own stream, not something forwarded from a caller-side
+    /// `resolveConfig()` write — so it must reach a subscriber from BACKGROUND revalidation too,
+    /// the path that never touched it before this finding. Before the fix, only a direct
+    /// `ConfigStore.resolve` caller ever saw an update; a subscriber sitting on `updates` alone
+    /// (the real-world shape: a UI observing config without itself calling `resolve` on every
+    /// stale hit) never learned the revalidated value existed.
+    @Test("background revalidation reaches the updates stream, not just memory (C3)")
+    func backgroundRevalidationReachesUpdatesStream() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let renamedBody = Self.body.replacingOccurrences(of: "Acme", with: "Acme Renamed")
+        let callCount = Counter()
+        let store = makeStore(clock: clock, log: log) { _ in
+            let count = callCount.increment()
+            return StubResponse(status: 200, body: count == 1 ? Self.body : renamedBody)
+        }
+
+        var iterator = await store.updates.makeAsyncIterator()
+
+        _ = try await store.resolve(query(), forceRefresh: false)
+        let first = await iterator.next()
+        #expect(first?.name == "Acme")
+
+        clock.current.addTimeInterval(ConfigStore.freshTTL + 1)
+        _ = try await store.resolve(query(), forceRefresh: false) // stale: served from cache, revalidates behind it
+
+        let second = await iterator.next()
+        #expect(
+            second?.name == "Acme Renamed",
+            "a subscriber must see the revalidated value even though it never called resolve() again"
+        )
+    }
+
     @Test("an expired cache is still served rather than blanked")
     func expiredCacheStillServed() async throws {
         let clock = Clock()
@@ -122,6 +155,66 @@ struct ConfigStoreTests {
 
         #expect(refreshed.name == "Acme Renamed")
         #expect(log.count == 2)
+    }
+
+    // C4's "an older fetch that starts first but lands last does not overwrite a newer publish"
+    // case does not have a deterministic test on this platform. It needs two requests genuinely
+    // in flight at once through ONE ConfigStore/HTTPClient/URLSession, with the first response
+    // deliberately held back until the second has published — which means blocking inside
+    // StubURLProtocol.startLoading() for one request while the other is still in flight on the
+    // SAME session. Nothing in Foundation's public contract guarantees URLSession runs two
+    // custom-URLProtocol loads concurrently rather than serialising them onto one queue; if it
+    // does serialise them, the second request never starts, the first's blocking wait is never
+    // released, and the test only unwinds via HTTPClient's 20s Deadline — a wedged thread, not a
+    // failure. That could not be verified without a toolchain to run it against, so rather than
+    // land a test that might hang CI, this pins only what IS provable without concurrent network
+    // I/O: the guard's comparison and publish logic (see the unit-level sequencing below), plus
+    // cross-key isolation-not-corruption. The Kotlin twin's equivalent test (`ConfigStoreTest.kt`,
+    // same finding id) uses a real second `Dispatchers.IO` thread instead of the cooperative pool
+    // and is not exposed to this same ambiguity, since JVM thread scheduling doesn't route through
+    // a single URLSession's task queue.
+    @Test("a fetch for one key does not publish over a different key's already-published result")
+    func differentKeyFetchDoesNotOverwritePublishedResult() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let secondQuery = MerchantQuery.bundleId(bundleId: "com.example.second", lang: nil)
+
+        let store = makeStore(clock: clock, log: log) { request in
+            let isFirstQuery = request.url?.query?.contains("merchantId=\(Self.merchantId)") == true
+            let body = isFirstQuery ? Self.body : Self.body.replacingOccurrences(of: "Acme", with: "Acme Second")
+            return StubResponse(status: 200, body: body)
+        }
+
+        // Attached BEFORE either resolve: `updates` only replays `lastPublished`, so an
+        // iterator created afterward would miss "Acme" and then suspend forever waiting for a
+        // third publish that never comes.
+        var iterator = await store.updates.makeAsyncIterator()
+
+        // Sequential, not concurrent: the first key publishes, then the second key publishes,
+        // proving the guard does not reject a later, genuinely-newer sequence number just because
+        // it belongs to a different cache key than the one already published.
+        let firstResult = try await store.resolve(query(), forceRefresh: true)
+        // Hoisted out of #expect: the suite's convention everywhere else, because an iterator is
+        // a mutating value and #expect's expansion is a closure over it.
+        let firstPublished = await iterator.next()
+        #expect(firstPublished?.name == "Acme")
+        let secondResult = try await store.resolve(secondQuery, forceRefresh: true)
+        let secondPublished = await iterator.next()
+        #expect(secondPublished?.name == "Acme Second")
+
+        #expect(firstResult.name == "Acme")
+        #expect(secondResult.name == "Acme Second")
+
+        // The iterator MUST attach before either resolve: `updates` replays only `lastPublished`,
+        // a single value, so an iterator created after both calls would see the replay on its
+        // first `next()` (skipping "Acme" entirely) and then suspend forever on its second —
+        // nothing publishes again and nothing ever calls `continuation.finish()`. Swift Testing
+        // has no default per-test timeout, so that ordering wedges the run permanently rather
+        // than failing it.
+        //
+        // memory must agree with the stream it feeds: `currentConfig(secondQuery)` reads memory
+        // directly here, since memory already holds the second key's entry.
+        #expect(await store.currentConfig(secondQuery)?.name == "Acme Second")
     }
 
     @Test("concurrent callers share one request")
@@ -265,6 +358,114 @@ struct ConfigStoreTests {
         let result = try await coldStart.resolve(query(), forceRefresh: false)
 
         #expect(result.name == "Acme")
+    }
+
+    /// 3.2 regression: `DefaultFrakClient.handleReferralLink`'s merchant guard resolves
+    /// `ownMerchantId` from `ConfigStore.currentConfig`, precisely so a warm start whose cached
+    /// entry is still fresh — the ordinary case, never touching `fetch` at all in this process —
+    /// still has a merchant id available. `updates` alone cannot supply it: `fetch` is C3's one
+    /// publish point, and a fresh-cache resolve never reaches it. This pins that `currentConfig`
+    /// IS populated by that hydrate-and-serve-from-cache path, while `updates` stays empty because
+    /// nothing published — the same guarantee the Kotlin twin's `ConfigStore.currentConfig()`
+    /// exists to provide, since both platforms must resolve "last known config" from the same kind
+    /// of source (`DefaultFrakClient.kt`'s 3.2 comment, `DefaultFrakClient.swift:179`).
+    @Test("currentConfig hydrates from disk on its own, without a prior resolve call")
+    func currentConfigHydratesWithoutResolve() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let sharedStore = InMemoryKeyValueStore()
+        let callCount = Counter()
+
+        let (session, host) = StubURLProtocol.makeSession()
+        StubURLProtocol.handle(host: host) { request in
+            log.record(request)
+            callCount.increment()
+            return StubResponse(status: 200, body: Self.body)
+        }
+        let http = HTTPClient(baseURL: "https://\(host)", session: session)
+        let firstStore = ConfigStore(
+            http: http,
+            store: sharedStore,
+            logger: FrakLogger(level: .none),
+            now: { clock.current }
+        )
+        _ = try await firstStore.resolve(query(), forceRefresh: false)
+        let requestsAfterFirstFetch = callCount.value
+
+        // A second, independent store instance sharing only the persisted KeyValueStore — the
+        // same situation as a fresh process reading what a previous run wrote to disk. Nothing
+        // in this test ever calls warmStore.resolve().
+        let warmStore = ConfigStore(
+            http: http,
+            store: sharedStore,
+            logger: FrakLogger(level: .none),
+            now: { clock.current }
+        )
+
+        // Hoisted: `query()` throws, and `#expect` expands to a rethrowing call, so it cannot
+        // host a `try` on an autoclosure argument.
+        let warmQuery = try query()
+        #expect(await warmStore.currentConfig(warmQuery)?.name == "Acme")
+        #expect(callCount.value == requestsAfterFirstFetch, "currentConfig must not reach the network")
+
+        // A subscriber attaching AFTER the hydration must see no replay: `updates` only ever
+        // replays `lastPublished`, and nothing has published on this store instance — only
+        // fetch() publishes (C3). If currentConfig's disk hydration wrongly published, this would
+        // instead see "Acme" arrive immediately instead of timing out. `received` (the existing
+        // lock-protected `Counter` from `TestSupport.swift`) is incremented from the iterator
+        // branch only, so a timeout win leaves it at zero; racing avoids ever awaiting an
+        // iterator that could otherwise suspend forever. The (Sendable) stream is hoisted out of
+        // the closure and iterated INSIDE the child task: a non-Sendable AsyncIterator captured
+        // and mutated by a @Sendable addTask closure does not compile under -swift-version 6.
+        let received = Counter()
+        let stream = await warmStore.updates
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                var iterator = stream.makeAsyncIterator()
+                _ = await iterator.next()
+                received.increment()
+            }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+            }
+            await group.next()
+            group.cancelAll()
+        }
+        #expect(
+            received.value == 0,
+            "currentConfig's disk hydration must not publish to the stream \u2014 only fetch() does (C3)"
+        )
+    }
+
+    @Test("currentConfig returns nil for a key nothing was ever persisted under")
+    func currentConfigReturnsNilForUnpersistedKey() async throws {
+        let clock = Clock()
+        let log = RequestLog()
+        let sharedStore = InMemoryKeyValueStore()
+
+        let (session, host) = StubURLProtocol.makeSession()
+        StubURLProtocol.handle(host: host) { request in
+            log.record(request)
+            return StubResponse(status: 200, body: Self.body)
+        }
+        let http = HTTPClient(baseURL: "https://\(host)", session: session)
+        let firstStore = ConfigStore(
+            http: http,
+            store: sharedStore,
+            logger: FrakLogger(level: .none),
+            now: { clock.current }
+        )
+        _ = try await firstStore.resolve(query(), forceRefresh: false)
+
+        let warmStore = ConfigStore(
+            http: http,
+            store: sharedStore,
+            logger: FrakLogger(level: .none),
+            now: { clock.current }
+        )
+        let otherQuery = MerchantQuery.bundleId(bundleId: "com.example.other", lang: nil)
+
+        #expect(await warmStore.currentConfig(otherQuery) == nil)
     }
 
     @Test("a persisted entry for a different query is ignored")

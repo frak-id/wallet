@@ -19,8 +19,10 @@ actor InteractionTracker {
     private let queue: EventQueue
     private let http: HTTPClient
     private let logger: FrakLogger
-    /// Read fresh on every drain, so an identity reset takes effect mid-flight.
-    private let currentClientId: @Sendable () -> String?
+    /// Read fresh on every drain, so an identity reset takes effect mid-flight. Async (4.5):
+    /// `AnonymousIdStore.anonymousId()` awaits eager generation rather than blocking, so this
+    /// drain loop no longer calls a blocking keystore read from inside itself.
+    private let currentClientId: @Sendable () async -> String?
     private let now: @Sendable () -> Date
     private let newKey: @Sendable () -> String
 
@@ -33,7 +35,7 @@ actor InteractionTracker {
         queue: EventQueue,
         http: HTTPClient,
         logger: FrakLogger,
-        currentClientId: @escaping @Sendable () -> String?,
+        currentClientId: @escaping @Sendable () async -> String?,
         now: @escaping @Sendable () -> Date = { Date() },
         newKey: @escaping @Sendable () -> String = { UUID().uuidString.lowercased() },
         backoff: Backoff = Backoff()
@@ -122,15 +124,23 @@ actor InteractionTracker {
             return
         }
 
-        let currentId = currentClientId()
-        var delivered: Set<String> = []
-        var retried: [String: QueuedEvent] = [:]
+        let currentId = await currentClientId()
+        var delivered: Set<Int64> = []
+        var retried: [Int64: QueuedEvent] = [:]
 
         for event in pending {
+            // Every event `queue.read` returns has already been migrated to a non-nil `rowId`;
+            // this guard exists so a future caller of `drain()` with a hand-built list can't
+            // silently reconcile the wrong row instead of crashing loudly in debug.
+            guard let rowId = event.rowId else {
+                assertionFailure("a queued event reaching drain() must already have a rowId")
+                continue
+            }
+
             // Captured under an id that has since been replaced. Dropped, not sent: it would
             // re-link an identity the user already walked away from.
             if let captured = event.clientId, let currentId, captured != currentId {
-                delivered.insert(event.idempotencyKey)
+                delivered.insert(rowId)
                 continue
             }
 
@@ -154,7 +164,7 @@ actor InteractionTracker {
 
             if response.isSuccess {
                 backoff.recordSuccess(Self.backoffKey)
-                delivered.insert(event.idempotencyKey)
+                delivered.insert(rowId)
                 continue
             }
 
@@ -165,9 +175,9 @@ actor InteractionTracker {
             let failed = event.withFailure()
             if failed.failures >= Self.maxFailures {
                 logger.warn("Dropping an event the backend keeps rejecting (HTTP \(response.status)).")
-                delivered.insert(event.idempotencyKey)
+                delivered.insert(rowId)
             } else {
-                retried[event.idempotencyKey] = failed
+                retried[rowId] = failed
             }
             break
         }

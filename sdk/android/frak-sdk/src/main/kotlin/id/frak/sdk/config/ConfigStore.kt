@@ -9,6 +9,9 @@ import id.frak.sdk.net.JsonReader
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -19,6 +22,20 @@ import org.json.JSONObject
  * Stale-while-revalidate cache over `GET /user/merchant/resolve`. Fresh (< 5 min) served from
  * memory; stale served immediately and revalidated in background. No hard expiry: a cached copy
  * is always served however old, since reward amounts come from a separate, stricter endpoint.
+ *
+ * C3: this store, not [id.frak.sdk.core.DefaultFrakClient], owns [updates] — [fetch] is the ONE
+ * choke point every resolved config passes through, foreground call or background revalidation
+ * alike, so publishing here is what makes revalidation finally visible to a subscriber instead of
+ * updating [memory] and nothing else. C4: the same publish is gated by a sequence number so an
+ * out-of-order landing (two different queries' fetches genuinely running concurrently, since
+ * [SingleFlight] only serialises same-key fetches, and [memory]/[updates]/the persisted disk
+ * entry are all one slot shared across every key) can never overwrite a newer result with an
+ * older one, on the stream OR on disk. The same-key case this was originally filed against — a
+ * background revalidation racing a foreground forced refresh — is structurally unreachable:
+ * [SingleFlight] collapses both onto one in-flight fetch before either can reach the publish
+ * site. In production there is exactly one cache key for the lifetime of a client
+ * ([id.frak.sdk.config.MerchantQuery.from] is constant over an immutable [id.frak.sdk.core.FrakConfig]),
+ * so this guard is currently exercised only by tests that construct a second key by hand.
  */
 internal class ConfigStore(
     private val http: HttpClient,
@@ -31,8 +48,46 @@ internal class ConfigStore(
     private val singleFlight = SingleFlight(scope)
     private val backoff = Backoff(now)
 
-    /** Guards [memory], [revalidating] and [backoff], none of which are thread-safe. */
+    /** Guards [memory], [revalidating], [backoff] and [publishedSequence], none of which are thread-safe. */
     private val mutex = Mutex()
+
+    private val configFlow = MutableStateFlow<FrakResolvedConfig?>(null)
+
+    /**
+     * C3: replaces [id.frak.sdk.core.DefaultFrakClient]'s own subscriber-less `MutableStateFlow`,
+     * which only [resolve]'s direct caller ever wrote to — background revalidation updated
+     * [memory] but never this. Conflated and dedup-on-equal by [MutableStateFlow]'s own contract,
+     * so an identical revalidated config does not re-emit; [FrakResolvedConfig]'s hand-written
+     * `equals` covers every field on the public model, so "equal" here genuinely means
+     * "no observable change" (`FrakResolvedConfig.kt`).
+     */
+    val updates: StateFlow<FrakResolvedConfig?> = configFlow.asStateFlow()
+
+    /**
+     * Best-known config right now, without waiting on [updates] to have published anything, and
+     * without a network call. Exactly the case 3.2's merchant-arrival guard needs
+     * (`DefaultFrakClient.kt`): the dominant deep-link flow launches the process FROM the
+     * referral URL, so `handleReferralLink` runs before anything has called [resolve] — [memory]
+     * is still empty at that point, and [updates] alone cannot answer either, since a cache hit
+     * publishes nothing (C3 only wires [fetch] to the stream). [readCache] is reused here for
+     * exactly the same reason [resolve]'s fast path uses it: it hydrates [memory] from disk on
+     * first miss (single-flighted, negative-cached via [hydrationAttempted]) without issuing a
+     * request. Mirrors iOS's `ConfigStore.currentConfig`, which reads the same `memory`-equivalent
+     * slot populated the same way — both platforms must resolve "last known config" from the same
+     * source.
+     */
+    suspend fun currentConfig(query: MerchantQuery): FrakResolvedConfig? = readCache(query.cacheKey())?.config
+
+    /**
+     * C4: minted at the START of [fetch], before the network call, and compared again at publish
+     * time under the same [mutex]. Minting at start records the order fetches were INTENDED in,
+     * which is the order that matters — a counter read at publish time would order by completion,
+     * exactly the order a slow-fetch-lands-last race gets wrong.
+     */
+    private var sequenceCounter: Long = 0
+
+    /** Highest sequence to have actually published. [Long.MIN_VALUE]: nothing has published yet, so the first fetch always wins. */
+    private var publishedSequence: Long = Long.MIN_VALUE
 
     private class Entry(
         val key: String,
@@ -116,6 +171,9 @@ internal class ConfigStore(
         key: String,
         query: MerchantQuery,
     ): FrakResolvedConfig {
+        // Minted before the network call so it records intent order, not completion order (C4).
+        val sequence = mutex.withLock { ++sequenceCounter }
+
         val response = backoff.runOrRecordFailure(mutex, key) { http.get(RESOLVE_PATH, query.parameters()) }
 
         if (!response.isSuccess) {
@@ -130,8 +188,19 @@ internal class ConfigStore(
         val entry = Entry(key, config, response.body, now())
         mutex.withLock {
             backoff.recordSuccess(key)
-            memory = entry
-            writePersisted(entry)
+            // C4: an older fetch that started first but lands last must not overwrite a newer
+            // result already published — on the stream, on disk, OR in the memory cache. The
+            // caller below still gets ITS OWN config regardless — only the shared publish is
+            // guarded. memory MUST be inside this guard, not above it: a superseded fetch that
+            // wrote memory unconditionally would get re-served as fresh for a full FRESH_TTL_MILLIS
+            // window (isFresh stamps off entry.fetchedAtMillis = now()), silently overwriting a
+            // newer result that had already published to updates/disk.
+            if (sequence > publishedSequence) {
+                publishedSequence = sequence
+                memory = entry
+                writePersisted(entry)
+                configFlow.value = config
+            }
         }
         return config
     }

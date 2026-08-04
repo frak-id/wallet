@@ -7,14 +7,21 @@ import id.frak.sdk.core.FrakLogger
 import id.frak.sdk.net.FAKE_BASE_URL
 import id.frak.sdk.net.FakeHttpTransport
 import id.frak.sdk.net.HttpClient
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -102,6 +109,146 @@ class ConfigStoreTest {
             testScheduler.advanceUntilIdle()
             assertEquals("but a refresh was issued behind it", 2, transport.requests.size)
             assertEquals("Acme Renamed", configStore.resolve(query, forceRefresh = false).name)
+        }
+
+    /**
+     * C3: [ConfigStore.updates] is this store's own stream, not something forwarded from a
+     * caller-side `resolveConfig()` write — so it must reach a subscriber from BACKGROUND
+     * revalidation too, the path that never touched it before this finding. Before the fix, only
+     * a direct [ConfigStore.resolve] caller ever saw an update; a subscriber sitting on
+     * [ConfigStore.updates] alone (the real-world shape: a UI observing config without itself
+     * calling `resolve` on every stale hit) never learned the revalidated value existed.
+     */
+    @Test
+    fun `background revalidation reaches the updates stream, not just memory (C3)`() =
+        runTest {
+            val configStore = newStore(this)
+            transport.respond(200, BODY)
+
+            val emissions = mutableListOf<String?>()
+            val collector = launch { configStore.updates.collect { emissions.add(it?.name) } }
+            advanceUntilIdle()
+
+            configStore.resolve(query, forceRefresh = false)
+            advanceUntilIdle()
+
+            clock += ConfigStore.FRESH_TTL_MILLIS + 1
+            transport.respond(200, BODY.replace("Acme", "Acme Renamed"))
+            configStore.resolve(query, forceRefresh = false) // stale: served from cache, revalidates behind it
+            advanceUntilIdle()
+
+            collector.cancel()
+            assertEquals(
+                "a subscriber must see the revalidated value even though it never called resolve() again",
+                listOf(null, "Acme", "Acme Renamed"),
+                emissions,
+            )
+        }
+
+    /**
+     * C4: [ConfigStore.memory]/[ConfigStore.updates]/the persisted disk entry are a single slot
+     * shared across every key, not one per key — [SingleFlight] only serialises fetches that
+     * share a key, so two DIFFERENT keys' fetches can genuinely run concurrently and race to
+     * publish into that one slot. This pins the sequence guard against exactly that: a fetch
+     * that started FIRST (and so is intended to be superseded) must not win the race to publish
+     * just because its response happened to arrive LAST.
+     *
+     * Ordering is real, not simulated, but nothing ever blocks a thread the scheduler needs.
+     * [ConfigStore] is given its own real [CoroutineScope] backed by [Dispatchers.IO], not this
+     * test's own `TestScope`. That distinction is the fix: `open()` runs on [ConfigStore]'s
+     * `scope` — via [SingleFlight]'s `scope.launch` — never on [HttpClient]'s `ioDispatcher`, so a
+     * previous version of this test that passed `runTest`'s `TestScope` here had a JVM
+     * [kotlinx.coroutines.runBlocking] inside `open` block that scope's one virtual thread, which
+     * starved the very scheduler the test needed to ever deliver `secondPublished`. With a real
+     * background scope backing [ConfigStore], the blocking wait inside `open` is a genuine OS
+     * thread park (a second real [Dispatchers.IO] thread), not a squatter on the scheduler thread,
+     * and [runTest]'s virtual scheduler is never touched by either fetch.
+     */
+    @Test
+    fun `an older fetch that starts first but lands last does not overwrite a newer publish (C4)`() =
+        runTest {
+            val firstQuery = MerchantQuery.from(FrakConfig(merchantId = MERCHANT_ID))
+            val secondQuery = MerchantQuery.from(FrakConfig(packageId = "com.example.second"))
+
+            val firstStarted = CompletableDeferred<Unit>()
+            val secondPublished = CompletableDeferred<Unit>()
+
+            // Two independent fake transports, one per query — not one shared FakeHttpTransport:
+            // its response body is a single mutable field read lazily when perform() actually
+            // drains the stream, which happens AFTER this test's open() lambda returns. Sharing
+            // one instance would let the second query's later respond() call silently rewrite
+            // the body the first (still-blocked) connection reads once released.
+            val firstTransport = FakeHttpTransport()
+            val secondTransport = FakeHttpTransport()
+            firstTransport.respond(200, BODY)
+            secondTransport.respond(200, BODY.replace("Acme", "Acme Second"))
+
+            // A real background scope, deliberately NOT this test's TestScope — see the doc above.
+            val backgroundScope = CoroutineScope(Dispatchers.IO)
+            val configStore =
+                ConfigStore(
+                    http =
+                        HttpClient(
+                            FAKE_BASE_URL,
+                            Dispatchers.IO,
+                            open = { url ->
+                                val isFirstQuery = url.query?.contains("merchantId=$MERCHANT_ID") == true
+                                if (isFirstQuery) {
+                                    firstStarted.complete(Unit)
+                                    // Blocks a real backgroundScope thread — never the TestScope's
+                                    // — until the second key's fetch has published, so this response
+                                    // is guaranteed to LAND last despite STARTING first.
+                                    kotlinx.coroutines.runBlocking { secondPublished.await() }
+                                    firstTransport.open(url)
+                                } else {
+                                    secondTransport.open(url)
+                                }
+                            },
+                        ),
+                    store = store,
+                    logger = FrakLogger(FrakLogLevel.NONE),
+                    scope = backgroundScope,
+                    ioDispatcher = Dispatchers.IO,
+                    now = { clock },
+                )
+
+            try {
+                // SingleFlight.run always dispatches the actual work via backgroundScope.launch
+                // (never the caller's own coroutine), so calling resolve() from runTest's TestScope
+                // here is safe — open() for BOTH queries still executes on backgroundScope, and this
+                // coroutine only ever suspends waiting for it, never blocks.
+                val firstFetch = backgroundScope.async { configStore.resolve(firstQuery, forceRefresh = true) }
+                firstStarted.await()
+
+                val secondResult = configStore.resolve(secondQuery, forceRefresh = true)
+                secondPublished.complete(Unit)
+                val firstResult = firstFetch.await()
+
+                // Each caller still gets ITS OWN fetched config regardless of publish order.
+                assertEquals("Acme", firstResult.name)
+                assertEquals("Acme Second", secondResult.name)
+
+                // The shared stream slot must reflect the fetch that's supposed to win — the one
+                // the sequence guard considers newer — not be clobbered by the older one landing last.
+                assertEquals(
+                    "the older fetch landing last must not overwrite the newer publish",
+                    "Acme Second",
+                    configStore.updates.value?.name,
+                )
+                // The memory cache must agree with the stream: memory = entry lives INSIDE the same
+                // sequence guard as the stream/disk publish. Before that fix, memory was written
+                // unconditionally above the guard, so it kept the OLDER "Acme" result — re-stamped
+                // with a fresh fetchedAtMillis, so isFresh would have served it as current for a
+                // full FRESH_TTL_MILLIS window even though a newer config had already published.
+                // updates.value alone cannot catch that: it only reads the stream, never memory.
+                assertEquals(
+                    "the memory cache must not disagree with the stream it feeds",
+                    "Acme Second",
+                    configStore.currentConfig(secondQuery)?.name,
+                )
+            } finally {
+                backgroundScope.cancel()
+            }
         }
 
     @Test
@@ -243,6 +390,55 @@ class ConfigStoreTest {
             val coldStart = newStore(this).resolve(query, forceRefresh = false)
 
             assertEquals("Acme", coldStart.name)
+        }
+
+    /**
+     * 3.2 regression: [DefaultFrakClient.handleReferralLink]'s merchant guard resolves
+     * `ownMerchantId` from [ConfigStore.currentConfig], not [ConfigStore.updates], precisely so a
+     * warm start reached BEFORE anything has called [resolve] in this process — the dominant
+     * deep-link case, where the process is launched BY the referral URL — still has a merchant id
+     * available. [updates] alone cannot supply it: [fetch] is C3's one publish point, and nothing
+     * has called it yet. [currentConfig] hydrates from disk itself now, on demand, rather than
+     * only reading whatever [ConfigStore.resolve] already happened to populate.
+     */
+    @Test
+    fun `currentConfig hydrates from disk on its own, without a prior resolve call`() =
+        runTest {
+            transport.respond(200, BODY)
+            newStore(this).resolve(query, forceRefresh = false)
+
+            // A second, independent store instance sharing only the persisted KeyValueStore —
+            // the same situation as a fresh process reading what a previous run wrote to disk,
+            // and nothing in this test ever calls warmStart.resolve().
+            val warmStart = newStore(this)
+
+            val emissions = mutableListOf<String?>()
+            val collector = launch { warmStart.updates.collect { emissions.add(it?.name) } }
+            advanceUntilIdle()
+
+            // Proven non-network: every request this store's transport could possibly make fails.
+            transport.fail(IOException("currentConfig must not reach the network"))
+            assertEquals("Acme", warmStart.currentConfig(query)?.name)
+
+            collector.cancel()
+            assertEquals(
+                "currentConfig's disk hydration must not publish to the stream — only fetch() does (C3)",
+                listOf<String?>(null),
+                emissions,
+            )
+        }
+
+    @Test
+    fun `currentConfig returns null for a key nothing was ever persisted under`() =
+        runTest {
+            transport.respond(200, BODY)
+            newStore(this).resolve(query, forceRefresh = false)
+
+            val warmStart = newStore(this)
+            val otherQuery = MerchantQuery.from(FrakConfig(packageId = "com.example.other"))
+            transport.fail(IOException("currentConfig must not reach the network"))
+
+            assertNull(warmStart.currentConfig(otherQuery))
         }
 
     @Test

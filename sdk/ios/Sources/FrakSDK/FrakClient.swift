@@ -27,11 +27,18 @@ public final class FrakClient: Sendable {
     public nonisolated var environment: FrakEnvironment { core.environment }
 
     /// Nil when tracking is disabled or the device refused key material.
-    public nonisolated var anonymousId: String? { core.anonymousId }
+    public var anonymousId: String? {
+        get async { await core.anonymousId }
+    }
 
     /// Destroys the keypair (next `anonymousId` read mints a new one) and purges the queue.
     /// For GDPR erasure; does not delete history already attributed to the old id.
-    public nonisolated func resetAnonymousId() { core.resetAnonymousId() }
+    ///
+    /// Returns false when erasure failed and the id did NOT rotate. On this platform the
+    /// underlying delete cannot fail, so this always returns true — the value exists to keep one
+    /// cross-platform contract for merchants writing shared erasure logic.
+    @discardableResult
+    public func resetAnonymousId() async -> Bool { await core.resetAnonymousId() }
 
     /// Config resolution and its live stream.
     public let config: ConfigAPI

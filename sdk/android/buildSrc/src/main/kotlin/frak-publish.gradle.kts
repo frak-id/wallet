@@ -1,5 +1,9 @@
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.process.ExecOperations
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 // Shared publishing setup for both artifacts, so their POM/licence/SCM cannot drift apart.
 
@@ -22,9 +26,6 @@ group = "id.frak"
 
 // Everything both artifacts must agree on. Kept here rather than in each module because the
 // two ship in lockstep: a value that differs between them is a bug, not a choice.
-//
-// The `kotlin { }` half (explicitApi, jvmTarget, api/languageVersion, jvmDefault) stays in the
-// modules: buildSrc carries AGP but not KGP, so the Kotlin extension is not on this classpath.
 android {
     compileSdk = 36
 
@@ -49,6 +50,30 @@ android {
             // Central requires a javadoc artifact to exist but never opens it; near-empty jar is fine.
             withJavadocJar()
         }
+    }
+}
+
+// Both artifacts publish public API (:frak-sdk-ui publishes `public sealed interface
+// SharingResult`, among others), so explicitApi/jvmTarget/language version/jvmDefault are
+// identical across both and belong here rather than duplicated per module. A module needing a
+// genuinely different value would configure `kotlin { }` again itself — the last configuration
+// wins — but none currently does.
+extensions.configure<KotlinAndroidProjectExtension> {
+    // Published library: explicit visibility/return type on every public symbol,
+    // so nothing silently widens the frozen API.
+    explicitApi()
+
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+
+        // Raised from 1.9: Kotlin 2.4 dropped the K1 compiler that guarantee needed.
+        // 2.2 not 2.0/2.1: those are already deprecated in 2.4.
+        apiVersion = KotlinVersion.KOTLIN_2_2
+        languageVersion = KotlinVersion.KOTLIN_2_2
+
+        // Real JVM default methods, not synthetic DefaultImpls: adding an interface method
+        // must not AbstractMethodError merchants on an older artifact version.
+        jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
     }
 }
 

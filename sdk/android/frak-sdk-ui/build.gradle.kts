@@ -1,7 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-
 plugins {
     id("com.android.library") // AGP 9.0 compiles Kotlin itself; no `kotlin.android` plugin needed.
     alias(libs.plugins.kotlin.compose)
@@ -29,19 +25,9 @@ android {
     }
 }
 
-kotlin {
-    explicitApi()
-
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-        apiVersion = KotlinVersion.KOTLIN_2_2
-        languageVersion = KotlinVersion.KOTLIN_2_2
-
-        // Same guarantee as :frak-sdk. This module publishes `public sealed interface
-        // SharingResult`, so it needs it at least as much.
-        jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
-    }
-}
+// explicitApi/jvmTarget/language version/jvmDefault (this module publishes `public sealed
+// interface SharingResult`, so it needs the same guarantee as :frak-sdk) are shared and
+// configured once by the frak-publish convention plugin applied above.
 
 // Pin unit-test JVM to 17: newer JDKs' bytecode breaks Robolectric's bundled ASM reader.
 tasks.withType<Test>().configureEach {

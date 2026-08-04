@@ -46,21 +46,31 @@ struct HTTPClient: Sendable {
     /// oversized or misbehaving response could force into UserDefaults (S5).
     static let maxResponseBodyBytes: Int64 = 1024 * 1024
 
-    /// Wall-clock ceiling for a whole request, both attempts included; the session's own
-    /// per-attempt timeouts alone would let a retry double the worst-case wait.
+    /// Wall-clock ceiling for a whole request, both attempts included. This is the SDK's single
+    /// authoritative timeout mechanism (5.7): `Deadline.run` races `performWithRetry`/`attempt`
+    /// against this one wall-clock bound and is what actually fires on a hang. The session's own
+    /// `timeoutIntervalForRequest`/`timeoutIntervalForResource` are set below to a value comfortably
+    /// above this deadline (see `defaultSession`), so they exist only as a defense-in-depth backstop
+    /// against `URLSession` wedging in a way `Deadline.run`'s cooperative cancellation can't reach —
+    /// they cannot fire first in any real request. Matches Android's effective per-request budget:
+    /// connect (3s) + read (5s) = 8s per attempt, two attempts plus up to 0.3s of jittered delay
+    /// (N6) is 16.3s, leaving 3.7s of slack under this same 20s wall clock — Android's per-attempt
+    /// timeouts are tighter than its own deadline and so are the mechanism that actually fires
+    /// there, where here `Deadline.run` is; the two platforms' authoritative mechanisms differ, but
+    /// the effective ceiling on total wait is the same 20s on both.
     static let overallDeadlineSeconds: TimeInterval = 20
 
-    /// Sized so two attempts plus `retryDelay` fit inside `overallDeadlineSeconds` with room to
-    /// spare (N4): `timeoutIntervalForResource` bounds one attempt (a single URLSessionTask), so
-    /// it must leave headroom for the retry `get` performs — the previous value (20s) equaled
-    /// the *outer* wall-clock budget for the whole two-attempt sequence, meaning one slow-but-
-    /// not-infinite attempt could exhaust the entire deadline by itself and starve the retry
-    /// before `Deadline.run` ever got a chance to intervene. 8s per attempt × 2 + up to 0.3s of
-    /// jittered delay (N6) is 16.3s, leaving 3.7s of slack under the 20s wall clock.
+    /// Set well above `overallDeadlineSeconds` (20s) so neither can ever be the mechanism that
+    /// actually ends a request — `Deadline.run` always wins first. Not `.infinity`/unset: a session
+    /// timeout still bounds the pathological case of `Deadline.run`'s own cancellation failing to
+    /// unblock a wedged `URLSessionTask` (cooperative cancellation is not always instant), so this
+    /// stays a real, finite backstop rather than a second competing budget (5.7).
+    private static let sessionBackstopSeconds: TimeInterval = 60
+
     static let defaultSession: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 8
-        configuration.timeoutIntervalForResource = 8
+        configuration.timeoutIntervalForRequest = sessionBackstopSeconds
+        configuration.timeoutIntervalForResource = sessionBackstopSeconds
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: configuration)
@@ -70,15 +80,22 @@ struct HTTPClient: Sendable {
     private let session: URLSession
     private let overallDeadlineSeconds: TimeInterval
     private let redirectDelegate = NoRedirectDelegate()
+    // D3: request logging is self-contained here rather than threaded through from
+    // DefaultFrakClient, since HTTPClient is constructed before that init has a fully-built
+    // FrakLogger to hand it (see the doc on `logger` above `attempt`). Defaults to nil — silent —
+    // until a caller passes one in.
+    private let logger: FrakLogger?
 
     init(
         baseURL: String,
         session: URLSession = HTTPClient.defaultSession,
-        overallDeadlineSeconds: TimeInterval = HTTPClient.overallDeadlineSeconds
+        overallDeadlineSeconds: TimeInterval = HTTPClient.overallDeadlineSeconds,
+        logger: FrakLogger? = nil
     ) {
         self.baseURL = baseURL
         self.session = session
         self.overallDeadlineSeconds = overallDeadlineSeconds
+        self.logger = logger
     }
 
     /// Issues a GET and returns the raw response, successful or not. `path` includes
@@ -187,25 +204,55 @@ struct HTTPClient: Sendable {
     }
 
     private func attempt(_ request: URLRequest) async throws -> Response {
+        let start = Date()
+        do {
+            let response = try await attemptUnlogged(request)
+            logResult(request, status: response.status, start: start)
+            return response
+        } catch {
+            logResult(request, status: nil, start: start)
+            throw error
+        }
+    }
+
+    /// D3: DEBUG-level only, symmetric with Android's `HttpClient`. Logs method, host, path and
+    /// status/duration — never the query string (S1/S2: a merchant id or the anonymous id can ride
+    /// in it, e.g. `campaigns?anonymousId=…`) and never a header value (an auth token lives there).
+    /// `os.Logger` interpolation stays `.private` even though a path alone is rarely sensitive,
+    /// since a future route could add a path parameter without anyone revisiting this call site.
+    private func logResult(_ request: URLRequest, status: Int?, start: Date) {
+        guard let logger else { return }
+        let durationMs = Int(Date().timeIntervalSince(start) * 1000)
+        let method = request.httpMethod ?? "GET"
+        let host = request.url?.host ?? "?"
+        let path = request.url?.path ?? "?"
+        let statusText = status.map(String.init) ?? "error"
+        logger.debug("Frak \(method) \(host)\(path) -> \(statusText) (\(durationMs)ms)")
+    }
+
+    private func attemptUnlogged(_ request: URLRequest) async throws -> Response {
+        // Not a true streaming read (S5, partial): `session.data(for:)` buffers the entire body
+        // before this function runs at all, so unlike Android's `readBytesUpTo` this does NOT
+        // bound peak memory during the read — a chunked response with no (or a lying)
+        // Content-Length can still be buffered in full by URLSession before the check below ever
+        // runs. A `URLSessionDataDelegate`-based accumulate-and-cancel would close this gap, but
+        // rewriting the transport around a delegate without a compiler to verify Sendable/actor
+        // isolation under `-swift-version 6` was judged too risky to land blind; reverted to this
+        // shape, which at least keeps the two invariants that ARE safe to guarantee here: an
+        // oversized body is never returned to a caller that would persist it, and the advertised
+        // Content-Length is checked before the read starts so an honest large response is
+        // rejected without waiting for the transfer to finish.
         let (data, response) = try await session.data(for: request, delegate: redirectDelegate)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw FrakError.network(underlying: URLError(.badServerResponse))
         }
-        // `expectedContentLength` is -1 when the header is absent, which is smaller than the cap
-        // and so correctly falls through to the count check below rather than being rejected here.
+        // `expectedContentLength` is -1 when the header is absent; not sufficient alone since a
+        // chunked or lying response has no (or a false) Content-Length, so the post-buffer check
+        // below is the backstop that actually rejects an oversized body regardless of the header.
         if httpResponse.expectedContentLength > Self.maxResponseBodyBytes {
             throw FrakError.network(underlying: ResponseTooLargeError(total: httpResponse.expectedContentLength))
         }
-        // `session.data(for:)` has already buffered the whole body by the time we see it, so this
-        // is a post-buffer check, not a true streaming abort: an oversized or misbehaving response
-        // with an absent or lying Content-Length still costs the full transient memory allocation
-        // before this check ever runs, unlike Android's HttpClient, which aborts the read
-        // incrementally and never buffers past the cap (net/HttpClient.kt's readBytesUpTo). What
-        // this check does guarantee is that the oversized body is never returned to a caller that
-        // would persist it verbatim into UserDefaults (S5) — never truncated silently. A real fix
-        // for the peak-memory gap needs `session.bytes(for:)` with an accumulating cap instead of
-        // `session.data(for:)`; not done here, tracked as an open asymmetry between platforms.
-        if data.count > Self.maxResponseBodyBytes {
+        if Int64(data.count) > Self.maxResponseBodyBytes {
             throw FrakError.network(underlying: ResponseTooLargeError(total: Int64(data.count)))
         }
         return Response(status: httpResponse.statusCode, body: data, retryAfterSeconds: retryAfterSeconds(httpResponse))

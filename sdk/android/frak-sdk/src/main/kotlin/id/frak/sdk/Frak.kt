@@ -87,6 +87,7 @@ public object Frak {
                             logger = logger,
                             merchantMarker = effective.merchantId ?: effective.packageId.orEmpty(),
                             trackingEnabled = effective.trackingEnabled,
+                            ioDispatcher = ioDispatcher,
                         ),
                     launcher = AndroidAppLauncher(context),
                     logger = logger,

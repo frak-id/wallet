@@ -61,7 +61,7 @@ internal class SharingSheetState(
     // actually calls, not all of them. Defaulted to `Frak.client`'s namespaces, resolved
     // lazily since Frak.initialize may not have run when this is constructed.
     private val buildSharingLink: suspend (SharingRequest) -> String? = { Frak.client.sharing.buildLink(it) },
-    private val anonymousId: () -> String? = { Frak.client.anonymousId },
+    private val anonymousId: suspend () -> String? = { Frak.client.anonymousId() },
     private val environment: () -> FrakEnvironment = { Frak.client.environment },
     private val resolveConfig: suspend () -> FrakResolvedConfig = { Frak.client.config.resolve() },
     private val bestReward: suspend (String?, List<ProductDetails>?) -> BestReward? =

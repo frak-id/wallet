@@ -257,7 +257,7 @@ struct FrakClientTests {
             return
         }
         #expect(v2.merchantId == Self.merchantId)
-        #expect(v2.clientId == client.anonymousId)
+        #expect(v2.clientId == (await client.anonymousId))
     }
 
     @Test("buildSharingLink yields nil with no base url to build from")
@@ -287,7 +287,7 @@ struct FrakClientTests {
         let withoutContext = await client.handleReferralLink("https://acme.example/p")
         #expect(!withoutContext)
 
-        let ownId = try #require(client.anonymousId)
+        let ownId = try #require(await client.anonymousId)
         let own = try #require(
             SharingLinkBuilder.build(
                 baseURL: "https://acme.example/p",
@@ -309,7 +309,7 @@ struct FrakClientTests {
             let isResolve = request.url?.path == "/user/merchant/resolve"
             return StubResponse(status: 200, body: isResolve ? Self.resolveBody : "{}")
         }
-        _ = try? await client.resolveConfig()  // populates latestConfig, mirroring the Android fixture's settled state
+        _ = try? await client.resolveConfig()  // populates the config store's cache, mirroring the Android fixture's settled state
         let before = requests.count
 
         let foreignMerchantId = "550e8400-e29b-41d4-a716-446655440002"
@@ -436,7 +436,7 @@ struct FrakClientTests {
         let page = try #require(
             await client.installPageURL(returnScheme: "frak-com.acme.app", sessionId: "session-1")
         )
-        let anonymousId = try #require(client.anonymousId)
+        let anonymousId = try #require(await client.anonymousId)
 
         let expected =
             "https://wallet.frak.id/install?m=\(Self.merchantId)&a=\(anonymousId)"

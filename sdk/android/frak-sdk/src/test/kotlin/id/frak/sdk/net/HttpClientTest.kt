@@ -2,6 +2,9 @@ package id.frak.sdk.net
 
 import id.frak.sdk.FrakSdkVersion
 import id.frak.sdk.core.FrakError
+import id.frak.sdk.core.FrakLogLevel
+import id.frak.sdk.core.FrakLogSink
+import id.frak.sdk.core.FrakLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -172,7 +175,7 @@ class HttpClientTest {
             // A real dispatcher, not the test one: this asserts that a *blocked
             // thread* is released, and a virtual-time dispatcher cannot express
             // being blocked.
-            val client = HttpClient(FAKE_BASE_URL, Dispatchers.IO) { stub }
+            val client = HttpClient(FAKE_BASE_URL, Dispatchers.IO, open = { stub })
             val job = launch(Dispatchers.Default) { runCatching { client.get("/x") } }
             gate.await()
             job.cancelAndJoin()
@@ -347,8 +350,70 @@ class HttpClientTest {
             )
         }
 
-    private fun kotlinx.coroutines.test.TestScope.newClient(open: (URL) -> HttpURLConnection = transport::open) =
-        HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), open)
+    @Test
+    fun `a request is logged at debug level without the query string or header values (D3)`() =
+        runTest {
+            transport.respond(200, "{}")
+            val sink = RecordingLogSink()
+            val logger = FrakLogger(FrakLogLevel.DEBUG, sink)
+
+            newClient(logger = logger).get(
+                "/user/merchant/resolve",
+                query = mapOf("merchantId" to "super-secret-merchant-id"),
+                headers = mapOf("Authorization" to "Bearer super-secret-token"),
+            )
+
+            assertEquals("exactly one debug line", 1, sink.messages.size)
+            val line = sink.messages.single()
+            assertTrue("names the path: $line", line.contains("/user/merchant/resolve"))
+            assertTrue("names the status: $line", line.contains("200"))
+            assertTrue("never the query string: $line", !line.contains("super-secret-merchant-id"))
+            assertTrue("never a header value: $line", !line.contains("super-secret-token"))
+        }
+
+    @Test
+    fun `nothing is logged when no logger is configured (D3)`() =
+        runTest {
+            transport.respond(200, "{}")
+
+            // newClient()'s default logger is null; get() must not throw or otherwise behave
+            // differently just because nobody is listening.
+            assertEquals(200, newClient().get("/x").status)
+        }
+
+    @Test
+    fun `a failed attempt is logged too, without a status (D3)`() =
+        runTest {
+            transport.fail(java.io.EOFException("boom"))
+            val sink = RecordingLogSink()
+            val logger = FrakLogger(FrakLogLevel.DEBUG, sink)
+
+            // EOFException is transient (N6): both the original attempt and its retry fail and are
+            // each logged once, so two lines are expected here, not one.
+            runCatching { newClient(logger = logger).get("/x") }
+
+            assertEquals("both the original attempt and its retry are logged", 2, sink.messages.size)
+            sink.messages.forEach { line ->
+                assertTrue("no status on a failed attempt: $line", line.contains("error"))
+            }
+        }
+
+    private class RecordingLogSink : FrakLogSink {
+        val messages = mutableListOf<String>()
+
+        override fun log(
+            level: FrakLogLevel,
+            message: String,
+            throwable: Throwable?,
+        ) {
+            messages += message
+        }
+    }
+
+    private fun kotlinx.coroutines.test.TestScope.newClient(
+        open: (URL) -> HttpURLConnection = transport::open,
+        logger: FrakLogger? = null,
+    ) = HttpClient(FAKE_BASE_URL, UnconfinedTestDispatcher(testScheduler), open, logger)
 
     private companion object {
         /** Long enough that the assertion cannot pass by the read simply finishing. */

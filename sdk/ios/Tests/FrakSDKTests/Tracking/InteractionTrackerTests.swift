@@ -50,6 +50,7 @@ struct InteractionTrackerTests {
         let backend = Backend()
         let clock = Clock()
         let queue: EventQueue
+        let fileURL: URL
         let tracker: InteractionTracker
         private let keys = Counter()
         private let currentId: Box<String?>
@@ -63,6 +64,7 @@ struct InteractionTrackerTests {
                 FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString, isDirectory: true)
                 .appendingPathComponent(EventQueue.fileName)
+            self.fileURL = fileURL
             let logger = FrakLogger(level: .none)
             self.queue = EventQueue(fileURL: fileURL, logger: logger)
             self.currentId = Box(clientId)
@@ -325,5 +327,55 @@ struct InteractionTrackerTests {
 
         let request = try #require(fixture.backend.requests.last)
         #expect(request.value(forHTTPHeaderField: "x-frak-client-id") == nil)
+    }
+
+    @Test("flush survives a failed migration rewrite instead of wiping the queue (2-7,critical)")
+    func flushSurvivesAFailedMigrationRewrite() async throws {
+        let fixture = Fixture()
+
+        // A pre-2.7 file: every current field except "r", which never existed. Written directly,
+        // bypassing append/track, exactly like an install upgrading in place.
+        try FileManager.default.createDirectory(
+            at: fixture.fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        var lines = ""
+        for (key, capturedAt) in [("old-a", 1_709_654_399.0), ("old-b", 1_709_654_400.0)] {
+            let object: [String: Any] = [
+                "k": key,
+                "p": "/user/track/interaction",
+                "b": ["type": "sharing", "merchantId": Self.merchantId] as [String: Any],
+                "c": Self.clientId,
+                "t": Int64((capturedAt * 1000).rounded()),
+                "f": 0,
+            ]
+            let data = try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+            lines += String(decoding: data, as: UTF8.self) + "\n"
+        }
+        try Data(lines.utf8).write(to: fixture.fileURL, options: .atomic)
+
+        // Forces EventQueue.replace's write to fail during the migration read inside flush: a
+        // read-only parent directory blocks the atomic write/rename, while fixture.fileURL
+        // itself stays readable — the same distinction EventQueueTests draws between "present but
+        // unreadable" (a different branch entirely) and "read fine, write fails" (this one).
+        // Mode bits are ignored for the superuser, so a root runner would write successfully and
+        // this test would report a false failure rather than the behaviour it pins.
+        try #require(getuid() != 0, "needs a non-root runner: 0o500 does not block root's write")
+        let parent = fixture.fileURL.deletingLastPathComponent()
+        try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: parent.path)
+        // defer, not a trailing restore: an #expect that throws below must not leave the temp
+        // directory unwritable for the rest of the suite.
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path) }
+
+        fixture.backend.respond(StubResponse(status: 200, body: #"{"success":true}"#))
+        await fixture.tracker.flush()
+
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path)
+        // This is the exact regression the fix closes: EventQueue.read signalling its failed
+        // migration rewrite by returning an empty array, InteractionTracker.drain reading that as
+        // "nothing queued" and compacting the file down to nothing, which would delete a file
+        // that in truth still holds two events. Both must survive.
+        let survivors = await fixture.pending()
+        #expect(survivors.map(\.idempotencyKey) == ["old-a", "old-b"])
     }
 }

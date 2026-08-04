@@ -51,7 +51,7 @@
         // actually calls, not all of them. Defaulted to `Frak.client`'s namespaces, resolved
         // lazily since Frak.initialize may not have run when this is constructed.
         private let buildSharingLink: @Sendable (SharingRequest) async -> String?
-        private let anonymousId: @Sendable () -> String?
+        private let anonymousId: @Sendable () async -> String?
         private let environment: @Sendable () -> FrakEnvironment
         private let resolveConfig: @Sendable () async throws -> FrakResolvedConfig
         private let bestReward: @Sendable (String?, [ProductDetails]) async -> BestReward?
@@ -74,7 +74,7 @@
             buildSharingLink: @escaping @Sendable (SharingRequest) async -> String? = {
                 await (try? Frak.client)?.sharing.buildLink($0)
             },
-            anonymousId: @escaping @Sendable () -> String? = { try? Frak.client.anonymousId },
+            anonymousId: @escaping @Sendable () async -> String? = { await (try? Frak.client)?.anonymousId },
             // Only read from `build(_:)`, reached after `prepare` has confirmed `Frak.isInitialized`.
             environment: @escaping @Sendable () -> FrakEnvironment = { (try? Frak.client)?.environment ?? .production },
             resolveConfig: @escaping @Sendable () async throws -> FrakResolvedConfig = {
@@ -343,7 +343,7 @@
         }
 
         private func build(_ request: SharingRequest) async throws -> SharingSession {
-            guard let link = await buildSharingLink(request), let clientId = anonymousId() else {
+            guard let link = await buildSharingLink(request), let clientId = await anonymousId() else {
                 // The one failure the fallback cannot help with: there is no link to share.
                 throw FrakError.merchantResolutionFailed(
                     reason: "no anonymous id or merchant to build a sharing link from"
