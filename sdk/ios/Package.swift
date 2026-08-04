@@ -18,8 +18,6 @@ import PackageDescription
 // instead. See the README for details.
 let package = Package(
     name: "FrakSDK",
-    // Required for the localized `.lproj` resources FrakSDKUI ships.
-    defaultLocalization: "en",
     platforms: [
         .iOS(.v15),
         .macOS(.v12),
@@ -52,8 +50,10 @@ let package = Package(
                 // `.copy`, never `.process`: the manifest must land at the resource-bundle
                 // root unmodified for Apple's aggregation to see it. FrakSDKUI ships its
                 // own because it is a separately consumable `.library` product.
-                .copy("PrivacyInfo.xcprivacy"),
-                .process("Resources"),
+                // No `.lproj` bundle any more: the sheet's last four strings (its title, and
+                // its Copy/Share buttons) went when the hosted page took those over, and the
+                // page already owns ~45 keys and every locale behind them.
+                .copy("PrivacyInfo.xcprivacy")
             ]
         ),
         .testTarget(

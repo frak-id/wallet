@@ -18,14 +18,18 @@ export const tabletContainerMedia: StyleRule["@media"] = {
 };
 
 /**
- * Container variant for a host that paints its own surface.
+ * Container variant for a host that presents this page inside its own sheet.
  *
- * Drops the opaque background so the host's surface shows through, and cancels
- * the `tabletContainerMedia` card treatment above — inside a host sheet that
- * would render a card within a card.
+ * Cancels the `tabletContainerMedia` card treatment above — inside a host
+ * sheet that would render a card within a card.
+ *
+ * The opaque background from `container` deliberately stays. The host sheet
+ * makes its own surface transparent and lets this one show through, so the
+ * page's background is the only one on screen; the two used to disagree (an
+ * M3 `surfaceContainerLow` sheet behind a white page) and the seam was
+ * visible wherever the page did not reach.
  */
 export const containerChromeless = style({
-    backgroundColor: "transparent",
     "@media": {
         [`screen and (min-width: ${tablet}px)`]: {
             maxWidth: "none",

@@ -31,6 +31,16 @@ internal sealed interface SharingPageAction {
 
     data object ShareAgain : SharingPageAction
 
+    /**
+     * The page's own Share button. An ask, not a report: `navigator.share` does not exist in
+     * an Android WebView, and the interaction a share earns has to be signed by the SDK
+     * keypair the page has no access to. The page draws the button, this sheet performs it.
+     */
+    data object Share : SharingPageAction
+
+    /** The page's own Copy button. Same division as [Share] — see its doc. */
+    data object Copy : SharingPageAction
+
     data object Error : SharingPageAction
 
     data class Code(
@@ -55,6 +65,10 @@ internal sealed interface SharingPageAction {
                 "dismiss" -> Dismiss
 
                 "shareAgain" -> ShareAgain
+
+                "share" -> Share
+
+                "copy" -> Copy
 
                 "error" -> Error
 

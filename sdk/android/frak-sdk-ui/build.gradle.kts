@@ -7,10 +7,12 @@ plugins {
 android {
     namespace = "id.frak.sdk.ui"
 
-    // Every resource here is already named frak_* by convention (see values/strings.xml's own
-    // comment on why: unprefixed merges into the host app's namespace and can collide). This
-    // makes that convention a lint failure (ResourceName) instead of a reviewer's memory, for
-    // whichever resource is added next.
+    // A library's resources merge into the host app's namespace, where an unprefixed `share`
+    // would collide with the merchant's own. This module currently ships none — its last four
+    // strings went when the page took over the sheet's title and buttons — so this is here for
+    // whichever resource is added next, as a lint failure (ResourceName) rather than a
+    // reviewer's memory. Prefixing also gives a merchant a supported way to override one:
+    // declare the same name in their app and the merger takes theirs.
     resourcePrefix = "frak_"
 
     buildFeatures {
@@ -44,9 +46,10 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
 
-    // Chrome Custom Tabs deliberately absent: can't embed in a bottom sheet, no
-    // native footer, no reliable load-failure detection, no origin-pinned
-    // interception. Transport is an embedded WebView instead.
+    // Chrome Custom Tabs deliberately absent: can't embed in a bottom sheet, no reliable
+    // load-failure detection, no origin-pinned interception — and that last one is also what
+    // catches the page's own Share/Copy, so the OS chooser would be out of reach too.
+    // Transport is an embedded WebView instead.
 
     testImplementation(libs.junit)
     testImplementation(libs.json) // test-only: local android.jar stubs org.json to throw

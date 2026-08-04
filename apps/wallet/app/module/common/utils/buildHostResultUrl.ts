@@ -1,16 +1,21 @@
 /**
  * Outcomes a native host is told about.
  *
- * `shared` and `copied` are absent on purpose: the host owns those controls
- * and already knows. `error` reports a rejected launch, so the host can close
- * its sheet instead of leaving it on a page it cannot interpret. `code` hands
- * over the install code so the SDK can write a pasteboard entry with an expiry
- * and `localOnly` — options this page cannot set itself.
+ * `share` and `copy` are asks, not reports: the page owns the buttons but not
+ * the capabilities behind them. `navigator.share` does not exist in an Android
+ * WebView at all, and the reward-bearing sharing interaction has to be signed
+ * by the SDK's keypair, which this page has no access to. `error` reports a
+ * rejected launch, so the host can close its sheet instead of leaving it on a
+ * page it cannot interpret. `code` hands over the install code so the SDK can
+ * write a pasteboard entry with an expiry and `localOnly` — options this page
+ * cannot set itself.
  */
 export type HostResultAction =
     | "install"
     | "dismiss"
     | "shareAgain"
+    | "share"
+    | "copy"
     | "error"
     | "code";
 
@@ -62,7 +67,21 @@ export function buildHostResultUrl({
 const sentActions = new Set<string>();
 
 /**
- * Hand an outcome to the host, at most once per page.
+ * Actions the dedupe above does not apply to.
+ *
+ * Both are direct results of a button press, so the re-entrancy the dedupe
+ * exists for (a route guard re-running itself) cannot reach them — while
+ * suppressing a repeat is actively wrong here: copying and then sharing, or
+ * retrying a share whose chooser the user backed out of, are ordinary things
+ * to do inside one page load and each one has to reach the host.
+ */
+const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
+    "share",
+    "copy",
+]);
+
+/**
+ * Hand an outcome to the host, at most once per page bar [REPEATABLE_ACTIONS].
  *
  * Route guards are not navigations: the router re-runs `beforeLoad` whenever
  * it resolves the location again, and it does so on load because
@@ -87,9 +106,11 @@ export function sendHostResult({
     expiresAt?: number;
 }): boolean {
     if (!scheme) return false;
-    const key = value === undefined ? action : `${action}:${value}`;
-    if (sentActions.has(key)) return true;
-    sentActions.add(key);
+    if (!REPEATABLE_ACTIONS.has(action)) {
+        const key = value === undefined ? action : `${action}:${value}`;
+        if (sentActions.has(key)) return true;
+        sentActions.add(key);
+    }
     window.location.assign(
         buildHostResultUrl({ scheme, action, sid, value, expiresAt })
     );

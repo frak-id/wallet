@@ -31,6 +31,12 @@ describe("buildHostResultUrl", () => {
         expect(buildHostResultUrl({ scheme: "frak-a", action: "error" })).toBe(
             "frak-a://result?action=error"
         );
+        expect(buildHostResultUrl({ scheme: "frak-a", action: "share" })).toBe(
+            "frak-a://result?action=share"
+        );
+        expect(buildHostResultUrl({ scheme: "frak-a", action: "copy" })).toBe(
+            "frak-a://result?action=copy"
+        );
     });
 
     it("escapes a sid so it cannot inject extra params", () => {
@@ -120,6 +126,22 @@ describe("sendHostResult", () => {
         expect(assign).toHaveBeenCalledTimes(1);
         expect(assign).toHaveBeenCalledWith(
             "frak-acme://result?action=error&sid=s1"
+        );
+    });
+
+    it("lets share and copy through every time they are pressed", () => {
+        // Both are button presses, not guard re-runs: copying and then sharing,
+        // or retrying a share whose chooser the user backed out of, all have to
+        // reach the host. The page reloads between a share and its
+        // confirmation, but nothing guarantees that ordering here.
+        sendHostResult({ scheme: "frak-acme", action: "share", sid: "s1" });
+        sendHostResult({ scheme: "frak-acme", action: "share", sid: "s1" });
+        sendHostResult({ scheme: "frak-acme", action: "copy", sid: "s1" });
+        sendHostResult({ scheme: "frak-acme", action: "copy", sid: "s1" });
+
+        expect(assign).toHaveBeenCalledTimes(4);
+        expect(assign).toHaveBeenLastCalledWith(
+            "frak-acme://result?action=copy&sid=s1"
         );
     });
 

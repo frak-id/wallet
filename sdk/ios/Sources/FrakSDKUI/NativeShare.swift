@@ -55,8 +55,9 @@
             }
         }
 
-        /// iOS shows its own banner when an app *reads* the pasteboard, never when it writes,
-        /// so the sheet still owes the user its own confirmation.
+        /// iOS shows its own banner when an app *reads* the pasteboard, never when it writes, so
+        /// the user needs telling some other way — which the page does, alongside the button that
+        /// asked for this. The sheet has no confirmation of its own any more.
         static func copy(_ link: String) {
             UIPasteboard.general.string = link
         }

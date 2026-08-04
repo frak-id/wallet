@@ -22,7 +22,7 @@ before.
 | `link` | required | the URL being shared |
 | `appName`, `logoUrl` | recommended | |
 | `attribution` | optional | JSON object **or** discrete `utm_*`/`ref`/`via` params — trap 2 |
-| `native=1` | required | chromeless: the page hides its own header and footer CTAs, because the native sheet provides them |
+| `native=1` | required | chromeless: the page hides its own header, because the native sheet owns dismissal. Its footer CTAs stay and reach the host as `share`/`copy` |
 | `returnScheme`, `sid` | required | the result channel, §1.2 |
 | `confirmed=1` | on reload | shows `PostShareConfirmation` — §1.3 |
 | `r=` | optional | seeded reward, display-only, validated by `sanitizeSeededReward`. Removes a round-trip from the critical path |
@@ -32,6 +32,27 @@ before.
 
 Unknown params are dropped rather than rejected (pinned by test), so an older page tolerates
 a newer SDK.
+
+**That tolerance does not extend to who draws the footer, and this is a before-first-publish
+decision.** `native=1` used to mean "the page hides its footer, the sheet draws its own";
+it now means "the page draws the footer, the sheet performs it". Nothing on the wire
+distinguishes the two, so once a binary ships:
+
+- **new page + old SDK** — both footers render, and worse, the page's Copy *lies*:
+  `sendHostResult` returns `true` whenever a `returnScheme` is present, because the channel
+  has no acknowledgement. An old `fromWire` answers `null` for `copy` (forward-compatible by
+  design), so nothing copies, while the page skips its own clipboard write and still toasts
+  success.
+- **old page + new SDK** — the page hides its footer and the sheet no longer draws one, so
+  the sheet has no way to share or copy at all. A dead funnel, not a cosmetic fault.
+
+Neither is live today: there is no publish path on either platform (verified — no CI job
+references either SDK, and `05-build-and-release.md` §3 defers publishing), so the page and
+the binaries still ship together. Before the first publish this needs either a capability
+param the SDK sets (so the page renders its footer only when the host will honour it, rather
+than inferring it from `returnScheme` alone) or an ack on the return channel. `sdkv` is
+already carried and would be enough to gate on, but per §5 it deliberately drives nothing
+today.
 
 **Trap 1 — `clientId` is mandatory under `native=1`.** Absent, the page would fall back to
 the wallet's *own* `clientIdStore`, which inside a merchant web view may hold an unrelated
@@ -63,6 +84,8 @@ cancels. `returnScheme` is validated against `^frak-[a-z0-9._-]{1,60}$` (`saniti
 | `install` | the user tapped the install CTA — the SDK owns everything after this |
 | `dismiss` | close |
 | `shareAgain` | reload without `confirmed=1` |
+| `share` | the user tapped the page's Share button — the SDK raises the OS chooser, then reloads with `confirmed=1` |
+| `copy` | the user tapped the page's Copy button — the SDK writes the clipboard and records the interaction, and **does not reload**: the page's own toast is the only feedback a copy gets |
 | `code` | carries the install code: `&value=<code>&exp=<epochSeconds>` |
 | `error` | **not in the original spec** — see below |
 

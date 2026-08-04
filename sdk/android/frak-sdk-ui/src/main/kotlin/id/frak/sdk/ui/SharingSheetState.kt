@@ -55,7 +55,6 @@ internal class SharingSheetState(
     private val context: Context,
     private val sessionId: String,
     private val onFinished: (SharingResult) -> Unit,
-    private val onCopyConfirmed: () -> Unit,
     // Individually injected, not `() -> FrakClient`: FrakClient carries no substitutable
     // abstraction (02-sdk-design.md), so the seam is the handful of members this sheet
     // actually calls, not all of them. Defaulted to `Frak.client`'s namespaces, resolved
@@ -79,27 +78,29 @@ internal class SharingSheetState(
     var failure: FrakError? by mutableStateOf(null)
         private set
 
-    /**
-     * The sheet has left the sharing page for the wallet's install page. The footer's
-     * Copy/Share act on the *product* link and reload `/sharing`, which would throw away the
-     * install page and the proof minted for it, so they are hidden past this point.
-     */
-    var showingInstallPage: Boolean by mutableStateOf(false)
-        private set
-
-    /**
-     * The page is on its post-share confirmation screen, either because this sheet reloaded it
-     * with `&confirmed=1` or because the page restored a saved confirmation of its own. The
-     * footer is hidden there: the share already happened, and the confirmation screen carries
-     * its own "share again" and install controls.
-     */
-    var showingConfirmation: Boolean by mutableStateOf(false)
-        private set
-
     private var best: SharingResult? = null
     private var webView: WebView? = null
     private var finished = false
     private var pageLoaded = false
+
+    /**
+     * A share is between its page-side press and its outcome. See [share] for why the page's
+     * own button cannot be trusted to have gone away in the meantime.
+     */
+    private var shareInFlight = false
+
+    /** The [copy] half of [shareInFlight]: two taps would bill two interactions for one copy. */
+    private var copyInFlight = false
+
+    /**
+     * The sheet has left the sharing page for the wallet's install page.
+     *
+     * A plain field, not `mutableStateOf`: nothing renders off it any more — it used to hide a
+     * native footer, and that footer is the page's now. It survives only because
+     * [onPageUnavailable] has to tell a failed install page apart from a failed sharing page,
+     * which reach it identically and need opposite answers.
+     */
+    private var showingInstallPage = false
 
     /**
      * Tier-3 commits once. [finished] can't stand in: it's set only after the chooser has
@@ -197,9 +198,21 @@ internal class SharingSheetState(
     /** Raises the chooser, then attributes the share. See the body for why that order. */
     fun share() {
         val active = session ?: return
+        // The page's footer is what drives this now, and it stays enabled for the whole round
+        // trip: the web `isSharing` flag that would normally disable it belongs to
+        // `useShareLink`, which a handed-off press never reaches. The gap is not the few
+        // milliseconds before the chooser covers the app — it is `track()` below, a queue write
+        // the chooser's dismissal returns into, with the page live and tappable underneath.
+        // Two taps across it would stack two choosers and bill two reward-bearing interactions
+        // for one share, which is the same failure `fallbackFired` exists to stop for tier 3.
+        if (shareInFlight) return
+        shareInFlight = true
         scope.launch {
             // Nothing took the intent.
             if (!NativeShare.share(context, active.link, active.shareTitle)) {
+                // Deliberately cleared, unlike the success path: no chooser came up, so the
+                // page is still on its sharing screen and the user must be able to try again.
+                shareInFlight = false
                 return@launch
             }
             // After the chooser, never before it. This is the reward-bearing interaction, not
@@ -212,19 +225,32 @@ internal class SharingSheetState(
             // becomes exact for free if `ActivityResultLauncher` ever lands.
             track()
             confirm(SharingResult.Shared(active.link))
+            // Not cleared here: `confirm` reloads onto the confirmation screen, which has no
+            // Share button. `ShareAgain` is what reopens the flow, and clears it.
         }
     }
 
-    /** Copies the link, then tells the page it happened. */
+    /**
+     * Copies the link and attributes it. The page owns the feedback.
+     *
+     * Records the outcome rather than [confirm]ing it, which is the one asymmetry with [share].
+     * The page moves itself to its confirmation screen the moment its own button is pressed and
+     * raises its own "link copied" toast; a `confirmed=1` reload on top of that would tear down
+     * the document mid-toast and repaint the same screen, so the user's only feedback that the
+     * copy happened would be destroyed by the navigation confirming it. `share` still reloads,
+     * because only this sheet learns whether a chooser actually came up.
+     */
     fun copy() {
         val active = session ?: return
+        if (copyInFlight) return
+        copyInFlight = true
         scope.launch {
             // Before, unlike `share()`, and deliberately: a copy has no chooser and no
             // completion to wait on, so there is no cancellation to avoid counting. Matches the
             // web, where `handleCopy` calls `trackSharing()` outright.
             track()
-            if (NativeShare.copy(context, active.link)) onCopyConfirmed()
-            confirm(SharingResult.Copied(active.link))
+            NativeShare.copy(context, active.link)
+            record(SharingResult.Copied(active.link))
         }
     }
 
@@ -256,12 +282,25 @@ internal class SharingSheetState(
 
             SharingPageAction.ShareAgain -> {
                 session?.url(confirmed = false)?.let {
+                    // The user is asking to share a second time, so the guards that closed the
+                    // first one have to open again — [share] deliberately leaves its own set.
+                    shareInFlight = false
+                    copyInFlight = false
+                    // Back on the sharing page, so a later load failure is that page's again.
                     showingInstallPage = false
-                    // The page left its confirmation screen, so the footer belongs back: this
-                    // reload is the user asking to share a second time.
-                    showingConfirmation = false
                     webView?.loadUrl(it)
                 }
+            }
+
+            // The page draws both buttons and this sheet performs them: `navigator.share` does
+            // not exist in an Android WebView, and either way the interaction a share earns has
+            // to be signed by the SDK keypair the page cannot reach.
+            SharingPageAction.Share -> {
+                share()
+            }
+
+            SharingPageAction.Copy -> {
+                copy()
             }
 
             is SharingPageAction.Code -> {
@@ -282,12 +321,15 @@ internal class SharingSheetState(
 
     /** A broken or unreachable page must never be shown; same fallback [onLoadDeadline] uses. */
     fun onPageUnavailable() {
-        // The install page failed rather than the sharing page. Tier 3 is not the answer — the
-        // user already shared — but the footer was hidden for it, so hiding it further would
-        // leave an error page with no controls at all. Put it back; Copy/Share reload the
-        // sharing page, which is the only recovery there is from here.
+        // A failed *install* page lands here first. Tier 3 is not the answer — the user has
+        // already shared — but neither is doing nothing: the sheet would sit on the WebView's
+        // own error page, and since the controls that used to rescue it were native and are now
+        // the *sharing* page's, there is nothing left on screen to press. Reloading the
+        // confirmation screen is the page-owned equivalent of what the old native footer did
+        // here, and it lands the user somewhere with its own share-again and install controls.
         if (showingInstallPage) {
             showingInstallPage = false
+            session?.url(confirmed = true)?.let { webView?.loadUrl(it) }
             return
         }
         // A renderer crash after the page painted arrives here too. Falling back then would raise
@@ -366,13 +408,18 @@ internal class SharingSheetState(
         track(Interaction.Sharing())
     }
 
-    /** `&confirmed=1` is load-bearing: under `native=1` the page hides its own share controls without this reload. */
+    /**
+     * Moves the page to its post-share confirmation screen.
+     *
+     * A reload with `&confirmed=1` rather than letting the page confirm itself off its own
+     * button press: the page asks for the share, but only this sheet learns whether a chooser
+     * actually came up, and `saveConfirmation` has to survive the user leaving and coming back.
+     * It costs a page load at the moment the chooser dismisses, which is the obvious thing to
+     * optimise away next — the page would have to own the optimism to do it.
+     */
     private fun confirm(result: SharingResult) {
         record(result)
         val confirmedUrl = session?.url(confirmed = true) ?: return // null under tier 3 (no page)
-        // Set alongside the navigation rather than on page load: the footer has to go at the
-        // moment the share lands, not a network round trip later.
-        showingConfirmation = true
         webView?.loadUrl(confirmedUrl)
     }
 

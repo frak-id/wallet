@@ -17,13 +17,12 @@
         /// dismissal. Hoist this onto a screen-level view rather than a list row — with
         /// `FrakConfig.preloadSharing` on, one per row means one warm web view per row.
         ///
-        /// `heightFraction` is the fraction of *screen* height given to the sheet as a whole —
-        /// title, hosted page and Copy/Share footer together — defaulting to
-        /// `FrakSharingDefaults.heightFraction`. The hosted page takes whatever is left after the
-        /// title and footer, so chrome growth (Dynamic Type, a longer localized title) eats into
-        /// the page rather than pushing the sheet past the screen. It is clamped to `0.3...1.0`
-        /// before use, so an out-of-range value from the caller cannot collapse the page to
-        /// nothing or push the sheet past the screen.
+        /// `heightFraction` is the fraction of *screen* height given to the sheet, defaulting
+        /// to `FrakSharingDefaults.heightFraction`. All of it goes to the hosted page — the
+        /// title and the Copy/Share footer that used to share it are the page's own now, so
+        /// nothing native is left to grow under Dynamic Type and squeeze the page. It is
+        /// clamped to `0.3...1.0` before use, so an out-of-range value from the caller cannot
+        /// collapse the page to nothing or push the sheet past the screen.
         public func frakSharingSheet(
             isPresented: Binding<Bool>,
             request: SharingRequest,
@@ -92,60 +91,29 @@
             // this package's iOS 15 floor, so the space this reader is offered is the same
             // "screen height" `heightFraction` promises, and stays that on iOS 16+ too since
             // no detent is applied here. `.presentationDetents` was evaluated for a tighter
-            // sheet, but sizing it correctly needs the *chrome's* height (title + footer),
-            // which is not knowable without either a hard-coded estimate — wrong under Dynamic
-            // Type or localization — or a second measurement pass; the page box below is the
-            // part this fix owns, and it is what was clipping content.
+            // sheet, but sizing it correctly needs the page's own idea of its height, which is
+            // not knowable from here without a second measurement pass.
             GeometryReader { proxy in
                 let sheetHeight = proxy.size.height * clampedSharingHeightFraction(heightFraction)
-                VStack(spacing: 0) {
-                    Text("frak.sharing.title", bundle: .module)
-                        .font(.headline)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-
-                    ZStack {
-                        if let webView = model.webView {
-                            SharingWebViewContainer(webView: webView)
-                        } else {
-                            ProgressView()
-                        }
-                    }
-                    .frame(maxHeight: .infinity)
-
-                    if model.copyConfirmed {
-                        Text("frak.sharing.copied", bundle: .module)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .padding(.top, 8)
-                    }
-
-                    // Hidden on the install page: both act on the product link and reload
-                    // `/sharing`, which would discard the install page and the proof minted for it.
-                    // Hidden on the confirmation screen for a different reason: the user has
-                    // already shared, the page now offers its own "share again"/install controls,
-                    // and a live Copy/Share under them reads as though the share had not registered.
-                    if !model.showingInstallPage && !model.showingConfirmation {
-                        HStack(spacing: 12) {
-                            Button {
-                                Task { await model.copy() }
-                            } label: {
-                                Text("frak.sharing.copy", bundle: .module).frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-
-                            Button {
-                                Task { await model.share() }
-                            } label: {
-                                Text("frak.sharing.share", bundle: .module).frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        .disabled(model.webView == nil)
-                        .padding(16)
+                ZStack {
+                    if let webView = model.webView {
+                        SharingWebViewContainer(webView: webView)
+                    } else {
+                        // The one moment the sheet has no page to show. It paints the system
+                        // sheet colour for it, because the sheet's own background is cleared
+                        // below and a spinner floating on whatever is behind the sheet would
+                        // read as a rendering bug rather than as loading.
+                        Color(.systemBackground).overlay(ProgressView())
                     }
                 }
                 .frame(height: sheetHeight)
+                // The page paints the only surface in this sheet — the title bar and the
+                // Copy/Share footer that used to sit around it are the page's own now, and the
+                // system sheet background behind them showed as a seam wherever the page did
+                // not reach. iOS 16.4 is where this became expressible; below it the WebView
+                // filling the sheet is what hides the difference, which is most of the way
+                // there and the reason this is not worth a `UIViewControllerRepresentable`.
+                .modifier(ClearSheetBackground())
             }
             .onAppear {
                 // Bound here rather than at construction so they are the current closures,
@@ -155,6 +123,23 @@
                 Task { await model.start(request) }
             }
             .onDisappear { model.release() }
+        }
+    }
+
+    /// Clears the sheet's own background where the OS allows it.
+    ///
+    /// A modifier rather than an inline `if #available`: the two branches return different
+    /// opaque types, which a `some View` body cannot express without erasing to `AnyView` on
+    /// every render.
+    private struct ClearSheetBackground: ViewModifier {
+        func body(content: Content) -> some View {
+            if #available(iOS 16.4, *) {
+                content.presentationBackground(.clear)
+            } else {
+                // Nothing to do below 16.4 and nothing lost that matters: the page fills the
+                // sheet, so the system background is only visible behind the corner radius.
+                content
+            }
         }
     }
 #endif

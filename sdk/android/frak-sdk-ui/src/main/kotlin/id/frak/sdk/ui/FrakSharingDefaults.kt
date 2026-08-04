@@ -3,8 +3,8 @@ package id.frak.sdk.ui
 /** Tunable defaults for [rememberFrakSharingLauncher]. */
 public object FrakSharingDefaults {
     /**
-     * The default fraction of the screen the sharing sheet takes — the hosted page plus the
-     * native chrome around it (title above, Copy/Share footer below).
+     * The default fraction of the screen the sharing sheet takes. All of it is the hosted
+     * page now — there is no native title or footer left to share it with.
      *
      * Not the old fixed 480dp: that number was smaller than the page's own first screenful on
      * every device tested, so the sheet opened on a clipped reward card. iOS carries the same

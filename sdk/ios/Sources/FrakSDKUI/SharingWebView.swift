@@ -12,6 +12,13 @@
         case install
         case dismiss
         case shareAgain
+        /// The page's own Share button. An ask, not a report: the interaction a share earns has
+        /// to be signed by the SDK keypair the page has no access to, and `navigator.share`
+        /// inside a sheet-embedded web view is not the OS chooser a merchant expects. The page
+        /// draws the button, the host performs it.
+        case share
+        /// The page's own Copy button. Same division as `share` — see its doc.
+        case copy
         case error
         case code(value: String, expiresAt: Date?)
 
@@ -22,6 +29,8 @@
             case "install": return .install
             case "dismiss": return .dismiss
             case "shareAgain": return .shareAgain
+            case "share": return .share
+            case "copy": return .copy
             case "error": return .error
             case "code":
                 // A code action with no code is not one; treat it as unknown.

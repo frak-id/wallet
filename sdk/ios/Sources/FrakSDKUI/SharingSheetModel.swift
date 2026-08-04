@@ -29,16 +29,6 @@
         private static let walletAppStoreId = "6740261164"
 
         @Published private(set) var webView: SharingWebView?
-        /// The sheet has left the sharing page for the wallet's install page. The footer's
-        /// Copy/Share act on the *product* link and reload `/sharing`, which would throw away
-        /// the install page and the proof minted for it, so they are hidden past this point.
-        @Published private(set) var showingInstallPage = false
-        /// The page is on its post-share confirmation screen, either because this sheet reloaded
-        /// it with `&confirmed=1` or because the page restored a saved confirmation of its own.
-        /// The footer is hidden there: the share already happened, and the confirmation screen
-        /// carries its own "share again" and install controls.
-        @Published private(set) var showingConfirmation = false
-        @Published private(set) var copyConfirmed = false
 
         /// Every outcome as it happens; the caller keeps the most significant.
         var onOutcome: ((SharingResult) -> Void)?
@@ -69,6 +59,18 @@
         /// `sharing` interactions and stack two OS choosers on the user.
         private var fellBack = false
         private var deadlineExpired = false
+        /// A share is between its page-side press and its outcome. See `share()` for why the
+        /// page's own button cannot be trusted to have gone away in the meantime.
+        private var shareInFlight = false
+        /// The `copy()` half of `shareInFlight`: two taps would bill two interactions for one copy.
+        private var copyInFlight = false
+        /// The sheet has left the sharing page for the wallet's install page.
+        ///
+        /// No longer `@Published`: nothing renders off it — it used to hide a native footer, and
+        /// that footer is the page's now. It survives only because `onPageUnavailable` has to tell
+        /// a failed install page apart from a failed sharing page, which reach it identically and
+        /// need opposite answers.
+        private var showingInstallPage = false
 
         init(
             buildSharingLink: @escaping @Sendable (SharingRequest) async -> String? = {
@@ -131,30 +133,56 @@
             webView = nil
         }
 
-        /// The user tapped Share.
+        /// The user tapped Share, in the page's own footer.
         func share() async {
             guard let session else { return }
+            // The page's footer is what drives this now, and it stays enabled for the whole round
+            // trip: the web `isSharing` flag that would normally disable it belongs to
+            // `useShareLink`, which a handed-off press never reaches. The gap is not the few
+            // milliseconds before `UIActivityViewController` covers the sheet — it is
+            // `trackSharing()` below, a queue write the chooser's dismissal returns into, with the
+            // page live and tappable underneath. Two taps across it would present two activity
+            // controllers and bill two reward-bearing interactions for one share, the same failure
+            // `fellBack` exists to stop for tier 3.
+            guard !shareInFlight else { return }
+            shareInFlight = true
             // After the chooser, and only on success. This is the reward-bearing interaction,
             // not an analytics event: recording it on intent would pay out for every user who
             // opened the chooser and backed out. The web splits the two — `useShareLink` fires
             // `sharing_link_started` before, and wires the interaction to `onShared` after —
             // and this is the half that pays. A share completed while the host is jettisoned
             // is lost, which is the accepted cost of not counting cancellations.
-            guard await NativeShare.share(link: session.link, title: session.shareTitle) else { return }
+            guard await NativeShare.share(link: session.link, title: session.shareTitle) else {
+                // Deliberately cleared, unlike the success path below: the user dismissed the
+                // chooser without sharing, so the page is still on its sharing screen and must
+                // be able to try again.
+                shareInFlight = false
+                return
+            }
             await trackSharing()
             confirm(.shared(link: session.link))
+            // Not cleared: `confirm` reloads onto the confirmation screen, which has no Share
+            // button. `.shareAgain` is what reopens the flow, and clears it.
         }
 
-        /// The user tapped Copy link.
+        /// The user tapped Copy link, in the page's own footer.
+        ///
+        /// Reports the outcome rather than `confirm`ing it, which is the one asymmetry with
+        /// `share()`. The page moves itself to its confirmation screen the moment its own button
+        /// is pressed and raises its own "link copied" toast; a `confirmed=1` reload on top of
+        /// that would tear down the document mid-toast and repaint the same screen, so the user's
+        /// only feedback that the copy happened would be destroyed by the navigation confirming
+        /// it. `share()` still reloads, because only this model learns whether a chooser came up.
         func copy() async {
             guard let session else { return }
+            guard !copyInFlight else { return }
+            copyInFlight = true
             // Before, unlike `share()`, and deliberately: a copy has no chooser and no
             // completion to wait on, so there is no cancellation to avoid counting. Matches
             // the web, where `handleCopy` calls `trackSharing()` outright.
             await trackSharing()
             NativeShare.copy(session.link)
-            copyConfirmed = true
-            confirm(.copied(link: session.link))
+            report(.copied(link: session.link))
         }
 
         func onPageReady() {
@@ -164,12 +192,15 @@
 
         /// The web view gave up, tier-2 retry included.
         func onPageUnavailable() {
-            // The install page failed rather than the sharing page. Tier 3 is not the answer —
-            // the user already shared — but the footer was hidden for it, so hiding it further
-            // would leave an error page with no controls at all. Put it back; Copy/Share reload
-            // the sharing page, which is the only recovery there is from here.
+            // A failed *install* page lands here first. Tier 3 is not the answer — the user has
+            // already shared — but neither is doing nothing: the sheet would sit on WebKit's own
+            // error page, and since the controls that used to rescue it were native and are now
+            // the *sharing* page's, there is nothing left on screen to press. Reloading the
+            // confirmation screen is the page-owned equivalent of what the old native footer did
+            // here, and it lands the user somewhere with its own share-again and install controls.
             if showingInstallPage {
                 showingInstallPage = false
+                if let url = session?.url(confirmed: true) { webView?.load(url) }
                 return
             }
             // Same predicate as the deadline: `pageLoaded` matters because a content-process crash
@@ -215,12 +246,21 @@
                 }
             case .shareAgain:
                 if let url = session?.url(confirmed: false) {
+                    // The user is asking to share a second time, so the guards that closed the
+                    // first one have to open again — `share()` deliberately leaves its own set.
+                    shareInFlight = false
+                    copyInFlight = false
+                    // Back on the sharing page, so a later load failure is that page's again.
                     showingInstallPage = false
-                    // The page left its confirmation screen, so the footer belongs back: this
-                    // reload is the user asking to share a second time.
-                    showingConfirmation = false
                     webView?.load(url)
                 }
+            // The page draws both buttons and this model performs them: the interaction a share
+            // earns has to be signed by the SDK keypair the page cannot reach, and `navigator
+            // .share` inside a sheet-embedded web view is not the OS chooser a merchant expects.
+            case .share:
+                Task { await share() }
+            case .copy:
+                Task { await copy() }
             case .code(let value, let expiresAt):
                 // The page owns generating and displaying it; the SDK owns the pasteboard,
                 // because `localOnly` and an expiry are options the page cannot set.
@@ -451,14 +491,16 @@
         }
 
         /// Records an outcome the sheet stays open after, and reloads the page onto its
-        /// post-share state — without `confirmed=1` the page just sits there, since under
-        /// `native=1` its own controls are hidden.
+        /// post-share state.
+        ///
+        /// A reload with `confirmed=1` rather than letting the page confirm itself off its own
+        /// button press: the page asks for the share, but only this model learns whether a
+        /// chooser actually came up, and `saveConfirmation` has to survive the user leaving and
+        /// coming back. It costs a page load at the moment the chooser dismisses, which is the
+        /// obvious thing to optimise away next — the page would have to own the optimism to do it.
         private func confirm(_ result: SharingResult) {
             report(result)
             guard let url = session?.url(confirmed: true) else { return }
-            // Set alongside the navigation rather than on page load: the footer has to go at the
-            // moment the share lands, not a network round trip later.
-            showingConfirmation = true
             webView?.load(url)
         }
 

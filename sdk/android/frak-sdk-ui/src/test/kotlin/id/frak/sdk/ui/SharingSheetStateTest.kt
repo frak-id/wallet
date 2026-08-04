@@ -57,7 +57,6 @@ class SharingSheetStateTest {
         context = context,
         sessionId = "test-session",
         onFinished = onFinished,
-        onCopyConfirmed = {},
         buildSharingLink = client::buildSharingLink,
         anonymousId = { client.anonymousId },
         environment = { client.environment },
@@ -397,11 +396,6 @@ class SharingSheetStateTest {
                 null,
                 result,
             )
-            assertEquals(
-                "the footer must not stay live over the install page",
-                true,
-                state.showingInstallPage,
-            )
         }
 
     @Test
@@ -463,11 +457,6 @@ class SharingSheetStateTest {
             // Nothing to hand the install page, so the old handoff is the honest answer.
             assertEquals(1, client.openFrakAppCount)
             assertEquals(SharingResult.InstallStarted, result)
-            assertEquals(
-                "the footer must stay live when there is no install page to show",
-                false,
-                state.showingInstallPage,
-            )
         }
 
     @Test
@@ -539,7 +528,67 @@ class SharingSheetStateTest {
         }
 
     @Test
-    fun `the footer goes once the share lands, and comes back on share again`() =
+    fun `a share moves the page to its confirmation screen`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+
+            state.share()
+            advanceUntilIdle()
+
+            // `&confirmed=1` is what puts the page on its own post-share screen: under `native`
+            // it will not confirm itself, since only this sheet knows a chooser came up.
+            assertEquals(
+                "the share must land the page on its confirmation screen",
+                true,
+                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+            )
+
+            state.onPageAction(SharingPageAction.ShareAgain)
+            advanceUntilIdle()
+
+            assertEquals(
+                "share again must take the page back off it",
+                false,
+                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+            )
+        }
+
+    /**
+     * The page draws both buttons and this sheet performs them. Reached over the same
+     * navigation channel as every other page action, so there is nothing to intercept twice.
+     */
+    @Test
+    fun `the page's own share button raises the chooser and pays out`() =
+        runTest {
+            val client = FakeSharingClient()
+            val results = mutableListOf<SharingResult>()
+            val state = newState(client) { results += it }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share)
+            advanceUntilIdle()
+            state.dismiss()
+            advanceUntilIdle()
+
+            assertEquals("the share must be attributed", 1, client.trackCount)
+            assertEquals(1, results.size)
+            assertTrue(
+                "a page-driven share is the same outcome as a native one",
+                results[0] is SharingResult.Shared,
+            )
+        }
+
+    @Test
+    fun `the page's own copy button writes the clipboard and pays out`() =
         runTest {
             val client = FakeSharingClient()
             val state = newState(client)
@@ -548,17 +597,127 @@ class SharingSheetStateTest {
             advanceUntilIdle()
             state.attach(WebView(context))
 
-            state.share()
+            state.onPageAction(SharingPageAction.Copy)
             advanceUntilIdle()
 
-            // The page is on its confirmation screen now, with its own share-again and install
-            // controls; a live Copy/Share under them reads as though the share had not landed.
-            assertEquals("the footer must go with the share", true, state.showingConfirmation)
+            assertEquals("the copy must be attributed", 1, client.trackCount)
+            val clipboard = context.getSystemService(ClipboardManager::class.java)
+            assertEquals(
+                "the link must reach the clipboard",
+                client.link,
+                clipboard.primaryClip
+                    ?.getItemAt(0)
+                    ?.text
+                    ?.toString(),
+            )
+        }
 
-            state.onPageAction(SharingPageAction.ShareAgain)
+    /**
+     * The asymmetry with `share`, and the reason for it: the page raises its own "link copied"
+     * toast and moves itself to the confirmation screen the instant its button is pressed. A
+     * `confirmed=1` reload on top of that tears the document down mid-toast, leaving a copy with
+     * no feedback at all — the sheet stopped showing its own when the footer became the page's.
+     */
+    @Test
+    fun `a copy does not reload the page out from under its own toast`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+            val beforeCopy = shadowOf(view).lastLoadedUrl
+
+            state.onPageAction(SharingPageAction.Copy)
             advanceUntilIdle()
 
-            assertEquals("share again puts the footer back", false, state.showingConfirmation)
+            assertEquals("the copy must be attributed", 1, client.trackCount)
+            assertEquals(
+                "a copy must not navigate the page at all",
+                beforeCopy,
+                shadowOf(view).lastLoadedUrl,
+            )
+        }
+
+    /**
+     * The page's footer stays enabled across the whole hand-off — the web `isSharing` flag that
+     * would disable it belongs to `useShareLink`, which a handed-off press never reaches. The
+     * window that matters is `track()`, which the chooser's dismissal returns into with the page
+     * live underneath.
+     */
+    @Test
+    fun `two taps on the page's share button raise one chooser and bill one interaction`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Share)
+            state.onPageAction(SharingPageAction.Share)
+            advanceUntilIdle()
+
+            assertEquals("one share must bill one interaction", 1, client.trackCount)
+            assertNotNull("the chooser must have been raised", shadowOf(app).nextStartedActivity)
+            assertNull("and only once", shadowOf(app).nextStartedActivity)
+        }
+
+    /** Same guard on the copy half: two taps would otherwise bill two interactions. */
+    @Test
+    fun `two taps on the page's copy button bill one interaction`() =
+        runTest {
+            val client = FakeSharingClient()
+            val state = newState(client)
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            state.attach(WebView(context))
+
+            state.onPageAction(SharingPageAction.Copy)
+            state.onPageAction(SharingPageAction.Copy)
+            advanceUntilIdle()
+
+            assertEquals("one copy must bill one interaction", 1, client.trackCount)
+        }
+
+    /**
+     * The install page is the one page whose failure is not tier 3's business: the user has
+     * already shared. Doing nothing is not the answer either — the controls that used to rescue
+     * this were native, and are now the *sharing* page's, so the sheet would sit on an error page
+     * with nothing on it to press.
+     */
+    @Test
+    fun `a failed install page falls back to the confirmation screen, not a dead sheet`() =
+        runTest {
+            val client = FakeSharingClient()
+            var finishedCount = 0
+            val state = newState(client) { finishedCount++ }
+
+            state.prepare(SharingRequest())
+            advanceUntilIdle()
+            val view = WebView(context)
+            state.attach(view)
+            state.onPageReady()
+
+            state.onPageAction(SharingPageAction.Install)
+            advanceUntilIdle()
+            assertEquals(client.installPage, shadowOf(view).lastLoadedUrl)
+
+            state.onPageUnavailable()
+            advanceUntilIdle()
+
+            assertEquals(
+                "the user must land somewhere with controls on it",
+                true,
+                shadowOf(view).lastLoadedUrl?.contains("confirmed=1"),
+            )
+            // Tier 3 would raise a chooser for a share that already happened.
+            assertEquals("no chooser, and no premature outcome", 0, finishedCount)
         }
 
     private fun TestScope.launchDeadline(state: SharingSheetState) =

@@ -25,14 +25,21 @@ internal object NativeShare {
         return runCatching { context.startActivity(chooser) }.isSuccess
     }
 
-    /** @return whether the SDK should show its own confirmation — Android 13+ already toasts clipboard writes. */
+    /**
+     * Writes the sharing link to the clipboard.
+     *
+     * Returns nothing, deliberately. It used to answer "should the SDK show its own
+     * confirmation?" (false on Android 13+, which toasts clipboard writes itself) — but the
+     * sheet has no confirmation of its own to show any more. The page owns that feedback along
+     * with the button that triggers it, and it is not conditioned on the OS version, so a caller
+     * has nothing left to decide with the answer.
+     */
     fun copy(
         context: Context,
         link: String,
-    ): Boolean {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return false
+    ) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
         clipboard.setPrimaryClip(ClipData.newPlainText(CLIP_LABEL, link))
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
     }
 
     /**

@@ -11,11 +11,12 @@ merchant surface (product page / post-purchase / event)
  → "Share and earn {REWARD}"          ← copy + reward from the SDK, {REWARD} pre-substituted
  → sheet opens
     ┌──────────────────────────────┐
-    │  merchant logo        [ ✕ ]  │  ← NATIVE header
+    │             ▂▂▂              │  ← NATIVE: a drag handle, over the page
     │  hosted /sharing?native=1    │  ← reward card, products, how-it-works, FAQ
-    │  [ Share ]        [ Copy ]   │  ← NATIVE, real OS share sheet
+    │  [ Share ]        [ Copy ]   │  ← the PAGE's own footer, performed natively
     └──────────────────────────────┘
- → user shares → SDK fires Interaction.Sharing (after the chooser, see §4)
+ → user shares → page navigates `<scheme>://result?action=share`
+ → SDK raises the real OS chooser, then fires Interaction.Sharing (after it, see §4)
  → SDK reloads the page with &confirmed=1                    ← load-bearing, see below
  → page shows PostShareConfirmation: "create your wallet to get your rewards"
  → Install CTA → <scheme>://result?action=install → back to native
@@ -25,10 +26,13 @@ merchant surface (product page / post-purchase / event)
 
 Two non-obvious requirements, each of which silently kills the funnel:
 
-1. **`&confirmed=1` is load-bearing.** The page only renders `PostShareConfirmation` when
-   its *own* share/copy handlers fire, and under `native=1` those are hidden. Without the
-   inbound signal the user shares and the page just sits there — no confirmation, no
-   install CTA, no wallet, no error.
+1. **`&confirmed=1` is load-bearing for a share, and must NOT be sent for a copy.** The page
+   renders `PostShareConfirmation` off its own handlers, which now do fire under `native=1` —
+   but only the SDK learns whether an OS chooser actually came up, so a share still needs the
+   inbound signal or the user shares and the page just sits there. A copy is the opposite: the
+   page has already toasted and moved itself on by the time the SDK is told, and reloading
+   would tear the document down mid-toast, leaving the copy with no feedback at all. The
+   sheet has none of its own to fall back on any more.
 2. **The SDK owns 100 % of sharing tracking.** `apps/wallet/app/routes/sharing.tsx` wires
    only `onSuccess`, never `onShared`, so the route never emits `create_referral_link` —
    not even for the existing Tauri consumer. An implementer who assumes otherwise ships
@@ -63,13 +67,19 @@ leaks the web view, so going native later is a non-breaking internal change.
 assembles `/sharing?native=1&…` with `merchantId`, `clientId`, `returnScheme`, `sid`, the
 SDK version and the optional `appName`, `logoUrl`, `link`, `products`, `r`. Every
 subsequent state change is a fresh `loadUrl` of a rebuilt URL: `confirm()` reloads with
-`&confirmed=1`, `shareAgain` reloads without it.
+`&confirmed=1`, `shareAgain` reloads without it. `copy` deliberately reloads nothing (§1),
+and so does a failed *install* page, which reloads `&confirmed=1` instead — its own controls
+are the only ones left once the sharing page's footer is off screen.
 
 **Outbound is an intercepted navigation.** The page calls
 `window.location.assign("<returnScheme>://result?action=…&sid=…")`; the SDK catches it in
 the navigation policy and stops it — `decisionHandler(.cancel)` on iOS, `return true` from
 `shouldOverrideUrlLoading` on Android. Actions: `install`, `dismiss`, `shareAgain`, `code`,
-`error`. `shared` and `copied` are absent by design — the native footer owns those buttons.
+`error`, `share`, `copy`. The last two are asks rather than reports: the page draws both
+buttons, and the host performs them because `navigator.share` does not exist in an Android
+WebView and the interaction a share earns has to be signed by the SDK keypair. Unlike every
+other action they are repeatable within one page load, so `sendHostResult` exempts them from
+its dedupe.
 
 **There is no JavaScript bridge on either platform**, deliberately.
 
@@ -175,11 +185,11 @@ the ~300 ms presentation.
 > the sharing screen, so it gates an architectural decision, not just a number.
 
 **Custom Tabs cannot implement this design at all**: a separate browser Activity cannot be
-embedded in a bottom sheet, cannot lose the browser toolbar, cannot have native buttons
-below it, breaks the `confirmed=1` reload, gives only coarse navigation callbacks and
-cannot do origin-pinned interception. **Partial Custom Tabs**
-(`setInitialActivityHeightPx`) are the next thing proposed and are also rejected: a
-sheet-*shaped* browser, still with Chrome chrome and still with no native footer. The same
+embedded in a bottom sheet, cannot lose the browser toolbar, breaks the `confirmed=1`
+reload, gives only coarse navigation callbacks and cannot do origin-pinned interception —
+which is also what would catch the page's own `share`/`copy`, so the OS chooser would be out
+of reach too. **Partial Custom Tabs** (`setInitialActivityHeightPx`) are the next thing
+proposed and are also rejected: a sheet-*shaped* browser, still with Chrome chrome. The same
 note is why `CustomTabsClient.mayLaunchUrl()` is unavailable to us as a warm-up lever.
 
 **Offline** has three tiers, and the key property is that `buildLink()` is 100 % local
@@ -252,9 +262,12 @@ the proof's `ts` is what the backend's 30-day window measures from.
   one. Anyone revisiting the open question below has to dismiss the sheet first, present
   from the top-most view controller in the completion block, and add a load timeout falling
   back to the plain App Store URL.
-- **Hide the Copy/Share footer once the install page is showing.** Both act on the product
-  link and reload `/sharing`, which would discard the install page *and the proof minted for
-  it*.
+- **The Copy/Share footer is the page's own, and it hides itself on the install page.** Both
+  act on the product link and reload `/sharing`, which would discard the install page *and
+  the proof minted for it* — the install page simply does not render them. A native
+  re-implementation of the same two buttons is what this replaced: two type scales, two
+  button shapes and two surfaces stacked in one sheet, and a `showingInstallPage` flag on
+  both platforms to keep them in step with a page that already knew.
 - **Never read the pasteboard.** Reading raises the "pasted from…" banner and, since iOS 16,
   a permission alert. **Writing triggers nothing**, including with `expirationDate`.
 - **The pasteboard carries the code, not a URL.** The wallet's install screen is a
