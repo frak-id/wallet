@@ -6,24 +6,16 @@ import id.frak.sdk.tracking.Interaction
 /** Turning an inbound referral context into an arrival, and deciding whether to. */
 internal object ReferralArrival {
     /**
-     * Mandatory before any arrival is tracked. Ignores two shapes of inbound context:
-     * - a self-referral: this device's own [anonymousId] as the link's `clientId`, or a user
-     *   resharing their own link corrupts the referral graph;
-     * - a foreign-merchant referral: a V2 context whose `merchantId` is not [ownMerchantId].
-     *   V1 carries no `merchantId` at all, so this guard cannot apply to it — a V1 link from any
-     *   merchant is still tracked as this merchant's arrival. That bypass is open, see 3.2 in
-     *   `06-open-findings.md`.
+     * Mandatory before any arrival is tracked. Ignores a self-referral (this device's own
+     * [anonymousId] as the link's `clientId`) and a foreign-merchant V2 referral. V1 carries no
+     * `merchantId`, so a V1 link from any merchant is still tracked as this merchant's arrival.
      *
-     * [ownMerchantId] is best-effort (the cached config, not a fresh resolve, since arrival
-     * handling is fire-and-forget and must not block on network): null means "unknown", which
-     * lets the context through rather than discard telemetry the SDK hasn't resolved its own
-     * merchant for yet.
+     * [ownMerchantId] is best-effort (cached config, not a fresh resolve): null lets the context
+     * through rather than discard telemetry.
      *
-     * The merchant-id comparison is case-insensitive and trims whitespace: [ownMerchantId] comes
-     * from either the merchant's own free-typed [id.frak.sdk.core.FrakConfig.merchantId] or the
-     * backend's canonical form, `context.merchantId` was minted by (possibly another build of)
-     * this same merchant's app — an exact-match compare would silently drop genuine referrals on
-     * nothing more than a casing difference.
+     * The merchant-id comparison is case-insensitive and trims whitespace: [ownMerchantId] and
+     * `context.merchantId` may differ only by casing between a free-typed config value and the
+     * backend's canonical form.
      */
     fun shouldIgnoreArrival(
         context: FrakContext,

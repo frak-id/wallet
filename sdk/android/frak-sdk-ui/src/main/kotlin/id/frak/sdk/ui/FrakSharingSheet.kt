@@ -25,19 +25,9 @@ import id.frak.sdk.sharing.SharingRequest
 import java.util.UUID
 
 /**
- * The sharing sheet: the hosted `/sharing` page, edge to edge in a bottom sheet.
- *
- * The split is deliberate (02 §1), but it is narrower than it once was. What the user can
- * feel is native — the sheet animates in immediately, and Share opens the real OS share
- * sheet with their own apps and contacts, which a web page cannot reach. What the user
- * *sees* is all page, including the Copy and Share buttons: those now live in the page's own
- * footer and reach this sheet as `share`/`copy` page actions (see [SharingPageAction]).
- *
- * Everything native above and below the page has gone with them. A title bar duplicated a
- * header the page already draws, and a Compose footer under a web footer meant two type
- * scales, two button shapes and two surfaces stacked in one sheet — the confirmation screen,
- * whose CTAs were always the page's, was visibly the better half. The sheet is now chrome:
- * a drag handle, a shape, and a scrim.
+ * The sharing sheet: the hosted `/sharing` page, edge to edge in a bottom sheet. The sheet is
+ * chrome only — a drag handle, a shape, a scrim. Share/Copy live in the page's own footer and
+ * reach this sheet as page actions (see [SharingPageAction]).
  *
  * Presented through [rememberFrakSharingLauncher] rather than directly, so re-entrancy and
  * result aggregation have one owner.
@@ -65,22 +55,16 @@ internal fun FrakSharingSheet(
 
     LaunchedEffect(request) { state.prepare(request) }
 
-    // Nothing to fall back to: without a link there is no share to make at all
-    // (`SharingSheetState.build`'s own null case), so the tier-3 native
-    // fallback does not apply either — a `resolveConfig` failure with a link
-    // already in hand does NOT reach here, see `build`'s doc.
+    // Without a link there's nothing to fall back to either (SharingSheetState.build's own
+    // null case) — a resolveConfig failure with a link already in hand does not reach here.
     LaunchedEffect(state.failure) {
         state.failure?.let(state::fail)
     }
 
-    // 03 §3's latency gate, keyed on `request`/`sessionId` (constant for this
-    // sheet's lifetime) rather than `state.session`: the budget has to cover
-    // `prepare()` itself — `buildSharingLink`/`resolveConfig` are both
-    // network-bound and run *before* a session exists — not just the page's
-    // own load once one does. `awaitLoadDeadline` is what races the two; see
-    // its doc for why this cannot simply time from `state.session` becoming
-    // non-null, which was the bug (worst case ~22s against
-    // `HttpClient.OVERALL_DEADLINE_MILLIS` rather than this ~1.5s budget).
+    // Keyed on request/sessionId, not state.session: the budget has to cover prepare() itself,
+    // since buildSharingLink/resolveConfig are network-bound and run before a session exists.
+    // Timing from state.session becoming non-null was the earlier bug — worst case ~22s
+    // against HttpClient.OVERALL_DEADLINE_MILLIS instead of this ~1.5s budget.
     LaunchedEffect(sessionId) { state.awaitLoadDeadline(PAGE_LOAD_DEADLINE_MILLIS) }
 
     DisposableEffect(Unit) { onDispose(state::release) }
@@ -88,39 +72,33 @@ internal fun FrakSharingSheet(
     ModalBottomSheet(
         onDismissRequest = state::dismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        // The page paints the only surface in this sheet, so the sheet must not paint one of
-        // its own behind it. M3's default here is `surfaceContainerLow`, a light grey that sat
-        // visibly wrong against the page's white wherever the page did not reach — the corners,
-        // the handle strip, and every scroll overshoot. Transparent also means the rounded
-        // corners below cut to the scrim rather than to another colour, which is what a sheet
-        // corner is supposed to do. The loading state paints its own surface; see below.
+        // The page paints the only surface here, so the sheet must not paint one behind it.
+        // M3's default (surfaceContainerLow) showed as a grey mismatch against the page's
+        // white at the corners and during scroll overshoot. The loading state below paints its
+        // own surface.
         containerColor = Color.Transparent,
-        // Drawn by hand inside the content instead, so it floats over the page rather than
-        // reserving a strip of sheet above it. A handle in its own row is a band of container
-        // colour, and with the container transparent that band would be scrim.
+        // Drawn by hand inside the content so it floats over the page instead of reserving a
+        // strip above it — in its own row it would render as a band of scrim, since the
+        // container is transparent.
         dragHandle = null,
     ) {
         val session = state.session
-        // A fraction of what the sheet is allowed to be, not a fixed dp: the hosted page is a
-        // full-page React app (reward card, product cards, stepper, FAQ) whose first screenful
-        // is taller than the 480dp this used to reserve, so the sheet opened clipped on every
-        // device. The page now gets all of it — there is no native chrome left to subtract.
+        // A fraction, not a fixed dp: the hosted page's first screenful (reward card, product
+        // cards, stepper, FAQ) needs the whole height, and there's no native chrome left to
+        // subtract from it.
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(clampSharingHeightFraction(heightFraction))
-                    // The WebView is a rectangle and would square off the sheet's top corners
-                    // without this, which is exactly the seam `containerColor` above removes.
+                    // The WebView is a rectangle; without this it squares off the sheet's top corners.
                     .clip(BottomSheetDefaults.ExpandedShape),
         ) {
             if (session == null) {
-                // The sheet is already on screen and animating; the page loads into it rather
-                // than delaying it. This is the one moment the sheet has no page to show, so
-                // it paints M3's own sheet colour for it — a spinner floating on the scrim
-                // would read as a rendering bug rather than as loading. Taken from
-                // `BottomSheetDefaults` rather than hard-coded, so it still follows the host
-                // app's theme (including dark) the way the transparent sheet above cannot.
+                // The sheet is already animating in; the page loads into it rather than
+                // delaying it. This is the only moment with no page to show, so it paints M3's
+                // own sheet colour (from BottomSheetDefaults, so it follows the host app's
+                // theme) instead of a spinner floating on the scrim.
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = BottomSheetDefaults.ContainerColor,
@@ -145,19 +123,12 @@ internal fun FrakSharingSheet(
                 )
             }
 
-            // Over the page, not above it. The page's own top padding is what it lands on, and
-            // scrolled content passing under a translucent pill is the ordinary behaviour of
-            // every sheet that hosts a full-bleed surface.
+            // Over the page, not above it — scrolled content passing under a translucent pill
+            // is ordinary for a sheet hosting a full-bleed surface.
             BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }
 
-/**
- * 03 §3's fallback threshold: "> 1.5s → skip the page, fire the native share
- * sheet directly". Taken as written rather than the p95 target doubled — the
- * previous 2s here was that doubling, but it was also timed from the wrong
- * point (see `awaitLoadDeadline`'s use above), so there is no longer a reason
- * to pad it independently of the plan's own number.
- */
+/** Fallback threshold: past this, skip the page and fire the native share sheet directly. */
 private const val PAGE_LOAD_DEADLINE_MILLIS = 1_500L

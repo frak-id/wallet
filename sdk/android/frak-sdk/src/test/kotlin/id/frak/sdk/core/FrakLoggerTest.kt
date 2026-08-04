@@ -6,11 +6,11 @@ import org.junit.Test
 
 /**
  * [FrakLogger] is `internal`; this file has friend access through the same-module JVM test
- * source set (see [id.frak.sdk.PublicSurfaceTest]'s doc for that access model).
+ * source set.
  *
- * Every case here exercises [FrakLogSink] only, never `android.util.Log` — [Log] is a stubbed
- * method on the JVM unit-test classpath and throws unless mocked, as [FrakLogger]'s own doc
- * says, and no mocking framework runs in this test tier.
+ * Every case here exercises [FrakLogSink] only, never `android.util.Log`: [Log] is a stubbed
+ * method on the JVM unit-test classpath and throws unless mocked, and no mocking framework runs
+ * in this test tier.
  */
 class FrakLoggerTest {
     private class RecordingSink : FrakLogSink {

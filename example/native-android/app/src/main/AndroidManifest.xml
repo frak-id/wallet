@@ -2,12 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      No <queries> and no INTERNET permission declared here: `:frak-sdk`'s own manifest already
-      declares both (id.frak.wallet / id.frak.wallet.dev app-detection queries, and INTERNET),
-      and the manifest merger folds a dependency's manifest into this one automatically. Repeating
-      them here was dead duplication once this app actually depended on the SDK — two places to
-      keep in sync for no gain, exactly the reasoning frak-sdk-ui's own manifest gives for not
-      repeating them either.
+      No <queries> or INTERNET permission here: `:frak-sdk`'s own manifest already declares
+      both, and the manifest merger folds them into this one automatically.
     -->
 
     <application
@@ -26,13 +22,10 @@
             </intent-filter>
 
             <!--
-              Inbound referral links.
-
-              No `android:autoVerify="true"` on the https filter: `example-merchant.com`
-              is a placeholder we do not control and it serves no `assetlinks.json`,
-              so verification would simply fail at install time and the link would
-              open in a browser. A real merchant sets autoVerify and publishes the
-              asset links file for their own domain.
+              Inbound referral links. No android:autoVerify: example-merchant.com is a
+              placeholder domain with no assetlinks.json, so verification would fail and
+              the link opens in a browser instead. A real merchant sets autoVerify and
+              publishes asset links for their own domain.
             -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

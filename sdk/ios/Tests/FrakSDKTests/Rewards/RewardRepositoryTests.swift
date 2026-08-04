@@ -373,10 +373,6 @@ struct RewardRepositoryTests {
         #expect(underlying.localizedDescription.contains("backing off"))
     }
 
-    /// Backoff must not be keyed by products. It was, briefly: because the products string is
-    /// part of the cache key, folding it into the backoff key too meant every product page
-    /// minted a fresh key with a zero failure count, so a merchant browsing a catalogue would
-    /// hammer a failing backend once per product instead of backing off.
     @Test("a backed-off backend stays backed off for a different product set")
     func backoffIgnoresProducts() async throws {
         let clock = Clock()
@@ -413,11 +409,10 @@ struct RewardRepositoryTests {
             return
         }
         #expect(underlying.localizedDescription.contains("backing off"))
-        // The point of the backoff: the second product set never reached the network.
         #expect(log.all.count == afterFirstFailure)
     }
 
-    /// The cache key carries an up-to-4KB caller-controlled products string, so entries must not
+    /// The cache key includes an up-to-4KB caller-controlled products string; entries must not
     /// accumulate for the process's lifetime the way a merchant/currency-keyed map safely could.
     @Test("expired entries are swept, so browsing a catalogue cannot grow the cache forever")
     func expiredEntriesAreSwept() async throws {
@@ -436,7 +431,7 @@ struct RewardRepositoryTests {
                 products: [ProductDetails(sku: "SKU-\(index)")],
                 forceRefresh: false
             )
-            // Past the 30s TTL, so every previous entry is dead by the next insert.
+            // Past the 30s TTL: every previous entry is dead by the next insert.
             clock.current.addTimeInterval(RewardRepository.cacheTTL + 1)
         }
 

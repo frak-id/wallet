@@ -4,10 +4,9 @@ import FrakSDK
 
 /// The share, resolved once before anything can be shown.
 ///
-/// `link` is built by `FrakClient.sharing.buildLink`, which is entirely local and works on
-/// a cold cache with no network. `pageURL` is the part that needs the network and can
-/// legitimately be absent while `link` is not — a session with no page is not a broken
-/// session, it is what the native-share fallback fires from.
+/// `link` is built locally by `FrakClient.sharing.buildLink` and works offline. `pageURL`
+/// needs the network and can legitimately be absent while `link` is not — that's what the
+/// native-share fallback fires from.
 struct SharingSession: Equatable {
     let walletOrigin: String
     let returnScheme: String
@@ -40,13 +39,10 @@ enum SharingDecision: Equatable {
     case doNothing
 }
 
-/// The tier choice, as one predicate.
+/// The tier choice, as one predicate. Lives outside `#if canImport(UIKit)` so it is reachable
+/// from the macOS test host, which cannot compile the model that calls it.
 ///
-/// Lives outside `#if canImport(UIKit)` so it is reachable from the macOS test host, which
-/// cannot compile the model that calls it.
-///
-/// `deadlineExpired` means "the 1.5s tap-to-content budget is gone", true both when the deadline
-/// task fires and when `prepare` returns to find it already fired. A nil `session` is not a
+/// `deadlineExpired` means the 1.5s tap-to-content budget is gone. A nil `session` is not a
 /// separate answer: `prepare` is still running and will decide when it returns.
 func sharingDecision(
     session: SharingSession?,
@@ -62,17 +58,14 @@ func sharingDecision(
 }
 
 /// The `products=` value the hosted sharing page's router parses as JSON. Nil rather than
-/// `[]`, because the page skips the card section on an absent value and renders an empty one
-/// on `[]`.
+/// `[]`: the page skips the card section on an absent value, renders an empty one on `[]`.
 ///
 /// Flattens `SharingProduct.details` alongside the render fields, matching `sdk/core`'s
-/// `SharingPageProduct` (`ProductDetails & { title, imageUrl?, link?, utmContent? }`) — the
-/// wallet route forwards this same array straight into reward selection, so a product card
-/// carrying no scope fields is a product-scoped campaign the page cannot rank correctly.
-/// Mirrored in `SharingSheetState.productsJson` on Android; keep both in step.
+/// `SharingPageProduct`. Mirrored in `SharingSheetState.productsJson` on Android; keep both
+/// in step.
 ///
 /// Outside `SharingSheetModel`'s `#if canImport(UIKit)` so a macOS test host can pin what
-/// reaches the page, the same reason `sharingDecision` sits here.
+/// reaches the page.
 func sharingPageProductsJSON(_ products: [SharingProduct]) -> String? {
     guard !products.isEmpty else { return nil }
     let array = products.map { product -> [String: Any] in
@@ -101,16 +94,14 @@ func sharingPageProductsJSON(_ products: [SharingProduct]) -> String? {
 
 /// A `Double` that `JSONSerialization` will print the way `JSON.stringify` does.
 ///
-/// Passed straight through, `JSONSerialization` prints a `Double` via `NSNumber` at full
-/// binary precision: `79.9` reaches the page as `79.900000000000006` and loses an `eq`
-/// comparison in `matchesProductScope` that Android, whose `JSONObject` prints `79.9`, wins.
-/// `Double.description` is Swift's round-trip-minimal formatter and `NSDecimalNumber` carries
-/// that decimal text through serialization instead of re-deriving it from the binary value.
-/// The trailing `.0` is dropped because `JSON.stringify` never emits one for an integral
-/// number, and a `quantity` of `2.0` would otherwise not compare equal to a scope authored
-/// as `2`.
-/// Nil for NaN/Infinity, which have no JSON literal — `JSONSerialization` would fail the whole
-/// array, silently dropping every product card rather than the one unusable price.
+/// Passed straight through, `JSONSerialization` prints a `Double` at full binary precision:
+/// `79.9` reaches the page as `79.900000000000006` and fails an `eq` scope comparison Android
+/// wins. `Double.description` is Swift's round-trip-minimal formatter; `NSDecimalNumber`
+/// carries that text through serialization. The trailing `.0` is dropped to match
+/// `JSON.stringify`, which never emits one for an integral number.
+///
+/// Nil for NaN/Infinity, which have no JSON literal — `JSONSerialization` would otherwise
+/// fail the whole array.
 private func sharingPageJSONNumber(_ value: Double) -> NSDecimalNumber? {
     guard value.isFinite else { return nil }
     // `-0.0` would leave as "-0"; `JSON.stringify(-0)` writes "0" and Android agrees.
@@ -122,25 +113,22 @@ private func sharingPageJSONNumber(_ value: Double) -> NSDecimalNumber? {
 
 /// Tunable defaults for `View.frakSharingSheet(isPresented:request:heightFraction:onResult:)`.
 public enum FrakSharingDefaults {
-    /// The default fraction of the screen the sharing sheet takes — the hosted page plus the
-    /// native chrome around it (title above, Copy/Share footer below).
+    /// The default fraction of the screen the sharing sheet takes.
     ///
     /// Mirrors `FrakSharingDefaults.HEIGHT_FRACTION` on Android — keep both in step.
     public static let heightFraction: CGFloat = 0.85
 }
 
-/// The range a caller-supplied `heightFraction` is clamped into, defensively: below it the
-/// hosted page — a full-page React app with its own header and FAQ — would be clipped to
-/// something unusably small; above it the sheet could be pushed taller than the screen.
+/// The range a caller-supplied `heightFraction` is clamped into: below it the hosted page
+/// would be clipped to something unusably small; above it the sheet could exceed the screen.
 let sharingHeightFractionRange: ClosedRange<CGFloat> = 0.3...1.0
 
 /// Clamps a merchant-supplied `heightFraction` into `sharingHeightFractionRange`.
 ///
-/// A non-finite input (NaN, ±infinity — reachable if a caller computes the fraction) answers
-/// the default rather than propagating into a `.frame(height:)` SwiftUI would refuse to lay
-/// out; `ClosedRange.contains`/`min`/`max` all treat NaN as out of range without signalling it,
-/// so this is checked explicitly. Lives outside `#if canImport(UIKit)`, like `sharingDecision`,
-/// so the clamp itself is exercised on the macOS test host.
+/// A non-finite input (NaN, ±infinity) answers the default rather than propagating into a
+/// `.frame(height:)` SwiftUI would refuse to lay out — `min`/`max` treat NaN as out of range
+/// without signalling it, so this is checked explicitly. Lives outside `#if canImport(UIKit)`
+/// so the clamp is exercised on the macOS test host.
 func clampedSharingHeightFraction(_ fraction: CGFloat) -> CGFloat {
     guard fraction.isFinite else { return FrakSharingDefaults.heightFraction }
     return min(max(fraction, sharingHeightFractionRange.lowerBound), sharingHeightFractionRange.upperBound)

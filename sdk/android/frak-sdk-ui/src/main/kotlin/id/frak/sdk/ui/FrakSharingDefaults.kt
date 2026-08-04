@@ -3,12 +3,9 @@ package id.frak.sdk.ui
 /** Tunable defaults for [rememberFrakSharingLauncher]. */
 public object FrakSharingDefaults {
     /**
-     * The default fraction of the screen the sharing sheet takes. All of it is the hosted
-     * page now — there is no native title or footer left to share it with.
-     *
-     * Not the old fixed 480dp: that number was smaller than the page's own first screenful on
-     * every device tested, so the sheet opened on a clipped reward card. iOS carries the same
-     * knob (`FrakSharingDefaults.heightFraction`); keep the two in step.
+     * Default fraction of the screen the sharing sheet takes. All of it is the hosted page now
+     * — there is no native title or footer left to share it with. iOS carries the same knob
+     * (`FrakSharingDefaults.heightFraction`); keep both in step.
      */
     public const val HEIGHT_FRACTION: Float = 0.85f
 

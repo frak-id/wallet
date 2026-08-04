@@ -5,13 +5,7 @@ import Testing
 
 @Suite("SingleFlight")
 struct SingleFlightTests {
-    // The work sleeps so the three callers genuinely overlap. It used to be an
-    // instantaneous `counter.increment()`, which meant the flight had already finished
-    // before the second and third callers arrived — they "shared" it only because a
-    // *completed* task was still sitting in the map, joinable. That is the defect that
-    // let `ConfigStore.resolve(_:forceRefresh: true)` skip the network, so the sharing
-    // this test exists to prove has to be demonstrated on a flight that is actually
-    // still in the air.
+    // Sleeps so the three callers genuinely overlap in flight, not just in the joinable map.
     @Test("concurrent callers for the same key share one execution")
     func concurrentCallersShareOneExecution() async throws {
         let singleFlight = SingleFlight<Int>()
@@ -63,10 +57,6 @@ struct SingleFlightTests {
         #expect(try await singleFlight.run("k") { counter.increment() } == 3)
     }
 
-    // The pre-existing cancellation test above never awaited `cancelled.value`, so it
-    // asserted nothing about what the cancelled caller actually saw. It saw the result,
-    // 200ms late: `await task.value` is not resumed early by the awaiter's cancellation,
-    // which made every SDK call through this class non-cancellable.
     @Test("a cancelled waiter throws CancellationError promptly, without cancelling the shared work")
     func cancelledWaiterThrowsPromptlyAndSharedWorkSurvives() async throws {
         let singleFlight = SingleFlight<Int>()
@@ -86,16 +76,12 @@ struct SingleFlightTests {
 
         await #expect(throws: CancellationError.self) { try await cancelled.value }
 
-        // Promptly: not parked for the remaining ~400ms of the shared work.
         #expect(Date().timeIntervalSince(start) < 0.2)
 
-        // And the survivor still gets the shared result, from the same single execution.
         #expect(try await waiter.value == 1)
         #expect(counter.value == 1)
     }
 
-    // The leader's cancellation used to run `defer { inFlight[key] = nil }` while its
-    // unstructured Task was still running, so the next caller started a duplicate.
     @Test("a cancelled leader does not evict the live flight")
     func cancelledLeaderDoesNotEvictLiveFlight() async throws {
         let singleFlight = SingleFlight<Int>()
@@ -116,9 +102,6 @@ struct SingleFlightTests {
         #expect(counter.value == 1)
     }
 
-    // A finished-but-not-yet-evicted task used to stay joinable, so a caller landing in
-    // that window was served the completed result with no execution of its own. That is
-    // what made `ConfigStore.resolve(_:forceRefresh: true)` silently skip the network.
     @Test("a caller arriving right after completion runs again rather than joining a finished flight")
     func callerAfterCompletionDoesNotJoinFinishedFlight() async throws {
         let singleFlight = SingleFlight<Int>()
@@ -156,8 +139,7 @@ struct SingleFlightTests {
             throw Boom()
         }
 
-        // `Task`, not `async let`: an `async let` variable cannot be captured by
-        // `#expect(throws:)`'s closure.
+        // Task, not async let: an async let variable cannot be captured by #expect(throws:)'s closure.
         let first = Task { try await singleFlight.run("k", work) }
         let second = Task { try await singleFlight.run("k", work) }
 
@@ -165,7 +147,6 @@ struct SingleFlightTests {
         await #expect(throws: Boom.self) { try await second.value }
         #expect(counter.value == 1)
 
-        // A failure must not be replayed to the next caller.
         #expect(try await singleFlight.run("k") { counter.increment() } == 2)
     }
 }

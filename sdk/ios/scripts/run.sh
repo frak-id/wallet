@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # Build / test / lint the Frak iOS SDK package.
-#
-# Mirrors the ergonomics of `example/native-ios/scripts/run.sh`: one script with
-# subcommands, wrapped by this package's package.json scripts.
+# One script with subcommands, wrapped by this package's package.json scripts.
 #
 # Usage:
 #   bun run --cwd sdk/ios build         # compile against the iOS simulator SDK
@@ -22,18 +20,14 @@ die() {
 	exit 1
 }
 
-# The iOS simulator SDK path and target triple, shared by build and test.
-#
-# This is not optional ceremony: a bare `swift build` targets the host and would
-# compile this package as macOS, passing without ever exercising iOS. The example
-# harness documents the same trap — `example/native-ios/scripts/run.sh`.
+# The iOS simulator SDK path and target triple, shared by build and test. A bare
+# `swift build` targets the host and would compile this package as macOS without ever
+# exercising iOS.
 #
 # `-swift-version 6` is passed here rather than declared in Package.swift because
-# `.swiftLanguageMode` is a tools-version 6.0 API and this manifest is 5.9, and the
-# 5.9 alternative (`.unsafeFlags`) would make the package unusable as a versioned
-# SwiftPM dependency. Swift 6 strict concurrency is enforced here, not in the manifest (02 §2, 06 §1).
-# Sets IOS_FLAGS. Assigns a global rather than echoing, because macOS ships bash 3.2 —
-# no namerefs, and no way to return an array.
+# `.swiftLanguageMode` needs tools-version 6.0 and this manifest is 5.9.
+# Sets IOS_FLAGS. Assigns a global rather than echoing: macOS ships bash 3.2, no
+# namerefs, no way to return an array.
 set_ios_flags() {
 	local sdk_path
 	sdk_path="$(xcrun --sdk iphonesimulator --show-sdk-path)" ||
@@ -45,10 +39,9 @@ set_ios_flags() {
 	)
 }
 
-# Swift Testing (not XCTest) lives in the platform Developer frameworks directory, and
-# SwiftPM does not add it for a cross-compiled triple. XCTest's Swift overlay is
-# zippered macOS/Catalyst and cannot be linked for iOS-simulator from SwiftPM at all —
-# which is why the suites here use Swift Testing.
+# Swift Testing (not XCTest) lives in the platform Developer frameworks directory; SwiftPM
+# does not add it for a cross-compiled triple. XCTest's overlay cannot link for
+# iOS-simulator from SwiftPM at all.
 # Sets IOS_TESTING_FLAGS.
 set_ios_testing_flags() {
 	local dev_dir
@@ -66,24 +59,16 @@ do_build() {
 	swift build "${IOS_FLAGS[@]}"
 }
 
-# Two stages, because neither one alone is the test.
-#
-#   1. Build the test targets for arm64-apple-ios15.0-simulator. This is the part that
-#      proves the suites compile against the iOS SDK under Swift 6 strict concurrency.
-#      It cannot RUN them: SwiftPM's test runner is a macOS process and refuses to
-#      dlopen an iOS-simulator bundle ("incompatible platform"). Executing on a real
-#      simulator needs `xcodebuild test -destination 'platform=iOS Simulator,...'`,
-#      which needs a generated Xcode project — the same gap the example harness has
-#      (it uses XcodeGen). Adding that here is deferred with the XCFramework work.
-#   2. Run the suites on the host, which is what actually asserts behaviour. FrakSDK has
-#      one platform-conditional seam — SystemAppLauncher, a false-returning stub where
-#      there is no UIKit, which nothing tests directly, so its suites do not diverge.
-#      FrakSDKUI is another matter: everything that touches UIKit sits behind
-#      `#if canImport(UIKit)`, so on the host that target reduces to `SharingPageURL`
-#      and `SharingResult` and stage 2 asserts only those. The sheet, the web view,
-#      the state machine and the native share are type-checked by stage 1 and
-#      executed by neither — the xcodebuild-on-simulator path above is what finally
-#      runs them, and it is still unbuilt.
+# Two stages: neither alone is the full test.
+#   1. Build the test targets for arm64-apple-ios15.0-simulator, proving the suites
+#      compile under Swift 6 strict concurrency. Cannot run them: SwiftPM's test runner
+#      is a macOS process and refuses to dlopen an iOS-simulator bundle. Running on a
+#      simulator needs `xcodebuild test -destination 'platform=iOS Simulator,...'` with a
+#      generated Xcode project — not done yet, deferred with the XCFramework work.
+#   2. Run the suites on the host. FrakSDKUI hides everything UIKit behind
+#      `#if canImport(UIKit)`, so on the host that target reduces to `SharingPageURL` and
+#      `SharingResult`. The sheet, the web view, the state machine and native share are
+#      type-checked by stage 1 only, not executed anywhere yet.
 do_test() {
 	cd "$PKG_DIR"
 
@@ -96,8 +81,8 @@ do_test() {
 	swift test
 }
 
-# `swift format` ships inside the Xcode toolchain — nothing to install, and the
-# version is pinned to whatever Xcode the machine already builds with.
+# `swift format` ships inside the Xcode toolchain — nothing to install; version is
+# pinned to whatever Xcode the machine already builds with.
 do_lint() {
 	cd "$PKG_DIR"
 	log "Checking Swift formatting and style..."
@@ -110,15 +95,12 @@ do_format() {
 	swift format --in-place --recursive Sources Tests
 }
 
-# NOT IMPLEMENTED. XCFramework assembly and `.binaryTarget` distribution are
-# 05-build-and-release.md §3 work: the shipped artifact is a signed binary
-# XCFramework referenced from a consumer's Package.swift by remote zip + checksum.
-# None of that exists yet, and there is no SDK behaviour to put inside it.
+# NOT IMPLEMENTED. The shipped artifact will be a signed binary XCFramework referenced
+# from a consumer's Package.swift by remote zip + checksum. None of that exists yet.
 #
-# The intended shape, for whoever builds it:
+# Intended shape:
 #
-#   1. Archive one slice per destination, with library evolution on so the binary
-#      stays ABI-stable across compiler versions:
+#   1. Archive one slice per destination, with library evolution on for ABI stability:
 #
 #      for dest in "generic/platform=iOS" "generic/platform=iOS Simulator"; do
 #          xcodebuild archive \
@@ -136,21 +118,17 @@ do_format() {
 #          -framework "build/iOS Simulator.xcarchive/Products/.../FrakSDK.framework" \
 #          -output "build/FrakSDK.xcframework"
 #
-#   3. Sign it — `codesign --timestamp -s "<Apple Distribution cert>"`. Frak is not on
-#      Apple's commonly-used third-party SDK list so signing is not yet mandatory, but
-#      02 §4 calls it the right call regardless.
+#   3. Sign it — `codesign --timestamp -s "<Apple Distribution cert>"`.
 #
 #   4. Zip, checksum with `swift package compute-checksum`, publish, and reference from
 #      a distribution manifest via `.binaryTarget(name:url:checksum:)`.
 #
-#   5. Verify PrivacyInfo.xcprivacy actually propagates into a REAL consumer app, not
-#      just a local build — 05 §3 records AppsFlyer's issue #281, where the manifest
-#      failed to bundle in the static SPM variant.
+#   5. Verify PrivacyInfo.xcprivacy propagates into a real consumer app, not just a local
+#      build — AppsFlyer's issue #281 shows the manifest failing to bundle in the static
+#      SPM variant.
 #
-# Repeat all of the above for FrakSDKUI.
-#
-# Note this needs an Xcode project or a scheme SwiftPM can archive; `swift build`
-# alone cannot produce a framework.
+# Repeat for FrakSDKUI. Needs an Xcode project or scheme SwiftPM can archive; `swift
+# build` alone cannot produce a framework.
 do_xcframework() {
 	die "xcframework is not implemented.
 

@@ -3,7 +3,6 @@ import Testing
 
 @testable import FrakSDK
 
-/// Records every call the sink sees, in order.
 private final class RecordingSink: FrakLogSink, @unchecked Sendable {
     private let lock = NSLock()
     private var captured: [(level: FrakLogLevel, message: String, hasError: Bool)] = []

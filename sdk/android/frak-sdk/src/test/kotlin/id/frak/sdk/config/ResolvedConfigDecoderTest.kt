@@ -35,8 +35,7 @@ class ResolvedConfigDecoderTest {
         val config = ResolvedConfigDecoder.decode(MINIMAL_RESPONSE)
 
         assertEquals("b3d5e5b8-9b1a-4c0e-8f5a-1a2b3c4d5e6f", config.merchantId)
-        // `sdkConfig` is omitted entirely rather than sent as null when a
-        // merchant has none, so every field derived from it must degrade.
+        // `sdkConfig` is omitted entirely rather than sent as null when a merchant has none.
         assertNull(config.currency)
         assertNull(config.lang)
         assertFalse(config.hidden)
@@ -44,8 +43,7 @@ class ResolvedConfigDecoderTest {
 
     @Test
     fun `hidden defaults to false when the backend omits it`() {
-        // The backend only emits `hidden` when it is true, so absent means false
-        // rather than unknown.
+        // The backend only emits `hidden` when it is true, so absent means false.
         assertFalse(ResolvedConfigDecoder.decode(FULL_RESPONSE).hidden)
     }
 
@@ -57,8 +55,6 @@ class ResolvedConfigDecoderTest {
              "allowedDomains":[],"sdkConfig":{"currency":"chf"}}
             """.trimIndent()
 
-        // A currency added to the backend tomorrow must not brick a binary
-        // shipped today.
         assertNull(ResolvedConfigDecoder.decode(body).currency)
     }
 
@@ -81,8 +77,6 @@ class ResolvedConfigDecoderTest {
              "allowedDomains":[],"sdkConfig":{"logoUrl":42,"lang":"en"}}
             """.trimIndent()
 
-        // A missing logo beats a bricked sheet: the rest of the config still
-        // decodes.
         val config = ResolvedConfigDecoder.decode(body)
         assertEquals(FrakLanguage.EN, config.lang)
     }
@@ -135,8 +129,6 @@ class ResolvedConfigDecoderTest {
                 ?.text,
         )
         // The merchant-global default itself, for a placement that doesn't override it.
-        // A merchant who sets one and sees it ignored has no way to tell that apart
-        // from the feature not working.
         assertEquals("Share", sdkConfig.components?.buttonShare?.text)
     }
 

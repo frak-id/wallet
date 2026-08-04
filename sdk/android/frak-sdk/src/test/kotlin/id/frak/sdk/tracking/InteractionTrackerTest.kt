@@ -33,11 +33,8 @@ class InteractionTrackerTest {
     private var currentClientId: String? = CLIENT_ID
 
     /**
-     * S6a/C7's egress gate, expressed as "consent is withdrawn once N events have reached the
-     * wire". Keyed off the transport rather than a call counter so the test says what it means and
-     * does not depend on how many times the drain happens to consult the gate.
-     *
-     * The mid-drain window is the one the finding is about, and it is not reachable from
+     * The egress gate: consent is withdrawn once N events have reached the wire. Keyed off the
+     * transport rather than a call counter, so this stays reachable mid-drain, unlike
      * `DefaultFrakClientTest`, where the drain only ever holds the single event that started it.
      */
     private var denyTrackingAfterRequests = Int.MAX_VALUE
@@ -49,7 +46,7 @@ class InteractionTrackerTest {
 
     /**
      * A [TestScope] extension so the tracker's detached drains share this test's scheduler and
-     * run eagerly under [UnconfinedTestDispatcher] — `track` no longer awaits its own flush.
+     * run eagerly under [UnconfinedTestDispatcher]; `track` does not await its own flush.
      */
     private fun TestScope.tracker(): InteractionTracker {
         file = File(folder.root, "frak-events.jsonl")
@@ -101,9 +98,6 @@ class InteractionTrackerTest {
             val queued = queue.read(now).single()
             assertEquals("key-0", queued.idempotencyKey)
 
-            // Hours later, back online: the timestamp is when the user shared,
-            // not when the network came back, or the event lands in the wrong
-            // attribution window.
             val sharedAt = now / 1000
             now += 6 * 60 * 60 * 1000
             transport.respond(200, "{}")
@@ -122,8 +116,6 @@ class InteractionTrackerTest {
             tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("first"))
             tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Custom("second"))
 
-            // First goes through, second is refused: the queue must keep the
-            // second rather than skipping past it.
             now += Backoff.MAX_DELAY_MILLIS
             transport.respondEach(200, 503)
             tracker.flush()
@@ -162,7 +154,6 @@ class InteractionTrackerTest {
                 tracker.flush()
             }
 
-            // The poison event is gone and the one behind it is reachable again.
             assertEquals(listOf("healthy"), queue.read(now).map { it.body.getString("customType") })
         }
 
@@ -173,8 +164,6 @@ class InteractionTrackerTest {
             transport.fail(IOException("offline"))
             tracker.track(MERCHANT_ID, CLIENT_ID, Interaction.Sharing())
 
-            // The purge and an in-flight drain can race, so the guarantee has to
-            // hold without it: the event carries the id it was captured under.
             currentClientId = "550e8400-e29b-41d4-a716-446655440009"
             now += Backoff.MAX_DELAY_MILLIS
             transport.respond(200, "{}")
@@ -214,7 +203,7 @@ class InteractionTrackerTest {
         runTest {
             val tracker = tracker()
 
-            // A pre-2.7 file: every current field except "r", which never existed. Written
+            // A pre-migration file: every current field except "r", which never existed. Written
             // directly, bypassing append/track, exactly like an install upgrading in place.
             file.parentFile?.mkdirs()
             listOf("old-a" to now - 1, "old-b" to now).forEach { (key, capturedAt) ->
@@ -232,10 +221,9 @@ class InteractionTrackerTest {
 
             // Forces EventQueue.replaceLocked's write to fail during the migration read inside
             // flush: the temp path is occupied by a directory, so temp.writeText throws.
-            // The directory must be NON-EMPTY: replaceLocked's failure path runs
-            // runCatching { temp.delete() }, and File.delete() succeeds on an empty directory —
-            // which would clear the obstruction after the first rewrite and let the reconcile's
-            // second rewrite succeed, compacting the queue away and hiding the regression.
+            // The directory must be non-empty: replaceLocked's failure path runs
+            // runCatching { temp.delete() }, and File.delete() succeeds on an empty directory,
+            // which would clear the obstruction before the second rewrite and hide the regression.
             val tempPath = File(file.parentFile, file.name + ".tmp")
             tempPath.mkdirs()
             File(tempPath, "occupied").writeText("x")
@@ -244,10 +232,6 @@ class InteractionTrackerTest {
             tracker.flush()
 
             tempPath.deleteRecursively()
-            // This is the exact regression the fix closes: EventQueue.read signalling its
-            // failed migration rewrite by returning an empty list, InteractionTracker.flush
-            // reading that as "nothing queued" and calling queue.replace(emptyList()), which
-            // deletes a file that in truth still holds two events. Both must survive.
             assertEquals(listOf("old-a", "old-b"), queue.read(now).map { it.idempotencyKey })
         }
 
@@ -283,19 +267,15 @@ class InteractionTrackerTest {
         }
 
     /**
-     * S6a/C7, and the direct test for `06-open-findings.md` §0 lesson 8: **stopping a producer is
-     * not stopping the pipe.** A drain reads the whole backlog under [EventQueue]'s lock and then
-     * POSTs it one event at a time OUTSIDE that lock, so a consent withdrawal landing mid-drain has
-     * to be caught at the point of egress. Purging the file cannot do it — the drain is already
-     * holding the events in memory. Worse, withdrawal makes `currentClientId` null, which DISABLES
-     * the stale-id guard rather than tightening it.
+     * A drain reads the whole backlog under [EventQueue]'s lock, then POSTs it one event at a
+     * time outside that lock, so a consent withdrawal landing mid-drain must be caught at the
+     * point of egress; purging the file cannot reach events the drain already holds in memory.
+     * Withdrawal also nulls `currentClientId`, which disables the stale-id guard rather than
+     * tightening it.
      *
-     * The queue is seeded directly rather than through [InteractionTracker.track], because `track`
-     * drains eagerly under `UnconfinedTestDispatcher`: routed through it, each drain would hold
-     * exactly one event and the mid-drain window would not exist to test.
-     *
-     * Fails against the pre-change tracker, which had no gate and posted both. Fails against a
-     * `purge()`-only fix, which does not touch a drain already in flight.
+     * The queue is seeded directly rather than through [InteractionTracker.track]: routed through
+     * it, each drain would hold exactly one event under `UnconfinedTestDispatcher`, and the
+     * mid-drain window would not exist to test.
      */
     @Test
     fun `stops mid-drain when consent is withdrawn, and keeps the unsent events`() =
@@ -311,11 +291,10 @@ class InteractionTrackerTest {
 
             assertEquals("only the event before the withdrawal may reach the wire", 1, transport.requests.size)
             assertEquals("first", bodyOf(0).getString("interactionType"))
-            // Reconciled, not abandoned: the delivered event is removed even though the drain
-            // stopped early, so a purge that silently fails to delete the file cannot make the SDK
-            // re-send it — and an `Interaction.Arrival` carries no idempotency key, so a re-send is
-            // a duplicated referral payout. The undelivered one survives, because withdrawal is a
-            // pause, not an erasure.
+            // Reconciled, not abandoned: the delivered event is removed so a stalled purge cannot
+            // re-send it — `Interaction.Arrival` carries no idempotency key, so a re-send would be
+            // a duplicated referral payout. The undelivered one survives: withdrawal is a pause,
+            // not an erasure.
             val remaining = queue.read(now)
             assertEquals(1, remaining.size)
             assertTrue(

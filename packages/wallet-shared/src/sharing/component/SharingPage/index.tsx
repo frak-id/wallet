@@ -110,17 +110,9 @@ export type SharingPageProps = {
      */
     showConfirmation: boolean;
     /**
-     * Suppress the page's own header, and hand dismissal to the host.
-     *
-     * For hosts that present this page inside their own chrome (a native
-     * bottom sheet with its own drag handle and close affordance). The footer
-     * CTAs deliberately stay: they are the page's own design, they scroll and
-     * theme with the content around them, and a host reaching them through
-     * `onShare`/`onCopy` gets the OS share sheet all the same — a native
-     * re-implementation of the same two buttons only ever drifted from these.
-     * Everything else — reward card, product cards, stepper, FAQ, legal — is
-     * unchanged, and the confirmation screen still renders, with its own
-     * header suppressed the same way.
+     * Suppress the page's own header and hand dismissal to the host, for
+     * hosts that present this page inside their own chrome (a native bottom
+     * sheet with its own drag handle and close affordance). Footer CTAs stay.
      */
     chromeless?: boolean;
     /**

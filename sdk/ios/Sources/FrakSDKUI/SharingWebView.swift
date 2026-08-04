@@ -2,28 +2,24 @@
     import SwiftUI
     import WebKit
 
-    /// What the hosted page can tell the host.
-    ///
-    /// `code` carries a value, which every other action deliberately does not. That is
-    /// permitted only because this navigation is cancelled below and never reaches the OS —
-    /// `01-platform-changes.md` §1.2 states the condition. Anything else wanting a payload
-    /// has to re-check it.
+    /// What the hosted page can tell the host. `code` carries a value, which every other
+    /// action deliberately does not — permitted only because this navigation is cancelled
+    /// below and never reaches the OS.
     enum SharingPageAction: Equatable {
         case install
         case dismiss
         case shareAgain
         /// The page's own Share button. An ask, not a report: the interaction a share earns has
-        /// to be signed by the SDK keypair the page has no access to, and `navigator.share`
-        /// inside a sheet-embedded web view is not the OS chooser a merchant expects. The page
-        /// draws the button, the host performs it.
+        /// to be signed by the SDK keypair the page has no access to. The page draws the
+        /// button, the host performs it.
         case share
-        /// The page's own Copy button. Same division as `share` — see its doc.
+        /// The page's own Copy button. Same division as `share`.
         case copy
         case error
         case code(value: String, expiresAt: Date?)
 
-        /// Unknown actions are nil, not a failure: the page can ship a new one before the
-        /// SDK that reads it, and a no-op is the forward-compatible answer.
+        /// Unknown actions are nil, not a failure: a no-op is the forward-compatible answer
+        /// when the page ships a new one before the SDK that reads it.
         static func from(action: String, value: String?, exp: String?) -> SharingPageAction? {
             switch action {
             case "install": return .install
@@ -35,9 +31,8 @@
             case "code":
                 // A code action with no code is not one; treat it as unknown.
                 guard let value, !value.isEmpty else { return nil }
-                // `Int64`, not `Double`: Kotlin's `toLongOrNull` rejects "NaN"/"inf" and this
-                // has to agree with it, or the same wire value yields a different pasteboard
-                // expiry per platform.
+                // `Int64`, not `Double`: has to agree with Kotlin's `toLongOrNull`, which
+                // rejects "NaN"/"inf", or the same wire value yields a different expiry per platform.
                 let expiresAt = exp.flatMap(Int64.init).map {
                     Date(timeIntervalSince1970: TimeInterval($0))
                 }
@@ -50,7 +45,7 @@
     /// The web view the sheet loads the hosted page in, and the navigation policy that is
     /// its only channel back to the host.
     ///
-    /// **No JavaScript bridge, ever** — no `WKScriptMessageHandler`, no injected script. The
+    /// No JavaScript bridge, ever — no `WKScriptMessageHandler`, no injected script. The
     /// page reports by navigating to `returnScheme://result?sid=…&action=…`, which is
     /// intercepted here and never allowed to leave the app.
     @MainActor
@@ -88,7 +83,7 @@
             onOpenExternal: @escaping (URL) -> Void = { _ in }
         ) {
             let configuration = WKWebViewConfiguration()
-            // Persistent, so the hosted page's own HTTP cache is what tier 2 falls back on.
+            // Persistent: the hosted page's own HTTP cache is what tier 2 falls back on.
             configuration.websiteDataStore = .default()
             configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
 
@@ -120,7 +115,7 @@
         }
 
         /// Component by component, never a prefix match: `wallet.frak.id.attacker.example`
-        /// starts with the origin and is not it.
+        /// starts with the origin string but is not it.
         private func isSameOrigin(_ url: URL) -> Bool {
             guard let origin else { return false }
             return url.scheme == origin.scheme
@@ -136,8 +131,8 @@
         }
 
         private func handleMainFrameFailure() {
-            // Before the `settled` guard: a reload that fails after tier 3 has already fired still
-            // gets an error document, whose `didFinish` must not report readiness.
+            // Before the `settled` guard: a reload that fails after tier 3 has already fired
+            // still gets an error document, whose `didFinish` must not report readiness.
             navigationFailed = true
             guard !settled else { return }
             guard !retryPending else { return }
@@ -146,7 +141,7 @@
                 onLoadFailed()
                 return
             }
-            // Tier 2: the document may still be in the HTTP cache even with no network.
+            // Tier 2: the document may still be in the HTTP cache with no network.
             retried = true
             retryPending = true
             view.load(URLRequest(url: requested, cachePolicy: .returnCacheDataDontLoad))
@@ -157,8 +152,8 @@
         private func isCancellation(_ error: any Error) -> Bool {
             let error = error as NSError
             if error.domain == NSURLErrorDomain, error.code == NSURLErrorCancelled { return true }
-            // `WebKitErrorFrameLoadInterruptedByPolicyChange`. Legacy domain and code, with no
-            // symbol in `WKError` — this is what a `.cancel` decision surfaces as.
+            // `WebKitErrorFrameLoadInterruptedByPolicyChange` — legacy domain and code, with no
+            // symbol in `WKError`. What a `.cancel` decision surfaces as.
             return error.domain == "WebKitErrorDomain" && error.code == 102
         }
     }
@@ -174,19 +169,17 @@
                 return
             }
 
-            // A sub-frame must not be launched externally — that would let an embedded frame yank
-            // the user out of the sheet — and a cross-origin one is cancelled rather than
-            // rendered, since a full-bleed foreign frame in a sheet with no URL bar is exactly the
-            // indistinguishability the origin pinning exists to prevent. Only remote schemes are
-            // judged: `about:blank`, `srcdoc`, `blob:` and `data:` frames have no host to compare
-            // and are routine inside a React page.
+            // A sub-frame must not be launched externally — that would let an embedded frame
+            // yank the user out of the sheet — and a cross-origin one is cancelled rather than
+            // rendered, since a full-bleed foreign frame in a sheet with no URL bar would be
+            // indistinguishable from the real page. Only remote schemes are judged: `about:blank`,
+            // `srcdoc`, `blob:` and `data:` frames have no host to compare and are routine inside
+            // a React page.
             if let frame = navigationAction.targetFrame, !frame.isMainFrame {
                 let remote = url.scheme == "https" || url.scheme == "http"
-                // The return scheme is cancelled outright from a sub-frame, never merely left
-                // unhandled. It carries a capability value (`action=code`), and
-                // `01-platform-changes.md` §1.2 permits that only while this navigation
-                // provably never reaches the OS — resting that on WebKit declining to launch
-                // an unregistered scheme would make the guarantee someone else's to keep.
+                // The return scheme carries a capability value (`action=code`), so it is
+                // cancelled outright from a sub-frame, never merely left unhandled — this
+                // navigation must provably never reach the OS.
                 if url.scheme == returnScheme {
                     decisionHandler(.cancel)
                     return
@@ -195,12 +188,11 @@
                 return
             }
 
-            // A nil `targetFrame` is a *new window*, not a sub-frame: `target="_blank"` and
+            // A nil `targetFrame` is a new window, not a sub-frame: `target="_blank"` and
             // gesture-driven `window.open` both produce one, and neither is stopped by
             // `javaScriptCanOpenWindowsAutomatically = false`. With no `WKUIDelegate`, `.allow`
-            // would drop it silently. Android has no such case — setSupportMultipleWindows(false)
-            // loads it in the current frame — so do the same here, and let a foreign one fall
-            // through to the browser below.
+            // would drop it silently, so this loads it in the current frame instead and lets a
+            // foreign one fall through to the browser below.
             if navigationAction.targetFrame == nil, isSameOrigin(url) {
                 webView.load(navigationAction.request)
                 decisionHandler(.cancel)
@@ -228,8 +220,8 @@
                 return
             }
 
-            // The merchant's own site, a social network, a wallet: all belong in the browser,
-            // not inside a sheet the user cannot navigate.
+            // Anything else — the merchant's own site, a social network, a wallet — belongs in
+            // the browser, not inside a sheet the user cannot navigate.
             onOpenExternal(url)
             decisionHandler(.cancel)
         }
@@ -239,8 +231,8 @@
             navigationFailed = false
         }
 
-        /// Android's `onReceivedHttpError` equivalent. Without this the main-frame status code is
-        /// never inspected, and a 5xx that returns a body reaches `didFinish` as a normal load.
+        /// Android's `onReceivedHttpError` equivalent: without this the main-frame status code
+        /// is never inspected, and a 5xx that returns a body reaches `didFinish` as a normal load.
         func webView(
             _ webView: WKWebView,
             decidePolicyFor navigationResponse: WKNavigationResponse,
@@ -254,9 +246,8 @@
                 return
             }
             // `.allow`, not `.cancel`: cancelling surfaces as a cancellation error, which
-            // `isCancellation` filters out, so neither path would fire. Letting WebKit finish
-            // normally keeps one route in — this call — and `navigationFailed` suppresses the
-            // `didFinish` that follows.
+            // `isCancellation` filters out, so neither path would fire. `navigationFailed`
+            // suppresses the `didFinish` that follows.
             decisionHandler(.allow)
             handleMainFrameFailure()
         }
@@ -280,8 +271,8 @@
             handleMainFrameFailure()
         }
 
-        /// A jetsammed content process leaves a blank view and fires nothing else. Recovery would
-        /// mean reloading the content that just killed a process; tier 3 has a working local link.
+        /// A jetsammed content process leaves a blank view and fires nothing else. Tier 3 has a
+        /// working local link; reloading would mean re-running the content that just crashed it.
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
             guard !settled else { return }
             settled = true
@@ -289,8 +280,8 @@
         }
     }
 
-    /// Puts an already-built `SharingWebView` on screen. The view is owned by the sheet's
-    /// model, not by SwiftUI, because the model has to reload it after a share.
+    /// Puts an already-built `SharingWebView` on screen. Owned by the sheet's model, not by
+    /// SwiftUI, because the model has to reload it after a share.
     struct SharingWebViewContainer: UIViewRepresentable {
         let webView: SharingWebView
 

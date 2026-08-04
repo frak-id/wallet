@@ -25,8 +25,8 @@ class EventQueueTest {
 
     private fun open() {
         file = File(folder.root, "events/frak-events.jsonl")
-        // Unconfined: EventQueue now hops to its ioDispatcher, and every assertion
-        // here is a read-after-write, so the hop must not defer the work.
+        // Unconfined: EventQueue hops to its ioDispatcher, and every assertion here is a
+        // read-after-write, so the hop must not defer the work.
         queue = EventQueue(file, FrakLogger(FrakLogLevel.NONE, null), UnconfinedTestDispatcher())
     }
 
@@ -45,7 +45,7 @@ class EventQueueTest {
         rowId = rowId,
     )
 
-    /** Writes a raw pre-2.7 line: every current field except `"r"`, which never existed. */
+    /** Writes a raw pre-migration line: every current field except `"r"`, which never existed. */
     private fun appendPreMigrationLine(
         key: String,
         capturedAt: Long = NOW,
@@ -81,8 +81,6 @@ class EventQueueTest {
         runTest {
             open()
             queue.append(event("a"))
-            // A kill mid-write leaves a partial line. Losing that one event is the
-            // correct outcome; losing the whole queue is not.
             file.appendText("""{"k":"b","p":"/user/tra""")
 
             assertEquals(listOf("a"), queue.read(NOW).map { it.idempotencyKey })
@@ -95,15 +93,11 @@ class EventQueueTest {
             queue.append(event("a"))
             file.appendText("""{"k":"b","p":"/user/tra""")
 
-            // The partial line is dropped from the parsed result on every read, but it also has to
-            // leave the FILE. reconcile used to sweep it as a side effect of rewriting on every
-            // flush; now that the rewrite is skipped when nothing changed, the read owns the sweep.
-            // Without it the on-disk ceiling would bound only the valid rows and torn tails would
-            // accumulate past it, one per mid-write kill.
+            // The partial line must be dropped from the file too, not just the parsed result,
+            // or torn tails would accumulate on disk past the ceiling, one per mid-write kill.
             queue.read(NOW)
 
             assertEquals(1, file.readLines().count { it.isNotBlank() })
-            // Self-healing: having swept it, a second read finds nothing left to do.
             assertEquals(listOf("a"), queue.read(NOW).map { it.idempotencyKey })
         }
 
@@ -166,8 +160,8 @@ class EventQueueTest {
     fun `rowId increases and never repeats, even for two events sharing an idempotencyKey`() =
         runTest {
             open()
-            // Same idempotencyKey on purpose (2.7): a caller-suppliable key is not guaranteed
-            // unique, and rowId is exactly what disambiguates two such rows from each other.
+            // Same idempotencyKey on purpose: a caller-suppliable key is not guaranteed unique,
+            // and rowId disambiguates two such rows.
             queue.append(event("same-key"))
             queue.append(event("same-key"))
             queue.append(event("same-key"))
@@ -206,8 +200,6 @@ class EventQueueTest {
             queue.append(event("dup"))
             val (first, second) = queue.read(NOW)
 
-            // Only the first is uploaded and reconciled away; a key-based reconcile would have
-            // deleted both, or the wrong one, since they share an idempotencyKey.
             queue.replace(queue.read(NOW).filterNot { it.rowId == first.rowId })
 
             val remaining = queue.read(NOW)
@@ -242,10 +234,9 @@ class EventQueueTest {
             appendPreMigrationLine("old-a", capturedAt = NOW - 1)
             appendPreMigrationLine("old-b", capturedAt = NOW)
 
-            // No read() yet: append's own seed path (readExistingForSeed), not read's, must
-            // reserve one id per un-migrated row ahead of it — otherwise "new" would take id 0,
-            // the same id the later migration in read() assigns to "old-a", and the newest row
-            // would carry the LOWEST id instead of the highest.
+            // No read() yet: append's own seed path (readExistingForSeed) must reserve one id
+            // per un-migrated row ahead of it, or "new" would take id 0 — the same id the later
+            // migration in read() assigns to "old-a".
             queue.append(event("new"))
 
             val all = queue.read(NOW)
@@ -267,18 +258,15 @@ class EventQueueTest {
             val tempPath = File(file.parentFile, file.name + ".tmp")
             tempPath.mkdirs()
 
-            // read() must NOT signal the non-durable rewrite by returning an empty list: that
-            // would be indistinguishable from "the queue is empty" to every caller, and
-            // InteractionTracker.flush's bare compaction (`if (rows.isEmpty()) replace(emptyList())`)
-            // would then delete a queue that is very much not empty. The durability signal lives
-            // out-of-band, on EventQueue.reconcile alone — see the caller-path test below.
+            // read() must not signal the non-durable rewrite by returning an empty list: that
+            // would be indistinguishable from an empty queue, and InteractionTracker.flush's
+            // bare compaction would then delete a queue that is not actually empty.
             val migrated = queue.read(NOW)
             assertEquals(listOf("old-a", "old-b"), migrated.map { it.idempotencyKey })
 
-            // The ids themselves are real for this pass but not guaranteed to survive a
-            // restart: the rewrite never landed, so a fresh instance re-migrates from scratch
-            // and may assign different ones. Not asserted here — see the reopened-instance
-            // shape in "rowId survives a reload from disk" for the durable-write case.
+            // These ids are real for this pass but not guaranteed to survive a restart: the
+            // rewrite never landed, so a fresh instance re-migrates from scratch and may assign
+            // different ones.
             tempPath.deleteRecursively()
             val retried = queue.read(NOW)
             assertEquals(listOf("old-a", "old-b"), retried.map { it.idempotencyKey })
@@ -298,13 +286,12 @@ class EventQueueTest {
             // nothing delivered, as if every send in this pass failed before reconcile ever ran.
             val result = queue.reconcile(delivered = emptySet(), retried = emptyMap(), now = NOW)
 
-            // The in-memory answer is still correct for this pass...
             assertEquals(listOf("old-a", "old-b"), result.map { it.idempotencyKey })
 
             tempPath.deleteRecursively()
-            // ...and critically, the FILE was never touched: reconcile must not compact against
-            // a read whose migration ids are not durable, or the very next flush would silently
-            // wipe every event still on disk instead of retrying with fresh ids.
+            // ...and the file was never touched: reconcile must not compact against a read whose
+            // migration ids are not durable, or the next flush would silently wipe events still
+            // on disk.
             assertEquals(listOf("old-a", "old-b"), queue.read(NOW).map { it.idempotencyKey })
         }
 
@@ -325,9 +312,8 @@ class EventQueueTest {
     fun `bounds the file from append alone, without a read ever running`() =
         runTest {
             open()
-            // 2.6: the cap used to be enforced only inside read(), and a drain that is backing off
-            // returns before it reads. Appending is therefore the one path that must bound itself,
-            // or the file grows without limit exactly while it cannot drain. No read() in this test.
+            // A drain that is backing off returns before it reads, so appending is the one path
+            // that must bound itself, or the file grows without limit while it cannot drain.
             val overflow = EventQueue.MAX_EVENTS + EventQueue.MAX_EVENTS_SLACK + 1
             repeat(overflow) { queue.append(event("e$it")) }
 
@@ -349,8 +335,8 @@ class EventQueueTest {
             // Oldest dropped first: a fresh event is likelier to still matter.
             assertEquals("e${overflow - 1}", kept.last().idempotencyKey)
             assertEquals(EventQueue.MAX_EVENTS, kept.size)
-            // And the append-time trim must not disturb the invariant 2.7 bought: ids ascend with
-            // capture order, so reconcile can key deletions on them.
+            // The append-time trim must not disturb id ascension with capture order, so
+            // reconcile can key deletions on them.
             assertEquals(kept.map { it.rowId }.sorted(), kept.map { it.rowId })
         }
 
@@ -361,17 +347,15 @@ class EventQueueTest {
             queue.append(event("a"))
             queue.append(event("b"))
             val before = file.readBytes()
-            // Backdated deliberately. A skipped rewrite and a performed one produce byte-identical
-            // content here, so the modification time is the only thing that can tell them apart —
-            // and comparing it against `now` makes the assertion a race with filesystem timestamp
-            // granularity, which silently stopped failing once the surrounding suite got slower.
-            // An hour in the past cannot be reached by a rewrite that would stamp it with `now`.
+            // Backdated deliberately: a skipped rewrite and a performed one produce byte-identical
+            // content, so mtime is the only thing that can tell them apart. An hour in the past
+            // cannot be reached by a rewrite that stamps `now`.
             val backdated = System.currentTimeMillis() - 3_600_000
             assertTrue("could not backdate the fixture", file.setLastModified(backdated))
 
-            // 4.4: the whole-file rewrite is the expensive half of a flush, and an offline pass
-            // delivers nothing and retries nothing. Skipping it is safe only because read() has
-            // already persisted anything it changed, so `next` is byte-identical to disk.
+            // The whole-file rewrite is the expensive half of a flush; skipping it here is safe
+            // only because read() already persisted anything it changed, so `next` is
+            // byte-identical to disk.
             val result = queue.reconcile(delivered = emptySet(), retried = emptyMap(), now = NOW)
 
             assertEquals(listOf("a", "b"), result.map { it.idempotencyKey })

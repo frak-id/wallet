@@ -102,8 +102,7 @@ internal class FakeHttpTransport {
         override fun getOutputStream() = written
 
         // The real HttpURLConnection throws for 204/205/304 rather than returning an empty
-        // stream — they never carry a body by spec — which is exactly the shape HttpClient's N5
-        // short-circuit exists to avoid touching.
+        // stream; they never carry a body by spec.
         override fun getInputStream() =
             when {
                 status == 204 || status == 205 || status == 304 -> {

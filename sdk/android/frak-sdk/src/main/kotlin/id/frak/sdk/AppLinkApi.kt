@@ -16,15 +16,7 @@ public class AppLinkApi internal constructor(
 
     public suspend fun installUrl(): String? = core.installUrl()
 
-    /**
-     * The wallet's hosted install page for this device, or null without an identity or a
-     * merchant to resolve.
-     *
-     * Not the store listing — that is [installUrl]. This page shows the install code that
-     * carries attribution across an install, plus the store link, and it carries a freshly
-     * minted `frak-install-v1` proof. The sharing sheet navigates to it in place, so the user
-     * never leaves the merchant app to reach it.
-     */
+    /** Wallet's hosted install page for this device, carrying a fresh `frak-install-v1` proof, or null without an identity or a merchant to resolve. Not the store listing — that is [installUrl]. */
     public suspend fun installPageUrl(
         returnScheme: String,
         sessionId: String,

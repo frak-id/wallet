@@ -48,9 +48,9 @@ struct ConfigStoreTests {
 
     @Test("a cache fetched in the future relative to now is treated as stale, not fresh forever")
     func futureDatedCacheIsTreatedAsStale() async throws {
-        // A clock stepped backward after the fetch, or a corrupted/tampered persisted fetchedAt,
-        // must not pin the entry as fresh forever (N7): now().timeIntervalSince(fetchedAt)
-        // negative is still "less than freshTTL" if only the upper bound is checked.
+        // A clock stepped backward, or a tampered fetchedAt, must not pin the entry as fresh
+        // forever: negative elapsed time is still "less than freshTTL" if only the upper bound
+        // is checked.
         let clock = Clock()
         clock.current = Date(timeIntervalSince1970: 10_000)
         let log = RequestLog()
@@ -90,12 +90,6 @@ struct ConfigStoreTests {
         #expect(try await store.resolve(query(), forceRefresh: false).name == "Acme Renamed")
     }
 
-    /// C3: `updates` is this actor's own stream, not something forwarded from a caller-side
-    /// `resolveConfig()` write — so it must reach a subscriber from BACKGROUND revalidation too,
-    /// the path that never touched it before this finding. Before the fix, only a direct
-    /// `ConfigStore.resolve` caller ever saw an update; a subscriber sitting on `updates` alone
-    /// (the real-world shape: a UI observing config without itself calling `resolve` on every
-    /// stale hit) never learned the revalidated value existed.
     @Test("background revalidation reaches the updates stream, not just memory (C3)")
     func backgroundRevalidationReachesUpdatesStream() async throws {
         let clock = Clock()
@@ -158,21 +152,12 @@ struct ConfigStoreTests {
     }
 
     // C4's "an older fetch that starts first but lands last does not overwrite a newer publish"
-    // case does not have a deterministic test on this platform. It needs two requests genuinely
-    // in flight at once through ONE ConfigStore/HTTPClient/URLSession, with the first response
-    // deliberately held back until the second has published — which means blocking inside
-    // StubURLProtocol.startLoading() for one request while the other is still in flight on the
-    // SAME session. Nothing in Foundation's public contract guarantees URLSession runs two
-    // custom-URLProtocol loads concurrently rather than serialising them onto one queue; if it
-    // does serialise them, the second request never starts, the first's blocking wait is never
-    // released, and the test only unwinds via HTTPClient's 20s Deadline — a wedged thread, not a
-    // failure. That could not be verified without a toolchain to run it against, so rather than
-    // land a test that might hang CI, this pins only what IS provable without concurrent network
-    // I/O: the guard's comparison and publish logic (see the unit-level sequencing below), plus
-    // cross-key isolation-not-corruption. The Kotlin twin's equivalent test (`ConfigStoreTest.kt`,
-    // same finding id) uses a real second `Dispatchers.IO` thread instead of the cooperative pool
-    // and is not exposed to this same ambiguity, since JVM thread scheduling doesn't route through
-    // a single URLSession's task queue.
+    // case has no deterministic test here: it needs two requests genuinely in flight through one
+    // ConfigStore/URLSession with the first response held back until the second publishes, and
+    // URLSession does not guarantee concurrent custom-URLProtocol loads over one session — a
+    // serialised second request would wedge the test on HTTPClient's Deadline instead of failing
+    // it. This pins only what is provable without concurrent I/O: guard/publish ordering and
+    // cross-key isolation.
     @Test("a fetch for one key does not publish over a different key's already-published result")
     func differentKeyFetchDoesNotOverwritePublishedResult() async throws {
         let clock = Clock()
@@ -185,17 +170,15 @@ struct ConfigStoreTests {
             return StubResponse(status: 200, body: body)
         }
 
-        // Attached BEFORE either resolve: `updates` only replays `lastPublished`, so an
-        // iterator created afterward would miss "Acme" and then suspend forever waiting for a
-        // third publish that never comes.
+        // Attached before either resolve: `updates` only replays `lastPublished`, so a later
+        // iterator would miss "Acme" and then suspend forever waiting for a publish that never
+        // comes.
         var iterator = await store.updates.makeAsyncIterator()
 
-        // Sequential, not concurrent: the first key publishes, then the second key publishes,
-        // proving the guard does not reject a later, genuinely-newer sequence number just because
-        // it belongs to a different cache key than the one already published.
+        // Sequential, not concurrent: the first key publishes, then the second, so the guard's
+        // sequence check must not reject the second merely for belonging to a different key.
         let firstResult = try await store.resolve(query(), forceRefresh: true)
-        // Hoisted out of #expect: the suite's convention everywhere else, because an iterator is
-        // a mutating value and #expect's expansion is a closure over it.
+        // Hoisted out of #expect: iterator is a mutating value and #expect expands to a closure over it.
         let firstPublished = await iterator.next()
         #expect(firstPublished?.name == "Acme")
         let secondResult = try await store.resolve(secondQuery, forceRefresh: true)
@@ -205,15 +188,8 @@ struct ConfigStoreTests {
         #expect(firstResult.name == "Acme")
         #expect(secondResult.name == "Acme Second")
 
-        // The iterator MUST attach before either resolve: `updates` replays only `lastPublished`,
-        // a single value, so an iterator created after both calls would see the replay on its
-        // first `next()` (skipping "Acme" entirely) and then suspend forever on its second —
-        // nothing publishes again and nothing ever calls `continuation.finish()`. Swift Testing
-        // has no default per-test timeout, so that ordering wedges the run permanently rather
-        // than failing it.
-        //
-        // memory must agree with the stream it feeds: `currentConfig(secondQuery)` reads memory
-        // directly here, since memory already holds the second key's entry.
+        // currentConfig reads memory directly; it must agree with the stream since memory
+        // already holds the second key's entry.
         #expect(await store.currentConfig(secondQuery)?.name == "Acme Second")
     }
 
@@ -360,15 +336,9 @@ struct ConfigStoreTests {
         #expect(result.name == "Acme")
     }
 
-    /// 3.2 regression: `DefaultFrakClient.handleReferralLink`'s merchant guard resolves
-    /// `ownMerchantId` from `ConfigStore.currentConfig`, precisely so a warm start whose cached
-    /// entry is still fresh — the ordinary case, never touching `fetch` at all in this process —
-    /// still has a merchant id available. `updates` alone cannot supply it: `fetch` is C3's one
-    /// publish point, and a fresh-cache resolve never reaches it. This pins that `currentConfig`
-    /// IS populated by that hydrate-and-serve-from-cache path, while `updates` stays empty because
-    /// nothing published — the same guarantee the Kotlin twin's `ConfigStore.currentConfig()`
-    /// exists to provide, since both platforms must resolve "last known config" from the same kind
-    /// of source (`DefaultFrakClient.kt`'s 3.2 comment, `DefaultFrakClient.swift:179`).
+    /// Pins that `currentConfig` is populated by the hydrate-and-serve-from-cache path even
+    /// though `updates` stays empty, since `fetch` is the only publish point and a fresh-cache
+    /// resolve never reaches it.
     @Test("currentConfig hydrates from disk on its own, without a prior resolve call")
     func currentConfigHydratesWithoutResolve() async throws {
         let clock = Clock()
@@ -392,9 +362,8 @@ struct ConfigStoreTests {
         _ = try await firstStore.resolve(query(), forceRefresh: false)
         let requestsAfterFirstFetch = callCount.value
 
-        // A second, independent store instance sharing only the persisted KeyValueStore — the
-        // same situation as a fresh process reading what a previous run wrote to disk. Nothing
-        // in this test ever calls warmStore.resolve().
+        // A second, independent store sharing only the persisted KeyValueStore, as if reading
+        // disk after a fresh process start. Never calls warmStore.resolve().
         let warmStore = ConfigStore(
             http: http,
             store: sharedStore,
@@ -402,30 +371,25 @@ struct ConfigStoreTests {
             now: { clock.current }
         )
 
-        // Hoisted: `query()` throws, and `#expect` expands to a rethrowing call, so it cannot
-        // host a `try` on an autoclosure argument.
+        // Hoisted: query() throws, and #expect expands to a rethrowing call that cannot host
+        // try on an autoclosure argument.
         let warmQuery = try query()
         #expect(await warmStore.currentConfig(warmQuery)?.name == "Acme")
         #expect(callCount.value == requestsAfterFirstFetch, "currentConfig must not reach the network")
 
-        // A subscriber attaching AFTER the hydration must see no replay: `updates` only ever
-        // replays `lastPublished`, and nothing has published on this store instance — only
-        // fetch() publishes (C3). If currentConfig's disk hydration wrongly published, this would
-        // instead see "Acme" arrive immediately instead of timing out. `received` (the existing
-        // lock-protected `Counter` from `TestSupport.swift`) is incremented only when a value
-        // genuinely ARRIVES, so a timeout win leaves it at zero; racing avoids ever awaiting an
-        // iterator that could otherwise suspend forever. The (Sendable) stream is hoisted out of
-        // the closure and iterated INSIDE the child task: a non-Sendable AsyncIterator captured
-        // and mutated by a @Sendable addTask closure does not compile under -swift-version 6.
+        // Attaching after hydration should see no replay, since only fetch() publishes — a
+        // wrongly-published value here would show up as an early arrival instead of a timeout.
+        // The stream is hoisted out of the closure but the iterator is created inside the child
+        // task: a non-Sendable AsyncIterator captured by a @Sendable addTask closure does not
+        // compile under -swift-version 6.
         let received = Counter()
         let stream = await warmStore.updates
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
                 var iterator = stream.makeAsyncIterator()
-                // `if let`, not a bare `_ = await`: once the timeout branch wins and cancels the
-                // group, a cancelled AsyncStream iterator RESOLVES WITH nil rather than hanging.
-                // Incrementing unconditionally therefore counted that cancellation as a publish,
-                // and this assertion could never fail for the reason it claims to test.
+                // `if let`, not a bare `_ = await`: a cancelled AsyncStream iterator resolves
+                // with nil rather than hanging, and incrementing unconditionally would count
+                // that as a publish.
                 if await iterator.next() != nil {
                     received.increment()
                 }

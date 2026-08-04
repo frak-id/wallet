@@ -110,7 +110,6 @@ struct ResolvedConfigDecoderTests {
              "allowedDomains":[],"sdkConfig":{"logoUrl":42,"lang":"en"}}
             """
 
-        // A missing logo beats a bricked config: the rest still decodes.
         let config = try ResolvedConfigDecoder.decode(Data(body.utf8))
         #expect(config.lang == .en)
     }
@@ -159,11 +158,10 @@ struct ResolvedConfigDecoderTests {
         #expect(sdkConfig.components?.buttonShare?.text == "Share")
     }
 
-    // `fullResponse`'s placement deliberately carries no `translations` key, because the backend
-    // omits it whenever a placement has none. `translations` is non-optional to match the Kotlin
-    // twin, so a synthesized `Decodable` on `ResolvedPlacement` would throw `keyNotFound` here and
-    // `ResolvedSdkConfig`'s `try?` would swallow it into dropping every placement — silently, and
-    // on ordinary responses. This pins the hand-written init that prevents that.
+    // `fullResponse`'s placement carries no `translations` key on purpose — the backend omits it
+    // when a placement has none. `translations` is non-optional, so a synthesized `Decodable`
+    // would throw `keyNotFound` and `ResolvedSdkConfig`'s `try?` would silently drop every
+    // placement. This pins the hand-written init that prevents that.
     @Test("a placement with no translations key still decodes, and defaults to empty")
     func placementWithoutTranslationsSurvives() throws {
         let sdkConfig = try #require(try ResolvedConfigDecoder.decode(Data(Self.fullResponse.utf8)).sdkConfig)

@@ -39,15 +39,11 @@ public fun interface FrakLogSink {
 /** How inbound links carrying an `fCtx` reach the SDK. */
 public enum class DeepLinkHandling {
     /**
-     * The SDK watches host activities itself (see [id.frak.sdk.applink.DeepLinkObserver]) and
-     * calls [id.frak.sdk.AppLinkApi.handleReferral] for every inbound `Intent`, including the
-     * one delivered to `onCreate`/`onNewIntent`. Calling `handleReferral` yourself for a URL
-     * that already arrived that way tracks the same arrival twice: the observer only guards
-     * against re-firing on its *own* re-delivery (an `Intent` extra marks an intent already
-     * consumed), not against a merchant's manual call for the same URL.
+     * The SDK watches host activities itself and calls [id.frak.sdk.AppLinkApi.handleReferral]
+     * for every inbound `Intent`. Calling `handleReferral` yourself for the same URL double-tracks
+     * the arrival: the observer only guards against its own re-delivery, not a manual call.
      *
-     * Android-only: iOS has no equivalent lifecycle hook to observe, and only offers `Manual`/
-     * `Disabled`.
+     * Android-only: iOS only offers `Manual`/`Disabled`.
      */
     Automatic,
 
@@ -81,16 +77,13 @@ public class FrakConfig(
     public val env: FrakEnvironment = FrakEnvironment.Production,
     public val deepLink: DeepLinkHandling = DeepLinkHandling.Automatic,
     /**
-     * Whether **tracking** may run. `false` means no anonymous id is ever minted and no tracking
-     * request is issued, and it is a hard floor that [id.frak.sdk.FrakClient.setTrackingEnabled]
-     * cannot lift at runtime (S6a/C7).
+     * Whether tracking may run. `false` means no anonymous id is ever minted and no tracking
+     * request is issued; a hard floor [id.frak.sdk.FrakClient.setTrackingEnabled] cannot lift at
+     * runtime.
      *
-     * It is not a whole-SDK off switch: merchant config and reward resolution still run, because
-     * they carry no identifier for the user (S9). Sharing does stop, since a share link is the
-     * anonymous id.
-     *
-     * Leave it `true` and drive consent through [id.frak.sdk.FrakClient.setTrackingEnabled]
-     * instead unless you want a build that can never track.
+     * Not a whole-SDK off switch: merchant config and reward resolution still run since they
+     * carry no user identifier. Sharing does stop, since a share link is the anonymous id.
+     * Leave `true` and drive consent through [id.frak.sdk.FrakClient.setTrackingEnabled] instead.
      */
     public val trackingEnabled: Boolean = true,
     public val logLevel: FrakLogLevel = FrakLogLevel.NONE,

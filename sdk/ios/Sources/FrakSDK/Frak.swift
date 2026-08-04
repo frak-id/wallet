@@ -14,7 +14,7 @@ public enum Frak {
     // Kept alongside the client so preloadSharing can be read without widening FrakClient.
     nonisolated(unsafe) private static var configuration: FrakConfig?
 
-    // Non-blocking, no I/O, never throws. Second call is a no-op (first config wins).
+    // Non-blocking, no I/O, never throws. Second call is a no-op; the first configuration wins.
     public static func initialize(_ config: FrakConfig) {
         let logger = FrakLogger(level: config.logLevel, sink: config.logSink)
         let effective = config.withBundleIdFromMainBundle()
@@ -42,9 +42,9 @@ public enum Frak {
                 return .missingStore
             }
 
-            // ONE instance, shared by the client and the identity store. Two would memoise the
+            // One instance, shared by the client and the identity store: two would memoise the
             // persisted decision independently and drift the moment setTrackingEnabled is called.
-            // It lives in the identity suite, not the disposable config cache.
+            // Lives in the identity suite, not the disposable config cache.
             let consent = TrackingConsent(
                 store: identityStore,
                 configDefault: effective.trackingEnabled,
@@ -106,9 +106,9 @@ public enum Frak {
         }
     }
 
-    /// Same as `client`, but nil instead of throwing (A6): for a call site that would just
-    /// `try?` it anyway. `client` itself already composes with `try?`; this exists for parity
-    /// with the Android surface, and for a call site that reads better without `try?`.
+    /// Same as `client`, but nil instead of throwing: for a call site that would just `try?`
+    /// it anyway. Exists for parity with the Android surface, and for a call site that reads
+    /// better without `try?`.
     public static var clientOrNull: FrakClient? {
         lock.lock()
         defer { lock.unlock() }
@@ -116,7 +116,7 @@ public enum Frak {
     }
 
     // Pure/static: works before initialize(_:) has run. Decode-only — arrival tracking
-    // and the self-referral guard are FrakClient.appLink.handleReferral(_:).
+    // and the self-referral guard live in FrakClient.appLink.handleReferral(_:).
     public static func parseReferralLink(_ url: String) -> FrakContext? {
         SharingLinkBuilder.parse(url)
     }
@@ -142,11 +142,10 @@ public enum Frak {
     /// Tears the SDK down: cancels the background work it owns and drops the client so
     /// `initialize(_:)` can run again with a different `FrakConfig`.
     ///
-    /// S6b/C7. **Not a privacy control** — use `FrakClient.setTrackingEnabled(_:)` for that;
-    /// shutting the SDK down neither records a consent decision nor erases anything, so a merchant
-    /// who calls only this has stopped tracking for exactly as long as their process lives. This
-    /// exists so a host can deterministically release the SDK, and so the facade is testable at
-    /// all (T2/8.8).
+    /// Not a privacy control — use `FrakClient.setTrackingEnabled(_:)` for that; shutting the
+    /// SDK down neither records a consent decision nor erases anything, so a merchant who calls
+    /// only this has stopped tracking for exactly as long as their process lives. Exists so a
+    /// host can deterministically release the SDK, and so the facade is testable at all.
     ///
     /// Idempotent and safe before `initialize(_:)`.
     public static func shutdown() async {
@@ -156,13 +155,11 @@ public enum Frak {
     /// Clears every singleton and hands back the client that was live, for `shutdown()` to await
     /// outside the lock.
     ///
-    /// Deliberately a separate SYNCHRONOUS function rather than a `lock()`/`unlock()` pair inside
-    /// `shutdown()` itself: `NSLock.lock()`/`unlock()` are unavailable from an async context under
-    /// Swift 6 (`-swift-version 6`, which is the flag `scripts/run.sh` builds the real iOS triple
-    /// with), so the inline version compiled on the host toolchain in Swift 5 mode and failed the
-    /// simulator build. Hoisting the critical section out also makes the rule it was upholding
-    /// — the lock must never span a suspension point — structural rather than a comment: there is
-    /// no `await` this function could reach.
+    /// A separate synchronous function rather than a `lock()`/`unlock()` pair inside
+    /// `shutdown()` itself: `NSLock.lock()`/`unlock()` are unavailable from an async context
+    /// under Swift 6 strict concurrency, so the inline version failed the simulator build.
+    /// Hoisting the critical section out also makes the "lock never spans a suspension point"
+    /// rule structural: there is no `await` this function could reach.
     private static func takeForShutdown() -> DefaultFrakClient? {
         lock.lock()
         defer { lock.unlock() }

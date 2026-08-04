@@ -28,9 +28,7 @@ import { initSafeAreaInsets } from "./utils/safeArea";
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
 
-// The wallet embeds a few core-SDK helpers (in-app-browser escape) that reach
-// the backend through the SDK's environment singleton. Nothing sets it here —
-// this app isn't an SDK integration — so publish this build's own origins.
+// Core-SDK helpers (in-app-browser escape) reach the backend through the SDK's environment singleton; this app isn't an SDK integration, so publish this build's own origins here.
 setEnvironment({
     wallet: window.location.origin,
     backend: process.env.BACKEND_URL ?? "https://backend.frak.id",

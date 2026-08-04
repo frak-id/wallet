@@ -19,8 +19,7 @@ struct AnonymousIdStoreTests {
             store: values,
             logger: logger,
             merchantMarker: merchantMarker,
-            // The consent gate this store now reads. Built over the SAME `values` store the
-            // identity uses, exactly as `Frak.initialize` wires it.
+            // Shares `values` with the identity store, as `Frak.initialize` wires it.
             consent: TrackingConsent(store: values, configDefault: trackingEnabled, logger: logger)
         )
     }
@@ -57,9 +56,6 @@ struct AnonymousIdStoreTests {
         #expect(await store.signProof(.ensure, merchantId: Self.merchantId) == nil)
     }
 
-    /// Pins the decision not to cache the failure. A keystore can refuse for reasons that pass:
-    /// key operations are unavailable before the device's first unlock, so an app launched by a
-    /// push on a rebooted phone would otherwise be stuck inert until the user force-quit it.
     @Test("a keystore that recovers gets an id, without a restart")
     func recoversAfterATransientRefusal() async {
         let keyStore = FakeDeviceKeyStore(failOnCreate: true)
@@ -71,10 +67,6 @@ struct AnonymousIdStoreTests {
         #expect(await store.anonymousId() != nil)
     }
 
-    /// A refusal is a `Task` too, and 4.5's whole point is that a `Task` is memoised. This pins
-    /// that the memoisation is conditional on success: a recovered mint is cached exactly once
-    /// (one `keyStore.creations`), and the earlier failed attempt cost zero extra key
-    /// generations — it is dropped, not retried in a loop, and not left occupying the slot.
     @Test("does not cache a transient refusal, and the eventual mint is still memoised")
     func doesNotCacheATransientRefusal() async {
         let keyStore = FakeDeviceKeyStore(failOnCreate: true)
@@ -150,10 +142,6 @@ struct AnonymousIdStoreTests {
         #expect(await store.signProof(.ensure, merchantId: "not-a-uuid") == nil)
     }
 
-    /// 4.5: two callers racing `anonymousId()` — one via `startEagerGeneration`, one calling
-    /// directly — must await the SAME in-flight generation rather than each independently
-    /// re-entering `FakeDeviceKeyStore.loadOrCreate`. Two key generations here would mean the
-    /// single-flight guard failed and a racing caller re-minted a second identity.
     @Test("a caller racing eager generation shares it instead of minting a second identity")
     func racingEagerGenerationSharesTheSameTask() async {
         let keyStore = FakeDeviceKeyStore()
@@ -164,29 +152,22 @@ struct AnonymousIdStoreTests {
 
         _ = await eager
         // Hoisted out of `#expect`: an `async let` variable cannot be awaited inside the closure
-        // the macro expands to (see SingleFlightTests.swift's note on the same restriction).
+        // the macro expands to.
         let racerId = await racer
         #expect(racerId != nil)
         #expect(keyStore.creations == 1)
     }
 
-    // 4fp / erasure-path race: a caller already suspended on the in-flight generation when
-    // `reset()` runs must never receive the identity `reset()` is in the middle of erasing.
-    // `Task.detached`'s `load()` is synchronous non-cooperative code, so `generation?.cancel()`
-    // cannot actually stop it mid-flight the way `Deferred.cancel()` does on the Android twin —
-    // it only flips `Task.isCancelled`, which `identity()` must check AFTER awaiting, not before,
-    // to catch a `reset()` that lands while the await is suspended. `async let` gives both sides
-    // a genuine chance to interleave through the cooperative pool without an artificial delay
-    // hook that `FakeDeviceKeyStore` does not have; it cannot force the exact interleaving
-    // deterministically, but any interleaving it does produce must satisfy the invariant below.
+    // `Task.detached`'s `load()` does not cooperate with cancellation: `generation?.cancel()`
+    // only flips `Task.isCancelled`, so `identity()` must check it after awaiting, not before.
     @Test("a caller racing reset never receives the identity reset is erasing", arguments: 0..<20)
     func racingResetNeverPublishesTheErasedIdentity(iteration: Int) async {
         let keyStore = FakeDeviceKeyStore()
         let store = makeStore(keyStore: keyStore)
         let original = await store.anonymousId()
 
-        // A fresh generation is already installed by the read above, so this races the SECOND
-        // caller against reset() clearing that same in-flight-or-completed generation.
+        // The read above already installed a generation; this races a second caller against
+        // reset() clearing that same generation.
         async let racer = store.anonymousId()
         async let resetOk = store.reset()
 
@@ -194,11 +175,6 @@ struct AnonymousIdStoreTests {
         let resetSucceeded = await resetOk
         #expect(resetSucceeded)
 
-        // The racer is allowed to see the ORIGINAL id (reset() had not yet cleared the memo when
-        // it read) or a brand new one (reset() ran first) — both are legitimate outcomes of an
-        // honest race. What must never happen: reset() reports success while the racer's answer
-        // is an identity that is neither the original nor the store's post-reset steady state,
-        // which would mean it received a value load() computed but reset() had already erased.
         let after = await store.anonymousId()
         if let racerId {
             #expect(racerId == original || racerId == after, "racer's id must be a real, live generation")

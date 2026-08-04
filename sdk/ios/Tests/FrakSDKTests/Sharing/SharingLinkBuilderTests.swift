@@ -4,7 +4,7 @@ import Testing
 
 @Suite("SharingLinkBuilder")
 struct SharingLinkBuilderTests {
-    /// The corpus's `c-only` fixture, so the link tests and the codec tests cannot drift.
+    /// The corpus's `c-only` fixture; keeps the link tests and the codec tests from drifting.
     private static let context = FrakContext.V2(
         merchantId: "550e8400-e29b-41d4-a716-446655440000",
         timestamp: 1_709_654_400,
@@ -12,8 +12,8 @@ struct SharingLinkBuilderTests {
     )
     private static let encodedContext = "ElUOhADim0HUpxZEZlVEAABl50GAVQ6EAOKbQdSnFkRmVUQAAQ"
 
-    /// The corpus's `timestamp-uint32-max` fixture, whose wire string actually contains the
-    /// two characters a channel re-encodes. `c-only`'s does not, so mangling it proves nothing.
+    /// The corpus's `timestamp-uint32-max` fixture, whose wire string actually contains the two
+    /// characters a channel re-encodes; `c-only`'s does not, and mangling it would prove nothing.
     private static let mangleableContext = FrakContext.V2(
         merchantId: "550e8400-e29b-41d4-a716-446655440000",
         timestamp: 4_294_967_295,

@@ -86,7 +86,6 @@ describe("buildHostResultUrl — the code action", () => {
     });
 
     it("never puts a value on any other action", () => {
-        // Only `code` has the exception in 01 §1.2; nothing else may carry a capability.
         expect(
             buildHostResultUrl({
                 scheme: "frak-acme",
@@ -130,10 +129,6 @@ describe("sendHostResult", () => {
     });
 
     it("lets share and copy through every time they are pressed", () => {
-        // Both are button presses, not guard re-runs: copying and then sharing,
-        // or retrying a share whose chooser the user backed out of, all have to
-        // reach the host. The page reloads between a share and its
-        // confirmation, but nothing guarantees that ordering here.
         sendHostResult({ scheme: "frak-acme", action: "share", sid: "s1" });
         sendHostResult({ scheme: "frak-acme", action: "share", sid: "s1" });
         sendHostResult({ scheme: "frak-acme", action: "copy", sid: "s1" });
@@ -153,8 +148,6 @@ describe("sendHostResult", () => {
     });
 
     it("lets a regenerated code through, but not the same one twice", () => {
-        // The code is refetchable, and a pasteboard holding a code the page is no longer
-        // showing is worse than none. Dedupe is per value, not per action.
         expect(
             sendHostResult({
                 scheme: "frak-acme",

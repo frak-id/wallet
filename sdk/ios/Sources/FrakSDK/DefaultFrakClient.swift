@@ -8,14 +8,12 @@ actor DefaultFrakClient {
     private let configStore: ConfigStore
     private let rewards: RewardRepository
     private let tracker: InteractionTracker
-    /// S6a/C7. Must be the SAME instance `identity` holds: two `TrackingConsent` actors over the
-    /// same suite would each memoise independently, so a `setTrackingEnabled(false)` here would
-    /// stop the network calls while the identity store carried on minting keypairs from its own
-    /// stale memo.
+    /// Must be the same instance `identity` holds: two `TrackingConsent` actors over the same
+    /// suite would memoise independently, so a withdrawal here wouldn't stop identity's own
+    /// key minting.
     private let consent: TrackingConsent
 
-    /// The startup drain, retained so `shutdown()` can cancel it. Previously fire-and-forget,
-    /// which is why there was nothing to cancel and no way to tear the SDK down (S6b/C7).
+    /// The startup drain, retained so `shutdown()` can cancel it.
     private var startupTask: Task<Void, Never>?
 
     init(
@@ -42,30 +40,27 @@ actor DefaultFrakClient {
             http: http,
             logger: logger,
             currentClientId: { await identity.anonymousId() },
-            // S6a/C7: read per event inside the drain, so a withdrawal that lands mid-drain stops
-            // the upload rather than only emptying a file the drain has already read.
+            // Read per event inside the drain, so a withdrawal that lands mid-drain stops the
+            // upload rather than only emptying a file the drain has already read.
             trackingAllowed: { await consent.isEnabled() }
         )
 
-        // 4.5: mints the keypair now, off whichever thread this init runs on. Then drain
-        // whatever a previous session queued and could not send — nothing else triggers a
-        // drain, since the SDK holds no connectivity callback.
+        // Mints the keypair now, off whichever thread this init runs on, then drains whatever a
+        // previous session queued and could not send. Nothing else triggers a drain: the SDK
+        // holds no connectivity callback.
         let tracker = self.tracker
         self.startupTask = Task {
-            // Gated inside AnonymousIdStore, which reads `consent` — so this is a no-op that
-            // touches no key material when consent is absent or withdrawn.
+            // Gated inside AnonymousIdStore on `consent`; a no-op when consent is absent or withdrawn.
             await identity.startEagerGeneration()
             guard await consent.isEnabled() else {
                 // Events captured before tracking was turned off must not be sent now.
                 await tracker.purge()
                 return
             }
-            // Narrow but real: `shutdown()` cancels this task BEFORE it awaits
-            // `tracker.shutdown()`, so without this check a shutdown landing in that window would
-            // resume here and schedule a drain that the tracker then immediately cancels. The
-            // load-bearing mechanism is the tracker's one-way `stopped` flag, not this line — a
-            // `Task<Void, Never>` has no throwing suspension to observe cancellation at, so
-            // cancelling it alone would be a no-op that merely READS as a teardown.
+            // A shutdown landing before this check would otherwise resume here and schedule a
+            // drain the tracker then immediately cancels. The load-bearing mechanism is the
+            // tracker's one-way `stopped` flag: `Task<Void, Never>` has no throwing suspension
+            // point, so cancelling this task alone would only read as a teardown.
             guard !Task.isCancelled else { return }
             await tracker.flush()
         }
@@ -75,42 +70,41 @@ actor DefaultFrakClient {
         settings.env
     }
 
-    /// 4.5: async, not a synchronous property — the first read used to mint a keypair on
-    /// whatever thread called it. `identity`'s own eager generation (started in `init`) means a
-    /// caller here usually awaits an already-completed result.
+    /// Async because the first read used to mint a keypair on whatever thread called it.
+    /// `identity`'s own eager generation, started in `init`, means a caller here usually awaits
+    /// an already-completed result.
     var anonymousId: String? {
         get async { await identity.anonymousId() }
     }
 
-    /// 4fp: `Bool`, matching the Android twin — false means the platform keystore refused to
-    /// erase the key, the old identity is still live, and the id did NOT rotate. This platform's
-    /// `identity.reset()` cannot itself fail (see its doc) and always returns true; the value
-    /// exists so a merchant writing shared cross-platform erasure logic has one contract to check.
+    /// `false` means the platform key store refused to erase the key: the old identity is
+    /// still live and did not rotate. This platform's `identity.reset()` cannot itself fail and
+    /// always returns true; the value exists so a merchant writing shared cross-platform
+    /// erasure logic has one contract to check.
     @discardableResult
     func resetAnonymousId() async -> Bool {
         let erased = await identity.reset()
-        // Purged, not left behind: an event captured under a dead id would re-link the
-        // identity the user just asked to be forgotten. Best-effort cleanup — the guarantee
-        // comes from the drain loop, which drops any event whose captured id is stale.
+        // Purged so an event captured under the dead id doesn't re-link the identity the user
+        // just asked to be forgotten. Best-effort; the drain loop's stale-id check is the real
+        // guarantee.
         let tracker = self.tracker
         Task { await tracker.purge() }
         return erased
     }
 
-    /// S6a/C7: the runtime half of `FrakConfig.trackingEnabled`. `false` stops the SDK talking to
-    /// the backend for the rest of this install, not just this process — the decision is persisted.
+    /// The runtime half of `FrakConfig.trackingEnabled`. `false` stops the SDK talking to the
+    /// backend for the rest of this install, not just this process — the decision is persisted.
     ///
-    /// Deliberately does NOT touch the keypair. Withdrawal and erasure are two calls, not one:
-    /// `resetAnonymousId()` can fail on Android (the keystore refuses), and a consent setter whose
-    /// return value meant "your consent change may not have applied" would be a worse API than
-    /// either half. It also lets a merchant express a *pause* — a session-scoped opt-out, an ATT
-    /// refusal, a minor-mode screen — without burning attribution a later opt-in would want back.
-    /// The documented withdrawal recipe is both, in that order.
+    /// Deliberately does not touch the keypair: withdrawal and erasure are two calls, not one.
+    /// `resetAnonymousId()` can fail on Android, and a combined setter whose return value meant
+    /// "your consent change may not have applied" would be worse than either half separately.
+    /// It also lets a merchant express a pause — a session-scoped opt-out, an ATT refusal, a
+    /// minor-mode screen — without burning attribution a later opt-in would want back.
     ///
-    /// The queue IS purged, because those events were captured under a decision that has just been
-    /// revoked. That deletes merchant-owned purchase events which may be mid-reconciliation; it is
-    /// the correct privacy behaviour and it has a real revenue consequence, so it is stated here
-    /// and in the README rather than left to be discovered.
+    /// The queue is purged, because those events were captured under a decision that has just
+    /// been revoked. That deletes merchant-owned purchase events which may be mid-reconciliation;
+    /// it is the correct privacy behaviour and it has a real revenue consequence, documented
+    /// here and in the README.
     func setTrackingEnabled(_ enabled: Bool) async {
         await consent.setEnabled(enabled)
         if !enabled {
@@ -123,42 +117,39 @@ actor DefaultFrakClient {
         await consent.isEnabled()
     }
 
-    /// S6b/C7. Cancels the background work this client owns — the startup drain and any queue
-    /// drain in flight.
+    /// Cancels the background work this client owns: the startup drain and any queue drain in
+    /// flight.
     ///
-    /// Idempotent, and there is **no restart contract**: this client is dead afterwards. Get a live
+    /// Idempotent, and there is no restart contract: this client is dead afterwards. Get a live
     /// one from `Frak.initialize` after `Frak.shutdown()`. Not a privacy control —
     /// `setTrackingEnabled` is; this exists so a host process can tear the SDK down
-    /// deterministically, which is also what makes the facade testable (T2/8.8).
+    /// deterministically.
     ///
-    /// **Still weaker than the Android twin, and named as such rather than papered over.** Android
-    /// cancels ONE `SupervisorJob` scope that every background coroutine is structured under, and
-    /// `cancelAndJoin` waits for all of them. This platform has no such scope, so the guarantee is
-    /// assembled by hand and is guaranteed only for what this client retains:
+    /// Weaker than the Android twin, and named as such rather than papered over. Android
+    /// cancels one `SupervisorJob` scope every background coroutine is structured under, and
+    /// `cancelAndJoin` waits for all of them. This platform has no such scope, so the guarantee
+    /// is assembled by hand and covers only what this client retains:
     ///
-    /// - the startup drain — cancelled, and its body checks `Task.isCancelled` before scheduling a
-    ///   flush, so cancelling it is not the no-op that `Task<Void, Never>` would otherwise make it;
-    /// - the tracker — `InteractionTracker.shutdown()` cancels the in-flight drain **and refuses to
-    ///   start another**, which is what stops a later `track()` from reviving one;
-    /// - **not covered**: `ConfigStore`'s background revalidation, `RewardRepository`, and
-    ///   `resetAnonymousId`'s purge, all of which spawn unstructured `Task`s that nothing retains;
-    ///   and the eager identity mint, a `Task.detached` inside `AnonymousIdStore`. None of them
-    ///   sends a tracked event, but they can still touch the network and the config suite after
-    ///   this returns, and nothing here waits for them.
-    ///
-    /// Giving iOS a single owned task group is the real fix and is deliberately not being attempted
-    /// in the same change as the consent work.
+    /// - the startup drain — cancelled, and its body checks `Task.isCancelled` before
+    ///   scheduling a flush, so cancelling it is not the no-op `Task<Void, Never>` would
+    ///   otherwise make it;
+    /// - the tracker — `InteractionTracker.shutdown()` cancels the in-flight drain and refuses
+    ///   to start another, which is what stops a later `track()` from reviving one;
+    /// - not covered: `ConfigStore`'s background revalidation, `RewardRepository`, and
+    ///   `resetAnonymousId`'s purge, all of which spawn unstructured `Task`s that nothing
+    ///   retains, and the eager identity mint, a `Task.detached` inside `AnonymousIdStore`.
+    ///   None of them sends a tracked event, but they can still touch the network and the
+    ///   config suite after this returns.
     func shutdown() async {
         startupTask?.cancel()
         startupTask = nil
         await tracker.shutdown()
     }
 
-    /// C3: `ConfigStore` owns the stream now — `fetch` is its one publish point, foreground or
-    /// background alike. This forwards it unchanged. `nil` when `FrakConfig` carries neither a
-    /// `merchantId` nor a `packageId` (see `MerchantQuery.from`): a config that cannot identify a
-    /// merchant at all cannot be hydrated from disk either, so that case degrades to `nil` exactly
-    /// like a genuine cache miss would.
+    /// `ConfigStore` owns the stream now; this forwards it unchanged. `nil` when `FrakConfig`
+    /// carries neither a `merchantId` nor a `packageId` — a config that cannot identify a
+    /// merchant cannot be hydrated from disk either, so that case degrades to `nil` like a
+    /// genuine cache miss.
     var currentConfig: FrakResolvedConfig? {
         get async {
             guard let query = try? MerchantQuery.from(settings) else { return nil }
@@ -170,11 +161,11 @@ actor DefaultFrakClient {
         get async { await configStore.updates }
     }
 
-    /// S9: deliberately NOT gated on consent, unlike every tracking entry point. This request
-    /// carries no user identifier at all — `x-frak-client-id` is set only by `InteractionTracker`
-    /// — so refusing it with tracking off bought no privacy and cost the merchant their own
-    /// config, their campaign list and their reward copy. `campaigns`/`bestReward` inherit that
-    /// through `fetchRewards`, which resolves the merchant first.
+    /// Deliberately not gated on consent, unlike every tracking entry point. This request
+    /// carries no user identifier at all — `x-frak-client-id` is set only by
+    /// `InteractionTracker` — so refusing it with tracking off bought no privacy and cost the
+    /// merchant their own config, their campaign list and their reward copy. `campaigns`/
+    /// `bestReward` inherit that through `fetchRewards`, which resolves the merchant first.
     func resolveConfig(forceRefresh: Bool = false) async throws -> FrakResolvedConfig {
         try await frakCall {
             let query = try MerchantQuery.from(settings)
@@ -265,11 +256,10 @@ actor DefaultFrakClient {
     func handleReferralLink(_ url: String) async -> Bool {
         guard settings.deepLink != .disabled, let context = SharingLinkBuilder.parse(url) else { return false }
 
-        // 3.2: currentConfig now hydrates from disk on demand (see its doc) rather than only
-        // reading whatever memory already held, so a warm start reached via this very deep link
-        // — before anything has called resolveConfig() — can still resolve a merchant id. Only
-        // reached when settings.merchantId is unset, so a merchant who did set it never pays for
-        // the disk read.
+        // `currentConfig` hydrates from disk on demand, so a warm start reached via this deep
+        // link — before anything has called resolveConfig() — can still resolve a merchant id.
+        // Only reached when settings.merchantId is unset, so a merchant who did set it never
+        // pays for the disk read.
         var ownMerchantId = settings.merchantId
         if ownMerchantId == nil, let query = try? MerchantQuery.from(settings) {
             ownMerchantId = await configStore.currentConfig(query)?.merchantId
@@ -298,9 +288,9 @@ actor DefaultFrakClient {
         // Attempted rather than gated on the probe: `canOpenURL` answers false when the
         // merchant forgot `LSApplicationQueriesSchemes` — which the SDK cannot inject, iOS
         // having no manifest merger — and `open(_:)` is not gated by that list. Trusting the
-        // probe would turn one missed line of integration docs into a wallet that is
-        // installed and never opens. `open` already answers false for an unhandled scheme,
-        // so the store fallback below is reached either way.
+        // probe would turn one missed line of integration docs into a wallet that is installed
+        // and never opens. `open` already answers false for an unhandled scheme, so the store
+        // fallback below is reached either way.
         let deepLink = InstallLinks.deepLink(
             scheme: settings.env.walletScheme,
             merchantId: install.merchantId,
@@ -328,8 +318,8 @@ actor DefaultFrakClient {
     func installPageURL(returnScheme: String, sessionId: String) async -> String? {
         guard let install = await installIdentity() else { return nil }
         // Minted here rather than when the sheet opens: most sessions never reach the install
-        // step, an enclave signature can fail for reasons that have nothing to do with
-        // sharing, and the backend's 30-day window runs from this timestamp.
+        // step, an enclave signature can fail for reasons that have nothing to do with sharing,
+        // and the backend's 30-day window runs from this timestamp.
         let proof = await identity.signProof(.install, merchantId: install.merchantId)
         return InstallLinks.installPage(
             walletOrigin: settings.env.wallet,
@@ -349,20 +339,17 @@ actor DefaultFrakClient {
         return (merchantId, anonymousId)
     }
 
-    /// The resolved config where one is available, nil where it is not.
-    ///
-    /// For the calls specified as nullable and never-throwing: a resolve failure means the
-    /// same thing to their caller as no identity — there is nothing to hand back. Callers
-    /// must still check `Task.isCancelled`, since this cannot tell them apart.
+    /// The resolved config where one is available, nil where it is not. A resolve failure
+    /// means the same thing to the caller as no identity — there is nothing to hand back.
+    /// Callers must still check `Task.isCancelled` separately, since this cannot tell them
+    /// apart.
     private func availableConfig() async -> FrakResolvedConfig? {
         try? await resolveConfig()
     }
 
-    /// Resolves the merchant an event belongs to, then runs `body`.
-    ///
-    /// Failure here is only ever a reason that will not resolve itself — tracking off, or no
-    /// merchant to attribute to. Everything transient is the queue's problem, not the
-    /// caller's, which is why nothing about connectivity can reach this return value.
+    /// Resolves the merchant an event belongs to, then runs `body`. Failure here is only ever
+    /// a reason that will not resolve itself — tracking off, or no merchant to attribute to.
+    /// Everything transient is the queue's problem, not the caller's.
     private func trackingCall(_ body: (String) async -> Void) async -> Result<Void, FrakError> {
         guard await consent.isEnabled() else { return .failure(.trackingDisabled) }
         let merchantId: String
@@ -375,9 +362,9 @@ actor DefaultFrakClient {
                 return .failure(error)
             } catch {
                 // `resolveConfig` is `frakCall`-wrapped, so the only thing left is a
-                // `CancellationError`. `.network` because that is literally what happened —
-                // the request never reached the backend — and never `.decoding`, which means
-                // the frozen binary and the deployed backend disagree and is worth an alert.
+                // `CancellationError`. `.network` because that is literally what happened — the
+                // request never reached the backend — and never `.decoding`, which would mean
+                // the frozen binary and the deployed backend disagree.
                 return .failure(.network(underlying: error))
             }
         }
@@ -385,13 +372,13 @@ actor DefaultFrakClient {
         return .success(())
     }
 
-    /// Resolves the merchant, then reads its rewards. Sequencing resolve first means a
-    /// bad merchant id surfaces as `merchantResolutionFailed` rather than a
-    /// permanently empty reward list; it is nearly always a cache hit.
+    /// Resolves the merchant, then reads its rewards. Sequencing resolve first means a bad
+    /// merchant id surfaces as `merchantResolutionFailed` rather than a permanently empty
+    /// reward list; it is nearly always a cache hit.
     ///
-    /// `forceRefresh` forwards to the config resolve too (D6): a caller asking to bypass the
-    /// rewards cache almost certainly also wants a fresh merchant id/currency, not a stale one
-    /// served alongside freshly-fetched rewards.
+    /// `forceRefresh` forwards to the config resolve too: a caller asking to bypass the rewards
+    /// cache almost certainly also wants a fresh merchant id/currency, not a stale one served
+    /// alongside freshly-fetched rewards.
     private func fetchRewards(
         targetInteraction: String?,
         audience: RewardAudience?,
@@ -408,8 +395,4 @@ actor DefaultFrakClient {
             forceRefresh: forceRefresh
         )
     }
-
-    // There is no `requireTrackingEnabled()` here any more (S6a/S9). Its last caller was
-    // `resolveConfig`, which is deliberately ungated; `trackingCall` reads `consent` directly
-    // because it must return a `Result` rather than throw.
 }

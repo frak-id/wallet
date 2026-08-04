@@ -263,17 +263,13 @@ async function fetchMerchantFromBackend(
 }
 
 /**
- * Ensure the wallet + backend URL metafields match the current environment.
- * They're the two halves of the SDK's `env`, so they're read, compared and
- * written as one — a shop holding one from stage A and the other from stage B
- * sends storefront traffic to the wrong backend.
+ * Ensure the wallet + backend URL metafields match the current environment. Read, compared and written together so no shop is left with a cross-stage pair.
  * Uses an in-memory cache to avoid redundant GraphQL calls.
  */
 export async function ensureEnvMetafields(
     context: AuthenticatedContext
 ): Promise<void> {
-    // Deliberately the un-defaulted origins: an unconfigured deployment must
-    // not stamp production onto every shop it touches.
+    // Un-defaulted origins: an unconfigured deployment must not stamp production onto every shop it touches.
     const { wallet: expectedWalletUrl, backend: expectedBackendUrl } =
         configuredOrigins();
     if (!expectedWalletUrl || !expectedBackendUrl) return;
@@ -293,15 +289,13 @@ export async function ensureEnvMetafields(
             currentWallet !== expectedWalletUrl ||
             currentBackend !== expectedBackendUrl
         ) {
-            // Both keys in one mutation: a partial write would leave the shop
-            // with a cross-stage pair until the next admin visit.
+            // Both keys in one mutation: a partial write would leave a cross-stage pair until the next admin visit.
             await writeEnvMetafields(context, {
                 walletUrl: expectedWalletUrl,
                 backendUrl: expectedBackendUrl,
             });
         }
-        // Only on success — a throw above leaves the shop unmarked so the next
-        // admin load retries.
+        // Only on success — a throw above leaves the shop unmarked so the next admin load retries.
         envSyncedShops.set(cacheKey, true);
     } catch (error) {
         log.error({ err: error }, "env metafield sync failed");

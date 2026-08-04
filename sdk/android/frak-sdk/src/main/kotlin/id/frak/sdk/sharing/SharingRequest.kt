@@ -10,10 +10,8 @@ public class SharingProduct(
     /** `utm_content` for a link built from this product; highest-priority source for that field. */
     public val utmContent: String? = null,
     /**
-     * Scope fields for reward selection (`bestReward`, the sharing page's own selection).
-     * Composed rather than flattened: this type's fields are display copy, [ProductDetails]'
-     * are what a `productScope` can match on, and merging them would force every render-only
-     * call site to also decide what its scope fields are.
+     * Scope fields for reward selection. Composed rather than flattened: this type's fields are
+     * display copy, [ProductDetails]' are what a `productScope` can match on.
      */
     public val details: ProductDetails? = null,
 )

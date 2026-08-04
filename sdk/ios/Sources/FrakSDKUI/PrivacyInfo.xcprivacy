@@ -1,34 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  FrakSDKUI's own privacy manifest.
-
-  This is a separate `.library` product (see Package.swift): a merchant can take
-  FrakSDKUI without FrakSDK's manifest applying to it, and once the XCFramework path
-  exists each framework is signed and aggregated on its own. Apple aggregates the
-  privacy report per binary, so an absent file here is not "inherits FrakSDK's" — it
-  is a hole in the merchant's privacy report, and ITMS-91053 lands on THEIR upload.
-
-  An explicit empty NSPrivacyAccessedAPITypes array is a declaration. An absent file
-  is not. That distinction is the whole reason this file exists.
+  FrakSDKUI's own privacy manifest. A separate `.library` product (see Package.swift),
+  so it needs its own manifest rather than inheriting FrakSDK's.
 
   Keep in step with Sources/FrakSDK/PrivacyInfo.xcprivacy: the collected types below
   are the subset FrakSDKUI is itself responsible for, not a copy of the full set.
 -->
 <plist version="1.0">
 <dict>
-    <!-- Same posture as FrakSDK: nothing is joined with other companies' data, nothing goes to a broker. -->
     <key>NSPrivacyTracking</key>
     <false/>
     <key>NSPrivacyTrackingDomains</key>
     <array/>
     <key>NSPrivacyCollectedDataTypes</key>
     <array>
-        <!--
-          `SharingPageURL.build` puts `clientId` (the anonymous id) and `merchantId`
-          in the query string of the wallet page loaded in the sheet's WKWebView, so
-          the id leaves the device from this module directly, not only via FrakSDK.
-        -->
+        <!-- SharingPageURL.build puts clientId (the anonymous id) and merchantId in the wallet page URL loaded in the sheet's WKWebView. -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
             <string>NSPrivacyCollectedDataTypeDeviceID</string>
@@ -42,10 +29,7 @@
                 <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
             </array>
         </dict>
-        <!--
-          The sheet reports what the user did with the share (`SharingSheetModel`
-          drives a `sharing` interaction through the client). Product Interaction.
-        -->
+        <!-- The sheet reports what the user did with the share via a `sharing` interaction. -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
             <string>NSPrivacyCollectedDataTypeProductInteraction</string>
@@ -60,15 +44,7 @@
             </array>
         </dict>
     </array>
-    <!--
-      Deliberately empty, and verified rather than assumed. FrakSDKUI touches none of
-      the five required-reason categories: it holds no UserDefaults of its own (that is
-      FrakSDK's, declared there), reads no file timestamps, and queries neither disk
-      space nor system boot time nor active keyboards. `UIPasteboard.general` in
-      NativeShare.swift is not a required-reason category. WKWebView is not either.
-
-      Re-verify this array whenever a UIKit/Foundation call is added to this module.
-    -->
+    <!-- Empty: FrakSDKUI touches none of the five required-reason categories. Re-verify whenever a UIKit/Foundation call is added to this module. -->
     <key>NSPrivacyAccessedAPITypes</key>
     <array/>
 </dict>

@@ -40,12 +40,7 @@ internal class DefaultFrakClient(
     store: KeyValueStore,
     queue: EventQueue,
     private val identity: AnonymousIdStore,
-    /**
-     * S6a/C7. Must be the SAME instance [identity] holds: two [TrackingConsent] objects over the
-     * same store would each memoise independently, so a `setTrackingEnabled(false)` here would
-     * stop the network calls while the identity store carried on minting keypairs from its own
-     * stale memo.
-     */
+    /** Must be the same instance [identity] holds: two [TrackingConsent] objects over the same store would memoise independently and drift. */
     private val consent: TrackingConsent,
     private val launcher: AppLauncher,
     private val logger: FrakLogger,
@@ -76,12 +71,12 @@ internal class DefaultFrakClient(
             logger,
             scope,
             currentClientId = { identity.anonymousId() },
-            // S6a/C7: read per event inside the drain, so a withdrawal that lands mid-drain stops
-            // the upload rather than only emptying a file the drain has already read.
+            // Read per event inside the drain, so a withdrawal that lands mid-drain stops the
+            // upload rather than only emptying a file the drain has already read.
             trackingAllowed = { consent.isEnabled() },
         )
 
-    /** C3: [ConfigStore] owns the stream now — [fetch][ConfigStore] is its one publish point, foreground or background alike. This forwards it unchanged. */
+    /** Forwards [ConfigStore]'s stream unchanged; [ConfigStore] owns publishing. */
     val configUpdates: StateFlow<FrakResolvedConfig?> = configStore.updates
 
     val environment: FrakEnvironment get() = settings.env
@@ -89,24 +84,13 @@ internal class DefaultFrakClient(
     /** Read by `Frak.preloadSharing`. Not on [FrakClient] itself: that would break every hand-written fake. */
     internal val preloadSharing: Boolean get() = settings.preloadSharing
 
-    /**
-     * 4.5: suspend, not a synchronous property — the first read used to mint a keypair on
-     * whatever thread called it, main thread included. [identity]'s own eager generation
-     * (started below, in `init`) means a caller here usually awaits an already-completed result.
-     */
+    /** Suspend, not a synchronous property: the first read mints a keypair, which must not run on the caller's thread. [identity]'s eager generation in `init` usually means this awaits an already-completed result. */
     suspend fun anonymousId(): String? = identity.anonymousId()
 
-    /**
-     * 4fp: `Boolean`, not `Unit` — false means the platform keystore refused to erase the key, the
-     * old identity is still live, and the id did NOT rotate. Callers with a legal erasure
-     * obligation must check this rather than assume success.
-     */
+    /** `Boolean`, not `Unit`: false means the platform keystore refused to erase the key and the id did not rotate. */
     suspend fun resetAnonymousId(): Boolean {
-        // Only purge on a confirmed erasure: a throwing keystore delete leaves the old identity
-        // in place (AnonymousIdStore.reset), and purging anyway would discard queued events that
-        // are about to be re-sent under an id that never actually rotated — permanent data loss
-        // for a GDPR erasure that silently failed. Purge itself stays best-effort cleanup; the
-        // guarantee is the flush loop dropping events whose captured id no longer matches current.
+        // Only purge on confirmed erasure: purging after a failed keystore delete would discard
+        // queued events for an id that never actually rotated.
         val erased = identity.reset()
         if (erased) {
             scope.launch { tracker.purge() }
@@ -115,20 +99,14 @@ internal class DefaultFrakClient(
     }
 
     /**
-     * S6a/C7: the runtime half of [FrakConfig.trackingEnabled]. `false` stops the SDK talking to
-     * the backend for the rest of this install, not just this process — the decision is persisted.
+     * The runtime half of [FrakConfig.trackingEnabled]. `false` stops the SDK talking to the
+     * backend for the rest of this install; the decision is persisted.
      *
-     * Deliberately does NOT touch the keypair. Withdrawal and erasure are two calls, not one:
-     * [resetAnonymousId] can fail (the keystore refuses), and a consent setter whose return value
-     * meant "your consent change may not have applied" would be a worse API than either half. It
-     * also lets a merchant express a *pause* — a session-scoped opt-out, an ATT refusal, a
-     * minor-mode screen — without burning attribution that a later opt-in would want back. The
-     * documented withdrawal recipe is both, in that order.
+     * Does not touch the keypair: withdrawal and erasure are two calls, so a merchant can
+     * express a pause without burning attribution a later opt-in would want back.
      *
-     * The queue IS purged, because those events were captured under a decision that has just been
-     * revoked. That deletes merchant-owned purchase events which may be mid-reconciliation; it is
-     * the correct privacy behaviour and it has a real revenue consequence, so it is stated here
-     * and in the README rather than left to be discovered.
+     * The queue is purged, since those events were captured under a decision that has just been
+     * revoked.
      */
     suspend fun setTrackingEnabled(enabled: Boolean) {
         consent.setEnabled(enabled)
@@ -139,28 +117,25 @@ internal class DefaultFrakClient(
     suspend fun isTrackingEnabled(): Boolean = consent.isEnabled()
 
     /**
-     * S6b/C7. Cancels every background coroutine this client owns — the queue drain, config
-     * revalidation, the eager identity mint — and waits for them to finish.
+     * Cancels every background coroutine this client owns (queue drain, config revalidation, the
+     * eager identity mint) and waits for them to finish.
      *
-     * Idempotent, and there is **no restart contract**: get a live client from
-     * [id.frak.sdk.Frak.initialize] after [id.frak.sdk.Frak.shutdown]. "Dead" means no background
-     * work, not that every member throws — `track` in particular still returns
-     * [FrakResult.Success], because the enqueue runs on the caller's context and is genuinely
-     * durable; only the drain behind it is gone, so the event ships on the next launch instead. Not a privacy control — [setTrackingEnabled] is the
-     * privacy control; this exists so a host process can tear the SDK down deterministically, which
-     * is also the only way the `Frak` facade becomes testable (T2/8.8).
+     * Idempotent, with no restart contract: get a live client from [id.frak.sdk.Frak.initialize]
+     * after [id.frak.sdk.Frak.shutdown]. "Dead" means no background work, not that every member
+     * throws — `track` still returns [FrakResult.Success], since the enqueue is durable; only the
+     * drain behind it is gone.
+     *
+     * Not a privacy control — [setTrackingEnabled] is.
      */
     suspend fun shutdown() {
-        // cancelAndJoin, not cancel: a test that returns while a drain is still unwinding sees it
-        // touch files the next test already deleted. Join is the whole point of this being suspend.
+        // cancelAndJoin, not cancel: a caller returning while a drain is still unwinding could
+        // see it touch already-deleted state.
         scope.coroutineContext.job.cancelAndJoin()
     }
 
     init {
-        // 4.5: mints the keypair now, off whichever thread happens to call anonymousId() first.
-        // Must run before anything below can reach identity.anonymousId()/signProof()/reset().
-        // Gated inside AnonymousIdStore.current(), which reads `consent` — so this is a no-op
-        // that touches no key material when consent is absent or withdrawn.
+        // Mints the keypair now, off whichever thread calls anonymousId() first. Gated inside
+        // AnonymousIdStore.current() on consent, so this is a no-op when consent is withdrawn.
         identity.startEagerGeneration(scope)
         scope.launch {
             if (!consent.isEnabled()) {
@@ -172,16 +147,12 @@ internal class DefaultFrakClient(
         }
     }
 
-    // resolveConfig/campaigns/bestReward deliberately do NOT wrap themselves in
-    // withContext(ioDispatcher): tried and reverted, since it moved dispatch outside frakCall's
-    // error boundary. The pool-starvation half of that reasoning is now handled by giving
-    // HttpClient its own dispatcher; this half still stands on its own.
+    // resolveConfig/campaigns/bestReward do not wrap themselves in withContext(ioDispatcher):
+    // that would move dispatch outside frakCall's error boundary.
     //
-    // S9: deliberately NOT gated on consent, unlike every tracking entry point. This request
-    // carries no user identifier at all — `x-frak-client-id` is set only by InteractionTracker —
-    // so refusing it with tracking off bought no privacy and cost the merchant their own config,
-    // their campaign list and their reward copy. `campaigns`/`bestReward` inherit that through
-    // `fetchRewards`, which resolves the merchant first.
+    // Deliberately not gated on consent, unlike every tracking entry point: this request carries
+    // no user identifier, so refusing it with tracking off would cost the merchant their config,
+    // campaign list and reward copy for no privacy gain.
     suspend fun resolveConfig(forceRefresh: Boolean = false): FrakResolvedConfig =
         frakCall {
             configStore.resolve(MerchantQuery.from(settings), forceRefresh)
@@ -259,32 +230,21 @@ internal class DefaultFrakClient(
 
     /**
      * Never throws, unlike every other public entry point: the return value only answers "was
-     * this a referral link", and arrival tracking is fire-and-forget telemetry that must not
-     * take a merchant's URL routing down with it. Mirrors the Swift twin, which discards
-     * [track]'s `Result` for the same reason. Deliberately not [frakCall]-wrapped: that would
-     * turn a future unexpected [Throwable] into a thrown [FrakError], the exact asymmetry this
-     * guards against.
+     * this a referral link", and arrival tracking must not take a merchant's URL routing down
+     * with it. Deliberately not [frakCall]-wrapped, which would turn an unexpected [Throwable]
+     * into a thrown [FrakError].
      */
     suspend fun handleReferralLink(url: String): Boolean {
         if (settings.deepLink == DeepLinkHandling.Disabled) return false
         val context = SharingLinkBuilder.parse(url) ?: return false
 
-        // 3.2: reads configStore.currentConfig(query), not configStore.updates.value — a warm
-        // start that never called resolve() (the dominant deep-link case: the process is launched
-        // BY this very URL) publishes nothing to updates (C3's only publish point), so
-        // updates.value would stay null and this guard would silently stop resolving a merchant
-        // id it used to resolve. currentConfig(query) hydrates from disk on demand instead of only
-        // reading whatever memory already holds. MerchantQuery.from can throw when FrakConfig has
-        // neither merchantId nor packageId — this function must never throw, and a config that
-        // can't identify a merchant at all can't be hydrated from disk either, so that case
-        // degrades to null exactly like a genuine cache miss would.
+        // Reads configStore.currentConfig(query), not configStore.updates.value: a cold start
+        // launched by this very URL never calls resolve(), so updates.value stays null even
+        // though a merchant id is resolvable. currentConfig hydrates from disk on demand.
         //
-        // The whole hydrate is guarded, not just MerchantQuery.from: currentConfig is suspend and
-        // reaches readCache -> SingleFlight, which can itself throw (e.g. a dead scope surfacing
-        // as FrakError.Network) on paths that have nothing to do with a malformed FrakConfig. This
-        // function is documented to never throw, and is deliberately not frakCall-wrapped (see the
-        // doc above), so nothing here may let an unexpected FrakError or Throwable escape either —
-        // except CancellationException, which must always propagate rather than be swallowed.
+        // The whole hydrate is guarded, not just MerchantQuery.from: this function must never
+        // throw, so any FrakError or Throwable degrades to null except CancellationException,
+        // which always propagates.
         val ownMerchantId =
             settings.merchantId ?: runCatching {
                 configStore.currentConfig(MerchantQuery.from(settings))?.merchantId
@@ -314,17 +274,14 @@ internal class DefaultFrakClient(
             val link = installIdentity() ?: return@frakCall OpenAppResult.Failed
             val (merchantId, anonymousId) = link
 
-            // Minted once, for whichever arm takes it. The deep link needs it as much as the
-            // store referrer does: an installed wallet lands on `/install` with no referrer to
-            // read, so without the proof here the app-installed path is the only one that
-            // reaches `ensure` unproven. Null when the keystore cannot sign, which both arms
-            // already degrade past rather than block on.
+            // Minted once, for whichever arm takes it: an installed wallet lands on `/install`
+            // with no referrer, so this proof is the only route to `ensure`. Null when the
+            // keystore cannot sign; both arms degrade past that.
             val proof = identity.signProof(ProofOp.Install, merchantId)
 
             // Attempted rather than gated on the probe: `isInstalled` can be false for reasons
-            // unrelated to the app being absent, and `startActivity` already reports whether
-            // anything took the intent. Mirrors iOS, where the probe is the weaker signal by a
-            // wider margin — there it needs a merchant-side plist entry the SDK cannot inject.
+            // unrelated to absence, and `startActivity` already reports whether anything took
+            // the intent.
             val deepLink =
                 InstallLinks.deepLink(
                     scheme = settings.env.walletScheme,
@@ -352,9 +309,8 @@ internal class DefaultFrakClient(
     ): String? =
         frakCall {
             val (merchantId, anonymousId) = installIdentity() ?: return@frakCall null
-            // Minted here rather than when the sheet opens: most sessions never reach the
-            // install step, a keystore signature can fail for reasons that have nothing to do
-            // with sharing, and the backend's 30-day window runs from this timestamp.
+            // Minted here, not when the sheet opens: most sessions never reach the install step,
+            // and the backend's 30-day window runs from this timestamp.
             InstallLinks.installPage(
                 walletOrigin = settings.env.wallet,
                 merchantId = merchantId,
@@ -379,11 +335,7 @@ internal class DefaultFrakClient(
         return merchantId to anonymousId
     }
 
-    /**
-     * [installProof] has no default (4.5): a suspend call cannot be a default-parameter
-     * expression, so every caller — [installUrl] included, which has no second arm to share a
-     * proof with — must mint and pass its own.
-     */
+    /** [installProof] has no default: a suspend call cannot be a default-parameter expression, so every caller must mint and pass its own. */
     private fun storeUrl(
         merchantId: String,
         anonymousId: String,
@@ -400,12 +352,8 @@ internal class DefaultFrakClient(
      * Only ever fails for a reason that won't resolve itself; connectivity is the queue's
      * problem.
      *
-     * Routed through [frakCall] (2.11): a bare `catch (known: FrakError)` here left an
-     * unexpected `Throwable` — a genuine SDK bug inside [block], not a [FrakError] — to escape
-     * uncaught instead of coming back as [FrakResult.Failure] the way every other public entry
-     * point normalises it. `frakCall` itself always rethrows rather than returning, so the
-     * catch here still does the [FrakResult] conversion; only the exception *normalisation* is
-     * shared now.
+     * Routed through [frakCall] so an unexpected `Throwable` normalises to a [FrakError] before
+     * this catch converts it to [FrakResult.Failure].
      */
     private suspend inline fun trackingCall(block: (merchantId: String) -> FrakResult<Unit>): FrakResult<Unit> =
         try {
@@ -420,9 +368,8 @@ internal class DefaultFrakClient(
     /**
      * Resolve first so a typo'd merchant id surfaces as [FrakError.MerchantResolutionFailed].
      *
-     * [forceRefresh] forwards to the config resolve too (D6): a caller asking to bypass the
-     * rewards cache almost certainly also wants a fresh merchant id/currency, not a stale one
-     * served alongside freshly-fetched rewards.
+     * [forceRefresh] forwards to the config resolve too: a caller bypassing the rewards cache
+     * almost certainly wants a fresh merchant id/currency too.
      */
     private suspend fun fetchRewards(
         targetInteraction: String?,
@@ -438,12 +385,7 @@ internal class DefaultFrakClient(
         products = products,
     )
 
-    /**
-     * Suspend since S6a/C7: the answer now comes from [TrackingConsent], which reads the merchant's
-     * compile-time flag AND the persisted runtime decision, and whose first read is disk I/O.
-     * Called only from [trackingCall] — the config/rewards path is deliberately ungated, see
-     * [resolveConfig].
-     */
+    /** Suspend: reads [TrackingConsent], whose first read is disk I/O. Called only from [trackingCall] — config/rewards stay ungated, see [resolveConfig]. */
     private suspend fun requireTrackingEnabled() {
         if (!consent.isEnabled()) throw FrakError.TrackingDisabled()
     }

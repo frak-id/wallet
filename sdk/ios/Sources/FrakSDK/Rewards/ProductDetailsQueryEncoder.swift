@@ -31,15 +31,13 @@ enum ProductDetailsQueryEncoder {
     }
 
     /// One object's JSON text, keys alphabetical (`name`, `productId`, `quantity`, `sku`,
-    /// `totalPrice`, `unitPrice`) to match `sdk/core`'s output and keep cross-platform vectors
-    /// reviewable. `nil` when every field is nil, so a scope-only product with nothing set
-    /// contributes no entry rather than an empty `{}`.
+    /// `totalPrice`, `unitPrice`) to match `sdk/core`'s output. `nil` when every field is nil,
+    /// so a scope-only product with nothing set contributes no entry rather than an empty `{}`.
     ///
     /// Hand-assembled rather than `JSONSerialization`: that API round-trips a `Double` through
-    /// `NSNumber`, which reintroduces binary floating-point noise `JSON.stringify` never emits
-    /// — `79.9` comes back as `79.900000000000006`. `Double.description` is Swift's own
-    /// round-trip-minimal formatter; stripping its trailing `.0` (which `JSON.stringify` never
-    /// emits for an integral value) is enough to match it exactly.
+    /// `NSNumber`, reintroducing binary floating-point noise `JSON.stringify` never emits —
+    /// `79.9` comes back as `79.900000000000006`. `Double.description` is Swift's own
+    /// round-trip-minimal formatter; stripping its trailing `.0` is enough to match it exactly.
     private static func fieldsJSON(for product: ProductDetails) -> String? {
         var fields: [(key: String, value: String)] = []
         if let name = product.name { fields.append(("name", jsonString(name))) }

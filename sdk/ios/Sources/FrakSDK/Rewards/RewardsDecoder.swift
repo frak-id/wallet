@@ -112,9 +112,8 @@ extension Campaign {
 /// Same contract as `Campaign`: `formatted` and `payoutType` are the display contract and
 /// stay required; the supporting detail fields degrade to nil.
 ///
-/// `isProductScoped` / `matchedProducts` degrade to `false` / `nil` rather than failing decode
-/// when absent, so a backend that predates product scoping still decodes cleanly — not just a
-/// reshaped field, but one that may not exist on the wire at all yet.
+/// `isProductScoped`/`matchedProducts` degrade to `false`/`nil` rather than failing decode when
+/// absent, so a backend that predates product scoping still decodes cleanly.
 extension BestReward {
     private enum CodingKeys: String, CodingKey {
         case formatted, payoutType, minPurchaseAmount, minPurchaseValue, lockupDurationDays, isProductScoped,
@@ -141,8 +140,8 @@ extension BestReward {
 
 /// Every field forgiving: `matchedProducts` is advisory display context, so one reshaped value
 /// inside it must cost that value, not the campaign list it arrived with. The synthesized
-/// `Decodable` would throw instead — an `Optional` property only defaults to nil when the key is
-/// absent, not when it is present with the wrong type.
+/// `Decodable` would throw instead — `Optional` only defaults to nil when the key is absent,
+/// not when it is present with the wrong type.
 extension ProductDetails: Decodable {
     private enum CodingKeys: String, CodingKey {
         case productId, sku, name, quantity, unitPrice, totalPrice

@@ -23,9 +23,8 @@ struct InstallLinksTests {
         )
     }
 
-    /// `?p=`, not the `#p=` `installPage` uses: the wallet's deep-link router navigates in-app,
-    /// so a fragment is gone before `/install` renders. `routeResolvers.install` forwards the
-    /// search param for exactly this reason, and iOS has no install referrer to fall back on.
+    /// `?p=`, not the `#p=` `installPage` uses: the wallet's router navigates in-app, so a
+    /// fragment is gone before `/install` renders, and iOS has no install referrer fallback.
     @Test("carries the install proof as a search param the deep-link router forwards")
     func carriesTheInstallProof() {
         #expect(

@@ -27,7 +27,7 @@ struct EventQueueTests {
         )
     }
 
-    /// Writes a raw pre-2.7 line: every current field except `"r"`, which never existed.
+    /// Writes a raw pre-migration line: every current field except `"r"`, which never existed.
     private func appendPreMigrationLine(_ key: String, to fileURL: URL, capturedAt: Date = EventQueueTests.now) throws {
         try FileManager.default.createDirectory(
             at: fileURL.deletingLastPathComponent(),
@@ -86,11 +86,6 @@ struct EventQueueTests {
         try handle.write(contentsOf: Data(#"{"k":"b","p":"/user/tra"#.utf8))
         try handle.close()
 
-        // The partial line is dropped from the parsed result on every read, but it also has to
-        // leave the FILE. reconcile used to sweep it as a side effect of rewriting on every flush;
-        // now that the rewrite is skipped when nothing changed, the read owns the sweep. Without it
-        // the on-disk ceiling would bound only the valid rows and torn tails would accumulate past
-        // it, one per mid-write kill.
         _ = await queue.read(now: Self.now)
 
         let lines =
@@ -98,7 +93,6 @@ struct EventQueueTests {
             .split(separator: "\n")
             .filter { !$0.allSatisfy(\.isWhitespace) }
         #expect(lines.count == 1)
-        // Self-healing: having swept it, a second read finds nothing left to do.
         let second = await queue.read(now: Self.now)
         #expect(second.map(\.idempotencyKey) == ["a"])
     }
@@ -164,8 +158,8 @@ struct EventQueueTests {
     @Test("rowId increases and never repeats, even for two events sharing an idempotencyKey")
     func rowIdIsMonotonicAndUnique() async {
         let (queue, _) = makeQueue()
-        // Same idempotencyKey on purpose (2.7): a caller-suppliable key is not guaranteed
-        // unique, and rowId is exactly what disambiguates two such rows from each other.
+        // Same idempotencyKey on purpose: it is not guaranteed unique, so rowId is what
+        // disambiguates two such rows from each other.
         await queue.append(event("same-key"))
         await queue.append(event("same-key"))
         await queue.append(event("same-key"))
@@ -182,8 +176,8 @@ struct EventQueueTests {
         await queue.append(event("b"))
         let before = try #require(await queue.read(now: Self.now).compactMap(\.rowId).max())
 
-        // A fresh EventQueue instance over the same file simulates a process restart: there is
-        // no in-memory counter to inherit, only what the last read/append left on disk.
+        // A fresh instance simulates a process restart: no in-memory counter to inherit,
+        // only what the last read/append left on disk.
         let reopened = EventQueue(fileURL: fileURL, logger: FrakLogger(level: .none))
         let reread = await reopened.read(now: Self.now).compactMap(\.rowId)
         #expect(reread == [0, 1])
@@ -203,8 +197,6 @@ struct EventQueueTests {
         let first = try #require(pending.first?.rowId)
         let second = try #require(pending.last?.rowId)
 
-        // Only the first is uploaded and reconciled away; a key-based reconcile would have
-        // deleted both, or the wrong one, since they share an idempotencyKey.
         await queue.reconcile(delivered: [first], retried: [:], now: Self.now)
 
         let remaining = await queue.read(now: Self.now)
@@ -222,8 +214,8 @@ struct EventQueueTests {
         #expect(migrated.map(\.idempotencyKey) == ["old-a", "old-b"])
         #expect(migrated.compactMap(\.rowId) == [0, 1])
 
-        // Persisted, not just returned in memory: a second read (a fresh instance, so nothing
-        // is cached) must see the same ids rather than re-migrating and reassigning.
+        // A fresh instance, so nothing is cached: a second read must see the same
+        // persisted ids rather than re-migrating and reassigning.
         let reopened = EventQueue(fileURL: fileURL, logger: FrakLogger(level: .none))
         let reread = await reopened.read(now: Self.now)
         #expect(reread.compactMap(\.rowId) == [0, 1])
@@ -240,9 +232,8 @@ struct EventQueueTests {
         try appendPreMigrationLine("old-b", to: fileURL, capturedAt: Self.now)
 
         // No read() yet: append's own seed path (readExistingForSeed), not read's, must reserve
-        // one id per un-migrated row ahead of it — otherwise "new" would take id 0, the same id
-        // the later migration in read() assigns to "old-a", and the newest row would carry the
-        // LOWEST id instead of the highest.
+        // one id per un-migrated row ahead of it, or "new" would take id 0, the same id the
+        // later migration in read() assigns to "old-a", making the newest row the lowest id.
         await queue.append(event("new"))
 
         let all = await queue.read(now: Self.now)
@@ -258,33 +249,24 @@ struct EventQueueTests {
         try appendPreMigrationLine("old-a", to: fileURL, capturedAt: Self.now.addingTimeInterval(-1))
         try appendPreMigrationLine("old-b", to: fileURL, capturedAt: Self.now)
 
-        // Forces the atomic write in replace() to fail WITHOUT touching the readability of
-        // fileURL itself: `.atomic` writes a temp file into the same directory and renames it
-        // over fileURL, so a read-only PARENT directory blocks the write/rename while
-        // Data(contentsOf: fileURL) still succeeds. Obstructing fileURL's own path instead (e.g.
-        // replacing it with a directory) makes it unreadable, which is a DIFFERENT branch in
-        // readWithOutcome (the "present but unreadable" branch, which deletes the file and
-        // reports durable: true) — that would never exercise the non-durable path this test
-        // exists to pin.
-        // Mode bits are ignored for the superuser, so a root runner would write successfully and
-        // never take the non-durable branch this test exists to pin.
+        // Obstructs the parent directory, not fileURL: `.atomic` writes a temp file into the
+        // directory and renames it over fileURL, so a read-only parent blocks the write while
+        // Data(contentsOf: fileURL) still succeeds. Obstructing fileURL itself instead would hit
+        // a different branch (present but unreadable) than the non-durable path this test pins.
         try #require(getuid() != 0, "needs a non-root runner: 0o500 does not block root's write")
         let parent = fileURL.deletingLastPathComponent()
         try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: parent.path)
         defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path) }
 
-        // read() must NOT signal the non-durable rewrite by returning an empty array: that would
-        // be indistinguishable from "the queue is empty" to every caller, and
-        // InteractionTracker.drain's bare `guard !pending.isEmpty` would then treat a genuinely
-        // non-empty queue as having nothing to send. The durability signal lives out-of-band, on
-        // EventQueue.reconcile alone — see the caller-path tests below.
+        // read() must not signal the failure via an empty array: that is indistinguishable from
+        // "the queue is empty", and InteractionTracker.drain's bare `guard !pending.isEmpty`
+        // would then treat a non-empty queue as having nothing to send. The durability signal
+        // lives on EventQueue.reconcile instead.
         let migrated = await queue.read(now: Self.now)
         #expect(migrated.map(\.idempotencyKey) == ["old-a", "old-b"])
 
-        // The ids themselves are real for this pass but not guaranteed to survive a restart: the
-        // rewrite never landed, so a fresh instance re-migrates from scratch and may assign
-        // different ones. Not asserted here — see "rowId survives a reload from disk" for the
-        // durable-write case.
+        // Ids are valid for this pass only: the rewrite never landed, so a fresh instance would
+        // re-migrate from scratch and may assign different ones.
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path)
         let retried = await queue.read(now: Self.now)
         #expect(retried.map(\.idempotencyKey) == ["old-a", "old-b"])
@@ -299,27 +281,19 @@ struct EventQueueTests {
         // byte-for-byte alone rather than merely leaving *some* file with the same two keys.
         let original = try Data(contentsOf: fileURL)
 
-        // Same technique as readSurvivesAFailedMigrationRewrite above: obstruct the parent
-        // directory's write permission, not fileURL itself, so the read that reconcile starts
-        // from actually succeeds and the write is what fails.
-        // Mode bits are ignored for the superuser, so a root runner would write successfully and
-        // this test would report a false failure rather than the behaviour it pins.
+        // Obstruct the parent directory's write permission, not fileURL itself, so the read
+        // reconcile starts from succeeds and only the write fails.
         try #require(getuid() != 0, "needs a non-root runner: 0o500 does not block root's write")
         let parent = fileURL.deletingLastPathComponent()
         try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: parent.path)
-        // defer, not a trailing restore: an #expect that throws below must not leave the temp
+        // defer, not a trailing restore: a throwing #expect below must not leave the temp
         // directory unwritable for the rest of the suite.
         defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path) }
 
-        // The exact call InteractionTracker.drain makes after a fully-offline pass: reconcile
-        // with nothing delivered.
         await queue.reconcile(delivered: [], retried: [:], now: Self.now)
 
-        // Clearing the obstacle uncovers whatever reconcile left behind — which must be exactly
-        // the original bytes, since a non-durable read must refuse to compact. Restoring
-        // permissions and reading again is what proves the queue is exactly as it was: reconcile
-        // must not compact against a read whose migration ids are not durable, or the very next
-        // drain would silently wipe every event still on disk instead of retrying with fresh ids.
+        // Must equal the original bytes: a non-durable read must refuse to compact, or the
+        // next drain would wipe events whose migration ids never persisted.
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path)
         let onDisk = try Data(contentsOf: fileURL)
         #expect(onDisk == original)
@@ -333,17 +307,14 @@ struct EventQueueTests {
         await queue.append(event("wire-check"))
         let stored = try #require(await queue.read(now: Self.now).first)
 
-        // rowId lives only in QueuedEvent's own Codable envelope (the on-disk JSONL line) and
-        // never in .body, which is exactly what InteractionTracker.flush sends as the POST payload.
         #expect(!stored.body.contains("\"r\":"))
     }
 
     @Test("bounds the file from append alone, without a read ever running (2.6)")
     func boundsTheFileFromAppendAlone() async throws {
         let (queue, fileURL) = makeQueue()
-        // The cap used to be enforced only inside read(), and a drain that is backing off returns
-        // before it reads. Appending is therefore the one path that must bound itself, or the file
-        // grows without limit exactly while it cannot drain. No read() in this test.
+        // No read() call in this test: append alone must bound the file, since a backing-off
+        // drain returns before it ever reads.
         let overflow = EventQueue.maxEvents + EventQueue.maxEventsSlack + 1
         for index in 0..<overflow {
             await queue.append(event("e\(index)"))
@@ -365,11 +336,10 @@ struct EventQueueTests {
         }
 
         let kept = await queue.read(now: Self.now)
-        // Oldest dropped first: a fresh event is likelier to still matter.
         #expect(kept.last?.idempotencyKey == "e\(overflow - 1)")
         #expect(kept.count == EventQueue.maxEvents)
-        // And the append-time trim must not disturb the invariant 2.7 bought: ids ascend with
-        // capture order, so reconcile can key deletions on them.
+        // The append-time trim must not disturb id ordering: ids ascend with capture order so
+        // reconcile can key deletions on them.
         let ids = kept.compactMap(\.rowId)
         #expect(ids == ids.sorted())
     }
@@ -380,17 +350,13 @@ struct EventQueueTests {
         await queue.append(event("a"))
         await queue.append(event("b"))
         let before = try Data(contentsOf: fileURL)
-        // Backdated deliberately. A skipped rewrite and a performed one produce byte-identical
-        // content here, so the modification date is the only thing that can tell them apart — and
-        // comparing it against `now` makes the assertion a race with filesystem timestamp
-        // granularity, which silently stopped failing once the surrounding suite got slower. An
-        // hour in the past cannot be reached by a rewrite that would stamp it with `now`.
+        // Backdated by an hour: a skipped rewrite and a performed one produce byte-identical
+        // content, so only the modification date can tell them apart, and backdating avoids a
+        // race against filesystem timestamp granularity that comparing against `now` would have.
         let backdated = Date(timeIntervalSinceNow: -3600)
         try FileManager.default.setAttributes([.modificationDate: backdated], ofItemAtPath: fileURL.path)
 
-        // The whole-file rewrite is the expensive half of a flush, and an offline pass delivers
-        // nothing and retries nothing. Skipping it is safe only because read() has already
-        // persisted anything it changed, so the reconciled list is byte-identical to disk.
+        // Skipping the rewrite is safe because read() has already persisted anything it changed.
         await queue.reconcile(delivered: [], retried: [:], now: Self.now)
 
         #expect(try Data(contentsOf: fileURL) == before)
@@ -409,18 +375,16 @@ struct EventQueueTests {
         let queued = try #require(await queue.read(now: Self.now).first)
         let rowId = try #require(queued.rowId)
 
-        // A retry replaces a row without changing the row count, so the write-skip cannot key on
-        // count alone.
+        // A retry replaces a row without changing the row count, so the write-skip cannot key
+        // on count alone.
         await queue.reconcile(delivered: [], retried: [rowId: queued.withFailure()], now: Self.now)
 
         let kept = await queue.read(now: Self.now)
         #expect(kept.first?.failures == 1)
     }
 
-    // `.protectionKey`/`FileProtectionType` are `API_UNAVAILABLE(macos)`, and this test target
-    // builds for the macOS triple on the only host this package is ever verified on (see
-    // `EventQueue.applyProtection()`'s doc comment). There is nothing to assert on macOS since
-    // `applyProtection()` is a no-op there.
+    // FileProtectionType is unavailable on macOS, the only host this target is verified on;
+    // applyProtection() is a no-op there, so there is nothing to assert.
     #if canImport(UIKit)
         @Test("protects the file so it is unreadable before first unlock (S3)")
         func protectsTheFile() async throws {

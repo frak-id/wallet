@@ -7,10 +7,9 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 /**
- * Pins `equals`/`hashCode`, hand-written because this is deliberately not a
- * `data class` (see the class doc). Without them, `StateFlow` conflation in
- * [id.frak.sdk.core.DefaultFrakClient] falls back to identity equality and
- * emits on every resolve, cache hit or not — see [id.frak.sdk.core.DefaultFrakClientTest].
+ * Pins `equals`/`hashCode`, hand-written because this is deliberately not a `data class`.
+ * Without them, `StateFlow` conflation in [id.frak.sdk.core.DefaultFrakClient] falls back to
+ * identity equality and emits on every resolve, cache hit or not.
  */
 class FrakResolvedConfigTest {
     @Test
@@ -42,9 +41,8 @@ class FrakResolvedConfigTest {
 
     @Test
     fun `an SDK-decoded config equals a merchant-built one with the same values`() {
-        // Pins the equality-asymmetry fix: sdkConfig is now public, so the public
-        // constructor can set it, and a merchant-built fixture can equal a
-        // decoded response instead of always differing on this field.
+        // sdkConfig is public, so the public constructor can set it and a merchant-built
+        // fixture can equal a decoded response instead of always differing on this field.
         val decoded = ResolvedConfigDecoder.decode(FULL_BODY)
         val merchantBuilt =
             build(

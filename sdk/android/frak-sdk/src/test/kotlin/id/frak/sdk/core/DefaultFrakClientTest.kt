@@ -72,8 +72,8 @@ class DefaultFrakClientTest {
             client.campaigns(forceRefresh = false)
             val resolvesAfterFirst = transport.requests.count { it.url.path == ConfigStore.RESOLVE_PATH }
 
-            // The rewards fetch that follows the second resolve will fail to decode BODY as a
-            // rewards response — irrelevant here, only the resolve call count is under test.
+            // The second call's rewards fetch fails to decode BODY as a rewards response; only
+            // the resolve count matters here.
             runCatching { client.campaigns(forceRefresh = true) }
             val resolvesAfterForced = transport.requests.count { it.url.path == ConfigStore.RESOLVE_PATH }
 
@@ -88,12 +88,9 @@ class DefaultFrakClientTest {
     @Test
     fun `two independently-fetched but byte-identical configs conflate to one emission`() =
         runTest {
-            // ConfigStore hands back the very same object reference for an
-            // in-memory hit, so that path conflates even under identity equality.
-            // A background-revalidated or forced refetch does not: it decodes a
-            // brand new object every time, so this is the path that actually
-            // depends on FrakResolvedConfig.equals. forceRefresh with an
-            // unchanged body is the simplest way to force two distinct decodes.
+            // ConfigStore returns the same object reference on an in-memory hit, which conflates
+            // under identity equality alone. A forced refetch decodes a fresh object every time,
+            // so forceRefresh with an unchanged body is what exercises FrakResolvedConfig.equals.
             val client = newClient(testScheduler)
             transport.respond(200, BODY)
 
@@ -176,14 +173,8 @@ class DefaultFrakClientTest {
     @Test
     fun `tracks a v2 arrival when only the configured merchant id's case or whitespace differs`() =
         runTest {
-            // The odd casing/whitespace has to live on the config side: FrakContextCodec
-            // rejects any merchantId that isn't a canonical lowercase UUID, so a link can never
-            // carry one — only FrakConfig.merchantId is free-typed and unvalidated. foreignLink()
-            // already carries the canonical MERCHANT_ID from a different device, so the only
-            // variable under test is settings.merchantId vs context.merchantId, which is exactly
-            // what ReferralArrival.sameMerchant normalises. Without that normalisation this link
-            // would be dropped as a foreign-merchant arrival, so the assertion below fails if the
-            // trim/case-fold is removed.
+            // FrakContextCodec requires a canonical lowercase UUID merchantId, so only
+            // FrakConfig.merchantId can carry mismatched case/whitespace here.
             val client = newClient(testScheduler, config = FrakConfig(merchantId = " ${MERCHANT_ID.uppercase()} "))
             transport.respond(200, """{"success":true}""")
             advanceUntilIdle()
@@ -213,9 +204,8 @@ class DefaultFrakClientTest {
     @Test
     fun `a tracking failure never escapes handleReferralLink, mirroring the Swift twin`() =
         runTest {
-            // No merchantId configured: the arrival's trackingCall must resolve one over the
-            // network, and that resolve is made to fail below — this is the failure handleReferral
-            // must swallow, exactly like iOS discarding track's Result.
+            // No merchantId configured, so the arrival's trackingCall resolves one over the
+            // network; that resolve is made to fail below.
             val client =
                 newClient(testScheduler, config = FrakConfig(packageId = "com.acme.app"))
             transport.fail(java.io.IOException("network down"))
@@ -242,11 +232,8 @@ class DefaultFrakClientTest {
             launcher.openableSchemes = setOf(FrakEnvironment.Production.walletScheme)
             assertEquals(OpenAppResult.OpenedApp, client.openFrakApp())
             assertEquals(true, launcher.opened.single().startsWith("frakwallet://install?m=$MERCHANT_ID"))
-            // The proof matters more on this arm than on the store one: an installed wallet
-            // lands on `/install` with no Play referrer to read it from, so this is the only
-            // carrier there is. Non-empty, not merely present — an empty `&p=` would satisfy
-            // `contains` while proving nothing reached the wallet, and `substringAfter` needs the
-            // empty missing-delimiter value or it answers the whole URL when there is no `&p=`.
+            // substringAfter needs the empty missing-delimiter default, or it returns the whole
+            // URL when there is no `&p=`; non-empty proves a proof actually reached the wallet.
             assertEquals(
                 true,
                 launcher.opened
@@ -259,10 +246,8 @@ class DefaultFrakClientTest {
     @Test
     fun `opens the wallet on a launch that works even when the probe says it is absent`() =
         runTest {
-            // The deep link is attempted, never gated on `isInstalled`: the probe can answer
-            // false for reasons unrelated to the app being there, and `startActivity` is the
-            // authoritative answer. iOS has the same rule for a sharper reason — there the
-            // probe needs a merchant-side plist entry the SDK cannot inject.
+            // The deep link is attempted regardless of isInstalled: the probe can report false
+            // for reasons unrelated to the app being there, so startActivity is authoritative.
             val client = newClient(testScheduler)
             transport.respond(200, BODY)
             advanceUntilIdle()
@@ -292,9 +277,8 @@ class DefaultFrakClientTest {
                         "&returnScheme=frak-com.acme.app&sid=session-1",
                 ),
             )
-            // The fragment, never a search param: it is never sent to a server, never logged
-            // and never in a `Referer`, and the sheet loads this URL directly so it survives.
-            // Non-empty, not merely present: an empty `#p=` would satisfy `contains`.
+            // The fragment, not a query param: never sent to a server, logged, or in a Referer.
+            // Non-empty, not merely present — an empty `#p=` would satisfy `contains`.
             assertEquals(true, (page?.substringAfter("#p=")?.length ?: 0) > 0)
             assertEquals(false, page?.contains("&p="))
         }
@@ -329,7 +313,7 @@ class DefaultFrakClientTest {
             val secondError = (second as FrakResult.Failure).error
             assertTrue("expected TrackingDisabled, got $firstError", firstError is FrakError.TrackingDisabled)
             assertTrue("expected TrackingDisabled, got $secondError", secondError is FrakError.TrackingDisabled)
-            // A8: not the same singleton instance — each throw site must capture its own stack trace.
+            // Each throw site captures its own stack trace, so this must not be the same singleton.
             assertTrue(
                 "each TrackingDisabled must be its own instance, not a shared singleton",
                 firstError !== secondError,
@@ -338,12 +322,9 @@ class DefaultFrakClientTest {
         }
 
     /**
-     * S9. There was never a test asserting the opposite — that `resolveConfig` threw
-     * `TrackingDisabled` — but the behaviour existed and this pins its removal: the resolve
-     * request carries no user identifier at all (`x-frak-client-id` is set only by
-     * [id.frak.sdk.tracking.InteractionTracker]), so refusing it bought no privacy and cost the
-     * merchant their own config, campaigns and reward copy. Tracking itself stays gated, see the
-     * test above.
+     * The resolve request carries no user identifier (`x-frak-client-id` is set only by
+     * [id.frak.sdk.tracking.InteractionTracker]), so `resolveConfig` is not gated on tracking
+     * consent.
      */
     @Test
     fun `resolveConfig still works with tracking off, and sends no client id`() =
@@ -360,7 +341,6 @@ class DefaultFrakClientTest {
 
             assertEquals(MERCHANT_ID, resolved.merchantId)
             assertEquals(1, transport.requests.size)
-            // The whole justification for ungating it: nothing about the user is on the wire.
             assertNull(transport.requests.first().headers["x-frak-client-id"])
         }
 
@@ -387,9 +367,9 @@ class DefaultFrakClientTest {
         }
 
     /**
-     * The hard floor, through the client rather than through [TrackingConsent] directly: a build
-     * that compiled tracking off must never be switched on at runtime, and must still mint no key
-     * material afterwards.
+     * A build that compiled tracking off must never be switched on at runtime, and must still
+     * mint no key material afterwards, exercised through the client rather than [TrackingConsent]
+     * directly.
      */
     @Test
     fun `setTrackingEnabled true cannot lift a compile-time trackingEnabled false`() =
@@ -408,9 +388,8 @@ class DefaultFrakClientTest {
         }
 
     /**
-     * The withdrawal recipe's first half, and the reason it is documented as two calls: the id is
-     * still there afterwards, so a merchant who wanted a pause got a pause. Erasure is
-     * `resetAnonymousId()`, deliberately separate.
+     * First half of the withdrawal recipe: the identity stays afterwards, so a pause is a pause.
+     * Erasure is the separate `resetAnonymousId()`.
      */
     @Test
     fun `setTrackingEnabled false does not destroy the identity`() =
@@ -429,15 +408,14 @@ class DefaultFrakClientTest {
         }
 
     /**
-     * The withdrawal recipe end to end, and the two headline README claims that had no coverage:
-     * the queue is emptied, and nothing queued under the old decision reaches the wire afterwards.
+     * End-to-end withdrawal: the queue is emptied, and nothing queued under the old decision
+     * reaches the wire afterwards.
      */
     @Test
     fun `the documented withdrawal recipe stops tracking and drops what was queued`() =
         runTest {
-            // The event must still BE queued when consent is withdrawn, or the purge has nothing to
-            // purge and this test proves nothing (§0 lesson 4). A failing transport is what keeps it
-            // there: the drain stops at the first failure and leaves the row on disk.
+            // A failing transport keeps the event queued on disk: the drain stops at the first
+            // failure and leaves the row there.
             transport.fail(java.io.IOException("offline"))
             val client = newClient(testScheduler)
             advanceUntilIdle()
@@ -450,17 +428,14 @@ class DefaultFrakClientTest {
             client.setTrackingEnabled(false)
             advanceUntilIdle()
 
-            // Asserted against the file, not against a request count: a request count cannot tell
-            // "the queue was emptied" apart from "nothing happened to drain it", which is how the
-            // first version of this test passed against a `setTrackingEnabled` that never purged.
             assertEquals(
                 "withdrawal must leave nothing captured under the old decision on disk",
                 0L,
                 if (queueFile.exists()) queueFile.length() else 0L,
             )
 
-            // Second half of the recipe. FakeDeviceKeyStore erases without throwing, so the
-            // Boolean must be true here; a false would mean the id never rotated (4fp).
+            // FakeDeviceKeyStore erases without throwing, so this must be true; false would
+            // mean the id never rotated.
             assertTrue(
                 "the recipe's second half must report a real erasure",
                 client.resetAnonymousId(),
@@ -469,10 +444,9 @@ class DefaultFrakClientTest {
         }
 
     /**
-     * The one instance rule: [DefaultFrakClient] and [AnonymousIdStore] must read the SAME
-     * [TrackingConsent], or a withdrawal stops the network calls while the identity store carries
-     * on minting from its own memo. Fails against the pre-change code, where `AnonymousIdStore`
-     * captured a `Boolean` at construction and could not see a runtime flip at all.
+     * [DefaultFrakClient] and [AnonymousIdStore] must read the same [TrackingConsent] instance,
+     * or a withdrawal stops the network calls while the identity store carries on minting from
+     * its own memo.
      */
     @Test
     fun `a runtime withdrawal reaches the identity store, not only the network gate`() =
@@ -497,9 +471,8 @@ class DefaultFrakClientTest {
             client.shutdown()
             client.shutdown()
 
-            // The scope is cancelled, so the detached drain `track` launches never runs. `track`
-            // itself still returns — the enqueue is on the caller's context — which is what makes
-            // the request count the observable difference.
+            // The scope is cancelled, so the detached drain `track` launches never runs; `track`
+            // itself still returns because the enqueue is on the caller's context.
             val before = transport.requests.size
             client.track(Interaction.Custom("after-shutdown"))
             advanceUntilIdle()
@@ -528,17 +501,10 @@ class DefaultFrakClientTest {
             assertEquals(true, on.preloadSharing)
         }
 
-    // ioDispatcher (governs DefaultFrakClient's own background scope, including
-    // SingleFlight and ConfigStore's disk I/O) is Standard, not Unconfined:
-    // this file's assertions rely on background
-    // work (revalidation, SingleFlight's shared coroutine) landing only at an
-    // explicit advanceUntilIdle(), not eagerly mid-call the way Unconfined
-    // would run it. SingleFlight itself no longer has a dispatcher constraint —
-    // it registers with ConcurrentHashMap.putIfAbsent rather than mutating the
-    // map from inside computeIfAbsent, so it no longer risks the "Recursive
-    // update" crash a completed Job's invokeOnCompletion used to cause on a
-    // real multi-threaded dispatcher. The HttpClient's own dispatcher stays
-    // Unconfined, matching ConfigStoreTest.
+    // ioDispatcher (governs DefaultFrakClient's own background scope, including SingleFlight
+    // and ConfigStore's disk I/O) is Standard, not Unconfined: this file's assertions rely on
+    // background work landing only at an explicit advanceUntilIdle(), not eagerly mid-call.
+    // HttpClient's own dispatcher stays Unconfined, matching ConfigStoreTest.
     private fun newClient(
         testScheduler: kotlinx.coroutines.test.TestCoroutineScheduler,
         config: FrakConfig = FrakConfig(merchantId = MERCHANT_ID),
@@ -593,7 +559,7 @@ class DefaultFrakClientTest {
                 defaults = null,
             )!!
 
-        /** A share link minted for a different merchant entirely (a v2 context; see 3.2's open V1 half). */
+        /** A share link minted for a different merchant entirely (a v2 context). */
         fun foreignMerchantLink(): String =
             SharingLinkBuilder.build(
                 baseUrl = "https://acme.example/p",

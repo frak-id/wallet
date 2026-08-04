@@ -101,11 +101,9 @@ class FrakEnvironmentTest {
         val cleartext = FrakEnvironment.Custom(wallet = "http://a", backend = "https://b")
         val file = FrakEnvironment.Custom(wallet = "https://a", backend = "file:///etc/passwd")
 
-        // Not thrown, matching FrakConfig's "never validated at construction": swapped for an
-        // unreachable placeholder. Unlike a malformed URL, this placeholder is well-formed —
-        // failure surfaces at request time as a DNS failure inside FrakError.Network, and
-        // Frak.initialize separately logs the rejection (with the offending origin and rule)
-        // at ERROR, since FrakEnvironment itself has no logger in scope to do so.
+        // Not thrown, matching FrakConfig's "never validated at construction": swapped for a
+        // well-formed but unreachable placeholder. Failure surfaces at request time as a DNS
+        // failure; Frak.initialize separately logs the rejection at ERROR.
         assertNotEquals("http://a", cleartext.wallet)
         assertEquals("https", cleartext.wallet.substringBefore("://"))
         assertNotEquals("file:///etc/passwd", file.backend)
@@ -115,10 +113,9 @@ class FrakEnvironmentTest {
     @Test
     fun `Custom accepts a bracketed IPv6 loopback host, with and without a port (matches iOS)`() {
         // Android previously extracted the host with substringBefore(':'), so the first ':' in
-        // "[::1]" was mistaken for the port separator and the host became "[" -- rejected, while
-        // iOS's URLComponents correctly parses "::1" and accepted. java.net.URI (like
-        // URLComponents) is bracket-aware, so all three of these must now be accepted on Android
-        // too. See S7 in 06-open-findings.md.
+        // "[::1]" was mistaken for the port separator and the host became "[" — rejected, while
+        // iOS's URLComponents correctly parses "::1". java.net.URI is bracket-aware too, so all
+        // three of these must be accepted on Android as well.
         val withPort = FrakEnvironment.Custom(wallet = "http://[::1]:3000", backend = "https://b")
         val withoutPort = FrakEnvironment.Custom(wallet = "http://[::1]", backend = "https://b")
         val httpsWithPort = FrakEnvironment.Custom(wallet = "https://[::1]:3000", backend = "https://b")

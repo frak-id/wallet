@@ -7,13 +7,13 @@ struct StubResponse: Sendable {
     var headers: [String: String] = [:]
 }
 
-/// Thrown by a handler to simulate a request that never completes, so only the
-/// caller's own deadline — not a canned response — ends it.
+/// Thrown by a handler to simulate a request that never completes; only the caller's own
+/// deadline — not a canned response — ends it.
 struct StubHangs: Error {}
 
-/// Lock-protected, per-host handler registry. Keyed by host (each test uses its own
-/// unique base URL) rather than a single shared handler, so parallel test suites
-/// sharing this class-level registration don't race on one global closure.
+/// Lock-protected, per-host handler registry. Keyed by host (each test uses its own unique
+/// base URL) so parallel test suites sharing this class-level registration don't race on one
+/// global closure.
 private final class HandlerRegistry: @unchecked Sendable {
     private let lock = NSLock()
     private var handlers: [String: @Sendable (URLRequest) throws -> StubResponse] = [:]
@@ -44,8 +44,8 @@ private final class HandlerRegistry: @unchecked Sendable {
 final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     private static let registry = HandlerRegistry()
 
-    /// Registers a handler scoped to `host`. Each test must use its own unique host
-    /// (see `makeSession(host:)`) so concurrently-running tests never share state.
+    /// Registers a handler scoped to `host`. Each test must use its own unique host so
+    /// concurrently-running tests never share state.
     static func handle(host: String, _ handler: @escaping @Sendable (URLRequest) throws -> StubResponse) {
         registry.set(host, handler)
     }

@@ -5,34 +5,22 @@ public enum FrakEnvironment: Sendable, Hashable {
     case production
     case development
     // `wallet`/`backend` must be `https://`, or `http://` to a loopback/private-network host —
-    // see `CustomOrigin.rejectionReason` for the exact allowlist. That carve-out matches this
-    // case's own documented local-dev workflow (see `custom(wallet:backend:walletScheme:)`
-    // below) and the platform's own default: iOS ATS already blocks plain http to anything else,
-    // so rejecting loopback http here too would just override a merchant's deliberate,
-    // platform-sanctioned ATS exception for no gain. `file:`/`data:`/`javascript:`/anything else
-    // is always rejected: `wallet` loads directly into a WebView for the sharing sheet
-    // (WarmSharingWebView), where file: is a local-file-disclosure vector, not just a
-    // cleartext-transport one — and unlike cleartext, nothing in the platform blocks that.
+    // see `CustomOrigin.rejectionReason` for the exact allowlist. `file:`/`data:`/`javascript:`/
+    // anything else is always rejected: `wallet` loads directly into a WebView for the sharing
+    // sheet, where file: is a local-file-disclosure vector, not just a cleartext-transport one.
     //
-    // Not validated eagerly: matching FrakConfig ("never validated at construction"), a rejected
-    // origin does not throw here. Unlike FrakConfig though, there is no typed error to surface it
-    // as yet — FrakError has no configuration-specific arm (06-open-findings.md A4), so a
-    // rejected origin is swapped for an unreachable placeholder and surfaces only as a generic
-    // FrakError.network (DNS failure) on first use, which names no rule and no offending origin.
-    // Frak.initialize logs the rejection at .error, with the offending origin and the rule, since
-    // it is the one place a configured logger (and the merchant's own FrakLogSink) actually
-    // exists; a typed FrakError.invalidConfiguration-shaped arm is the real fix and belongs with
-    // the A4 error-taxonomy work, not here.
+    // Not validated eagerly, matching FrakConfig: a rejected origin does not throw here. It is
+    // swapped for an unreachable placeholder and surfaces only as a generic FrakError.network
+    // (DNS failure) on first use. Frak.initialize logs the rejection at .error with the
+    // offending origin and the rule, since that is the one place a configured logger exists.
     //
-    // Swift enum cases cannot carry default argument values (SE-0155 was returned for revision,
-    // never implemented) — the wallet:backend: convenience below is the 2-argument entry point;
-    // this case always carries all three.
+    // Swift enum cases cannot carry default argument values, so the wallet:backend: convenience
+    // below is the 2-argument entry point; this case always carries all three.
     case custom(wallet: String, backend: String, walletScheme: String)
 
     /// Local backend serves self-signed HTTPS; needs an ATS exception on device. `walletScheme`
     /// defaults to Frak's own dev wallet, which is almost never right for a merchant's stub
-    /// server: use `custom(wallet:backend:walletScheme:)` to override it, or a custom install
-    /// ends up probing for (and deep-linking into) Frak's internal dev app.
+    /// server: use `custom(wallet:backend:walletScheme:)` to override it.
     public static func custom(wallet: String, backend: String) -> FrakEnvironment {
         .custom(wallet: wallet, backend: backend, walletScheme: "frakwallet-dev")
     }
@@ -65,7 +53,7 @@ public enum FrakEnvironment: Sendable, Hashable {
 
     /// `nil` when neither origin of a `.custom` case was rejected; the rejection message
     /// (naming the offending origin and the rule) otherwise. `Frak.initialize` logs this at
-    /// `.error` — see the `.custom` case doc for why the rejection itself is silent here.
+    /// `.error`.
     var customOriginRejectionReason: String? {
         guard case .custom(let wallet, let backend, _) = self else { return nil }
         return [CustomOrigin.rejectionReason(wallet), CustomOrigin.rejectionReason(backend)]

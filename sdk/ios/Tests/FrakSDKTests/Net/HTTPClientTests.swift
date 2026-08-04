@@ -3,9 +3,7 @@ import Testing
 
 @testable import FrakSDK
 
-/// Records every line a `FrakLogger` handed to this sink, in order. Local to this file rather
-/// than reusing `Core/FrakLoggerTests.swift`'s private `RecordingSink`, since that file is out of
-/// this change's scope.
+/// Records every line a `FrakLogger` handed to this sink, in order.
 private final class RecordingLogSink: FrakLogSink, @unchecked Sendable {
     private let lock = NSLock()
     private var captured: [String] = []
@@ -25,8 +23,8 @@ private final class RecordingLogSink: FrakLogSink, @unchecked Sendable {
 
 @Suite("HTTPClient")
 struct HTTPClientTests {
-    /// Builds a client on its own uniquely-hosted stub session, and registers `handler`
-    /// against that host. Each test gets isolated state, so parallel tests never race.
+    /// Builds a client on its own uniquely-hosted stub session and registers `handler` against
+    /// that host. Each test gets isolated state; parallel tests never race.
     private func makeClient(
         logger: FrakLogger? = nil,
         _ handler: @escaping @Sendable (URLRequest) throws -> StubResponse
@@ -61,11 +59,10 @@ struct HTTPClientTests {
 
     @Test("percent-encodes characters URLComponents would leave unescaped in a query value (N2)")
     func percentEncodesReservedCharactersUrlComponentsWouldLeaveAlone() async throws {
-        // `!`, `$`, `&`, `=` are all in URLComponents' own "allowed" set for a query value, so
-        // components.percentEncodedQuery used to leave them unescaped — wrong here, since one of
-        // these appearing inside a *value* (not as the query's own delimiter) would otherwise
-        // parse as a second parameter or a literal `=`. PercentEncoding's RFC 3986 unreserved-only
-        // allowlist (matching the Android twin exactly) escapes all of them.
+        // `!`, `$`, `&`, `=` are in URLComponents' own "allowed" set for a query value, so
+        // `percentEncodedQuery` leaves them unescaped even inside a value, where they'd otherwise
+        // parse as a second parameter or a literal `=`. The RFC 3986 unreserved-only allowlist
+        // used here escapes all of them.
         let client = makeClient { request in
             let url = try #require(request.url?.absoluteString)
             #expect(url.contains("tricky=a%21b%24c%26d%3De"))
@@ -181,10 +178,9 @@ struct HTTPClientTests {
             )
         }
 
-        // #expect(throws: FrakError.self) alone would also pass if URLSession itself rejected the
-        // lying Content-Length as a transport error (a well-known outcome for a header/body
-        // mismatch) — exactly the failure mode this test exists to exclude. Unwrap and assert the
-        // underlying error to prove the cap, not URLSession, is what rejected it.
+        // A bare #expect(throws: FrakError.self) would also pass if URLSession itself rejected
+        // the lying Content-Length as a transport error. Unwrap and assert the underlying error
+        // to prove the cap, not URLSession, rejected it.
         do {
             _ = try await client.get("/x")
             Issue.record("expected the request to throw")
@@ -197,11 +193,9 @@ struct HTTPClientTests {
 
     @Test("a body over the cap with no advertised Content-Length is rejected, not truncated")
     func bodyOverCapWithNoContentLengthIsRejected() async throws {
-        // No Content-Length header at all (not even a lying one): StubURLProtocol's
-        // HTTPURLResponse only carries whatever headers the stub supplies. iOS uses
-        // session.data(for:), which buffers the whole body before this check runs — unlike
-        // Android's readBytesUpTo, this is a post-buffer rejection, not a bounded-memory
-        // streaming abort. See the comment on HTTPClient.attemptUnlogged (S5, partial).
+        // No Content-Length header at all. StubURLProtocol's HTTPURLResponse only carries
+        // whatever headers the stub supplies. `session.data(for:)` buffers the whole body
+        // before this check runs, so this is a post-buffer rejection, not a streaming abort.
         let oversized = String(repeating: "x", count: Int(HTTPClient.maxResponseBodyBytes) + 1)
         let client = makeClient { _ in StubResponse(status: 200, body: oversized) }
 
@@ -249,8 +243,8 @@ struct HTTPClientTests {
             }
             throw StubHangs()
         }
-        // Comfortably above the retry's 100-300ms jittered delay (N6) so the second attempt is
-        // never starved by the delay itself, while still well under the 1s assertion below.
+        // Comfortably above the retry's 100-300ms jittered delay so the second attempt is never
+        // starved by the delay itself, while still well under the 1s assertion below.
         let client = HTTPClient(baseURL: "https://\(host)", session: session, overallDeadlineSeconds: 0.5)
 
         let start = Date()
@@ -297,8 +291,7 @@ struct HTTPClientTests {
 
     @Test("nothing is logged when no logger is configured (D3)")
     func nothingLoggedWithoutConfiguredLogger() async throws {
-        // makeClient's default logger is nil; get() must behave identically to every other test
-        // in this suite, none of which configure one.
+        // makeClient's default logger is nil.
         let client = makeClient { _ in StubResponse(status: 200, body: "{}") }
 
         let response = try await client.get("/x")
@@ -316,8 +309,8 @@ struct HTTPClientTests {
             throw URLError(.networkConnectionLost)
         }
 
-        // .networkConnectionLost is transient (N6): the original attempt and its retry both fail
-        // and are each logged once, so two lines are expected, not one.
+        // .networkConnectionLost is transient: the original attempt and its retry both fail and
+        // are each logged once.
         await #expect(throws: FrakError.self) {
             _ = try await client.get("/x")
         }

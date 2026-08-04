@@ -69,8 +69,8 @@ class ReferralArrivalTest {
     fun `cannot self-refer with no identity, or from a v1 link`() {
         val context = FrakContext.V2(MERCHANT_ID, TIMESTAMP, clientId = CLIENT_ID)
         assertFalse(ReferralArrival.shouldIgnoreArrival(context, null))
-        // A native app has no wallet, so the wallet comparison the web makes
-        // has nothing to compare against.
+        // A native app has no wallet, so the wallet comparison the web makes has nothing to
+        // compare against.
         assertFalse(ReferralArrival.shouldIgnoreArrival(FrakContext.V1(WALLET), CLIENT_ID))
     }
 

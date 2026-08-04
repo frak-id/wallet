@@ -26,10 +26,8 @@ class MerchantQueryTest {
 
         val parameters = query.parameters()
         assertEquals("merchantId is sent", MERCHANT_ID, parameters["merchantId"])
-        // The backend's own lookup is first-match-wins with merchantId first, so
-        // a packageId sent alongside would be inert for lookup — but would still
-        // be schema-validated, and without a platform that is a 400 rather than
-        // the 200 the caller expects.
+        // A packageId sent alongside a merchantId would be inert for lookup but still schema-
+        // validated, and without a platform that is a 400 rather than the 200 expected.
         assertNull("packageId is not sent alongside a merchantId", parameters["packageId"])
         assertNull("platform is not sent alongside a merchantId", parameters["platform"])
     }
@@ -39,10 +37,8 @@ class MerchantQueryTest {
         val parameters = MerchantQuery.from(FrakConfig(packageId = "com.example.app")).parameters()
 
         assertEquals("com.example.app", parameters["packageId"])
-        // Unconditional. The backend rejects the pair with
-        // 400 INVALID_PACKAGE_ID_PAIRING when platform is missing, and
-        // allowed_package_ids entries are platform-prefixed, so an unprefixed
-        // lookup matches nothing anyway.
+        // The backend rejects the pair with 400 INVALID_PACKAGE_ID_PAIRING when platform is
+        // missing, and allowed_package_ids entries are platform-prefixed.
         assertEquals("android", parameters["platform"])
     }
 
@@ -59,9 +55,8 @@ class MerchantQueryTest {
         assertEquals("fr", withLang["lang"])
 
         val withoutLang = MerchantQuery.from(FrakConfig(merchantId = MERCHANT_ID)).parameters()
-        // Null rather than empty: the backend distinguishes an absent parameter
-        // from an empty one, and lets an absent lang fall back to the merchant's
-        // own configured language.
+        // Null rather than empty: the backend distinguishes an absent parameter from an empty
+        // one, and lets an absent lang fall back to the merchant's own configured language.
         assertNull(withoutLang["lang"])
     }
 
@@ -87,8 +82,6 @@ class MerchantQueryTest {
                     FrakConfig(merchantId = MERCHANT_ID, metadata = FrakMetadata(lang = FrakLanguage.FR)),
                 ).cacheKey()
 
-        // Two languages resolve the same merchant but return different copy.
-        // Sharing a cache entry would serve French copy to an English user.
         assertTrue("languages do not share a cache entry", english != french)
     }
 
@@ -97,8 +90,7 @@ class MerchantQueryTest {
         val lower = MerchantQuery.from(FrakConfig(packageId = "com.example.app")).cacheKey()
         val upper = MerchantQuery.from(FrakConfig(packageId = "COM.EXAMPLE.APP")).cacheKey()
 
-        // Mirrors the backend's own normalisation (`normalizePackageId` lowercases),
-        // so a cache hit here corresponds to a cache hit there.
+        // Mirrors the backend's own normalisation (`normalizePackageId` lowercases).
         assertEquals(lower, upper)
     }
 
@@ -114,8 +106,8 @@ class MerchantQueryTest {
 
     @Test
     fun `blank identifiers are treated as absent`() {
-        // A merchant reading an empty BuildConfig field gets "" rather than null,
-        // and "" would resolve nothing while looking configured.
+        // A merchant reading an empty BuildConfig field gets "" rather than null, which would
+        // resolve nothing while looking configured.
         val query = MerchantQuery.from(FrakConfig(merchantId = "   ", packageId = "com.example.app"))
 
         assertEquals("com.example.app", query.parameters()["packageId"])

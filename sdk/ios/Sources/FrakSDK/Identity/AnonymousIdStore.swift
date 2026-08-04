@@ -8,14 +8,13 @@ import Foundation
 /// clientId = uuid_from(SHA-256(pubkey_uncompressed)[0..16])   // RFC-4122 v4 bits set
 /// ```
 ///
-/// Scoped to one installation: a reinstall is a new user, exactly as clearing site data is
-/// on the web. Nothing here throws — a device that refuses key material yields nil, and
-/// tracking goes inert rather than the SDK failing a merchant's call.
-/// 4.5: an actor, not a class with `NSLock` — generation is suspend/async now, so the lock that
-/// existed only because `anonymousId()` was synchronous is unnecessary; actor isolation gives the
-/// same mutual exclusion for free. [startEagerGeneration] mints the keypair as soon as this store
-/// exists; a caller racing that warm-up awaits the SAME in-flight `Task` instead of redundantly
-/// re-entering `load` behind a lock.
+/// Scoped to one installation: a reinstall is a new user, like clearing site data on the web.
+/// Nothing here throws — a device that refuses key material yields nil, and tracking goes
+/// inert rather than the SDK failing a merchant's call.
+///
+/// An actor rather than a class with a lock: actor isolation gives the same mutual exclusion,
+/// and `startEagerGeneration` lets a caller racing the warm-up await the same in-flight `Task`
+/// instead of re-entering `load`.
 actor AnonymousIdStore {
     /// Which merchant this installation's id belongs to, so a rebuild pointed at a
     /// different one regenerates rather than carrying the old identity across.
@@ -30,14 +29,13 @@ actor AnonymousIdStore {
     private let store: KeyValueStore
     private let logger: FrakLogger
     private let merchantMarker: String
-    /// S6a/C7: the runtime consent handle, not the build-time `FrakConfig.trackingEnabled` bool
-    /// this used to be. Read fresh at both gate sites below rather than captured once, so a
-    /// `setTrackingEnabled(false)` mid-session actually stops the next mint instead of taking
-    /// effect only after the merchant's app is relaunched.
+    /// Runtime consent handle, read fresh at both gate sites below rather than captured once,
+    /// so a withdrawal mid-session stops the next mint immediately instead of only after the
+    /// merchant's app is relaunched.
     ///
-    /// Two gates here, one on Android: `startEagerGeneration()` has to make the cross-actor read
-    /// itself before it can decide whether to start a `Task` at all, whereas the Kotlin twin's
-    /// equivalent only launches into a scope and can defer the whole decision to `current()`.
+    /// Two gates here, one on Android: `startEagerGeneration()` makes the cross-actor read
+    /// itself before deciding whether to start a `Task`, where the Kotlin twin can defer that
+    /// decision to `current()`.
     private let consent: TrackingConsent
 
     private var generation: Task<Identity?, Never>?
@@ -65,9 +63,8 @@ actor AnonymousIdStore {
     /// `DefaultFrakClient.init`, so a later `anonymousId()` read usually awaits an
     /// already-completed `Task` rather than starting the round-trip itself.
     ///
-    /// `async` since S6a/C7: the consent read is a cross-actor hop. It still does not await the
-    /// mint itself — only the decision of whether to start one — so this stays the fire-and-forget
-    /// warm-up its caller expects.
+    /// `async` because the consent read is a cross-actor hop; it awaits only that decision, not
+    /// the mint itself, so this stays the fire-and-forget warm-up its caller expects.
     func startEagerGeneration() async {
         guard await consent.isEnabled() else { return }
         _ = generationTask()
@@ -111,27 +108,20 @@ actor AnonymousIdStore {
     /// Destroys the keypair, so the next read mints a new identity. Everything already
     /// attributed to the old id stays with it — this severs the device from that id.
     ///
-    /// `Bool`, matching the Android twin now (4fp), where the return value distinguishes a
-    /// genuine keystore failure from success. This platform's `delete()` cannot itself fail —
-    /// `DeviceKeyStore.delete()` is non-throwing by protocol (`DeviceKey.swift`) and its one
-    /// production conformance, `PersistedDeviceKeyStore`, is a `KeyValueStore.removeValue` call —
-    /// itself non-throwing by protocol, backed by `UserDefaults` removal, never the Keychain or
-    /// Secure Enclave (deletion only ever drops the stored key *reference*; the Secure Enclave
-    /// path is exercised on generation, not on delete) — so this always returns true. The value
-    /// exists so a merchant writing shared cross-platform erasure logic has one contract to check
-    /// rather than two: overriding this platform's local asymmetry in favour of the one that
-    /// carries a real legal-compliance obligation is deliberate, not an oversight.
+    /// Always returns true on this platform: `DeviceKeyStore.delete()` is non-throwing,
+    /// backed by a `UserDefaults` removal, not the Keychain or Secure Enclave. The value
+    /// exists so a merchant writing shared cross-platform erasure logic has one contract to
+    /// check — the equivalent call can genuinely fail on Android.
     ///
-    /// Clearing `generation` before touching storage (rather than after) closes a race the
-    /// `NSLock`-based version had: a generation already in flight when `reset()` runs can no
-    /// longer publish the OLD identity afterwards, because the next `anonymousId()` call sees
-    /// `generation == nil` and starts a brand new one rather than awaiting the stale one.
+    /// Clears `generation` before touching storage: a generation already in flight when
+    /// `reset()` runs can then no longer publish the OLD identity afterwards, because the next
+    /// `anonymousId()` call sees `generation == nil` and starts a brand new one rather than
+    /// awaiting the stale one.
     @discardableResult
     func reset() -> Bool {
         // Cancelled before being cleared: an in-flight `load()` racing this call must not write
         // `merchantMarker` back after `removeValue` below removes it (see `load`'s cancellation
-        // check). Cancellation never changes what THIS call returns — deletion on this platform
-        // cannot fail regardless of what an in-flight generation was doing.
+        // check).
         generation?.cancel()
         generation = nil
         generationToken += 1
@@ -140,53 +130,40 @@ actor AnonymousIdStore {
         return true
     }
 
-    /// Awaits the in-flight or already-completed generation. A refusal is never cached (see the
-    /// KDoc on the recovery test): a keystore can refuse for reasons that pass — key operations
-    /// unavailable before first unlock, a transient Secure Enclave hiccup — and caching the
-    /// failure would turn one refusal into an install that never tracks again. So a `Task` that
-    /// resolves to nil clears `generation` afterwards — but ONLY if `generationToken` is still the
-    /// token this call started with. That check is what makes the clear race-safe: if `reset()` or
-    /// a newer generation already ran while this was awaiting, the token has moved on, and this
-    /// call leaves `generation` alone instead of clobbering something newer than the failure it
-    /// observed.
+    /// Awaits the in-flight or already-completed generation. A refusal is never cached: a
+    /// keystore can refuse for reasons that pass (unavailable before first unlock, a transient
+    /// Secure Enclave hiccup), and caching it would turn one refusal into an install that never
+    /// tracks again. A task that resolves to nil clears `generation` afterwards, but only if
+    /// `generationToken` is still the token this call started with — otherwise a newer
+    /// generation already replaced it and this leaves it alone.
     ///
-    /// `task.isCancelled` is checked separately from `value == nil`: `generation` is a
-    /// `Task.detached` running `load`, which is synchronous, non-cooperative code with no
-    /// suspension point to actually stop at. `reset()`'s `generation?.cancel()` therefore never
-    /// stops the keystore work in flight — it only flips `Task.isCancelled`, which `load` checks
-    /// once, to skip resurrecting the merchant marker. The task still runs to completion and
-    /// `.value` still resolves to the OLD, just-deleted identity. Without this check, a caller
-    /// already suspended on `await task.value` when `reset()` ran would receive that stale
-    /// identity and hand it back to `anonymousId()`/`signProof` — publishing an id `reset()` just
-    /// erased. Android does not need this: `Deferred.cancel()` makes `await()` throw immediately,
-    /// which `awaitAndDropIfFailed` maps to null. This mirrors that outcome without a real
-    /// cancellation point to rely on.
+    /// `task.isCancelled` is checked separately from `value == nil`: `load` is synchronous,
+    /// non-cooperative code with no suspension point to stop at, so `reset()`'s
+    /// `generation?.cancel()` never actually stops the keystore work in flight, only flips
+    /// `Task.isCancelled`. Without this check, a caller already suspended on `await task.value`
+    /// when `reset()` ran would receive the stale, just-deleted identity.
     private func identity() async -> Identity? {
-        // The load-bearing gate (`startEagerGeneration` has the other, but only a caller reaching
-        // here can mint on demand). Checked before `generation` is read, so a DENIED consent
-        // short-circuits ahead of any keystore work — including on the first launch of a build that
-        // reads a denial already on disk, which is what makes "denied consent, no key material"
-        // true rather than merely claimed.
+        // Checked before `generation` is read, so a denied consent short-circuits ahead of any
+        // keystore work, including on the first launch of a build that reads a denial already
+        // on disk.
         //
-        // Note what that does NOT say. The shipped default is `trackingEnabled: true` with no
-        // recorded decision, which this treats as permitted (see `TrackingConsent`'s table), so the
-        // keypair IS minted on first launch before any CMP has spoken.
+        // Default is `trackingEnabled: true` with no recorded decision, treated as permitted
+        // (see `TrackingConsent`'s table), so the keypair mints on first launch before any CMP
+        // has spoken.
         //
-        // This `await` is a new suspension point ahead of every actor-isolated read below, so this
-        // call can now be re-entered before it touches `generation`. That is safe for the token
-        // invariant — `generationTask()` and `generationToken` are read on the next two lines with
-        // no suspension between them, so `token` still names the task it was read beside. What it
-        // does NOT prevent is a withdrawal landing inside this very `await`: that mint completes.
-        // `reset()` cancels an in-flight generation; `setTrackingEnabled(false)` deliberately does
-        // not, because it is a pause, not an erasure.
+        // This await is a suspension point, so the call can be re-entered before touching
+        // `generation` — safe since `generationTask()` and `generationToken` are read with no
+        // suspension between them right after. A withdrawal landing inside this await lets that
+        // mint complete: `setTrackingEnabled(false)` deliberately doesn't cancel an in-flight
+        // generation, unlike `reset()`, because it is a pause, not an erasure.
         guard await consent.isEnabled() else { return nil }
         let task = generationTask()
         let token = generationToken
         let value = await task.value
-        // Checked AFTER awaiting, not before: the race is `reset()` running WHILE this call is
-        // suspended on `await task.value`, so cancellation can only be observed once the await
-        // returns. `task.value` still resolves to `load`'s real result even when cancelled —
-        // this discards that result rather than returning it.
+        // Checked after awaiting: `reset()` can run while this is suspended on
+        // `await task.value`, so cancellation is only observable once the await returns.
+        // `task.value` still resolves to `load`'s real result even when cancelled; this
+        // discards it.
         if task.isCancelled {
             return nil
         }
@@ -196,15 +173,14 @@ actor AnonymousIdStore {
         return value
     }
 
-    /// Non-optional since S6a/C7: the consent gate moved to the two callers, which are `async`
-    /// and can therefore make the cross-actor read this function cannot. Nothing else could ever
-    /// make it return nil.
+    /// Non-optional: the consent gate lives in the two async callers, which can make the
+    /// cross-actor read this function cannot.
     private func generationTask() -> Task<Identity?, Never> {
         if let generation { return generation }
-        // Task.detached, not Task { }: a non-detached Task inside an actor inherits the actor's
-        // executor, so the keystore/Secure Enclave work would run ON the actor and serialise
-        // every other actor method behind it — exactly the blocking 4.5 exists to remove. `load`
-        // is `nonisolated` so it is callable from a detached context without hopping back here.
+        // Task.detached, not Task { }: a non-detached Task inherits the actor's executor, so
+        // the keystore/Secure Enclave work would run on the actor and serialise every other
+        // actor method behind it. `load` is `nonisolated` so it is callable from a detached
+        // context without hopping back here.
         let keyStore = keyStore
         let store = store
         let logger = logger
@@ -213,12 +189,9 @@ actor AnonymousIdStore {
             Self.load(keyStore: keyStore, store: store, logger: logger, merchantMarker: merchantMarker)
         }
         generation = task
-        // Bumped here, not only in `reset()`: `generationToken` identifies WHICH generation is
-        // current, not just whether a reset happened. Without this, a task B that is awaiting an
-        // older, now-superseded generation could see the token unchanged when it resolves to nil
-        // and clear a DIFFERENT, newer task that this call just installed and that may already
-        // have succeeded — discarding a live identity and forcing a redundant Secure Enclave round
-        // trip. See `identity()`'s doc for the read side of this invariant.
+        // Bumped here too, not only in `reset()`: the token identifies which generation is
+        // current, not just whether a reset happened. Otherwise a stale task resolving to nil
+        // could clear a newer, already-installed task and discard a live identity.
         generationToken += 1
         return task
     }

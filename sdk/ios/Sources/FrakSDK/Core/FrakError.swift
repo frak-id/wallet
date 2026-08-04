@@ -10,10 +10,10 @@ public enum FrakError: Error, Sendable {
     case server(status: Int, code: String?, retryAfterSeconds: Int?)
     /// A 2xx response arrived but could not be read as the shape we expect.
     case decoding(message: String)
-    /// A **tracking** call was made while tracking is not permitted — either because this build
+    /// A tracking call was made while tracking is not permitted — either because this build
     /// ships `FrakConfig(trackingEnabled: false)` or because `FrakClient.setTrackingEnabled(false)`
-    /// was called at runtime (S6a/C7). Not raised by config or reward resolution, which are
-    /// deliberately ungated (S9).
+    /// was called at runtime. Not raised by config or reward resolution, which are deliberately
+    /// ungated.
     case trackingDisabled
     /// No merchant could be identified for this app.
     case merchantResolutionFailed(reason: String)

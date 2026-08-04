@@ -1,35 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Keeps the SDK's anonymous identity from surviving a device migration.
+  Keeps the SDK's anonymous identity from surviving a device migration. The anonymous id is
+  derived from a device-held P-256 keypair scoped to one app installation; carrying it to a new
+  device resurrects a "fresh" user's identity.
 
-  02-sdk-design.md §3: the anonymous id is derived from a device-held
-  P-256 keypair and is scoped to one app installation. Carrying it to a new
-  device resurrects a "fresh" user's identity — the exact behaviour that makes
-  Keychain unusable on iOS, and the reason it is rejected there.
+  Both blocks are required for both files: `<cloud-backup>` alone still lets a device-to-device
+  transfer clone them verbatim.
 
-  BOTH blocks are required for BOTH files. `<cloud-backup>` alone still lets a
-  device-to-device transfer — the standard new-phone flow — clone them verbatim.
+  Two files: `id.frak.sdk.xml` holds the anonymous identity, `id.frak.sdk.config.xml` is the
+  resolved-config cache. Keeping them separate means a corrupt write to one cannot take the
+  other with it. The config cache is excluded too since a stale copy on a new device risks
+  serving config resolved under a different identity.
 
-  Two files, deliberately. `id.frak.sdk.xml` holds the anonymous identity;
-  `id.frak.sdk.config.xml` is the resolved-config cache, written on every
-  successful resolve. Keeping the hot one away from the identity slot means a
-  corrupt write cannot take the identity with it. The config cache is excluded
-  for a milder reason than the identity — it is merchant data keyed to an install
-  and cheap to refetch, so carrying a stale copy onto a new device buys nothing
-  and risks serving config resolved under a different identity.
+  API 31+ only (`android:dataExtractionRules`). `frak_full_backup_content.xml` is the same
+  exclusion list for API 24-30 (`android:fullBackupContent`).
 
-  This is API 31+ only (`android:dataExtractionRules`). `frak_full_backup_content.xml` is
-  the same exclusion list for API 24-30 (`android:fullBackupContent`) — both are required to
-  cover the SDK's minSdk 24 floor.
+  This file being present is not sufficient: `android:dataExtractionRules` is a singular
+  attribute on `<application>`, and Gradle's manifest merger does not union rules files, so a
+  library cannot wire this from its own manifest. See "Backup and device-transfer exclusion" in
+  the SDK's README for the required `<application>` snippet.
 
-  Note that this file being present is NOT sufficient. `android:dataExtractionRules`
-  is a singular attribute on `<application>`, and Gradle's manifest merger does
-  not union rules files: if the merchant declares their own, the build fails
-  outright (merger conflict, not a silent drop) pending `tools:replace` — a
-  library cannot apply `tools:replace` to its own consumer. So this ships as a
-  resource to reference or copy; see "Backup and device-transfer exclusion" in
-  the SDK's README for the required `<application>` snippet. Backed by a
-  debug-build runtime assertion once there is code to assert.
+  TODO: a debug-build runtime assertion that these exclusions are actually wired is not yet
+  implemented.
 -->
 <data-extraction-rules>
     <cloud-backup>

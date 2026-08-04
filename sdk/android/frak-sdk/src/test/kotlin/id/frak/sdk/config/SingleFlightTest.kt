@@ -123,10 +123,9 @@ class SingleFlightTest {
         }
 
     /**
-     * Fails against the original `computeIfAbsent`/`scope.async` implementation: a `Deferred`
-     * left cancelled by the runtime throws the bare `CancellationException` from `await()`
-     * regardless of what the body caught, killing an innocent waiter's coroutine silently. This
-     * implementation hands such a waiter a catchable [FrakError.Network] instead.
+     * A `Deferred` left cancelled by the runtime throws the bare `CancellationException` from
+     * `await()` regardless of what the body caught, which would otherwise kill an innocent
+     * waiter's coroutine silently; this implementation hands it a catchable [FrakError.Network].
      */
     @Test
     fun `the shared flight's own cancellation reaches a waiter as a catchable FrakError`() =

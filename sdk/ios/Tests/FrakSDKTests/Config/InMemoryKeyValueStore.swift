@@ -4,9 +4,9 @@ import Foundation
 
 /// `KeyValueStore` with no platform underneath, so cache behaviour is testable at all.
 ///
-/// Lock-protected, not just `@unchecked Sendable` on faith (4.5): `AnonymousIdStore` now mints
-/// identity on a `Task.detached` background thread, so a test racing `startEagerGeneration()`
-/// against a direct `anonymousId()` call can genuinely reach this from two threads at once.
+/// Lock-protected: `AnonymousIdStore` mints identity on a `Task.detached` background thread, so
+/// a test racing `startEagerGeneration()` against a direct `anonymousId()` call can reach this
+/// from two threads at once.
 final class InMemoryKeyValueStore: KeyValueStore, @unchecked Sendable {
     private let lock = NSLock()
     private var values: [String: String] = [:]

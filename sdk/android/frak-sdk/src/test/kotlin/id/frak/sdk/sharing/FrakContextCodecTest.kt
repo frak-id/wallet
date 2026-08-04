@@ -11,14 +11,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The `fCtx` codec against the shared corpus.
- *
- * Every assertion here is one the TypeScript codec makes too, on the same
- * vectors. 04 §1 calls this the highest silent-divergence risk in the port —
- * a wrong byte order or a tolerated near-miss length produces links that look
- * valid and attribute to nobody — so the corpus, not this file, is the
- * authority: an `encode` fixture is checked byte-for-byte and a `reject`
- * fixture is checked to actually be refused.
+ * The `fCtx` codec against the shared corpus: every assertion here is one the TypeScript codec
+ * makes too, on the same vectors. A wrong byte order or a tolerated near-miss length produces
+ * links that look valid and attribute to nobody, so the corpus is the authority: an `encode`
+ * fixture is checked byte-for-byte, a `reject` fixture is checked to actually be refused.
  */
 class FrakContextCodecTest {
     private val corpus = GoldenFixtures.load(GoldenFixtures.CONTEXT_CODEC)
@@ -75,9 +71,8 @@ class FrakContextCodecTest {
             when (val direction = fixture.getString("direction")) {
                 "encode" -> {
                     val input = fixture.getJSONObject("input")
-                    // A fractional timestamp is unrepresentable here: the Kotlin
-                    // API takes a Long. Asserting a rejection would be asserting
-                    // something about this test's own coercion, not the codec.
+                    // A fractional timestamp is unrepresentable here: the Kotlin API takes a
+                    // Long, so asserting a rejection would test this coercion, not the codec.
                     if (input.getDouble("t") != Math.floor(input.getDouble("t"))) continue
                     assertNull(name, encodeFrom(input))
                 }
@@ -96,15 +91,15 @@ class FrakContextCodecTest {
             }
             checked++
         }
-        // Not an equality against the corpus count: one fixture (a fractional
-        // timestamp) is unrepresentable in a Long-typed API and is skipped above.
+        // Not an equality against the corpus count: one fractional-timestamp fixture is
+        // unrepresentable in a Long-typed API and is skipped above.
         assertTrue("the corpus lost its reject fixtures", checked > 0)
     }
 
     /**
-     * A V1 payload must be refused by the V2 decoder and still read by the
-     * outer decompressor — that pair *is* the version disambiguation, so
-     * asserting only the rejection would leave half of it untested.
+     * A V1 payload must be refused by the V2 decoder and still read by the outer decompressor —
+     * that pair is the version disambiguation, so asserting only the rejection would leave half
+     * of it untested.
      */
     @Test
     fun `reads a v1 payload the v2 decoder refuses`() {

@@ -17,15 +17,13 @@ plugins {
 val sdkVersion: String =
     providers.gradleProperty("frak.sdk.version").get()
 
-// Composite-build dependency substitution (`includeBuild("…/sdk/android")`) matches on
-// `project.group`, not the `MavenPublication`'s `groupId` below — without this, a consumer
-// doing that falls through to "cannot resolve id.frak:frak-sdk from Maven Central" instead of
-// being substituted locally. The publication keeps its own explicit `groupId` too, so the
-// published POM stays pinned even if this ever needs to diverge.
+// Composite-build substitution (`includeBuild("…/sdk/android")`) matches on `project.group`,
+// not the `MavenPublication`'s `groupId` below — without this, a consumer falls through to
+// "cannot resolve id.frak:frak-sdk" instead of resolving it locally.
 group = "id.frak"
 
-// Everything both artifacts must agree on. Kept here rather than in each module because the
-// two ship in lockstep: a value that differs between them is a bug, not a choice.
+// Everything both artifacts must agree on; they ship in lockstep, so a value that differs
+// between them is a bug, not a choice.
 android {
     compileSdk = 36
 
@@ -53,11 +51,8 @@ android {
     }
 }
 
-// Both artifacts publish public API (:frak-sdk-ui publishes `public sealed interface
-// SharingResult`, among others), so explicitApi/jvmTarget/language version/jvmDefault are
-// identical across both and belong here rather than duplicated per module. A module needing a
-// genuinely different value would configure `kotlin { }` again itself — the last configuration
-// wins — but none currently does.
+// Both artifacts publish public API, so explicitApi/jvmTarget/language version/jvmDefault are
+// identical across both and belong here rather than duplicated per module.
 extensions.configure<KotlinAndroidProjectExtension> {
     // Published library: explicit visibility/return type on every public symbol,
     // so nothing silently widens the frozen API.
@@ -100,7 +95,7 @@ afterEvaluate {
                         license {
                             // Apache-2.0, not the monorepo's GPL-3.0: merchants statically link
                             // this into closed-source store binaries, and the patent grant covers
-                            // the identity proof-of-possession scheme. See sdk/android/LICENSE.
+                            // the identity proof-of-possession scheme.
                             name.set("The Apache License, Version 2.0")
                             url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                         }

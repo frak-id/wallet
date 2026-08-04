@@ -381,8 +381,7 @@ describe("ensureEnvMetafields", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        // The sync is memoised per shop for 30 minutes, so each case needs
-        // its own shop or every one after the first would be a no-op.
+        // Memoised per shop for 30 minutes: each case needs its own shop or it's a no-op.
         shopCounter += 1;
         vi.mocked(shopInfo).mockResolvedValue({
             ...mockShop,
@@ -399,8 +398,7 @@ describe("ensureEnvMetafields", () => {
     });
 
     it("backfills a shop that predates the backend metafield", async () => {
-        // The rollout case: wallet_url already synced, backend_url absent.
-        // Left alone the storefront would pair a dev wallet with prod backend.
+        // Rollout case: wallet_url already synced, backend_url absent.
         vi.mocked(getWalletUrlMetafield).mockResolvedValue(
             "https://wallet-dev.frak.id"
         );

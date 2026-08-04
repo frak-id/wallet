@@ -65,15 +65,14 @@ private final class Waiter<Value: Sendable>: @unchecked Sendable {
 // Collapses concurrent calls for the same key into one execution.
 //
 // The work runs as an unstructured Task so one caller going away doesn't cancel other
-// waiters' request, but that also means awaiting task.value directly is never resumed
-// early by the awaiting task's own cancellation — it would make every public call
-// effectively non-cancellable. So waiters instead register via Waiter/withTaskCancellationHandler
-// and get resumed by whichever comes first: the flight settling, or their own cancellation.
+// waiters. Awaiting task.value directly would make every call effectively non-cancellable, so
+// waiters instead register via Waiter/withTaskCancellationHandler and get resumed by whichever
+// comes first: the flight settling, or their own cancellation.
 //
 // Eviction is identity-guarded (inFlight[key] === flight), never a bare `= nil`: a slow
 // completion must not evict a newer flight under the same key. Reuse also requires
 // !flight.isCompleted — without it a finished-but-not-evicted task could be served as a
-// cached result to a forceRefresh caller (actor executors aren't FIFO, so reachable in practice).
+// cached result to a forceRefresh caller.
 actor SingleFlight<Value: Sendable> {
     private struct Flight {
         let task: Task<Value, any Error>

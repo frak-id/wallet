@@ -10,13 +10,12 @@ import org.junit.Test
 
 /**
  * [FrakSharingLauncher]'s own state machine, independent of composition. Touches only
- * `androidx.compose.runtime` (a plain-JVM snapshot-state API, not `android.*`), so this runs as
- * an ordinary JUnit test with no Robolectric runner, unlike [SharingSheetStateTest] next to it.
+ * `androidx.compose.runtime`, a plain-JVM snapshot-state API, so this runs as an ordinary JUnit
+ * test with no Robolectric runner, unlike [SharingSheetStateTest] next to it.
  *
- * [rememberFrakSharingLauncher] itself — `remember`, `rememberUpdatedState`, hosting
- * [WarmSharingWebView] and [id.frak.sdk.ui.FrakSharingSheet] — needs a real composition and has
- * no coverage here; that would need `androidx.compose.ui.test` with a `createComposeRule` host,
- * i.e. an instrumented/`androidTest` run, not a JVM unit test.
+ * [rememberFrakSharingLauncher] itself needs a real composition and has no coverage here — that
+ * would need `androidx.compose.ui.test`'s `createComposeRule`, an instrumented/`androidTest`
+ * run, not a JVM unit test.
  */
 class FrakSharingLauncherTest {
     private fun newLauncher(onResult: (SharingResult) -> Unit = {}) = FrakSharingLauncher(mutableStateOf(onResult))

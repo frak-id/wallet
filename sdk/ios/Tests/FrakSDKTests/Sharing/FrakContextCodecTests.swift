@@ -50,7 +50,6 @@ struct FrakContextCodecTests {
             #expect(FrakContextCodec.compress(context) == compressed, "\(fixture.name)")
             #expect(compressed?.count == fixture.expected["base64urlLength"] as? Int, "\(fixture.name)")
         }
-        // A loop over an empty corpus passes while proving nothing.
         #expect(!fixtures.isEmpty)
     }
 

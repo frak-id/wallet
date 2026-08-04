@@ -11,9 +11,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * S6a/C7. The tri-state table in [TrackingConsent]'s KDoc, one test per row plus the two
- * behaviours that are easy to "simplify" away later: the compile-time floor, and the fact that an
- * absent key follows the config rather than reading as a denial.
+ * One test per row of [TrackingConsent]'s KDoc tri-state table, plus two behaviours easy to
+ * "simplify" away: the compile-time floor, and an absent key following the config rather than
+ * reading as a denial.
  */
 class TrackingConsentTest {
     private fun consent(
@@ -35,7 +35,7 @@ class TrackingConsentTest {
             consent(store).setEnabled(false)
 
             // A second instance over the same store is the next app launch: nothing is carried
-            // over in memory, so this reads only what reached disk.
+            // over in memory.
             assertFalse(consent(store).isEnabled())
         }
 
@@ -54,9 +54,8 @@ class TrackingConsentTest {
         }
 
     /**
-     * The hard floor. Pinned because the obvious "simplification" — letting the persisted value
-     * win outright — silently turns the SDK on inside a merchant's staged-rollout build, which is
-     * the one outcome this class exists to make impossible.
+     * The obvious "simplification" — letting the persisted value win outright — would silently
+     * turn the SDK on inside a merchant's staged-rollout build.
      */
     @Test
     fun `a persisted grant can never lift a compile-time trackingEnabled false`() =
@@ -67,8 +66,8 @@ class TrackingConsentTest {
             subject.setEnabled(true)
 
             assertFalse(subject.isEnabled())
-            // Recorded even so: the merchant's users really did consent, and a build that later
-            // ships trackingEnabled = true must honour that rather than re-prompt.
+            // Recorded even so: a build that later ships trackingEnabled = true must honour it
+            // rather than re-prompt.
             assertTrue(consent(store, configDefault = true).isEnabled())
         }
 
@@ -85,12 +84,9 @@ class TrackingConsentTest {
         }
 
     /**
-     * A half-written **value** is not a denial. Failing towards "off" here would turn one corrupt
-     * preferences entry into an install that never tracks again and never says why.
-     *
-     * The opposite case — a read that *throws* — is the test below, and the two answers differ on
-     * purpose. This one is about a value we successfully read and did not recognise; that one is
-     * about not knowing at all.
+     * A half-written value is not a denial. Failing towards "off" here would turn one corrupt
+     * preferences entry into an install that never tracks again. The opposite case — a read that
+     * throws — is the test below, and the two answers differ on purpose.
      */
     @Test
     fun `an unrecognised stored value follows the config rather than reading as a denial`() =
@@ -103,15 +99,11 @@ class TrackingConsentTest {
         }
 
     /**
-     * A read we could not perform is not consent — the Android-only half of this class (the iOS
-     * `KeyValueStore` is non-throwing by protocol, so it has nothing to distinguish).
-     *
-     * The failure mode this closes: `runCatching { store.getString(KEY) }.getOrNull() != DENIED`
-     * collapses "key absent" and "the read threw" into the same `null`, which compares `true`, and
-     * memoises it — turning a recorded **denial** into "tracking on" for the whole process on a
-     * corrupted preferences file or a locked direct-boot user. Fails against that shape.
-     *
-     * Retryable, not sticky: the second call succeeds and sees the denial that was there all along.
+     * A read we could not perform is not consent. `runCatching { store.getString(KEY) }.getOrNull()
+     * != DENIED` collapses "key absent" and "the read threw" into the same `null`, turning a
+     * recorded denial into "tracking on" for the whole process on a corrupted preferences file or
+     * a locked direct-boot user. Retryable, not sticky: the second call sees the denial that was
+     * there all along.
      */
     @Test
     fun `a read that throws answers no consent and is never memoised`() =
@@ -140,7 +132,6 @@ class TrackingConsentTest {
                 TrackingConsent(flaky, true, FrakLogger(FrakLogLevel.NONE, null), UnconfinedTestDispatcher())
 
             assertFalse("a read we could not perform is not consent", subject.isEnabled())
-            // Not cached: the retry reads the denial that was on disk the whole time.
             assertFalse("the real answer was a denial", subject.isEnabled())
         }
 }

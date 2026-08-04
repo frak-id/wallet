@@ -2,8 +2,6 @@ import Testing
 
 @testable import FrakSDK
 
-/// There is no SDK behaviour to test yet — these assertions exist so `swift test`
-/// runs green and the test target is wired, not because the version string is at risk.
 @Suite("FrakSDKVersion")
 struct FrakSDKVersionTests {
     @Test("version is not empty")

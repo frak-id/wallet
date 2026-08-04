@@ -2,8 +2,8 @@ import Foundation
 
 @testable import FrakSDK
 
-/// Collects every value a background subscriber Task sees from an `AsyncStream`, so a
-/// test can assert both what arrived and how many times.
+/// Collects every value a background subscriber Task sees from an `AsyncStream`, so a test
+/// can assert both what arrived and how many times.
 actor ConfigLog {
     private(set) var values: [FrakResolvedConfig] = []
 
@@ -46,12 +46,10 @@ final class RequestLog: @unchecked Sendable {
 
     /// Waits until the log holds at least `target` requests, or the timeout expires.
     ///
-    /// `track` is durable-then-detached: it returns once the event is on disk and the drain
-    /// runs in its own task, so a delivery assertion made straight after the call reads the log
-    /// before the request has been made. Only the tracker's own suite can `flush()`; through the
-    /// client the drain is unreachable, so waiting for the effect is the only way to assert it.
-    /// `Date`/`Task.sleep(nanoseconds:)` rather than `ContinuousClock`/`Duration`, which are
-    /// iOS 16 and would not compile at this package's iOS 15 deployment target.
+    /// Polling is needed because `track` returns once the event is durable, before the drain
+    /// task runs — a delivery assertion made straight after the call would otherwise read the
+    /// log too early. Uses `Date`/`Task.sleep(nanoseconds:)` instead of `ContinuousClock`/
+    /// `Duration`, which need iOS 16; this package targets iOS 15.
     func wait(forCount target: Int, timeoutSeconds: TimeInterval = 2) async -> Bool {
         let deadline = Date().addingTimeInterval(timeoutSeconds)
         while count < target, Date() < deadline {
@@ -83,9 +81,9 @@ final class Counter: @unchecked Sendable {
 }
 
 extension URLRequest {
-    /// The request body as `URLProtocol` actually sees it: `URLSession` moves `httpBody`
-    /// into `httpBodyStream` before a protocol handler runs, so reading `httpBody` alone
-    /// silently returns nil for every POST.
+    /// The request body as `URLProtocol` actually sees it: `URLSession` moves `httpBody` into
+    /// `httpBodyStream` before a protocol handler runs; reading `httpBody` alone silently
+    /// returns nil for every POST.
     var stubBody: Data {
         if let httpBody { return httpBody }
         guard let stream = httpBodyStream else { return Data() }

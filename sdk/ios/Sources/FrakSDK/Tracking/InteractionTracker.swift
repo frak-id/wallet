@@ -19,17 +19,15 @@ actor InteractionTracker {
     private let queue: EventQueue
     private let http: HTTPClient
     private let logger: FrakLogger
-    /// Read fresh on every drain, so an identity reset takes effect mid-flight. Async (4.5):
+    /// Read fresh on every drain, so an identity reset takes effect mid-flight. Async:
     /// `AnonymousIdStore.anonymousId()` awaits eager generation rather than blocking, so this
-    /// drain loop no longer calls a blocking keystore read from inside itself.
+    /// drain loop does not call a blocking keystore read from inside itself.
     private let currentClientId: @Sendable () async -> String?
-    /// S6a/C7: whether tracking is still permitted, read fresh inside the drain loop.
-    ///
-    /// A `purge()` alone cannot stop a drain: `drain()` reads the whole backlog, then posts it one
-    /// event at a time with `await`s in between, so an event already in `pending` would still be
-    /// uploaded after the user withdrew consent — and the stale-id guard below cannot catch it,
-    /// because withdrawing consent makes `currentClientId` nil, which disables that guard rather
-    /// than tightening it. Re-reading this per event is what actually stops the upload.
+    /// Whether tracking is still permitted, read fresh inside the drain loop rather than once,
+    /// so a withdrawal mid-drain actually stops the upload. A `purge()` alone cannot do that:
+    /// `drain()` reads the whole backlog up front, so an event already read would still be
+    /// posted, and the stale-id guard below cannot catch it either — withdrawing consent makes
+    /// `currentClientId` nil, which disables that guard rather than tightening it.
     ///
     /// Defaults to always-allowed so the tracker's own tests, which have no consent store, are
     /// unaffected; the real gate is wired in `DefaultFrakClient`.
@@ -41,9 +39,8 @@ actor InteractionTracker {
     private var drainTask: Task<Void, Never>?
     /// Set when the queue changes under a running drain, so it loops once more.
     private var drainAgain = false
-    /// Bumped every time `drainTask` is replaced or cleared, so a finishing drain can tell whether
-    /// the slot still holds it before nilling it out. See `scheduleDrain` for what goes wrong
-    /// without it.
+    /// Bumped every time `drainTask` is replaced or cleared, so a finishing drain can tell
+    /// whether the slot still holds it before nilling it out.
     private var drainToken = 0
     /// Set once by `shutdown()`, never cleared: a torn-down tracker starts no further drains.
     private var stopped = false
@@ -111,22 +108,21 @@ actor InteractionTracker {
         await scheduleDrain().value
     }
 
-    /// S6b/C7. Cancels an in-flight drain and refuses to start another, so
+    /// Cancels an in-flight drain and refuses to start another, so
     /// `DefaultFrakClient.shutdown()` leaves nothing running and nothing able to start.
     ///
-    /// The refusal is the load-bearing half. Cancelling alone would not do it: `scheduleDrain`
-    /// uses `Task.init`, which does **not** inherit cancellation, so the very next `track()` would
-    /// start a fresh, uncancelled drain and "shut down" would have meant "paused until the next
-    /// event". Android gets this for free — every drain is a child of the one scope
-    /// `DefaultFrakClient.shutdown()` cancels — and this flag is how the same guarantee is bought
-    /// here. It is one-way: a torn-down tracker is not restartable, matching `Frak.shutdown()`'s
-    /// contract that you get a live SDK by calling `Frak.initialize` again, which builds a new one.
+    /// The refusal is the load-bearing half: cancelling alone would not do it, since
+    /// `scheduleDrain` uses `Task.init`, which does not inherit cancellation, so the very next
+    /// `track()` would start a fresh, uncancelled drain. One-way: a torn-down tracker is not
+    /// restartable, matching `Frak.shutdown()`'s contract that you get a live SDK by calling
+    /// `Frak.initialize` again.
     ///
-    /// Does NOT await the cancelled task: `drain()` writes the queue file back after each batch,
-    /// and awaiting a task we have just cancelled would block shutdown on a network round-trip
-    /// that is already doomed. Queued events survive on disk — shutdown is not erasure, `purge()`
-    /// is. The token is bumped too, so the drain being cancelled cannot clear a `drainTask` that a
-    /// `track()` racing this call installed while it was still unwinding.
+    /// Does not await the cancelled task: `drain()` writes the queue file back after each
+    /// batch, and awaiting a task we have just cancelled would block shutdown on a network
+    /// round-trip that is already doomed. Queued events survive on disk — shutdown is not
+    /// erasure, `purge()` is. The token is bumped too, so the drain being cancelled cannot
+    /// clear a `drainTask` that a `track()` racing this call installed while it was still
+    /// unwinding.
     func shutdown() {
         stopped = true
         drainToken += 1
@@ -147,16 +143,14 @@ actor InteractionTracker {
             drainAgain = true
             return inFlight
         }
-        // Same shape, and the same reason, as `AnonymousIdStore.generationToken` (S6b/C7): the tail
-        // below has to know whether the `drainTask` slot still holds THIS task before clearing it.
-        // It cannot compare against `task` itself — a closure may not capture the `let` it is being
-        // assigned to. A token bumped on every install and by `shutdown()` answers the same
-        // question with an immutable capture.
+        // Mirrors `AnonymousIdStore.generationToken`: the tail below has to know whether the
+        // `drainTask` slot still holds THIS task before clearing it, and a closure cannot
+        // capture the `let` it is being assigned to, so it compares against a token instead.
         //
         // Without it: `shutdown()` clears `drainTask` while this task is still unwinding, a
-        // `track()` immediately after installs a new one, this tail then erases that newer task,
-        // and the next `track()` starts a SECOND concurrent drain over the same queue file — two
-        // writers, which `EventQueue` explicitly does not serialise (02 §5.3).
+        // `track()` immediately after installs a new one, this tail then erases that newer
+        // task, and the next `track()` starts a second concurrent drain over the same queue
+        // file — two writers, which `EventQueue` does not serialise.
         drainToken += 1
         let token = drainToken
         let task = Task {
@@ -171,17 +165,17 @@ actor InteractionTracker {
     }
 
     private func drain() async {
-        // S6a/C7: before the read, so a drain started by a `track()` that raced a consent
-        // withdrawal never even loads the backlog. The per-event re-read below is what closes the
-        // withdrawal-lands-mid-drain window; this one just avoids the pointless work.
+        // Checked before the read, so a drain started by a `track()` that raced a consent
+        // withdrawal never even loads the backlog. The per-event re-read below is what closes
+        // the withdrawal-lands-mid-drain window; this one just avoids the pointless work.
         guard await trackingAllowed() else { return }
         guard !backoff.isBackingOff(Self.backoffKey) else { return }
 
         let pending = await queue.read(now: now())
         guard !pending.isEmpty else {
             // Nothing to send, but expired rows may still be on disk. `reconcile` rather than
-            // `replace([])`: read and write must be one hop, or a `track` appending between them
-            // is read by neither and erased by the second.
+            // `replace([])`: read and write must be one hop, or a `track` appending between
+            // them is read by neither and erased by the second.
             await queue.reconcile(delivered: [], retried: [:], now: now())
             return
         }
@@ -191,14 +185,14 @@ actor InteractionTracker {
         var retried: [Int64: QueuedEvent] = [:]
 
         for event in pending {
-            // S6a/C7. `break`, not `return`: the caller that flipped consent is about to `purge()`
-            // the whole file, so it is tempting to leave the file alone — but if that purge does not
-            // land, every event this drain ALREADY uploaded is still on disk with no record that it
-            // went, and the next flush re-sends all of them. An `Interaction.arrival` carries no
-            // idempotency key: that is a duplicated referral payout. Falling through to `reconcile`
-            // costs nothing when the purge does work (it re-reads the file, so a purge that already
-            // ran wins) and prevents that when it does not. Unlike the cancellation path further
-            // down, which must `return` — there the queue file must be left exactly as found.
+            // `break`, not `return`: the caller that flipped consent is about to `purge()` the
+            // whole file, but if that purge does not land, every event this drain already
+            // uploaded is still on disk with no record that it went, and the next flush
+            // re-sends all of them — an `Interaction.arrival` carries no idempotency key, so
+            // that is a duplicated referral payout. Falling through to `reconcile` costs
+            // nothing when the purge does land (it re-reads the file) and prevents the
+            // duplicate when it does not. The cancellation path further down must `return`
+            // instead — there the queue file must be left exactly as found.
             guard await trackingAllowed() else {
                 logger.info("Tracking was disabled mid-drain; stopping without sending the rest.")
                 break
@@ -232,8 +226,9 @@ actor InteractionTracker {
             } catch {
                 // Cancellation, and nothing else — `HTTPClient` maps every transport failure to
                 // a `FrakError`. Returning rather than breaking skips the reconcile below, so a
-                // cancelled drain leaves the file exactly as it found it: re-sending a delivered
-                // event is recoverable server-side, compacting away an undelivered one is not.
+                // cancelled drain leaves the file exactly as it found it: re-sending a
+                // delivered event is recoverable server-side, compacting away an undelivered
+                // one is not.
                 return
             }
 
@@ -316,13 +311,12 @@ actor InteractionTracker {
         }
     }
 
-    /// Sorted keys so a body is byte-identical every time it is built — the queue stores it
-    /// verbatim, and a test that reads it back should not depend on dictionary order.
-    /// Nil-valued keys are absent rather than JSON null, matching the Kotlin twin.
+    /// Sorted keys so a body is byte-identical every time it is built; the queue stores it
+    /// verbatim. Nil-valued keys are absent rather than JSON null, matching the Kotlin twin.
     ///
     /// Every value here is a `String`, `Int64` or `[String: String]`, so the fallback is
-    /// unreachable. It is a fallback rather than a trap because an SDK does not get to bring
-    /// down its host over a body it failed to build.
+    /// unreachable — a fallback rather than a trap, since an SDK does not get to bring down
+    /// its host over a body it failed to build.
     private static func json(_ fields: [String: Any?]) -> String {
         let object = fields.compactMapValues { $0 }
         guard let data = try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]),

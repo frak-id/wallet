@@ -11,11 +11,9 @@ public sealed class FrakError(
     /**
      * Client method reached before [id.frak.sdk.Frak.initialize]. Always a programmer error.
      *
-     * A plain `class`, not a Kotlin `object` (A8): `Exception.fillInStackTrace()` runs once, at
-     * construction. A singleton's stack trace is therefore captured the first time it is ever
-     * touched — typically class init — and every later `throw FrakError.NotInitialized` reports
-     * *that* call site, not the real one. A fresh instance per throw is the only way to get a
-     * trace that points at the actual bug.
+     * A plain `class`, not a Kotlin `object`: `Exception.fillInStackTrace()` runs once, at
+     * construction, so a singleton's stack trace would report the first-ever call site, not the
+     * real one.
      */
     public class NotInitialized :
         FrakError(
@@ -50,22 +48,19 @@ public sealed class FrakError(
     ) : FrakError("Frak could not decode a backend response: $message", cause)
 
     /**
-     * A **tracking** call was made while tracking is not permitted — either because this build
-     * ships `FrakConfig(trackingEnabled = false)` or because
-     * [id.frak.sdk.FrakClient.setTrackingEnabled]`(false)` was called at runtime (S6a/C7). Not
-     * raised by config or reward resolution, which are deliberately ungated (S9).
+     * A tracking call was made while tracking is not permitted, either by
+     * `FrakConfig(trackingEnabled = false)` or a runtime
+     * [id.frak.sdk.FrakClient.setTrackingEnabled]`(false)`. Not raised by config or reward
+     * resolution, which are ungated.
      *
-     * See [NotInitialized]'s doc: not an `object`, for the same stack-trace reason (A8).
+     * See [NotInitialized]'s doc for why this is not an `object`.
      */
     public class TrackingDisabled :
         FrakError(
             "Frak tracking is disabled; no network request was issued.",
         )
 
-    /**
-     * [id.frak.sdk.ui.FrakSharingLauncher.launch] called while a sheet is already up. See
-     * [NotInitialized]'s doc: not an `object`, for the same stack-trace reason (A8).
-     */
+    /** [id.frak.sdk.ui.FrakSharingLauncher.launch] called while a sheet is already up. See [NotInitialized]'s doc for why this is not an `object`. */
     public class AlreadyPresenting :
         FrakError(
             "A Frak sharing sheet is already presented.",

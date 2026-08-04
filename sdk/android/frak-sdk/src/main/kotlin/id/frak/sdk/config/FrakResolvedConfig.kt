@@ -4,12 +4,9 @@ import id.frak.sdk.core.FrakCurrency
 import id.frak.sdk.core.FrakLanguage
 
 /**
- * What the backend knows about this merchant. The whole tree is `public` (not just fields this
- * increment uses) because its reader, the sharing sheet, lives in the separate `:frak-sdk-ui`
- * Gradle module and only sees `public` API. Not a `data class` anywhere in this tree: a published
+ * What the backend knows about this merchant. Not a `data class`: a published
  * `copy()`/`componentN()` would freeze the ABI against future fields, hence hand-written
- * `equals`/`hashCode`/`toString`. Deliberately absent: `css`, `productId`, `allowedDomains`
- * (no native equivalent).
+ * `equals`/`hashCode`/`toString`.
  */
 public class FrakResolvedConfig(
     public val merchantId: String,

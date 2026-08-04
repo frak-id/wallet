@@ -47,9 +47,7 @@ class BackoffTest {
                 measureWindow("k")
             }
 
-        // 1s, 2s, 4s, 8s at the top of the jitter range. Doubling is what stops
-        // the SDK hammering a dead network at 1Hz for as long as the user stays
-        // on the screen — the JS fixed 1s does exactly that.
+        // 1s, 2s, 4s, 8s at the top of the jitter range.
         assertEquals(listOf(1_000L, 2_000L, 4_000L, 8_000L), delays)
     }
 
@@ -62,7 +60,6 @@ class BackoffTest {
 
     @Test
     fun `a Retry-After acts as a floor, not a replacement`() {
-        // The backend knows its own rate limit better than we do.
         backoff.recordFailure("k", FrakError.Server(429, null, retryAfterSeconds = 30))
 
         assertEquals(30_000L, measureWindow("k"))
@@ -70,7 +67,6 @@ class BackoffTest {
 
     @Test
     fun `our own exponential wins once it exceeds the server floor`() {
-        // A small Retry-After must not pin us to it while we keep failing.
         repeat(6) { backoff.recordFailure("k", FrakError.Server(429, null, retryAfterSeconds = 2)) }
 
         assertTrue("exponential should have overtaken the 2s floor", measureWindow("k") > 2_000L)
@@ -91,8 +87,6 @@ class BackoffTest {
         clock = 0
         backoff.recordFailure("k", null)
 
-        // Back to the floor. Without a reset, a key that fails once an hour
-        // would eventually sit at the cap forever.
         assertEquals(Backoff.MIN_DELAY_MILLIS, measureWindow("k"))
     }
 
@@ -106,9 +100,8 @@ class BackoffTest {
 
     @Test
     fun `jitter halves the floor rather than smearing around the delay`() {
-        // Full jitter draws over [delay/2, delay] to decorrelate devices that
-        // all failed at the same instant; a narrow band around a common value
-        // would leave a fleet-wide stampede intact, just slightly smeared.
+        // Full jitter draws over [delay/2, delay] to decorrelate devices that all failed at the
+        // same instant; a narrow band would leave a fleet-wide stampede intact, just smeared.
         val zeroJitter =
             Backoff(
                 now = { clock },

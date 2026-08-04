@@ -330,7 +330,6 @@ struct RewardsDecoderTests {
             _ = try RewardsDecoder.decode(Data(body.utf8))
             Issue.record("expected a decoding error")
         } catch is FrakError {
-            // expected
         } catch {
             Issue.record("expected FrakError.decoding")
         }
@@ -369,9 +368,9 @@ struct RewardsDecoderTests {
 }
 
 extension RewardsDecoderTests {
-    /// The synthesized `Decodable` throws on a present-but-wrong-typed value even for an
-    /// `Optional` property, so one reshaped field inside `matchedProducts` used to fail the whole
-    /// response — losing `rewards` along with `best`. Kotlin's `JsonReader` never could.
+    /// The synthesized `Decodable` throws on a wrong-typed value even for an `Optional`
+    /// property, so one bad field inside `matchedProducts` could otherwise fail the whole
+    /// response, losing `rewards` along with `best`.
     @Test("a wrong-typed field inside matchedProducts costs that field, not the whole response")
     func matchedProductsFieldIsForgiving() throws {
         let body = """
@@ -382,14 +381,14 @@ extension RewardsDecoderTests {
 
         let result = try RewardsDecoder.decode(Data(body.utf8))
 
-        // The campaign list survives, which is the part that used to be lost.
         #expect(result.campaigns.count == 1)
         let matched = try #require(result.best?.matchedProducts?.first)
         #expect(matched.sku == "SHOE-42")
         #expect(matched.quantity == nil)
     }
 
-    /// Mirrors Kotlin's `ifEmpty { null }`: "the winner is unscoped" must be one value, not two.
+    /// "The winner is unscoped" must be one value, not two: an empty array decodes to nil,
+    /// matching the absent case.
     @Test("an empty matchedProducts array decodes to nil, matching the absent case")
     func emptyMatchedProductsIsNil() throws {
         let body = """

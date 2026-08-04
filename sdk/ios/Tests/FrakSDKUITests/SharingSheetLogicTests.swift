@@ -4,13 +4,11 @@ import Testing
 
 @testable import FrakSDKUI
 
-/// The tier choice, which is where the load-failure bugs live.
-///
-/// These run on the macOS test host because `sharingDecision` and `SharingSession` sit outside
-/// `SharingSheetModel`'s `#if canImport(UIKit)`. Note what this does *not* cover: the model
-/// itself, and all of `SharingWebView` — `navigationFailed`, the navigation-response policy,
-/// content-process termination and the frame guard have no executed coverage on any platform.
-/// Their Android twins in `SharingWebViewClientTest.kt` are the only evidence for that logic.
+/// The tier choice, which is where the load-failure bugs live. Runs on the macOS test host
+/// because `sharingDecision` and `SharingSession` sit outside `SharingSheetModel`'s
+/// `#if canImport(UIKit)`. Does not cover the model itself or `SharingWebView` — those have
+/// no executed coverage on any platform; `SharingWebViewClientTest.kt` is Android's only
+/// evidence for that logic.
 @Suite("SharingDecision")
 struct SharingSheetLogicTests {
     private static let pageURL = "https://wallet.frak.id/sharing?native=1"
@@ -133,11 +131,7 @@ struct SharingSheetLogicTests {
     }
 }
 
-/// What reaches the hosted page's `products=` parameter.
-///
-/// The wallet route forwards this same array straight into reward selection
-/// (`rewardProductsForSelection` → `selectBestReward`), so a scope field missing here is a
-/// product-gated campaign the page silently misranks. Twinned with
+/// What reaches the hosted page's `products=` parameter. Twinned with
 /// `SharingSheetStateTest`'s `product scope fields reach the page url` on Android.
 @Suite("SharingPageProductsJSON")
 struct SharingPageProductsJSONTests {
@@ -169,8 +163,7 @@ struct SharingPageProductsJSONTests {
     }
 
     /// The bug this pins: `JSONSerialization` prints a bare `Double` at full binary precision,
-    /// so `79.9` would go out as `79.900000000000006` and lose an `eq` scope comparison that
-    /// Android, printing `79.9`, wins. Prices are exactly the field campaigns gate on.
+    /// so `79.9` would go out as `79.900000000000006` and lose an `eq` comparison Android wins.
     @Test("prices serialize the way JSON.stringify writes them, not at binary precision")
     func numbersMatchJSONStringify() throws {
         let json = try #require(
@@ -204,8 +197,7 @@ struct SharingPageProductsJSONTests {
 
 extension SharingPageProductsJSONTests {
     /// `JSONSerialization` rejects a non-finite number outright, so an unguarded NaN would take
-    /// the whole product array down — every card lost over one unusable price. Android's
-    /// `JSONObject.put` throws on the same input, inside the sheet's `launch`.
+    /// the whole product array down. Android's `JSONObject.put` throws on the same input.
     @Test("a non-finite price is dropped, not allowed to fail the whole array")
     func nonFiniteNumbersAreDropped() throws {
         let json = try #require(
@@ -232,8 +224,7 @@ extension SharingPageProductsJSONTests {
 }
 
 /// The defensive clamp on a merchant-supplied `heightFraction`, run on the macOS test host
-/// since `clampedSharingHeightFraction` sits outside `SharingSheetModel`'s `#if
-/// canImport(UIKit)` for exactly that reason.
+/// since `clampedSharingHeightFraction` sits outside `SharingSheetModel`'s `#if canImport(UIKit)`.
 @Suite("clampedSharingHeightFraction")
 struct ClampedSharingHeightFractionTests {
     @Test("a value already inside the range is left untouched")

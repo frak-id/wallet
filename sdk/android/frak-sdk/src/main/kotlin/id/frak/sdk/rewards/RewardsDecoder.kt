@@ -88,8 +88,8 @@ internal object RewardsDecoder {
         return RewardTier.Amount(minValue, maxValue, amount)
     }
 
-    // requireFiniteDouble, not requireDouble (N1): a NaN/Infinity amount is parseable JSON but
-    // never a legitimate monetary value, and every downstream consumer assumes finiteness.
+    // requireFiniteDouble, not requireDouble: a NaN/Infinity amount is parseable JSON but never
+    // a legitimate monetary value.
     private fun decodeTokenAmount(source: JSONObject): TokenAmount =
         TokenAmount(
             amount = JsonReader.requireFiniteDouble(source, "amount", CONTEXT),

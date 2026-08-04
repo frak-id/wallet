@@ -2,9 +2,8 @@ package id.frak.sdk.core
 
 /**
  * Lowercase hex, both directions. Shared by the identity proof layout ([id.frak.sdk.identity.ProofCodec])
- * and the FrakContext v2 codec ([id.frak.sdk.sharing.FrakContextCodec]), which both read and
- * emit raw bytes as hex text. Mirrors iOS's `Hex.swift` exactly (5.6/8.6). UUID formatting built
- * on top of this lives in [Uuid], not here or in either codec, for the same reason.
+ * and the FrakContext v2 codec ([id.frak.sdk.sharing.FrakContextCodec]). Mirrors iOS's `Hex.swift`.
+ * UUID formatting built on top of this lives in [Uuid], not here or in either codec.
  */
 internal object Hex {
     private const val DIGITS = "0123456789abcdef"

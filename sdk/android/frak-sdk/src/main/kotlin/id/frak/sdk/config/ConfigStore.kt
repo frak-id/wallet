@@ -21,21 +21,11 @@ import org.json.JSONObject
 /**
  * Stale-while-revalidate cache over `GET /user/merchant/resolve`. Fresh (< 5 min) served from
  * memory; stale served immediately and revalidated in background. No hard expiry: a cached copy
- * is always served however old, since reward amounts come from a separate, stricter endpoint.
+ * is always served however old.
  *
- * C3: this store, not [id.frak.sdk.core.DefaultFrakClient], owns [updates] — [fetch] is the ONE
- * choke point every resolved config passes through, foreground call or background revalidation
- * alike, so publishing here is what makes revalidation finally visible to a subscriber instead of
- * updating [memory] and nothing else. C4: the same publish is gated by a sequence number so an
- * out-of-order landing (two different queries' fetches genuinely running concurrently, since
- * [SingleFlight] only serialises same-key fetches, and [memory]/[updates]/the persisted disk
- * entry are all one slot shared across every key) can never overwrite a newer result with an
- * older one, on the stream OR on disk. The same-key case this was originally filed against — a
- * background revalidation racing a foreground forced refresh — is structurally unreachable:
- * [SingleFlight] collapses both onto one in-flight fetch before either can reach the publish
- * site. In production there is exactly one cache key for the lifetime of a client
- * ([id.frak.sdk.config.MerchantQuery.from] is constant over an immutable [id.frak.sdk.core.FrakConfig]),
- * so this guard is currently exercised only by tests that construct a second key by hand.
+ * [fetch] is the one choke point every resolved config passes through, and its publish is gated
+ * by a sequence number so an out-of-order landing can never overwrite a newer result on the
+ * stream or on disk.
  */
 internal class ConfigStore(
     private val http: HttpClient,
@@ -53,37 +43,13 @@ internal class ConfigStore(
 
     private val configFlow = MutableStateFlow<FrakResolvedConfig?>(null)
 
-    /**
-     * C3: replaces [id.frak.sdk.core.DefaultFrakClient]'s own subscriber-less `MutableStateFlow`,
-     * which only [resolve]'s direct caller ever wrote to — background revalidation updated
-     * [memory] but never this. Conflated and dedup-on-equal by [MutableStateFlow]'s own contract,
-     * so an identical revalidated config does not re-emit; [FrakResolvedConfig]'s hand-written
-     * `equals` covers every field on the public model, so "equal" here genuinely means
-     * "no observable change" (`FrakResolvedConfig.kt`).
-     */
+    /** Conflated and dedup-on-equal: an identical revalidated config does not re-emit. */
     val updates: StateFlow<FrakResolvedConfig?> = configFlow.asStateFlow()
 
-    /**
-     * Best-known config right now, without waiting on [updates] to have published anything, and
-     * without a network call. Exactly the case 3.2's merchant-arrival guard needs
-     * (`DefaultFrakClient.kt`): the dominant deep-link flow launches the process FROM the
-     * referral URL, so `handleReferralLink` runs before anything has called [resolve] — [memory]
-     * is still empty at that point, and [updates] alone cannot answer either, since a cache hit
-     * publishes nothing (C3 only wires [fetch] to the stream). [readCache] is reused here for
-     * exactly the same reason [resolve]'s fast path uses it: it hydrates [memory] from disk on
-     * first miss (single-flighted, negative-cached via [hydrationAttempted]) without issuing a
-     * request. Mirrors iOS's `ConfigStore.currentConfig`, which reads the same `memory`-equivalent
-     * slot populated the same way — both platforms must resolve "last known config" from the same
-     * source.
-     */
+    /** Best-known config right now, without waiting on [updates] and without a network call. Hydrates [memory] from disk on first miss via [readCache]. */
     suspend fun currentConfig(query: MerchantQuery): FrakResolvedConfig? = readCache(query.cacheKey())?.config
 
-    /**
-     * C4: minted at the START of [fetch], before the network call, and compared again at publish
-     * time under the same [mutex]. Minting at start records the order fetches were INTENDED in,
-     * which is the order that matters — a counter read at publish time would order by completion,
-     * exactly the order a slow-fetch-lands-last race gets wrong.
-     */
+    /** Minted at the start of [fetch], before the network call, so ordering reflects intent, not completion. */
     private var sequenceCounter: Long = 0
 
     /** Highest sequence to have actually published. [Long.MIN_VALUE]: nothing has published yet, so the first fetch always wins. */
@@ -98,12 +64,7 @@ internal class ConfigStore(
 
     private var memory: Entry? = null
 
-    /**
-     * A [fetchedAtMillis] in the future — the clock stepped backward since the fetch, or a
-     * corrupted/tampered persisted value — must never read as fresh: `now() - fetchedAtMillis`
-     * would be negative, which is always less than [FRESH_TTL_MILLIS], pinning the entry as fresh
-     * forever (N7).
-     */
+    /** Guards against a future [fetchedAtMillis] (clock skew or a tampered persisted value) reading as fresh forever. */
     private fun isFresh(fetchedAtMillis: Long): Boolean {
         val elapsed = now() - fetchedAtMillis
         return elapsed in 0 until FRESH_TTL_MILLIS
@@ -141,13 +102,8 @@ internal class ConfigStore(
     }
 
     /**
-     * Hydrates from disk on first miss via [readPersisted] (dispatched onto [ioDispatcher]).
-     * [memory] is re-checked once the lock is reacquired to publish, since another coroutine may
-     * have published a fresher entry while this one was hydrating; only a strictly newer hydrated
-     * entry replaces it, though this call still returns its own key's entry either way.
-     * Concurrent misses collapse through [singleFlight] under a `"hydrate:"`-prefixed key so a
-     * hydration never joins a fetch's flight. [hydrationAttempted] stops a permanently-absent key
-     * from re-reading disk on every miss.
+     * Hydrates from disk on first miss via [readPersisted]. Concurrent misses collapse through
+     * [singleFlight] under a `"hydrate:"`-prefixed key so a hydration never joins a fetch's flight.
      */
     private suspend fun readCache(key: String): Entry? {
         mutex.withLock {
@@ -171,7 +127,7 @@ internal class ConfigStore(
         key: String,
         query: MerchantQuery,
     ): FrakResolvedConfig {
-        // Minted before the network call so it records intent order, not completion order (C4).
+        // Minted before the network call so it records intent order, not completion order.
         val sequence = mutex.withLock { ++sequenceCounter }
 
         val response = backoff.runOrRecordFailure(mutex, key) { http.get(RESOLVE_PATH, query.parameters()) }
@@ -180,21 +136,18 @@ internal class ConfigStore(
             backoff.recordFailureAndThrow(mutex, key, mapFailure(response))
         }
 
-        // Persisted write happens INSIDE mutex, alongside publishing to memory, so two concurrent
-        // fetches can't land their disk writes out of order. Safe only because scope's dispatcher
-        // IS ioDispatcher (same object): withContext takes the same-interceptor fast path instead
-        // of a real hop while holding the lock.
+        // Persisted write happens inside mutex, alongside publishing to memory, so concurrent
+        // fetches can't land their disk writes out of order. Safe because scope's dispatcher is
+        // ioDispatcher: withContext takes the same-interceptor fast path instead of a real hop
+        // while holding the lock.
         val config = ResolvedConfigDecoder.decode(response.body)
         val entry = Entry(key, config, response.body, now())
         mutex.withLock {
             backoff.recordSuccess(key)
-            // C4: an older fetch that started first but lands last must not overwrite a newer
-            // result already published — on the stream, on disk, OR in the memory cache. The
-            // caller below still gets ITS OWN config regardless — only the shared publish is
-            // guarded. memory MUST be inside this guard, not above it: a superseded fetch that
-            // wrote memory unconditionally would get re-served as fresh for a full FRESH_TTL_MILLIS
-            // window (isFresh stamps off entry.fetchedAtMillis = now()), silently overwriting a
-            // newer result that had already published to updates/disk.
+            // An older fetch that lands last must not overwrite a newer published result, on the
+            // stream, on disk, or in memory. memory must stay inside this guard: writing it
+            // unconditionally would re-serve a superseded fetch as fresh for a full
+            // FRESH_TTL_MILLIS window.
             if (sequence > publishedSequence) {
                 publishedSequence = sequence
                 memory = entry

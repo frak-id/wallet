@@ -3,8 +3,8 @@ import Foundation
 
 @testable import FrakSDK
 
-/// `DeviceKeyStore` with no platform underneath, so identity behaviour is testable without
-/// a Secure Enclave. Counts keypairs minted, which is what "regenerated" actually means.
+/// `DeviceKeyStore` with no platform underneath — testable without a Secure Enclave. Counts
+/// keypairs minted; that count is what "regenerated" means here.
 final class FakeDeviceKeyStore: DeviceKeyStore, @unchecked Sendable {
     private let lock = NSLock()
     private var key: DeviceKey?
@@ -15,8 +15,7 @@ final class FakeDeviceKeyStore: DeviceKeyStore, @unchecked Sendable {
         self.refuses = failOnCreate
     }
 
-    /// Settable, so a test can model a keystore that refuses once and then recovers. Whether
-    /// the second call succeeds is the whole question behind not caching the failure.
+    /// Settable: a test can model a keystore that refuses once, then recovers.
     var failOnCreate: Bool {
         get {
             lock.lock()

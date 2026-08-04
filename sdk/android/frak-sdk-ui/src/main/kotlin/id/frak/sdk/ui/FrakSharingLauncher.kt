@@ -48,7 +48,7 @@ public fun rememberFrakSharingLauncher(
     val currentOnResult = rememberUpdatedState(onResult) // always calls the current lambda, not the captured one
     val launcher = remember { FrakSharingLauncher(currentOnResult) }
 
-    WarmSharingWebView() // this composable IS the share surface becoming visible
+    WarmSharingWebView() // this composable is the share surface becoming visible
 
     launcher.active?.let { request ->
         FrakSharingSheet(

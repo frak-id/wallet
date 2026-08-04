@@ -1,13 +1,9 @@
 package id.frak.sdk.core
 
 /**
- * UUID <-> raw-16-bytes, shared by two independent frozen wire formats that both read and emit
- * UUIDs as raw bytes rather than the 36-char text form: the identity proof envelope
- * ([id.frak.sdk.identity.ProofCodec], `golden-identity-proofs.json`) and the FrakContext v2 codec
- * ([id.frak.sdk.sharing.FrakContextCodec], `golden-context.json`). Kept in `core`, alongside
- * [Hex], rather than in either codec, so neither format depends on the other's module — a change
- * to one's UUID handling must not silently reshape the other (5.6/8.6). Mirrors iOS, where
- * `Core/Hex.swift` is the only thing both Swift codecs share and neither imports the other.
+ * UUID <-> raw-16-bytes, shared by the identity proof envelope ([id.frak.sdk.identity.ProofCodec])
+ * and the FrakContext v2 codec ([id.frak.sdk.sharing.FrakContextCodec]). Kept in `core`, alongside
+ * [Hex], so neither format depends on the other's module.
  */
 internal object Uuid {
     const val BYTES: Int = 16

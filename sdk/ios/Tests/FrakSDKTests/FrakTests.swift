@@ -21,8 +21,8 @@ private final class RecordingLogSink: FrakLogSink, @unchecked Sendable {
     }
 }
 
-/// `Frak` is process-global static state guarded by one lock, so these tests cannot run
-/// concurrently with each other without corrupting one another's view of `instance`.
+/// `Frak` is process-global static state guarded by one lock: tests run `.serialized`
+/// to avoid corrupting one another's view of `instance`.
 @Suite("Frak", .serialized)
 struct FrakTests {
     @Test("initialize routes its own log lines to a configured sink end to end")

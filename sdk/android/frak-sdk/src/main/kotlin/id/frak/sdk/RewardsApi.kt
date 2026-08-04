@@ -18,17 +18,11 @@ public class RewardsApi internal constructor(
     /**
      * Reward worth advertising, formatted server-side; null when nothing matches.
      *
-     * Answers "what is the best reward in *this* context" — a product page, a cart, an order's
-     * line items — not "what is the best reward per item". A listing screen showing many
-     * products must call this **once** for the whole visible set and render a single headline
-     * figure from the result; it must not call it once per row. The reward cache is keyed on
-     * the encoded product list, so N per-row calls mean N cache keys and N network requests,
-     * all competing for the same small HTTP concurrency budget. Calling this per row is an
-     * anti-pattern.
+     * Call once per screen for the whole visible product set, not once per row: the cache is
+     * keyed on the encoded product list, so per-row calls multiply cache keys and requests.
      *
-     * @param products the products currently in view (a product page, a cart, an order's
-     *   line items), when known. Advisory: a campaign scoped to none of them is ranked below
-     *   every campaign matching at least one. Omitting it preserves the unscoped ranking.
+     * @param products products currently in view, when known. Advisory: a campaign scoped to
+     *   none of them is ranked below one matching at least one.
      */
     @Throws(FrakError::class)
     public suspend fun best(

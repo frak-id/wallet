@@ -492,10 +492,7 @@ class SharingSheetStateTest {
             assertNotNull("an ordinary link still opens", shadowOf(app).nextStartedActivity)
         }
 
-    /**
-     * The install page's download button points at the store unconditionally, so without this a
-     * user who already has the wallet installed lands on its Play listing instead of in it.
-     */
+    /** Without this, a user who already has the wallet installed would land on its Play listing instead of in it. */
     @Test
     fun `the wallet's own store listing goes through the app handoff instead of Play`() =
         runTest {
@@ -559,10 +556,7 @@ class SharingSheetStateTest {
             )
         }
 
-    /**
-     * The page draws both buttons and this sheet performs them. Reached over the same
-     * navigation channel as every other page action, so there is nothing to intercept twice.
-     */
+    /** The page draws both buttons and this sheet performs them, over the same navigation channel as every other page action. */
     @Test
     fun `the page's own share button raises the chooser and pays out`() =
         runTest {
@@ -612,12 +606,7 @@ class SharingSheetStateTest {
             )
         }
 
-    /**
-     * The asymmetry with `share`, and the reason for it: the page raises its own "link copied"
-     * toast and moves itself to the confirmation screen the instant its button is pressed. A
-     * `confirmed=1` reload on top of that tears the document down mid-toast, leaving a copy with
-     * no feedback at all — the sheet stopped showing its own when the footer became the page's.
-     */
+    /** The asymmetry with `share`: the page raises its own toast and moves to the confirmation screen on its own button press. A `confirmed=1` reload on top of that would tear the toast down mid-copy. */
     @Test
     fun `a copy does not reload the page out from under its own toast`() =
         runTest {
@@ -641,12 +630,7 @@ class SharingSheetStateTest {
             )
         }
 
-    /**
-     * The page's footer stays enabled across the whole hand-off — the web `isSharing` flag that
-     * would disable it belongs to `useShareLink`, which a handed-off press never reaches. The
-     * window that matters is `track()`, which the chooser's dismissal returns into with the page
-     * live underneath.
-     */
+    /** The page's footer stays enabled across the whole hand-off. The window that matters is `track()`, which the chooser's dismissal returns into with the page still live underneath. */
     @Test
     fun `two taps on the page's share button raise one chooser and bill one interaction`() =
         runTest {
@@ -685,12 +669,7 @@ class SharingSheetStateTest {
             assertEquals("one copy must bill one interaction", 1, client.trackCount)
         }
 
-    /**
-     * The install page is the one page whose failure is not tier 3's business: the user has
-     * already shared. Doing nothing is not the answer either — the controls that used to rescue
-     * this were native, and are now the *sharing* page's, so the sheet would sit on an error page
-     * with nothing on it to press.
-     */
+    /** The install page's failure is not tier 3's business — the user has already shared. The sheet must not just sit on an error page with nothing to press either. */
     @Test
     fun `a failed install page falls back to the confirmation screen, not a dead sheet`() =
         runTest {

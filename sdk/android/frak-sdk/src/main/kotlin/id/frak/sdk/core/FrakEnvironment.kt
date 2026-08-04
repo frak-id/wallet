@@ -27,44 +27,25 @@ public sealed interface FrakEnvironment {
 
     /**
      * Explicit origin pair for local development. On an emulator use `10.0.2.2`, not `localhost`.
-     * Trailing slashes stripped, since `HttpClient` concatenates origin+path verbatim.
+     * Trailing slashes are stripped.
      *
-     * `wallet`/`backend` must be `https://`, or `http://` to a loopback/private-network host —
-     * `localhost`, `127.0.0.0/8`, `::1`, `10.0.2.2`/`10.0.3.2` (Android emulator/Genymotion host
-     * aliases), `*.local`, or an RFC 1918 range (`10/8`, `172.16/12`, `192.168/16`). That
-     * carve-out matches this class's own documented workflow above ("On an emulator use
-     * `10.0.2.2`") and the platform's own default: Android already blocks cleartext to anything
-     * else via `cleartextTrafficPermitted=false` (API 28+), so rejecting loopback `http://` here
-     * too would just override a merchant's deliberate, platform-sanctioned
-     * `networkSecurityConfig` opt-in for no gain. `file:`/`data:`/`javascript:`/anything else is
-     * always rejected: `wallet` loads directly into a `WebView` for the sharing sheet
-     * (`WarmSharingWebView`), where `file:` is a local-file-disclosure vector, not just a
-     * cleartext-transport one — and unlike cleartext, nothing in the platform blocks that.
+     * `wallet`/`backend` must be `https://`, or `http://` to a loopback/private-network host
+     * (`localhost`, `127.0.0.0/8`, `::1`, `10.0.2.2`/`10.0.3.2`, `*.local`, or an RFC 1918
+     * range). Anything else, including `file:`/`data:`/`javascript:`, is rejected.
      *
-     * Not validated eagerly: matching [FrakConfig] ("never validated at construction"), a
-     * rejected origin does not throw here. Unlike [FrakConfig] though, there is no typed error to
-     * surface it as yet — `FrakError` has no configuration-specific arm (`06-open-findings.md`
-     * A4), so a rejected origin is swapped for an unreachable placeholder and surfaces only as a
-     * generic [FrakError.Network] (DNS failure) on first use, which names no rule and no
-     * offending origin. [Frak.initialize] logs the rejection at `ERROR`, with the offending
-     * origin and the rule, since it is the one place a configured logger (and the merchant's own
-     * [FrakLogSink]) actually exists; a typed `FrakError.InvalidConfiguration`-shaped arm is the
-     * real fix and belongs with the A4 error-taxonomy work, not here.
+     * Not validated eagerly: a rejected origin is swapped for an unreachable placeholder and
+     * surfaces only as a generic [FrakError.Network] on first use. [Frak.initialize] logs the
+     * rejection at `ERROR` with the offending origin and rule.
      *
-     * [walletPackageId] and [walletScheme] default to Frak's own dev wallet, which is almost never
-     * right for a merchant's stub server: override them, or a `Custom` install ends up probing for
-     * (and deep-linking into) Frak's internal dev app.
+     * [walletPackageId] and [walletScheme] default to Frak's own dev wallet: override them for a
+     * merchant's stub server.
      */
     public class Custom private constructor(
         wallet: String,
         backend: String,
         override val walletPackageId: String,
         override val walletScheme: String,
-        /**
-         * `null` when neither raw origin was rejected; the rejection message (naming the
-         * offending origin and the rule) otherwise. [id.frak.sdk.Frak.initialize] logs this at
-         * `ERROR` — see this class's doc for why the rejection itself is silent here.
-         */
+        /** Null when neither raw origin was rejected; the rejection message otherwise. Logged by [id.frak.sdk.Frak.initialize] at `ERROR`. */
         internal val rejectionReason: String?,
     ) : FrakEnvironment {
         public constructor(
@@ -91,31 +72,21 @@ public sealed interface FrakEnvironment {
 private const val DEV_WALLET_PACKAGE_ID = "id.frak.wallet.dev"
 private const val DEV_WALLET_SCHEME = "frakwallet-dev"
 
-/**
- * The [FrakEnvironment.Custom] origin allowlist, plus the placeholder substitution for a
- * rejected origin. See the class doc above for the rationale; kept as its own object (rather
- * than private top-level functions) so [Frak.initialize] can call [rejectionReason] to log a
- * diagnosable message — [FrakEnvironment] itself has no logger in scope.
- */
+/** [FrakEnvironment.Custom] origin allowlist and placeholder substitution for a rejected origin. */
 internal object CustomOrigin {
     private const val PLACEHOLDER = "https://frak-sdk-invalid-custom-origin.invalid"
 
     /**
-     * `null` when [origin] is accepted as-is (besides trailing-slash trimming). Parsed with
-     * [java.net.URI] rather than manual string-splitting — same reason as iOS's `URLComponents`:
-     * a bracketed IPv6 host, e.g. `"http://[::1]:3000"`, needs the port separator recognised as
-     * the `:` *after* the matching `]`, not the first `:` in the string (which sits inside
-     * `[::1]`). Anything [java.net.URI] itself cannot parse (a raw space in the host, for
-     * instance) is rejected the same way an unparseable origin is rejected by iOS's
-     * `URLComponents(string:)` returning `nil`.
+     * Null when [origin] is accepted as-is. Parsed with [java.net.URI], not manual string
+     * splitting: a bracketed IPv6 host like `"http://[::1]:3000"` needs the port separator
+     * recognised as the `:` after the matching `]`.
      */
     internal fun rejectionReason(origin: String): String? {
         val uri = runCatching { java.net.URI(origin) }.getOrNull()
         val scheme = uri?.scheme?.lowercase() ?: ""
-        // `getHost()` is null for a registry-based authority — notably any hostname containing an
-        // underscore, which iOS's `URLComponents.host` returns happily. Falling back to the raw
-        // authority keeps `http://my_host.local:3000` accepted on both platforms; it cannot widen
-        // anything, since `isLoopbackOrPrivateHost` is a closed allowlist either way.
+        // getHost() is null for a registry-based authority, e.g. a hostname containing an
+        // underscore. Falling back to the raw authority keeps such hosts accepted; it cannot
+        // widen anything since isLoopbackOrPrivateHost is a closed allowlist.
         val host =
             uri?.host
                 ?: uri?.authority?.substringAfterLast('@')?.substringBeforeLast(':')
@@ -164,17 +135,9 @@ internal object CustomOrigin {
         val (a, b, _, _) = octets
         return when {
             a == 127 -> true
-
-            // 127.0.0.0/8
             a == 10 -> true
-
-            // 10.0.0.0/8
             a == 172 && b in 16..31 -> true
-
-            // 172.16.0.0/12
             a == 192 && b == 168 -> true
-
-            // 192.168.0.0/16
             else -> false
         }
     }

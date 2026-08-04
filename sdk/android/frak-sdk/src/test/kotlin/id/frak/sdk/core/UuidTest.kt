@@ -7,9 +7,8 @@ import org.junit.Test
 import kotlin.random.Random
 
 /**
- * [Uuid] is the single source of truth two independent frozen wire formats depend on
- * ([id.frak.sdk.identity.ProofCodec] and [id.frak.sdk.sharing.FrakContextCodec]) — see the class
- * doc for why it lives in `core` rather than either codec (5.6/8.6).
+ * [Uuid] is the single source of truth two independent frozen wire formats depend on:
+ * [id.frak.sdk.identity.ProofCodec] and [id.frak.sdk.sharing.FrakContextCodec].
  */
 class UuidTest {
     @Test

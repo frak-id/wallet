@@ -16,10 +16,10 @@ public sealed interface SharingResult {
     ) : SharingResult
 
     /**
-     * The user asked to install and the sheet took them to the wallet's install page (or, with
-     * no identity to hand it, to the store). Informational only — the sheet owns the step from
-     * here, so do not call [id.frak.sdk.AppLinkApi.openFrakApp] again in response. It does not
-     * mean anything was installed: the user may still have dismissed the sheet.
+     * The user asked to install; the sheet took them to the wallet's install page, or to the
+     * store with no identity to hand it. Informational only — do not call
+     * [id.frak.sdk.AppLinkApi.openFrakApp] again in response, and it doesn't mean anything was
+     * installed.
      */
     public object InstallStarted : SharingResult
 

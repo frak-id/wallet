@@ -19,10 +19,9 @@ import android.webkit.WebViewClient
 /**
  * What the hosted page told the host. Mirrors the wallet's `HostResultAction`.
  *
- * [Code] carries a value, which every other action deliberately does not. That is permitted
- * only because this navigation is consumed by [SharingWebViewClient.shouldOverrideUrlLoading]
- * and never reaches the OS — `01-platform-changes.md` §1.2 states the condition. Anything else
- * wanting a payload has to re-check it.
+ * [Code] carries a value; every other action deliberately does not. Safe only because this
+ * navigation is consumed by [SharingWebViewClient.shouldOverrideUrlLoading] and never reaches
+ * the OS.
  */
 internal sealed interface SharingPageAction {
     data object Install : SharingPageAction
@@ -32,9 +31,8 @@ internal sealed interface SharingPageAction {
     data object ShareAgain : SharingPageAction
 
     /**
-     * The page's own Share button. An ask, not a report: `navigator.share` does not exist in
-     * an Android WebView, and the interaction a share earns has to be signed by the SDK
-     * keypair the page has no access to. The page draws the button, this sheet performs it.
+     * The page's own Share button. An ask, not a report — navigator.share doesn't exist in an
+     * Android WebView, and the interaction has to be signed by a keypair the page can't reach.
      */
     data object Share : SharingPageAction
 
@@ -81,11 +79,10 @@ internal sealed interface SharingPageAction {
 }
 
 /**
- * Builds the sheet's WebView. No visible URL bar, so a cross-origin navigation
- * would be indistinguishable from trusted content — hence the origin pinning
- * and no JS bridge below. No service-worker offline shell for a
- * never-before-visited sheet (wallet's worker only handles push, not fetch);
- * [SharingWebViewClient] covers the previously-visited case via a cache-only retry.
+ * Builds the sheet's WebView. No visible URL bar, so a cross-origin navigation would be
+ * indistinguishable from trusted content — hence the origin pinning and no JS bridge below. No
+ * service-worker offline shell for a never-before-visited sheet; [SharingWebViewClient] covers
+ * the previously-visited case via a cache-only retry.
  */
 @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
 @Suppress("LongParameterList")
@@ -100,13 +97,9 @@ internal fun createSharingWebView(
     onOpenExternal: (String) -> Unit,
 ): WebView =
     WebView(context).apply {
-        // MATCH_PARENT, explicitly. A view handed to Compose's `AndroidView` with no layout
-        // params is measured `wrap_content`, and a wrap-content WebView reports a viewport
-        // height of 0 to Blink: `vh`, `dvh`, `svh` and `lvh` all resolve to 0 while
-        // `documentElement.clientHeight` still reads the real height. The hosted page sizes its
-        // scroll container with `height: 100dvh`, so that collapsed the whole
-        // `html > body > #root > container` chain to zero — which is why the page painted in
-        // fragments and could not be scrolled at all: its scroller had `clientHeight: 0`.
+        // MATCH_PARENT, explicit: a wrap-content WebView reports a 0 viewport height to Blink
+        // (vh/dvh/svh/lvh all resolve to 0 while clientHeight reads the real height), which
+        // collapsed the page's `height: 100dvh` scroll container to zero.
         layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
 
         settings.javaScriptEnabled = true // page is a React app; rest of this bounds what it can reach
@@ -119,19 +112,15 @@ internal fun createSharingWebView(
         settings.setGeolocationEnabled(false)
         settings.cacheMode = WebSettings.LOAD_DEFAULT // explicit default: revalidate cached responses
 
-        // NORMAL, not the inherited `NARROW_COLUMNS` default. That default is deprecated, is
-        // documented as only for pre-KitKat, and reflows content to the view width on its own
-        // heuristics — which a responsive page laid out for a phone viewport does not want, and
-        // which shows up as text sized and wrapped unlike anywhere else the same page runs.
-        // NORMAL is the "no rendering changes" option the WebView docs recommend.
+        // NORMAL, not the inherited NARROW_COLUMNS default: that reflows content to the view
+        // width on its own heuristics, which a responsive page laid out for a phone viewport
+        // doesn't want.
         settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
 
-        // The page scrolls itself (reward card, product cards, stepper, FAQ), and it lives
-        // inside a ModalBottomSheet whose drag gesture would otherwise swallow every vertical
-        // drag before the web content saw it — the sheet is not a scroll container Compose can
-        // hand off to, so it treats the whole drag as its own. Claiming the gesture only while
-        // the content actually has somewhere to go leaves swipe-to-dismiss working on a page
-        // short enough not to scroll, and the scrim and the drag handle work regardless.
+        // The page scrolls itself but lives inside a ModalBottomSheet whose drag gesture would
+        // otherwise swallow every vertical drag before the web content sees it. Claiming the
+        // gesture only when the content can actually scroll leaves swipe-to-dismiss working on
+        // a page short enough not to.
         setOnTouchListener { view, event ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN) {
                 val scrollable = view.canScrollVertically(-1) || view.canScrollVertically(1)
@@ -139,10 +128,9 @@ internal fun createSharingWebView(
             }
             false // the WebView still handles the event itself
         }
-        // Third-party cookies off. Android has no per-WebView data store (only a
-        // process-wide dir set once via setDataDirectorySuffix before any WebView
-        // exists), so first-party wallet cookies do outlive the sheet; clearing on
-        // dismiss isn't an option either since that API is app-global.
+        // Third-party cookies off. Android has no per-WebView data store, so first-party wallet
+        // cookies outlive the sheet regardless; clearing on dismiss isn't an option either,
+        // since that API is app-global.
         CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
 
         webViewClient =
@@ -175,11 +163,9 @@ private class SharingWebViewClient(
     private var retried = false
 
     /**
-     * True between issuing the cache-only retry and it actually starting. A failed
-     * navigation can raise both [onReceivedError] and [onReceivedHttpError]; without
-     * this guard the second callback for the same failure looks like the retry
-     * failing and resets cacheMode before loadUrl's posted navigation dispatches,
-     * sending the retry to the network instead of the cache. [onPageStarted] clears it.
+     * True between issuing the cache-only retry and it starting. Without this, a duplicate
+     * error callback for the same failure would look like the retry itself failing and reset
+     * cacheMode before the retry's own loadUrl dispatches. [onPageStarted] clears it.
      */
     private var retryPending = false
 
@@ -187,9 +173,9 @@ private class SharingWebViewClient(
     private var settled = false
 
     /**
-     * Set when the in-flight main-frame navigation reports an error. Android then fires
-     * [onPageFinished] for its own error page, which without this reads as a successful load:
-     * it would undo the cache-only pinning and cancel the deadline that drives tier 3.
+     * Set when the in-flight main-frame navigation reports an error. Android still fires
+     * [onPageFinished] for its own error page, which without this flag would read as a
+     * successful load and cancel the tier-3 deadline.
      */
     private var navigationFailed = false
 
@@ -197,13 +183,12 @@ private class SharingWebViewClient(
         view: WebView,
         request: WebResourceRequest,
     ): Boolean {
-        // A sub-frame must not be launched externally — that would let an embedded frame yank the
-        // user out of the sheet — and a cross-origin one is cancelled rather than rendered, since
-        // a full-bleed foreign frame in a sheet with no URL bar is exactly the indistinguishability
-        // the origin pinning exists to prevent. Only remote schemes are judged: `about:blank`,
-        // `blob:` and `data:` frames have no host to compare and are routine inside a React page.
-        // `target="_blank"` never arrives here as a sub-frame — setSupportMultipleWindows(false)
-        // folds it into the main frame, which is the behaviour iOS has to reproduce by hand.
+        // A sub-frame is never launched externally (that would let an embedded frame yank the
+        // user out of the sheet), and a cross-origin one is cancelled rather than rendered —
+        // the origin pinning this exists to enforce. Only remote schemes are checked:
+        // about:blank/blob:/data: frames have no host to compare and are routine inside a React
+        // page. target="_blank" never arrives here as a sub-frame — setSupportMultipleWindows(false)
+        // folds it into the main frame.
         if (!request.isForMainFrame) {
             val remote = request.url.scheme == "https" || request.url.scheme == "http"
             return remote && !isSameOrigin(request.url)
@@ -251,7 +236,7 @@ private class SharingWebViewClient(
         url: String,
     ) {
         // Android delivers this for its own error page too, in the same load cycle as the
-        // failure. Reporting readiness here is what kills the tier-3 fallback.
+        // failure. Reporting readiness here would kill the tier-3 fallback.
         if (navigationFailed) return
         // `retried` is NOT reset: one retry per client for the sheet's whole lifetime.
         pendingMainFrameUrl = null
@@ -308,9 +293,9 @@ private class SharingWebViewClient(
         view: WebView,
         detail: RenderProcessGoneDetail,
     ): Boolean {
-        // MUST return true. Returning false lets the framework kill the host app, not just
-        // the sheet. Recovery would mean reloading the content that just crashed a process;
-        // tier 3 already has a working locally-built link.
+        // MUST return true — false lets the framework kill the host app, not just the sheet.
+        // Recovery would mean reloading the content that just crashed a process; tier 3 already
+        // has a working locally-built link.
         if (!settled) {
             settled = true
             onLoadFailed()

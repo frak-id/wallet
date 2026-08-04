@@ -242,10 +242,7 @@ async function writeMetafield<T>(
 }
 
 /**
- * Write (or delete) several metafields in one mutation, so callers whose
- * values only make sense together can't leave a half-written pair behind.
- * Every entry must be a write or every entry a delete — they are different
- * mutations.
+ * Write (or delete) several metafields in one mutation, so callers can't leave a half-written pair behind. Every entry must be a write or every entry a delete.
  */
 async function writeMetafields<T>(
     ctx: AuthenticatedContext,
@@ -907,14 +904,7 @@ export async function getBackendUrlMetafield({
     return readMetafield<string>(graphql, BACKEND_URL_KEY);
 }
 
-/**
- * Write both origins of the SDK's `env` in a single `metafieldsSet` mutation.
- *
- * One call, not two: they are two halves of one value, and a shop left
- * holding a wallet from stage A with a backend from stage B sends storefront
- * traffic to the wrong backend. The backend origin is stored rather than
- * derived from the wallet one — sandboxes pair hosts nothing can guess.
- */
+/** Write both origins of the SDK's `env` in a single `metafieldsSet` mutation, so a shop is never left with a cross-stage pair. The backend origin is stored rather than derived from the wallet one — sandboxes pair hosts nothing can guess. */
 export async function writeEnvMetafields(
     context: AuthenticatedContext,
     { walletUrl, backendUrl }: { walletUrl: string; backendUrl: string }

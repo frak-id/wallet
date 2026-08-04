@@ -7,8 +7,7 @@ enum ReferralArrival {
     //   anonymous id to compare.
     // - a foreign-merchant referral: a v2 context whose merchantId is not ownMerchantId. v1
     //   carries no merchantId at all, so this guard cannot apply to it — a v1 link from any
-    //   merchant is still tracked as this merchant's arrival. That bypass is open, see 3.2 in
-    //   06-open-findings.md.
+    //   merchant is still tracked as this merchant's arrival. That gap is known and still open.
     //
     // ownMerchantId is best-effort (the cached config, not a fresh resolve, since arrival
     // handling is fire-and-forget and must not block on network): nil means "unknown", which

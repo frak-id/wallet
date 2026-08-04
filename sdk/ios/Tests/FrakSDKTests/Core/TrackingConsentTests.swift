@@ -3,12 +3,8 @@ import Testing
 
 @testable import FrakSDK
 
-/// S6a/C7. The tri-state table in `TrackingConsent`'s doc comment, one test per row plus the two
-/// behaviours that are easy to "simplify" away later: the compile-time floor, and the fact that an
-/// absent key follows the config rather than reading as a denial.
-///
-/// Kept in step with its Android twin, `TrackingConsentTest.kt` — same rows, same names where the
-/// language allows.
+/// One test per row of `TrackingConsent`'s tri-state table, plus the compile-time floor and the
+/// fact that an absent key follows the config rather than reading as a denial.
 @Suite("TrackingConsent")
 struct TrackingConsentTests {
     private func consent(
@@ -29,8 +25,7 @@ struct TrackingConsentTests {
         let store = InMemoryKeyValueStore()
         await consent(store: store).setEnabled(false)
 
-        // A second instance over the same store is the next app launch: nothing is carried over in
-        // memory, so this reads only what was written.
+        // A second instance over the same store is the next app launch: nothing carries over in memory.
         #expect(await consent(store: store).isEnabled() == false)
     }
 
@@ -47,9 +42,8 @@ struct TrackingConsentTests {
         #expect(await consent(store: store).isEnabled())
     }
 
-    /// The hard floor. Pinned because the obvious "simplification" — letting the persisted value
-    /// win outright — silently turns the SDK on inside a merchant's staged-rollout build, which is
-    /// the one outcome this type exists to make impossible.
+    /// The hard floor: letting the persisted value win outright would silently turn the SDK on
+    /// inside a merchant's staged-rollout build.
     @Test("a persisted grant can never lift a compile-time trackingEnabled: false")
     func compileTimeDisableIsAHardFloor() async {
         let store = InMemoryKeyValueStore()
@@ -74,9 +68,8 @@ struct TrackingConsentTests {
         #expect(store.string(forKey: "tracking-consent") == "granted")
     }
 
-    /// An unreadable or half-written value is not a denial. Failing towards "off" here would turn
-    /// one corrupt suite into an install that never tracks again and never says why — the same
-    /// reasoning as `AnonymousIdStore`'s refusal ever to cache a keystore failure.
+    /// An unreadable or half-written value is not a denial: failing towards "off" would turn one
+    /// corrupt suite into an install that never tracks again and never says why.
     @Test("an unrecognised stored value follows the config rather than reading as a denial")
     func unrecognisedValueFollowsTheConfig() async {
         let store = InMemoryKeyValueStore()

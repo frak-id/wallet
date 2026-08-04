@@ -25,13 +25,9 @@ public enum FrakLogLevel: Int, Sendable, Hashable, Comparable {
 public enum DeepLinkHandling: Sendable, Hashable {
     // Merchant calls FrakClient.appLink.handleReferral(_:) from onOpenURL or their own router.
     //
-    // The only mode iOS offers. Android additionally has an `.automatic` mode backed by
-    // `ActivityLifecycleCallbacks`, which lets its SDK observe every Activity's incoming
-    // Intent and self-route referral links without merchant code. iOS has no equivalent
-    // hook: nothing lets a library install itself in front of the app's own URL routing,
-    // so this SDK cannot intercept `onOpenURL`/`onContinueUserActivity` on the merchant's
-    // behalf. `.manual` — the merchant forwarding URLs from their own `onOpenURL` — is
-    // therefore mandatory on iOS, not just the default.
+    // The only mode iOS offers: nothing lets a library install itself in front of the app's own
+    // URL routing, so this SDK cannot intercept `onOpenURL`/`onContinueUserActivity` on the
+    // merchant's behalf the way Android's `.automatic` mode can via `ActivityLifecycleCallbacks`.
     case manual
     case disabled
 }
@@ -70,16 +66,15 @@ public struct FrakConfig: Sendable, Hashable {
     // Merchants never set this; for Frak's own dev/local builds.
     public let env: FrakEnvironment
     public let deepLink: DeepLinkHandling
-    /// Whether **tracking** may run. `false` means no anonymous id is ever minted and no tracking
-    /// request is issued, and it is a hard floor that `FrakClient.setTrackingEnabled(_:)` cannot
-    /// lift at runtime (S6a/C7).
+    /// Whether tracking may run. `false` means no anonymous id is ever minted and no tracking
+    /// request is issued; it is a hard floor that `FrakClient.setTrackingEnabled(_:)` cannot lift
+    /// at runtime.
     ///
-    /// It is not a whole-SDK off switch: merchant config and reward resolution still run, because
-    /// they carry no identifier for the user (S9). Sharing does stop, since a share link is the
-    /// anonymous id.
+    /// Not a whole-SDK off switch: merchant config and reward resolution still run, since they
+    /// carry no identifier for the user. Sharing does stop, since a share link is the anonymous id.
     ///
-    /// Leave it `true` and drive consent through `FrakClient.setTrackingEnabled(_:)` instead unless
-    /// you want a build that can never track.
+    /// Leave it `true` and drive consent through `FrakClient.setTrackingEnabled(_:)` instead
+    /// unless you want a build that can never track.
     public let trackingEnabled: Bool
     public let logLevel: FrakLogLevel
     // Nil (default) keeps diagnostics in os.Logger.

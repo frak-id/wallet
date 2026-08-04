@@ -62,8 +62,6 @@ describe("SharingPage chromeless mode", () => {
         expect(
             screen.queryByText("sdk.sharingPage.dismiss")
         ).not.toBeInTheDocument();
-        // The host drives these through `onShare`/`onCopy` rather than
-        // re-implementing them in native chrome above the page.
         expect(screen.getByText("sharing.btn.share")).toBeInTheDocument();
         expect(screen.getByText("sharing.btn.copy")).toBeInTheDocument();
     });

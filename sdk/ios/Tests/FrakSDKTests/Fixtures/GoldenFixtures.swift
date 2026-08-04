@@ -1,10 +1,8 @@
 import Foundation
 
-/// Loads the cross-platform golden fixture corpus from `sdk/core`. `JSONSerialization`
-/// rather than `Codable`: only the envelope is a contract between the corpus authors
-/// and this loader, payload fields evolve independently per concern, and `Codable`
-/// structs here would make every payload change a change to this file. Entries are
-/// handed back as `[String: Any]`.
+/// Loads the cross-platform golden fixture corpus from `sdk/core`. Uses `JSONSerialization`,
+/// not `Codable`: only the envelope is a contract, payload fields evolve independently, and a
+/// `Codable` struct would make every payload change a change to this file.
 enum GoldenFixtures {
     /// A bump means the envelope changed shape; a payload gaining a field is routine
     /// and needs no bump.
@@ -13,7 +11,7 @@ enum GoldenFixtures {
     /// Identity: the signed byte layout for `merge`/`ensure`/`install`/`sso`.
     static let identityProofs = "sdk/core/src/identity/fixtures/golden-proofs.json"
 
-    /// FrakContext v2 codec vectors. Owned by the context corpus work.
+    /// FrakContext v2 codec vectors.
     static let contextCodec = "sdk/core/src/context/fixtures/golden-context.json"
 
     /// Reward selection and currency formatting vectors.
@@ -142,11 +140,10 @@ enum GoldenFixtures {
         return Corpus(path: repoRelativePath, formatVersion: formatVersion, entries: entries)
     }
 
-    /// Walks up from this source file to the repository root, starting at `#filePath`
-    /// rather than the working directory (which `swift test` inherits arbitrarily).
-    /// Requires both `sdk/core` and a repo marker (`.git`/`package.json`): `sdk/core`
-    /// alone could match a stray directory, and `.git` alone breaks in a trimmed
-    /// checkout.
+    /// Walks up from this source file to the repository root, starting at `#filePath` rather
+    /// than the working directory (which `swift test` inherits arbitrarily). Requires both
+    /// `sdk/core` and a repo marker (`.git`/`package.json`), since either alone can produce a
+    /// false match.
     static func repoRoot(from filePath: String = #filePath) throws -> URL {
         let fileManager = FileManager.default
         var directory = URL(fileURLWithPath: filePath).deletingLastPathComponent()

@@ -8,11 +8,8 @@ android {
     namespace = "id.frak.sdk.ui"
 
     // A library's resources merge into the host app's namespace, where an unprefixed `share`
-    // would collide with the merchant's own. This module currently ships none — its last four
-    // strings went when the page took over the sheet's title and buttons — so this is here for
-    // whichever resource is added next, as a lint failure (ResourceName) rather than a
-    // reviewer's memory. Prefixing also gives a merchant a supported way to override one:
-    // declare the same name in their app and the merger takes theirs.
+    // would collide with the merchant's own. Prefixing also lets a merchant override one by
+    // declaring the same name in their app; the merger takes theirs.
     resourcePrefix = "frak_"
 
     buildFeatures {
@@ -27,9 +24,8 @@ android {
     }
 }
 
-// explicitApi/jvmTarget/language version/jvmDefault (this module publishes `public sealed
-// interface SharingResult`, so it needs the same guarantee as :frak-sdk) are shared and
-// configured once by the frak-publish convention plugin applied above.
+// explicitApi/jvmTarget/language version/jvmDefault are shared and configured once by the
+// frak-publish convention plugin applied above.
 
 // Pin unit-test JVM to 17: newer JDKs' bytecode breaks Robolectric's bundled ASM reader.
 tasks.withType<Test>().configureEach {
@@ -46,10 +42,8 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
 
-    // Chrome Custom Tabs deliberately absent: can't embed in a bottom sheet, no reliable
-    // load-failure detection, no origin-pinned interception — and that last one is also what
-    // catches the page's own Share/Copy, so the OS chooser would be out of reach too.
-    // Transport is an embedded WebView instead.
+    // Chrome Custom Tabs deliberately absent: can't embed in a bottom sheet or intercept the
+    // page's own Share/Copy. Transport is an embedded WebView instead.
 
     testImplementation(libs.junit)
     testImplementation(libs.json) // test-only: local android.jar stubs org.json to throw

@@ -27,15 +27,12 @@ internal class AndroidKeystoreDeviceKeyStore(
 
     /**
      * Null both when there is no entry and when the entry is damaged, so [loadOrCreate]'s `?:`
-     * reaches [create] either way. `getKey` throws rather than returning null for an entry an OS
-     * upgrade left unreadable, and that throw used to escape [loadOrCreate] — leaving the install
-     * with no identity for its lifetime and the poisoned entry still in place.
+     * reaches [create] either way.
      *
      * Opening the keystore is deliberately outside the `try`: a provider that will not load is
-     * unavailable, not damaged, and must reach [AnonymousIdStore] as a failure to retry rather
-     * than be answered by minting over the user's key. For the same reason there is no explicit
-     * delete here — [create] targets the same alias, so a replacement is generated in one step
-     * instead of destroying the entry first and hoping the mint that follows succeeds.
+     * unavailable, not damaged, and must reach [AnonymousIdStore] as a failure to retry, not be
+     * answered by minting over the user's key. No explicit delete here either — [create] targets
+     * the same alias, generating a replacement in one step.
      */
     private fun load(): DeviceKey? {
         val keyStore = keyStore()

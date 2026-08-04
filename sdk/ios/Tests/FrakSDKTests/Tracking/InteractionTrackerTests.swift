@@ -54,9 +54,9 @@ struct InteractionTrackerTests {
         let tracker: InteractionTracker
         private let keys = Counter()
         private let currentId: Box<String?>
-        /// S6a/C7's egress gate, expressed as "consent is withdrawn once N events have reached the
-        /// wire". Keyed off the backend rather than a call counter so a test says what it means and
-        /// does not depend on how many times the drain happens to consult the gate.
+        /// Egress gate: "consent is withdrawn once N events have reached the wire." Keyed off
+        /// the backend rather than a call counter, so a test states what it means, independent
+        /// of how many times the drain consults the gate.
         let denyTrackingAfterRequests = Box(Int.max)
 
         init(clientId: String? = InteractionTrackerTests.clientId) {
@@ -85,8 +85,8 @@ struct InteractionTrackerTests {
                 trackingAllowed: { backend.requests.count < deny.value },
                 now: { clock.current },
                 newKey: { "key-\(keys.increment() - 1)" },
-                // Deterministic jitter: the top of the range, so a test advancing the clock
-                // past the maximum delay always clears the window.
+                // Deterministic jitter: the top of the range; a test advancing the clock past
+                // the maximum delay always clears the window.
                 backoff: Backoff(now: { clock.current }, random: { $0.upperBound })
             )
         }
@@ -339,8 +339,8 @@ struct InteractionTrackerTests {
     func flushSurvivesAFailedMigrationRewrite() async throws {
         let fixture = Fixture()
 
-        // A pre-2.7 file: every current field except "r", which never existed. Written directly,
-        // bypassing append/track, exactly like an install upgrading in place.
+        // Every current field except "r", which never existed. Written directly, bypassing
+        // append/track, exactly like an install upgrading in place.
         try FileManager.default.createDirectory(
             at: fixture.fileURL.deletingLastPathComponent(),
             withIntermediateDirectories: true
@@ -351,9 +351,7 @@ struct InteractionTrackerTests {
                 "k": key,
                 "p": "/user/track/interaction",
                 // A JSON *string*, not a nested object: QueuedEvent.body is typed String (the
-                // request body is pre-serialised at capture time). Writing an object here made
-                // every fixture row fail to decode, so this test spent its life asserting against
-                // an already-empty queue and could never have caught the regression it names.
+                // request body is pre-serialised at capture time).
                 "b": #"{"type":"sharing","merchantId":"\#(Self.merchantId)"}"#,
                 "c": Self.clientId,
                 "t": Int64((capturedAt * 1000).rounded()),
@@ -366,10 +364,9 @@ struct InteractionTrackerTests {
 
         // Forces EventQueue.replace's write to fail during the migration read inside flush: a
         // read-only parent directory blocks the atomic write/rename, while fixture.fileURL
-        // itself stays readable — the same distinction EventQueueTests draws between "present but
-        // unreadable" (a different branch entirely) and "read fine, write fails" (this one).
-        // Mode bits are ignored for the superuser, so a root runner would write successfully and
-        // this test would report a false failure rather than the behaviour it pins.
+        // itself stays readable.
+        // Mode bits are ignored for the superuser, so a root runner would write successfully,
+        // producing a false failure rather than the behavior this test pins.
         try #require(getuid() != 0, "needs a non-root runner: 0o500 does not block root's write")
         let parent = fixture.fileURL.deletingLastPathComponent()
         try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: parent.path)
@@ -381,29 +378,17 @@ struct InteractionTrackerTests {
         await fixture.tracker.flush()
 
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path)
-        // This is the exact regression the fix closes: EventQueue.read signalling its failed
-        // migration rewrite by returning an empty array, InteractionTracker.drain reading that as
-        // "nothing queued" and compacting the file down to nothing, which would delete a file
-        // that in truth still holds two events. Both must survive.
         let survivors = await fixture.pending()
         #expect(survivors.map(\.idempotencyKey) == ["old-a", "old-b"])
     }
 
-    /// S6a/C7, and the direct test for `06-open-findings.md` §0 lesson 8: **stopping a producer is
-    /// not stopping the pipe.** A drain reads the whole backlog and then POSTs it one event at a
-    /// time with `await`s in between, so a consent withdrawal landing mid-drain has to be caught at
-    /// the point of egress. Purging the file cannot do it — the drain is already holding the events
-    /// in memory. Worse, withdrawal makes `currentClientId` nil, which DISABLES the stale-id guard
-    /// rather than tightening it.
+    /// Consent withdrawn mid-drain must stop before the next POST: the drain already holds
+    /// every event in memory, so purging the file alone can't stop it. Withdrawal also nils
+    /// `currentClientId`, which disables the stale-id guard rather than tightening it.
     ///
-    /// The queue is seeded directly rather than through `track`, because `track` schedules a drain
-    /// per call: routed through it, each drain would hold exactly one event and the mid-drain
-    /// window would not exist to test.
-    ///
-    /// Fails against the pre-change tracker, which had no gate and posted both. Fails against a
-    /// `purge()`-only fix, which does not touch a drain already in flight.
-    ///
-    /// Android twin: `stops mid-drain when consent is withdrawn, and keeps the unsent events`.
+    /// The queue is seeded directly rather than through `track`, since `track` schedules one
+    /// drain per call — routed through it, each drain would hold exactly one event and the
+    /// mid-drain window wouldn't exist to test.
     @Test("stops mid-drain when consent is withdrawn, and keeps the unsent events")
     func stopsMidDrainOnWithdrawal() async throws {
         let fixture = Fixture()
@@ -416,10 +401,8 @@ struct InteractionTrackerTests {
         await fixture.tracker.flush()
 
         #expect(fixture.backend.requests.count == 1)
-        // Reconciled, not abandoned: the delivered event is removed even though the drain stopped
-        // early, so a purge that silently fails cannot make the SDK re-send it — and an
-        // `Interaction.arrival` carries no idempotency key, so a re-send is a duplicated referral
-        // payout. The undelivered one survives, because withdrawal is a pause, not an erasure.
+        // Reconciled, not abandoned: the delivered event is removed even though the drain
+        // stopped early. The undelivered one survives — withdrawal is a pause, not an erasure.
         let survivors = await fixture.pending()
         #expect(survivors.map(\.idempotencyKey) == ["key-second"])
     }

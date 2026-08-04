@@ -1,12 +1,7 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import type { FrakEnvironment, FrakWalletSdkConfig } from "@frak-labs/core-sdk";
 
-/**
- * The stage the dashboard's own SDK talks to. The build already injects the
- * origins this app uses everywhere else, so they're reused verbatim rather
- * than named — the dashboard is deployed against sandboxes the presets don't
- * know about.
- */
+/** The stage the dashboard's own SDK talks to; reused verbatim since this app deploys against sandboxes no preset covers. */
 function getEnv(): FrakEnvironment {
     if (process.env.FRAK_WALLET_URL && process.env.BACKEND_URL) {
         return {
@@ -15,9 +10,7 @@ function getEnv(): FrakEnvironment {
         };
     }
 
-    // Half-injected is a deploy bug, and falling through silently would point
-    // the dashboard's own widgets at production while its API client talks to
-    // the stage that *was* injected.
+    // Half-injected is a deploy bug: falling through would point widgets at production while the API client uses the injected stage.
     if (process.env.FRAK_WALLET_URL || process.env.BACKEND_URL) {
         console.error(
             "[Frak] FRAK_WALLET_URL and BACKEND_URL must be injected together; ignoring both."

@@ -63,10 +63,9 @@ internal class RewardRepository(
     ): EstimatedRewardsResult {
         val encodedProducts = encodeProducts(products)
         val key = cacheKey(merchantId, currency, targetInteraction, audience, encodedProducts)
-        // Deliberately products-free. Backoff is a statement about the backend's health, not
-        // about one product set: folding products in would mint a fresh key with a zero failure
-        // count on every product page, so a failing backend would be re-dialled instead of
-        // backed off. This is the key the repository used before products existed.
+        // Deliberately products-free: backoff is a statement about the backend's health, not
+        // one product set. Folding products in would mint a fresh key with a zero failure count
+        // on every product page.
         val backoffKey = cacheKey(merchantId, currency, targetInteraction, audience, null)
 
         if (!forceRefresh) {
@@ -131,12 +130,9 @@ internal class RewardRepository(
 
         mutex.withLock {
             backoff.recordSuccess(backoffKey)
-            // Sweep before inserting: `products` put a caller-controlled, up-to-4KB string in
-            // the key, so the map is no longer bounded by the handful of
-            // merchant/currency/audience combinations it used to hold. An entry past its TTL
-            // can never be served again, so dropping expired entries here bounds the map to
-            // what was actually asked for inside one TTL window rather than letting a browsed
-            // catalogue accumulate for the process's life.
+            // Sweep before inserting: `products` puts a caller-controlled string in the key, so
+            // the map is no longer bounded by a handful of merchant/currency/audience
+            // combinations. Dropping expired entries here bounds it to one TTL window.
             val cutoff = now() - CACHE_TTL_MILLIS
             cache.values.removeAll { it.fetchedAtMillis <= cutoff }
             cache[key] = Entry(result, now())
@@ -163,22 +159,16 @@ internal class RewardRepository(
         }
 
     /**
-     * `base64url(utf8(JSON.stringify(products)))` — byte-identical scheme to `sdk/core`'s
-     * `compressJsonToB64` (it is not compression, just a URL-safe transport encoding), so the
-     * backend's single decoder serves every SDK. Null fields and products carrying no scope
-     * field at all are dropped: this parameter feeds reward selection, not rendering, and an
-     * empty object would only make the payload larger for no benefit.
+     * `base64url(utf8(JSON.stringify(products)))`, matching `sdk/core`'s `compressJsonToB64`
+     * scheme so the backend's single decoder serves every SDK. Null fields and products with no
+     * scope field at all are dropped.
      *
-     * Built as a string directly rather than via [JSONObject]: this `org.json` backs
-     * [JSONObject] with a plain `HashMap`, so its iteration — and therefore `toString()`—
-     * order is unspecified and JVM-dependent, not insertion order. The backend parses JSON,
-     * so wire order is not a requirement, but a fixed alphabetical order keeps the encoded
-     * string (and the cache key built from it) deterministic across JVMs and reviewable
-     * byte-for-byte against the iOS encoder.
+     * Built as a string directly, not via [JSONObject]: `org.json` backs it with a `HashMap`, so
+     * iteration order is JVM-dependent, not insertion order. A fixed alphabetical order keeps the
+     * encoded string deterministic across JVMs.
      *
-     * Returns null (parameter omitted) for an empty/all-empty list, or when the encoded string
-     * would exceed [MAX_ENCODED_PRODUCTS_LENGTH] — advisory display degrades to unscoped
-     * selection rather than ever failing the call over this.
+     * Returns null for an empty list, or when the encoded string would exceed
+     * [MAX_ENCODED_PRODUCTS_LENGTH]; selection falls back to unscoped rather than failing the call.
      */
     private fun encodeProducts(products: List<ProductDetails>?): String? {
         if (products.isNullOrEmpty()) return null
@@ -189,11 +179,9 @@ internal class RewardRepository(
                     buildList {
                         product.name?.let { add("name" to it.jsonQuoted()) }
                         product.productId?.let { add("productId" to it.jsonQuoted()) }
-                        // `takeIf { it.isFinite() }`: NaN/Infinity have no JSON literal, and
-                        // emitting the bare `toString()` would put `NaN` in the payload and make
-                        // the whole thing unparseable. Dropping the field lands where
-                        // `JSON.stringify` does — it writes `null`, which the backend's
-                        // `sanitizeProductDetailsList` discards anyway.
+                        // takeIf { it.isFinite() }: NaN/Infinity have no JSON literal; emitting
+                        // toString() would make the payload unparseable. Dropping the field
+                        // matches what JSON.stringify does.
                         product.quantity?.takeIf { it.isFinite() }?.let { add("quantity" to it.jsonNumber()) }
                         product.sku?.let { add("sku" to it.jsonQuoted()) }
                         product.totalPrice?.takeIf { it.isFinite() }?.let { add("totalPrice" to it.jsonNumber()) }
@@ -236,9 +224,7 @@ internal class RewardRepository(
                     }
 
                     // RFC 8259 §7: a raw control character inside a string is invalid JSON, and
-                    // merchant catalogue data does carry stray newlines and tabs. Emitting one
-                    // would make the whole `products` payload unparseable, so the backend would
-                    // drop the entire basket's scope context over a single bad character.
+                    // merchant catalogue data does carry stray newlines and tabs.
                     '\n' -> {
                         append("\\n")
                     }

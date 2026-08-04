@@ -98,11 +98,9 @@ struct FrakEnvironmentTests {
         let cleartext = FrakEnvironment.custom(wallet: "http://a", backend: "https://b")
         let file = FrakEnvironment.custom(wallet: "https://a", backend: "file:///etc/passwd")
 
-        // Not thrown, matching FrakConfig's "never validated at construction": swapped for an
-        // unreachable placeholder. Unlike a malformed URL, this placeholder is well-formed —
-        // failure surfaces at request time as a DNS failure inside FrakError.network, and
-        // Frak.initialize separately logs the rejection (with the offending origin and rule) at
-        // .error, since FrakEnvironment itself has no logger in scope to do so.
+        // Not thrown: swapped for an unreachable placeholder, well-formed so failure surfaces
+        // later as a DNS failure inside FrakError.network. Frak.initialize logs the rejection
+        // separately, since FrakEnvironment has no logger in scope.
         #expect(cleartext.wallet != "http://a")
         #expect(cleartext.wallet.hasPrefix("https://"))
         #expect(file.backend != "file:///etc/passwd")

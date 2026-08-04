@@ -32,10 +32,10 @@ protocol DeviceKeyStore: Sendable {
     func delete()
 }
 
-// DeviceKeyStore over the SDK's own UserDefaults suite. Not the Keychain, deliberately:
-// Keychain items survive uninstall, which would resurrect a cross-install identifier
-// (inconsistent with Android/web, where reinstall/clearing data resets the id).
-// Stores a key reference, not the key itself (Secure Enclave blob is chip-wrapped).
+// DeviceKeyStore over the SDK's own UserDefaults suite, not the Keychain: Keychain items
+// survive uninstall, which would resurrect a cross-install identifier (inconsistent with
+// Android/web, where reinstall/clearing data resets the id). Stores a key reference, not the
+// key itself; the Secure Enclave blob is chip-wrapped.
 struct PersistedDeviceKeyStore: DeviceKeyStore {
     // One byte in front of key material so a blob from one backing never reaches the other.
     private enum Backing: UInt8 {
@@ -51,18 +51,15 @@ struct PersistedDeviceKeyStore: DeviceKeyStore {
         self.store = store
     }
 
-    // Stored material this device cannot use is replaced. It reads like the destructive choice
-    // and is the opposite: an iCloud restore carries the blob to a new phone but not the Secure
-    // Enclave key that wraps it, so the id that blob derived is already unrecoverable. Refusing
-    // to regenerate does not preserve it — it just leaves the install with no id at all,
-    // permanently, which is how tracking, sharing links and the install handoff all go inert
-    // after a restore.
+    // Stored material this device cannot use is replaced, not preserved: an iCloud restore
+    // carries the blob to a new phone but not the Secure Enclave key that wraps it, so the id
+    // that blob derived is already unrecoverable — refusing to regenerate just leaves the
+    // install with no id at all, permanently.
     //
     // Unusable is not graded — a bad base64 string, an unknown backing tag and a blob the
-    // enclave rejects take the same remedy — but the old material is deliberately NOT cleared
-    // here. `generate()` overwrites it on success, so a clear would be a no-op on every path
-    // that works, and on the paths that do not it would destroy a healthy key: the enclave also
-    // refuses before the device's first unlock, which is a background launch away.
+    // enclave rejects take the same remedy — but the old material is deliberately not cleared
+    // here: `generate()` overwrites it on success, and on the paths that fail (e.g. before the
+    // device's first unlock) clearing would destroy a healthy key.
     func loadOrCreate() throws -> DeviceKey {
         if let key = load() { return key }
         let (key, blob) = try Self.generate()

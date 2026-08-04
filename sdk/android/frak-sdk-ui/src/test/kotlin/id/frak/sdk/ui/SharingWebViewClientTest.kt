@@ -200,8 +200,7 @@ class SharingWebViewClientTest {
             ),
         )
 
-        // The capability-value exception in 01 §1.2 rests on this: an embedded frame must not
-        // reach the dispatch at all.
+        // An embedded frame must not reach the dispatch at all.
         assertTrue(h.actions.isEmpty())
     }
 
@@ -224,10 +223,7 @@ class SharingWebViewClientTest {
 
     // --- tier 2 ---------------------------------------------------------
 
-    /**
-     * 01 §4 tier 2: a device that has seen this sheet before should still paint
-     * from the HTTP cache rather than dropping straight to the native chooser.
-     */
+    /** A device that has seen this sheet before should still paint from the HTTP cache rather than dropping straight to the native chooser. */
     @Test
     fun `a main-frame failure retries once against the cache`() {
         val (view, h) = harness()
@@ -245,12 +241,7 @@ class SharingWebViewClientTest {
         assertEquals("tier 3 must not have fired yet", 0, h.loadFailedCount)
     }
 
-    /**
-     * One failed navigation raises **both** error callbacks. Treating the second
-     * as the retry's own failure skipped tier 2 entirely — and reset `cacheMode`
-     * before `loadUrl`'s posted navigation was dispatched, so the retry that did
-     * happen silently went to the network.
-     */
+    /** One failed navigation raises both error callbacks. Treating the second as the retry's own failure skipped tier 2 entirely, and reset `cacheMode` before `loadUrl`'s posted navigation dispatched, sending the retry to the network silently. */
     @Test
     fun `both error callbacks for one navigation still yield a single cache retry`() {
         val (view, h) = harness()
@@ -348,10 +339,9 @@ class SharingWebViewClientTest {
         view.client.onPageStarted(view, url, null)
         view.client.onReceivedError(view, request(url), error())
 
-        // What the framework actually does: `onPageFinished` for its internal error page, in the
-        // same load cycle as the failure and with no `onPageStarted` in between. Reading it as a
-        // load cancels the deadline that drives tier 3 and unpins the cache before the retry's
-        // posted navigation dispatches.
+        // Android fires onPageFinished for its own error page too, same load cycle, no
+        // onPageStarted between. Reading that as a load would cancel the tier-3 deadline and
+        // unpin the cache before the retry's navigation dispatches.
         view.client.onPageFinished(view, url)
 
         assertEquals(0, h.pageReadyCount)
@@ -404,9 +394,9 @@ class SharingWebViewClientTest {
         val overridden =
             view.client.shouldOverrideUrlLoading(view, request("https://ads.example/x", mainFrame = false))
 
-        // Cancelled, because a full-bleed foreign frame in a sheet with no URL bar is what the
-        // origin pinning exists to stop — but not handed to `onOpenExternal`, which would yank
-        // the user out of the sheet on an iframe's say-so.
+        // Cancelled: a full-bleed foreign frame in a sheet with no URL bar is what the pinning
+        // exists to stop. Not handed to onOpenExternal though, which would yank the user out on
+        // an iframe's say-so.
         assertTrue(overridden)
         assertTrue(h.externalUrls.isEmpty())
     }
@@ -415,8 +405,8 @@ class SharingWebViewClientTest {
     fun `a sub-frame cannot forge a page result`() {
         val (view, h) = harness()
 
-        // A same-origin iframe can read the real `sid` off `location.search`, so the sid guard
-        // alone does not make the result channel trustworthy — the frame check does.
+        // A same-origin iframe can read the real sid off location.search, so the sid guard
+        // alone isn't trustworthy — the frame check is what makes it so.
         view.client.shouldOverrideUrlLoading(
             view,
             request(

@@ -70,14 +70,7 @@ data class LogEntry(
 
 enum class LogType { INFO, SUCCESS, ERROR }
 
-/**
- * The harness's own display model for a catalog row. Deliberately does not carry a reward
- * amount: [BestReward] is fetched **once** for the whole catalog, not per row — see
- * [MainActivity.loadCatalogReward] and [CatalogRewardBanner].
- *
- * Shared with the iOS harness — same ids, titles and links, so a divergence between the two
- * apps is visible in review.
- */
+/** Catalog row display model, shared with the iOS harness (same ids, titles, links). */
 data class ProductItem(
     val id: String,
     val title: String,
@@ -106,21 +99,17 @@ val sampleProducts =
 /** Order total used by the checkout simulator, shared with the iOS harness. */
 const val SAMPLE_ORDER_TOTAL_CENTS = 14999L
 
-/**
- * The real SDK has no anonymous-checkout concept — `tracking.purchase` takes a merchant-owned
- * customer id and a checkout token the merchant's own backend would issue. Both are fabricated
- * here; a real integration wires these to its actual customer/checkout records.
- */
+/** `tracking.purchase` needs a merchant-owned customer id and checkout token; both are fabricated here for the demo. */
 const val SAMPLE_CUSTOMER_ID = "cust_example_android_001"
 const val SAMPLE_CHECKOUT_TOKEN = "checkout_token_example_9988"
 
 /** Hoisted: allocating a formatter per log line is wasteful and this runs often. */
 private val LOG_TIME_FORMAT = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
-/** Display-only formatting for the order total; the reward amount itself now comes from [BestReward.formatted], which is already a ready-to-render string. */
+/** Formats the order total only; reward amounts come from [BestReward.formatted]. */
 fun formatCents(cents: Long): String = "$%d.%02d".format(cents / 100, cents % 100)
 
-/** Where the catalog-wide `Frak.client.rewards.best` lookup currently stands. See [CatalogRewardBanner]. */
+/** State of the catalog-wide rewards.best lookup. See [CatalogRewardBanner]. */
 private sealed interface CatalogRewardLookup {
     data object Loading : CatalogRewardLookup
 
@@ -141,13 +130,8 @@ class MainActivity : ComponentActivity() {
         get() =
             when (val state = catalogReward) {
                 CatalogRewardLookup.Loading -> "Checking catalog reward…"
-
                 is CatalogRewardLookup.Loaded -> state.reward.formatted
-
                 CatalogRewardLookup.NoActiveReward -> "No active reward"
-
-                // Clearly-labelled placeholder, not a fabricated amount: the task this harness
-                // exists for is proving the real call was made, not showing a pretty number.
                 CatalogRewardLookup.Failed -> "Reward unavailable (placeholder)"
             }
 
@@ -160,15 +144,12 @@ class MainActivity : ComponentActivity() {
                 FrakConfig(
                     merchantId = "0a799880-ba54-4276-a734-db8721911bab",
                     metadata = FrakMetadata(name = "Frak Android Harness"),
-                    // Points at wallet-dev.frak.id / backend.gcp-dev.frak.id and expects the DEV
-                    // wallet app (`id.frak.wallet.dev`, scheme `frakwallet-dev`) rather than the
-                    // production one — which is why `appLink.isFrakAppInstalled()` below reports
-                    // false unless the dev wallet build is installed.
+                    // Development points at wallet-dev.frak.id / backend.gcp-dev.frak.id and the
+                    // dev wallet app (id.frak.wallet.dev, scheme frakwallet-dev). isFrakAppInstalled()
+                    // below reports false without it.
                     env = FrakEnvironment.Development,
-                    // `DeepLinkHandling.Automatic` exists only on Android: it hooks
-                    // `Application.ActivityLifecycleCallbacks`, which iOS has no equivalent of.
-                    // iOS necessarily uses `.manual` and routes `.onOpenURL` to
-                    // `appLink.handleReferral(_:)` by hand — see `FrakExampleApp.init()`.
+                    // Automatic exists only on Android (hooks ActivityLifecycleCallbacks). iOS uses
+                    // .manual and routes .onOpenURL to appLink.handleReferral(_:) by hand.
                     deepLink = DeepLinkHandling.Automatic,
                     logLevel = FrakLogLevel.INFO,
                 ),
@@ -177,18 +158,12 @@ class MainActivity : ComponentActivity() {
 
         intent?.dataString?.let { url -> logInboundIntent(url) }
 
-        // Both of these are non-suspend/suspend calls that don't belong to any user gesture, so
-        // they run once against the Activity's own lifecycleScope rather than needing a
-        // composable's rememberCoroutineScope.
         lifecycleScope.launch {
             addLog("Frak wallet app installed: ${Frak.client.appLink.isFrakAppInstalled()}", LogType.INFO)
             try {
                 val resolved = Frak.client.config.resolve()
                 addLog("Merchant config resolved: ${resolved.name} (${resolved.domain})", LogType.SUCCESS)
             } catch (error: FrakError) {
-                // A real merchant id is configured, so a failure here means something is
-                // actually wrong — e.g. this bundle id is not yet allow-listed for the
-                // merchant, or the dev backend is unreachable. Not expected; see README.
                 addLog("Config resolve failed: ${error.message}", LogType.ERROR)
             }
             loadCatalogReward()
@@ -201,10 +176,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     val scope = rememberCoroutineScope()
-                    // Must live in the composable tree: FrakSharingLauncher is obtained from a
-                    // @Composable function and its sheet is hosted as a composable, so it cannot
-                    // be created or held from an Activity method the way the old stub's
-                    // presentSharing(request, onResult) callback could.
+                    // FrakSharingLauncher must be obtained inside the composable tree; its sheet is
+                    // hosted as a composable.
                     val sharingLauncher = rememberFrakSharingLauncher { result -> logSharingResult(result) }
 
                     MerchantAppScreen(
@@ -225,14 +198,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * The config above uses `DeepLinkHandling.Automatic`, so `Frak.initialize` already registered
-     * an `Application.ActivityLifecycleCallbacks` that reads this same Activity's intent from
-     * `onActivityCreated`/`onActivityResumed` and calls `appLink.handleReferral` itself — that
-     * dispatch happens right after this method returns. Calling `handleReferral` again here would
-     * track the same arrival twice (it has no idempotency guard beyond self-referral detection),
-     * so this only logs that the intent filter fired and the URL reached the activity; the actual
-     * handling is intentionally left to the SDK. [simulateDeepLink] below is the one place this
-     * harness calls `handleReferral` directly.
+     * Automatic mode already dispatched `handleReferral` via the activity lifecycle callback;
+     * this only logs the arrival. Calling `handleReferral` again would double-track it.
      */
     private fun logInboundIntent(url: String) {
         addLog("Inbound link reached the activity (SDK auto-handles it): $url", LogType.SUCCESS)
@@ -246,9 +213,8 @@ class MainActivity : ComponentActivity() {
         launcher.launch(
             SharingRequest(
                 products = listOf(SharingProduct(title = product.title, link = product.link)),
-                // A share is asking a friend to buy, not to visit or add-to-cart, so "purchase"
-                // is the trigger this reward should be scoped to — matches the `rewards.best`
-                // call below and iOS's `SharingRequest`. See the parity note there.
+                // Reward trigger is "purchase" — matches the rewards.best call below and iOS's
+                // SharingRequest.
                 targetInteraction = "purchase",
                 placement = "product-page",
             ),
@@ -266,11 +232,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Unlike a real inbound link, this URL never goes through `startActivity`/`onNewIntent` — it
-     * is only ever passed straight to `handleReferral`. The SDK's automatic observer therefore
-     * never sees it and there is no double-handling to worry about here, which is what makes this
-     * the one place in the harness that calls `appLink.handleReferral` directly and logs its
-     * result.
+     * Passes the URL straight to `handleReferral`, bypassing `startActivity`/`onNewIntent` — the
+     * only place in the harness that calls it directly.
      */
     private suspend fun simulateDeepLink() {
         val testUrl = "https://example-merchant.com/product?fCtx=test_referral_token_android_9988"
@@ -298,7 +261,6 @@ class MainActivity : ComponentActivity() {
                 addLog("Order $orderId tracked successfully.", LogType.SUCCESS)
             }
 
-            // Not expected against the real merchant id this harness configures — see README.
             is FrakResult.Failure -> {
                 addLog(
                     "Order $orderId tracking failed: ${result.error.message}",
@@ -308,22 +270,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * One `rewards.best` call for the entire visible catalog, not one per row. Per
-     * `RewardsApi.best`'s KDoc
-     * (sdk/android/frak-sdk/src/main/kotlin/id/frak/sdk/RewardsApi.kt), a listing screen must
-     * call this once for the whole visible set and render a single headline figure: one call
-     * per row would mean one cache key and one network request per row against a small HTTP
-     * concurrency budget, and the resulting `BestReward?` can't be attributed back to a single
-     * row anyway. See [CatalogRewardBanner].
-     */
+    /** One `rewards.best` call for the whole visible catalog, not one per row. See [CatalogRewardBanner]. */
     private suspend fun loadCatalogReward() {
         catalogReward =
             try {
                 val best =
                     Frak.client.rewards.best(
-                        // Matches the `SharingRequest.targetInteraction` used by [shareProduct]
-                        // — see the comment there.
+                        // Matches SharingRequest.targetInteraction used by shareProduct.
                         targetInteraction = "purchase",
                         products = sampleProducts.map { ProductDetails(productId = it.id, name = it.title) },
                     )
@@ -335,7 +288,6 @@ class MainActivity : ComponentActivity() {
                     CatalogRewardLookup.NoActiveReward
                 }
             } catch (error: FrakError) {
-                // Not expected against the real merchant id this harness configures — see README.
                 addLog("Catalog reward lookup failed: ${error.message}", LogType.ERROR)
                 CatalogRewardLookup.Failed
             }
@@ -421,7 +373,6 @@ fun MerchantAppScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Status Box / Log view
         Text(
             text = "SDK Event Log:",
             style = MaterialTheme.typography.labelMedium,

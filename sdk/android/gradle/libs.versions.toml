@@ -1,13 +1,9 @@
-# Version catalog for the Frak Android SDK.
+# Version catalog for the Frak Android SDK — every coordinate the build resolves is declared
+# here, so a version bump is a one-line diff in one file.
 #
-# Every coordinate the build resolves is declared here, so a version bump is a
-# one-line diff in one file rather than a grep across module scripts.
-#
-# Reminder on the dependency budget (02-sdk-design.md §4): the hard rule
-# is ZERO third-party runtime dependencies. `kotlinx-coroutines` and AndroidX /
-# Compose are first-party to Kotlin and Google respectively and are the only
-# things allowed near `api`/`implementation`. Anything else belongs in
-# `testImplementation` or nowhere.
+# Zero third-party runtime dependencies. `kotlinx-coroutines` and AndroidX/Compose are
+# first-party to Kotlin and Google respectively and are the only things allowed near
+# `api`/`implementation`. Anything else belongs in `testImplementation` or nowhere.
 
 [versions]
 agp = "9.1.1"
@@ -29,36 +25,28 @@ coroutines = "1.11.0"
 compose-bom = "2026.06.01"
 
 junit = "4.13.2"
-# TEST-ONLY. Parses the golden fixture corpus in `sdk/core` from the Kotlin test
-# suite (docs/plans/native-sdk/04-golden-fixtures.md).
+# Test-only. Parses the golden fixture corpus in `sdk/core` from the Kotlin test suite.
 #
-# This does NOT violate the zero-third-party-runtime-dependency rule: it is
-# declared `testImplementation`, so it never reaches `components["release"]` and
-# cannot appear in the published POM.
+# Does not violate the zero-third-party-runtime-dependency rule: declared `testImplementation`,
+# so it never reaches `components["release"]` or the published POM.
 #
-# It also must NOT be removed on the reasoning that "org.json ships with
-# Android". It does — but for local unit tests the classpath is the stubbed
-# `android.jar`, whose methods all throw `Method ... not mocked`. The real
-# artifact in test scope shadows the stub. Verified by execution.
+# Must not be removed on the reasoning that "org.json ships with Android" — for local unit
+# tests the classpath is the stubbed `android.jar`, whose methods all throw `Method ... not
+# mocked`. The real artifact in test scope shadows the stub.
 #
 # Public domain, no transitive dependencies.
 json = "20260719"
 
-# TEST-ONLY. Runs the `:frak-sdk-ui` unit tests against a real Android runtime on
-# the JVM, instead of the stubbed `android.jar` whose every method throws
-# `Method ... not mocked`.
+# Test-only. Runs the `:frak-sdk-ui` unit tests against a real Android runtime on the JVM,
+# instead of the stubbed `android.jar` whose every method throws `Method ... not mocked`.
 #
-# This is what makes `SharingSheetState` and the sharing `WebViewClient`
-# testable at all: both are built on framework types (`Context`, `Intent`,
-# `WebView`, `WebResourceRequest`) that cannot be exercised on the stub, and the
-# latency-gate regression fixed in this area reached code review precisely
-# because nothing mechanical could catch it.
+# This is what makes `SharingSheetState` and the sharing `WebViewClient` testable at all: both
+# are built on framework types (`Context`, `Intent`, `WebView`, `WebResourceRequest`) that
+# cannot be exercised on the stub.
 #
-# Same zero-runtime-dependency argument as `json` above: `testImplementation`
-# only, so it never reaches `components["release"]` and cannot appear in the
-# published POM. It is NOT added to `:frak-sdk`, which stays on plain JUnit —
-# that module is deliberately free of framework types and must remain provable
-# without an Android runtime.
+# Same zero-runtime-dependency argument as `json` above: `testImplementation` only. Not added
+# to `:frak-sdk`, which stays on plain JUnit and must remain provable without an Android
+# runtime.
 robolectric = "4.16.1"
 androidx-test-core = "1.7.0"
 
@@ -79,12 +67,10 @@ androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-te
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
-# NOTE: `org.jetbrains.kotlin.android` is deliberately absent. AGP 9.0 ships
-# built-in Kotlin and registers its own `kotlin` extension, so applying the
-# JetBrains plugin alongside it fails with "Cannot add extension with name
-# 'kotlin'". Kotlin compilation is now AGP's job; the `kotlin` version above
-# only feeds the Compose compiler plugin below.
-# Bundled with Kotlin from 2.0 on, so the compiler-plugin version tracks the
-# Kotlin version automatically instead of being hand-pinned.
+# `org.jetbrains.kotlin.android` is deliberately absent: AGP 9.0 ships built-in Kotlin and
+# registers its own `kotlin` extension, so applying the JetBrains plugin alongside it fails
+# with "Cannot add extension with name 'kotlin'". The `kotlin` version above only feeds the
+# Compose compiler plugin below, which is bundled with Kotlin from 2.0 on and tracks its
+# version automatically.
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-plugin" }

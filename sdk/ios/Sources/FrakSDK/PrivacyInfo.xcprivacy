@@ -1,27 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  HARD SHIPPING GATE — see 02-sdk-design.md §4.
-
   Since 1 May 2024, an SDK using a required-reason API must declare it in a privacy
   manifest or App Store Connect rejects the upload with ITMS-91053 (Missing API
-  declaration). That rejection lands on the MERCHANT's upload, not ours: shipping this
-  file wrong or absent breaks every integrator's release, which is the worst possible
-  first impression.
+  declaration). That rejection lands on the merchant's upload, not ours: shipping this
+  file wrong or absent breaks every integrator's release.
 
-  Known failure mode to validate before release (05-build-and-release.md §3):
-  AppsFlyer's manifest failed to bundle correctly in the *static* SPM variant (their
-  issue #281). Propagation must be checked against a real consumer app, not just a
-  local `swift build`.
+  Known failure mode to validate before release: AppsFlyer's manifest failed to bundle
+  correctly in the static SPM variant (their issue #281). Propagation must be checked
+  against a real consumer app, not just a local `swift build`.
 -->
 <plist version="1.0">
 <dict>
     <!--
       No tracking as defined by App Tracking Transparency: nothing here is joined with
       data from other companies' apps or sites, and no data goes to a data broker. The
-      ATT question itself is 02 §8 open question 1 and needs a legal decision before
-      iOS ships; if that decision changes, this key, NSPrivacyTrackingDomains, and the
-      NSPrivacyCollectedDataTypeTracking flags below all change with it.
+      ATT question needs a legal decision before iOS ships; if that decision changes,
+      this key, NSPrivacyTrackingDomains, and the NSPrivacyCollectedDataTypeTracking
+      flags below all change with it.
     -->
     <key>NSPrivacyTracking</key>
     <false/>
@@ -33,7 +29,7 @@
           The anonymous id. Apple's "Device ID" covers any identifier scoped to a
           particular device, browser or app installation, which is exactly what this
           is: derived from a P-256 keypair the platform holds, one per installation,
-          gone on uninstall (02 §3).
+          gone on uninstall.
 
           Linked, because the whole point of the install handoff is that the wallet
           links this id to the user's Frak identity. Declaring it unlinked would be
@@ -74,8 +70,7 @@
         <!--
           `track(_:)` posts `arrival`, `sharing` and `custom` interactions to
           /user/track/interaction. In-app interaction events are exactly Apple's
-          "Product Interaction", and this is the SDK's headline feature — it was the
-          most conspicuous omission when this file declared only the two types above.
+          "Product Interaction", and this is the SDK's headline feature.
 
           `Interaction.custom(_:data:)` carries a merchant-supplied [String: String].
           The SDK cannot declare what a merchant chooses to put in it: that payload is
@@ -115,16 +110,15 @@
     </array>
     <!--
       UserDefaults is one of the five required-reason categories, and this SDK stores
-      both the resolved merchant config and the anonymous id there (02 §3, and the
-      storage row of the §4 dependency table). Nothing else the SDK touches is a
-      required-reason API: the event queue is an ordinary file whose timestamps are
-      never read, and neither WebKit nor UIPasteboard is in a category.
+      both the resolved merchant config and the anonymous id there. Nothing else the
+      SDK touches is a required-reason API: the event queue is an ordinary file whose
+      timestamps are never read, and neither WebKit nor UIPasteboard is in a category.
 
-      CA92.1 is the right code and this is settled: it covers a third-party SDK reading
-      or writing UserDefaults in the app's own container, on the app's behalf, which is
-      what this SDK does. C56D.1 — floated as an alternative in 02 §4 — is for an SDK
-      that exposes a UserDefaults *wrapper API for the app itself to call*. This SDK
-      exposes no such API, so C56D.1 would be the wrong declaration.
+      CA92.1 is the right code: it covers a third-party SDK reading or writing
+      UserDefaults in the app's own container, on the app's behalf, which is what this
+      SDK does. C56D.1 is for an SDK that exposes a UserDefaults wrapper API for the
+      app itself to call. This SDK exposes no such API, so C56D.1 would be the wrong
+      declaration.
     -->
     <key>NSPrivacyAccessedAPITypes</key>
     <array>

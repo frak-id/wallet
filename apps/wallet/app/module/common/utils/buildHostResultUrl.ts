@@ -1,15 +1,4 @@
-/**
- * Outcomes a native host is told about.
- *
- * `share` and `copy` are asks, not reports: the page owns the buttons but not
- * the capabilities behind them. `navigator.share` does not exist in an Android
- * WebView at all, and the reward-bearing sharing interaction has to be signed
- * by the SDK's keypair, which this page has no access to. `error` reports a
- * rejected launch, so the host can close its sheet instead of leaving it on a
- * page it cannot interpret. `code` hands over the install code so the SDK can
- * write a pasteboard entry with an expiry and `localOnly` — options this page
- * cannot set itself.
- */
+/** Outcomes a native host is told about. `share`/`copy` are asks, not reports: `navigator.share` doesn't exist in an Android WebView, and the reward-bearing share must be signed by the SDK's keypair, which this page can't access. `error` lets the host close its sheet; `code` hands over the install code for the SDK to pasteboard. */
 export type HostResultAction =
     | "install"
     | "dismiss"
@@ -22,14 +11,10 @@ export type HostResultAction =
 /**
  * Build the URL that hands an outcome back to a native host.
  *
- * The host intercepts this navigation inside its own web view and cancels it, so it never
- * reaches the OS. That is the condition under which `code` may carry a capability value at
- * all — see `01-platform-changes.md` §1.2, which permits it only while that holds. A
- * `returnScheme` on a page loaded anywhere else turns this into a real scheme launch, and
- * then `value` is readable by any app registering the scheme.
- *
- * `sid` is the host's own correlation token; callbacks that do not match the session it
- * opened are dropped.
+ * The host intercepts this navigation in its own web view before it reaches the OS — that's
+ * the only reason `code` may carry a capability value here. A page loaded anywhere else would
+ * turn this into a real scheme launch, making `value` readable by any app registering the scheme.
+ * `sid` is the host's own correlation token; mismatched callbacks are dropped.
  */
 export function buildHostResultUrl({
     scheme,
@@ -55,26 +40,10 @@ export function buildHostResultUrl({
     return `${scheme}://result?${params}`;
 }
 
-/**
- * Outcomes already handed to the host, so none is sent twice.
- *
- * Keyed by action *and* value: every other action is terminal and fires once, but the
- * install code can change across a remount (`useGenerateInstallCode` mints a new row per
- * fetch, which is why it pins `staleTime: Infinity`), and a second, different code must
- * reach the host or the pasteboard keeps one the page is no longer showing. A repeat of the
- * *same* code is still suppressed.
- */
+/** Outcomes already handed to the host, so none is sent twice. Keyed by action and value: the install code can change across a remount, so a different code still reaches the host even though a repeat of the same one is suppressed. */
 const sentActions = new Set<string>();
 
-/**
- * Actions the dedupe above does not apply to.
- *
- * Both are direct results of a button press, so the re-entrancy the dedupe
- * exists for (a route guard re-running itself) cannot reach them — while
- * suppressing a repeat is actively wrong here: copying and then sharing, or
- * retrying a share whose chooser the user backed out of, are ordinary things
- * to do inside one page load and each one has to reach the host.
- */
+/** Actions the dedupe above skips: both are direct button-press results, not route-guard re-entrancy, and suppressing a repeat here would be wrong — e.g. copying then sharing, or retrying a share the user backed out of. */
 const REPEATABLE_ACTIONS: ReadonlySet<HostResultAction> = new Set([
     "share",
     "copy",

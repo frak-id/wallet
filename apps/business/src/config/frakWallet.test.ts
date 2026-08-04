@@ -55,8 +55,7 @@ describe("frakWalletSdkConfig", () => {
         vi.stubEnv("BACKEND_URL", "");
         vi.resetModules();
 
-        // No injected origins and not running locally: the named preset,
-        // rather than a hardcoded pair that could drift from the SDK's.
+        // Falls back to the named preset, not a hardcoded pair that could drift from the SDK's.
         const { frakWalletSdkConfig } = await import("./frakWallet");
         expect(frakWalletSdkConfig.env).toBe("prod");
 

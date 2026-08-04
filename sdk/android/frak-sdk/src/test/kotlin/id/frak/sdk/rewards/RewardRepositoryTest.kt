@@ -22,12 +22,9 @@ import org.junit.Test
 import java.io.IOException
 
 /**
- * Pins the query sent to `GET /user/merchant/estimated-rewards` and the cache
- * around it.
- *
- * The query assertions are the important ones: three of the five parameters are
- * ones the backend rejects or silently ignores if sent wrong, and the failure in
- * each case is a reward that renders as absent rather than an error.
+ * Pins the query sent to `GET /user/merchant/estimated-rewards`. Three of five parameters
+ * are ones the backend rejects or silently ignores if sent wrong, and the failure renders
+ * as an absent reward, not an error.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RewardRepositoryTest {
@@ -48,9 +45,8 @@ class RewardRepositoryTest {
             transport.respond(200, EMPTY)
             newRepository(this).fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false)
 
-            // The backend declares this `t.Literal("1")`, not a boolean: "true"
-            // and "0" are both 422s. And without it the `best` object is simply
-            // absent, which looks exactly like "no rewards".
+            // The backend declares this `t.Literal("1")`, not a boolean: "true" and "0" are
+            // both 422s, and omitting it leaves `best` absent.
             val url =
                 transport.requests
                     .single()
@@ -65,8 +61,6 @@ class RewardRepositoryTest {
             transport.respond(200, EMPTY)
             newRepository(this).fetch(MERCHANT_ID, FrakCurrency.GBP, null, null, forceRefresh = false)
 
-            // A caller-supplied currency invites drift — the same campaign
-            // advertised at different amounts on two of a merchant's surfaces.
             val url =
                 transport.requests
                     .single()
@@ -114,10 +108,8 @@ class RewardRepositoryTest {
     @Test
     fun `an unknown merchant returns an empty list rather than an error`() =
         runTest {
-            // This endpoint NEVER 404s. A typo'd merchantId is a permanently
-            // successful call returning nothing — indistinguishable from a real
-            // merchant between campaigns, which is why the diagnosis lives on
-            // resolveConfig().
+            // This endpoint never 404s: a typo'd merchantId returns an empty success response,
+            // indistinguishable from a real merchant between campaigns.
             transport.respond(200, EMPTY)
 
             val result = newRepository(this).fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false)
@@ -149,8 +141,8 @@ class RewardRepositoryTest {
             clock += RewardRepository.CACHE_TTL_MILLIS
             repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false)
 
-            // Unlike the config cache, which serves stale indefinitely: a reward
-            // amount must not be shown when we are not sure of it.
+            // Unlike the config cache, which serves stale indefinitely: an unsure reward
+            // amount must not be shown.
             assertEquals(2, transport.requests.size)
         }
 
@@ -163,10 +155,8 @@ class RewardRepositoryTest {
             repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, RewardAudience.REFERRER, forceRefresh = false)
             repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, RewardAudience.REFEREE, forceRefresh = false)
 
-            // `best` is selected server-side FROM the query, so these return
-            // genuinely different answers. Sharing an entry would show a
-            // referrer's reward to a referee — the right number for the wrong
-            // role, which is worse than showing nothing.
+            // `best` is selected server-side from the query; sharing an entry would show a
+            // referrer's reward to a referee.
             assertEquals(2, transport.requests.size)
         }
 
@@ -193,8 +183,6 @@ class RewardRepositoryTest {
                 products = listOf(ProductDetails(sku = "SHIRT-1")),
             )
 
-            // Same reasoning as the audience case above: a scoped selection for one basket must
-            // never be served back for a different one.
             assertEquals(2, transport.requests.size)
         }
 
@@ -227,9 +215,8 @@ class RewardRepositoryTest {
                     .url
                     .toString()
             // Pinned against sdk/core's compressJsonToB64([{"name":"Kettle","productId":"p1",
-            // "quantity":2,"sku":"SHOE-42","totalPrice":159.8,"unitPrice":79.9}]) — see the
-            // product-scope contract's golden vectors. Both platforms and the backend must
-            // agree on this exact string.
+            // "quantity":2,"sku":"SHOE-42","totalPrice":159.8,"unitPrice":79.9}]). Both
+            // platforms and the backend must agree on this exact string.
             assertTrue(
                 "was: $url",
                 url.contains(
@@ -256,9 +243,8 @@ class RewardRepositoryTest {
                     .single()
                     .url
                     .toString()
-            // Raw UTF-8, not \u-escaped: JSON.stringify emits raw UTF-8 for non-ASCII text, and a
-            // native encoder that escapes it instead produces a different (still valid) string
-            // that fails this vector.
+            // Raw UTF-8, not \u-escaped: JSON.stringify emits raw UTF-8 for non-ASCII text; an
+            // escaping encoder produces a different, still-valid string that fails this vector.
             assertTrue(
                 "was: $url",
                 url.contains(
@@ -268,10 +254,8 @@ class RewardRepositoryTest {
         }
 
     /**
-     * RFC 8259 §7 forbids a raw control character inside a JSON string, and merchant catalogue
-     * data carries stray newlines and tabs. An unescaped one made the whole payload unparseable,
-     * so the backend dropped the entire basket's scope context over a single bad character.
-     * Vector generated from `sdk/core`'s `compressJsonToB64`.
+     * RFC 8259 §7 forbids a raw control character inside a JSON string; merchant catalogue data
+     * carries stray newlines and tabs. Vector generated from `sdk/core`'s `compressJsonToB64`.
      */
     @Test
     fun `control characters in a product name are escaped, not emitted raw`() =
@@ -296,8 +280,7 @@ class RewardRepositoryTest {
         }
 
     /**
-     * NaN/Infinity have no JSON literal: emitting `toString()` would put `NaN` in the payload and
-     * make it unparseable. `JSON.stringify` writes `null` there, which the backend's
+     * NaN/Infinity have no JSON literal. `JSON.stringify` writes `null`, which the backend's
      * `sanitizeProductDetailsList` discards — dropping the field reaches the same place.
      */
     @Test
@@ -398,9 +381,8 @@ class RewardRepositoryTest {
     fun `an oversized encoded payload is dropped and warns rather than failing the call`() =
         runTest {
             transport.respond(200, EMPTY)
-            // A sink, not FrakLogLevel.WARN with the default logcat sink: android.util.Log is a
-            // stubbed method on this JVM unit-test classpath and throws unless mocked (see
-            // FrakLoggerTest's doc) — no mocking framework runs in this test tier.
+            // A custom sink, not the default logcat one: android.util.Log throws on this JVM
+            // unit-test classpath unless mocked, and no mocking framework runs in this tier.
             val warnings = mutableListOf<String>()
             val logger = FrakLogger(FrakLogLevel.WARN, FrakLogSink { _, message, _ -> warnings.add(message) })
             val repository =
@@ -435,8 +417,6 @@ class RewardRepositoryTest {
                 async { repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false) }
             }.awaitAll()
 
-            // A LazyColumn rendering ten product rows calls this ten times in one
-            // frame, against a 60-per-minute per-IP bucket.
             assertEquals(1, transport.requests.size)
         }
 
@@ -463,16 +443,14 @@ class RewardRepositoryTest {
             val afterFirst = transport.requests.size
             runCatching { repository.fetch(MERCHANT_ID, FrakCurrency.EUR, null, null, forceRefresh = false) }
 
-            // The HTTP layer retries once internally, so `afterFirst` is 2. The
-            // point is that the second call adds nothing.
+            // The HTTP layer retries once internally, so afterFirst is 2; the second call adds
+            // nothing.
             assertEquals("the second call was suppressed by backoff", afterFirst, transport.requests.size)
         }
 
     /**
-     * Backoff must not be keyed by products. It was, briefly: because the products string is
-     * part of the cache key, folding it into the backoff key too meant every product page
-     * minted a fresh key with a zero failure count, so a merchant browsing a catalogue would
-     * hammer a failing backend once per product instead of backing off.
+     * Backoff must not be keyed by products, or a merchant browsing a catalogue would hammer a
+     * failing backend once per product instead of backing off.
      */
     @Test
     fun `a backed-off backend stays backed off for a different product set`() =

@@ -8,39 +8,19 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Whether the SDK may mint an identity and talk to the backend, as a **runtime** decision
- * (S6a/C7) rather than the build-time-only [FrakConfig.trackingEnabled] it replaces at the read
- * sites.
+ * Whether the SDK may mint an identity and talk to the backend, as a runtime decision layered
+ * over the build-time [FrakConfig.trackingEnabled] floor.
  *
- * Tri-state on purpose, and the third state is not "unset means off":
+ * `FrakConfig.trackingEnabled = false` is a floor no persisted grant can lift: a build with
+ * tracking off must never have `setTrackingEnabled(true)` silently switch it on. The grant is
+ * still written to disk, so it takes effect if a later build ships with the flag on; it just
+ * cannot lift the floor of the current build. [setEnabled] logs when it is called into that floor.
  *
- * | persisted | [FrakConfig.trackingEnabled] | [isEnabled] |
- * |---|---|---|
- * | absent    | true  | **true**  — every integration shipped before this class existed behaves exactly as it did |
- * | absent    | false | false |
- * | `granted` | true  | true |
- * | `granted` | false | **false** — the compile-time flag is a hard floor, see below |
- * | `denied`  | true  | false |
- * | `denied`  | false | false |
+ * Stored in the identity [KeyValueStore], not the config cache, since the config cache can be
+ * thrown away at any time and a consent decision must not be.
  *
- * **The compile-time `false` is a floor no persisted value can lift.** A merchant who shipped
- * `FrakConfig(trackingEnabled = false)` — a staged rollout, a build for a market they have not
- * cleared legally, a debug variant — must not discover that a `setTrackingEnabled(true)` call
- * somewhere in their app silently switched the SDK on. The grant is still written to disk, so it
- * takes effect if they later ship a build with the flag on; it simply cannot take effect against
- * a build that says no. [setEnabled] logs when it is called into that floor, because a silent
- * no-op is the failure mode this whole class exists to remove.
- *
- * Stored in the **identity** [KeyValueStore], never the config cache: the config cache is
- * the SDK's own cache of someone else's data and is safe to throw away at any time, whereas a
- * consent decision is the only record that the user was ever asked. They are already separate files
- * so a corrupt write to the hot one cannot take identity with it; the same reasoning puts the
- * consent decision on the side that is not disposable.
- *
- * `suspend`, with an in-memory memo, for the same reason [id.frak.sdk.identity.AnonymousIdStore]
- * is (4.5): the backing `SharedPreferences` file is opened lazily on first read, and that first
- * read is disk I/O that must not land on whichever thread a merchant happened to call
- * `track()` from.
+ * `suspend`, with an in-memory memo: the backing `SharedPreferences` file is opened lazily on
+ * first read, and that disk I/O must not land on whichever thread a merchant called `track()` from.
  */
 internal class TrackingConsent(
     private val store: KeyValueStore,
@@ -51,12 +31,7 @@ internal class TrackingConsent(
 ) {
     private val mutex = Mutex()
 
-    /**
-     * The persisted decision once read, so only the first call touches disk. `@Volatile` because
-     * the fast path below reads it outside [mutex]. Holds the *persisted* state only — the
-     * [configDefault] floor is applied on every read, never baked into this value, so the memo
-     * stays correct regardless of which of the two inputs is being consulted.
-     */
+    /** Persisted decision once read, so only the first call touches disk. `@Volatile`: the fast path below reads it outside [mutex]. Holds the persisted state only; [configDefault] is applied on every read. */
     @Volatile
     private var persisted: Boolean? = null
 
@@ -66,27 +41,16 @@ internal class TrackingConsent(
         persisted?.let { return it }
         return mutex.withLock {
             persisted ?: withContext(ioDispatcher) {
-                // A read that THREW and a key that is ABSENT are deliberately not the same thing.
-                //
-                // Absent means "not decided": follow [configDefault], and memoise, because a corrupt
-                // or partially-written *value* must fail towards the behaviour the merchant compiled
-                // in rather than towards a silently dead SDK.
-                //
-                // A throw means "we do not know": `SharedPreferences` can fail on a corrupted entry,
-                // on a locked direct-boot user, or on an OS-level failure opening the file. Falling
-                // back to [configDefault] for THAT would turn a recorded denial into "tracking on" —
-                // and memoising it would make one transient failure permanent for the process. So
-                // this leaves [persisted] alone and answers `false`: a read we could not perform is
-                // not consent. The next call retries, exactly as
-                // [id.frak.sdk.identity.AnonymousIdStore] refuses to cache a keystore refusal.
+                // A read that threw and a key that is absent are not the same thing. Absent means
+                // "not decided": follow [configDefault], and memoise. A throw means "we do not
+                // know": leave [persisted] alone and answer false, so a read we could not perform
+                // is not treated as consent; the next call retries.
                 val stored =
                     try {
                         Stored(store.getString(KEY))
                     } catch (cancelled: CancellationException) {
-                        // Never swallowed, per this codebase's rule (see `frakCall` and
-                        // `handleReferralLink`). Not reachable today — [KeyValueStore.getString] is
-                        // not a suspend function — but the catch below is deliberately broad, and
-                        // `kotlinx.coroutines.CancellationException` is an `Exception`.
+                        // Never swallowed. Not reachable today (getString isn't suspend), but the
+                        // catch below is deliberately broad.
                         throw cancelled
                     } catch (unreadable: Exception) {
                         logger.error(
@@ -112,16 +76,12 @@ internal class TrackingConsent(
     )
 
     /**
-     * Records the decision. The caller — [DefaultFrakClient.setTrackingEnabled] — owns the side
-     * effects (purging the queue).
+     * Records the decision. The caller owns the side effects (purging the queue).
      *
-     * **The memo is updated even if the write fails**, deliberately: the in-process answer must
-     * change the moment the user says no, whether or not the disk agreed. The cost is that a
-     * withdrawal whose write is lost reverts on the next launch — and the write is
-     * `SharedPreferences.apply()` (`KeyValueStore.kt`), which is asynchronous and reports nothing,
-     * so the `catch` below only ever sees a synchronous `edit()` failure. Making a consent
-     * withdrawal durable against a process kill needs a committing write this store does not
-     * expose; that is recorded as an open row rather than papered over here.
+     * The memo is updated even if the write fails: the in-process answer must change the moment
+     * the user says no, regardless of disk. A withdrawal whose write is lost reverts on the next
+     * launch, since the write is `SharedPreferences.apply()`, which is asynchronous and reports
+     * nothing.
      */
     suspend fun setEnabled(enabled: Boolean) {
         mutex.withLock {

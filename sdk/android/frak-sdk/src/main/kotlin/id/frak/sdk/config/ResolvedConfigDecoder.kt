@@ -8,9 +8,8 @@ import org.json.JSONObject
 /**
  * Turns a `GET /user/merchant/resolve` body into a [FrakResolvedConfig].
  *
- * A hand-written mapper rather than reflective binding, to avoid a
- * serialization dependency. Everything optional degrades to null; only the
- * fields the OpenAPI document marks `required` are enforced.
+ * A hand-written mapper, not reflective binding: avoids a serialization dependency. Everything
+ * optional degrades to null; only the fields the OpenAPI document marks `required` are enforced.
  */
 internal object ResolvedConfigDecoder {
     private const val CONTEXT = "merchant/resolve response"
@@ -106,7 +105,7 @@ internal object ResolvedConfigDecoder {
             ref = JsonReader.string(source, "ref"),
         )
 
-    /** An unrecognised wire value reads as null rather than throwing (forward compatibility). */
+    /** An unrecognised wire value reads as null; never throws (forward compatibility). */
     private fun currency(wireValue: String?): FrakCurrency? =
         FrakCurrency.entries.firstOrNull { it.wireValue == wireValue }
 

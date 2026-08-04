@@ -67,11 +67,9 @@ class PublicSurfaceTest {
 
     @Test
     fun `two independently merchant-built configs with the same nested sdkConfig values compare equal`() {
-        // The real equality asymmetry fix (a decoded config now equals a
-        // merchant-built one with the same values) is pinned against the actual
-        // decoder in FrakResolvedConfigTest, which is allowed friend access to it;
-        // this file deliberately references only public API, so it proves the
-        // same round-trip using two independently-built public instances instead.
+        // The equality-asymmetry fix is pinned against the decoder in FrakResolvedConfigTest,
+        // which has friend access to it. This file references only public API, so it proves
+        // the same round-trip using two independently-built public instances instead.
         val first =
             FrakResolvedConfig(
                 merchantId = "m1",

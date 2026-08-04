@@ -23,21 +23,14 @@ internal class InteractionTracker(
     private val logger: FrakLogger,
     /** Drains run here, not on the caller: [track] must not block on the whole backlog. */
     private val scope: CoroutineScope,
-    /**
-     * The id events are currently captured under, read fresh so a reset is visible mid-drain.
-     * Suspending (4.5): [id.frak.sdk.identity.AnonymousIdStore.anonymousId] awaits eager
-     * generation rather than blocking, so this drain loop no longer calls a blocking keystore
-     * read from inside itself.
-     */
+    /** The id events are currently captured under, read fresh so a reset is visible mid-drain. Suspending: [id.frak.sdk.identity.AnonymousIdStore.anonymousId] awaits eager generation rather than blocking. */
     private val currentClientId: suspend () -> String?,
     /**
-     * S6a/C7: whether tracking is still permitted, read fresh inside the drain loop.
+     * Whether tracking is still permitted, read fresh inside the drain loop.
      *
      * A [purge] alone cannot stop a drain: [flush] reads the whole backlog under [queueMutex] and
-     * then posts it **outside** that lock, so an event already in `pending` would still be
-     * uploaded after the user withdrew consent — and the stale-id guard below cannot catch it,
-     * because withdrawing consent makes [currentClientId] null, which disables that guard rather
-     * than tightening it. Re-reading this per event is what actually stops the upload.
+     * posts it outside that lock, so an event already in `pending` would still upload after a
+     * withdrawal. Re-reading this per event is what actually stops it.
      *
      * Defaults to always-allowed so the tracker's own tests, which have no consent store, are
      * unaffected; the real gate is wired in [id.frak.sdk.core.DefaultFrakClient].
@@ -82,11 +75,9 @@ internal class InteractionTracker(
         scope.launch { flush() }
     }
 
-    // Deliberately no `shutdown()` here, unlike the Swift twin (S6b/C7). Every drain is a
-    // `scope.launch` on the client's single `SupervisorJob` scope, which
-    // `DefaultFrakClient.shutdown()` cancels and joins — a launch into a cancelled scope never runs
-    // its body, so there is nothing left for a `stopped` flag to refuse. iOS needs both because its
-    // `scheduleDrain` uses `Task.init`, which does not inherit cancellation.
+    // No shutdown() here: every drain is a scope.launch on the client's single SupervisorJob
+    // scope, which DefaultFrakClient.shutdown() cancels and joins. A launch into a cancelled
+    // scope never runs its body, so there is nothing left for a stopped flag to refuse.
 
     /** Called on anonymous id reset: an event captured under the dead id must never be emitted. */
     suspend fun purge() {
@@ -101,21 +92,17 @@ internal class InteractionTracker(
      */
     suspend fun flush() {
         flushMutex.withLock {
-            // S6a/C7: before the read, so a drain started by a `track()` that raced a consent
-            // withdrawal never even loads the backlog. The per-event re-read below is what closes
-            // the withdrawal-lands-mid-drain window; this one just avoids the pointless work.
+            // Before the read, so a drain started by a track() that raced a consent withdrawal
+            // never even loads the backlog. The per-event re-read below is what actually closes
+            // the window.
             if (!trackingAllowed()) return
             if (backoff.isBackingOff(BACKOFF_KEY)) return
 
             val pending = queueMutex.withLock { queue.read(now()) }
             if (pending.isEmpty()) {
-                // Nothing to send, but expired/unreadable rows may still be on disk. `reconcile`,
-                // not a bare `replace(emptyList())`: that call relied on an unstated invariant
-                // (a non-durable read is never empty, per EventQueue.readLocked's contract) to
-                // avoid wiping a queue whose migration ids hadn't actually persisted — fragile,
-                // and one edit away from reopening 2.7's critical bug. `reconcile` already refuses
-                // to compact a non-durable read, so it is safe unconditionally and matches the
-                // iOS actor twin exactly.
+                // Nothing to send, but expired/unreadable rows may still be on disk. reconcile,
+                // not a bare replace(emptyList()): it already refuses to compact a non-durable
+                // read, so it is safe unconditionally.
                 queueMutex.withLock { queue.reconcile(emptySet(), emptyMap(), now()) }
                 return
             }
@@ -125,15 +112,10 @@ internal class InteractionTracker(
             val retried = mutableMapOf<Long, QueuedEvent>()
 
             for (event in pending) {
-                // S6a/C7. `break`, not `return`: the caller that flipped consent is about to
-                // `purge()` the whole file, so it is tempting to leave the file alone — but
-                // `EventQueue.clear()` swallows a failed `File.delete()`, and if that delete does
-                // not land, every event this drain ALREADY uploaded is still on disk with no
-                // record that it went. The next flush re-sends all of them, and an
-                // `Interaction.Arrival` carries no idempotency key: that is a duplicated referral
-                // payout. Falling through to `reconcile` costs nothing when the purge does work
-                // (it re-reads the file, so a purge that already ran wins) and prevents that when
-                // it does not.
+                // break, not return: EventQueue.clear() swallows a failed File.delete(), and if
+                // that delete doesn't land, events this drain already uploaded stay on disk with
+                // no record that they went. Falling through to reconcile prevents a re-send
+                // (a duplicated referral payout) when the concurrent purge's delete fails.
                 if (!trackingAllowed()) {
                     logger.info("Tracking was disabled mid-drain; stopping without sending the rest.")
                     break
@@ -174,14 +156,10 @@ internal class InteractionTracker(
                 break
             }
 
-            // queue.reconcile, not a read()-then-replace() from here (2.7/6): those would be two
-            // separate suspending hops on ioDispatcher — genuinely multi-threaded — and an event
-            // appended between them would be read by neither and erased by the second. queueMutex
-            // wraps every call site in this file today so that specific window can't open yet, but
-            // EventQueue's own doc says "single writer only" while providing no internal
-            // serialisation of its own; keeping read+write inside one EventQueue-owned hop, the way
-            // the iOS actor twin already does, means that stays true regardless of what future
-            // caller reaches EventQueue next.
+            // queue.reconcile, not a read()-then-replace() from here: those would be two separate
+            // suspending hops, and an event appended between them would be read by neither and
+            // erased by the second. Keeping read+write inside one EventQueue-owned hop keeps this
+            // safe regardless of what future caller reaches EventQueue next.
             queueMutex.withLock {
                 queue.reconcile(delivered, retried, now())
             }
@@ -196,7 +174,7 @@ internal class InteractionTracker(
     ) {
         queueMutex.withLock {
             // MISSING_ROW_ID: EventQueue.append assigns and persists the real id; nothing
-            // upstream of it, including this call site, is allowed to choose one (2.7).
+            // upstream of it, including this call site, is allowed to choose one.
             queue.append(QueuedEvent(idempotencyKey, path, body, clientId, now(), rowId = EventQueue.MISSING_ROW_ID))
         }
     }

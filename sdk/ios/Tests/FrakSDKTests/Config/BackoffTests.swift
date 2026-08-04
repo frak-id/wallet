@@ -5,7 +5,7 @@ import Testing
 
 @Suite("Backoff")
 struct BackoffTests {
-    /// Draws the top of the jitter range, so delays are exact and assertable.
+    /// Draws the top of the jitter range, for exact, assertable delays.
     private static let maxJitter: @Sendable (ClosedRange<Double>) -> Double = { $0.upperBound }
     private static let zeroJitter: @Sendable (ClosedRange<Double>) -> Double = { $0.lowerBound }
 

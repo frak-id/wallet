@@ -9,7 +9,7 @@ import kotlin.random.Random
 /**
  * Direct coverage for [Hex]: both current callers ([Uuid] and [id.frak.sdk.sharing.FrakContextCodec])
  * validate their input before decoding, so [Hex.decodeOrNull]'s odd-length and non-hex-character
- * branches are otherwise unreached by any test in the suite (8.6).
+ * branches are otherwise unreached by any test in the suite.
  */
 class HexTest {
     @Test

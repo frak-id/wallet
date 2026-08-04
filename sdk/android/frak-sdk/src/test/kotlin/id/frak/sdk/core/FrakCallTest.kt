@@ -31,8 +31,8 @@ class FrakCallTest {
 
         val thrown = runCatching { frakCall { throw original } }.exceptionOrNull()
 
-        // The single most important assertion here: the cancellation arm must come first in
-        // frakCall, or a catch-all above it would swallow this and break structured concurrency.
+        // The cancellation arm must come first in frakCall, or a catch-all above it would
+        // swallow this and break structured concurrency.
         assertSame(original, thrown)
     }
 

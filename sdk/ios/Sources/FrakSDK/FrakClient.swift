@@ -4,8 +4,8 @@ import Foundation
 ///
 /// A concrete class, not a protocol: adding a member here is additive on both platforms,
 /// where adding a requirement to a protocol invalidates every witness table built before
-/// it (`02-sdk-design.md`). There is no supported way for a merchant to substitute a fake;
-/// point `FrakEnvironment.custom(wallet:backend:)` at a stub server instead and exercise
+/// it. There is no supported way for a merchant to substitute a fake; point
+/// `FrakEnvironment.custom(wallet:backend:)` at a stub server instead and exercise
 /// the real client.
 ///
 /// Capabilities are grouped into five namespaces — ``config``, ``rewards``, ``sharing``,
@@ -66,11 +66,11 @@ public final class FrakClient: Sendable {
     /// accountability record a data-protection authority asks for.
     public func isTrackingEnabled() async -> Bool { await core.isTrackingEnabled() }
 
-    // Deliberately NO `shutdown()` here — teardown is `Frak.shutdown()` only (S6b/C7). A shutdown
-    // on this class would leave `Frak.instance` pointing at the client it just killed, so
+    // Deliberately no `shutdown()` here — teardown is `Frak.shutdown()` only. A shutdown on
+    // this class would leave `Frak.instance` pointing at the client it just killed, so
     // `Frak.client` would keep handing out a corpse and `Frak.initialize` would no-op: a public
-    // method whose only documented use is "do not call this, call the other one". The Kotlin twin
-    // omits it for the same reason.
+    // method whose only documented use is "do not call this, call the other one". The Kotlin
+    // twin omits it for the same reason.
 
     /// Config resolution and its live stream.
     public let config: ConfigAPI

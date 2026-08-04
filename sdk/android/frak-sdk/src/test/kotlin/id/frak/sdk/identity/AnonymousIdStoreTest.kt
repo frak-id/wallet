@@ -19,10 +19,9 @@ import org.junit.Test
 class AnonymousIdStoreTest {
     /**
      * [AnonymousIdStore.startEagerGeneration] runs immediately, mirroring
-     * [id.frak.sdk.core.DefaultFrakClient]'s `init`: every suspend member requires it to have run
-     * first (see the store's own `requireEagerScope`), and `UnconfinedTestDispatcher` means the
-     * `scope.launch { current() }` it starts completes eagerly rather than actually racing the
-     * assertions below, except where a test deliberately controls timing itself.
+     * [id.frak.sdk.core.DefaultFrakClient]'s `init`. `UnconfinedTestDispatcher` means the
+     * `scope.launch { current() }` it starts completes eagerly rather than racing the assertions
+     * below, except where a test controls timing itself.
      */
     private fun store(
         keyStore: DeviceKeyStore = FakeDeviceKeyStore(),
@@ -38,8 +37,7 @@ class AnonymousIdStoreTest {
                 values,
                 logger,
                 merchantMarker,
-                // The consent gate this store now reads. Built over the SAME `values` store the
-                // identity uses, exactly as `Frak.initialize` wires it.
+                // Built over the same `values` store the identity uses, as `Frak.initialize` wires it.
                 TrackingConsent(values, trackingEnabled, logger, dispatcher),
                 dispatcher,
             )
@@ -77,9 +75,9 @@ class AnonymousIdStoreTest {
         }
 
     /**
-     * Pins the decision not to cache the failure. A keystore can refuse for reasons that pass —
-     * it is unavailable across parts of an OS upgrade — so caching would turn a transient
-     * refusal into an install that never tracks again.
+     * A keystore can refuse for reasons that pass — unavailable across parts of an OS upgrade —
+     * so caching the failure would turn a transient refusal into an install that never tracks
+     * again.
      */
     @Test
     fun `a keystore that recovers gets an id, without a restart`() =
@@ -94,10 +92,9 @@ class AnonymousIdStoreTest {
         }
 
     /**
-     * A refusal is a `Deferred` too, and 4.5's whole point is that a `Deferred` is memoised. This
-     * pins that the memoisation is conditional on success: a recovered mint is cached exactly
-     * once (one [FakeDeviceKeyStore.creations]), and the earlier failed attempt cost zero extra
-     * key generations — it is dropped, not retried in a loop, and not left occupying the slot.
+     * A refusal is memoised too, but only conditionally: a recovered mint is cached exactly once
+     * (one [FakeDeviceKeyStore.creations]), and the earlier failed attempt costs zero extra key
+     * generations.
      */
     @Test
     fun `does not cache a transient refusal, and the eventual mint is still memoised`() =
@@ -131,7 +128,7 @@ class AnonymousIdStoreTest {
             assertEquals(2, keyStore.creations)
         }
 
-    /** Pins 4fp: a throwing keystore delete must not be mistaken for a successful rotation. */
+    /** A throwing keystore delete must not be mistaken for a successful rotation. */
     @Test
     fun `a keystore delete that throws leaves the identity unchanged and reports failure`() =
         runTest {
@@ -182,10 +179,10 @@ class AnonymousIdStoreTest {
         }
 
     /**
-     * 4.5: two callers racing [AnonymousIdStore.anonymousId] — one via eager generation, one
-     * calling directly — must await the SAME in-flight generation rather than each independently
-     * re-entering [FakeDeviceKeyStore.loadOrCreate]. Two key generations here would mean the
-     * single-flight guard failed and a racing caller re-minted a second identity.
+     * Two callers racing [AnonymousIdStore.anonymousId] — one via eager generation, one calling
+     * directly — must await the same in-flight generation rather than each re-entering
+     * [FakeDeviceKeyStore.loadOrCreate]. Two key generations would mean a racing caller minted a
+     * second identity.
      */
     @Test
     fun `a caller racing eager generation shares it instead of minting a second identity`() =

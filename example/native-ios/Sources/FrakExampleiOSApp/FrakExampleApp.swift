@@ -13,19 +13,16 @@ struct LogEntry: Identifiable {
     }
 }
 
-/// Display-only product model, local to this harness — the real SDK has no notion of a
-/// catalog. Mapped to `SharingProduct` at the sharing/rewards call sites rather than
-/// carrying SDK types directly, so this file stays the merchant's own data shape.
+/// Catalog row display model, local to this harness. Mapped to `SharingProduct` at the
+/// sharing/rewards call sites.
 struct ProductItem: Identifiable, Sendable {
     let id: String
     let title: String
     let link: String
 }
 
-/// Shared with the Android harness — same ids, titles and links, so a divergence between
-/// the two apps is visible in review. Reward amounts are **not** hardcoded here: they come
-/// from a single, catalog-wide `rewards.best(...)` call (see `loadCatalogReward()`), so
-/// they legitimately differ from Android's numbers.
+/// Shared with the Android harness — same ids, titles, links. Reward amounts are not
+/// hardcoded; they come from `rewards.best(...)` in `loadCatalogReward()`.
 let sampleProducts = [
     ProductItem(
         id: "prod_001",
@@ -44,14 +41,12 @@ let sampleProducts = [
     ),
 ]
 
-/// Order total used by the checkout simulator, shared with the Android harness. Display
-/// only now: `tracking.purchase(customerId:orderId:token:)` has no amount parameter, so
-/// this never reaches the SDK — it only labels the button and the log line.
+/// Order total used by the checkout simulator, shared with the Android harness. Display-only:
+/// `tracking.purchase` takes no amount parameter.
 let sampleOrderTotalCents: Int64 = 14999
 
-/// The real SDK has no anonymous-checkout concept — `tracking.purchase` takes a merchant-owned
-/// customer id and a checkout token the merchant's own backend would issue. Both are fabricated
-/// here; a real integration wires these to its actual customer/checkout records.
+/// `tracking.purchase` needs a merchant-owned customer id and checkout token; both are
+/// fabricated here for the demo.
 let sampleCustomerId = "cust_example_ios_001"
 let sampleCheckoutToken = "checkout_token_example_9988"
 
@@ -62,16 +57,12 @@ let logTimeFormatter: DateFormatter = {
     return formatter
 }()
 
-/// Display-only formatting, local to the harness.
-///
-/// The real SDK formats rewards server-side (`BestReward.formatted`); this is only used
-/// for the merchant's own order-total display, which the SDK has no opinion on.
+/// Formats the order total only; reward amounts come from `BestReward.formatted`.
 func formatCents(_ cents: Int64) -> String {
     String(format: "$%lld.%02lld", cents / 100, cents % 100)
 }
 
-/// Where the catalog-wide `rewards.best(...)` lookup currently stands, populated by
-/// `loadCatalogReward()`. See [ProductCatalogView].
+/// State of the catalog-wide rewards.best lookup. See `ProductCatalogView`.
 private enum CatalogRewardLookup {
     case loading
     case loaded(BestReward)
@@ -83,8 +74,6 @@ private enum CatalogRewardLookup {
         case .loading: return "Checking catalog reward…"
         case .loaded(let reward): return reward.formatted
         case .noActiveReward: return "No active reward"
-        // Clearly-labelled placeholder, not a fabricated amount: the task this harness
-        // exists for is proving the real call was made, not showing a pretty number.
         case .failed: return "Reward unavailable (placeholder)"
         }
     }
@@ -99,26 +88,19 @@ struct FrakExampleApp: App {
     @State private var pendingSharingRequest = SharingRequest()
 
     init() {
-        // `Frak.initialize` is synchronous and non-throwing (unlike `Frak.client` below) —
-        // it only stores config and spins up local state, no I/O.
+        // Frak.initialize is synchronous and non-throwing; it only stores config, no I/O.
         //
-        // `deepLink: .manual` is the ONLY usable option here: iOS's `DeepLinkHandling` has
-        // just `.manual` and `.disabled` — there is no `.automatic`. Android gets a third
-        // case because `ActivityLifecycleCallbacks` gives it an app-wide hook to intercept
-        // every incoming Intent; iOS has no equivalent hook outside SwiftUI's own
-        // `.onOpenURL`/`UIApplicationDelegate`, so the SDK cannot install itself in front of
-        // the merchant's own URL routing the way it can on Android. Concretely: the stub
-        // this replaced passed `.automatic`, which does not exist on this platform, and
-        // every inbound URL must be routed to `appLink.handleReferral(_:)` by hand — see
-        // `.onOpenURL` below and `handleInboundURL(_:)`.
+        // .manual is the only DeepLinkHandling option on iOS — no .automatic. iOS has no
+        // app-wide hook like Android's ActivityLifecycleCallbacks, so inbound URLs must be
+        // routed to appLink.handleReferral(_:) by hand — see .onOpenURL below and
+        // handleInboundURL(_:).
         Frak.initialize(
             FrakConfig(
                 merchantId: "0a799880-ba54-4276-a734-db8721911bab",
                 metadata: FrakMetadata(name: "Frak iOS Harness"),
-                // Points at wallet-dev.frak.id / backend.gcp-dev.frak.id and expects the DEV
-                // wallet app (`id.frak.wallet.dev`, scheme `frakwallet-dev`) rather than the
-                // production one — which is why `appLink.isFrakAppInstalled()` reports false
-                // unless the dev wallet build is installed.
+                // Development points at wallet-dev.frak.id / backend.gcp-dev.frak.id and the
+                // dev wallet app (id.frak.wallet.dev, scheme frakwallet-dev). isFrakAppInstalled()
+                // reports false without it.
                 env: .development,
                 deepLink: .manual,
                 logLevel: .info
@@ -163,7 +145,6 @@ struct FrakExampleApp: App {
                     )
                 }
 
-                // Event Log View
                 VStack(alignment: .leading, spacing: 4) {
                     Text("SDK Event Log:")
                         .font(.caption)
@@ -200,15 +181,13 @@ struct FrakExampleApp: App {
                 await resolveConfig()
                 await loadCatalogReward()
             }
-            // `CFBundleURLTypes` registration and this delivery path are the real thing.
-            // `.manual` is the only `DeepLinkHandling` mode on iOS, so this call is
-            // mandatory, not optional the way it might be on Android with `.automatic`.
+            // .manual is the only DeepLinkHandling mode on iOS, so this call is mandatory
+            // (unlike Android's .automatic).
             .onOpenURL { url in
                 handleInboundURL(url)
             }
-            // The presenting view for every "Share & Earn" tap — one sheet instance driven
-            // by `pendingSharingRequest`/`isSharingPresented` rather than one per row, per
-            // FrakSDKUI's own guidance (a preload-sharing web view per row would be wasteful).
+            // One sheet instance driven by pendingSharingRequest/isSharingPresented, not one
+            // per row — a preloaded web view per row would be wasteful.
             .frakSharingSheet(
                 isPresented: $isSharingPresented,
                 request: pendingSharingRequest,
@@ -221,9 +200,8 @@ struct FrakExampleApp: App {
         addLog("Triggering sharing sheet for '\(product.title)'...", type: .info)
         pendingSharingRequest = SharingRequest(
             products: [SharingProduct(title: product.title, link: product.link)],
-            // A share is asking a friend to buy, not to visit or add-to-cart, so "purchase"
-            // is the trigger this reward should be scoped to — matches the `rewards.best`
-            // call below and Android's `SharingRequest`. See the parity note there.
+            // Reward trigger is "purchase" — matches the rewards.best call below and
+            // Android's SharingRequest.
             targetInteraction: "purchase",
             placement: "product-page"
         )
@@ -245,11 +223,7 @@ struct FrakExampleApp: App {
         }
     }
 
-    /// The deep-link simulator button and the real `.onOpenURL` delivery both funnel
-    /// through here, matching Android — where the simulator dispatches a real Intent and
-    /// so necessarily goes through the same `ActivityLifecycleCallbacks` path as a genuine
-    /// inbound link. The old stub's simulator bypassed `.onOpenURL` entirely and called the
-    /// SDK directly; that divergence is now gone.
+    /// Both the deep-link simulator button and `.onOpenURL` delivery funnel through here.
     private func handleInboundURL(_ url: URL) {
         addLog("Inbound URL reached the app: \(url)", type: .info)
         Task {
@@ -280,8 +254,7 @@ struct FrakExampleApp: App {
         let orderId = "ord_\(Int(Date().timeIntervalSince1970))"
         addLog("Completing order \(orderId) (\(formatCents(sampleOrderTotalCents)))...", type: .info)
         Task {
-            // `tracking.purchase` has no amount parameter to carry `sampleOrderTotalCents`
-            // through anyway — the total above is display-only.
+            // tracking.purchase has no amount parameter; the total above is display-only.
             let result = await client()?.tracking.purchase(
                 customerId: sampleCustomerId,
                 orderId: orderId,
@@ -291,7 +264,6 @@ struct FrakExampleApp: App {
             case .success:
                 addLog("Order \(orderId) tracked successfully.", type: .success)
             case .failure(let error):
-                // Not expected against the real merchant id this harness configures — see README.
                 addLog(
                     "Order \(orderId) tracking failed: \(error.localizedDescription)",
                     type: .error
@@ -320,18 +292,11 @@ struct FrakExampleApp: App {
             let resolved = try await client.config.resolve()
             addLog("Merchant config resolved: \(resolved.name) (\(resolved.domain))", type: .success)
         } catch {
-            // A real merchant id is configured, so a failure here means something is actually
-            // wrong — e.g. this bundle id is not yet allow-listed for the merchant, or the dev
-            // backend is unreachable. Not expected; see README.
             addLog("Config resolve failed: \(error.localizedDescription)", type: .error)
         }
     }
 
-    /// One `rewards.best(...)` call for the entire visible catalog, not one per product. Per
-    /// `RewardsAPI.best`'s doc comment (sdk/ios/Sources/FrakSDK/RewardsAPI.swift), a listing
-    /// screen must call this once for the whole visible set and render a single headline
-    /// figure: one call per row would multiply network requests and the resulting
-    /// `BestReward?` still couldn't be attributed back to a single row. See
+    /// One `rewards.best(...)` call for the whole visible catalog, not one per product. See
     /// `CatalogRewardLookup` and `ProductCatalogView`.
     private func loadCatalogReward() async {
         guard let client = client() else {
@@ -341,8 +306,7 @@ struct FrakExampleApp: App {
         }
         do {
             let best = try await client.rewards.best(
-                // Matches the `SharingRequest.targetInteraction` used by `handleShareProduct`
-                // — see the comment there.
+                // Matches SharingRequest.targetInteraction used by handleShareProduct.
                 targetInteraction: "purchase",
                 products: sampleProducts.map { ProductDetails(productId: $0.id, name: $0.title) }
             )
@@ -354,7 +318,6 @@ struct FrakExampleApp: App {
                 addLog("No campaign matched the catalog.", type: .info)
             }
         } catch {
-            // Not expected against the real merchant id this harness configures — see README.
             addLog(
                 "Catalog reward lookup failed: \(error.localizedDescription)",
                 type: .error
@@ -363,9 +326,8 @@ struct FrakExampleApp: App {
         }
     }
 
-    /// `Frak.client` throws (not initialized) rather than being async, but every namespace
-    /// call site here wants a plain optional to `guard`/`?.` against — this is that
-    /// adaptation point, kept in one place instead of repeating `try?` everywhere.
+    /// Adapts `Frak.client`'s throw to a plain optional, so call sites can `guard`/`?.`
+    /// against it in one place.
     private func client() -> FrakClient? {
         try? Frak.client
     }

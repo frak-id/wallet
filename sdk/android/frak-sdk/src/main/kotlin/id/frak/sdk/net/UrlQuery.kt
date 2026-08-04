@@ -20,11 +20,9 @@ internal class UrlQuery private constructor(
     /**
      * The decoded value at [key], or null.
      *
-     * Case-insensitive on the key: some channels lowercase query keys in
-     * transit, so `fCtx` can arrive as `fctx`. Percent-decoded on the value,
-     * because a channel that re-encodes a link turns `-` into `%2D` and the
-     * base64url payload would then fail to decode — the web reads these through
-     * `URLSearchParams`, which decodes first.
+     * Case-insensitive on the key: some channels lowercase query keys in transit, so `fCtx` can
+     * arrive as `fctx`. Percent-decoded on the value: a channel that re-encodes a link turns `-`
+     * into `%2D`, and the base64url payload would then fail to decode.
      */
     fun get(key: String): String? =
         parameters

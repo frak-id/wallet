@@ -46,7 +46,7 @@ struct ProofCodecTests {
                 description: description,
                 publicKey: publicKey,
                 derivedClientId: derivedClientId,
-                // `frak-sso-v1` is a web-SDK op with no native caller, so it has no case here.
+                // `frak-sso-v1` is a web-SDK op with no native caller: it has no case here.
                 op: ProofOp(rawValue: op),
                 merchantId: merchantId,
                 anonymousId: anonymousId,

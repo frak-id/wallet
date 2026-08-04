@@ -8,11 +8,9 @@
     // `SharingSession` and `sharingDecision` live in SharingSheetLogic.swift, outside this
     // file's `#if canImport(UIKit)`, so they stay reachable from a macOS test host.
 
-    /// The sheet's behaviour, kept out of the view.
-    ///
-    /// The ordering rules that matter — attribute the share after the OS share sheet,
-    /// reload with `&confirmed=1` after it, never fall back twice — are sequencing, and
-    /// sequencing inside a re-evaluating `body` is where this kind of flow goes wrong.
+    /// The sheet's behaviour, kept out of the view. Ordering matters here — attribute the
+    /// share after the OS share sheet, reload with `&confirmed=1` after it, never fall back
+    /// twice — and sequencing inside a re-evaluating `body` is where that kind of flow breaks.
     @MainActor
     final class SharingSheetModel: ObservableObject {
         /// Tap-to-content budget, timed from the sheet appearing rather than from the page
@@ -36,10 +34,9 @@
         var onClose: (() -> Void)?
 
         private let sessionId = UUID().uuidString.lowercased()
-        // Individually injected, not `() -> FrakClient`: FrakClient carries no substitutable
-        // abstraction (02-sdk-design.md), so the seam is the handful of members this sheet
-        // actually calls, not all of them. Defaulted to `Frak.client`'s namespaces, resolved
-        // lazily since Frak.initialize may not have run when this is constructed.
+        // Individually injected, not `() -> FrakClient`: the seam is the handful of members this
+        // sheet actually calls. Defaulted to `Frak.client`'s namespaces, resolved lazily since
+        // Frak.initialize may not have run when this is constructed.
         private let buildSharingLink: @Sendable (SharingRequest) async -> String?
         private let anonymousId: @Sendable () async -> String?
         private let environment: @Sendable () -> FrakEnvironment
@@ -54,9 +51,8 @@
         private var started = false
         private var closed = false
         private var pageLoaded = false
-        /// The 1.5s budget and the page's own load failure are independent triggers on the
-        /// same session, and offline both fire. Without this, one share would queue two
-        /// `sharing` interactions and stack two OS choosers on the user.
+        /// The 1.5s budget and the page's own load failure are independent triggers on the same
+        /// session; without this, one share could queue two `sharing` interactions.
         private var fellBack = false
         private var deadlineExpired = false
         /// A share is between its page-side press and its outcome. See `share()` for why the
@@ -64,12 +60,10 @@
         private var shareInFlight = false
         /// The `copy()` half of `shareInFlight`: two taps would bill two interactions for one copy.
         private var copyInFlight = false
-        /// The sheet has left the sharing page for the wallet's install page.
-        ///
-        /// No longer `@Published`: nothing renders off it — it used to hide a native footer, and
-        /// that footer is the page's now. It survives only because `onPageUnavailable` has to tell
-        /// a failed install page apart from a failed sharing page, which reach it identically and
-        /// need opposite answers.
+        /// The sheet has left the sharing page for the wallet's install page. Not `@Published`:
+        /// nothing renders off it. Survives only so `onPageUnavailable` can tell a failed install
+        /// page apart from a failed sharing page, which reach it identically and need opposite
+        /// answers.
         private var showingInstallPage = false
 
         init(
@@ -121,12 +115,11 @@
         }
 
         func release() {
-            // Deliberately does NOT set `closed`, and does not cancel `prepare`. `.onDisappear`
+            // Deliberately does NOT set `closed` and does not cancel `prepare`. `.onDisappear`
             // also fires when `UIActivityViewController` covers the sheet, and both `share` and
             // the tier-3 fallback suspend across exactly that window — suppressing outcomes here
-            // would report `.dismissed` for a share that succeeded. Audit §6's late-`report`
-            // concern needs a signal that distinguishes "covered" from "dismissed", which cannot
-            // be settled without a device.
+            // would report `.dismissed` for a share that succeeded. Distinguishing "covered" from
+            // "dismissed" needs a signal that cannot be settled without a device.
             deadline?.cancel()
             deadline = nil
             webView?.stop()
@@ -136,50 +129,39 @@
         /// The user tapped Share, in the page's own footer.
         func share() async {
             guard let session else { return }
-            // The page's footer is what drives this now, and it stays enabled for the whole round
-            // trip: the web `isSharing` flag that would normally disable it belongs to
-            // `useShareLink`, which a handed-off press never reaches. The gap is not the few
-            // milliseconds before `UIActivityViewController` covers the sheet — it is
-            // `trackSharing()` below, a queue write the chooser's dismissal returns into, with the
-            // page live and tappable underneath. Two taps across it would present two activity
-            // controllers and bill two reward-bearing interactions for one share, the same failure
-            // `fellBack` exists to stop for tier 3.
+            // The page's footer stays enabled for the whole round trip — the web's `isSharing`
+            // guard belongs to `useShareLink`, which a handed-off press never reaches. Without
+            // `shareInFlight`, two taps across `trackSharing()` below would bill two interactions
+            // for one share, the same failure `fellBack` exists to stop for tier 3.
             guard !shareInFlight else { return }
             shareInFlight = true
-            // After the chooser, and only on success. This is the reward-bearing interaction,
-            // not an analytics event: recording it on intent would pay out for every user who
-            // opened the chooser and backed out. The web splits the two — `useShareLink` fires
-            // `sharing_link_started` before, and wires the interaction to `onShared` after —
-            // and this is the half that pays. A share completed while the host is jettisoned
-            // is lost, which is the accepted cost of not counting cancellations.
+            // Tracked after the chooser, only on success: this is the reward-bearing interaction,
+            // not an analytics event. Recording it on intent would pay out for a chooser opened
+            // and cancelled. A share completed while the host is jettisoned is lost — the accepted
+            // cost of not counting cancellations.
             guard await NativeShare.share(link: session.link, title: session.shareTitle) else {
-                // Deliberately cleared, unlike the success path below: the user dismissed the
-                // chooser without sharing, so the page is still on its sharing screen and must
-                // be able to try again.
+                // Cleared, unlike the success path: the user dismissed without sharing, so the
+                // page is still on its sharing screen and must be able to try again.
                 shareInFlight = false
                 return
             }
             await trackSharing()
             confirm(.shared(link: session.link))
             // Not cleared: `confirm` reloads onto the confirmation screen, which has no Share
-            // button. `.shareAgain` is what reopens the flow, and clears it.
+            // button. `.shareAgain` reopens the flow and clears it.
         }
 
-        /// The user tapped Copy link, in the page's own footer.
-        ///
-        /// Reports the outcome rather than `confirm`ing it, which is the one asymmetry with
-        /// `share()`. The page moves itself to its confirmation screen the moment its own button
-        /// is pressed and raises its own "link copied" toast; a `confirmed=1` reload on top of
-        /// that would tear down the document mid-toast and repaint the same screen, so the user's
-        /// only feedback that the copy happened would be destroyed by the navigation confirming
-        /// it. `share()` still reloads, because only this model learns whether a chooser came up.
+        /// The user tapped Copy link, in the page's own footer. Reports the outcome rather than
+        /// `confirm`ing it: the page already moves to its confirmation screen and raises its own
+        /// toast on press, and a `confirmed=1` reload on top would tear down the document
+        /// mid-toast. `share()` still reloads because only this model learns whether a chooser
+        /// came up.
         func copy() async {
             guard let session else { return }
             guard !copyInFlight else { return }
             copyInFlight = true
-            // Before, unlike `share()`, and deliberately: a copy has no chooser and no
-            // completion to wait on, so there is no cancellation to avoid counting. Matches
-            // the web, where `handleCopy` calls `trackSharing()` outright.
+            // Before, unlike `share()`: a copy has no chooser and no completion to wait on, so
+            // there is no cancellation to avoid counting. Matches the web's `handleCopy`.
             await trackSharing()
             NativeShare.copy(session.link)
             report(.copied(link: session.link))
@@ -192,21 +174,18 @@
 
         /// The web view gave up, tier-2 retry included.
         func onPageUnavailable() {
-            // A failed *install* page lands here first. Tier 3 is not the answer — the user has
-            // already shared — but neither is doing nothing: the sheet would sit on WebKit's own
-            // error page, and since the controls that used to rescue it were native and are now
-            // the *sharing* page's, there is nothing left on screen to press. Reloading the
-            // confirmation screen is the page-owned equivalent of what the old native footer did
-            // here, and it lands the user somewhere with its own share-again and install controls.
+            // A failed install page lands here first. Tier 3 is not the answer — the user has
+            // already shared — so this reloads the confirmation screen instead, which has its own
+            // share-again and install controls.
             if showingInstallPage {
                 showingInstallPage = false
                 if let url = session?.url(confirmed: true) { webView?.load(url) }
                 return
             }
-            // Same predicate as the deadline: `pageLoaded` matters because a content-process crash
-            // after the page painted arrives here too, and a chooser on top of a sheet the user is
-            // using would be a share they never asked for. `deadlineExpired: true` because there
-            // is no page left to spend the budget on either way.
+            // Same predicate as the deadline: `pageLoaded` matters because a content-process
+            // crash after the page painted arrives here too, and a chooser now would be a share
+            // the user never asked for. `deadlineExpired: true` because there's no page left to
+            // spend the budget on.
             guard
                 case .nativeShare(let session) = sharingDecision(
                     session: session,
@@ -224,17 +203,16 @@
             case .install:
                 Task {
                     guard let session else { return }
-                    // The sheet stays open and navigates to the wallet's install page, rather
-                    // than handing the user to the store. That page owns the decision — install
-                    // code, store link, or straight into an installed wallet — and it is the
-                    // only route by which an iOS user's attribution survives an install, there
-                    // being no App Store equivalent of the Play referrer.
+                    // The sheet stays open and navigates to the wallet's install page rather than
+                    // handing the user to the store: that page owns install code / store link /
+                    // installed-wallet routing, and it's the only route by which an iOS install
+                    // keeps attribution — there's no App Store equivalent of the Play referrer.
                     guard
                         let page = await installPageURL(session.returnScheme, sessionId),
                         let url = URL(string: page)
                     else {
-                        // No identity or no merchant, so nothing to hand the install page. The
-                        // store handoff is the honest fallback, and it closes the sheet.
+                        // No identity or no merchant to hand the install page; the store handoff
+                        // is the fallback, and it closes the sheet.
                         _ = await openFrakApp()
                         report(.installStarted)
                         close()
@@ -246,24 +224,20 @@
                 }
             case .shareAgain:
                 if let url = session?.url(confirmed: false) {
-                    // The user is asking to share a second time, so the guards that closed the
-                    // first one have to open again — `share()` deliberately leaves its own set.
+                    // Sharing again: reopen the guards `share()`/`copy()` left closed.
                     shareInFlight = false
                     copyInFlight = false
-                    // Back on the sharing page, so a later load failure is that page's again.
                     showingInstallPage = false
                     webView?.load(url)
                 }
-            // The page draws both buttons and this model performs them: the interaction a share
-            // earns has to be signed by the SDK keypair the page cannot reach, and `navigator
-            // .share` inside a sheet-embedded web view is not the OS chooser a merchant expects.
+            // The page draws both buttons; this model performs them, since the interaction has
+            // to be signed by the SDK keypair the page cannot reach.
             case .share:
                 Task { await share() }
             case .copy:
                 Task { await copy() }
             case .code(let value, let expiresAt):
-                // The page owns generating and displaying it; the SDK owns the pasteboard,
-                // because `localOnly` and an expiry are options the page cannot set.
+                // The SDK owns the pasteboard: `localOnly` and an expiry are options the page can't set.
                 NativeShare.copyInstallCode(value, expiresAt: expiresAt)
             case .dismiss:
                 close()
@@ -273,34 +247,25 @@
         }
 
         func openExternally(_ url: URL) {
-            // The page chooses this URL. Anything but http(s) is an app-to-app launch the
-            // merchant never sanctioned, reaching whatever handler is registered on the device.
+            // Anything but http(s) is an app-to-app launch the merchant never sanctioned.
             guard url.scheme == "https" || url.scheme == "http" else { return }
-            // The install page's download button is the one external link worth keeping
-            // inside the app: `SKOverlay` installs in place, and renders Install/Open/Update
-            // from the device's real state — which is also a better answer than
-            // `canOpenURL`, since it needs no `LSApplicationQueriesSchemes` entry from the
-            // merchant. Anything else genuinely belongs in the browser.
+            // The install page's download button is the one link worth keeping in-app:
+            // `SKOverlay` installs in place and needs no `LSApplicationQueriesSchemes` entry.
             if isWalletAppStoreListing(url) {
                 if presentAppStoreOverlay() { return }
-                // No foreground-active scene to host the overlay (e.g. the app is
-                // backgrounding). Falling through to `UIApplication.shared.open(url)` here
-                // would send an owner of an already-installed wallet to that wallet's own
-                // store page instead of into it. `openFrakApp()` is the same deep-link-first,
-                // store-fallback answer the install action already uses a few lines up this
-                // file when there is no install page to hand the user to — it tries the
-                // wallet's own scheme first and only reaches the store if that fails.
+                // No foreground-active scene to host the overlay. Falling through to
+                // `UIApplication.shared.open(url)` would send an already-installed wallet's
+                // owner to its own store page. `openFrakApp()` tries the wallet's scheme first
+                // and only reaches the store if that fails.
                 Task { _ = await openFrakApp() }
                 return
             }
             Task { _ = await UIApplication.shared.open(url) }
         }
 
-        /// The wallet's own App Store listing, and nothing else on `apps.apple.com`.
-        ///
-        /// Matched on the id path component rather than the host, so a link to some other app
-        /// cannot make the sheet advertise the wallet. Storefront-prefixed forms
-        /// (`/us/app/name/id123`) are why this scans the components instead of comparing paths.
+        /// The wallet's own App Store listing, and nothing else on `apps.apple.com`. Matched on
+        /// the id path component, not the host, so a link to some other app can't match; scanning
+        /// components, not comparing paths, handles storefront-prefixed forms like `/us/app/name/id123`.
         private func isWalletAppStoreListing(_ url: URL) -> Bool {
             guard url.host?.caseInsensitiveCompare(Self.appStoreHost) == .orderedSame else {
                 return false
@@ -311,9 +276,8 @@
         /// - Returns: whether the overlay was presented; false leaves the caller to open the
         ///   URL normally, so a missing scene can never swallow the download.
         private func presentAppStoreOverlay() -> Bool {
-            // `SKOverlay` is unavailable on Mac Catalyst, which `canImport(UIKit)` does not
-            // exclude. Falling through opens the listing in the browser, which is the right
-            // answer on a Mac anyway.
+            // `SKOverlay` is unavailable on Mac Catalyst, which `canImport(UIKit)` doesn't
+            // exclude; falling through opens the listing in the browser instead.
             #if targetEnvironment(macCatalyst)
                 return false
             #else
@@ -349,9 +313,8 @@
             }
 
             session = built
-            // Either the budget is already gone, or there is no page to spend it on. `closed`
-            // matters here too: the sheet can reach a terminal outcome while `build` is still
-            // suspended, and a web view built after that would never be seen.
+            // `closed` matters here too: the sheet can reach a terminal outcome while `build`
+            // is still suspended, and a web view built after that would never be seen.
             let url: URL
             switch sharingDecision(
                 session: built,
@@ -493,11 +456,10 @@
         /// Records an outcome the sheet stays open after, and reloads the page onto its
         /// post-share state.
         ///
-        /// A reload with `confirmed=1` rather than letting the page confirm itself off its own
-        /// button press: the page asks for the share, but only this model learns whether a
-        /// chooser actually came up, and `saveConfirmation` has to survive the user leaving and
-        /// coming back. It costs a page load at the moment the chooser dismisses, which is the
-        /// obvious thing to optimise away next — the page would have to own the optimism to do it.
+        /// A reload with `confirmed=1` rather than letting the page confirm itself: only this
+        /// model learns whether a chooser actually came up, and the confirmation has to survive
+        /// the user leaving and coming back. Costs a page load at the moment the chooser
+        /// dismisses — the obvious next optimization, which the page would have to own.
         private func confirm(_ result: SharingResult) {
             report(result)
             guard let url = session?.url(confirmed: true) else { return }

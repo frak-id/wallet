@@ -44,13 +44,7 @@ public object Frak {
     @Volatile
     private var instance: FrakClient? = null
 
-    /**
-     * The registered lifecycle observer, so [shutdown] can unregister it. Without this, an
-     * initialize/shutdown/initialize cycle leaves the first observer attached and every inbound
-     * deep link is handled twice — the failure mode is a duplicated arrival, i.e. a duplicated
-     * referral payout, which is exactly the kind of bug a test suite is supposed to catch and
-     * could not until [shutdown] existed.
-     */
+    /** Registered lifecycle observer, so [shutdown] can unregister it; otherwise a re-initialize cycle double-handles every inbound deep link. */
     @Volatile
     private var deepLinkObserver: Pair<Application, Application.ActivityLifecycleCallbacks>? = null
 
@@ -124,29 +118,20 @@ public object Frak {
     }
 
     /**
-     * Tears the SDK down: cancels every background coroutine, unregisters the deep-link observer,
-     * and drops the client so [initialize] can run again with a different [FrakConfig].
+     * Tears the SDK down: cancels background coroutines, unregisters the deep-link observer, and
+     * drops the client so [initialize] can run again with a different [FrakConfig].
      *
-     * S6b/C7. **Not a privacy control** — use [FrakClient.setTrackingEnabled] for that; shutting
-     * the SDK down neither records a consent decision nor erases anything, so a merchant who calls
-     * only this has stopped tracking for exactly as long as their process lives. This exists so a
-     * host can deterministically release the SDK, and so the facade is testable at all (T2/8.8):
-     * before it, `initialize` was once-per-process with no teardown, which is why nothing in this
-     * file had a single test.
+     * Not a privacy control — use [FrakClient.setTrackingEnabled] for that; this neither records
+     * a consent decision nor erases anything.
      *
-     * Idempotent and safe before [initialize]. Suspends until the background work has actually
-     * stopped, rather than merely being asked to.
+     * Idempotent and safe before [initialize]. Suspends until the background work has stopped.
      *
-     * Deliberately no `@JvmStatic`, unlike every other member here: a `suspend fun` compiles to a
-     * method taking a `Continuation`, which no Java caller can supply. Annotating it as if it were
-     * Java-callable would be a promise the signature cannot keep (A7).
+     * No `@JvmStatic`: a `suspend fun` compiles to a method taking a `Continuation`, which no
+     * Java caller can supply.
      */
     public suspend fun shutdown() {
-        // Everything mutable is read and cleared under the lock, then acted on outside it: this is
-        // a suspend function, and `synchronized` must never span a suspension point. The state is
-        // returned OUT of the lambda rather than assigned to `val`s declared above it, which would
-        // lean on `synchronized`'s `callsInPlace` contract for definite assignment — true today,
-        // but not worth depending on when the alternative is this.
+        // State is read and cleared under the lock, then acted on outside it: `synchronized`
+        // must never span a suspension point.
         val (dying, observer) =
             synchronized(this) {
                 val client = core

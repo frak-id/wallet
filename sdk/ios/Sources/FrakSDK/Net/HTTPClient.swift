@@ -40,31 +40,24 @@ struct HTTPClient: Sendable {
     static let maxRetryAfterSeconds = 300
 
     /// 1 MiB. Both responses this client ever reads — a merchant config resolve and a rewards
-    /// list — are small JSON; the entire 67-case golden rewards fixture, packing every reward
-    /// kind and currency this SDK supports, is under 100 KB (`golden-rewards.json`). 1 MiB is
-    /// generous headroom above any real payload while still bounding memory and what an
-    /// oversized or misbehaving response could force into UserDefaults (S5).
+    /// list — are small JSON; generous headroom above any real payload while still bounding
+    /// memory and what an oversized or misbehaving response could force into UserDefaults.
     static let maxResponseBodyBytes: Int64 = 1024 * 1024
 
-    /// Wall-clock ceiling for a whole request, both attempts included. This is the SDK's single
-    /// authoritative timeout mechanism (5.7): `Deadline.run` races `performWithRetry`/`attempt`
-    /// against this one wall-clock bound and is what actually fires on a hang. The session's own
-    /// `timeoutIntervalForRequest`/`timeoutIntervalForResource` are set below to a value comfortably
-    /// above this deadline (see `defaultSession`), so they exist only as a defense-in-depth backstop
-    /// against `URLSession` wedging in a way `Deadline.run`'s cooperative cancellation can't reach —
-    /// they cannot fire first in any real request. Matches Android's effective per-request budget:
-    /// connect (3s) + read (5s) = 8s per attempt, two attempts plus up to 0.3s of jittered delay
-    /// (N6) is 16.3s, leaving 3.7s of slack under this same 20s wall clock — Android's per-attempt
-    /// timeouts are tighter than its own deadline and so are the mechanism that actually fires
-    /// there, where here `Deadline.run` is; the two platforms' authoritative mechanisms differ, but
-    /// the effective ceiling on total wait is the same 20s on both.
+    /// Wall-clock ceiling for a whole request, both attempts included. This is the SDK's
+    /// single authoritative timeout mechanism: `Deadline.run` races the request against this
+    /// one wall-clock bound and is what actually fires on a hang. The session's own timeouts
+    /// (see `defaultSession`) are set well above this deadline, so they exist only as a
+    /// defense-in-depth backstop against `URLSession` wedging, not as the mechanism that fires.
+    /// Matches Android's effective per-request budget of ~20s, though the two platforms enforce
+    /// it differently: Android's per-attempt timeouts are tight enough to be the mechanism that
+    /// actually fires there, where here it is `Deadline.run`.
     static let overallDeadlineSeconds: TimeInterval = 20
 
-    /// Set well above `overallDeadlineSeconds` (20s) so neither can ever be the mechanism that
-    /// actually ends a request — `Deadline.run` always wins first. Not `.infinity`/unset: a session
-    /// timeout still bounds the pathological case of `Deadline.run`'s own cancellation failing to
-    /// unblock a wedged `URLSessionTask` (cooperative cancellation is not always instant), so this
-    /// stays a real, finite backstop rather than a second competing budget (5.7).
+    /// Set well above `overallDeadlineSeconds` so neither can ever be the mechanism that
+    /// actually ends a request — `Deadline.run` always wins first. Not `.infinity`/unset: this
+    /// still bounds the pathological case of `Deadline.run`'s own cancellation failing to
+    /// unblock a wedged `URLSessionTask`.
     private static let sessionBackstopSeconds: TimeInterval = 60
 
     static let defaultSession: URLSession = {
@@ -80,10 +73,9 @@ struct HTTPClient: Sendable {
     private let session: URLSession
     private let overallDeadlineSeconds: TimeInterval
     private let redirectDelegate = NoRedirectDelegate()
-    // D3: request logging is self-contained here rather than threaded through from
-    // DefaultFrakClient, since HTTPClient is constructed before that init has a fully-built
-    // FrakLogger to hand it (see the doc on `logger` above `attempt`). Defaults to nil — silent —
-    // until a caller passes one in.
+    // Self-contained here rather than threaded through from DefaultFrakClient: HTTPClient is
+    // constructed before that init has a fully-built FrakLogger to hand it. Defaults to nil —
+    // silent — until a caller passes one in.
     private let logger: FrakLogger?
 
     init(
@@ -146,7 +138,7 @@ struct HTTPClient: Sendable {
 
     /// A dropped/reset/timed-out connection is worth one retry; a trust or configuration failure
     /// will just fail identically again, so retrying only burns the deadline's remaining budget
-    /// on a guaranteed repeat (N6).
+    /// on a guaranteed repeat.
     private static func isTransient(_ error: URLError) -> Bool {
         switch error.code {
         case .networkConnectionLost, .notConnectedToInternet, .timedOut, .cannotConnectToHost,
@@ -165,7 +157,7 @@ struct HTTPClient: Sendable {
         } catch let error as URLError where Self.isTransient(error) {
             // One retry: a pooled connection closed server-side while idle fails on next
             // use, indistinguishable from a real failure. Safe only because this is GET-only.
-            // Short, jittered delay (N6): retrying instantly, in lockstep, across every client
+            // Short, jittered delay: retrying instantly, in lockstep, across every client
             // affected by the same blip recreates the load spike that caused it.
             try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds())
             return try await retry(request)
@@ -215,11 +207,12 @@ struct HTTPClient: Sendable {
         }
     }
 
-    /// D3: DEBUG-level only, symmetric with Android's `HttpClient`. Logs method, host, path and
-    /// status/duration — never the query string (S1/S2: a merchant id or the anonymous id can ride
-    /// in it, e.g. `campaigns?anonymousId=…`) and never a header value (an auth token lives there).
-    /// `os.Logger` interpolation stays `.private` even though a path alone is rarely sensitive,
-    /// since a future route could add a path parameter without anyone revisiting this call site.
+    /// DEBUG-level only, symmetric with Android's `HttpClient`. Logs method, host, path and
+    /// status/duration — never the query string (a merchant id or the anonymous id can ride in
+    /// it, e.g. `campaigns?anonymousId=…`) and never a header value (an auth token lives
+    /// there). `os.Logger` interpolation stays `.private` even though a path alone is rarely
+    /// sensitive, since a future route could add a path parameter without anyone revisiting
+    /// this call site.
     private func logResult(_ request: URLRequest, status: Int?, start: Date) {
         guard let logger else { return }
         let durationMs = Int(Date().timeIntervalSince(start) * 1000)
@@ -231,24 +224,19 @@ struct HTTPClient: Sendable {
     }
 
     private func attemptUnlogged(_ request: URLRequest) async throws -> Response {
-        // Not a true streaming read (S5, partial): `session.data(for:)` buffers the entire body
-        // before this function runs at all, so unlike Android's `readBytesUpTo` this does NOT
-        // bound peak memory during the read — a chunked response with no (or a lying)
-        // Content-Length can still be buffered in full by URLSession before the check below ever
-        // runs. A `URLSessionDataDelegate`-based accumulate-and-cancel would close this gap, but
-        // rewriting the transport around a delegate without a compiler to verify Sendable/actor
-        // isolation under `-swift-version 6` was judged too risky to land blind; reverted to this
-        // shape, which at least keeps the two invariants that ARE safe to guarantee here: an
-        // oversized body is never returned to a caller that would persist it, and the advertised
-        // Content-Length is checked before the read starts so an honest large response is
-        // rejected without waiting for the transfer to finish.
+        // Not a true streaming read: `session.data(for:)` buffers the entire body before this
+        // function runs, so unlike Android's `readBytesUpTo` this does not bound peak memory
+        // during the read — a chunked response with no (or a lying) Content-Length can still be
+        // buffered in full before the check below ever runs. What is guaranteed: an oversized
+        // body is never returned to a caller that would persist it, and an honest large
+        // response with a real Content-Length is rejected before the transfer finishes.
         let (data, response) = try await session.data(for: request, delegate: redirectDelegate)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw FrakError.network(underlying: URLError(.badServerResponse))
         }
         // `expectedContentLength` is -1 when the header is absent; not sufficient alone since a
-        // chunked or lying response has no (or a false) Content-Length, so the post-buffer check
-        // below is the backstop that actually rejects an oversized body regardless of the header.
+        // chunked or lying response has no (or a false) Content-Length, so the post-buffer
+        // check below is the real backstop against an oversized body.
         if httpResponse.expectedContentLength > Self.maxResponseBodyBytes {
             throw FrakError.network(underlying: ResponseTooLargeError(total: httpResponse.expectedContentLength))
         }
@@ -267,13 +255,12 @@ struct HTTPClient: Sendable {
         return min(max(seconds, 1), Self.maxRetryAfterSeconds)
     }
 
-    /// Values are percent-encoded with `PercentEncoding` (RFC 3986, matching the Android twin's
-    /// `HttpClient.buildUrl` byte-for-byte); keys are compile-time constants and are not encoded.
-    /// Not `URLComponents`: its `percentEncodedQuery` allows several RFC-3986-reserved characters
-    /// (`!$&'()*+,;=`) through unescaped and passes `+` through literally rather than encoding it
-    /// — the `replacingOccurrences(of: "+", with: "%2B")` this used to need was a symptom of using
-    /// the wrong encoder, not a complete fix (every other reserved character it lets through stayed
-    /// unescaped).
+    /// Values are percent-encoded with `PercentEncoding` (RFC 3986); keys are compile-time
+    /// constants and are not encoded.
+    ///
+    /// Not `URLComponents`: its `percentEncodedQuery` allows several RFC-3986-reserved
+    /// characters (`!$&'()*+,;=`) through unescaped and passes `+` through literally rather
+    /// than encoding it.
     private func buildRequest(path: String, query: [String: String?]) throws -> URLRequest {
         let present = query.compactMapValues { $0 }
         let urlString: String

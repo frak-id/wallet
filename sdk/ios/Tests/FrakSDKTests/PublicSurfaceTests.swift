@@ -1,7 +1,5 @@
 import Foundation
-// Deliberately a plain import, not `@testable`. `@testable` would let this file reach
-// internal declarations and hide the exact bug it exists to catch: that a merchant
-// building against the compiled module cannot construct these types at all.
+// Deliberately a plain import, not `@testable`: catches types a merchant cannot construct outside the module.
 import FrakSDK
 import Testing
 
@@ -54,7 +52,6 @@ struct PublicSurfaceTests {
         #expect(tier.minValue == 0)
         #expect(campaign.referrer == reward)
         #expect(best.payoutType == "fixed")
-        // Defaults preserve the pre-scoping shape for a merchant who never passes products.
         #expect(best.isProductScoped == false)
         #expect(best.matchedProducts == nil)
         #expect(scopedBest.isProductScoped)
@@ -132,7 +129,6 @@ struct PublicSurfaceTests {
         #expect(FrakConfig().env.backend == "https://backend.frak.id")
         #expect(FrakEnvironment.development.wallet == "https://wallet-dev.frak.id")
 
-        // Trailing slash stripped: origins are concatenated with paths verbatim.
         let local = FrakEnvironment.custom(wallet: "https://localhost:3000", backend: "https://localhost:3030/")
         #expect(local.wallet == "https://localhost:3000")
         #expect(local.backend == "https://localhost:3030")

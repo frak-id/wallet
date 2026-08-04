@@ -37,8 +37,8 @@ class RewardsDecoderTest {
         assertEquals(5.0, referrer.percent, 0.0)
         assertEquals("purchase_amount", referrer.percentOf)
         assertEquals(50.0, referrer.maxAmount?.eurAmount)
-        // Absent bounds stay absent rather than becoming zero — a zero maximum
-        // would silently cap every reward at nothing.
+        // Absent bounds stay absent, not zero: a zero maximum would silently cap every reward
+        // at nothing.
         assertNull(referrer.minAmount)
     }
 
@@ -75,8 +75,8 @@ class RewardsDecoderTest {
                 .first()
                 .referrer
 
-        // Dropping it would make a newly-launched reward type look, to a frozen
-        // binary, exactly like a merchant with nothing configured.
+        // Dropping it would make a newly-launched reward type look, to a frozen binary, like a
+        // merchant with nothing configured.
         assertTrue("expected Unknown, got $referrer", referrer is EstimatedReward.Unknown)
         assertEquals("quantum", (referrer as EstimatedReward.Unknown).payoutType)
     }
@@ -96,11 +96,9 @@ class RewardsDecoderTest {
 
     @Test
     fun `a well-formed campaign object missing a required field still throws (N3, matching iOS)`() {
-        // objectArray only skips entries that are not JSON objects at all — an object-shaped
-        // entry missing a required field is a contract break and must stay loud, same as iOS's
-        // ForgivingArray, which decodes an object-shaped entry strictly (see
-        // RewardsDecoderTests.swift's missingCampaignIdStillThrows). N3 as originally filed
-        // described iOS tolerating this too; it does not — both platforms already agree.
+        // objectArray only skips entries that are not JSON objects at all; an object-shaped
+        // entry missing a required field is a contract break and must stay loud, matching iOS's
+        // ForgivingArray.
         val body = """{"rewards":[{"name":"Summer","interactionTypeKey":"purchase","conditions":[]}]}"""
 
         val failure = runCatching { RewardsDecoder.decode(body) }.exceptionOrNull()
@@ -120,8 +118,8 @@ class RewardsDecoderTest {
 
         val failure = runCatching { RewardsDecoder.decode(body) }.exceptionOrNull()
 
-        // Absent entirely is a contract break, unlike a present-but-unrecognised
-        // value (which degrades to Unknown, see the test above).
+        // Absent entirely is a contract break, unlike a present-but-unrecognised value, which
+        // degrades to Unknown.
         assertTrue("expected Decoding, got $failure", failure is FrakError.Decoding)
         assertTrue(
             "the message should name payoutType, was: ${failure?.message}",
@@ -131,9 +129,8 @@ class RewardsDecoderTest {
 
     @Test
     fun `an empty rewards array decodes to an empty list, not an error`() {
-        // This endpoint NEVER 404s: an unknown merchantId returns exactly this.
-        // It is indistinguishable from a real merchant between campaigns, which
-        // is why the diagnosis lives on resolveConfig().
+        // This endpoint never 404s: an unknown merchantId returns exactly this,
+        // indistinguishable from a real merchant between campaigns.
         val result = RewardsDecoder.decode("""{"rewards":[]}""")
 
         assertTrue(result.campaigns.isEmpty())
@@ -142,8 +139,8 @@ class RewardsDecoderTest {
 
     @Test
     fun `best is absent when the server did not select one`() {
-        // `best` is attached only when formatted=1 AND a campaign was selected.
-        // It is omitted, never null and never an empty object.
+        // `best` is attached only when formatted=1 and a campaign was selected: omitted,
+        // never null or an empty object.
         assertNull(RewardsDecoder.decode(FIXED_RESPONSE).best)
     }
 
@@ -176,8 +173,8 @@ class RewardsDecoderTest {
 
     @Test
     fun `isProductScoped and matchedProducts default to false and null on a backend that omits them`() {
-        // FORMATTED_RESPONSE predates product scoping entirely — pins that an older backend
-        // response still decodes to the unscoped shape rather than failing.
+        // FORMATTED_RESPONSE predates product scoping: pins that an older backend response
+        // still decodes to the unscoped shape.
         val best = requireNotNull(RewardsDecoder.decode(FORMATTED_RESPONSE).best)
 
         assertEquals(false, best.isProductScoped)
@@ -271,24 +268,16 @@ class RewardsDecoderTest {
 
     @Test
     fun `a non-finite amount is a decoding error, not a silently broken TokenAmount (N1)`() {
-        // NOT a bare `NaN` literal (the previous version of this test): this test's unit-test
-        // classpath is org.json:json, the JVM reference implementation (see
-        // gradle/libs.versions.toml), not AOSP. org.json's JSONObject.stringToValue only
-        // attempts numeric parsing when the token starts with a digit or '-', so a bare `NaN`
-        // decodes as the *string* "NaN" — JsonReader.double's `as? Number` then yields null, and
-        // the error actually raised is the MISSING-FIELD error, not the finiteness guard. That
-        // false pass is exactly why this test now asserts on the guard's own message text, not
-        // merely on the substring "amount" (both errors would contain it).
+        // Not a bare `NaN` literal: org.json (this classpath's JSON implementation) only
+        // attempts numeric parsing when the token starts with a digit or '-', so a bare NaN
+        // decodes as the string "NaN" and raises the missing-field error, not the finiteness
+        // guard — hence asserting on the guard's own message, not just the substring "amount".
         //
-        // 1e999 instead: org.json's JSONTokener recognises the leading digit and tries
-        // JSONObject.stringToValue -> BigDecimal("1e999") (arbitrary precision, always parses),
-        // and BigDecimal.doubleValue() on a value outside Double's range returns
-        // Double.POSITIVE_INFINITY per the Java spec. JsonReader.double's `as? Number` therefore
-        // sees a real Number, `.toDouble()` yields Infinity, and requireFiniteDouble's own check
-        // is what throws. AOSP's Double.valueOf("1e999") is also +Infinity, so the same literal
-        // reaches the same guard on-device. (JSONObject().put("amount", Double.NaN) cannot be
-        // used instead: org.json's testValidity rejects non-finite doubles at put(), so there is
-        // no way to construct this case except as a literal in the wire body.)
+        // 1e999 instead: org.json parses it via BigDecimal("1e999"), whose doubleValue() returns
+        // Double.POSITIVE_INFINITY per the Java spec, reaching requireFiniteDouble's own check.
+        // AOSP's Double.valueOf("1e999") is also +Infinity, so the same literal reaches the same
+        // guard on-device. JSONObject().put("amount", Double.NaN) cannot be used instead: org.json
+        // rejects non-finite doubles at put(), so this must be a literal in the wire body.
         val body =
             """
             {"rewards":[{"campaignId":"c","name":"N","interactionTypeKey":"purchase","conditions":[],
@@ -324,9 +313,8 @@ class RewardsDecoderTest {
 
     @Test
     fun `a non-finite percent, tier bound, or product-detail field is also a decoding error (N1)`() {
-        // The guard originally covered only TokenAmount's four fields; extended to every
-        // numeric wire field a decoded reward can carry, since percent in particular feeds
-        // display arithmetic directly.
+        // Covers every numeric wire field a decoded reward can carry; percent in particular
+        // feeds display arithmetic directly.
         val percentBody =
             """
             {"rewards":[{"campaignId":"c","name":"N","interactionTypeKey":"purchase","conditions":[],

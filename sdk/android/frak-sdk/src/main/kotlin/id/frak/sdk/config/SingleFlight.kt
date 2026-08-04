@@ -14,12 +14,11 @@ import java.util.concurrent.ConcurrentHashMap
  * fires synchronously and re-entrantly, which would deadlock/corrupt the map.
  *
  * Work runs on [scope], not the caller's, so a caller leaving composition can't cancel other
- * waiters. A cancelled shared coroutine is delivered to waiters as [FrakError.Network] (never a
- * bare [CancellationException] they don't own, which `frakCall` would rethrow and silently kill
- * their coroutine).
+ * waiters. A cancelled shared coroutine is delivered to waiters as [FrakError.Network], never a
+ * bare [CancellationException] they don't own.
  *
- * Cleanup is driven by the Job's `invokeOnCompletion`, not the coroutine body: if [scope] is
- * already cancelled, `launch` never runs the body (or its `finally`) at all.
+ * Cleanup is driven by the Job's `invokeOnCompletion`: if [scope] is already cancelled, `launch`
+ * never runs the body at all.
  */
 internal class SingleFlight(
     private val scope: CoroutineScope,

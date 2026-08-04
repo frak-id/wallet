@@ -17,7 +17,6 @@ struct FrakCallTests {
             _ = try await frakCall { () -> Int in throw FrakError.trackingDisabled }
             Issue.record("expected trackingDisabled to be thrown")
         } catch FrakError.trackingDisabled {
-            // Expected: the same case, unchanged.
         }
     }
 

@@ -40,9 +40,9 @@ class HttpClientTest {
             val client =
                 newClient { url ->
                     attempts++
-                    // A pooled connection the server closed while idle fails on
-                    // the *next* use exactly like this — a transient EOFException, one of the
-                    // exception types HttpClient.isTransient treats as worth retrying (N6).
+                    // A pooled connection the server closed while idle fails on the next use
+                    // exactly like this: a transient EOFException, one of the types
+                    // HttpClient.isTransient retries.
                     if (attempts == 1) throw java.io.EOFException("unexpected end of stream")
                     transport.respond(200, "{}")
                     transport.open(url)
@@ -59,8 +59,8 @@ class HttpClientTest {
             val client =
                 newClient {
                     attempts++
-                    // A SocketException subtype: still transient (N6) and worth retrying once,
-                    // just persistently unlucky both times in this test.
+                    // A SocketException subtype: still transient and worth retrying once, just
+                    // unlucky both times here.
                     throw java.net.NoRouteToHostException("no route to host")
                 }
 
@@ -81,8 +81,8 @@ class HttpClientTest {
             val client =
                 newClient {
                     attempts++
-                    // Not in HttpClient.isTransient's allowlist: a trust failure will just fail
-                    // identically again, so retrying it only burns the deadline's budget (N6).
+                    // Not in HttpClient.isTransient's allowlist: a trust failure fails identically
+                    // again, so retrying only burns the deadline's budget.
                     throw javax.net.ssl.SSLHandshakeException("PKIX path building failed")
                 }
 
@@ -99,8 +99,8 @@ class HttpClientTest {
             val client =
                 newClient { url ->
                     attempts++
-                    // UnknownHostException is a plain IOException, not a SocketException subtype
-                    // — needs its own arm in isTransient, or this silently stops being retried (N6).
+                    // UnknownHostException is a plain IOException, not a SocketException subtype:
+                    // needs its own arm in isTransient, or this silently stops being retried.
                     if (attempts == 1) throw java.net.UnknownHostException("backend.frak.id")
                     transport.respond(200, "{}")
                     transport.open(url)
@@ -126,8 +126,8 @@ class HttpClientTest {
             client.get("/x")
 
             // The virtual clock only advances past a delay() once one is scheduled and run, so
-            // this proves the 100-300ms jittered delay (N6) actually executed, not just that time
-            // could have passed.
+            // this proves the jittered delay actually executed, not just that time could have
+            // passed.
             assertTrue(
                 "expected a jittered 100-300ms delay before the retry, was ${currentTime}ms",
                 currentTime in 100..300,
@@ -141,9 +141,8 @@ class HttpClientTest {
 
             val failure = runCatching { client.get("/x") }.exceptionOrNull()
 
-            // Wrapping this would break structured concurrency: the parent never
-            // learns the child cancelled, and `withTimeout` silently stops
-            // working. Only TimeoutCancellationException is translated.
+            // Wrapping this would break structured concurrency: the parent would never learn
+            // the child cancelled. Only TimeoutCancellationException is translated.
             assertTrue("expected CancellationException, got $failure", failure is CancellationException)
         }
 
@@ -160,8 +159,8 @@ class HttpClientTest {
                     override fun usingProxy(): Boolean = false
 
                     override fun getResponseCode(): Int {
-                        // Stands in for a blocking socket read: a server that
-                        // accepts and never answers.
+                        // Stands in for a blocking socket read: a server that accepts and never
+                        // answers.
                         gate.complete(Unit)
                         Thread.sleep(BLOCKED_READ_MILLIS)
                         return 200
@@ -172,27 +171,20 @@ class HttpClientTest {
                     }
                 }
 
-            // A real dispatcher, not the test one: this asserts that a *blocked
-            // thread* is released, and a virtual-time dispatcher cannot express
-            // being blocked.
+            // A real dispatcher, not the test one: this asserts a blocked thread is released,
+            // and a virtual-time dispatcher cannot express being blocked.
             val client = HttpClient(FAKE_BASE_URL, Dispatchers.IO, open = { stub })
             val job = launch(Dispatchers.Default) { runCatching { client.get("/x") } }
             gate.await()
             job.cancelAndJoin()
 
-            // `Thread.interrupt()` does not unblock a socket read; only
-            // `disconnect()` does. Without this the coroutine *returns* while a
-            // thread sits on a 15s read holding a socket, and repeated
-            // presentations exhaust the SDK's limited dispatcher until every
-            // call hangs.
+            // `Thread.interrupt()` does not unblock a socket read; only `disconnect()` does.
             assertTrue("cancellation must reach the connection", disconnected)
         }
 
     @Test
     fun `non-2xx statuses are returned rather than thrown`() =
         runTest {
-            // Only the caller knows whether a 404 means "no merchant" or an
-            // ordinary server error, so the mapping is not this layer's job.
             transport.respond(404, "Merchant not found")
             val response = newClient().get("/x")
 
@@ -203,9 +195,8 @@ class HttpClientTest {
     @Test
     fun `an error body is read from errorStream, not inputStream`() =
         runTest {
-            // Reading `inputStream` on a >= 400 throws FileNotFoundException, so
-            // getting this wrong turns every structured backend error into a
-            // generic transport failure.
+            // inputStream on a >= 400 response throws FileNotFoundException; getting this wrong
+            // turns every structured backend error into a generic transport failure.
             transport.respond(400, """{"success":false,"error":"nope","code":"BAD"}""")
 
             assertEquals("BAD", JsonReader.errorCodeOrNull(newClient().get("/x").body))
@@ -217,9 +208,8 @@ class HttpClientTest {
             transport.respond(200, "{}")
             newClient().get("/x")
 
-            // Setting it by hand switches the response to raw deflate with no
-            // warning, and we would then have to inflate it ourselves. Both
-            // halves or neither.
+            // Setting it by hand switches the response to raw deflate with no warning, and we
+            // would then have to inflate it ourselves.
             val headers = transport.requests.single().headers
             assertTrue(
                 "Accept-Encoding must not be set, was: $headers",
@@ -242,9 +232,8 @@ class HttpClientTest {
             transport.respond(200, "{}")
             newClient().get("/x")
 
-            // Every URL this client builds is one we own, so a redirect is a
-            // misconfiguration to surface rather than to follow — and following
-            // one across hosts silently drops headers.
+            // A redirect is a misconfiguration to surface, not follow: crossing hosts silently
+            // drops headers.
             assertTrue("instanceFollowRedirects must be false", !transport.requests.single().instanceFollowRedirects)
         }
 
@@ -254,8 +243,8 @@ class HttpClientTest {
             transport.respond(200, "{}")
             newClient().get("/x")
 
-            // A merchant with a global HttpResponseCache installed would
-            // otherwise answer our config requests from their cache.
+            // A merchant with a global HttpResponseCache installed would otherwise answer our
+            // config requests from theirs.
             assertTrue("useCaches must be false", !transport.requests.single().useCaches)
         }
 
@@ -270,8 +259,8 @@ class HttpClientTest {
                     .single()
                     .url
                     .toString()
-            // A space must be %20, not `+`. `URLEncoder` produces `+`, which is
-            // form-encoding and wrong in a query string.
+            // A space must be %20, not `+`: `URLEncoder` produces `+`, which is form-encoding
+            // and wrong in a query string.
             assertTrue("space must be %20, was: $url", url.contains("name=Acme%20Ltd"))
             assertTrue("a null value is omitted entirely, was: $url", !url.contains("lang"))
         }
@@ -302,9 +291,8 @@ class HttpClientTest {
         runTest {
             transport.respond(429, "Too Many Requests", retryAfter = "Wed, 21 Oct 2026 07:28:00 GMT")
 
-            // Only the delta-seconds form is parsed; the limiter emits integer
-            // seconds unconditionally, so a date form means something unexpected
-            // is in the path and the backoff falls back to its own schedule.
+            // Only the delta-seconds form is parsed; a date form means something unexpected is
+            // in the path, and the backoff falls back to its own schedule.
             assertEquals(null, newClient().get("/x").retryAfterSeconds)
         }
 
@@ -320,8 +308,8 @@ class HttpClientTest {
     @Test
     fun `a Content-Length over the cap is rejected before the stream is read`() =
         runTest {
-            // The real body is small; only the advertised header lies. Proves the pre-check runs
-            // off Content-Length alone and does not need to read anything to reject.
+            // The real body is small; only the advertised header lies, proving the pre-check
+            // runs off Content-Length alone.
             transport.respond(200, "{}", declaredContentLength = HttpClient.MAX_RESPONSE_BODY_BYTES + 1)
 
             val failure = runCatching { newClient().get("/x") }.exceptionOrNull()
@@ -337,8 +325,8 @@ class HttpClientTest {
     fun `a body over the cap with no advertised Content-Length is rejected during the read, not truncated`() =
         runTest {
             val oversized = "x".repeat(HttpClient.MAX_RESPONSE_BODY_BYTES.toInt() + 1)
-            // declaredContentLength = -1 stands in for "absent", exactly what HttpURLConnection
-            // reports when a server sends no Content-Length header (e.g. chunked transfer).
+            // declaredContentLength = -1 stands in for "absent", what HttpURLConnection reports
+            // for a server that sends no Content-Length header (e.g. chunked transfer).
             transport.respond(200, oversized, declaredContentLength = -1)
 
             val failure = runCatching { newClient().get("/x") }.exceptionOrNull()
@@ -376,8 +364,6 @@ class HttpClientTest {
         runTest {
             transport.respond(200, "{}")
 
-            // newClient()'s default logger is null; get() must not throw or otherwise behave
-            // differently just because nobody is listening.
             assertEquals(200, newClient().get("/x").status)
         }
 
@@ -388,8 +374,8 @@ class HttpClientTest {
             val sink = RecordingLogSink()
             val logger = FrakLogger(FrakLogLevel.DEBUG, sink)
 
-            // EOFException is transient (N6): both the original attempt and its retry fail and are
-            // each logged once, so two lines are expected here, not one.
+            // EOFException is transient: both the original attempt and its retry fail and are
+            // each logged once.
             runCatching { newClient(logger = logger).get("/x") }
 
             assertEquals("both the original attempt and its retry are logged", 2, sink.messages.size)
@@ -411,10 +397,8 @@ class HttpClientTest {
     }
 
     /**
-     * [open] is deliberately LAST: most call sites here pass it as a trailing lambda, and Kotlin
-     * binds a trailing lambda to the final parameter. When `logger` was added after `open` the
-     * whole suite silently retargeted every `newClient { ... }` onto `logger` and stopped
-     * compiling. Add future parameters ahead of [open], not after it.
+     * [open] is deliberately last: call sites here pass it as a trailing lambda, and Kotlin binds
+     * a trailing lambda to the final parameter. Add future parameters ahead of [open].
      */
     private fun kotlinx.coroutines.test.TestScope.newClient(
         logger: FrakLogger? = null,
